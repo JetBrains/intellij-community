@@ -1,14 +1,32 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertCannotRename
+import org.jetbrains.idea.maven.fixtures.assertRenameResult
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenPropertyRenameTest : MavenDomTestCase() {
-  override fun setUp() = runBlocking {
-    super.setUp()
-    importProjectAsync("""
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenPropertyRenameTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+
+  @BeforeEach
+  fun setUp(): Unit = runBlocking {
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>module1</artifactId>
                     <version>1</version>
@@ -17,7 +35,7 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
 
   @Test
   fun testRenamingPropertyTag() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1</version>
@@ -27,7 +45,7 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
                        </properties>
                        """.trimIndent())
 
-    assertRenameResult("xxx",
+    maven.assertRenameResult("xxx",
                        """
                          <groupId>test</groupId>
                          <artifactId>module1</artifactId>
@@ -41,7 +59,7 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
 
   @Test
   fun testDoNotRuinTextAroundTheReferenceWhenRenaming() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1</version>
@@ -51,7 +69,7 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
                        </properties>
                        """.trimIndent())
 
-    assertRenameResult("xxx",
+    maven.assertRenameResult("xxx",
                        """
                          <groupId>test</groupId>
                          <artifactId>module1</artifactId>
@@ -65,7 +83,7 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
 
   @Test
   fun testRenamingChangesTheReferenceAccordingly() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1</version>
@@ -75,7 +93,7 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
                        </properties>
                        """.trimIndent())
 
-    assertRenameResult("xxxxx",
+    maven.assertRenameResult("xxxxx",
                        """
                          <groupId>test</groupId>
                          <artifactId>module1</artifactId>
@@ -86,7 +104,7 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
                          </properties>
                          """.trimIndent())
 
-    assertRenameResult("xx",
+    maven.assertRenameResult("xx",
                        """
                          <groupId>test</groupId>
                          <artifactId>module1</artifactId>
@@ -100,7 +118,7 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
 
   @Test
   fun testRenamingPropertyFromReference() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1</version>
@@ -110,7 +128,7 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
                        </properties>
                        """.trimIndent())
 
-    assertRenameResult("xxx",
+    maven.assertRenameResult("xxx",
                        """
                          <groupId>test</groupId>
                          <artifactId>module1</artifactId>
@@ -124,7 +142,7 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
 
   @Test
   fun testDoNotRenameModelProperties() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1</version>
@@ -132,12 +150,12 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
                        <description>${'$'}{project.name}</description>
                        """.trimIndent())
 
-    assertCannotRename()
+    maven.assertCannotRename()
   }
 
   @Test
   fun testDoNotRenameModelPropertiesFromReference() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1</version>
@@ -145,12 +163,12 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
                        <description>${'$'}{proje<caret>ct.name}</description>
                        """.trimIndent())
 
-    assertCannotRename()
+    maven.assertCannotRename()
   }
 
   @Test
   fun testDoNotRenameModelPropertiesTag() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1</version>
@@ -158,6 +176,6 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
                        <properti<caret>es></properties>
                        """.trimIndent())
 
-    assertCannotRename()
+    maven.assertCannotRename()
   }
 }

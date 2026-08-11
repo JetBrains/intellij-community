@@ -4,7 +4,7 @@ fun test(foo: Foo?) {
     baz {
         bar("")
         bar("")
-        foo?.s ?: <caret>
+        foo?.s ?: TODO()
     }
 }
 

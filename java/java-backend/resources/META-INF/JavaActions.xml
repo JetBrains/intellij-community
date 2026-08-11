@@ -1,5 +1,8 @@
 <idea-plugin visibility="public">
   <resource-bundle>messages.ActionsBundle</resource-bundle>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
   <actions>
     <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirAction"
             icon="AllIcons.Actions.ModuleDirectory">
@@ -22,10 +25,6 @@
           <add-to-group group-id="ProjectWidget.Actions" anchor="first"/>
         </action>
         <action id="ImportProject" class="com.intellij.ide.actions.ImportProjectAction"/>
-        <action id="ProjectFromVersionControl" class="com.intellij.openapi.wm.impl.welcomeScreen.ProjectFromVersionControlAction">
-          <override-text place="ProjectWidgetPopup"/>
-          <add-to-group group-id="ProjectWidget.Actions"/>
-        </action>
       </group>
       <separator/>
       <action id="NewModule" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction"/>
@@ -233,10 +232,6 @@
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" relative-to-action="MarkRootGroup" anchor="after"/>
     </group>
 
-    <action id="ChangesView.GroupBy.Module" class="com.intellij.openapi.vcs.changes.actions.SetModuleChangesGroupingAction">
-      <add-to-group group-id="ChangesView.GroupBy"/>
-    </action>
-
     <group id="JavaGenerateGroup1">
       <action id="GenerateTestMethod" class="com.intellij.testIntegration.GenerateTestMethodAction"/>
       <action id="GenerateSetUpMethod" class="com.intellij.testIntegration.GenerateSetUpMethodAction"/>
@@ -383,4 +378,9 @@
       <synonym key="action.DevKit.Bootstrap.synonym"/>
     </action>
   </actions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.java.class.action.suppressor"
+                    interface="com.intellij.ide.actions.JavaClassActionSuppressor" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

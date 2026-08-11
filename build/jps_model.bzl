@@ -1,3 +1,7 @@
+load("@xml.bzl//:xml.bzl", "xml")
+
+_PLUGIN_XML_MARKER_PREFIX = "<!-- BUILD_USING_BAZEL_MARKER"
+
 def _parse_project_relative_module_paths_strict(modules_xml_text):
     marker = 'filepath="'
     prefix = "$PROJECT_DIR$/"
@@ -28,6 +32,60 @@ def _parse_project_relative_module_paths_strict(modules_xml_text):
 
     return rels
 
+def _normalize_project_relative_path(parts, context):
+    result = []
+    for part in parts:
+        if part == "" or part == ".":
+            continue
+        if part == "..":
+            if not result:
+                fail("%s resolves outside the project root" % context)
+            result.pop()
+        else:
+            result.append(part)
+    return "/".join(result)
+
+def _find_plugin_xml_rel_path(ctx, project_root, iml_content, iml_rel_path, iml_dir_rel):
+    doc = xml.parse(iml_content, strict = True)
+    root = xml.get_document_element(doc)
+
+    for source_folder in xml.find_elements_by_tag_name(root, "sourceFolder"):
+        if xml.get_attribute(source_folder, "type") != "java-resource":
+            continue
+
+        url = xml.get_attribute(source_folder, "url")
+        if not url:
+            fail("Production resource root is missing the 'url' attribute in %s" % iml_rel_path)
+
+        prefix = "file://$MODULE_DIR$"
+        if not url.startswith(prefix):
+            fail("Unsupported production resource root URL in %s (expected $MODULE_DIR$ path): %s" % (iml_rel_path, url))
+
+        resource_root_rel = url[len(prefix):]
+        if resource_root_rel.startswith("/"):
+            resource_root_rel = resource_root_rel[1:]
+        elif resource_root_rel:
+            fail("Unsupported production resource root URL in %s (expected $MODULE_DIR$ path): %s" % (iml_rel_path, url))
+
+        parts = iml_dir_rel.split("/") if iml_dir_rel else []
+        if resource_root_rel:
+            parts += resource_root_rel.split("/")
+        parts += ["META-INF", "plugin.xml"]
+        plugin_xml_rel_path = _normalize_project_relative_path(
+            parts,
+            "Production resource root '%s' in %s" % (url, iml_rel_path),
+        )
+        plugin_xml_path = project_root.get_child(plugin_xml_rel_path)
+        if not plugin_xml_path.exists:
+            continue
+
+        plugin_xml_content = ctx.read(plugin_xml_path, watch = "yes")
+        first_line = plugin_xml_content.split("\n")[0]
+        if first_line.startswith(_PLUGIN_XML_MARKER_PREFIX):
+            return plugin_xml_rel_path
+
+    return None
+
 def watch_project_model_files(ctx, project_root):
     idea_dir = project_root.get_child(".idea")
     modules_xml = idea_dir.get_child("modules.xml")
@@ -48,7 +106,7 @@ def read_project_model(ctx, project_root):
     returns the file contents for processing.
 
     Returns struct with:
-      - modules: list of structs (module_name, iml_dir_rel, iml_content, iml_rel_path)
+      - modules: list of structs (module_name, iml_dir_rel, iml_content, iml_rel_path, plugin_xml_rel_path)
       - library_xmls: list of structs (xml_content, xml_rel_path) from .idea/libraries/
     """
     idea_dir = project_root.get_child(".idea")
@@ -74,11 +132,20 @@ def read_project_model(ctx, project_root):
         else:
             iml_dir_rel = ""
 
+        plugin_xml_rel_path = _find_plugin_xml_rel_path(
+            ctx = ctx,
+            project_root = project_root,
+            iml_content = iml_content,
+            iml_rel_path = rel_path,
+            iml_dir_rel = iml_dir_rel,
+        )
+
         modules.append(struct(
             module_name = module_name,
             iml_dir_rel = iml_dir_rel,
             iml_content = iml_content,
             iml_rel_path = rel_path,
+            plugin_xml_rel_path = plugin_xml_rel_path,
         ))
 
     # Read library XMLs and retain relative paths for error messages.

@@ -302,6 +302,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return removed;
   }
 
+  @ApiStatus.Internal
   public InspectionMetaDataDialog createMetaDataDialog(Project project, @NotNull String profileName, @Nullable Configuration configuration) {
     final List<Configuration> configurations = getConfigurations();
     final Function<String, @Nullable @NlsContexts.DialogMessage String> nameValidator = name -> {

@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
-import com.intellij.unscramble.MergeableDumpItem;
+import com.intellij.unscramble.DumpItem;
 import com.intellij.unscramble.ThreadDumpPanel;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -42,7 +42,7 @@ public final class SharedDebuggerUtils {
 
   @ApiStatus.Internal
   public static ThreadDumpPanel createThreadDumpPanel(Project project,
-                                                      List<MergeableDumpItem> dumpItems,
+                                                      List<DumpItem> dumpItems,
                                                       RunnerLayoutUi ui,
                                                       List<Filter> filters) {
     final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);

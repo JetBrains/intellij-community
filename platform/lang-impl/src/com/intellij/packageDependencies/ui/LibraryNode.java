@@ -9,7 +9,9 @@ import com.intellij.psi.PsiFile;
 
 import javax.swing.Icon;
 import java.util.Set;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class LibraryNode extends PackageDependenciesNode {
 
   private final OrderEntry myLibraryOrJdk;

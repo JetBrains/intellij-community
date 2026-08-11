@@ -45,8 +45,8 @@ common --symlink_prefix=/
 common --incompatible_enable_proto_toolchain_resolution
 
 # Do not depend on external environment
-common --action_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
-common --action_env BAZEL_NO_APPLE_CPP_TOOLCHAIN=1
+common --repo_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+common --repo_env BAZEL_NO_APPLE_CPP_TOOLCHAIN=1
 startup --noautodetect_server_javabase
 
 # Remote-caches related
@@ -62,6 +62,11 @@ common:teamcity --show_progress_rate_limit=30
 
 # A workaround for https://github.com/bazelbuild/rules_kotlin/issues/1352
 common --repo_env=ANDROID_HOME=
+
+# Compilation backend switch (see backend_config.bzl). Default (no flag) = JPS / rules_jvm (native).
+# `common:` scope so --config=jps/bta also applies to query/cquery, not just build/test.
+common:jps --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=0
+common:bta --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=1
 
 # Use prebuilt protoc instead of building from source, https://protobuf.dev/news/2026-01-16/
 common --incompatible_enable_proto_toolchain_resolution

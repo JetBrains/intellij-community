@@ -2,6 +2,7 @@
 package com.intellij.python.test.env.core
 
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 @ApiStatus.Internal
 class CachingPyEnvironmentFactory(
@@ -9,6 +10,9 @@ class CachingPyEnvironmentFactory(
 ) : PyEnvironmentFactory {
 
   private val cache = PyEnvironmentCache()
+
+  override val workingDir: Path
+    get() = wrapper.workingDir
 
   override suspend fun createEnvironment(factory: PyEnvironmentFactory, spec: PyEnvironmentSpec<*>): PyEnvironment {
     return cache.getOrCreate(spec.toCacheKey()) {

@@ -71,35 +71,35 @@ internal class ChangeListScheduler(private val coroutineScope: CoroutineScope) {
   fun awaitAll() {
     val throwables = ArrayList<Throwable>()
     val start = System.currentTimeMillis()
-    while (true) {
-      if (System.currentTimeMillis() - start > TimeUnit.MINUTES.toMillis(10)) {
-        cancelAll()
-        throwables.add(IllegalStateException("Too long waiting for VCS update"))
-        break
-      }
-      var future: Job?
-      synchronized(jobs) { future = jobs.peek() }
-      if (future == null) break
-      if (ApplicationManager.getApplication().isDispatchThread) {
-        EDT.dispatchAllInvocationEvents()
-      }
-      try {
-        TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+    TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+      while (true) {
+        if (System.currentTimeMillis() - start > TimeUnit.MINUTES.toMillis(10)) {
+          cancelAll()
+          throwables.add(IllegalStateException("Too long waiting for VCS update"))
+          break
+        }
+        var future: Job?
+        synchronized(jobs) { future = jobs.peek() }
+        if (future == null) break
+        if (ApplicationManager.getApplication().isDispatchThread) {
+          EDT.dispatchAllInvocationEvents()
+        }
+        try {
           future.asCompletableFuture().get(10, TimeUnit.MILLISECONDS)
         }
+        catch (_: TimeoutException) {
+          continue
+        }
+        catch (_: CancellationException) {
+        }
+        catch (e: InterruptedException) {
+          throwables.add(e)
+        }
+        catch (e: ExecutionException) {
+          throwables.add(e)
+        }
+        synchronized(jobs) { jobs.remove(future) }
       }
-      catch (_: TimeoutException) {
-        continue
-      }
-      catch (_: CancellationException) {
-      }
-      catch (e: InterruptedException) {
-        throwables.add(e)
-      }
-      catch (e: ExecutionException) {
-        throwables.add(e)
-      }
-      synchronized(jobs) { jobs.remove(future) }
     }
     CompoundRuntimeException.throwIfNotEmpty(throwables)
   }

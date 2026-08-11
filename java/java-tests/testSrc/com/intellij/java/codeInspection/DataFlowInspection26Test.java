@@ -30,6 +30,14 @@ public class DataFlowInspection26Test extends DataFlowInspectionTestCase {
                              public V get();
                          }
                          """);
-    doTestWith((dfi, cvi) -> dfi.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = false);
+    doTestWith((dfi, _) -> dfi.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = false);
   }
+
+  public void testMatchExceptionWithPrimitivePatterns() { doTest(); }
+
+  public void testTrackRecordFields() {
+    doTest();
+  }
+
+  public void testMapGetOrDefaultNullability() { doTest(); }
 }

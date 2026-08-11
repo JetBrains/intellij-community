@@ -51,8 +51,13 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.SuspendingPointerInputModifierNode
 import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.node.DelegatingNode
 import androidx.compose.ui.node.ModifierNodeElement
@@ -96,6 +101,7 @@ import org.jetbrains.jewel.ui.theme.scrollbarStyle
  * @param style The [ScrollbarStyle] to use for this scrollbar.
  * @param keepVisible `true` to keep the scrollbar visible even when not scrolling, `false` otherwise.
  */
+@Deprecated("Use the overload with adapter parameter instead.", level = DeprecationLevel.HIDDEN)
 @Composable
 public fun VerticalScrollbar(
     scrollState: ScrollableState,
@@ -107,6 +113,7 @@ public fun VerticalScrollbar(
     keepVisible: Boolean = false,
 ) {
     BaseScrollbar(
+        modifier = modifier,
         scrollState = scrollState,
         reverseLayout = reverseLayout,
         enabled = enabled,
@@ -114,7 +121,48 @@ public fun VerticalScrollbar(
         isVertical = true,
         style = style,
         keepVisible = keepVisible,
+    )
+}
+
+/**
+ * A vertical scrollbar that can be tied to a [ScrollableState].
+ *
+ * @param scrollState The [ScrollableState] to control
+ * @param modifier The modifier to apply to this layout node
+ * @param reverseLayout `true` to reverse the direction of the scrollbar, `false` otherwise.
+ * @param enabled `true` to enable the scrollbar, `false` otherwise.
+ * @param interactionSource The [MutableInteractionSource] that will be used to dispatch events.
+ * @param style The [ScrollbarStyle] to use for this scrollbar.
+ * @param keepVisible `true` to keep the scrollbar visible even when not scrolling, `false` otherwise.
+ * @param adapter The [ScrollbarAdapter] used to compute the thumb position and size, and to handle thumb drags and
+ *   track clicks. When null, a default adapter is derived from [scrollState]; in that case, [scrollState] must be a
+ *   [ScrollState], [LazyListState], [LazyGridState], or [TextFieldScrollState]. Provide a custom adapter to override
+ *   the default scroll math — e.g., to stabilize the thumb in lazy layouts with items of significantly varying sizes.
+ *   The adapter must be backed by the same [scrollState], since mouse-wheel scrolling on the track bypasses the adapter
+ *   and goes through [scrollState] directly. Callers should [remember] the adapter instance: a new instance on every
+ *   recomposition causes unnecessary internal state recreation.
+ */
+@Composable
+public fun VerticalScrollbar(
+    scrollState: ScrollableState,
+    modifier: Modifier = Modifier,
+    reverseLayout: Boolean = false,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    keepVisible: Boolean = false,
+    adapter: ScrollbarAdapter? = null,
+) {
+    BaseScrollbar(
         modifier = modifier,
+        scrollState = scrollState,
+        reverseLayout = reverseLayout,
+        enabled = enabled,
+        interactionSource = interactionSource,
+        isVertical = true,
+        style = style,
+        keepVisible = keepVisible,
+        userAdapter = adapter,
     )
 }
 
@@ -129,6 +177,7 @@ public fun VerticalScrollbar(
  * @param style The [ScrollbarStyle] to use for this scrollbar.
  * @param keepVisible `true` to keep the scrollbar visible even when not scrolling, `false` otherwise.
  */
+@Deprecated("Use the overload with adapter parameter instead.", level = DeprecationLevel.HIDDEN)
 @Composable
 public fun HorizontalScrollbar(
     scrollState: ScrollableState,
@@ -140,6 +189,7 @@ public fun HorizontalScrollbar(
     keepVisible: Boolean = false,
 ) {
     BaseScrollbar(
+        modifier = modifier,
         scrollState = scrollState,
         reverseLayout = reverseLayout,
         enabled = enabled,
@@ -147,7 +197,48 @@ public fun HorizontalScrollbar(
         isVertical = false,
         style = style,
         keepVisible = keepVisible,
+    )
+}
+
+/**
+ * A horizontal scrollbar that can be tied to a [ScrollableState].
+ *
+ * @param scrollState The [ScrollableState] to control.
+ * @param modifier The modifier to apply to this layout node.
+ * @param reverseLayout `true` to reverse the direction of the scrollbar, `false` otherwise.
+ * @param enabled `true` to enable the scrollbar, `false` otherwise.
+ * @param interactionSource The [MutableInteractionSource] that will be used to dispatch events.
+ * @param style The [ScrollbarStyle] to use for this scrollbar.
+ * @param keepVisible `true` to keep the scrollbar visible even when not scrolling, `false` otherwise.
+ * @param adapter The [ScrollbarAdapter] used to compute the thumb position and size, and to handle thumb drags and
+ *   track clicks. When null, a default adapter is derived from [scrollState]; in that case, [scrollState] must be a
+ *   [ScrollState], [LazyListState], [LazyGridState], or [TextFieldScrollState]. Provide a custom adapter to override
+ *   the default scroll math — e.g., to stabilize the thumb in lazy layouts with items of significantly varying sizes.
+ *   The adapter must be backed by the same [scrollState], since mouse-wheel scrolling on the track bypasses the adapter
+ *   and goes through [scrollState] directly. Callers should [remember] the adapter instance: a new instance on every
+ *   recomposition causes unnecessary internal state recreation.
+ */
+@Composable
+public fun HorizontalScrollbar(
+    scrollState: ScrollableState,
+    modifier: Modifier = Modifier,
+    reverseLayout: Boolean = false,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    keepVisible: Boolean = false,
+    adapter: ScrollbarAdapter? = null,
+) {
+    BaseScrollbar(
         modifier = modifier,
+        scrollState = scrollState,
+        reverseLayout = reverseLayout,
+        enabled = enabled,
+        interactionSource = interactionSource,
+        isVertical = false,
+        style = style,
+        keepVisible = keepVisible,
+        userAdapter = adapter,
     )
 }
 
@@ -161,6 +252,7 @@ private fun BaseScrollbar(
     style: ScrollbarStyle,
     keepVisible: Boolean,
     modifier: Modifier = Modifier,
+    userAdapter: ScrollbarAdapter? = null,
 ) {
     val isHovered by interactionSource.collectIsHoveredAsState()
 
@@ -203,13 +295,14 @@ private fun BaseScrollbar(
         )
 
     val adapter =
-        when (scrollState) {
-            is LazyListState -> rememberScrollbarAdapter(scrollState)
-            is LazyGridState -> rememberScrollbarAdapter(scrollState)
-            is ScrollState -> rememberScrollbarAdapter(scrollState)
-            is TextFieldScrollState -> rememberScrollbarAdapter(scrollState)
-            else -> error("Unsupported scroll state type: ${scrollState::class.qualifiedName}")
-        }
+        userAdapter
+            ?: when (scrollState) {
+                is LazyListState -> rememberScrollbarAdapter(scrollState)
+                is LazyGridState -> rememberScrollbarAdapter(scrollState)
+                is ScrollState -> rememberScrollbarAdapter(scrollState)
+                is TextFieldScrollState -> rememberScrollbarAdapter(scrollState)
+                else -> error("Unsupported scroll state type: ${scrollState::class.qualifiedName}")
+            }
 
     with(LocalDensity.current) {
         var containerSize by remember { mutableIntStateOf(0) }
@@ -471,25 +564,67 @@ private val IntRange.size
     get() = last + 1 - first
 
 private fun verticalMeasurePolicy(sliderAdapter: SliderAdapter, setContainerSize: (Int) -> Unit, thumbThickness: Int) =
-    MeasurePolicy { measurables, constraints ->
-        setContainerSize(constraints.maxHeight)
-        val pixelRange = sliderAdapter.thumbPixelRange
-        val placeable =
-            measurables.first().measure(Constraints.fixed(constraints.constrainWidth(thumbThickness), pixelRange.size))
-        layout(placeable.width, constraints.maxHeight) { placeable.place(0, pixelRange.first) }
+    object : MeasurePolicy {
+        override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+            setContainerSize(constraints.maxHeight)
+            val pixelRange = sliderAdapter.thumbPixelRange
+            val placeable =
+                measurables
+                    .first()
+                    .measure(Constraints.fixed(constraints.constrainWidth(thumbThickness), pixelRange.size))
+            return layout(placeable.width, constraints.maxHeight) { placeable.place(0, pixelRange.first) }
+        }
+
+        // The scrollbar's cross-axis intrinsic size is simply its track thickness. Returning it
+        // here avoids the default fallback that re-runs the measure block with Int.MAX_VALUE as
+        // the height, which would crash when trying to call layout(w, Int.MAX_VALUE).
+        override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int =
+            thumbThickness
+
+        override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int =
+            thumbThickness
+
+        // The vertical scrollbar has no natural height — it always fills its container. Returning
+        // 0 prevents the default fallback from re-running the measure block with Int.MAX_VALUE,
+        // which would crash at layout(w, Int.MAX_VALUE) when queried via modifier chains (e.g.
+        // padding) that propagate intrinsic measurements.
+        override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int =
+            0
+
+        override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int =
+            0
     }
 
 private fun horizontalMeasurePolicy(
     sliderAdapter: SliderAdapter,
     setContainerSize: (Int) -> Unit,
     thumbThickness: Int,
-) = MeasurePolicy { measurables, constraints ->
-    setContainerSize(constraints.maxWidth)
-    val pixelRange = sliderAdapter.thumbPixelRange
-    val placeable =
-        measurables.first().measure(Constraints.fixed(pixelRange.size, constraints.constrainHeight(thumbThickness)))
-    layout(constraints.maxWidth, placeable.height) { placeable.place(pixelRange.first, 0) }
-}
+) =
+    object : MeasurePolicy {
+        override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+            setContainerSize(constraints.maxWidth)
+            val pixelRange = sliderAdapter.thumbPixelRange
+            val placeable =
+                measurables
+                    .first()
+                    .measure(Constraints.fixed(pixelRange.size, constraints.constrainHeight(thumbThickness)))
+            return layout(constraints.maxWidth, placeable.height) { placeable.place(pixelRange.first, 0) }
+        }
+
+        // The scrollbar's cross-axis intrinsic size is simply its track thickness.
+        override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int =
+            thumbThickness
+
+        override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int =
+            thumbThickness
+
+        // The horizontal scrollbar has no natural width — it always fills its container.
+        override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int =
+            0
+
+        override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int =
+            0
+    }
 
 private fun Modifier.scrollbarDrag(
     interactionSource: MutableInteractionSource,

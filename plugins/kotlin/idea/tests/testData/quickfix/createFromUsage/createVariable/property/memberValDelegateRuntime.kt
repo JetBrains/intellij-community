@@ -1,9 +1,9 @@
 // "Create property 'foo'" "true"
 // ERROR: Property must be initialized or be abstract
 // ERROR: Variable 'foo' must be initialized
-// K2_ERROR: Unresolved reference 'foo'.
-// K2_AFTER_ERROR: Property must be initialized or be abstract.
-// K2_AFTER_ERROR: Variable 'foo' must be initialized.
+// K2_AFTER_ERROR: MUST_BE_INITIALIZED_OR_BE_ABSTRACT
+// K2_AFTER_ERROR: UNINITIALIZED_VARIABLE
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 class A<T> {
     val x: A<Int> by <caret>foo

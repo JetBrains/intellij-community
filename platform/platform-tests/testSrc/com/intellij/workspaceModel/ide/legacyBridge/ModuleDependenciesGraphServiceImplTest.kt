@@ -3,6 +3,9 @@ package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.projectModel.ModuleDependenciesGraphService
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
@@ -296,5 +299,161 @@ class ModuleDependenciesGraphServiceImplTest {
     assertThat(exportedGraph.getModuleDependants(moduleAEntity).map { it.name }.toList())
       .describedAs("getIn() should return direct dependents even when not exported")
       .containsExactlyInAnyOrder("module-b", "module-c")
+  }
+
+  @Test
+  fun `no unloaded modules returns empty`() {
+    val main = projectModel.createModule("main")
+    val mainEntity = main.findModuleEntity()!!
+
+    assertThat(graph.getModuleDependenciesGraph().getModuleUnloadedDependents(mainEntity))
+      .describedAs("With no unloaded modules in the project, the result must be empty")
+      .isEmpty()
+  }
+
+  @Test
+  fun `unloaded module directly depending on loaded module`() {
+    // unloaded → main
+    val unloaded = projectModel.createModule("unloaded")
+    val main = projectModel.createModule("main")
+    ModuleRootModificationUtil.addDependency(unloaded, main)
+
+    projectModel.setUnloadedModules("unloaded")
+
+    val mainEntity = main.findModuleEntity()!!
+    assertThat(graph.getModuleDependenciesGraph().getModuleUnloadedDependents(mainEntity).map { it.name })
+      .describedAs("Direct unloaded dependent must be returned")
+      .containsExactlyInAnyOrder("unloaded")
+  }
+
+  @Test
+  fun `unloaded module reached via exported transitive edge`() {
+    // unloaded → main, main → common (exported)
+    val unloaded = projectModel.createModule("unloaded")
+    val main = projectModel.createModule("main")
+    val common = projectModel.createModule("common")
+    ModuleRootModificationUtil.addDependency(unloaded, main)
+    ModuleRootModificationUtil.addDependency(main, common, DependencyScope.COMPILE, true)
+
+    projectModel.setUnloadedModules("unloaded")
+
+    val commonEntity = common.findModuleEntity()!!
+    assertThat(graph.getModuleDependenciesGraph().getModuleUnloadedDependents(commonEntity).map { it.name })
+      .describedAs("Unloaded module must reach `common` via main's exported edge")
+      .containsExactlyInAnyOrder("unloaded")
+  }
+
+  @Test
+  fun `non-exported edge blocks unloaded propagation`() {
+    // unloaded → main, main → util (NOT exported)
+    val unloaded = projectModel.createModule("unloaded")
+    val main = projectModel.createModule("main")
+    val util = projectModel.createModule("util")
+    ModuleRootModificationUtil.addDependency(unloaded, main)
+    ModuleRootModificationUtil.addDependency(main, util, DependencyScope.COMPILE, false)
+
+    projectModel.setUnloadedModules("unloaded")
+
+    val utilEntity = util.findModuleEntity()!!
+    assertThat(graph.getModuleDependenciesGraph().getModuleUnloadedDependents(utilEntity))
+      .describedAs("Non-exported main → util edge must NOT propagate the unloaded dependent")
+      .isEmpty()
+  }
+
+  @Test
+  fun `multiple unloaded modules depending on same loaded module`() {
+    // unloadedA → main, unloadedB → main
+    val unloadedA = projectModel.createModule("unloaded-a")
+    val unloadedB = projectModel.createModule("unloaded-b")
+    val main = projectModel.createModule("main")
+    ModuleRootModificationUtil.addDependency(unloadedA, main)
+    ModuleRootModificationUtil.addDependency(unloadedB, main)
+
+    projectModel.setUnloadedModules("unloaded-a", "unloaded-b")
+
+    val mainEntity = main.findModuleEntity()!!
+    assertThat(graph.getModuleDependenciesGraph().getModuleUnloadedDependents(mainEntity).map { it.name })
+      .describedAs("All unloaded direct dependents must be returned")
+      .containsExactlyInAnyOrder("unloaded-a", "unloaded-b")
+  }
+
+  @Test
+  fun `reloading clears unloaded dependents`() {
+    // unloaded → main
+    val unloaded = projectModel.createModule("unloaded")
+    val main = projectModel.createModule("main")
+    ModuleRootModificationUtil.addDependency(unloaded, main)
+
+    projectModel.setUnloadedModules("unloaded")
+    val mainEntityAfterUnload = main.findModuleEntity()!!
+    assertThat(graph.getModuleDependenciesGraph().getModuleUnloadedDependents(mainEntityAfterUnload).map { it.name })
+      .containsExactlyInAnyOrder("unloaded")
+
+    projectModel.setUnloadedModules()
+    val mainEntityAfterReload = main.findModuleEntity()!!
+    assertThat(graph.getModuleDependenciesGraph().getModuleUnloadedDependents(mainEntityAfterReload))
+      .describedAs("After reload, no unloaded dependents should remain")
+      .isEmpty()
+  }
+
+  @Test
+  fun `unloaded argument returns empty`() {
+    // unloaded → main
+    val unloaded = projectModel.createModule("unloaded")
+    val main = projectModel.createModule("main")
+    ModuleRootModificationUtil.addDependency(unloaded, main)
+
+    projectModel.setUnloadedModules("unloaded")
+
+    val unloadedEntity = (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelInternal)
+      .currentSnapshotOfUnloadedEntities
+      .entities(ModuleEntity::class.java)
+      .first { it.name == "unloaded" }
+    assertThat(graph.getModuleDependenciesGraph().getModuleUnloadedDependents(unloadedEntity))
+      .describedAs("Passing an unloaded ModuleEntity is not supported")
+      .isEmpty()
+  }
+
+  @Test
+  fun `getModuleDependants is not polluted by unloaded modules`() {
+    // unloaded → main, sibling → main (loaded, exported)
+    val unloaded = projectModel.createModule("unloaded")
+    val main = projectModel.createModule("main")
+    val sibling = projectModel.createModule("sibling")
+    ModuleRootModificationUtil.addDependency(unloaded, main)
+    ModuleRootModificationUtil.addDependency(sibling, main, DependencyScope.COMPILE, true)
+
+    projectModel.setUnloadedModules("unloaded")
+
+    val mainEntity = main.findModuleEntity()!!
+    val depsGraph = graph.getModuleDependenciesGraph()
+    assertThat(depsGraph.getModuleDependants(mainEntity).map { it.name })
+      .describedAs("getModuleDependants must contain only loaded modules")
+      .containsExactlyInAnyOrder("sibling")
+    assertThat(depsGraph.getModuleUnloadedDependents(mainEntity).map { it.name })
+      .containsExactlyInAnyOrder("unloaded")
+  }
+
+  @Test
+  fun `cyclic exported loaded graph with unloaded entry does not loop`() {
+    // unloaded → a; a → b (exported); b → a (exported)
+    val unloaded = projectModel.createModule("unloaded")
+    val a = projectModel.createModule("module-a")
+    val b = projectModel.createModule("module-b")
+    ModuleRootModificationUtil.addDependency(unloaded, a)
+    ModuleRootModificationUtil.addDependency(a, b, DependencyScope.COMPILE, true)
+    ModuleRootModificationUtil.addDependency(b, a, DependencyScope.COMPILE, true)
+
+    projectModel.setUnloadedModules("unloaded")
+
+    val aEntity = a.findModuleEntity()!!
+    val bEntity = b.findModuleEntity()!!
+    val depsGraph = graph.getModuleDependenciesGraph()
+    assertThat(depsGraph.getModuleUnloadedDependents(aEntity).map { it.name })
+      .describedAs("Query from `a`: unloaded harvested at `a` (direct dependent)")
+      .containsExactlyInAnyOrder("unloaded")
+    assertThat(depsGraph.getModuleUnloadedDependents(bEntity).map { it.name })
+      .describedAs("Query from `b`: traverses b → a via exported edge")
+      .containsExactlyInAnyOrder("unloaded")
   }
 }

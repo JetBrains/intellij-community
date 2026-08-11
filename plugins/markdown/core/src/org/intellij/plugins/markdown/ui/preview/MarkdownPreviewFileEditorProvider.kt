@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -23,8 +24,13 @@ class MarkdownPreviewFileEditorProvider : WeighedFileEditorProvider(), AsyncFile
     if (!MarkdownHtmlPanelProvider.hasAvailableProviders()) {
       return false
     }
-    return file.hasMarkdownType() || isMarkdownScratchFile(project, file)
+    if (file.hasMarkdownType()) {
+      return true
+    }
+    return runReadActionBlocking { isMarkdownScratchFile(project, file) }
   }
+
+  override fun acceptRequiresReadAction(): Boolean = false
 
   override suspend fun createFileEditor(
     project: Project,

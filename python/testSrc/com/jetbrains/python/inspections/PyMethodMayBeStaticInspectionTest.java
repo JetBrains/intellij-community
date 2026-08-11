@@ -15,12 +15,17 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyMethodMayBeStaticInspectionTest extends PyInspectionTestCase {
 
   @Override

@@ -30,7 +30,6 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.jcef.JBCefPsiNavigationUtils
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -41,6 +40,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler
 import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler.PreviewRequest
 import org.intellij.plugins.markdown.ui.preview.PreviewStyleScheme
 import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
+import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownSourceLinkNavigator
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.JewelComposePanel
 import org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory
@@ -92,7 +92,7 @@ internal class MarkdownComposePanel(
   @Composable
   private fun MarkdownPanel() {
     val scheme = PreviewStyleScheme.fromCurrentTheme()
-    val fontSize = scheme.fontSize.sp
+    val fontSize = scheme.fontSize.sp / scheme.scale
     val scrollState = rememberScrollState(0)
     val scrollingSynchronizer = remember(scrollState) { ScrollingSynchronizer.create(scrollState) }
     val markdownStyling = remember(scheme, fontSize) { JcefLikeMarkdownStyling(scheme, fontSize) }
@@ -120,7 +120,7 @@ internal class MarkdownComposePanel(
     val coilContext = LocalPlatformContext.current
     val imageRendererExtension = remember(coilContext) { Coil3ImageRendererExtension.withDefaultLoader(coilContext) }
     val allRenderingExtensions = listOf(tableRenderer, alertRenderer, GitHubStrikethroughRendererExtension, imageRendererExtension)
-    val blockRenderer = remember(markdownStyling) {
+    val blockRenderer = remember(markdownStyling, allRenderingExtensions) {
       ScrollSyncMarkdownBlockRenderer(
         markdownStyling,
         allRenderingExtensions,
@@ -189,8 +189,7 @@ internal class MarkdownComposePanel(
         selectable = true,
         onUrlClick = { url ->
           if (!Registry.`is`("markdown.open.link.in.external.browser")) return@Markdown
-          if (JBCefPsiNavigationUtils.navigateTo(url)) return@Markdown
-
+          if (MarkdownSourceLinkNavigator.navigate(project, url, virtualFile)) return@Markdown
           if (Registry.`is`("markdown.open.link.fallback"))
             MarkdownLinkOpener.getInstance().openLink(project, url)
           else

@@ -2,7 +2,19 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="Git4Idea"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.collaborationTools"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.vcs.dvcs.impl"/>
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.vcs.git.backend"/>

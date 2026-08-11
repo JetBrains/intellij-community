@@ -47,7 +47,7 @@ class KotlinFragmentDataService : AbstractProjectDataService<KotlinFragmentData,
     override fun getTargetDataKey(): Key<KotlinFragmentData> = KotlinFragmentData.KEY
 
     override fun postProcess(
-        toImport: MutableCollection<out DataNode<KotlinFragmentData>>,
+        toImport: Collection<DataNode<KotlinFragmentData>>,
         projectData: ProjectData?,
         project: Project,
         modelsProvider: IdeModifiableModelsProvider

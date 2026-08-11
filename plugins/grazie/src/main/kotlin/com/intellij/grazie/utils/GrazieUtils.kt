@@ -29,7 +29,6 @@ import com.intellij.grazie.mlec.MlecChecker
 import com.intellij.grazie.rule.RuleIdeClient
 import com.intellij.grazie.rule.SentenceBatcher
 import com.intellij.grazie.rule.SentenceBatcher.Companion.runWithSentenceBatcher
-import com.intellij.grazie.rule.SentenceTokenizer
 import com.intellij.grazie.rule.SentenceTokenizer.toTokens
 import com.intellij.grazie.rule.SentenceTokenizer.tokenize
 import com.intellij.grazie.spellcheck.SpellingTextChecker
@@ -46,10 +45,10 @@ import com.intellij.grazie.utils.HighlightingUtil.findInstalledLang
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
@@ -130,7 +129,7 @@ private fun buildProblemMap(
 fun getLanguageIfAvailable(text: TextContent, strippedOffset: Int? = null): Language? {
   val offset = strippedOffset ?: HighlightingUtil.stripPrefix(text)
   // Rider `ExternalTextContent` doesn't support view providers, hence batch detection is not available
-  if (text is TextContentImpl && Registry.`is`("grazie.batch.language.detector", false)) {
+  if (text is TextContentImpl) {
     return BatchLangDetector.getLanguage(text, offset)?.takeIf { findInstalledLang(it) != null }
   } else {
     @Suppress("DEPRECATION")
@@ -219,32 +218,30 @@ private val textProblemsCache = Caffeine.newBuilder()
   .expireAfterWrite(5, TimeUnit.MINUTES)
   .build<String, List<Problem>>()
 
-suspend fun getProblemsForText(contexts: List<ProofreadingContext>): Map<ProofreadingContext, List<Problem>> {
+suspend fun getProblemsForText(contexts: List<ProofreadingContext>, project: Project): Map<ProofreadingContext, List<Problem>> {
   if (contexts.isEmpty()) return emptyMap()
   if (!GrazieCloudConnector.seemsCloudConnected() || GrazieCloudConnector.isAfterRecentGecError()) {
     return emptyMap()
   }
-  return getAndCacheTextProblems(contexts.filter { it.hasLanguage() && NaturalTextDetector.seemsNatural(it.text) })
+  return getAndCacheTextProblems(contexts.filter { it.hasLanguage() && NaturalTextDetector.seemsNatural(it.text) }, project)
 }
 
-private suspend fun getAndCacheTextProblems(contexts: List<ProofreadingContext>): Map<ProofreadingContext, List<Problem>> {
+private suspend fun getAndCacheTextProblems(contexts: List<ProofreadingContext>, project: Project): Map<ProofreadingContext, List<Problem>> {
   if (contexts.isEmpty()) return emptyMap()
   val key = contexts.joinToString(";")
 
   val problems =
     textProblemsCache.getIfPresent(key)
-    ?: getTextProblems(contexts)?.also { textProblemsCache.put(key, it) }
+    ?: getTextProblems(contexts, project)?.also { textProblemsCache.put(key, it) }
     ?: emptyList()
   return problems.associateByContexts(contexts)
 }
 
-private suspend fun getTextProblems(contexts: List<ProofreadingContext>): List<Problem>? {
-  val project = contexts.first().text.containingFile.project
-  return APIQueries.correctText(
+private suspend fun getTextProblems(contexts: List<ProofreadingContext>, project: Project): List<Problem>? =
+  APIQueries.correctText(
     contexts.map { it.toParagraph() }, project,
     setOf(CorrectionServiceType.SPELL, CorrectionServiceType.MLEC)
   )
-}
 
 private suspend fun List<Problem>.associateByContexts(contexts: List<ProofreadingContext>): Map<ProofreadingContext, List<Problem>> {
   if (this.isEmpty()) return emptyMap()

@@ -2,8 +2,30 @@
   <resource-bundle>messages.GitBundle</resource-bundle>
 
   <dependencies>
-    <module name="intellij.platform.vcs.impl.shared"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.shared"/>
+    <!-- endregion -->
   </dependencies>
 
   <actions resource-bundle="messages.GitBundle">
@@ -23,7 +45,11 @@
       <action id="git.branches.popup.filter.by.action" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupFilterByAction"/>
       <action id="git.branches.popup.filter.by.repository" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupFilterByRepository"/>
       <separator/>
-      <action id="git.branches.group.by.directory" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupGroupByDirectoryAction"/>
+      <action id="git.branches.group.by.directory"
+              class="com.intellij.vcs.git.branch.GitGroupBranchByDirectoryAction"
+              icon="AllIcons.Actions.GroupByPackage"/>
+      <action id="git.branches.group.by.repository"
+              class="com.intellij.vcs.git.branch.GitGroupBranchByRepositoryAction"/>
       <action class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupTrackReposSynchronouslyAction"/>
       <action id="git.branches.show.recent" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupShowRecentBranchesAction"/>
       <reference ref="git.branches.show.tags"/>

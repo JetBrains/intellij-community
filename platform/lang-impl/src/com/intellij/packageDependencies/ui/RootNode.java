@@ -4,10 +4,12 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
+@ApiStatus.Internal
 public class RootNode extends PackageDependenciesNode {
   public RootNode(@NotNull Project project) {
     super(project);

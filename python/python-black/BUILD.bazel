@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.black` start
-
 jvm_library(
     name = "black",
     srcs = glob(
@@ -46,7 +45,7 @@ jvm_library(
         "//python/python-pytools:pytools",
         "//python/python-pytools-ui:pytools-ui",
         "//python/openapi:community",
-        "//python/python-sdk:sdk",
+        "//python/python-sdk/backend",
         "//platform/projectModel-impl",
         "//platform/eel",
     ],
@@ -89,7 +88,7 @@ jvm_library(
         "//python/python-pytools:pytools_test_lib",
         "//python/python-pytools-ui:pytools-ui_test_lib",
         "//python/openapi:community_test_lib",
-        "//python/python-sdk:sdk_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
         "//platform/projectModel-impl:projectModel-impl_test_lib",
         "//platform/eel:eel_test_lib",
     ],

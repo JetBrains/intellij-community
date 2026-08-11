@@ -17,6 +17,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -24,6 +25,7 @@ import java.awt.datatransfer.StringSelection;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class DumpLookupElementWeights extends AnAction implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance(DumpLookupElementWeights.class);

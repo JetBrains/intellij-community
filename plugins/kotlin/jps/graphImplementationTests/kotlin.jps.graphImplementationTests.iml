@@ -19,7 +19,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.trove" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
@@ -32,5 +32,6 @@
     <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
 </module>

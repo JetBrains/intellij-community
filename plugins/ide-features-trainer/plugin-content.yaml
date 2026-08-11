@@ -9,7 +9,6 @@
   contentModules:
   - name: intellij.vcs.git.featuresTrainer
   - name: intellij.featuresTrainer.onboarding
-  - name: intellij.kotlin.onboarding.promoter
 - name: lib/git-learning-project.jar
   library: git-learning-project
   files:
@@ -21,3 +20,9 @@
     libraries:
       assertJ:
       - name: $MAVEN_REPOSITORY$/org/assertj/assertj-core/4/assertj-core-4.jar
+- name: lib/modules/intellij.featuresTrainer.tips.jar
+  contentModules:
+  - name: intellij.featuresTrainer.tips
+- name: lib/modules/intellij.kotlin.onboarding.promoter.jar
+  contentModules:
+  - name: intellij.kotlin.onboarding.promoter

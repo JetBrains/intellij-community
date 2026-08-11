@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus
  * This EP makes it possible for plugins to add any UI to Settings | Appearance & Behavior | System Settings | Updates.
  */
 interface UpdateSettingsUIProvider {
+  @ApiStatus.Internal
   companion object {
     @ApiStatus.Internal
     val EP_NAME = ExtensionPointName<UpdateSettingsUIProvider>("com.intellij.updateSettingsUIProvider")

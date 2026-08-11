@@ -7,14 +7,13 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent.createEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.editorTab.LearnIdeEditorTab
 import com.intellij.platform.ide.nonModalWelcomeScreen.backend.WelcomeScreenFeatureBackend
 import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
 import com.intellij.pycharm.community.ide.impl.miscProject.PyMiscService
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscScriptFileType
-import com.intellij.python.common.welcomeScreen.WelcomeScreenFeatureIds
+import com.intellij.python.community.common.welcomeScreen.WelcomeScreenFeatureIds
 import com.intellij.util.application
 
 internal class PyNewScriptWelcomeScreenFeature : WelcomeScreenFeatureBackend() {
@@ -58,7 +57,7 @@ internal class PyPluginsWelcomeScreenFeature : WelcomeScreenFeatureBackend() {
 
   override fun onClick(project: Project) {
     application.invokeLater {
-      ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginManagerConfigurable::class.java)
+      PluginManagerConfigurable.showSettingsDialogFromWelcomeScreen(project)
     }
   }
 }

@@ -1,7 +1,7 @@
 // "Create property 'foo'" "true"
 // ERROR: Property must be initialized or be abstract
-// K2_ERROR: Unresolved reference 'foo'.
-// K2_AFTER_ERROR: Property must be initialized or be abstract.
+// K2_AFTER_ERROR: MUST_BE_INITIALIZED_OR_BE_ABSTRACT
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 class A {
     class B {

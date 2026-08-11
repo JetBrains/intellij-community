@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.util.troveCompileOnly` start
-
 jvm_library(
     name = "troveCompileOnly",
     srcs = glob(
@@ -15,7 +14,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.util.troveCompileOnly",
     visibility = ["//visibility:public"],
-    deps = ["@lib//:jetbrains-annotations"],
+    deps = ["//libraries/jetbrains/annotations"],
 )
 
 jvm_library(
@@ -28,7 +27,11 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.util.troveCompileOnly",
     visibility = ["//visibility:public"],
-    runtime_deps = [":troveCompileOnly"],
+    runtime_deps = [
+        # do not sort,
+        ":troveCompileOnly",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.util.troveCompileOnly` end
 

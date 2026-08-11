@@ -3,6 +3,10 @@
 
 package com.intellij.ide.actions
 
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.KeyboardGestureAction
 import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortcut
@@ -77,6 +81,25 @@ internal class SearchEverywhereShortcutTrackerTest {
     assertThat(getShortcutText()).isEqualTo(KeymapUtil.getShortcutText(altDoubleShiftShortcut))
   }
 
+  @Test
+  fun getShortcutTextIsNullWithoutKeymapGesture() {
+    resetShortcuts(emptyList())
+    syncKeymapShortcuts()
+
+    assertThat(getShortcutText()).isNull()
+  }
+
+  @Test
+  fun searchEverywhereActionIsEnabledWithoutProject() {
+    val action = SearchEverywhereAction()
+    val event = AnActionEvent.createEvent(action, DataContext.EMPTY_CONTEXT, null, ActionPlaces.KEYBOARD_SHORTCUT, ActionUiKind.NONE, null)
+
+    action.update(event)
+
+    assertThat(event.presentation.isEnabled).isTrue()
+    assertThat(event.presentation.isVisible).isTrue()
+  }
+
   private fun resetShortcuts(shortcuts: List<Shortcut>) {
     val keymap = activeKeymap()
     runWriteAction {
@@ -97,9 +120,9 @@ internal class SearchEverywhereShortcutTrackerTest {
     method.invoke(ModifierKeyDoubleClickHandler.getInstance())
   }
 
-  private fun getShortcutText(): String {
+  private fun getShortcutText(): String? {
     val method = SearchEverywhereAction::class.java.getDeclaredMethod("getShortcut")
     method.isAccessible = true
-    return method.invoke(null) as String
+    return method.invoke(null) as String?
   }
 }

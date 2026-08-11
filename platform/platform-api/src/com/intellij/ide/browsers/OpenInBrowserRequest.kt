@@ -28,7 +28,7 @@ abstract class OpenInBrowserRequest @JvmOverloads constructor(open val file: Psi
   abstract val element: PsiElement
 
   fun isPhysicalFile(): Boolean {
-    return file.viewProvider.isPhysical && virtualFile !is LightVirtualFile
+    return file.viewProvider.correspondsToRealFile() && virtualFile !is LightVirtualFile
   }
 
 }

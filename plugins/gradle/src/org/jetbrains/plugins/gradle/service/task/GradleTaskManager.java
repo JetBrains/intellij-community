@@ -57,6 +57,7 @@ import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHel
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.BUILD_PROCESS_DEBUGGER_PORT_KEY;
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.DEBUGGER_DISPATCH_ADDR_KEY;
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.DEBUGGER_DISPATCH_PORT_KEY;
+import static org.jetbrains.plugins.gradle.service.task.VersionSpecificInitScriptKt.DEFAULT_INIT_SCRIPT_NAME;
 import static org.jetbrains.plugins.gradle.service.task.debugger.GradleDebuggerSupport.setupDebuggerProxy;
 
 public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecutionSettings> {
@@ -336,21 +337,14 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     });
 
     final String initScript = settings.getUserData(INIT_SCRIPT_KEY);
+    final String initScriptPrefix = settings.getUserData(INIT_SCRIPT_PREFIX_KEY);
     if (StringUtil.isNotEmpty(initScript)) {
-      var initScriptPrefix = StringUtil.notNullize(settings.getUserData(INIT_SCRIPT_PREFIX_KEY), "ijmiscinit");
-      var initScriptPath = GradleInitScriptUtil.createInitScript(initScriptPrefix, initScript);
-      settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath.toString());
+      settings.addInitScript(StringUtil.notNullize(initScriptPrefix, DEFAULT_INIT_SCRIPT_NAME), initScript);
     }
 
     final Collection<VersionSpecificInitScript> scripts = settings.getUserData(VERSION_SPECIFIC_SCRIPTS_KEY);
     if (gradleVersion != null && scripts != null) {
-      for (var script : scripts) {
-        if (script.isApplicableTo(gradleVersion) && StringUtil.isNotEmpty(script.getScript())) {
-          var initScriptPrefix = StringUtil.notNullize(script.getFilePrefix(), "ijverspecinit");
-          var initScriptPath = GradleInitScriptUtil.createInitScript(initScriptPrefix, script.getScript());
-          settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath.toString());
-        }
-      }
+      settings.addInitScript(gradleVersion, scripts);
     }
 
     if (settings.getArguments().contains(GradleConstants.INIT_SCRIPT_CMD_OPTION)) {

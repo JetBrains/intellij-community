@@ -17,4 +17,4 @@ def foo(value):
     return None
 
 
-foo(<warning descr="Parameter(s) unfilledPossible callees:foo(value: None)foo(value: int)foo(value: str)">)</warning>
+foo(<warning descr="No overload of 'foo' matches the arguments. Argument types: (). Expected one of: (value: None), (value: int), (value: str)">)</warning>

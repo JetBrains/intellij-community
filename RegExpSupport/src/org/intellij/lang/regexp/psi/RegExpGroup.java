@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.regexp.psi;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,7 @@ public interface RegExpGroup extends RegExpAtom, PsiNameIdentifierOwner {
   /** @return true, if this is a named group of any kind, false otherwise */
   boolean isAnyNamedGroup();
 
-  @Nullable String getGroupName();
+  @Nullable @NlsSafe String getGroupName();
 
   @NotNull Type getType();
 

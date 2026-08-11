@@ -149,9 +149,6 @@ internal object Slots {
 
   // ============ Validation Slots (produce inter-node data) ============
 
-  /** Suppression usages from LibraryModuleValidator */
-  @JvmField val LIBRARY_SUPPRESSIONS = DataSlot<List<SuppressionUsage>>("librarySuppressions")
-
   /** Suppression usages from TestLibraryScopeValidator */
   @JvmField val TEST_LIBRARY_SCOPE_SUPPRESSIONS = DataSlot<List<SuppressionUsage>>("testLibraryScopeSuppressions")
 }

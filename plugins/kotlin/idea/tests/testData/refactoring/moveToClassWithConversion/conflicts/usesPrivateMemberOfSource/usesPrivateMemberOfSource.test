@@ -1,0 +1,8 @@
+{
+  "mainFile": "sample/Source.kt",
+  "enabledInK2": true,
+  "targetClassFqName": "sample.Target",
+  "candidateKind": "VALUE_PARAMETER",
+  "candidateDisplayName": "t",
+  "comment": "visibility issue caused by the move is not reported"
+}

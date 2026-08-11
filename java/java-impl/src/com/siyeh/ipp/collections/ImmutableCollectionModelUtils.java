@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.collections;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -35,7 +35,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
@@ -78,9 +77,7 @@ final class ImmutableCollectionModelUtils {
     if (!CodeBlockSurrounder.canSurround(call)) return null;
     String assignedVariable = getAssignedVariable(call);
     PsiMethod method = call.resolveMethod();
-    if (method == null) return null;
-    PsiClassType classType = ObjectUtils.tryCast(call.getType(), PsiClassType.class);
-    if (classType == null) return null;
+    if (method == null || !(call.getType() instanceof PsiClassType classType)) return null;
     PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(call.getProject()).getResolveHelper();
     boolean hasNonResolvedTypeParams = Arrays.stream(classType.getParameters())
       .map(PsiUtil::resolveClassInClassTypeOnly)
@@ -107,20 +104,18 @@ final class ImmutableCollectionModelUtils {
   private static @Nullable String getAssignedVariable(@NotNull PsiMethodCallExpression call) {
     PsiElement parent = PsiTreeUtil.getParentOfType(call, PsiVariable.class, PsiAssignmentExpression.class);
     if (parent == null) return null;
-    if (parent instanceof PsiVariable) {
-      PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(((PsiVariable)parent).getInitializer());
-      return initializer == call ? ((PsiVariable)parent).getName() : null;
+    if (parent instanceof PsiVariable var) {
+      PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(var.getInitializer());
+      return initializer == call ? var.getName() : null;
     }
     PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
     PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
     if (rhs != call) return null;
-    PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
-    PsiReferenceExpression ref = ObjectUtils.tryCast(lhs, PsiReferenceExpression.class);
-    if (ref == null) return null;
+    if (!(PsiUtil.skipParenthesizedExprDown(assignment.getLExpression()) instanceof PsiReferenceExpression ref)) return null;
     PsiExpression qualifier = ref.getQualifierExpression();
     if (qualifier != null && SideEffectChecker.mayHaveSideEffects(qualifier)) return null;
-    PsiVariable variable = ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
-    if (variable == null || variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.VOLATILE)) return null;
+    if (!(ref.resolve() instanceof PsiVariable variable)
+        || variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.VOLATILE)) return null;
     return ref.getText();
   }
 
@@ -128,8 +123,7 @@ final class ImmutableCollectionModelUtils {
     if (entryExpression instanceof PsiReferenceExpression) {
       return MessageFormat.format("{0}.getKey(), {0}.getValue()", entryExpression.getText());
     }
-    PsiCallExpression call = ObjectUtils.tryCast(entryExpression, PsiCallExpression.class);
-    if (call == null || !isEntryConstruction(call)) return null;
+    if (!(entryExpression instanceof PsiCallExpression call) || !isEntryConstruction(call)) return null;
     PsiExpressionList argumentList = call.getArgumentList();
     if (argumentList == null) return null;
     PsiExpression[] expressions = argumentList.getExpressions();
@@ -140,8 +134,7 @@ final class ImmutableCollectionModelUtils {
 
   private static boolean isEntryConstruction(@NotNull PsiCallExpression call) {
     if (MAP_ENTRY_CALL.matches(call)) return true;
-    PsiNewExpression newExpression = ObjectUtils.tryCast(call, PsiNewExpression.class);
-    return newExpression != null && InheritanceUtil.isInheritor(newExpression.getType(), JAVA_UTIL_MAP_ENTRY);
+    return call instanceof PsiNewExpression newExpression && InheritanceUtil.isInheritor(newExpression.getType(), JAVA_UTIL_MAP_ENTRY);
   }
 
   private enum CollectionType {
@@ -238,6 +231,7 @@ final class ImmutableCollectionModelUtils {
       else {
         PsiReplacementUtil.replaceExpression(call, name, new CommentTracker());
       }
+      myCodeStyleManager.shortenClassReferences(declaration);
       myUpdater.rename(declaredVariable, List.of(names));
     }
 
@@ -254,7 +248,7 @@ final class ImmutableCollectionModelUtils {
       }
       if (type == null) return null;
       PsiDeclarationStatement declaration = myElementFactory.createVariableDeclarationStatement(name, type, initializer);
-      return ObjectUtils.tryCast(BlockUtils.addBefore(usage, declaration), PsiDeclarationStatement.class);
+      return (PsiDeclarationStatement)BlockUtils.addBefore(usage, declaration);
     }
 
     private String @NotNull [] getNameSuggestions(@NotNull PsiMethodCallExpression call, @NotNull PsiType type) {

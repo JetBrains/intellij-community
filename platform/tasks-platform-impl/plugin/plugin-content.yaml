@@ -1,0 +1,15 @@
+- name: lib/modules/intellij.platform.tasks.impl.bookmarks.jar
+  contentModules:
+  - name: intellij.platform.tasks.impl.bookmarks
+- name: lib/modules/intellij.platform.tasks.impl.debugger.jar
+  contentModules:
+  - name: intellij.platform.tasks.impl.debugger
+- name: lib/modules/intellij.platform.tasks.impl.jar
+  contentModules:
+  - name: intellij.platform.tasks.impl
+- name: lib/modules/intellij.platform.tasks.jar
+  contentModules:
+  - name: intellij.platform.tasks
+- name: lib/platform-tasks-plugin.jar
+  modules:
+  - name: intellij.platform.tasks.plugin

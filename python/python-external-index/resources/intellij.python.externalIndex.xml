@@ -1,4 +1,17 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.welcomeScreen"/>
+  </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <workspaceModel.fileIndexContributor implementation="com.intellij.python.externalIndex.workspace.PyExternalFilesIndexContributor" />
     <postStartupActivity implementation="com.intellij.python.externalIndex.PyWelcomeScreenOpenedFilesListener"/>

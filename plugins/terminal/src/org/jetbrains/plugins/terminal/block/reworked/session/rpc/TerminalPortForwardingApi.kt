@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.terminal.block.reworked.session.rpc
 
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -61,7 +61,8 @@ interface TerminalPortForwardingApi : RemoteApi<Unit> {
 
   companion object {
     suspend fun getInstance(): TerminalPortForwardingApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<TerminalPortForwardingApi>())
+      // TODO: IJPL-252054
+      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<TerminalPortForwardingApi>())
     }
   }
 }

@@ -7,7 +7,9 @@ import com.intellij.openapi.wm.WelcomeScreenTab
 import com.intellij.openapi.wm.WelcomeTabFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnTabPanel
 import javax.swing.JComponent
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class LearnIdeTabFactory: WelcomeTabFactory {
   override fun createWelcomeTab(parentDisposable: Disposable): WelcomeScreenTab {
     return object : TabbedWelcomeScreen.DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.learnIde.title"),

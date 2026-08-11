@@ -5,11 +5,12 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 
 @Service(Service.Level.PROJECT)
-@State(name = "IdeStarterRunSettings", storages = [Storage("ideStarterRunModes.xml")])
+@State(name = "IdeStarterRunSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 internal class IdeStarterRunSettings : PersistentStateComponent<IdeStarterRunSettings.State> {
   internal data class State(
     var useInstaller: Boolean = false,

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.codeInspection.InspectionManager
@@ -16,7 +16,7 @@ import com.intellij.util.ArrayUtil
 import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.annotator.intentions.ConvertLambdaToClosureIntention
 import org.jetbrains.plugins.groovy.annotator.intentions.ReplaceDotFix
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DEF
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ELVIS_ASSIGN
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ID
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_METHOD_CLOSURE
@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GrExpressionList
 import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
@@ -55,6 +56,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
@@ -69,8 +71,21 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
   }
 
   override fun visitModifierList(modifierList: GrModifierList) {
-    val modifier = modifierList.getModifier(PsiModifier.DEFAULT) ?: return
-    error(modifier, message("default.modifier.in.old.versions"))
+    val defaultModifier = modifierList.getModifier(PsiModifier.DEFAULT)
+    if (defaultModifier != null) {
+      error(defaultModifier, message("default.modifier.in.old.versions"))
+    }
+    val varModifier = modifierList.getModifier(GrModifier.VAR)
+    if (varModifier != null) {
+      val parent = modifierList.parent
+      if (parent !is GrMethod && (parent !is GrVariableDeclaration || !parent.isTuple)) {
+        val message = message("unsupported.var.declaration")
+        val builder = holder.newAnnotation(HighlightSeverity.ERROR, message).range(varModifier)
+        registerLocalFix(builder, GrRemoveModifierFix(GrModifier.VAR), varModifier,
+                         message, ProblemHighlightType.ERROR, varModifier.textRange)
+        builder.create()
+      }
+    }
   }
 
   override fun visitDoWhileStatement(statement: GrDoWhileStatement) {
@@ -80,10 +95,6 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
 
   override fun visitVariableDeclaration(variableDeclaration: GrVariableDeclaration) {
     super.visitVariableDeclaration(variableDeclaration)
-    checkTupleVariableIsNotAllowed(variableDeclaration,
-                                   holder,
-                                   message("tuple.declaration.should.end.with.def.modifier"),
-                                   setOf(KW_DEF))
 
     if (variableDeclaration.parent is GrTraditionalForClause) {
       if (variableDeclaration.isTuple) {

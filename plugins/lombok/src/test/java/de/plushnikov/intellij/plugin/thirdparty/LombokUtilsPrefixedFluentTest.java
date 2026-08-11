@@ -85,4 +85,24 @@ public class LombokUtilsPrefixedFluentTest {
     assertThat(result, equalTo("ISmyField"));
   }
 
+  @Test
+  public void testToGetterNames_NonBoolean_SpecialCharacter() {
+    String result = makeResults("ß", false);
+
+    assertThat(result, equalTo("ß"));
+  }
+
+  @Test
+  public void testToGetterNames_NonBoolean_MultipleSpecialCharacters() {
+    String result = makeResults("ßßß", false);
+
+    assertThat(result, equalTo("ßßß"));
+  }
+
+  @Test
+  public void testToGetterNames_NonBoolean_Cyrillic() {
+    String result = makeResults("ы", false);
+
+    assertThat(result, equalTo("ы"));
+  }
 }

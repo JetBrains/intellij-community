@@ -1,0 +1,15 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
+// LANGUAGE_VERSION: 2.2
+
+class Transaction(val id: String)
+class Session(val userId: String)
+
+context(tx: Transaction, session: Session)
+fun <T> save(block: () -> T): T = block()
+
+fun test() {
+    val tx = Transaction("tx-1")
+    val session = Session("user-1")
+
+    val result = save(tx = tx, session = session) { "[${tx.id}:${session.userId}] inline:${"run"}" }
+}

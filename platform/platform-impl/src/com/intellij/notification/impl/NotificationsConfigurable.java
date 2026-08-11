@@ -17,6 +17,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class NotificationsConfigurable extends ConfigurableBase<NotificationsConfigurableUi, NotificationsConfigurationImpl> implements BackedByPersistentState {
   static final @NonNls String ID = "reference.settings.ide.settings.notifications";
 

@@ -20,7 +20,7 @@ interface BuildDataVersionManager {
 
 private val VERSION = 39 +
                       (if (PersistentHashMapValueStorage.COMPRESSION_ENABLED) 1 else 0) +
-                      (if (JavaBuilderUtil.isDepGraphEnabled()) 2 else 0)
+                      (if (JavaBuilderUtil.isDepGraphEnabled()) 3 else 0)
 
 internal class BuildDataVersionManagerImpl(private val versionFile: Path) : BuildDataVersionManager {
   private var versionDiffers: Boolean? = null

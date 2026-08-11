@@ -4,6 +4,8 @@ package org.intellij.plugins.markdown.lang.lexer;
 import com.intellij.lexer.LexerBase;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.tree.IElementType;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.intellij.markdown.ast.ASTNode;
 import org.intellij.markdown.ast.ASTNodeKt;
 import org.intellij.markdown.ast.visitors.RecursiveVisitor;
@@ -21,46 +23,58 @@ public class MarkdownToplevelLexer extends LexerBase {
   private int myBufferStart;
   private int myBufferEnd;
 
-  private int lastBufferHash = 0;
+  private int myBufferHash = 0;
 
   private final List<IElementType> myLexemes = new ArrayList<>();
-  private final List<Integer> myStartOffsets = new ArrayList<>();
-  private final List<Integer> myEndOffsets = new ArrayList<>();
+  private final IntList myStartOffsets = new IntArrayList();
+  private final IntList myEndOffsets = new IntArrayList();
+  private final IntList myStates = new IntArrayList();
 
   private int myLexemeIndex;
 
   private final @NotNull MarkdownFlavourDescriptor flavour;
+  private final @Nullable ASTNode parsedTree;
 
   public MarkdownToplevelLexer() {
     this(MarkdownParserManager.FLAVOUR);
   }
 
   public MarkdownToplevelLexer(@NotNull MarkdownFlavourDescriptor flavour) {
+    this(flavour, null);
+  }
+
+  public MarkdownToplevelLexer(@NotNull MarkdownFlavourDescriptor flavour, @Nullable ASTNode parsedTree) {
     this.flavour = flavour;
+    this.parsedTree = parsedTree;
   }
 
   @Override
   public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     final var bufferHash = buffer.hashCode();
-    myBufferStart = startOffset;
-    myBufferEnd = endOffset;
-    if (bufferHash == lastBufferHash && buffer.equals(myBuffer)) {
-      myLexemeIndex = initialState;
+    if (bufferHash == myBufferHash && startOffset == myBufferStart && buffer.equals(myBuffer)) {
+      myLexemeIndex = 0;
       return;
     }
-    lastBufferHash = bufferHash;
+    myBufferHash = bufferHash;
     myBuffer = buffer;
-    final var parsedTree = MarkdownParserManager.parseContent(buffer.subSequence(startOffset, endOffset), flavour);
+    myBufferStart = startOffset;
+    myBufferEnd = endOffset;
+    var parsedTree =
+      this.parsedTree != null ?
+      this.parsedTree : MarkdownParserManager.parseContent(buffer.subSequence(startOffset, endOffset), flavour);
     myLexemes.clear();
     myStartOffsets.clear();
     myEndOffsets.clear();
-    ASTNodeKt.accept(parsedTree, new LexerBuildingVisitor());
+    myStates.clear();
+    for (ASTNode child : parsedTree.getChildren()) {
+      ASTNodeKt.accept(child, new LexerBuildingVisitor());
+    }
     myLexemeIndex = 0;
   }
 
   @Override
   public int getState() {
-    return myLexemeIndex;
+    return myLexemeIndex < myStates.size() ? myStates.getInt(myLexemeIndex) : 1;
   }
 
   @Override
@@ -76,7 +90,7 @@ public class MarkdownToplevelLexer extends LexerBase {
     if (myLexemeIndex >= myLexemes.size()) {
       return myBufferEnd;
     }
-    return myBufferStart + myStartOffsets.get(myLexemeIndex);
+    return myBufferStart + myStartOffsets.getInt(myLexemeIndex);
   }
 
   @Override
@@ -84,7 +98,7 @@ public class MarkdownToplevelLexer extends LexerBase {
     if (myLexemeIndex >= myLexemes.size()) {
       return myBufferEnd;
     }
-    return myBufferStart + myEndOffsets.get(myLexemeIndex);
+    return myBufferStart + myEndOffsets.getInt(myLexemeIndex);
   }
 
   @Override
@@ -103,6 +117,7 @@ public class MarkdownToplevelLexer extends LexerBase {
   }
 
   private class LexerBuildingVisitor extends RecursiveVisitor {
+    private boolean myFirstLeaf = true;
 
     @Override
     public void visitNode(@NotNull ASTNode node) {
@@ -115,6 +130,8 @@ public class MarkdownToplevelLexer extends LexerBase {
         myLexemes.add(MarkdownElementType.platformType(node.getType()));
         myStartOffsets.add(node.getStartOffset());
         myEndOffsets.add(node.getEndOffset());
+        myStates.add(myFirstLeaf ? 0 : 1);
+        myFirstLeaf = false;
       }
       else {
         super.visitNode(node);

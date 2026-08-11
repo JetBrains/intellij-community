@@ -4,11 +4,16 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.MakeUpperBoundNotNullFix
 import org.jetbrains.kotlin.idea.quickfix.MakeUpperBoundNotNullFix.Kind
@@ -31,7 +36,8 @@ internal object MakeUpperBoundNotNullFixFactories {
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.createChangeUpperBoundActions(
+    context(session: KaSession)
+    private fun createChangeUpperBoundActions(
         expectedType: KaType,
         actualType: KaType
     ): List<MakeUpperBoundNotNullFix>? {

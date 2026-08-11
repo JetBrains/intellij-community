@@ -10,8 +10,10 @@ import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFunction
@@ -41,7 +43,8 @@ class KtDefaultParameterInlayHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
-    private fun KaSession.collectDefaultParameterValues(
+    context(session: KaSession)
+    private fun collectDefaultParameterValues(
         function: KtFunction,
         parameters: List<KtParameter>,
         sink: InlayTreeSink

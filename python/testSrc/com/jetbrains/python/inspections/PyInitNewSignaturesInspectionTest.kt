@@ -1,8 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.jetbrains.python.fixtures.PyInspectionTestCase
 
+@Subsystems.Inspections
+@Layers.Functional
 class PyInitNewSignatureInspectionTest : PyInspectionTestCase() {
   override fun getInspectionClass(): Class<out PyInspection?> = PyInitNewSignatureInspection::class.java
 
@@ -18,7 +23,7 @@ class PyInitNewSignatureInspectionTest : PyInspectionTestCase() {
           
       class Derived2(Base):
           # b has wrong type
-          def __init__<warning descr="Signature is not compatible to __new__">(self, a: int, b: int)</warning>: ...
+          def __init__<warning descr="Signature is not compatible to '__new__'">(self, a: int, b: int)</warning>: ...
       """.trimIndent())
 
   fun testWrongNames() =
@@ -27,13 +32,13 @@ class PyInitNewSignatureInspectionTest : PyInspectionTestCase() {
           def __new__(cls, first: int, second: str): ...
   
       class Derived1(Base1):
-          def __init__<warning descr="Signature is not compatible to __new__">(self, a: int, b: str)</warning>: ...
+          def __init__<warning descr="Signature is not compatible to '__new__'">(self, a: int, b: str)</warning>: ...
       
       class Base2:
           def __init__(self, first: int, second: str): ...
       
       class Derived2(Base2):
-          def __new__<warning descr="Signature is not compatible to __init__">(self, a: int, b: str)</warning>: ...
+          def __new__<warning descr="Signature is not compatible to '__init__'">(self, a: int, b: str)</warning>: ...
       """.trimIndent())
 
   fun testPositionalOnly() =
@@ -46,6 +51,6 @@ class PyInitNewSignatureInspectionTest : PyInspectionTestCase() {
           
       class Derived2(Base):
           # second param has wrong type
-          def __init__<warning descr="Signature is not compatible to __new__">(self, x: int, y: int, /)</warning>: ...
+          def __init__<warning descr="Signature is not compatible to '__new__'">(self, x: int, y: int, /)</warning>: ...
       """.trimIndent())
 }

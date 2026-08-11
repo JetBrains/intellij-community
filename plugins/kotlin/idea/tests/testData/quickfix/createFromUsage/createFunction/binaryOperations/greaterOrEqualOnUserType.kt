@@ -1,5 +1,5 @@
 // "Create member function 'A.compareTo'" "true"
-// K2_ERROR: Unresolved reference 'compareTo' on receiver of type 'A<Int>'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 class A<T>(val n: T)
 

@@ -85,6 +85,11 @@ public abstract class KotlinFirSurroundWithTestGenerated extends AbstractKotlinF
                     KotlinTestUtils.runTest(this::doTestWithIfSurrounder, this, testDataFilePath);
                 }
 
+                @TestMetadata("backtickedPropertyName.kt")
+                public void testBacktickedPropertyName() throws Exception {
+                    runTest("../../idea/tests/testData/codeInsight/surroundWith/if/moveDeclarationsOut/order/backtickedPropertyName.kt");
+                }
+
                 @TestMetadata("twoClasses.kt")
                 public void testTwoClasses() throws Exception {
                     runTest("../../idea/tests/testData/codeInsight/surroundWith/if/moveDeclarationsOut/order/twoClasses.kt");
@@ -106,6 +111,11 @@ public abstract class KotlinFirSurroundWithTestGenerated extends AbstractKotlinF
             public static class Val extends AbstractKotlinFirSurroundWithTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestWithIfSurrounder, this, testDataFilePath);
+                }
+
+                @TestMetadata("backtickedPropertyName.kt")
+                public void testBacktickedPropertyName() throws Exception {
+                    runTest("../../idea/tests/testData/codeInsight/surroundWith/if/moveDeclarationsOut/val/backtickedPropertyName.kt");
                 }
 
                 @TestMetadata("fullQualifiedType.kt")

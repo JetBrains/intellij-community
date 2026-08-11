@@ -48,6 +48,7 @@ import com.intellij.util.system.CpuArch
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.XCollection
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.jps.model.java.JdkVersionDetector
@@ -108,6 +109,7 @@ private class JarSdkConfigurator(val extraJars: List<String>) : UnknownSdkFixCon
 
 private val LOG = logger<JdkAuto>()
 
+@ApiStatus.Internal
 class JdkAuto : UnknownSdkResolver {
   override fun supportsResolution(sdkTypeId: SdkTypeId): Boolean =
     notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType().value(sdkTypeId)

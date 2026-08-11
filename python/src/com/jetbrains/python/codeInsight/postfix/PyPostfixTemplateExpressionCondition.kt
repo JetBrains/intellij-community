@@ -8,7 +8,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.extensions.inherits
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyExpression
@@ -18,8 +17,8 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.types.PyABCUtil
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyLiteralStringType
+import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -49,7 +48,7 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
 
     override fun value(element: PyExpression): Boolean {
       val context = TypeEvalContext.codeCompletion(element.project, element.containingFile)
-      val type = context.getType(element) ?: return false
+      val type = PyLiteralType.upcastLiteralToClass(context.getType(element)) ?: return false
       return PyBuiltinCache.getInstance(element).boolType == type
     }
 
@@ -63,7 +62,7 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
 
     override fun value(element: PyExpression): Boolean {
       val context = TypeEvalContext.codeCompletion(element.project, element.containingFile)
-      val type = context.getType(element) ?: return false
+      val type = PyLiteralType.upcastLiteralToClass(context.getType(element)) ?: return false
       val builtinCache = PyBuiltinCache.getInstance(element)
       val intType = builtinCache.intType
       val floatType = builtinCache.floatType
@@ -83,7 +82,7 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
 
     override fun value(element: PyExpression): Boolean {
       val context = TypeEvalContext.codeCompletion(element.project, element.containingFile)
-      val type = context.getType(element) ?: return false
+      val type = PyLiteralType.upcastLiteralToClass(context.getType(element)) ?: return false
       val builtinCache = PyBuiltinCache.getInstance(element)
       val languageLevel = LanguageLevel.forElement(element)
       val types = setOfNotNull(builtinCache.getStringType(languageLevel), builtinCache.getByteStringType(languageLevel),
@@ -117,11 +116,8 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
     override fun value(element: PyExpression): Boolean {
       val context = TypeEvalContext.codeCompletion(element.project, element.containingFile)
       val elementType = context.getType(element) ?: return false
-      if (elementType is PyCollectionType) {
-        return elementType.classQName == type || elementType.pyClass.inherits(context, type)
-      }
       if (elementType is PyClassLikeType) {
-        return elementType.classQName == type || elementType.inherits(context, type)
+        return PyNames.FQN.unqualifyBuiltinName(elementType.classQName) == type || elementType.inherits(context, type)
       }
       return false
     }
@@ -194,7 +190,8 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
       val expressionType = context.getType(expression) ?: return false
       if (expressionType is PyClassLikeType) {
         val expected = name.toString()
-        return expressionType.classQName == expected || expressionType.inherits(context, expected)
+        return PyNames.FQN.unqualifyBuiltinName(expressionType.classQName) == PyNames.FQN.unqualifyBuiltinName(expected) ||
+               expressionType.inherits(context, expected)
       }
       return false
     }
@@ -256,6 +253,10 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
 }
 
 private fun PyWithAncestors.inherits(evalContext: TypeEvalContext, vararg parentNames: String): Boolean {
-  val names = parentNames.toHashSet()
-  return this.getAncestorTypes(evalContext).filterNotNull().mapNotNull(PyClassLikeType::getClassQName).any(names::contains)
+  // Unqualify on both sides so short builtin names (e.g. "list") still match ancestors whose
+  // qualified name is now "builtins.list".
+  val names = parentNames.mapNotNull(PyNames.FQN::unqualifyBuiltinName).toHashSet()
+  return this.getAncestorTypes(evalContext).filterNotNull()
+    .mapNotNull { PyNames.FQN.unqualifyBuiltinName(it.classQName) }
+    .any(names::contains)
 }

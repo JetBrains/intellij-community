@@ -4,8 +4,13 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.expressions.isDefinitelyNull
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.scopes.declarationScope
+import org.jetbrains.kotlin.analysis.api.scopes.scope
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
@@ -40,7 +45,8 @@ object AddExclExclCallFixFactories {
         getFixForUnsafeCall(diagnostic.psi)
     }
 
-    private fun KaSession.getFixForUnsafeCall(psi: PsiElement): List<AddExclExclCallFix> {
+    context(session: KaSession)
+    private fun getFixForUnsafeCall(psi: PsiElement): List<AddExclExclCallFix> {
         val (target, hasImplicitReceiver) = when (val unwrapped = psi.unwrapParenthesesLabelsAndAnnotations()) {
             // `foo.bar` -> `foo!!.bar`
             is KtDotQualifiedExpression -> unwrapped.receiverExpression to false

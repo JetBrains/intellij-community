@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
 import java.awt.GradientPaint
@@ -25,7 +24,6 @@ import kotlin.math.max
 /**
  * @param subButton determines border target: true for button inside segmented button, false for segmented button
  */
-@ApiStatus.Internal
 internal fun getSegmentedButtonBorderPaint(segmentedButton: Component, subButton: Boolean): Paint {
   if (!segmentedButton.isEnabled) {
     return JBUI.CurrentTheme.Button.disabledOutlineColor()
@@ -46,7 +44,6 @@ internal fun getSegmentedButtonBorderPaint(segmentedButton: Component, subButton
   }
 }
 
-@ApiStatus.Internal
 internal fun paintBorder(g: Graphics2D, r: Rectangle) {
   val border = Path2D.Float(Path2D.WIND_EVEN_ODD)
   val lw = DarculaUIUtil.LW.float
@@ -57,7 +54,6 @@ internal fun paintBorder(g: Graphics2D, r: Rectangle) {
   g.fill(border)
 }
 
-@ApiStatus.Internal
 internal class SegmentedButtonBorder : Border {
 
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
@@ -96,7 +92,6 @@ internal class SegmentedButtonBorder : Border {
   }
 }
 
-@ApiStatus.Internal
 internal object SegmentedButtonLook : IdeaActionButtonLook() {
 
   override fun paintBorder(g: Graphics, component: JComponent, state: Int) {

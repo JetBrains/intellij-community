@@ -8,13 +8,15 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.frontend.action.TerminalAgentsAvailabilityService
-import org.jetbrains.plugins.terminal.agent.TerminalAgentsStateService
 import com.intellij.terminal.frontend.action.createTerminalAgentActions
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.agent.TERMINAL_AI_AGENTS_REGISTRY_KEY
 import org.jetbrains.plugins.terminal.agent.TerminalAgent
+import org.jetbrains.plugins.terminal.agent.TerminalAgentProvider
+import org.jetbrains.plugins.terminal.agent.TerminalAgentsStateService
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentMode
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAvailableAgentDto
 import org.junit.Test
@@ -26,6 +28,18 @@ internal class TerminalAgentsActionsTest : BasePlatformTestCase() {
   override fun setUp() {
     super.setUp()
     Registry.get(TERMINAL_AI_AGENTS_REGISTRY_KEY).setValue(true, testRootDisposable)
+    // The Junie/Codex agent keys used below are stable IDs referenced by hardcoded actions
+    // (e.g. LaunchJunieCliAction); the fake provider only needs to make those keys resolvable.
+    ExtensionTestUtil.maskExtensions(
+      TerminalAgentProvider.EP_NAME,
+      listOf(
+        FakeTerminalAgentProvider(
+          TestTerminalAgent(agentKey = TerminalAgent.AgentKey("junie"), showsNewBadge = true),
+          TestTerminalAgent(agentKey = TerminalAgent.AgentKey("codex")),
+        ),
+      ),
+      testRootDisposable,
+    )
     TerminalAgentsStateService.getInstance().isSelectorVisible = true
     TerminalAgentsStateService.getInstance().lastLaunchedAgentKey = null
   }
@@ -71,6 +85,61 @@ internal class TerminalAgentsActionsTest : BasePlatformTestCase() {
     assertThat(isVisible("Terminal.AiAgents.AgentSelector")).isTrue()
     assertThat(isVisible("Terminal.AiAgents.ChevronSelector")).isFalse()
     assertThat(isVisible("Terminal.AiAgents.LaunchSelectedAgent")).isFalse()
+  }
+
+  @Test
+  fun `launch Junie CLI action is resolvable by id`() {
+    assertThat(ActionManager.getInstance().getAction("Terminal.AiAgents.LaunchJunieCli")).isNotNull()
+  }
+
+  @Test
+  fun `launch Junie CLI action is enabled when Junie is available`() {
+    setAvailableAgents(listOf(TerminalAvailableAgentDto(TerminalAgent.AgentKey("junie"), TerminalAgentMode.RUN)))
+
+    assertThat(isVisible("Terminal.AiAgents.LaunchJunieCli")).isTrue()
+  }
+
+  @Test
+  fun `launch Junie CLI action is enabled when Junie is available in install-and-run mode`() {
+    setAvailableAgents(listOf(TerminalAvailableAgentDto(TerminalAgent.AgentKey("junie"), TerminalAgentMode.INSTALL_AND_RUN)))
+
+    assertThat(isVisible("Terminal.AiAgents.LaunchJunieCli")).isTrue()
+  }
+
+  @Test
+  fun `launch Junie CLI action is disabled when only another agent is available`() {
+    setAvailableAgents(listOf(TerminalAvailableAgentDto(TerminalAgent.AgentKey("codex"), TerminalAgentMode.RUN)))
+
+    assertThat(isVisible("Terminal.AiAgents.LaunchJunieCli")).isFalse()
+  }
+
+  @Test
+  fun `launch Junie CLI action is disabled when no agents are available`() {
+    setAvailableAgents(emptyList())
+
+    assertThat(isVisible("Terminal.AiAgents.LaunchJunieCli")).isFalse()
+  }
+
+  @Test
+  fun `launch Junie CLI action is disabled when AI agents feature is off`() {
+    Registry.get(TERMINAL_AI_AGENTS_REGISTRY_KEY).setValue(false, testRootDisposable)
+    setAvailableAgents(listOf(TerminalAvailableAgentDto(TerminalAgent.AgentKey("junie"), TerminalAgentMode.RUN)))
+
+    assertThat(isVisible("Terminal.AiAgents.LaunchJunieCli")).isFalse()
+  }
+
+  @Test
+  fun `launch Junie CLI action does not launch when Junie is unavailable despite an enabled presentation`() {
+    // Simulate a TOCTOU between update() and actionPerformed(): the presentation is stale-enabled, but Junie
+    // is no longer among the available agents. The action's defensive re-check must then skip the launch.
+    setAvailableAgents(listOf(TerminalAvailableAgentDto(TerminalAgent.AgentKey("codex"), TerminalAgentMode.RUN)))
+    val action = ActionManager.getInstance().getAction("Terminal.AiAgents.LaunchJunieCli")
+    val event = TestActionEvent.createTestEvent(projectDataContext())
+    event.presentation.isEnabledAndVisible = true
+
+    ActionUtil.performAction(action, event)
+
+    assertThat(TerminalAgentsStateService.getInstance().lastLaunchedAgentKey).isNull()
   }
 
   private fun secondaryIcon(action: AnAction): Any? {

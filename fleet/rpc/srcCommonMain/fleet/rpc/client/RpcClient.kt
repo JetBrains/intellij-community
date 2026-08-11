@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.rpc.client
 
 import fleet.multiplatform.shims.MultiplatformConcurrentHashMap
@@ -68,15 +68,30 @@ import kotlinx.coroutines.selects.whileSelect
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.Continuation
-import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.startCoroutine
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.TimeSource
 
-internal const val RPC_TIMEOUT = 60_000L
+internal val RPC_TIMEOUT = 1.minutes
+
+/**
+ * Tells apart the reasons for a call to run out of [RPC_TIMEOUT]: a stuck interceptor, a connection that never came up,
+ * or a request that was sent but was not answered.
+ *
+ * Returns one of a fixed set of phrases: it ends up in an exception message, which has to stay free of varying data
+ * to remain groupable. Timings and ids are logged separately.
+ */
+private fun timeoutPhase(interceptedAfter: Duration?, routeAvailableAfter: Duration?): String =
+  when {
+    interceptedAfter == null -> "stuck in the request interceptor"
+    routeAvailableAfter == null -> "the route did not become available"
+    else -> "no response"
+  }
 
 private data class OutgoingRequest(
   val route: UID,
@@ -139,7 +154,12 @@ private class RpcClient(
 
   private val remoteObjectFactory = this.asHandlerFactory().tracing()
 
-  private fun <T : RemoteResource> remoteResource(remoteApiDescriptor: RemoteApiDescriptor<T>, instanceId: InstanceId, route: UID, parentService: InstanceId): T {
+  private fun <T : RemoteResource> remoteResource(
+    remoteApiDescriptor: RemoteApiDescriptor<T>,
+    instanceId: InstanceId,
+    route: UID,
+    parentService: InstanceId
+  ): T {
     val resource = suspendProxy(
       remoteApiDescriptor,
       remoteObjectFactory
@@ -154,14 +174,14 @@ private class RpcClient(
         ))
     )
 
-    remoteResources.compute(parentService) { k, s -> s.orEmpty().toPersistentSet().add(instanceId to resource) }
-    resourceParents.put(instanceId, parentService)
+    remoteResources.compute(parentService) { k, s -> s.orEmpty().toPersistentSet().adding(instanceId to resource) }
+    resourceParents[instanceId] = parentService
 
     return resource
   }
 
   companion object {
-    internal val logger = KLoggers.logger(RpcClient::class)
+    val logger by lazy { KLoggers.logger(RpcClient::class) }
   }
 
   private sealed class Event {
@@ -192,7 +212,7 @@ private class RpcClient(
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  internal suspend fun work(abortOnError: Boolean) {
+  suspend fun work(abortOnError: Boolean) {
     supervisorScope {
       val rpcScope = this
 
@@ -254,7 +274,7 @@ private class RpcClient(
         try {
           requestsChannel.consumeEach { (message, onSend) ->
             try {
-              logger.trace { "Sending ${message}" }
+              logger.trace { "Sending $message" }
               transport.outgoing.send(message)
             }
             catch (e: Throwable) {
@@ -347,12 +367,13 @@ private class RpcClient(
     when (message) {
       is RpcMessage.CallResult -> {
         logger.trace { "Got CallResult: requestId = ${message.requestId}" }
-        // TODO this value can contain send/receive channels that must be closed, we should not drop it on the ground
         outgoingRpc.remove(message.requestId)?.let { (rpc) ->
           try {
             val (returnResult, streams) = run {
               if (rpc.returnType is RemoteKind.Resource) {
                 val path = Json.decodeFromJsonElement(InstanceId.serializer(), message.result)
+
+                @Suppress("UNCHECKED_CAST")
                 val remoteApiDescriptor = rpc.returnType.descriptor as RemoteApiDescriptor<RemoteResource>
                 val resource = resource {
                   val resource = remoteResource(remoteApiDescriptor, path, rpc.route, parentService = rpc.call.service)
@@ -374,14 +395,16 @@ private class RpcClient(
                 val json = rpcJsonImplementationDetail()
                 json.decodeFromJsonElement(kser, message.result)
               }
-              val internalDescriptors = registerStreams(streamDescriptors, rpc.route, rpc.prefetchStrategy)
+              // the remote pre-seeded these producers with rpc.call.streamBudget (see CallRequest.streamBudget),
+              // so record it on the descriptors to avoid over-granting in the consumer loop
+              val internalDescriptors = registerStreams(streamDescriptors, rpc.route, rpc.prefetchStrategy, rpc.call.streamBudget)
               // we register streams immediately to catch messages
               // but we are not sure the continuation will be resumed successfully so let's postpone serving coroutines
               return@run de to internalDescriptors
             }
             completedRpc[message.requestId] = TransferredResource(
               streams = streams,
-              prefetchStrategy = rpc.prefetchStrategy
+              prefetchStrategy = rpc.prefetchStrategy,
             )
             interceptCallResult(rpc, message) { result ->
               result
@@ -410,7 +433,7 @@ private class RpcClient(
               val (element, streamDescriptors) = withSerializationContext(stream.displayName, stream.token, rpcScope) {
                 rpcJsonImplementationDetail().decodeFromJsonElement(stream.elementSerializer, message.data)
               }
-              for (internalDescriptor in registerStreams(streamDescriptors, stream.route, stream.prefetchStrategy)) {
+              for (internalDescriptor in registerStreams(streamDescriptors, stream.route, stream.prefetchStrategy, initialBudget = 0)) {
                 serveStream(internalDescriptor, stream.prefetchStrategy)
               }
               val result = stream.bufferedChannel.trySend(InternalStreamMessage.Payload(element))
@@ -425,7 +448,6 @@ private class RpcClient(
           }
         }
         else {
-          // TODO this value can contain send/receive channels that must be closed
           logger.trace { "Received StreamData for unregistered stream ${message.streamId}" }
         }
       }
@@ -512,7 +534,7 @@ private class RpcClient(
   }
 
   private fun requestCanceledByClient(requestId: UID, cause: Throwable) {
-    logger.trace(cause) { "Removing cancelled request ${requestId} from queue" }
+    logger.trace(cause) { "Removing cancelled request $requestId from queue" }
     val req = outgoingRpc.remove(requestId)
     when {
       req != null -> {
@@ -592,7 +614,8 @@ private class RpcClient(
   override suspend fun call(call: Call, publish: (SuspendInvocationHandler.CallResult) -> Unit) {
     val requestId = UID.random()
     logger.trace { "executing call ${call.display()} with id $requestId" }
-    val token = coroutineContext[RpcToken]
+    val token = currentCoroutineContext()[RpcToken]
+    val rpcStrategy = currentCoroutineContext()[RpcStrategyContextElement] ?: RpcStrategyContextElement()
     val (serializedArguments, streamParameters) = run {
       val json = rpcJsonImplementationDetail()
       val triples = (call.arguments zip call.signature.parameters).map { (arg, parameterDescriptor) ->
@@ -606,14 +629,23 @@ private class RpcClient(
       }
       triples.associate { (n, s) -> n to s } to triples.flatMap { (_, _, streams) -> streams }
     }
-    val uninterceptedRequest = RpcMessage.CallRequest(requestId = requestId,
-                                                      service = call.service,
-                                                      method = call.signature.methodName,
-                                                      args = serializedArguments)
+    val uninterceptedRequest = RpcMessage.CallRequest(
+      requestId = requestId,
+      service = call.service,
+      method = call.signature.methodName,
+      args = serializedArguments,
+      // pre-seed the producers the remote will start for this call, so a returned
+      // stream/flow can deliver its first batch together with the result (one roundtrip)
+      streamBudget = rpcStrategy.prefetchStrategy.streamStarted(),
+    )
+    // the marks below tell apart the phases of the call in case it times out, they are only written by this coroutine
+    val callStarted = TimeSource.Monotonic.markNow()
+    var interceptedAfter: Duration? = null
+    var routeAvailableAfter: Duration? = null
     withTimeoutOrNull(RPC_TIMEOUT) {
       val callRequest = requestInterceptor.interceptCallRequest(uninterceptedRequest)
-      logger.trace { "Interceptor completed for request ${callRequest}" }
-      val rpcStrategy = coroutineContext[RpcStrategyContextElement] ?: RpcStrategyContextElement()
+      interceptedAfter = callStarted.elapsedNow()
+      logger.trace { "Interceptor completed for request $callRequest" }
       if (rpcStrategy.awaitConnection) {
         logger.trace { "request $requestId, waiting for ${call.route} to become available" }
         grayList[call.route]?.await()
@@ -622,6 +654,7 @@ private class RpcClient(
       else if (grayList.contains(call.route)) {
         throw RouteClosedException(call.route, rpcCallFailureMessage(callRequest, "Route ${call.route} closed"))
       }
+      routeAvailableAfter = callStarted.elapsedNow()
 
       suspendCancellableCoroutine { cc ->
         val request = OutgoingRequest(route = call.route,
@@ -647,7 +680,10 @@ private class RpcClient(
             logger.trace { "Register request ${request.call} in queue" }
             val previous = outgoingRpc.putIfAbsent(requestId, OngoingRequest(request))
             check(previous == null) { "Request with id $requestId is already present in the queue" }
-            val streamDescriptors = registerStreams(request.streamParameters, request.route, rpcStrategy.prefetchStrategy)
+            // argument streams follow the same budget policy as the call: their producers (on either side) are pre-seeded
+            // with streamBudget, and the matching consumer reconciles against the same value (both ends see CallRequest.streamBudget)
+            val streamDescriptors =
+              registerStreams(request.streamParameters, request.route, rpcStrategy.prefetchStrategy, callRequest.streamBudget)
 
             // Also dispose local resource issued from remote objects
             if (call.signature.methodName == "clientDispose") {
@@ -703,34 +739,54 @@ private class RpcClient(
         logger.trace { "Result published for request $requestId" }
 
       }
-    } ?: throw RpcTimeoutException("Request $uninterceptedRequest has timed out after ${RPC_TIMEOUT}ms", cause = null)
+    } ?: run {
+      // everything that varies between occurrences goes to the log, so that the exception message stays groupable
+      logger.warn {
+        "Timed out request ${call.display()}[#$requestId]: " +
+        "interceptor ${interceptedAfter?.let { "took $it" } ?: "did not finish"}, " +
+        "route ${routeAvailableAfter?.let { "became available after $it" } ?: "never became available"}"
+      }
+      throw RpcTimeoutException(
+        rpcCallFailureMessage(call.display(), "timed out after $RPC_TIMEOUT, ${timeoutPhase(interceptedAfter, routeAvailableAfter)}"),
+        cause = null,
+      )
+    }
   }
 
   private fun registerStreams(
     list: List<StreamDescriptor>,
     route: UID,
     prefetchStrategy: PrefetchStrategy,
+    initialBudget: Int,
   ): List<InternalStreamDescriptor> {
-    return list.map { descriptor -> registerStream(descriptor, route, prefetchStrategy) }
+    return list.map { descriptor -> registerStream(descriptor, route, prefetchStrategy, initialBudget) }
   }
 
-  private fun registerStream(descriptor: StreamDescriptor, route: UID, prefetchStrategy: PrefetchStrategy): InternalStreamDescriptor {
-    return InternalStreamDescriptor.fromDescriptor(descriptor, route, prefetchStrategy, coroutineScope).also {
+  private fun registerStream(
+    descriptor: StreamDescriptor,
+    route: UID,
+    prefetchStrategy: PrefetchStrategy,
+    initialBudget: Int,
+  ): InternalStreamDescriptor {
+    return InternalStreamDescriptor.fromDescriptor(descriptor, route, prefetchStrategy, coroutineScope, initialBudget).also {
       streams[descriptor.uid] = it
     }
   }
 
   private fun serveStream(descriptor: InternalStreamDescriptor, prefetchStrategy: PrefetchStrategy) {
     val route = descriptor.route
-    serveStream(origin = origin,
-                coroutineScope = coroutineScope,
-                descriptor = descriptor,
-                prefetchStrategy = prefetchStrategy,
-                registerStream = { stream -> registerStream(stream, route, prefetchStrategy) },
-                unregisterStream = { streamId -> streams.remove(streamId) },
-                wrapThrowable = { cause ->
-                  cause.causeOfType<TransportDisconnectedException>()?.let { RpcClientDisconnectedException(null, it) } ?: cause
-                },
-                sendAsync = ::sendAsync)
+    serveStream(
+      origin = origin,
+      coroutineScope = coroutineScope,
+      descriptor = descriptor,
+      prefetchStrategy = prefetchStrategy,
+      // nested streams always begin with no budget; only the direct arguments/response streams are pre-seeded
+      registerStream = { stream -> registerStream(stream, route, prefetchStrategy, initialBudget = 0) },
+      unregisterStream = { streamId -> streams.remove(streamId) },
+      wrapThrowable = { cause ->
+        cause.causeOfType<TransportDisconnectedException>()?.let { RpcClientDisconnectedException(null, it) } ?: cause
+      },
+      sendAsync = ::sendAsync,
+    )
   }
 }

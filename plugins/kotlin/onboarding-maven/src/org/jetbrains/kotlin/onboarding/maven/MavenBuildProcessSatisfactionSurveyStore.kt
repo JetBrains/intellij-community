@@ -9,7 +9,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
@@ -37,7 +36,6 @@ internal fun Project.isKotlinMavenProject(): Boolean {
     }
 }
 
-@ApiStatus.Internal
 @State(
     name = "MavenBuildProcessSatisfactionSurveyStore",
     storages = [Storage(value = "kotlin-onboarding.xml", roamingType = RoamingType.DISABLED)]

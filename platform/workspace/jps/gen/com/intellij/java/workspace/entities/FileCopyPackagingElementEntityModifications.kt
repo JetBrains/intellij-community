@@ -21,7 +21,7 @@ interface FileCopyPackagingElementEntityBuilder : WorkspaceEntityBuilder<FileCop
 }
 
 internal object FileCopyPackagingElementEntityType : EntityType<FileCopyPackagingElementEntity, FileCopyPackagingElementEntityBuilder>() {
-  override val entityClass: Class<FileCopyPackagingElementEntity> get() = FileCopyPackagingElementEntity::class.java
+  override val entityImplClass: Class<*> get() = FileCopyPackagingElementEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = FileCopyPackagingElementEntityImpl.Builder::class.java
   operator fun invoke(
     filePath: VirtualFileUrl,

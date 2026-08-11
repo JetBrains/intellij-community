@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDependenciesDto
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDependencyDto
@@ -9,7 +8,7 @@ import com.intellij.platform.debugger.impl.rpc.XBreakpointDependencyEvent
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.platform.debugger.impl.rpc.XDependentBreakpointManagerApi
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProject
+import com.intellij.platform.project.findProjectOrNull
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
@@ -23,10 +22,12 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.emptyFlow
 
 internal class BackendXDependentBreakpointManagerApi : XDependentBreakpointManagerApi {
   override suspend fun breakpointDependencies(projectId: ProjectId): XBreakpointDependenciesDto {
-    val project = projectId.findProject()
+    val project = projectId.findProjectOrNull()
+                  ?: return XBreakpointDependenciesDto(emptyList(), emptyFlow<XBreakpointDependencyEvent>().toRpc())
     val dependentBreakpointManager = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).breakpointManager.dependentBreakpointManager
 
     val dependencyEvents = createDependencyEventsFlow(project, dependentBreakpointManager)

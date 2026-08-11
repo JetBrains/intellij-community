@@ -211,7 +211,6 @@ class K2ScratchExecutor(override val scratchFile: K2KotlinScratchFile, val proje
                 listOf(
                     "-P",
                     "plugin:kotlin.scripting:script-templates=${scriptTemplate.name}",
-                    "-Xuse-fir-lt=false",
                     "-Xallow-any-scripts-in-source-roots",
                     "-P",
                     "plugin:kotlin.scripting:disable-script-definitions-autoloading=true",

@@ -19,6 +19,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
@@ -27,7 +28,8 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="intellij.kotlin.references" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fir" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
@@ -38,10 +40,10 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
     <orderEntry type="module" module-name="intellij.kotlin.base.resources" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
-    <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
-    <orderEntry type="library" name="kotlinc.analysis-api-impl-base" level="project" />
-    <orderEntry type="library" name="kotlinc.analysis-api-k2" level="project" />
-    <orderEntry type="library" name="kotlinc.low-level-api-fir" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.impl.base" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.k2" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.low.level.api.fir" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-common" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="library" name="kotlinc.scripting-compiler-plugin" level="project" />
@@ -52,7 +54,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis" />
-    <orderEntry type="module" module-name="kotlin.highlighting.shared" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis.utils" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
@@ -68,8 +69,8 @@
     <orderEntry type="module" module-name="intellij.kotlin.uast" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.analysis" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
-    <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="kotlinc.symbol-light-classes" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.symbol.light.classes" />
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.kotlin.analysis.platform" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" />
@@ -78,12 +79,11 @@
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" />
-    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.overrideImplement" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support.bundled" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
-    <orderEntry type="module" module-name="kotlin.refactorings.common" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.base" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
   </component>

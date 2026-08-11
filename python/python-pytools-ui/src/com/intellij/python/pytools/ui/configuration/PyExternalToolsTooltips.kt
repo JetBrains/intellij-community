@@ -39,12 +39,23 @@ internal fun resolveCellTooltip(
   val toolRow = rows.getOrNull(viewRow) ?: return default()
   val cellRect = table.getCellRect(viewRow, viewCol, false)
   return when (viewCol) {
+    COL_ENABLED -> enabledColumnTooltip(toolRow, host)
     COL_TOOL -> toolColumnTooltip(toolRow, host, event.x, cellRect)
     COL_MODE -> modeColumnTooltip(toolRow)
     COL_PATH -> pathColumnTooltip(toolRow, host, event.x, cellRect)
     else -> default()
   }
 }
+
+/**
+ * Tooltip for the enable toggle: when the tool is the project's selected type engine the toggle is
+ * locked (rendered as a dash), so explain that its state is governed by the Type Engine settings.
+ * Ordinary rows fall back to no tooltip.
+ */
+private fun enabledColumnTooltip(toolRow: ToolRow, host: TooltipHost): String? =
+  if (toolRow.tool.isSelectedAsTypeEngine(host.project))
+    PyToolsUiBundle.message("settings.external.tools.locked.by.type.engine", toolRow.tool.presentableName)
+  else null
 
 /**
  * Tooltip for the Lookup-column cell: a short description of the fallback strategy implied by
@@ -103,7 +114,7 @@ private fun lookupStrategyText(mode: com.intellij.python.pytools.configuration.E
  */
 private fun toolColumnTooltip(toolRow: ToolRow, host: TooltipHost, eventX: Int, cellRect: Rectangle): String {
   val onGear = isOverIcon(eventX, cellRect, PythonPytoolsUIIcons.Settings.iconWidth)
-  if (onGear && toolRow.staged.enabled && toolRow.tool.detailConfigurable != null) {
+  if (onGear && toolRow.staged.enabled && toolRow.detailConfigurableProvider != null) {
     return PyToolsUiBundle.message("settings.external.tools.edit.tooltip", toolRow.tool.presentableName)
   }
   // Match the cell-rendering rule: a disabled tool's options aren't surfaced anywhere — its
@@ -215,7 +226,7 @@ private fun buildPathTooltip(
  */
 private fun actionHintFor(kind: PathIconKind, latestVersion: String?): String? = when (kind) {
   PathIconKind.NONE -> null
-  PathIconKind.INSTALL -> PyToolsUiBundle.message("settings.external.tools.install.via.uv.tooltip")
+  PathIconKind.INSTALL -> PyToolsUiBundle.message("settings.external.tools.install.tooltip")
   PathIconKind.RESET -> PyToolsUiBundle.message("settings.external.tools.path.reset.tooltip")
   PathIconKind.UPGRADE -> if (latestVersion != null) {
     PyToolsUiBundle.message("settings.external.tools.path.upgrade.to.version.tooltip", latestVersion)

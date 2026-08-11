@@ -20,7 +20,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -82,7 +81,7 @@ public final class EndUserAgreement {
   }
 
   public static void setAcceptedVersion(@NotNull String docName, @NotNull Version version) {
-    String versionKey = getAcceptedVersionKey(docName);
+    var versionKey = getAcceptedVersionKey(docName);
     if (version.isUnknown()) {
       Prefs.remove(versionKey);
     }
@@ -92,35 +91,36 @@ public final class EndUserAgreement {
   }
 
   public static @NotNull Version getAcceptedVersion(@NotNull String docName) {
-    String versionKey = getAcceptedVersionKey(docName);
+    var versionKey = getAcceptedVersionKey(docName);
     return Version.fromString(Prefs.get(versionKey, null));
   }
 
   public static @NotNull Document getLatestDocument() {
     // needed for testing
-    String text = System.getProperty(POLICY_TEXT_PROPERTY, null);
+    var text = System.getProperty(POLICY_TEXT_PROPERTY, null);
     if (text != null) {
-      Document fromProperty = new Document(PRIVACY_POLICY_DOCUMENT_NAME, text);
+      var fromProperty = new Document(PRIVACY_POLICY_DOCUMENT_NAME, text);
       if (!fromProperty.getVersion().isUnknown()) {
         return fromProperty;
       }
     }
 
-    String docName = getDocumentName();
-    Document defaultDocument = loadDocument(docName);
-    Locale locale = Locale.getDefault();
-    List<String> localizedDocsNames = LocalizationUtil.INSTANCE.getSuffixLocalizedPaths(docName, locale);
+    var docName = getDocumentName();
+    var defaultDocument = loadDocument(docName);
+    var locale = Locale.getDefault();
+    var localizedDocsNames = LocalizationUtil.INSTANCE.getSuffixLocalizedPaths(docName, locale);
 
-    Document document;
-    for (String localizedDocName : localizedDocsNames) {
-      document = loadDocument(localizedDocName);
-      if (!document.getText().isEmpty() && !defaultDocument.getVersion().isNewer(document.getVersion())) return document;
+    for (var localizedDocName : localizedDocsNames) {
+      var document = loadDocument(localizedDocName);
+      if (!document.getText().isEmpty() && !defaultDocument.getVersion().isNewer(document.getVersion())) {
+        return document;
+      }
     }
     return defaultDocument;
   }
 
   private static @NotNull Document loadDocument(String docName) {
-    Document fromFile = loadContent(docName, getDocumentContentFile(docName));
+    var fromFile = loadContent(docName, getDocumentContentFile(docName));
     if (fromFile != null && !fromFile.getVersion().isUnknown()) {
       return fromFile;
     }
@@ -128,10 +128,10 @@ public final class EndUserAgreement {
   }
 
   public static void updateCachedContentToLatestBundledVersion() {
-    String docName = getDocumentName();
-    Locale locale = Locale.getDefault();
-    List<String> localizedDocsNames = LocalizationUtil.INSTANCE.getSuffixLocalizedPaths(docName, locale);
-    for (String localizedDocName : localizedDocsNames) {
+    var docName = getDocumentName();
+    var locale = Locale.getDefault();
+    var localizedDocsNames = LocalizationUtil.INSTANCE.getSuffixLocalizedPaths(docName, locale);
+    for (var localizedDocName : localizedDocsNames) {
       updateCachedContentToLatestBundledVersion(localizedDocName);
     }
     updateCachedContentToLatestBundledVersion(docName);
@@ -139,12 +139,12 @@ public final class EndUserAgreement {
 
   private static void updateCachedContentToLatestBundledVersion(@NotNull String docName) {
     try {
-      Document cached = loadContent(docName, getDocumentContentFile(docName));
+      var cached = loadContent(docName, getDocumentContentFile(docName));
       if (cached == null || cached.getVersion().isUnknown()) {
         return;
       }
 
-      Document bundled = loadContent(docName, getBundledResourcePath(docName));
+      var bundled = loadContent(docName, getBundledResourcePath(docName));
       if (!bundled.getVersion().isUnknown() && bundled.getVersion().isNewer(cached.getVersion())) {
         // update content only and not the active document name (the latter can only be changed by JBA)
         writeToFile(getDocumentContentFile(docName), bundled.getText());
@@ -176,7 +176,7 @@ public final class EndUserAgreement {
 
   private static @NotNull Document loadContent(String docName, String resourcePath) {
     try {
-      byte[] data = ResourceUtil.getResourceAsBytes(resourcePath, EndUserAgreement.class.getClassLoader());
+      var data = ResourceUtil.getResourceAsBytes(resourcePath, EndUserAgreement.class.getClassLoader());
       if (data != null) {
         return new Document(docName, new String(data, StandardCharsets.UTF_8));
       }
@@ -205,7 +205,7 @@ public final class EndUserAgreement {
   private static @NotNull String getDocumentName() {
     if (!PlatformUtils.isCommercialEdition()) {
       if (PlatformUtils.isCommunityEdition()) {
-        return shouldUseEAPAgreement() ? DEFAULT_DOC_EAP_NAME : EULA_COMMUNITY_DOCUMENT_NAME;
+        return EULA_COMMUNITY_DOCUMENT_NAME;
       }
       if (PlatformUtils.isMPS()) {
         if (isValidFileName(System.getProperty(EULA_MPS_CUSTOM_DOCUMENT_KEY))) {
@@ -223,7 +223,7 @@ public final class EndUserAgreement {
     }
 
     try {
-      String docName = Files.readString(getDocumentNameFile());
+      var docName = Files.readString(getDocumentNameFile());
       if (isValidFileName(docName)) {
         return docName;
       }
@@ -247,7 +247,7 @@ public final class EndUserAgreement {
     if (PRIVACY_POLICY_DOCUMENT_NAME.equals(docName)) {
       return "JetBrains.privacy_policy.accepted_version";
     }
-    String keyName = docName;
+    var keyName = docName;
     if (EULA_EAP_DOCUMENT_NAME.equals(docName)) {
       // for commercial EAP releases accepted version attribute should be separate from the one Resharper uses (IDEA-212020)
       keyName = "ij_" + keyName;
@@ -271,11 +271,11 @@ public final class EndUserAgreement {
     }
 
     public boolean isAccepted() {
-      final Version thisVersion = getVersion();
+      var thisVersion = getVersion();
       if (thisVersion.isUnknown() || MAGIC_VERSION.equals(thisVersion)) {
         return true;
       }
-      final Version acceptedByUser = getAcceptedVersion(getName());
+      var acceptedByUser = getAcceptedVersion(getName());
       return !acceptedByUser.isUnknown() && acceptedByUser.getMajor() >= thisVersion.getMajor();
     }
 
@@ -296,12 +296,12 @@ public final class EndUserAgreement {
         return Version.UNKNOWN;
       }
 
-      Iterator<String> iterator = text.lines().iterator();
+      var iterator = text.lines().iterator();
       while (iterator.hasNext()) {
-        String line = iterator.next();
-        int startComment = line.indexOf(VERSION_COMMENT_START);
+        var line = iterator.next();
+        var startComment = line.indexOf(VERSION_COMMENT_START);
         if (startComment >= 0) {
-          int endComment = line.indexOf(VERSION_COMMENT_END);
+          var endComment = line.indexOf(VERSION_COMMENT_END);
           if (endComment > startComment) {
             return Version.fromString(line.substring(startComment + VERSION_COMMENT_START.length(), endComment).trim());
           }

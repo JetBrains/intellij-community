@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.symbol.light.classes.jar
+  modules:
+  - name: intellij.libraries.kotlinc.symbol.light.classes
+    libraries:
+      kotlinc.symbol-light-classes:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/2/symbol-light-classes-for-ide-2.jar

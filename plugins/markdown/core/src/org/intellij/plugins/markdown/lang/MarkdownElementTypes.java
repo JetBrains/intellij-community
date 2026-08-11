@@ -8,6 +8,8 @@ import com.intellij.psi.tree.OuterLanguageElementType;
 import org.intellij.markdown.flavours.gfm.GFMElementTypes;
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes;
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition;
+import org.intellij.plugins.markdown.lang.parser.at.MarkdownAtPathElementTypes;
+import org.intellij.plugins.markdown.lang.parser.blocks.AdmonitionMarkerProvider;
 import org.intellij.plugins.markdown.lang.parser.blocks.CommentElementTypesKt;
 import org.intellij.plugins.markdown.lang.parser.blocks.DefinitionListMarkerProvider;
 import org.intellij.plugins.markdown.lang.parser.blocks.frontmatter.FrontMatterHeaderMarkerProvider;
@@ -59,6 +61,8 @@ public interface MarkdownElementTypes {
   IElementType IMAGE = platformType(org.intellij.markdown.MarkdownElementTypes.IMAGE);
 
   IElementType TEST_LINK = platformType(TestLinkElementTypes.LINK);
+
+  IElementType AT_PATH = platformType(MarkdownAtPathElementTypes.PATH);
 
   IElementType HTML_BLOCK = platformType(org.intellij.markdown.MarkdownElementTypes.HTML_BLOCK);
 
@@ -123,4 +127,10 @@ public interface MarkdownElementTypes {
 
   @ApiStatus.Experimental
   IElementType FRONT_MATTER_HEADER_DELIMITER = platformType(FrontMatterHeaderMarkerProvider.FRONT_MATTER_HEADER_DELIMITER);
+
+  @ApiStatus.Experimental
+  IElementType ALERT = platformType(GFMElementTypes.ALERT);
+
+  @ApiStatus.Experimental
+  IElementType ADMONITION = platformType(AdmonitionMarkerProvider.ADMONITION);
 }

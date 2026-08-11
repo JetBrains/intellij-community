@@ -18,6 +18,7 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.EditorEventListener
@@ -123,11 +124,15 @@ open class IdeDocumentHistoryImpl(
     })
     connection.subscribe(CommandListener.TOPIC, object : CommandListener {
       override fun commandStarted(event: CommandEvent) {
-        onCommandStarted(event.commandGroupId)
+        if (!Elf.getElf().isElfCommandInProgress()) {
+          onCommandStarted(event.commandGroupId)
+        }
       }
 
       override fun commandFinished(event: CommandEvent) {
-        onCommandFinished(event.project, event.commandGroupId)
+        if (!Elf.getElf().isElfCommandInProgress()) {
+          onCommandFinished(event.project, event.commandGroupId)
+        }
       }
     })
 
@@ -593,7 +598,7 @@ open class IdeDocumentHistoryImpl(
     val offset = editor.getCaretModel().offset
     var marker = fileEditor.getUserData(CACHED_CARET_MARKER_KEY)
     if (marker == null || !marker.isValid || marker.startOffset != offset || marker.endOffset != offset) {
-      marker = editor.getElfDocument().createRangeMarker(offset, offset)
+      marker = editor.getDocument().createRangeMarker(offset, offset)
       fileEditor.putUserData(CACHED_CARET_MARKER_KEY, marker)
     }
     return marker

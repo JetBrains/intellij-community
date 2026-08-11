@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -15,7 +14,6 @@ import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
@@ -30,14 +28,12 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SourceRootT
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SourceRootTestOrderEntityImpl(private val dataSource: SourceRootTestOrderEntityData) : SourceRootTestOrderEntity,
                                                                                                       WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootTestEntity::class.java,
                                                                                SourceRootTestOrderEntity::class.java,
                                                                                ConnectionId.ConnectionType.ONE_TO_ONE,
                                                                                false)
     private val connections = listOf<ConnectionId>(CONTENTROOT_CONNECTION_ID)
-
   }
 
   override val data: String
@@ -48,7 +44,6 @@ internal class SourceRootTestOrderEntityImpl(private val dataSource: SourceRootT
   override val contentRoot: ContentRootTestEntity
     get() = snapshot.instrumentation.getParent(CONTENTROOT_CONNECTION_ID, this) as? ContentRootTestEntity
             ?: error("Parent contentRoot not found for SourceRootTestOrderEntity")
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -59,33 +54,11 @@ internal class SourceRootTestOrderEntityImpl(private val dataSource: SourceRootT
     return connections
   }
 
-
   internal class Builder(result: SourceRootTestOrderEntityData?) :
     ModifiableWorkspaceEntityBase<SourceRootTestOrderEntity, SourceRootTestOrderEntityData>(result), SourceRootTestOrderEntityBuilder {
     internal constructor() : this(SourceRootTestOrderEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity SourceRootTestOrderEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -117,14 +90,12 @@ internal class SourceRootTestOrderEntityImpl(private val dataSource: SourceRootT
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var data: String
       get() = getEntityData().data
@@ -151,10 +122,8 @@ internal class SourceRootTestOrderEntityImpl(private val dataSource: SourceRootT
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -164,7 +133,6 @@ internal class SourceRootTestOrderEntityImpl(private val dataSource: SourceRootT
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = value
         }
         changedProperty.add("contentRoot")
@@ -172,31 +140,15 @@ internal class SourceRootTestOrderEntityImpl(private val dataSource: SourceRootT
 
     override fun getEntityClass(): Class<SourceRootTestOrderEntity> = SourceRootTestOrderEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SourceRootTestOrderEntityData : WorkspaceEntityData<SourceRootTestOrderEntity>() {
   lateinit var data: String
-
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SourceRootTestOrderEntity> {
-    val modifiable = SourceRootTestOrderEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): SourceRootTestOrderEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = SourceRootTestOrderEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
+  override fun newInstance(): SourceRootTestOrderEntity = SourceRootTestOrderEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<SourceRootTestOrderEntity, *> =
+    SourceRootTestOrderEntityImpl.Builder(null)
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.SourceRootTestOrderEntity") as EntityMetadata

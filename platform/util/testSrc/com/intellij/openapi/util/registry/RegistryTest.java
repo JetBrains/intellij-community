@@ -42,7 +42,7 @@ public class RegistryTest {
 
   @Test
   public void booleanValueFalse() {
-    RegistryValue handle = Registry.get("ide.tree.experimental.layout.cache");
+    RegistryValue handle = Registry.get("ide.tree.showBusyIndicator");
     try {
       assertThat(handle.asString()).isEqualTo("true");
       assertThat(handle.asBoolean()).isTrue();

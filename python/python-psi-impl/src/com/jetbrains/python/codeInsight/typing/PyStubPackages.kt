@@ -3,19 +3,25 @@
 
 package com.jetbrains.python.codeInsight.typing
 
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiManager
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.RatedResolveResult
+import com.jetbrains.python.psi.resolve.isNamespacePackage
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 
@@ -137,6 +143,26 @@ private fun getClassOrContentOrSourceRoot(project: Project, file: VirtualFile): 
  */
 fun isInStubPackage(element: PsiElement) = element.getUserData(STUB_PACKAGE_KEY) == true
 
+internal fun isInPartialStubPackage(element: PsiElement): Boolean {
+  // The enclosing stub package (the element itself, its package directory, or any ancestor up to the root) is explicitly
+  // marked as partial via its `py.typed` marker. Works both for package directories and for plain stub modules
+  // (e.g. `foo-stubs/bar.pyi`), so that submodules of a partial stub package still fall back to the runtime package.
+  val pyTyped = getPyTyped(element) ?: return false
+  return isPartialPyTypedMarker(element.project, pyTyped)
+}
+
+/**
+ * Returns `true` if the stub package [element] directly contains a sub-package named [name] that is a namespace package.
+ *
+ * Namespace packages cannot ship complete type information (PEP 561), so submodules resolved underneath them must still
+ * fall back to the runtime package even when the enclosing stub package itself is complete.
+ */
+internal fun hasNamespaceSubPackage(element: PsiElement, name: String): Boolean {
+  val packageDir = getPackageDir(element) ?: return false
+  val subPackage = packageDir.findSubdirectory(name) ?: return false
+  return isNamespacePackage(subPackage)
+}
+
 /**
  * See [https://www.python.org/dev/peps/pep-0561/#packaging-type-information].
  * Value is cached in element's user data.
@@ -165,12 +191,34 @@ private fun getPyTyped(element: PsiElement?): VirtualFile? {
   val root = getClassOrContentOrSourceRoot(element.project, file) ?: return null
   var current = if (file.isDirectory) file else file.parent
 
-  while (current != null && current != root && current.isDirectory) {
+  while (current != null && current.isDirectory) {
     val pyTyped = current.findChild("py.typed")
     if (pyTyped != null && !pyTyped.isDirectory) return pyTyped
 
+    if (current == root) break
     current = current.parent
   }
 
   return null
+}
+
+private fun getPackageDir(element: PsiElement): PsiDirectory? {
+  return when (val packageDir = PyUtil.turnInitIntoDir(element)) {
+    is PsiDirectory -> packageDir
+    else -> null
+  }
+}
+
+private fun isPartialPyTypedMarker(project: Project, pyTyped: VirtualFile): Boolean {
+  val psiFile = PsiManager.getInstance(project).findFile(pyTyped) ?: return false
+  return CachedValuesManager.getCachedValue(psiFile) {
+    CachedValueProvider.Result.create(readPyTypedMarker(pyTyped), psiFile)
+  }
+}
+
+private fun readPyTypedMarker(pyTyped: VirtualFile): Boolean {
+  return runCatching {
+    val text = FileDocumentManager.getInstance().getCachedDocument(pyTyped)?.text ?: VfsUtilCore.loadText(pyTyped)
+    "partial\n" in text
+  }.getOrDefault(false)
 }

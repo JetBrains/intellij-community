@@ -1,0 +1,16 @@
+public abstract interface I1 {
+}
+
+public abstract interface I2 {
+}
+
+public abstract class AClass {
+    public fun AClass() = UastEmptyExpression
+}
+
+public final class A {
+    @org.jetbrains.annotations.NotNull private final var field1: AClass = anonymous object : AClass(), I1, I2 {}
+    @org.jetbrains.annotations.NotNull private final var field2: I1 = anonymous object : AClass(), I1, I2 {}
+    @org.jetbrains.annotations.NotNull private final var field3: I2 = anonymous object : AClass(), I1, I2 {}
+    public fun A() = UastEmptyExpression
+}

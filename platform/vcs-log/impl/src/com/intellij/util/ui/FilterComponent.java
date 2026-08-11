@@ -3,7 +3,12 @@ package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ClickListener;
@@ -12,6 +17,7 @@ import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.vcs.log.VcsLogBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,11 +25,15 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.AccessibleAction;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.KeyStroke;
 import javax.swing.border.Border;
 import java.awt.Color;
 import java.awt.Component;
@@ -33,9 +43,9 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -50,6 +60,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
   private static final int GAP_BEFORE_ARROW = 3;
   protected static final int BORDER_SIZE = 2;
   protected static final int ARC_SIZE = 10;
+  private static final @NotNull String SHOW_POPUP_ACTION_KEY = "showPopupAction";
 
   private final @NotNull Supplier<@NlsContexts.Label @NotNull String> myDisplayName;
   private @Nullable JLabel myNameLabel;
@@ -125,7 +136,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     if (selected) {
       new HelpTooltip()
         .setTitle(VcsLogBundle.message("vcs.log.filter.clear"))
-        .setShortcut(KeymapUtil.getKeyText(KeyEvent.VK_DELETE))
+        .setShortcut(KeymapUtil.getFirstKeyboardShortcutText(getResetFilterActionShortcuts()))
         .installOn(myFilterActionButton);
     }
     else {
@@ -179,19 +190,33 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     });
   }
 
+  @ApiStatus.Internal
+  protected static @NotNull ShortcutSet getResetFilterActionShortcuts() {
+    var deleteAction = ActionManager.getInstance().getAction(IdeActions.ACTION_DELETE);
+    return deleteAction.getShortcutSet();
+  }
+
   private void showPopupMenuFromKeyboardAndClearOnDelete() {
-    addKeyListener(new KeyAdapter() {
+    InputMap inputMap = getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    ActionMap actionMap = getActionMap();
+
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), SHOW_POPUP_ACTION_KEY);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), SHOW_POPUP_ACTION_KEY);
+    actionMap.put(SHOW_POPUP_ACTION_KEY, new AbstractAction() {
       @Override
-      public void keyPressed(@NotNull KeyEvent e) {
+      public void actionPerformed(ActionEvent e) {
         if (!isEnabled()) return;
-        if (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_DOWN) {
-          showPopup();
-        }
-        if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-          resetFilter();
-        }
+        showPopup();
       }
     });
+
+    new DumbAwareAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        if (!isEnabled()) return;
+        resetFilter();
+      }
+    }.registerCustomShortcutSet(getResetFilterActionShortcuts(), this);
   }
 
   private void showPopupMenuOnClick() {

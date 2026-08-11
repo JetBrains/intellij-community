@@ -44,7 +44,8 @@ public class DocumentEventImpl extends DocumentEvent {
                            boolean wholeTextReplaced,
                            int initialStartOffset,
                            int initialOldLength,
-                           int moveOffset) {
+                           int moveOffset,
+                           int textLength) {
     super(document);
     myOffset = offset;
 
@@ -60,7 +61,7 @@ public class DocumentEventImpl extends DocumentEvent {
 
     myOldTimeStamp = oldTimeStamp;
 
-    myIsWholeDocReplaced = getDocument().getTextLength() != 0 && wholeTextReplaced;
+    myIsWholeDocReplaced = textLength != 0 && wholeTextReplaced;
     assert initialStartOffset >= 0 : initialStartOffset;
     assert initialOldLength >= 0 : initialOldLength;
     assert moveOffset == offset || myOldLength == 0 || myNewLength == 0 : this;

@@ -9,6 +9,7 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -18,7 +19,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import java.util.List;
-
 
 final class TypedAutoPopupImpl {
   private static final Logger LOG = Logger.getInstance(TypedAutoPopupImpl.class);
@@ -73,7 +73,7 @@ final class TypedAutoPopupImpl {
       }
       language = element.getLanguage();
     }
-    List<CompletionContributor> contributors = CompletionContributor.forLanguageHonorDumbness(language, file.getProject());
+    List<CompletionContributor> contributors = CompletionContributor.forLanguageHonorDumbness(language, file.getProject(), editor);
     if (contributors.isEmpty()) {
       return false;
     }

@@ -25,12 +25,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.registerExtension
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
@@ -356,6 +358,54 @@ class UnindexedFilesScannerTest {
       "Scanning should increase dumbService.modCount: before(=$dumbModCountBeforeScanning), after(=$dumbModCountAfterScanning)",
       dumbModCountAfterScanning >= dumbModCountBeforeScanning + 1,
     )
+  }
+
+  @Test
+  fun `test index with a failing input filter does not break scanning of the other indexes`() {
+    // An InputFilter is a plugin's code, and it may throw anything -- including an Error: e.g. a plugin compiled against classes
+    // that are not available anymore throws NoClassDefFoundError for every single file.
+    // Such an index must be skipped, but the scanning must go on -- otherwise the whole project stays unindexed.
+    val brokenIndexer = ConfigurableNoFiletypeFileIndexer(dependsOnContent = true)
+    val healthyIndexer = ConfigurableNoFiletypeFileIndexer(dependsOnContent = true)
+    registerIndexers(brokenIndexer, healthyIndexer)
+
+    val filesAndDirs = setupSimpleRepresentativeFolderForIndexing()
+
+    val (scanningStat, dirtyFiles) = LoggedErrorProcessor.executeWith(tolerateErrorsCausedBy(NoClassDefFoundError::class.java)).use {
+      brokenIndexer.getAndResetIndexedFiles()
+      healthyIndexer.getAndResetIndexedFiles()
+
+      brokenIndexer.additionalInputFilter = { throw NoClassDefFoundError("com/example/ClassGoneAfterIdeUpdate") }
+      try {
+        scanFiles(filesAndDirs).also { indexFiles() }
+      }
+      finally {
+        brokenIndexer.additionalInputFilter = { true }
+      }
+    }
+
+    assertThat(scanningStat.numberOfScannedFiles)
+      .withFailMessage("Scanning must not be abandoned because one index's input filter fails: %s", scanningStat)
+      .isGreaterThan(0)
+
+    assertThat(dirtyFiles)
+      .withFailMessage("Files must still be scheduled for indexing: %s", scanningStat)
+      .isNotEmpty
+
+    val results = captureIndexingResults(brokenIndexer, healthyIndexer)
+    results.assertIndexerIndexedFiles("A broken index must not prevent the other indexes from indexing the files", healthyIndexer)
+    results.assertIndexerIndexedNoFiles("An index whose input filter fails must not index anything", brokenIndexer)
+  }
+
+  /**
+   * Intercepts the LOG.error reports caused by [throwableClass], so that the expected failures don't fail the test.
+   * The reported throwable may be a wrapper (e.g. a PluginException blaming the plugin the index belongs to), hence the check
+   * by the causes, and not by the type of the reported throwable itself.
+   */
+  private fun tolerateErrorsCausedBy(throwableClass: Class<out Throwable>): LoggedErrorProcessor = object : LoggedErrorProcessor() {
+    override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
+      return if (t != null && ExceptionUtil.causedBy(t, throwableClass)) Action.NONE else Action.ALL
+    }
   }
 
   private fun registerFiletype(filetype: FakeFileType) {

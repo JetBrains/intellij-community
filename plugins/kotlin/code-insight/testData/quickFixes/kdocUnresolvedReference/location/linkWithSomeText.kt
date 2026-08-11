@@ -1,5 +1,5 @@
 // "Add link qualifier" "true"
-// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.kdoc.KDocUnresolvedReferenceInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.kdoc.KDocUnresolvedReferenceInspection
 
 /**
  * [map][Concurren<caret>tHashMap]

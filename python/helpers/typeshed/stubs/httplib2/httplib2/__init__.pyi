@@ -1,22 +1,38 @@
+import builtins
 import email.message
 import http.client
 import re
 from _ssl import _PasswordType
-from _typeshed import Incomplete, MaybeNone, StrOrBytesPath
+from _typeshed import ConvertibleToFloat, ConvertibleToInt, Incomplete, MaybeNone, StrOrBytesPath
 from collections.abc import Generator
 from ssl import _SSLMethod
-from typing import ClassVar, Final, Literal, TypeVar
+from typing import Any, ClassVar, Final, Literal, TypeVar, overload
 from typing_extensions import Self
 
 from .error import *
 
 _T = TypeVar("_T", default=str)
+_R = TypeVar("_R")
+_D = TypeVar("_D")
 
 __author__: Final[str]
 __copyright__: Final[str]
 __contributors__: Final[list[str]]
 __license__: Final[str]
 __version__: Final[str]
+__all__ = [
+    "debuglevel",
+    "FailedToDecompressContent",
+    "Http",
+    "HttpLib2Error",
+    "ProxyInfo",
+    "RedirectLimit",
+    "RedirectMissingLocation",
+    "Response",
+    "RETRIES",
+    "UnimplementedDigestAuthOptionError",
+    "UnimplementedHmacDigestAuthOptionError",
+]
 
 def has_timeout(timeout: float | None) -> bool: ...
 
@@ -175,6 +191,7 @@ class Http:
     force_exception_to_status_code: bool
     timeout: float | None
     forward_authorization_headers: bool
+    limit_kwargs: dict[str, float]
     def __init__(
         self,
         cache: str | FileCache | None = None,
@@ -184,6 +201,10 @@ class Http:
         disable_ssl_certificate_validation: bool = False,
         tls_maximum_version=None,
         tls_minimum_version=None,
+        decode_limit_hard: ConvertibleToInt | None = None,
+        decode_limit_safe: ConvertibleToInt | None = None,
+        decode_limit_ratio: ConvertibleToFloat | None = None,
+        decode_limit_chunk: ConvertibleToInt | None = None,
     ) -> None: ...
     def close(self) -> None: ...
     def add_credentials(self, name, password, domain: str = "") -> None: ...
@@ -197,20 +218,15 @@ class Response(dict[str, str | _T]):
     status: int
     reason: str
     previous: Response[_T] | None
-    def __init__(self, info: http.client.HTTPResponse | email.message.Message | dict[str, _T]) -> None: ...
+    def __init__(self, info: http.client.HTTPResponse | email.message.Message | builtins.dict[str, _T]) -> None: ...
     @property
     def dict(self) -> Self: ...
 
-__all__ = [
-    "debuglevel",
-    "FailedToDecompressContent",
-    "Http",
-    "HttpLib2Error",
-    "ProxyInfo",
-    "RedirectLimit",
-    "RedirectMissingLocation",
-    "Response",
-    "RETRIES",
-    "UnimplementedDigestAuthOptionError",
-    "UnimplementedHmacDigestAuthOptionError",
-]
+@overload
+def try_value_or_env(
+    to: type[_R], value: Any, env_key: str, default: None = None  # `value` type depends on what `to()` can convert
+) -> _R | None: ...
+@overload
+def try_value_or_env(
+    to: type[_R], value: Any, env_key: str, default: _D = ...  # `value` type depends on what `to()` can convert
+) -> _R | _D: ...

@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -24,9 +25,14 @@ public final class PyDescriptorTypeUtil {
   private PyDescriptorTypeUtil() { }
 
   public static @Nullable Ref<PyType> getDunderGetReturnType(@NotNull PyQualifiedExpression expression,
+                                                             @Nullable PyType instanceType,
                                                              @Nullable PyType attributeType,
                                                              @NotNull TypeEvalContext context) {
     if (!expression.isQualified()) return null;
+    if (attributeType instanceof PyUnionType unionType) {
+      return mapDescriptorUnion(unionType, member -> getDunderGetReturnType(expression, instanceType, member, context));
+    }
+
     final PyClassLikeType targetType = as(attributeType, PyClassLikeType.class);
     if (targetType == null || targetType.isDefinition()) return null;
 
@@ -35,12 +41,16 @@ public final class PyDescriptorTypeUtil {
                                                                                 resolveContext);
     if (members == null || members.isEmpty()) return null;
 
-    return getTypeFromSyntheticDunderGetCall(expression, attributeType, context);
+    return getTypeFromSyntheticDunderGetCall(expression, instanceType, attributeType, context);
   }
 
   public static @Nullable Ref<PyType> getExpectedValueTypeForDunderSet(@NotNull PyQualifiedExpression targetExpression,
                                                                        @Nullable PyType attributeType,
                                                                        @NotNull TypeEvalContext context) {
+    if (attributeType instanceof PyUnionType unionType) {
+      return mapDescriptorUnion(unionType, member -> getExpectedValueTypeForDunderSet(targetExpression, member, context));
+    }
+
     final PyClassLikeType targetType = as(attributeType, PyClassLikeType.class);
     if (targetType == null || targetType.isDefinition()) return null;
 
@@ -52,31 +62,50 @@ public final class PyDescriptorTypeUtil {
     return getExpectedTypeFromDunderSet(targetExpression, attributeType, context);
   }
 
+  /**
+   * Resolves each union member via {@code resolver}: a non-null result replaces the member, others are kept.
+   * Returns {@code null} when no member resolved, so plain unions keep their original type.
+   */
+  private static @Nullable Ref<PyType> mapDescriptorUnion(@NotNull PyUnionType unionType,
+                                                          @NotNull Function<@Nullable PyType, @Nullable Ref<PyType>> resolver) {
+    boolean anyDescriptor = false;
+    final List<PyType> mapped = new ArrayList<>();
+    for (PyType member : unionType.getMembers()) {
+      final Ref<PyType> resolved = resolver.apply(member);
+      if (resolved != null) {
+        anyDescriptor = true;
+        mapped.add(resolved.get());
+      }
+      else {
+        mapped.add(member);
+      }
+    }
+    if (!anyDescriptor) return null;
+    return Ref.create(PyUnionType.union(mapped));
+  }
+
   private static @Nullable Ref<PyType> getTypeFromSyntheticDunderGetCall(@NotNull PyQualifiedExpression expression,
+                                                                         @Nullable PyType instanceType,
                                                                          @NotNull PyType attributeType,
                                                                          @NotNull TypeEvalContext context) {
-    PyExpression qualifier = expression.getQualifier();
-    if (qualifier != null && attributeType instanceof PyCallableType receiverType) {
-      PyType qualifierType = context.getType(qualifier);
-      if (qualifierType instanceof PyClassLikeType classType) {
-        PyType instanceArgumentType;
-        PyType instanceTypeArgument;
-        final var noneType = PyBuiltinCache.getInstance(expression).getNoneType();
-        if (noneType == null) {
-          return null;
-        }
-        if (classType.isDefinition()) {
-          instanceArgumentType = noneType;
-          instanceTypeArgument = classType;
-        }
-        else {
-          instanceArgumentType = classType;
-          instanceTypeArgument = noneType;
-        }
-        List<PyType> argumentTypes = List.of(instanceArgumentType, instanceTypeArgument);
-        PyType type = PySyntheticCallHelper.getCallTypeByFunctionName(PyNames.DUNDER_GET, receiverType, argumentTypes, context);
-        return Ref.create(type);
+    if (attributeType instanceof PyCallableType receiverType && instanceType instanceof PyClassLikeType classType) {
+      PyType instanceArgumentType;
+      PyType instanceTypeArgument;
+      final var noneType = PyBuiltinCache.getInstance(expression).getNoneType();
+      if (noneType == null) {
+        return null;
       }
+      if (classType.isDefinition()) {
+        instanceArgumentType = noneType;
+        instanceTypeArgument = classType;
+      }
+      else {
+        instanceArgumentType = classType;
+        instanceTypeArgument = classType.toClass();
+      }
+      List<PyType> argumentTypes = List.of(instanceArgumentType, instanceTypeArgument);
+      PyType type = PySyntheticCallHelper.getCallTypeByFunctionName(PyNames.DUNDER_GET, receiverType, argumentTypes, context);
+      return Ref.create(type);
     }
     return null;
   }
@@ -86,12 +115,12 @@ public final class PyDescriptorTypeUtil {
                                                                     @NotNull TypeEvalContext context) {
     PyExpression qualifier = expression.getQualifier();
     PyType objectArgumentType = PyBuiltinCache.getInstance(expression).getNoneType();
-    PyType valueArgumentType = null; // We don't use the actual type of value here as we want to match the overload by object type only
+    PyType valueArgumentType = PyAnyType.getUnknown(); // We don't use the actual type of value here as we want to match the overload by object type only
 
     if (qualifier != null && attributeType instanceof PyCallableType) {
       PyType qualifierType = context.getType(qualifier);
       if (qualifierType instanceof PyClassType classType && !classType.isDefinition()) {
-        objectArgumentType = qualifierType;
+        objectArgumentType = qualifierType; // TODO: Incorrect: can be union
       }
     }
     List<PyType> argumentTypes = new ArrayList<>();

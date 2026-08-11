@@ -1142,6 +1142,28 @@ public class LiveTemplateTest extends LiveTemplateTestCase {
                             """);
   }
 
+  public void testEscapeWithLookupWithoutSelection() {
+    myFixture.configureByText("a.java", """                                                                                                                                                                                                                                                                                 
+      class Foo {                                                                                                                                                                                                                                                                                                           
+        {                                                                                                                                                                                                                                                                                                                   
+            int foo_1, foo_2;                                                                                                                                                                                                                                                                                               
+            soutv<caret>                                                                                                                                                                                                                                                                                                    
+        }                                                                                                                                                                                                                                                                                                                   
+      }                                                                                                                                                                                                                                                                                                                     
+      """);
+    myFixture.type("\tfoo");        // expand + type collapses the segment selection                                                                                                                                                                                                                                        
+    myFixture.completeBasic();      // 2 matches -> lookup stays open with a current item                                                                                                                                                                                                                                   
+    assertFalse(myFixture.getEditor().getSelectionModel().hasSelection());
+    assertNotNull(myFixture.getLookup().getCurrentItem());
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
+    assertNull(myFixture.getLookup());                                              // popup dismissed                                                                                                                                                                                                                      
+    assertNotNull(getTemplateManager().getActiveTemplate(myFixture.getEditor()));   // template survives                                                                                                                                                                                                                    
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
+    assertNull(getTemplateManager().getActiveTemplate(myFixture.getEditor()));      // 2nd Esc finishes                                                                                                                                                                                                                     
+  }
+
   public void testEscapeWithEmptyLookup() {
     myFixture.configureByText("a.java", """
       class Foo {

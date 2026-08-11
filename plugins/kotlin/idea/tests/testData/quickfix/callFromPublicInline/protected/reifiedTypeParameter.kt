@@ -5,9 +5,9 @@
 // ACTION: Remove braces from all 'if' statements
 // ACTION: Replace with generated @PublishedApi bridge call '`access$protectedMethod`(...)'
 // ERROR: Protected function call from public-API inline function is prohibited
-// K2_ERROR: Protected function call from public-API inline function is prohibited.
-// K2_AFTER_ERROR: Protected function call from public-API inline function is prohibited.
 // WITH_STDLIB
+// K2_AFTER_ERROR: PROTECTED_CALL_FROM_PUBLIC_INLINE_ERROR
+// K2_ERROR: PROTECTED_CALL_FROM_PUBLIC_INLINE_ERROR
 open class Foo {
     protected fun protectedMethod() = true
 

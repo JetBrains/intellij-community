@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("KotlinFacetUtils")
 
 package org.jetbrains.kotlin.idea.base.facet
@@ -68,6 +68,9 @@ val Module.isNewMultiPlatformModule: Boolean
         // TODO: review clients, correct them to use precise checks for MPP version
         return facetSettings?.mppVersion.isNewMPP || facetSettings?.mppVersion.isHmpp
     }
+
+val Project.isMultiPlatformProject: Boolean
+    get() = ModuleManager.getInstance(this).modules.any { it.isMultiPlatformModule || it.isNewMultiPlatformModule }
 
 var Module.isKpmModule: Boolean
         by NotNullableUserDataProperty(Key.create("IS_KPM_MODULE"), false)

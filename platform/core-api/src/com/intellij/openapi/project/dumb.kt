@@ -2,9 +2,12 @@
 package com.intellij.openapi.project
 
 import com.intellij.concurrency.ContextAwareRunnable
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CancellationException
 import kotlin.coroutines.resume
 
 fun <T : Any> ExtensionPointName<T>.lazyDumbAwareExtensions(project: Project): Sequence<T> {
@@ -23,8 +26,16 @@ fun <T : Any> ExtensionPointName<T>.lazyDumbAwareExtensions(project: Project): S
 @ApiStatus.Experimental
 suspend fun Project.waitForSmartMode() {
   suspendCancellableCoroutine { continuation ->
+    val cancellationDisposable = Disposable {
+      if (continuation.isActive) {
+        continuation.cancel(CancellationException("Smart mode cannot be awaited because the project is closing"))
+      }
+    }
+    Disposer.register(this, cancellationDisposable)
+
     DumbService.getInstance(this).runWhenSmart(ContextAwareRunnable {
       continuation.resume(Unit)
+      Disposer.dispose(cancellationDisposable)
     })
   }
 }

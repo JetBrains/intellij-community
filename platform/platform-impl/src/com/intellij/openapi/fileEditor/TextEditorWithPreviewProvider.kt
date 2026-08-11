@@ -1,4 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
 package com.intellij.openapi.fileEditor
 
 import com.intellij.openapi.application.EDT
@@ -65,12 +66,12 @@ abstract class TextEditorWithPreviewProvider(private val previewProvider: FileEd
     return createSplitEditorAsync(project, firstEditor = firstBuilder as TextEditor, secondEditor = secondBuilder)
   }
 
-  private fun readFirstProviderState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState? {
+  private fun readFirstProviderState(sourceElement: Element, project: Project, file: Lazy<VirtualFile?>): FileEditorState? {
     val child = sourceElement.getChild(FIRST_EDITOR) ?: return null
     return mainProvider.readState(/* sourceElement = */ child, /* project = */ project, /* file = */ file)
   }
 
-  private fun readSecondProviderState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState? {
+  private fun readSecondProviderState(sourceElement: Element, project: Project, file: Lazy<VirtualFile?>): FileEditorState? {
     val child = sourceElement.getChild(SECOND_EDITOR) ?: return null
     return previewProvider.readState(/* sourceElement = */ child, /* project = */ project, /* file = */ file)
   }
@@ -91,7 +92,7 @@ abstract class TextEditorWithPreviewProvider(private val previewProvider: FileEd
     }
   }
 
-  override fun readState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState {
+  override fun readState(sourceElement: Element, project: Project, file: Lazy<VirtualFile?>): FileEditorState {
     val firstState = readFirstProviderState(sourceElement, project, file)
     val secondState = readSecondProviderState(sourceElement, project, file)
     val layoutState = readSplitLayoutState(sourceElement)

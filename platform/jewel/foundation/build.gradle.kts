@@ -15,6 +15,7 @@ private val composeVersion
 dependencies {
     api("org.jetbrains.compose.foundation:foundation-desktop:$composeVersion")
 
+    testImplementation(projects.bazelRunfiles)
     testImplementation(compose.desktop.uiTestJUnit4)
     testImplementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
 }

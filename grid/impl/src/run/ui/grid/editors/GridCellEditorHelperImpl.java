@@ -80,7 +80,7 @@ public class GridCellEditorHelperImpl implements GridCellEditorHelper {
   }
 
   protected @Nullable Formatter getDateFormat(@NotNull CoreGrid<GridRow, GridColumn> grid, @NotNull ModelIndex<GridColumn> columnIdx) {
-    int jdbcType = guessJdbcTypeForEditing(GridCellRequestKt.requestColumn(grid, columnIdx));
+    int jdbcType = guessJdbcTypeForColumn(GridCellRequestKt.requestColumn(grid, columnIdx));
     FormatterCreator creator = FormatterCreator.get(grid);
     FormatsCache cache = FormatsCache.get(grid);
     GridColumn column = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getColumn(columnIdx);
@@ -92,6 +92,15 @@ public class GridCellEditorHelperImpl implements GridCellEditorHelper {
   @Override
   public int guessJdbcTypeForEditing(@NotNull GridCellRequest<GridRow, GridColumn> request) {
     if (!request.isValid()) return Types.OTHER;
+    GridColumn c = request.getColumn();
+    return c == null ? Types.OTHER : c.getType();
+  }
+
+  @Override
+  public int guessJdbcTypeForColumn(
+    @NotNull GridCellRequest<GridRow, GridColumn> request
+  ) {
+    if (!request.getColumnIdx().isValid(request.getGrid())) return Types.OTHER;
     GridColumn c = request.getColumn();
     return c == null ? Types.OTHER : c.getType();
   }

@@ -12,6 +12,7 @@ import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.shouldRend
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.observable.util.bindBooleanStorage
@@ -415,9 +416,11 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                 addVersion(parent.version)
 
                 val kotlinVersion = parent.kotlinVersionToUse.takeUnless {
-                    parent.usesPluginManagementKotlinVersion(project) ||
-                            parent.usesParentKotlinVersion(project) ||
-                            parent.usesVersionCatalogVersionInBuildSrc(project)
+                    runReadActionBlocking {
+                        parent.usesPluginManagementKotlinVersion(project) ||
+                                parent.usesParentKotlinVersion(project) ||
+                                parent.usesVersionCatalogVersionInBuildSrc(project)
+                    }
                 }
                 withKotlinJvmPlugin(kotlinVersion)
                 withKotlinTest()

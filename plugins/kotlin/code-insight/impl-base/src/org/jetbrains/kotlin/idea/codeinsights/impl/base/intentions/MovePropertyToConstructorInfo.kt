@@ -6,12 +6,13 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.annotationApplicableTargets
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationTarget
+import org.jetbrains.kotlin.analysis.api.symbols.applicableAnnotationTargets
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
-import org.jetbrains.kotlin.analysis.api.components.type
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
@@ -22,7 +23,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
-import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
@@ -131,18 +131,18 @@ sealed interface MovePropertyToConstructorInfo {
             if (useSiteTarget != null) return text
             val typeReference = typeReference ?: return text
 
-            val applicableTargets = typeReference.type.expandedSymbol?.annotationApplicableTargets ?: return text
+            val applicableTargets = typeReference.type.expandedSymbol?.applicableAnnotationTargets ?: return text
 
             fun AnnotationUseSiteTarget.textWithMe() = "@$renderName:${typeReference.text}${valueArgumentList?.text.orEmpty()}"
 
             return when {
-                KotlinTarget.VALUE_PARAMETER !in applicableTargets ->
+                KaAnnotationTarget.VALUE_PARAMETER !in applicableTargets ->
                     text
 
-                KotlinTarget.PROPERTY in applicableTargets ->
+                KaAnnotationTarget.PROPERTY in applicableTargets ->
                     AnnotationUseSiteTarget.PROPERTY.textWithMe()
 
-                KotlinTarget.FIELD in applicableTargets ->
+                KaAnnotationTarget.FIELD in applicableTargets ->
                     AnnotationUseSiteTarget.FIELD.textWithMe()
 
                 else ->

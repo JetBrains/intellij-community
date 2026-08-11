@@ -1,8 +1,8 @@
 from _typeshed import Incomplete
 from abc import abstractmethod
 from collections.abc import Callable
-from typing import IO, Any, Literal, Protocol, TypeAlias, type_check_only
-from typing_extensions import Self
+from typing import IO, Any, Literal, Protocol, TypeAlias, TypedDict, type_check_only
+from typing_extensions import Self, Unpack
 
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus.flowables import Flowable
@@ -165,6 +165,8 @@ class onDrawStr(str):
     ) -> Self: ...
     def __getnewargs__(self) -> tuple[str, Callable[[Canvas, str | None, str], object], str, str | None]: ...  # type: ignore[override]
 
+_OnDrawStr: TypeAlias = onDrawStr
+
 class PageAccumulator:
     name: str
     data: list[tuple[Any, ...]]
@@ -177,7 +179,55 @@ class PageAccumulator:
     def onPage(self, canv: Canvas, doc: BaseDocTemplate) -> None: ...
     def onPageEnd(self, canv: Canvas, doc: BaseDocTemplate) -> None: ...
     def pageEndAction(self, canv: Canvas, doc: BaseDocTemplate) -> None: ...
-    def onDrawStr(self, value: object, *args) -> onDrawStr: ...
+    def onDrawStr(self, value: object, *args) -> _OnDrawStr: ...
+
+@type_check_only
+class _DocTemplateKwargs(TypedDict, total=False):
+    pagesize: Incomplete
+    pageTemplates: list[PageTemplate]
+    showBoundary: Incomplete
+    width: float
+    height: float
+    leftMargin: float
+    rightMargin: float
+    topMargin: float
+    bottomMargin: float
+    allowSplitting: Incomplete
+    title: Incomplete | None
+    author: Incomplete | None
+    subject: Incomplete | None
+    creator: Incomplete | None
+    producer: Incomplete | None
+    keywords: list[Incomplete]
+    invariant: Incomplete | None
+    pageCompression: Incomplete | None
+    rotation: Incomplete
+    encrypt: Incomplete | None
+    cropMarks: Incomplete | None
+    enforceColorSpace: Incomplete | None
+    displayDocTitle: Incomplete | None
+    lang: Incomplete | None
+    initialFontName: Incomplete | None
+    initialFontSize: Incomplete | None
+    initialLeading: Incomplete | None
+    cropBox: Incomplete | None
+    artBox: Incomplete | None
+    trimBox: Incomplete | None
+    bleedBox: Incomplete | None
+    keepTogetherClass: type[Flowable]
+    hideToolbar: Incomplete | None
+    hideMenubar: Incomplete | None
+    hideWindowUI: Incomplete | None
+    fitWindow: Incomplete | None
+    centerWindow: Incomplete | None
+    nonFullScreenPageMode: Incomplete | None
+    direction: Incomplete | None
+    viewArea: Incomplete | None
+    viewClip: Incomplete | None
+    printArea: Incomplete | None
+    printClip: Incomplete | None
+    printScaling: Incomplete | None
+    duplex: Incomplete | None
 
 class BaseDocTemplate:
     filename: Incomplete
@@ -231,8 +281,7 @@ class BaseDocTemplate:
     page: int
     frame: Frame
     canv: Canvas
-    # TODO: Use TypedDict with Unpack for **kw
-    def __init__(self, filename: str | IO[bytes], **kw) -> None: ...
+    def __init__(self, filename: str | IO[bytes], **kw: Unpack[_DocTemplateKwargs]) -> None: ...
     def setPageCallBack(self, func: Callable[[int], object] | None) -> None: ...
     def setProgressCallBack(self, func: Callable[[str, int], object] | None) -> None: ...
     def clean_hanging(self) -> None: ...

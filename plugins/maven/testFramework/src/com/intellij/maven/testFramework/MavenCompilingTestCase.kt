@@ -26,6 +26,23 @@ import kotlin.io.path.exists
 import kotlin.io.path.notExists
 import kotlin.io.path.readText
 
+/**
+ * @deprecated Use JUnit 5 with [com.intellij.maven.testFramework.fixtures.mavenImportingFixture] instead.
+ *
+ * Example:
+ * ```kotlin
+ * @TestApplication
+ * @ParameterizedClass
+ * @ArgumentsSource(MavenVersionArguments::class)
+ * class MyTest(mavenVersion: String, modelVersion: String) {
+ *   private val maven by mavenImportingFixture(mavenVersion, modelVersion)
+ *
+ *   @Test
+ *   fun myTest() = runBlocking { ... }
+ * }
+ * ```
+ */
+@Deprecated("Use JUnit 5 with mavenImportingFixture() from com.intellij.maven.testFramework.fixtures instead")
 abstract class MavenCompilingTestCase : MavenMultiVersionImportingTestCase() {
 
   protected suspend fun compileModules(vararg moduleNames: String) {

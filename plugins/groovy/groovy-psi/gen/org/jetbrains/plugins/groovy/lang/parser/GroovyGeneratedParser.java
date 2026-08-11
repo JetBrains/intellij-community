@@ -434,9 +434,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IDENTIFIER
+  // weak_keyword | IDENTIFIER
   static boolean annotation_definition_header(PsiBuilder b, int l) {
-    return consumeToken(b, IDENTIFIER);
+    if (!recursion_guard_(b, l, "annotation_definition_header")) return false;
+    boolean r;
+    r = weak_keyword(b, l + 1);
+    if (!r) r = consumeToken(b, IDENTIFIER);
+    return r;
   }
 
   /* ********************************************************** */
@@ -1656,7 +1660,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'break' IDENTIFIER?
+  // 'break' [weak_keyword | IDENTIFIER]
   public static boolean break_statement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "break_statement")) return false;
     if (!nextTokenIs(b, KW_BREAK)) return false;
@@ -1668,11 +1672,20 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // IDENTIFIER?
+  // [weak_keyword | IDENTIFIER]
   private static boolean break_statement_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "break_statement_1")) return false;
-    consumeToken(b, IDENTIFIER);
+    break_statement_1_0(b, l + 1);
     return true;
+  }
+
+  // weak_keyword | IDENTIFIER
+  private static boolean break_statement_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "break_statement_1_0")) return false;
+    boolean r;
+    r = weak_keyword(b, l + 1);
+    if (!r) r = consumeToken(b, IDENTIFIER);
+    return r;
   }
 
   /* ********************************************************** */
@@ -2026,7 +2039,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '(' non_empty_annotation_list? (IDENTIFIER | primitive_type)
+  // '(' non_empty_annotation_list? (weak_keyword | IDENTIFIER | primitive_type)
   static boolean cast_expression_start(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cast_expression_start")) return false;
     if (!nextTokenIsFast(b, T_LPAREN)) return false;
@@ -2046,12 +2059,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // IDENTIFIER | primitive_type
+  // weak_keyword | IDENTIFIER | primitive_type
   private static boolean cast_expression_start_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cast_expression_start_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenFast(b, IDENTIFIER);
+    r = weak_keyword(b, l + 1);
+    if (!r) r = consumeTokenFast(b, IDENTIFIER);
     if (!r) r = parsePrimitiveType(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -2707,15 +2721,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'def' | 'as' | 'in' | 'trait' | 'var'
+  // 'def' | 'in'
   static boolean code_reference_identifiers_soft(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "code_reference_identifiers_soft")) return false;
+    if (!nextTokenIsFast(b, KW_DEF, KW_IN)) return false;
     boolean r;
     r = consumeTokenFast(b, KW_DEF);
-    if (!r) r = consumeTokenFast(b, KW_AS);
     if (!r) r = consumeTokenFast(b, KW_IN);
-    if (!r) r = consumeTokenFast(b, KW_TRAIT);
-    if (!r) r = consumeTokenFast(b, KW_VAR);
     return r;
   }
 
@@ -2969,7 +2981,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'continue' IDENTIFIER?
+  // 'continue' [weak_keyword | IDENTIFIER]
   public static boolean continue_statement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "continue_statement")) return false;
     if (!nextTokenIs(b, KW_CONTINUE)) return false;
@@ -2981,11 +2993,20 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // IDENTIFIER?
+  // [weak_keyword | IDENTIFIER]
   private static boolean continue_statement_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "continue_statement_1")) return false;
-    consumeToken(b, IDENTIFIER);
+    continue_statement_1_0(b, l + 1);
     return true;
+  }
+
+  // weak_keyword | IDENTIFIER
+  private static boolean continue_statement_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "continue_statement_1_0")) return false;
+    boolean r;
+    r = weak_keyword(b, l + 1);
+    if (!r) r = consumeToken(b, IDENTIFIER);
+    return r;
   }
 
   /* ********************************************************** */
@@ -3478,19 +3499,28 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // annotation_modifier_list mb_nl IDENTIFIER call_argument_list? enum_constant_initializer?
+  // annotation_modifier_list mb_nl (weak_keyword | IDENTIFIER) call_argument_list? enum_constant_initializer?
   public static boolean enum_constant(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "enum_constant")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, ENUM_CONSTANT, "<enum constant>");
     r = annotation_modifier_list(b, l + 1);
     r = r && mb_nl(b, l + 1);
-    r = r && consumeToken(b, IDENTIFIER);
+    r = r && enum_constant_2(b, l + 1);
     p = r; // pin = 3
     r = r && report_error_(b, enum_constant_3(b, l + 1));
     r = p && enum_constant_4(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  // weak_keyword | IDENTIFIER
+  private static boolean enum_constant_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "enum_constant_2")) return false;
+    boolean r;
+    r = weak_keyword(b, l + 1);
+    if (!r) r = consumeToken(b, IDENTIFIER);
+    return r;
   }
 
   // call_argument_list?
@@ -3998,7 +4028,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "field")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, FIELD, "<field>");
-    r = var(b, l + 1);
+    r = var_$(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -4471,7 +4501,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   public static boolean import_$(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_$")) return false;
     boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, IMPORT, "<import $>");
+    Marker m = enter_section_(b, l, _NONE_, IMPORT, "<import>");
     r = modifier_list(b, l + 1);
     r = r && mb_nl(b, l + 1);
     r = r && import_2(b, l + 1);
@@ -4516,7 +4546,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'as' mb_nl IDENTIFIER
+  // 'as' (weak_keyword | IDENTIFIER)
   public static boolean import_alias(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_alias")) return false;
     if (!nextTokenIs(b, KW_AS)) return false;
@@ -4524,10 +4554,18 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, IMPORT_ALIAS, null);
     r = consumeToken(b, KW_AS);
     p = r; // pin = 1
-    r = r && report_error_(b, mb_nl(b, l + 1));
-    r = p && consumeToken(b, IDENTIFIER) && r;
+    r = r && import_alias_1(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  // weak_keyword | IDENTIFIER
+  private static boolean import_alias_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "import_alias_1")) return false;
+    boolean r;
+    r = weak_keyword(b, l + 1);
+    if (!r) r = consumeToken(b, IDENTIFIER);
+    return r;
   }
 
   /* ********************************************************** */
@@ -4681,15 +4719,23 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IDENTIFIER after_label
+  // (weak_keyword | IDENTIFIER) after_label
   public static boolean labeled_statement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "labeled_statement")) return false;
-    if (!nextTokenIs(b, IDENTIFIER)) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, IDENTIFIER);
+    Marker m = enter_section_(b, l, _NONE_, LABELED_STATEMENT, "<labeled statement>");
+    r = labeled_statement_0(b, l + 1);
     r = r && after_label(b, l + 1);
-    exit_section_(b, m, LABELED_STATEMENT, r);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // weak_keyword | IDENTIFIER
+  private static boolean labeled_statement_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "labeled_statement_0")) return false;
+    boolean r;
+    r = weak_keyword(b, l + 1);
+    if (!r) r = consumeToken(b, IDENTIFIER);
     return r;
   }
 
@@ -4908,7 +4954,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ':' expression
+  // ':' mb_nl expression
   public static boolean map_argument(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "map_argument")) return false;
     if (!nextTokenIsFast(b, T_COLON)) return false;
@@ -4916,7 +4962,8 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _LEFT_, NAMED_ARGUMENT, null);
     r = consumeTokenFast(b, T_COLON);
     p = r; // pin = 1
-    r = r && expression(b, l + 1, -1);
+    r = r && report_error_(b, mb_nl(b, l + 1));
+    r = p && expression(b, l + 1, -1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -5217,7 +5264,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   //                    | 'synchronized' !'('
   //                    | 'transient'
   //                    | 'volatile'
-  //                    | 'sealed'
+  //                    | 'sealed' !(mb_nl ('(' | ';' | '='))
   //                    | 'non-sealed'
   //                    | def_modifier
   //                    | var_modifier
@@ -5237,7 +5284,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!r) r = modifier_9(b, l + 1);
     if (!r) r = consumeTokenFast(b, KW_TRANSIENT);
     if (!r) r = consumeTokenFast(b, KW_VOLATILE);
-    if (!r) r = consumeTokenFast(b, KW_SEALED);
+    if (!r) r = modifier_12(b, l + 1);
     if (!r) r = consumeTokenFast(b, KW_NON_SEALED);
     if (!r) r = def_modifier(b, l + 1);
     if (!r) r = var_modifier(b, l + 1);
@@ -5263,6 +5310,48 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NOT_);
     r = !consumeTokenFast(b, T_LPAREN);
     exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // 'sealed' !(mb_nl ('(' | ';' | '='))
+  private static boolean modifier_12(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "modifier_12")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenFast(b, KW_SEALED);
+    r = r && modifier_12_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // !(mb_nl ('(' | ';' | '='))
+  private static boolean modifier_12_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "modifier_12_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !modifier_12_1_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // mb_nl ('(' | ';' | '=')
+  private static boolean modifier_12_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "modifier_12_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = mb_nl(b, l + 1);
+    r = r && modifier_12_1_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '(' | ';' | '='
+  private static boolean modifier_12_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "modifier_12_1_0_1")) return false;
+    boolean r;
+    r = consumeTokenFast(b, T_LPAREN);
+    if (!r) r = consumeTokenFast(b, T_SEMI);
+    if (!r) r = consumeTokenFast(b, T_ASSIGN);
     return r;
   }
 
@@ -5339,7 +5428,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ':' (mb_nl expression)
+  // ':' mb_nl expression
   static boolean named_argument_tail(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "named_argument_tail")) return false;
     if (!nextTokenIsFast(b, T_COLON)) return false;
@@ -5347,20 +5436,10 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeTokenFast(b, T_COLON);
     p = r; // pin = 1
-    r = r && named_argument_tail_1(b, l + 1);
+    r = r && report_error_(b, mb_nl(b, l + 1));
+    r = p && expression(b, l + 1, -1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
-  }
-
-  // mb_nl expression
-  private static boolean named_argument_tail_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "named_argument_tail_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = mb_nl(b, l + 1);
-    r = r && expression(b, l + 1, -1);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */
@@ -5919,7 +5998,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "parameter")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, PARAMETER, "<parameter>");
-    r = var(b, l + 1);
+    r = var_$(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -7664,18 +7743,26 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IDENTIFIER type_parameter_list? nl_extends nl_implements nl_permits
+  // (weak_keyword | IDENTIFIER) type_parameter_list? nl_extends nl_implements nl_permits
   static boolean trait_definition_header(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "trait_definition_header")) return false;
-    if (!nextTokenIs(b, IDENTIFIER)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, IDENTIFIER);
+    r = trait_definition_header_0(b, l + 1);
     r = r && trait_definition_header_1(b, l + 1);
     r = r && nl_extends(b, l + 1);
     r = r && nl_implements(b, l + 1);
     r = r && nl_permits(b, l + 1);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // weak_keyword | IDENTIFIER
+  private static boolean trait_definition_header_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "trait_definition_header_0")) return false;
+    boolean r;
+    r = weak_keyword(b, l + 1);
+    if (!r) r = consumeToken(b, IDENTIFIER);
     return r;
   }
 
@@ -8312,8 +8399,8 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // (weak_keyword | IDENTIFIER) mb_initializer
-  static boolean var(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "var")) return false;
+  static boolean var_$(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "var_$")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = var_0(b, l + 1);
@@ -8332,19 +8419,28 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'var' &(weak_keyword | IDENTIFIER | modifier | type_element | tuple_var_declaration_tuple)
+  // ('var' | 'val' | 'sealed') &(mb_nl (weak_keyword | IDENTIFIER | modifier | type_element | tuple_var_declaration_tuple))
   static boolean var_modifier(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "var_modifier")) return false;
-    if (!nextTokenIsFast(b, KW_VAR)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenFast(b, KW_VAR);
+    r = var_modifier_0(b, l + 1);
     r = r && var_modifier_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // &(weak_keyword | IDENTIFIER | modifier | type_element | tuple_var_declaration_tuple)
+  // 'var' | 'val' | 'sealed'
+  private static boolean var_modifier_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "var_modifier_0")) return false;
+    boolean r;
+    r = consumeTokenFast(b, KW_VAR);
+    if (!r) r = consumeTokenFast(b, KW_VAL);
+    if (!r) r = consumeTokenFast(b, KW_SEALED);
+    return r;
+  }
+
+  // &(mb_nl (weak_keyword | IDENTIFIER | modifier | type_element | tuple_var_declaration_tuple))
   private static boolean var_modifier_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "var_modifier_1")) return false;
     boolean r;
@@ -8354,9 +8450,20 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // weak_keyword | IDENTIFIER | modifier | type_element | tuple_var_declaration_tuple
+  // mb_nl (weak_keyword | IDENTIFIER | modifier | type_element | tuple_var_declaration_tuple)
   private static boolean var_modifier_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "var_modifier_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = mb_nl(b, l + 1);
+    r = r && var_modifier_1_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // weak_keyword | IDENTIFIER | modifier | type_element | tuple_var_declaration_tuple
+  private static boolean var_modifier_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "var_modifier_1_0_1")) return false;
     boolean r;
     r = weak_keyword(b, l + 1);
     if (!r) r = consumeTokenFast(b, IDENTIFIER);
@@ -8372,7 +8479,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "variable")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, VARIABLE, "<variable>");
-    r = var(b, l + 1);
+    r = var_$(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -8444,14 +8551,18 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'var' | 'yield' | 'permits' | 'record'
+  // 'as' | 'permits' | 'record' | 'sealed' | 'trait' | 'var' | 'val' | 'yield'
   static boolean weak_keyword_identifiers(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "weak_keyword_identifiers")) return false;
     boolean r;
-    r = consumeTokenFast(b, KW_VAR);
-    if (!r) r = consumeTokenFast(b, KW_YIELD);
+    r = consumeTokenFast(b, KW_AS);
     if (!r) r = consumeTokenFast(b, KW_PERMITS);
     if (!r) r = consumeTokenFast(b, KW_RECORD);
+    if (!r) r = consumeTokenFast(b, KW_SEALED);
+    if (!r) r = consumeTokenFast(b, KW_TRAIT);
+    if (!r) r = consumeTokenFast(b, KW_VAR);
+    if (!r) r = consumeTokenFast(b, KW_VAL);
+    if (!r) r = consumeTokenFast(b, KW_YIELD);
     return r;
   }
 

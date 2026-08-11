@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.execution.Executor
+import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.execution.ui.RunContentWithExecutorListener
@@ -24,8 +25,8 @@ import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.debugger.impl.ui.evaluate.quick.common.ValueLookupManager
 import com.intellij.platform.project.projectId
 import com.intellij.util.asDisposable
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener
+import fleet.rpc.client.RpcClientDisconnectedException
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -72,7 +73,9 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
 
       launch(Dispatchers.EDT) {
         // await listening started on the backend
-        XDebuggerValueLookupHintsRemoteApi.getInstance().getValueLookupListeningFlow(project.projectId()).first { it }
+        durable {
+          XDebuggerValueLookupHintsRemoteApi.getInstance().getValueLookupListeningFlow(project.projectId()).first { it }
+        }
         val lookupManager = ValueLookupManager.getInstance(project)
         lookupManager.startListening(XQuickEvaluateHandler())
         currentSessionFlow.collectLatest {
@@ -80,9 +83,7 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
         }
       }
     }
-    if (SplitDebuggerMode.isSplitDebugger()) {
-      startContentSelectionListening()
-    }
+    startContentSelectionListening()
   }
 
   private suspend fun initCapabilities() {
@@ -92,29 +93,24 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
   }
 
   private fun initSessions() = cs.launch {
-    // When the registry flag is not set, we would prefer to have XDebugSessionProxy.Monolith in a listener
-    // see com.intellij.xdebugger.impl.MonolithListenerAdapter
-    val shouldTriggerListener = SplitDebuggerMode.isSplitDebugger()
     durableWithStateReset(block = {
-      val (sessionsList, eventFlow) = XDebuggerManagerApi.getInstance().sessions(project.projectId())
+      val (sessionsList, currentId, eventFlow) = XDebuggerManagerApi.getInstance().sessions(project.projectId())
+      currentSessionId = currentId
       for (sessionDto in sessionsList) {
-        createDebuggerSession(sessionDto)
+        val session = createDebuggerSession(sessionDto)
+        project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).sessionStarted(session)
       }
       eventFlow.toFlow().collect { event ->
         when (event) {
           is XDebuggerManagerSessionEvent.ProcessStarted -> {
             val session = createDebuggerSession(event.sessionDto)
-            if (shouldTriggerListener) {
-              project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).sessionStarted(session)
-            }
+            project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).sessionStarted(session)
           }
           is XDebuggerManagerSessionEvent.ProcessStopped -> {
             sessionsFlow.update { sessions ->
               val sessionToRemove = sessions.firstOrNull { it.id == event.sessionId }
               if (sessionToRemove != null) {
-                if (shouldTriggerListener) {
-                  project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).sessionStopped(sessionToRemove)
-                }
+                project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).sessionStopped(sessionToRemove)
                 sessions - sessionToRemove
               }
               else {
@@ -129,18 +125,14 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
             val currentSession = findSessionById(sessions, event.currentSession)
             currentSessionId = event.currentSession
             updateCurrentSession()
-            if (shouldTriggerListener) {
-              project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).activeSessionChanged(previousSession, currentSession)
-            }
+            project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).activeSessionChanged(previousSession, currentSession)
           }
         }
       }
     }, stateReset = {
       sessionsFlow.update { currentSessions ->
-        if (shouldTriggerListener) {
-          for (session in currentSessions) {
-            project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).sessionStopped(session)
-          }
+        for (session in currentSessions) {
+          project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).sessionStopped(session)
         }
         listOf()
       }
@@ -180,11 +172,16 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
     val selectedSessionId = MutableSharedFlow<XDebugSessionId?>(1, 1, BufferOverflow.DROP_OLDEST)
     cs.launch {
       selectedSessionId.collectLatest { sessionId ->
-        XDebuggerManagerApi.getInstance().sessionTabSelected(project.projectId(), sessionId)
+        try {
+          XDebuggerManagerApi.getInstance().sessionTabSelected(project.projectId(), sessionId)
+        }
+        catch (_: RpcClientDisconnectedException) {
+          // Content selection can race with remote debugger disconnect.
+        }
       }
     }
 
-    project.messageBus.connect().subscribe(RunContentManager.TOPIC, object : RunContentWithExecutorListener {
+    project.messageBus.connect(cs).subscribe(RunContentManager.TOPIC, object : RunContentWithExecutorListener {
       override fun contentSelected(descriptor: RunContentDescriptor?, executor: Executor) {
         if (executor.toolWindowId != ToolWindowId.DEBUG) return
         if (descriptor == null) return
@@ -195,9 +192,14 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
       override fun contentRemoved(descriptor: RunContentDescriptor?, executor: Executor) {
         if (executor.toolWindowId != ToolWindowId.DEBUG) return
         if (descriptor == null) return
-        val sessionId = getSessionIdByContentDescriptor(descriptor) ?: return
+        val descriptorId = descriptor.id as? RunContentDescriptorIdImpl ?: return
         cs.launch {
-          XDebuggerManagerApi.getInstance().sessionTabClosed(sessionId)
+          try {
+            XDebuggerManagerApi.getInstance().sessionTabClosed(descriptorId)
+          }
+          catch (_: RpcClientDisconnectedException) {
+            // The backend may already be disconnected, so there is no tab to close remotely.
+          }
         }
       }
     })

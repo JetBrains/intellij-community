@@ -45,7 +45,7 @@ public final class QuickFixPreviewPanelFactory {
       return new LoadingInProgressPreview(view);
     }
     else {
-      final QuickFixReadyPanel panel = new QuickFixReadyPanel(view);
+      QuickFixReadyPanel panel = new QuickFixReadyPanel(view);
       return panel.isEmpty() ? null : panel;
     }
   }
@@ -89,21 +89,21 @@ public final class QuickFixPreviewPanelFactory {
 
       InspectionTree tree = myView.getTree();
       InspectionToolPresentation presentation = tree.getContext().getPresentation(myWrapper);
-      final boolean showProblemCount = presentation.showProblemCount();
+      boolean showProblemCount = presentation.showProblemCount();
 
       if (showProblemCount) {
-        final int actualProblemCount = tree.getSelectedProblemCount();
+        int actualProblemCount = tree.getSelectedProblemCount();
         if (actualProblemCount > 1 || (actualProblemCount == 1 && multipleDescriptors)) {
           add(getLabel(actualProblemCount));
           hasComponents = true;
         }
       }
 
-      final DefaultActionGroup actions = new DefaultActionGroup();
+      DefaultActionGroup actions = new DefaultActionGroup();
       if (hasFixes) {
         actions.addAll(createFixActions(fixes, multipleDescriptors));
       }
-      final AnAction suppressionCombo = createSuppressionCombo();
+      AnAction suppressionCombo = createSuppressionCombo();
       updateAvailableSuppressors(view);
       actions.add(suppressionCombo);
 
@@ -113,8 +113,8 @@ public final class QuickFixPreviewPanelFactory {
 
       if (actions.getChildrenCount() != 0) {
         view.setFixesAvailable(true);
-        final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("inspection.view.quick.fix.preview", actions, true);
-        final JComponent component = toolbar.getComponent();
+        ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("inspection.view.quick.fix.preview", actions, true);
+        JComponent component = toolbar.getComponent();
         toolbar.setTargetComponent(view);
         add(component);
         hasComponents = true;
@@ -150,7 +150,7 @@ public final class QuickFixPreviewPanelFactory {
     }
 
     private AnAction createSuppressionCombo() {
-      final ComboBoxAction action = new ComboBoxAction() {
+      ComboBoxAction action = new ComboBoxAction() {
         @Override public @NotNull ActionUpdateThread getActionUpdateThread() { return ActionUpdateThread.EDT; }
 
         @Override
@@ -172,7 +172,7 @@ public final class QuickFixPreviewPanelFactory {
 
     private static AnAction @NotNull [] createFixActions(QuickFixAction[] fixes, boolean multipleDescriptors) {
       if (fixes.length > MAX_FIX_COUNT) {
-        final ComboBoxAction fixComboBox = new ComboBoxAction() {
+        ComboBoxAction fixComboBox = new ComboBoxAction() {
           {
             if (multipleDescriptors) {
               getTemplatePresentation().setText(InspectionsBundle.message("apply.quick.fixes.to.all.action.text"));
@@ -186,7 +186,7 @@ public final class QuickFixPreviewPanelFactory {
 
           @Override
           protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
-            final DefaultActionGroup actionGroup = new DefaultActionGroup();
+            DefaultActionGroup actionGroup = new DefaultActionGroup();
             for (QuickFixAction fix : fixes) {
               actionGroup.add(fix);
             }
@@ -219,7 +219,7 @@ public final class QuickFixPreviewPanelFactory {
     public void updateLoadingProgress() {
       if (myWaitingLabel != null) {
         myWaitingLabel.clear();
-        final InspectionTree tree = myView.getTree();
+        InspectionTree tree = myView.getTree();
         appendTextToLabel(myWaitingLabel, tree.getSelectedProblemCount());
       }
     }

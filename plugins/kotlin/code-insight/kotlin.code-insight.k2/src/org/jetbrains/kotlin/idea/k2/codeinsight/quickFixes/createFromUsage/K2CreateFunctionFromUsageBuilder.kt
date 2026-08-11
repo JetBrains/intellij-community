@@ -13,10 +13,11 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.allSupertypes
-import org.jetbrains.kotlin.analysis.api.components.directSupertypes
-import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.types.allSupertypes
+import org.jetbrains.kotlin.analysis.api.types.directSupertypes
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.expressions.isImplicitReferenceToCompanion
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -255,6 +256,7 @@ object K2CreateFunctionFromUsageBuilder {
         val receiverResolved =
             (receiverExpression as? KtNameReferenceExpression)?.mainReference?.resolveToSymbol() as? KaClassSymbol
         return receiverResolved != null && receiverResolved.classKind != KaClassKind.OBJECT && receiverResolved.classKind != KaClassKind.COMPANION_OBJECT
+                || (receiverExpression as? KtNameReferenceExpression)?.isImplicitReferenceToCompanion == true
     }
 
     // assume the map is linked, because we require order

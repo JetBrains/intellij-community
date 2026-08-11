@@ -978,7 +978,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
         // notify the CommandQueue service that the command has been completed without exceptions
         // and it must be removed from the queue
         // or clear queue if exception occurred
-        ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class)
+        myProject.getService(CommandQueueForPythonConsoleService.class)
           .removeCommand(PydevConsoleCommunication.this, exceptionOccurred);
       }
       execNotifyFinished(needsMoreInput);

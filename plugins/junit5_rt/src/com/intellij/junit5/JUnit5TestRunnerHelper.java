@@ -45,6 +45,10 @@ public class JUnit5TestRunnerHelper {
 
     LauncherDiscoveryRequestBuilder builder = LauncherDiscoveryRequestBuilder.request();
 
+    if (Boolean.getBoolean(CollectInvocationsInterceptor.COLLECT_PARAMETERS_PROPERTY)) {
+      builder.configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true");
+      builder.configurationParameter(CollectInvocationsInterceptor.COLLECT_PARAMETERS_PROPERTY, "true");
+    }
 
     if (suiteClassNames.length == 1 && suiteClassNames[0].charAt(0) == '@') {
       // all tests in the package specified

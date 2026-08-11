@@ -58,23 +58,22 @@ public class ShowDumpDialogGridAction extends DumbAwareAction implements GridAct
       new DumpDataDialog(project, source, e.getData(CONTEXT_COMPONENT)) {
         @Override
         protected void exportToFile(@NotNull DataExtractorFactory factory, @NotNull File file) {
-          export(project, grid, source, factory, new FileExtractionHelper(file), myForm.getExtractorConfig());
+          export(grid, source, factory, new FileExtractionHelper(file), myForm.getExtractorConfig());
         }
 
         @Override
         protected void exportToClipboard(@NotNull DataExtractorFactory factory) {
-          export(project, grid, source, factory, new ClipboardExtractionHelper(), myForm.getExtractorConfig());
+          export(grid, source, factory, new ClipboardExtractionHelper(), myForm.getExtractorConfig());
         }
       }.show();
     }
   }
 
-  private static void export(@NotNull Project project,
-                             @NotNull DataGrid grid,
+  private static void export(@NotNull DataGrid grid,
                              @NotNull DumpSource<?> source,
                              @NotNull DataExtractorFactory factory,
                              @NotNull ExtractionHelper helper,
                              @NotNull ExtractionConfig config) {
-    GridHelper.get(grid).createDumpHandler(source, helper, factory, config).performDump(project);
+    GridHelper.get(grid).createDumpHandler(source, helper, factory, config).performDump();
   }
 }

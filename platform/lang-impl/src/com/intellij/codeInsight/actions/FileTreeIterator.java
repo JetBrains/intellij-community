@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 
+@ApiStatus.Internal
 public final class FileTreeIterator {
   private Queue<PsiFile> myCurrentFiles = new LinkedList<>();
   private Queue<PsiDirectory> myCurrentDirectories = new LinkedList<>();

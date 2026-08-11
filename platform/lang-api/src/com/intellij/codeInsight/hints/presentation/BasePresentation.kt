@@ -3,9 +3,10 @@ package com.intellij.codeInsight.hints.presentation
 
 import java.awt.Dimension
 import java.awt.Rectangle
+import java.util.concurrent.CopyOnWriteArraySet
 
 abstract class BasePresentation : InlayPresentation {
-  private val listeners = hashSetOf<PresentationListener>()
+  private val listeners = CopyOnWriteArraySet<PresentationListener>()
 
   override fun fireSizeChanged(previous: Dimension, current: Dimension) {
     for (listener in listeners) {

@@ -28,5 +28,5 @@ def f():
 
 
 obj = f()
-obj.g(10)
-obj.g([])
+obj.g(<warning descr="Expected type 'list', got 'Literal[10]' instead">10</warning>)
+obj.g(<warning descr="Expected type 'int', got 'List[Unknown]' instead">[]</warning>)

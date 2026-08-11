@@ -256,23 +256,26 @@ internal sealed class GitObject {
 
     companion object {
       /**
-       * Each entry: mode + space + name + null byte + 20-byte SHA-1 hash
+       * Each entry: mode + space + name + null byte + raw object id bytes
        * There is no separator between entries.
        */
-      fun parseBody(body: ByteArray): Map<FileName, Entry> {
+      fun parseBody(body: ByteArray, oidByteSize: Int): Map<FileName, Entry> {
         val entries = mutableMapOf<FileName, Entry>()
         var ptr = 0
         while (ptr < body.size) {
           val spacePos = body.indexOf(' '.code.toByte(), ptr)
+          require(spacePos != -1) { "Invalid tree object: missing mode separator" }
           val mode = String(body, ptr, spacePos - ptr, StandardCharsets.UTF_8)
           ptr = spacePos + 1
 
           val nullPos = body.indexOf(0.toByte(), ptr)
+          require(nullPos != -1) { "Invalid tree object: missing file name separator" }
           val name = String(body, ptr, nullPos - ptr, StandardCharsets.UTF_8)
           ptr = nullPos + 1
 
-          val hashBytes = body.copyOfRange(ptr, ptr + Oid.HASH_LENGTH)
-          ptr += Oid.HASH_LENGTH
+          require(ptr + oidByteSize <= body.size) { "Invalid tree object: truncated object id" }
+          val hashBytes = body.copyOfRange(ptr, ptr + oidByteSize)
+          ptr += oidByteSize
 
           entries[FileName(name)] = Entry(
             FileMode.fromValue(mode) ?: error("Unknown file mode: $mode"),

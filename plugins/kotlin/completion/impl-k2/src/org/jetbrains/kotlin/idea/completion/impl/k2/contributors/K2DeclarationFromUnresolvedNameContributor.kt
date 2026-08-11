@@ -5,10 +5,9 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.collectImplicitReceiverTypes
 import org.jetbrains.kotlin.analysis.api.components.dispatchReceiverType
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -16,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
@@ -121,7 +121,10 @@ internal class K2DeclarationFromUnresolvedNameContributor : K2SimpleCompletionCo
                     // If there is no explicit receiver at call-site, we check if any implicit receiver at call-site matches the extension
                     // receiver type for the current declared symbol
                     val extensionReceiverType = symbol.receiverType ?: return true
-                    collectImplicitReceiverTypes(unresolvedRef).any { it.isSubtypeOf(extensionReceiverType) }
+
+                    unresolvedRef.containingKtFile.scopeContext(unresolvedRef).implicitReceivers.any {
+                        it.type.isSubtypeOf(extensionReceiverType)
+                    }
                 }
             }
 

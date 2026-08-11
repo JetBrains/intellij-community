@@ -63,6 +63,11 @@ class MarkdownSupportTest : GrazieTestBase() {
     myFixture.checkHighlighting()
   }
 
+  fun `test no LT article warning before number starting with a vowel`() {
+    myFixture.configureByText("a.md", "Extract an 8x8 pixel square from an 11x11 square from an 18432x18432 square from an 11000.")
+    myFixture.checkHighlighting()
+  }
+
   fun `test no em dash warning for list bullet in injected markdown`() {
     myFixture.configureByText("a.md", """
       Something
@@ -75,27 +80,27 @@ class MarkdownSupportTest : GrazieTestBase() {
   }
 
   fun `test grazie rule controls associated LT rules`() {
-    // ALL_OF_THE is enabled by default in LT, so the style error should be detected
+    // REPEAT_AGAIN is enabled by default in LT, so the style error should be detected
     GrazieConfig.update { it.copy(userEnabledRules = setOf(), userDisabledRules = setOf()) }
     myFixture.configureByText("a.md", """
-      <STYLE_SUGGESTION descr="ALL_OF_THE">All of the</STYLE_SUGGESTION> people I know came.
+      Please <STYLE_SUGGESTION descr="REPEAT_AGAIN">repeat again</STYLE_SUGGESTION>.
      """.trimIndent())
     myFixture.checkHighlighting()
 
-    // Grazie REDUNDANT_OF rule controls associated ALL_OF_THE LT rule, hence no style error should be detected
-    GrazieConfig.update { it.copy(userEnabledRules = setOf(), userDisabledRules = setOf("Grazie.RuleEngine.En.Style.REDUNDANT_OF")) }
-    myFixture.configureByText("a.md", "All of the people I know came.")
+    // Grazie TAUTOLOGY rule controls associated REPEAT_AGAIN LT rule, hence no style error should be detected
+    GrazieConfig.update { it.copy(userEnabledRules = setOf(), userDisabledRules = setOf("Grazie.RuleEngine.En.Style.TAUTOLOGY")) }
+    myFixture.configureByText("a.md", "Please repeat again.")
     myFixture.checkHighlighting()
 
-    // Explicitly enabled ALL_OF_THE rule should still detect the style error
+    // Explicitly enabled REPEAT_AGAIN should still detect the style error
     GrazieConfig.update {
       it.copy(
-        userEnabledRules = setOf("LanguageTool.EN.ALL_OF_THE"),
-        userDisabledRules = setOf("Grazie.RuleEngine.En.Style.REDUNDANT_OF")
+        userEnabledRules = setOf("LanguageTool.EN.REPEAT_AGAIN"),
+        userDisabledRules = setOf("Grazie.RuleEngine.En.Style.TAUTOLOGY")
       )
     }
     myFixture.configureByText("a.md", """
-      <STYLE_SUGGESTION descr="ALL_OF_THE">All of the</STYLE_SUGGESTION> people I know came.
+      Please <STYLE_SUGGESTION descr="REPEAT_AGAIN">repeat again</STYLE_SUGGESTION>.
      """.trimIndent())
     myFixture.checkHighlighting()
   }

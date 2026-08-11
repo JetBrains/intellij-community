@@ -60,6 +60,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonCodeStyleService;
+import com.jetbrains.python.ast.PyAstElement;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -549,7 +550,14 @@ public final class PyUtil {
    * @return expression casted to appropriate type (if could be casted). Null otherwise.
    */
   public static @Nullable <T> T as(final @Nullable Object expression, final @NotNull Class<T> clazz) {
-    return ObjectUtils.tryCast(expression, clazz);
+    //noinspection unchecked
+    return ObjectUtils.tryCast(
+      expression,
+      (Class<T>)switch (clazz) {
+        case Class<?> c when c == boolean.class -> Boolean.class;
+        case Class<?> c when c == int.class -> Integer.class;
+        default -> clazz;
+      });
   }
 
   // TODO: Move to PsiElement?
@@ -986,7 +994,10 @@ public final class PyUtil {
 
   /**
    * @return true iff the name looks like a class-private one, starting with two underscores but not ending with two underscores.
+   *
+   * @deprecated use {@link PyAstElement#getProtectionLevel()} or {@link PyNames#isDunder(String)}
    */
+  @Deprecated
   public static boolean isClassPrivateName(@NotNull String name) {
     return name.startsWith("__") && !name.endsWith("__");
   }
@@ -1465,7 +1476,8 @@ public final class PyUtil {
 
   public static boolean isObjectClass(@NotNull PyClass cls) {
     String qualifiedName = cls.getQualifiedName();
-    return PyNames.OBJECT.equals(qualifiedName) || (qualifiedName == null && PyNames.OBJECT.equals(cls.getName()));
+    return PyNames.FQN.OBJECT.equals(qualifiedName) ||
+           (qualifiedName == null && PyNames.OBJECT.equals(cls.getName()));
   }
 
   public static @Nullable PyType getReturnTypeOfMember(@NotNull PyType type,

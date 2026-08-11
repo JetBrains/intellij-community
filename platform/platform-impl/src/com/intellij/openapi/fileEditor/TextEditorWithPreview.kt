@@ -44,6 +44,7 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
 import java.awt.BorderLayout
@@ -297,7 +298,7 @@ open class TextEditorWithPreview @JvmOverloads constructor(
 
   override fun getState(level: FileEditorStateLevel): FileEditorState {
     return MyFileEditorState(
-      splitLayout = layout,
+      splitLayout = layout.takeUnless { level == FileEditorStateLevel.UNDO },
       firstState = myEditor.getState(level),
       secondState = myPreview.getState(level),
       isVerticalSplit = isVerticalSplit(),
@@ -425,6 +426,7 @@ open class TextEditorWithPreview @JvmOverloads constructor(
       }
     }
 
+    @ApiStatus.Internal
     companion object {
       @JvmStatic
       fun fromId(id: String?, defaultValue: Layout): Layout = entries.firstOrNull { it.id == id } ?: defaultValue

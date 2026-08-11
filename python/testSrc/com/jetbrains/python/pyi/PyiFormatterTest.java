@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.pyi;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Components;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -8,6 +11,9 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.CodeInsight
+@Components.Stubs
+@Layers.Functional
 public class PyiFormatterTest extends PyTestCase {
 
   @NotNull

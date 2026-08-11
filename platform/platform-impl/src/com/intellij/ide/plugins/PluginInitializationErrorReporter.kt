@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
-import com.intellij.ide.ApplicationActivity
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -15,17 +15,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.util.ui.RawSwingDispatcher
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 
 // TODO add trigger on dynamic plugin set change
-internal class PluginInitializationErrorReporterStartupActivity : ApplicationActivity {
-
+internal class PluginInitializationErrorStartupReporter : AppLifecycleListener {
   val handlers: List<PluginInitializationErrorHandler> by lazy { PluginInitializationErrorHandler.getInstances() }
 
-  override suspend fun execute() {
-    if (!IdeProductMode.isBackend) {
-      reportPluginErrors()
+  override fun appStarted() {
+    service<PluginManagerCoroutineScopeHolder>().coroutineScope.launch {
+      if (!IdeProductMode.isBackend) {
+        reportPluginErrors()
+      }
     }
   }
 
@@ -65,10 +68,12 @@ internal class PluginInitializationErrorReporterStartupActivity : ApplicationAct
       actions += prepareDisableAction(pluginsToDisable)
     }
 
-    serviceAsync<NotificationGroupManager>().getNotificationGroup("Plugin Error")
-      .createNotification(title, content, NotificationType.ERROR)
-      .addActions(actions)
-      .notify(null)
+    withContext(RawSwingDispatcher) {
+      serviceAsync<NotificationGroupManager>().getNotificationGroup("Plugin Error")
+        .createNotification(title, content, NotificationType.ERROR)
+        .addActions(actions)
+        .notify(null)
+    }
   }
 
   internal fun prepareEnableAction(pluginsToEnable: Collection<String>): AnAction {

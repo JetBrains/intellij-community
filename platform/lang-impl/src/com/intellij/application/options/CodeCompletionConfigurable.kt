@@ -42,6 +42,7 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
   ApplicationBundle.message("title.code.completion.popup"), "reference.settingsdialog.IDE.editor.code.completion"),
                               EditorOptionsProvider, WithEpDependencies, BackedByPersistentState {
 
+  @ApiStatus.Internal
   companion object {
     const val ID: String = "editor.preferences.completion.popup"
     private val LOG = Logger.getInstance(CodeCompletionConfigurable::class.java)

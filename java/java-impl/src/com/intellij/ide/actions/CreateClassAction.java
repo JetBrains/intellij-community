@@ -12,6 +12,8 @@ import com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
@@ -31,11 +33,13 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.Icon;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -54,6 +58,21 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
                            @Nullable Supplier<? extends @Nullable Icon> icon,
                            Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     super(text, description, icon, rootTypes);
+  }
+
+  @Override
+  protected boolean isAvailable(@NotNull DataContext dataContext) {
+    if (!super.isAvailable(dataContext)) return false;
+
+    return !isJavaFileActionSuppressed(dataContext);
+  }
+
+  public static boolean isJavaFileActionSuppressed(@NotNull DataContext dataContext) {
+    if (AdvancedSettings.getBoolean("java.suggest.creating.java.sources.in.irrelevant.source.roots")) return false;
+
+    List<JavaClassActionSuppressor> suppressors = JavaClassActionSuppressor.EP_NAME.getExtensionList();
+    return ContainerUtil.exists(suppressors,
+                                 suppressor -> suppressor.isSuppressed(dataContext));
   }
 
   @Override

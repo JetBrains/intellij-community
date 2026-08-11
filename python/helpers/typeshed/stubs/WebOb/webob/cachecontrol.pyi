@@ -1,3 +1,4 @@
+import builtins
 from _typeshed import SupportsItems
 from collections.abc import Callable
 from typing import Any, Generic, Literal, overload
@@ -37,7 +38,7 @@ class exists_property(Generic[_ScopeT]):
     def __delete__(self, obj: CacheControl[_ScopeT]) -> None: ...
 
 class value_property(Generic[_T, _DefaultT, _NoneLiteral, _ScopeT]):
-    def __init__(self, prop: str, default: _DefaultT = None, none: _NoneLiteral = None, type: _ScopeT = None) -> None: ...  # type: ignore[assignment]
+    def __init__(self, prop: str, default: _DefaultT = None, none: _NoneLiteral = None, type: _ScopeT = None) -> None: ...  # type: ignore[assignment]  # ty:ignore[invalid-parameter-default]
 
     @overload
     def __get__(self, obj: None, type: type[CacheControl[Any]] | None = None) -> Self: ...
@@ -68,7 +69,7 @@ class value_property(Generic[_T, _DefaultT, _NoneLiteral, _ScopeT]):
 
 class CacheControl(Generic[_ScopeT]):
     header_value: str
-    update_dict: type[UpdateDict]
+    update_dict: builtins.type[UpdateDict]
     properties: dict[str, Any]
     type: _ScopeT
     def __init__(self, properties: dict[str, Any], type: _ScopeT) -> None: ...
@@ -99,7 +100,7 @@ class CacheControl(Generic[_ScopeT]):
     proxy_revalidate: exists_property[Literal["response"]]
     max_age: value_property[int, None, Literal[-1], None]
     s_maxage: value_property[int, None, None, Literal["response"]]
-    s_max_age = s_maxage
+    s_max_age = s_maxage  # pyrefly: ignore [unknown-name]
     stale_while_revalidate: value_property[int, None, None, Literal["response"]]
     stale_if_error: value_property[int, None, None, Literal["response"]]
     def copy(self) -> Self: ...

@@ -12,8 +12,11 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.Collections
 
 @ApiStatus.Experimental
-class PyIntersectionType private constructor(members: Collection<PyType?>) : PyCompositeType {
-  override val members: Set<PyType?> = Collections.unmodifiableSet<PyType?>(LinkedHashSet(members))
+class PyIntersectionType private constructor(members: Collection<PyType?>) : PyCompositeTypeBase() {
+  override val memberSet: Set<PyType?> = Collections.unmodifiableSet(LinkedHashSet(members))
+
+  override val members: Set<PyType?>
+    get() = memberSet
 
   override fun resolveMember(
     name: String,
@@ -56,19 +59,6 @@ class PyIntersectionType private constructor(members: Collection<PyType?>) : PyC
       return visitor.visitPyIntersectionType(this)
     }
     return visitor.visitPyType(this)
-  }
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as PyIntersectionType
-
-    return members == other.members
-  }
-
-  override fun hashCode(): Int {
-    return members.hashCode()
   }
 
   override fun toString(): String {

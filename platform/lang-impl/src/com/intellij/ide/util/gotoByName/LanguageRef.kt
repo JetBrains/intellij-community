@@ -11,19 +11,37 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.psi.PsiElement
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
 private val LOG = Logger.getInstance(LanguageRef::class.java)
 
-data class LanguageRef(val id: String, @field:Nls val displayName: String, val icon: Icon?) {
+class LanguageRef private constructor(
+  val id: String,
+  @field:Nls val displayName: String,
+  iconProvider: () -> Icon?,
+) {
+  private val lazyIcon: Lazy<Icon?> = lazy(LazyThreadSafetyMode.PUBLICATION, iconProvider)
+  val icon: Icon? get() = lazyIcon.value
+
+  constructor(id: String, displayName: @Nls String, icon: Icon?) : this(id, displayName, { icon })
+
   companion object {
+    private val cache = ContainerUtil.createConcurrentWeakMap<Language, LanguageRef>()
+
     @JvmStatic
-    fun forLanguage(lang: Language): LanguageRef =
-      (nonDependentLanguage(lang) ?: lang).let {
-        LanguageRef(it.id, it.displayName, it.associatedFileType?.icon)
+    fun forLanguage(lang: Language): LanguageRef {
+      val language = nonDependentLanguage(lang) ?: lang
+      return cache.computeIfAbsent(language) {
+        LanguageRef(it.id, it.displayName) {
+          runCatching {
+            it.associatedFileType?.icon
+          }.getOrLogException(LOG)
+        }
       }
+    }
 
     private fun nonDependentLanguage(lang: Language): Language? =
       if (lang is DependentLanguage) lang.baseLanguage else lang
@@ -60,12 +78,32 @@ data class LanguageRef(val id: String, @field:Nls val displayName: String, val i
   override fun hashCode(): Int {
     return id.hashCode()
   }
+
+  override fun toString(): String = "LanguageRef(id=$id, displayName=$displayName)"
 }
 
-data class FileTypeRef(val name: @NonNls String, val displayName: @Nls String, val icon: Icon?) {
+class FileTypeRef private constructor(
+  val name: @NonNls String,
+  val displayName: @Nls String,
+  iconProvider: () -> Icon?,
+) {
+  private val lazyIcon: Lazy<Icon?> = lazy(LazyThreadSafetyMode.PUBLICATION, iconProvider)
+  val icon: Icon? get() = lazyIcon.value
+
+  constructor(name: @NonNls String, displayName: @Nls String, icon: Icon?) : this(name, displayName, { icon })
+
   companion object {
+    private val cache = ContainerUtil.createConcurrentWeakMap<FileType, FileTypeRef>()
+
     @JvmStatic
-    fun forFileType(fileType: FileType): FileTypeRef = FileTypeRef(fileType.name, fileType.displayName, fileType.icon)
+    fun forFileType(fileType: FileType): FileTypeRef =
+      cache.computeIfAbsent(fileType) {
+        FileTypeRef(it.name, it.displayName) {
+          runCatching {
+            it.icon
+          }.getOrLogException(LOG)
+        }
+      }
 
     @JvmStatic
     fun forAllFileTypes(): List<FileTypeRef> {
@@ -92,4 +130,5 @@ data class FileTypeRef(val name: @NonNls String, val displayName: @Nls String, v
     return name.hashCode()
   }
 
+  override fun toString(): String = "FileTypeRef(name=$name, displayName=$displayName)"
 }

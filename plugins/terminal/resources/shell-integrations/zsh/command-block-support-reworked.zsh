@@ -82,7 +82,11 @@ __jetbrains_intellij_prompt_finished() {
 
 __jetbrains_intellij_get_aliases() {
   builtin local aliases_mapping="$(__jetbrains_intellij_escape_json "$(alias)")"
-  builtin printf '\e]1341;aliases_received;result=%s\a' "$(__jetbrains_intellij_encode "$aliases_mapping")" 2>/dev/null
+  builtin local aliases_encoded="$(__jetbrains_intellij_encode "$aliases_mapping")"
+  # Precompute the aliases in the separate local variable
+  # to avoid possible 'SIGCHLD' interruption (from the processes started in __jetbrains_intellij_encode)
+  # during printing possibly large payload.
+  builtin printf '\e]1341;aliases_received;result=%s\a' "$aliases_encoded"
 }
 
 __jetbrains_intellij_escape_json() {

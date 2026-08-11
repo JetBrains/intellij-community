@@ -12,7 +12,7 @@ import com.intellij.testFramework.junit5.fixture.extensionPointFixture
 
 abstract class DependencySubstitutionTestCase {
 
-  val coordinates by extensionPointFixture(DependencySubstitutionExtension.EP_NAME, ::TestDependencySubstitutionExtension)
+  val coordinates by extensionPointFixture(DependencySubstitutionExtension.EP_NAME, createExtension = ::TestDependencySubstitutionExtension)
 
   class TestDependencySubstitutionExtension : DependencySubstitutionExtension {
 

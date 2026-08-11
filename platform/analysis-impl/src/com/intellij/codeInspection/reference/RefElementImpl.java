@@ -46,7 +46,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     myID = null;
   }
 
-  protected RefElementImpl(PsiFile file, RefManager manager) {
+  protected RefElementImpl(@NotNull PsiFile file, @NotNull RefManager manager) {
     this(file.getName(), file, manager);
   }
 

@@ -288,6 +288,7 @@ private val asyncAppListenerAllowListForNonCorePlugin = java.util.Set.of(
   "com.intellij.internal.statistic.updater.StatisticsJobsScheduler",
   "com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler",
   "com.intellij.platform.daemon.client.DaemonApplicationActivity",
+  "com.intellij.platform.ijent.community.impl.IjentMessageBusAdapter",
 )
 
 private fun executeAsyncAppInitListeners(scope: CoroutineScope) {
@@ -512,7 +513,7 @@ private suspend fun createAppStarter(args: List<String>, asyncScope: CoroutineSc
   val commandName = args.firstOrNull()  // the first argument maybe a project path
   return when {
     commandName == null -> {
-      asyncScope.async(CoroutineName("app starter creation")) { IdeStarter() }
+      asyncScope.async(CoroutineName("app starter creation")) { createProductDefaultAppStarter() }
     }
     args.size == 1 && OSAgnosticPathUtil.isAbsolute(commandName) -> {
       asyncScope.async(CoroutineName("app starter creation")) { createDefaultAppStarter() }
@@ -539,8 +540,24 @@ private suspend fun createAppStarter(args: List<String>, asyncScope: CoroutineSc
   }
 }
 
-private fun createDefaultAppStarter(): ApplicationStarter =
-  if (PlatformUtils.getPlatformPrefix() == "LightEdit") IdeStarter.StandaloneLightEditStarter() else IdeStarter()
+private fun createDefaultAppStarter(): ApplicationStarter {
+  return when (PlatformUtils.getPlatformPrefix()) {
+    "LightEdit" -> IdeStarter.StandaloneLightEditStarter()
+    else -> createProductDefaultAppStarter()
+  }
+}
+
+/**
+ * A product may replace the default [IdeStarter] used when the IDE is started without an explicit command
+ * (either without arguments at all or with a project path only) by an [ApplicationStarter] bundled in the product layout:
+ * the starter ID is specified in the [DEFAULT_APP_STARTER_ID_PROPERTY] system property (usually set via the product's launcher JVM arguments).
+ */
+private fun createProductDefaultAppStarter(): ApplicationStarter {
+  val starterId = System.getProperty(DEFAULT_APP_STARTER_ID_PROPERTY) ?: return IdeStarter()
+  return ApplicationStarter.findStarter(starterId) ?: IdeStarter()
+}
+
+private const val DEFAULT_APP_STARTER_ID_PROPERTY: String = "ide.default.app.starter.id"
 
 @VisibleForTesting
 internal fun createAppLocatorFile() {

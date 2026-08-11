@@ -1,12 +1,17 @@
 package com.jetbrains.python.packaging;
 
-import junit.framework.TestCase;
+import com.intellij.python.requirements.parser.PyRequirementParser;
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.fixtures.PyTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Ilya.Kazakevich
  */
-public class PyPackageTest extends TestCase {
+@Subsystems.PackagingRequirements
+@Layers.Functional
+public class PyPackageTest extends PyTestCase {
 
   // http://legacy.python.org/dev/peps/pep-0386/
   public void testIsAtLeastVersionNormal() {

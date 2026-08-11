@@ -28,6 +28,7 @@ import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.math.max
@@ -120,8 +121,10 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
         paintRect.cutLeft(iconsRect.width)
       }
 
-      paintRect.cutLeft(BEFORE_CHEVRON_GAP)
-      paintIcons(listOf(AllIcons.General.ChevronDown), combo, g2, paintRect)
+      combo.chevronIcon?.let { chevron ->
+        paintRect.cutLeft(BEFORE_CHEVRON_GAP)
+        paintIcons(listOf(chevron), combo, g2, paintRect)
+      }
     }
     finally {
       g2.dispose()
@@ -160,8 +163,10 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
       result.height = max(result.height, rightIcons.stream().mapToInt{ it.iconHeight }.max().orElse(0))
     }
 
-    result.width += BEFORE_CHEVRON_GAP + AllIcons.General.ChevronDown.iconWidth
-    result.height = max(result.height, AllIcons.General.ChevronDown.iconHeight)
+    if (combo.showChevron) {
+      result.width += BEFORE_CHEVRON_GAP + AllIcons.General.ChevronDown.iconWidth
+      result.height = max(result.height, AllIcons.General.ChevronDown.iconHeight)
+    }
 
     val insets = c.getInsets()
     val margin = c.margin
@@ -186,10 +191,13 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
     if (right > 0) right += c.iconTextGap
     otherElementsWidth += right
 
-    otherElementsWidth += BEFORE_CHEVRON_GAP + AllIcons.General.ChevronDown.iconWidth
+    otherElementsWidth += c.chevronIcon?.let { BEFORE_CHEVRON_GAP + it.iconWidth } ?: 0
 
     return paintRect.width - otherElementsWidth
   }
+
+  private val ToolbarComboButton.chevronIcon: Icon?
+    get() = if (showChevron) AllIcons.General.ChevronDown else null
 
   private fun paintBackground(g: Graphics, combo: ToolbarComboButton) {
     val g2 = g.create() as Graphics2D
@@ -211,7 +219,7 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
       }
       combo.highlightBackground?.let(innerRectPainter)
 
-      if (combo.isEnabled && combo.model.isSelected()) {
+      if (combo.isEnabled && combo.showChevron && combo.model.isSelected()) {
         val hoverBackground = if (ProjectWindowCustomizerService.getInstance().isActive()) combo.transparentHoverBackground else combo.hoverBackground
         hoverBackground?.let(innerRectPainter)
       }

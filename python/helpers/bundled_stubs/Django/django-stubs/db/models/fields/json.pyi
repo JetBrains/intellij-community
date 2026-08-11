@@ -35,8 +35,6 @@ class JSONField(CheckFieldDefaultMixin, Field[_ST, _GT]):
     def get_transform(self, name: str) -> type[Transform] | KeyTransformFactory: ...  # type: ignore[override]
     @override
     def value_to_string(self, obj: Model) -> Any: ...
-    @override
-    def formfield(self, **kwargs: Any) -> Any: ...  # type: ignore[override]
 
 class DataContains(FieldGetDbPrepValueMixin, PostgresOperatorLookup): ...
 class ContainedBy(FieldGetDbPrepValueMixin, PostgresOperatorLookup): ...
@@ -90,7 +88,7 @@ class KeyTransform(Transform):
 class KeyTextTransform(KeyTransform):
     postgres_operator: str
     postgres_nested_operator: str
-    output_field: ClassVar[TextField]
+    output_field: ClassVar[TextField[Any, Any]]
     @override
     def as_mysql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...
     @classmethod

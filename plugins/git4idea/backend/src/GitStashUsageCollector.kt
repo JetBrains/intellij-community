@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 internal object GitStashUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("stash.interactions", 4)
+  private val GROUP: EventLogGroup = EventLogGroup("stash.interactions", 5)
 
   private val STASH_PUSH = GROUP.registerIdeActivity("stash.push")
 
@@ -18,7 +18,8 @@ internal object GitStashUsageCollector : CounterUsagesCollector() {
 
   private val STASH_PUSH_DIALOG = GROUP.registerEvent("stash.push.dialog",
                                                       EventFields.Boolean("message_entered"),
-                                                      EventFields.Boolean("keep_index"))
+                                                      EventFields.Boolean("keep_index"),
+                                                      EventFields.Boolean("include_untracked"))
   private val STASH_POP_DIALOG = GROUP.registerEvent("stash.pop.dialog",
                                                      EventFields.Boolean("create_branch"),
                                                      EventFields.Boolean("reinstate_index"),
@@ -35,8 +36,8 @@ internal object GitStashUsageCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  fun logStashPushDialog(messageEntered: Boolean, keepIndex: Boolean) {
-    STASH_PUSH_DIALOG.log(messageEntered, keepIndex)
+  fun logStashPushDialog(messageEntered: Boolean, keepIndex: Boolean, includeUntracked: Boolean) {
+    STASH_PUSH_DIALOG.log(messageEntered, keepIndex, includeUntracked)
   }
 
   @JvmStatic

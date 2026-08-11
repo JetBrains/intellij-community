@@ -32,16 +32,17 @@ import com.jetbrains.python.psi.PyTypeParameterList
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyElementImpl
 import com.jetbrains.python.psi.resolve.PyResolveUtil.resolveFullyQualifiedName
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableTypeImpl
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl
 import com.jetbrains.python.psi.types.PyFunctionTypeImpl
 import com.jetbrains.python.psi.types.PyType
-import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.PyTypeVarTypeImpl
+import com.jetbrains.python.psi.types.PyVariance
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), PyExpression {
@@ -123,7 +124,7 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
         emptyList(), // constraints
         boundType, // bound
         null, // defaultType (Ref<PyType>?)
-        PyTypeParameterType.Variance.INVARIANT // variance
+        PyVariance.INVARIANT // variance
       )
 
       result[paramName] = typeVar
@@ -193,7 +194,7 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
           val paramType = resolveTypeExpression(param, context, typeVarMap)
           PyCallableParameterImpl.nonPsi(paramType)
         }
-        else -> PyCallableParameterImpl.nonPsi(null)
+        else -> PyCallableParameterImpl.nonPsi(PyAnyType.unknown)
       }
     }
   }

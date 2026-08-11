@@ -1,5 +1,5 @@
 // "Create abstract function 'foo'" "true"
-// K2_ERROR: Unresolved reference 'foo'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 abstract class A {
     fun bar(b: Boolean) {}
 

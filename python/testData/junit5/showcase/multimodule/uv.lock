@@ -1,0 +1,53 @@
+version = 1
+revision = 1
+requires-python = ">=3.12"
+
+[manifest]
+members = [
+    "analyzer",
+    "formatlib",
+    "mathlib",
+    "multimod",
+    "reporter",
+]
+
+[[package]]
+name = "analyzer"
+version = "0.1.0"
+source = { editable = "tools/analyzer" }
+dependencies = [
+    { name = "formatlib" },
+    { name = "mathlib" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "formatlib", editable = "libs/formatlib" },
+    { name = "mathlib", editable = "libs/mathlib" },
+]
+
+[[package]]
+name = "formatlib"
+version = "0.1.0"
+source = { editable = "libs/formatlib" }
+
+[[package]]
+name = "mathlib"
+version = "0.1.0"
+source = { editable = "libs/mathlib" }
+
+[[package]]
+name = "multimod"
+version = "0.1.0"
+source = { virtual = "." }
+
+[[package]]
+name = "reporter"
+version = "0.1.0"
+source = { editable = "tools/reporter" }
+dependencies = [
+    { name = "formatlib" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "formatlib", editable = "libs/formatlib" }]

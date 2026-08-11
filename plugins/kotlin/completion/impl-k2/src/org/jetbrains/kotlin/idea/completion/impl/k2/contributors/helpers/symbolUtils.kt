@@ -5,9 +5,9 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKindImpl
-import org.jetbrains.kotlin.analysis.api.components.memberScope
-import org.jetbrains.kotlin.analysis.api.components.packageScope
-import org.jetbrains.kotlin.analysis.api.components.staticMemberScope
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
+import org.jetbrains.kotlin.analysis.api.scopes.packageScope
+import org.jetbrains.kotlin.analysis.api.scopes.staticMemberScope
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion

@@ -1,5 +1,5 @@
 // "Make 'foo' internal" "true"
-// K2_ERROR: Cannot access 'val foo: Int': it is private in 'A'.
+// K2_ERROR: INVISIBLE_REFERENCE
 
 open class A {
     private val foo = 1

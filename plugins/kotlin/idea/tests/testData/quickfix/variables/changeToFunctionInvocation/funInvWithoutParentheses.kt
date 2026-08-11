@@ -1,5 +1,5 @@
 // "Change to function invocation" "true"
-// K2_ERROR: Function invocation 'foo()' expected.
+// K2_ERROR: FUNCTION_CALL_EXPECTED
 package a
 
 fun foo() {}

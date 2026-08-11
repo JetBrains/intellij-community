@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit2.configuration;
 
@@ -273,7 +273,7 @@ public class JUnitConfigurationModel {
     });
   }
 
-  public void reloadTestKindModel(JComboBox<Integer> comboBox, Module module, @Nullable Runnable onDone) {
+  public void reloadTestKindModel(@NotNull JComboBox<Integer> comboBox, @Nullable Module module, @Nullable Runnable onDone) {
     Object selectedItem = comboBox.getSelectedItem();
     ReadAction.nonBlocking(() -> {
       final DefaultComboBoxModel<Integer> aModel = new DefaultComboBoxModel<>();
@@ -283,8 +283,7 @@ public class JUnitConfigurationModel {
       aModel.addElement(CLASS);
       aModel.addElement(METHOD);
 
-      GlobalSearchScope searchScope = module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
-                                                     : GlobalSearchScope.allScope(myProject);
+      GlobalSearchScope searchScope = JUnitUtil.getScope(module, myProject);
 
       if (myProject.isDefault() || JavaPsiFacade.getInstance(myProject).findPackage("org.junit") != null) {
         aModel.addElement(CATEGORY);

@@ -1,18 +1,38 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.inspections.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assumeModel_4_0_0
+import com.intellij.maven.testFramework.fixtures.assumeModel_4_1_0
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
+import com.intellij.maven.testFramework.fixtures.setRawPomFile
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.inspections.MavenBomPackagingInOldSchema
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.checkHighlighting
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenBomInOldModelInspectionTest : MavenDomTestCase() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenBomInOldModelInspectionTest(mavenVersion: String, modelVersion: String) {
 
-    fixture.enableInspections(MavenBomPackagingInOldSchema::class.java)
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
+  @BeforeEach
+  fun setUp() {
+    maven.fixture.enableInspections(MavenBomPackagingInOldSchema::class.java)
     runBlocking {
-      importProjectAsync("""
+      maven.importProjectAsync("""
                        <groupId>test</groupId>
                        <artifactId>test</artifactId>
                        <version>1.0</version>
@@ -22,21 +42,22 @@ class MavenBomInOldModelInspectionTest : MavenDomTestCase() {
 
   @Test
   fun testDoNotFireHighlightIn41() = runBlocking {
-    assumeModel_4_1_0("")
-    createProjectPom("""
+    maven.assumeModel_4_1_0("")
+    maven.createProjectPom("""
                        <groupId>my.group</groupId>
                        <artifactId>childA</artifactId>
                        <version>1.0</version>
                        <packaging>bom</packaging>
                        """.trimIndent())
 
-    checkHighlighting()
+    maven.checkHighlighting()
   }
 
   @Test
   fun testFireHighlightIn40() = runBlocking {
-    assumeModel_4_0_0("")
-    setRawPomFile("""<?xml version="1.0"?>
+    val modelVersion = maven.modelVersion
+    maven.assumeModel_4_0_0("")
+    maven.setRawPomFile("""<?xml version="1.0"?>
       <project xmlns="http://maven.apache.org/POM/$modelVersion"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/$modelVersion http://maven.apache.org/xsd/maven-$modelVersion.xsd">
@@ -47,13 +68,13 @@ class MavenBomInOldModelInspectionTest : MavenDomTestCase() {
         <packaging><error descr="Model version 4.1.0 is required for packaging bom">bom</error></packaging>
         </project>
     """.trimIndent())
-    checkHighlighting()
+    maven.checkHighlighting()
   }
 
   @Test
   fun testUpdateToModel41() = runBlocking {
-    assumeModel_4_0_0("")
-    setRawPomFile("""<?xml version="1.0"?>
+    maven.assumeModel_4_0_0("")
+    maven.setRawPomFile("""<?xml version="1.0"?>
       <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -63,11 +84,11 @@ class MavenBomInOldModelInspectionTest : MavenDomTestCase() {
   <version>1.0</version>
   <packaging><error descr="Model version 4.1.0 is required for packaging bom">bo<caret>m</error></packaging>  </project>
     """.trimIndent())
-    checkHighlighting()
-    val intention =  fixture.availableIntentions.singleOrNull{it.text.contains("Update Maven Model and XSD to 4.1.0")}
-    assertNotNull("Cannot find intention", intention)
-    fixture.launchAction(intention!!)
-    fixture.checkResult("""<?xml version="1.0"?>
+    maven.checkHighlighting()
+    val intention =  maven.fixture.availableIntentions.singleOrNull{it.text.contains("Update Maven Model and XSD to 4.1.0")}
+    assertNotNull(intention, "Cannot find intention")
+    maven.fixture.launchAction(intention!!)
+    maven.fixture.checkResult("""<?xml version="1.0"?>
       <project xmlns="http://maven.apache.org/POM/4.1.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 http://maven.apache.org/xsd/maven-4.1.0.xsd">

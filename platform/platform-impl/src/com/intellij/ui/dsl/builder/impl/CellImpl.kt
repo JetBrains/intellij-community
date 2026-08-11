@@ -24,11 +24,9 @@ import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.components.DslLabel
-import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.dsl.gridLayout.toUnscaled
 import com.intellij.ui.dsl.validation.CellValidation
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValidationInfoBuilder
@@ -44,7 +42,6 @@ import javax.swing.JScrollPane
 import javax.swing.event.DocumentEvent
 import javax.swing.text.BadLocationException
 
-@ApiStatus.Internal
 internal class CellImpl<T : JComponent>(
   private val dialogPanelConfig: DialogPanelConfig,
   component: T,
@@ -381,12 +378,6 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  @Deprecated("Use customize(UnscaledGaps) instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun customize(customGaps: Gaps): CellImpl<T> {
-    return customize(customGaps.toUnscaled())
-  }
-
   override fun customize(customGaps: UnscaledGaps): CellImpl<T> {
     super.customize(customGaps)
     return this
@@ -461,12 +452,6 @@ internal class CellImpl<T : JComponent>(
     }
     catch (_: BadLocationException) {
       return null
-    }
-  }
-
-  companion object {
-    internal fun Cell<*>.installValidationRequestor(property: ObservableProperty<*>) {
-      CellValidationImpl.installDefaultValidationRequestor(component.interactiveComponent, property)
     }
   }
 }

@@ -314,6 +314,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     return true;
   }
 
+  @ApiStatus.Internal
   protected @NotNull PathProximityComparator getPathProximityComparator() {
     return new PathProximityComparator(myContext == null ? null : myContext.getElement());
   }
@@ -401,7 +402,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   private static void processNamesByPattern(final @NotNull ChooseByNameViewModel base,
                                             final String @NotNull [] names,
                                             final @NotNull String namePattern,
-                                            final ProgressIndicator indicator,
+                                            final @NotNull ProgressIndicator indicator,
                                             final @NotNull Consumer<? super MatchResult> consumer,
                                             final boolean preferStartMatches) {
     final var nameMatcher = buildPatternMatcher(namePattern, preferStartMatches);
@@ -513,6 +514,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     return builder.build();
   }
 
+  @ApiStatus.Internal
   protected static final class PathProximityComparator implements Comparator<Object> {
     private final @NotNull PsiProximityComparator myProximityComparator;
 

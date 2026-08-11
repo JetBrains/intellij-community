@@ -8,7 +8,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.updateSettings.impl.PluginAutoUpdateService
 import com.intellij.openapi.updateSettings.impl.PluginUpdateHandler
 import com.intellij.openapi.updateSettings.impl.PluginUpdatesModel
-import com.intellij.platform.pluginManager.shared.rpc.PluginUpdaterApi
+import com.intellij.platform.pluginManager.shared.base.rpc.PluginUpdaterApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -16,8 +16,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class BackendPluginUpdaterApi : PluginUpdaterApi {
-  override suspend fun loadAndStorePluginUpdates(apiVersion: String?, sessionId: String): PluginUpdatesModel {
-    val updates = PluginUpdateHandler.getInstance().loadAndStorePluginUpdates(apiVersion, sessionId)
+  override suspend fun loadAndStorePluginUpdates(apiVersion: String?): PluginUpdatesModel {
+    val updates = PluginUpdateHandler.getInstance().loadAndStorePluginUpdates(apiVersion)
     val pluginAutoUpdateService = service<PluginAutoUpdateService>()
     if (pluginAutoUpdateService.isAutoUpdateEnabled()) {
       pluginAutoUpdateService.onPluginUpdatesChecked(updates.downloaders)
@@ -25,10 +25,10 @@ class BackendPluginUpdaterApi : PluginUpdaterApi {
     return updates
   }
 
-  override suspend fun installUpdates(sessionId: String, updates: List<PluginDto>): Deferred<Boolean> {
+  override suspend fun installUpdates(updates: List<PluginDto>): Deferred<Boolean> {
     return serviceAsync<PluginManagerCoroutineScopeHolder>().cs.async {
       try {
-        PluginUpdateHandler.getInstance().installUpdates(sessionId, updates, null, null)
+        PluginUpdateHandler.getInstance().installUpdates(updates, null, null)
       }
       catch (_: Exception) {
         return@async false
@@ -37,8 +37,8 @@ class BackendPluginUpdaterApi : PluginUpdaterApi {
     }
   }
 
-  override suspend fun ignorePluginUpdates(sessionId: String) {
-    PluginUpdateHandler.getInstance().ignorePluginUpdates(sessionId)
+  override suspend fun ignorePluginUpdates() {
+    PluginUpdateHandler.getInstance().ignorePluginUpdates()
   }
 }
 

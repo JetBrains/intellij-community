@@ -1,6 +1,6 @@
 // FIX: Override Java default methods by explicit delegation to the superclass
-// K2_ERROR: 'val' on function parameter is prohibited.
-// K2_AFTER_ERROR: 'val' on function parameter is prohibited.
+// K2_AFTER_ERROR: VAL_OR_VAR_ON_FUN_PARAMETER
+// K2_ERROR: VAL_OR_VAR_ON_FUN_PARAMETER
 class IImpl: Interface {
     override fun getInt(): Int = 42
 }

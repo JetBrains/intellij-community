@@ -60,4 +60,8 @@ public final class MacFullScreenSupport implements FullScreenSupport {
       FullScreenUtilities.removeFullScreenListenerFrom(window, myListener);
     }
   }
+
+  public static void disableNativeFullScreen(@NotNull Window window) {
+    FullScreenUtilities.setWindowCanFullScreen(window, false);
+  }
 }

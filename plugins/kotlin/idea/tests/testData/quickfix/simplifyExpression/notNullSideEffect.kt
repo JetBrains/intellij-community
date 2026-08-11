@@ -1,5 +1,5 @@
 // "Simplify comparison" "true"
-// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KotlinConstantConditionsInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KotlinConstantConditionsInspection
 // Issue: KTIJ-32803
 
 fun test() {

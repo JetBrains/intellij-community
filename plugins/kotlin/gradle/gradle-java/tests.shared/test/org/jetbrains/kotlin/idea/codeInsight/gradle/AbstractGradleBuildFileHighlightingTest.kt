@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.runInEdtAndWait
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.idea.highlighter.KotlinProblemHighlightFilter
+import org.jetbrains.kotlin.idea.highlighting.KotlinProblemHighlightFilter
 import org.jetbrains.kotlin.idea.highlighter.checkHighlighting
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.parseDirectives
 import org.jetbrains.kotlin.psi.KtFile

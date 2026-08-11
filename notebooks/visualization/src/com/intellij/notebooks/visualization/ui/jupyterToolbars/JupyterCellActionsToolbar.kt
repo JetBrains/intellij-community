@@ -2,6 +2,7 @@ package com.intellij.notebooks.visualization.ui.jupyterToolbars
 
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.editor.Editor
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics2D
 import java.awt.geom.RoundRectangle2D
@@ -13,9 +14,10 @@ class JupyterCellActionsToolbar(
   // PY-72283
   actionGroup: ActionGroup,
   target: JComponent,
+  editor: Editor,
   place: String = ActionPlaces.EDITOR_INLAY,
   actionsUpdatedCallback: () -> Unit,
-) : JupyterAbstractAboveCellToolbar(actionGroup, target, place, actionsUpdatedCallback) {
+) : JupyterAbstractAboveCellToolbar(actionGroup, target, place, actionsUpdatedCallback, editor) {
   override fun fillRect(g2d: Graphics2D) {
     val arcSize = getArcSize()
     val shape = RoundRectangle2D.Float(

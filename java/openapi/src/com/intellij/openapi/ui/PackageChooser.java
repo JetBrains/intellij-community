@@ -19,6 +19,7 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiPackage;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ public abstract class PackageChooser extends DialogWrapper {
 
   public abstract PsiPackage getSelectedPackage();
 
-  public abstract List<PsiPackage> getSelectedPackages();
+  public abstract @Unmodifiable List<PsiPackage> getSelectedPackages();
 
   public abstract void selectPackage(@NonNls String qualifiedName);
 }

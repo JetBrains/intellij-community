@@ -20,6 +20,10 @@ abstract class AbstractKotlinCompilerProjectPostConfigurator(protected val kotli
     protected fun compilerPluginProjectConfigurators(module: Module): List<KotlinCompilerPluginProjectConfigurator> =
         KotlinCompilerPluginProjectConfigurator.compilerPluginProjectConfigurators(kotlinCompilerPluginId, module)
 
+    @ApiStatus.Internal
+    fun isForCompilerPlugin(kotlinCompilerPluginId: String): Boolean =
+        this.kotlinCompilerPluginId == kotlinCompilerPluginId
+
     protected fun Module.hasCompilerPluginExtension(filter: (FirExtensionRegistrarAdapter) -> Boolean): Boolean {
         val kotlinSourceRootType = getKotlinSourceRootType() ?: return false
         val kind = when (kotlinSourceRootType) {

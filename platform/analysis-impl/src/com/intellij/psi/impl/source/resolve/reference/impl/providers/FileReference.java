@@ -66,6 +66,12 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
 
   public static final FileReference[] EMPTY = new FileReference[0];
 
+  /**
+   * The number of path segments beyond which the context chain is resolved iteratively
+   * instead of relying on the recursion in {@link #getContexts()}.
+   */
+  private static final int ITERATIVE_CONTEXT_RESOLVE_THRESHOLD = 64;
+
   private final int myIndex;
   private TextRange myRange;
   private final String myText;
@@ -132,6 +138,24 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   public ResolveResult @NotNull [] multiResolve(final boolean incompleteCode) {
     PsiFile file = getElement().getContainingFile();
     return ResolveCache.getInstance(file.getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, false, file);
+  }
+
+  /**
+   * {@link #getContexts()} resolves the context reference, which resolves its own context reference and so on down to
+   * index 0, so a path with many segments would exhaust the stack. Resolve a long chain bottom-up instead: every level
+   * then finds its context reference already cached and returns without recursing.
+   * <p>
+   * Called only on a cache miss, from {@link MyResolver#INSTANCE}. The references resolved here go through
+   * {@link MyResolver#WITHOUT_CONTEXT_CHAIN} so that they don't walk the chain again.
+   */
+  private void resolveContextChain(@NotNull PsiFile containingFile) {
+    if (myIndex < ITERATIVE_CONTEXT_RESOLVE_THRESHOLD) return;
+    ResolveCache cache = ResolveCache.getInstance(containingFile.getProject());
+    FileReference[] references = myFileReferenceSet.getAllReferences();
+    int limit = Math.min(myIndex, references.length);
+    for (int i = 0; i < limit; i++) {
+      cache.resolveWithCaching(references[i], MyResolver.WITHOUT_CONTEXT_CHAIN, false, false, containingFile);
+    }
   }
 
   protected ResolveResult @NotNull [] innerResolve(boolean caseSensitive, @NotNull PsiFile containingFile) {
@@ -599,11 +623,23 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     return myFileReferenceSet.getLastReference();
   }
 
-  private static class MyResolver implements ResolveCache.PolyVariantContextResolver<FileReference> {
-    static final MyResolver INSTANCE = new MyResolver();
+  private static final class MyResolver implements ResolveCache.PolyVariantContextResolver<FileReference> {
+    static final MyResolver INSTANCE = new MyResolver(true);
+
+    /** Used while a context chain is being resolved bottom-up, see {@link FileReference#resolveContextChain}. */
+    static final MyResolver WITHOUT_CONTEXT_CHAIN = new MyResolver(false);
+
+    private final boolean myResolveContextChain;
+
+    private MyResolver(boolean resolveContextChain) {
+      myResolveContextChain = resolveContextChain;
+    }
 
     @Override
     public ResolveResult @NotNull [] resolve(@NotNull FileReference ref, @NotNull PsiFile containingFile, boolean incompleteCode) {
+      if (myResolveContextChain) {
+        ref.resolveContextChain(containingFile);
+      }
       return ref.innerResolve(ref.getFileReferenceSet().isCaseSensitive(), containingFile);
     }
   }

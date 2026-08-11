@@ -1,8 +1,8 @@
 // "Make 'Data' public" "true"
 // PRIORITY: HIGH
-// K2_ERROR: 'protected (in Another)' subclass exposes its 'private-in-class' supertype 'Data'.
-// K2_ERROR: Cannot access 'class Data : Any': it is private in 'Other'.
-// K2_ERROR: Cannot access 'class Data : Any': it is private in 'Other'.
+// K2_ERROR: EXPOSED_SUPER_CLASS
+// K2_ERROR: INVISIBLE_REFERENCE
+// K2_ERROR: INVISIBLE_REFERENCE
 
 class Other {
     private open class Data(val x: Int)

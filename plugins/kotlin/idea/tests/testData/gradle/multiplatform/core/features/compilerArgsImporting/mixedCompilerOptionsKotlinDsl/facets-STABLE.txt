@@ -1,0 +1,121 @@
+MODULES
+project
+
+project.androidTest
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
+
+project.appleMain
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation -progressive -opt-in=CompilationOptInAnnotation
+
+project.appleTest
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation -progressive
+
+project.commonMain
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation -progressive -opt-in=CompilationOptInAnnotation
+
+project.commonTest
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation -progressive
+
+project.iosArm64Main
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
+
+project.iosArm64Test
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
+
+project.iosMain
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation -progressive -opt-in=CompilationOptInAnnotation
+
+project.iosTest
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation -progressive
+
+project.iosX64Main
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
+
+project.iosX64Test
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
+
+project.jsMain
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -main call -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
+
+project.jsTest
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -main call -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
+
+project.jvmAndroidMain
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation -progressive -opt-in=CompilationOptInAnnotation
+
+project.jvmAndroidTest
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation -progressive
+
+project.jvmMain
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
+
+project.jvmTest
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
+
+project.main
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
+
+project.nativeMain
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation -progressive -opt-in=CompilationOptInAnnotation
+
+project.nativeTest
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation -progressive
+
+project.unitTest
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
+
+project.webMain
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation -progressive
+
+project.webTest
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in LangSettingsOptInAnnotation -progressive
+
+
+Test configuration:
+- showing only following facet fields: languageLevel, apiLevel, compilerSettings

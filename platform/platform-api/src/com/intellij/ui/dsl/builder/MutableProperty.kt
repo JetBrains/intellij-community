@@ -12,7 +12,6 @@ interface MutableProperty<T> {
 
 }
 
-@Suppress("FunctionName")
 fun <T> MutableProperty(getter: () -> T, setter: (value: T) -> Unit): MutableProperty<T> {
   return MutablePropertyImpl(getter, setter)
 }
@@ -23,7 +22,7 @@ fun <T> KMutableProperty0<T>.toMutableProperty(): MutableProperty<T> {
 
 /**
  * Converts property to nullable MutableProperty. Use this method if there is no chance null is set into resulting [MutableProperty],
- * otherwise NPE will be thrown. See also safe overloaded [toNullableProperty] method with default value.
+ * otherwise NPE will be thrown. See also safe overloaded [toNullableProperty] method with the default value.
  *
  * Useful for [Cell<ComboBox>.bindItem(prop: KMutableProperty0<T?>)] if the ComboBox is not empty and the property is non-nullable
  */

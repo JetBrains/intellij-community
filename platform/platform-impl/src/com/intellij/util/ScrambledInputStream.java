@@ -3,7 +3,9 @@ package com.intellij.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class ScrambledInputStream extends InputStream{
   private static final int MASK = ScrambledOutputStream.MASK;
   private final InputStream myOriginalStream;

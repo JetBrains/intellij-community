@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.searchEverywhereLucene.common` start
-
 jvm_library(
     name = "common",
     srcs = glob(
@@ -21,7 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -34,7 +33,11 @@ jvm_library(
     ),
     module_name = "intellij.searchEverywhereLucene.common",
     visibility = ["//visibility:public"],
-    runtime_deps = [":common"],
+    runtime_deps = [
+        # do not sort,
+        ":common",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.searchEverywhereLucene.common` end
 

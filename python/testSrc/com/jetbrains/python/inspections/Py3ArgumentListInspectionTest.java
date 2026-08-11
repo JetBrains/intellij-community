@@ -1,10 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
 import com.intellij.idea.TestFor;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
   @NotNull
   @Override
@@ -368,6 +372,52 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  @TestFor(issues = "PY-79173")
+  public void testInitSubclassUnexpectedAndUnfilledArguments() {
+    doTestByText(
+      """
+        class A:
+            def __init_subclass__(cls, a: int):
+                ...
+        
+        
+        class B1(A, <warning descr="Unexpected argument">z="a"</warning><warning descr="Parameter 'a' unfilled">)</warning>: ...
+        class B2(A, a=1): ...
+        """);
+  }
+
+  @TestFor(issues = "PY-79173")
+  public void testInitSubclassKeywordContainerAcceptsAnyArgument() {
+    doTestByText(
+      """
+        class A:
+            def __init_subclass__(cls, **kwargs): ...
+        
+        
+        class B(A, anything=1):
+            ...
+        """);
+  }
+
+  @TestFor(issues = "PY-79173")
+  public void testInitSubclassCustomMetaClassConsumesArguments() {
+    doTestByText(
+      """
+        class Meta(type):
+            def __new__(mcs, name, bases, namespace, **kwargs):
+                return super().__new__(mcs, name, bases, namespace)
+        
+        
+        class A(metaclass=Meta):
+            def __init_subclass__(cls):
+                ...
+        
+        
+        class B(A, whatever=1):
+            ...
+        """);
+  }
+
   // PY-76899
   public void testFieldInDataclassTransformInitIsSkippedDueToFieldSpecifierOverloadMultifile() {
     doMultiFileTest();
@@ -408,23 +458,10 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
     );
   }
 
-  public void testKeywordUnpack() {
-    doTestByText("""
-                   from collections.abc import Mapping
-                   
-                   class M(Mapping[str, str]): pass
-                   
-                   dict(**M())
-                   
-                   dict(<warning descr="Expected a mapping, got int">**1</warning>)
-                   """);
-  }
-
   // PY-79816
   public void testGenericDataclassExplicitType() {
     doTest();
   }
-
 
   // PY-79816
   public void testGenericDataclassExplicitTypeDeconstructed() {
@@ -608,185 +645,9 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
-  // PY-72077
-  public void testPydanticPopulateByNameWithAlias() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doMultiFileTest("b.py");
-  }
-
-  // PY-72077
-  public void testPydanticPopulateByNameWithFieldName() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTest();
-  }
-
-  // PY-72077
-  public void testPydanticPopulateByNameInherited() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTest();
-  }
-
-  // PY-72077
-  public void testPydanticPopulateByNameInheritedMultiFile() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doMultiFileTest();
-  }
-
-  // PY-72077
-  public void testPydanticPopulateByNameModelConfig() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTest();
-  }
-
-  // PY-72077
-  public void testPydanticPopulateByNameDisabled() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTest();
-  }
-
-  // PY-72077
-  public void testPydanticPopulateByNameExplicitFalse() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTest();
-  }
-
-  // PY-78911
-  public void testPydanticFieldWithPositionalDefault() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTestByText("""
-                   from pydantic import BaseModel, Field
-                   
-                   class MyModel(BaseModel):
-                       a: str | None = Field(None, alias="A")
-                       b: str | None = Field(None)
-                       c: str | None = Field(default=None)
-                   
-                   MyModel()
-                   """);
-  }
-
   // PY-88828
   public void testDataclassTransformDecoratorOnOverloadNotImplementation() {
     doMultiFileTest();
-  }
-
-  // PY-88897
-  public void testPydanticPopulateByNameFromDecoratorConfigVariable() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTestByText("""
-                 from pydantic import Field, ConfigDict
-                 from pydantic.dataclasses import dataclass
-
-                 my_config = ConfigDict(populate_by_name=True)
-
-                 @dataclass(config=my_config)
-                 class Model:
-                     __pydantic_config__ = ConfigDict(populate_by_name=False)
-
-                     a1: str = Field(alias="a2", frozen=True)
-
-                 _ = Model(a1="value")
-                 _ = Model(a2="value")
-                 """);
-  }
-
-  // PY-88897
-  public void testPydanticPopulateByNameFromDecoratorConfigExplicitFalse() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTestByText("""
-                 from pydantic import Field, ConfigDict
-                 from pydantic.dataclasses import dataclass
-
-                 @dataclass(config=ConfigDict(populate_by_name=False))
-                 class Model:
-                     __pydantic_config__ = ConfigDict(populate_by_name=True)
-
-                     a1: str = Field(alias="a2", frozen=True)
-
-                 _ = Model(<warning descr="Unexpected argument">a1="value"</warning><warning descr="Parameter 'a2' unfilled">)</warning>
-                 _ = Model(a2="value")
-                 """);
-  }
-
-  // PY-88897
-  public void testPydanticPopulateByNameFallsBackToPydanticConfigWithoutDecoratorConfig() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTestByText("""
-                 from pydantic import Field, ConfigDict
-                 from pydantic.dataclasses import dataclass
-
-                 @dataclass
-                 class Model:
-                     __pydantic_config__ = ConfigDict(populate_by_name=True)
-
-                     a1: str = Field(alias="a2", frozen=True)
-
-                 _ = Model(a1="value")
-                 _ = Model(a2="value")
-                 """);
-  }
-
-  // PY-88897
-  public void testPydanticDataclassKwOnlyDecoratorArgument() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTestByText("""
-               from pydantic.dataclasses import dataclass
-
-               @dataclass(kw_only=True)
-               class Model:
-                   a: str
-
-               _ = Model(a="value")
-               _ = Model(<warning descr="Unexpected argument">"value"</warning><warning descr="Parameter 'a' unfilled">)</warning>
-               """);
-  }
-
-  // PY-88897
-  public void testPydanticDataclassKwOnlyDecoratorArgumentCombinedWithConfig() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTestByText("""
-               from pydantic import ConfigDict, Field
-               from pydantic.dataclasses import dataclass
-
-               @dataclass(kw_only=True, config=ConfigDict(populate_by_name=True))
-               class Model:
-                   a: str = Field(alias="b")
-
-               _ = Model(a="value")
-               _ = Model<warning descr="Unexpected argument(s)Possible callees:(*, b: str)(*, a: str)">("value"<warning descr="Parameter(s) unfilledPossible callees:(*, b: str)(*, a: str)">)</warning></warning>
-               """);
-  }
-
-  // PY-88897
-  public void testPydanticPopulateByNameIsDisabledByDefaultWithoutConfig() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTestByText("""
-               from pydantic import Field
-               from pydantic.dataclasses import dataclass
-
-               @dataclass
-               class Model:
-                   a1: str = Field(alias="a2", frozen=True)
-
-               _ = Model(<warning descr="Unexpected argument">a1="value"</warning><warning descr="Parameter 'a2' unfilled">)</warning>
-               _ = Model(a2="value")
-               """);
-  }
-
-  // PY-88897
-  public void testPydanticPopulateByNameIsDisabledWhenConfigOmitsIt() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTestByText("""
-               from pydantic import Field, ConfigDict
-               from pydantic.dataclasses import dataclass
-
-               @dataclass(config=ConfigDict())
-               class Model:
-                   a1: str = Field(alias="a2", frozen=True)
-
-               _ = Model(<warning descr="Unexpected argument">a1="value"</warning><warning descr="Parameter 'a2' unfilled">)</warning>
-               _ = Model(a2="value")
-               """);
   }
 
   // PY-88727
@@ -857,27 +718,70 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
-  @TestFor(issues = "PY-89182")
-  public void testPydanticValidateByAliasAndNameFalse() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTest();
+  @TestFor(issues = "PY-12592")
+  public void testKnownSpreadInFunctionCall() {
+    doTestByText(
+      """
+        def f(a: str, b: str, c: int): ...
+
+        tup = ("a", "b")
+        f(*tup, 1)
+        f(*tup<warning descr="Parameter 'c' unfilled">)</warning>
+        """);
   }
 
-  @TestFor(issues = "PY-89182")
-  public void testPydanticValidateByNameAndAliasBothTrue() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTest();
+  @TestFor(issues = "PY-89177")
+  public void testUnknownSpreadInFunctionCall() {
+    fixme("not implemented", AssertionError.class, "f(*lst[<warning descr=\"Parameter 'c' unfilled\">)<warning>]", () ->
+      doTestByText(
+        """
+          def f(a: str, b: str, c: int): ...
+
+          lst = ["a"]
+          f(*lst<warning descr="Parameter 'c' unfilled">)<warning>
+          f(*lst, 0)
+          """)
+    );
   }
 
-  @TestFor(issues = "PY-89182")
-  public void testPydanticValidateByNameFalseAndAliasTrue() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTest();
+  // PY-37275
+  public void testFunctoolsPartialMissingArg() {
+    doTestByText("""
+                   import functools
+                   def foo(a: int, b: str) -> bool: ...
+                   a_pos_bound = functools.partial(foo, 1)
+                   a_pos_bound("hello")
+                   a_pos_bound(<warning descr="Parameter 'b' unfilled">)</warning>
+                   
+                   b_kw_bound = functools.partial(foo, b=1)
+                   b_kw_bound("hello")
+                   b_kw_bound(<warning descr="Parameter 'a' unfilled">)</warning>
+                   """);
   }
 
-  @TestFor(issues = "PY-89182")
-  public void testPydanticValidateByNameTrueAndAliasFalse() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTest();
+  // PY-37275
+  public void testFunctoolsPartialAlreadyBoundArgNotExpectedAgain() {
+    doTestByText("""
+                   import functools
+                   def foo(a: int, b: str) -> bool: ...
+                   a_pos_bound = functools.partial(foo, 1)
+                   a_pos_bound("hello", <warning descr="Unexpected argument">a=5</warning>)
+                   
+                   b_kw_bound = functools.partial(foo, b=1)
+                   b_kw_bound("hello", <warning descr="Unexpected argument">b=5</warning>)
+                   """);
+  }
+
+  // PY-37275
+  public void testFunctoolsPartialExtraPosArg() {
+    doTestByText("""
+                   import functools
+                   def foo(a: int, b: str) -> bool: ...
+                   a_pos_bound = functools.partial(foo, 1)
+                   a_pos_bound("hello", <warning descr="Unexpected argument">3.0</warning>)
+                   
+                   b_kw_bound = functools.partial(foo, b=1)
+                   b_kw_bound("hello", <warning descr="Unexpected argument">3.0</warning>)
+                   """);
   }
 }

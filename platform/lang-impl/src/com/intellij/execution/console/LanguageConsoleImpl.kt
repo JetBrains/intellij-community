@@ -63,6 +63,7 @@ import javax.swing.JPanel
 import javax.swing.JScrollBar
 import kotlin.math.max
 import kotlin.math.min
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author Gregory.Shrago
@@ -97,6 +98,7 @@ open class LanguageConsoleImpl(private val myHelper: Helper) : ConsoleViewImpl(
     myScrollBar.putClientProperty(JBScrollPane.Alignment::class.java, JBScrollPane.Alignment.BOTTOM)
   }
 
+  @ApiStatus.Internal
   companion object {
     @JvmStatic
     fun printWithHighlighting(console: LanguageConsoleView, inputEditor: Editor, textRange: TextRange): String {

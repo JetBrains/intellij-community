@@ -10,7 +10,7 @@
                     interface="com.intellij.platform.debugger.impl.rpc.XDebuggerConsoleViewConverter"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.xdebugger.descriptorStateManager"
-                    interface="com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManagerExtension"
+                    interface="com.intellij.platform.debugger.impl.shared.CustomDescriptorStateManagerExtension"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.xdebugger.managerProxy" interface="com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy"
                     dynamic="true"/>

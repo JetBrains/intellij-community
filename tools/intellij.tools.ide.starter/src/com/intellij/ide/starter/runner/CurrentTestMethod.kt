@@ -9,6 +9,7 @@ data class TestMethod(
   val testClass: Class<*>,
   val startTime: LocalDateTime = LocalDateTime.now(),
   var arguments: List<Any> = emptyList(),
+  val id: String = "${testClass.name}#$name/$displayName",
 ) {
   val clazzSimpleName: String = testClass.simpleName
   val clazz: String = testClass.name

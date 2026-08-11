@@ -5,6 +5,7 @@ import com.intellij.application.options.colors.OptionsPanelImpl.ColorDescription
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.util.Condition;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class CompositeColorDescriptionPanel extends JPanel implements ColorDescriptionPanel {
   protected final @NotNull List<ColorDescriptionPanel> myDescriptionPanels = new ArrayList<>();
   protected final @NotNull List<Condition<? super EditorSchemeAttributeDescriptor>> myConditions = new ArrayList<>();

@@ -29,11 +29,12 @@
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.kotlin.references" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
-    <orderEntry type="module" module-name="kotlin.highlighting.shared" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
+    <orderEntry type="module" module-name="intellij.libraries.markdown" />
     <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util" />
     <orderEntry type="module" module-name="intellij.platform.diff" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
@@ -42,7 +43,8 @@
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.api" />
-    <orderEntry type="library" name="kotlinc.analysis-api-k2" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.k2" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.symbol.light.classes" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" />
@@ -58,5 +60,9 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.kotlin.highlighting.minimal" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.resources" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
   </component>
 </module>

@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.markdown.frontend` start
-
 jvm_library(
     name = "frontend",
     srcs = glob(
@@ -33,6 +32,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/util:util-ui",
         "//platform/kernel/shared:kernel",
+        "//platform/lang-api:lang",
         "//platform/platform-impl/rpc",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
@@ -40,6 +40,9 @@ jvm_library(
         "//platform/code-style-api:codeStyle",
         "//libraries/miglayout-swing",
         "//fleet/rhizomedb",
+        "//platform/lang-impl",
+        "//platform/ide-core-impl",
+        "//platform/editor-ui-ex:editor-ex",
     ],
 )
 
@@ -71,6 +74,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
+        "//platform/lang-api:lang_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
@@ -78,6 +82,9 @@ jvm_library(
         "//platform/code-style-api:codeStyle_test_lib",
         "//libraries/miglayout-swing:miglayout-swing_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/editor-ui-ex:editor-ex_test_lib",
     ],
 )
 ### auto-generated section `build intellij.markdown.frontend` end

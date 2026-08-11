@@ -5,7 +5,7 @@
 // ACTION: Make 'PrivateType' public
 // ACTION: Make 'foo' private
 // ACTION: Remove parameter 'arg'
-// K2_ERROR: 'public' function exposes its 'private-in-file' parameter type 'PrivateType'.
+// K2_ERROR: EXPOSED_PARAMETER_TYPE
 
 private class PrivateType
 

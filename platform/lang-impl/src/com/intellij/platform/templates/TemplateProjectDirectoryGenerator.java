@@ -11,6 +11,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGeneratorBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.Icon;
 import javax.swing.JLabel;
 
+@ApiStatus.Internal
 public final class TemplateProjectDirectoryGenerator<T> extends DirectoryProjectGeneratorBase<T> {
   private final LocalArchivedTemplate myTemplate;
   private final ModuleBuilder myModuleBuilder;

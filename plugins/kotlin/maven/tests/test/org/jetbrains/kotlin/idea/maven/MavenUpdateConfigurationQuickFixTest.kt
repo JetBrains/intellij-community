@@ -1,11 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.maven
 
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenUpdateConfigurationQuickFixTest12 : AbstractMavenUpdateConfigurationQuickFixTest() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenUpdateConfigurationQuickFixTest12(mavenVersion: String, modelVersion: String) :
+    AbstractMavenUpdateConfigurationQuickFixTest(mavenVersion, modelVersion) {
 
     override val testRoot: String
         get() = "maven/tests/testData/languageFeature"

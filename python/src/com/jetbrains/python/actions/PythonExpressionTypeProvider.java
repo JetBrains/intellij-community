@@ -8,10 +8,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SyntaxTraverser;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.documentation.PyTypeRenderer.Feature;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -19,7 +19,8 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public final class PythonExpressionTypeProvider extends ExpressionTypeProvider<PyExpression> {
+@ApiStatus.Internal
+final class PythonExpressionTypeProvider extends ExpressionTypeProvider<PyExpression> {
   @Override
   public @NotNull String getInformationHint(@NotNull PyExpression element) {
     TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
@@ -53,8 +54,8 @@ public final class PythonExpressionTypeProvider extends ExpressionTypeProvider<P
       TypeEvalContext.userInitiated: %s
       TypeEvalContext.codeAnalysis: %s
       """.formatted(
-      PythonDocumentationProvider.getTypeName(userInitiated.getType(element), userInitiated, Feature.UNSAFE_UNION),
-      PythonDocumentationProvider.getTypeName(codeAnalysis.getType(element), codeAnalysis, Feature.UNSAFE_UNION)
+      PythonDocumentationProvider.getTypeName(userInitiated.getType(element), userInitiated),
+      PythonDocumentationProvider.getTypeName(codeAnalysis.getType(element), codeAnalysis)
     );
   }
 }

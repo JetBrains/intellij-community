@@ -52,12 +52,14 @@ public final class CommonParameterFragments<Settings extends CommonProgramRunCon
   private final List<SettingsEditorFragment<Settings, ?>> myFragments = new ArrayList<>();
   private final SettingsEditorFragment<Settings, LabeledComponent<TextFieldWithBrowseButton>> myWorkingDirectory;
   private final Computable<Boolean> myHasModule;
+  private final @NotNull Project myProject;
 
   public CommonParameterFragments(@NotNull Project project, Computable<Module> moduleProvider) {
+    myProject = project;
     myHasModule = () -> moduleProvider.compute() != null;
     myWorkingDirectory = createWorkingDirectory(project, moduleProvider);
     myFragments.add(myWorkingDirectory);
-    myFragments.add(createEnvParameters());
+    myFragments.add(createEnvParameters(project));
   }
 
   public @NotNull SettingsEditorFragment<Settings, RawCommandLineEditor> programArguments() {
@@ -88,7 +90,7 @@ public final class CommonParameterFragments<Settings extends CommonProgramRunCon
   public <S extends InputRedirectAware> SettingsEditorFragment<S, ?> createRedirectFragment() {
     TextFieldWithBrowseButton inputFile = new TextFieldWithBrowseButton();
     inputFile.addActionListener(new ComponentWithBrowseButton.BrowseFolderActionListener<>(
-      inputFile, null, FileChooserDescriptorFactory.createSingleFileDescriptor(), TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
+      inputFile, myProject, FileChooserDescriptorFactory.createSingleFileDescriptor().withEnvironmentRestricted(true), TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
     ) {
       @Override
       protected @Nullable VirtualFile getInitialFile() {
@@ -129,7 +131,9 @@ public final class CommonParameterFragments<Settings extends CommonProgramRunCon
     var textField = new ExtendableTextField(10);
     MacrosDialog.addMacroSupport(textField, MacrosDialog.Filters.DIRECTORY_PATH, () -> moduleProvider.compute() != null);
     var workingDirectoryField = new TextFieldWithBrowseButton(textField);
-    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(ExecutionBundle.message("select.working.directory.message"));
+    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(ExecutionBundle.message("select.working.directory.message"))
+      .withEnvironmentRestricted(true);
     workingDirectoryField.addBrowseFolderListener(project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     LabeledComponent<TextFieldWithBrowseButton> field = LabeledComponent.create(
       workingDirectoryField,
@@ -157,8 +161,17 @@ public final class CommonParameterFragments<Settings extends CommonProgramRunCon
     return workingDirectorySettings;
   }
 
+  /**
+   * @deprecated Use {@link #createEnvParameters(Project)} to pass a non-null project so the file chooser
+   * used by the environment variables editor is scoped to the correct project context.
+   */
+  @Deprecated
   public static <S extends CommonProgramRunConfigurationParameters> SettingsEditorFragment<S, ?> createEnvParameters() {
-    EnvironmentVariablesComponent env = new EnvironmentVariablesComponent();
+    return createEnvParameters(null);
+  }
+
+  public static <S extends CommonProgramRunConfigurationParameters> SettingsEditorFragment<S, ?> createEnvParameters(@Nullable Project project) {
+    EnvironmentVariablesComponent env = new EnvironmentVariablesComponent(project);
     env.setLabelLocation(BorderLayout.WEST);
     setMonospaced(env.getComponent().getTextField());
     SettingsEditorFragment<S, JComponent> fragment =

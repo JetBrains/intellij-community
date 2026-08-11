@@ -14,7 +14,7 @@ It forwards JSON-RPC messages between stdin/stdout and the upstream streamable H
 In the JetBrains monorepo, `dotnet/` is excluded from IDEA's scope and requires Rider. Neither IDE alone covers all files. When both are running, the proxy discovers both and routes transparently.
 
 - Auto-discover IDEs by scanning ports and matching `serverInfo.name` (e.g. `"JetBrains Rider MCP Server"`). No configuration needed.
-- Route file operations (`read_file`, `list_dir`, `lint_files`, etc.) to Rider for `dotnet/` paths; everything else goes to IDEA.
+- Route path-scoped analysis, formatting, and refactoring operations to Rider for `dotnet/` paths; everything else goes to IDEA.
 - Merge search results (`search_text`, `search_regex`, `search_file`, `search_symbol`) from both IDEs concurrently. Rider results are prefixed with `dotnet/` for monorepo-relative paths.
 - Adjust Rider's `project_path` to `dotnet/` and strip `dotnet/` prefixes from file path arguments before forwarding.
 - Single-IDE mode: when only one IDE is running, the proxy behaves as a standard single-upstream proxy.
@@ -55,43 +55,42 @@ Environment variables (optional):
 - `JETBRAINS_MCP_SCAN_TIMEOUT_S`: timeout for additional port probes after the default port fails (seconds). Default: `1`. Use `0` to disable.
 - `JETBRAINS_MCP_QUEUE_LIMIT`: max number of queued client messages before the stream endpoint is ready. Default: `100`. Use `0` for unlimited.
 - `JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S`: timeout for upstream tool calls after they are sent (seconds). Default: `60`. Use `0` to disable.
-- `JETBRAINS_MCP_BUILD_TIMEOUT_S`: timeout for long-running upstream calls such as `build_project` and `lint_files` (seconds). Default: `1200` (20 minutes). Use `0` to disable.
+- `JETBRAINS_MCP_BUILD_TIMEOUT_S`: timeout for long-running upstream calls such as `lint_files` and `reformat_file` (seconds). Default: `1200` (20 minutes). Use `0` to disable.
 - `JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S`: timeout for upstream tool calls waiting to be sent while the stream is unavailable (seconds). Defaults to the tool-call timeout when set; use `0` to disable.
 - `JETBRAINS_MCP_PROJECT_PATH`: override the injected project path (defaults to `process.cwd()`, relative paths resolve from the current working directory, and `file://` URIs are supported).
 - `MCP_LOG`: path to a log file for proxy progress (cleared on startup).
-- `JETBRAINS_MCP_PROXY_DISABLE_NEW_SEARCH`: force legacy search tools when available; hides search_text/search_regex/search_file if only the new tools exist.
-- `JETBRAINS_MCP_PROXY_DISABLE_WORKAROUNDS`: disable all version-gated workarounds (set to any non-empty value except `0` or `false`).
-- `JETBRAINS_MCP_PROXY_DISABLE_WORKAROUND_KEYS`: comma-separated list of workaround keys to disable (see `workarounds.ts`).
-- `JETBRAINS_MCP_PROXY_WORKAROUND_DEBUG`: emit debug logs when workarounds are skipped or disabled (set to any non-empty value except `0` or `false`).
+
+## Supported IDE versions
+
+ij-proxy targets IntelliJ platform build **262 and newer**. That generation ships `search_text`,
+`search_regex`, `search_file`, `search_symbol`, `lint_files(files)` and `reformat_file(files)`, so the
+proxy forwards them unchanged instead of emulating older tool shapes.
 
 ## Proxy tool set
 
-The proxy is not a pure pass-through: it exposes a fixed proxy tool set (unless the upstream already provides the same tool name), filters out blocked tools (for example `create_new_file` and `execute_terminal_command`), hides upstream tools that are replaced by proxy tools, and keeps the remaining upstream tools whose names do not collide with proxy tools.
+The proxy is not a pure pass-through: it exposes a fixed proxy tool set (unless the upstream already provides the same tool name), filters out blocked tools, hides upstream tools that are replaced by proxy tools, and keeps the remaining upstream tools whose names do not collide with proxy tools.
 
-- Proxy tools (when not provided upstream): `read_file`, `list_dir`, `apply_patch`, `rename`, `reformat_file`.
+- Proxy tools: `rename`; container sessions additionally expose `bash` and container-routed `search_text` / `search_regex` / `search_file`.
 - Upstream tools: all upstream tools except blocked names, replaced tools, and name collisions.
 
 Notes:
-- Upstream JetBrains file tools that are replaced by proxy tools (for example `get_file_text_by_path`, `replace_text_in_file`, `list_directory_tree`) are hidden.
-- If the upstream server exposes `read_file` or `search_*`, ij-proxy passes them through unchanged and does not expose proxy shims for those names.
+- File reads, writes, patches, and directory listings use the agent harness's native tools, not MCP.
+- JetBrains MCP file-operation tools, including the container variants, are blocked until they are removed upstream.
+- `search_*`, `lint_files` and `reformat_file` are upstream tools passed through unchanged; the proxy only normalizes their arguments and, in a dual-IDE setup, splits and merges them across IDEA and Rider.
+- `get_file_problems` is hidden: it is the per-file variant of `lint_files`, and exposing both invites the agent to lint one file at a time.
+- `build_project` is hidden: this repo builds through Bazel wrappers (`bazel build`, `tests.cmd`), and an IDE JPS build duplicates and conflicts with them.
 - `lint_files` responses may include file entries with `timedOut: true` and empty `problems`; top-level `more: true` still means the overall batch is incomplete.
-- Search tools and their compatibility are documented in `search.md`.
-- Use `apply_patch` to create files.
+- Search tools are documented in `search.md`.
 
 ## Custom tool commands (name + behavior mapping)
 
-The proxy exposes a small, client-shaped tool set. Names are chosen to match Codex CLI conventions (see `/Users/develar/Downloads/codex-main`).
-
-Each proxy command maps to one or more JetBrains MCP tools. Search tool mapping and compatibility are documented in `search.md`.
+The proxy exposes a small, client-shaped search and IDE tool set. File operations stay with the agent harness.
 
 ### Proxy tools
 
-- `read_file`: Matches the JetBrains MCP `read_file` shape (`file_path`, optional `offset`, optional `limit`). When upstream already provides `read_file`, ij-proxy passes it through unchanged; otherwise it emulates the same schema and numbered output.
-- `list_dir`: Matches Codex `list_dir`. Uses `list_directory_tree`.
-- `apply_patch`: Matches Codex `apply_patch` and accepts unified git diff compatibility input (raw or wrapped in `*** Begin Patch` / `*** End Patch`). Uses native `read_file` when available, falls back to legacy file reads for older upstream IDEs, and writes through `create_new_file` plus `git rm`/`git mv` for delete/move.
-- `apply_patch` unified hunk compatibility: coordinate-only headers like `@@ -1,3 +1,4 @@` are treated as metadata (not search hints). See `apply-patch-unified-hunk-header-spec.md`.
 - `rename`: Uses `rename_refactoring`.
-- `reformat_file`: Accepts `files` for batch formatting and falls back to older upstream `paths` or repeated legacy `path` calls internally.
+- `search_text`, `search_regex`, `search_file` (container sessions only): Route the search into the container instead of the host project. See `search.md`.
+- `bash` (container sessions only): Runs a shell command inside the container via `container_exec`.
 
 Example `.mcp.toml` entry (Codex):
 
@@ -129,5 +128,5 @@ bun test community/build/mcp-servers/ij-proxy/integration-tests/*.test.ts commun
 ## Notes
 
 - Run from the desired project root so `process.cwd()` matches the injected project path, or set `JETBRAINS_MCP_PROJECT_PATH` (path or `file://` URI) to override it.
-- Direct `create_new_file` calls are blocked; use `apply_patch`.
+- JetBrains MCP file-operation calls are blocked; use the agent harness's native file tools.
 - Requires Bun 1.0+ (Node 18+ if you run the built proxy with node).

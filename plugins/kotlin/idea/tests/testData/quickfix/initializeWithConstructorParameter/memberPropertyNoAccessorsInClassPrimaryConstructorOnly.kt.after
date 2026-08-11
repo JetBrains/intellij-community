@@ -1,5 +1,5 @@
 // "Initialize with constructor parameter" "true"
-// K2_ERROR: Property must be initialized or be abstract.
+// K2_ERROR: MUST_BE_INITIALIZED_OR_BE_ABSTRACT
 open class A(s: String, n: Int) {
     val n: Int = n
 }

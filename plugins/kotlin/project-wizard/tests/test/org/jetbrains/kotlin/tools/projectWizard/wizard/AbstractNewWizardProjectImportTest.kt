@@ -16,12 +16,12 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.enableInspectionTool
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleKotlinScriptEntitySource
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceUntilWithRangeUntilInspection
+import org.jetbrains.kotlin.idea.codeInsight.inspections.ReplaceUntilWithRangeUntilInspection
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.v1.getKtFile

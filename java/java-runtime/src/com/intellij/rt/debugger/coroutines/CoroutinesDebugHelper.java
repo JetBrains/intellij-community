@@ -4,15 +4,14 @@ package com.intellij.rt.debugger.coroutines;
 import com.intellij.rt.debugger.JsonUtils;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public final class CoroutinesDebugHelper {
 
@@ -26,10 +25,12 @@ public final class CoroutinesDebugHelper {
   private static final String COROUTINE_CONTEXT_KEY_FQN = "kotlin.coroutines.CoroutineContext$Key";
   private static final String DEBUGGER_AGENT_CAPTURE_STORAGE_FQN = "com.intellij.rt.debugger.agent.CaptureStorage";
 
-  public static long[] getCoroutinesRunningOnCurrentThread(Class<?> debugProbesImplClass, Thread currentThread) throws ReflectiveOperationException {
+  @SuppressWarnings("unused")
+  public static long[] getCoroutinesRunningOnCurrentThread(Class<?> debugProbesImplClass, Thread currentThread) throws Throwable {
     Object debugProbesImplInstance = debugProbesImplClass.getField("INSTANCE").get(null);
     List<Long> coroutinesIds = new ArrayList<>();
-    List infos = (List)invoke(debugProbesImplInstance, "dumpCoroutinesInfo");
+    @SuppressWarnings("unchecked")
+    List<Object> infos = (List<Object>)invoke(debugProbesImplInstance, "dumpCoroutinesInfo");
     for (Object info : infos) {
       if (invoke(info, "getLastObservedThread") == currentThread) {
         coroutinesIds.add((Long)invoke(info, "getSequenceNumber"));
@@ -42,7 +43,8 @@ public final class CoroutinesDebugHelper {
     return res;
   }
 
-  public static long tryGetContinuationId(Object continuation) throws ReflectiveOperationException {
+  @SuppressWarnings("unused")
+  public static long tryGetContinuationId(Object continuation) throws Throwable {
     Object rootContinuation = getCoroutineOwner(continuation, true);
     if (isCoroutineOwner(rootContinuation)) {
       Object debugCoroutineInfo = getField(rootContinuation, "info");
@@ -53,14 +55,14 @@ public final class CoroutinesDebugHelper {
 
   // This method tries to extract CoroutineOwner as a root coroutine frame,
   // it is invoked when kotlinx-coroutines debug agent is enabled.
-  private static Object getCoroutineOwner(Object continuation, boolean checkForCoroutineOwner) throws ReflectiveOperationException {
+  private static Object getCoroutineOwner(Object continuation, boolean checkForCoroutineOwner) throws Throwable {
     Method getCallerFrame = Class.forName("kotlin.coroutines.jvm.internal.CoroutineStackFrame", false, continuation.getClass().getClassLoader())
       .getDeclaredMethod("getCallerFrame");
     getCallerFrame.setAccessible(true);
     Object current = continuation;
     while (true) {
       if (checkForCoroutineOwner && isCoroutineOwner(current)) return current;
-      Object parentFrame = getCallerFrame.invoke(current);
+      Object parentFrame = invoke(current, getCallerFrame);
       if ((parentFrame != null)) {
         current = parentFrame;
       } else {
@@ -69,25 +71,31 @@ public final class CoroutinesDebugHelper {
     }
   }
 
-  public static Object getRootContinuation(Object continuation) throws ReflectiveOperationException {
+  @SuppressWarnings("unused")
+  public static Object getRootContinuation(Object continuation) throws Throwable {
     return getCoroutineOwner(continuation, false);
   }
 
-  public static Object getCallerFrame(Object continuation) throws ReflectiveOperationException {
+  @SuppressWarnings("unused")
+  public static Object getCallerFrame(Object continuation) throws Throwable {
     // This method extracts the caller frame of the given continuation.
     Class<?> coroutineStackFrame = Class.forName("kotlin.coroutines.jvm.internal.CoroutineStackFrame", false, continuation.getClass().getClassLoader());
     Method getCallerFrame = coroutineStackFrame.getDeclaredMethod("getCallerFrame");
     getCallerFrame.setAccessible(true);
-    Object callerFrame = getCallerFrame.invoke(continuation);
+    Object callerFrame = invoke(continuation, getCallerFrame);
     // In case the caller frame is the root CoroutineOwner completion added by the debug agent -> return the current continuation
     if (callerFrame == null || isCoroutineOwner(callerFrame)) {
       return continuation;
     }
     // In case the caller frame is an instance of ScopeCoroutine, then extract the uCont that is wrapped by the ScopeCoroutine class.
-    // ScopeCoroutine is used to wrap the current continuation and pass it into withContext/coroutineScope/flow.. invocation
-    Class<?> scopeCoroutine = Class.forName("kotlinx.coroutines.internal.ScopeCoroutine", false, continuation.getClass().getClassLoader());
-    if (scopeCoroutine.isInstance(callerFrame)) {
-      return getCallerFrame.invoke(callerFrame);
+    // ScopeCoroutine is used to wrap the current continuation and pass it into withContext/coroutineScope/flow invocation
+    try {
+      Class<?> scopeCoroutine = Class.forName("kotlinx.coroutines.internal.ScopeCoroutine", false, continuation.getClass().getClassLoader());
+      if (scopeCoroutine.isInstance(callerFrame)) {
+        return invoke(callerFrame, getCallerFrame);
+      }
+    } catch (ClassNotFoundException e) {
+      // If ScopeCoroutine can't be loaded, callerFrame cannot be an instance.
     }
     return callerFrame;
   }
@@ -99,7 +107,8 @@ public final class CoroutinesDebugHelper {
    * {@link org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.CoroutineStackTraceData};<p/>
    * 1-st element is an array of {@link kotlin.coroutines.Continuation} that form a stack of continuations
    */
-  public static Object[] getCoroutineStackTraceDump(Object continuation) throws ReflectiveOperationException {
+  @SuppressWarnings("unused")
+  public static Object[] getCoroutineStackTraceDump(Object continuation) throws Throwable {
     List<Object> continuationStack = new ArrayList<>();
     List<StackTraceElement> continuationStackElements = new ArrayList<>();
     List<List<String>> variableNames = new ArrayList<>();
@@ -150,8 +159,8 @@ public final class CoroutinesDebugHelper {
 
   private static void extractSpilledVariables(Object continuation,
                                               List<String> variableNames, List<String> fieldNames,
-                                              Method getSpilledVariableFieldMapping) throws ReflectiveOperationException {
-    String[] mapping = (String[])getSpilledVariableFieldMapping.invoke(null, continuation);
+                                              Method getSpilledVariableFieldMapping) throws Throwable {
+    String[] mapping = (String[])invoke(null, getSpilledVariableFieldMapping, continuation);
     if (mapping == null) return;
     for (int i = 0; i < mapping.length; i += 2) {
       fieldNames.add(mapping[i]);
@@ -163,37 +172,30 @@ public final class CoroutinesDebugHelper {
     return current.getClass().getSimpleName().contains(COROUTINE_OWNER_CLASS);
   }
 
-  public static Object[] dumpCoroutinesInfoAsJsonAndReferences(Class<?> debugProbesImplClass) {
-    try {
-      Object debugProbesImplInstance = debugProbesImplClass.getField("INSTANCE").get(null);
-      Object[] infos = (Object[])invoke(debugProbesImplInstance, "dumpCoroutinesInfoAsJsonAndReferences");
-      return infos;
-    } catch (Throwable e) {
-      return null;
-    }
+  public static Object[] dumpCoroutinesInfoAsJsonAndReferences(Class<?> debugProbesImplClass) throws Throwable {
+    Object debugProbesImplInstance = debugProbesImplClass.getField("INSTANCE").get(null);
+    Object[] infos = (Object[])invoke(debugProbesImplInstance, "dumpCoroutinesInfoAsJsonAndReferences");
+    return infos;
   }
 
-  public static Object[] dumpCoroutinesWithStacktracesAsJson(Class<?> debugProbesImplClass) {
-    try {
-      Object debugProbesImplInstance = debugProbesImplClass.getField("INSTANCE").get(null);
-      Object[] dump = (Object[])invoke(debugProbesImplInstance, "dumpCoroutinesInfoAsJsonAndReferences");
-      Object[] coroutineInfos = (Object[])dump[3];
-      String[] lastObservedStackTraces = new String[coroutineInfos.length];
-      for (int i = 0; i < coroutineInfos.length; i++) {
-        lastObservedStackTraces[i] = lastObservedStackTrace(coroutineInfos[i]);
-      }
-      dump = Arrays.copyOf(dump, dump.length + 2);
-      dump[4] = lastObservedStackTraces;
-
-      Object[] lastObservedThreads = (Object[])dump[1];
-      dump[5] = getAsyncStackTracesForThreads(lastObservedThreads);
-      return dump;
-    } catch (Throwable e) {
-      return null;
+  @SuppressWarnings("unused")
+  public static Object[] dumpCoroutinesWithStacktracesAsJson(Class<?> debugProbesImplClass) throws Throwable {
+    Object[] dump = dumpCoroutinesInfoAsJsonAndReferences(debugProbesImplClass);
+    Object[] coroutineInfos = (Object[])dump[3];
+    String[] lastObservedStackTraces = new String[coroutineInfos.length];
+    for (int i = 0; i < coroutineInfos.length; i++) {
+      lastObservedStackTraces[i] = lastObservedStackTrace(coroutineInfos[i]);
     }
+    dump = Arrays.copyOf(dump, dump.length + 2);
+    dump[4] = lastObservedStackTraces;
+
+    Object[] lastObservedThreads = (Object[])dump[1];
+    dump[5] = getAsyncStackTracesForThreads(lastObservedThreads);
+    return dump;
   }
 
-  private static String lastObservedStackTrace(Object debugCoroutineInfo) throws ReflectiveOperationException {
+  private static String lastObservedStackTrace(Object debugCoroutineInfo) throws Throwable {
+    @SuppressWarnings("unchecked")
     List<StackTraceElement> stackTrace = (List<StackTraceElement>)invoke(debugCoroutineInfo, "lastObservedStackTrace");
     return JsonUtils.dumpStackTraceElements(stackTrace);
   }
@@ -202,14 +204,15 @@ public final class CoroutinesDebugHelper {
    * Invokes com.intellij.rt.debugger.agent.CaptureStorage#getAllCapturedStacks method
    * which returns a map of threads to their captured async stack traces.
    * If `debugger.async.stack.trace.for.all.threads` is false, only the current thread's stack trace is returned.
-   *
+   * <p>
    * If debugger-agent is not available, e.g. in attach, returns null
    */
-  private static String[] getAsyncStackTracesForThreads(Object[] threads) {
+  private static String[] getAsyncStackTracesForThreads(Object[] threads) throws Throwable {
     try {
       Class<?> captureStorageClass = Class.forName(DEBUGGER_AGENT_CAPTURE_STORAGE_FQN, false, null);
       Method getAllCapturedStacks = captureStorageClass.getMethod("getAllCapturedStacks", int.class);
 
+      @SuppressWarnings("unchecked")
       Map<Thread, String> threadToStackTrace = (Map<Thread, String>)invoke(null, getAllCapturedStacks, 500);
 
       String[] asyncStackTraces = new String[threads.length];
@@ -221,7 +224,7 @@ public final class CoroutinesDebugHelper {
         }
       }
       return asyncStackTraces;
-    } catch (Throwable e) {
+    } catch (Throwable t) {
       return null;
     }
   }
@@ -237,7 +240,7 @@ public final class CoroutinesDebugHelper {
    *     in this dump, or -1 if no such parent exists.</li>
    * </ol>
    */
-  public static Object[] getCoroutineJobHierarchyInfo(Object ... debugCoroutineInfos) throws ReflectiveOperationException {
+  public static Object[] getCoroutineJobHierarchyInfo(Object ... debugCoroutineInfos) throws Throwable {
     if (debugCoroutineInfos.length == 0) return new String[]{};
     ClassLoader loader = debugCoroutineInfos[0].getClass().getClassLoader();
     Class<?> debugCoroutineInfoClass = Class.forName(DEBUG_COROUTINE_INFO_FQN, false, loader);
@@ -290,14 +293,17 @@ public final class CoroutinesDebugHelper {
     return field.get(object);
   }
 
-  private static Object invoke(Object object, Method method, Object... args) throws ReflectiveOperationException {
-    method.setAccessible(true);
-    return method.invoke(object, args);
+  private static Object invoke(Object object, Method method, Object... args) throws Throwable {
+    try {
+      method.setAccessible(true);
+      return method.invoke(object, args);
+    } catch (InvocationTargetException e) {
+      throw e.getTargetException();
+    }
   }
 
-  private static Object invoke(Object object, String methodName) throws ReflectiveOperationException {
+  private static Object invoke(Object object, String methodName) throws Throwable {
     Method method = object.getClass().getMethod(methodName);
-    method.setAccessible(true);
-    return method.invoke(object);
+    return invoke(object, method);
   }
 }

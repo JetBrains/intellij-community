@@ -1,9 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.idea.TestFor
+import com.jetbrains.python.PyNames
+import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.fixtures.PyInspectionTestCase
 
+@Subsystems.Inspections
+@Layers.Functional
 class Py3StringFormatInspectionTest : PyInspectionTestCase() {
   // PY-16938
   fun testByteString() = doTest()
@@ -183,13 +191,100 @@ class Py3StringFormatInspectionTest : PyInspectionTestCase() {
     f'{WeirdInt():s}'
     """.trimIndent())
 
+  @TestFor(issues = ["PY-89760"])
+  fun `test indirect subclass with inherited format`() = doTestByText("""
+    class MyInt(int):
+        pass
+
+    class GrandInt(MyInt):
+        pass
+
+    f'{GrandInt():d}'
+    f'{GrandInt():f}'
+    f'{GrandInt():<warning descr="Format code 's' not supported for 'GrandInt'">s</warning>}'
+    """.trimIndent())
+
   @TestFor(issues = ["PY-51322"])
   fun `test LiteralString`() = doTestByText("""
     from typing import LiteralString
 
     def foo(s: LiteralString) -> None:
         f'{s:s}'
-        f'{s:<warning descr="Format code 'b' not supported for 'LiteralString'">b</warning>}'
+        f'{s:<warning descr="Format code 'b' not supported for 'str'">b</warning>}'
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-51322"])
+  fun `test default object format with type char`() = doTestByText("""
+    class A: ...
+
+    f'{A()<warning descr="Format spec is not supported for 'A' ('object.__format__' only accepts empty string)">:d</warning>}'
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-51322"])
+  fun `test default object format no spec`() = doTestByText("""
+    class A: ...
+
+    f'{A()}'
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-51322"])
+  fun `test format override`() = doTestByText("""
+    class A:
+        def __format__(self, spec):
+            return ""
+
+    f'{A():bar}'
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-51322"])
+  fun `test default object format with type conversion`() = doTestByText("""
+    class A: ...
+
+    f'{A()!s:s}'
+    """.trimIndent())
+
+  fun `test quickfix add __format__`() {
+    val file = myFixture.configureByText(PythonFileType.INSTANCE, """
+      class A: pass
+      
+      f"{A():foo<caret>}"
+      """.trimIndent())
+    myFixture.enableInspections(getAllInspectionClasses())
+
+    val action = myFixture.findSingleIntention(
+      PyPsiBundle.message("QFIX.add.dunder.method.to.class", PyNames.DUNDER_FORMAT, "A"))
+    myFixture.launchAction(action)
+
+    assertEquals("""
+      class A:
+          def __format__(self, format_spec: str):
+              raise NotImplementedError('A.__format__ not implemented')
+      
+      f"{A():foo}"
+      """.trimIndent(),file.text)
+  }
+
+  // A class declared in a .pyi stub usually omits __str__/__repr__/__format__ that the runtime .py defines.
+  @TestFor(issues = ["PY-89760"])
+  fun testStubMethodResolvedToImplementation() = doMultiFileTestByText("""
+    from mod import A, B
+  
+    class C(B): ...
+  
+    f"{A():foo}"
+    f"{B():foo}"
+    f"{C():foo}"
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-89760"])
+  fun testStubMethodMissingInImplementation() = doMultiFileTestByText("""
+    from mod import A, B
+    
+    class C(B): ...
+
+    f"{A()<warning descr="Format spec is not supported for 'A' ('object.__format__' only accepts empty string)">:foo</warning>}"
+    f"{B()<warning descr="Format spec is not supported for 'B' ('object.__format__' only accepts empty string)">:foo</warning>}"
+    f"{C()<warning descr="Format spec is not supported for 'C' ('object.__format__' only accepts empty string)">:foo</warning>}"
     """.trimIndent())
 
   override fun getInspectionClass() = PyStringFormatInspection::class.java

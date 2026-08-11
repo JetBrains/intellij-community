@@ -3,6 +3,7 @@ package com.intellij.filePrediction.references.java
 
 import com.intellij.filePrediction.FilePredictionTestDataHelper
 import com.intellij.filePrediction.FilePredictionTestDataHelper.DEFAULT_MAIN_FILE
+import com.intellij.filePrediction.java.JavaFileReferenceProvider
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase

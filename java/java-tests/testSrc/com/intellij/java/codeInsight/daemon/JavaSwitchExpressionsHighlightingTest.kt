@@ -54,6 +54,7 @@ class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCas
     myFixture.checkResultByFile("${getTestName(false)}_after.java")
   }
   fun testDeeplyNested() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
+  fun testYieldUnnamedLambdaInIfElse() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_22) { doTest() }
 
   private fun doTest() {
     myFixture.configureByFile("${getTestName(false)}.java")

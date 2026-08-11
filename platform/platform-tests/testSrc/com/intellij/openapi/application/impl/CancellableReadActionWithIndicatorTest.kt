@@ -29,7 +29,7 @@ class CancellableReadActionWithIndicatorTest : CancellableReadActionTests() {
       assertNotNull(ProgressManager.getGlobalProgressIndicator())
       application.assertReadAccessNotAllowed()
 
-      val result = computeCancellable {
+      val result = computeCancellableUnsafe {
         assertNotNull(Cancellation.currentJob())
         assertNull(ProgressManager.getGlobalProgressIndicator())
         application.assertReadAccessAllowed()
@@ -48,7 +48,7 @@ class CancellableReadActionWithIndicatorTest : CancellableReadActionTests() {
     val indicator = EmptyProgressIndicator()
     withIndicator(indicator) {
       assertThrows<ProcessCanceledException> {
-        computeCancellable {
+        computeCancellableUnsafe {
           testNoExceptions()
           indicator.cancel()
           requireNotNull(Cancellation.currentJob()).timeoutJoinBlocking()
@@ -97,7 +97,7 @@ class CancellableReadActionWithIndicatorTest : CancellableReadActionTests() {
   fun `does not throw inside non-cancellable read action when a write is requested during computation`() {
     indicatorTest {
       runReadAction {
-        computeCancellable {
+        computeCancellableUnsafe {
           testNoExceptions()
         }
       }

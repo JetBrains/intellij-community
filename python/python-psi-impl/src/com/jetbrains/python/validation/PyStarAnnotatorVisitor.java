@@ -22,6 +22,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile;
 import com.jetbrains.python.psi.PyAnnotation;
+import com.jetbrains.python.psi.PyComprehensionElement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParenthesizedExpression;
@@ -55,6 +56,11 @@ final class PyStarAnnotatorVisitor extends PyElementVisitor {
   }
 
   private static boolean allowedUnpacking(@NotNull PyStarExpression starExpression) {
+    // PEP 798: unpacking in comprehensions/generator expressions, e.g. [*it for it in its]
+    if (starExpression.getParent() instanceof PyComprehensionElement comprehension &&
+        comprehension.getResultExpression() == starExpression) {
+      return true;
+    }
     if (!starExpression.isUnpacking()) {
       return false;
     }

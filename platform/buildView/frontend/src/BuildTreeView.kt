@@ -41,6 +41,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.buildView.BuildDataKeys.BUILD_VIEW_ID
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.ui.AnimatedIcon
@@ -236,6 +237,7 @@ internal class BuildTreeView(
   override fun uiDataSnapshot(sink: DataSink) {
     sink[CommonDataKeys.NAVIGATABLE_ARRAY] = extractSelectedNodesNavigatables()
     sink[CommonDataKeys.NAVIGATABLE] = extractSelectedNodeNavigatable()
+    sink[BUILD_VIEW_ID] = buildViewId
     sink[BUILD_TREE_SELECTED_NODE] = getSelectedNode()?.let { SelectedBuildTreeNode(it.id) }
   }
 

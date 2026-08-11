@@ -5,10 +5,10 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiModifier
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.analysisScope
-import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.components.memberScope
-import org.jetbrains.kotlin.analysis.api.components.withNullability
+import org.jetbrains.kotlin.analysis.api.session.analysisScope
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol

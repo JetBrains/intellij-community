@@ -1,6 +1,6 @@
 // PROBLEM: none
-// K2_ERROR: 'operator' modifier is not applicable to function: illegal function name.
 // LANGUAGE_VERSION: 1.2
+// K2_ERROR: INAPPLICABLE_OPERATOR_MODIFIER
 
 fun test() {
     class Test {

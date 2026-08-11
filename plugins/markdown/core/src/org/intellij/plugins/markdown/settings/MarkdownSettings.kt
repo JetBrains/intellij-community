@@ -10,10 +10,8 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.project.Project
-import com.intellij.ui.jcef.JBCefApp
 import com.intellij.util.messages.Topic
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
-import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider
 
 @Service(Service.Level.PROJECT)
 @State(name = "MarkdownSettings", storages = [(Storage("markdown.xml"))])
@@ -25,6 +23,10 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
   var showProblemsInCodeBlocks: Boolean
     get() = state.showProblemsInCodeBlocks
     set(value) { state.showProblemsInCodeBlocks = value }
+
+  var isStripTrailingSpacesOnSave: Boolean
+    get() = state.isStripTrailingSpacesOnSave
+    set(value) { state.isStripTrailingSpacesOnSave = value }
 
   var splitLayout: TextEditorWithPreview.Layout
     get() = state.splitLayout
@@ -62,6 +64,10 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
     get() = state.isFileGroupingEnabled
     set(value) { state.isFileGroupingEnabled = value }
 
+  var useFileDirectoryForCommands: Boolean?
+    get() = state.useFileDirectoryForCommands
+    set(value) { state.useFileDirectoryForCommands = value }
+
   override fun noStateLoaded() {
     super.noStateLoaded()
     loadState(MarkdownSettingsState())
@@ -91,7 +97,7 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
 
   companion object {
     internal val defaultFontSize
-      get() = JBCefApp.normalizeScaledSize((checkNotNull(AppEditorFontOptions.getInstance().state).FONT_SIZE + 0.5).toInt())
+      get() = (checkNotNull(AppEditorFontOptions.getInstance().state).FONT_SIZE + 0.5).toInt()
 
     internal val defaultFontFamily
       get() = checkNotNull(AppEditorFontOptions.getInstance().state).FONT_FAMILY
@@ -99,10 +105,11 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
     @JvmStatic
     val defaultProviderInfo: MarkdownHtmlPanelProvider.ProviderInfo
       get() {
-        return when {
-          JCEFHtmlPanelProvider.canBeUsed() -> JCEFHtmlPanelProvider().providerInfo
-          else -> MarkdownHtmlPanelProvider.ProviderInfo("Unavailable", "Unavailable")
-        }
+        return MarkdownHtmlPanelProvider.getProviders()
+          .firstOrNull { it.isAvailable() == MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE }
+          ?.providerInfo
+               ?: MarkdownHtmlPanelProvider.getProviders().firstOrNull()?.providerInfo
+               ?: MarkdownHtmlPanelProvider.ProviderInfo("Unavailable", "Unavailable")
       }
 
     @JvmStatic

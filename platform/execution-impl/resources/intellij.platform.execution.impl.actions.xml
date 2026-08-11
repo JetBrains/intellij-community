@@ -1,0 +1,80 @@
+<idea-plugin>
+  <actions>
+    <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction"/>
+    <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" icon="AllIcons.Actions.Execute"/>
+    <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" icon="AllIcons.Actions.StartDebugger"/>
+    <group id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
+    <action id="SaveTemporaryRunConfiguration" class="com.intellij.execution.actions.SaveTemporaryRunConfigurationAction"/>
+    <action id="DeleteRunConfiguration" class="com.intellij.execution.actions.DeleteRunConfigurationAction"/>
+    <group id="CreateNewRunConfiguration" class="com.intellij.execution.actions.CreateNewConfigurationAction"/>
+    <!--region Run Main Menu-->
+    <action id="Rerun" class="com.intellij.execution.runners.FakeRerunAction"/>
+    <action id="RerunTests" class="com.intellij.execution.runners.RerunTestsAction"/>
+    <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
+    <action id="ManageTargets" class="com.intellij.execution.target.ManageTargetEnvironmentsAction"/>
+    <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="AllIcons.Actions.Suspend"/>
+    <action id="StopBackgroundProcesses" class="com.intellij.execution.actions.StopBackgroundProcessesAction"/>
+    <action id="ShowLiveRunConfigurations" class="com.intellij.execution.actions.ShowRunningListAction"/>
+    <action id="NewUiRunWidget" class="com.intellij.execution.ui.RedesignedRunToolbarWrapper"/>
+    <action class="com.intellij.execution.ui.RedesignedRunConfigurationSelector" id="RedesignedRunConfigurationSelector"/>
+    <group id="RunToolbarTopLevelExecutorActionGroup" class="com.intellij.execution.ui.RunToolbarTopLevelExecutorActionGroup" popup="false"/>
+    <action id="MoreRunToolbarActions" class="com.intellij.execution.ui.MoreRunToolbarActions" />
+    <action id="InactiveStopActionPlaceholder" class="com.intellij.execution.ui.InactiveStopActionPlaceholder" />
+    <action id="AllRunConfigurationsToggle" class="com.intellij.execution.ui.AllRunConfigurationsToggle"/>
+    <group id="RunConfigurationsActionGroup" class="com.intellij.execution.ui.RunConfigurationsActionGroup"/>
+    <action id="Runner.ToggleTabLabels" class="com.intellij.execution.ui.layout.actions.ToggleShowTabLabelsAction"/>
+    <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"
+            icon="AllIcons.Debugger.RestoreLayout"/>
+    <action id="Runner.CloseView" class="com.intellij.execution.ui.layout.actions.CloseViewAction" icon="AllIcons.Actions.Close"/>
+    <action id="Runner.CloseOtherViews" class="com.intellij.execution.ui.layout.actions.CloseOtherViewsAction" icon="AllIcons.Actions.Close"/>
+    <action id="Runner.CloseAllViews" class="com.intellij.execution.ui.layout.actions.CloseAllViewsAction" icon="AllIcons.Actions.Close"/>
+    <action id="Runner.CloseAllUnpinnedViews" class="com.intellij.execution.ui.layout.actions.CloseAllUnpinnedViewsAction" icon="AllIcons.Actions.Close"/>
+    <action id="SendEOF" class="com.intellij.execution.actions.EOFAction"/>
+    <action class="com.intellij.execution.actions.ActivateRunToolWindowAction" id="ActivateRunToolWindow"/>
+    <action id="WslSyncAction" class="com.intellij.execution.wsl.target.WslSyncAction" internal="true"/>
+    <action id="TerminalIncreaseFontSize" class="com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction$IncreaseEditorFontSize"
+            use-shortcut-of="EditorIncreaseFontSize">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="TerminalDecreaseFontSize" class="com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction$DecreaseEditorFontSize"
+            use-shortcut-of="EditorDecreaseFontSize">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="TerminalResetFontSize" class="com.intellij.openapi.editor.actions.TerminalResetFontSizeAction"
+            use-shortcut-of="EditorResetFontSize">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="RunToolbarWidgetAction" class="com.intellij.execution.runToolbar.RunToolbarWidgetAction"/>
+    <action id="ExecutionTargets" class="com.intellij.execution.actions.ExecutionTargetComboBoxAction"/>
+    <action id="RunConfigurationTemplatesForNewProjects"
+            class="com.intellij.execution.actions.EditRunConfigurationTemplatesForNewProjectsAction">
+      <override-text place="MainMenu"/>
+    </action>
+    <action id="RunToolbarMoveToTopAction" class="com.intellij.execution.runToolbar.RunToolbarMoveToTopAction" icon="AllIcons.Toolbar.Pin"/>
+    <action id="RunToolbarEditConfigurationAction" class="com.intellij.execution.runToolbar.RunToolbarEditConfigurationAction"/>
+    <action id="RunToolbarRemoveSlotAction" class="com.intellij.execution.runToolbar.RunToolbarRemoveSlotAction"/>
+    <action id="RunToolbarShowToolWindowTab" class="com.intellij.execution.runToolbar.RunToolbarShowToolWindowTab"/>
+    <action id="RunToolbarProcessStartedAction" class="com.intellij.execution.runToolbar.RunToolbarProcessStartedAction"/>
+    <action id="RunToolbarRunConfigurationsAction" class="com.intellij.execution.runToolbar.RunToolbarRunConfigurationsAction"/>
+    <action id="RunToolbarRerunAction" class="com.intellij.execution.runToolbar.RunToolbarRerunAction" icon="AllIcons.Actions.Restart"/>
+    <action id="RunToolbarStopAction" class="com.intellij.execution.runToolbar.RunToolbarStopAction"/>
+    <action id="RunToolbarMainSlotActive" class="com.intellij.execution.runToolbar.RunToolbarMainSlotActive"/>
+    <action id="RunToolbarShowHidePopupAction" class="com.intellij.execution.runToolbar.RunToolbarShowHidePopupAction" icon="AllIcons.Toolbar.Expand"/>
+    <action id="RunToolbarMainSlotInfoAction" class="com.intellij.execution.runToolbar.RunToolbarMainSlotInfoAction"/>
+    <action id="RunToolbarMainRunConfigurationsAction" class="com.intellij.execution.runToolbar.RunToolbarMainRunConfigurationsAction"/>
+    <action id="RunToolbarMainMultipleStopAction" class="com.intellij.execution.runToolbar.RunToolbarMainMultipleStopAction" icon="AllIcons.Actions.Suspend"/>
+    <action id="RunToolbarRollbackToPrevious" class="com.intellij.execution.runToolbar.RunToolbarRollbackToPrevious"/>
+    <action id="SegmentedVcsControlAction" class="com.intellij.execution.segmentedVcsWidget.SegmentedVcsControlAction"/>
+    <action id="ConsoleView.ClearAll" class="com.intellij.execution.actions.ClearConsoleAction"/>
+    <action id="UpdateRunningApplication" class="com.intellij.execution.update.UpdateRunningApplicationAction"
+            icon="AllIcons.Javaee.UpdateRunningApplication">
+      <keyboard-shortcut first-keystroke="control F10" keymap="$default"/>
+    </action>
+    <action id="PauseOutput" class="com.intellij.execution.actions.PauseOutputAction"/>
+    <group id="RunToolbarMoreActionGroup" class="com.intellij.execution.runToolbar.RunToolbarMoreActionGroup" overrides="true" keep-content="true"/>
+    <group id="RunToolbarMainMoreActionGroup" class="com.intellij.execution.runToolbar.RunToolbarMoreActionGroup" overrides="true" keep-content="true"/>
+    <group id="RunContextGroupMore" class="com.intellij.ide.actions.SmartPopupActionGroup" overrides="true" keep-content="true"/>
+    <group id="BuildMenu" class="com.intellij.ide.actions.NonEmptyActionGroup" overrides="true" keep-content="true"/>
+    <group id="RunTab.TopToolbar.More" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup"/>
+  </actions>
+</idea-plugin>

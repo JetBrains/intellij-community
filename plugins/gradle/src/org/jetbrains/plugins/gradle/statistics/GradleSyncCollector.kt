@@ -24,7 +24,7 @@ object GradleSyncCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("gradle.sync", 5)
+  val GROUP: EventLogGroup = EventLogGroup("gradle.sync", 5)
 
   private val ACTIVITY_ID = EventFields.Long("ide_activity_id")
 

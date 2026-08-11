@@ -239,7 +239,7 @@ private class ShortcutHintTextState(
   private fun calculateHintText(): String {
     val selectedItem = lookup.currentItem ?: return defaultText()
     val typedPrefix = lookup.itemPattern(selectedItem)
-    return if (canExecuteWithChosenItem(selectedItem.lookupString, typedPrefix)) {
+    return if (canExecuteWithChosenItem(selectedItem, typedPrefix)) {
       executeText()
     }
     else defaultText()

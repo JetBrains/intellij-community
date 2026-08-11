@@ -1,4 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
 package com.intellij.ide.gdpr
 
 import com.intellij.DynamicBundle
@@ -36,11 +37,13 @@ import javax.swing.border.Border
 import javax.swing.border.CompoundBorder
 import javax.swing.text.html.HTMLDocument
 import kotlin.system.exitProcess
+import org.jetbrains.annotations.ApiStatus
 
 fun showAgreementUi(build: AgreementUiBuilder.() -> Unit): Boolean {
   return AgreementUiBuilder().build(build)
 }
 
+@ApiStatus.Internal
 class AgreementUiBuilder internal constructor() {
   private var declineButton: Pair<@NlsContexts.Button String, (DialogWrapper) -> Unit>? = null
   private var acceptButton: Pair<@NlsContexts.Button String, (DialogWrapper) -> Unit>? = null

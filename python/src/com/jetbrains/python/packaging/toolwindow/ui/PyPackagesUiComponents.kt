@@ -17,8 +17,8 @@ import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.management.toInstallRequest
-import com.jetbrains.python.packaging.pyRequirement
-import com.jetbrains.python.packaging.pyRequirementVersionSpec
+import com.intellij.python.requirements.pyRequirement
+import com.intellij.python.requirements.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
@@ -31,7 +31,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-object PyPackagesUiComponents {
+internal object PyPackagesUiComponents {
   val SELECTED_PACKAGE_DATA_CONTEXT: DataKey<DisplayablePackage> = DataKey.create<DisplayablePackage>("SELECTED_PACKAGE_DATA_CONTEXT")
   val SELECTED_PACKAGES_DATA_CONTEXT: DataKey<List<DisplayablePackage>> = DataKey.create<List<DisplayablePackage>>("SELECTED_PACKAGES_DATA_CONTEXT")
 
@@ -48,8 +48,8 @@ object PyPackagesUiComponents {
           val repository = checkNotNull(selectedPackage.repository)
           val packageName = PyPackageName.from(selectedPackage.name).name
           val version = selectedValue?.let { pyRequirementVersionSpec(it) }
-          val specification = repository.findPackageSpecification(pyRequirement(packageName, version))
           PyPackageCoroutine.launch(project, Dispatchers.IO) {
+            val specification = repository.findPackageSpecification(pyRequirement(packageName, version))
             project.service<PyPackagingToolWindowService>().installPackage(specification!!.toInstallRequest())
           }
         }
@@ -67,6 +67,12 @@ object PyPackagesUiComponents {
     init {
       background = UIUtil.getLabelBackground()
       border = BorderFactory.createCompoundBorder(SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.BOTTOM), JBUI.Borders.empty(0, 5))
+      alignmentX = LEFT_ALIGNMENT
+      addHierarchyBoundsListener(object : java.awt.event.HierarchyBoundsAdapter() {
+        override fun ancestorResized(e: java.awt.event.HierarchyEvent) {
+          maximumSize = java.awt.Dimension(Integer.MAX_VALUE, preferredSize.height)
+        }
+      })
 
       add(label, BorderLayout.WEST)
       if (component != null) {

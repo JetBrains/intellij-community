@@ -1,6 +1,20 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.groovy.spock.rt` start
+jvm_provided_library(
+    name = "plugins_junit-rt_provided",
+    lib = "//plugins/junit_rt:junit-rt",
+)
+
+jvm_provided_library(
+    name = "libraries_junit4_provided",
+    lib = "//libraries/junit4",
+)
+
+jvm_provided_library(
+    name = "libraries_opentest4j_provided",
+    lib = "//libraries/opentest4j",
+)
 
 jvm_library(
     name = "spock-rt",
@@ -17,10 +31,10 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "//plugins/junit_rt:junit-rt",
-        "@lib//:junit4-provided",
         "@lib//:groovy-spock-rt-spockframework-spock-core-provided",
-        "@lib//:opentest4j-provided",
+        ":plugins_junit-rt_provided",
+        ":libraries_junit4_provided",
+        ":libraries_opentest4j_provided",
     ],
 )
 
@@ -37,10 +51,13 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":spock-rt",
+        "//plugins/junit_rt:junit-rt",
         "//plugins/junit_rt:junit-rt_test_lib",
-        "@lib//:junit4-provided",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "@lib//:groovy-spock-rt-spockframework-spock-core-provided",
-        "@lib//:opentest4j-provided",
+        "//libraries/opentest4j",
+        "//libraries/opentest4j:opentest4j_test_lib",
     ],
 )
 ### auto-generated section `build intellij.groovy.spock.rt` end

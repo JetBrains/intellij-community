@@ -1,0 +1,4 @@
+*:com.intellij.analysis.problemsView.HighlightingDuplicateProblem
+- com.intellij.analysis.problemsView.FileProblem
+com.intellij.analysis.problemsView.Problem
+- *:getContextGroup():com.intellij.codeInsight.multiverse.CodeInsightContext

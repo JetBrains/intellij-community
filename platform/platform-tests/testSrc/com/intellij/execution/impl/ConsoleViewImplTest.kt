@@ -534,6 +534,38 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     assertEquals(expectedRegisteredTokens, registered)
   }
 
+  fun testAddedAndRemovedInputFilter() {
+    var passThroughFilterCalls = 0
+    val registered = mutableListOf<Pair<String, ConsoleViewContentType>>()
+    val passThroughFilter = InputFilter { _, _ ->
+      passThroughFilterCalls++
+      null
+    }
+    val wrappingFilter = InputFilter { text, contentType ->
+      registered.add(Pair(text, contentType))
+      listOf(OpenApiPair("[$text]", contentType))
+    }
+    console.addInputFilter(passThroughFilter)
+    console.addInputFilter(wrappingFilter)
+
+    console.print("chunk", ConsoleViewContentType.USER_INPUT)
+    console.flushDeferredText()
+    console.waitAllRequests()
+
+    assertEquals("[chunk]", console.text)
+    assertEquals(1, passThroughFilterCalls)
+    assertEquals(listOf(Pair("chunk", ConsoleViewContentType.USER_INPUT)), registered)
+
+    console.removeInputFilter(wrappingFilter)
+    console.print("next", ConsoleViewContentType.USER_INPUT)
+    console.flushDeferredText()
+    console.waitAllRequests()
+
+    assertEquals("[chunk]next", console.text)
+    assertEquals(2, passThroughFilterCalls)
+    assertEquals(listOf(Pair("chunk", ConsoleViewContentType.USER_INPUT)), registered)
+  }
+
   fun testConsoleDependentInputFilter() {
     Disposer.dispose(console) // have to re-init extensions
     val filterProvider: ConsoleDependentInputFilterProvider = object : ConsoleDependentInputFilterProvider() {

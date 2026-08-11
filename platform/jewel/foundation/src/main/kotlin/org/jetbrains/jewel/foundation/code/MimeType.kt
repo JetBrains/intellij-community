@@ -99,6 +99,11 @@ private val ALREADY_NORMALIZED_BUILTIN_TYPES =
 )
 @JvmInline
 public value class MimeType(private val mimeType: String) {
+    /**
+     * Returns a human-readable display name for this MIME type (e.g., `"Kotlin"`, `"Java"`, `"XML"`).
+     *
+     * @see Known
+     */
     @Deprecated(
         message =
             "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +
@@ -247,6 +252,11 @@ public value class MimeType(private val mimeType: String) {
         const val VALUE_MANIFEST = "manifest"
     }
 
+    /**
+     * Predefined [MimeType] constants for well-known programming languages and content types.
+     *
+     * @see MimeType
+     */
     @Deprecated(
         message =
             "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", " +

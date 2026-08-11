@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.ide.projectView.impl
 
 import com.intellij.ide.projectView.ProjectView
@@ -27,6 +29,7 @@ import com.intellij.ui.tree.project.ProjectFileNode
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import org.jetbrains.annotations.ApiStatus
 
 internal fun appendInplaceComments(node: ProjectViewNode<*>, appender: InplaceCommentAppender) {
   if (node.shouldTryToShowInplaceComments()) {

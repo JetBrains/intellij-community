@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.java.langInjection` start
-
 jvm_provided_library(
     name = "plugins_IntelliLang_backend_provided",
     lib = "//plugins/IntelliLang/backend",

@@ -18,6 +18,7 @@ import com.intellij.remote.RemoteSdkException;
 import com.intellij.remote.RemoteSdkFactoryImpl;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -29,6 +30,7 @@ import java.awt.Component;
 import java.util.Collection;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> extends DialogWrapper implements RemoteSdkEditorContainer {
   private static final Logger LOG = Logger.getInstance(CreateRemoteSdkDialog.class);
   protected final @Nullable Project myProject;

@@ -7,14 +7,12 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
@@ -26,13 +24,6 @@ import org.jetbrains.plugins.gradle.util.entity.GradleTestEntityId
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class GradleTestEntityImpl(private val dataSource: GradleTestEntityData) : GradleTestEntity, WorkspaceEntityBase(dataSource) {
-
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val symbolicId: GradleTestEntityId = super.symbolicId
 
   override val phase: GradleSyncPhase
@@ -40,7 +31,6 @@ internal class GradleTestEntityImpl(private val dataSource: GradleTestEntityData
       readField("phase")
       return dataSource.phase
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -48,36 +38,14 @@ internal class GradleTestEntityImpl(private val dataSource: GradleTestEntityData
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: GradleTestEntityData?) : ModifiableWorkspaceEntityBase<GradleTestEntity, GradleTestEntityData>(result),
                                                           GradleTestEntityBuilder {
     internal constructor() : this(GradleTestEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity GradleTestEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -88,7 +56,7 @@ internal class GradleTestEntityImpl(private val dataSource: GradleTestEntityData
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -99,14 +67,12 @@ internal class GradleTestEntityImpl(private val dataSource: GradleTestEntityData
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var phase: GradleSyncPhase
       get() = getEntityData().phase
@@ -114,37 +80,18 @@ internal class GradleTestEntityImpl(private val dataSource: GradleTestEntityData
         checkModificationAllowed()
         getEntityData(true).phase = value
         changedProperty.add("phase")
-
       }
 
     override fun getEntityClass(): Class<GradleTestEntity> = GradleTestEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class GradleTestEntityData : WorkspaceEntityData<GradleTestEntity>() {
   lateinit var phase: GradleSyncPhase
-
   internal fun isPhaseInitialized(): Boolean = ::phase.isInitialized
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<GradleTestEntity> {
-    val modifiable = GradleTestEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): GradleTestEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = GradleTestEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): GradleTestEntity = GradleTestEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<GradleTestEntity, *> = GradleTestEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("org.jetbrains.plugins.gradle.util.entity.GradleTestEntity") as EntityMetadata
   }

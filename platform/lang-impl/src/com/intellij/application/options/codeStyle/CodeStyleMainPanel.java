@@ -24,6 +24,7 @@ import com.intellij.ui.components.JBBox;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,6 +76,7 @@ public final class CodeStyleMainPanel extends JPanel implements TabbedLanguageCo
 
   private static final String SELECTED_TAB = "settings.code.style.selected.tab";
 
+  @ApiStatus.Internal
   public CodeStyleMainPanel(CodeStyleSchemesModel model, CodeStyleSettingsPanelFactory factory, boolean schemesPanelEnabled) {
     super(new BorderLayout());
     myModel = model;

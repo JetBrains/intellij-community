@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="PROVIDED" />
   </component>
   <component name="copyright">
     <Base>

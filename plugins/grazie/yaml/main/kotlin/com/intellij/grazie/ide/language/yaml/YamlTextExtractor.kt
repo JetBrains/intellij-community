@@ -6,6 +6,7 @@ import com.intellij.grazie.text.TextContent.TextDomain
 import com.intellij.grazie.text.TextContentBuilder
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.utils.getNotSoDistantSimilarSiblings
+import com.intellij.grazie.utils.replaceBackslashEscapes
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
@@ -18,6 +19,7 @@ import org.jetbrains.yaml.YAMLTokenTypes.SCALAR_KEY
 import org.jetbrains.yaml.YAMLTokenTypes.SCALAR_LIST
 import org.jetbrains.yaml.YAMLTokenTypes.SCALAR_TEXT
 import org.jetbrains.yaml.YAMLTokenTypes.WHITESPACE
+import org.jetbrains.yaml.psi.YAMLQuotedText
 import org.jetbrains.yaml.psi.YAMLScalar
 import org.jetbrains.yaml.psi.impl.YAMLAnchorImpl
 
@@ -33,7 +35,8 @@ internal class YamlTextExtractor : TextExtractor() {
       if (JsonSchemaSpellcheckerClientForYaml(root).matchesNameFromSchema()) {
         return null
       }
-      return TextContentBuilder.FromPsi.excluding { isStealth(it) }.build(root, TextDomain.LITERALS)
+      val content = TextContentBuilder.FromPsi.excluding { isStealth(it) }.build(root, TextDomain.LITERALS) ?: return null
+      return if (root is YAMLQuotedText && !root.isSingleQuote) content.replaceBackslashEscapes() else content
     }
     if (TextDomain.LITERALS in allowedDomains && (root is YAMLAnchorImpl && root.parent !is YAMLScalar)) {
       return TextContentBuilder.FromPsi.excluding { isStealth(it) }.build(root, TextDomain.LITERALS)

@@ -52,17 +52,6 @@ class ClassLoaderConfigurator(
     }
   }
 
-  fun configureDescriptorDynamic(subDescriptor: ContentModuleDescriptor): Boolean {
-    val mainDescriptor = subDescriptor.getMainDescriptor()
-    val pluginId = mainDescriptor.pluginId
-    assert(pluginId == subDescriptor.pluginId) { "pluginId '$pluginId' != moduleDescriptor.pluginId '${subDescriptor.pluginId}'"}
-    // class cast fails in case IU is running from sources, IDEA-318252
-    (mainDescriptor.pluginClassLoader as? PluginClassLoader)?.let {
-      mainToClassPath.put(pluginId, MainPluginDescriptorClassPathInfo(classLoader = it))
-    }
-    return configureModule(subDescriptor)
-  }
-
   fun configure() {
     for (module in pluginSet.getModulesOrderedForClassLoaderConfiguration()) {
       configureModule(module)
@@ -186,7 +175,7 @@ class ClassLoaderConfigurator(
         }
       }
       for (descriptor in sequence { yieldAllDependsSubDescriptors(module) }) {
-        if (!descriptor.isEnabled) {
+        if (!pluginSet.resolvedPluginSet.isResolved(descriptor)) {
           continue
         }
         contributeDependencies(pluginSet.getSortedDependencies(descriptor))

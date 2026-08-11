@@ -1,12 +1,12 @@
 // "Apply all 'Make public explicitly' fixes in file" "true"
 // COMPILER_ARGUMENTS: -Xexplicit-api=strict
-// K2_ERROR: Return type must be specified in explicit API mode.
-// K2_ERROR: Return type must be specified in explicit API mode.
-// K2_ERROR: Visibility must be specified in explicit API mode.
-// K2_ERROR: Visibility must be specified in explicit API mode.
-// K2_ERROR: Visibility must be specified in explicit API mode.
-// K2_AFTER_ERROR: Return type must be specified in explicit API mode.
-// K2_AFTER_ERROR: Return type must be specified in explicit API mode.
+// K2_AFTER_ERROR: NO_EXPLICIT_RETURN_TYPE_IN_API_MODE
+// K2_AFTER_ERROR: NO_EXPLICIT_RETURN_TYPE_IN_API_MODE
+// K2_ERROR: NO_EXPLICIT_RETURN_TYPE_IN_API_MODE
+// K2_ERROR: NO_EXPLICIT_RETURN_TYPE_IN_API_MODE
+// K2_ERROR: NO_EXPLICIT_VISIBILITY_IN_API_MODE
+// K2_ERROR: NO_EXPLICIT_VISIBILITY_IN_API_MODE
+// K2_ERROR: NO_EXPLICIT_VISIBILITY_IN_API_MODE
 
 class Test {
     fun foo<caret>() = 1

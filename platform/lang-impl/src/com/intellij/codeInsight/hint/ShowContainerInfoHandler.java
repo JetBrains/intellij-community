@@ -17,6 +17,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.LightweightHint;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.lang.ref.WeakReference;
 
+@ApiStatus.Internal
 public final class ShowContainerInfoHandler implements CodeInsightActionHandler {
   private static final Key<WeakReference<LightweightHint>> MY_LAST_HINT_KEY = Key.create("MY_LAST_HINT_KEY");
   private static final Key<PsiElement> CONTAINER_KEY = Key.create("CONTAINER_KEY");

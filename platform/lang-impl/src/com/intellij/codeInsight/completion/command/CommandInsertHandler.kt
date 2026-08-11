@@ -8,6 +8,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
@@ -24,7 +25,7 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.command")
     var editor = context.editor
-    val originalEditor = editor.getUserData(ORIGINAL_EDITOR)
+    val originalEditor = NonWriteAccessCommandCompletionSupport.originalEditor(editor)
     var startOffset: Int = -1
     var psiFile = context.file
     val commandProcessor = CommandProcessor.getInstance()
@@ -33,8 +34,18 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
         startOffset = originalEditor.second
         editor = originalEditor.first
         psiFile = PsiDocumentManager.getInstance(context.project).getPsiFile(editor.getDocument()) ?: return
-        val installedEditor = editor.getUserData(INSTALLED_EDITOR) ?: return
-        Disposer.dispose(installedEditor)
+        val installedEditor = editor.getUserData(INSTALLED_EDITOR)
+        if (installedEditor != null) {
+          // local (monolith) read-only flow: close the command inlay before executing the command
+          Disposer.dispose(installedEditor)
+        }
+        else if (!NonWriteAccessCommandCompletionSupport.Backend.isRemoteBackendEditor(context.editor)) {
+          // no inlay on the original editor and the completion editor is not a remote-dev backend document
+          // (in the remote flow this handler runs on the backend, where the inlay exists only on the frontend
+          // and is disposed there together with the lookup) — the inlay was disposed concurrently, so executing
+          // the command would act on a stale context; bail out
+          return
+        }
       }
       else {
         commandProcessor.executeCommand(context.project, {
@@ -50,11 +61,11 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
     if (startOffset == -1) return
 
     ApplicationManager.getApplication().invokeLater {
-      commandProcessor.runUndoTransparentAction(
-        {
+      commandProcessor.runUndoTransparentAction {
+        WriteIntentReadAction.run {
           completionCommand.execute(startOffset, psiFile, editor)
         }
-      )
+      }
     }
   }
 

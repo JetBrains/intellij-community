@@ -17,9 +17,8 @@ var name: String
 var propertyChild: ChildEntityType1Builder?
 var typeChild: ChildEntityType2Builder?
 }
-
 internal object EntityWithChildrenType : EntityType<EntityWithChildren, EntityWithChildrenBuilder>(){
-override val entityClass: Class<EntityWithChildren> get() = EntityWithChildren::class.java
+override val entityImplClass: Class<*> get() = EntityWithChildrenImpl::class.java
 override val entityImplBuilderClass: Class<*> get() = EntityWithChildrenImpl.Builder::class.java
 operator fun invoke(
 name: String,
@@ -33,12 +32,10 @@ init?.invoke(builder)
 return builder
 }
 }
-
 fun MutableEntityStorage.modifyEntityWithChildren(
 entity: EntityWithChildren,
 modification: EntityWithChildrenBuilder.() -> Unit,
 ): EntityWithChildren = modifyEntity(EntityWithChildrenBuilder::class.java, entity, modification)
-
 @JvmOverloads
 @JvmName("createEntityWithChildren")
 fun EntityWithChildren(

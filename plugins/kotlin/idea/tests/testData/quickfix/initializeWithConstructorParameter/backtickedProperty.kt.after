@@ -1,0 +1,12 @@
+// "Initialize with constructor parameter" "true"
+// K2_ERROR: MUST_BE_INITIALIZED_OR_BE_ABSTRACT
+
+class A {
+    val `foo bar`: Int
+
+    constructor(`foo bar`: Int) {
+        this.`foo bar` = `foo bar`
+    }
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.InitializePropertyQuickFixFactories$InitializeWithConstructorParameterFix

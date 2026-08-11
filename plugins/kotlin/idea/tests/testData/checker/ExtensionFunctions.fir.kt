@@ -16,7 +16,7 @@ class A
 infix operator fun A.plus(a : Any) {
 
   1.foo()
-  true.foo(<error descr="[NO_VALUE_FOR_PARAMETER] No value passed for parameter 'x'"><error descr="[NO_VALUE_FOR_PARAMETER] No value passed for parameter 'y'">)</error></error>
+  true.foo(<error descr="[NO_VALUE_FOR_PARAMETER]"><error descr="[NO_VALUE_FOR_PARAMETER]">)</error></error>
 
   1
 }
@@ -33,7 +33,7 @@ fun test() {
 val Int.abs : Int
   get() = if (this > 0) this else -this;
 
-<error descr="[EXTENSION_PROPERTY_MUST_HAVE_ACCESSORS_OR_BE_ABSTRACT] Extension property must have accessors or be abstract">val <T> T.foo : T</error>
+<error descr="[EXTENSION_PROPERTY_MUST_HAVE_ACCESSORS_OR_BE_ABSTRACT]">val <T> T.foo : T</error>
 
 fun Int.foo() = this
 
@@ -58,7 +58,7 @@ fun Int.foo() = this
 
             command.foo
 
-            command<error descr="[UNSAFE_CALL] Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type Command?">.</error>equals(null)
+            command<error descr="[UNSAFE_CALL]">.</error>equals(null)
             command?.equals(null)
             command.equals1(null)
             command?.equals1(null)

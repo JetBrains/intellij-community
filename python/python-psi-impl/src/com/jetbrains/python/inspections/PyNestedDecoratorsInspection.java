@@ -88,8 +88,8 @@ public final class PyNestedDecoratorsInspection extends PyInspection {
           if (maybeAffected) {
             registerProblem(
               decoOuter,
-              PyPsiBundle.message("INSP.decorator.receives.unexpected.builtin", decoInnerName),
-              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, new RemoveDecoratorQuickFix()
+              PyPsiBundle.problemMessage("INSP.decorator.receives.unexpected.builtin", decoInnerName),
+              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveDecoratorQuickFix()
             );
             return;
           }

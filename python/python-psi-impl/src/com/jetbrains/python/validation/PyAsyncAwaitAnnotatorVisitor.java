@@ -29,17 +29,6 @@ public final class PyAsyncAwaitAnnotatorVisitor extends PyElementVisitor {
 
   public PyAsyncAwaitAnnotatorVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
 
-  private static boolean isAsyncAllowed(ScopeOwner scopeOwner) {
-    // Async functions are allowed to contain "await", "async with" and "async for"
-    if (scopeOwner instanceof PyFunction pyFunction && pyFunction.isAsync()) return true;
-
-    for (PyImplicitAsyncContextProvider provider : PyImplicitAsyncContextProvider.EP_NAME.getExtensionList()) {
-      if (provider.isImplicitAsyncContext(scopeOwner)) return true;
-    }
-
-    return false;
-  }
-
   private void createError(@NotNull PsiElement node, ScopeOwner scopeOwner, @InspectionMessage @NotNull String message) {
     var annotation = myHolder
       .newAnnotation(HighlightSeverity.ERROR, message)
@@ -55,7 +44,7 @@ public final class PyAsyncAwaitAnnotatorVisitor extends PyElementVisitor {
     if (asyncNode == null) return;
 
     var scopeOwner = ScopeUtil.getScopeOwner(node);
-    if (isAsyncAllowed(scopeOwner)) return;
+    if (PyImplicitAsyncContextProvider.isAsyncAllowed(scopeOwner)) return;
 
     createError((PsiElement)asyncNode, scopeOwner, PyPsiBundle.message("ANN.async.for.outside.function"));
   }
@@ -66,7 +55,7 @@ public final class PyAsyncAwaitAnnotatorVisitor extends PyElementVisitor {
 
     if (node.getOperator() == PyTokenTypes.AWAIT_KEYWORD) {
       var scopeOwner = ScopeUtil.getScopeOwner(node);
-      if (isAsyncAllowed(scopeOwner)) return;
+      if (PyImplicitAsyncContextProvider.isAsyncAllowed(scopeOwner)) return;
 
       createError(node.getFirstChild(), scopeOwner, PyPsiBundle.message("ANN.await.outside.async.function"));
     }
@@ -78,7 +67,7 @@ public final class PyAsyncAwaitAnnotatorVisitor extends PyElementVisitor {
     if (!node.isAsync()) return;
 
     var scopeOwner = ScopeUtil.getScopeOwner(node);
-    if (isAsyncAllowed(scopeOwner)) return;
+    if (PyImplicitAsyncContextProvider.isAsyncAllowed(scopeOwner)) return;
 
     createError(node.getFirstChild(), scopeOwner, PyPsiBundle.message("ANN.async.for.outside.function"));
   }
@@ -89,7 +78,7 @@ public final class PyAsyncAwaitAnnotatorVisitor extends PyElementVisitor {
     if (!node.isAsync()) return;
 
     var scopeOwner = ScopeUtil.getScopeOwner(node);
-    if (isAsyncAllowed(scopeOwner)) return;
+    if (PyImplicitAsyncContextProvider.isAsyncAllowed(scopeOwner)) return;
 
     createError(node.getFirstChild(), scopeOwner, PyPsiBundle.message("ANN.async.with.outside.function"));
   }

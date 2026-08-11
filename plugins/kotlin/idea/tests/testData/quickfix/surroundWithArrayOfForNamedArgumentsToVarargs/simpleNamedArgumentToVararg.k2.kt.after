@@ -1,6 +1,6 @@
 // "Surround with arrayOf(...)" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'String', but 'Array<out String>' was expected.
-// K2_ERROR: Assigning single elements to varargs in named form is prohibited.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION_ERROR
 
 fun foo(vararg s: String) {}
 

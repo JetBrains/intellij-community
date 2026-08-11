@@ -21,6 +21,8 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringTest;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +31,8 @@ import java.util.List;
 /**
  * @author Dennis.Ushakov
  */
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyPushDownTest extends PyClassRefactoringTest {
 
   public PyPushDownTest() {

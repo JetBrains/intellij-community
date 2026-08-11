@@ -5,9 +5,9 @@
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.KaSubtypingErrorTypePolicy
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -36,8 +36,9 @@ object CallParameterInfoProvider {
         currentArgumentIndex: Int,
         subtypingErrorTypePolicy: KaSubtypingErrorTypePolicy = KaSubtypingErrorTypePolicy.STRICT,
     ): Boolean {
-        val argumentExpressionsBeforeCurrent = getArgumentOrIndexExpressions(sourceElement).take(currentArgumentIndex).filterNotNull()
+        val argumentExpressionsBeforeCurrent = getArgumentOrIndexExpressions(sourceElement).take(currentArgumentIndex)
         for (argumentExpression in argumentExpressionsBeforeCurrent) {
+            if (argumentExpression == null) continue
             val parameterForArgument = argumentMapping[argumentExpression] ?: continue
             val argumentType = argumentExpression.expressionType ?: error("Argument should have a KaType")
             if (!argumentType.isSubtypeOf(parameterForArgument.returnType, subtypingErrorTypePolicy)) {

@@ -1,6 +1,19 @@
 <idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.platform.debugger.impl.ui"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.debugger.impl.rpc"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.rpc"/>
+    <!-- endregion -->
   </dependencies>
   <actions resource-bundle="messages.SharedStreamDebuggerBundle">
     <action id="StreamTracerAction"
@@ -10,7 +23,4 @@
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
     </action>
   </actions>
-  <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="com.intellij.debugger.streams.shared.TraceDebuggerInitializationProjectActivity"/>
-  </extensions>
 </idea-plugin>

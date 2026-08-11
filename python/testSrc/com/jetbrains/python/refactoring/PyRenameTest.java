@@ -2,6 +2,7 @@
 package com.jetbrains.python.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -15,12 +16,16 @@ import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyRenameTest extends PyTestCase {
   public static final String RENAME_DATA_PATH = "refactoring/rename/";
 
@@ -177,6 +182,11 @@ public class PyRenameTest extends PyTestCase {
   // PY-4200
   public void testRenameUpdatesImportReferences() {
     doMultiFileTest("baz.py");
+  }
+
+  @TestFor(issues="PY-53274")
+  public void testRenameModule() {
+    doMultiFileTest("module.py", "__init__.py");
   }
 
   // PY-3991

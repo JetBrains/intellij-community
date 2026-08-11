@@ -13,6 +13,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.io.DataInputOutputUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.ast.PyAstNamedParameter;
@@ -77,6 +78,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     PyTargetExpressionStub.InitializerType initializerType = PyTargetExpressionStub.InitializerType.Other;
     QualifiedName initializer = null;
     PyLiteralKind assignedLiteralKind = null;
+    String assignedLiteralValue = null;
     final Ref<QualifiedName> assignedReference = PyTargetExpressionImpl.getAssignedReferenceQualifiedName(psi);
     if (assignedReference != null) {
       initializerType = PyTargetExpressionStub.InitializerType.ReferenceExpression;
@@ -90,10 +92,11 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
       }
       else {
         assignedLiteralKind = PyLiteralKind.fromExpression(assignedValue);
+        assignedLiteralValue = PyTargetExpressionImpl.getAssignedLiteralValueText(assignedValue);
       }
     }
-    return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, assignedLiteralKind, psi.isQualified(),
-                                          typeComment, annotation, psi.hasAssignedValue(), parentStub, versions);
+    return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, assignedLiteralKind, assignedLiteralValue,
+                                          psi.isQualified(), typeComment, annotation, psi.hasAssignedValue(), parentStub, versions);
   }
 
   @Override
@@ -114,6 +117,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
       QualifiedName.serialize(stub.getInitializer(), stream);
       stream.writeBoolean(stub.isQualified());
       PyLiteralKind.serialize(stream, stub.getAssignedLiteralKind());
+      DataInputOutputUtil.writeNullable(stream, stub.getAssignedLiteralValue(), stream::writeUTFFast);
     }
   }
 
@@ -137,8 +141,9 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     QualifiedName initializer = QualifiedName.deserialize(stream);
     boolean isQualified = stream.readBoolean();
     PyLiteralKind literalKind = PyLiteralKind.deserialize(stream);
-    return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, literalKind, isQualified, typeComment, annotation,
-                                          hasAssignedValue, parentStub, versions);
+    var literalValue = DataInputOutputUtil.readNullable(stream, stream::readUTFFast);
+    return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, literalKind, literalValue, isQualified,
+                                          typeComment, annotation, hasAssignedValue, parentStub, versions);
   }
 
   @Override

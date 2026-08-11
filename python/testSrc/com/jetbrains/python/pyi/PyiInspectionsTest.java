@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python.pyi;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Components;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.Disposable;
@@ -33,10 +36,13 @@ import com.jetbrains.python.inspections.PyTypeCheckerInspection;
 import com.jetbrains.python.inspections.PyUnboundLocalVariableInspection;
 import com.jetbrains.python.inspections.PyUnusedImportsInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
-import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedParameterInspection;
 import com.jetbrains.python.psi.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Inspections
+@Components.Stubs
+@Layers.Functional
 public class PyiInspectionsTest extends PyTestCase {
 
   private Disposable myRootsDisposable;
@@ -110,7 +116,7 @@ public class PyiInspectionsTest extends PyTestCase {
   }
 
   public void testPyiUnusedParameters() {
-    doPyiTest(PyUnusedLocalInspection.class);
+    doPyiTest(PyUnusedParameterInspection.class);
   }
 
   public void testPyiStatementEffect() {
@@ -146,7 +152,7 @@ public class PyiInspectionsTest extends PyTestCase {
   }
 
   public void testPyiRelativeImports() {
-    myRootsDisposable = PyiTypeTest.addPyiStubsToContentRoot(myFixture);
+    myRootsDisposable = LegacyPyiTypeTest.addPyiStubsToContentRoot(myFixture);
     doTestByFileName(PyUnresolvedReferencesInspection.class, "package_with_stub_in_path/a.pyi");
   }
 

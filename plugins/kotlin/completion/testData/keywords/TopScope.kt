@@ -1,6 +1,6 @@
 // FIR_IDENTICAL
 // FIR_COMPARISON
-// COMPILER_ARGUMENTS: -XXLanguage:+SealedInterfaces -XXLanguage:+MultiPlatformProjects -XXLanguage:+CompanionBlocksAndExtensions
+// COMPILER_ARGUMENTS: -XXLanguage:+SealedInterfaces -XXLanguage:+MultiPlatformProjects -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
 
 <caret>
 
@@ -44,6 +44,8 @@
 // EXIST:  expect
 // EXIST:  actual
 // EXIST:  lateinit var
-// EXIST: data object
+// EXIST:  data object
 // EXIST: {"lookupString":"data object TopScope", "itemText":"data object TopScope"}
+// EXIST:  context
+// EXIST: {"lookupString":"context","tailText":"(...)","attributes":"bold","allLookupStrings":"context","itemText":"context"}
 // NOTHING_ELSE

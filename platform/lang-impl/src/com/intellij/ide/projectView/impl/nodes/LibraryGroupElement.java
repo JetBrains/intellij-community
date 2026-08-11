@@ -18,11 +18,13 @@ package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
  */
+@ApiStatus.Internal
 public final class LibraryGroupElement {
   public static final DataKey<LibraryGroupElement[]> ARRAY_DATA_KEY = DataKey.create("libraryGroup.array");
   

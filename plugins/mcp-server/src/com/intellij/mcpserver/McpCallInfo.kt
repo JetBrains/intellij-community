@@ -4,6 +4,7 @@ import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.McpSessionHandler
 import com.intellij.mcpserver.impl.util.projectPathParameterName
+import com.intellij.mcpserver.util.getPathForMcp
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import kotlinx.serialization.Serializable
@@ -22,7 +23,7 @@ class McpCallInfo(
   val rawArguments: JsonObject,
   val meta: JsonObject,
   val mcpSessionOptions: McpServerService.McpSessionOptions,
-  val headers: Map<String, List<String>> = emptyMap(),
+  val headers: McpCallHeaders = emptyMcpCallHeaders(),
   // todo drop default, drop nullability
   val sessionId: String? = null,
 ) {
@@ -32,6 +33,18 @@ class McpCallInfo(
     return "McpCallAdditionalData(id=$callId, clientInfo=$clientInfo, toolName=${mcpToolDescriptor.name}"
   }
 }
+
+class McpCallHeaders {
+  private val headers: Map<String, List<String>>
+
+  constructor(headers: Map<String, List<String>>) {
+    this.headers = headers.entries.associateBy({ it.key.lowercase() }, { it.value })
+  }
+
+  fun get(header: String): List<String>? = headers[header.lowercase()]
+}
+
+fun emptyMcpCallHeaders(): McpCallHeaders = McpCallHeaders(emptyMap())
 
 class ClientInfo(val name: String, val version: String)
 
@@ -81,7 +94,7 @@ val CoroutineContext.projectOrNull: Project?
 
 fun noSuitableProjectError(messagePrefix: String): McpExpectedError {
   val openProjects = ProjectManager.getInstance().openProjects
-  val projects = OpenProjects(openProjects.mapNotNull { project -> project.basePath?.let { ProjectInfo(project.basePath.toString()) } })
+  val projects = OpenProjects(openProjects.mapNotNull { project -> project.getPathForMcp()?.let { ProjectInfo(it) } })
 
   return McpExpectedError(mcpErrorText = """$messagePrefix
               | You may specify the project path via `$projectPathParameterName` parameter when calling a tool. 

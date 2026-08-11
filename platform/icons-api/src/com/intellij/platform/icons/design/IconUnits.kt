@@ -14,7 +14,8 @@ import com.intellij.platform.icons.IconManager
  * </pre>
  */
 sealed interface IconUnit {
-    operator fun times(other: Int): IconUnit
+  operator fun times(other: Int): IconUnit
+  operator fun times(other: Double): IconUnit
 
     companion object {
         val Zero: IconUnit = 0.dp

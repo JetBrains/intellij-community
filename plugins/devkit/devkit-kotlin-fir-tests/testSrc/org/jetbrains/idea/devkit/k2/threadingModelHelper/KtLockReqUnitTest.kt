@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.k2.threadingModelHelper
 
 import com.intellij.openapi.application.PluginPathManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.GlobalSearchScope
@@ -76,7 +77,7 @@ class KtLockReqUnitTest : BasePlatformTestCase() {
     val psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.projectScope(project))
     val method = SmartPointerManager.createPointer(psiClass?.methods?.firstOrNull { m -> m.name == TEST_METHOD_NAME }!!)
     val config = AnalysisConfig.Companion.forProject(project, EnumSet.allOf(ConstraintType::class.java))
-    return runBlocking {
+    return runBlockingMaybeCancellable {
         analyzerBFS.analyzeMethod(method, config)
     }
   }

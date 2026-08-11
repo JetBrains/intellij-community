@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -266,25 +267,32 @@ public final class GuiUtils {
     return size;
   }
 
-  public static void installVisibilityReferent(JComponent owner, JComponent referent) {
-    referent.addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentShown(ComponentEvent e) {
-        toggleVisibility(e);
-      }
+  public static void installVisibilityReferent(@NotNull JComponent owner, @NotNull JComponent referent) {
+    installVisibilityReferents(owner, referent);
+  }
 
-      @Override
-      public void componentHidden(ComponentEvent e) {
-        toggleVisibility(e);
-      }
-
-      private void toggleVisibility(ComponentEvent e) {
-        Component component = e.getComponent();
-        if (component != null) {
-          owner.setVisible(component.isVisible());
+  /**
+   * Makes {@code owner} visible when any of {@code referents} is visible and invisible when all of them are invisible.
+   */
+  public static void installVisibilityReferents(@NotNull JComponent owner, JComponent @NotNull ... referents) {
+    for (JComponent referent : referents) {
+      referent.addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentShown(ComponentEvent e) {
+          updateVisibility();
         }
-      }
-    });
+
+        @Override
+        public void componentHidden(ComponentEvent e) {
+          updateVisibility();
+        }
+
+        private void updateVisibility() {
+          boolean anyVisible = ContainerUtil.find(referents, Component::isVisible) != null;
+          owner.setVisible(anyVisible);
+        }
+      });
+    }
   }
 
   /**

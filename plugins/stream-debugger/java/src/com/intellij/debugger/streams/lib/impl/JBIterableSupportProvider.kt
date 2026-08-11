@@ -21,13 +21,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.CommonClassNames
 
+private const val CLASS_NAME = "com.intellij.util.containers.JBIterable"
+
 /**
  * @author Vitaliy.Bibaev
  */
 internal class JBIterableSupportProvider : JvmLibrarySupportProvider() {
-  private companion object {
-    const val CLASS_NAME = "com.intellij.util.containers.JBIterable"
-  }
 
   private val librarySupport = JBIterableSupport()
   private val dsl = DslImpl(JBIterableJavaStatementFactory())

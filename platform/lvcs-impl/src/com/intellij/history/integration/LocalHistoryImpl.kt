@@ -24,6 +24,7 @@ import com.intellij.history.utils.LocalHistoryLog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
@@ -224,9 +225,9 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
 
       override fun getByteContent(path: String): ByteContent {
         val facade = facade ?: error("Local history storage unavailable")
-        val root = runReadActionBlocking {
+        val root = ReadAction.nonBlocking<RootEntry> {
           gateway.createTransientRootEntryForPath(path, false)
-        }
+        }.executeSynchronously()
         return facade.getByteContentBefore(root, path, labelId)
       }
     }
@@ -237,14 +238,14 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
       return null
     }
 
-    return runReadActionBlocking {
+    return ReadAction.nonBlocking<ByteContentRetriever?> {
       if (gateway.areContentChangesVersioned(file)) {
-        ByteContentRetriever(gateway, facade, file, condition).getResult()
+        ByteContentRetriever(gateway, facade, file, condition)
       }
       else {
         null
       }
-    }
+    }.executeSynchronously()?.getResult()
   }
 
   override fun isUnderControl(file: VirtualFile): Boolean = isInitialized() && gateway.isVersioned(file)

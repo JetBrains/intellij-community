@@ -14,6 +14,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Version as PlatformVersion
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.Version
@@ -22,10 +24,11 @@ import com.intellij.python.pytools.findExecutableInPath
 import com.intellij.python.pytools.findExecutableInSdk
 import com.jetbrains.python.sdk.pyInterpreterPresentation
 import com.intellij.python.pytools.ui.PyToolsUiBundle
+import com.intellij.python.pytools.configuration.ConfigurablePyTool
 import com.intellij.python.pytools.ui.icons.PythonPytoolsUIIcons
 import com.jetbrains.python.Result
 import com.intellij.python.pytools.validateCustomPath
-import com.jetbrains.python.sdk.pyRichSdk
+import com.jetbrains.python.sdk.pythonInterpreter
 import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -91,7 +94,10 @@ internal class ToolRow(
    * glyph next to `Sdk`, plus a tooltip listing the resolved binary path per SDK.
    */
   var sdkAvailability: SdkAvailability? = null,
-)
+) {
+  /** This tool's detail-panel provider, or `null` when the tool has no detail configurable. */
+  val detailConfigurableProvider: ConfigurablePyTool? = tool as? ConfigurablePyTool
+}
 
 /**
  * Project-SDK detection snapshot for one [ToolRow]: an ordered list of SDKs with the tool's
@@ -117,16 +123,23 @@ internal sealed interface PathFieldValue {
   /** User-supplied [PyToolsState.ToolEntry.customPathToExecutable]. */
   data class Custom(val path: Path) : PathFieldValue
 
-  /** Path derived from system PATH. */
+  /** Path auto-detected on PATH or in a well-known per-user install directory. */
   data class AutoDetected(val path: Path) : PathFieldValue
 
   /** Neither configured nor discoverable. */
   data object NotFound : PathFieldValue
 }
 
-internal fun detect(tool: PyTool, customPath: Path?): PathFieldValue {
+/**
+ * Resolve the row's displayed path. A user-supplied [customPath] wins; a [knownPath] (the exact path an
+ * installer just reported) is trusted next; otherwise the tool is auto-detected via [findExecutableInPath],
+ * which searches PATH **and** the well-known per-user install dirs — a plain PATH lookup misses the per-user
+ * scripts dirs pip/uv install into, which are frequently not on PATH on Windows (PY-91493).
+ */
+internal suspend fun detect(project: Project, tool: PyTool, customPath: Path?, knownPath: Path? = null): PathFieldValue {
   if (customPath != null) return PathFieldValue.Custom(customPath)
-  val auto = tool.findExecutableInPath()
+  if (knownPath != null) return PathFieldValue.AutoDetected(knownPath)
+  val auto = findExecutableInPath(project.getEelDescriptor().toEelApi(), tool.packageName.name)
   return if (auto != null) PathFieldValue.AutoDetected(auto) else PathFieldValue.NotFound
 }
 
@@ -144,15 +157,12 @@ internal enum class PathIconKind(val icon: Icon?) {
 
 /**
  * Compute the hover-only icon for a Path cell given the row's current state. The function is
- * deliberately pure: the caller supplies the live uv-availability snapshot (`null` while
- * detection is in flight) and the "is this tool uv-managed" predicate, so the renderer doesn't
- * need to know how those are sourced.
+ * deliberately pure: the caller supplies the "is an upgrade available" predicate, so the renderer
+ * doesn't need to know how it is sourced.
  */
 internal fun iconKindFor(
   toolRow: ToolRow?,
   detected: PathFieldValue?,
-  uvAvailable: Boolean?,
-  isUvManaged: (ToolRow) -> Boolean,
   isUpgradeAvailable: (ToolRow) -> Boolean,
 ): PathIconKind = when {
   toolRow == null -> PathIconKind.NONE
@@ -160,10 +170,11 @@ internal fun iconKindFor(
   // action there is "revert to auto-detection". Skip install / upgrade / info — none of them
   // apply to a user-pointed-at executable.
   detected is PathFieldValue.Custom -> PathIconKind.RESET
-  detected is PathFieldValue.NotFound && uvAvailable == true -> PathIconKind.INSTALL
-  detected is PathFieldValue.NotFound -> PathIconKind.NONE
+  // Offer install for any undiscovered tool; the installer uses uv when present and otherwise
+  // falls back to a pip install into a system Python.
+  detected is PathFieldValue.NotFound -> PathIconKind.INSTALL
   toolRow.version == null -> PathIconKind.NONE
-  isUvManaged(toolRow) && isUpgradeAvailable(toolRow) -> PathIconKind.UPGRADE
+  isUpgradeAvailable(toolRow) -> PathIconKind.UPGRADE
   // Otherwise no actionable icon — the path text + version tooltip already conveys the state.
   else -> PathIconKind.NONE
 }
@@ -180,16 +191,18 @@ internal fun iconKindFor(
  */
 internal fun ToolRow.probeVersion(
   scope: CoroutineScope,
+  project: Project,
   isCustomEdit: Boolean = false,
+  knownPath: Path? = null,
   onUpdated: (ToolRow) -> Unit,
 ) {
   validationJob?.cancel()
   val mode = staged.mode
   val customPath = staged.customPath
   validationJob = scope.launch {
-    // Step 1: resolve the displayed path off the EDT — `findInPath` does disk I/O.
+    // Step 1: resolve the displayed path off the EDT — detection does disk I/O.
     val detected = withContext(Dispatchers.IO) {
-      detect(tool, customPath)
+      detect(project, tool, customPath, knownPath)
     }
     val path = when (detected) {
       is PathFieldValue.Custom -> detected.path
@@ -316,6 +329,6 @@ internal fun snapshotProjectSdks(project: Project): List<ProjectSdkSnapshot> {
 internal fun PyTool.detectInSdks(snapshot: List<ProjectSdkSnapshot>): SdkAvailability {
   if (snapshot.isEmpty()) return SdkAvailability.NoProjectSdks
   return SdkAvailability(snapshot.map { sdk ->
-    SdkEntry(sdkLabel = sdk.label, binaryPath = findExecutableInSdk(sdk.sdk.pyRichSdk()))
+    SdkEntry(sdkLabel = sdk.label, binaryPath = findExecutableInSdk(sdk.sdk.pythonInterpreter()))
   })
 }

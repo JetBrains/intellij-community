@@ -14,7 +14,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
-    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module-library">
       <library name="jline.terminal" type="repository">
         <properties maven-id="org.jline:jline-terminal:3.27.0">

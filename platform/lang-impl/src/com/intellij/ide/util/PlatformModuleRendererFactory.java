@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.TextWithIcon;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ public final class PlatformModuleRendererFactory extends ModuleRendererFactory {
     return text == null ? null : new TextWithIcon(text, null);
   }
 
+  @ApiStatus.Internal
   public static final class PlatformModuleRenderer extends DefaultListCellRenderer {
     @Override
     public Component getListCellRendererComponent(final JList list,

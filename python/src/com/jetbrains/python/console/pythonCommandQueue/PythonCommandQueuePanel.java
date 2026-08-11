@@ -33,7 +33,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugConsoleCommunication;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
-import com.jetbrains.python.console.actions.ShowCommandQueueAction;
+import com.jetbrains.python.console.actions.ShowCommandQueueActionKt;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,8 +54,7 @@ public final class PythonCommandQueuePanel extends JPanel {
   private final GotItTooltip tooltip;
   private final EditorEx myQueueEditor;
   private final Map<ConsoleCommunication.ConsoleCodeFragment, QueueElementPanel> myQueueElementPanelMap = new ConcurrentHashMap<>();
-  private final CommandQueueForPythonConsoleService myService = ApplicationManager.getApplication()
-    .getService(CommandQueueForPythonConsoleService.class);
+  private final CommandQueueForPythonConsoleService myService;
 
 
   private QueueElementPanel selectedCommand;
@@ -63,8 +62,6 @@ public final class PythonCommandQueuePanel extends JPanel {
 
   private static final int PREFERED_WIDTH = 500;
   private static final int PREFERED_HEIGHT = 150;
-  private static final int QUEUE_MINIMUM_WIDTH = 200;
-  private static final int QUEUE_MINIMUM_HEIGHT = -1;
   private static final int BORDER_OFFSETS = 7;
 
 
@@ -73,6 +70,7 @@ public final class PythonCommandQueuePanel extends JPanel {
     setBorder(JBUI.Borders.empty());
     setPreferredSize(new Dimension(PREFERED_WIDTH, PREFERED_HEIGHT));
     myConsole = console;
+    myService = console.getProject().getService(CommandQueueForPythonConsoleService.class);
     tooltip = new GotItTooltip(PyBundle.message("python.console.command.queue.got.it.tooltip.id"),
                                PyBundle.message("python.console.command.queue.got.it.tooltip.text"), myConsole)
       .withHeader(PyBundle.message("python.console.command.queue.got.it.tooltip.title"));
@@ -196,7 +194,7 @@ public final class PythonCommandQueuePanel extends JPanel {
     return UIUtil.uiTraverser(myConsole.getToolbar().getComponent())
       .filter(ActionButton.class)
       .filter((button) -> {
-        return ShowCommandQueueAction.isCommandQueueIcon(button.getIcon());
+        return ShowCommandQueueActionKt.isCommandQueueIcon(button.getIcon());
       })
       .first();
   }

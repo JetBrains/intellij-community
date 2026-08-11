@@ -14,6 +14,25 @@
       calculated based on your completion usage patterns. The plugin does not send more than 15MB of data per day. </p>
     ]]></description>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.http.client"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+  </dependencies>
+  <!-- endregion -->
+  <content namespace="jetbrains"/>
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
   <depends>com.intellij.completion.ml.ranking</depends>

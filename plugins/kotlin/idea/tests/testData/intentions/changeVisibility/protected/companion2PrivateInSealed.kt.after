@@ -1,0 +1,8 @@
+sealed class A {
+    companion object {
+        @JvmStatic
+        protected fun b() {
+
+        }
+    }
+}

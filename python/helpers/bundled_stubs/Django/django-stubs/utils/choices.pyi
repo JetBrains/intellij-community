@@ -8,7 +8,8 @@ _Choice: TypeAlias = tuple[Any, Any]
 _ChoiceNamedGroup: TypeAlias = tuple[str, Iterable[_Choice]]
 _Choices: TypeAlias = Iterable[_Choice | _ChoiceNamedGroup]
 _ChoicesMapping: TypeAlias = Mapping[Any, Any]
-_ChoicesInput: TypeAlias = _Choices | _ChoicesMapping | type[Choices] | Callable[[], _Choices | _ChoicesMapping]  # noqa: PYI047
+_ChoicesPrimitive: TypeAlias = _Choices | _ChoicesMapping | type[Choices]
+_ChoicesInput: TypeAlias = _ChoicesPrimitive | Callable[[], _ChoicesPrimitive]  # noqa: PYI047
 
 @type_check_only
 class _ChoicesCallable(Protocol):

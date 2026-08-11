@@ -10,7 +10,7 @@ import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBund
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectUsageCollector
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.emit
-import com.jetbrains.python.util.ShowingMessageErrorSync
+import com.jetbrains.python.errorProcessing.ErrorSink
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -42,7 +42,7 @@ class PyMiscService(private val scope: CoroutineScope) {
         }
         is Result.Failure -> {
           withContext(Dispatchers.EDT) {
-            ShowingMessageErrorSync.emit(projectCreationResult.error, project)
+            ErrorSink().emit(projectCreationResult.error, project)
           }
         }
       }

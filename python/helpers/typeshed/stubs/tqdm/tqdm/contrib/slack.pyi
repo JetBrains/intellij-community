@@ -1,6 +1,7 @@
 from _typeshed import Incomplete, SupportsWrite
 from collections.abc import Iterable, Mapping
-from typing import NoReturn, TypeVar, overload
+from typing import TypeVar, overload
+from typing_extensions import Never
 
 from ..auto import tqdm as tqdm_auto
 from .utils_worker import MonoWorker
@@ -48,13 +49,14 @@ class tqdm_slack(tqdm_auto[_T]):
         colour: str | None = ...,
         delay: float | None = ...,
         gui: bool = ...,
-        token: str = ...,
-        channel: int = ...,
+        *,
+        token: str | None = None,
+        channel: int | None = None,
         **kwargs,
     ) -> None: ...
     @overload
     def __init__(
-        self: tqdm_slack[NoReturn],
+        self: tqdm_slack[Never],
         iterable: None = None,
         desc: str | None = ...,
         total: float | None = ...,
@@ -81,8 +83,9 @@ class tqdm_slack(tqdm_auto[_T]):
         colour: str | None = ...,
         delay: float | None = ...,
         gui: bool = ...,
-        token: str = ...,
-        channel: int = ...,
+        *,
+        token: str | None = None,
+        channel: int | None = None,
         **kwargs,
     ) -> None: ...
 

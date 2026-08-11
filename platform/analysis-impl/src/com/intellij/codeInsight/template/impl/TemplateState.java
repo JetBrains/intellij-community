@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -44,7 +45,6 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint;
 import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
-import com.intellij.openapi.editor.impl.elf.ElfTheManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -134,7 +134,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       public void beforeDocumentChange(@NotNull DocumentEvent e) {
         if (CommandProcessor.getInstance().isCommandInProgress() &&
             !isUndoOrRedoInProgress() &&
-            !ElfTheManager.getInstance().isElfCommandInProgress()) {
+            !Elf.getElf().isElfCommandInProgress()) {
           myDocumentChanged = true;
         }
       }

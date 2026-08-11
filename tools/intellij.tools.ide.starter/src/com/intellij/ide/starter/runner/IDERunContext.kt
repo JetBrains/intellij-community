@@ -22,17 +22,15 @@ import com.intellij.ide.starter.profiler.ProfilerType
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.ide.starter.screenRecorder.IDEScreenRecorder
+import com.intellij.ide.starter.utils.FileSystem.createDirectoriesIfNotExist
 import com.intellij.ide.starter.utils.FileSystem.listDirectoryEntriesQuietly
-import com.intellij.ide.starter.utils.JvmUtils
 import com.intellij.ide.starter.utils.catchAll
-import com.intellij.ide.starter.utils.formatArtifactName
 import com.intellij.ide.starter.utils.startProfileNativeThreads
 import com.intellij.ide.starter.utils.stopProfileNativeThreads
 import com.intellij.ide.starter.utils.takeScreenshot
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.tools.ide.performanceTesting.commands.MarshallableCommand
 import com.intellij.tools.ide.starter.bus.EventsBus
-import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.containers.ConcurrentList
 import com.intellij.util.containers.ContainerUtil
@@ -72,60 +70,39 @@ data class IDERunContext(
   val collectNativeThreads: Boolean = false,
   private val stdOut: ExecOutputRedirect? = null,
 ) {
-  val contextName: String
-    get() = (if (launchName.isNotEmpty()) "${testContext.testName}/${launchName}" else testContext.testName)
+  val contextName: String = (if (launchName.isNotBlank()) "${testContext.testName}/${launchName}" else testContext.testName)
 
-  private val jvmCrashLogDirectory by lazy { logsDir.resolve("jvm-crash").createDirectories() }
-  private val heapDumpOnOomDirectory by lazy { logsDir.resolve("heap-dump").createDirectories() }
-  val reportsDir: Path = testContext.paths.testHome.resolve(launchName).resolve("reports").createDirectoriesIfNotExist()
-  val snapshotsDir: Path = testContext.paths.testHome.resolve(launchName).resolve("snapshots").createDirectoriesIfNotExist()
-  val launchDir: Path = testContext.paths.testHome.resolve(launchName).createDirectoriesIfNotExist()
-  val logsDir: Path = testContext.paths.testHome.resolve(launchName).resolve("log").createDirectoriesIfNotExist()
+  private val reportingDataRegistry = IDEReportingDataRegistry(testContext, launchName)
+
+  fun registeredIdeReportingData(): List<IDEReportingData> = reportingDataRegistry.all()
+  internal fun ideReportingDataFromCurrentToOldest(): List<IDEReportingData> = reportingDataRegistry.fromCurrentToOldest()
+
+  val lastIdeReportingData: IDEReportingData get() = reportingDataRegistry.current
+  val originalIdeReportingData: IDEReportingData = reportingDataRegistry.original
+
+  val reportsDir: Path
+    get() = registeredIdeReportingData().singleOrNull()?.reportsDir ?: multipleReportingDirsError()
+  val snapshotsDir: Path
+    get() = registeredIdeReportingData().singleOrNull()?.snapshotsDir ?: multipleReportingDirsError()
+  val logsDir: Path
+    get() = registeredIdeReportingData().singleOrNull()?.logsDir ?: multipleReportingDirsError()
+
+  private fun multipleReportingDirsError(): Nothing =
+    error("There have been several reporting dirs. You need either to choose the last one or perform your action for all reporting dirs.")
+
+  private fun jvmCrashLogDirectory() = lastIdeReportingData.logsDir.resolve("jvm-crash").createDirectories()
+  private fun heapDumpOnOomDirectory() = lastIdeReportingData.logsDir.resolve("heap-dump").createDirectories()
+
   private val patchesForVMOptions: ConcurrentList<VMOptions.() -> Unit> = ContainerUtil.createConcurrentList()
 
-  var artifactsPublishingEnabled: Boolean = true
+  fun registerNewIdeReportingData(actionToResetLogDir: (Path) -> Unit): IDEReportingData =
+    reportingDataRegistry.register(actionToResetLogDir)
 
-  private fun Path.createDirectoriesIfNotExist(): Path {
-    if (exists()) {
-      logOutput("Reports dir '${this.fileName}' is already created")
-      return this
-    }
-    logOutput("Creating reports dir '${this.fileName}'")
-    return createDirectories()
-  }
-
-  private fun formatArtifactName(artifactName: String): String {
-    return if (testContext.testCase.ideInfo.isFrontend) {
-      formatArtifactName(artifactName + "-frontend", testContext.testName)
-    }
-    else {
-      formatArtifactName(artifactName, testContext.testName)
-    }
-  }
-
-  fun publishArtifacts(publish: Boolean = artifactsPublishingEnabled) {
-    if (!publish) return
-
-    testContext.publishArtifact(
-      source = logsDir,
-      artifactPath = contextName,
-      artifactName = formatArtifactName("logs")
-    )
-    testContext.publishArtifact(
-      source = testContext.paths.eventLogDataDir,
-      artifactPath = contextName,
-      artifactName = formatArtifactName("event-log-data")
-    )
-    testContext.publishArtifact(
-      source = snapshotsDir,
-      artifactPath = contextName,
-      artifactName = formatArtifactName("snapshots")
-    )
-    testContext.publishArtifact(
-      source = reportsDir,
-      artifactPath = contextName,
-      artifactName = formatArtifactName("reports")
-    )
+  fun publishArtifacts() {
+    registeredIdeReportingData().forEach { it.publishArtifacts(testContext) }
+    // the event log is written by the IDE process as a whole rather than per launch, so it goes under the first reporting data of the
+    // process - under the same path scheme as the rest, so that it lands next to the logs and reports it belongs with
+    catchAll("publish event-log-data") { originalIdeReportingData.publishArtifact(testContext, testContext.paths.eventLogDataDir, "event-log-data") }
   }
 
   fun verbose(): IDERunContext = copy(verboseOutput = true)
@@ -169,9 +146,9 @@ data class IDERunContext(
       if (!testContext.isRemDevContext()) {
         takeScreenshotsPeriodically()
       }
-      withJvmCrashLogDirectory(jvmCrashLogDirectory)
-      withHeapDumpOnOutOfMemoryDirectory(heapDumpOnOomDirectory)
-      withGCLogs(reportsDir.resolve("gcLog.log"))
+      withJvmCrashLogDirectory(jvmCrashLogDirectory())
+      withHeapDumpOnOutOfMemoryDirectory(heapDumpOnOomDirectory())
+      withGCLogs(lastIdeReportingData.reportsDir.resolve("gcLog.log"))
       setOpenTelemetryMaxFilesNumber()
 
       if (ConfigurationStorage.classFileVerification()) {
@@ -183,8 +160,7 @@ data class IDERunContext(
       }
 
       installProfiler()
-      setSnapshotPath(snapshotsDir)
-      setPathForMemorySnapshot()
+      setSnapshotPath(lastIdeReportingData.snapshotsDir)
       collectOpenTelemetry()
       setupLogDir()
 
@@ -196,7 +172,20 @@ data class IDERunContext(
       // Allow an overridden script file, required for migration of Rider performance tests
       else if (!this.hasOption(TEST_SCRIPT_FILE_OPTION))
         installTestScript(testName = contextName, paths = testContext.paths, commands = commands)
+
+      applyCustomCommandJvmArguments()
     }
+  }
+
+  private fun VMOptions.applyCustomCommandJvmArguments() {
+    if (!testContext.ide.isFromSources) return
+    val customCommand = commandLine(this@IDERunContext) as? IDECommandLine.CustomCommand ?: return
+    val customCommandJvmArguments = requireNotNull(
+      DevBuildServerRunner.instance.readCustomCommandJvmArguments(testContext.ide.installationPath, customCommand.command)
+    ) {
+      "No '${customCommand.command}' custom command in the product info of ${testContext.ide.installationPath}"
+    }
+    customCommandJvmArguments.forEach { addLine(it) }
   }
 
   fun runIDE(): IDEStartResult {
@@ -226,7 +215,7 @@ data class IDERunContext(
 
 
   internal fun getErrorMessage(t: Throwable, ciFailureDetails: String?): String? {
-    val failureCauseFile = logsDir.resolve("failure_cause.txt")
+    val failureCauseFile = lastIdeReportingData.logsDir.resolve("failure_cause.txt")
     val errorMessage = if (Files.exists(failureCauseFile)) {
       Files.readString(failureCauseFile)
     }
@@ -280,7 +269,7 @@ data class IDERunContext(
   }
 
   private fun isLowMemorySignalPresent(logsDir: Path): Boolean {
-    return logsDir.walk().single { it.name == "idea.log"}.bufferedReader().useLines { lines ->
+    return logsDir.walk().single { it.name == "idea.log" }.bufferedReader().useLines { lines ->
       lines.any { line ->
         line.contains("Low memory signal received: afterGc=true")
       }
@@ -288,21 +277,21 @@ data class IDERunContext(
   }
 
   suspend fun startCollectThreadDumpsLoop(
-    logsDir: Path,
+    logsDir: () -> Path,
     process: IDEHandle,
     jdkHome: Path,
     workDir: Path,
     collectingProcessId: Long,
     processName: String,
   ) {
-    val monitoringThreadDumpDir = logsDir.resolve("monitoring-thread-dumps-${processName}").createDirectoriesIfNotExist()
+    fun monitoringThreadDumpDir() = logsDir().resolve("monitoring-thread-dumps-${processName}").createDirectoriesIfNotExist()
 
     var cnt = 0
     while (process.isAlive) {
       delay(ConfigurationStorage.monitoringDumpsIntervalSeconds().seconds)
       if (!process.isAlive) break
 
-      val dumpFile = monitoringThreadDumpDir.resolve("threadDump-${++cnt}-${getCurrentTimestamp()}.txt")
+      val dumpFile = monitoringThreadDumpDir().resolve("threadDump-${++cnt}-${getCurrentTimestamp()}.txt")
       logOutput("Dumping threads to $dumpFile")
       catchAll { collectJavaThreadDumpSuspendable(jdkHome, workDir, collectingProcessId, dumpFile) }
     }
@@ -339,18 +328,12 @@ data class IDERunContext(
     }
   }
 
-  fun setPathForMemorySnapshot() {
-    addVMOptionsPatch {
-      addSystemProperty("memory.snapshots.path", logsDir)
-    }
+  private fun collectOpenTelemetry(): IDERunContext = addVMOptionsPatch {
+    addSystemProperty("idea.diagnostic.opentelemetry.file", lastIdeReportingData.logsDir.resolve(IDETestContext.OPENTELEMETRY_FILE))
   }
 
-  fun collectOpenTelemetry(): IDERunContext = addVMOptionsPatch {
-    addSystemProperty("idea.diagnostic.opentelemetry.file", logsDir.resolve(IDETestContext.OPENTELEMETRY_FILE))
-  }
-
-  fun setupLogDir(): IDERunContext = addVMOptionsPatch {
-    addSystemProperty("idea.log.path", logsDir)
+  private fun setupLogDir(): IDERunContext = addVMOptionsPatch {
+    addSystemProperty("idea.log.path", lastIdeReportingData.logsDir)
   }
 
   fun withScreenRecording() {

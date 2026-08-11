@@ -13,7 +13,7 @@ public final class FilteringMarkupIterator<T> implements MarkupIterator<T> {
   private final @NotNull MarkupIterator<? extends T> myDelegate;
   private final @NotNull Predicate<? super T> myFilter;
 
-  public FilteringMarkupIterator(@NotNull MarkupIterator<? extends T> delegate, @NotNull Predicate<? super T> filter) {
+  private FilteringMarkupIterator(@NotNull MarkupIterator<? extends T> delegate, @NotNull Predicate<? super T> filter) {
     myDelegate = delegate;
     myFilter = filter;
     skipUnrelated();
@@ -43,5 +43,12 @@ public final class FilteringMarkupIterator<T> implements MarkupIterator<T> {
 
   private void skipUnrelated() {
     while(myDelegate.hasNext() && !myFilter.test(myDelegate.peek())) myDelegate.next();
+  }
+
+  public static <T> @NotNull MarkupIterator<T> create(@NotNull MarkupIterator<T> delegate, @NotNull Predicate<? super T> filter) {
+    if (delegate == EMPTY) {
+      return delegate;
+    }
+    return new FilteringMarkupIterator<>(delegate, filter);
   }
 }

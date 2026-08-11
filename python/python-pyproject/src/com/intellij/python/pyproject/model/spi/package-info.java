@@ -1,5 +1,5 @@
 /**
- * Implement {@link com.intellij.python.pyproject.model.spi.Tool} and register it
+ * Implement {@link com.intellij.python.pyproject.model.spi.PyProjectManager} and register it
  */
 @ApiStatus.Internal
 package com.intellij.python.pyproject.model.spi;

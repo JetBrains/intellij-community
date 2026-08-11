@@ -1,5 +1,4 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
-// SHOULD_FAIL_WITH: Explicit receiver is already present in call element: c1.foo()
 
 interface Foo {
     context(<caret>c1: String)

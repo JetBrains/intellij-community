@@ -1956,6 +1956,12 @@ public final class JBUI {
     }
 
     public interface Window {
+      @Internal
+      static Border getDialogBorder(boolean undecoratedWindow) {
+        Border result = UIManager.getBorder("Dialog.border");
+        return result == null ? getBorder(undecoratedWindow) : result;
+      }
+
       static Border getBorder(boolean undecoratedWindow) {
         Border result = UIManager.getBorder("Window.border");
         if (result == null && undecoratedWindow &&

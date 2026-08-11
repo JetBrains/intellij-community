@@ -22,7 +22,7 @@ from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from http import HTTPStatus
 from pathlib import Path
-from typing import Annotated, Any, ClassVar, Literal, NamedTuple, TypeAlias, TypedDict, TypeVar
+from typing import Annotated, Any, ClassVar, Literal, NamedTuple, TypeAlias, TypedDict, TypeVar, cast
 from typing_extensions import Self
 
 if sys.version_info >= (3, 11):
@@ -38,6 +38,7 @@ from termcolor import colored
 
 from ts_utils.metadata import ObsoleteMetadata, StubMetadata, read_metadata, update_metadata
 from ts_utils.paths import PYRIGHT_CONFIG, STUBS_PATH, distribution_path
+from ts_utils.stubs import third_party_stubs
 
 TYPESHED_OWNER = "python"
 TYPESHED_API_URL = f"https://api.github.com/repos/{TYPESHED_OWNER}/typeshed"
@@ -534,7 +535,7 @@ async def analyze_github_diff(
     # https://docs.github.com/en/rest/commits/commits#compare-two-commits
     py_files: list[FileInfo] = [file for file in json_resp["files"] if Path(file["filename"]).suffix == ".py"]
     stub_path = distribution_path(distribution)
-    files_in_typeshed = set(stub_path.rglob("*.pyi"))
+    files_in_typeshed = {stub.path for stub in third_party_stubs(distribution)}
     py_files_stubbed_in_typeshed = [file for file in py_files if (stub_path / f"{file['filename']}i") in files_in_typeshed]
     return DiffAnalysis(py_files=py_files, py_files_stubbed_in_typeshed=py_files_stubbed_in_typeshed)
 
@@ -570,7 +571,7 @@ async def analyze_gitlab_diff(
         py_files.append(FileInfo(filename=filename, status=status, additions=additions, deletions=deletions))
 
     stub_path = distribution_path(distribution)
-    files_in_typeshed = set(stub_path.rglob("*.pyi"))
+    files_in_typeshed = {stub.path for stub in third_party_stubs(distribution)}
     py_files_stubbed_in_typeshed = [file for file in py_files if (stub_path / f"{file['filename']}i") in files_in_typeshed]
     return DiffAnalysis(py_files=py_files, py_files_stubbed_in_typeshed=py_files_stubbed_in_typeshed)
 
@@ -715,7 +716,7 @@ def get_origin_owner() -> str:
     output = subprocess.check_output(["git", "remote", "get-url", "origin"], text=True).strip()
     match = re.match(r"(git@github.com:|https://github.com/)(?P<owner>[^/]+)/(?P<repo>[^/\s]+)", output)
     assert match is not None, f"Couldn't identify origin's owner: {output!r}"
-    assert match.group("repo").removesuffix(".git") == "typeshed", f'Unexpected repo: {match.group("repo")!r}'
+    assert match.group("repo").removesuffix(".git") == "typeshed", f"Unexpected repo: {match.group('repo')!r}"
     return match.group("owner")
 
 
@@ -906,9 +907,9 @@ async def suggest_typeshed_obsolete(obsolete: Obsolete, session: aiohttp.ClientS
     async with _repo_lock:
         branch_name = f"{BRANCH_PREFIX}/{normalize(obsolete.distribution)}"
         subprocess.check_call(["git", "checkout", "-B", branch_name, "origin/main"])
-        obs_string = tomlkit.string(obsolete.obsolete_since_version)
-        obs_string.comment(f"Released on {obsolete.obsolete_since_date.date().isoformat()}")
-        update_metadata(obsolete.distribution, obsolete_since=obs_string)
+        obsolete_t = cast(dict[str, object], tomlkit.inline_table())
+        obsolete_t.update({"version": obsolete.obsolete_since_version, "date": obsolete.obsolete_since_date.date().isoformat()})
+        update_metadata(obsolete.distribution, obsolete_since=obsolete_t)
         body = "\n".join(f"{k}: {v}" for k, v in obsolete.links.items())
         subprocess.check_call(["git", "commit", "--all", "-m", f"{title}\n\n{body}"])
         if action_level <= ActionLevel.local:
@@ -965,7 +966,7 @@ async def main() -> int:
     if args.distributions:
         dists_to_update = args.distributions
     else:
-        dists_to_update = [path.name for path in STUBS_PATH.iterdir()]
+        dists_to_update = sorted(path.name for path in STUBS_PATH.iterdir())
 
     if args.action_level > ActionLevel.nothing:
         subprocess.run(["git", "update-index", "--refresh"], capture_output=True, check=False)

@@ -9,7 +9,7 @@ import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.impl.PyEvaluator
-import com.jetbrains.python.psi.types.PyCollectionType
+import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyUnionType
@@ -53,7 +53,7 @@ private fun getParametersFromDecorator(decorator: PyDecorator, function: PyFunct
   }
 
   //Value expression could be scalar
-  if (valuesExpression !is PyCollectionType) {
+  if (valuesExpression !is PyClassType || !valuesExpression.isParameterized) {
     return parameterNames.map { PyTestParameter(it, valuesExpression) }
   }
 
@@ -70,7 +70,8 @@ private fun getParametersFromDecorator(decorator: PyDecorator, function: PyFunct
       }
     }
     is PyTupleType -> iteratedItemType.elementTypes.forEachIndexed { i, type -> if (parameterTypes.size > i) parameterTypes[i] = type }
-    !is PyCollectionType -> parameterTypes.fill(iteratedItemType)
+    !is PyClassType -> parameterTypes.fill(iteratedItemType)
+    is PyClassType if !iteratedItemType.isParameterized -> parameterTypes.fill(iteratedItemType)
   }
   // We now have array of param names and array of their types
   // But if indirect=true or indirect=["param"..], we should replace param types with fixture result types
@@ -133,4 +134,3 @@ internal fun PyFunction.getParametersOfParametrized(evalContext: TypeEvalContext
   }
   return unique
 }
-

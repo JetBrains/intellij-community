@@ -1,11 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.shared
 
-import com.intellij.analysis.problemsView.toolWindow.ProblemsView
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.impl.ContentImpl
 import org.jetbrains.annotations.ApiStatus
 
@@ -14,7 +15,7 @@ val CODE_SMELL_DETECTOR_KEY: Key<Boolean> = Key.create("CODE_SMELL_DETECTOR_KEY"
 
 @ApiStatus.Internal
 fun showCodeSmellsPanelInToolWindow(project: Project, panel: NewErrorTreeViewPanel) : Boolean {
-  val toolWindow = ProblemsView.getToolWindow(project)
+  val toolWindow = if (project.isDisposed) null else ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROBLEMS_VIEW)
   if (toolWindow != null && toolWindow.isAvailable) {
     toolWindow.activate({
       val contentManager = toolWindow.contentManager

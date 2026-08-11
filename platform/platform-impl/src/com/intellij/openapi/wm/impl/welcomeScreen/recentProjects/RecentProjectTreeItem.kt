@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjectsAction
 import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.eel.EelUnavailableException
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -104,16 +105,17 @@ internal data class RecentProjectItem(
     // Force move focus to IdeFrame
     IdeEventQueue.getInstance().popupManager.closeAllPopups()
 
+    val file = Path.of(projectPath).normalize()
+
     try {
       runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.title.project.initialization")) {
-        EelInitialization.runEelInitialization(projectPath)
+        EelInitialization.runEelInitialization(file.getEelDescriptor())
       }
     } catch (e : EelUnavailableException) {
       showReopenDialog(e.message)
       return
     }
 
-    val file = Path.of(projectPath).normalize()
     if (!Files.exists(file)) {
       showReopenDialog(IdeBundle.message("message.the.path.0.does.not.exist.maybe.on.remote", FileUtil.toSystemDependentName(projectPath)))
       return

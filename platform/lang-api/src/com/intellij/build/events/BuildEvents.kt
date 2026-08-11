@@ -60,6 +60,7 @@ interface BuildEvents {
     kind: MessageEvent.Kind,
   ): MessageEventBuilder
 
+  @Deprecated("Use [BuildEvents.message] instead.", ReplaceWith("message(message, kind).withFilePosition(filePosition)"))
   fun fileMessage(
     message: @Message String,
     kind: MessageEvent.Kind,

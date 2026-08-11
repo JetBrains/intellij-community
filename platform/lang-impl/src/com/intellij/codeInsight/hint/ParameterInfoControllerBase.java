@@ -390,6 +390,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
   }
 
 
+  @ApiStatus.Internal
   protected class UpdateParameterInfoContextBase implements UpdateParameterInfoContext {
     protected final int myOffset;
     protected final @Nullable PsiFile myFile;
@@ -549,9 +550,11 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
 
   protected abstract void hideHint();
 
+  @ApiStatus.Internal
   public interface SignatureItemModel {
   }
 
+  @ApiStatus.Internal
   public static final class RawSignatureItem implements SignatureItemModel {
     public final String htmlText;
 
@@ -591,6 +594,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     }
   }
 
+  @ApiStatus.Internal
   public static final class SignatureItem implements SignatureItemModel {
     public final String text;
     public final boolean deprecated;
@@ -611,6 +615,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     }
   }
 
+  @ApiStatus.Internal
   public static final class Model {
     public final List<SignatureItemModel> signatures = new ArrayList<>();
     public int current = -1;

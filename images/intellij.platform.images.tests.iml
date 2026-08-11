@@ -44,7 +44,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jcef" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
@@ -57,6 +57,7 @@
     <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.images" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.images" />
 </module>

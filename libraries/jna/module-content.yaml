@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.jna.jar
+  modules:
+  - name: intellij.libraries.jna
+    libraries:
+      jna:
+      - name: $MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5/jna-platform-5.jar
+      - name: $MAVEN_REPOSITORY$/net/java/dev/jna/jna/5/jna-5.jar

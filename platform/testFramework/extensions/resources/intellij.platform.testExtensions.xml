@@ -1,0 +1,23 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.rt"/>
+    <module name="intellij.libraries.assertj.core"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.junit4"/>
+    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.snakeyaml"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.testFramework"/>
+    <module name="intellij.platform.util.ex"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

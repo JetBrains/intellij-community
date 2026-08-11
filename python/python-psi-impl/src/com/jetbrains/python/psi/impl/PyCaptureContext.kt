@@ -4,6 +4,7 @@ import com.intellij.psi.util.findParentOfType
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyPattern
 import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -39,7 +40,7 @@ interface PyCaptureContext : PyElement {
     fun getCaptureType(pattern: PyPattern, context: TypeEvalContext): PyType? {
       return PyUtil.getNullableParameterizedCachedValue(pattern, context) {
         pattern.findParentOfType<PyCaptureContext>()?.getCaptureTypeForChild(pattern, context)
-      }
+      } ?: PyAnyType.unknown
     }
   }
 }

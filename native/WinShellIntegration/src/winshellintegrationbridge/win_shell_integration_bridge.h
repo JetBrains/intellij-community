@@ -24,8 +24,6 @@ namespace intellij::ui::win::jni
         static void initialize(JNIEnv* jEnv, jobject jThis) noexcept;
 
     public:
-        static void setAppUserModelId(JNIEnv* jEnv, jobject jThis, jstring jAppUserModelId) noexcept;
-
         static void clearRecentTasksList(JNIEnv* jEnv, jobject jThis) noexcept;
 
         static void setRecentTasksList(

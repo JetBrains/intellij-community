@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Checks that operation execution is scheduled.
  */
+@ApiStatus.Internal
 fun ObservableOperationTrace.isOperationScheduled(): Boolean =
   status == SCHEDULED
 
@@ -27,6 +28,7 @@ fun ObservableOperationTrace.isOperationInProgress(): Boolean =
 /**
  * Checks that operation is completed.
  */
+@ApiStatus.Internal
 fun ObservableOperationTrace.isOperationCompleted(): Boolean =
   status == COMPLETED
 
@@ -54,6 +56,7 @@ fun ObservableOperationTrace.getOperationInProgressProperty(): ObservableBoolean
   }
 }
 
+@ApiStatus.Internal
 inline fun <R> MutableOperationTrace.traceRun(
   id: OperationExecutionId = OperationExecutionId.NONE,
   execution: () -> R

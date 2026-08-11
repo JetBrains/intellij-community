@@ -19,16 +19,24 @@
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.usageView" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.structureView" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.jcef.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.jcef.frontend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jcef" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.lucene.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mermaid.markdown" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.mermaid" />
 </module>

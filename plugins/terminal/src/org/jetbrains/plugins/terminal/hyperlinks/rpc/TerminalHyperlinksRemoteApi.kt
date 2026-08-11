@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.hyperlinks.rpc
 
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -17,11 +17,12 @@ import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessi
 interface TerminalHyperlinksRemoteApi : RemoteApi<Unit> {
   suspend fun createNewSession(request: TerminalCreateHyperlinksSessionRequest): TerminalHyperlinksSessionId
 
-  suspend fun closeSession(sessionId: TerminalHyperlinksSessionId)
+  suspend fun closeSession(projectId: ProjectId, sessionId: TerminalHyperlinksSessionId)
 
   companion object {
     suspend fun getInstance(): TerminalHyperlinksRemoteApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<TerminalHyperlinksRemoteApi>())
+      // TODO: IJPL-252054
+      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<TerminalHyperlinksRemoteApi>())
     }
   }
 }

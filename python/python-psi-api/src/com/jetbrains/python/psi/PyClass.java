@@ -8,6 +8,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.ast.PyAstClass;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -28,13 +30,45 @@ import java.util.Map;
 public interface PyClass
   extends PyAstClass, PsiNameIdentifierOwner, PyCompoundStatement, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
           ScopeOwner, PyDecoratable, PyTypedElement, PyQualifiedNameOwner, PyStatementListContainer, PyWithAncestors,
-          PyTypeParameterListOwner, PyDeprecatable {
+          PyTypeParameterListOwner, PyDeprecatable, PyCallSiteOwner {
   PyClass[] EMPTY_ARRAY = new PyClass[0];
   ArrayFactory<PyClass> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyClass[count];
 
   @Override
   default @NotNull PyStatementList getStatementList() {
     return (PyStatementList)PyAstClass.super.getStatementList();
+  }
+
+  /**
+   * A class definition is an implicit call site for {@code __init_subclass__} of its base classes:
+   * the keyword arguments in the base classes list (other than {@code metaclass}) are passed to it.
+   *
+   * @see PyCallSiteOwner
+   */
+  @Override
+  default @Nullable PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
+    return null;
+  }
+
+  @Override
+  default @NotNull List<@NotNull PyExpression> getArguments(@Nullable PyCallable resolvedCallee) {
+    final PyArgumentList argumentList = getSuperClassExpressionList();
+    if (argumentList == null) {
+      return List.of();
+    }
+    final List<PyExpression> arguments = new ArrayList<>();
+    for (PyExpression argument : argumentList.getArguments()) {
+      if (argument instanceof PyKeywordArgument keywordArgument) {
+        if (!PyNames.METACLASS.equals(keywordArgument.getKeyword())) {
+          arguments.add(argument);
+        }
+      }
+      else if (argument instanceof PyStarArgument starArgument && starArgument.isKeyword()) {
+        arguments.add(argument);
+      }
+      // Positional expressions in the base classes list are the base classes themselves, not __init_subclass__ arguments.
+    }
+    return arguments;
   }
 
   /**
@@ -130,6 +164,12 @@ public interface PyClass
    */
   @Nullable
   PyFunction findMethodByName(final @Nullable @NonNls String name, boolean inherited, TypeEvalContext context);
+
+  @ApiStatus.Internal
+  @Nullable
+  default PyFunction findMethodInImplementations(final @Nullable @NonNls String name, TypeEvalContext context) {
+    return null;
+  }
 
   /**
    * Finds a method with the given name and all its overloads.

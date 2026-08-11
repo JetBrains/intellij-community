@@ -26,6 +26,7 @@
     <inspection_tool class="4ed1243f-91f1-388d-ba02-4dbef1721d3a" enabled="true" level="WEAK WARNING" enabled_by_default="true" editorAttributes="INFO_ATTRIBUTES">
       <scope name="IDE Testing Framework" level="WARNING" enabled="true" />
     </inspection_tool>
+    <inspection_tool class="60116a3f-d0e5-3ea6-bf7a-7856244d8ffc" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
     <inspection_tool class="60175927-3d94-3de3-bbe6-54353bd28bc6" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="Fleet" level="WARNING" enabled="false" />
       <scope name="Rider Build Scripts" level="WARNING" enabled="false" />
@@ -1166,6 +1167,7 @@
             <module name="intellij.platform.diff" />
             <module name="intellij.platform.vcs.dvcs" />
             <module name="intellij.platform.editor" />
+            <module name="intellij.platform.execution" />
             <module name="intellij.platform.externalSystem" />
             <module name="intellij.platform.indexing" />
             <module name="intellij.platform.jps.model" />
@@ -1189,12 +1191,15 @@
             <module name="intellij.platform.diff.impl" />
             <module name="intellij.platform.vcs.dvcs.impl" />
             <module name="intellij.platform.editor.ex" />
+            <module name="intellij.platform.execution.impl" />
             <module name="intellij.platform.images" />
             <module name="intellij.platform.indexing.impl" />
             <module name="intellij.json" />
             <module name="intellij.platform.lang.impl" />
             <module name="intellij.platform.lvcs.impl" />
+            <module name="intellij.platform.ide.codeinsight.inline" />
             <module name="intellij.platform.ide.impl" />
+            <module name="intellij.platform.ide.initialConfigImport" />
             <module name="intellij.platform.projectModel.impl" />
             <module name="intellij.platform.scriptDebugger.protocolReaderRuntime" />
             <module name="intellij.regexp" />
@@ -1204,10 +1209,12 @@
             <module name="intellij.platform.scriptDebugger.ui" />
             <module name="intellij.platform.smRunner" />
             <module name="intellij.spellchecker" />
-            <module name="intellij.platform.structureView.impl" />
+            <module name="intellij.platform.structureView" />
             <module name="intellij.platform.tasks.impl" />
             <module name="intellij.platform.testRunner" />
+            <module name="intellij.platform.usageView.impl" />
             <module name="intellij.platform.debugger.impl" />
+            <module name="intellij.platform.debugger.impl.ui" />
             <module name="intellij.xml.analysis.impl" />
             <module name="intellij.xml.psi.impl" />
             <module name="intellij.xml.structureView.impl" />
@@ -1236,6 +1243,24 @@
             <module name="intellij.platform.duplicates" />
             <module name="intellij.platform.duplicates.analysis" />
             <module name="intellij.platform.externalSystem.impl" />
+            <module name="intellij.platform.ide.core" />
+            <module name="intellij.platform.ide.core.impl" />
+            <module name="intellij.platform.ide.bootstrap" />
+            <module name="intellij.platform.lang.core" />
+            <module name="intellij.platform.editor.ui" />
+            <module name="intellij.platform.codeStyle.impl" />
+            <module name="intellij.platform.kernel.impl" />
+            <module name="intellij.platform.settings.local" />
+            <module name="intellij.platform.statistics" />
+            <module name="intellij.platform.polySymbols" />
+            <module name="intellij.platform.workspace.jps" />
+            <module name="intellij.platform.ijent.impl" />
+            <module name="intellij.platform.ijent.community.ui" />
+            <module name="intellij.platform.vcs" />
+            <module name="intellij.platform.vcs.shared" />
+            <module name="intellij.platform.vcs.impl" />
+            <module name="intellij.platform.recentFiles.frontend" />
+            <module name="intellij.xml.duplicates.analysis" />
           </modules-set>
           <modules-set>
             <module name="intellij.idea.community.customization" />
@@ -1272,7 +1297,6 @@
             <module name="intellij.java.rt" />
             <module name="intellij.java.structuralSearch" />
             <module name="intellij.java.structureView" />
-            <module name="intellij.java.testFramework" />
             <module name="intellij.java.typeMigration" />
             <module name="intellij.java.uast" />
             <module name="intellij.java.ui" />
@@ -1285,11 +1309,9 @@
             <module name="intellij.platform.jps.build.javac.rt" />
             <module name="intellij.platform.jps.build.launcher" />
             <module name="intellij.platform.uast" />
-            <module name="intellij.platform.uast.tests" />
             <module name="intellij.uiDesigner" />
             <module name="intellij.xml.dom" />
             <module name="intellij.xml.dom.impl" />
-            <module name="intellij.platform.testFramework" />
           </modules-set>
           <modules-set>
             <module name="intellij.android.core" />
@@ -1298,6 +1320,8 @@
             <module name="intellij.android.apkanalyzer" />
             <module name="intellij.android.designer" />
             <module name="intellij.android.ultimate" />
+            <module name="intellij.android.design-plugin.descriptor" />
+            <module name="intellij.android.projectSystem.gradle" />
           </modules-set>
           <modules-set>
             <module name="intellij.appcode" />
@@ -1352,7 +1376,6 @@
             <module name="intellij.php" />
             <module name="intellij.php.resources" />
             <module name="intellij.php.impl" />
-            <module name="intellij.php.jsDebugger" />
             <module name="intellij.phpstorm" />
             <module name="intellij.platform.webide.impl" />
             <module name="intellij.php.structuralSearch" />
@@ -1389,6 +1412,12 @@
           <modules-set>
             <module name="intellij.protoeditor.core" />
             <module name="intellij.protoeditor" />
+            <module name="intellij.protoeditor.go" />
+            <module name="intellij.protoeditor.jvm" />
+          </modules-set>
+          <modules-set>
+            <module name="intellij.android.device-manager-v2" />
+            <module name="intellij.android.sdkUpdates" />
           </modules-set>
         </option>
       </scope>
@@ -1409,6 +1438,7 @@
           <module name="intellij.platform.diff" />
           <module name="intellij.platform.vcs.dvcs" />
           <module name="intellij.platform.editor" />
+          <module name="intellij.platform.execution" />
           <module name="intellij.platform.externalSystem" />
           <module name="intellij.platform.indexing" />
           <module name="intellij.platform.jps.model" />
@@ -1432,12 +1462,15 @@
           <module name="intellij.platform.diff.impl" />
           <module name="intellij.platform.vcs.dvcs.impl" />
           <module name="intellij.platform.editor.ex" />
+          <module name="intellij.platform.execution.impl" />
           <module name="intellij.platform.images" />
           <module name="intellij.platform.indexing.impl" />
           <module name="intellij.json" />
           <module name="intellij.platform.lang.impl" />
           <module name="intellij.platform.lvcs.impl" />
+          <module name="intellij.platform.ide.codeinsight.inline" />
           <module name="intellij.platform.ide.impl" />
+          <module name="intellij.platform.ide.initialConfigImport" />
           <module name="intellij.platform.projectModel.impl" />
           <module name="intellij.platform.scriptDebugger.protocolReaderRuntime" />
           <module name="intellij.regexp" />
@@ -1447,10 +1480,12 @@
           <module name="intellij.platform.scriptDebugger.ui" />
           <module name="intellij.platform.smRunner" />
           <module name="intellij.spellchecker" />
-          <module name="intellij.platform.structureView.impl" />
+          <module name="intellij.platform.structureView" />
           <module name="intellij.platform.tasks.impl" />
           <module name="intellij.platform.testRunner" />
+          <module name="intellij.platform.usageView.impl" />
           <module name="intellij.platform.debugger.impl" />
+          <module name="intellij.platform.debugger.impl.ui" />
           <module name="intellij.xml.analysis.impl" />
           <module name="intellij.xml.psi.impl" />
           <module name="intellij.xml.structureView.impl" />
@@ -1479,60 +1514,24 @@
           <module name="intellij.platform.duplicates" />
           <module name="intellij.platform.duplicates.analysis" />
           <module name="intellij.platform.externalSystem.impl" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.idea.community.customization" />
-          <module name="intellij.java" />
-          <module name="intellij.java.aetherDependencyResolver" />
-          <module name="intellij.java.analysis" />
-          <module name="intellij.java.analysis.impl" />
-          <module name="intellij.java.compiler" />
-          <module name="intellij.java.compiler.antTasks" />
-          <module name="intellij.java.compiler.impl" />
-          <module name="intellij.java.compiler.instrumentationUtil" />
-          <module name="intellij.java.compiler.instrumentationUtil.java8" />
-          <module name="intellij.java.debugger" />
-          <module name="intellij.java.debugger.impl" />
-          <module name="intellij.java.debugger.memory.agent" />
-          <module name="intellij.java.duplicates" />
-          <module name="intellij.java.duplicates.analysis" />
-          <module name="intellij.java.duplicatesDetection" />
-          <module name="intellij.java.execution" />
-          <module name="intellij.java.execution.impl" />
-          <module name="intellij.java.guiForms.compiler" />
-          <module name="intellij.java.guiForms.rt" />
-          <module name="intellij.java.impl" />
-          <module name="intellij.java.indexing" />
-          <module name="intellij.java.indexing.impl" />
-          <module name="intellij.java.jam" />
-          <module name="intellij.java.jam.impl" />
-          <module name="intellij.java.jshell.protocol" />
-          <module name="intellij.java.manifest" />
-          <module name="intellij.java.psi" />
-          <module name="intellij.java.psi.impl" />
-          <module name="intellij.java.remoteServers" />
-          <module name="intellij.java.remoteServers.impl" />
-          <module name="intellij.java.rt" />
-          <module name="intellij.java.structuralSearch" />
-          <module name="intellij.java.structureView" />
-          <module name="intellij.java.testFramework" />
-          <module name="intellij.java.typeMigration" />
-          <module name="intellij.java.uast" />
-          <module name="intellij.java.ui" />
-          <module name="intellij.jsp" />
-          <module name="intellij.jsp.base" />
-          <module name="intellij.jsp.spi" />
-          <module name="intellij.jvm.analysis" />
-          <module name="intellij.jvm.analysis.impl" />
-          <module name="intellij.platform.jps.build" />
-          <module name="intellij.platform.jps.build.javac.rt" />
-          <module name="intellij.platform.jps.build.launcher" />
-          <module name="intellij.platform.uast" />
-          <module name="intellij.platform.uast.tests" />
-          <module name="intellij.uiDesigner" />
-          <module name="intellij.xml.dom" />
-          <module name="intellij.xml.dom.impl" />
-          <module name="intellij.platform.testFramework" />
+          <module name="intellij.platform.ide.core" />
+          <module name="intellij.platform.ide.core.impl" />
+          <module name="intellij.platform.ide.bootstrap" />
+          <module name="intellij.platform.lang.core" />
+          <module name="intellij.platform.editor.ui" />
+          <module name="intellij.platform.codeStyle.impl" />
+          <module name="intellij.platform.kernel.impl" />
+          <module name="intellij.platform.settings.local" />
+          <module name="intellij.platform.statistics" />
+          <module name="intellij.platform.polySymbols" />
+          <module name="intellij.platform.workspace.jps" />
+          <module name="intellij.platform.ijent.impl" />
+          <module name="intellij.platform.ijent.community.ui" />
+          <module name="intellij.platform.vcs" />
+          <module name="intellij.platform.vcs.shared" />
+          <module name="intellij.platform.vcs.impl" />
+          <module name="intellij.platform.recentFiles.frontend" />
+          <module name="intellij.xml.duplicates.analysis" />
         </modules-set>
         <modules-set>
           <module name="intellij.android.core" />
@@ -1541,6 +1540,8 @@
           <module name="intellij.android.apkanalyzer" />
           <module name="intellij.android.designer" />
           <module name="intellij.android.ultimate" />
+          <module name="intellij.android.design-plugin.descriptor" />
+          <module name="intellij.android.projectSystem.gradle" />
         </modules-set>
         <modules-set>
           <module name="intellij.appcode" />
@@ -1595,7 +1596,6 @@
           <module name="intellij.php" />
           <module name="intellij.php.resources" />
           <module name="intellij.php.impl" />
-          <module name="intellij.php.jsDebugger" />
           <module name="intellij.phpstorm" />
           <module name="intellij.platform.webide.impl" />
           <module name="intellij.php.structuralSearch" />
@@ -1632,6 +1632,129 @@
         <modules-set>
           <module name="intellij.protoeditor.core" />
           <module name="intellij.protoeditor" />
+          <module name="intellij.protoeditor.go" />
+          <module name="intellij.protoeditor.jvm" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.java.psi" />
+          <module name="intellij.java.psi.impl" />
+          <module name="intellij.java.syntax" />
+          <module name="intellij.java.frontback.psi" />
+          <module name="intellij.java.frontback.psi.impl" />
+          <module name="intellij.java.frontback.impl" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.evaluationPlugin" />
+          <module name="intellij.evaluationPlugin.languages.cppClassic" />
+          <module name="intellij.evaluationPlugin.languages.cppRider" />
+          <module name="intellij.evaluationPlugin.languages.csharp" />
+          <module name="intellij.evaluationPlugin.languages.go" />
+          <module name="intellij.evaluationPlugin.languages.java" />
+          <module name="intellij.evaluationPlugin.languages.js" />
+          <module name="intellij.evaluationPlugin.languages.json" />
+          <module name="intellij.evaluationPlugin.languages.kotlin" />
+          <module name="intellij.evaluationPlugin.languages.markdown" />
+          <module name="intellij.evaluationPlugin.languages.php" />
+          <module name="intellij.evaluationPlugin.languages.properties" />
+          <module name="intellij.evaluationPlugin.languages.python" />
+          <module name="intellij.evaluationPlugin.languages.pythonDocker" />
+          <module name="intellij.evaluationPlugin.languages.ruby" />
+          <module name="intellij.evaluationPlugin.languages.rust" />
+          <module name="intellij.evaluationPlugin.languages.sql" />
+          <module name="intellij.evaluationPlugin.languages.terminal" />
+          <module name="intellij.evaluationPlugin.languages.terraform" />
+          <module name="intellij.evaluationPlugin.languages.xml" />
+          <module name="intellij.evaluationPlugin.languages.yaml" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.java.backend" />
+          <module name="intellij.java.xml.dom.impl" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.grazie" />
+          <module name="intellij.grazie.java" />
+          <module name="intellij.grazie.json" />
+          <module name="intellij.grazie.markdown" />
+          <module name="intellij.grazie.properties" />
+          <module name="intellij.grazie.xml" />
+          <module name="intellij.grazie.yaml" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.groovy" />
+          <module name="intellij.groovy.langInjection" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.markdown.frontend" />
+          <module name="intellij.markdown.images" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.sh.backend" />
+          <module name="intellij.sh.python" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.qodana" />
+          <module name="intellij.qodana.inspectionKts" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.clouds.docker" />
+          <module name="intellij.clouds.docker.shared" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.javascript.debugger.backend" />
+          <module name="intellij.javascript.debugger.webDeployment" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.cwm.plugin.common" />
+          <module name="intellij.platform.frontend.split" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.dfa.analysis.rml.impl" />
+          <module name="intellij.dfa.analysis.rml.taint" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.editSuggestion" />
+          <module name="intellij.editSuggestion.java" />
+          <module name="intellij.editSuggestion.kotlin" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.javaee.platform.impl" />
+          <module name="intellij.javaee.platform.plugin" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.ml.llm.codeGeneration" />
+          <module name="intellij.ml.llm.terminal" />
+          <module name="intellij.ml.llm.vcs" />
+          <module name="intellij.ml.llm.voice" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.microservices.diagrams" />
+          <module name="intellij.microservices.plugin" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.spring.core.analysis.services" />
+          <module name="intellij.spring.groovy" />
+          <module name="intellij.spring.jsf" />
+          <module name="intellij.spring.persistence.hibernate" />
+          <module name="intellij.spring.web" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.diagram.impl" />
+          <module name="intellij.diagram.plugin" />
+          <module name="intellij.diagram.properties" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.kotlin.base.facet" />
+          <module name="intellij.kotlin.base.plugin" />
+          <module name="intellij.kotlin.base.resources" />
+          <module name="intellij.kotlin.codeInsight.utils" />
+          <module name="intellij.kotlin.gradle.gradle" />
+          <module name="intellij.kotlin.ide" />
+          <module name="intellij.kotlin.internal" />
+          <module name="intellij.kotlin.maven" />
+          <module name="intellij.kotlin.plugin" />
+          <module name="intellij.kotlin.plugin.updater" />
+          <module name="intellij.kotlin.projectConfiguration" />
+          <module name="kotlin.scripting" />
         </modules-set>
       </option>
     </inspection_tool>
@@ -2969,6 +3092,11 @@
         <constraint name="ARGS" maxCount="2147483647" within="" contains="" />
         <constraint name="DO" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="replace `relativeTo` with `relativeToOrNull`" description="`relativeTo` is error prone and, always have a safe fallback `relativeToOrNull` or `relativeToOrSelf`" text="$path$.relativeTo($arg$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$path$.relativeToOrNull($arg$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="path" nameOfExprType="java\.nio\.file\.Path" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="arg" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="Replace explicit RExpression#getType() with RTypeUtil#getType()" uuid="260bf7ef-989c-3b5b-b926-edbfeb9271cc" text="((RExpression)$foo$).getType()" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RTypeUtil.getType($foo$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="foo" within="" contains="" />
@@ -2977,19 +3105,23 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="foo" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Rethow ControlFlowException using platform utility function" description="Replaces if (e instanceOf ControlFlowException) throw e with a convenient helper utility call" suppressId="RethowControlFlowExceptionWithUtil" text="if ($Expr$ instanceof ControlFlowException) {&#10;  throw $Expr$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" useStaticImport="true" replacement="com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException($Expr$);">
+      <replaceConfiguration name="Rethrow ControlFlowException using platform utility function" description="Replaces if (e instanceOf ControlFlowException) throw e with a convenient helper utility call" suppressId="RethrowControlFlowExceptionWithUtil" text="if ($Expr$ instanceof ControlFlowException) {&#10;  throw $Expr$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" useStaticImport="true" replacement="com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException($Expr$);">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Expr" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Rethow ControlFlowException using platform utility function" text="if ($Expr$ is ControlFlowException) {&#10;  throw $Expr$&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.diagnostic.rethrowControlFlowException($Expr$)">
+      <replaceConfiguration name="Rethrow ControlFlowException using platform utility function" text="if ($Expr$ is ControlFlowException) {&#10;  throw $Expr$&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.diagnostic.rethrowControlFlowException($Expr$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Expr" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Rethow ControlFlowException using platform utility function" text="if (Logger.shouldRethrow($Expr$)) {&#10;  throw $Expr$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" useStaticImport="true" replacement="com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException($Expr$);">
+      <replaceConfiguration name="Rethrow ControlFlowException using platform utility function" text="if (Logger.shouldRethrow($Expr$)) {&#10;  throw $Expr$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" useStaticImport="true" replacement="com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException($Expr$);">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Expr" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Rethow ControlFlowException using platform utility function" text="if (Logger.shouldRethrow($Expr$)) {&#10;  throw $Expr$&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" useStaticImport="true" replacement="com.intellij.openapi.diagnostic.rethrowControlFlowException($Expr$)">
+      <replaceConfiguration name="Rethrow ControlFlowException using platform utility function" text="if (Logger.shouldRethrow($Expr$)) {&#10;  throw $Expr$&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" useStaticImport="true" replacement="com.intellij.openapi.diagnostic.rethrowControlFlowException($Expr$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Expr" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Rethrow ControlFlowException using platform utility function" text="if ($Expr$ is CancellationException) {&#10;  throw $Expr$&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.diagnostic.rethrowControlFlowException($Expr$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Expr" within="" contains="" />
       </replaceConfiguration>

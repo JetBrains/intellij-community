@@ -34,8 +34,8 @@ fun currentExtensionRegistry(): ExtensionRegistry? = registry as? ExtensionRegis
  * @see buildExtensionSupport
  */
 interface ExtensionSupport {
-  fun <T : Any> getExtensions(extensionPoint: ExtensionPointKey<T>): List<T>
-  fun <T : Any> getLanguageExtensions(extensionPoint: ExtensionPointKey<T>, language: SyntaxLanguage): List<T>
+  fun <T : Any> getExtensions(extensionPoint: ExtensionPointKey<T>): Sequence<T>
+  fun <T : Any> getLanguageExtensions(extensionPoint: ExtensionPointKey<T>, language: SyntaxLanguage): Sequence<T>
 }
 
 /**

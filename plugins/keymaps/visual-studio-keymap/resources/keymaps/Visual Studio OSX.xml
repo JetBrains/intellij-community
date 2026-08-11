@@ -63,6 +63,7 @@
   </action>
   <action id="GotoClass"/>
   <action id="SearchEverywhere">
+    <keyboard-gesture-shortcut keystroke="shift SHIFT" modifier="dblClick"/>
     <keyboard-shortcut first-keystroke="meta T"/>
   </action>
   <action id="GotoChangedFile"/>
@@ -371,6 +372,7 @@
   <action id="SaveAll">
     <keyboard-shortcut first-keystroke="meta shift S"/>
   </action>
+  <action id="SaveAs"/>
   <action id="SaveDocument">
     <keyboard-shortcut first-keystroke="meta S" />
   </action>

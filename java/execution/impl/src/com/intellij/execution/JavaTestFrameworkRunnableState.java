@@ -57,7 +57,6 @@ import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -104,6 +103,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Modifier;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
@@ -111,6 +111,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -129,7 +130,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState implements RemoteConnectionCreator {
   private static final Logger LOG = Logger.getInstance(JavaTestFrameworkRunnableState.class);
 
-  private static final ExtensionPointName<JUnitPatcher> JUNIT_PATCHER_EP = new ExtensionPointName<>("com.intellij.junitPatcher");
   private static final String JIGSAW_OPTIONS = "Jigsaw Options";
 
   public static ParamsGroup getJigsawOptions(JavaParameters parameters) {
@@ -406,7 +406,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       javaParameters.getClassPath().addFirst(JavaSdkUtil.getIdeaRtJarPath());
       javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
 
-      for (JUnitPatcher patcher : JUNIT_PATCHER_EP.getExtensionList()) {
+      for (JUnitPatcher patcher : JUnitPatcher.JUNIT_PATCHER_EP.getExtensionList()) {
         patcher.patchJavaParameters(project, module, javaParameters);
       }
 
@@ -514,6 +514,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected void collectListeners(JavaParameters javaParameters, StringBuilder buf, String epName, String delimiter) {
     final T configuration = getConfiguration();
+    Set<String> classpath = new LinkedHashSet<>();
     for (final Object listener : Extensions.getRootArea().getExtensionPoint(epName).getExtensionList()) {
       boolean enabled = true;
       for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
@@ -526,9 +527,17 @@ public abstract class JavaTestFrameworkRunnableState<T extends
         if (!buf.isEmpty()) buf.append(delimiter);
         final Class<?> classListener = listener.getClass();
         buf.append(classListener.getName());
-        javaParameters.getClassPath().add(PathUtil.getJarPathForClass(classListener));
+        classpath.add(PathUtil.getJarPathForClass(classListener));
+        Class<?> parentClass = classListener.getSuperclass();
+        while (parentClass != null) {
+          if (Modifier.isAbstract(parentClass.getModifiers())) {
+            classpath.add(PathUtil.getJarPathForClass(parentClass));
+          }
+          parentClass = parentClass.getSuperclass();
+        }
       }
     }
+    classpath.forEach(javaParameters.getClassPath()::add);
   }
 
   protected void configureClasspath(final JavaParameters javaParameters) throws CantRunException {

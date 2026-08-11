@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  version="1.1"
+  width="64"
+  height="64"
+  id="svg2993">
+  <defs>
+    <rect id="rect1" x="12" y="12" width="10" height="10" fill="red"/>
+    <circle id="circ1" cx="12" cy="12" r="10" fill="yellow"/>
+  </defs>
+
+  <use href="#rect1" x="15" y="25"/>
+  <use href="#circ1" x="40" y="25"/>
+  <use href="#rect1" x="1" y="2"/>
+
+
+</svg>

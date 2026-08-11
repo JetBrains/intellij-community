@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.codeInsight.api` start
-
 create_kotlinc_options(
     name = "custom_api",
     opt_in = [
@@ -24,13 +23,18 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_api",
     module_name = "intellij.kotlin.codeInsight.api",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/reflect",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//plugins/kotlin/base/util",
@@ -41,7 +45,6 @@ jvm_library(
         "//platform/lang-api:lang",
         "//java/java-psi-api:psi",
         "//platform/projectModel-impl",
-        "//plugins/kotlin/base/statistics",
         "//plugins/kotlin/base/project-structure",
         "//platform/statistics",
         "//java/java-impl:impl",
@@ -62,6 +65,9 @@ jvm_library(
         # do not sort,
         ":api",
         "//libraries/kotlin/reflect:reflect_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",
@@ -72,7 +78,6 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//java/java-psi-api:psi_test_lib",
         "//platform/projectModel-impl:projectModel-impl_test_lib",
-        "//plugins/kotlin/base/statistics:statistics_test_lib",
         "//plugins/kotlin/base/project-structure:project-structure_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//java/java-impl:impl_test_lib",

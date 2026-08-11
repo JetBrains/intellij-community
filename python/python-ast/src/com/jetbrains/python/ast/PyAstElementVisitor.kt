@@ -242,6 +242,10 @@ open class PyAstElementVisitor : PsiElementVisitor() {
     visitPyExpression(node)
   }
 
+  open fun visitPyStarArgument(node: PyAstStarArgument) {
+    visitPyExpression(node)
+  }
+
   open fun visitPySubscriptionExpression(node: PyAstSubscriptionExpression) {
     visitPyExpression(node)
   }

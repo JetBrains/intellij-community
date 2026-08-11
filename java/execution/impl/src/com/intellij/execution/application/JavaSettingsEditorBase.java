@@ -56,7 +56,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
     SettingsEditorFragment<T, ?> vmParameters = CommonJavaFragments.vmOptionsEx(mySettings, hasModule, jrePathEditor);
     fragments.add(vmParameters);
 
-    fragments.add(new LogsGroupFragment<>());
+    fragments.add(createLogGroupFragment());
     return fragments;
   }
 

@@ -151,8 +151,8 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
                                     @NotNull CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
 
-        if (position.getParent() instanceof PsiDocComment comment && comment.isMarkdownComment()) {
-          PsiJavaDocumentedElement owner = comment.getOwner();
+        if (isStartOfMarkdownComment(position)) {
+          PsiJavaDocumentedElement owner = ((PsiDocComment)position.getParent()).getOwner();
           if (owner != null) {
             JavadocMarkdownTemplateLookupElement documentationElement = new JavadocMarkdownTemplateLookupElement(owner);
             if (documentationElement.isAvailable()) {
@@ -344,16 +344,20 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
     });
   }
 
-  /// Returns `true` if the element is at the start of the Markdown comment.
-  /// Note that if the comment isn't empty, `false` will be returned.
+  /// Returns `true` if the element *(considered to be the element at the caret position)*
+  /// is at the start of the Markdown comment.
+  ///
+  /// An element can be considered at the start of a Markdown comment if:
+  /// - The comment is empty (or just spaces)
+  /// - The element is part of the children from the comment
   private static boolean isStartOfMarkdownComment(@NotNull PsiElement element) {
     PsiElement prev = element.getPrevSibling();
     if (prev == null) return false;
     ASTNode prevNode = prev.getNode();
     IElementType prevType = prevNode.getElementType();
 
-    PsiDocComment comment = PsiTreeUtil.getParentOfType(prev, PsiDocComment.class);
-    if (comment == null || !comment.isMarkdownComment()) return false;
+    if (!(prev.getParent() instanceof PsiDocComment comment)) return false;
+    if (!comment.isMarkdownComment()) return false;
     PsiElement[] children = comment.getChildren();
     if (children.length > 3) return false;
 

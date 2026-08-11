@@ -16,10 +16,12 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class CustomInspectionActions {
   public static @Nullable DefaultActionGroup getAddActionGroup(SingleInspectionProfilePanel panel) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
@@ -36,6 +38,7 @@ public final class CustomInspectionActions {
     return actionGroup;
   }
 
+  @ApiStatus.Internal
   public static final class RemoveInspectionAction extends DumbAwareAction {
     private final SingleInspectionProfilePanel myPanel;
 

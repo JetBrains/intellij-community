@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Serializable
-data class CondaEnvInfo(
+internal data class CondaEnvInfo(
   @SerialName("envs")
   val envs: List<String>,
   @SerialName("envs_dirs")
@@ -20,7 +20,7 @@ data class CondaEnvInfo(
 
 @ApiStatus.Internal
 @Serializable
-data class CondaEnvDetail(
+internal data class CondaEnvDetail(
   @SerialName("name")
   val name: String,
   @SerialName("base")

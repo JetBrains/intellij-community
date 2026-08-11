@@ -26,12 +26,12 @@ public final class CompletionLocation implements UserDataHolder {
    * 
    * @return completion parameters
    * 
-   * @throws ClassCastException if completion parameters are not instance of {@link CompletionParameters}, which may happen 
+   * @throws UnsupportedOperationException if there's no available {@link CompletionParameters}, which may happen 
    * if the {@linkplain com.intellij.modcompletion.ModCompletionItemProvider mod command completion} works. 
    */
   @ApiStatus.Obsolete
   public @NotNull CompletionParameters getCompletionParameters() {
-    return (CompletionParameters)myCompletionParameters;
+    return myCompletionParameters.asCompletionParameters();
   }
 
   /**

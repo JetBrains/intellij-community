@@ -12,26 +12,30 @@ import com.intellij.codeInsight.completion.JavaSmartCompletionContributor
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.TypedLookupItem
 import com.intellij.codeInsight.lookup.VariableLookupItem
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.useSiteModule
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.visibility.KaUseSiteVisibilityChecker
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -78,9 +82,6 @@ private class KotlinCompanionMemberLookupElement(
 }
 
 private object KotlinCompanionMemberCompletionProvider : CompletionProvider<CompletionParameters>() {
-
-    private val JVM_FIELD = ClassId(StandardClassIds.BASE_JVM_PACKAGE, Name.identifier("JvmField"))
-
     context(_: KaSession)
     private fun KaDeclarationSymbol.isMarkedAsStatic(): Boolean {
         return annotations.any { it.classId == StandardClassIds.Annotations.jvmStatic }
@@ -88,7 +89,7 @@ private object KotlinCompanionMemberCompletionProvider : CompletionProvider<Comp
 
     context(_: KaSession)
     private fun KaDeclarationSymbol.isJvmField(): Boolean {
-        return annotations.any { it.classId == JVM_FIELD }
+        return annotations.any { it.classId == JvmStandardClassIds.Annotations.JvmField }
     }
 
     /**
@@ -97,20 +98,30 @@ private object KotlinCompanionMemberCompletionProvider : CompletionProvider<Comp
      * In other cases at most one element is returned.
      */
     context(_: KaSession)
-    private fun createCompanionLookupElements(declaration: KaDeclarationSymbol): List<LookupElement> = buildList {
-        if (declaration is KaPropertySymbol) {
-            val psi = declaration.psi as? KtProperty ?: return@buildList
-            val methods = LightClassUtil.getLightClassPropertyMethods(psi)
-            val getter = methods.getter
-            val setter = methods.setter
+    private fun createCompanionLookupElements(declaration: KaDeclarationSymbol): List<LookupElement> {
+        val lightDeclarations = when (declaration) {
+            is KaPropertySymbol -> {
+                val psi = declaration.psi as? KtProperty ?: return emptyList()
+                val methods = LightClassUtil.getLightClassPropertyMethods(psi)
+                val getter = methods.getter
+                // Only show the setter if it is not declared as private or protected
+                val setter = methods.setter?.takeIf {
+                    !it.hasModifier(JvmModifier.PRIVATE) && !it.hasModifier(JvmModifier.PROTECTED)
+                }
 
-            addIfNotNull(getter?.let(::JavaMethodCallElement))
-            addIfNotNull(setter?.let(::JavaMethodCallElement))
-        } else if (declaration is KaFunctionSymbol) {
-            val psi = declaration.psi as? KtFunction ?: return@buildList
-            val method = LightClassUtil.getLightClassMethod(psi) ?: return@buildList
-            add(JavaMethodCallElement(method))
+                listOfNotNull(getter, setter)
+            }
+
+            is KaFunctionSymbol -> {
+                val psi = declaration.psi as? KtFunction ?: return emptyList()
+                val method = LightClassUtil.getLightClassMethod(psi) ?: return emptyList()
+                listOf(method)
+            }
+
+            else -> emptyList()
         }
+
+        return lightDeclarations.map(::JavaMethodCallElement)
     }
 
     override fun addCompletions(
@@ -134,7 +145,7 @@ private object KotlinCompanionMemberCompletionProvider : CompletionProvider<Comp
             JavaSmartCompletionContributor.getExpectedTypes(parameters)
         }
 
-        val foundMembers: MutableSet<PsiElement> = mutableSetOf()
+        val completedMembers: MutableSet<PsiElement> = mutableSetOf()
 
         analyze(companionObject) {
             val resolvedCompanion = companionObject.symbol
@@ -151,18 +162,18 @@ private object KotlinCompanionMemberCompletionProvider : CompletionProvider<Comp
                 // Hide suspend functions because they cannot easily be called from Java
                 if (declaration is KaNamedFunctionSymbol && declaration.isSuspend) continue
 
-                createCompanionLookupElements(declaration).forEach { lookupElement ->
+                for (lookupElement in createCompanionLookupElements(declaration)) {
                     val wrappedElement = KotlinCompanionMemberLookupElement(companionObjectLookupElement, lookupElement)
-                    if (!result.prefixMatcher.prefixMatches(wrappedElement)) return@forEach
+                    if (!result.prefixMatcher.prefixMatches(wrappedElement)) continue
 
                     if (parameters.completionType == CompletionType.SMART) {
                         val itemType = (lookupElement as? TypedLookupItem)?.type
                         if (itemType == null || expectedTypes.none { it.type.isAssignableFrom(itemType) }) {
-                            return@forEach
+                            continue
                         }
                     }
 
-                    foundMembers.addIfNotNull(lookupElement.psiElement)
+                    completedMembers.addIfNotNull(lookupElement.psiElement)
                     result.addElement(wrappedElement)
                 }
             }
@@ -172,7 +183,7 @@ private object KotlinCompanionMemberCompletionProvider : CompletionProvider<Comp
         // we need to ensure that we do not duplicate elements.
         result.runRemainingContributors(parameters) { completionResult ->
             val lookupElement = completionResult.lookupElement
-            if (lookupElement.psiElement in foundMembers) return@runRemainingContributors
+            if (lookupElement.psiElement in completedMembers) return@runRemainingContributors
             result.passResult(completionResult)
         }
     }
@@ -190,23 +201,22 @@ private fun KtDeclaration.getDirectVisibility(): Visibility = when {
     else -> Visibilities.DEFAULT_VISIBILITY
 }
 
+private val KtDeclaration.containingClassesWithSelf: Sequence<KtDeclaration>
+    get() = generateSequence(this) { it.containingClassOrObject }
+
 /**
  * Returns the effective visibility of the declaration symbol, taking into account any containing symbol's visibility.
  */
 private fun KtDeclaration.getEffectiveVisibility(): Visibility {
-    val directVisibility = getDirectVisibility()
-    val containingClassOrObject = containingClassOrObject
-    if (containingClassOrObject != null) {
-        return minOf(directVisibility, containingClassOrObject.getEffectiveVisibility()) {
-            a, b -> a.compareTo(b) ?: 0
-        }
+    return containingClassesWithSelf.minOfWith(Comparator { a, b -> a.compareTo(b) ?: 0 }) {
+        it.getDirectVisibility()
     }
-    return directVisibility
 }
 
 /**
  * Checks if the given declaration is visible from the position of [fromModule].
  * The check assumes protected members are not visible for simplicity.
+ * We cannot use [KaUseSiteVisibilityChecker] here because the position might be in a Java file.
  */
 internal fun KtDeclaration.isVisibleIgnoringProtected(fromModule: KaModule): Boolean = when (getEffectiveVisibility()) {
     Visibilities.Public -> true
@@ -214,5 +224,6 @@ internal fun KtDeclaration.isVisibleIgnoringProtected(fromModule: KaModule): Boo
         val fileModule = containingKtFile.getKaModule(containingKtFile.project, fromModule)
         fileModule == fromModule || fileModule in fromModule.directFriendDependencies
     }
+
     else -> false
 }

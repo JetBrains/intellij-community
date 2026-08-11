@@ -1,13 +1,26 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.python.community.impl"/>
-    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.terminal.shared"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <shellExecOptionsCustomizer implementation="com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer"/>
   </extensions>
+  <projectListeners>
+    <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"
+              class="com.intellij.python.terminal.PyTerminalFileManagerListener"/>
+  </projectListeners>
 </idea-plugin>

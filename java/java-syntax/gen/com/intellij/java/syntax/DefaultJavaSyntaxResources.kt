@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.syntax
 
 // To regenerate the file, please run `GenerateBundleMapping` run configuration with the following parameters: ")
@@ -126,6 +127,7 @@ internal object DefaultJavaSyntaxResources {
     "feature.structured.concurrency" to "Structured Concurrency",
     "feature.structured.concurrency.constructors" to "Structured Concurrency (StructuredTaskScope with constructors)",
     "feature.structured.concurrency.static.factory.methods" to "Structured Concurrency (StructuredTaskScope with static factory methods)",
+    "feature.structured.concurrency.static.factory.methods.with.execution.exception" to "Structured Concurrency (StructuredTaskScope with static factory methods and ExecutionException)",
     "feature.switch.expressions" to "'switch' expressions",
     "feature.text.block.escape.sequences" to "'\\s' escape sequences",
     "feature.text.blocks" to "Text block literals",
@@ -147,7 +149,7 @@ internal object DefaultJavaSyntaxResources {
     "jdk.1.4.language.level.description" to "1.4 - 'assert' keyword",
     "jdk.1.5.language.level.description" to "5 - 'enum' keyword, generics, autoboxing, etc.",
     "jdk.1.6.language.level.description" to "6 - @Override in interfaces",
-    "jdk.1.7.language.level.description" to "7 - Diamonds, ARM, multi-catch, etc.",
+    "jdk.1.7.language.level.description" to "7 - Diamonds, try-with-resources, multi-catch, strings in switch, etc.",
     "jdk.1.8.language.level.description" to "8 - Lambdas, type annotations, etc.",
     "jdk.1.9.language.level.description" to "9 - Modules, private methods in interfaces, etc.",
     "jdk.10.language.level.description" to "10 - Local variable type inference",
@@ -170,9 +172,11 @@ internal object DefaultJavaSyntaxResources {
     "jdk.24.language.level.description" to "24 - No new language features",
     "jdk.24.preview.language.level.description" to "24 (Preview) - Flexible constructor bodies, simple source files, etc.",
     "jdk.25.language.level.description" to "25 - Compact source files, module imports, etc.",
-    "jdk.25.preview.language.level.description" to "25 (Preview) - Primitive types in patterns (3rd preview)",
+    "jdk.25.preview.language.level.description" to "25 (Preview) - Primitive types in patterns, instanceof, and switch (3rd preview)",
     "jdk.26.language.level.description" to "26 - No new language features",
-    "jdk.26.preview.language.level.description" to "26 (Preview) - Primitive types in patterns (4th preview)",
+    "jdk.26.preview.language.level.description" to "26 (Preview) - Primitive types in patterns, instanceof, and switch (4th preview)",
+    "jdk.27.language.level.description" to "27 - No new language features",
+    "jdk.27.preview.language.level.description" to "27 (Preview) - Primitive types in patterns, instanceof, and switch (5th preview)",
     "jdk.X.language.level.description" to "X - Experimental features",
     "jdk.unsupported.preview.language.level.description" to "{0} (Preview) - Unsupported",
     "unexpected.identifier" to "Unexpected identifier",

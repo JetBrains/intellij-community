@@ -11,13 +11,18 @@ import androidx.compose.ui.input.pointer.isCtrlPressed
 import androidx.compose.ui.input.pointer.isMetaPressed
 import androidx.compose.ui.input.pointer.isShiftPressed
 
+/** Defines the key bindings for navigating and selecting items in a selectable lazy column. */
 public interface SelectableColumnKeybindings {
+    /** Whether the contiguous selection modifier key (e.g., Shift) is pressed in a key event. */
     public val KeyEvent.isContiguousSelectionKeyPressed: Boolean
 
+    /** Whether the contiguous selection modifier key (e.g., Shift) is pressed in a pointer event. */
     public val PointerKeyboardModifiers.isContiguousSelectionKeyPressed: Boolean
 
+    /** Whether the multi-selection modifier key (e.g., Ctrl or Meta) is pressed in a key event. */
     public val KeyEvent.isMultiSelectionKeyPressed: Boolean
 
+    /** Whether the multi-selection modifier key (e.g., Ctrl or Meta) is pressed in a pointer event. */
     public val PointerKeyboardModifiers.isMultiSelectionKeyPressed: Boolean
 
     /** Select First Node. */
@@ -63,7 +68,9 @@ public interface SelectableColumnKeybindings {
     public val KeyEvent.isSelectAll: Boolean
 }
 
+/** Default [SelectableColumnKeybindings] for macOS, using `Meta` (⌘) as the multi-selection modifier. */
 public open class DefaultMacOsSelectableColumnKeybindings : DefaultSelectableColumnKeybindings() {
+    /** The default singleton instance for macOS. */
     public companion object : DefaultMacOsSelectableColumnKeybindings()
 
     override val KeyEvent.isMultiSelectionKeyPressed: Boolean
@@ -73,7 +80,12 @@ public open class DefaultMacOsSelectableColumnKeybindings : DefaultSelectableCol
         get() = isMetaPressed
 }
 
+/**
+ * Default [SelectableColumnKeybindings] for Windows/Linux, using `Ctrl` for multi-selection and standard arrow/page
+ * keys.
+ */
 public open class DefaultSelectableColumnKeybindings : SelectableColumnKeybindings {
+    /** The default singleton instance. */
     public companion object : DefaultSelectableColumnKeybindings()
 
     override val KeyEvent.isContiguousSelectionKeyPressed: Boolean

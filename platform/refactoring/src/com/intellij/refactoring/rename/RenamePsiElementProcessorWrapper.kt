@@ -138,11 +138,11 @@ abstract class RenamePsiElementProcessorWrapper(val processor: RenamePsiElementP
     return processor.equals(other)
   }
 
-  override fun findReferences(element: PsiElement): MutableCollection<PsiReference> {
+  override fun findReferences(element: PsiElement): Collection<PsiReference> {
     return processor.findReferences(element)
   }
 
-  override fun findReferences(element: PsiElement, searchInCommentsAndStrings: Boolean): MutableCollection<PsiReference> {
+  override fun findReferences(element: PsiElement, searchInCommentsAndStrings: Boolean): Collection<PsiReference> {
     return processor.findReferences(element, searchInCommentsAndStrings)
   }
 }

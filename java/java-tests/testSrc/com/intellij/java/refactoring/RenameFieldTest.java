@@ -119,6 +119,10 @@ public class RenameFieldTest extends LightJavaCodeInsightTestCase {
   public void testRecordOverloads() {
     doTest("baz");
   }
+  
+  public void testRenameInSnippet() {
+    doTest("BAR");
+  }
 
   public void testRecordNonPhysicalAccessor() {
     String testName = getTestName(false);

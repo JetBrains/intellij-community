@@ -4,6 +4,7 @@ package com.intellij.serviceContainer
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.instanceContainer.instantiation.instantiate
 import com.intellij.platform.instanceContainer.internal.DynamicInstanceSupport
 import com.intellij.platform.instanceContainer.internal.DynamicInstanceSupport.DynamicInstanceInitializer
@@ -11,6 +12,8 @@ import com.intellij.platform.instanceContainer.internal.InstanceHolder
 import com.intellij.platform.instanceContainer.internal.InstanceInitializer
 import kotlinx.coroutines.CoroutineScope
 import java.lang.reflect.Modifier
+
+private val lightServiceLogger = logger<LightServiceInstanceSupport>()
 
 internal class LightServiceInstanceSupport(
   private val componentManager: ComponentManagerImpl,
@@ -20,8 +23,13 @@ internal class LightServiceInstanceSupport(
     if (!isLightService(instanceClass)) {
       return null
     }
+    val classLoader = instanceClass.classLoader as? PluginAwareClassLoader
+    if (classLoader != null && classLoader.state != PluginAwareClassLoader.ACTIVE) {
+      lightServiceLogger.warn("Light service ${instanceClass.name} not loaded because classloader is being unloaded")
+      return null
+    }
     return DynamicInstanceInitializer(
-      registrationScope = (instanceClass.classLoader as? PluginAwareClassLoader)?.pluginCoroutineScope,
+      registrationScope = classLoader?.pluginCoroutineScope,
       initializer = LightServiceInstanceInitializer(instanceClass),
     )
   }

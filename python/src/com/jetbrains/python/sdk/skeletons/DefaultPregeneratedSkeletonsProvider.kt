@@ -20,7 +20,7 @@ import com.intellij.util.io.ZipUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PythonEnvironment
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.pyRichSdk
+import com.jetbrains.python.sdk.pythonInterpreter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
@@ -92,7 +92,7 @@ fun getPregeneratedSkeletonsName(
 ): String? {
   if (PythonSdkUtil.isRemote(sdk)) return null
   @NonNls val versionString = sdk.versionString ?: return null
-  val rich = sdk.pyRichSdk(false)
+  val rich = sdk.pythonInterpreter(false)
   val effectiveVersion = when (rich.pythonEnvironment) {
     is PythonEnvironment.Conda -> "Anaconda-$versionString"
     is PythonEnvironment.Venv, is PythonEnvironment.SystemPython, null -> versionString
@@ -135,12 +135,12 @@ fun getPrebuiltSkeletonsName(
 }
 
 private class ArchivedSkeletons(private val archiveRoot: VirtualFile) : PyPregeneratedSkeletons {
-  override fun unpackPreGeneratedSkeletons(skeletonDir: String) {
+  override fun unpackPreGeneratedSkeletons(skeletonDir: Path) {
     ProgressManager.progress(PyBundle.message("python.sdk.unpacking.pre.generated.skeletons"))
     try {
       val jar = JarFileSystem.getInstance().getVirtualFileForJar(archiveRoot)
       if (jar != null) {
-        ZipUtil.extract(Path.of(jar.path), Path.of(skeletonDir), null)
+        ZipUtil.extract(Path.of(jar.path), skeletonDir, null)
       }
     }
     catch (e: IOException) {

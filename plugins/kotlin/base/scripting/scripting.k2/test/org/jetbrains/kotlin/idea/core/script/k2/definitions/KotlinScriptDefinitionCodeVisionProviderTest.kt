@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.core.script.k2.definitions
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.registerExtension
-import org.jetbrains.kotlin.idea.core.script.k2.kotlinScriptDefinitionInlayHint
 import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
+import org.jetbrains.kotlin.idea.core.script.shared.definition.kotlinScriptDefinitionInlayHint
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource

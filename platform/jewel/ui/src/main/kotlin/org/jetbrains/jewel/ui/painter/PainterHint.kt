@@ -19,6 +19,7 @@ import org.w3c.dom.Element
  */
 @Immutable
 public sealed interface PainterHint {
+    /** Returns `true` if this hint should be applied for the resource at the current [PainterProviderScope.path]. */
     public fun PainterProviderScope.canApply(): Boolean = true
 
     /** An empty [PainterHint], it will be ignored. */
@@ -72,8 +73,10 @@ public interface PainterSvgPatchHint : SvgPainterHint {
     public fun PainterProviderScope.patch(element: Element)
 }
 
+/** A [PainterHint] that wraps the loaded [Painter] with another [Painter], allowing post-load decoration. */
 @Immutable
 public interface PainterWrapperHint : PainterHint {
+    /** Wraps the loaded [painter] with another [Painter], returning the decorated result. */
     public fun PainterProviderScope.wrap(painter: Painter): Painter
 }
 
@@ -93,6 +96,7 @@ public abstract class PainterPrefixHint : PainterPathHint {
         append(path.substringAfterLast('.'))
     }
 
+    /** Returns the prefix string to prepend to the file name portion of the resource path. */
     public abstract fun PainterProviderScope.prefix(): String
 }
 
@@ -113,5 +117,6 @@ public abstract class PainterSuffixHint : PainterPathHint {
         append(path.substringAfterLast('.'))
     }
 
+    /** Returns the suffix string to insert before the file extension of the resource path. */
     public abstract fun PainterProviderScope.suffix(): String
 }

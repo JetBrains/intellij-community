@@ -12,7 +12,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor.Compan
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-internal object MarkdownFileEditorUtils {
+object MarkdownFileEditorUtils {
   @JvmStatic
   fun findMarkdownPreviewEditor(editor: FileEditor): MarkdownPreviewFileEditor? {
     return when (editor) {

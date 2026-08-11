@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.community` start
-
 jvm_library(
     name = "community",
     srcs = glob(
@@ -30,7 +29,7 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io",
         "//libraries/jsoup",
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util",
         "//platform/extensions",
         "//platform/core-api:core",
@@ -42,6 +41,8 @@ jvm_library(
         "//platform/backend/workspace",
         "//platform/workspace/storage",
         "//platform/workspace/jps",
+        "//platform/ide-core",
+        "//platform/util-ex",
     ],
 )
 
@@ -68,6 +69,7 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//libraries/jsoup:jsoup_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util:util_test_lib",
         "//platform/extensions:extensions_test_lib",
         "//platform/core-api:core_test_lib",
@@ -79,6 +81,8 @@ jvm_library(
         "//platform/backend/workspace:workspace_test_lib",
         "//platform/workspace/storage:storage_test_lib",
         "//platform/workspace/jps:jps_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community` end

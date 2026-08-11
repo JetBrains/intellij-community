@@ -35,6 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.UPolyadicExpression;
@@ -81,7 +82,7 @@ public final class I18nizeBatchQuickFix extends I18nizeQuickFix implements Batch
 
   private static void fillI18nizedPropertyDataMap(@NotNull Project project,
                                                   CommonProblemDescriptor @NotNull [] descriptors,
-                                                  @NotNull Set<PsiFile> contextFiles,
+                                                  @NotNull Set<? super PsiFile> contextFiles,
                                                   @NotNull Map<String, I18nizedPropertyData<HardcodedStringContextData>> keyValuePairs) {
     final Set<PsiElement> distinct = new HashSet<>();
     final UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
@@ -99,8 +100,8 @@ public final class I18nizeBatchQuickFix extends I18nizeQuickFix implements Batch
           if (distinct.add(psiElement) && value != null) {
             I18nizedPropertyData<HardcodedStringContextData> data = keyValuePairs.get(value);
             if (data != null) {
-              data.contextData().getPsiElements().add(psiElement);
-              data.contextData().getExpressions().add(concatenation.getRootUExpression());
+              data.contextData().psiElements().add(psiElement);
+              data.contextData().expressions().add(concatenation.getRootUExpression());
             }
             else {
               String key = ObjectUtils.notNull(suggestKeyByPlace(value, concatenation.getRootUExpression()),
@@ -140,7 +141,7 @@ public final class I18nizeBatchQuickFix extends I18nizeQuickFix implements Batch
     I18nizeMultipleStringsDialog<HardcodedStringContextData> dialog =
       new I18nizeMultipleStringsDialog<>(project, replacements, contextFiles, bundleManager,
                                          data -> {
-                                           List<PsiElement> elements = data.getPsiElements();
+                                           List<PsiElement> elements = data.psiElements();
                                            return ContainerUtil.map(elements, element -> new UsageInfo(element.getParent()));
                                          },
                                          null, true);
@@ -149,7 +150,7 @@ public final class I18nizeBatchQuickFix extends I18nizeQuickFix implements Batch
       PropertiesFile propertiesFile = dialog.getPropertiesFile();
       Set<PsiFile> files = new HashSet<>();
       for (I18nizedPropertyData<HardcodedStringContextData> data : replacements) {
-        for (PsiElement element : data.contextData().getPsiElements()) {
+        for (PsiElement element : data.contextData().psiElements()) {
           ContainerUtil.addIfNotNull(files, element.getContainingFile());
         }
       }
@@ -165,14 +166,14 @@ public final class I18nizeBatchQuickFix extends I18nizeQuickFix implements Batch
                                                                         data.key(),
                                                                         data.value(),
                                                                         new UExpression[0]);
-          List<UExpression> uExpressions = data.contextData().getExpressions();
-          List<PsiElement> psiElements = data.contextData().getPsiElements();
+          List<UExpression> uExpressions = data.contextData().expressions();
+          List<PsiElement> psiElements = data.contextData().psiElements();
           for (int i = 0; i < psiElements.size(); i++) {
             PsiElement psiElement = psiElements.get(i);
             UExpression uExpression = uExpressions.get(i);
             Language language = psiElement.getLanguage();
             String i18NText =
-              dialog.getI18NText(data.key(), data.value(), JavaI18nUtil.composeParametersText(data.contextData().getArgs()));
+              dialog.getI18NText(data.key(), data.value(), JavaI18nUtil.composeParametersText(data.contextData().args()));
 
             PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
             PsiExpression expression;
@@ -208,7 +209,7 @@ public final class I18nizeBatchQuickFix extends I18nizeQuickFix implements Batch
             UastElementFactory pluginElementFactory = generationPlugin.getElementFactory(project);
             List<UExpression> arguments = new ArrayList<>();
             arguments.add(pluginElementFactory.createStringLiteralExpression(data.key(), psiElement));
-            arguments.addAll(data.contextData().getArgs());
+            arguments.addAll(data.contextData().args());
 
             UExpression receiver = callDescriptor.first != null
                                    ? pluginElementFactory.createQualifiedReference(callDescriptor.first, uExpression.getSourcePsi())
@@ -269,28 +270,6 @@ public final class I18nizeBatchQuickFix extends I18nizeQuickFix implements Batch
     return null;
   }
 
-  private static final class HardcodedStringContextData {
-    private final List<UExpression> myExpressions;
-    private final List<PsiElement> myPsiElements;
-    private final List<UExpression> myArgs;
-
-    private HardcodedStringContextData(@NotNull List<UExpression> expressions, @NotNull List<PsiElement> psiElements,
-                                       @NotNull List<UExpression> args) {
-      myExpressions = expressions;
-      myPsiElements = psiElements;
-      myArgs = args;
-    }
-
-    private List<UExpression> getExpressions() {
-      return myExpressions;
-    }
-
-    private List<PsiElement> getPsiElements() {
-      return myPsiElements;
-    }
-
-    private List<UExpression> getArgs() {
-      return myArgs;
-    }
+  private record HardcodedStringContextData(List<UExpression> expressions, List<PsiElement> psiElements, @Unmodifiable List<UExpression> args) {
   }
 }

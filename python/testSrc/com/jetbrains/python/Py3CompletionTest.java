@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -26,6 +29,8 @@ import java.util.List;
 
 
 @TestDataPath("$CONTENT_ROOT/../testData/completion")
+@Subsystems.CodeCompletion
+@Layers.Functional
 public class Py3CompletionTest extends PyTestCase {
 
   public void testPropertyDecorator() {
@@ -48,6 +53,28 @@ public class Py3CompletionTest extends PyTestCase {
 
   public void testNamedTupleBaseClass() {
     doTest();
+  }
+
+  @TestFor(issues = "PY-88569")
+  public void testWalrusVariableFromImportCompletion() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    final List<String> strings = myFixture.getLookupElementStrings();
+    assertNotNull(strings);
+    assertContainsElements(strings, "d", "y");
+    assertDoesntContain(strings, "x");
+  }
+
+  @TestFor(issues = "PY-88569")
+  public void testWalrusVariableQualifiedCompletion() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    final List<String> strings = myFixture.getLookupElementStrings();
+    assertNotNull(strings);
+    assertContainsElements(strings, "d", "y");
+    assertDoesntContain(strings, "x");
   }
 
   // PY-13157
@@ -1002,6 +1029,32 @@ public class Py3CompletionTest extends PyTestCase {
       import mod
 
       mod.Outer.Inner.unique_attribute""");
+  }
+
+  @TestFor(issues = "PY-90275")
+  public void testDunderCallMethod() {
+    doTestByText("""
+      class A:
+          def __call<caret>
+      """);
+    myFixture.checkResult("""
+      class A:
+          def __call__(self, *args, **kwargs):
+      """);
+  }
+
+  @TestFor(issues = "PY-90275")
+  public void testDunderOperatorMethodFromType() {
+    // `__or__` / `__ror__` are declared on `type`, but they are ordinary operator dunders and must still be suggested in
+    // ordinary classes (unlike metaclass-only dunders such as `__prepare__`).
+    doTestByText("""
+      class A:
+          def __or<caret>
+      """);
+    myFixture.checkResult("""
+      class A:
+          def __or__(self, other):
+      """);
   }
 
   // PY-88016

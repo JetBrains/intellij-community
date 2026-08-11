@@ -2,6 +2,7 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
 import com.intellij.diagnostic.StartUpMeasurer
@@ -52,6 +53,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.measureTime
@@ -77,10 +79,10 @@ private fun isTrafficLightExists(editor: Editor): Boolean {
 
 private fun checkTrafficLightRenderer() = java.lang.Boolean.getBoolean("is.test.traffic.light")
 
+private val LOG = logger<WaitForFinishedCodeAnalysis>()
 class WaitForFinishedCodeAnalysis(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
-    const val PREFIX = CMD_PREFIX + "waitForFinishedCodeAnalysis"
-    val LOG = logger<WaitForFinishedCodeAnalysis>()
+    const val PREFIX: String = CMD_PREFIX + "waitForFinishedCodeAnalysis"
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
@@ -98,11 +100,6 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : PerformanceCommandC
 
 @Service(Service.Level.PROJECT)
 class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
-
-  internal companion object {
-    val LOG = logger<WaitForFinishedCodeAnalysis>()
-  }
-
   private val stateLock = Any()
   private val filesYetToStartHighlighting = ConcurrentHashMap<VirtualFile, Unit>()
   private val sessions = ConcurrentHashMap<TextEditor, ExceptionWithTime>()
@@ -167,7 +164,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
         while (true) {
           @Suppress("TestOnlyProblems")
           if (!ApplicationManagerEx.getApplication().isHeadlessEnvironment && !FUSProjectHotStartUpMeasurer.isHandlingFinished() && !future.isDone) {
-            delay(500)
+            delay(500.milliseconds)
           }
           else {
             break
@@ -207,7 +204,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
         throw TimeoutException(errorText)
       }
     }
-    LOG.info("Code analysis waiting finished")
+    LOG.info("Code analysis complete")
   }
 
   private fun registerToWaitForAnalysisToFinish(future: CompletableFuture<Unit>) {
@@ -427,7 +424,7 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
   }
 
   override fun daemonStarting(fileEditors: Collection<FileEditor>) {
-    CodeAnalysisStateListener.LOG.info(""""Daemon starting, editors size = ${fileEditors.size}, editors:
+    LOG.info(""""Daemon starting, editors size = ${fileEditors.size}, editors:
                                        ${fileEditors.joinToString(separator = "\n    ") { it.description }}
                                        """)
     project.service<CodeAnalysisStateListener>().registerDaemonStarted(fileEditors.getWorthy())
@@ -465,11 +462,11 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
 
   fun printFileEditors(fileEditors: Collection<FileEditor>, status: String, traceId: UUID, reason: String) {
     try {
-      val editorsMessage = fileEditors.map { fileEditor -> fileEditor.description }.joinToString(separator = "\n    ")
-      CodeAnalysisStateListener.LOG.info("Daemon analyzer status $status, editors size = ${fileEditors.size}, reason = $reason ,traceId = $traceId, editors = $editorsMessage")
+      val editorsMessage = fileEditors.joinToString(separator = "\n    ") { fileEditor -> fileEditor.description }
+      LOG.info("Daemon analyzer status $status, editors size = ${fileEditors.size}, reason = $reason, traceId = $traceId, editors = $editorsMessage; fileStatusMap:${DaemonCodeAnalyzerEx.getInstanceEx(project).fileStatusMap}")
     }
     catch (e: Exception) {
-      CodeAnalysisStateListener.LOG.warn(e)
+      LOG.warn(e)
     }
   }
 }
@@ -491,7 +488,7 @@ private sealed class ExceptionWithTime(override val message: String?) : Exceptio
   abstract val wasStartedInLimitedSetup: Boolean
 
   companion object {
-    val highlightingScopeName = "highlighting"
+    val highlightingScopeName: String = "highlighting"
 
     private class DaemonAnalysisStarted(editor: TextEditor, override val wasStartedInLimitedSetup: Boolean) :
       ExceptionWithTime(message = "Previous daemon start trace (editor = ${editor.description})") {

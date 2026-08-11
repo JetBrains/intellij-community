@@ -1,5 +1,5 @@
 // "Change type of 'complex' to '(String) -> String'" "true"
-// K2_ERROR: Return type mismatch: expected '(Int) -> String', actual '(String) -> String'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 
 val complex: (Int) -> String
     get() = { s: String -> s<caret> }

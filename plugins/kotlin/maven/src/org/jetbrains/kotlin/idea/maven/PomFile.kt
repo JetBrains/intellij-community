@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.build
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Companion.KOTLIN_VERSION_PROPERTY
+import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Companion.javacMavenId
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Companion.kotlinPluginId
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
@@ -201,11 +202,13 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
             ?: domModel.build.pluginManagement.plugins.plugins.firstOrNull { it.matches(groupArtifact) }
 
     fun isPluginAfter(plugin: MavenDomPlugin, referencePlugin: MavenDomPlugin): Boolean {
-        require(plugin.parent === referencePlugin.parent) { "Plugins should be siblings" }
         require(plugin !== referencePlugin)
 
         val referenceElement = referencePlugin.xmlElement!!
         var e: PsiElement = plugin.xmlElement!!
+        // `pluginManagement/plugins` and `build/plugins` can both contain the same Maven plugin.
+        // In that case there is no shared sibling order to compare inside one XML container.
+        if (e.parent !== referenceElement.parent) return false
 
         while (e !== referenceElement) {
             val prev = e.prevSibling ?: return false
@@ -216,13 +219,21 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
     }
 
     private fun ensurePluginAfter(plugin: MavenDomPlugin, referencePlugin: MavenDomPlugin): MavenDomPlugin {
+        // Only reorder plugins that already live in the same XML list. Moving a plugin across
+        // `pluginManagement` and `build/plugins` would change the POM structure instead of order.
+        if (plugin.xmlElement?.parent !== referencePlugin.xmlElement?.parent) {
+            return plugin
+        }
+
         if (!isPluginAfter(plugin, referencePlugin)) {
             // rearrange
             val referenceElement = referencePlugin.xmlElement!!
             val newElement = referenceElement.parent.addAfter(plugin.xmlElement!!, referenceElement)
             plugin.xmlTag?.delete()
 
-            return domModel.build.plugins.plugins.single { it.xmlElement == newElement }
+            return (domModel.build.plugins.plugins + domModel.build.pluginManagement.plugins.plugins)
+                .singleOrNull { it.xmlElement == newElement }
+                ?: error("Failed to find plugin after reordering in ${xmlFile.name}")
         }
 
         return plugin
@@ -289,20 +300,13 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
     fun isPluginExecutionMissing(plugin: MavenPlugin?, excludedExecutionId: String, goal: String): Boolean =
         plugin == null || plugin.executions.none { it.executionId != excludedExecutionId && goal in it.goals }
 
-    fun hasJavacPlugin(): Boolean {
-        return findPlugin(
-            MavenId(
-                "org.apache.maven.plugins",
-                "maven-compiler-plugin",
-                null
-            )
-        ) != null
-    }
+    fun hasJavacPlugin(): Boolean =
+        findPlugin(javacMavenId) != null
 
     fun addJavacExecutions(module: Module, kotlinPlugin: MavenDomPlugin) {
         val javacPlugin =
             ensurePluginAfter(
-                addPlugin(MavenId("org.apache.maven.plugins", "maven-compiler-plugin", null)),
+                addPlugin(javacMavenId),
                 kotlinPlugin
             )
 
@@ -343,7 +347,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
                 error("Can't find maven project for $module")
             }
 
-        val plugin = project.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
+        val plugin = project.findPlugin(javacMavenId.groupId, javacMavenId.artifactId)
 
         if (isPluginExecutionMissing(plugin, "default-compile", "compile")) {
             addExecution(javacPlugin, "compile", DefaultPhases.Compile, listOf("compile"))

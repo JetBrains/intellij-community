@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
-import com.intellij.compose.ide.plugin.resources.ANDROID_MAIN
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesTestCase
 import com.intellij.compose.ide.plugin.resources.TARGET_GRADLE_VERSION
 import com.intellij.compose.ide.plugin.resources.intentions.quickfix.CreateStringResourceQuickFix
@@ -21,7 +20,6 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.util.concurrent.ForkJoinPool
 
@@ -32,6 +30,14 @@ internal class ComposeResourcesUnresolvedStringReferenceQuickFixProviderTest : C
   @TestMetadata("ComposeResources")
   fun `test quickfix is registered for unresolved string reference`() =
     doQuickFixRegistrationAndExecution("val x = Res.string.new_string_resource", shouldRegister = true)
+
+  @TargetVersions(TARGET_GRADLE_VERSION)
+  @Test
+  @TestMetadata("ComposeResources")
+  fun `test quickfix is registered for unresolved string reference and strings_xml is missing`() =
+    doQuickFixRegistrationAndExecution("val x = Res.string.new_string_resource",
+                                       shouldRegister = true,
+                                       deleteStringsXmlBeforeRegistration = true)
 
   @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
@@ -56,8 +62,24 @@ internal class ComposeResourcesUnresolvedStringReferenceQuickFixProviderTest : C
   @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
   @TestMetadata("ComposeResources")
+  fun `test quickfix is registered for unresolved string-array reference and strings_xml is missing`() =
+    doQuickFixRegistrationAndExecution("val x = Res.array.new_array_resource",
+                                       shouldRegister = true,
+                                       deleteStringsXmlBeforeRegistration = true)
+
+  @TargetVersions(TARGET_GRADLE_VERSION)
+  @Test
+  @TestMetadata("ComposeResources")
   fun `test quickfix is registered for unresolved plurals reference`() =
     doQuickFixRegistrationAndExecution("val x = Res.plurals.new_plurals_resource", shouldRegister = true)
+
+  @TargetVersions(TARGET_GRADLE_VERSION)
+  @Test
+  @TestMetadata("ComposeResources")
+  fun `test quickfix is registered for unresolved plurals reference and strings_xml is missing`() =
+    doQuickFixRegistrationAndExecution("val x = Res.plurals.new_plurals_resource",
+                                       shouldRegister = true,
+                                       deleteStringsXmlBeforeRegistration = true)
 
   @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
@@ -95,11 +117,21 @@ internal class ComposeResourcesUnresolvedStringReferenceQuickFixProviderTest : C
   fun `test quickfix is not registered for drawable`() =
     doQuickFixRegistrationAndExecution("val x = Res.drawable.test", shouldRegister = false)
 
-  private fun doQuickFixRegistrationAndExecution(codeLine: String, shouldRegister: Boolean) {
-    assumeTrue("temporarily disable for androidMain since it's not recognised as source root", sourceSetName != ANDROID_MAIN)
+  private fun doQuickFixRegistrationAndExecution(
+    codeLine: String,
+    shouldRegister: Boolean,
+    deleteStringsXmlBeforeRegistration: Boolean = false,
+  ) {
     invokeAndWaitIfNeeded(ModalityState.nonModal()) {
       val files = importProjectFromTestData()
       val (sourceKtFile, stringsXmlFile) = files.findTestFiles(myProject, sourceSetName)
+      val composeResourcesDir = stringsXmlFile.parent.parent
+
+      if (deleteStringsXmlBeforeRegistration) {
+        runWriteAction {
+          stringsXmlFile.delete(this)
+        }
+      }
 
       codeInsightTestFixture.openFileInEditor(sourceKtFile)
       val document = codeInsightTestFixture.editor.document
@@ -123,7 +155,7 @@ internal class ComposeResourcesUnresolvedStringReferenceQuickFixProviderTest : C
 
       invokeAndAssertQuickFixResult(
         quickFix = quickFix,
-        stringsXmlFileVirtualFile = stringsXmlFile,
+        composeResourcesDirVirtualFile = composeResourcesDir,
         project = myProject,
         codeLine = codeLine,
         expectAdded = true,

@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.jewel.markdown.intUiStandaloneStyling` start
-
 create_kotlinc_options(
     name = "custom_int-ui-standalone-styling",
     opt_in = [
@@ -23,6 +22,11 @@ jvm_provided_library(
 jvm_provided_library(
     name = "platform_jewel_markdown_extensions_gfm-tables_provided",
     lib = "//platform/jewel/markdown/extensions/gfm-tables",
+)
+
+jvm_provided_library(
+    name = "platform_jewel_markdown_extensions_front-matter_provided",
+    lib = "//platform/jewel/markdown/extensions/front-matter",
 )
 
 jvm_library(
@@ -46,7 +50,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/jewel/markdown/core",
         "//platform/jewel/ui",
         "//platform/jewel/foundation",
@@ -55,6 +59,7 @@ jvm_library(
         "//libraries/compose-foundation-desktop",
         ":platform_jewel_markdown_extensions_gfm-alerts_provided",
         ":platform_jewel_markdown_extensions_gfm-tables_provided",
+        ":platform_jewel_markdown_extensions_front-matter_provided",
     ],
 )
 
@@ -72,6 +77,7 @@ jvm_library(
         # do not sort,
         ":int-ui-standalone-styling",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/jewel/markdown/core:core_test_lib",
         "//platform/jewel/ui:ui_test_lib",
         "//platform/jewel/foundation:foundation_test_lib",
@@ -81,6 +87,8 @@ jvm_library(
         "//platform/jewel/markdown/extensions/gfm-alerts:gfm-alerts_test_lib",
         "//platform/jewel/markdown/extensions/gfm-tables",
         "//platform/jewel/markdown/extensions/gfm-tables:gfm-tables_test_lib",
+        "//platform/jewel/markdown/extensions/front-matter",
+        "//platform/jewel/markdown/extensions/front-matter:front-matter_test_lib",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
         "//libraries/compose-foundation-desktop-junit",
         "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",

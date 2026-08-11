@@ -1,0 +1,18 @@
+pluginManagement {
+    plugins {
+        id 'org.jetbrains.kotlin.jvm' version '2.3.0'
+    }
+}
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.10.0'
+}
+import static org.gradle.api.initialization.resolve.RepositoriesMode.*
+
+rootProject.name = "project"
+
+dependencyResolutionManagement {
+    repositoriesMode.set(PREFER_SETTINGS)
+    repositories {
+        mavenCentral()
+    }
+}

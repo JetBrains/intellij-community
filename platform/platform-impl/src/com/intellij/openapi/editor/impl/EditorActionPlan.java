@@ -21,7 +21,7 @@ final class EditorActionPlan implements ActionPlan {
 
   EditorActionPlan(@NotNull Editor editor) {
     myEditor = editor;
-    CharSequence sequence = editor.getElfDocument().getImmutableCharSequence();
+    CharSequence sequence = editor.getDocument().getImmutableCharSequence();
     myText = CharArrayUtil.createImmutableCharSequence(sequence);
     myCaretOffset = editor.getCaretModel().getOffset();
   }

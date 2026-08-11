@@ -6,10 +6,10 @@
 // ACTION: Enable a trailing comma by default in the formatter
 // ERROR: Destructuring declaration initializer of type Foo must have a 'component1()' function
 // ERROR: Destructuring declaration initializer of type Foo must have a 'component2()' function
-// K2_ERROR: Destructuring of type 'Foo' requires operator function 'component1()'.
-// K2_ERROR: Destructuring of type 'Foo' requires operator function 'component2()'.
-// K2_AFTER_ERROR: Destructuring of type 'Foo' requires operator function 'component1()'.
-// K2_AFTER_ERROR: Destructuring of type 'Foo' requires operator function 'component2()'.
+// K2_AFTER_ERROR: COMPONENT_FUNCTION_MISSING
+// K2_AFTER_ERROR: COMPONENT_FUNCTION_MISSING
+// K2_ERROR: COMPONENT_FUNCTION_MISSING
+// K2_ERROR: COMPONENT_FUNCTION_MISSING
 class Foo()
 
 fun test() {

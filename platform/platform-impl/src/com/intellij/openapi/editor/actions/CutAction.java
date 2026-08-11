@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.actions.CopyAction.SelectionToCopy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ public final class CutAction extends TextComponentEditorAction {
     super(new Handler(), false);
   }
 
+  @ApiStatus.Internal
   public static final class Handler extends EditorWriteActionHandler {
     @Override
     public void executeWriteAction(final @NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {

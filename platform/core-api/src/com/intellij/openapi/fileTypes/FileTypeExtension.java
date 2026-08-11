@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +30,7 @@ public class FileTypeExtension<T> extends KeyedExtensionCollector<T, FileType> {
     return key.getName();
   }
 
-  public @NotNull List<T> allForFileType(@NotNull FileType t) {
+  public @NotNull @Unmodifiable List<T> allForFileType(@NotNull FileType t) {
     return forKey(t);
   }
 

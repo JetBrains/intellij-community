@@ -15,7 +15,11 @@ import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 
+@Subsystems.Refactoring
+@Layers.Functional
 class PySuggestedRefactoringTest : PyTestCase() {
 
   override fun setUp() {

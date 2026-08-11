@@ -16,6 +16,11 @@ interface Mut : Q {
   val defaultPart: Part
 
   /**
+   * Controls whether creating an entity auto-registers its [EntityType]
+   * */
+  val registerEntityTypeOnEntityCreation: Boolean
+
+  /**
    * Persistent snapshot of [DB] from which the transaction is started.
    * */
   val dbBefore: DB

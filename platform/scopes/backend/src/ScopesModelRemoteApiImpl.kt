@@ -30,6 +30,7 @@ import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -39,7 +40,6 @@ import java.util.EnumSet
 import java.util.concurrent.ConcurrentHashMap
 
 internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
-  private val modelIdToModel = ConcurrentHashMap<String, AbstractScopeModel>()
   /**
    * Tracks newly created scope names by model ID for deferred selection.
    *
@@ -54,26 +54,33 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
     projectId: ProjectId,
     modelId: String,
     filterConditionType: ScopesFilterConditionType,
-    dataContextId: DataContextId?
+    dataContextId: DataContextId?,
   ): Flow<SearchScopesInfo>? {
     val project = projectId.findProjectOrNull() ?: return null
-    val model = project.getService(ScopeService::class.java)
-      .createModel(EnumSet.of(
-        ScopeOption.FROM_SELECTION,
-        ScopeOption.USAGE_VIEW,
-        ScopeOption.LIBRARIES,
-        ScopeOption.SEARCH_RESULTS
-      ))
-    modelIdToModel[modelId] = model
-    val flow = subscribeToModelUpdates(model, modelId, project)
-    val dataContext = withContext(Dispatchers.EDT) { dataContextId?.dataContext() }
-    model.refreshScopes(dataContext)
-    val scopeFilter = filterConditionType.getScopeFilterByType()
-    if (scopeFilter != null) model.setFilter(scopeFilter)
+    return channelFlow {
+      val model = project.getService(ScopeService::class.java)
+        .createModel(EnumSet.of(
+          ScopeOption.FROM_SELECTION,
+          ScopeOption.USAGE_VIEW,
+          ScopeOption.LIBRARIES,
+          ScopeOption.SEARCH_RESULTS
+        ))
 
-    NamedScopeManager.getInstance(project).addScopeListener({ model.refreshScopes(null) }, model)
-    DependencyValidationManager.getInstance(project).addScopeListener({ model.refreshScopes(null) }, model)
-    return flow
+      subscribeToModelUpdates(model, modelId, project)
+
+      val dataContext = withContext(Dispatchers.EDT) { dataContextId?.dataContext() }
+      model.refreshScopes(dataContext)
+      val scopeFilter = filterConditionType.getScopeFilterByType()
+      if (scopeFilter != null) model.setFilter(scopeFilter)
+
+      NamedScopeManager.getInstance(project).addScopeListener({ model.refreshScopes(null) }, model)
+      DependencyValidationManager.getInstance(project).addScopeListener({ model.refreshScopes(null) }, model)
+
+      awaitClose {
+        Disposer.dispose(model)
+        modelIdToSelectedScopeName.remove(modelId)
+      }
+    }
   }
 
   override suspend fun openEditScopesDialog(projectId: ProjectId, selectedScopeId: String?, modelId: String): Deferred<String?> {
@@ -83,7 +90,8 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
     val coroutineScope = ScopeModelService.getInstance(project).getCoroutineScope()
     coroutineScope.launch(Dispatchers.EDT) {
       WindowFocusFrontendService.getInstance().performActionWithFocus(true) {
-        val dialog = EditScopesDialog.showDialog(project, selectedScopeId?.let { ScopesStateService.getInstance(project).getScopeNameById(it) })
+        val dialog = EditScopesDialog.showDialog(project, selectedScopeId
+          ?.let { ScopesStateService.getInstance(project).getScopeNameById(it) })
         if (dialog.isOK) {
           val scopeName = dialog.selectedScope?.scopeId
           val scopeId = scopeName?.let { ScopesStateService.getInstance(project).getIdByScopeName(it) }
@@ -93,7 +101,8 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
           if (scopeId == null && scopeName != null) modelIdToSelectedScopeName[modelId] = scopeName
 
           deferred.complete(scopeId)
-        } else {
+        }
+        else {
           deferred.complete(null)
         }
       }
@@ -101,38 +110,30 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
     return deferred
   }
 
-  private fun subscribeToModelUpdates(model: AbstractScopeModel, modelId: String, project: Project): Flow<SearchScopesInfo> {
-    val flow = channelFlow {
-      model.addScopeModelListener(object : ScopeModelListener {
-        override fun scopesUpdated(scopes: ScopesSnapshot) {
-          val scopesState = ScopesStateService.getInstance(project).getScopesState()
-          val scopesStateMap = mutableMapOf<String, ScopeDescriptor>()
-          val scopesData = scopes.scopeDescriptors.mapNotNull { descriptor ->
-            val scopeId = scopesState.addScope(descriptor)
-            val scopeData = SearchScopeData.from(descriptor, scopeId) ?: return@mapNotNull null
-            scopesStateMap[scopeData.scopeId] = descriptor
-            scopeData
-          }
-          scopesState.updateScopes(scopesStateMap)
-
-          val currentScopeName = modelIdToSelectedScopeName[modelId]
-          if (currentScopeName != null) { modelIdToSelectedScopeName.remove(modelId) }
-          val currentScopeId = currentScopeName?.let { name -> scopesStateMap.entries.find { it.value.displayName == name }?.key }
-          val searchScopesInfo = SearchScopesInfo(scopesData, currentScopeId, null, null)
-          launch {
-            send(searchScopesInfo)
-          }
+  private fun ProducerScope<SearchScopesInfo>.subscribeToModelUpdates(model: AbstractScopeModel, modelId: String, project: Project) {
+    model.addScopeModelListener(object : ScopeModelListener {
+      override fun scopesUpdated(scopes: ScopesSnapshot) {
+        val scopesState = ScopesStateService.getInstance(project).getScopesState()
+        val scopesStateMap = mutableMapOf<String, ScopeDescriptor>()
+        val scopesData = scopes.scopeDescriptors.mapNotNull { descriptor ->
+          val scopeId = scopesState.addScope(descriptor)
+          val scopeData = SearchScopeData.from(descriptor, scopeId) ?: return@mapNotNull null
+          scopesStateMap[scopeData.scopeId] = descriptor
+          scopeData
         }
-      })
+        scopesState.updateScopes(scopesStateMap)
 
-      awaitClose {
-        val model = modelIdToModel[modelId]
-        model?.let { Disposer.dispose(it) }
-        modelIdToModel.remove(modelId)
-        modelIdToSelectedScopeName.remove(modelId)
+        val currentScopeName = modelIdToSelectedScopeName[modelId]
+        if (currentScopeName != null) {
+          modelIdToSelectedScopeName.remove(modelId)
+        }
+        val currentScopeId = currentScopeName?.let { name -> scopesStateMap.entries.find { it.value.displayName == name }?.key }
+        val searchScopesInfo = SearchScopesInfo(scopesData, currentScopeId, null, null)
+        launch {
+          send(searchScopesInfo)
+        }
       }
-    }
-    return flow
+    })
   }
 
   override suspend fun performScopeSelection(scopeId: String, projectId: ProjectId): Deferred<Unit> {

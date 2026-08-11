@@ -3,8 +3,11 @@ package com.jetbrains.env;
 
 import com.google.common.collect.Sets;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.python.test.env.common.PredefinedPyEnvironments;
 import com.intellij.python.test.env.core.PyEnvironmentFactory;
@@ -76,6 +79,7 @@ public class PyEnvTaskRunner {
 
     for (PyTestEnvironment environment : environments) {
       final String envDescription = environment.getDescription();
+      Sdk registeredSdk = null;
 
       LOG.warn(String.format("Running on environment: %s", envDescription));
 
@@ -85,6 +89,9 @@ public class PyEnvTaskRunner {
 
         // Prepare SDK for this environment
         final Sdk sdk = environment.prepareSdk();
+        if (registerSdkIfNeeded(sdk)) {
+          registeredSdk = sdk;
+        }
 
         if (skipOnFlavors != null) {
           final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
@@ -135,12 +142,17 @@ public class PyEnvTaskRunner {
         }
 
         try {
+          removeRegisteredSdk(registeredSdk);
+        }
+        finally {
           // Teardown should be called on the main thread because fixture teardown checks for
           // thread leaks, and blocked main thread is considered as leaked.
-          testTask.tearDown();
-        }
-        catch (final Exception e) {
-          throw new RuntimeException("Couldn't tear down task", e);
+          try {
+            testTask.tearDown();
+          }
+          catch (final Exception e) {
+            throw new RuntimeException("Couldn't tear down task", e);
+          }
         }
       }
     }
@@ -159,6 +171,28 @@ public class PyEnvTaskRunner {
       .map(e -> new ProviderTestEnvironment(myFactory, e.getSpec(), PredefinedPyEnvironments.Companion.getENVIRONMENTS_TO_TAGS().get(e)))
       .filter(e -> myPythonVersionFilter == null || PythonVersionKt.matches(e.getPythonVersion(), myPythonVersionFilter))
       .toList();
+  }
+
+  private static boolean registerSdkIfNeeded(@NotNull Sdk sdk) {
+    return WriteAction.compute(() -> {
+      if (!ContainerUtil.exists(ProjectJdkTable.getInstance().getAllJdks(), existingSdk ->
+        FileUtil.pathsEqual(existingSdk.getHomePath(), sdk.getHomePath()))) {
+        ProjectJdkTable.getInstance().addJdk(sdk);
+        return true;
+      }
+      return false;
+    });
+  }
+
+  private static void removeRegisteredSdk(@Nullable Sdk sdk) {
+    if (sdk == null) {
+      return;
+    }
+    WriteAction.run(() -> {
+      if (ContainerUtil.exists(ProjectJdkTable.getInstance().getAllJdks(), existingSdk -> existingSdk == sdk)) {
+        ProjectJdkTable.getInstance().removeJdk(sdk);
+      }
+    });
   }
 
   /**

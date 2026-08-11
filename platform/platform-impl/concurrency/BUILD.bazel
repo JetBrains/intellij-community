@@ -1,8 +1,16 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.platform.ide.concurrency` start
+jps_test(
+    name = "ide-concurrency-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":ide-concurrency-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.ide.concurrency.tests`
+
+### auto-generated section `build intellij.platform.ide.concurrency` start
 jvm_library(
     name = "concurrency",
     srcs = glob(
@@ -21,7 +29,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//platform/util",
@@ -49,6 +57,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":concurrency",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/util:util_test_lib",
         "//platform/core-api:core_test_lib",
@@ -78,7 +87,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.ide.concurrency` end
 
 ### auto-generated section `build intellij.platform.ide.concurrency.tests` start
-
 jvm_library(
     name = "ide-concurrency-tests",
     srcs = glob(
@@ -110,7 +118,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
@@ -149,11 +158,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.ide.concurrency.tests` end
-
-### auto-generated section `test intellij.platform.ide.concurrency.tests` start
-
-jps_test(
-    name = "ide-concurrency-tests_test",
-    runtime_deps = [":ide-concurrency-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.ide.concurrency.tests` end

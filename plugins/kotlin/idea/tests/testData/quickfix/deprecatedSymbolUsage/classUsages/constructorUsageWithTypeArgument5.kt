@@ -1,6 +1,7 @@
 // "Replace with 'Factory<Int>()'" "true"
 // K2_ACTION: "Replace with 'Factory()'" "true"
 // WITH_STDLIB
+// K2_AFTER_ERROR: CANNOT_INFER_PARAMETER_TYPE
 
 class Foo<T> @Deprecated("", ReplaceWith("Factory()")) constructor()
 fun <T> Factory(): Foo<T> = TODO()

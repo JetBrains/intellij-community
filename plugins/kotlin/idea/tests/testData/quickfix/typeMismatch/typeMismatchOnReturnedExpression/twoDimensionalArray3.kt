@@ -1,6 +1,6 @@
 // "Change return type of enclosing function 'b' to 'Array<Array<Int>>'" "true"
 // WITH_STDLIB
-// K2_ERROR: Return type mismatch: expected 'Array<Int>', actual 'Array<Array<Int>>'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 val a: Array<Int> = arrayOf(1)
 fun b(): Array<Int> {
     return <caret>arrayOf(a)

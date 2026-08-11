@@ -2,9 +2,11 @@
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.IdeActions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class ActionShortcutRestrictionsImpl extends ActionShortcutRestrictions {
   private static final ShortcutRestrictions MOUSE_SINGLE_CLICK_ONLY = new ShortcutRestrictions(true, true, false, false, false, false);
   private static final ShortcutRestrictions FIXED_SHORTCUT = new ShortcutRestrictions(false, false, false, false, false, false);

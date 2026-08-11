@@ -32,7 +32,6 @@ import com.jetbrains.python.requirements.getPythonSdk
  * the specific package manager satisfies that intent.
  */
 internal class UpdateLockedDependenciesQuickFix(
-  private val sdk: Sdk,
   private val packageManager: PythonPackageManager,
 ) : LocalQuickFix, PriorityAction {
   override fun getFamilyName(): String = PyBundle.message("QFIX.NAME.install.all.requirements")
@@ -46,7 +45,7 @@ internal class UpdateLockedDependenciesQuickFix(
       // Route through PythonPackageManagerUI so the run gets the standard serialized background-progress
       // wrapper plus error-sink reporting; otherwise a sync failure (e.g. `poetry lock` is
       // out of sync) would surface only via logger.warn and the user would see no feedback.
-      val pmUI = PythonPackageManagerUI.forSdk(project, sdk)
+      val pmUI = PythonPackageManagerUI.forSdk(project, packageManager.sdk)
       pmUI.executeCommand(PyBundle.message("python.packaging.installing.packages")) {
         updateLockedAction().mapSuccess { }
       }

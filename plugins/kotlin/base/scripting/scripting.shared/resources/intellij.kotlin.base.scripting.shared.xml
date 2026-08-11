@@ -1,8 +1,25 @@
-<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.core.script.shared">
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
@@ -33,6 +50,11 @@
             qualifiedName="org.jetbrains.kotlin.scriptDiagnosticFixProvider"
             interface="org.jetbrains.kotlin.idea.core.script.shared.ScriptDiagnosticFixProvider"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptAdditionalIdeaDependenciesProvider"
+            interface="org.jetbrains.kotlin.idea.core.script.v1.ScriptAdditionalIdeaDependenciesProvider"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -51,5 +73,7 @@
     <scriptDefinitionsSource
             id="BridgeScriptDefinitionsContributor"
             implementation="org.jetbrains.kotlin.idea.core.script.shared.definition.BridgeScriptDefinitionsContributor"/>
+    <idea.base.platforms.targetPlatformDetector
+            implementation="org.jetbrains.kotlin.idea.core.script.v1.ScriptingTargetPlatformDetector"/>
   </extensions>
 </idea-plugin>

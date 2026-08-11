@@ -4,8 +4,10 @@ package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.even
 import org.gradle.tooling.events.test.TestSkippedResult;
 import org.jetbrains.annotations.ApiStatus;
 
+import java.io.Serializable;
+
 @ApiStatus.Internal
-public class InternalTestSkippedResult implements TestSkippedResult {
+public class InternalTestSkippedResult implements TestSkippedResult, Serializable {
   private final long startTime;
   private final long endTime;
 

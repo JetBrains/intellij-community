@@ -1,18 +1,39 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.junit.Test
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.configTest
+import com.intellij.maven.testFramework.fixtures.configureProjectPom
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createPomXml
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.getEditorOffset
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
+import com.intellij.maven.testFramework.fixtures.performEditorAction
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenSuperNavigationTest : MavenDomTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenSuperNavigationTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun testNavigationToManagingDependencyWithoutModules() = runBlocking {
-    configureProjectPom(
+    maven.configureProjectPom(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -34,10 +55,10 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
         </dependencies>
         """.trimIndent())
 
-    fixture.performEditorAction("GotoSuperMethod")
+    maven.performEditorAction("GotoSuperMethod")
 
     checkResultWithInlays(
-      createPomXml(
+      maven.createPomXml(
         """
           <groupId>test</groupId>
           <artifactId>project</artifactId>
@@ -62,7 +83,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
 
   @Test
   fun testNavigationToManagingPluginWithoutModules() = runBlocking {
-    configureProjectPom(
+    maven.configureProjectPom(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -86,10 +107,10 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
         """.trimIndent()
     )
 
-    fixture.performEditorAction("GotoSuperMethod")
+    maven.performEditorAction("GotoSuperMethod")
 
     checkResultWithInlays(
-      createPomXml(
+      maven.createPomXml(
         """
           <groupId>test</groupId>
           <artifactId>project</artifactId>
@@ -116,7 +137,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
 
   @Test
   fun testGotoToParentProject() = runBlocking {
-    val parent = createProjectPom(
+    val parent = maven.createProjectPom(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -127,7 +148,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
         </modules>
         """.trimIndent())
 
-    val m1 = createModulePom(
+    val m1 = maven.createModulePom(
       "m1",
       """
         <parent>
@@ -138,16 +159,16 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
         <artifactId>m1</artifactId>
         """.trimIndent())
 
-    configTest(m1)
-    fixture.performEditorAction("GotoSuperMethod")
+    maven.configTest(m1)
+    maven.performEditorAction("GotoSuperMethod")
 
-    val offset = getEditorOffset(parent)
+    val offset = maven.getEditorOffset(parent)
     assertEquals(0, offset)
   }
 
   @Test
   fun testNavigationToManagingDependencyWithModules() = runBlocking {
-    val parent = createProjectPom(
+    val parent = maven.createProjectPom(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -167,7 +188,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
         </modules>
         """.trimIndent())
 
-    val m1 = createModulePom(
+    val m1 = maven.createModulePom(
       "m1",
       """
         <parent>
@@ -185,12 +206,12 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
         """.trimIndent()
     )
 
-    configTest(m1)
-    fixture.performEditorAction("GotoSuperMethod")
+    maven.configTest(m1)
+    maven.performEditorAction("GotoSuperMethod")
 
-    configTest(parent)
+    maven.configTest(parent)
     checkResultWithInlays(
-      createPomXml(
+      maven.createPomXml(
         """
           <groupId>test</groupId>
           <artifactId>project</artifactId>
@@ -213,7 +234,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
 
   @Test
   fun testNavigationToManagingPluginWithModules() = runBlocking {
-    val parent = createProjectPom(
+    val parent = maven.createProjectPom(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -236,7 +257,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
         """.trimIndent()
     )
 
-    val m1 = createModulePom(
+    val m1 = maven.createModulePom(
       "m1",
       """
         <parent>
@@ -256,12 +277,12 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
         """.trimIndent()
     )
 
-    configTest(m1)
-    fixture.performEditorAction("GotoSuperMethod")
+    maven.configTest(m1)
+    maven.performEditorAction("GotoSuperMethod")
 
-    configTest(parent)
+    maven.configTest(parent)
     checkResultWithInlays(
-      createPomXml(
+      maven.createPomXml(
         """
           <groupId>test</groupId>
           <artifactId>project</artifactId>
@@ -289,7 +310,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
     withContext(Dispatchers.EDT) {
       //readaction is not enough
       writeIntentReadAction {
-        fixture.checkResultWithInlays(text)
+        maven.fixture.checkResultWithInlays(text)
       }
     }
   }

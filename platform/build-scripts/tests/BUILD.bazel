@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.buildScripts.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(
@@ -38,7 +37,8 @@ jvm_library(
         # do not sort,
         "//platform/runtime/product",
         "//platform/runtime/product:product_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/opentelemetry",
         "//libraries/opentelemetry:opentelemetry_test_lib",
@@ -60,6 +60,8 @@ jvm_library(
         "//platform/testFramework/extensions:testExtensions_test_lib",
         "//build/tasks",
         "//build/tasks:tasks_test_lib",
+        "//build/deps:dependencies",
+        "//build/deps:dependencies_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//libraries/commons/compress",
@@ -111,6 +113,8 @@ jvm_library(
         "//platform/build-scripts/product-dsl:buildScripts-productDsl-tests_test_lib",
         "//platform/runtime/repository",
         "//platform/runtime/repository:repository_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.tests` end
@@ -125,7 +129,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.buildScripts.tests` end
 
 ### auto-generated section `test intellij.platform.buildScripts.tests` start
-
 jps_test(
     name = "tests_test",
     runtime_deps = [":tests_test_lib"],

@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
+import com.intellij.platform.eel.provider.utils.EelProjectUtils;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -286,7 +287,7 @@ public class GitTagDialog extends DialogWrapper {
     if (hasMessage) {
       try {
         if (GitEelExecutableDetectionHelper.canUseEel()) {
-          messageFile = EelPathUtils.createTemporaryFile(myProject, MESSAGE_FILE_PREFIX, MESSAGE_FILE_SUFFIX, true);
+          messageFile = EelProjectUtils.createTemporaryFile(myProject, MESSAGE_FILE_PREFIX, MESSAGE_FILE_SUFFIX, true);
         }
         else {
           var file = FileUtil.createTempFile(MESSAGE_FILE_PREFIX, MESSAGE_FILE_SUFFIX);

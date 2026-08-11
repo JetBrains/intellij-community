@@ -17,6 +17,10 @@ import java.util.List;
  * Use {@link com.intellij.platform.backend.workspace.VirtualFileUrls#getVirtualFile virtualFile} extension property to locate a 
  * {@link com.intellij.openapi.vfs.VirtualFile VirtualFile} instance by an instance of this interface.
  * <p>
+ * <b>Equality:</b> for a given manager the same URL always returns the same instance, so {@code ==} is a valid same-URL
+ * check for instances obtained from one manager. Instances obtained from <i>different</i> managers must not be compared with {@code equals};
+ * compare {@link #getUrl()} instead (see {@code VirtualFileUrlManagerUtil.isEqualOrParentOf}).
+ * <p>
  * {@link EntityStorage#getVirtualFileUrlIndex()} provides a way to quickly find entities referring to a particular {@link VirtualFileUrl}.
  * Also, it's possible to automatically update references in entities when corresponding files are moved or renamed. Currently, it's 
  * implemented to specific types of entities only in {@link com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher VirtualFileUrlWatcher}.

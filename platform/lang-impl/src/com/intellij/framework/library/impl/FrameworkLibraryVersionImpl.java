@@ -6,11 +6,13 @@ import com.intellij.framework.library.DownloadableLibraryFileDescription;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.download.impl.DownloadableFileSetDescriptionImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class FrameworkLibraryVersionImpl extends DownloadableFileSetDescriptionImpl<DownloadableLibraryFileDescription> implements FrameworkLibraryVersion {
   private final @Nullable String myLibraryName;
   private final @NotNull FrameworkAvailabilityCondition myAvailabilityCondition;

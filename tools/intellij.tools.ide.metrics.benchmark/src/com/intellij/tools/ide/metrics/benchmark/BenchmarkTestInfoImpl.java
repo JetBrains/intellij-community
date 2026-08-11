@@ -284,20 +284,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
 
   @Override
   public void start() {
-    if (setInStressTest) {
-      ApplicationManagerEx.runInStressTest(true, ()-> start(getCallingTestMethod(), launchName));
-    }
-    else {
-      Application app = ApplicationManager.getApplication();
-      if (app != null) {//if app == null then we probably don't use platform at all
-        if (!ApplicationManagerEx.isInStressTest()) {
-          Logger log = Logger.getInstance(BenchmarkTestInfoImpl.class);
-          log.error("ApplicationManagerEx.isInStressTest=false -- not good for reliable benchmarks!\n" +
-                    "Either use `BenchmarkTestInfoImpl.runAsStressTest()`, or @StressTestApplication on the test itself");
-        }
-      }
-      start(getCallingTestMethod(), launchName);
-    }
+    start(getCallingTestMethod(), launchName);
   }
 
   /**
@@ -337,14 +324,33 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
 
   @Override
   public void start(String fullQualifiedTestMethodName) {
-    String sanitizedFullQualifiedTestMethodName = sanitizeFullTestNameForArtifactPublishing(fullQualifiedTestMethodName);
-    start(IterationMode.WARMUP, sanitizedFullQualifiedTestMethodName);
-    start(IterationMode.MEASURE, sanitizedFullQualifiedTestMethodName);
+    runInStressTestOrLog(() -> {
+      String sanitizedFullQualifiedTestMethodName = sanitizeFullTestNameForArtifactPublishing(fullQualifiedTestMethodName);
+      start(IterationMode.WARMUP, sanitizedFullQualifiedTestMethodName);
+      start(IterationMode.MEASURE, sanitizedFullQualifiedTestMethodName);
+    });
   }
 
   @Override
   public String getLaunchName() {
     return launchName;
+  }
+
+  private <E extends Throwable> void runInStressTestOrLog(ThrowableRunnable<E> runnable) throws E {
+    if (setInStressTest) {
+      ApplicationManagerEx.runInStressTest(true, runnable);
+    }
+    else {
+      Application app = ApplicationManager.getApplication();
+      if (app != null) {//if app == null then we probably don't use platform at all
+        if (!ApplicationManagerEx.isInStressTest()) {
+          Logger log = Logger.getInstance(BenchmarkTestInfoImpl.class);
+          log.error("ApplicationManagerEx.isInStressTest=false -- not good for reliable benchmarks!\n" +
+                    "Either use `BenchmarkTestInfoImpl.runAsStressTest()`, or @StressTestApplication on the test itself");
+        }
+      }
+      runnable.run();
+    }
   }
 
   /**

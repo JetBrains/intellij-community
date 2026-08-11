@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -194,8 +194,9 @@ public final class ChunkExtractor {
 
     boolean isBeginning = true;
 
-    for (int j = 0; lexer.getTokenType() != null; lexer.advance(), j++) {
-      if (j % 1000 == 0) {
+    IElementType tokenType;
+    for (int j = 0; (tokenType = lexer.getTokenType()) != null; lexer.advance(), j++) {
+      if (j % 50 == 0) {
         ProgressManager.checkCanceled();
       }
       int hiStart = lexer.getTokenStart();
@@ -215,7 +216,6 @@ public final class ChunkExtractor {
         }
       }
       isBeginning = false;
-      IElementType tokenType = lexer.getTokenType();
       TextAttributesKey[] tokenHighlights = highlighter.getTokenHighlights(tokenType);
       if (!tokenHighlightProcessor.process(hiStart, hiEnd, tokenHighlights)) {
         return;

@@ -47,6 +47,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -892,6 +893,7 @@ public final class ColorPicker extends JPanel implements ColorListener, Document
     }
   }
 
+  @ApiStatus.Internal
   public final class NumberDocument extends PlainDocument {
 
     private final boolean myHex;
@@ -1187,6 +1189,7 @@ public final class ColorPicker extends JPanel implements ColorListener, Document
     }
   }
 
+  @ApiStatus.Internal
   public static final class ColorWheelImageProducer extends MemoryImageSource {
     private final int[] myPixels;
     private final int myWidth;

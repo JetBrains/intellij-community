@@ -202,6 +202,7 @@ public final class DocumentWindowImpl extends UserDataHolderBase implements Disp
   @Override
   public int getLineNumber(int offset) {
     int lineNumber = 0;
+    // replacing with getImmutableCharSequence leads to regression, IJPL-249359
     String hostText = myDelegate.getText();
     synchronized (myLock) {
       for (PsiLanguageInjectionHost.Shred shred : myShreds) {

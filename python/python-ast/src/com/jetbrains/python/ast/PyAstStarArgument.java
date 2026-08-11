@@ -25,4 +25,9 @@ public interface PyAstStarArgument extends PyAstExpression {
   default boolean isKeyword() {
     return getNode().findChildByType(PyTokenTypes.EXP) != null;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor visitor) {
+    visitor.visitPyStarArgument(this);
+  }
 }

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
-import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.launchNowIn
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
@@ -162,11 +161,11 @@ class GHPRReviewCommentBodyViewModel internal constructor(
   private val loadedDetailsState = detailsData.detailsComputationFlow
     .filter { !it.isInProgress }.map { it.getOrNull() }
     .stateInNow(cs, null)
-  val isOnReviewBranch: StateFlow<Boolean> = repository.infoStateIn(cs)
-    .combineState(loadedDetailsState) { _, details ->
-      val remote = details?.getHeadRemoteDescriptor(remoteUrlCoordinates) ?: return@combineState false
-      GitRemoteBranchesUtil.isRemoteBranchCheckedOut(repository, remote, details.headRefName)
-    }
+  val isOnReviewBranch: StateFlow<Boolean?> = repository.infoStateIn(cs)
+    .combine(loadedDetailsState) { _, details ->
+      val remote = details?.getHeadRemoteDescriptor(remoteUrlCoordinates) ?: return@combine false
+      GitRemoteBranchesUtil.testRemoteBranchCheckedOut(repository, remote, details.headRefName)
+    }.stateIn(cs, SharingStarted.Eagerly, null)
 
   fun applySuggestionLocally(patch: TextFilePatch) {
     taskLauncher.launch(Dispatchers.Default) {

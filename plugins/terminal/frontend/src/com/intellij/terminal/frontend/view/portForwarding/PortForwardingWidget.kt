@@ -47,6 +47,7 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 internal class PortForwardingWidget(
   private val model: PortForwardingViewModel,
+  private val portForwardingManager: TerminalPortForwardingManager,
   coroutineScope: CoroutineScope,
 ) : BorderLayoutPanel(), UiDataProvider {
   private val portsContainer: JPanel = JPanel().also {
@@ -95,6 +96,7 @@ internal class PortForwardingWidget(
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[PortForwardingViewModel.KEY] = model
+    sink[TerminalPortForwardingManager.DATA_KEY] = portForwardingManager
   }
 }
 

@@ -71,6 +71,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Font
 import javax.swing.DefaultComboBoxModel
@@ -88,6 +89,7 @@ private val laf: LafManager
 private val keymapManager: KeymapManagerImpl
   get() = KeymapManager.getInstance() as KeymapManagerImpl
 
+@ApiStatus.Internal
 class CustomizeTabFactory : WelcomeTabFactory {
   override fun createWelcomeTabs(ws: WelcomeScreen, parentDisposable: Disposable): MutableList<WelcomeScreenTab> {
     return mutableListOf(CustomizeTab(parentDisposable))

@@ -34,6 +34,7 @@ class SwingLayerPaintingContext(
   override val slotHeight: Int? = null,
   override val slotWidth: Int? = null,
   private val overrideColorFilter: ColorFilter? = null,
+  override val alpha: Float = 1f,
   override val scaling: ScalingContext = DefaultScalingContext(1f, 1f),
 ) : LayerPaintingContext {
   override val offsetX: Int = customX ?: x
@@ -45,6 +46,7 @@ class SwingLayerPaintingContext(
     slotWidth: Int?,
     slotHeight: Int?,
     scale: Float,
+    alpha: Float,
     overrideColorFilter: ColorFilter?
   ): LayerPaintingContext {
     return SwingLayerPaintingContext(
@@ -57,6 +59,7 @@ class SwingLayerPaintingContext(
         slotHeight,
         slotWidth,
         overrideColorFilter ?: this.overrideColorFilter,
+        alpha,
         DefaultScalingContext(scaling.displayDensity, scaling.contextScale * scale)
     )
   }
@@ -72,7 +75,7 @@ class SwingLayerPaintingContext(
 
   @Suppress("unused")
   private fun drawShape(color: Color, shape: Shape, alpha: Float, mode: DrawMode) {
-    setDrawingDefaults()
+    setDrawingDefaults(alpha)
     if (g is Graphics2D) {
       val oldComposite = g.composite
       val oldPaint = g.paint
@@ -118,10 +121,14 @@ class SwingLayerPaintingContext(
     }
   }
 
-  private fun setDrawingDefaults() {
+  private fun setDrawingDefaults(alpha: Float) {
     if (g !is Graphics2D) return
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE)
+    val realAlpha = alpha * this.alpha
+    if (realAlpha < 1f) {
+      g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, realAlpha)
+    }
   }
 
   private fun drawImage(
@@ -188,13 +195,13 @@ class SwingLayerPaintingContext(
     alpha: Float,
     colorFilter: ColorFilter?,
   ) {
-    // TODO apply alpha & color filters
+    // TODO apply color filters
 
     val imageWidth = image.getWidth(null)
     val imageHeight = image.getHeight(null)
 
     if (imageWidth == 0 || imageHeight == 0) return
-    setDrawingDefaults()
+    setDrawingDefaults(alpha)
     g.drawImage(
       image,
       x,

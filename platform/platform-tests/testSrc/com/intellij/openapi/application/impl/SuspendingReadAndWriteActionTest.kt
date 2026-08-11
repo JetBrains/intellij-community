@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ThreadingSupport
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readAndBackgroundWriteAction
@@ -32,6 +33,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.assertContains
 import kotlin.test.assertFalse
 import kotlin.time.Duration.Companion.seconds
@@ -231,6 +233,31 @@ class SuspendingReadAndWriteActionTest {
         Assertions.assertFalse(EDT.isCurrentThreadEdt())
       }
     }
+  }
+
+  @Test
+  fun `atomic check in background write action executor does not make write action pending`(): Unit = timeoutRunBlocking {
+    val atomicCheckWasRun = AtomicBoolean(false)
+
+    val result = application.threadingSupport!!.runWriteActionWithExecutor(
+      action = {
+        Assertions.assertTrue(application.isWriteAccessAllowed)
+        42
+      },
+      onJobPublished = {},
+      onJobNotNeeded = {},
+      shouldProceedWithWriteAction = {
+        atomicCheckWasRun.set(true)
+        Assertions.assertFalse(ApplicationManagerEx.getApplicationEx().isWriteActionPending)
+        true
+      },
+      executor = { actualAction, _ ->
+        ThreadingSupport.ExecutorResult.Completion(actualAction())
+      },
+    )
+
+    Assertions.assertEquals(42, (result as ThreadingSupport.WriteActionResult.Completion).value)
+    Assertions.assertTrue(atomicCheckWasRun.get())
   }
 
   @Test

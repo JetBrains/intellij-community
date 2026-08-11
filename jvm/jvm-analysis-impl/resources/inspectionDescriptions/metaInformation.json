@@ -111,6 +111,18 @@
     {
       "id": "TestOnlyProblems",
       "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EmptyMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "TestCaseWithConstructor",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IllegalDependencyOnInternalPackage",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

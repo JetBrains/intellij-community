@@ -191,13 +191,18 @@ public final class PySelfType implements PyTypeParameterType, PyClassType {
   }
 
   @Override
-  public int getImplicitOffset() {
-    return myScopeClassType.getImplicitOffset();
+  public @NotNull PyClass getPyClass() {
+    return myScopeClassType.getPyClass();
   }
 
   @Override
-  public @NotNull PyClass getPyClass() {
-    return myScopeClassType.getPyClass();
+  public @NotNull List<PyType> getTypeArguments() {
+    return myScopeClassType.getTypeArguments();
+  }
+
+  @Override
+  public @Nullable PyType getIteratedItemType() {
+    return myScopeClassType.getIteratedItemType();
   }
 
   @Override

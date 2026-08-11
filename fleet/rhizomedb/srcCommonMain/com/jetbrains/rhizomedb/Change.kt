@@ -19,9 +19,14 @@ data class Change(val dbBefore: DB,
 /**
  * @see [DB.change]
  * */
-fun<T> DB.changeAndReturn(defaultPart: Part = 1, f: ChangeScope.() -> T): Pair<T, Change> = run {
+fun<T> DB.changeAndReturn(
+  defaultPart: Part = 1,
+  registerEntityTypeOnEntityCreation: Boolean = true,
+  f: ChangeScope.() -> T,
+): Pair<T, Change> = run {
   var res: T? = null
-  val change = change(defaultPart) {
+  val change = change(defaultPart = defaultPart,
+                      registerEntityTypeOnEntityCreation = registerEntityTypeOnEntityCreation) {
     res = f()
   }
   @Suppress("UNCHECKED_CAST")
@@ -33,8 +38,13 @@ fun<T> DB.changeAndReturn(defaultPart: Part = 1, f: ChangeScope.() -> T): Pair<T
  * and returns a corresponding [Change] object.
  * @param defaultPart is the future value of [ChangeScope.defaultPart]
  * */
-fun DB.change(defaultPart: Part = 1, f: ChangeScope.() -> Unit): Change = let { dbBefore ->
-  val mutableDb = dbBefore.mutable(defaultPart)
+fun DB.change(
+  defaultPart: Part = 1,
+  registerEntityTypeOnEntityCreation: Boolean = true,
+  f: ChangeScope.() -> Unit,
+): Change = let { dbBefore ->
+  val mutableDb = dbBefore.mutable(defaultPart = defaultPart,
+                                   registerEntityTypeOnEntityCreation = registerEntityTypeOnEntityCreation)
   val mutableNovelty = MutableNovelty()
   asOf(mutableDb.collectingNovelty(mutableNovelty::add)) {
     withChangeScope {

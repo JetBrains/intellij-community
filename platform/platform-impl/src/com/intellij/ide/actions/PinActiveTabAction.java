@@ -22,6 +22,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,9 @@ import java.util.Objects;
  *
  * todo drop TW and EW, both are only for menu|Window tab/editor sub-menus.
  */
+@ApiStatus.Internal
 public class PinActiveTabAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
+  @ApiStatus.Internal
   public abstract static class Handler {
     public final boolean isPinned;
     public final boolean isActiveTab;
@@ -185,6 +188,7 @@ public class PinActiveTabAction extends DumbAwareAction implements ActionRemoteB
     }
   }
 
+  @ApiStatus.Internal
   public static final class Toggle extends PinActiveTabAction implements Toggleable {
   }
 }

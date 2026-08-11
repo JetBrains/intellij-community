@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 public final class BaseFilterLexerUtil {
 
@@ -62,5 +63,23 @@ public final class BaseFilterLexerUtil {
       }
       filterLexer.advance();
     }
+  }
+
+  @ApiStatus.Internal
+  public static <T extends Lexer> boolean processContentWithCheckCanceled(@NotNull FileContent content,
+                                                                          @NotNull T lexer,
+                                                                          @NotNull Function<T, Boolean> processor) {
+    lexer.start(content.getContentAsText());
+    int tokenIdx = 0;
+    while (lexer.getTokenType() != null) {
+      if (tokenIdx++ % 128 == 0) {
+        ProgressManager.checkCanceled();
+      }
+      if (!processor.apply(lexer)) {
+        return false;
+      }
+      lexer.advance();
+    }
+    return true;
   }
 }

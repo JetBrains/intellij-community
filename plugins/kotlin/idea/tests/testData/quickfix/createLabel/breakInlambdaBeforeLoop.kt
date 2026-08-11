@@ -1,8 +1,8 @@
 // "Create Label 'foo'@" "false"
 // ERROR: The label '@foo' does not denote a loop
 // ERROR: Unresolved reference: @foo
-// K2_ERROR: Label does not denote a reachable loop.
-// K2_AFTER_ERROR: Label does not denote a reachable loop.
+// K2_AFTER_ERROR: NOT_A_LOOP_LABEL
+// K2_ERROR: NOT_A_LOOP_LABEL
 
 fun bar(f: () -> Unit) { }
 

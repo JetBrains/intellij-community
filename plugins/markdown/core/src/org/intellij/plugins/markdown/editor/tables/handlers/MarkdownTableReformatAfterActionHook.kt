@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
 import com.intellij.psi.PsiDocumentManager
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.reformatColumnOnChange
 import org.intellij.plugins.markdown.editor.tables.TableUtils
+import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
 
 internal class MarkdownTableReformatAfterActionHook(private val baseHandler: EditorActionHandler?): EditorWriteActionHandler() {
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
@@ -40,6 +41,7 @@ internal class MarkdownTableReformatAfterActionHook(private val baseHandler: Edi
     if (cell == null || table == null || columnIndex == null) {
       return
     }
+    val tableStyle = getTableStyle(file)
     val text = document.charsSequence
     if (cell.textRange.let { text.substring(it.startOffset, it.endOffset) }.isBlank()) {
       return
@@ -50,7 +52,8 @@ internal class MarkdownTableReformatAfterActionHook(private val baseHandler: Edi
         editor.caretModel.allCarets,
         columnIndex,
         trimToMaxContent = false,
-        preventExpand = false
+        tableStyle = tableStyle,
+        preventExpand = false,
       )
     }
   }

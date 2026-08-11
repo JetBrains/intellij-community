@@ -15,11 +15,23 @@
  */
 package com.intellij.java.codeInsight.intention;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 public class AddJavadocIntentionTest extends LightIntentionActionTestCase {
   @Override
   protected String getBasePath() {
     return "/codeInsight/addJavadoc";
   }
+  
+  @Override
+    protected void setUp() throws Exception {
+      super.setUp();
+  
+      CodeStyleSettings settings = CodeStyle.getSettings(getProject());
+      settings.getCommonSettings(JavaLanguage.INSTANCE).DOCUMENTATION_LINE_COMMENT_PREFERRED = false;
+      CodeStyle.setTemporarySettings(getProject(), settings);
+    }
 }

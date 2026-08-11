@@ -1,5 +1,5 @@
 // "Convert expression to 'Byte'" "true"
-// K2_ERROR: Assignment type mismatch: actual type is 'Float', but 'Byte' was expected.
+// K2_ERROR: ASSIGNMENT_TYPE_MISMATCH
 fun test(f: Float) {
     var x: Byte
     x = f<caret>

@@ -14,10 +14,12 @@ import javax.swing.plaf.UIResource;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Insets;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public class DarculaCheckBoxBorder implements Border, UIResource {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {}

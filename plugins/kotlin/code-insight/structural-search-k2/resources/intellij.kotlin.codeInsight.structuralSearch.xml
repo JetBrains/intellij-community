@@ -1,11 +1,29 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch">
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.codeInsight.liveTemplates"/>
+    <module name="intellij.kotlin.references"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.duplicates.analysis"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.structuralSearch"/>
-    <module name="kotlin.code-insight.live-templates.shared"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <structuralsearch.profile implementation="org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch.KotlinStructuralSearchProfile"/>
     <structuralsearch.filterProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch.filters.KotlinFilterProvider"/>

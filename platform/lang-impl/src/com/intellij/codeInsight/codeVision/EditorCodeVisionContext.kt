@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.codeInsight.codeVision
 
 import com.intellij.codeInsight.codeVision.ui.CodeVisionView
@@ -63,6 +65,7 @@ interface EditorCodeVisionContextExtension {
   fun getValidResult(): Sequence<RangeMarker>
 }
 
+@ApiStatus.Internal
 class EditorCodeVisionContext(
   private val codeVisionHost: CodeVisionHost,
   val editor: Editor,

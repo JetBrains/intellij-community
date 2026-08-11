@@ -20,5 +20,6 @@
   "imlTargets": [
     "@community//module:intellij.module.iml"
   ],
-  "projectLibraries": {}
+  "projectLibraries": {},
+  "pluginDistributionTargets": {}
 }

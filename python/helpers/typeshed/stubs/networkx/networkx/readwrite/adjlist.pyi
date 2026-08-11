@@ -1,4 +1,5 @@
-from collections.abc import Generator
+from _typeshed import Incomplete, StrPath, SupportsRead, SupportsWrite
+from collections.abc import Generator, Iterable
 
 from networkx.classes.graph import Graph, _Node
 from networkx.utils.backends import _dispatchable
@@ -6,8 +7,23 @@ from networkx.utils.backends import _dispatchable
 __all__ = ["generate_adjlist", "write_adjlist", "parse_adjlist", "read_adjlist"]
 
 def generate_adjlist(G: Graph[_Node], delimiter: str = " ") -> Generator[str]: ...
-def write_adjlist(G: Graph[_Node], path, comments: str = "#", delimiter: str = " ", encoding: str = "utf-8") -> None: ...
+def write_adjlist(
+    G: Graph[_Node], path: StrPath | SupportsWrite[bytes], comments: str = "#", delimiter: str = " ", encoding: str = "utf-8"
+) -> None: ...
 @_dispatchable
-def parse_adjlist(lines, comments: str = "#", delimiter=None, create_using=None, nodetype=None): ...
+def parse_adjlist(
+    lines: Iterable[str],
+    comments: str = "#",
+    delimiter: str | None = None,
+    create_using: Graph[Incomplete] | type[Graph[Incomplete]] | None = None,
+    nodetype: type[Incomplete] | None = None,
+) -> Graph[Incomplete]: ...
 @_dispatchable
-def read_adjlist(path, comments: str = "#", delimiter=None, create_using=None, nodetype=None, encoding: str = "utf-8"): ...
+def read_adjlist(
+    path: StrPath | SupportsRead[bytes],
+    comments: str = "#",
+    delimiter: str | None = None,
+    create_using: Graph[Incomplete] | type[Graph[Incomplete]] | None = None,
+    nodetype: type[Incomplete] | None = None,
+    encoding: str = "utf-8",
+) -> Graph[Incomplete]: ...

@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.restructuredtext.python` start
-
 jvm_provided_library(
     name = "platform_lang-impl_provided",
     lib = "//platform/lang-impl",
@@ -53,7 +52,7 @@ jvm_library(
         "//libraries/guava",
         "//platform/projectModel-api:projectModel",
         "//libraries/jsoup",
-        "//python/python-sdk:sdk",
+        "//python/python-sdk/backend",
         "//platform/util/jdom",
         "//platform/util:util-ui",
         "//platform/platform-impl:ide-impl",
@@ -103,7 +102,7 @@ jvm_library(
         "//platform/core-ui",
         "//platform/core-ui:core-ui_test_lib",
         "//libraries/jsoup:jsoup_test_lib",
-        "//python/python-sdk:sdk_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",

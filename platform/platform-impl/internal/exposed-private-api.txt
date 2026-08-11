@@ -1,2 +1,0 @@
-com/intellij/internal/ml/DecisionFunction
-com/intellij/psi/util/CachedValueProfiler$EventConsumer

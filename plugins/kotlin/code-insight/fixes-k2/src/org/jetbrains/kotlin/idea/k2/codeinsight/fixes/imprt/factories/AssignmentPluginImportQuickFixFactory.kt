@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories
 
-import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.CallableImportCandidatesProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportCandidate
@@ -24,7 +24,8 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
  */
 @Internal
 object AssignmentPluginImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
+    context(session: KaSession)
+    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
         if (diagnostic !is KaFirDiagnostic.UnresolvedReference) return null
 
         val assignmentExpression = diagnostic.psi as? KtBinaryExpression ?: return null
@@ -46,7 +47,8 @@ object AssignmentPluginImportQuickFixFactory : AbstractImportQuickFixFactory() {
     override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importContext: ImportContext): Set<Name> =
         setOf(OperatorConventions.ASSIGN_METHOD)
 
-    override fun KaSession.provideImportCandidates(
+    context(session: KaSession)
+    override fun provideImportCandidates(
         unresolvedName: Name,
         importContext: ImportContext,
         indexProvider: KtSymbolFromIndexProvider,

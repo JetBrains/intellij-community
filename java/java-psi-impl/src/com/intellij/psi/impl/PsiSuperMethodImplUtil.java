@@ -153,7 +153,7 @@ public final class PsiSuperMethodImplUtil {
     Map<MethodSignature, HierarchicalMethodSignatureImpl> map = new LinkedHashMap<>(new EqualityPolicy<MethodSignature>() {
       @Override
       public int getHashCode(MethodSignature signature) {
-        return signature.hashCode();
+        return MethodSignatureUtil.erasedSignatureHashCode(signature);
       }
 
       @Override

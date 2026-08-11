@@ -61,7 +61,7 @@ internal class PatchDiffViewer(
                                                 diffRequest,
                                                 listOf(diffRequest.contentTitle1, diffRequest.contentTitle2))
       .filterNotNull()
-    val titlePanel = if (titles.isNotEmpty()) DiffUtil.createStackedComponents(titles, DiffUtil.TITLE_GAP) else null
+    val titlePanel = if (titles.isNotEmpty()) DiffUtil.createStackedTitleComponents(titles) else null
 
     val contentPanel = OnesideContentPanel.createFromHolder(editorHolder)
     contentPanel.setTitle(titlePanel)

@@ -7,6 +7,7 @@ import com.intellij.internal.ml.InconsistentMetadataException
 import com.intellij.internal.ml.completion.CompletionRankingModelBase
 import com.intellij.internal.ml.completion.RankingModelProvider
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -30,6 +31,7 @@ abstract class CatBoostJarCompletionModelProvider(@Nls(capitalization = Nls.Capi
     }
   }
 
+  @ApiStatus.Internal
   override fun getModel(): DecisionFunction = lazyModel
 
   override fun getDisplayNameInSettings(): String = displayName

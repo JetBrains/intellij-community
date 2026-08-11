@@ -37,14 +37,14 @@ import org.jetbrains.intellij.build.PluginDistribution
 import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.buildSearchableOptions
-import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.generateClassPathByLayoutReport
 import org.jetbrains.intellij.build.classPath.generateCoreClasspathFromPlugins
+import org.jetbrains.intellij.build.dev.collectLayoutsOfPluginsToScramble
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
 import org.jetbrains.intellij.build.impl.moduleRepository.generateRuntimeModuleRepositoryForDistribution
 import org.jetbrains.intellij.build.impl.plugins.BundledPluginsBuildResult
-import org.jetbrains.intellij.build.impl.plugins.buildBundledPlugins
 import org.jetbrains.intellij.build.impl.plugins.buildBundledPluginsForAllPlatforms
 import org.jetbrains.intellij.build.impl.plugins.buildNonBundledPlugins
 import org.jetbrains.intellij.build.impl.plugins.scrambleAlreadyLaidOutPlugins
@@ -179,8 +179,9 @@ internal suspend fun buildDistribution(
         )
       }
 
+      val layoutsOfPluginsToScramble = collectLayoutsOfPluginsToScramble(pluginLayouts)
       val coScrambleEntriesDeferred: Deferred<List<ScrambleTool.CoScrambleEntry>> = async(traceContext + CoroutineName("collect co-scramble entries")) {
-        collectCoScrambleEntries(coScramblePluginLayoutJob.await().descriptors)
+        collectCoScrambleEntries(coScramblePluginLayoutJob.await().descriptors, layoutsOfPluginsToScramble = layoutsOfPluginsToScramble)
       }
 
       val buildPlatformJob: Deferred<List<DistributionFileEntry>> = async(traceContext + CoroutineName("build platform lib")) {
@@ -234,6 +235,7 @@ internal suspend fun buildDistribution(
         descriptors = bundledPluginItems,
         state = state,
         platformEntries = platformItems,
+        layoutsOfPluginsToScramble = layoutsOfPluginsToScramble,
         context = context,
       )
       // Write plugin classpath/info now that descriptors reflect the scrambled layout.
@@ -242,6 +244,7 @@ internal suspend fun buildDistribution(
         isUpdateFromSources = false,
         descriptors = bundledPluginItems,
         additionalPlugins = additionalPluginsDeferred.await(),
+        layoutsOfPluginsToScramble = layoutsOfPluginsToScramble,
         descriptorCacheContainer = platformLayout.descriptorCacheContainer,
         context = context,
       )
@@ -279,7 +282,7 @@ private suspend fun generateCoreClassPath(
   platformLayout: PlatformLayout,
   context: BuildContext,
   platformDistribution: List<DistributionFileEntry>,
-  bundledPluginsDistribution: List<PluginBuildDescriptor>,
+  bundledPluginsDistribution: List<PluginBuildResult>,
 ): List<String> {
   if (context.useModularLoader) {
     return listOf(PLATFORM_LOADER_JAR)
@@ -342,17 +345,17 @@ suspend fun buildPlatform(
   return distributionFileEntries
 }
 
-fun collectCoScrambleEntries(descriptors: List<PluginBuildDescriptor>): List<ScrambleTool.CoScrambleEntry> {
-  if (descriptors.isEmpty()) return emptyList()
-  val result = ArrayList<ScrambleTool.CoScrambleEntry>(descriptors.size)
-  for (descriptor in descriptors) {
-    val layout = descriptor.layout
-    if (!layout.scrambleWithPlatform) continue
+fun collectCoScrambleEntries(plugins: List<PluginBuildResult>, layoutsOfPluginsToScramble: Map<String, PluginLayout>): List<ScrambleTool.CoScrambleEntry> {
+  if (plugins.isEmpty()) return emptyList()
+  val result = ArrayList<ScrambleTool.CoScrambleEntry>(plugins.size)
+  for (plugin in plugins) {
+    val layout = layoutsOfPluginsToScramble[plugin.mainModule]
+    if (layout == null || !layout.scrambleWithPlatform) continue
     for (jarRelative in layout.pathsToScramble) {
       result.add(ScrambleTool.CoScrambleEntry(
-        jarFile = descriptor.dir.resolve(jarRelative),
+        jarFile = plugin.dir.resolve(jarRelative),
         pluginLayout = layout,
-        pluginDir = descriptor.dir,
+        pluginDir = plugin.dir,
       ))
     }
   }
@@ -410,11 +413,11 @@ fun validateCoScramblePluginsAreNotPublished(pluginsToPublish: Collection<Plugin
  * [ScrambleTool.scramble]'s `classpathDirs` so the run can resolve any cross-plugin reference
  * during trim/obfuscate.
  */
-fun collectAllPluginClasspathDirs(descriptors: List<PluginBuildDescriptor>): List<Path> {
-  if (descriptors.isEmpty()) return emptyList()
+fun collectAllPluginClasspathDirs(plugins: List<PluginBuildResult>): List<Path> {
+  if (plugins.isEmpty()) return emptyList()
   val result = LinkedHashSet<Path>()
-  for (descriptor in descriptors) {
-    val libDir = descriptor.dir.resolve("lib")
+  for (buildResult in plugins) {
+    val libDir = buildResult.dir.resolve("lib")
     if (!Files.isDirectory(libDir)) continue
     Files.walk(libDir).use { stream ->
       stream
@@ -426,7 +429,7 @@ fun collectAllPluginClasspathDirs(descriptors: List<PluginBuildDescriptor>): Lis
   return result.toList()
 }
 
-private fun orderBundledPluginDescriptors(descriptors: List<PluginBuildDescriptor>): List<PluginBuildDescriptor> {
+private fun orderBundledPluginDescriptors(descriptors: List<PluginBuildResult>): List<PluginBuildResult> {
   if (descriptors.size < 2) return descriptors
   val distributionOrder = HashMap<Pair<OsFamily?, JvmArchitecture?>, Int>(SUPPORTED_DISTRIBUTIONS.size + 1)
   distributionOrder.put(Pair(null, null), 0)
@@ -434,8 +437,8 @@ private fun orderBundledPluginDescriptors(descriptors: List<PluginBuildDescripto
     distributionOrder.put(Pair(distribution.os, distribution.arch), index + 1)
   }
   return descriptors.sortedWith(
-    compareBy<PluginBuildDescriptor> { distributionOrder.get(Pair(it.os, it.arch)) ?: Int.MAX_VALUE }
-      .thenBy { it.layout.mainModule }
+    compareBy<PluginBuildResult> { distributionOrder.get(Pair(it.os, it.arch)) ?: Int.MAX_VALUE }
+      .thenBy { it.mainModule }
   )
 }
 
@@ -464,8 +467,7 @@ suspend fun testBuildBundledPluginsForAllPlatforms(
 /**
  * Lays out the given bundled plugins (no scrambling) so the caller can invoke [buildPlatform] with
  * `coScrambleEntriesProvider` / `classpathDirsProvider` populated from [collectCoScrambleEntries]
- * and [collectAllPluginClasspathDirs]. Per-plugin scramble for the laid-out plugins runs later via
- * [testScrambleAlreadyLaidOutPlugins].
+ * and [collectAllPluginClasspathDirs].
  */
 @VisibleForTesting
 suspend fun testLayoutBundledPlugins(
@@ -490,62 +492,12 @@ suspend fun testLayoutBundledPlugins(
 }
 
 /**
- * Per-plugin scramble pass for plugins that were laid out earlier via [testLayoutBundledPlugins],
- * followed by writing plugin-classpath info (so [BuildContext.getDistFiles] reflects it). Co-scramble
- * plugins ([PluginLayout.scrambleWithPlatform]) are skipped during scramble — they were already
- * scrambled in the platform ZKM run.
- */
-@VisibleForTesting
-suspend fun testScrambleAlreadyLaidOutPlugins(
-  descriptors: List<PluginBuildDescriptor>,
-  state: DistributionBuilderState,
-  platformEntries: List<DistributionFileEntry>,
-  additionalPlugins: List<Pair<Path, List<Path>>>?,
-  descriptorCacheContainer: DescriptorCacheContainer,
-  context: BuildContext,
-) {
-  scrambleAlreadyLaidOutPlugins(
-    descriptors = descriptors,
-    state = state,
-    platformEntries = platformEntries,
-    context = context,
-  )
-  writeBundledPluginInfoAfterScramble(
-    state = state,
-    isUpdateFromSources = false,
-    descriptors = descriptors,
-    additionalPlugins = additionalPlugins,
-    descriptorCacheContainer = descriptorCacheContainer,
-    context = context,
-  )
-}
-
-
-/**
  * Validates module structure to ensure all module dependencies are included.
  */
 fun validateModuleStructure(platform: PlatformLayout, context: BuildContext) {
   if (context.options.validateModuleStructure) {
     ModuleStructureValidator(context = context, allProductModules = platform.includedModules).validate()
   }
-}
-
-suspend fun buildBundledPluginsAsStandaloneTask(
-  state: DistributionBuilderState,
-  plugins: Collection<PluginLayout>,
-  searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
-  platformContent: List<DistributionFileEntry>,
-  context: BuildContext,
-) {
-  buildBundledPlugins(
-    state = state,
-    plugins = plugins,
-    isUpdateFromSources = false,
-    buildPlatformJob = CompletableDeferred(platformContent),
-    searchableOptionSet = searchableOptionSetDescriptor,
-    descriptorCacheContainer = state.platformLayout.descriptorCacheContainer,
-    context = context,
-  )
 }
 
 suspend fun copyAdditionalPlugins(pluginDir: Path, context: BuildContext): List<Pair<Path, List<Path>>>? {
@@ -683,6 +635,19 @@ internal suspend fun layoutPlatformDistribution(
           val sourceBytes = context.outputProvider.readFileContentFromModuleOutput(module, relativePath) ?: error("app info not found")
           val patchedBytes = injectAppInfo(inFileBytes = sourceBytes, newFieldValue = context.appInfoXml)
           moduleOutputPatcher.patchModuleOutput(moduleName = moduleName, path = relativePath, content = patchedBytes)
+
+          // keep the packaged descriptor in sync with the baked constant, so it isn't shipped with raw placeholders
+          val appInfoModuleName = context.productProperties.applicationInfoModule
+          val appInfoResourcePath = "idea/${context.productProperties.platformPrefix ?: ""}ApplicationInfo.xml"
+          val appInfoModule = context.outputProvider.findRequiredModule(appInfoModuleName)
+          if (context.outputProvider.readFileContentFromModuleOutput(appInfoModule, appInfoResourcePath) != null) {
+            moduleOutputPatcher.patchModuleOutput(
+              moduleName = appInfoModuleName,
+              path = appInfoResourcePath,
+              content = context.appInfoXml,
+              overwrite = PatchOverwriteMode.TRUE,
+            )
+          }
         }
       }
     }

@@ -1,23 +1,27 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.rpc"/>
-    <module name="intellij.python.pyproject"/>
-    <module name="intellij.python.sdk"/>
-    <module name="intellij.python.community"/>
-    <module name="intellij.python.sdkConfigurator.common"/>
-    <module name="intellij.platform.backend"/>
     <module name="intellij.platform.rpc.backend"/>
-    <module name="intellij.python.common"/>
+    <module name="intellij.platform.rpc.topics"/>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.community.common"/>
+    <module name="intellij.python.pyproject"/>
+    <module name="intellij.python.sdk.backend"/>
   </dependencies>
-  <resource-bundle>messages.PySdkConfiguratorBundle</resource-bundle>
+  <!-- endregion -->
   <projectListeners>
     <listener class="com.intellij.python.sdkConfigurator.backend.impl.platformBridge.ModelRebuiltListenerImplToConfigureSdk"
               topic="com.intellij.python.pyproject.model.api.ModelRebuiltListener"/>
   </projectListeners>
-  <extensions defaultExtensionNs="com.intellij.platform">
-    <rpc.backend.remoteApiProvider implementation="com.intellij.python.sdkConfigurator.backend.impl.rpcBridge.ApiProvider"/>
-  </extensions>
-  <actions>
-    <action class="com.intellij.python.sdkConfigurator.backend.impl.platformBridge.ConfigureSDKAction" id="ConfigureSDKAction"/>
-  </actions>
 </idea-plugin>

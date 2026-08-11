@@ -1,8 +1,16 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.platform.testFramework.junit5.jimfs` start
+jps_test(
+    name = "junit5-jimfs-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":junit5-jimfs-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.testFramework.junit5.jimfs.tests`
+
+### auto-generated section `build intellij.platform.testFramework.junit5.jimfs` start
 jvm_library(
     name = "junit5.jimfs",
     srcs = glob(
@@ -17,7 +25,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/junit5",
@@ -38,6 +46,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":junit5.jimfs",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/junit5:junit5_test_lib",
         "//platform/testFramework/junit5:junit5_test_lib",
@@ -57,7 +66,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.testFramework.junit5.jimfs` end
 
 ### auto-generated section `build intellij.platform.testFramework.junit5.jimfs.tests` start
-
 jvm_library(
     name = "junit5-jimfs-tests",
     srcs = glob(
@@ -87,13 +95,16 @@ jvm_library(
     runtime_deps = [":junit5-jimfs-tests"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "@lib//:jimfs",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/util-ex",
@@ -110,11 +121,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.testFramework.junit5.jimfs.tests` end
-
-### auto-generated section `test intellij.platform.testFramework.junit5.jimfs.tests` start
-
-jps_test(
-    name = "junit5-jimfs-tests_test",
-    runtime_deps = [":junit5-jimfs-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.testFramework.junit5.jimfs.tests` end

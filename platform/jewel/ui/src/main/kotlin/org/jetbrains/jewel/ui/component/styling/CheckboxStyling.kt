@@ -15,11 +15,15 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.CheckboxState
 import org.jetbrains.jewel.ui.icon.IconKey
 
+/** Combines the colors, metrics, and icons that define the visual style of a checkbox component. */
 @Immutable
 @GenerateDataFunctions
 public class CheckboxStyle(
+    /** The color tokens for the checkbox. */
     public val colors: CheckboxColors,
+    /** The size and spacing metrics for the checkbox. */
     public val metrics: CheckboxMetrics,
+    /** The icon keys for the checkbox. */
     public val icons: CheckboxIcons,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -44,16 +48,25 @@ public class CheckboxStyle(
 
     override fun toString(): String = "CheckboxStyle(colors=$colors, metrics=$metrics, icons=$icons)"
 
+    /** Companion object for [CheckboxStyle]. */
     public companion object
 }
 
+/** Holds color tokens for the checkbox component in its various states (default, disabled, selected). */
 @Immutable
 @GenerateDataFunctions
 public class CheckboxColors(
+    /** The content (label) color. */
     public val content: Color,
+    /** The content color when the checkbox is disabled. */
     public val contentDisabled: Color,
+    /** The content color when the checkbox is selected. */
     public val contentSelected: Color,
 ) {
+    /**
+     * Returns a [State] holding the content color appropriate for the given [state], reflecting disabled and selected
+     * variants.
+     */
     @Composable
     public fun contentFor(state: CheckboxState): State<Color> =
         rememberUpdatedState(
@@ -92,23 +105,45 @@ public class CheckboxColors(
             ")"
     }
 
+    /** Companion object for [CheckboxColors]. */
     public companion object
 }
 
+/**
+ * Holds size and spacing metrics for the checkbox component, including checkbox size, outline sizes, corner sizes, and
+ * content gap.
+ */
 @Immutable
 @GenerateDataFunctions
 public class CheckboxMetrics(
+    /** The size of the checkbox indicator box. */
     public val checkboxSize: DpSize,
+    /** The corner size of the error/warning outline in the default (unfocused, unselected) state. */
     public val outlineCornerSize: CornerSize,
+    /** The corner size of the outline when the checkbox is focused (and not selected). */
     public val outlineFocusedCornerSize: CornerSize,
+    /** The corner size of the outline when the checkbox is selected or indeterminate (and not focused). */
     public val outlineSelectedCornerSize: CornerSize,
+    /** The corner size of the outline when the checkbox is focused and either selected or indeterminate. */
     public val outlineSelectedFocusedCornerSize: CornerSize,
+    /** The size of the outline box in the default state, when the checkbox is neither focused nor selected. */
     public val outlineSize: DpSize,
+    /** The size of the focus outline when the checkbox is focused. */
     public val outlineFocusedSize: DpSize,
+    /**
+     * The size of the outline box when the checkbox is selected or indeterminate and not focused. This box carries the
+     * validation (Error/Warning) outline.
+     */
     public val outlineSelectedSize: DpSize,
+    /** The size of the outline box when the checkbox is both selected (or indeterminate) and focused. */
     public val outlineSelectedFocusedSize: DpSize,
+    /** The gap between the checkbox icon and its label. */
     public val iconContentGap: Dp,
 ) {
+    /**
+     * Returns a [State] holding the outline corner size appropriate for the given [state], varying by focus and
+     * selection.
+     */
     @Composable
     public fun outlineCornerSizeFor(state: CheckboxState): State<CornerSize> =
         rememberUpdatedState(
@@ -120,6 +155,7 @@ public class CheckboxMetrics(
             }
         )
 
+    /** Returns a [State] holding the outline size appropriate for the given [state], varying by focus and selection. */
     @Composable
     public fun outlineSizeFor(state: CheckboxState): State<DpSize> =
         rememberUpdatedState(
@@ -180,12 +216,17 @@ public class CheckboxMetrics(
             ")"
     }
 
+    /** Companion object for [CheckboxMetrics]. */
     public companion object
 }
 
+/** Holds the icon key for the checkbox component. */
 @Immutable
 @GenerateDataFunctions
-public class CheckboxIcons(public val checkbox: IconKey) {
+public class CheckboxIcons(
+    /** The icon key for the checkbox indicator. */
+    public val checkbox: IconKey
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -199,9 +240,11 @@ public class CheckboxIcons(public val checkbox: IconKey) {
 
     override fun toString(): String = "CheckboxIcons(checkbox=$checkbox)"
 
+    /** Companion object for [CheckboxIcons]. */
     public companion object
 }
 
+/** CompositionLocal used to provide the [CheckboxStyle] to checkbox components. */
 public val LocalCheckboxStyle: ProvidableCompositionLocal<CheckboxStyle> = staticCompositionLocalOf {
     error("No CheckboxStyle provided. Have you forgotten the theme?")
 }

@@ -24,7 +24,6 @@
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.ui"/>
-    <module name="intellij.platform.vcs.impl"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
@@ -38,6 +37,14 @@
     <extensionPoint name="spellchecker.builtInDictionariesProvider" interface="com.intellij.spellchecker.settings.BuiltInDictionariesProvider" dynamic="true"/>
     <extensionPoint name="spellchecker.dictionaryLayersProvider" interface="com.intellij.spellchecker.DictionaryLayersProvider" dynamic="true"/>
     <extensionPoint name="spellchecker.quickFixFactory" interface="com.intellij.spellchecker.quickfixes.SpellCheckerQuickFixFactory" dynamic="true"/>
+    <!--
+      Domain providers classify spellchecker statistics events that need optional platform integrations.
+      The VCS-backed commit-message provider lives in `intellij.spellchecker.vcs`, keeping this base module
+      loadable in SQL/Java Language Server products where `intellij.platform.vcs.impl` is intentionally absent.
+    -->
+    <extensionPoint qualifiedName="com.intellij.spellchecker.domainProvider"
+                    interface="com.intellij.spellchecker.statistics.SpellcheckerDomainProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

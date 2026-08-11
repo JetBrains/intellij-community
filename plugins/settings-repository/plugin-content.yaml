@@ -1,13 +1,17 @@
-- name: lib/eclipse.jgit.ssh.apache.agent.jar
-  library: eclipse.jgit.ssh.apache.agent
-  module: intellij.settingsRepository
-  files:
-  - name: $MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache.agent/6/org.eclipse.jgit.ssh.apache.agent-6.jar
-- name: lib/eclipse.jgit.ssh.apache.jar
-  library: eclipse.jgit.ssh.apache
-  module: intellij.settingsRepository
-  files:
-  - name: $MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache/6/org.eclipse.jgit.ssh.apache-6.jar
+- name: lib/intellij.libraries.jgit.ssh.jar
+  contentModules:
+  - name: intellij.libraries.jgit.ssh
+    libraries:
+      eclipse.jgit.ssh.apache:
+      - name: $MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache/6/org.eclipse.jgit.ssh.apache-6.jar
+      eclipse.jgit.ssh.apache.agent:
+      - name: $MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache.agent/6/org.eclipse.jgit.ssh.apache.agent-6.jar
+- name: lib/intellij.libraries.sshd.osgi.jar
+  contentModules:
+  - name: intellij.libraries.sshd.osgi
+    libraries:
+      apache.sshd.osgi:
+      - name: $MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2/sshd-osgi-2.jar
 - name: lib/jetbrains.intellij.deps.eclipse.jgit.jar
   library: jetbrains.intellij.deps.eclipse.jgit
   files:

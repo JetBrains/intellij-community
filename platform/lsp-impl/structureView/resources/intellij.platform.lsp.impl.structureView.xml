@@ -1,8 +1,11 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.eclipse.lsp4j"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.lang"/>
@@ -12,6 +15,7 @@
     <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <lang.psiStructureViewFactory language="" implementationClass="com.intellij.platform.lsp.impl.structureView.LspStructureViewFactory"/>

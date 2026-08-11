@@ -33,6 +33,7 @@ import org.jetbrains.uast.UTryExpression
 import org.jetbrains.uast.getParentOfType
 import org.jetbrains.uast.resolveToUElement
 import org.jetbrains.uast.resolveToUElementOfType
+import org.jetbrains.uast.skipParenthesizedExprDown
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -310,7 +311,7 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
         var found = false
         catchBody.accept(object : AbstractUastVisitor() {
           override fun visitThrowExpression(node: UThrowExpression): Boolean {
-            val resolvedParam = (node.thrownExpression as? USimpleNameReferenceExpression)?.resolveToUElement()
+            val resolvedParam = (node.thrownExpression.skipParenthesizedExprDown() as? USimpleNameReferenceExpression)?.resolveToUElement()
             if (caughtParam == resolvedParam) {
               if (logStatement == null) { // throw is mostly last statement
                 found = true

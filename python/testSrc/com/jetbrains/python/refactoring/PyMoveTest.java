@@ -40,6 +40,8 @@ import com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersHe
 import com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,6 +51,8 @@ import java.util.List;
 
 import static com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersHelper.isMovableModuleMember;
 
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyMoveTest extends PyTestCase {
   private List<String> myEvents = new ArrayList<>();
 

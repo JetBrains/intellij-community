@@ -5,7 +5,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
 import com.intellij.ide.actions.WhatsNewUtil
 import com.intellij.idea.AppMode
-import com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
+import com.intellij.internal.performanceTests.ProjectInitializationDiagnostic
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager
@@ -96,7 +96,7 @@ internal class WhatsNewShowOnStartCheckService(private val environment: WhatsNew
               return@withContext
             }
 
-            val activityTracker = ProjectInitializationDiagnosticService.registerTracker(project, "OpenWhatsNewOnStart")
+            val activityTracker = ProjectInitializationDiagnostic.registerTracker(project, "OpenWhatsNewOnStart")
             environment.showWhatsNew(project, whatsNewAction)
             activityTracker.activityFinished()
           }

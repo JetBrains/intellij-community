@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.gradle.java` start
-
 jvm_library(
     name = "java",
     srcs = glob(
@@ -86,6 +85,7 @@ jvm_library(
         "//platform/execution",
         "//platform/testRunner",
         "//plugins/properties/properties-psi-impl:backend-psi",
+        "//plugins/gradle/properties",
     ],
 )
 
@@ -166,6 +166,7 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//platform/testRunner:testRunner_test_lib",
         "//plugins/properties/properties-psi-impl:backend-psi_test_lib",
+        "//plugins/gradle/properties:properties_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.java` end
@@ -180,7 +181,6 @@ exports_files(
 ### auto-generated section `iml intellij.gradle.java` end
 
 ### auto-generated section `build intellij.gradle.java.tests` start
-
 jvm_library(
     name = "java-tests",
     srcs = glob(
@@ -225,7 +225,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:jmock",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/util/concurrency",
@@ -257,8 +258,6 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//java/java-psi-api:psi_test_lib",
         "//platform/observable",
-        "//java/java-runtime:rt",
-        "//java/java-runtime:rt_test_lib",
         "//plugins/gradle/properties",
         "//plugins/gradle/properties:properties_test_lib",
         "//plugins/gradle/java",
@@ -318,8 +317,6 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
-        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
         "//platform/backend/workspace",
         "//platform/backend/workspace:workspace_test_lib",
         "//platform/backend/observation",
@@ -360,6 +357,10 @@ jvm_library(
         "//platform/util-ex:util-ex_test_lib",
         "//platform/testRunner",
         "//platform/testRunner:testRunner_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.java.tests` end
@@ -374,7 +375,6 @@ exports_files(
 ### auto-generated section `iml intellij.gradle.java.tests` end
 
 ### auto-generated section `test intellij.gradle.java.tests` start
-
 jps_test(
     name = "java-tests_test",
     runtime_deps = [":java-tests_test_lib"],

@@ -28,7 +28,10 @@ public abstract class RunConfigurationExtension extends RunConfigurationExtensio
   }
 
   /**
-   * @param params java parameters to be updated. E.g. put additional jars on classpath or module path, additional VM options, etc
+   * Note that there is no guarantee that this method is called under a read action,
+   * so implementations are responsible for acquiring read access for project model, PSI, and other read-protected data access.
+   *
+   * @param params java parameters to be updated. E.g. put additional jars on classpath or module path, additional VM options, etc.
    */
   public abstract <T extends RunConfigurationBase<?>> void updateJavaParameters(@NotNull T configuration,
                                                                                 @NotNull JavaParameters params,

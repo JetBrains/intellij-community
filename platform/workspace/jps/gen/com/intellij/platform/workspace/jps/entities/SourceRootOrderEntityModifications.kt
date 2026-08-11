@@ -22,7 +22,7 @@ interface SourceRootOrderEntityBuilder : WorkspaceEntityBuilder<SourceRootOrderE
 }
 
 internal object SourceRootOrderEntityType : EntityType<SourceRootOrderEntity, SourceRootOrderEntityBuilder>() {
-  override val entityClass: Class<SourceRootOrderEntity> get() = SourceRootOrderEntity::class.java
+  override val entityImplClass: Class<*> get() = SourceRootOrderEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SourceRootOrderEntityImpl.Builder::class.java
   operator fun invoke(
     orderOfSourceRoots: List<VirtualFileUrl>,

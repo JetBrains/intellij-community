@@ -509,9 +509,7 @@ class CapstoneEngine(Engine):
         except AttributeError:
             self.__bug = False
         if self.__bug:
-            warnings.warn(
-                "This version of the Capstone bindings is unstable," " please upgrade to a newer one!", RuntimeWarning, stacklevel=4
-            )
+            warnings.warn("This version of the Capstone bindings is unstable, please upgrade to a newer one!", RuntimeWarning, stacklevel=4)
 
     def decode(self, address, code):
         # Get the constants for the requested architecture.

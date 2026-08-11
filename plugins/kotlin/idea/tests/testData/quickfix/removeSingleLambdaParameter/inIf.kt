@@ -1,5 +1,5 @@
 // "Remove parameter 's'" "false"
-// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedSymbolInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.UnusedSymbolInspection
 // ACTION: Add braces to 'if' statement
 // ACTION: Add braces to all 'if' statements
 // ACTION: Convert to anonymous function

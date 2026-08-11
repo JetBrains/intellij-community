@@ -1,5 +1,6 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
+import com.intellij.ide.GeneralSettings
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
@@ -13,6 +14,9 @@ import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.keymap.impl.keymapComparator
 import com.intellij.openapi.keymap.impl.ui.KeymapSchemeManager
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
+import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenProjectScopeHolder
+import kotlinx.coroutines.launch
 
 internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
   abstract val items: List<T>
@@ -98,11 +102,40 @@ internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
     }
 
     private fun getThemes(): List<LafReference> {
-      val groupedThemes = ThemeListProvider.Companion.getInstance().getShownThemes()
+      val groupedThemes = ThemeListProvider.getInstance().getShownThemes()
       return groupedThemes.infos.flatMap { it.items }.map { LafReference(it.name, it.id) }
     }
 
     private val laf: LafManager
       get() = LafManager.getInstance()
+  }
+
+  class StartupSwitchModel : WelcomeScreenRightTabComboBoxModel<Boolean>() {
+    val settings = GeneralSettings.getInstance()
+
+    override val items: List<Boolean> = listOf(false, true)
+
+    override var currentItem: Boolean
+      get() = settings.isReopenLastProject
+      set(value) {
+        settings.isReopenLastProject = value
+      }
+
+    override fun Boolean.toName(): String {
+      return if (this)
+        NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.startup.switch.reopen")
+      else
+        NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.startup.switch.welcome")
+    }
+
+    override fun externalUpdateListener(project: Project): ((Int) -> Unit) -> Unit = { stateListener ->
+      WelcomeScreenProjectScopeHolder.getInstance(project).coroutineScope.launch {
+        settings.propertyChangedFlow.collect {
+          if (it == GeneralSettings.PropertyNames.reopenLastProject) {
+            stateListener(currentItemIndex())
+          }
+        }
+      }
+    }
   }
 }

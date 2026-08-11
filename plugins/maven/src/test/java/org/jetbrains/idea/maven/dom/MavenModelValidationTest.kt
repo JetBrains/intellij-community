@@ -1,6 +1,21 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture
+import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture.Highlight
+import com.intellij.maven.testFramework.fixtures.MavenDomTestFixtureIndices
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assumeMaven3
+import com.intellij.maven.testFramework.fixtures.assumeMaven4
+import com.intellij.maven.testFramework.fixtures.configTest
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProfilesXml
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.createProjectSubDir
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
+import com.intellij.maven.testFramework.fixtures.updateSettingsXml
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.psi.PsiFile
@@ -10,24 +25,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.inspections.MavenModelVersionMissedInspection
-import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture
-import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture.Highlight
-import org.jetbrains.idea.maven.fixtures.MavenDomTestFixtureIndices
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariantsInclude
-import org.jetbrains.idea.maven.fixtures.assumeMaven3
-import org.jetbrains.idea.maven.fixtures.assumeMaven4
 import org.jetbrains.idea.maven.fixtures.checkHighlighting
-import org.jetbrains.idea.maven.fixtures.configTest
-import org.jetbrains.idea.maven.fixtures.createModulePom
-import org.jetbrains.idea.maven.fixtures.createProfilesXml
-import org.jetbrains.idea.maven.fixtures.createProjectPom
-import org.jetbrains.idea.maven.fixtures.createProjectSubDir
-import org.jetbrains.idea.maven.fixtures.createProjectSubFile
-import org.jetbrains.idea.maven.fixtures.importProjectAsync
-import org.jetbrains.idea.maven.fixtures.mavenDomFixture
-import org.jetbrains.idea.maven.fixtures.updateSettingsXml
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass

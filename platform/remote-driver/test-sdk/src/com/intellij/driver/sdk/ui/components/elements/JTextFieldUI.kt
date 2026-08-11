@@ -1,11 +1,8 @@
 package com.intellij.driver.sdk.ui.components.elements
 
-import com.intellij.driver.client.Remote
-import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
-import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.xQuery
 import org.intellij.lang.annotations.Language
 import javax.swing.JTextField
@@ -14,24 +11,6 @@ import javax.swing.JTextField
 fun Finder.textField(@Language("xpath") xpath: String? = null) =
   x(xpath ?: xQuery { byType(JTextField::class.java) }, JTextFieldUI::class.java)
 
-fun Finder.textField(init: QueryBuilder.() -> String) = x(JTextFieldUI::class.java, init)
+fun Finder.textField(readableName: String? = null, init: QueryBuilder.() -> String) = x(JTextFieldUI::class.java, readableName, init)
 
-class JTextFieldUI(data: ComponentData) : UiComponent(data) {
-  private val textFieldComponent by lazy { driver.cast(component, JTextComponent::class) }
-  var text: String
-    get() = textFieldComponent.getText()
-    set(value) = driver.withContext(OnDispatcher.EDT) { textFieldComponent.setText(value) }
-
-  val selectedText: String get() = textFieldComponent.getSelectedText()
-
-  fun appendText(appendString: String) {
-    text += appendString
-  }
-}
-
-@Remote("javax.swing.text.JTextComponent")
-interface JTextComponent {
-  fun getText(): String
-  fun getSelectedText(): String
-  fun setText(document: String)
-}
+class JTextFieldUI(data: ComponentData) : JTextComponentUI(data)

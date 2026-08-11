@@ -172,6 +172,11 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     if (myProjectsTab != null) myLeftSidebar.selectTab(myProjectsTab);
   }
 
+  @ApiStatus.Internal
+  public WelcomeScreenLeftPanel getLeftSidebar() {
+    return myLeftSidebar;
+  }
+
   @ApiStatus.Experimental
   public void selectTab(@NotNull WelcomeScreenTab tab) {
     myLeftSidebar.selectTab(tab);

@@ -11,6 +11,7 @@ import com.intellij.cce.evaluable.AIA_CORRECT_ATTACHMENT
 import com.intellij.cce.evaluable.AIA_DESCRIPTION
 import com.intellij.cce.evaluable.AIA_ERASED_APIS
 import com.intellij.cce.evaluable.AIA_EVAL_ARTIFACT
+import com.intellij.cce.evaluable.AIA_EVAL_ARTIFACT_FILES
 import com.intellij.cce.evaluable.AIA_EVAL_ARTIFACT_NAME
 import com.intellij.cce.evaluable.AIA_EXACT_MATCH
 import com.intellij.cce.evaluable.AIA_EXPECTED_FUNCTION_CALLS
@@ -48,7 +49,6 @@ import com.intellij.cce.metric.PrecisionMetric
 import com.intellij.cce.metric.PreservedApi
 import com.intellij.cce.metric.RelatedFileValidationSuccess
 import com.intellij.cce.metric.SessionsCountMetric
-import com.intellij.cce.metric.WasAskAICalledMetric
 import com.intellij.cce.metric.WithoutHighlightErrorsSessionRatio
 import com.intellij.cce.metric.WithoutSyntaxErrorsSessionRatio
 import com.intellij.cce.metric.context.MeanContextLines
@@ -289,7 +289,18 @@ object Execution {
       ignoreMissingData = true,
     )
   )
+
+  val ARTIFACTS_FILES: EvalDataDescription<List<ArtifactFile>, ArtifactFile> = EvalDataDescription(
+    name = "Artifact files",
+    description = "Files that should be copied to report artifacts. Source is the path to copy, target is the relative report path",
+    placement = DataPlacement.ArtifactFiles(AIA_EVAL_ARTIFACT_FILES),
+  )
 }
+
+data class ArtifactFile(
+  val target: String,
+  val source: String,
+)
 
 object Analysis {
   val HAS_SYNTAX_ERRORS: TrivialEvalData<Boolean> = EvalDataDescription(
@@ -591,11 +602,6 @@ object Metrics {
     threshold = 1.0,
     dependencies = MetricDependencies(Analysis.FAILED_RELATED_FILE_VALIDATIONS)
   ) { RelatedFileValidationSuccess() }
-
-  val WAS_ASK_AI_CALLED: EvalMetric = EvalMetric(
-    threshold = 1.0,
-    dependencies = MetricDependencies(Execution.ACTUAL_SMART_CHAT_ENDPOINTS)
-  ) { WasAskAICalledMetric() }
 
   val FUNCTION_CALLING: EvalMetric = EvalMetric(
     threshold = 1.0,

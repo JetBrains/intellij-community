@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages
 
 import com.intellij.psi.PsiElement
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
@@ -121,7 +122,7 @@ internal class KotlinImplicitThisUsage(
     }
 }
 
-fun PsiElement.qualifyNestedThisExpressions() {
+internal fun PsiElement.qualifyNestedThisExpressions() {
     forEachDescendantOfType<KtThisExpression> { thisExpression ->
         val labelQualifier = thisExpression.labelQualifier
         if (labelQualifier != null) {

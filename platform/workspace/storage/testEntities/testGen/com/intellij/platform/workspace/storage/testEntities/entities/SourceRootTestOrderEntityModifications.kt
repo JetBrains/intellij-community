@@ -18,7 +18,7 @@ interface SourceRootTestOrderEntityBuilder : WorkspaceEntityBuilder<SourceRootTe
 }
 
 internal object SourceRootTestOrderEntityType : EntityType<SourceRootTestOrderEntity, SourceRootTestOrderEntityBuilder>() {
-  override val entityClass: Class<SourceRootTestOrderEntity> get() = SourceRootTestOrderEntity::class.java
+  override val entityImplClass: Class<*> get() = SourceRootTestOrderEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SourceRootTestOrderEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,

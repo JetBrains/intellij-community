@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+
 import com.intellij.lang.LanguageASTFactory
 import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.ParsingTestCase
@@ -17,6 +20,8 @@ import com.jetbrains.python.psi.impl.PythonASTFactory
  * For the details see:
  *  https://ipython.readthedocs.io/en/stable/interactive/python-ipython-diff.html
  */
+@Subsystems.PythonConsole
+@Layers.Functional
 class IPythonConsoleParsingTest : ParsingTestCase(
   "psi",
   "py",

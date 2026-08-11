@@ -30,6 +30,7 @@ public class ThreadState {
   private String myExtraState;
   private boolean isDaemon;
   private boolean isVirtual;
+  private int similarThreadsCount = 1;
   private Long uniqueId;
   private Long threadContainerUniqueId;
   private String type;
@@ -274,6 +275,16 @@ public class ThreadState {
 
   public void setVirtual(boolean virtual) {
     isVirtual = virtual;
+  }
+
+  @ApiStatus.Internal
+  public int getSimilarThreadsCount() {
+    return similarThreadsCount;
+  }
+
+  @ApiStatus.Internal
+  public void setSimilarThreadsCount(int count) {
+    similarThreadsCount = Math.max(count, 1);
   }
 
   public @Nullable Long getUniqueId() { return uniqueId; }

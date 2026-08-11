@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.durability` start
-
 create_kotlinc_options(
     name = "custom_durability",
     opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"],
@@ -85,7 +84,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.durability` end
 
 ### auto-generated section `test intellij.platform.durability` start
-
 jps_test(
     name = "durability_test",
     runtime_deps = [":durability_test_lib"],

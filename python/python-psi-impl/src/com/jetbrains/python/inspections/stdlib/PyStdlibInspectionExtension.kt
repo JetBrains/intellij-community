@@ -2,7 +2,7 @@
 package com.jetbrains.python.inspections.stdlib
 
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.parseStdDataclassParameters
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider
 import com.jetbrains.python.inspections.PyInspectionExtension
@@ -18,7 +18,7 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
 
   override fun ignoreInitNewSignatures(original: PyFunction, complementary: PyFunction): Boolean {
     val qName = complementary.containingClass?.qualifiedName
-    return PyNames.TYPE_ENUM == qName || PyNames.TYPE == qName
+    return PyNames.TYPE_ENUM == qName || PyNames.FQN.TYPE == qName
   }
 
   override fun ignoreUnresolvedMember(type: PyType, name: String, context: TypeEvalContext): Boolean {

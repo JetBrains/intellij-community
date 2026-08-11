@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.IdeaTestUtil
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
@@ -15,9 +16,12 @@ import java.nio.file.Path
 abstract class AbstractConfigureKotlinTestBase : HeavyPlatformTestCase() {
     protected lateinit var projectRoot: File
 
-    protected val jvmConfigurator: KotlinJavaModuleConfigurator by lazy { KotlinJavaModuleConfigurator() }
+    protected val coroutineScope
+        get() = KotlinPluginDisposable.getInstance(project).coroutineScope
 
-    protected val jsConfigurator: KotlinJsModuleConfigurator by lazy { KotlinJsModuleConfigurator() }
+    protected val jvmConfigurator: KotlinJavaModuleConfigurator by lazy { KotlinJavaModuleConfigurator(coroutineScope) }
+
+    protected val jsConfigurator: KotlinJsModuleConfigurator by lazy { KotlinJsModuleConfigurator(coroutineScope) }
 
     protected val modules: Array<Module>
         get() = ModuleManager.getInstance(myProject).modules

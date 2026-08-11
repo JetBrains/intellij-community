@@ -7,4 +7,4 @@ fun test() {
     val (<caret>x, y) = pair
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations.ConvertNameBasedDestructuringShortFormToPositionalFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.declarations.ConvertNameBasedDestructuringShortFormToPositionalFix

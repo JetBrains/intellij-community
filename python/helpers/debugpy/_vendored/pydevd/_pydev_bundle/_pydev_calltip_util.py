@@ -2,6 +2,7 @@
 License: Apache 2.0
 Author: Yuli Fitterman
 """
+
 import types
 
 from _pydevd_bundle.pydevd_constants import IS_JYTHON

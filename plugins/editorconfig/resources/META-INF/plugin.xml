@@ -29,4 +29,7 @@
     <module name="intellij.editorconfig.backend"/>
     <module name="intellij.editorconfig.backend.spellchecking"/>
   </content>
+  <content>
+    <module name="intellij.libraries.ec4j.core" loading="embedded"/>
+  </content>
 </idea-plugin>

@@ -132,7 +132,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
       return;
     }
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-    Document originalDocument = originalEditor.getElfDocument();
+    Document originalDocument = originalEditor.getDocument();
     TypedDelegateImpl.fireNewTypingStarted(originalEditor, dataContext, charTyped);
     originalEditor.getCaretModel().runForEachCaret(caret -> {
       doExecutePerCaret(
@@ -194,7 +194,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
       if (TypedQuoteImpl.beforeQuoteTyped(project, file, editor, charTyped)) {
         return;
       }
-      long modStampBefore = editor.getElfDocument().getModificationStamp();
+      long modStampBefore = editor.getDocument().getModificationStamp();
       TypedCharImpl.typeChar(originalEditor, project, charTyped);
       AutoHardWrapHandler.getInstance().wrapLineIfNecessary(originalEditor, dataContext, modStampBefore);
       if (editor.isDisposed()) { // can be that injected editor disappear
@@ -225,7 +225,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
           // IDEA-52375/WEB-9105/KTNB-470 fix: last quote in editable fragment should be handled by outer language quote handler,
           // except injection-first editors
           TextRange hostRange = documentWindow.getHostRange(offset);
-          CharSequence sequence = editor.getElfDocument().getCharsSequence();
+          CharSequence sequence = editor.getDocument().getCharsSequence();
           if (sequence.length() > offset && charTyped != Character.codePointAt(sequence, offset) ||
               hostRange != null && (
                 hostRange.contains(offset) ||

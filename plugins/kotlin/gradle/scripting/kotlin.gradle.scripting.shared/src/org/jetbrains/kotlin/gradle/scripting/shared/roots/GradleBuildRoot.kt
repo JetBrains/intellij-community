@@ -2,99 +2,23 @@
 
 package org.jetbrains.kotlin.gradle.scripting.shared.roots
 
-//import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.gradle.scripting.shared.LastModifiedFiles
-import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
-import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
-import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicReference
-import kotlin.io.path.exists
-
 /**
  * [GradleBuildRoot] is a linked gradle build (don't confuse with gradle project and included build).
  * Each [GradleBuildRoot] may have it's own Gradle version, Java home and other settings.
  *
  * Typically, IntelliJ project have no more than one [GradleBuildRoot].
  */
-sealed class GradleBuildRoot(
-    private val lastModifiedFiles: LastModifiedFiles,
-    open val externalProjectPath: String,
+class GradleBuildRoot(
+    val externalProjectPath: String,
+    val projectRoots: Collection<String>,
+    val supportsScriptModelImport: Boolean,
+    private val importingStatus: ImportingStatus,
 ) {
     enum class ImportingStatus {
-        IMPORTING, UPDATING_CACHES, UPDATED
-    }
-
-    val importing: AtomicReference<ImportingStatus?> = AtomicReference(ImportingStatus.UPDATED)
-
-    abstract val projectRoots: Collection<String>
-
-    val dir: VirtualFile?
-        get() = LocalFileSystem.getInstance().findFileByPath(externalProjectPath)
-
-    fun saveLastModifiedFiles() {
-        scriptingDebugLog { "LasModifiedFiles saved: $lastModifiedFiles" }
-        LastModifiedFiles.write(dir ?: return, lastModifiedFiles)
-    }
-
-    fun areRelatedFilesChangedBefore(file: VirtualFile, lastModified: Long): Boolean =
-        lastModifiedFiles.lastModifiedTimeStampExcept(file.path) < lastModified
-
-    fun fileChanged(filePath: String, ts: Long) {
-        lastModifiedFiles.fileChanged(ts, filePath)
+        IMPORTING, UPDATED
     }
 
     fun isImportingInProgress(): Boolean {
-        return importing.get() != ImportingStatus.UPDATED
+        return importingStatus != ImportingStatus.UPDATED
     }
-}
-
-sealed class WithoutScriptModels(
-    settings: GradleProjectSettings,
-    lastModifiedFiles: LastModifiedFiles,
-    externalBuildProjectPath: String,
-) : GradleBuildRoot(lastModifiedFiles, externalBuildProjectPath) {
-    final override val projectRoots = settings.modules.takeIf { it.isNotEmpty() } ?: listOf(externalBuildProjectPath)
-}
-
-/**
- * Gradle build with old Gradle version (<6.0)
- */
-class Legacy(
-    settings: GradleProjectSettings,
-    lastModifiedFiles: LastModifiedFiles = settings.loadLastModifiedFiles() ?: LastModifiedFiles(),
-) : WithoutScriptModels(settings, lastModifiedFiles, settings.externalProjectPath)
-
-/**
- * Linked but not yet imported Gradle build.
- */
-class New(
-    settings: GradleProjectSettings,
-    lastModifiedFiles: LastModifiedFiles = settings.loadLastModifiedFiles() ?: LastModifiedFiles(),
-) : WithoutScriptModels(settings, lastModifiedFiles, settings.externalProjectPath)
-
-/**
- * Imported Gradle build.
- * Each imported build have info about all of it's Kotlin Build Scripts.
- */
-class Imported(
-    override val externalProjectPath: String,
-    val data: GradleBuildRootData,
-    lastModifiedFiles: LastModifiedFiles
-) : GradleBuildRoot(lastModifiedFiles, externalProjectPath) {
-    override val projectRoots: Collection<String>
-        get() = data.projectRoots
-
-    val javaHome: Path? = data.javaHome?.takeIf { it.isNotBlank() }?.let { Path.of(it) }?.takeIf { it.exists() }
-}
-
-fun GradleProjectSettings.loadLastModifiedFiles(): LastModifiedFiles? {
-    val externalProjectPath = externalProjectPath ?: return null
-    return loadLastModifiedFiles(externalProjectPath)
-}
-
-fun loadLastModifiedFiles(rootDirPath: String): LastModifiedFiles? {
-    val vFile = LocalFileSystem.getInstance().findFileByPath(rootDirPath) ?: return null
-    return LastModifiedFiles.read(vFile)
 }

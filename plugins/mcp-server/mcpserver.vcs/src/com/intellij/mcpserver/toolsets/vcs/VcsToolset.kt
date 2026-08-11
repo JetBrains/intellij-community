@@ -2,6 +2,7 @@
 
 package com.intellij.mcpserver.toolsets.vcs
 
+import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
@@ -32,6 +33,9 @@ import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 
 class VcsToolset : McpToolset {
+  override fun displayName(): String = McpServerBundle.message("toolset.display.name.vcs")
+
+  override fun displayDescription(toolName: String): String? = McpServerBundle.message("tool.description.$toolName")
 
   @Serializable
   class VcsRoots(val roots: Array<VcsRoot>)

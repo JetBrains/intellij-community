@@ -13,7 +13,6 @@ import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Query
-import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
@@ -79,16 +78,29 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   val indexData: WorkspaceFileIndexData
 
   /**
-   * Processes [indexable][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isContent] files from the file sets located under
+   * Processes [content][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isContent] files from the file sets located under
    * [fileOrDir] directory using [processor].
    * @param customFilter determines whether an individual file or directory should be processed;
    * @param fileSetFilter determines whether files belonging to a specific file set should be processed;
    * @return `true` if all files were processed, or `false` if processing was stopped because [processor] returned
-   * [STOP][com.intellij.util.containers.TreeNodeProcessingResult.STOP]. 
+   * [STOP][com.intellij.util.containers.TreeNodeProcessingResult.STOP].
+   * @see [processIndexableContentUnderDirectory]
    */
   fun processContentUnderDirectory(fileOrDir: VirtualFile, processor: ContentIteratorEx, customFilter: VirtualFileFilter?,
                                    fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean): Boolean
 
+  /**
+   * Processes [indexable][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isIndexable]
+   * [content][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isContent] files from the file sets located under
+   * [fileOrDir] directory using [processor].
+   * @param customFilter determines whether an individual file or directory should be processed;
+   * @param fileSetFilter determines whether files belonging to a specific file set should be processed;
+   * @return `true` if all files were processed, or `false` if processing was stopped because [processor] returned
+   * [STOP][com.intellij.util.containers.TreeNodeProcessingResult.STOP].
+   * @see [processContentUnderDirectory]
+   */
+  fun processIndexableContentUnderDirectory(fileOrDir: VirtualFile, processor: ContentIteratorEx, customFilter: VirtualFileFilter?,
+                                   fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean): Boolean
   /**
    * Returns package name for [fileOrDir] if it's a single file source root, or a directory located under source root or 
    * classes root of a Java library. Returns `null` otherwise.
@@ -137,9 +149,12 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   @ApiStatus.Internal
   fun reset()
 
+  /**
+   * Use [isIndexable]
+   */
   @ApiStatus.Internal
   @RequiresReadLock
-  fun isUrlIndexable(url: String, allowNonRecursive: Boolean): ThreeState
+  fun isUrlIndexableRecursiveFileSetRoot(url: String): Boolean
 }
 
 internal class WorkspaceFileIndexCleaner: PersistentFsConnectionListener {

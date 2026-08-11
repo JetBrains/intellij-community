@@ -25,9 +25,11 @@ class AtomicOperationTrace(
   private val atomicState = AtomicReference(State(COMPLETED, mapOf(), mapOf()))
 
   override val state: ObservableOperationState
+    @ApiStatus.Internal
     get() = atomicState.get()
 
   override val status: ObservableOperationStatus
+    @ApiStatus.Internal
     get() = state.status
 
   override fun traceSchedule(id: OperationExecutionId) {

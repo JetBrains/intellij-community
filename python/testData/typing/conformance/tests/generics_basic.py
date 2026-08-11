@@ -207,3 +207,45 @@ class GenericMeta(type, Generic[T]): ...
 
 class GenericMetaInstance(metaclass=GenericMeta[T]):  # E
     ...
+
+
+# When a typevar appears in multiple parameters, we can (but are not required
+# to) infer a "combined" specialization that satisfies all of the corresponding
+# arguments. This is especially interesting for list literals, since `list` is
+# invariant in its typevar. We can use the surrounding context of the generic
+# function call to infer a wider type for the list literals that allows the call
+# to succeed.
+
+def takes_two_lists(x: list[T], y: list[T]) -> T:
+    return x[0]
+
+
+takes_two_lists([1], "not a list")  # E: no assignment of T makes the second argument valid
+takes_two_lists([""], [""])  # T = str or T = Literal[""]
+takes_two_lists([1], [""])  # E?: T = int | str is a potential solution
+
+def test_specific_lists() -> None:
+    x: list[int] = [1]
+    y: list[int] = [1]
+    z: list[str] = [""]
+    assert_type(takes_two_lists(x, y), int)
+    takes_two_lists(x, z)  # E: because lists are invariant, no assignment of T makes both arguments valid
+
+
+T_int = TypeVar("T_int", bound=int)
+
+def takes_two_int_lists(x: list[T_int], y: list[T_int]) -> T_int:
+    return x[0]
+
+takes_two_int_lists([1], "not a list")  # E: no assignment of T_int makes the second argument valid
+takes_two_int_lists([1], [""])  # E: no assignment of T_int makes the second argument valid
+takes_two_int_lists([1], [1])  # T = int or T = Literal[1]
+takes_two_int_lists([True], [True])  # T = bool or T = Literal[True]
+takes_two_int_lists([1], [True])  # E?: T = int | bool = int is a potential solution
+
+def test_specific_int_lists() -> None:
+    x: list[int] = [1]
+    y: list[int] = [1]
+    z: list[bool] = [True]
+    assert_type(takes_two_int_lists(x, y), int)
+    takes_two_int_lists(x, z)  # E: because lists are invariant, no assignment of T makes both arguments valid

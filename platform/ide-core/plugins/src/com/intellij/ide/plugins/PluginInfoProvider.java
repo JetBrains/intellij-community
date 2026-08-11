@@ -4,12 +4,14 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 import java.util.concurrent.Future;
 
+@ApiStatus.Internal
 public interface PluginInfoProvider {
   /**
    * Reads cached plugin ids from a file. Returns {@code null} if cache file does not exist.

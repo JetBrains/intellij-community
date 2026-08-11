@@ -18,7 +18,7 @@ abstract class FileWithoutExtensionReference(
   private val fileReference: FileReference,
   soft: Boolean
 ): PsiReferenceBase<PsiElement>(element, fileReference.rangeInElement, soft) {
-  protected val path
+  protected val path: String
     get() = fileReference.fileReferenceSet.pathString + '.' + MarkdownFileType.INSTANCE.defaultExtension
 
   protected val containingFile: VirtualFile?

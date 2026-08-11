@@ -18,6 +18,9 @@ import java.nio.channels.NonWritableChannelException
 import java.nio.channels.ReadableByteChannel
 import java.nio.channels.WritableByteChannel
 import java.nio.file.Path
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 class OpenChannelsCacheTest {
   @Test
@@ -205,6 +208,104 @@ class OpenChannelsCacheTest {
   }
 
   @Test
+  fun `opening channel does not block unrelated cache access`(@TempDir tempDir: Path) {
+    val blockedFile = tempDir.resolve("blocked.bin")
+    val probeFile = tempDir.resolve("probe.bin")
+    val openEntered = CountDownLatch(1)
+    val openMayFinish = CountDownLatch(1)
+    val accessor = OpenChannelsCache(
+      "test-cache",
+      2,
+      BlockingOpenChannelOpener(blockedFile, openEntered, openMayFinish),
+    ).asWritable()
+
+    val openFinished = CountDownLatch(1)
+    val openFailure = AtomicReference<Throwable>()
+    val openThread = runInThread("test-channel-opening", openFinished, openFailure) {
+      accessor.executeOp(blockedFile) { }
+    }
+
+    val probeFinished = CountDownLatch(1)
+    val probeFailure = AtomicReference<Throwable>()
+    var probeThread: Thread? = null
+    val probeCompletedWhileOpenIsBlocked: Boolean
+    try {
+      assertTrue(openEntered.await(5, TimeUnit.SECONDS), "Channel opener must enter the blocked open call")
+
+      probeThread = runInThread("test-cache-probe-while-opening", probeFinished, probeFailure) {
+        accessor.executeOp(probeFile) { }
+      }
+      probeCompletedWhileOpenIsBlocked = probeFinished.await(2, TimeUnit.SECONDS)
+    }
+    finally {
+      openMayFinish.countDown()
+      openThread.join(5_000)
+      probeThread?.join(5_000)
+      accessor.closeChannel(blockedFile)
+      accessor.closeChannel(probeFile)
+    }
+
+    throwFailure("Blocked channel open failed", openFailure)
+    throwFailure("Cache probe failed", probeFailure)
+    assertTrue(openFinished.count == 0L, "Blocked channel open must finish after the test releases it")
+    assertTrue(
+      probeCompletedWhileOpenIsBlocked,
+      "Opening a channel must not keep OpenChannelsCache locked for unrelated paths"
+    )
+  }
+
+  @Test
+  fun `closing evicted channel does not block unrelated cache access`(@TempDir tempDir: Path) {
+    val evictedFile = tempDir.resolve("evicted.bin")
+    val nextFile = tempDir.resolve("next.bin")
+    val probeFile = tempDir.resolve("probe.bin")
+    val closeEntered = CountDownLatch(1)
+    val closeMayFinish = CountDownLatch(1)
+    val accessor = OpenChannelsCache(
+      "test-cache",
+      1,
+      BlockingCloseChannelOpener(evictedFile, closeEntered, closeMayFinish),
+    ).asWritable()
+
+    accessor.executeOp(evictedFile) { }
+
+    val evictionFinished = CountDownLatch(1)
+    val evictionFailure = AtomicReference<Throwable>()
+    val evictionThread = runInThread("test-channel-eviction", evictionFinished, evictionFailure) {
+      accessor.executeOp(nextFile) { }
+    }
+
+    val probeFinished = CountDownLatch(1)
+    val probeFailure = AtomicReference<Throwable>()
+    var probeThread: Thread? = null
+    val probeCompletedWhileCloseIsBlocked: Boolean
+    try {
+      assertTrue(closeEntered.await(5, TimeUnit.SECONDS), "Eviction must start closing the cached channel")
+
+      probeThread = runInThread("test-cache-probe-while-closing", probeFinished, probeFailure) {
+        accessor.executeOp(probeFile) { }
+      }
+      probeCompletedWhileCloseIsBlocked = probeFinished.await(2, TimeUnit.SECONDS)
+    }
+    finally {
+      closeMayFinish.countDown()
+      evictionThread.join(5_000)
+      probeThread?.join(5_000)
+      accessor.closeChannel(evictedFile)
+      accessor.closeChannel(nextFile)
+      accessor.closeChannel(probeFile)
+    }
+
+    throwFailure("Evicting cached channel failed", evictionFailure)
+    throwFailure("Cache probe failed", probeFailure)
+    assertTrue(evictionFinished.count == 0L, "Eviction must finish after the test releases close")
+    assertTrue(
+      probeCompletedWhileCloseIsBlocked,
+      "Closing an evicted channel must not keep OpenChannelsCache locked for unrelated paths"
+    )
+  }
+
+  @Test
   fun `StorageLockContext assertNoOpenChannels reports descriptors from both mode views`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("storage.bin")
     val cache = OpenChannelsCache("test-cache", 2, RecordingChannelOpener())
@@ -292,11 +393,55 @@ class OpenChannelsCacheTest {
     }
   }
 
+  /** Blocks in [open] */
+  private class BlockingOpenChannelOpener(
+    private val path: Path,
+    private val openEntered: CountDownLatch,
+    private val openMayFinish: CountDownLatch,
+  ) : ChannelsAccessor.FileChannelOpener {
+    override fun open(path: Path, readOnly: Boolean): FileChannel {
+      if (path == this@BlockingOpenChannelOpener.path) {
+        openEntered.countDown()
+        awaitLatch(openMayFinish)
+      }
+      return TrackingFileChannel(readOnly)
+    }
+  }
+
+  /** Returned [FileChannel] blocks on [FileChannel.close] */
+  private class BlockingCloseChannelOpener(
+    private val path: Path,
+    private val closeEntered: CountDownLatch,
+    private val closeMayFinish: CountDownLatch,
+  ) : ChannelsAccessor.FileChannelOpener {
+    override fun open(path: Path, readOnly: Boolean): FileChannel {
+      return if (path == this@BlockingCloseChannelOpener.path) {
+        BlockingCloseFileChannel(readOnly, closeEntered, closeMayFinish)
+      }
+      else {
+        TrackingFileChannel(readOnly)
+      }
+    }
+  }
+
+  /** Blocks during [close] */
+  private class BlockingCloseFileChannel(
+    readOnly: Boolean,
+    private val closeEntered: CountDownLatch,
+    private val closeMayFinish: CountDownLatch,
+  ) : TrackingFileChannel(readOnly) {
+    override fun implCloseChannel() {
+      closeEntered.countDown()
+      awaitLatch(closeMayFinish)
+      super.implCloseChannel()
+    }
+  }
+
   private fun writeSingleByte(channel: FileChannel) {
     channel.write(ByteBuffer.wrap(byteArrayOf(42)))
   }
 
-  private class TrackingFileChannel(val readOnly: Boolean) : FileChannel(), Resilient {
+  private open class TrackingFileChannel(val readOnly: Boolean) : FileChannel(), Resilient {
     var closeCount: Int = 0
       private set
 
@@ -418,5 +563,51 @@ class OpenChannelsCacheTest {
         throw NonWritableChannelException()
       }
     }
+  }
+
+  companion object {
+    private fun runInThread(
+      name: String,
+      finished: CountDownLatch,
+      failure: AtomicReference<Throwable>,
+      action: () -> Unit,
+    ): Thread {
+      return Thread {
+        try {
+          action()
+        }
+        catch (t: Throwable) {
+          failure.set(t)
+        }
+        finally {
+          finished.countDown()
+        }
+      }.also {
+        it.name = name
+        it.isDaemon = true
+        it.start()
+      }
+    }
+
+    private fun throwFailure(message: String, failure: AtomicReference<Throwable>) {
+      failure.get()?.let { throw AssertionError(message, it) }
+    }
+  }
+}
+
+private fun awaitLatch(latch: CountDownLatch) {
+  var interrupted = false
+  while (true) {
+    try {
+      if (latch.await(30, TimeUnit.SECONDS)) {
+        break
+      }
+    }
+    catch (_: InterruptedException) {
+      interrupted = true
+    }
+  }
+  if (interrupted) {
+    Thread.currentThread().interrupt()
   }
 }

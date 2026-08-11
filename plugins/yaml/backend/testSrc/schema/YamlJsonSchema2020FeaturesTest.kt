@@ -41,8 +41,9 @@ internal class YamlJsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
 
   fun `test if-then-else validation with inlined branch schemas`() {
     doTestSchemaValidation(
-      """
+      $$"""
         {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
           "properties": {
             "street_address": {

@@ -21,19 +21,30 @@ internal fun ColorFilter.toAwtFilter(): RGBImageFilter {
   }
 }
 
-internal fun DefaultSvgPatcher.toIJPatcher(): SVGLoader.SvgElementColorPatcherProvider {
-  return ProxySvgPatcher(this)
+internal fun DefaultSvgPatcher.toIJPatcher(rootPatcher: SVGLoader.SvgElementColorPatcherProvider?): SVGLoader.SvgElementColorPatcherProvider {
+  return ProxySvgPatcher(this, rootPatcher)
 }
 
 private class ProxySvgPatcher(
-  private val patcher: DefaultSvgPatcher
+  private val patcher: DefaultSvgPatcher,
+  private val rootPatcher: SVGLoader.SvgElementColorPatcherProvider? = null
 ): SVGLoader.SvgElementColorPatcherProvider, SvgAttributePatcher {
-  override fun attributeForPath(path: String): SvgAttributePatcher = this
+  override fun attributeForPath(path: String): SvgAttributePatcher = ProxySvgAttributePatcher(patcher, rootPatcher?.attributeForPath(path))
   override fun digest(): LongArray {
-    return longArrayOf(patcher.hashCode().toLong())
+    if (rootPatcher != null) {
+      return rootPatcher.digest() + longArrayOf(patcher.hashCode().toLong())
+    } else {
+      return longArrayOf(patcher.hashCode().toLong())
+    }
   }
+}
 
+private class ProxySvgAttributePatcher(
+  private val patcher: DefaultSvgPatcher,
+  private val rootPatcher: SvgAttributePatcher? = null
+): SvgAttributePatcher {
   override fun patchColors(attributes: MutableMap<String, String>) {
+    rootPatcher?.patchColors(attributes)
     // TODO Support filtered operations - not possible with current IJ svg loader
     for (operation in patcher.operations) {
       when (operation.operation) {
@@ -44,8 +55,7 @@ private class ProxySvgPatcher(
         }
         SvgPatchOperation.Operation.Replace -> {
           if (operation.conditional) {
-            val matches = attributes[operation.attributeName] == operation.expectedValue
-            if (matches == !operation.negatedCondition) {
+            if (operation.matches(attributes[operation.attributeName]) != operation.negatedCondition) {
               attributes.replace(operation.attributeName, operation.value!!)
             }
           } else {
@@ -54,8 +64,7 @@ private class ProxySvgPatcher(
         }
         SvgPatchOperation.Operation.Remove -> {
           if (operation.conditional) {
-            val matches = attributes[operation.attributeName] == operation.expectedValue
-            if (matches == !operation.negatedCondition) {
+            if (operation.matches(attributes[operation.attributeName]) != operation.negatedCondition) {
               attributes.remove(operation.attributeName)
             }
           } else {

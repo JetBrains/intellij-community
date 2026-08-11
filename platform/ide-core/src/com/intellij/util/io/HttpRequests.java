@@ -43,6 +43,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import static java.util.Objects.requireNonNullElse;
@@ -648,8 +649,10 @@ public final class HttpRequests {
 
       var method = httpURLConnection.getRequestMethod();
 
-      LOG.assertTrue(method.equals("GET") || method.equals("HEAD") || method.equals("DELETE"),
-                     "'" + method + "' not supported; please use GET, HEAD, DELETE, PUT or POST");
+      LOG.assertTrue(
+        method.equals("GET") || method.equals("HEAD") || method.equals("DELETE"),
+        "'" + method + "' not supported; please use GET, HEAD, DELETE, PUT or POST"
+      );
 
       if (LOG.isDebugEnabled()) {
         LOG.debug("connecting to " + url);
@@ -679,6 +682,7 @@ public final class HttpRequests {
           }
 
           httpURLConnection.disconnect();
+
           var loc = connection.getHeaderField("Location");
           if (LOG.isDebugEnabled()) LOG.debug("redirect from " + url + ": " + loc);
           if (loc != null) {
@@ -690,6 +694,15 @@ public final class HttpRequests {
               catch (URISyntaxException e) {
                 throw new IOException(e);
               }
+            }
+            var scheme1 = connection.getURL().getProtocol().toLowerCase(Locale.ROOT);
+            var scheme2 = loc.substring(0, loc.indexOf(URLUtil.SCHEME_SEPARATOR)).toLowerCase(Locale.ROOT);
+            if (
+              "https".equals(scheme1) && !"https".equals(scheme2) ||
+              "http".equals(scheme1) && !("https".equals(scheme2) || "http".equals(scheme2))
+            ) {
+              var message = IdeCoreBundle.message("error.connection.failed.downgrade", loc);
+              throw new HttpStatusException(message, responseCode, request.myUrl);
             }
             request.myUrl = loc;
             continue;

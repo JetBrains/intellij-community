@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
 
 ### auto-generated section `build intellij.platform.benchmarks` start
-
 kt_javac_options(
     name = "custom-javac-options",
     add_exports = [],
@@ -88,7 +87,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.benchmarks` end
 
 ### auto-generated section `test intellij.platform.benchmarks` start
-
 jps_test(
     name = "benchmarks_test",
     runtime_deps = [":benchmarks_test_lib"],

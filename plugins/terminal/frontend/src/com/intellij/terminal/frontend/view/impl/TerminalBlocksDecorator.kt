@@ -19,7 +19,6 @@ import org.jetbrains.plugins.terminal.block.ui.TerminalPromptLeftAreaRenderer
 import org.jetbrains.plugins.terminal.block.ui.TerminalPromptSeparatorRenderer
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
 import org.jetbrains.plugins.terminal.block.ui.VerticalSpaceInlayRenderer
-import org.jetbrains.plugins.terminal.block.ui.doTerminalOutputScrollChangingAction
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockAddedEvent
@@ -79,9 +78,7 @@ class TerminalBlocksDecorator(
       return
     }
 
-    editor.doTerminalOutputScrollChangingAction {
-      doHandleBlocksModelEvent(event)
-    }
+    doHandleBlocksModelEvent(event)
 
     scrollingModel.scrollToCursor(force = false)
   }

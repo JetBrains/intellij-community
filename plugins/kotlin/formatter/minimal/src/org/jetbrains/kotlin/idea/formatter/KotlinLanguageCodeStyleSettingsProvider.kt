@@ -17,6 +17,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings
+import com.intellij.psi.codeStyle.DocCommentSettings
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -150,6 +151,12 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                     KotlinBundle.message("formatter.title.when.parentheses"),
                     codeStyleSettingsCustomizableOptions.SPACES_BEFORE_PARENTHESES
                 )
+
+                showCustomOption(
+                    KotlinCodeStyleSettings::SPACE_AFTER_CONTEXT_PARAMETER_LIST_IN_FUNCTION_TYPE,
+                    KotlinBundle.message("formatter.title.after.context.parameter.list.in.function.type"),
+                    codeStyleSettingsCustomizableOptions.SPACES_OTHER
+                )
             }
             SettingsType.WRAPPING_AND_BRACES_SETTINGS -> {
                 consumer.showStandardOptions(
@@ -249,6 +256,12 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                 )
 
                 showCustomOption(
+                    KotlinCodeStyleSettings::CONTINUATION_INDENT_IN_CONTEXT_PARAMETER_LISTS,
+                    KotlinBundle.message("formatter.title.use.continuation.indent.in.context.parameters"),
+                    codeStyleSettingsCustomizableOptions.WRAPPING_METHOD_PARAMETERS
+                )
+
+                showCustomOption(
                     KotlinCodeStyleSettings::CONTINUATION_INDENT_IN_ARGUMENT_LISTS,
                     KotlinBundle.message("formatter.title.use.continuation.indent"),
                     codeStyleSettingsCustomizableOptions.WRAPPING_METHOD_ARGUMENTS_WRAPPING
@@ -336,9 +349,37 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                     "BLOCK_COMMENT_ADD_SPACE"
                 )
             }
+            SettingsType.LANGUAGE_SPECIFIC -> {
+                // Rendered by KDocFormattingPanel (the "KDoc" tab).
+                consumer.showStandardOptions("WRAP_COMMENTS")
+
+                showCustomOption(
+                    KotlinCodeStyleSettings::KDOC_PRESERVE_LINE_FEEDS,
+                    KotlinBundle.message("formatter.checkbox.text.preserve.line.feeds"),
+                    KDocFormattingPanel.getOtherGroup(),
+                )
+            }
             else -> consumer.showStandardOptions()
         }
     }
+
+    override fun getDocCommentSettings(rootSettings: CodeStyleSettings): DocCommentSettings =
+        object : DocCommentSettings {
+            private val settings = rootSettings.kotlinCustomSettings
+
+            override fun isDocFormattingEnabled(): Boolean = settings.ENABLE_KDOC_FORMATTING
+
+            override fun setDocFormattingEnabled(formattingEnabled: Boolean) {
+                settings.ENABLE_KDOC_FORMATTING = formattingEnabled
+            }
+
+            // KDoc always uses leading asterisks, and no tag is ever removed for being empty.
+            override fun isLeadingAsteriskEnabled(): Boolean = true
+
+            override fun isRemoveEmptyTags(): Boolean = false
+
+            override fun setRemoveEmptyTags(removeEmptyTags: Boolean) {}
+        }
 
     override fun usesCommonKeepLineBreaks(): Boolean {
         return true
@@ -503,9 +544,11 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                            return 0
                        }
 
+                       context(a: Int)
                        fun multilineMethod(
                            foo: String,
-                           bar: String
+                           bar: String,
+                           baz: context(Int, String) (String, Int) -> Unit
                        ) {
                            foo
                                .length

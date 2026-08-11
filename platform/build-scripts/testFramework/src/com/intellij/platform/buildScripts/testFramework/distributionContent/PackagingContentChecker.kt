@@ -26,6 +26,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.selects.select
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildPaths
@@ -513,6 +514,8 @@ private fun scheduleFullSuiteWork(
   pluginCheckTasks.startAllDeferreds { task ->
     if (task.packagingTask in targetValidationPackagingTasks && task.packagingTask.spec.checkPlugins) task.resultDeferred else null
   }
+  val remainingPackagingTasks = packagingTasks.filter { it !in targetValidationPackagingTasks }
+  val pluginCheckTasksByPackagingTask = pluginCheckTasks.associateBy { it.packagingTask }
 
   scope.launch(Dispatchers.Default) {
     validationTasks.filter { it.spec.isBlocking }.map { it.resultDeferred }.awaitAll()
@@ -520,14 +523,59 @@ private fun scheduleFullSuiteWork(
       // independent ones already started above
       if (task.spec.isBlocking || !task.spec.requiresCompilation) null else task.resultDeferred
     }
-    targetValidationPackagingTasks.map { it.resultDeferred }.awaitAll()
+  }
+  scope.launch(Dispatchers.Default) {
+    startRemainingTasksWithRollingReplenishment(
+      startedTasks = targetValidationPackagingTasks,
+      remainingTasks = remainingPackagingTasks,
+      getCompletion = { it.resultDeferred },
+      startTask = { packagingTask ->
+        packagingTask.start()
+        if (packagingTask.spec.checkPlugins) {
+          pluginCheckTasksByPackagingTask.get(packagingTask)?.resultDeferred?.start()
+        }
+      },
+    )
+  }
+}
 
-    val remainingPackagingTasks = packagingTasks.filter { it !in targetValidationPackagingTasks }
-    remainingPackagingTasks.startAllPackagingTasks()
-    val remainingPackagingTaskSet = remainingPackagingTasks.toHashSet()
-    pluginCheckTasks.startAllDeferreds { task ->
-      if (task.packagingTask in remainingPackagingTaskSet && task.packagingTask.spec.checkPlugins) task.resultDeferred else null
+internal suspend fun <T> startRemainingTasksWithRollingReplenishment(
+  startedTasks: Collection<T>,
+  remainingTasks: Collection<T>,
+  getCompletion: (T) -> Deferred<*>,
+  startTask: (T) -> Unit,
+) {
+  val maxParallelTasks = maxOf(startedTasks.size, remainingTasks.size)
+  if (maxParallelTasks == 0) {
+    return
+  }
+
+  val activeTasks = LinkedHashSet<T>(maxParallelTasks)
+  activeTasks.addAll(startedTasks)
+  val tasksToStart = ArrayDeque<T>(remainingTasks.size)
+  tasksToStart.addAll(remainingTasks)
+
+  fun fillAvailableSlots() {
+    while (activeTasks.size < maxParallelTasks && tasksToStart.isNotEmpty()) {
+      val task = tasksToStart.removeFirst()
+      activeTasks.add(task)
+      startTask(task)
     }
+  }
+
+  if (activeTasks.isEmpty()) {
+    fillAvailableSlots()
+    return
+  }
+
+  while (tasksToStart.isNotEmpty()) {
+    val completedTask = select {
+      for (task in activeTasks) {
+        getCompletion(task).onAwait { task }
+      }
+    }
+    activeTasks.remove(completedTask)
+    fillAvailableSlots()
   }
 }
 

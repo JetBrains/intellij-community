@@ -1,5 +1,5 @@
 // "Remove parameter 'i'" "false"
-// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedSymbolInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.UnusedSymbolInspection
 // ACTION: Convert to also
 // ACTION: Convert to anonymous function
 // ACTION: Convert to apply

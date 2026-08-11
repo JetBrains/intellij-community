@@ -512,7 +512,7 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
 
     private List<PsiToken> splitToken(int tokenStart, List<Exclusion> affecting) {
       int tokenEnd = tokenStart + length();
-      if (affecting.size() == 1 && affecting.getFirst().start < tokenStart && affecting.getFirst().end > tokenEnd) {
+      if (affecting.size() == 1 && affecting.getFirst().start < tokenStart && affecting.getFirst().end >= tokenEnd) {
         return Collections.emptyList();
       }
 

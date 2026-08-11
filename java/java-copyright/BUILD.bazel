@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.copyright` start
-
 jvm_library(
     name = "copyright",
     srcs = glob(
@@ -20,7 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//plugins/copyright",
         "//platform/core-api:core",
         "//java/java-psi-api:psi",
@@ -42,6 +41,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":copyright",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//plugins/copyright:copyright_test_lib",
         "//platform/core-api:core_test_lib",
         "//java/java-psi-api:psi_test_lib",

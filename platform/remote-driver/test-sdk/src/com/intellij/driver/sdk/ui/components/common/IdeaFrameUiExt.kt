@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.ui.components.common
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.components.common.toolwindows.CommitToolWindowUi
 import com.intellij.driver.sdk.ui.components.common.toolwindows.GitLogToolWindowUi
+import com.intellij.driver.sdk.ui.components.common.toolwindows.GitWorktreesToolWindowUi
 import com.intellij.driver.sdk.ui.components.common.toolwindows.TerminalToolWindowUi
 import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowUiComponent
 import com.intellij.driver.sdk.ui.components.elements.WindowUiComponent
@@ -27,6 +28,11 @@ fun IdeaFrameUI.commitToolWindow(action: CommitToolWindowUi.() -> Unit = {}): Co
 fun IdeaFrameUI.gitLogToolWindow(action: GitLogToolWindowUi.() -> Unit = {}): GitLogToolWindowUi =
   x(GitLogToolWindowUi::class.java) { and(byAccessibleName("Log Tool Window"), byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS)) }.apply(action)
 
+fun IdeaFrameUI.worktreesToolWindow(action: GitWorktreesToolWindowUi.() -> Unit = {}): GitWorktreesToolWindowUi =
+  x(GitWorktreesToolWindowUi::class.java) {
+    componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byAccessibleName("Worktrees"))
+  }.apply(action)
+
 fun IdeaFrameUI.databaseToolWindow(action: ToolWindowUiComponent.() -> Unit = {}): ToolWindowUiComponent = toolWindow("Database", action)
 
 fun IdeaFrameUI.mesonToolWindow(action: ToolWindowUiComponent.() -> Unit = {}): ToolWindowUiComponent =
@@ -38,7 +44,7 @@ fun IdeaFrameUI.terminalToolWindow(action: TerminalToolWindowUi.() -> Unit = {})
   x(TerminalToolWindowUi::class.java) { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byType("org.jetbrains.plugins.terminal.TerminalToolWindowPanel")) }.apply(action)
 
 fun IdeaFrameUI.problemsToolWindow(action: ToolWindowUiComponent.() -> Unit = {}): ToolWindowUiComponent =
-  x(ToolWindowUiComponent::class.java) { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byAccessibleName("Problems")) }.apply(action)
+  x(ToolWindowUiComponent::class.java) { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byAccessibleName("Problems View")) }.apply(action)
 
 fun IdeaFrameUI.usagesToolWindow(action: ToolWindowUiComponent.() -> Unit = {}): ToolWindowUiComponent =
   x(ToolWindowUiComponent::class.java) { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byAccessibleName("Find")) }.apply(action)

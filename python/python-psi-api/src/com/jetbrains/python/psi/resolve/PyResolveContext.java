@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -63,6 +64,11 @@ public final class PyResolveContext {
 
   public @NotNull PyResolveContext withoutImplicits() {
     return allowImplicits() ? new PyResolveContext(false, myAllowProperties, myAllowRemote, myTypeEvalContext) : this;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull PyResolveContext withoutProperties() {
+    return new PyResolveContext(myAllowImplicits, false, myAllowRemote, myTypeEvalContext);
   }
 
   public @NotNull PyResolveContext withRemote() {

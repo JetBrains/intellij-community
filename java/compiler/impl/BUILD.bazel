@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.compiler.impl` start
-
 jvm_library(
     name = "impl",
     srcs = glob(
@@ -46,7 +45,6 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//platform/ide-core/plugins",
         "//java/compiler/instrumentation-util",
-        "//platform/vcs-api:vcs",
         "//platform/platform-api:ide",
         "//platform/lang-impl",
         "//java/jsp-openapi:jsp",
@@ -61,7 +59,6 @@ jvm_library(
         "//java/java-syntax:syntax",
         "//platform/built-in-server:builtInServer-impl",
         "//platform/built-in-server-api:builtInServer",
-        "//platform/vcs-impl",
         "//platform/external-system-api:externalSystem",
         "//platform/statistics",
         "//platform/core-ui",
@@ -95,8 +92,9 @@ jvm_library(
         "//libraries/opentelemetry",
         "//libraries/opentelemetry-semconv",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "@lib//:netty-codec-protobuf",
+        "//libraries/netty/codec-protobuf:libraries-netty-codec-protobuf",
         "//platform/eel-provider",
+        "//platform/eel-impl",
         "//xml/xml-psi-api:psi",
         "//xml/xml-parser:parser",
         "//platform/execution",
@@ -148,7 +146,6 @@ jvm_library(
         "//java/java-psi-api:psi_test_lib",
         "//platform/ide-core/plugins:plugins_test_lib",
         "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
-        "//platform/vcs-api:vcs_test_lib",
         "//platform/platform-api:ide_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
         "//java/jsp-openapi:jsp_test_lib",
@@ -163,7 +160,6 @@ jvm_library(
         "//java/java-syntax:syntax_test_lib",
         "//platform/built-in-server:builtInServer-impl_test_lib",
         "//platform/built-in-server-api:builtInServer_test_lib",
-        "//platform/vcs-impl:vcs-impl_test_lib",
         "//platform/external-system-api:externalSystem_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//platform/core-ui:core-ui_test_lib",
@@ -195,7 +191,9 @@ jvm_library(
         "//libraries/opentelemetry:opentelemetry_test_lib",
         "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//libraries/netty/codec-protobuf:libraries-netty-codec-protobuf_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
+        "//platform/eel-impl:eel-impl_test_lib",
         "//xml/xml-psi-api:psi_test_lib",
         "//xml/xml-parser:parser_test_lib",
         "//platform/execution:execution_test_lib",

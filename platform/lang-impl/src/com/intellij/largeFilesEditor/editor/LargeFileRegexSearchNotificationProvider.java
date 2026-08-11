@@ -10,12 +10,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.EditorNotifications;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public final class LargeFileRegexSearchNotificationProvider implements EditorNotificationProvider {
   private static final Key<String> HIDDEN_KEY = Key.create("large.file.editor.regex.search.notification.hidden");
 

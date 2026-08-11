@@ -1,0 +1,67 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.lsp.client.playground` start
+jvm_library(
+    name = "lsp.client.playground",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.lsp.client.playground",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/ide-core",
+        "//platform/lsp",
+        "//platform/lsp-impl",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/lang-api:lang",
+        "//platform/core-ui",
+        "//platform/util:util-ui",
+        "//platform/platform-frontend:frontend",
+    ],
+)
+
+jvm_library(
+    name = "lsp.client.playground_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.lsp.client.playground",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":lsp.client.playground",
+        "//platform/core-api:core_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/lsp:lsp_test_lib",
+        "//platform/lsp-impl:lsp-impl_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/platform-frontend:frontend_test_lib",
+    ],
+)
+### auto-generated section `build intellij.lsp.client.playground` end
+
+### auto-generated section `iml intellij.lsp.client.playground` start
+exports_files(
+    [
+        "intellij.lsp.client.playground.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.lsp.client.playground` end

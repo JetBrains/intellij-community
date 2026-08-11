@@ -1,13 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.frontback.psi.impl` start
-
 jvm_library(
     name = "frontback-psi-impl",
     srcs = glob(
         [
-            "gen/**/*.kt",
-            "gen/**/*.java",
             "src/**/*.kt",
             "src/**/*.java",
             "src/**/*.form",

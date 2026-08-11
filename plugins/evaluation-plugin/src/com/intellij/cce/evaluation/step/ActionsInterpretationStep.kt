@@ -20,7 +20,7 @@ class ActionsInterpretationStep(
 
   override suspend fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
     val resultWorkspace =
-      if (newWorkspace) EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
+      if (newWorkspace) EvaluationWorkspace.create(config)
       else workspace
     ActionsInterpretationHandler(config, datasetContext).invoke(environment, resultWorkspace, progress)
     return resultWorkspace

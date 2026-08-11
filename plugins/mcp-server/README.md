@@ -30,6 +30,7 @@ IntelliJ plugin). If you want a one-page summary, jump to the [cheat sheet](#16-
 15. [Advanced](#15-advanced)
 16. [Cheat sheet / checklist](#16-cheat-sheet--checklist)
 17. [Implementation details](#17-implementation-details)
+18. [Built-in IDE diagnostics tool](#18-built-in-ide-diagnostics-tool)
 
 Sections 1–16 are the **user guide** — everything you need to write a tool. Section 17 is **implementation details** for readers who want to
 understand how the framework turns a Kotlin method into an MCP tool, or who plan to extend the framework itself.
@@ -182,6 +183,10 @@ From [`AnalysisToolset.kt:60-71`](src/com/intellij/mcpserver/toolsets/general/An
 
 Treat the description as your only channel to the LLM. It must state what the tool does, its side effects, coordinate conventions (1-based
 vs 0-based, inclusive vs exclusive), and every meaningful default — see [§13](#13-naming--description-style).
+
+`@McpDescription` is the **agent-facing** channel (`@NlsSafe`, deliberately not localized — it is prose tuned for a model). The separate,
+localizable **UI-facing** name and description shown in Settings are supplied through `McpToolset.displayName()` / `displayDescription()` —
+see [§13.5](#135-ui-facing-names--descriptions-i18n).
 
 ### 3.3 `@McpToolHints` — capability hints
 
@@ -781,6 +786,72 @@ limit: Int = Constants.MAX_LINES_COUNT_VALUE,
 
 This works whenever the referenced value is itself a `const val` (Kotlin compile-time constant) — primitives and `String` literals. Use it everywhere it compiles: defaults for `limit` / `timeout` / `max_depth`, size bounds mentioned in descriptions, mode enumerations backed by `const val`, etc. If the referenced value is not `const` (e.g., a `val` computed at runtime), fall back to writing the number by hand and accept the drift risk — there is no runtime-string-interpolation path for `@McpDescription` arguments because annotations only accept compile-time constants.
 
+### 13.5 UI-facing names & descriptions (i18n)
+
+There are **two audiences** for a tool's text, and they use **two different channels**:
+
+| Channel                                            | Audience             | Nullability | i18n                    | Where it shows                                                        |
+|----------------------------------------------------|----------------------|-------------|-------------------------|-----------------------------------------------------------------------|
+| `@McpDescription` / `@McpTool(title=…)`            | the **LLM / agent**  | `@NlsSafe`  | **not** localized       | sent on the wire to MCP clients                                       |
+| `McpToolset.displayName()` / `displayDescription()`| a **human**          | `@Nls`      | localized (bundle)      | Settings \| Tools \| MCP Server \| Exposed Tools, and other UI surfaces |
+
+`@McpDescription` is prose engineered for a model and must stay stable English; localizing it
+would change what the LLM sees. The UI, on the other hand, wants a short, human-friendly,
+translatable label. That is what the two optional `McpToolset` overrides provide:
+
+```kotlin
+interface McpToolset {
+  // Group (toolset) name shown in the UI. Falls back to a name derived from the class name.
+  fun displayName(): @Nls String? = null
+
+  // Per-tool UI description shown INSTEAD of the agent-facing @McpDescription.
+  // `toolName` is the resolved wire name. Falls back to @McpDescription when null.
+  fun displayDescription(toolName: String): @Nls String? = null
+}
+```
+
+See [`McpToolset.kt`](src/com/intellij/mcpserver/McpToolset.kt). The overrides feed UI-only
+extension properties — never sent to the LLM:
+
+- [`McpToolCategory.presentableName`](src/com/intellij/mcpserver/McpToolCategory.kt) = `displayName()` or a name derived from the class name (`FooToolset` → "Foo").
+- [`McpToolDescriptor.presentableDescription`](src/com/intellij/mcpserver/McpToolDescriptor.kt) = `displayDescription(toolName)` or the agent-facing `description`.
+
+These are what [`ShowMcpToolsAction`](src/com/intellij/mcpserver/actions/ShowMcpToolsAction.kt)
+and [`McpToolFilterConfigurable`](mcpserver.frontend/src/settings/McpToolFilterConfigurable.kt)
+render (tree labels, the per-tool description pane, the search index, group headers), and what
+[`McpToolsMarkdownExporter`](src/com/intellij/mcpserver/McpToolsMarkdownExporter.kt) exports.
+
+#### Wiring it to a message bundle
+
+Route every UI string through a `DynamicBundle` so it is translatable. In-tree toolsets use
+[`McpServerBundle`](src/com/intellij/mcpserver/McpServerBundle.kt); downstream plugins declare
+their own (e.g. `DevKitMcpBundle`, `CLionMcpBundle`). The idiomatic wiring:
+
+```kotlin
+class MyToolset : McpToolset {
+  override fun displayName(): String = MyBundle.message("toolset.display.name.mytoolset")
+  
+  override fun displayDescription(toolName: String): String = MyBundle.message("tool.description.$toolName")
+  // or
+  override fun displayDescription(toolName: String): String? = MyBundle.messageOrNull("tool.description.$toolName")
+  /* … @McpTool methods … */
+}
+```
+
+```properties
+# messages/MyBundle.properties
+toolset.display.name.mytoolset=My Toolset
+# suppress inspection "UnusedProperty"
+tool.description.my_tool=Human-friendly description of my_tool
+```
+
+Key-naming rules:
+
+- `toolset.display.name.<toolset>` → `displayName()`.
+- `tool.description.<wire_tool_name>` → per-tool `displayDescription(toolName)`. The suffix **must
+  match the wire tool name** — the function name, or `@McpTool(name=…)` when overridden — because
+  the provider resolves it dynamically via `message("tool.description.$toolName")`.
+
 ---
 
 ## 14. Testing your tool
@@ -875,7 +946,7 @@ suspend fun search_text(
 
 Look at [`Constants.MAX_LINES_COUNT_VALUE`](src/com/intellij/mcpserver/toolsets/Constants.kt) and
 `MAX_RESULTS_UPPER_BOUND` in [`SearchToolset.kt:65`](src/com/intellij/mcpserver/toolsets/general/SearchToolset.kt) for typical caps. Use the
-streaming accumulator in [`util/OutputCollector.kt`](src/com/intellij/mcpserver/util/OutputCollector.kt) when you need to trim in the middle
+streaming accumulator in [`util/OutputCollector.kt`](mcpserver.toolsets/src/util/OutputCollector.kt) when you need to trim in the middle
 of growing output.
 
 ### 15.3 Side-effect tracking
@@ -908,7 +979,7 @@ val result = ProjectTaskManager.getInstance(project).run(context, task).await()
 ```
 
 From [`AnalysisToolset.kt:139`](src/com/intellij/mcpserver/toolsets/general/AnalysisToolset.kt) and [
-`AnalysisToolset.kt:254-258`](src/com/intellij/mcpserver/toolsets/general/AnalysisToolset.kt).
+`AnalysisToolset.kt:254-258`](mcpserver.toolsets/src/general/AnalysisToolset.kt).
 
 ---
 
@@ -925,6 +996,9 @@ From [`AnalysisToolset.kt:139`](src/com/intellij/mcpserver/toolsets/general/Anal
 5. For data-class inputs/outputs: `@Serializable`, `@EncodeDefault(Mode.NEVER)` on defaulted fields, `@property:McpDescription` on each
    field, `@file:OptIn(ExperimentalSerializationApi::class)`.
 6. Get the project with `currentCoroutineContext().project`. Announce work with `reportToolActivity(McpServerBundle.message(...))`.
+   - If your toolset overrides `displayName()` / `displayDescription(toolName)`, add the matching `toolset.display.name.*` /
+     `tool.description.<tool_name>` keys to your message bundle — with the `tool.description.$toolName` idiom, a missing key throws at
+     runtime. See [§13.5](#135-ui-facing-names--descriptions-i18n).
 7. Wrap PSI/VFS reads in `readAction { }`, user-visible edits in `writeCommandAction(project) { … }`, blocking IO in
    `withContext(Dispatchers.IO) { … }`.
 8. For long operations: accept `timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE`, wrap the body in
@@ -950,6 +1024,8 @@ Blocks on filesystem / network IO    → withContext(Dispatchers.IO) { }
 - Forgetting `@EncodeDefault(Mode.NEVER)` on defaulted result fields (bloats wire payload, breaks optional-ness in the schema).
 - Relying on Kotlin defaults to reach the LLM — defaults are not serialized into the schema, say them in `@McpDescription`.
 - Declaring a `projectPath` parameter yourself — the framework injects it.
+- Overriding `displayDescription(toolName)` with `message("tool.description.$toolName")` but forgetting to add the bundle key for a newly
+  added tool — throws a runtime `'tool.description.<tool_name>' is not found` error (see [§13.5](#135-ui-facing-names--descriptions-i18n)).
 
 ---
 
@@ -1040,7 +1116,7 @@ is captured automatically.
 ### 17.5 Project resolution
 
 Tool-call project resolution is performed in [`McpSessionHandler.kt`](src/com/intellij/mcpserver/impl/McpSessionHandler.kt) through
-[`McpProjectLocationInputs.kt`](src/com/intellij/mcpserver/impl/McpProjectLocationInputs.kt). The logic has two modes:
+[`McpSessionProjectResolverImpl.kt`](src/com/intellij/mcpserver/impl/McpSessionProjectResolverImpl.kt). The logic has two modes:
 
 1. Strict mode: if the tool call contains an explicit `projectPath` argument, MCP matches only by that value.
    If it doesn't resolve to an open project, the call fails immediately with `noSuitableProjectError`.
@@ -1076,3 +1152,32 @@ Implementation details:
 - `hasMcpServerRuntimeOverrides()` is a quick probe used by settings UI to hide / disable controls that the system property already dictates.
 
 These overrides are **not a public API** — they are JetBrains-internal knobs for evaluation and should not be depended on by downstream plugins.
+
+---
+
+## 18. Built-in IDE diagnostics tool
+
+The built-in `get_ide_diagnostics` tool captures cheap diagnostics from the running IDE process: IDE/project identity, JVM uptime, process CPU
+load, memory, garbage collector counters, thread-state summary, CPU-ranked threads, and optionally the raw IntelliJ thread/coroutine dump.
+
+The toolset is disabled by default because it exposes process-wide diagnostic details. Start the IDE with:
+
+```bash
+-Didea.diagnostics.mcp.enabled=true
+```
+
+Tool parameters:
+
+| Parameter            | Default | Meaning                                                                                  |
+|----------------------|---------|------------------------------------------------------------------------------------------|
+| `sampleMillis`       | `1000`  | CPU sampling window in milliseconds. Values are clamped to `0..30000`; use `0` for a snapshot. |
+| `topThreadCount`     | `25`    | Maximum CPU-ranked threads to return. Values are clamped to `1..200`.                    |
+| `includeRawDump`     | `true`  | Include the raw IntelliJ thread dump text.                                                |
+| `maxDumpChars`       | `200000`| Maximum raw dump characters. Values are clamped to `0..2000000`.                         |
+| `stripCoroutineDump` | `true`  | Strip coroutine dump frames with little diagnostic value.                                  |
+
+Use this tool for quick answers to "what is this IDE doing right now?" questions: high CPU, blocked threads, thread-state spikes, or a raw
+dump that should be attached to a performance investigation. Thread states are JVM `Thread.State` values: `RUNNABLE` includes Java execution
+and native calls, so use `topCpuThreads[].cpuDeltaNanos` together with `isInNative`, `nativeFrame`, and `nativeOperationHint` before treating a
+thread as CPU-bound. It is not a replacement for JFR, async-profiler, or a long-running profiler recording. Per-thread CPU data is based on
+`ThreadMXBean` CPU-time deltas sampled inside the IDE process, and raw dumps are truncated when they exceed `maxDumpChars`.

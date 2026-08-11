@@ -15,7 +15,7 @@ class TimezoneMixin:
 
 class Extract(TimezoneMixin, Transform):
     lookup_name: str | None  # type: ignore[assignment]
-    output_field: ClassVar[models.IntegerField]
+    output_field: ClassVar[models.IntegerField[Any, Any]]
     def __init__(
         self, expression: Combinable | str, lookup_name: str | None = None, tzinfo: Any | None = None, **extra: Any
     ) -> None: ...
@@ -35,7 +35,7 @@ class ExtractMinute(Extract): ...
 class ExtractSecond(Extract): ...
 
 class Now(Func):
-    output_field: ClassVar[models.DateTimeField]
+    output_field: ClassVar[models.DateTimeField[Any, Any]]
     def as_postgresql(
         self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any
     ) -> _AsSqlType: ...
@@ -49,7 +49,7 @@ class TruncBase(TimezoneMixin, Transform):
     def __init__(
         self,
         expression: Combinable | str,
-        output_field: Field | None = None,
+        output_field: Field[Any, Any] | None = None,
         tzinfo: tzinfo | None = None,
         **extra: Any,
     ) -> None: ...
@@ -61,7 +61,7 @@ class Trunc(TruncBase):
         self,
         expression: Combinable | str,
         kind: str,
-        output_field: Field | None = None,
+        output_field: Field[Any, Any] | None = None,
         tzinfo: tzinfo | None = None,
         **extra: Any,
     ) -> None: ...
@@ -73,10 +73,10 @@ class TruncWeek(TruncBase): ...
 class TruncDay(TruncBase): ...
 
 class TruncDate(TruncBase):
-    output_field: ClassVar[models.DateField]
+    output_field: ClassVar[models.DateField[Any, Any]]
 
 class TruncTime(TruncBase):
-    output_field: ClassVar[models.TimeField]
+    output_field: ClassVar[models.TimeField[Any, Any]]
 
 class TruncHour(TruncBase): ...
 class TruncMinute(TruncBase): ...

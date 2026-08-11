@@ -3,11 +3,13 @@ package com.intellij.junit5.report;
 
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 final public class ExecutionState {
@@ -17,7 +19,7 @@ final public class ExecutionState {
 
   private long myCurrentTestStartNanos;
   private final Map<String, Long> mySuiteStartNanos = new ConcurrentHashMap<>();
-  private int myFinishCount;
+  private final Set<String> myFinishedTestIds = ConcurrentHashMap.newKeySet();
   private String myRootName;
   private String myPresentableName;
   private boolean mySuccessful = true;
@@ -28,10 +30,6 @@ final public class ExecutionState {
   public ExecutionState(PrintStream out, boolean useSuiteDuration) {
     myOut = out;
     myUseSuiteDuration = useSuiteDuration;
-  }
-
-  public boolean isUseSuiteDuration() {
-    return myUseSuiteDuration;
   }
 
   public void setPlan(TestPlan plan) {
@@ -96,10 +94,6 @@ final public class ExecutionState {
     myCurrentTestStartNanos = System.nanoTime();
   }
 
-  void setCurrentTestStartNanos(long nanos) {
-    myCurrentTestStartNanos = nanos;
-  }
-
   public void onSuiteStarted(String id) {
     if (myUseSuiteDuration) {
       mySuiteStartNanos.put(id, System.nanoTime());
@@ -119,16 +113,13 @@ final public class ExecutionState {
     return (System.nanoTime() - from) / 1_000_000L;
   }
 
-  public void resetFinishCount() {
-    myFinishCount = 0;
+  public void markFinished(String uniqueId) {
+    myFinishedTestIds.add(uniqueId);
   }
 
-  public void incrementFinishCount() {
-    myFinishCount++;
-  }
-
-  public int finishCount() {
-    return myFinishCount;
+  public boolean hasFinished(Set<TestIdentifier> descendants) {
+    //noinspection SSBasedInspection
+    return descendants.stream().anyMatch(descendant -> myFinishedTestIds.contains(descendant.getUniqueId()));
   }
 
   public void printRootNameIfNeeded() {

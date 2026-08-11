@@ -15,19 +15,14 @@ import java.awt.image.BufferedImage
  * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and edit 'logo' tag. For more information, see documentation for
  * the tag attributes in ApplicationInfo.xsd file.
  */
-internal class Splash(private val image: BufferedImage, isAlwaysOnTop: Boolean) :
+internal class Splash(private val image: BufferedImage) :
   Dialog(null as Frame?, "splash" /* not visible, but available through window properties on Linux */) {
   init {
     isUndecorated = true
     background = Gray.TRANSPARENT
-    // we don't hide splash when project frame is shown - show on top of,
-    // it allows us to avoid focus issues (we do not focus the splash window)
-    if (isAlwaysOnTop) {
-      this.isAlwaysOnTop = true
-    }
     // makes tiling window managers on a Linux show window as floating
     isResizable = false
-    focusableWindowState = isAlwaysOnTop
+    focusableWindowState = false
     val size = Dimension(image.width, image.height)
     this.size = size
 

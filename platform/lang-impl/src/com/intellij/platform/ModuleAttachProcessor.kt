@@ -2,12 +2,9 @@
 package com.intellij.platform
 
 import com.intellij.CommonBundle
-import com.intellij.configurationStore.runInAutoSaveDisabledMode
-import com.intellij.configurationStore.saveSettings
+import com.intellij.conversion.ModuleSettings.MODULE_ROOT_MANAGER_COMPONENT
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
-import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
@@ -18,10 +15,8 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.PrimaryModuleManager
 import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ModuleAttachProcessor.Companion.getPrimaryModule
 import com.intellij.projectImport.ProjectAttachProcessor
@@ -31,13 +26,16 @@ import com.intellij.util.io.directoryStreamIfExists
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.readText
 
 private val LOG = logger<ModuleAttachProcessor>()
 
 class ModuleAttachProcessor : ProjectAttachProcessor() {
+  @ApiStatus.Internal
   companion object {
     @JvmStatic
     fun getPrimaryModule(project: Project): Module? {
@@ -45,37 +43,30 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
     }
   }
 
+  override fun isEnabled(project: Project?, projectDir: Path?, newProject: Project?): Boolean {
+    val dotIdeaDir = projectDir?.resolve(Project.DIRECTORY_STORE_FOLDER) ?: return false
+    return Files.exists(dotIdeaDir) &&
+           projectDir.directoryStreamIfExists({ path: Path ->
+                                                path.fileName.toString().endsWith(ModuleManagerEx.IML_EXTENSION)
+                                              }) { stream ->
+             stream.any { imlFile ->
+               imlFile.readText().contains(MODULE_ROOT_MANAGER_COMPONENT)
+             }
+           } ?: false
+  }
+
   override suspend fun attachToProjectAsync(project: Project,
                                             projectDir: Path,
                                             callback: ProjectOpenedCallback?,
                                             beforeOpen: (suspend (Project) -> Boolean)?): Boolean {
-    LOG.info("Attaching directory: $projectDir")
     val dotIdeaDir = projectDir.resolve(Project.DIRECTORY_STORE_FOLDER)
     if (Files.notExists(dotIdeaDir)) {
-      val options = OpenProjectTask {
-        useDefaultProjectAsTemplate = true
-        isNewProject = true
-      }
-      val newProject = ProjectManagerEx.getInstanceEx().newProjectAsync(file = projectDir, options = options)
-      try {
-        PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
-          projectFile = projectDir,
-          project = newProject,
-          newProject = true,
-          createModule = true,
-        )
-        runInAutoSaveDisabledMode {
-          saveSettings(newProject)
-        }
-      }
-      finally {
-        withContext(Dispatchers.EDT) {
-          ApplicationManager.getApplication().runWriteAction { Disposer.dispose(newProject) }
-        }
-      }
+      return false
     }
 
-    val newModule = try {
+    LOG.info("Attaching directory: $projectDir")
+
+    val newModule: Module? = try {
       findMainModule(project, dotIdeaDir) ?: findMainModule(project, projectDir)
     }
     catch (e: CancellationException) {
@@ -114,15 +105,15 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
 }
 
 private suspend fun findMainModule(project: Project, projectDir: Path): Module? {
-  projectDir.directoryStreamIfExists({ path -> path.fileName.toString().endsWith(ModuleManagerEx.IML_EXTENSION) }) { directoryStream ->
+  return projectDir.directoryStreamIfExists({ path -> path.fileName.toString().endsWith(ModuleManagerEx.IML_EXTENSION) }) { directoryStream ->
     for (file in directoryStream) {
       return attachModule(project, file)
     }
+    return null
   }
-  return null
 }
 
-private suspend fun attachModule(project: Project, imlFile: Path): Module {
+internal suspend fun attachModule(project: Project, imlFile: Path): Module {
   val moduleManager = ModuleManager.getInstance(project)
   val model = moduleManager.getModifiableModel()
   val module = model.loadModule(imlFile.invariantSeparatorsPathString)

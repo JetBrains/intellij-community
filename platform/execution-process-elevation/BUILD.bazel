@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.execution.process.elevation` start
-
 jvm_library(
     name = "execution-process-elevation",
     srcs = glob(
@@ -30,7 +29,7 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io",
         "//platform/ide-core-impl",
         "//platform/ide-core",
-        "@lib//:jna",
+        "//libraries/jna",
         "//platform/projectModel-api:projectModel",
         "//libraries/grpc",
         "//platform/util:util-ui",
@@ -58,6 +57,7 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//libraries/grpc:grpc_test_lib",
         "//platform/util:util-ui_test_lib",

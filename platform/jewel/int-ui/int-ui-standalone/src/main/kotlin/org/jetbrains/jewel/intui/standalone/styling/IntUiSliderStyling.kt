@@ -12,18 +12,21 @@ import org.jetbrains.jewel.ui.component.styling.SliderColors
 import org.jetbrains.jewel.ui.component.styling.SliderMetrics
 import org.jetbrains.jewel.ui.component.styling.SliderStyle
 
+/** Creates an Int UI light [SliderStyle] with the provided parameters. */
 public fun SliderStyle.Companion.light(
     colors: SliderColors = SliderColors.light(),
     metrics: SliderMetrics = SliderMetrics.defaults(),
     thumbShape: Shape = CircleShape,
 ): SliderStyle = SliderStyle(colors, metrics, thumbShape)
 
+/** Creates an Int UI dark [SliderStyle] with the provided parameters. */
 public fun SliderStyle.Companion.dark(
     colors: SliderColors = SliderColors.dark(),
     metrics: SliderMetrics = SliderMetrics.defaults(),
     thumbShape: Shape = CircleShape,
 ): SliderStyle = SliderStyle(colors, metrics, thumbShape)
 
+/** Creates an Int UI light [SliderColors] with the provided parameters. */
 public fun SliderColors.Companion.light(
     track: Color = IntUiLightTheme.colors.gray(10),
     trackFilled: Color = IntUiLightTheme.colors.blue(6),
@@ -59,6 +62,7 @@ public fun SliderColors.Companion.light(
         thumbBorderHovered,
     )
 
+/** Creates an Int UI dark [SliderColors] with the provided parameters. */
 public fun SliderColors.Companion.dark(
     track: Color = IntUiDarkTheme.colors.gray(4),
     trackFilled: Color = IntUiDarkTheme.colors.blue(7),
@@ -94,6 +98,7 @@ public fun SliderColors.Companion.dark(
         thumbBorderHovered,
     )
 
+/** Creates an Int UI default [SliderMetrics] with the provided parameters. */
 public fun SliderMetrics.Companion.defaults(
     trackHeight: Dp = 4.dp,
     thumbSize: DpSize = DpSize(14.dp, 14.dp),

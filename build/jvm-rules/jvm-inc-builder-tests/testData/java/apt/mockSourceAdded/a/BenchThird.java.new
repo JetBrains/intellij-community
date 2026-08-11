@@ -1,0 +1,10 @@
+package a;
+
+import mockapt.Bench;
+
+public class BenchThird {
+  @Bench("Throughput")
+  public int third() {
+    return 3;
+  }
+}

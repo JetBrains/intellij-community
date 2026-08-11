@@ -146,7 +146,7 @@ class CompilationChartsImpl(
     fun add(event: ModuleChartEvent) {
       if (start > event.nanoTime()) start = event.nanoTime()
       if (end < event.nanoTime()) end = event.nanoTime()
-      events.compute(event.key()) { _, list -> list?.add(event) ?: persistentListOf(event) }
+      events.compute(event.key()) { _, list -> list?.adding(event) ?: persistentListOf(event) }
     }
     fun ModuleChartEvent.key(): ModuleKey = ModuleKey(name(), type(), isTest(), threadId())
   }

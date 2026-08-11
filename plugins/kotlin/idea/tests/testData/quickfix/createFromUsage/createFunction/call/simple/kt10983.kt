@@ -4,12 +4,12 @@
 // ERROR: Type mismatch: inferred type is () -> Boolean but Boolean was expected
 // ERROR: Type mismatch: inferred type is () -> Boolean but Boolean was expected
 // ERROR: Unresolved reference: maximumSizeOfGroup
-// K2_ERROR: Return type mismatch: expected 'Boolean', actual '() -> Boolean'.
-// K2_ERROR: The expression cannot be a selector (cannot occur after a dot).
-// K2_ERROR: Unresolved reference 'maximumSizeOfGroup'.
-// K2_AFTER_ERROR: Return type mismatch: expected 'Boolean', actual '() -> Boolean'.
-// K2_AFTER_ERROR: The expression cannot be a selector (cannot occur after a dot).
-// K2_AFTER_ERROR: Unresolved reference 'maximumSizeOfGroup'.
+// K2_AFTER_ERROR: ILLEGAL_SELECTOR
+// K2_AFTER_ERROR: RETURN_TYPE_MISMATCH
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: ILLEGAL_SELECTOR
+// K2_ERROR: RETURN_TYPE_MISMATCH
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 fun doSomethingStrangeWithCollection(collection: Collection<String>): Collection<String>? {
     val groupsByLength = collection.groupBy { s -> { s.length } }

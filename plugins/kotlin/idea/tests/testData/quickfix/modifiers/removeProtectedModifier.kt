@@ -1,6 +1,6 @@
 // "Remove 'protected' modifier" "true"
-// K2_ERROR: Modifier 'private' is incompatible with 'protected'.
-// K2_ERROR: Modifier 'protected' is incompatible with 'private'.
+// K2_ERROR: INCOMPATIBLE_MODIFIERS
+// K2_ERROR: INCOMPATIBLE_MODIFIERS
 
 class A private <caret>protected constructor() {
 

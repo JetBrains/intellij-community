@@ -5,10 +5,12 @@ import com.intellij.GroupBasedTestClassFilter
 import com.intellij.TestCaseLoader
 import com.intellij.TestCaseLoader.TEST_RUNNERS_COUNT
 import com.intellij.TestCaseLoader.TEST_RUNNER_INDEX
-import com.intellij.platform.testFramework.teamCity.TeamCityReporter
-import com.intellij.testFramework.TeamCityLogger
 import com.intellij.platform.bazel.runfiles.BazelLabel
 import com.intellij.platform.bazel.runfiles.BazelRunfiles
+import com.intellij.platform.testFramework.teamCity.TeamCityReporter
+import com.intellij.testFramework.TeamCityLogger
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes
 import org.jetbrains.annotations.ApiStatus
 import tools.jackson.databind.SerializationFeature
 import tools.jackson.databind.json.JsonMapper
@@ -81,26 +83,56 @@ internal object TestsDurationBucketingUtils {
     return filters
   }
 
-  @JvmStatic
-  fun loadSeasonData(season: String?): Map<String, Int>? {
-    if (season == null) return null
-
+  private fun loadSeasonData(season: String, reportFailure: Boolean): Path? {
     val files = if (BazelRunfiles.isRunningFromBazel) {
       val label = BazelLabel.fromString("//:tests/classes-duration")
       BazelRunfiles.getFileByLabelOrNull(label)?.absolute()?.resolve("seasons/$season.csv")?.let { listOf(it) } ?: emptyList()
-    } else {
+    }
+    else {
       getDataDirectories().map { it.resolve("seasons/$season.csv") }.filter { Files.isRegularFile(it) }.distinct().toList()
     }
-
     if (files.isEmpty()) {
-      System.err.println("No CSV file for season '$season' found")
-      return null
+      val msg = "No CSV file for season '$season' found"
+      if (reportFailure) {
+        println(ServiceMessage.asString(ServiceMessageTypes.BUILD_PROBLEM, mapOf("description" to msg)))
+      }
+      else {
+        println(msg)
+      }
     }
     if (files.size > 1) {
-      System.err.println("Multiple files for season '$season' found, will use the first one: ${files.joinToString { it.absolutePathString() }}")
+      val msg = "Multiple files for season '$season' found, will use the first one: ${files.joinToString { it.absolutePathString() }}"
+      if (reportFailure) {
+        println(ServiceMessage.asString(ServiceMessageTypes.BUILD_PROBLEM, mapOf("description" to msg)))
+      }
+      else {
+        println(msg)
+      }
     }
+    return files.firstOrNull()
+  }
+
+  @JvmStatic
+  fun loadSeasonData(season: String?, fallbackSeason: String?): Map<String, Int>? {
+    if (season == null) {
+      require(fallbackSeason == null) {
+        "No season specified but the fallback season is: $fallbackSeason"
+      }
+      return null
+    }
+    var file = loadSeasonData(season, reportFailure = fallbackSeason == null)
+    if (file != null) {
+      println("Tests duration bucketing with the season: $season")
+    }
+    else if (fallbackSeason != null) {
+      file = loadSeasonData(fallbackSeason, reportFailure = true)
+      if (file != null) {
+        println("Tests duration bucketing with the season fallback: $fallbackSeason")
+      }
+    }
+    if (file == null) return null
     val result = HashMap<String, Int>()
-    loadCSV(files.first(), result)
+    loadCSV(file, result)
     return result
   }
 
@@ -134,8 +166,8 @@ internal object TestsDurationBucketingUtils {
       }
     }
     catch (e: Exception) {
-      System.err.println("Failed to dump bucketing data: ${e.message}")
-      e.printStackTrace()
+      println(ServiceMessage.asString(ServiceMessageTypes.BUILD_PROBLEM,
+                                      mapOf("description" to "Failed to dump bucketing data: ${e.stackTraceToString()}")))
     }
   }
 
@@ -274,7 +306,8 @@ internal object TestsDurationBucketingUtils {
         }
       }
       catch (e: IOException) {
-        System.err.println("Failed to load test classes duration from files in '$directory': ${e.message}")
+        println(ServiceMessage.asString(ServiceMessageTypes.BUILD_PROBLEM,
+                                        mapOf("description" to "Failed to load test classes duration from files in '$directory': ${e.stackTraceToString()}")))
       }
       // load only from the first directory
       return result
@@ -317,7 +350,7 @@ internal object TestsDurationBucketingUtils {
             val previous = result[name]
             if (previous != null) {
               if (previous != duration) {
-                System.err.println("Conflicting test duration for '$name': $previous vs $duration")
+                println(ServiceMessage.asString(ServiceMessageTypes.BUILD_PROBLEM, mapOf("description" to "Conflicting test duration for '$name': $previous vs $duration")))
                 duration = maxOf(previous, duration)
               }
             }
@@ -327,7 +360,8 @@ internal object TestsDurationBucketingUtils {
       }
     }
     catch (e: Exception) {
-      System.err.println("Failed to load test classes duration from '$path': ${e.message}")
+      println(ServiceMessage.asString(ServiceMessageTypes.BUILD_PROBLEM,
+                                      mapOf("description" to "Failed to load test classes duration from '$path': ${e.stackTraceToString()}")))
     }
   }
 

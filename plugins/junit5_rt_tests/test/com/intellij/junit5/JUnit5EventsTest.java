@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
+import com.intellij.junit5.JUnit5TestRunnerBuilder.TestDescriptorContext;
 import com.intellij.junit5.testData.AnnotationsTestClass;
 import com.intellij.junit5.testData.MyTestClass;
 import org.junit.jupiter.api.Assertions;
@@ -30,10 +31,10 @@ public class JUnit5EventsTest {
   @Test
   void multipleFailures() throws Exception {
     JUnit5TestRunnerBuilder builder = new JUnit5TestRunnerBuilder();
-    JUnit5TestRunnerBuilder.TestDescriptorContext testContext = builder
+    TestDescriptorContext testContext = builder
       .withRootName("testClass")
       .withPresentableName("testClass")
-      .withTestMethod(MyTestClass.class, "test1");
+      .withTestMethod(MyTestClass.class, "test1", "testClass", "testMethod");
 
     builder.buildTestPlan().execute();
     testContext.startExecution();
@@ -66,7 +67,7 @@ public class JUnit5EventsTest {
   void testsWithExplicitTestSources() {
     JUnit5TestRunnerBuilder builder = new JUnit5TestRunnerBuilder();
 
-    List<JUnit5TestRunnerBuilder.TestDescriptorContext> tests = List.of(
+    List<TestDescriptorContext> tests = List.of(
       builder.withTestDescriptor(MyTestClass.class, "test1", "test1 display name",
                                  ClassSource.from(MyTestClass.class, FilePosition.from(111, 222))),
       builder.withTestDescriptor(MyTestClass.class, "test2", "test2 display name", FileSource.from(
@@ -80,7 +81,7 @@ public class JUnit5EventsTest {
     );
 
     builder.buildTestPlan().execute();
-    for (JUnit5TestRunnerBuilder.TestDescriptorContext test : tests) {
+    for (TestDescriptorContext test : tests) {
       test.startTestOnly();
     }
 
@@ -97,7 +98,7 @@ public class JUnit5EventsTest {
   @Test
   void containerFailure() throws Exception {
     JUnit5TestRunnerBuilder builder = new JUnit5TestRunnerBuilder();
-    JUnit5TestRunnerBuilder.TestDescriptorContext testContext = builder
+    TestDescriptorContext testContext = builder
       .withRootName("testMethod")
       .withPresentableName("testMethod")
       .withSendTree()
@@ -148,7 +149,7 @@ public class JUnit5EventsTest {
   @Test
   void containerDisabled() throws Exception {
     JUnit5TestRunnerBuilder builder = new JUnit5TestRunnerBuilder();
-    JUnit5TestRunnerBuilder.TestDescriptorContext testContext = builder
+    TestDescriptorContext testContext = builder
       .withSendTree()
       .withTestFactory(MyTestClass.class, "brokenStream");
 
@@ -171,7 +172,8 @@ public class JUnit5EventsTest {
   @Test
   void singleMethodTestOneFromMyTest() {
     var request =
-      new JUnit5TestRunnerHelper().buildRequest(new String[]{"com.intellij.junit5.testData.InitStaticField$MyTest,testOne"}, new String[1], null);
+      new JUnit5TestRunnerHelper().buildRequest(new String[]{"com.intellij.junit5.testData.InitStaticField$MyTest,testOne"}, new String[1],
+                                                null);
     var selectors = request.getSelectorsByType(DiscoverySelector.class);
     Assertions.assertFalse(selectors.isEmpty(), "Selectors should not be empty");
 
@@ -183,10 +185,10 @@ public class JUnit5EventsTest {
   @Test
   void testEscaping() throws NoSuchMethodException {
     JUnit5TestRunnerBuilder builder = new JUnit5TestRunnerBuilder();
-    JUnit5TestRunnerBuilder.TestDescriptorContext testContext = builder
+    TestDescriptorContext testContext = builder
       .withRootName("testClass")
       .withPresentableName("testClass")
-      .withTestMethod(AnnotationsTestClass.class, "test1");
+      .withTestMethod(AnnotationsTestClass.class, "test1", "testClass", "testMethod");
 
     builder.buildTestPlan().execute();
     testContext.startExecution().finish();
@@ -196,6 +198,35 @@ public class JUnit5EventsTest {
                               ##TC[rootName name='testClass' location='java:suite://testClass']
                               ##TC[testStarted id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='|[test|'s method|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' locationHint='java:test://com.intellij.junit5.testData.AnnotationsTestClass/test1' metainfo='']
                               ##TC[testFinished id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='|[test|'s method|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0']
+                              """, builder.getNormalizedTestOutput());
+  }
+
+  @Test
+  void parallelSiblingClassesDoNotReportFinishedTestAsIgnored() throws Exception {
+    JUnit5TestRunnerBuilder builder = new JUnit5TestRunnerBuilder();
+    TestDescriptorContext classA = builder.withTestMethod(MyTestClass.class, "test1", "classA", "methodA");
+    TestDescriptorContext classB = builder.withTestMethod(MyTestClass.class, "test1", "classB", "methodB");
+
+    builder.buildTestPlan().execute();
+
+    // Interleave sibling classes as parallel execution does: classA's method finishes,
+    // then classB's suite starts, and only afterwards classA's suite finishes.
+    classA.startSuiteOnly().startTestOnly().finish();
+    classB.startSuiteOnly();
+    classA.finishSuiteOnly();
+    classB.startTestOnly().finish();
+    classB.finishSuiteOnly();
+
+    Assertions.assertEquals("""
+                              ##TC[enteredTheMatrix]
+                              ##TC[testSuiteStarted id='|[engine:engine|]/|[class:classA|]' name='MyTestClass' nodeId='|[engine:engine|]/|[class:classA|]' parentNodeId='0' locationHint='java:suite://com.intellij.junit5.testData.MyTestClass']
+                              ##TC[testStarted id='|[engine:engine|]/|[class:classA|]/|[method:methodA|]' name='test1()' nodeId='|[engine:engine|]/|[class:classA|]/|[method:methodA|]' parentNodeId='|[engine:engine|]/|[class:classA|]' locationHint='java:test://com.intellij.junit5.testData.MyTestClass/test1' metainfo='']
+                              ##TC[testFinished id='|[engine:engine|]/|[class:classA|]/|[method:methodA|]' name='test1()' nodeId='|[engine:engine|]/|[class:classA|]/|[method:methodA|]' parentNodeId='|[engine:engine|]/|[class:classA|]']
+                              ##TC[testSuiteStarted id='|[engine:engine|]/|[class:classB|]' name='MyTestClass' nodeId='|[engine:engine|]/|[class:classB|]' parentNodeId='0' locationHint='java:suite://com.intellij.junit5.testData.MyTestClass']
+                              ##TC[testSuiteFinished id='|[engine:engine|]/|[class:classA|]' name='MyTestClass' nodeId='|[engine:engine|]/|[class:classA|]' parentNodeId='0']
+                              ##TC[testStarted id='|[engine:engine|]/|[class:classB|]/|[method:methodB|]' name='test1()' nodeId='|[engine:engine|]/|[class:classB|]/|[method:methodB|]' parentNodeId='|[engine:engine|]/|[class:classB|]' locationHint='java:test://com.intellij.junit5.testData.MyTestClass/test1' metainfo='']
+                              ##TC[testFinished id='|[engine:engine|]/|[class:classB|]/|[method:methodB|]' name='test1()' nodeId='|[engine:engine|]/|[class:classB|]/|[method:methodB|]' parentNodeId='|[engine:engine|]/|[class:classB|]']
+                              ##TC[testSuiteFinished id='|[engine:engine|]/|[class:classB|]' name='MyTestClass' nodeId='|[engine:engine|]/|[class:classB|]' parentNodeId='0']
                               """, builder.getNormalizedTestOutput());
   }
 }

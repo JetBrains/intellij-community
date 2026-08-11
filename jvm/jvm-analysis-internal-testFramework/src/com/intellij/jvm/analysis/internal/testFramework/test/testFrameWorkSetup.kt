@@ -19,8 +19,8 @@ internal fun ModifiableRootModel.addJUnit3Library() {
 }
 
 internal fun ModifiableRootModel.addJUnit4Library() {
-  val jar = File(PathUtil.getJarPathForClass(org.junit.Test::class.java))
-  PsiTestUtil.addLibrary(this, "junit4", jar.parent, jar.name)
+  val libraryJar = Path.of(IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4").classesPaths.single())
+  PsiTestUtil.addLibrary(this, "junit4", libraryJar.parent.toString(), libraryJar.fileName.toString())
 }
 
 internal fun ModifiableRootModel.addHamcrestLibrary() {

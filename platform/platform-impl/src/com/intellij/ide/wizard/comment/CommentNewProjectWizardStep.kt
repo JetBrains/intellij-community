@@ -8,9 +8,11 @@ import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.event.HyperlinkEvent
 
+@ApiStatus.Internal
 abstract class CommentNewProjectWizardStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent) {
   abstract val comment: @Nls(capitalization = Nls.Capitalization.Sentence) String
 

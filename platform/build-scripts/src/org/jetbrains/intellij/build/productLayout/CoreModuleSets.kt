@@ -36,6 +36,7 @@ object CoreModuleSets {
    */
   fun librariesPlatform(): ModuleSet = moduleSet("libraries.platform") {
     embeddedModule("intellij.libraries.java.compatibility")
+    embeddedModule("intellij.libraries.jetbrains.annotations")
 
     embeddedModule("intellij.libraries.kotlin.reflect")
     // intellij.platform.wsl.impl and intellij.platform.util.http uses it
@@ -100,6 +101,7 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.jaxen")
     embeddedModule("intellij.libraries.jbr")
     embeddedModule("intellij.libraries.jcip")
+    embeddedModule("intellij.libraries.jna")
     embeddedModule("intellij.libraries.jsoup")
     embeddedModule("intellij.libraries.jsonpath")
     embeddedModule("intellij.libraries.jsvg")
@@ -113,6 +115,7 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.netty.buffer")
     embeddedModule("intellij.libraries.netty.codec.compression")
     embeddedModule("intellij.libraries.netty.codec.http")
+    embeddedModule("intellij.libraries.netty.codec.protobuf")
     embeddedModule("intellij.libraries.netty.handler.proxy")
 
     embeddedModule("intellij.libraries.oro.matcher")
@@ -136,6 +139,19 @@ object CoreModuleSets {
   }
 
   /**
+   * Eclipse LSP4J library wrapper modules used by LSP and DAP support.
+   *
+   * Kept separate from `librariesPlatform()` because LSP4J is not a universal platform dependency.
+   * Kept embedded because LSP support modules are embedded.
+   */
+  fun librariesLsp4j(): ModuleSet = moduleSet("libraries.lsp4j", outputModule = "intellij.platform.lsp") {
+    embeddedModule("intellij.libraries.eclipse.lsp4j")
+    embeddedModule("intellij.libraries.eclipse.lsp4j.debug")
+    embeddedModule("intellij.libraries.eclipse.lsp4j.jsonrpc")
+    embeddedModule("intellij.libraries.eclipse.lsp4j.jsonrpc.debug")
+  }
+
+  /**
    * Jackson 2 library wrapper modules.
    *
    * Kept as a dedicated module set so that `librariesPlatform()` stays focused on truly universal utilities.
@@ -153,7 +169,6 @@ object CoreModuleSets {
     module("intellij.libraries.jackson.dataformat.toml")
 
     module("intellij.libraries.jackson.datatype.jdk8")
-    module("intellij.libraries.jackson.datatype.joda")
     module("intellij.libraries.jackson.datatype.jsr310")
 
     embeddedModule("intellij.libraries.jackson.module.kotlin")
@@ -355,18 +370,27 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.configurationStore.impl")
 
     embeddedModule("intellij.platform.lang.core")
+    embeddedModule("intellij.platform.testIntegration")
+    embeddedModule("intellij.platform.testIntegration.ui")
     embeddedModule("intellij.platform.lang")
     embeddedModule("intellij.platform.lang.impl")
+    embeddedModule("intellij.platform.syntax.psi")
 
     embeddedModule("intellij.platform.statistics")
     embeddedModule("intellij.platform.statistics.config")
     embeddedModule("intellij.platform.statistics.uploader")
     embeddedModule("intellij.platform.experiment")
+    embeddedModule("intellij.platform.project")
+    embeddedModule("intellij.platform.ide.progress")
     embeddedModule("intellij.platform.ide.impl")
+    // keeps marketplace-zip-signer out of the core classloader - loaded only when a plugin signature is verified
+    module("intellij.platform.ide.pluginSignatureVerifier")
+    // private wrapper used only by intellij.platform.ide.pluginSignatureVerifier, so it is not embedded
+    // and is not in librariesPlatform() - products without ide.impl do not need it
+    module("intellij.libraries.zip.signer")
 
     embeddedModule("intellij.platform.rd.community")
 
-    embeddedModule("intellij.platform.ide.ui.inspector")
     embeddedModule("intellij.platform.remote.core")
     embeddedModule("intellij.platform.ide.remote")
     embeddedModule("intellij.platform.threadDumpParser")
@@ -374,6 +398,7 @@ object CoreModuleSets {
     // todo not used by platform - move to plugin
     embeddedModule("intellij.platform.ide.designer")
 
+    embeddedModule("intellij.platform.ide.bootstrap")
     embeddedModule("intellij.platform.bootstrap")
 
     // depends on intellij.platform.ide.impl
@@ -437,7 +462,9 @@ object CoreModuleSets {
     moduleSet(fleet())
 
     // Base RPC and kernel modules (backend modules are in rpc(), not here)
-    embeddedModule("intellij.platform.rpc")
+    embeddedModule("intellij.platform.klogger")
+    module("intellij.platform.rpc")
+    embeddedModule("intellij.platform.rpc.lite")
     embeddedModule("intellij.platform.kernel")
   }
 

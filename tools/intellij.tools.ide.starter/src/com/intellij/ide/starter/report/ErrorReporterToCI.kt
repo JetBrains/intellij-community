@@ -4,10 +4,11 @@ import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.report.ErrorReporter.Companion.MESSAGE_FILENAME
 import com.intellij.ide.starter.report.ErrorReporter.Companion.STACKTRACE_FILENAME
 import com.intellij.ide.starter.report.ErrorReporter.Companion.SYNTHETIC_TESTNAME_FILENAME
-import com.intellij.ide.starter.report.ErrorReporter.Companion.ACTIVE_TESTNAME_FILENAME
+import com.intellij.ide.starter.runner.IDEReportingData
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter
 import com.intellij.util.SystemProperties
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -21,37 +22,48 @@ object ErrorReporterToCI : ErrorReporter {
   /**
    * Read files from errors directories, written by performance testing plugin and report them as errors.
    * Read threadDumps folders and report them as freezes.
-   * Take a look at [com.jetbrains.performancePlugin.ScriptErrorReporter]
+   * Take a look at `com.jetbrains.performancePlugin.ScriptErrorReporter`.
    */
   override fun reportErrorsAsFailedTests(runContext: IDERunContext) {
-    reportErrors(runContext, collectErrors(runContext.logsDir) + collectScriptErrors(runContext.logsDir))
+    runContext.registeredIdeReportingData().forEach { ideReportingData ->
+      reportErrors(ideReportingData)
+    }
   }
 
-  fun collectErrors(logsDir: Path): List<Error> {
-    if (SystemProperties.getBooleanProperty("DO_NOT_REPORT_ERRORS", false)) return listOf()
-    return collectExceptions(getErrorsDir(logsDir))
+  @ApiStatus.Internal
+  fun collectErrors(runContext: IDERunContext): List<Error> {
+    return runContext.registeredIdeReportingData().flatMap { ideReportingData -> collectErrors(ideReportingData) }
+  }
+
+  private fun collectErrors(ideReportingData: IDEReportingData): List<Error> {
+    return collectErrors(ideReportingData.logsDir, ideReportingData.allowedIdeErrorReportFiles)
+  }
+
+  fun collectErrors(logsDir: Path, allowedFiles: Set<Path>? = null): List<Error> {
+    if (SystemProperties.getBooleanProperty("DO_NOT_REPORT_ERRORS", false)) return emptyList()
+    return collectExceptions(getErrorsDir(logsDir), allowedFiles) +
+           collectExceptions(getScriptErrorsDir(logsDir), allowedFiles)
   }
 
   fun getErrorsDir(logsDir: Path): Path? {
-    //client has structure log/2024-04-11_at_11-06-10/script-errors so we need to look deeeper
-    return Files.find(logsDir, 3, { path, _ -> path.name == ErrorReporter.ERRORS_DIR_NAME }).findFirst().getOrNull()
+    return findReportDir(logsDir, ErrorReporter.ERRORS_DIR_NAME)
   }
 
-  /**
-   * To support legacy formant of errors reporting in "script-errors" dir
-   */
-  fun collectScriptErrors(logsDir: Path): List<Error> {
-    val rootErrorsDir = Files.find(logsDir, 3, { path, _ -> path.name == "script-" + ErrorReporter.ERRORS_DIR_NAME })
-      .findFirst().getOrNull()
+  private fun getScriptErrorsDir(logsDir: Path): Path? {
+    return findReportDir(logsDir, "script-${ErrorReporter.ERRORS_DIR_NAME}")
+  }
 
-    if (SystemProperties.getBooleanProperty("DO_NOT_REPORT_ERRORS", false)) return listOf()
-    return collectExceptions(rootErrorsDir)
+  private fun findReportDir(logsDir: Path, directoryName: String): Path? {
+    // Client logs may be nested, for example log/2024-04-11_at_11-06-10/errors.
+    return Files.find(logsDir, 3, { path, _ -> path.name == directoryName }).use { paths ->
+      paths.findFirst().getOrNull()
+    }
   }
 
   /**
    * Method only collects exceptions from [ErrorReporter.ERRORS_DIR_NAME] and skip freezes
    */
-  private fun collectExceptions(rootErrorsDir: Path?): List<Error> {
+  private fun collectExceptions(rootErrorsDir: Path?, allowedFiles: Set<Path>?): List<Error> {
     if (rootErrorsDir == null || !rootErrorsDir.isDirectory()) {
       return emptyList()
     }
@@ -60,6 +72,7 @@ object ErrorReporterToCI : ErrorReporter {
     for (errorDir in errorsDirectories) {
       val messageFile = errorDir.resolve(MESSAGE_FILENAME)
       if (!messageFile.exists()) continue
+      if (allowedFiles != null && messageFile.toAbsolutePath().normalize() !in allowedFiles) continue
 
       val messageText = messageFile.readText().trimIndent().trim()
       val syntheticTestNameFile = errorDir.resolve(SYNTHETIC_TESTNAME_FILENAME)
@@ -70,9 +83,7 @@ object ErrorReporterToCI : ErrorReporter {
         val stacktraceFile = errorDir.resolve(STACKTRACE_FILENAME)
         if (!stacktraceFile.exists()) continue
         val stackTrace = stacktraceFile.readText().trimIndent().trim()
-        val activeTestNameFile = errorDir.resolve(ACTIVE_TESTNAME_FILENAME)
-        val activeTestName = if (activeTestNameFile.exists()) activeTestNameFile.readText().trim().takeIf { it.isNotEmpty() } else null
-        errors.add(Error(messageText, stackTrace, "", errorType, syntheticTestName, activeTestName))
+        errors.add(Error(messageText, stackTrace, "", errorType, syntheticTestName = syntheticTestName))
       }
       else if (errorType == ErrorType.FREEZE) {
         errorDir.listDirectoryEntries("dump*").firstOrNull()?.let { threadDump ->
@@ -119,14 +130,14 @@ object ErrorReporterToCI : ErrorReporter {
     throw Exception("Thread dump file without methods!")
   }
 
-  fun reportErrors(runContext: IDERunContext, errors: List<Error>) {
-    val failureDetailsProvider = FailureDetailsOnCI.instance
-    for (error in errors) {
+  private fun reportErrors(ideReportingData: IDEReportingData) {
+    val failureDetailsProvider = DetailsOnCI.instance
+    for (error in collectErrors(ideReportingData)) {
       reportError(
         error = error,
-        failureDetailsMessage = failureDetailsProvider.getFailureDetails(runContext, error),
-        urlToLogs = failureDetailsProvider.getLinkToCIArtifacts(runContext),
-        allureContextName = runContext.contextName,
+        failureDetailsMessage = failureDetailsProvider.getDetails(ideReportingData),
+        urlToLogs = failureDetailsProvider.getLinkToCIArtifacts(ideReportingData),
+        allureContextName = ideReportingData.humanReadableTestName,
       )
     }
   }

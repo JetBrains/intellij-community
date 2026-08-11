@@ -1,5 +1,5 @@
 // "Create property 'y' as constructor parameter" "true"
-// K2_ERROR: No parameter with name 'y' found.
+// K2_ERROR: NAMED_PARAMETER_NOT_FOUND
 annotation class Annotation(val x: Int)
 
 @Annotation(x = 1, <caret>y = 2)

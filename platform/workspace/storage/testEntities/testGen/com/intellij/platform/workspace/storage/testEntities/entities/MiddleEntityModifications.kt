@@ -18,7 +18,7 @@ interface MiddleEntityBuilder : WorkspaceEntityBuilder<MiddleEntity>, BaseEntity
 }
 
 internal object MiddleEntityType : EntityType<MiddleEntity, MiddleEntityBuilder>() {
-  override val entityClass: Class<MiddleEntity> get() = MiddleEntity::class.java
+  override val entityImplClass: Class<*> get() = MiddleEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = MiddleEntityImpl.Builder::class.java
   operator fun invoke(
     property: String,

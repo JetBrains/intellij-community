@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Cell
@@ -19,16 +20,17 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.associatedModulePath
+import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.pySdkAdditionalData
 
 /**
  * Configurable for local Python interpreter.
  *
  */
-class PythonLocalInterpreterConfigurable(private val project: Project, private val module: Module?, private val sdk: Sdk)
-  : BoundConfigurable(sdk.name) {
+internal class PythonLocalInterpreterConfigurable(private val project: Project, private val module: Module?, private val sdk: Sdk) :
+  BoundConfigurable(sdk.name) {
   private val initialSdkHomePath = sdk.homePath
 
   private val interpreterPath = AtomicProperty(sdk.homePath ?: "")
@@ -97,12 +99,19 @@ class PythonLocalInterpreterConfigurable(private val project: Project, private v
 
     if (isSdkAssociatedWithOtherPathInitiallyAndReset || wasSdkAssociatedWithPathInitially != isSdkAssociatedWithPath) {
       if (isSdkAssociatedWithPath) {
-        if (module != null) sdkModificator.associateWithModule(module)
-        else sdkModificator.associateWithProject(project)
+        if (module != null) {
+          val basePath = module.baseDir?.path ?: throw IllegalArgumentException("Module $module has no roots and can't be associated")
+          sdk.pySdkAdditionalData.associatedModulePath = basePath
+        }
+        else {
+          val projectBasePath = project.basePath
+          if (projectBasePath != null) sdk.pySdkAdditionalData.associatedModulePath = projectBasePath
+        }
       }
       else {
-        sdkModificator.resetAssociatedModulePath()
+        sdk.pySdkAdditionalData.associatedModulePath = null
       }
+      sdk.sdkModificator.sdkAdditionalData = sdk.sdkAdditionalData
     }
 
     WriteAction.run<Throwable> {

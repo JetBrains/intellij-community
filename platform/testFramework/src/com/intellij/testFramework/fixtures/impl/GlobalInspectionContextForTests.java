@@ -37,7 +37,7 @@ public class GlobalInspectionContextForTests extends GlobalInspectionContextImpl
   }
 
   @Override
-  protected boolean includeDoNotShow(final InspectionProfile profile) {
+  protected boolean includeDoNotShow(final @NotNull InspectionProfile profile) {
     return true;
   }
 

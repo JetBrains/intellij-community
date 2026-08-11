@@ -1,11 +1,30 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.codeInsight.postfix">
+<idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.codeInsight.liveTemplates"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
-    <module name="kotlin.code-insight.live-templates.shared"/>
+    <module name="intellij.kotlin.codeInsight.utils"/>
+    <module name="intellij.kotlin.refactorings.base"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="kotlin.fir.frontend-independent"/>
   </dependencies>
   <!-- endregion -->
 

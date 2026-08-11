@@ -9,11 +9,13 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PartiallyKnownString;
 import com.intellij.util.SmartList;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class PathVariableDeclarationUtils {
   public static PsiReference @NotNull [] createPathVariableReferencesForPks(
     @NotNull PsiElement host,

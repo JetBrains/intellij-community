@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -135,6 +136,7 @@ abstract class LocalHistory {
    * @return the byte array representing the content of the file, or null if local history is not initialized,
    *         file is not tracked in the local history, no matching entry is found or content in the matching entry is not available
    */
+  @RequiresBackgroundThread
   abstract fun getByteContent(file: VirtualFile, condition: FileRevisionTimestampComparator): ByteArray?
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.LangBundle;
@@ -30,6 +30,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -113,6 +114,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         return super.getPreferredSize();
       }
     };
+    scrollPane.setBorder(JBUI.Borders.empty());
     myPanel.add(scrollPane
       , new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                                JBInsets.emptyInsets(), 0, 0));
@@ -380,6 +382,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     myOptions.add(new SelectionOption(null, fieldName, title, groupName, null, null, options, values));
   }
 
+  @ApiStatus.Internal
   protected void addCustomOption(@NotNull Option option) {
     myOptions.add(option);
   }
@@ -388,6 +391,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     return null;
   }
 
+  @ApiStatus.Internal
   protected @Nullable JComponent getCustomNodeEditor(@NotNull MyTreeNode node) {
     return null;
   }
@@ -526,6 +530,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
   public final ColumnInfo[] COLUMNS = new ColumnInfo[]{TITLE, VALUE};
 
+  @ApiStatus.Internal
   protected static final class MyTreeNode extends DefaultMutableTreeNode {
     private final Option myKey;
     private final String myText;
@@ -686,6 +691,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
+  @ApiStatus.Internal
   protected abstract static class Option extends OrderedOption {
     final @NotNull String title;
     final @Nullable String groupName;
@@ -714,6 +720,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     public abstract void setValue(Object value, CodeStyleSettings settings);
   }
 
+  @ApiStatus.Internal
   protected abstract class FieldOption extends Option {
     final @Nullable Class<? extends CustomCodeStyleSettings> clazz;
     final @NotNull Field field;
@@ -1026,6 +1033,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
+  @ApiStatus.Internal
   protected static final class ColoredLabel extends JLabel {
     public ColoredLabel(@Nls String text, Color foreground) {
       super(text);

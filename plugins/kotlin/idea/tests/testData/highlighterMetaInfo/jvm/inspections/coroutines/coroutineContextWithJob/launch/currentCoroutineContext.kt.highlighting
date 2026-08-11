@@ -12,4 +12,4 @@ import kotlinx.coroutines.currentCoroutineContext
 suspend fun CoroutineScope.test() {
     launch(<!HIGHLIGHTING("severity='WARNING'; descr='Passing 'CoroutineContext' with a 'Job' to 'launch' builder can lead to structured concurrency violations'")!>currentCoroutineContext()<!>) {}
 }
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutineContextWithJobInspection

@@ -2,6 +2,8 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -9,10 +11,16 @@ import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.CloseProjectWindowHelper
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenPreventWelcomeTabFocusService
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTab
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabVirtualFile
 import com.intellij.util.application
 import com.intellij.util.asSafely
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal class WelcomeScreenProjectActivity : ProjectActivity {
   init {
@@ -27,6 +35,24 @@ internal class WelcomeScreenProjectActivity : ProjectActivity {
     if (project.isWelcomeExperienceProject()) {
       dropModalWelcomeScreenOnClose(project)
       subscribeToWelcomeScreenTabClose(project)
+      focusLeftProjectView(project)
+    }
+  }
+
+  private suspend fun focusLeftProjectView(project: Project) {
+    if (!project.serviceAsync<WelcomeScreenPreventWelcomeTabFocusService>().isAllowedFocusOnWelcomeTab()) {
+      return
+    }
+    val toolWindowManager = project.serviceAsync<ToolWindowManager>()
+    withContext(Dispatchers.EDT) {
+      toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW)?.activate(null)
+    }
+    // Re-enable focusing the welcome tab content only after the focus transfer to the project view has been
+    // processed (a later EDT event), so the passive startup open does not steal focus first (avoids the IJPL-248588
+    // flicker), while later user-driven activations (Esc from the project view, clicking the tab) still focus the
+    // tab content (IJPL-203369).
+    withContext(Dispatchers.EDT) {
+      WelcomeScreenRightTab.getInstance(project)?.enableContentFocus()
     }
   }
 

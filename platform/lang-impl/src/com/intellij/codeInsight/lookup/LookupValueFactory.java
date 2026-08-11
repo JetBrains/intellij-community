@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.Iconable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,7 @@ import javax.swing.Icon;
  * @deprecated use {@link LookupElementBuilder}
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 @Deprecated(forRemoval = true)
 public final class LookupValueFactory {
 
@@ -26,6 +28,7 @@ public final class LookupValueFactory {
     return new LookupValueWithIconAndHint(name, icon, hint);
   }
 
+  @ApiStatus.Internal
   public static class LookupValueWithIcon implements PresentableLookupValue, Iconable {
     private final String myName;
     private final Icon myIcon;
@@ -55,6 +58,7 @@ public final class LookupValueFactory {
     }
   }
 
+  @ApiStatus.Internal
   public static final class LookupValueWithIconAndHint extends LookupValueWithIcon implements LookupValueWithUIHint {
 
     private final String myHint;

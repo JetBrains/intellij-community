@@ -4,11 +4,13 @@ package org.jetbrains.plugins.gradle.service.task
 import org.gradle.util.GradleVersion
 import java.util.function.Supplier
 
+internal const val DEFAULT_INIT_SCRIPT_NAME = "ijMiscInit"
+
 interface VersionSpecificInitScript {
   val script: String
   val filePrefix: String?
   val isApplicable: (GradleVersion) -> Boolean
-  fun isApplicableTo(ver: GradleVersion) = isApplicable(ver)
+  fun isApplicableTo(ver: GradleVersion): Boolean = isApplicable(ver)
 }
 
 class LazyVersionSpecificInitScript(scriptSupplier: Supplier<String>,

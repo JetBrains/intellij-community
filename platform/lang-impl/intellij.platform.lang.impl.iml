@@ -14,9 +14,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>
-                <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-              </args>
+              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -31,6 +29,7 @@
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
     </content>
     <orderEntry type="module" module-name="intellij.platform.boot" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.lite" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.core" />
@@ -68,7 +67,7 @@
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
     <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.plugins" />
-    <orderEntry type="library" name="jna" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jna" />
     <orderEntry type="module" module-name="intellij.libraries.lz4" />
     <orderEntry type="module" module-name="intellij.platform.util" exported="" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
@@ -127,7 +126,6 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.platform.util.io.storages" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
-    <orderEntry type="module" module-name="intellij.platform.ide.internal" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
@@ -146,5 +144,8 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.platform.locking.impl" />
     <orderEntry type="module" module-name="fleet.rhizomedb" />
+    <orderEntry type="module" module-name="intellij.platform.testIntegration" />
+    <orderEntry type="module" module-name="intellij.platform.testIntegration.ui" />
+    <orderEntry type="module" module-name="intellij.platform.eel.nioFs" />
   </component>
 </module>

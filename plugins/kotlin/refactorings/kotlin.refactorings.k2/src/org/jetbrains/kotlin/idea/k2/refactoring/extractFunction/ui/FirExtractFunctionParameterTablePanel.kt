@@ -7,9 +7,10 @@ import com.intellij.ui.components.JBComboBoxLabel
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent
 import com.intellij.util.ui.AbstractTableCellEditor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.Parameter
@@ -23,20 +24,20 @@ import javax.swing.table.DefaultTableCellRenderer
 abstract class FirExtractFunctionParameterTablePanel :
     AbstractParameterTablePanel<Parameter, FirExtractFunctionParameterTablePanel.ParameterInfo>() {
     companion object {
-        const val PARAMETER_TYPE_COLUMN = 2
+        const val PARAMETER_TYPE_COLUMN: Int = 2
     }
 
     class ParameterInfo(
         originalParameter: Parameter,
         val isReceiver: Boolean
     ) : AbstractParameterInfo<Parameter>(originalParameter) {
-        var type = originalParameter.parameterType
+        var type: KaType = originalParameter.parameterType
 
         init {
             name = if (isReceiver) KotlinBundle.message("text.receiver") else originalParameter.name
         }
 
-        override fun toParameter() = object : Parameter by originalParameter {
+        override fun toParameter(): Parameter = object : Parameter by originalParameter {
             override val name: String = this@ParameterInfo.name
             override val parameterType: KaType = this@ParameterInfo.type
         }

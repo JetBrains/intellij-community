@@ -29,12 +29,13 @@ class AutomaticParameterRenamer(element: KtParameter, newName: String) : Automat
     }
 
     private fun processHierarchy(element: KtParameter, newName: String) {
-        val function = element.ownerFunction ?: return
+        val function = element.ownerDeclaration ?: return
         for (overrider in KotlinFindUsagesSupport.searchOverriders(function, function.useScope)) {
             val callable = overrider.namedUnwrappedElement ?: continue
             if (!callable.canRefactorElement()) continue
             val parameter: PsiNamedElement? = when (callable) {
                 is KtCallableDeclaration -> callable.valueParameters.firstOrNull { it.name == element.name }
+                    ?: callable.contextParameters.firstOrNull { it.name == element.name }
                 is PsiMethod -> callable.parameterList.parameters.firstOrNull { it.name == element.name }
                 else -> null
             }
@@ -54,7 +55,7 @@ class AutomaticParameterRenamer(element: KtParameter, newName: String) : Automat
 }
 
 open class AutomaticParameterRenamerFactory : AutomaticRenamerFactory {
-    override fun isApplicable(element: PsiElement) = element is KtParameter && element.ownerFunction is KtNamedFunction
+    override fun isApplicable(element: PsiElement) = element is KtParameter && element.ownerDeclaration is KtNamedFunction
 
     override fun getOptionName() = RefactoringBundle.message("rename.parameters.hierarchy")
 

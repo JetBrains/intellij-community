@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.SuspiciousCallableReferenceInLambdaInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.SuspiciousCallableReferenceInLambdaInspection

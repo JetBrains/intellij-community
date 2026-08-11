@@ -1,4 +1,21 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.internal.actions">
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.platform.interface"/>
+    <module name="intellij.libraries.kotlinc.low.level.api.fir"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="kotlin.fir.frontend-independent"/>
+  </dependencies>
+  <!-- endregion -->
   <resource-bundle>messages.KotlinInternalBundle</resource-bundle>
   <actions>
       <action id="InvalidateK2CachesInternalAction" class="org.jetbrains.kotlin.idea.internal.actions.InvalidateK2CachesInternalAction" internal="true">

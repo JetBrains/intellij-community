@@ -3,10 +3,13 @@ package com.intellij.codeInsight.codeVision
 
 import com.intellij.openapi.editor.RangeMarker
 import com.jetbrains.rd.util.lifetime.Lifetime
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class CodeVisionModel {
   private val listeners = hashSetOf<Listener>()
 
+  @ApiStatus.Internal
   interface Listener {
     fun onLensesAddedOrUpdated(lensesMarkers: Iterable<RangeMarker>)
     fun onLensesRemoved(lensesMarkers: Iterable<RangeMarker>)

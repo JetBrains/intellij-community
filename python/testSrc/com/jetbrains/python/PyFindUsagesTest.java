@@ -1,6 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -15,6 +19,9 @@ import java.util.Comparator;
 import java.util.List;
 
 
+@Subsystems.CodeInsight
+@Components.FindUsages
+@Layers.Functional
 public class PyFindUsagesTest extends PyTestCase {
   public void testInitUsages() {   // PY-292
     final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/InitUsages.py");

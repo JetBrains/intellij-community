@@ -1,0 +1,78 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.groovy.langInjection` start
+jvm_library(
+    name = "langInjection",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.groovy.langInjection",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//plugins/groovy/groovy-psi:psi",
+        "//platform/core-api:core",
+        "//platform/indexing-impl",
+        "//java/java-psi-api:psi",
+        "//java/java-psi-impl:psi-impl",
+        "//platform/indexing-api:indexing",
+        "//platform/util/jdom",
+        "//platform/lang-impl",
+        "//xml/xml-psi-api:psi",
+        "//plugins/IntelliLang:langInjection",
+        "//platform/ide-core",
+        "//platform/core-impl",
+        "//platform/projectModel-api:projectModel",
+        "//java/langInjection",
+        "//platform/lang-api:lang",
+    ],
+)
+
+jvm_library(
+    name = "langInjection_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.groovy.langInjection",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":langInjection",
+        "//plugins/groovy/groovy-psi:psi_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/indexing-impl:indexing-impl_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//java/java-psi-impl:psi-impl_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//xml/xml-psi-api:psi_test_lib",
+        "//plugins/IntelliLang:langInjection_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//java/langInjection:langInjection_test_lib",
+        "//platform/lang-api:lang_test_lib",
+    ],
+)
+### auto-generated section `build intellij.groovy.langInjection` end
+
+### auto-generated section `iml intellij.groovy.langInjection` start
+exports_files(
+    [
+        "intellij.groovy.langInjection.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.groovy.langInjection` end

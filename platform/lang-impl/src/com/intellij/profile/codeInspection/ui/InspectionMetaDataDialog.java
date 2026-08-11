@@ -17,6 +17,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.FormBuilder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
+@ApiStatus.Internal
 public final class InspectionMetaDataDialog extends DialogWrapper {
   private final Pattern mySuppressIdPattern = Pattern.compile(LocalInspectionTool.VALID_ID_PATTERN);
 

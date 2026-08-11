@@ -1,5 +1,5 @@
 // "Make 'Foo' not open" "true"
-// K2_ERROR: Modifier 'open' is not applicable to 'standalone object'.
+// K2_ERROR: WRONG_MODIFIER_TARGET
 <caret>open object Foo {
     fun a(): Int = 1
 }

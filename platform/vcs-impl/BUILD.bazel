@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.vcs.impl` start
-
 jvm_library(
     name = "vcs-impl",
     srcs = glob(
@@ -204,7 +203,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.vcs.impl` end
 
 ### auto-generated section `build intellij.platform.vcs.impl.tests` start
-
 jvm_library(
     name = "vcs-impl-tests",
     srcs = glob(
@@ -302,6 +300,8 @@ jvm_library(
         "//libraries/stream:stream_test_lib",
         "//platform/statistics",
         "//platform/statistics:statistics_test_lib",
+        "//platform/statistics/testFramework",
+        "//platform/statistics/testFramework:testFramework_test_lib",
         "//platform/util",
         "//platform/util:util_test_lib",
         "//libraries/fastutil",
@@ -389,6 +389,10 @@ jvm_library(
         "//platform/vcs-impl/shared:vcs-impl-shared-tests_test_lib",
         "//fleet/rhizomedb",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.vcs.impl.tests` end
@@ -403,7 +407,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.vcs.impl.tests` end
 
 ### auto-generated section `test intellij.platform.vcs.impl.tests` start
-
 jps_test(
     name = "vcs-impl-tests_test",
     runtime_deps = [":vcs-impl-tests_test_lib"],

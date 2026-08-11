@@ -54,13 +54,14 @@ import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunner
 import org.intellij.plugins.markdown.settings.MarkdownSettingsUtil.belongsToTheProject
 import org.intellij.plugins.markdown.settings.pandoc.PandocSettingsPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
+import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import javax.swing.DefaultComboBoxModel
 import kotlin.io.path.isDirectory
 import kotlin.io.path.notExists
 
-internal class MarkdownSettingsConfigurable(private val project: Project): BoundSearchableConfigurable(
+internal class MarkdownSettingsConfigurable(private val project: Project) : BoundSearchableConfigurable(
   MarkdownBundle.message("markdown.settings.name"),
   MarkdownBundle.message("markdown.settings.name"),
   _id = ID
@@ -122,6 +123,10 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
           .bindSelected(settings::showProblemsInCodeBlocks)
       }
       row {
+        checkBox(MarkdownBundle.message("markdown.settings.strip.trailing.spaces"))
+          .bindSelected(settings::isStripTrailingSpacesOnSave)
+      }
+      row {
         checkBox(MarkdownBundle.message("markdown.settings.group.documents.in.project.tree"))
           .bindSelected(settings::isFileGroupingEnabled)
           .onApply { ProjectView.getInstance(project).refresh(ProjectViewUpdateCause.SETTINGS) }
@@ -134,6 +139,19 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
           )
           onApply { notifyExtensionsChanged() }
         }
+      }
+      row(MarkdownBundle.message("markdown.settings.commandrunner.directory")) {
+        comboBox(
+          model = DefaultComboBoxModel(arrayOf(false, true)),
+          renderer = textListCellRenderer("") { value: Boolean? ->
+            value?.let {
+              MarkdownBundle.message(if (it) "markdown.settings.commandrunner.directory.file" else "markdown.settings.commandrunner.directory.project")
+            }
+          }
+        ).bindItem(
+          getter = { settings.useFileDirectoryForCommands },
+          setter = { settings.useFileDirectoryForCommands = it }
+        ).widthGroup(comboBoxWidthGroup)
       }.bottomGap(BottomGap.SMALL)
       extensionsListRow().apply {
         onApply { notifyExtensionsChanged() }
@@ -254,7 +272,7 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
   private fun Row.customCssTextFieldWithBrowserButton(): Cell<TextFieldWithBrowseButton> {
     val field = textFieldWithBrowseButton(
       project = project,
-      fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor("css")
+      fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor("css").withEnvironmentRestricted(true)
     )
     field.applyToComponent {
       disposable?.let { Disposer.register(it, this@applyToComponent) }
@@ -319,7 +337,7 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
       val extensionsSettings = MarkdownExtensionsSettings.getInstance()
       val extensionCheckBox = checkBox(text = extension.displayName).bindSelected(
         { extensionsSettings.extensionsEnabledState[extension.id] ?: false },
-        { extensionsSettings.extensionsEnabledState[extension.id] = it}
+        { extensionsSettings.extensionsEnabledState[extension.id] = it }
       ).gap(RightGap.SMALL)
       extensionCheckBox.enabled((extension as? MarkdownExtensionWithExternalFiles)?.isAvailable ?: true)
         .contextHelp(extension.description)
@@ -397,6 +415,6 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
       }
     }
 
-    val fontSizeOptions = listOf(8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72)
+    val fontSizeOptions: List<Int> = PreviewLAFThemeStyles.fontSizeOptions
   }
 }

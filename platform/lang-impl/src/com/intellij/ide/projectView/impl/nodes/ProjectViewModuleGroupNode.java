@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -36,6 +37,7 @@ public class ProjectViewModuleGroupNode extends ModuleGroupNode {
     return new ProjectViewModuleNode(getProject(), module, getSettings());
   }
 
+  @ApiStatus.Internal
   @Override
   protected @NotNull ModuleGroupNode createModuleGroupNode(@NotNull ModuleGroup moduleGroup) {
     return new ProjectViewModuleGroupNode(getProject(), moduleGroup, getSettings());

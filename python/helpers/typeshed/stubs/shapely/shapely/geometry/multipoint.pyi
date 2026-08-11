@@ -1,4 +1,5 @@
 from collections.abc import Collection
+from typing import Literal
 from typing_extensions import Self
 
 from .base import BaseMultipartGeometry
@@ -17,5 +18,7 @@ class MultiPoint(BaseMultipartGeometry[Point]):
     def __new__(self, points: MultiPoint | Collection[_PointLike] | None = None) -> Self: ...
     def svg(self, scale_factor: float = 1.0, fill_color: str | None = None, opacity: float | None = None) -> str: ...  # type: ignore[override]
     # more precise base overrides
+    @property
+    def geom_type(self) -> Literal["MultiPoint"]: ...
     @property
     def boundary(self) -> GeometryCollection: ...  # empty geometry collection

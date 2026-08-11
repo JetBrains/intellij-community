@@ -28,9 +28,9 @@ internal class CommandCompletionContributor : CompletionContributor(), DumbAware
         isNonWritten = !parameters.originalFile.isWritable,
         offset = parameters.editor.caretModel.offset,
         editor = parameters.editor
-      ) ?: return false
+      )
 
-      return !(commandType is InvocationCommandType.FullSuffix && factory.supportFiltersWithDoublePrefix())
+      return commandType != null
     }
     catch (e: Throwable) {
       rethrowControlFlowException(e)

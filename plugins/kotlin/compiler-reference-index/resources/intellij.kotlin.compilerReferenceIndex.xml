@@ -1,12 +1,32 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.search.refIndex" visibility="internal">
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.gradle"/>
     <module name="intellij.java.frontback.psi"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.gradle.gradle"/>
-    <module name="intellij.platform.jps.build"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
     <module name="intellij.maven"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.jps.build"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
@@ -35,7 +55,15 @@
 
     <languageCompilerRefAdapter.directInheritorProvider
             implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinDirectInheritorProvider"/>
+
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.search.refIndex.bta.CriMavenStartupActivity"
+                         order="after org.jetbrains.idea.maven.project.MavenProjectsManagerProjectActivity"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.search.refIndex.bta.CriMavenImportListener"
+              topic="org.jetbrains.idea.maven.project.MavenImportListener"/>
+  </projectListeners>
 
   <extensionPoints>
     <extensionPoint

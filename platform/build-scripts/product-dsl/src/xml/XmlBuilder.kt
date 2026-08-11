@@ -21,11 +21,14 @@ internal class ContentBuilder(@PublishedApi internal val sb: StringBuilder, @Pub
   /**
    * Appends a <module> element.
    */
-  fun module(name: String, loading: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL) {
+  fun module(name: String, loading: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL, requiredIfAvailable: String? = null) {
     sb.append("$indent<module name=\"$name\"")
     // Only output loading attribute for non-default values (OPTIONAL is default, omit it)
     if (loading != ModuleLoadingRuleValue.OPTIONAL) {
       sb.append(" loading=\"${loading.xmlValue}\"")
+    }
+    if (requiredIfAvailable != null) {
+      sb.append(" required-if-available=\"$requiredIfAvailable\"")
     }
     sb.append("/>\n")
   }
@@ -49,7 +52,7 @@ internal class ContentBuilder(@PublishedApi internal val sb: StringBuilder, @Pub
  * Extension function to append module with ContentModule data class.
  */
 internal fun ContentBuilder.module(contentModule: ContentModule) {
-  module(contentModule.moduleId.name, contentModule.loading)
+  module(contentModule.moduleId.name, contentModule.loading, contentModule.requiredIfAvailable?.name)
 }
 
 /**

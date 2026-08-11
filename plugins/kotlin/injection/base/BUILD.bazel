@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build kotlin.base.injection` start
-
 create_kotlinc_options(
     name = "custom_kotlin-base-injection",
     opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
@@ -34,7 +33,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin/references",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/guava",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
@@ -47,12 +47,12 @@ jvm_library(
         "//platform/util-ex",
         "//java/java-psi-api:psi",
         "//platform/code-style-api:codeStyle",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//plugins/IntelliLang:langInjection",
         "//plugins/kotlin/base/project-structure",
         "//java/langInjection",
         "//plugins/kotlin/base/psi",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//plugins/kotlin/base/analysis",
         ":plugins_IntelliLang_backend_provided",
     ],
@@ -71,6 +71,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-base-injection",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/guava:guava_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
@@ -83,10 +85,12 @@ jvm_library(
         "//platform/util-ex:util-ex_test_lib",
         "//java/java-psi-api:psi_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//plugins/IntelliLang:langInjection_test_lib",
         "//plugins/kotlin/base/project-structure:project-structure_test_lib",
         "//java/langInjection:langInjection_test_lib",
         "//plugins/kotlin/base/psi:psi_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//plugins/kotlin/base/analysis:analysis_test_lib",
         "//plugins/IntelliLang/backend",
         "//plugins/IntelliLang/backend:backend_test_lib",

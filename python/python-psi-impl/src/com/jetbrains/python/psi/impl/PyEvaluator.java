@@ -223,12 +223,26 @@ public class PyEvaluator {
         return first.compareTo(second) != 0;
       }
     }
-    else if (lhs instanceof Boolean first && rhs instanceof Boolean second) {
-      if (op == PyTokenTypes.AND_KEYWORD) {
-        return first && second;
+    else if (op == PyTokenTypes.AND_KEYWORD || op == PyTokenTypes.OR_KEYWORD) {
+      final Boolean first = PyUtil.as(lhs, Boolean.class);
+      final Boolean second = PyUtil.as(rhs, Boolean.class);
+      // Short-circuit: `True or x` is True and `False and x` is False even when the other operand
+      // cannot be evaluated statically (e.g. `TYPE_CHECKING or not USE_EXTENSIONS`).
+      if (op == PyTokenTypes.OR_KEYWORD) {
+        if (Boolean.TRUE.equals(first) || Boolean.TRUE.equals(second)) {
+          return true;
+        }
+        if (first != null && second != null) {
+          return first || second;
+        }
       }
-      else if (op == PyTokenTypes.OR_KEYWORD) {
-        return first || second;
+      else {
+        if (Boolean.FALSE.equals(first) || Boolean.FALSE.equals(second)) {
+          return false;
+        }
+        if (first != null && second != null) {
+          return first && second;
+        }
       }
     }
 

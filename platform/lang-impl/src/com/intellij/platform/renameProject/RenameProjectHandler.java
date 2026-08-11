@@ -25,9 +25,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class RenameProjectHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance(RenameProjectHandler.class);
 

@@ -20,6 +20,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,6 +132,7 @@ public class EnterBetweenBracesFinalHandler implements EnterHandlerDelegate {
            !helper.bracesAreInTheSameElement(psiFile, editor, prevCharOffset, nextCharOffset);
   }
 
+  @ApiStatus.Internal
   protected static @NotNull EnterBetweenBracesDelegate getLanguageImplementation(@Nullable Language language) {
     if (language != null) {
       final EnterBetweenBracesDelegate helper = EnterBetweenBracesDelegate.EP_NAME.forLanguage(language);
@@ -141,8 +143,10 @@ public class EnterBetweenBracesFinalHandler implements EnterHandlerDelegate {
     return ourDefaultBetweenDelegate;
   }
 
+  @ApiStatus.Internal
   protected static EnterBetweenBracesDelegate ourDefaultBetweenDelegate = new EnterBetweenBracesDelegate();
 
+  @ApiStatus.Internal
   protected static boolean isValidOffset(int offset, CharSequence text) {
     return offset >= 0 && offset < text.length();
   }

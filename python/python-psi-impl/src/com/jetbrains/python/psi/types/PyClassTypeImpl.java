@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
@@ -86,6 +87,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   protected final @NotNull PyClass myClass;
   protected final boolean myIsDefinition;
+  protected final @NotNull List<PyType> myTypeArguments;
+  private final @NotNull Ref<Integer> myHashCode = new Ref<>();
 
   /**
    * Describes a class-based type. Since everything in Python is an instance of some class, this type pretty much completes
@@ -97,9 +100,43 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
    * @param isDefinition whether this type describes an instance or a definition of the class.
    */
   public PyClassTypeImpl(@NotNull PyClass source, boolean isDefinition) {
+    this(source, isDefinition, Collections.emptyList());
+  }
+
+  /**
+   * @param source        PyClass which defines this type. For builtin or external classes, skeleton files contain the definitions.
+   * @param isDefinition  whether this type describes an instance or a definition of the class.
+   * @param typeArguments concrete type arguments of this class instance, e.g. {@code [int]} for {@code list[int]}.
+   */
+  public PyClassTypeImpl(@NotNull PyClass source, boolean isDefinition, @NotNull List<? extends PyType> typeArguments) {
     PyClass originalElement = CompletionUtilCoreImpl.getOriginalElement(source);
     myClass = originalElement != null ? originalElement : source;
     myIsDefinition = isDefinition;
+    for (var argument : typeArguments) {
+      PyAnyType.validate(argument);
+    }
+    myTypeArguments = new ArrayList<>(typeArguments);
+  }
+
+  /**
+   * Creates a new instance of the same runtime type as this one. Subclasses (e.g. {@link PyCollectionTypeImpl}) override
+   * this so that derived types produced by {@link #toInstance()}, {@link #toClass()} and call resolution preserve their
+   * concrete class.
+   */
+  protected @NotNull PyClassTypeImpl createInstance(@NotNull PyClass source,
+                                                    boolean isDefinition,
+                                                    @NotNull List<? extends PyType> typeArguments) {
+    return new PyClassTypeImpl(source, isDefinition, typeArguments);
+  }
+
+  @Override
+  public @NotNull List<PyType> getTypeArguments() {
+    return Collections.unmodifiableList(myTypeArguments);
+  }
+
+  @Override
+  public @Nullable PyType getIteratedItemType() {
+    return PyTypeChecker.getIteratedItemType(this, TypeEvalContext.codeInsightFallback(getPyClass().getProject()));
   }
 
   public <T> PyClassTypeImpl withUserData(Key<T> key, T value) {
@@ -131,12 +168,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @Override
   public @NotNull PyClassType toInstance() {
-    return myIsDefinition ? withUserDataCopy(new PyClassTypeImpl(myClass, false)) : this;
+    return myIsDefinition ? withUserDataCopy(createInstance(myClass, false, myTypeArguments)) : this;
   }
 
   @Override
   public @NotNull PyClassType toClass() {
-    return myIsDefinition ? this : new PyClassTypeImpl(myClass, true);
+    return myIsDefinition ? this : createInstance(myClass, true, myTypeArguments);
   }
 
   /**
@@ -366,16 +403,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Override
   public @Nullable List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     final var resolveContext = PyResolveContext.defaultContext(context);
-
-    return StreamEx
-      .of(PyUtil.filterTopPriorityElements(PyCallExpressionHelper.resolveImplicitlyInvokedMethods(this, null, resolveContext)))
-      .select(PyCallable.class)
-      .map(callable -> callable.getParameters(context))
-      .findFirst()
-      // If resolved parameters are empty, consider them as invalid and return null
-      .filter(parameters -> !parameters.isEmpty())
-      // Skip "self" for __init__/__call__ and "cls" for __new__
-      .map(parameters -> ContainerUtil.subList(parameters, 1))
+    PyType callableType = PyCallExpressionHelper.createCallableFromClass(this, resolveContext);
+    return StreamEx.of(PyTypeUtil.getCallableItems(callableType))
+      .findAny()
+      .map(it -> it.getParameters(context))
       .orElse(null);
   }
 
@@ -407,7 +438,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return PyUtil.getReturnTypeOfMember(this, PyNames.CALL, callSite instanceof PyCallSiteExpression callSiteExpression ? callSiteExpression : null , context);
     }
     else {
-      return withUserDataCopy(new PyClassTypeImpl(getPyClass(), false));
+      return withUserDataCopy(createInstance(getPyClass(), false, myTypeArguments));
     }
   }
 
@@ -627,10 +658,11 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   public @NotNull List<@NotNull PyTypeMember> getAllMembers(@NotNull PyResolveContext resolveContext) {
     List<@NotNull PyTypeMember> result = new ArrayList<>();
     Set<String> visited = new HashSet<>();
+    TypeEvalContext context = resolveContext.getTypeEvalContext();
     for (Map.Entry<String, Property> entry : myClass.getProperties().entrySet()) {
       visited.add(entry.getKey());
       Property property = entry.getValue();
-      PyType type = property.getType(null, resolveContext.getTypeEvalContext());
+      PyType type = property.getType(this, context);
       result.add(new PyTypeMember(property, type));
     }
 
@@ -639,19 +671,19 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         if (visited.add(namedElement.getName())) {
           PyType type = null;
           if (element instanceof PyTypedElement typedElement) {
-            type = resolveContext.getTypeEvalContext().getType(typedElement);
+            type = context.getType(typedElement);
           }
 
           boolean isClassVar = false;
           if (element instanceof PyAnnotationOwner && element instanceof PyTypeCommentOwner) {
             isClassVar =
-              PyTypingTypeProvider.isClassVar((PyAnnotationOwner & PyTypeCommentOwner)element, resolveContext.getTypeEvalContext());
+              PyTypingTypeProvider.isClassVar((PyAnnotationOwner & PyTypeCommentOwner)element, context);
           }
           result.add(new PyTypeMember(element, type, isClassVar));
         }
       }
       return true;
-    }, false, resolveContext.getTypeEvalContext());
+    }, false, context);
 
     processProvidedMembers(
       member -> {
@@ -662,7 +694,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         return true;
       },
       null,
-      resolveContext.getTypeEvalContext()
+      context
     );
 
     return result;
@@ -672,7 +704,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   public @NotNull List<@NotNull PyTypeMember> findMember(@NotNull String name, @NotNull PyResolveContext resolveContext) {
     Property property = myClass.findProperty(name, true, resolveContext.getTypeEvalContext());
     if (property != null) {
-      PyType type = property.getType(null, resolveContext.getTypeEvalContext());
+      PyType type = property.getType(this, resolveContext.getTypeEvalContext());
       return List.of(new PyTypeMember(property, type));
     }
     List<PyTypeMember> customMembers = new ArrayList<>();
@@ -839,22 +871,36 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
     PyClassTypeImpl classType = (PyClassTypeImpl)o;
 
+    // Cheap fields first, then the memoized-hashCode fast path guarding the deep myTypeArguments walk.
     if (myIsDefinition != classType.myIsDefinition) return false;
     if (!myClass.equals(classType.myClass)) return false;
+    if (hashCode() != classType.hashCode()) return false;
+    if (!myTypeArguments.equals(classType.myTypeArguments)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myClass.hashCode();
-    result = 31 * result + (myIsDefinition ? 1 : 0);
-    return result;
+    if (myHashCode.isNull()) {
+      int result = myClass.hashCode();
+      result = 31 * result + (myIsDefinition ? 1 : 0);
+      if (!myTypeArguments.isEmpty()) {
+        result = 31 * result + myTypeArguments.hashCode();
+      }
+      myHashCode.set(result);
+    }
+    return myHashCode.get();
   }
 
   @Override
   public String toString() {
-    return (isValid() ? "" : "[INVALID] ") + "PyClassType: " + getClassQName();
+    String name = getClassQName() == null ? getName() : getClassQName();
+    String result = (isValid() ? "" : "[INVALID] ") + "PyClassType: " + name;
+    if (!myTypeArguments.isEmpty()) {
+      result += "[" + StringUtil.join(myTypeArguments, String::valueOf, ", ") + "]";
+    }
+    return result;
   }
 
   @Override

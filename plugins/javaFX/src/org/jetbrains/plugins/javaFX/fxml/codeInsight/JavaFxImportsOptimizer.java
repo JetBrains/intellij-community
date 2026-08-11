@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -66,7 +66,7 @@ public final class JavaFxImportsOptimizer implements ImportOptimizer {
     final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(file);
     final @NotNull List<ImportHelper.Import> sortedNames = ImportHelper.sortItemsAccordingToSettings(names, settings);
     final Map<String, Boolean> onDemand = new HashMap<>();
-    ImportHelper.collectOnDemandImports(sortedNames, settings, onDemand, new HashMap<>());
+    ImportHelper.collectOnDemandImports(file, sortedNames, settings, onDemand, new HashMap<>());
     for (String s : demandedForNested) {
       onDemand.put(s, false);
     }

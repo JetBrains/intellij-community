@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.ide.bootstrap` start
-
 jvm_library(
     name = "bootstrap",
     srcs = glob(
@@ -13,6 +12,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.platform.ide.bootstrap",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -48,7 +51,7 @@ jvm_library(
         "//fleet/kernel",
         "//platform/platform-impl/bootstrap/kernel",
         "//platform/util/jdom",
-        "@lib//:jna",
+        "//libraries/jna",
         "//libraries/hash4j",
         "//libraries/jbr",
         "@lib//:googlecode-plist-dd",
@@ -108,6 +111,7 @@ jvm_library(
         "//fleet/kernel:kernel_test_lib",
         "//platform/platform-impl/bootstrap/kernel:kernel_test_lib",
         "//platform/util/jdom:jdom_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//libraries/hash4j:hash4j_test_lib",
         "//libraries/jbr:jbr_test_lib",
         "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",

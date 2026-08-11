@@ -18,6 +18,8 @@ public final class DevkitCoreIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, expUIPath, DevkitCoreIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon Add_sdk = load("icons/expui/addSDK.svg", "icons/add_sdk.svg", 641117830, 2);
+  /** 16x16 */ public static final @NotNull Icon BackendModule = load("icons/expui/backendModule.svg", 557439390, 2);
+  /** 16x16 */ public static final @NotNull Icon FrontendModule = load("icons/expui/frontendModule.svg", -815193685, 2);
 
   public static final class Gutter {
     /** 12x12 */ public static final @NotNull Icon DescriptionFile = load("icons/expui/gutter/descriptionFile@14x14.svg", "icons/gutter/descriptionFile.svg", 1318760137, 2);
@@ -37,5 +39,6 @@ public final class DevkitCoreIcons {
   /** 16x16 */ public static final @NotNull Icon RemoteMapping = load("icons/expui/remoteMapping.svg", "icons/remoteMapping.svg", 1371307852, 2);
   /** 16x16 */ public static final @NotNull Icon Sdk_closed = load("icons/expui/sdkClosed.svg", "icons/sdk_closed.svg", -1355048140, 2);
   /** 16x16 */ public static final @NotNull Icon Service = load("icons/expui/service.svg", 865613742, 2);
+  /** 16x16 */ public static final @NotNull Icon SharedModule = load("icons/expui/sharedModule.svg", 1430081738, 2);
   /** 16x16 */ public static final @NotNull Icon State = load("icons/expui/state.svg", 889951373, 2);
 }

@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-jps-common" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-common-for-ide:2.4.20-dev-5797">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-common-for-ide:2.5.0-dev-3229">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.4.20-dev-5797/kotlin-jps-common-for-ide-2.4.20-dev-5797.jar">
-          <sha256sum>a48adfd0454ced9990b6802d735c66be0739f763f9cad8b30fefa11defb97bcf</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.5.0-dev-3229/kotlin-jps-common-for-ide-2.5.0-dev-3229.jar">
+          <sha256sum>c85071072bb07363c65d54eb9e79d3df31a2109d42f943232b69babe5f917539</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.4.20-dev-5797/kotlin-jps-common-for-ide-2.4.20-dev-5797.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.5.0-dev-3229/kotlin-jps-common-for-ide-2.5.0-dev-3229.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.4.20-dev-5797/kotlin-jps-common-for-ide-2.4.20-dev-5797-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.5.0-dev-3229/kotlin-jps-common-for-ide-2.5.0-dev-3229-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

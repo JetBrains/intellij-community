@@ -20,25 +20,25 @@ import org.jetbrains.annotations.TestOnly
 interface StructureTreeApi : RemoteApi<Unit> {
   suspend fun getShowPopupRequestFlow(): Flow<ShowStructurePopupRequest>
 
-  suspend fun createStructureViewModel(id: StructureViewDtoId, fileEditorId: FileEditorId, fileId: VirtualFileId, projectId: ProjectId): StructureViewModelDto?
+  suspend fun createStructureViewModel(projectId: ProjectId, id: StructureViewDtoId, fileEditorId: FileEditorId, fileId: VirtualFileId): StructureViewModelDto?
 
-  suspend fun structureViewModelDisposed(id: StructureViewDtoId)
+  suspend fun structureViewModelDisposed(projectId: ProjectId, id: StructureViewDtoId)
 
-  suspend fun setTreeActionState(id: StructureViewDtoId, actionName: String, isEnabled: Boolean, autoClicked: Boolean)
+  suspend fun setTreeActionState(projectId: ProjectId, id: StructureViewDtoId, actionName: String, isEnabled: Boolean, autoClicked: Boolean)
 
   @TestOnly
-  suspend fun getNewSelection(id: StructureViewDtoId): Int?
+  suspend fun getNewSelection(projectId: ProjectId, id: StructureViewDtoId): Int?
 
-  suspend fun navigateToElement(id: StructureViewDtoId, elementId: Int): Boolean
+  suspend fun navigateToElement(projectId: ProjectId, id: StructureViewDtoId, elementId: Int): Boolean
 
   companion object {
     suspend fun getInstance(): StructureTreeApi {
       return RemoteApiProviderService.resolve(remoteApiDescriptor<StructureTreeApi>())
     }
 
-    suspend fun callDisposeModel(id: StructureViewDtoId) {
+    suspend fun callDisposeModel(projectId: ProjectId, id: StructureViewDtoId) {
       durable {
-        getInstance().structureViewModelDisposed(id)
+        getInstance().structureViewModelDisposed(projectId, id)
       }
     }
   }

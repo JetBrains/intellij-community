@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -16,7 +15,6 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -29,12 +27,6 @@ import com.intellij.util.indexing.testEntities.IndexingTestEntityBuilder
 internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntityData) : IndexingTestEntity,
                                                                                         WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val roots: List<VirtualFileUrl>
     get() {
       readField("roots")
@@ -45,7 +37,6 @@ internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntity
       readField("excludedRoots")
       return dataSource.excludedRoots
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -53,38 +44,14 @@ internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntity
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: IndexingTestEntityData?) :
     ModifiableWorkspaceEntityBase<IndexingTestEntity, IndexingTestEntityData>(result), IndexingTestEntityBuilder {
     internal constructor() : this(IndexingTestEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity IndexingTestEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-      index(this, "roots", this.roots)
-      index(this, "excludedRoots", this.excludedRoots)
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -98,7 +65,7 @@ internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntity
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -121,6 +88,10 @@ internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntity
       updateChildToParentReferences(parents)
     }
 
+    override fun index() {
+      index(this, "roots", this.roots)
+      index(this, "excludedRoots", this.excludedRoots)
+    }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -128,7 +99,6 @@ internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntity
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     private val rootsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
@@ -177,34 +147,16 @@ internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntity
 
     override fun getEntityClass(): Class<IndexingTestEntity> = IndexingTestEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class IndexingTestEntityData : WorkspaceEntityData<IndexingTestEntity>() {
   lateinit var roots: MutableList<VirtualFileUrl>
   lateinit var excludedRoots: MutableList<VirtualFileUrl>
-
   internal fun isRootsInitialized(): Boolean = ::roots.isInitialized
   internal fun isExcludedRootsInitialized(): Boolean = ::excludedRoots.isInitialized
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<IndexingTestEntity> {
-    val modifiable = IndexingTestEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): IndexingTestEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = IndexingTestEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): IndexingTestEntity = IndexingTestEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<IndexingTestEntity, *> = IndexingTestEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.util.indexing.testEntities.IndexingTestEntity") as EntityMetadata
   }

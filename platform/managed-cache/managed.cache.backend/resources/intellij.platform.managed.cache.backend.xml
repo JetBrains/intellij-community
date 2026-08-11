@@ -4,12 +4,14 @@
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.managed.cache"/>
     <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.project"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">

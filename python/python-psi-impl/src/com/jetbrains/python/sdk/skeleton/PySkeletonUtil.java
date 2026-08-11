@@ -13,9 +13,9 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.sdk.PyRichSdk;
-import com.jetbrains.python.sdk.PyRichSdkExtKt;
-import com.jetbrains.python.sdk.PyRichSdkKt;
+import com.jetbrains.python.sdk.PythonInterpreter;
+import com.jetbrains.python.sdk.PythonInterpreterExtKt;
+import com.jetbrains.python.sdk.PythonInterpreterKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +59,7 @@ public final class PySkeletonUtil {
    */
   @RequiresBackgroundThread
   public static @Nullable VirtualFile getSitePackagesDirectory(@NotNull Sdk pythonSdk) {
-    return PyRichSdkExtKt.sitePackagesDirectory(PyRichSdkKt.pyRichSdk(pythonSdk, false));
+    return PythonInterpreterExtKt.sitePackagesDirectory(PythonInterpreterKt.pythonInterpreter(pythonSdk, false));
   }
 
   @RequiresBackgroundThread(generateAssertion = false)
@@ -102,12 +102,12 @@ public final class PySkeletonUtil {
       originPath = originFile.getPath();
     }
 
-    final PyRichSdk pyRichSdk = PyRichSdkKt.pyRichSdk(pythonSdk, false);
-    final VirtualFile libDir = PyRichSdkExtKt.stdlibLibDirectory(pyRichSdk);
+    final PythonInterpreter pythonInterpreter = PythonInterpreterKt.pythonInterpreter(pythonSdk, false);
+    final VirtualFile libDir = PythonInterpreterExtKt.stdlibLibDirectory(pythonInterpreter);
     if (libDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, libDir, pythonSdk, checkOnRemoteFS)) {
       return true;
     }
-    final VirtualFile venvLibDir = PyRichSdkExtKt.venvLibDirectory(pyRichSdk);
+    final VirtualFile venvLibDir = PythonInterpreterExtKt.venvLibDirectory(pythonInterpreter);
     if (venvLibDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, venvLibDir, pythonSdk, checkOnRemoteFS)) {
       return true;
     }

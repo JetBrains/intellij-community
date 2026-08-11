@@ -33,9 +33,14 @@ public class KtCallChainHintsProviderTestGenerated extends AbstractKtCallChainHi
         runTest("../../idea/tests/testData/codeInsight/hints/chainCall/duplicatedBuilder.kt");
     }
 
-    @TestMetadata("errorType.kt")
-    public void testErrorType() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/chainCall/errorType.kt");
+    @TestMetadata("kotlin23InaccessibleOuterClassReceiver.kt")
+    public void testKotlin23InaccessibleOuterClassReceiver() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/chainCall/kotlin23InaccessibleOuterClassReceiver.kt");
+    }
+
+    @TestMetadata("kotlin24InaccessibleOuterClassReceiver.kt")
+    public void testKotlin24InaccessibleOuterClassReceiver() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/chainCall/kotlin24InaccessibleOuterClassReceiver.kt");
     }
 
     @TestMetadata("multilineCalls.kt")

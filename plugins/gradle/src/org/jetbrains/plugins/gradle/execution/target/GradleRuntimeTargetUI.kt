@@ -86,7 +86,7 @@ class GradleRuntimeTargetUI<C : TargetEnvironmentConfiguration>(private val conf
       title: @NlsContexts.DialogTitle String
     ): TargetPathFieldWithBrowseButton {
       addTargetActionListener(null, ActionListener(BrowseFolderActionListener(
-        this, project, createSingleFolderDescriptor().withTitle(title), TEXT_FIELD_WHOLE_TEXT
+        this, project, createSingleFolderDescriptor().withTitle(title).withEnvironmentRestricted(true), TEXT_FIELD_WHOLE_TEXT
       )::actionPerformed))
       return this
     }

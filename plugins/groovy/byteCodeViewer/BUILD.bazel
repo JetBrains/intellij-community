@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.groovy.byteCodeViewer` start
-
 jvm_library(
     name = "byteCodeViewer",
     srcs = glob(
@@ -24,7 +23,7 @@ jvm_library(
         "//plugins/groovy/groovy-psi:psi",
         "//java/java-psi-api:psi",
         "//plugins/ByteCodeViewer:java-byteCodeViewer",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
@@ -46,6 +45,7 @@ jvm_library(
         "//plugins/groovy/groovy-psi:psi_test_lib",
         "//java/java-psi-api:psi_test_lib",
         "//plugins/ByteCodeViewer:java-byteCodeViewer_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util:util_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     ],

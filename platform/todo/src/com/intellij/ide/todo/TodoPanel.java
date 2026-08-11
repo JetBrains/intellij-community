@@ -14,7 +14,7 @@ import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.ide.todo.nodes.LeafTodoItemNode;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
-import com.intellij.ide.todo.nodes.TodoRemoteItemNode;
+import com.intellij.ide.todo.nodes.TodoRemoteFileNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
@@ -389,6 +389,10 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     if (selection instanceof LeafTodoItemNode leaf) {
       return leaf.getVirtualFile();
     }
+    Object element = selection.getElement();
+    if (element instanceof TodoRemoteFileNode remoteFileNode) {
+      return remoteFileNode.getVirtualFile();
+    }
     return PsiUtilCore.getVirtualFile(TodoTreeBuilder.getFileForNodeDescriptor(selection));
   }
 
@@ -397,6 +401,9 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       return leafTodoItemNode.createNavigatable(project);
     }
     Object element = selection.getElement();
+    if (element instanceof TodoRemoteFileNode remoteFileNode) {
+      return remoteFileNode.createNavigatable(project);
+    }
     if (!(element instanceof TodoFileNode || element instanceof LeafTodoItemNode)) { // allow user to use F4 only on files an TODOs
       return null;
     }

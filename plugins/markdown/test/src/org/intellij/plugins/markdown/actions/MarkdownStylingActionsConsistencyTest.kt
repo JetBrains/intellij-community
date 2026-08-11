@@ -41,17 +41,13 @@ class MarkdownStylingActionsConsistencyTest {
       checkResultByText(content)
     }
 
-    fun `test enabled inside inline link text`() {
+    fun `test disabled inside inline link text`() {
       val content = """
       Click [<selection>JetBrains</selection>](https://jetbrains.com) here
       """.trimIndent()
-      val applied = """
-      Click [$wrapPrefix<selection>JetBrains</selection>$wrapSuffix](https://jetbrains.com) here
-      """.trimIndent()
       configureFromFileText("some.md", content)
-      executeAction(actionId)
-      checkResultByText(applied)
-      executeAction(actionId)
+      val action = ActionManager.getInstance().getAction(actionId)
+      assertFalse(EditorTestUtil.checkActionIsEnabled(editor, action))
       checkResultByText(content)
     }
 
@@ -81,6 +77,17 @@ class MarkdownStylingActionsConsistencyTest {
       // language=Markdown
       val content = """
       [@test] ../path/he<caret>re.py
+      """.trimIndent()
+      configureFromFileText("some.md", content)
+      val action = ActionManager.getInstance().getAction(actionId)
+      assertFalse(EditorTestUtil.checkActionIsEnabled(editor, action))
+      checkResultByText(content)
+    }
+
+    fun `test disabled inside @ path`() {
+      // language=Markdown
+      val content = """
+      @path/he<caret>re.py
       """.trimIndent()
       configureFromFileText("some.md", content)
       val action = ActionManager.getInstance().getAction(actionId)

@@ -9,6 +9,10 @@
       It allows to improve different IDE features by learning patterns from opened project.</p>
     ]]></description>
 
+  <content>
+    <module name="intellij.ml.models.local.java"/>
+  </content>
+
   <actions>
     <action id="TrainLocalModelsAction" class="com.intellij.ml.local.actions.TrainLocalModelsAction"/>
   </actions>
@@ -26,6 +30,4 @@
                  description="Show notification with suggestion to train local ML models"/>
 
   </extensions>
-
-  <depends optional="true" config-file="intellij.ml.models.local.java.xml">com.intellij.java</depends>
 </idea-plugin>

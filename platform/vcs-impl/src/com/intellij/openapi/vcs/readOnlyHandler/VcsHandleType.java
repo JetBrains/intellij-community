@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -68,7 +69,7 @@ public class VcsHandleType extends HandleType {
   }
 
   @Override
-  public List<String> getChangelists() {
+  public @Unmodifiable List<String> getChangelists() {
     return ContainerUtil.map(myChangeListManager.getChangeLists(), FUNCTION);
   }
 

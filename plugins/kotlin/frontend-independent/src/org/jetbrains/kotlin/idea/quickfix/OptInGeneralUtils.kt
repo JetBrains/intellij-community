@@ -6,7 +6,8 @@ import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
-import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationTarget
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.name.ClassId
@@ -45,16 +46,17 @@ abstract class OptInGeneralUtilsBase {
 
     abstract fun KtDeclaration.isSubclassOptPropagateApplicable(annotationFqName: FqName): Boolean
 
+    @KaExperimentalApi
     fun collectPropagateOptInAnnotationFix(
         targetElement: KtDeclaration,
         kind: AddAnnotationFix.Kind,
-        applicableTargets: Set<KotlinTarget>,
-        actualTargetList: List<KotlinTarget>,
+        applicableTargets: Set<KaAnnotationTarget>,
+        actualTargets: Set<KaAnnotationTarget>,
         annotationClassId: ClassId,
         isOverrideError: Boolean
     ): AddAnnotationFix? {
         if (KtPsiUtil.isLocal(targetElement)) return null
-        if (actualTargetList.none { it in applicableTargets }) return null
+        if (actualTargets.none { it in applicableTargets }) return null
 
         val annotationFqName = annotationClassId.asSingleFqName()
         return when {

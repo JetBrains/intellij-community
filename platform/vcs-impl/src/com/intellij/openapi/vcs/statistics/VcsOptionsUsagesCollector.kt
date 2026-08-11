@@ -96,7 +96,7 @@ internal class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
     return if (value != defaultValue) value else null
   }
 
-  private val GROUP = EventLogGroup("vcs.settings", 6)
+  private val GROUP = EventLogGroup("vcs.settings", 7)
 
   private val CONFIRMATION_OPTION_FIELD = EventFields.Enum<ConfirmationOption>("value")
   private val STANDARD_CONFIRMATION_ADD = GROUP.registerEvent("standard.confirmation.for.add", CONFIRMATION_OPTION_FIELD)

@@ -12,7 +12,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsActions;
 
 import java.util.List;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public abstract class BaseToolKeymapExtension implements KeymapExtension {
   @Override
   public KeymapGroup createGroup(final Condition<? super AnAction> filtered, final Project project) {

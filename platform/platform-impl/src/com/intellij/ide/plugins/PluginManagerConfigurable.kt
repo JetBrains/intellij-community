@@ -4,6 +4,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSourceEnum
 import com.intellij.ide.plugins.newui.getPluginsViewCustomizer
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
@@ -37,6 +38,7 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
   private var myPanel: PluginManagerConfigurablePanel? = null
+  private var openSource: PluginManagerOpenSourceEnum? = null
 
   /**
    * @deprecated Use {@link PluginManagerConfigurable#PluginManagerConfigurable()}
@@ -87,9 +89,21 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
   @RequiresEdt
   private fun createPanelIfNeeded(searchQuery: String?): PluginManagerConfigurablePanel {
     if (myPanel == null) {
-      myPanel = PluginManagerConfigurablePanel(searchQuery)
+      myPanel = PluginManagerConfigurablePanel(searchQuery, openSource ?: PluginManagerOpenSourceEnum.OTHER)
     }
     return myPanel!!
+  }
+
+  @RequiresEdt
+  fun setOpenSource(source: PluginManagerOpenSourceEnum) {
+    openSource = source
+  }
+
+  @RequiresEdt
+  fun setOpenSourceFromSettings() {
+    if (openSource == null) {
+      openSource = PluginManagerOpenSourceEnum.SETTINGS
+    }
   }
 
   override fun disposeUIResources() {
@@ -295,55 +309,71 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
       )
     }
 
+    @ApiStatus.Internal
     @JvmStatic
-    fun showPluginConfigurable(project: Project?, pluginIds: Collection<PluginId?>) {
-      val configurable = PluginManagerConfigurable()
+    fun showPluginManagerDialog(project: Project?, source: PluginManagerOpenSourceEnum, advancedInitialization: (PluginManagerConfigurable) -> Unit) {
+      val configurable = createWithOpenSource(source)
       ShowSettingsUtil.getInstance().editConfigurable(
         project,
         configurable,
-        Runnable { configurable.select(pluginIds as Collection<PluginId>) },
+        Runnable {
+          advancedInitialization(configurable)
+        }
       )
+    }
+
+    private fun createWithOpenSource(openSource: PluginManagerOpenSourceEnum): PluginManagerConfigurable {
+      return PluginManagerConfigurable().apply { setOpenSource(openSource) }
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun createForWelcomeScreen(): PluginManagerConfigurable {
+      return createWithOpenSource(PluginManagerOpenSourceEnum.WELCOME_SCREEN)
+    }
+
+    @JvmStatic
+    fun showPluginConfigurable(project: Project?, pluginIds: Collection<PluginId?>) {
+      showPluginConfigurable(project, pluginIds, PluginManagerOpenSourceEnum.OTHER)
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun showPluginConfigurable(project: Project?, pluginIds: Collection<PluginId?>, openSource: PluginManagerOpenSourceEnum) {
+      showPluginManagerDialog(project, openSource, {
+        it.select(pluginIds as Collection<PluginId>)
+      })
     }
 
     @ApiStatus.Internal
     @JvmStatic
     fun showSuggestedPlugins(project: Project?, source: FUSEventSource?) {
-      val configurable = PluginManagerConfigurable()
-      ShowSettingsUtil.getInstance().editConfigurable(
-        project,
-        configurable,
-        Runnable {
-          configurable.setInstallSource(source)
-          configurable.openMarketplaceTab("/suggested")
-        },
-      )
+      showPluginManagerDialog(project, PluginManagerOpenSourceEnum.NOTIFICATION, {
+        it.setInstallSource(source)
+        it.openMarketplaceTab("/suggested")
+      })
     }
 
-    @JvmStatic
-    fun showPluginConfigurable(parent: Component?, project: Project?, pluginIds: Collection<PluginId?>) {
-      if (parent != null) {
-        val configurable = PluginManagerConfigurable()
-        ShowSettingsUtil.getInstance().editConfigurable(
-          parent,
-          configurable,
-          Runnable { configurable.select(pluginIds as Collection<PluginId>) },
-        )
-      }
-      else {
-        showPluginConfigurable(project, pluginIds)
-      }
-    }
-
+    @ApiStatus.Internal
     @JvmStatic
     fun showPluginConfigurableAndEnable(project: Project?, descriptors: Set<IdeaPluginDescriptor>) {
-      val configurable = PluginManagerConfigurable()
-      ShowSettingsUtil.getInstance().editConfigurable(
-        project,
-        configurable,
-        Runnable {
-          configurable.selectAndEnable(descriptors)
-        },
-      )
+      showPluginManagerDialog(project, PluginManagerOpenSourceEnum.NOTIFICATION, {
+        it.selectAndEnable(descriptors)
+      })
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun showSettingsDialogFromWelcomeScreen(project: Project?) {
+      ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginManagerConfigurable::class.java) {
+        it.setOpenSource(PluginManagerOpenSourceEnum.WELCOME_SCREEN)
+      }
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun showDialogFromWelcomeScreen(project: Project?, pluginIds: Collection<PluginId?>) {
+      showPluginConfigurable(project, pluginIds, PluginManagerOpenSourceEnum.WELCOME_SCREEN)
     }
   }
 }

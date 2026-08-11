@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object VcsStatisticsCollector : CounterUsagesCollector() {
-  internal val GROUP = EventLogGroup("vcs", 18)
+  internal val GROUP = EventLogGroup("vcs", 19)
 
   @JvmField
   internal val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")

@@ -35,10 +35,9 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHCommitModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRChangesViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRDetailsViewModel
@@ -69,7 +68,7 @@ object GHPRDetailsComponentFactory {
       null
     }
 
-    val commitsAndBranches = createCommitsAndBranchesComponent(project, scope, detailsVm)
+    val commitsAndBranches = createCommitsAndBranchesComponent(scope, detailsVm)
     val statusChecks = GHPRStatusChecksComponentFactory.create(scope, project, detailsVm)
     val actionsComponent = GHPRDetailsActionsComponentFactory.create(scope, project, detailsVm.reviewRequestState, detailsVm.reviewFlowVm)
 
@@ -87,7 +86,7 @@ object GHPRDetailsComponentFactory {
         add(titlePanel, CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
       }
       add(commitsAndBranches, CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
-      add(createCommitsInfoComponent(project, scope, detailsVm), CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
+      add(createCommitsInfoComponent(scope, detailsVm), CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
       add(createCommitFilesBrowserComponent(scope, detailsVm.changesVm), CC().grow().shrinkPrioY(200))
       add(statusChecks, CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))
       add(actionsComponent, CC().growX().pushX().gap(ReviewDetailsUIUtil.ACTIONS_GAPS).minHeight("pref"))
@@ -96,11 +95,11 @@ object GHPRDetailsComponentFactory {
     }
   }
 
-  private fun createCommitsInfoComponent(project: Project, cs: CoroutineScope, detailsVm: GHPRDetailsViewModel): JComponent {
+  private fun createCommitsInfoComponent(cs: CoroutineScope, detailsVm: GHPRDetailsViewModel): JComponent {
     return CodeReviewDetailsCommitInfoComponentFactory.create(
       cs, detailsVm.changesVm.selectedCommit,
       commitPresentation = { commit ->
-        createCommitsPopupPresenter(project, commit, detailsVm.securityService.ghostUser)
+        createCommitsPopupPresenter(commit, detailsVm.securityService.ghostUser)
       },
       htmlPaneFactory = {
         SimpleHtmlPane(addBrowserListener = false).apply {
@@ -109,11 +108,11 @@ object GHPRDetailsComponentFactory {
       })
   }
 
-  private fun createCommitsAndBranchesComponent(project: Project, cs: CoroutineScope, detailsVm: GHPRDetailsViewModel): JComponent {
+  private fun createCommitsAndBranchesComponent(cs: CoroutineScope, detailsVm: GHPRDetailsViewModel): JComponent {
     return JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
-      add(CodeReviewDetailsCommitsComponentFactory.create(cs, detailsVm.changesVm) { commit: GHCommit ->
-        createCommitsPopupPresenter(project, commit, detailsVm.securityService.ghostUser)
+      add(CodeReviewDetailsCommitsComponentFactory.create(cs, detailsVm.changesVm) { commit: GHCommitModel ->
+        createCommitsPopupPresenter(commit, detailsVm.securityService.ghostUser)
       })
       add(CodeReviewDetailsBranchComponentFactory.create(cs, detailsVm.branchesVm))
     }
@@ -125,12 +124,11 @@ object GHPRDetailsComponentFactory {
   }
 
   private fun createCommitsPopupPresenter(
-    project: Project,
-    commit: GHCommit,
+    commit: GHCommitModel,
     ghostUser: GHUser,
   ) = CommitPresentation(
-    titleHtml = commit.messageHeadline.convertToHtml(project),
-    descriptionHtml = commit.messageBody.convertToHtml(project),
+    titleHtml = commit.messageHeadline,
+    descriptionHtml = commit.messageBody,
     author = (commit.author?.user ?: ghostUser).getPresentableName(),
     committedDate = commit.committedDate
   )

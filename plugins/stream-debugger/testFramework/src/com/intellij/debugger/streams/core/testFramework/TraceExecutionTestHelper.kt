@@ -5,6 +5,7 @@ import com.intellij.debugger.streams.core.lib.ResolverFactory
 import com.intellij.debugger.streams.core.psi.DebuggerPositionResolver
 import com.intellij.debugger.streams.core.resolve.ResolvedStreamCall
 import com.intellij.debugger.streams.core.resolve.ResolvedStreamChain
+import com.intellij.debugger.streams.core.trace.DebuggerCommandLauncher
 import com.intellij.debugger.streams.core.trace.EvaluateExpressionTracer
 import com.intellij.debugger.streams.core.trace.NextAwareState
 import com.intellij.debugger.streams.core.trace.PrevAwareState
@@ -17,6 +18,8 @@ import com.intellij.debugger.streams.core.trace.TraceResultInterpreter
 import com.intellij.debugger.streams.core.trace.TracingResult
 import com.intellij.debugger.streams.core.trace.Value
 import com.intellij.debugger.streams.core.trace.XValueInterpreter
+import com.intellij.debugger.streams.core.trace.formatResolvedTrace
+import com.intellij.debugger.streams.core.trace.formatTrace
 import com.intellij.debugger.streams.core.trace.impl.TraceResultInterpreterImpl
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.core.wrapper.StreamChainBuilder
@@ -25,7 +28,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
 import com.intellij.xdebugger.XDebugSession
-import one.util.streamex.StreamEx
 import java.util.function.Function
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -37,8 +39,8 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 abstract class TraceExecutionTestHelper(
-  private val session: XDebugSession,
-  private val librarySupportProvider: LibrarySupportProvider,
+  protected val session: XDebugSession,
+  protected val librarySupportProvider: LibrarySupportProvider,
   private val debuggerPositionResolver: DebuggerPositionResolver,
   private val LOG: Logger,
 ) {
@@ -48,25 +50,28 @@ abstract class TraceExecutionTestHelper(
     COMPILATION, EVALUATION, CHAIN_CONSTRUCTION
   }
 
-  private fun createResultInterpreter(): TraceResultInterpreter {
-    return TraceResultInterpreterImpl(librarySupportProvider.librarySupport.interpreterFactory)
+  protected fun createResultInterpreter(): TraceResultInterpreter {
+    return TraceResultInterpreterImpl(librarySupportProvider.getLibrarySupport().interpreterFactory)
   }
 
-  private fun createXValueInterpreter(): XValueInterpreter {
+  protected fun createXValueInterpreter(): XValueInterpreter {
     return librarySupportProvider.getXValueInterpreter(project)
   }
 
   private fun createResolverFactory(): ResolverFactory {
-    return librarySupportProvider.librarySupport.resolverFactory
+    return librarySupportProvider.getLibrarySupport().resolverFactory
   }
 
   private fun createChainBuilder(): StreamChainBuilder {
-    return librarySupportProvider.chainBuilder
+    return librarySupportProvider.getChainBuilder()
   }
 
   protected open fun createExpressionBuilder(): TraceExpressionBuilder {
     return librarySupportProvider.getExpressionBuilder(project)
   }
+
+  protected open fun createTracer(chain: StreamChain, commandLauncher: DebuggerCommandLauncher): StreamTracer =
+    EvaluateExpressionTracer(session, createExpressionBuilder(), createXValueInterpreter(), createResultInterpreter(), commandLauncher)
 
   suspend fun onPause(chainSelector: ChainSelector, resultMustBeNull: Boolean? = null) {
     val chain = readAction {
@@ -88,7 +93,8 @@ abstract class TraceExecutionTestHelper(
       return
     }
 
-    val tracer = EvaluateExpressionTracer(session, createExpressionBuilder(), createResultInterpreter(), createXValueInterpreter())
+    val commandLauncher = librarySupportProvider.getDebuggerCommandLauncher(session)
+    val tracer = createTracer(chain, commandLauncher)
     val trace = tracer.trace(chain)
     when (trace) {
       is StreamTracer.Result.Evaluated -> complete(chain, trace.result, resultMustBeNull, null, null)
@@ -175,18 +181,7 @@ abstract class TraceExecutionTestHelper(
   }
 
   private fun handleTrace(trace: List<TraceInfo>) {
-    for (info in trace) {
-      val name = info.call.name + info.call.genericArguments
-      println(name, ProcessOutputTypes.SYSTEM)
-
-      print("    before: ", ProcessOutputTypes.SYSTEM)
-      val before = info.valuesOrderBefore
-      println(traceToString(before.values), ProcessOutputTypes.SYSTEM)
-
-      print("    after: ", ProcessOutputTypes.SYSTEM)
-      val after = info.valuesOrderAfter
-      println(traceToString(after.values), ProcessOutputTypes.SYSTEM)
-    }
+    print(formatTrace(trace), ProcessOutputTypes.SYSTEM)
   }
 
   private fun handleResolvedTrace(result: ResolvedTracingResult) {
@@ -195,51 +190,7 @@ abstract class TraceExecutionTestHelper(
     checkChain(resolvedChain)
     checkTracesIsCorrectInBothDirections(resolvedChain)
 
-    val terminator = resolvedChain.terminator
-    resolvedChain.intermediateCalls.forEach { x: ResolvedStreamCall.Intermediate -> printBeforeAndAfterValues(x.stateBefore, x.stateAfter) }
-    printBeforeAndAfterValues(terminator.stateBefore, terminator.stateAfter)
-  }
-
-  private fun printBeforeAndAfterValues(before: NextAwareState?, after: PrevAwareState?) {
-    assertFalse(before == null && after == null)
-    val call = before?.nextCall ?: after!!.prevCall
-    assertNotNull(call)
-    println("mappings for " + call!!.name, ProcessOutputTypes.SYSTEM)
-    println("  direct:", ProcessOutputTypes.SYSTEM)
-    if (before != null) {
-      printMapping(before.trace, { value: TraceElement? -> before.getNextValues(value!!) }, Direction.FORWARD)
-    }
-    else {
-      println("    no", ProcessOutputTypes.SYSTEM)
-    }
-
-    println("  reverse:", ProcessOutputTypes.SYSTEM)
-    if (after != null) {
-      printMapping(after.trace, { value: TraceElement? -> after.getPrevValues(value!!) }, Direction.BACKWARD)
-    }
-    else {
-      println("    not found", ProcessOutputTypes.SYSTEM)
-    }
-  }
-
-  private fun printMapping(
-    values: List<TraceElement>,
-    mapper: Function<in TraceElement, out List<TraceElement>>,
-    direction: Direction,
-  ) {
-    if (values.isEmpty()) {
-      println("    empty", ProcessOutputTypes.SYSTEM)
-    }
-    for (element in values) {
-      val mappedValues = mapper.apply(element)
-      val mapped = traceToString(mappedValues)
-      val line = if (Direction.FORWARD == direction) element.time.toString() + " -> " + mapped else mapped + " <- " + element.time
-      println("    $line", ProcessOutputTypes.SYSTEM)
-    }
-  }
-
-  private enum class Direction {
-    FORWARD, BACKWARD
+    print(formatResolvedTrace(result), ProcessOutputTypes.SYSTEM)
   }
 
   private fun checkChain(chain: ResolvedStreamChain) {
@@ -314,11 +265,4 @@ abstract class TraceExecutionTestHelper(
     }
   }
 
-  private fun traceToString(trace: Collection<TraceElement>): String {
-    return replaceIfEmpty(StreamEx.of(trace).map { obj: TraceElement -> obj.time }.sorted().joining(","))
-  }
-
-  private fun replaceIfEmpty(str: String): String {
-    return str.ifEmpty { "nothing" }
-  }
 }

@@ -11,7 +11,7 @@ class K2LoggingPlaceholderCountMatchesArgumentCountInspectionLog4J2Test :
 
         class Log4j {
             fun m() {
-              var e = <error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'Ce'.">Ce</error>;
+              var e = <error descr="[UNRESOLVED_REFERENCE]">Ce</error>;
               LOG.error(<warning descr="Fewer arguments provided (2) than placeholders specified (3)">"1 {} {} {}"</warning> , e, e)
             }
 

@@ -22,8 +22,8 @@ public final class CollaborationToolsIcons {
   /** 16x16 */ public static final @NotNull Icon Comment = load("icons/expui/comment.svg", "icons/comment.svg", 585242443, 0);
   /** 16x16 */ public static final @NotNull Icon Delete = load("icons/delete.svg", -26771446, 0);
   /** 16x16 */ public static final @NotNull Icon DeleteHovered = load("icons/deleteHovered.svg", -505177250, 0);
-  /** 16x16 */ public static final @NotNull Icon PullRequestClosed = load("icons/pullRequestClosed.svg", 1915762689, 0);
-  /** 16x16 */ public static final @NotNull Icon PullRequestOpen = load("icons/pullRequestOpen.svg", 410240917, 0);
+  /** 16x16 */ public static final @NotNull Icon PullRequestClosed = load("icons/expui/pullRequestClosed.svg", "icons/pullRequestClosed.svg", 1915762689, 0);
+  /** 16x16 */ public static final @NotNull Icon PullRequestOpen = load("icons/expui/pullRequestOpen.svg", "icons/pullRequestOpen.svg", 410240917, 0);
 
   public static final class Review {
     /** 16x16 */ public static final @NotNull Icon BranchCurrent = load("icons/review/branchCurrent.svg", -1058941099, 0);

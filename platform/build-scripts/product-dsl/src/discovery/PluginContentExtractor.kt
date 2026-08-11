@@ -144,7 +144,6 @@ internal data class PluginXmlOverride(
 
 private val PLUGIN_ID_PATTERN = Regex("""<id>([^<]+)</id>""")
 private val XML_COMMENT_PATTERN = Regex("<!--.*?-->", setOf(RegexOption.DOT_MATCHES_ALL))
-
 /** Extracts plugin ID from plugin.xml content */
 private fun extractPluginId(content: String): PluginId? {
   return PLUGIN_ID_PATTERN.find(content)?.groupValues?.get(1)?.trim()?.let { PluginId(it) }

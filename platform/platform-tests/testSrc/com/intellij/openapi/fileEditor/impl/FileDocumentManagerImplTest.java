@@ -155,7 +155,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     );
     assertNotNull(
       "Non-LightVirtualFile documents start in myDocumentCache",
-      myDocumentManager.getFileCachedDocument(file)
+      myDocumentManager.getDocumentFromCacheInTests(file)
     );
 
     FileDocumentManagerBase.registerDocument(document, file);
@@ -167,7 +167,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     );
     assertNull(
       "Hard-bound documents must not leave a strong file key in myDocumentCache",
-      myDocumentManager.getFileCachedDocument(file)
+      myDocumentManager.getDocumentFromCacheInTests(file)
     );
   }
 

@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.jps.build` start
-
 jvm_library(
     name = "build",
     srcs = glob(
@@ -57,11 +56,11 @@ jvm_library(
         "//libraries/caffeine",
         "@lib//:kotlin-stdlib-provided",
         "//libraries/hash4j",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/mvstore",
         "//libraries/http-client",
         "//libraries/maven-resolver-provider",
-        "@lib//:netty-codec-protobuf",
+        "//libraries/netty/codec-protobuf:libraries-netty-codec-protobuf",
         "//libraries/netty/codec-http:libraries-netty-codec-http",
         "//libraries/netty/buffer",
         "@lib//:kotlin-metadata",
@@ -112,9 +111,11 @@ jvm_library(
         "//libraries/caffeine:caffeine_test_lib",
         "@lib//:kotlin-stdlib-provided",
         "//libraries/hash4j:hash4j_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/mvstore:mvstore_test_lib",
         "//libraries/http-client:http-client_test_lib",
         "//libraries/maven-resolver-provider:maven-resolver-provider_test_lib",
+        "//libraries/netty/codec-protobuf:libraries-netty-codec-protobuf_test_lib",
         "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
         "//libraries/netty/buffer:buffer_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
@@ -134,7 +135,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jps.build` end
 
 ### auto-generated section `build intellij.platform.jps.build.tests` start
-
 jvm_library(
     name = "build-tests",
     srcs = glob(
@@ -226,6 +226,10 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/lang-api:lang",
         "//platform/lang-api:lang_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.jps.build.tests` end
@@ -240,7 +244,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jps.build.tests` end
 
 ### auto-generated section `test intellij.platform.jps.build.tests` start
-
 jps_test(
     name = "build-tests_test",
     runtime_deps = [":build-tests_test_lib"],

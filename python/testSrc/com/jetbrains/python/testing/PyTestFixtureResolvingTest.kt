@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction
 import com.intellij.idea.TestFor
 import com.intellij.psi.PsiElement
@@ -21,6 +24,9 @@ import com.jetbrains.python.testing.pyTestFixtures.reservedFixtureClassSet
 import com.jetbrains.python.testing.pyTestFixtures.reservedFixturesSet
 import junit.framework.TestCase
 
+@Subsystems.TestRunner
+@Components.Pytest
+@Layers.Functional
 class PyTestFixtureResolvingTest : PyTestCase() {
 
   companion object {
@@ -333,7 +339,7 @@ class PyTestFixtureResolvingTest : PyTestCase() {
   }
 
   fun testGenerator() {
-    assertCorrectType(ITERATED_DIR, TEST_GENERATOR, STR_TYPE_NAME)
+    assertCorrectType(ITERATED_DIR, TEST_GENERATOR, "Literal[\"Hello World\"]")
   }
 
   fun testIterable() {
@@ -345,7 +351,7 @@ class PyTestFixtureResolvingTest : PyTestCase() {
   }
 
   fun testAsyncGenerator() {
-    assertCorrectType(ASYNC_DIR, TEST_ASYNC_GENERATOR, STR_TYPE_NAME)
+    assertCorrectType(ASYNC_DIR, TEST_ASYNC_GENERATOR, "Literal[\"Hello World\"]")
   }
 
   fun testAsyncIterable() {
@@ -361,7 +367,7 @@ class PyTestFixtureResolvingTest : PyTestCase() {
   }
 
   fun testNamedParameterTypes() {
-    assertCorrectType(PARAMETRIZED_DIR, TEST_PARAMETER_TYPES, "int | str")
+    assertCorrectType(PARAMETRIZED_DIR, TEST_PARAMETER_TYPES, INT_STR_UNION)
   }
 
   @TestFor(issues = ["PY-56268"])

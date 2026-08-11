@@ -14,7 +14,10 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.milliseconds
 
-internal class JoniRegexFacade(private val myRegex: Regex) : RegexFacade {
+internal class JoniRegexFacade(
+  private val myRegex: Regex,
+  private val myRegexWithoutBeginStringAnchor: Regex? = null,
+) : RegexFacade {
   override fun match(string: TextMateString, checkCancelledCallback: Runnable?): MatchData {
     return match(string = string,
                  byteOffset = TextMateByteOffset(0),
@@ -34,10 +37,12 @@ internal class JoniRegexFacade(private val myRegex: Regex) : RegexFacade {
 
     val gosOffset = if (matchBeginPosition) byteOffset.offset else Int.MAX_VALUE
     val options = if (matchBeginString) Option.NONE else Option.NOTBOS
+    // joni ignores NOTBOS for \A, so a rewritten pattern with disabled \A is used instead
+    val regex = if (matchBeginString) myRegex else myRegexWithoutBeginStringAnchor ?: myRegex
 
     checkCancelledCallback?.run()
 
-    val matcher = myRegex.matcher(string.bytes, 0, string.bytes.size, MATCHING_TIMEOUT)
+    val matcher = regex.matcher(string.bytes, 0, string.bytes.size, MATCHING_TIMEOUT)
     try {
       val matchIndex = matcher.search(gosOffset, byteOffset.offset, string.bytes.size, options)
       return when (matchIndex) {

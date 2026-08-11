@@ -13,33 +13,43 @@ import org.jetbrains.jewel.ui.component.styling.SimpleListItemColors
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemMetrics
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle
 
+/** Creates an Int UI default [SimpleListItemStyle], choosing between light and dark based on the current theme. */
 @Composable
 public fun SimpleListItemStyle.Companion.default(): SimpleListItemStyle = if (JewelTheme.isDark) dark() else light()
 
+/** Creates an Int UI light [SimpleListItemStyle] with the provided parameters. */
 public fun SimpleListItemStyle.Companion.light(
     colors: SimpleListItemColors = SimpleListItemColors.light(),
     metrics: SimpleListItemMetrics = SimpleListItemMetrics.default(),
 ): SimpleListItemStyle = SimpleListItemStyle(colors, metrics)
 
+/** Creates an Int UI dark [SimpleListItemStyle] with the provided parameters. */
 public fun SimpleListItemStyle.Companion.dark(
     colors: SimpleListItemColors = SimpleListItemColors.dark(),
     metrics: SimpleListItemMetrics = SimpleListItemMetrics.default(),
 ): SimpleListItemStyle = SimpleListItemStyle(colors, metrics)
 
+/**
+ * Creates an Int UI full-width default [SimpleListItemStyle], choosing between light and dark based on the current
+ * theme.
+ */
 @Composable
 public fun SimpleListItemStyle.Companion.fullWidth(): SimpleListItemStyle =
     if (JewelTheme.isDark) darkFullWidth() else lightFullWidth()
 
+/** Creates an Int UI light full-width [SimpleListItemStyle] with the provided parameters. */
 public fun SimpleListItemStyle.Companion.lightFullWidth(
     colors: SimpleListItemColors = SimpleListItemColors.light(),
     metrics: SimpleListItemMetrics = SimpleListItemMetrics.fullWidth(),
 ): SimpleListItemStyle = SimpleListItemStyle(colors, metrics)
 
+/** Creates an Int UI dark full-width [SimpleListItemStyle] with the provided parameters. */
 public fun SimpleListItemStyle.Companion.darkFullWidth(
     colors: SimpleListItemColors = SimpleListItemColors.dark(),
     metrics: SimpleListItemMetrics = SimpleListItemMetrics.fullWidth(),
 ): SimpleListItemStyle = SimpleListItemStyle(colors, metrics)
 
+/** Creates an Int UI light [SimpleListItemColors] with the provided parameters. */
 public fun SimpleListItemColors.Companion.light(
     background: Color = Color.Unspecified,
     backgroundActive: Color = background,
@@ -61,6 +71,7 @@ public fun SimpleListItemColors.Companion.light(
         contentSelectedActive = contentSelectedActive,
     )
 
+/** Creates an Int UI dark [SimpleListItemColors] with the provided parameters. */
 public fun SimpleListItemColors.Companion.dark(
     background: Color = Color.Unspecified,
     backgroundActive: Color = background,
@@ -82,6 +93,7 @@ public fun SimpleListItemColors.Companion.dark(
         contentSelectedActive = contentSelectedActive,
     )
 
+/** Creates an Int UI default [SimpleListItemMetrics] with the provided parameters. */
 public fun SimpleListItemMetrics.Companion.default(
     innerPadding: PaddingValues = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
     outerPadding: PaddingValues = PaddingValues(horizontal = 7.dp, vertical = 1.dp),
@@ -89,6 +101,7 @@ public fun SimpleListItemMetrics.Companion.default(
     iconTextGap: Dp = 3.dp,
 ): SimpleListItemMetrics = SimpleListItemMetrics(innerPadding, outerPadding, selectionBackgroundCornerSize, iconTextGap)
 
+/** Creates an Int UI full-width [SimpleListItemMetrics] with the provided parameters. */
 public fun SimpleListItemMetrics.Companion.fullWidth(
     innerPadding: PaddingValues = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
     outerPadding: PaddingValues = PaddingValues(),

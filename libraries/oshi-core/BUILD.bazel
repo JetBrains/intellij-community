@@ -1,0 +1,42 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.oshi.core` start
+jvm_library(
+    name = "oshi-core",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.oshi.core",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-oshi-core-github-oshi-core"],
+    runtime_deps = ["@lib//:libraries-oshi-core-github-oshi-core"],
+)
+
+jvm_library(
+    name = "oshi-core_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.oshi.core",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-oshi-core-github-oshi-core"],
+    runtime_deps = [":oshi-core"],
+)
+### auto-generated section `build intellij.libraries.oshi.core` end
+
+### auto-generated section `iml intellij.libraries.oshi.core` start
+exports_files(
+    [
+        "intellij.libraries.oshi.core.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.oshi.core` end

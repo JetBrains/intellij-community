@@ -5,6 +5,8 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAlert
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAtPath
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeBlock
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
@@ -43,6 +45,7 @@ object MarkdownPsiFactory {
       MarkdownElementTypes.BLOCK_QUOTE -> MarkdownBlockQuote(node)
       MarkdownElementTypes.SHORT_REFERENCE_LINK -> MarkdownShortReferenceLink(node)
       MarkdownElementTypes.TEST_LINK -> MarkdownTestLink(node)
+      MarkdownElementTypes.AT_PATH -> MarkdownAtPath(node)
       MarkdownElementTypes.LINK_DEFINITION -> MarkdownLinkDefinition(node)
       MarkdownElementTypes.LINK_DESTINATION -> MarkdownLinkDestination(node)
       MarkdownElementTypes.LINK_LABEL -> MarkdownLinkLabel(node)
@@ -53,11 +56,12 @@ object MarkdownPsiFactory {
       MarkdownElementTypes.AUTOLINK -> MarkdownWrappedAutoLink(node)
       MarkdownElementTypes.LINK_COMMENT -> MarkdownComment(node)
       MarkdownElementTypes.CODE_SPAN -> MarkdownCodeSpan(node)
+      MarkdownElementTypes.ALERT -> MarkdownAlert(node)
       else -> when {
         elementType in MarkdownTokenTypeSets.HEADER_CONTENT -> MarkdownHeaderContent(node)
         MarkdownTokenTypeSets.HEADERS.contains(elementType) -> MarkdownHeader(node)
         MarkdownTokenTypeSets.LISTS.contains(elementType) -> MarkdownList(node)
-        else -> ASTWrapperPsiElement(node)
+        else -> MarkdownPsiElementProvider.createElement(node) ?: ASTWrapperPsiElement(node)
       }
     }
   }

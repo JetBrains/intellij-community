@@ -9,6 +9,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens;
 import org.jetbrains.kotlin.lexer.KtTokens;
 
@@ -16,8 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class KotlinHighlighter extends SyntaxHighlighterBase {
-    private static final Map<IElementType, TextAttributesKey> keys1;
-    private static final Map<IElementType, TextAttributesKey> keys2;
+    private static final @NotNull @Unmodifiable Map<@NotNull IElementType, @NotNull TextAttributesKey @NotNull []> keys;
 
     @Override
     public @NotNull Lexer getHighlightingLexer() {
@@ -25,13 +25,13 @@ public class KotlinHighlighter extends SyntaxHighlighterBase {
     }
 
     @Override
-    public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
-        return pack(keys1.get(tokenType), keys2.get(tokenType));
+    public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(@NotNull IElementType tokenType) {
+        return keys.getOrDefault(tokenType, TextAttributesKey.EMPTY_ARRAY);
     }
 
     static {
-        keys1 = new HashMap<IElementType, TextAttributesKey>();
-        keys2 = new HashMap<IElementType, TextAttributesKey>();
+        Map<IElementType, TextAttributesKey> keys1 = new HashMap<>();
+        Map<IElementType, TextAttributesKey> keys2 = new HashMap<>();
 
         fillMap(keys1, KtTokens.KEYWORDS, KotlinHighlightingColors.KEYWORD);
 
@@ -83,5 +83,7 @@ public class KotlinHighlighter extends SyntaxHighlighterBase {
         keys2.put(KDocTokens.TAG_NAME, KotlinHighlightingColors.KDOC_TAG);
 
         keys1.put(TokenType.BAD_CHARACTER, KotlinHighlightingColors.BAD_CHARACTER);
+
+        keys = merge(keys1, keys2);
     }
 }

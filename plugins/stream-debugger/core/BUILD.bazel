@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.debugger.streams.core` start
-
 jvm_library(
     name = "core",
     srcs = glob(
@@ -35,6 +34,8 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//platform/progress/shared:ide-progress",
+        "//platform/statistics",
+        "//platform/util/coroutines",
         "//plugins/stream-debugger/shared",
     ],
 )
@@ -65,6 +66,8 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
         "//plugins/stream-debugger/shared:shared_test_lib",
     ],
 )

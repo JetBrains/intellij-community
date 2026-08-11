@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForTest
-import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
+import org.jetbrains.kotlin.library.isNativeStdlib
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.closure
 import com.intellij.openapi.module.Module as OpenapiModule
@@ -250,7 +250,7 @@ internal class KaSourceModuleDependenciesProvider(private val project: Project) 
         if (this is KaLibraryModuleImpl) {
             if (resolvedKotlinLibraries.isNotEmpty()) { // this is a klib-based library
                 val isNativeStdlib = resolvedKotlinLibraries.any { kotlinLibrary ->
-                    kotlinLibrary.libraryFile.path.endsWith(KONAN_STDLIB_NAME)
+                    kotlinLibrary.isNativeStdlib
                 }
                 return SourceModuleDependenciesFilterCandidate.KlibLibraryDependency(targetPlatform, isNativeStdlib)
             }

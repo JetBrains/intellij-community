@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.concurrency` start
-
 jvm_library(
     name = "concurrency",
     srcs = glob(
@@ -67,7 +66,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.concurrency` end
 
 ### auto-generated section `build intellij.platform.concurrency.tests` start
-
 jvm_library(
     name = "concurrency-tests",
     srcs = glob(
@@ -137,7 +135,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.concurrency.tests` end
 
 ### auto-generated section `test intellij.platform.concurrency.tests` start
-
 jps_test(
     name = "concurrency-tests_test",
     runtime_deps = [":concurrency-tests_test_lib"],

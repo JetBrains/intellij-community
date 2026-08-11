@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 25" allPlatforms="JVM [25]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlin.time.ExperimentalTime -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive -opt-in=com.jetbrains.python.PyInternalExecApi" />
+        </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="25" />
+            <stringArg name="apiVersion" arg="2.4" />
+            <stringArg name="languageVersion" arg="2.4" />
+          </stringArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$/testResources">
@@ -83,7 +99,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.core.impl" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.sdk.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.gson" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.commandInterface" scope="TEST" />
@@ -91,6 +107,7 @@
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.jupiter" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.suites" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.remote" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
@@ -107,7 +124,7 @@
     <orderEntry type="module" module-name="intellij.python.syntax" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.execService" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetcheck" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.python.test.env.common" />
     <orderEntry type="module" module-name="intellij.python.test.env.junit4" scope="TEST" />
@@ -129,11 +146,24 @@
     <orderEntry type="module" module-name="intellij.platform.todo.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.communityOnly" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.json.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.json.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.aliasProvider" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.impl.conda" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.codeInsight" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testIntegration" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testIntegration.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.lsp.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lsp" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lsp.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.ty" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.ruff" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.pyright" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.toml.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.poetry.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.requirements.backend" scope="TEST" />
   </component>
+  <component name="TestModuleProperties" production-module="intellij.python.community.impl" />
 </module>

@@ -6,9 +6,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.validation.CellValidation
 import com.intellij.ui.dsl.validation.Level
 import com.intellij.ui.layout.ComponentPredicate
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal class CompoundCellValidation<out T>(private vararg val cellValidations: CellValidation<T>) : CellValidation<T> {
 
   override var enabled: Boolean

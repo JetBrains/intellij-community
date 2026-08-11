@@ -18,6 +18,7 @@ import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.ResourceUtil
 import javax.swing.JComponent
 import javax.swing.JPanel
+import org.jetbrains.annotations.ApiStatus
 
 open class CodeVisionGroupDefaultSettingModel(override val name: String,
                                               groupId: String,
@@ -32,6 +33,7 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
               isEnabled: Boolean,
               providers: List<CodeVisionProvider<*>>) : this(name, groupId, description, null, isEnabled, providers)
 
+  @ApiStatus.Internal
   companion object {
     private val CODE_VISION_PREVIEW_ENABLED = Key<Boolean>("code.vision.preview.data")
 

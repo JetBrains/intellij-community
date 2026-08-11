@@ -1,6 +1,6 @@
 // "Move 'SomeOptInAnnotation' opt-in requirement from value parameter to property" "true"
 // RUNTIME_WITH_SCRIPT_RUNTIME
-// K2_ERROR: Opt-in requirement marker annotation cannot be used on parameter.
+// K2_ERROR: OPT_IN_MARKER_ON_WRONG_TARGET
 
 @RequiresOptIn
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.VALUE_PARAMETER)

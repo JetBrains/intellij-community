@@ -1,12 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assumeMaven3
+import com.intellij.maven.testFramework.fixtures.assumeMaven4
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ResourceUtil
 import com.intellij.util.xml.Converter
 import com.intellij.util.xml.DomElement
@@ -18,26 +25,40 @@ import com.intellij.util.xml.reflect.DomExtension
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.lang.reflect.Type
 import java.util.function.Supplier
 
-class MavenPluginConfigurationDomExtenderTest : MavenDomTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenPluginConfigurationDomExtenderTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
 
   @Test
   fun testShouldCorrectlyAddTagsForMaven3Plugin() = runBlocking {
-    assumeMaven3()
+    maven.assumeMaven3()
     doTestWith(pluginModelFileName = "compiler-3-14-1.xml")
   }
 
   @Test
   fun testShouldCorrectlyAddTagsForMaven4Plugin() = runBlocking {
-    assumeMaven4()
+    maven.assumeMaven4()
     doTestWith(pluginModelFileName = "compiler-4-0-beta3.xml")
   }
 
   private suspend fun doTestWith(pluginModelFileName: String) {
-    importProjectAsync("""
+    maven.importProjectAsync("""
         <groupId>test</groupId>
         <artifactId>test</artifactId>
         <version>1</version>
@@ -59,7 +80,7 @@ class MavenPluginConfigurationDomExtenderTest : MavenDomTestCase() {
 
     val pluginFile = createFromFile(pluginModelFileName, "plugin-test/$pluginModelFileName")
     readAction {
-      val dom = MavenDomUtil.getMavenDomProjectModel(project, projectPom)!!
+      val dom = MavenDomUtil.getMavenDomProjectModel(maven.project, maven.projectPom)!!
       val compilerConfiguration = dom
         .build
         .plugins
@@ -67,7 +88,7 @@ class MavenPluginConfigurationDomExtenderTest : MavenDomTestCase() {
         .single { it.artifactId.stringValue == "maven-compiler-plugin" }
         .configuration
 
-      val pluginFileModel = MavenDomUtil.getMavenDomModel(project, pluginFile, MavenDomPluginModel::class.java)
+      val pluginFileModel = MavenDomUtil.getMavenDomModel(maven.project, pluginFile, MavenDomPluginModel::class.java)
       val extender = MavenPluginConfigurationDomExtender {
         pluginFileModel
       }
@@ -82,7 +103,7 @@ class MavenPluginConfigurationDomExtenderTest : MavenDomTestCase() {
 
       val basedir = registeredExtensions.singleOrNull() { it.xmlName.localName == "basedir" }
       assertNotNull(basedir)
-      assertEmpty(basedir!!.customAnnotations)
+      UsefulTestCase.assertEmpty(basedir!!.customAnnotations)
     }
   }
 
@@ -90,7 +111,7 @@ class MavenPluginConfigurationDomExtenderTest : MavenDomTestCase() {
     val result = ResourceUtil.getResourceAsStream(this::class.java.classLoader, "org/jetbrains/maven/", resourceName).use {
       StreamUtil.readBytes(it).toString(Charsets.UTF_8)
     }
-    return createProjectSubFile(file, result)
+    return maven.createProjectSubFile(file, result)
   }
 
 }

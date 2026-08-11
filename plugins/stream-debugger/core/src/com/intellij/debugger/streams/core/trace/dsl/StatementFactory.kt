@@ -11,10 +11,6 @@ import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
  * @author Vitaliy.Bibaev
  */
 interface StatementFactory {
-  companion object {
-    fun commaSeparate(vararg args: Expression): String = args.joinToString(separator = ", ") { it.toCode() }
-  }
-
   val types: Types
 
   fun createEmptyCompositeCodeBlock(): CompositeCodeBlock

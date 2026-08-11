@@ -1,8 +1,7 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.devkit.workspaceModel` start
-
 create_kotlinc_options(
     name = "custom_workspaceModel",
     opt_in = [
@@ -32,8 +31,11 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//java/java-indexing-api:indexing",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//plugins/kotlin/references",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-jps-common-provided",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "@lib//:workspace-model-codegen",
@@ -53,6 +55,8 @@ jvm_library(
         "//platform/indexing-api:indexing",
         "//platform/core-ui",
         "//platform/lang-impl",
+        "//platform/problemsView/shared",
+        "//platform/problemsView/ui",
         "//plugins/devkit/devkit-core:core",
         "//java/idea-ui:ui",
         "//aether-dependency-resolver",
@@ -93,7 +97,10 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":workspaceModel",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//java/java-indexing-api:indexing_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-jps-common-provided",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
@@ -112,6 +119,8 @@ jvm_library(
         "//platform/indexing-api:indexing_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/problemsView/shared:shared_test_lib",
+        "//platform/problemsView/ui:ui_test_lib",
         "//plugins/devkit/devkit-core:core_test_lib",
         "//java/idea-ui:ui_test_lib",
         "//aether-dependency-resolver:aether-dependency-resolver_test_lib",

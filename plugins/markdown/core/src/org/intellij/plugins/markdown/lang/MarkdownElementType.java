@@ -5,7 +5,6 @@ import com.intellij.psi.tree.IElementType;
 import org.intellij.markdown.MarkdownElementTypes;
 import org.intellij.markdown.MarkdownTokenTypes;
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes;
-import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElementType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -50,11 +49,7 @@ public class MarkdownElementType extends IElementType {
             || type == MarkdownTokenTypes.SETEXT_CONTENT
             || type == GFMTokenTypes.CELL) {
           result = new MarkdownLazyElementType(type.toString());
-        }
-        else if (isHeaderElementType(type)) {
-          result = new MarkdownHeaderStubElementType(type.toString());
-        }
-        else {
+        } else {
           result = new MarkdownElementType(type.toString());
         }
         platformToMarkdownTypeMap.put(result, type);

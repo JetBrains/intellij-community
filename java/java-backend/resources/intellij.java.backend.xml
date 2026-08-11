@@ -3,13 +3,10 @@
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="com.intellij.modules.vcs"/>
     <plugin id="com.intellij.modules.xdebugger"/>
     <plugin id="com.intellij.modules.xml"/>
     <plugin id="com.intellij.modules.java-capable"/>
-    <module name="intellij.platform.vcs.impl.lang"/>
     <module name="intellij.spellchecker"/>
-    <module name="intellij.regexp"/>
     <module name="intellij.java.typeMigration"/>
     <module name="intellij.java.manifest"/>
     <module name="intellij.java.frontback.impl"/>
@@ -22,7 +19,6 @@
     <module name="intellij.java.codeserver.core"/>
     <module name="intellij.java.codeserver.highlighting"/>
     <module name="intellij.java.compiler"/>
-    <module name="intellij.java.compiler.impl"/>
     <module name="intellij.java.debugger"/>
     <module name="intellij.java.execution"/>
     <module name="intellij.java.impl"/>
@@ -30,6 +26,7 @@
     <module name="intellij.java.impl.refactorings"/>
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.indexing.impl"/>
+    <module name="intellij.java.indexing.serializers"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.java.uast"/>
@@ -39,9 +36,11 @@
     <module name="intellij.jvm.analysis.quickFix"/>
     <module name="intellij.jvm.analysis.refactoring"/>
     <module name="intellij.platform.backend"/>
-    <module name="intellij.platform.jps.build.dependencyGraph"/>
+    <module name="intellij.platform.testIntegration.ui"/>
     <module name="intellij.platform.uast"/>
     <module name="intellij.platform.uast.ide"/>
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.regexp"/>
   </dependencies>
   <!-- endregion -->
 

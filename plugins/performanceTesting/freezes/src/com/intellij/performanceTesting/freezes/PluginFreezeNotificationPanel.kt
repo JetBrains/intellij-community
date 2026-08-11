@@ -10,6 +10,7 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.isVendorJetBrains
 import com.intellij.ide.setToolTipText
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.UnhandledReportSinkService
@@ -23,6 +24,8 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.performanceTesting.freezes.promo.FREEZE_COUNT_KEY
+import com.intellij.performanceTesting.freezes.promo.FREEZE_THRESHOLD
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
@@ -39,13 +42,15 @@ internal class PluginFreezeNotifier : FreezeNotifier {
     val freezeReason = freezeWatcher.getFreezeReason()
     if (freezeReason != null) return // still have previous reason shown to user
 
+    countFreezes()
+
     for (dump in currentDumps) {
       val reason = freezeWatcher.dumpedThreads(event, dump, durationMs)
       if (reason != null) {
         LifecycleUsageTriggerCollector.pluginFreezeDetected(reason.pluginId, durationMs, reason.reportToUser)
         thisLogger().warn("Identified UI freeze in plugin ${reason.pluginId} for $durationMs ms")
         if (reason.reportToUser) {
-          reportFreeze()
+          updateUi()
         }
 
         UnhandledReportSinkService.getInstance()?.report(PluginFreezeReportData(
@@ -60,10 +65,22 @@ internal class PluginFreezeNotifier : FreezeNotifier {
     }
   }
 
-  private fun reportFreeze() {
+  private fun updateUi() {
     for (project in ProjectManager.getInstance().openProjects) {
       EditorNotifications.getInstance(project).updateAllNotifications()
     }
+  }
+
+  internal fun countFreezes() {
+    val props = PropertiesComponent.getInstance()
+    val currentCount = props.getInt(FREEZE_COUNT_KEY, 0)
+    if (currentCount > FREEZE_THRESHOLD) {
+      thisLogger().debug("Freeze count exceeded threshold, do not count further")
+      return
+    }
+
+    props.setValue(FREEZE_COUNT_KEY, currentCount + 1, 0)
+    thisLogger().debug("Freeze detected, incrementing freeze count for promo")
   }
 }
 
@@ -114,25 +131,32 @@ internal class PluginFreezeNotificationPanel : EditorNotificationProvider {
     if (reported.add(freezeReason)) {
       // must be added only once
       MessagePool.getInstance().addErrorMessage(freezeReason.event).invokeOnCompletion {
-        application.invokeLater(
-          {
-            if (project.isDisposed) return@invokeLater
-
-            val dialog = object : IdeErrorsDialog(MessagePool.getInstance(), project, ijProject, freezeReason.event) {
-              override fun updateOnSubmit() {
-                super.updateOnSubmit()
-
-                PluginsFreezesService.getInstance().mutePlugin(pluginDescriptor.pluginId)
-
-                LifecycleUsageTriggerCollector.pluginFreezeReported(pluginDescriptor.pluginId)
-                closePanel(project)
-              }
-            }
-
-            dialog.show()
-          }, ModalityState.nonModal())
+        openInErrorDialog(project, ijProject, freezeReason, pluginDescriptor)
       }
     }
+    else { // already added to pool
+      openInErrorDialog(project, ijProject, freezeReason, pluginDescriptor)
+    }
+  }
+
+  private fun openInErrorDialog(project: Project, ijProject: Boolean, freezeReason: FreezeReason, pluginDescriptor: PluginDescriptor) {
+    application.invokeLater(
+      {
+        if (project.isDisposed) return@invokeLater
+
+        val dialog = object : IdeErrorsDialog(MessagePool.getInstance(), project, ijProject, freezeReason.event) {
+          override fun updateOnSubmit() {
+            super.updateOnSubmit()
+
+            PluginsFreezesService.getInstance().mutePlugin(pluginDescriptor.pluginId)
+
+            LifecycleUsageTriggerCollector.pluginFreezeReported(pluginDescriptor.pluginId)
+            closePanel(project)
+          }
+        }
+
+        dialog.show()
+      }, ModalityState.nonModal())
   }
 
   private fun closePanel(project: Project) {

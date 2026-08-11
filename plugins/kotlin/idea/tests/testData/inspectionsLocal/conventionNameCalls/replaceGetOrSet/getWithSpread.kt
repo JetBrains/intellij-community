@@ -1,5 +1,5 @@
 // PROBLEM: none
-// K2_ERROR: Type argument for reified type parameter 'T' was inferred to the intersection of ['Comparable<*>' & 'Serializable']. Reification of an intersection type results in the common supertype being used. This may lead to subtle issues and an explicit type argument is encouraged.
+// K2_ERROR: TYPE_INTERSECTION_AS_REIFIED_ERROR
 class A {
     operator fun get(vararg args: Any) {
         println(args.size)

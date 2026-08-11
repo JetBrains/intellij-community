@@ -10,7 +10,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBScalableIcon;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +31,6 @@ import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.Objects;
 
-@ApiStatus.Experimental
 public final class RoundedIcon extends JBScalableIcon implements DarkIconProvider, IconWithToolTip {
   private final Icon mySourceIcon;
   private final double myArcRatio;
@@ -157,7 +155,6 @@ public final class RoundedIcon extends JBScalableIcon implements DarkIconProvide
   public int getIconHeight() {
     return mySourceIcon.getIconHeight();
   }
-
 
   @Override
   public int hashCode() {

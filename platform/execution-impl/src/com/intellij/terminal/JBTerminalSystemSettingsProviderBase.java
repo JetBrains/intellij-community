@@ -31,6 +31,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.KeyStroke;
 import java.awt.Font;
@@ -184,7 +185,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
     return strokes;
   }
 
-  public static @NotNull List<KeyStroke> getKeyStrokesByActionId(@NotNull String actionId) {
+  public static @NotNull @Unmodifiable List<KeyStroke> getKeyStrokesByActionId(@NotNull String actionId) {
     return ContainerUtil.mapNotNull(KeymapUtil.getActiveKeymapShortcuts(actionId).getShortcuts(), shortcut -> {
       return shortcut instanceof KeyboardShortcut ks ? ks.getFirstKeyStroke() : null;
     });

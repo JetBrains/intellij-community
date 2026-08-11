@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.base.indices.names
 
 import com.intellij.ide.highlighter.JavaClassFileType
-import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -77,7 +77,7 @@ class KotlinBinaryRootToPackageIndex : FileBasedIndexExtension<String, String>()
 
                 return mapOf(binaryRoot.name to packageName.asString())
             } catch (e: Exception) {
-                if (e is ControlFlowException) throw e
+                rethrowControlFlowException(e)
 
                 throw RuntimeException("Error on indexing ${inputData.file}", e)
             }

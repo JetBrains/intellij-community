@@ -5,4 +5,4 @@ def func(x: ID):
     pass
 
 
-func(<warning descr="Expected type 'ID', got 'int' instead">42</warning>)
+func(<warning descr="Expected type 'ID', got 'Literal[42]' instead">42</warning>)

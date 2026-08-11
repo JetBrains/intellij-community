@@ -2,7 +2,9 @@
 package com.intellij.slicer;
 
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class SliceFilterParseException extends Exception {
   public SliceFilterParseException(@NlsContexts.DialogMessage String message) {
     super(message);

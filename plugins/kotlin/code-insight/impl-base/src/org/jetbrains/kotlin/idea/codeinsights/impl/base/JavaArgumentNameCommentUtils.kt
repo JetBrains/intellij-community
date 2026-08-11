@@ -9,11 +9,11 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.fakeOverrideOriginal
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.util.realName
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -41,7 +41,11 @@ fun KtValueArgument.getBlockCommentWithName(): PsiComment? =
 @ApiStatus.Internal
 class ArgumentNameCommentInfo(val argumentName: Name, val comment: String) {
     @ApiStatus.Internal
-    constructor(symbol: KaValueParameterSymbol, analysisSession: KaSession): this(with(analysisSession) { symbol.realName } ?: symbol.name, symbol.toArgumentNameComment(analysisSession))
+    constructor(symbol: KaValueParameterSymbol, analysisSession: KaSession) :
+            this(
+                context(analysisSession) { symbol.realName } ?: symbol.name,
+                context(analysisSession) { symbol.toArgumentNameComment() }
+            )
 }
 
 typealias NameCommentsByArgument = Map<SmartPsiElementPointer<KtValueArgument>, ArgumentNameCommentInfo>
@@ -58,12 +62,12 @@ fun getArgumentNameComments(element: KtCallElement): NameCommentsByArgument? {
 
     // Use `unwrapFakeOverrides` to handle `SUBSTITUTION_OVERRIDE` and `INTERSECTION_OVERRIDE` callee symbols. Also see the test
     // `genericSuperTypeMethodCall.kt`.
-    val calleeSymbol = resolvedCall.partiallyAppliedSymbol.symbol
+    val calleeSymbol = resolvedCall.symbol
     if (!calleeSymbol.fakeOverrideOriginal.origin.isJavaSourceOrLibrary()) return null
 
     return arguments
         .mapNotNull { argument ->
-            val symbol = resolvedCall.argumentMapping[argument.getArgumentExpression()]?.symbol ?: return@mapNotNull null
+            val symbol = resolvedCall.valueArgumentMapping[argument.getArgumentExpression()]?.symbol ?: return@mapNotNull null
             argument to symbol
         }
         // Take arguments until and including the first vararg parameter. A name comment should be added to the first vararg only, not
@@ -77,8 +81,9 @@ fun getArgumentNameComments(element: KtCallElement): NameCommentsByArgument? {
 private fun KtCallElement.getNonLambdaArguments(): List<KtValueArgument> =
     valueArguments.filterIsInstance<KtValueArgument>().filterNot { it is KtLambdaArgument }
 
-private fun KaValueParameterSymbol.toArgumentNameComment(analysisSession: KaSession): String {
-    val realName = with(analysisSession) { realName } ?: name
+context(session: KaSession)
+private fun KaValueParameterSymbol.toArgumentNameComment(): String {
+    val realName = realName ?: name
     return canonicalArgumentNameComment(if (isVararg) "...$realName" else realName.toString())
 }
 

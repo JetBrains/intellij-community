@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.pluginManager.shared` start
-
 jvm_library(
     name = "shared",
     srcs = glob(
@@ -21,6 +20,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//platform/pluginManager/shared.base",
+        "//platform/kernel/rpc",
         "//platform/core-api:core",
         "//platform/kernel/shared:kernel",
         "//platform/platform-impl/rpc",
@@ -47,6 +48,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":shared",
+        "//platform/pluginManager/shared.base:shared.base_test_lib",
+        "//platform/kernel/rpc:rpc_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",

@@ -1,7 +1,43 @@
 <idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.platform.frontend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.jediterm.core"/>
+    <module name="intellij.libraries.jediterm.ui"/>
+    <module name="intellij.libraries.kotlinx.datetime"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.pty4j"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.eel.impl"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.feedback"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.inline.completion"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc.topics"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.terminal.emulator"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>
@@ -11,11 +47,17 @@
                     interface="com.intellij.terminal.frontend.action.TerminalEscapeHandler" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.terminalSettingsProvider" dynamic="true"
                     interface="com.intellij.terminal.frontend.settings.TerminalSettingsProvider"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.portForwardingManager" dynamic="true"
+                    interface="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingManager"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.activityTracker" dynamic="true"
+                    interface="com.intellij.terminal.frontend.session.TerminalActivityTracker"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager"
                     serviceImplementation="com.intellij.terminal.frontend.toolwindow.impl.TerminalToolWindowTabsManagerImpl"/>
+    <toolWindowEditorTabSupport key="Terminal"
+                                implementationClass="com.intellij.terminal.frontend.TerminalToolWindowEditorTabSupport"/>
 
     <projectConfigurable groupId="tools"
                          bundle="messages.IdeBundle"
@@ -39,6 +81,7 @@
 
     <extendWordSelectionHandler implementation="com.intellij.terminal.frontend.view.impl.TerminalTextSelectioner"/>
     <basicWordSelectionFilter implementation="com.intellij.terminal.frontend.view.impl.TerminalWordSelectionFilter"/>
+    <editorMouseActionsOverrider implementation="com.intellij.terminal.frontend.view.impl.TerminalMouseActionsOverrider"/>
 
     <toolWindow.splitContentProvider toolWindowId="terminal"
                                      implementationClass="com.intellij.terminal.frontend.view.impl.TerminalToolWindowSplitContentProvider"/>
@@ -46,18 +89,6 @@
     <applicationService
       serviceInterface="org.jetbrains.plugins.terminal.fus.FrontendLatencyService"
       serviceImplementation="com.intellij.terminal.frontend.fus.FrontendLatencyServiceImpl"/>
-    <applicationService
-      serviceInterface="com.intellij.terminal.frontend.session.TerminalActivityTracker"
-      serviceImplementation="com.intellij.terminal.frontend.session.TerminalNoOpActivityTracker"
-      open="true"/>
-    <applicationService
-      serviceInterface="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingManager"
-      serviceImplementation="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingManagerImpl"
-      open="true"/>
-    <projectService
-      serviceInterface="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingPersistenceService"
-      serviceImplementation="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingNoOpPersistenceService"
-      open="true"/>
     <inline.completion.editorInsertHandler
       implementation="com.intellij.terminal.frontend.view.inlineCompletion.TerminalInlineCompletionEditorInsertHandler"
       order="first"/>
@@ -71,10 +102,13 @@
     <platform.rpc.projectRemoteTopicListener
       implementation="com.intellij.terminal.frontend.view.notification.TerminalEnvironmentChangedTopicListener"/>
     <editorAutoClosingHandler implementation="com.intellij.terminal.frontend.editor.TerminalViewEditorAutoClosingHandler"/>
+    <backgroundPostStartupActivity implementation="com.intellij.terminal.frontend.toolwindow.impl.TerminalProcessesClosingNotifierInstaller"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <toolWindowInitializer implementation="com.intellij.terminal.frontend.toolwindow.impl.TerminalToolWindowTabsManagerImpl$Initializer"/>
+
+    <portForwardingManager implementation="com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingManagerImpl"/>
 
     <escapeHandler implementation="com.intellij.terminal.frontend.action.CancelSelection"/>
     <escapeHandler implementation="com.intellij.terminal.frontend.action.CloseSearch"/>
@@ -98,9 +132,19 @@
       <keyboard-shortcut first-keystroke="control V" keymap="$default"/>
       <keyboard-shortcut first-keystroke="shift INSERT" keymap="$default"/>
     </action>
+    <action id="Terminal.PasteFromHistory" class="com.intellij.terminal.frontend.action.TerminalPasteFromHistoryAction"
+            icon="AllIcons.Actions.MenuPaste" use-shortcut-of="PasteMultiple">
+      <!-- On XWin Ctrl+Shift+V is owned by Terminal.Paste -->
+      <keyboard-shortcut first-keystroke="control shift V" keymap="Default for XWin" remove="true"/>
+    </action>
     <action id="Terminal.PasteSelection" class="com.intellij.terminal.frontend.action.TerminalPasteSelectionAction"
             use-shortcut-of="EditorPasteFromX11">
       <override-text place="GoToAction"/>
+    </action>
+    <action id="Terminal.CreateRectangularSelectionOnMouseDrag"
+            class="com.intellij.terminal.frontend.action.TerminalCreateRectangularSelectionOnMouseDragAction"
+            use-shortcut-of="EditorCreateRectangularSelectionOnMouseDrag">
+      <mouse-shortcut keystroke="shift alt button1" keymap="$default"/>
     </action>
     <action id="Terminal.Find" class="com.intellij.terminal.frontend.action.TerminalFindAction" use-shortcut-of="Find">
       <override-text place="GoToAction"/>
@@ -138,6 +182,23 @@
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
 
+    <action id="Terminal.LineUp" class="com.intellij.terminal.frontend.action.TerminalLineUpAction">
+      <override-text place="GoToAction"/>
+      <keyboard-shortcut first-keystroke="control UP" keymap="$default"/>
+    </action>
+    <action id="Terminal.LineDown" class="com.intellij.terminal.frontend.action.TerminalLineDownAction">
+      <override-text place="GoToAction"/>
+      <keyboard-shortcut first-keystroke="control DOWN" keymap="$default"/>
+    </action>
+    <action id="Terminal.PageUp" class="com.intellij.terminal.frontend.action.TerminalPageUpAction">
+      <override-text place="GoToAction"/>
+      <keyboard-shortcut first-keystroke="shift PAGE_UP" keymap="$default"/>
+    </action>
+    <action id="Terminal.PageDown" class="com.intellij.terminal.frontend.action.TerminalPageDownAction">
+      <override-text place="GoToAction"/>
+      <keyboard-shortcut first-keystroke="shift PAGE_DOWN" keymap="$default"/>
+    </action>
+
     <group id="Terminal.Engine" popup="true">
       <action id="Terminal.UseReworkedEngine" class="com.intellij.terminal.frontend.action.TerminalReworkedEngineAction"/>
       <action id="Terminal.UseClassicEngine" class="com.intellij.terminal.frontend.action.TerminalClassicEngineAction"/>
@@ -157,6 +218,7 @@
       <reference ref="Terminal.CopyBlock"/>
       <reference ref="Terminal.CopySelectedText"/>
       <reference ref="Terminal.Paste"/>
+      <reference ref="Terminal.PasteFromHistory"/>
     </group>
 
     <group id="Terminal.PromptContextMenu">
@@ -164,6 +226,7 @@
       <reference ref="EditorCut"/>
       <reference ref="Terminal.CopySelectedText"/>
       <reference ref="Terminal.Paste"/>
+      <reference ref="Terminal.PasteFromHistory"/>
       <reference ref="Terminal.PromptStyle"/>
     </group>
 
@@ -185,6 +248,7 @@
             class="com.intellij.terminal.frontend.action.TerminalAgentsChevronSelectorAction"
             icon="AllIcons.Toolbar.Expand"/>
     <action id="Terminal.AiAgents.LaunchSelectedAgent" class="com.intellij.terminal.frontend.action.LaunchSelectedAgentAction"/>
+    <action id="Terminal.AiAgents.LaunchJunieCli" class="com.intellij.terminal.frontend.action.LaunchJunieCliAction"/>
     <action id="Terminal.AiAgents.ResetJunieNewBadgeCounter"
             class="com.intellij.terminal.frontend.action.ResetJunieNewBadgeCounterAction"
             internal="true"/>
@@ -196,6 +260,7 @@
       <separator/>
       <reference ref="Terminal.CopySelectedText"/>
       <reference ref="Terminal.Paste"/>
+      <reference ref="Terminal.PasteFromHistory"/>
       <reference ref="Terminal.SelectAll"/>
       <separator/>
       <reference ref="Terminal.ClearBuffer"/>
@@ -216,4 +281,8 @@
     <listener class="com.intellij.terminal.frontend.toolwindow.impl.ExperimentalTerminalMigrationNotifier"
               topic="com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener"/>
   </projectListeners>
+  <applicationListeners>
+    <listener class="com.intellij.terminal.frontend.toolwindow.impl.TerminalProcessesClosingNotifierInstaller"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
 </idea-plugin>

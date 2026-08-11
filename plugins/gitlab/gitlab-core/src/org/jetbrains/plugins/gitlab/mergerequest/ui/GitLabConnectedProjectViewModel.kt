@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -126,9 +127,13 @@ abstract class GitLabConnectedProjectViewModelBase(
 
   protected val mergeRequestCreatedSignal: MutableSharedFlow<Unit> = MutableSharedFlow()
 
+  // Re-run the lookup on MR creation and whenever the MR list is reloaded/refreshed, so an MR opened outside the IDE
+  // (or otherwise missed by the initial lookup) is picked up on the next refresh without switching branches.
+  private val mergeRequestOnCurrentBranchRefresh = merge(mergeRequestCreatedSignal, listVm.listUpdated)
+
   private val mergeRequestOnCurrentBranch: Flow<String?> =
     projectsManager.findHostedRemoteBranchTrackedByCurrent(connection.repo.gitRepository)
-      .combine(mergeRequestCreatedSignal.withInitial(Unit)) { repoAndBranch, _ ->
+      .combine(mergeRequestOnCurrentBranchRefresh.withInitial(Unit)) { repoAndBranch, _ ->
         val (targetRepo, branch) = repoAndBranch ?: return@combine null
         try {
           findOpenReviewIdByBranch(connection, branch.nameForRemoteOperations, targetRepo.repository.projectPath.fullPath())

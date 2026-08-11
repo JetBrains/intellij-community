@@ -15,9 +15,8 @@ interface UnknownPropertyTypeEntityBuilder: WorkspaceEntityBuilder<UnknownProper
 override var entitySource: EntitySource
 var date: Date
 }
-
 internal object UnknownPropertyTypeEntityType : EntityType<UnknownPropertyTypeEntity, UnknownPropertyTypeEntityBuilder>(){
-override val entityClass: Class<UnknownPropertyTypeEntity> get() = UnknownPropertyTypeEntity::class.java
+override val entityImplClass: Class<*> get() = UnknownPropertyTypeEntityImpl::class.java
 override val entityImplBuilderClass: Class<*> get() = UnknownPropertyTypeEntityImpl.Builder::class.java
 operator fun invoke(
 date: Date,
@@ -31,12 +30,10 @@ init?.invoke(builder)
 return builder
 }
 }
-
 fun MutableEntityStorage.modifyUnknownPropertyTypeEntity(
 entity: UnknownPropertyTypeEntity,
 modification: UnknownPropertyTypeEntityBuilder.() -> Unit,
 ): UnknownPropertyTypeEntity = modifyEntity(UnknownPropertyTypeEntityBuilder::class.java, entity, modification)
-
 @JvmOverloads
 @JvmName("createUnknownPropertyTypeEntity")
 fun UnknownPropertyTypeEntity(

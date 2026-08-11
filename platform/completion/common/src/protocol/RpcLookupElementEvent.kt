@@ -33,19 +33,33 @@ sealed interface RpcLookupElementEvent {
    * the lookup is closed without completion
    */
   @Serializable
-  data class Cancel(val projectId: ProjectId) : RpcLookupElementEvent {
+  data class Cancel(val projectId: ProjectId, val requestId: RpcCompletionRequestId) : RpcLookupElementEvent {
     override fun toString(): String = buildToString("Cancel") {
       field("projectId", projectId)
+      field("requestId", requestId)
     }
   }
 
   /**
    * the lookup is closed with completion
+   *
+   * [requestId] is the request the chosen item belongs to, and it is what the backend must resolve
+   * [selectedItemId] against: items live in a per-request storage
+   * (`BackendCompletionRequestSession.findCompletionResult`), and the mirror lookup's arranger can still belong to an
+   * older request when this event is handled (IJPL-252099 — the frontend swaps a stale-seeded request for a fresh one
+   * right before the accept). Resolving against the arranger's own session instead would fail to find the item and
+   * insert one carrying a shorter prefix matcher, leaving the leading typed characters in the document.
    */
   @Serializable
-  data class ItemSelected(val projectId: ProjectId) : RpcLookupElementEvent {
+  data class ItemSelected(
+    val projectId: ProjectId,
+    val requestId: RpcCompletionRequestId,
+    val selectedItemId: RpcCompletionItemId? = null,
+  ) : RpcLookupElementEvent {
     override fun toString(): String = buildToString("ItemSelected") {
       field("projectId", projectId)
+      field("requestId", requestId)
+      fieldWithNullDefault("selectedItemId", selectedItemId)
     }
   }
 

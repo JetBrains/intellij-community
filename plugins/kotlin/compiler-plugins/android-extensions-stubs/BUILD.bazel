@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build kotlin.compiler-plugins.android-extensions-stubs` start
-
 jvm_library(
     name = "android-extensions-stubs",
     srcs = glob(

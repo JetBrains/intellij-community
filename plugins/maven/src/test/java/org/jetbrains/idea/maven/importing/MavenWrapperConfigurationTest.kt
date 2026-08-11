@@ -1,39 +1,52 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenImportingTestCase
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.ZipUtil
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
+import com.intellij.maven.testFramework.fixtures.MavenCustomRepositoryHelper
+import com.intellij.maven.testFramework.fixtures.assertOrderedElementsAreEqual
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenGeneralSettings
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.refreshFiles
+import com.intellij.maven.testFramework.fixtures.removeFromLocalRepository
+import com.intellij.maven.testFramework.fixtures.updateProjectSubFile
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.MavenWrapper
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.util.zip.ZipOutputStream
 import kotlin.io.path.isRegularFile
 
-class MavenWrapperConfigurationTest : MavenImportingTestCase() {
+@TestApplication
+class MavenWrapperConfigurationTest {
+  private val maven by mavenImportingFixture()
 
   private val httpServerFixture = MavenHttpRepositoryServerFixture()
   private val httpServerFixtureForWrapper = MavenHttpRepositoryServerFixture()
 
-  public override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUpServers() {
     httpServerFixture.setUp()
     httpServerFixtureForWrapper.setUp()
   }
 
-  override fun runInDispatchThread(): Boolean = false
-
-  public override fun tearDown() {
+  @AfterEach
+  fun tearDownServers() {
     RunAll(
       { httpServerFixture.tearDown() },
       { httpServerFixtureForWrapper.tearDown() },
-      { super.tearDown() }
     ).run()
   }
 
@@ -52,7 +65,7 @@ class MavenWrapperConfigurationTest : MavenImportingTestCase() {
         </profile>
       </profiles>
       </settings>
-     
+
      """.trimIndent())
     }
 
@@ -69,38 +82,38 @@ class MavenWrapperConfigurationTest : MavenImportingTestCase() {
         </profile>
       </profiles>
       </settings>
-     
+
      """.trimIndent())
     }
 
     httpServerFixtureForWrapper.startRepositoryFor(repack1.parent)
-    val wrapperProperties = createProjectSubFile(".mvn/wrapper/maven-wrapper.properties",
+    val wrapperProperties = maven.createProjectSubFile(".mvn/wrapper/maven-wrapper.properties",
                                                  "distributionUrl=${httpServerFixtureForWrapper.url()}/profile1.zip\n")
-    MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.setMavenHomeNoFire(MavenWrapper)
+    MavenWorkspaceSettingsComponent.getInstance(maven.project).settings.generalSettings.setMavenHomeNoFire(MavenWrapper)
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1</version>
     """)
 
-    assertOrderedElementsAreEqual(projectsManager.projects[0].activatedProfilesIds.enabledProfiles, listOf("profile1"))
+    assertOrderedElementsAreEqual(maven.projectsManager.projects[0].activatedProfilesIds.enabledProfiles, listOf("profile1"))
 
-    updateProjectSubFile(".mvn/wrapper/maven-wrapper.properties",
+    maven.updateProjectSubFile(".mvn/wrapper/maven-wrapper.properties",
                          "distributionUrl=${httpServerFixtureForWrapper.url()}/profile2.zip\n")
-    refreshFiles(listOf(wrapperProperties))
-    importProjectAsync("""
+    maven.refreshFiles(listOf(wrapperProperties))
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>2</version>
     """)
-    assertOrderedElementsAreEqual(projectsManager.projects[0].activatedProfilesIds.enabledProfiles, listOf("profile2"))
+    assertOrderedElementsAreEqual(maven.projectsManager.projects[0].activatedProfilesIds.enabledProfiles, listOf("profile2"))
 
   }
 
   @Test
   fun testShouldDownloadAndUseWrapperMavenSettings() = runBlocking {
-    val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
+    val helper = MavenCustomRepositoryHelper(maven.dir, "local1", "remote")
     val remoteRepoPath = helper.getTestData("remote")
     val localRepoPath = helper.getTestData("local1")
 
@@ -125,22 +138,22 @@ class MavenWrapperConfigurationTest : MavenImportingTestCase() {
         </profile>
       </profiles>
       </settings>
-     
+
      """.trimIndent())
     }
     httpServerFixtureForWrapper.startRepositoryFor(repack.parent)
 
-    repositoryPath = localRepoPath
-    val settingsXml = createProjectSubFile(
+    maven.repositoryPath = localRepoPath
+    val settingsXml = maven.createProjectSubFile(
       "settings.xml",
       """
        <settings>
           <localRepository>$localRepoPath</localRepository>
        </settings>
        """.trimIndent())
-    mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
+    maven.mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -153,14 +166,14 @@ class MavenWrapperConfigurationTest : MavenImportingTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    val wrapperProperties = createProjectSubFile(".mvn/wrapper/maven-wrapper.properties",
+    val wrapperProperties = maven.createProjectSubFile(".mvn/wrapper/maven-wrapper.properties",
                          "distributionUrl=${httpServerFixtureForWrapper.url()}/custom-maven.zip\n")
-    refreshFiles(listOf(settingsXml, wrapperProperties))
+    maven.refreshFiles(listOf(settingsXml, wrapperProperties))
 
-    MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.setMavenHomeNoFire(MavenWrapper)
-    removeFromLocalRepository("org/mytest/myartifact/")
+    MavenWorkspaceSettingsComponent.getInstance(maven.project).settings.generalSettings.setMavenHomeNoFire(MavenWrapper)
+    maven.removeFromLocalRepository("org/mytest/myartifact/")
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
-    importProjectAsync()
+    maven.importProjectAsync()
     assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
   }
 

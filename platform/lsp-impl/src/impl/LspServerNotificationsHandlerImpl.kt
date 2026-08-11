@@ -21,7 +21,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.lsp.api.LspBundle
 import com.intellij.platform.lsp.api.LspServerNotificationsHandler
+import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.impl.features.LspFeaturesRefreshing
+import com.intellij.platform.lsp.impl.serviceView.LspClientConsole
+import com.intellij.platform.lsp.impl.serviceView.LspServiceViewSupport
 import com.intellij.platform.lsp.impl.util.LspWorkspaceEditApplier
 import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.platform.util.progress.reportRawProgress
@@ -129,8 +132,7 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
     }
 
     if (needsInlayHintRefresh) {
-      // Also calls `DaemonCodeAnalyzer.restart` internally
-      LspFeaturesRefreshing.refreshInlayHints(project)
+      lspClient.refreshInlayHints()
     }
 
     if (needsCodeLensesRefresh) {
@@ -146,8 +148,8 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
       }
     }
 
-    // Only restart daemon explicitly if neither inlay hints nor folding update was triggered (both already restart it)
-    if (needsDaemonRestart && !needsInlayHintRefresh && !needsFoldingUpdate) {
+    // Folding update already restarts the daemon internally, so only restart explicitly when it wasn't triggered.
+    if (needsDaemonRestart && !needsFoldingUpdate) {
       DaemonCodeAnalyzer.getInstance(project).restart("LspClientManagerImpl.registerCapabilities")
     }
   }
@@ -250,7 +252,9 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
                                  cancellable = value.cancellable ?: false) {
 
             coroutineContext.job.invokeOnCompletion { throwable ->
-              if (throwable is CancellationException && value.cancellable == true) {
+              // A cancellation while the server is running means the user cancelled the indicator, so tell the server.
+              // A cancellation after the server stopped comes from cancelAllProgress(); there is no server to notify anymore.
+              if (throwable is CancellationException && value.cancellable == true && lspClient.state == LspServerState.Running) {
                 lspClient.sendNotification { it.cancelProgress(WorkDoneProgressCancelParams(token)) }
               }
               progressJobs.remove(tokenId)
@@ -285,6 +289,17 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
     }
   }
 
+  /**
+   * Cancels every in-flight progress indicator started by the server. Called when the server stops so its background
+   * progresses don't keep running. The state is already set to shutdown by then, so the completion handler in
+   * [notifyProgress] won't send a `window/workDoneProgress/cancel` back to the server that is going away.
+   */
+  internal fun cancelAllProgress() {
+    progressTasks.clear()
+    progressJobs.values.forEach { it.cancel() }
+    progressJobs.clear()
+  }
+
   override fun refreshSemanticTokens(): CompletableFuture<Void> {
     if (!project.isDisposed) {
       lspClient.refreshSemanticTokens()
@@ -298,7 +313,9 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
   }
 
   override fun refreshInlayHints(): CompletableFuture<Void> {
-    LspFeaturesRefreshing.refreshInlayHints(project)
+    if (!project.isDisposed) {
+      lspClient.refreshInlayHints()
+    }
     return completedFuture(null)
   }
 
@@ -310,6 +327,7 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
     if (project.isDisposed) return completedFuture(null)
 
     lspClient.logInfo("window/showMessageRequest: ${params.message}: ${params.actions?.joinToString { it.title }}")
+    serviceViewConsole()?.printShowMessage(params.type, "${params.message}: ${params.actions?.joinToString { it.title }}")
     return doNotify(params.message, getNotificationType(params), SHOW_MESSAGE_NOTIFICATION_GROUP, params.actions)
   }
 
@@ -317,6 +335,7 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
     if (project.isDisposed) return
 
     lspClient.logInfo("window/showMessage: ${params.message}")
+    serviceViewConsole()?.printShowMessage(params.type, params.message)
     doNotify(params.message, getNotificationType(params), SHOW_MESSAGE_NOTIFICATION_GROUP)
   }
 
@@ -324,6 +343,7 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
     if (project.isDisposed) return
 
     lspClient.logInfo("window/logMessage ${params.type}: ${params.message}")
+    serviceViewConsole()?.printLogMessage(params.type, params.message)
     if (params.type == MessageType.Error || params.type == MessageType.Warning) {
       doNotify(params.message, getNotificationType(params), LOG_ERRORS_WARNINGS_NOTIFICATION_GROUP)
     }
@@ -338,8 +358,11 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
 
     // no need to LOG.info() it additionally; LOG.debug() done in Lsp4jServerConnector.createMessageJsonHandler is enough.
     val message = if (params.verbose != null) "${params.message}\n${params.verbose}" else params.message
+    serviceViewConsole()?.printTrace(message)
     doNotify(message, NotificationType.INFORMATION, LOG_INFO_TRACE_NOTIFICATION_GROUP)
   }
+
+  private fun serviceViewConsole(): LspClientConsole? = LspServiceViewSupport.getInstance(project).getOrCreateConsole(lspClient)
 
   private fun getNotificationType(params: MessageParams): NotificationType = when (params.type) {
     MessageType.Error -> NotificationType.ERROR

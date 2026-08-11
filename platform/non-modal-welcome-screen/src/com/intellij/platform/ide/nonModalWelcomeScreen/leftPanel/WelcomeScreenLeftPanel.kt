@@ -12,10 +12,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory
-import com.intellij.platform.ide.nonModalWelcomeScreen.GoFileDragAndDropHandler
+import com.intellij.platform.ide.nonModalWelcomeScreen.DefaultFileDragAndDropHandler
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.isNonModalWelcomeScreenEnabled
 import com.intellij.platform.ide.nonModalWelcomeScreen.isWelcomeExperienceProjectSync
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
@@ -69,7 +70,9 @@ class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(pro
       override fun drop(event: DnDEvent) {
         val files = FileCopyPasteUtil.getFileListFromAttachedObject(event.attachedObject)
           .map { file -> file.toPath() }
-        GoFileDragAndDropHandler.openFiles(project, files)
+        val handler = WelcomeRightTabContentProvider.getSingleExtension()?.getFileDragAndDropHandler()
+                      ?: DefaultFileDragAndDropHandler
+        handler.openFiles(project, files)
       }
     }
 

@@ -59,6 +59,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.DIALOG_CLOSED;
 
+/**
+ * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere
+ * ({@code com.intellij.platform.searchEverywhere}). This functionality is obsolete.
+ */
+@Deprecated
 public final class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   public static final String ALL_CONTRIBUTORS_GROUP_ID = "SearchEverywhereContributor.All";
   public static final String LOCATION_SETTINGS_KEY = "search.everywhere.popup";
@@ -368,6 +373,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     return PreviewExperiment.isExperimentEnabled() && !PlatformUtils.isJetBrainsClient();
   }
 
+  @ApiStatus.Internal
   @Override
   public SearchEverywherePopupInstance getCurrentlyShownPopupInstance() {
     return getCurrentlyShownUI();

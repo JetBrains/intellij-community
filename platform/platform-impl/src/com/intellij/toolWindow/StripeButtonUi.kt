@@ -19,8 +19,10 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import javax.swing.plaf.basic.BasicGraphicsUtils
 import javax.swing.plaf.metal.MetalToggleButtonUI
+import org.jetbrains.annotations.ApiStatus
 
 class StripeButtonUi : MetalToggleButtonUI() {
+  @ApiStatus.Internal
   companion object {
     val FOREGROUND_COLOR: Color = JBColor.namedColor("ToolWindow.Button.foreground", 0x5A5D6B, 0x9DA0A8)
 

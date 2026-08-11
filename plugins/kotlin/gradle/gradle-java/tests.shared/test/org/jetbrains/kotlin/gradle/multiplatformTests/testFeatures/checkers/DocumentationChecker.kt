@@ -10,7 +10,7 @@ import com.intellij.testFramework.runInEdtAndGet
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.TestFeatureWithFileMarkup
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.kdoc.findKDocByPsi
+import org.jetbrains.kotlin.idea.highlighting.kdoc.findKDocByPsi
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.psi.KtDeclaration

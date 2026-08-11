@@ -2,13 +2,11 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.kernel"/>
   </dependencies>
   <!-- endregion -->
-  <extensions defaultExtensionNs="com.intellij">
-    <platform.entityTypes implementation="com.intellij.platform.editor.EditorEntityTypeProvider"/>
-  </extensions>
 </idea-plugin>

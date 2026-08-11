@@ -1,5 +1,5 @@
 // "Change type of 'x' to 'Long'" "true"
-// K2_ERROR: Initializer type mismatch: expected 'Double', actual 'Long'.
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
 
 fun foo() {
     val x: Long = 0L

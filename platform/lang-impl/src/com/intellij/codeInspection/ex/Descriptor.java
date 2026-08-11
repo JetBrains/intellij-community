@@ -36,12 +36,12 @@ public final class Descriptor {
     myInspectionProfile = inspectionProfile;
     InspectionToolWrapper<?, ?> tool = state.getTool();
     myText = tool.getDisplayName();
-    final String[] groupPath = tool.getGroupPath();
+    String[] groupPath = tool.getGroupPath();
     myGroup = groupPath.length == 0 ? new String[]{InspectionProfileEntry.getGeneralGroupName()} : groupPath;
     myShortName = tool.getShortName();
     myScope = state.getScope(project);
     myEditorAttributesKey = state.getEditorAttributesKey();
-    final HighlightDisplayKey key = HighlightDisplayKey.findOrRegister(myShortName, myText);
+    HighlightDisplayKey key = HighlightDisplayKey.findOrRegister(myShortName, myText);
     myLevel = inspectionProfile.getErrorLevel(key, myScope, project);
     myEnabled = inspectionProfile.isToolEnabled(key, myScope, project);
     myToolWrapper = tool;
@@ -58,7 +58,7 @@ public final class Descriptor {
 
   @Override
   public int hashCode() {
-    final int hash = myShortName.hashCode() + 29 * myLevel.hashCode();
+    int hash = myShortName.hashCode() + 29 * myLevel.hashCode();
     return myScope != null ? myScope.hashCode() + 29 * hash : hash;
   }
 
@@ -66,7 +66,7 @@ public final class Descriptor {
     return myEnabled;
   }
 
-  public void setEnabled(final boolean enabled) {
+  public void setEnabled(boolean enabled) {
     myEnabled = enabled;
   }
 

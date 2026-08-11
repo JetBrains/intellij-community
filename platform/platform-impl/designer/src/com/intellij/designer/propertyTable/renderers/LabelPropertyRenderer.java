@@ -6,6 +6,7 @@ import com.intellij.designer.model.PropertyContext;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +19,7 @@ import javax.swing.JLabel;
  * This is convenient class for implementing property renderers which
  * are based on JLabel.
  */
+@ApiStatus.Internal
 public class LabelPropertyRenderer extends JLabel implements PropertyRenderer {
   private final @Nullable @Nls String myStaticText;
 

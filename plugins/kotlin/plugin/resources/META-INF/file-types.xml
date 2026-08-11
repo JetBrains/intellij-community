@@ -1,0 +1,10 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.analysis.decompiler.psi.KotlinLabelProviderService"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.psi.fileTypes.IdeKotlinLabelProviderService"/>
+
+
+  </extensions>
+</idea-plugin>

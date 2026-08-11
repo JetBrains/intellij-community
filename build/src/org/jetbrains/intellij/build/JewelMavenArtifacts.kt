@@ -33,6 +33,12 @@ private val PLATFORM_DEPENDENCY_PREFIXES: Set<String> = setOf(
   "com.jetbrains.intellij.platform:icons-",
 )
 
+private val JEWEL_STANDALONE_REQUIRED_ICONS_MODULES: Set<String> = setOf(
+  "intellij.platform.icons.api",
+  "intellij.platform.icons.api.rendering",
+  "intellij.platform.icons.impl",
+)
+
 private val CORE: PersistentMap<String, String> = persistentHashMapOf(
   "intellij.platform.jewel.foundation" to "jewel-foundation",
   "intellij.platform.jewel.markdown.core" to "jewel-markdown-core",
@@ -42,6 +48,7 @@ private val CORE: PersistentMap<String, String> = persistentHashMapOf(
   "intellij.platform.jewel.markdown.extensions.autolink" to "jewel-markdown-extensions-autolink",
   "intellij.platform.jewel.markdown.extensions.gfmAlerts" to "jewel-markdown-extensions-gfm-alerts",
   "intellij.platform.jewel.markdown.extensions.images" to "jewel-markdown-extensions-images",
+  "intellij.platform.jewel.markdown.extensions.frontMatter" to "jewel-markdown-extensions-front-matter",
 )
 
 private val NOT_PUBLISHED: Set<String> = setOf(
@@ -55,6 +62,7 @@ private val transitiveJewelDependencies = persistentHashMapOf(
   "jewel-decorated-window" to setOf("jewel-foundation", "jewel-ui"),
   "jewel-markdown-core" to setOf("jewel-foundation"),
   "jewel-markdown-extensions-autolink" to setOf("jewel-foundation", "jewel-ui"),
+  "jewel-markdown-extensions-front-matter" to setOf("jewel-foundation", "jewel-ui"),
   "jewel-markdown-extensions-gfm-alerts" to setOf("jewel-foundation", "jewel-ui"),
   "jewel-markdown-extensions-gfm-strikethrough" to setOf("jewel-foundation", "jewel-ui"),
   "jewel-markdown-extensions-gfm-tables" to setOf("jewel-foundation", "jewel-ui"),
@@ -88,6 +96,13 @@ internal object JewelMavenArtifacts {
 
   fun isPublishedJewelModule(module: JpsModule): Boolean =
     module.name.startsWith("intellij.platform.jewel.") && module.name !in NOT_PUBLISHED
+
+  /**
+   * The icons modules required in Jewel Standalone and published to Maven Central transitively through
+   * the published Jewel artifacts. Keep this allow-list aligned with [PLATFORM_DEPENDENCY_PREFIXES].
+   */
+  fun isPublishedPlatformDependency(module: JpsModule): Boolean =
+    module.name in JEWEL_STANDALONE_REQUIRED_ICONS_MODULES
 
   fun patchCoordinates(module: JpsModule, coordinates: MavenCoordinates): MavenCoordinates {
     check(isPublishedJewelModule(module))
@@ -144,6 +159,14 @@ internal object JewelMavenArtifacts {
             add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
           }
         }
+        "com.jetbrains.intellij.platform" -> {
+          // Publish the Icons API modules (icons-api / icons-api-rendering / icons-impl) as compile
+          // dependencies, so consumers of the Jewel Standalone artifacts get IconManager on their
+          // classpath and can both boot IntUiTheme and compile against the public Icon/iconKey APIs.
+          if (coordinates.artifactId.startsWith("icons-")) {
+            add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
+          }
+        }
 
         // else -> ignore the dependency, as it comes through transitively, usually from Compose.
 
@@ -180,6 +203,20 @@ internal object JewelMavenArtifacts {
       name = "Google Team"
       organization = "Google"
       organizationUrl = "https://developer.android.com"
+    })
+  }
+
+  /**
+   * Supplies the POM metadata required by Maven Central for the [isPublishedPlatformDependency] modules.
+   * The `name`, `url`, `scm`, `developers` and `organization` fields are already filled in by the POM
+   * generator for these community modules; only `description` and `licenses` are missing.
+   */
+  fun addPlatformPomMetadata(module: JpsModule, model: Model) {
+    check(isPublishedPlatformDependency(module))
+    model.description = "IntelliJ Platform icons API."
+    model.addLicense(License().apply {
+      name = "Apache License 2.0"
+      url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
     })
   }
 

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -48,6 +49,7 @@ import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 import org.jetbrains.plugins.terminal.classic.ClassicTerminalTabCloseListener;
 import org.jetbrains.plugins.terminal.classic.ClassicTerminalTitleUpdatingKt;
+import org.jetbrains.plugins.terminal.classic.CustomTerminalRunnerProvider;
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 import org.jetbrains.plugins.terminal.util.TerminalCoroutineKt;
@@ -89,7 +91,15 @@ public final class TerminalToolWindowManager implements Disposable {
 
   public TerminalToolWindowManager(@NotNull Project project) {
     myProject = project;
-    myTerminalRunner = DefaultTerminalRunnerFactory.getInstance().create(project);
+    myTerminalRunner = createTerminalRunner(project);
+  }
+
+  private static @NotNull AbstractTerminalRunner<?> createTerminalRunner(@NotNull Project project) {
+    var customRunner = CustomTerminalRunnerProvider.createRunner(project);
+    if (customRunner != null) {
+      return customRunner;
+    }
+    return new LocalTerminalDirectRunner(project);
   }
 
   @Override
@@ -133,6 +143,10 @@ public final class TerminalToolWindowManager implements Disposable {
 
   /** Restores tabs for Classic Terminal and New Terminal Gen1. */
   void restoreTabsLocal(@Nullable TerminalArrangementState arrangementState) {
+    if (!TrustedProjects.isProjectTrusted(myProject)) {
+      return;
+    }
+
     ContentManager contentManager = myToolWindow.getContentManager();
 
     if (arrangementState != null) {
@@ -258,7 +272,7 @@ public final class TerminalToolWindowManager implements Disposable {
     }
 
     int tabsCount = toolWindow.getContentManager().getContentsRecursively().size();
-    ReworkedTerminalUsageCollector.logTabOpened(myProject, tabsCount);
+    ReworkedTerminalUsageCollector.logTabOpened(myProject, null, tabsCount);
 
     return content;
   }
@@ -301,7 +315,7 @@ public final class TerminalToolWindowManager implements Disposable {
             terminalRunner.getDefaultTabTitle(),
             TerminalOptionsProvider.getInstance().getTabName()
           );
-          String uniqueName = TerminalTitleUtils.createDefaultTabName(toolWindow, defaultName);
+          String uniqueName = TerminalTitleUtils.createDefaultTabName(myProject, toolWindow, defaultName);
           state.setDefaultTitle(uniqueName);
         }
         return Unit.INSTANCE;

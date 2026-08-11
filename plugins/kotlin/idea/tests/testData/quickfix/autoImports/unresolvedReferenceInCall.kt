@@ -1,5 +1,7 @@
 // "Import class 'ArrayList'" "true"
 // ERROR: Classifier 'ArrayList' does not have a companion object, and thus must be initialized here
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: NO_COMPANION_OBJECT
 
 // KT-4000
 

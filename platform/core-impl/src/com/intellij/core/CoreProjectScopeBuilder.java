@@ -10,6 +10,7 @@ import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.search.ProjectScopeImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -20,16 +21,24 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
   private final Project myProject;
   private final FileIndexFacade myFileIndexFacade;
   private final CoreProjectScopeBuilder.CoreLibrariesScope myLibrariesScope;
+  private final CoreProjectScopeBuilder.CoreLibraryClassesScope myLibraryClassesScope;
 
   public CoreProjectScopeBuilder(Project project, FileIndexFacade fileIndexFacade) {
     myFileIndexFacade = fileIndexFacade;
     myProject = project;
     myLibrariesScope = new CoreLibrariesScope();
+    myLibraryClassesScope = new CoreLibraryClassesScope();
   }
 
   @Override
   public @NotNull GlobalSearchScope buildLibrariesScope() {
     return myLibrariesScope;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @NotNull GlobalSearchScope buildLibraryClassesScope() {
+    return myLibraryClassesScope;
   }
 
   @Override
@@ -56,6 +65,23 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
     @Override
     public boolean contains(@NotNull VirtualFile file) {
       return myFileIndexFacade.isInLibrary(file);
+    }
+
+    @Override
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
+      return false;
+    }
+
+    @Override
+    public boolean isSearchInLibraries() {
+      return true;
+    }
+  }
+
+  private class CoreLibraryClassesScope extends GlobalSearchScope {
+    @Override
+    public boolean contains(@NotNull VirtualFile file) {
+      return myFileIndexFacade.isInLibraryClasses(file);
     }
 
     @Override

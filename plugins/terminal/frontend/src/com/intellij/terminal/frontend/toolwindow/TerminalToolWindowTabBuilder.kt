@@ -1,8 +1,10 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend.toolwindow
 
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 
@@ -47,6 +49,13 @@ interface TerminalToolWindowTabBuilder {
    * Specify [TerminalProcessType.NON_SHELL] if you start some arbitrary PTY process that is not a shell.
    */
   fun processType(processType: TerminalProcessType): TerminalToolWindowTabBuilder
+
+  /**
+   * Specifies the terminal emulator that should drive the session of this tab.
+   * If unspecified, [TerminalEmulatorType.default] is used.
+   */
+  @ApiStatus.Internal
+  fun emulatorType(emulatorType: TerminalEmulatorType?): TerminalToolWindowTabBuilder
 
   /**
    * The title show in the tool window tab.

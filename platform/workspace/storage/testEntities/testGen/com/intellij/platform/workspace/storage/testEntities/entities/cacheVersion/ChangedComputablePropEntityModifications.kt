@@ -17,7 +17,7 @@ interface ChangedComputablePropEntityBuilder : WorkspaceEntityBuilder<ChangedCom
 }
 
 internal object ChangedComputablePropEntityType : EntityType<ChangedComputablePropEntity, ChangedComputablePropEntityBuilder>() {
-  override val entityClass: Class<ChangedComputablePropEntity> get() = ChangedComputablePropEntity::class.java
+  override val entityImplClass: Class<*> get() = ChangedComputablePropEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ChangedComputablePropEntityImpl.Builder::class.java
   operator fun invoke(
     text: String,

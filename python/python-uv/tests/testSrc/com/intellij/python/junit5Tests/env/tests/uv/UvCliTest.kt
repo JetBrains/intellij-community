@@ -5,11 +5,13 @@ import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pytools.runtime.PyToolRuntime
+import com.intellij.python.uv.backend.cli.uv.UvInitKind
 import com.intellij.python.uv.backend.runtime.uvCli
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.getOrThrow
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -18,8 +20,11 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.name
 import kotlin.time.Duration.Companion.seconds
 
 @PyEnvTestCase
@@ -58,10 +63,10 @@ class UvCliTest {
     this.projectName = testInfo.projectName()
     this.projectRootPath = realTempDir.resolve(this.projectName)
 
-    val tempDirUvCli = uvContext.globalRuntime.withWorkingDirectory(realTempDir).getOrThrow().uvCli()
+    val tempDirUvCli = uvContext.globalRuntime.withWorkingDirectory(realTempDir).uvCli()
     timeoutRunBlocking { tempDirUvCli.init(projectName) }.getOrThrow()
 
-    this.myRuntime = uvContext.globalRuntime.withWorkingDirectory(projectRootPath).getOrThrow()
+    this.myRuntime = uvContext.globalRuntime.withWorkingDirectory(projectRootPath)
     assertTrue(projectRootPath.exists())
     assertTrue(projectRootPath.resolve(PY_PROJECT_TOML).exists())
   }
@@ -76,6 +81,33 @@ class UvCliTest {
   fun testGetVersion() = timeoutRunBlocking {
     val version = myRuntime.uvCli().getVersion().getOrThrow()
     assertTrue(version.isNotBlank())
+  }
+
+  /**
+   * Covers PY-91393: `init(kind = PACKAGE)` must scaffold a `src/`-layout package (mirroring
+   * Hatch's `src` layout) rather than the default flat `main.py`. This is the path
+   * `EnvironmentCreatorUv.createPythonModuleStructure` relies on so that the welcome `main.py`
+   * later created by the new-project wizard lands in `src/` instead of the project root.
+   */
+  @Test
+  fun testInitPackagedCreatesSrcLayout(@TempDir packagedTempDir: Path): Unit = timeoutRunBlocking(60.seconds) {
+    // GIVEN a fresh, empty project directory
+    val packagedProjectPath = packagedTempDir.toRealPath().resolve("packaged_project")
+    Files.createDirectories(packagedProjectPath)
+
+    // WHEN initializing with --package
+    uvContext.globalRuntime.withWorkingDirectory(packagedProjectPath).uvCli().init(kind = UvInitKind.PACKAGE).getOrThrow()
+
+    // THEN uv creates a src/ package layout and no flat root main.py
+    assertSrcPackageLayout(packagedProjectPath)
+  }
+
+  private fun assertSrcPackageLayout(projectPath: Path) {
+    val srcDir = projectPath.resolve("src")
+    assertTrue(srcDir.isDirectory()) { "expected a src/ directory after init(kind = PACKAGE)" }
+    assertFalse(projectPath.resolve("main.py").exists()) { "packaged layout must not create a root main.py" }
+    val hasPackageInit = Files.walk(srcDir).use { paths -> paths.anyMatch { it.name == "__init__.py" } }
+    assertTrue(hasPackageInit) { "expected a package __init__.py under src/" }
   }
 
   @Test
@@ -113,7 +145,7 @@ class UvCliTest {
   @Test
   fun testTool(): Unit = timeoutRunBlocking(60.seconds) {
     val tool = myRuntime.uvCli().tool()
-    assertTrue(tool.dir().getOrThrow().isNotBlank())
+    assertTrue(tool.dir().getOrThrow().isAbsolute)
     tool.list().getOrThrow()
   }
 
@@ -141,21 +173,21 @@ class UvCliTest {
       "expected ${pkg.name} install under the class-scoped UV_TOOL_DIR ${uvContext.uvToolDirPath}, missing: $expectedToolEnv"
     }
 
-    // 2. listInstalled() should surface the freshly installed tool at the pinned version.
-    val installed = tool.listInstalled().getOrThrow()
+    // 2. list(showPaths) should surface the freshly installed tool at the pinned version.
+    val installed = tool.list(showPaths = true).getOrThrow()
     val installedEntry = installed.firstOrNull { it.name == pkg.name }
-    assertNotNull(installedEntry) { "expected ${pkg.name} in listInstalled(), got $installed" }
+    assertNotNull(installedEntry) { "expected ${pkg.name} in list(), got $installed" }
     assertEquals(pkg.version, installedEntry!!.version) {
       "expected ${pkg.spec()} right after install, got ${installedEntry.version}"
     }
 
-    // 3. listOutdated() should report it with a newer latestVersion (we pinned to an older release).
-    val outdatedBefore = tool.listOutdated().getOrThrow()
+    // 3. list(outdated) should report it with a newer latestVersion (we pinned to an older release).
+    val outdatedBefore = tool.list(outdated = true, showPaths = true).getOrThrow()
     val outdatedEntry = outdatedBefore.firstOrNull { it.name == pkg.name }
     assertNotNull(outdatedEntry) {
-      "expected ${pkg.name} in listOutdated() before upgrade, got $outdatedBefore"
+      "expected ${pkg.name} in list(outdated = true) before upgrade, got $outdatedBefore"
     }
-    assertEquals(pkg.version, outdatedEntry!!.currentVersion)
+    assertEquals(pkg.version, outdatedEntry!!.version)
     assertNotEquals(pkg.version, outdatedEntry.latestVersion) {
       "latestVersion must differ from the pinned ${pkg.version} for the outdated signal to mean anything"
     }
@@ -166,7 +198,7 @@ class UvCliTest {
     //    This is exactly the production path that surfaces "{tool} is already up to date" in
     //    the External Tools settings balloon.
     tool.upgrade(pkg.name).getOrThrow()
-    val outdatedAfterUpgrade = tool.listOutdated().getOrThrow()
+    val outdatedAfterUpgrade = tool.list(outdated = true, showPaths = true).getOrThrow()
     assertTrue(outdatedAfterUpgrade.any { it.name == pkg.name }) {
       "uv tool upgrade respects the original pin; ${pkg.name} should still be outdated, got $outdatedAfterUpgrade"
     }
@@ -174,9 +206,9 @@ class UvCliTest {
     // 5. `install(name, reinstall = true)` (uv's `--reinstall`) drops the prior pin and
     //    installs the latest release. After that the outdated list must no longer mention it.
     tool.install(pkg.name, reinstall = true).getOrThrow()
-    val outdatedAfterReinstall = tool.listOutdated().getOrThrow()
+    val outdatedAfterReinstall = tool.list(outdated = true, showPaths = true).getOrThrow()
     assertTrue(outdatedAfterReinstall.none { it.name == pkg.name }) {
-      "after install(reinstall=true) ${pkg.name} should drop off listOutdated(), got $outdatedAfterReinstall"
+      "after install(reinstall=true) ${pkg.name} should drop off list(outdated = true), got $outdatedAfterReinstall"
     }
   }
 }

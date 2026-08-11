@@ -1,6 +1,11 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.copyright">
+<idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.copyright"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.copyright">

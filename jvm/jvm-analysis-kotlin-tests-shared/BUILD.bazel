@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.jvm.analysis.kotlin.tests.shared` start
-
 jvm_library(
     name = "analysis-kotlin-tests-shared",
     srcs = glob(
@@ -13,13 +12,14 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "//plugins/kotlin/plugin/common",
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework",
         "//java/java-tests:tests",
         "//java/java-impl-inspections:impl-inspections",
         "//platform/testFramework/junit5",
         "//plugins/kotlin/base/plugin",
     ],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -37,8 +37,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "//plugins/kotlin/plugin/common",
-        "//plugins/kotlin/plugin/common:common_test_lib",
         "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework",
         "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework_test_lib",
         "//java/java-tests:tests",
@@ -50,7 +48,11 @@ jvm_library(
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
     ],
-    runtime_deps = [":analysis-kotlin-tests-shared"],
+    runtime_deps = [
+        # do not sort,
+        ":analysis-kotlin-tests-shared",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -67,8 +69,6 @@ jvm_library(
         "//jps/model-api:model_test_lib",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
-        "//plugins/kotlin/plugin/common",
-        "//plugins/kotlin/plugin/common:common_test_lib",
         "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework",
         "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework_test_lib",
         "//java/java-tests:tests",
@@ -95,6 +95,8 @@ jvm_library(
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//java/java-syntax:syntax",
         "//java/java-syntax:syntax_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.jvm.analysis.kotlin.tests.shared` end
@@ -109,7 +111,6 @@ exports_files(
 ### auto-generated section `iml intellij.jvm.analysis.kotlin.tests.shared` end
 
 ### auto-generated section `test intellij.jvm.analysis.kotlin.tests.shared` start
-
 jps_test(
     name = "analysis-kotlin-tests-shared_test",
     runtime_deps = [":analysis-kotlin-tests-shared_test_lib"],

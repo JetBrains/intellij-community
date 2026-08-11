@@ -26,10 +26,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+@ApiStatus.Internal
 public abstract class BaseCompleteMacro extends Macro {
   private final String myName;
   private final boolean myCheckCompletionChar;

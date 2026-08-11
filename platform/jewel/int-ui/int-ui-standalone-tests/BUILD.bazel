@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.jewel.intUi.standalone.tests` start
-
 create_kotlinc_options(
     name = "custom_jewel-intUi-standalone-tests",
     opt_in = [
@@ -58,6 +57,14 @@ jvm_library(
         "//libraries/junit5:junit5_test_lib",
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
+        "//platform/jewel/foundation",
+        "//platform/jewel/foundation:foundation_test_lib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/coroutines/test",
+        "//libraries/kotlinx/coroutines/test:test_test_lib",
+        "//platform/jewel/ui",
+        "//platform/jewel/ui:ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.jewel.intUi.standalone.tests` end
@@ -72,7 +79,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jewel.intUi.standalone.tests` end
 
 ### auto-generated section `test intellij.platform.jewel.intUi.standalone.tests` start
-
 jps_test(
     name = "jewel-intUi-standalone-tests_test",
     runtime_deps = [":jewel-intUi-standalone-tests_test_lib"],

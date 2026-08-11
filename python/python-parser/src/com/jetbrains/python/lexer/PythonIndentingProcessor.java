@@ -31,6 +31,8 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
 
   private final Stack<FString> myFStringStack = new Stack<>();
 
+  public static final int TAB_WIDTH = 8;
+
   private static final boolean DUMP_TOKENS = false;
   private final TokenSet RECOVERY_TOKENS = PythonDialectsTokenSetProvider.getInstance().getUnbalancedBracesRecoveryTokens();
 
@@ -131,20 +133,10 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   @Override
   public void advance() {
     if (getTokenType() == PyTokenTypes.LINE_BREAK) {
-      final String text = getTokenText();
-      int spaces = 0;
-      for (int i = text.length() - 1; i >= 0; i--) {
-        if (text.charAt(i) == ' ') {
-          spaces++;
-        }
-        else if (text.charAt(i) == '\t') {
-          spaces += 8;
-        }
-      }
-      myCurrentNewLineIndent = spaces;
+      myCurrentNewLineIndent = getIndentWidth(getTokenText());
     }
     else if (getTokenType() == PyTokenTypes.TAB) {
-      myCurrentNewLineIndent += 8;
+      myCurrentNewLineIndent += TAB_WIDTH;
     }
     if (!myTokenQueue.isEmpty()) {
       myTokenQueue.remove(0);
@@ -462,6 +454,27 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
       }
     }
     return result;
+  }
+
+  /**
+   * Width in columns of the whitespace in {@code text}, counting a tab as {@link #TAB_WIDTH} columns.
+   * Characters other than a space or a tab (a line break, for instance) contribute nothing.
+   * <p>
+   * Callers that seed a lexer's indent stack must measure an indent with this method: the number of
+   * indent <em>characters</em> is not the number of columns the lexer sees once tabs are involved.
+   */
+  public static int getIndentWidth(@NotNull CharSequence text) {
+    int width = 0;
+    for (int i = 0; i < text.length(); i++) {
+      final char c = text.charAt(i);
+      if (c == ' ') {
+        width++;
+      }
+      else if (c == '\t') {
+        width += TAB_WIDTH;
+      }
+    }
+    return width;
   }
 
   protected int getNextLineIndent() {

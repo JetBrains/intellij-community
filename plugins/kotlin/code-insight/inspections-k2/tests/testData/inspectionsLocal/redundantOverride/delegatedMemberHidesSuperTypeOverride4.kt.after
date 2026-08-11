@@ -1,0 +1,17 @@
+// ERROR: 'test2' overrides nothing
+// ERROR: Too many arguments for public open fun test2(): Unit defined in Bar
+// K2_ERROR: NOTHING_TO_OVERRIDE
+// K2_ERROR: TOO_MANY_ARGUMENTS
+
+interface Foo {
+    fun test(arg: Int)
+}
+
+open class Bar : Foo {
+    override fun test(arg: Int) {}
+    open fun test(a: String) {}
+    open fun test2() {}
+}
+
+class Baz(val foo: Foo) : Bar(), Foo by foo {
+}

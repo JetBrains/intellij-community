@@ -1,5 +1,5 @@
 // "Add non-null asserted (arg!!) call" "true"
-// K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'Int?'.
+// K2_ERROR: UNSAFE_CALL
 
 operator fun Int.get(row: Int, column: Int) = this
 fun foo(arg: Int?) = arg<caret>[42, 13]

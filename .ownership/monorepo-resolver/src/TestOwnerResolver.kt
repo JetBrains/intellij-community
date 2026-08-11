@@ -1,120 +1,66 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeowners.monorepo.resolver
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.jetbrains.patronus.codeowners.lib.OwnerResolver
-import org.jetbrains.patronus.codeowners.lib.OwnershipMappingGenerator
-import org.jetbrains.patronus.codeowners.lib.models.OwnershipMatch
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.logging.Logger
-import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.relativeTo
 import kotlin.io.path.useLines
 
 /**
- * Resolves code owners for test classes by combining file-location and module-path NDJSON artifacts
- * with the [OwnerResolver] index.
+ * Resolves code owners of test classes from the `test-class-owners.ndjson` artifact — a map of test class FQN
+ * to owner group precomputed at build time (see `TestClassOwners` in `intellij.idea.ultimate.build`).
  *
- * Resolution algorithm:
- * 1. Look up (module, package, file) in file-locations map to get the relative path inside the module
- * 2. Resolve the full source file path using the module path
- * 3. Query [OwnerResolver.resolve] with the repository-relative path
- *
- * @see OwnerResolver
+ * A class FQN is unique across the monorepo (enforced by `IntelliJProjectTestNamesUniquenessTest`), so the FQN
+ * alone identifies the source file and therefore the owner — no module or file location is needed at lookup time.
  */
-class TestOwnerResolver(
-  private val codeOwners: OwnerResolver,
-  private val modulePathMap: Map<String, Path>,
-  private val fileLocationMap: Map<FileLocationKey, String>,
-  private val repositoryRoot: Path,
-) {
-  data class FileLocationKey(val moduleName: String, val packagePath: String, val fileName: String)
+class TestOwnerResolver(private val ownersByClassFqn: Map<String, String>) {
 
-  fun getOwner(moduleName: String, packagePath: String, fileName: String): OwnershipMatch? {
-    val key = FileLocationKey(moduleName, packagePath, fileName)
-    val relativePath = fileLocationMap[key] ?: return null
-    val modulePath = modulePathMap[moduleName] ?: return null
-    val testSourceFile = modulePath
-      .resolve(relativePath)
-      .resolve(fileName)
-      .relativeTo(repositoryRoot)
-      .invariantSeparatorsPathString
-    return codeOwners.resolve(testSourceFile)
+  /** Owner group name for [classFqn]; nested classes (`Outer$Inner`) resolve through their top-level class. */
+  fun getOwner(classFqn: String): String? {
+    ownersByClassFqn[classFqn]?.let { return it }
+    val topLevelFqn = classFqn.substringBefore('$')
+    return if (topLevelFqn != classFqn) ownersByClassFqn[topLevelFqn] else null
   }
 
   companion object {
+    /** File name of the FQN→owner artifact, generated to `out/artifacts/codeowners/`. */
+    const val TEST_CLASS_OWNERS_FILE_NAME: String = "test-class-owners.ndjson"
+
     private val logger: Logger = Logger.getLogger(TestOwnerResolver::class.java.name)
     private val json = Json { ignoreUnknownKeys = true }
 
-    fun create(repositoryRoot: Path, fileLocations: Path, modulePaths: Path, ownershipMapping: Path): TestOwnerResolver? {
-      if (!Files.exists(fileLocations) || !Files.exists(modulePaths) || !Files.exists(ownershipMapping)) return null
+    fun create(testClassOwners: Path): TestOwnerResolver? {
+      if (!Files.exists(testClassOwners)) return null
       return try {
-        val mapping = OwnershipMappingGenerator.loadMapping(ownershipMapping)
-        val resolver = OwnerResolver(mapping)
-
-        TestOwnerResolver(
-          codeOwners = resolver,
-          modulePathMap = loadModulePaths(modulePaths, repositoryRoot),
-          fileLocationMap = loadFileLocations(fileLocations),
-          repositoryRoot = repositoryRoot,
-        )
+        val map = HashMap<String, String>()
+        testClassOwners.useLines { lines ->
+          for (line in lines) {
+            if (line.isBlank()) continue
+            try {
+              val entry = json.decodeFromString<TestClassOwnerEntry>(line)
+              map[entry.fqn] = entry.owner
+            }
+            catch (e: Exception) {
+              logger.warning("Failed to parse test class owner entry: $line - ${e.message}")
+            }
+          }
+        }
+        TestOwnerResolver(map)
       }
       catch (e: Exception) {
         logger.warning("Failed to create TestOwnerResolver: ${e.message}")
         null
       }
     }
-
-    private fun loadModulePaths(file: Path, repositoryRoot: Path): Map<String, Path> {
-      val map = mutableMapOf<String, Path>()
-      file.useLines { lines ->
-        for (line in lines) {
-          if (line.isBlank()) continue
-          try {
-            val entry = json.decodeFromString<ModulePathEntry>(line)
-            map[entry.moduleName] = repositoryRoot.resolve(entry.modulePath)
-          }
-          catch (e: Exception) {
-            logger.warning("Failed to parse module path entry: $line - ${e.message}")
-          }
-        }
-      }
-      return map
-    }
-
-    private fun loadFileLocations(file: Path): Map<FileLocationKey, String> {
-      val map = mutableMapOf<FileLocationKey, String>()
-      file.useLines { lines ->
-        for (line in lines) {
-          if (line.isBlank()) continue
-          try {
-            val entry = json.decodeFromString<FileLocationEntry>(line)
-            val key = FileLocationKey(entry.moduleName, entry.packagePath, entry.fileName)
-            map[key] = entry.relativePath
-          }
-          catch (e: Exception) {
-            logger.warning("Failed to parse file location entry: $line - ${e.message}")
-          }
-        }
-      }
-      return map
-    }
   }
 }
 
+/** One row of `test-class-owners.ndjson`: a top-level class FQN in a test output root and its owner group. */
 @Serializable
-data class FileLocationEntry(
-  @SerialName("m") val moduleName: String,
-  @SerialName("p") val packagePath: String,
-  @SerialName("f") val fileName: String,
-  @SerialName("rp") val relativePath: String,
-)
-
-@Serializable
-data class ModulePathEntry(
-  @SerialName("m") val moduleName: String,
-  @SerialName("p") val modulePath: String,
+data class TestClassOwnerEntry(
+  @SerialName("fqn") val fqn: String,
+  @SerialName("owner") val owner: String,
 )

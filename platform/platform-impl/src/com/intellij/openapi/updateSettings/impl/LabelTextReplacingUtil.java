@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 
 import javax.swing.AbstractButton;
@@ -11,6 +12,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import java.awt.Component;
 
+@ApiStatus.Internal
 public final class LabelTextReplacingUtil {
 
   /**

@@ -26,26 +26,32 @@ import java.nio.file.Path
  * Create virtual env in [where]. If [addToSdkTable] then also added to the project jdk table
  */
 fun TestFixture<SdkFixture<PyEnvironment>>.pyVenvFixture(
-    where: TestFixture<Path>,
-    addToSdkTable: Boolean,
-    moduleFixture: TestFixture<Module>? = null,
+  where: TestFixture<Path>,
+  addToSdkTable: Boolean,
+  moduleFixture: TestFixture<Module>? = null,
 ): TestFixture<Sdk> = testFixture {
-    val env = this@pyVenvFixture.init().env
-    withContext(Dispatchers.EDT) {
-        val module = moduleFixture?.init()
-        val venvDir = where.init().resolve(".venv")
-        val venvPython = createVenv(env.pythonPath, venvDir).getOrThrow()
-        val venvSdk = createSdk(PathHolder.Eel(venvPython), createVenvAdditionalData(), advancedOpts = SdkCreationAdvancedOpts(persist = addToSdkTable)).orThrow()
-        if (addToSdkTable) {
-            if (module != null) {
-                module.pythonSdk = venvSdk
-                venvSdk.setAssociationToModule(module)
-            }
-        }
-        initialized(venvSdk) {
-            edtWriteAction {
-                ProjectJdkTable.getInstance().removeJdk(venvSdk)
-            }
-        }
+  val env = this@pyVenvFixture.init().env
+  withContext(Dispatchers.EDT) {
+    val module = moduleFixture?.init()
+    val workingDirectory = where.init()
+    val venvDir = workingDirectory.resolve(".venv")
+    val venvPython = createVenv(env.pythonPath, venvDir).getOrThrow()
+    val additionalData = createVenvAdditionalData(workingDirectory)
+    val venvSdk = createSdk(
+      PathHolder.Eel(venvPython),
+      additionalData,
+      advancedOpts = SdkCreationAdvancedOpts(persist = addToSdkTable),
+    ).orThrow()
+    if (addToSdkTable) {
+      if (module != null) {
+        module.pythonSdk = venvSdk
+        venvSdk.setAssociationToModule(module)
+      }
     }
+    initialized(venvSdk) {
+      edtWriteAction {
+        ProjectJdkTable.getInstance().removeJdk(venvSdk)
+      }
+    }
+  }
 }

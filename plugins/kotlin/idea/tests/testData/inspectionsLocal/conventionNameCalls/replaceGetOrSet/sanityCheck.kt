@@ -1,6 +1,6 @@
 // PROBLEM: none
-// K2_ERROR: Unresolved reference 'got' on receiver of type 'Test'.
 // ERROR: Unresolved reference: got
+// K2_ERROR: UNRESOLVED_REFERENCE
 fun test() {
     class Test{
         operator fun get(i: Int) : Int = 0

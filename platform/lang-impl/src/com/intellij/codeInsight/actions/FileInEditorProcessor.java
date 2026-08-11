@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
@@ -89,7 +88,7 @@ public final class FileInEditorProcessor {
       return;
     }
 
-    if (myOptions.isOptimizeImports() && myOptions.getTextRangeType() == VCS_CHANGED_TEXT) {
+    if (myOptions.isOptimizeImports() && myOptions.getTextRangeType() != SELECTED_TEXT) {
       myProcessor = new OptimizeImportsProcessor(myProject, myPsiFile);
     }
 
@@ -123,11 +122,6 @@ public final class FileInEditorProcessor {
 
     if (myOptions.getTextRangeType() == TextRangeType.WHOLE_FILE) {
       CodeStyleSettingsManager.getInstance(myProject).notifyCodeStyleSettingsChanged();
-      if (myOptions.isOptimizeImports()) {
-        CodeStyleCachingService.getInstance(myProject).scheduleWhenSettingsComputed(myPsiFile, () -> {
-          new OptimizeImportsProcessor(myProject, myPsiFile).run();
-        });
-      }
     }
   }
 

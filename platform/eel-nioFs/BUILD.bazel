@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.eel.nioFs` start
-
 jvm_library(
     name = "eel-nioFs",
     srcs = glob(
@@ -18,11 +17,14 @@ jvm_library(
     exports = ["//platform/eel"],
     deps = [
         # do not sort,
+        "//libraries/fastutil",
         "//platform/eel",
         "//platform/util-rt",
         "//libraries/kotlinx/coroutines/core",
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//platform/util/base",
+        "//platform/util/annotations",
     ],
 )
 
@@ -44,9 +46,13 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":eel-nioFs",
+        "//libraries/fastutil:fastutil_test_lib",
         "//platform/eel:eel_test_lib",
         "//platform/util-rt:util-rt_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//platform/util/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.eel.nioFs` end

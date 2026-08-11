@@ -3,7 +3,6 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -11,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.psi.PsiDocumentManager
+import com.jetbrains.performancePlugin.LogDirHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
@@ -31,7 +31,7 @@ class StoreHighlightingResultsCommand(text: String, line: Int) : PlaybackCommand
   override suspend fun doExecute(context: PlaybackContext) {
     val project = context.project
     val fileNameToStoreHighlightingInfo = extractCommandArgument(PREFIX).split(" ", limit = 1)[0]
-    val fileForStoringHighlights: File = (PathManager.getLogDir() / "${fileNameToStoreHighlightingInfo}.txt").toFile()
+    val fileForStoringHighlights: File = (LogDirHandler.currentLogDir() / "${fileNameToStoreHighlightingInfo}.txt").toFile()
     if (!fileForStoringHighlights.exists()) {
       fileForStoringHighlights.createNewFile()
     }

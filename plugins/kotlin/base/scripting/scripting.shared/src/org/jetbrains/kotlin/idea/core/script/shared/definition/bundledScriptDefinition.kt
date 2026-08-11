@@ -5,11 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.ex.PathUtilEx
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import java.io.File
-import kotlin.script.experimental.api.IdeScriptCompilationConfigurationKeys
 import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
@@ -21,9 +19,6 @@ import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.host.createScriptDefinitionFromTemplate
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
-import kotlin.script.experimental.jvm.jdkHome
-import kotlin.script.experimental.jvm.jvm
-import kotlin.script.experimental.util.PropertiesCollection
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
 val scriptClassPath: List<File> = listOf(
@@ -48,12 +43,6 @@ fun getBundledScriptDefinition(project: Project) = createScriptDefinitionFromTem
         hostConfiguration(defaultJvmScriptingHostConfiguration)
         ide.dependenciesSources(JvmDependency(KotlinArtifacts.kotlinStdlibSources))
         ide.jdkSupplier { project.javaHomePath }
-    }
-)
-
-val IdeScriptCompilationConfigurationKeys.jdkSupplier: PropertiesCollection.Key<(VirtualFile) -> File?> by PropertiesCollection.key(
-    getDefaultValue = {
-        { get(ScriptCompilationConfiguration.jvm.jdkHome) }
     }
 )
 

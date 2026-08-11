@@ -21,7 +21,9 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class LangIndentSelectionAction extends IndentSelectionAction {
 
   @Override

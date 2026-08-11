@@ -50,16 +50,29 @@ private fun generateDependenciesForModule(
     return emptyList()
   }
   val dependencies = ArrayList<RuntimeModuleId>()
-  JpsJavaExtensionService.dependencies(jpsElement).withoutSdk().withoutModuleSourceEntries().runtimeOnly().productionOnly().processModuleAndLibraries(
+  JpsJavaExtensionService.dependencies(jpsElement).withoutSdk().withoutModuleSourceEntries().runtimeOnly().productionOnly().forEachModuleAndLibrary(
     { module ->
       dependencies.add(findTargetModuleId(module, pluginHeaderData, elementToIds, contentModuleDetector))
     },
     { library ->
       if (library.isProjectLevel) {
-        dependencies.add(findTargetModuleId(library, pluginHeaderData, elementToIds, contentModuleDetector))
+        val containingContentModules = pluginHeaderData.projectLibrariesToIncludingContentModules[library]
+        if (containingContentModules.isEmpty()) {
+          dependencies.add(findTargetModuleId(library, pluginHeaderData, elementToIds, contentModuleDetector))
+        }
+        else if (moduleId !in containingContentModules) {
+          require(containingContentModules.size == 1) {
+            "Library $library is included in multiple content modules in the same plugin ${pluginHeaderData.header.pluginId} ($containingContentModules) and used as a dependency in another module ${moduleId.displayName}"
+          }
+          dependencies.add(containingContentModules.single())
+        }
       }
     }
   )
+  val additional = pluginHeaderData.dependenciesOnPluginDescriptorModules[moduleId]
+  if (!additional.isNullOrEmpty()) {
+    dependencies.addAll(additional)
+  }
   return dependencies
 }
 

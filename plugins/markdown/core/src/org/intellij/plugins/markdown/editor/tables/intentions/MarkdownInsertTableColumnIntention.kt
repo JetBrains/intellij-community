@@ -9,6 +9,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.insertColumn
 import org.intellij.plugins.markdown.editor.tables.TableUtils
+import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 
 internal abstract class MarkdownInsertTableColumnIntention(private val insertAfter: Boolean): PsiElementBaseIntentionAction() {
@@ -27,7 +28,7 @@ internal abstract class MarkdownInsertTableColumnIntention(private val insertAft
     if (cell == null || table == null || editor == null) {
       return
     }
-    table.insertColumn(editor.document, cell.columnIndex, insertAfter, alignment = MarkdownTableSeparatorRow.CellAlignment.LEFT)
+    table.insertColumn(editor.document, cell.columnIndex, getTableStyle(cell.containingFile), insertAfter, alignment = MarkdownTableSeparatorRow.CellAlignment.LEFT)
   }
 
   class InsertBefore: MarkdownInsertTableColumnIntention(insertAfter = false) {

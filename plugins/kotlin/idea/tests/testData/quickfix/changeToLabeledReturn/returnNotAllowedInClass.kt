@@ -9,10 +9,10 @@
 // ACTION: Enable option 'Property types' for 'Types' inlay hints
 // ACTION: Move to constructor
 // WITH_STDLIB
-// K2_ERROR: 'return' is prohibited here.
-// K2_ERROR: Null cannot be a value of a non-null type 'Unit'.
-// K2_AFTER_ERROR: 'return' is prohibited here.
-// K2_AFTER_ERROR: Null cannot be a value of a non-null type 'Unit'.
+// K2_AFTER_ERROR: NULL_FOR_NONNULL_TYPE
+// K2_AFTER_ERROR: RETURN_NOT_ALLOWED
+// K2_ERROR: NULL_FOR_NONNULL_TYPE
+// K2_ERROR: RETURN_NOT_ALLOWED
 fun main() {
     val types = (1..10).mapNotNull { c ->
         class Type {

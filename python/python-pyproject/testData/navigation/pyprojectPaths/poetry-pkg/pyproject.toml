@@ -1,0 +1,14 @@
+[project]
+name = "poetry-pkg"
+version = "0.1.0"
+
+[tool.poetry]
+packages = [{ include = "mypkg", from = "src" }]
+# Sdist file pattern, not a package path: must not get a file reference.
+include = ["docs"]
+
+[tool.poetry.dependencies]
+subproject-a = { path = "../sub-projects/sub-project-a", develop = true }
+
+[tool.poetry.group.dev.dependencies]
+liba = { path = "../inline/packages/lib-a" }

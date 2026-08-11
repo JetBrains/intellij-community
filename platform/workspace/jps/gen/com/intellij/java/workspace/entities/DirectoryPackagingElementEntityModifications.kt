@@ -22,7 +22,7 @@ interface DirectoryPackagingElementEntityBuilder : WorkspaceEntityBuilder<Direct
 
 internal object DirectoryPackagingElementEntityType :
   EntityType<DirectoryPackagingElementEntity, DirectoryPackagingElementEntityBuilder>() {
-  override val entityClass: Class<DirectoryPackagingElementEntity> get() = DirectoryPackagingElementEntity::class.java
+  override val entityImplClass: Class<*> get() = DirectoryPackagingElementEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = DirectoryPackagingElementEntityImpl.Builder::class.java
   operator fun invoke(
     directoryName: String,

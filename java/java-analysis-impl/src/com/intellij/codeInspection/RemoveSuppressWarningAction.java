@@ -22,6 +22,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -154,9 +155,12 @@ class RemoveSuppressWarningAction extends ModCommandQuickFix {
     }
     else {
       PsiElement[] descriptionElements =
-        JavaPsiFacade.getElementFactory(tag.getProject()).createDocCommentFromText("/**" + nextText + "*/", tag).getDescriptionElements();
+        JavaPsiFacade.getElementFactory(tag.getProject())
+          .createDocCommentFromText(CommentUtil.convertToDocComment(docComment, nextText), tag)
+          .getDescriptionElements();
       if (descriptionElements.length > 0) {
-        docComment.addRangeAfter(descriptionElements[0], descriptionElements[descriptionElements.length - 1], tag);
+        docComment.addRangeAfter(descriptionElements[0],
+                                 descriptionElements[descriptionElements.length - (docComment.isMarkdownComment() ? 1 : 2)], tag);
       }
       tag.delete();
     }

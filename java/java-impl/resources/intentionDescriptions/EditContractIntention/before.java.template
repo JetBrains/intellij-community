@@ -1,7 +1,0 @@
-class A {
-
-  Object getObject() {
-    //do smth
-    return null;
-  }
-}

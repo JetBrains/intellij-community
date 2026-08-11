@@ -19,9 +19,8 @@ var version: Int
 var name: String
 var contentRoot: ContentRootEntityBuilder?
 }
-
 internal object ReferredEntityType : EntityType<ReferredEntity, ReferredEntityBuilder>(){
-override val entityClass: Class<ReferredEntity> get() = ReferredEntity::class.java
+override val entityImplClass: Class<*> get() = ReferredEntityImpl::class.java
 override val entityImplBuilderClass: Class<*> get() = ReferredEntityImpl.Builder::class.java
 operator fun invoke(
 version: Int,
@@ -37,7 +36,6 @@ init?.invoke(builder)
 return builder
 }
 }
-
 fun MutableEntityStorage.modifyReferredEntity(
 entity: ReferredEntity,
 modification: ReferredEntityBuilder.() -> Unit,
@@ -45,8 +43,6 @@ modification: ReferredEntityBuilder.() -> Unit,
 @Parent
 var ContentRootEntityBuilder.ref: ReferredEntityBuilder
 by WorkspaceEntity.extensionBuilder(ReferredEntity::class.java)
-
-
 @JvmOverloads
 @JvmName("createReferredEntity")
 fun ReferredEntity(

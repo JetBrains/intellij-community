@@ -83,4 +83,27 @@ public class LombokUtilsWitherTest {
     assertThat(result, equalTo("withISmyField"));
   }
 
+  @SuppressWarnings("NonAsciiCharacters")
+  @Test
+  public void testToWitherNames_NonBoolean_SpecialCharacter() {
+    String result = makeResults("ß", false);
+
+    assertThat(result, equalTo("withß"));
+  }
+
+  @SuppressWarnings("NonAsciiCharacters")
+  @Test
+  public void testToWitherNames_NonBoolean_MultipleSpecialCharacters() {
+    String result = makeResults("ßßß", false);
+
+    assertThat(result, equalTo("withßßß"));
+  }
+
+  @SuppressWarnings("NonAsciiCharacters")
+  @Test
+  public void testToWitherNames_NonBoolean_Cyrillic() {
+    String result = makeResults("ы", false);
+
+    assertThat(result, equalTo("withЫ"));
+  }
 }

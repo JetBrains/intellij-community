@@ -25,7 +25,7 @@ class ExternalSystemRunConfigurationFragmentedEditor(
       add(CommonTags.parallelRun())
       addEnvironmentFragment()
       addVmOptionsFragment()
-      add(LogsGroupFragment())
+      add(createLogGroupFragment())
     }
   }
 }

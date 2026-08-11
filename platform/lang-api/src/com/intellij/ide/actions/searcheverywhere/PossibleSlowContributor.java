@@ -8,7 +8,10 @@ package com.intellij.ide.actions.searcheverywhere;
  * Currently, this interface is not in use. By default, all contributors are
  * assumed slow unless they are explicitly marked as an {@link EssentialContributor}.
  * Nevertheless, this interface may be repurposed and applied for enhanced checks in the future.
+ *
+ * @deprecated The old Search Everywhere API is being sunset.
  */
+@Deprecated
 public interface PossibleSlowContributor {
 
   default boolean isSlow() {

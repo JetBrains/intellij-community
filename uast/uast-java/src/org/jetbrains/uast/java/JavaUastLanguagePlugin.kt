@@ -323,7 +323,12 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
 
       override fun visitParameter(parameter: PsiParameter) {
         if (parameter is LightRecordConstructorParameter) {
+          // For an incomplete or erroneous record (e.g. a component shadowed by an explicitly declared field) the
+          // corresponding record field/component cannot be resolved, so the record-aware alternative is unavailable.
+          // Fall back to a plain parameter instead of returning null and reporting a "failed to convert" error
+          // (IDEA-391020).
           result = convertRecordConstructorParameterAlternatives(element, givenParent, requiredType)
+                   ?: requiredType.el<UParameter, PsiParameter>(parameter, givenParent, ::JavaUParameter)
         }
         else {
           result = requiredType.el<UParameter, PsiParameter>(parameter, givenParent, ::JavaUParameter)

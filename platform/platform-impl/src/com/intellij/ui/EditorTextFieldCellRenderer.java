@@ -35,6 +35,7 @@ import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -251,6 +252,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
   }
 
+  @ApiStatus.Internal
   public static class SimpleWithGutterRendererComponent extends SimpleRendererComponent {
     public SimpleWithGutterRendererComponent(Project project, @Nullable Language language, boolean inheritFontFromLaF) {
       super(project, language, inheritFontFromLaF);

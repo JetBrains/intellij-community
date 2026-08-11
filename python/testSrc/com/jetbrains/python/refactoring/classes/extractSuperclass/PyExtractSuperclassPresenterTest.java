@@ -15,6 +15,8 @@ import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -25,6 +27,8 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
+@Subsystems.Refactoring
+@Layers.Functional
 public final class PyExtractSuperclassPresenterTest
   extends PyRefactoringPresenterTestCase<PyExtractSuperclassInitializationInfo, PyExtractSuperclassView> {
 

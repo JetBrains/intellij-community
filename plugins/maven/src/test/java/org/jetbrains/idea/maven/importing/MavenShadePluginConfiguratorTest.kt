@@ -1,17 +1,39 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertModuleLibDep
+import com.intellij.maven.testFramework.fixtures.assertModuleModuleDeps
+import com.intellij.maven.testFramework.fixtures.awaitConfiguration
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.testRootDisposable
+import com.intellij.maven.testFramework.fixtures.updateAllProjectsFullSync
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.nio.file.Files
 import java.nio.file.Path
 
-class MavenShadePluginConfiguratorTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenShadePluginConfiguratorTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun `test maven shade plugin uber jar dependency`() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -22,7 +44,7 @@ class MavenShadePluginConfiguratorTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -35,7 +57,7 @@ class MavenShadePluginConfiguratorTest : MavenMultiVersionImportingTestCase() {
       </dependencies>
       """.trimIndent())
 
-    val m2 = createModulePom("m2", """
+    val m2 = maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
@@ -65,17 +87,17 @@ class MavenShadePluginConfiguratorTest : MavenMultiVersionImportingTestCase() {
       </build>  
       """.trimIndent())
 
-    importProjectAsync()
+    maven.importProjectAsync()
 
     val uberJarPath = m2.parent.path + "/target/m2-1.jar"
-    assertModuleModuleDeps("m1", "m2")
-    assertModuleLibDep("m1", "Maven Shade: test:m2:1",
+    maven.assertModuleModuleDeps("m1", "m2")
+    maven.assertModuleLibDep("m1", "Maven Shade: test:m2:1",
                        "jar://$uberJarPath!/")
 
-    Registry.get("maven.shade.plugin.generate.uber.jar").setValue("true", testRootDisposable)
+    Registry.get("maven.shade.plugin.generate.uber.jar").setValue("true", maven.testRootDisposable)
     // incremental sync doesn't support uber jar generation
-    updateAllProjectsFullSync()
-    awaitConfiguration()
+    maven.updateAllProjectsFullSync()
+    maven.awaitConfiguration()
     assertTrue(Files.exists(Path.of(uberJarPath)));
   }
 }

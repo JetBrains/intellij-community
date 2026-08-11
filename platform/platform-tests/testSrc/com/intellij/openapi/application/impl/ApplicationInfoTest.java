@@ -198,6 +198,7 @@ public class ApplicationInfoTest {
     var children = new ArrayList<>(List.of(content));
     children.add(new XmlElement("icon", Map.of("svg", "xxx.svg", "svg-small", "xxx.svg"), List.of(), null));
     children.add(new XmlElement("plugins", Map.of(), List.of(), null));
+    children.add(new XmlElement("splash", Map.of(), List.of(), null));
     return new ApplicationInfoImpl(new XmlElement("state", Map.of(), children, null));
   }
 

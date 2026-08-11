@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.LocalPtyOptions
+import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
@@ -22,8 +23,8 @@ import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.IdeUtilIoBundle
 import com.intellij.util.io.SuperUserStatus
@@ -114,13 +115,17 @@ object ExecUtil {
 
   @JvmStatic
   @RequiresBackgroundThread(generateAssertion = false)
-  fun execAndReadLine(commandLine: GeneralCommandLine): String? = try {
-    val process = commandLine.createProcess()
-    BufferedReader(InputStreamReader(process.inputStream, commandLine.charset)).use { it.readLine() }
-  }
-  catch (e: ExecutionException) {
-    logger<ExecUtil>().debug(e)
-    null
+  fun execAndReadLine(commandLine: GeneralCommandLine): String? {
+    OSProcessHandler.checkEdtAndReadAction()
+
+    return try {
+      val process = commandLine.createProcess()
+      BufferedReader(InputStreamReader(process.inputStream, commandLine.charset)).use { it.readLine() }
+    }
+    catch (e: ExecutionException) {
+      logger<ExecUtil>().debug(e)
+      null
+    }
   }
 
   /**

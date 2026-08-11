@@ -51,6 +51,13 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
     return withInlayAttributes(textWithoutBox)
   }
 
+  @ApiStatus.Internal
+  @Contract(pure = true)
+  fun smallTextWithAttributes(text: String, textAttributesKey: TextAttributesKey): InlayPresentation {
+    val textWithoutBox = InsetPresentation(TextInlayPresentation(textMetricsStorage, true, text), top = 1, down = 1)
+    return attributes(textWithoutBox, textAttributesKey)
+  }
+
   fun smallTextWithoutBackground(text: String): InlayPresentation {
     val textWithoutBox = InsetPresentation(TextInlayPresentation(textMetricsStorage, true, text), top = 1, down = 1)
     return WithAttributesPresentation(textWithoutBox, DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND, editor,
@@ -501,7 +508,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
     val tokenPresentations = mutableListOf<InlayPresentation>()
     while (lexer.tokenType != null) {
       val tokenText = lexer.tokenText
-      val tokenType = lexer.tokenType
+      val tokenType = lexer.tokenType!!
       val textKeys = highlighter.getTokenHighlights(tokenType)
       if (textKeys.isEmpty() || textKeys.firstOrNull()?.defaultAttributes == null || textKeys.firstOrNull()?.defaultAttributes?.fontType == 0) {
         tokenPresentations.add(if (smallText) smallText(tokenText) else text(tokenText))
@@ -528,6 +535,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
     }
   }
 
+  @ApiStatus.Internal
   companion object {
     var customToStringProvider: ((PsiElement) -> String)? = null
 

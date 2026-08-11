@@ -13,6 +13,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.CheckReturnValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -162,8 +163,18 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
     return myNavigateToError;
   }
 
+  /**
+   * @deprecated Use {@link #withNavigateToError)} instead.
+   */
+  @Deprecated
   public void setNavigateToError(@NotNull ThreeState navigateToError) {
     myNavigateToError = navigateToError;
+  }
+
+  @CheckReturnValue
+  public @NotNull DefaultBuildDescriptor withNavigateToError(@NotNull ThreeState navigateToError) {
+    myNavigateToError = navigateToError;
+    return this;
   }
 
   public boolean isAutoFocusContent() {

@@ -53,6 +53,7 @@ import javax.swing.tree.TreeNode
 
 val CASE_KEY: Key<ImmediateConfigurable.Case> = Key.create("inlay.case.key")
 
+@ApiStatus.Internal
 class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
 
   val tree: CheckboxTree
@@ -60,6 +61,7 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
   private val groups: MutableMap<InlayGroup, List<InlayProviderSettingsModel>>
   private var currentEditor: Editor? = null
 
+  @ApiStatus.Internal
   companion object {
     @JvmField
     val PREVIEW_KEY: Key<Any> = Key.create("inlay.preview.key")

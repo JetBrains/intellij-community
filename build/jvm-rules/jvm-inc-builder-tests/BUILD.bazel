@@ -75,6 +75,8 @@ kt_jvm_library(
         "//dependency-graph",
         "//jps-builders-6:build-javac-rt",
         "//jvm-inc-builder:jvm-inc-builder-lib",
+        "//jvm-inc-builder:kotlin-compiler-for-bazel",
+        "//worker-framework",
         "@bazel_tools//tools/java/runfiles",
     ],
 )

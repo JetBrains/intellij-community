@@ -70,7 +70,10 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
   }
 
   protected void createModule(VirtualFile module1Content, boolean addSource) {
-    createModule(module1Content, addSource, "JUnit4");
+    createModule(module1Content,
+                 addSource,
+                 "JUnit4",
+                 IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4"));
   }
 
   protected void createModule(VirtualFile module1Content,

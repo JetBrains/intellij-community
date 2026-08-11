@@ -13,11 +13,13 @@ import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class CustomColorsPage implements ColorSettingsPage, DisplayPrioritySortable {
   private static final AttributesDescriptor[] ATTRS = {
     new AttributesDescriptor(OptionsBundle.messagePointer("options.custom.attribute.descriptor.keyword1"), CustomHighlighterColors.CUSTOM_KEYWORD1_ATTRIBUTES),

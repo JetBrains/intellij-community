@@ -9,6 +9,7 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.progress"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

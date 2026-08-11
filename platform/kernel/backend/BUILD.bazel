@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.kernel.backend` start
-
 create_kotlinc_options(
     name = "custom_backend",
     opt_in = [
@@ -39,7 +38,7 @@ jvm_library(
         "//platform/extensions",
         "//platform/util",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util/coroutines",
         "//platform/kernel/shared:kernel",
         "//platform/kernel/rpc.backend",
@@ -72,6 +71,7 @@ jvm_library(
         "//platform/extensions:extensions_test_lib",
         "//platform/util:util_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
         "//platform/kernel/rpc.backend:rpc.backend_test_lib",

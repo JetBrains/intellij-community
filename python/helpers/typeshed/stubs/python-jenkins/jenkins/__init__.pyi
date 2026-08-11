@@ -5,8 +5,8 @@ from typing import Any, Final, Literal, TypeAlias, TypedDict, overload, type_che
 from typing_extensions import Required, deprecated
 
 import requests
+from requests._types import AuthType
 from requests.models import Request, Response
-from requests.sessions import _Auth
 
 LAUNCHER_SSH: Final[str]
 LAUNCHER_COMMAND: Final[str]
@@ -103,7 +103,7 @@ class _Job(TypedDict, total=False):
 
 class Jenkins:
     server: str
-    auth: _Auth | None
+    auth: AuthType | None
     crumb: Mapping[str, Incomplete] | bool | Incomplete
     timeout: int
     def __init__(

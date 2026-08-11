@@ -8,9 +8,11 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class MoveDirectoryUsageInfo extends UsageInfo {
   private final PsiFileSystemItem myTargetFileItem;
 

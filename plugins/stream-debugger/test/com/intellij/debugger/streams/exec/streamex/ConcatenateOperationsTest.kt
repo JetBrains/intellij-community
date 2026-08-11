@@ -4,7 +4,7 @@ package com.intellij.debugger.streams.exec.streamex
 /**
  * @author Vitaliy.Bibaev
  */
-class ConcatenateOperationsTest : StreamExTestCase() {
+open class ConcatenateOperationsTest : StreamExTestCase() {
   override val packageName: String = "concatenate"
 
   fun testAppendToEmpty() = doStreamExVoidTest()

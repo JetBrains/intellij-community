@@ -7,14 +7,12 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedEnumNameEntity
@@ -27,18 +25,11 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 internal class ChangedEnumNameEntityImpl(private val dataSource: ChangedEnumNameEntityData) : ChangedEnumNameEntity,
                                                                                               WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val someEnum: ChangedEnumNameEnum
     get() {
       readField("someEnum")
       return dataSource.someEnum
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -46,36 +37,14 @@ internal class ChangedEnumNameEntityImpl(private val dataSource: ChangedEnumName
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: ChangedEnumNameEntityData?) :
     ModifiableWorkspaceEntityBase<ChangedEnumNameEntity, ChangedEnumNameEntityData>(result), ChangedEnumNameEntityBuilder {
     internal constructor() : this(ChangedEnumNameEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity ChangedEnumNameEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -86,7 +55,7 @@ internal class ChangedEnumNameEntityImpl(private val dataSource: ChangedEnumName
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -97,14 +66,12 @@ internal class ChangedEnumNameEntityImpl(private val dataSource: ChangedEnumName
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var someEnum: ChangedEnumNameEnum
       get() = getEntityData().someEnum
@@ -112,37 +79,18 @@ internal class ChangedEnumNameEntityImpl(private val dataSource: ChangedEnumName
         checkModificationAllowed()
         getEntityData(true).someEnum = value
         changedProperty.add("someEnum")
-
       }
 
     override fun getEntityClass(): Class<ChangedEnumNameEntity> = ChangedEnumNameEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChangedEnumNameEntityData : WorkspaceEntityData<ChangedEnumNameEntity>() {
   lateinit var someEnum: ChangedEnumNameEnum
-
   internal fun isSomeEnumInitialized(): Boolean = ::someEnum.isInitialized
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChangedEnumNameEntity> {
-    val modifiable = ChangedEnumNameEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): ChangedEnumNameEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = ChangedEnumNameEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): ChangedEnumNameEntity = ChangedEnumNameEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<ChangedEnumNameEntity, *> = ChangedEnumNameEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedEnumNameEntity") as EntityMetadata
   }

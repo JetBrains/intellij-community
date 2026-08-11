@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea.lombok.configuration
 import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.idea.configuration.AbstractKotlinCompilerProjectPostConfigurator
-import org.jetbrains.kotlin.lombok.k2.FirLombokKotlinRegistrar
+import org.jetbrains.kotlin.lombok.FirLombokCommonRegistrar
 
 internal class LombokCompilerPluginProjectPostConfigurator : AbstractKotlinCompilerProjectPostConfigurator("lombok") {
   override fun isApplicable(module: Module): Boolean =
     JavaLibraryUtil.hasLibraryClass(module, LOMBOK_FQN) &&
     compilerPluginProjectConfigurators(module).isNotEmpty() &&
-    !module.hasCompilerPluginExtension { it is FirLombokKotlinRegistrar }
+    !module.hasCompilerPluginExtension { it is FirLombokCommonRegistrar }
 }
 
 private const val LOMBOK_FQN: String = "lombok.Lombok"

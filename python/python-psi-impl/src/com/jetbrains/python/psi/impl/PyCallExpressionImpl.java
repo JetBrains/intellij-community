@@ -4,7 +4,9 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;

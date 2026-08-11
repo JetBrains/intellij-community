@@ -7,7 +7,7 @@ import com.intellij.psi.InjectedLanguagePlaces;
 import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.restructuredtext.psi.RestLine;
-import com.jetbrains.python.documentation.doctest.PyDocstringLanguageDialect;
+import com.jetbrains.python.documentation.doctest.PyDoctestLanguageDialect;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -30,12 +30,12 @@ public final class PyRestDocstringLanguageInjector implements LanguageInjector {
         if (!trimmedString.startsWith(">>>") && !trimmedString.startsWith("...") && gotExample && start < end) {
           gotExample = false;
           if (!endsWithSlash)
-            injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end),  null, null);
+            injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
         }
         if (endsWithSlash) {
           endsWithSlash = false;
-          injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(),
-                                            TextRange.create(start, getEndOffset(currentPosition, string)),  null, null);
+          injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(),
+                                            TextRange.create(start, getEndOffset(currentPosition, string)), null, null);
         }
 
         if (trimmedString.startsWith(">>>")) {
@@ -57,7 +57,7 @@ public final class PyRestDocstringLanguageInjector implements LanguageInjector {
         currentPosition += string.length();
       }
       if (gotExample && start < end)
-        injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end),  null, null);
+        injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
     }
   }
 

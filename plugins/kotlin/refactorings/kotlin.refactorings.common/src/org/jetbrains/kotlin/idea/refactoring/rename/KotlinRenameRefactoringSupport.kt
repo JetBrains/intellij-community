@@ -6,13 +6,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.directlyOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -60,7 +62,7 @@ interface KotlinRenameRefactoringSupport {
                     val declarationSymbol = declaration.symbol as? KaCallableSymbol ?: return false
 
                     val callableSymbol = when (declarationSymbol) {
-                        is KaValueParameterSymbol -> declarationSymbol.generatedPrimaryConstructorProperty ?: return false
+                        is KaValueParameterSymbol -> declarationSymbol.primaryConstructorProperty ?: return false
                         else -> declarationSymbol
                     }
                     return !callableSymbol.directlyOverriddenSymbols.iterator().hasNext()

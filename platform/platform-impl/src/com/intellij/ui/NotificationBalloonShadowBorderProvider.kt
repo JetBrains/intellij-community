@@ -18,10 +18,12 @@ import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
 import javax.swing.Icon
 import javax.swing.JComponent
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 open class NotificationBalloonShadowBorderProvider protected constructor(@JvmField protected val fillColor: Color,
                                                                          @JvmField protected val borderColor: Color,
                                                                          private val topIcon: Icon,

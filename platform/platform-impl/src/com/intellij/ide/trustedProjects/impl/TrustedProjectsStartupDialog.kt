@@ -1,7 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects.impl
 
 import com.intellij.diagnostic.WindowsDefenderChecker
+import com.intellij.diagnostic.WindowsDefenderCheckerActivity
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
@@ -18,12 +19,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ExitActionType
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.eel.isWindows
-import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.WindowRoundedCornersManager
@@ -36,6 +34,8 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.plus
 import com.intellij.ui.util.width
 import com.intellij.util.SystemProperties
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -59,7 +59,6 @@ import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 import javax.swing.border.Border
 import javax.swing.text.View
-import kotlin.io.path.name
 import kotlin.io.path.pathString
 import kotlin.math.ceil
 
@@ -68,6 +67,7 @@ class TrustedProjectStartupDialog private constructor(
   project: Project?,
   private val projectPath: Path,
   private val pathsToExclude: List<Path>,
+  private val projectParentPathToExclude: Path?,
   private val myTitle: @NlsContexts.DialogTitle String,
   private val message: @NlsContexts.DialogMessage String,
   private val trustButtonText: @NlsContexts.Button String,
@@ -81,11 +81,13 @@ class TrustedProjectStartupDialog private constructor(
   private val trustAll = propGraph.property(false)
   private var windowsDefenderCheckBox: Cell<JBCheckBox>? = null
   private var userChoice: OpenUntrustedProjectChoice = OpenUntrustedProjectChoice.CANCEL
-  private val myIsTitleComponent = SystemInfoRt.isMac || !Registry.`is`(DIALOGS_AS_SWING_ALERT_SHOW_TITLE_BAR_KEY, false)
+  @OptIn(LowLevelLocalMachineAccess::class)
+  private val myIsTitleComponent = OS.CURRENT == OS.macOS || !Registry.`is`(DIALOGS_AS_SWING_ALERT_SHOW_TITLE_BAR_KEY, false)
   private var trustAction: Action? = null
 
   init {
-    if (SystemInfoRt.isMac) {
+    @OptIn(LowLevelLocalMachineAccess::class)
+    if (OS.CURRENT == OS.macOS) {
       setInitialLocationCallback {
         val rootPane: JRootPane? = SwingUtilities.getRootPane(window.parent) ?: SwingUtilities.getRootPane(window.owner)
         if (rootPane == null || !rootPane.isShowing) {
@@ -167,14 +169,16 @@ class TrustedProjectStartupDialog private constructor(
               component.isFocusable = true // Workaround for IJPL-184339
             }
           }
-          if (getParentFolder() != null) {
+          projectPath.parent?.let { projectParentPath ->
             row {
-              val trimmedFolderName = StringUtil.shortenTextWithEllipsis(getParentFolder()!!.name, 40, 0, true)
-              checkBox(IdeBundle.message("untrusted.project.warning.trust.location.checkbox", trimmedFolderName))
+              val parentDirName = NioFiles.getFileName(projectParentPath)
+              val trimmedParentDirName = StringUtil.shortenTextWithEllipsis(parentDirName, 40, 0, true)
+              val truncatedParentDirName = StringUtil.shortenTextWithEllipsis(parentDirName, 18, 0, true)
+              checkBox(IdeBundle.message("untrusted.project.warning.trust.location.checkbox", trimmedParentDirName))
                 .bindSelected(trustAll)
                 .apply {
                   component.toolTipText = null
-                  component.addMouseMotionListener(TooltipMouseAdapter { listOf(getParentFolder()!!.pathString) })
+                  component.addMouseMotionListener(TooltipMouseAdapter { listOf(projectParentPath.pathString) })
                 }
                 .onChanged {
                   if (it.isSelected) {
@@ -182,27 +186,28 @@ class TrustedProjectStartupDialog private constructor(
                   }
                   if (trustAction != null) {
                     val trustButton = getButton(trustAction!!)
-                    val text = if (it.isSelected) {
-                      val truncatedParentFolderName = StringUtil.shortenTextWithEllipsis(getTrustFolder(it.isSelected).name, 18, 0, true)
-                      IdeBundle.message("untrusted.project.dialog.trust.folder.button", truncatedParentFolderName)
+                    val text = when {
+                      it.isSelected -> IdeBundle.message("untrusted.project.dialog.trust.folder.button", truncatedParentDirName)
+                      else -> trustButtonText
                     }
-                    else trustButtonText
                     trustButton?.text = text
                   }
-                  val trimmedFolderName = StringUtil.shortenTextWithEllipsis(getTrustFolder(it.isSelected).name, 18, 0, true)
-                  windowsDefenderCheckBox?.component?.text = IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", trimmedFolderName)
+                  windowsDefenderCheckBox?.let { cb ->
+                    val trimmedFolderName = StringUtil.shortenTextWithEllipsis(NioFiles.getFileName(getDefenderTrustFolder(it.isSelected)), 18, 0, true)
+                    cb.component.text = IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", trimmedFolderName)
+                  }
                 }
             }
           }
           if (pathsToExclude.isNotEmpty()) {
             row {
-              val trimmedFolderName = StringUtil.shortenTextWithEllipsis(projectPath.name.ifEmpty { projectPath.toString() }, 18, 0, true)
+              val trimmedFolderName = StringUtil.shortenTextWithEllipsis(NioFiles.getFileName(projectPath), 18, 0, true)
               val idePaths = pathsToExclude.asSequence().filter { it != projectPath }.joinToString(separator = "<br>")
               windowsDefenderCheckBox = checkBox(IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", trimmedFolderName))
                 .bindSelected(windowsDefender)
                 .apply {
                   component.toolTipText = null
-                  component.addMouseMotionListener(TooltipMouseAdapter { listOf(idePaths, getTrustFolder(isTrustAll()).pathString) })
+                  component.addMouseMotionListener(TooltipMouseAdapter { listOf(idePaths, getDefenderTrustFolder(isTrustAll()).pathString) })
                   comment(IdeBundle.message("untrusted.project.location.comment"))
                 }
             }
@@ -212,7 +217,7 @@ class TrustedProjectStartupDialog private constructor(
     }.withMinimumWidth(600).withPreferredWidth(600)
   }
 
-  private inner class TooltipMouseAdapter(val orderedPaths: () -> List<String>) : MouseAdapter() {
+  private class TooltipMouseAdapter(val orderedPaths: () -> List<String>) : MouseAdapter() {
     override fun mouseMoved(e: MouseEvent) {
       val checkBox = e.source as? JBCheckBox ?: return
       val position = e.point
@@ -221,7 +226,7 @@ class TrustedProjectStartupDialog private constructor(
 
       val text = htmlDocument?.getText(0, htmlDocument.length)?.replace("\n", "") ?: textWithMarkedElements
       val fontMetrics = checkBox.getFontMetrics(checkBox.font)
-      val bounds = fontMetrics.getStringBounds(text, checkBox.graphics)
+      val bounds = fontMetrics.getStringBounds(text, @Suppress("RawComponentGraphics") checkBox.graphics)
       val x = checkBox.width - bounds.width - checkBox.insets.width
       bounds.setRect(x + bounds.x, bounds.y, bounds.width, bounds.height)
       val mousePosition = position.x - x
@@ -238,7 +243,7 @@ class TrustedProjectStartupDialog private constructor(
         val firstQuotesInd = pathInd * 2
         val secondQuotesInd = pathInd * 2 + 1
         if (quotePositions[firstQuotesInd] <= positionX && positionX <= quotePositions[secondQuotesInd]) {
-          @Suppress("HardCodedStringLiteral")
+          @Suppress("HardCodedStringLiteral", "UseHtmlChunkToolTip")
           checkBox.toolTipText = paths.getOrNull(pathInd)
           return
         }
@@ -246,10 +251,6 @@ class TrustedProjectStartupDialog private constructor(
       checkBox.toolTipText = null
     }
   }
-
-  private fun getTrustFolder(isTrustAll: Boolean): Path = if (isTrustAll) getParentFolder() ?: projectPath else projectPath
-
-  private fun getParentFolder(): Path? = projectPath.parent
 
   /* This is a workaround for ij-light which does not know what to do when user clicks the "cancel" button. (IJPL-245778)
    * The problem is that ij-light can transform from Local IDE to RD client, but cannot do it backwards. Use case is the following:
@@ -268,16 +269,14 @@ class TrustedProjectStartupDialog private constructor(
   override fun shouldCloseOnCross(): Boolean = hasCancelButton()
 
   override fun createActions(): Array<out Action?> {
-    val actions: MutableList<Action> = mutableListOf()
-    val options: List<String> = if (hasCancelButton()) {
-      listOf(trustButtonText, distrustButtonText, cancelButtonText)
-    } else {
-      listOf(trustButtonText, distrustButtonText)
+    val actions = mutableListOf<Action>()
+    val options = when {
+      hasCancelButton() -> listOf(trustButtonText, distrustButtonText, cancelButtonText)
+      else -> listOf(trustButtonText, distrustButtonText)
     }
-
     for (i in options.indices) {
       val option = options[i]
-      val action: Action = object : AbstractAction(UIUtil.replaceMnemonicAmpersand(option)) {
+      val action = object : AbstractAction(UIUtil.replaceMnemonicAmpersand(option)) {
         override fun actionPerformed(e: ActionEvent) {
           val exitActionType: ExitActionType
           userChoice = when (option) {
@@ -312,9 +311,7 @@ class TrustedProjectStartupDialog private constructor(
       UIUtil.assignMnemonic(option, action)
       actions.add(action)
     }
-    if (helpId != null) {
-      actions.add(helpAction)
-    }
+    actions.add(helpAction)
     return actions.toTypedArray()
   }
 
@@ -322,15 +319,29 @@ class TrustedProjectStartupDialog private constructor(
     actions.reverse()
   }
 
-  override fun getHelpId(): String? = TRUSTED_PROJECTS_HELP_TOPIC
+  override fun getHelpId(): String = TRUSTED_PROJECTS_HELP_TOPIC
 
   private fun getOpenChoice(): OpenUntrustedProjectChoice = userChoice
 
   private fun isTrustAll(): Boolean = trustAll.get()
 
-  private fun getDefenderTrustFolder(): Path? = if (windowsDefender.get()) getTrustFolder(isTrustAll()) else null
+  private fun getDefenderTrustFolder(trustParent: Boolean): Path = projectParentPathToExclude?.takeIf { trustParent } ?: projectPath
 
-  private fun getDefenderExcludePaths(): List<Path> = pathsToExclude
+  private fun getDefenderExcludePaths(): List<Path> {
+    if (!windowsDefender.get()) {
+      return emptyList()
+    }
+    if (isTrustAll()) {
+      val defenderTrustDir = getDefenderTrustFolder(isTrustAll())
+      if (defenderTrustDir != projectPath) {
+        return pathsToExclude.toMutableList().apply {
+          remove(projectPath)
+          add(0, defenderTrustDir)
+        }
+      }
+    }
+    return pathsToExclude
+  }
 
   @TestOnly
   fun getButtonTextsInTests(): Set<String> = buttonMap.values.mapTo(linkedSetOf()) { it.text }
@@ -341,8 +352,7 @@ class TrustedProjectStartupDialog private constructor(
   class DialogChoice(
     val openChoice: OpenUntrustedProjectChoice,
     val isTrustAll: Boolean,
-    val defenderTrustFolder: Path?,
-    val defenderExcludePaths: List<Path> ,
+    val defenderExcludePaths: List<Path>
   )
 
   companion object {
@@ -355,7 +365,7 @@ class TrustedProjectStartupDialog private constructor(
 
     @TestOnly
     fun setDialogChoiceInTests(openChoice: OpenUntrustedProjectChoice, disposable: Disposable) {
-      val choice = DialogChoice(openChoice, false, null, emptyList())
+      val choice = DialogChoice(openChoice, false, emptyList())
       setKotlinProperty(::ourDialogChoice, choice, disposable)
     }
 
@@ -368,9 +378,9 @@ class TrustedProjectStartupDialog private constructor(
       trustButtonText: @NlsContexts.Button String,
       distrustButtonText: @NlsContexts.Button String,
       cancelButtonText: @NlsContexts.Button String,
-    ): TrustedProjectStartupDialog {
-      return TrustedProjectStartupDialog(project, projectPath, emptyList(), title, message, trustButtonText, distrustButtonText, cancelButtonText)
-    }
+    ): TrustedProjectStartupDialog = TrustedProjectStartupDialog(
+      project, projectPath, emptyList(), null, title, message, trustButtonText, distrustButtonText, cancelButtonText
+    )
 
     suspend fun showAndGet(
       project: Project?,
@@ -381,16 +391,19 @@ class TrustedProjectStartupDialog private constructor(
       distrustButtonText: @NlsContexts.Button String,
       cancelButtonText: @NlsContexts.Button String,
     ): DialogChoice {
-      val pathsToExclude = getDefenderExcludePaths(project, projectPath)
+      val (pathsToExclude, projectParentPathToExclude) = getDefenderExcludePaths(project, projectPath)
       return ourDialogChoice ?: withContext(Dispatchers.EDT) {
-        val dialog = TrustedProjectStartupDialog(project, projectPath, pathsToExclude, title, message, trustButtonText, distrustButtonText, cancelButtonText)
+        val dialog = TrustedProjectStartupDialog(
+          project, projectPath, pathsToExclude, projectParentPathToExclude,
+          title, message, trustButtonText, distrustButtonText, cancelButtonText
+        )
         dialog.show()
-        DialogChoice(dialog.getOpenChoice(), dialog.isTrustAll(), dialog.getDefenderTrustFolder(), dialog.getDefenderExcludePaths())
+        DialogChoice(dialog.getOpenChoice(), dialog.isTrustAll(), dialog.getDefenderExcludePaths())
       }
     }
 
-    private suspend fun getDefenderExcludePaths(project: Project?, projectPath: Path): List<Path> {
-      if (isWindowsProject(projectPath)) {
+    private suspend fun getDefenderExcludePaths(project: Project?, projectPath: Path): Pair<List<Path>, Path?> {
+      if (WindowsDefenderCheckerActivity.isLocalWindowsPath(projectPath)) {
         val checker = serviceAsync<WindowsDefenderChecker>()
         if (
           !checker.isUntrustworthyLocation(projectPath) &&
@@ -399,14 +412,12 @@ class TrustedProjectStartupDialog private constructor(
         ) {
           val paths = checker.filterDevDrivePaths(checker.getPathsToExclude(project, projectPath)).toMutableList()
           if (projectPath in paths) {
-            return paths
+            val projectParentPath = projectPath.parent?.takeIf { !checker.isUntrustworthyLocation(it) }
+            return Pair(paths, projectParentPath)
           }
         }
       }
-      return emptyList()
+      return Pair(emptyList(), null)
     }
-
-    private fun isWindowsProject(projectPath: Path): Boolean =
-      SystemInfo.isWindows && projectPath.asEelPath().descriptor.osFamily.isWindows
   }
 }

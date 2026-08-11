@@ -8,10 +8,10 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.OrderRootsCache
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ConcurrencyUtil
-import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -43,7 +43,7 @@ class OrderRootsCacheBridge(project: Project, parentDisposable: Disposable) : Or
     val key = CacheKey(rootType, flags)
     val entry = myRootUrlsAndFiles.get()?.get(key)
     if (entry != null) return entry
-    val virtualFileUrls = rootUrlsComputer.get().map { virtualFileUrlManager.getOrCreateFromUrl(it) as VirtualFileUrlBridge }
+    val virtualFileUrls = rootUrlsComputer.get().map { virtualFileUrlManager.getOrCreateFromUrl(it) as VirtualFilePointer }
     val urls = ArrayUtil.toStringArray(virtualFileUrls.map { it.url })
     val virtualFiles = VfsUtilCore.toVirtualFileArray(virtualFileUrls.mapNotNull { it.file })
     return ConcurrencyUtil.cacheOrGet(myRootUrlsAndFiles, ConcurrentHashMap()).computeIfAbsent(key) { UrlsAndVirtualFiles(urls, virtualFiles) }

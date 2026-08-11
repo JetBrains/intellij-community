@@ -15,33 +15,55 @@
  */
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createPomXml
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.envVar
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.importProjectWithProfiles
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.projectPath
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.nio.file.Paths
 
-class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenPropertyResolverTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun testResolvingProjectAttributes() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals("test", resolve("\${project.groupId}", projectPom))
-    assertEquals("test", resolve("\${pom.groupId}", projectPom))
+    assertEquals("test", resolve("\${project.groupId}", maven.projectPom))
+    assertEquals("test", resolve("\${pom.groupId}", maven.projectPom))
   }
 
   @Test
   fun testResolvingProjectParentAttributes() = runBlocking {
-    val modulePom = createModulePom("test",
+    val modulePom = maven.createModulePom("test",
                                     """
                           <groupId>test</groupId>
                           <artifactId>project</artifactId>
@@ -52,7 +74,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                             <version>parent.1</version>
                           </parent>
                           """.trimIndent())
-    importProjectAsync("""
+    maven.importProjectAsync("""
                       <groupId>parent.test</groupId>
                       <artifactId>parent.project</artifactId>
                       <version>parent.1</version>
@@ -68,32 +90,32 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testResolvingAbsentProperties() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals("\${project.parent.groupId}", resolve("\${project.parent.groupId}", projectPom))
+    assertEquals("\${project.parent.groupId}", resolve("\${project.parent.groupId}", maven.projectPom))
   }
 
   @Test
   fun testResolvingProjectDirectories() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals(Paths.get(projectPath.toString(), "target").toString(),
-                 resolve("\${project.build.directory}", projectPom))
-    assertEquals(Paths.get(projectPath.toString(), "src/main/java").toString(),
-                 resolve("\${project.build.sourceDirectory}", projectPom))
+    assertEquals(Paths.get(maven.projectPath.toString(), "target").toString(),
+                 resolve("\${project.build.directory}", maven.projectPom))
+    assertEquals(Paths.get(maven.projectPath.toString(), "src/main/java").toString(),
+                 resolve("\${project.build.sourceDirectory}", maven.projectPom))
   }
 
   @Test
   fun testResolvingProjectAndParentProperties() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -106,7 +128,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val f = createModulePom("m",
+    val f = maven.createModulePom("m",
                             """
                                       <groupId>test</groupId>
                                       <artifactId>m</artifactId>
@@ -121,7 +143,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                                       </parent>
                                       """.trimIndent())
 
-    importProjectAsync()
+    maven.importProjectAsync()
 
     assertEquals("parent.value", resolve("\${parentProp}", f))
     assertEquals("module.value", resolve("\${moduleProp}", f))
@@ -134,7 +156,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testProjectPropertiesRecursively() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -145,16 +167,16 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                        </properties>
                        """.trimIndent())
 
-    importProjectAsync()
+    maven.importProjectAsync()
 
-    assertEquals("value", resolve("\${prop1}", projectPom))
-    assertEquals("value-2", resolve("\${prop2}", projectPom))
-    assertEquals("value-2-3", resolve("\${prop3}", projectPom))
+    assertEquals("value", resolve("\${prop1}", maven.projectPom))
+    assertEquals("value-2", resolve("\${prop2}", maven.projectPom))
+    assertEquals("value-2-3", resolve("\${prop3}", maven.projectPom))
   }
 
   @Test
   fun testDoNotGoIntoInfiniteRecursion() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -168,27 +190,27 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                        </properties>
                        """.trimIndent())
 
-    importProjectAsync()
-    assertEquals("\${prop1}", resolve("\${prop1}", projectPom))
-    assertEquals("\${prop3}", resolve("\${prop3}", projectPom))
-    assertEquals("\${prop5}", resolve("\${prop5}", projectPom))
+    maven.importProjectAsync()
+    assertEquals("\${prop1}", resolve("\${prop1}", maven.projectPom))
+    assertEquals("\${prop3}", resolve("\${prop3}", maven.projectPom))
+    assertEquals("\${prop5}", resolve("\${prop5}", maven.projectPom))
   }
 
   @Test
   fun testSophisticatedPropertyNameDoesNotBreakResolver() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals("\${~!@#$%^&*()}", resolve("\${~!@#$%^&*()}", projectPom))
-    assertEquals("\${#ARRAY[@]}", resolve("\${#ARRAY[@]}", projectPom))
+    assertEquals("\${~!@#$%^&*()}", resolve("\${~!@#$%^&*()}", maven.projectPom))
+    assertEquals("\${#ARRAY[@]}", resolve("\${#ARRAY[@]}", maven.projectPom))
   }
 
   @Test
   fun testProjectPropertiesWithProfiles() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -211,80 +233,80 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                        </profiles>
                        """.trimIndent())
 
-    importProjectAsync()
-    assertEquals("value1", resolve("\${prop}", projectPom))
+    maven.importProjectAsync()
+    assertEquals("value1", resolve("\${prop}", maven.projectPom))
 
-    importProjectWithProfiles("one")
-    assertEquals("value2", resolve("\${prop}", projectPom))
+    maven.importProjectWithProfiles("one")
+    assertEquals("value2", resolve("\${prop}", maven.projectPom))
 
-    importProjectWithProfiles("two")
-    assertEquals("value3", resolve("\${prop}", projectPom))
+    maven.importProjectWithProfiles("two")
+    assertEquals("value3", resolve("\${prop}", maven.projectPom))
   }
 
   @Test
   fun testResolvingBasedirProperties() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals(projectPath.toCanonicalPath().toString(), resolve("\${basedir}", projectPom))
-    assertEquals(projectPath.toCanonicalPath().toString(), resolve("\${project.basedir}", projectPom))
-    assertEquals(projectPath.toCanonicalPath().toString(), resolve("\${pom.basedir}", projectPom))
+    assertEquals(maven.projectPath.toCanonicalPath().toString(), resolve("\${basedir}", maven.projectPom))
+    assertEquals(maven.projectPath.toCanonicalPath().toString(), resolve("\${project.basedir}", maven.projectPom))
+    assertEquals(maven.projectPath.toCanonicalPath().toString(), resolve("\${pom.basedir}", maven.projectPom))
   }
 
   @Test
   fun testResolvingSystemProperties() = runBlocking {
     val javaHome = System.getProperty("java.home")
-    val tempDir = System.getenv(envVar)
+    val tempDir = System.getenv(maven.envVar)
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals(javaHome, resolve("\${java.home}", projectPom))
-    assertEquals(tempDir, resolve("\${env." + envVar + "}", projectPom))
+    assertEquals(javaHome, resolve("\${java.home}", maven.projectPom))
+    assertEquals(tempDir, resolve("\${env." + maven.envVar + "}", maven.projectPom))
   }
 
   @Test
   fun testAllProperties() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
     assertEquals("foo test-project bar",
-                 resolve("foo \${project.groupId}-\${project.artifactId} bar", projectPom))
+                 resolve("foo \${project.groupId}-\${project.artifactId} bar", maven.projectPom))
   }
 
   @Test
   fun testIncompleteProperties() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals("\${project.groupId", resolve("\${project.groupId", projectPom))
-    assertEquals("\$project.groupId}", resolve("\$project.groupId}", projectPom))
-    assertEquals("{project.groupId}", resolve("{project.groupId}", projectPom))
+    assertEquals("\${project.groupId", resolve("\${project.groupId", maven.projectPom))
+    assertEquals("\$project.groupId}", resolve("\$project.groupId}", maven.projectPom))
+    assertEquals("{project.groupId}", resolve("{project.groupId}", maven.projectPom))
   }
 
   @Test
   fun testUncomittedProperties() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    val doc = readAction { FileDocumentManager.getInstance().getDocument(projectPom) }
+    val doc = readAction { FileDocumentManager.getInstance().getDocument(maven.projectPom) }
     edtWriteAction {
-      doc!!.setText(createPomXml("""
+      doc!!.setText(maven.createPomXml("""
           <groupId>test</groupId>
           <artifactId>project</artifactId>
           <version>2</version>
@@ -292,15 +314,15 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
             <uncomitted>value</uncomitted>
           </properties>
           """.trimIndent()))
-      PsiDocumentManager.getInstance(project).commitDocument(doc)
+      PsiDocumentManager.getInstance(maven.project).commitDocument(doc)
     }
 
-    assertEquals("value", resolve("\${uncomitted}", projectPom))
+    assertEquals("value", resolve("\${uncomitted}", maven.projectPom))
   }
 
   @Test
   fun testChainResolvePropertiesForFileWhichIsNotAProjectPom() = runBlocking {
-    val file = createProjectSubFile("../some.pom",
+    val file = maven.createProjectSubFile("../some.pom",
                                     """
                                               <project>
                                                   <parent>
@@ -317,7 +339,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                                               </project>
                                               """.trimIndent())
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -331,7 +353,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testResolveMavenCoordinatesWithDependencyPropertiesPlugin() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -365,15 +387,14 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                        </plugins>
                     </build>
                     """.trimIndent())
-    val pathFirst = repositoryPath.resolve("mygroup/myartifact/1.0/myartifact-1.0.jar").toAbsolutePath().toString()
-    val pathAnother = repositoryPath.resolve("anothergroup/anotherartifact/1.0/anotherartifact-1.0-classifier.type").toAbsolutePath().toString()
-    assertEquals(pathFirst, resolve("\${mygroup:myartifact:jar}", projectPom))
-    assertEquals(pathAnother, resolve("\${anothergroup:anotherartifact:type:classifier}", projectPom))
+    val pathFirst = maven.repositoryPath.resolve("mygroup/myartifact/1.0/myartifact-1.0.jar").toAbsolutePath().toString()
+    val pathAnother = maven.repositoryPath.resolve("anothergroup/anotherartifact/1.0/anotherartifact-1.0-classifier.type").toAbsolutePath().toString()
+    assertEquals(pathFirst, resolve("\${mygroup:myartifact:jar}", maven.projectPom))
+    assertEquals(pathAnother, resolve("\${anothergroup:anotherartifact:type:classifier}", maven.projectPom))
 
   }
 
   private suspend fun resolve(text: String, f: VirtualFile): String {
-    return readAction { MavenPropertyResolver.resolve(text, MavenDomUtil.getMavenDomProjectModel(project, f)) }
+    return readAction { MavenPropertyResolver.resolve(text, MavenDomUtil.getMavenDomProjectModel(maven.project, f)) }
   }
 }
-

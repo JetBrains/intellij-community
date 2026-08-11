@@ -15,6 +15,10 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyNumericLiteralExpression;
@@ -27,6 +31,9 @@ import org.jetbrains.annotations.Nullable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+@Subsystems.CodeInsight
+@Components.Parsing
+@Layers.Functional
 public class PyNumericLiteralTest extends PyTestCase {
 
   public void testHexIntegers() {
@@ -397,11 +404,11 @@ public class PyNumericLiteralTest extends PyTestCase {
   }
 
   private void doTestIntegerLiteral(@NotNull String text, int expected) {
-    doTestLiteral(text, true, Long.valueOf(expected), BigInteger.valueOf(expected), BigDecimal.valueOf(expected), "int");
+    doTestLiteral(text, true, Long.valueOf(expected), BigInteger.valueOf(expected), BigDecimal.valueOf(expected), "Literal[" + expected + "]");
   }
 
   private void doTestMoreThanLongIntegerLiteral(@NotNull String text, @NotNull BigInteger expected) {
-    doTestLiteral(text, true, null, expected, new BigDecimal(expected), "int");
+    doTestLiteral(text, true, null, expected, new BigDecimal(expected), "Literal[" + expected + "]");
   }
 
   private void doTestFloatLiteral(@NotNull String text, int expectedInt, @NotNull BigDecimal expectedDecimal) {

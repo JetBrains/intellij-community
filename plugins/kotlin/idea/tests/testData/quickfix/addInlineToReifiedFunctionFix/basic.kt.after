@@ -1,5 +1,5 @@
 // "Add 'inline' modifier" "true"
-// K2_ERROR: Only type parameters of inline functions can be reified.
+// K2_ERROR: REIFIED_TYPE_PARAMETER_NO_INLINE
 
 inline fun <reified T> fn() {
 

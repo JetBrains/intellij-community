@@ -18,7 +18,7 @@ interface ParentWithLinkToAbstractChildBuilder : WorkspaceEntityBuilder<ParentWi
 }
 
 internal object ParentWithLinkToAbstractChildType : EntityType<ParentWithLinkToAbstractChild, ParentWithLinkToAbstractChildBuilder>() {
-  override val entityClass: Class<ParentWithLinkToAbstractChild> get() = ParentWithLinkToAbstractChild::class.java
+  override val entityImplClass: Class<*> get() = ParentWithLinkToAbstractChildImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ParentWithLinkToAbstractChildImpl.Builder::class.java
   operator fun invoke(
     data: String,

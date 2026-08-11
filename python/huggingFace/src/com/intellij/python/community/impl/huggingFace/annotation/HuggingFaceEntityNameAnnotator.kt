@@ -16,6 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class HuggingFaceEntityNameAnnotator : Annotator {
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+    if (holder.isBatchMode()) return
     if (element !is PyStringLiteralExpression) return
 
     val project = element.project

@@ -169,14 +169,14 @@ private class DropOldestSemaphore(private val permits: Int) : DropOldestSemaphor
     while (true) {
       val activeJobs = _activeJobs.get()
       if (activeJobs.size < permits) {
-        val newJobs = activeJobs.add(currentJob)
+        val newJobs = activeJobs.adding(currentJob)
         if (_activeJobs.compareAndSet(activeJobs, newJobs)) {
           return null
         }
       }
       else {
         val oldestJob = activeJobs.first() // rely on ordering
-        val newJobs = activeJobs.remove(oldestJob).add(currentJob)
+        val newJobs = activeJobs.removing(oldestJob).adding(currentJob)
         if (_activeJobs.compareAndSet(activeJobs, newJobs)) {
           return oldestJob
         }
@@ -187,7 +187,7 @@ private class DropOldestSemaphore(private val permits: Int) : DropOldestSemaphor
   override fun removeCurrentJob(currentJob: Job) {
     while (true) {
       val activeJobs = _activeJobs.get()
-      val newJobs = activeJobs.remove(currentJob)
+      val newJobs = activeJobs.removing(currentJob)
       if (newJobs === activeJobs) {
         return // Job was already removed
       }

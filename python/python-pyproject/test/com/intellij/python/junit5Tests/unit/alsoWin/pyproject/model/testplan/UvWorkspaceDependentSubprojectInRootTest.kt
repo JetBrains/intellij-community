@@ -3,7 +3,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
-import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.SEP
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
 import com.intellij.testFramework.TestDataPath
@@ -27,7 +27,7 @@ internal class UvWorkspaceDependentSubprojectInRootTest {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule("pythonproject", contentRoot = ".", deps = listOf("subinroot"), sourceRoots = listOf(".")),
-      ExpectedModule("subinroot", contentRoot = "subinroot", sourceRoots = listOf("subinroot${SEP}src")),
+      ExpectedModule("subinroot", contentRoot = "subinroot", sourceRoots = listOf("subinroot" / "src")),
     )
   }
 }

@@ -31,16 +31,16 @@ import java.util.function.Function;
 public final class InspectionRVContentProviderImpl extends InspectionRVContentProvider {
   @Override
   public boolean checkReportedProblems(@NotNull GlobalInspectionContextImpl context,
-                                       final @NotNull InspectionToolWrapper toolWrapper) {
+                                       @NotNull InspectionToolWrapper toolWrapper) {
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     presentation.updateContent();
 
     AnalysisScope scope = context.getCurrentScope();
     if (scope == null) return false;
-    final SearchScope searchScope = scope.toSearchScope();
+    SearchScope searchScope = scope.toSearchScope();
     if (searchScope instanceof LocalSearchScope) {
-      final Map<String, Set<RefEntity>> contents = presentation.getContent();
-      final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> problemElements = presentation.getProblemElements();
+      Map<String, Set<RefEntity>> contents = presentation.getContent();
+      SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> problemElements = presentation.getProblemElements();
       for (Set<RefEntity> entities : contents.values()) {
         for (Iterator<RefEntity> iterator = entities.iterator(); iterator.hasNext();) {
           RefEntity entity = iterator.next();
@@ -49,9 +49,9 @@ public final class InspectionRVContentProviderImpl extends InspectionRVContentPr
             if (pointer != null) {
               VirtualFile vFile = pointer.getVirtualFile();
               if (vFile != null && searchScope.contains(vFile)) {
-                final PsiElement element = ((RefElement)entity).getPsiElement();
+                PsiElement element = ((RefElement)entity).getPsiElement();
                 if (element != null) {
-                  final TextRange range = element.getTextRange();
+                  TextRange range = element.getTextRange();
                   if (range != null && ((LocalSearchScope)searchScope).containsRange(element.getContainingFile(), range)) {
                     continue;
                   }
@@ -69,8 +69,8 @@ public final class InspectionRVContentProviderImpl extends InspectionRVContentPr
   }
 
   @Override
-  public QuickFixAction @NotNull [] getCommonQuickFixes(final @NotNull InspectionToolWrapper toolWrapper,
-                                                        final @NotNull InspectionTree tree,
+  public QuickFixAction @NotNull [] getCommonQuickFixes(@NotNull InspectionToolWrapper toolWrapper,
+                                                        @NotNull InspectionTree tree,
                                                         CommonProblemDescriptor @NotNull [] descriptors,
                                                         RefEntity @NotNull [] refElements) {
     InspectionToolPresentation presentation = tree.getContext().getPresentation(toolWrapper);
@@ -80,12 +80,12 @@ public final class InspectionRVContentProviderImpl extends InspectionRVContentPr
 
   @Override
   public void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
-                                    final @NotNull InspectionToolWrapper wrapper,
-                                    final @NotNull InspectionTreeNode toolNode,
-                                    final boolean showStructure,
+                                    @NotNull InspectionToolWrapper wrapper,
+                                    @NotNull InspectionTreeNode toolNode,
+                                    boolean showStructure,
                                     boolean groupBySeverity,
-                                    final @NotNull Map<String, Set<RefEntity>> contents,
-                                    final @NotNull Function<? super RefEntity, CommonProblemDescriptor[]> problems) {
+                                    @NotNull Map<String, Set<RefEntity>> contents,
+                                    @NotNull Function<? super RefEntity, CommonProblemDescriptor[]> problems) {
 
     InspectionResultsView view = context.getView();
 
@@ -100,13 +100,13 @@ public final class InspectionRVContentProviderImpl extends InspectionRVContentPr
 
   @Override
   protected void appendDescriptor(@NotNull GlobalInspectionContextImpl context,
-                                  final @NotNull InspectionToolWrapper toolWrapper,
-                                  final @NotNull RefEntityContainer container,
-                                  final @NotNull InspectionTreeNode parent) {
-    final RefEntity refElement = container.getRefEntity();
+                                  @NotNull InspectionToolWrapper toolWrapper,
+                                  @NotNull RefEntityContainer container,
+                                  @NotNull InspectionTreeNode parent) {
+    RefEntity refElement = container.getRefEntity();
     InspectionTreeModel model = context.getView().getTree().getInspectionTreeModel();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    final CommonProblemDescriptor[] problems = ((RefEntityContainer<CommonProblemDescriptor>)container).getDescriptors();
+    CommonProblemDescriptor[] problems = ((RefEntityContainer<CommonProblemDescriptor>)container).getDescriptors();
     if (problems != null) {
         for (CommonProblemDescriptor problem : problems) {
           assert problem != null;

@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="intellij.platform.kernel" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
-    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.platform.pasta" />
     <orderEntry type="module" module-name="fleet.rhizomedb" />
   </component>

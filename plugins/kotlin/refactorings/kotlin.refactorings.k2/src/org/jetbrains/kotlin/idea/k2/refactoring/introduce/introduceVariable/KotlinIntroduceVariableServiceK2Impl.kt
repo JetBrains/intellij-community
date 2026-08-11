@@ -7,7 +7,10 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPackage
 import com.intellij.psi.util.elementType
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.K2IntroduceVariableHandler.getCandidateContainers
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
@@ -84,7 +87,7 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
     override fun hasUnitType(element: KtExpression): Boolean {
         return analyze(element) {
             val expressionType = element.expressionType
-            expressionType == null || expressionType.isUnitType
+            expressionType == null || expressionType.classId == KaStandardTypeClassIds.UNIT
         } || isNonExtractableQualifier(element)
     }
 

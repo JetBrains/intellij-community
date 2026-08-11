@@ -10,7 +10,7 @@ import com.intellij.platform.workspace.storage.impl.ReplaceState
 import com.intellij.platform.workspace.storage.impl.ReplaceWithState
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.assertConsistency
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
 import com.intellij.platform.workspace.storage.testEntities.entities.AttachedEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.AttachedEntityParentList
@@ -1142,10 +1142,13 @@ class ReplaceBySourceTest {
 
   @RepeatedTest(10)
   fun `non persistent id root`() {
+    // Both entities must share a manager: VirtualFileUrl instances are interned per manager, so URLs created by
+    // two different managers are never the same instance and won't be matched by replaceBySource.
+    val virtualFileManager = ConcurrentVirtualFileUrlManager()
     val targetEntity = builder addEntity SampleEntity(false, "data", ArrayList(), HashMap(),
-                                                      VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"), MySource)
+                                                      virtualFileManager.getOrCreateFromUrl("file:///tmp"), MySource)
     val replaceWithEntity = replacement addEntity SampleEntity(false, "data", ArrayList(), HashMap(),
-                                                               VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"), MySource)
+                                                               virtualFileManager.getOrCreateFromUrl("file:///tmp"), MySource)
 
     rbsMySources()
 

@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.gradle.tooling.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(
@@ -15,14 +14,14 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:kotlin-test",
-        "@lib//:junit4",
+        "//libraries/junit4",
         "//plugins/kotlin/base/project-model",
         "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling",
         "//plugins/kotlin/tests-common:common-tests",
         "//plugins/kotlin/gradle/gradle-tooling/impl",
         "//plugins/gradle/tooling-extension-api:toolingExtension",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-        "@lib//:kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
     ],
 )
 
@@ -45,7 +44,8 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "@lib//:kotlin-project-model",
         "@lib//:kotlin-test",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//plugins/kotlin/base/project-model",
         "//plugins/kotlin/base/project-model:project-model_test_lib",
         "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling",
@@ -59,7 +59,8 @@ jvm_library(
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
         "@lib//:gradle",
-        "@lib//:kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.tooling.tests` end
@@ -74,7 +75,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.gradle.tooling.tests` end
 
 ### auto-generated section `test intellij.kotlin.gradle.tooling.tests` start
-
 jps_test(
     name = "tests_test",
     runtime_deps = [":tests_test_lib"],

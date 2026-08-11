@@ -1,5 +1,5 @@
 // "Add 'abstract val bar: Int' to 'I'" "true"
-// K2_ERROR: 'bar' overrides nothing.
+// K2_ERROR: NOTHING_TO_OVERRIDE
 annotation class A(vararg val names: String)
 annotation class B(val i: Int)
 

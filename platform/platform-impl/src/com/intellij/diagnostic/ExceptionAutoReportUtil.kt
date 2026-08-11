@@ -8,16 +8,17 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.ProblematicPluginInfo
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.util.application
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -33,15 +34,13 @@ object ExceptionAutoReportUtil {
 
   // may be queried before Application started
   val autoReportIsForbiddenForProduct: Boolean
-    get() = !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains
-            || AppMode.isRemoteDevHost() // we handle everything on client
-            || AppMode.isHeadless()
+    get() = !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains || AppMode.isHeadless()
 
   suspend fun isAutoReportVisible(): Boolean {
     return !autoReportIsForbiddenForProduct && RegistryManager.getInstanceAsync().`is`("ea.auto.report.feature.visible")
   }
 
-  private fun isAutoReportVisibleBlocking(): Boolean {
+  fun isAutoReportVisibleBlocking(): Boolean {
     // may be called extremely early before IDE started!
     return !autoReportIsForbiddenForProduct && Registry.`is`("ea.auto.report.feature.visible", false)
   }
@@ -169,8 +168,6 @@ object ExceptionAutoReportUtil {
   private fun isDefaultSubmitter(submitter: ITNReporter): Boolean {
     val cls = submitter.javaClass
     return cls == ITNReporter::class.java
-           || cls.name == $$"com.intellij.rustrover.RustRoverMessagePoolAutoReporter$MyITNReporter"
-           && ApplicationManager.getApplication().isEAP
   }
 
   fun isFreeze(throwable: Throwable): Boolean {
@@ -192,7 +189,7 @@ object ExceptionAutoReportUtil {
   }
 
   @TestOnly
-  fun createFreezeLogMessage(): LogMessage = LogMessage(Freeze(emptyList()), null, emptyList())
+  fun createFreezeLogMessage(): LogMessage = LogMessage(Freeze(null, null, emptyList()), null, emptyList())
 }
 
 internal class ReporterIdForEAAutoReporters : AboutPopupDescriptionProvider {
@@ -202,6 +199,10 @@ internal class ReporterIdForEAAutoReporters : AboutPopupDescriptionProvider {
 }
 
 internal class ReporterIdLoggerActivity : ProjectActivity {
+  init {
+      if (application.isHeadlessEnvironment) throw ExtensionNotApplicableException.create()
+  }
+
   override suspend fun execute(project: Project) {
     thisLogger().info(DiagnosticBundle.message("about.dialog.text.ea.reporting.id", ITNProxy.DEVICE_ID))
   }
@@ -209,4 +210,9 @@ internal class ReporterIdLoggerActivity : ProjectActivity {
 
 internal enum class ForcedReportLevel {
   ALL, FREEZES, NONE
+}
+
+@ApiStatus.Internal
+interface ExceptionAutoReportService {
+  fun getResendAttempts(): Int
 }

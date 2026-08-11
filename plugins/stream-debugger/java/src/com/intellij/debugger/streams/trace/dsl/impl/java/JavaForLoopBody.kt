@@ -7,14 +7,12 @@ import com.intellij.debugger.streams.core.trace.dsl.StatementFactory
 import com.intellij.debugger.streams.core.trace.dsl.Variable
 import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
 
+private val BREAK = TextExpression("break")
+
 /**
  * @author Vitaliy.Bibaev
  */
 class JavaForLoopBody(statementFactory: StatementFactory, override val loopVariable: Variable)
   : JavaCodeBlock(statementFactory), ForLoopBody {
-  private companion object {
-    val BREAK = TextExpression("break")
-  }
-
   override fun breakIteration(): Expression = BREAK
 }

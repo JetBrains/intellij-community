@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@ApiStatus.Internal
 public final class SynchronizeCurrentFileAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {

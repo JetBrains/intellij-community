@@ -3,11 +3,11 @@
 // ACTION: Change to 'return@forEach'
 // ACTION: Enable option 'Implicit receivers and parameters' for 'Lambdas' inlay hints
 // ERROR: The integer literal does not conform to the expected type Unit
-// K2_ERROR: 'return' is prohibited here.
-// K2_ERROR: Return type mismatch: expected 'Unit', actual 'Int'.
-// K2_AFTER_ERROR: Return type mismatch: expected 'Unit', actual 'Int'.
-// K2_AFTER_ERROR: Return type mismatch: expected 'Unit', actual 'Int'.
 // WITH_STDLIB
+// K2_AFTER_ERROR: RETURN_TYPE_MISMATCH
+// K2_AFTER_ERROR: RETURN_TYPE_MISMATCH
+// K2_ERROR: RETURN_NOT_ALLOWED
+// K2_ERROR: RETURN_TYPE_MISMATCH
 
 fun foo(f:()->Int){}
 

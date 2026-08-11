@@ -3,8 +3,10 @@ package com.intellij.task.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.task.ModuleResourcesBuildTask;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class ModuleResourcesBuildTaskImpl extends ModuleBuildTaskImpl implements ModuleResourcesBuildTask {
   public ModuleResourcesBuildTaskImpl(@NotNull Module module) {
     super(module, true);

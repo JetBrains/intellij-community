@@ -2,7 +2,6 @@
 
 package com.intellij.psi.impl.cache.impl.id;
 
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -30,6 +29,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Map;
 
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
@@ -139,7 +139,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
           return idsMap;
         }
         catch (Exception e) {
-          if (e instanceof ControlFlowException) throw e;
+          rethrowControlFlowException(e);
           throw new MapReduceIndexMappingException(e, subIndexerType.getClass());
         }
       }

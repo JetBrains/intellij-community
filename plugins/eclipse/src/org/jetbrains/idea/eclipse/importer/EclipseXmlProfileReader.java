@@ -33,6 +33,7 @@ public class EclipseXmlProfileReader extends DefaultHandler implements EclipseXm
     spf.setValidating(false);
     SAXParser parser;
     try {
+      spf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
       parser = spf.newSAXParser();
       parser.parse(input, this);
     }

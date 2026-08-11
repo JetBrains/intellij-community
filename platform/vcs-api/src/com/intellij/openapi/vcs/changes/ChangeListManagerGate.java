@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -21,6 +22,7 @@ public interface ChangeListManagerGate {
    * @return lists with <b>populated</b> {@link LocalChangeList#getChanges()}
    */
   @NotNull
+  @Unmodifiable
   List<LocalChangeList> getListsCopy();
 
   /**

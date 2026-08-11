@@ -7,11 +7,13 @@ import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class DefaultScopesProvider extends CustomScopesProviderEx {
   @SuppressWarnings({"FieldCanBeLocal", "unused"})
   private final Project myProject;

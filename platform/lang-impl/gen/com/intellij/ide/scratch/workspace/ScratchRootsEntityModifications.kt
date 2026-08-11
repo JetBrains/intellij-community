@@ -19,7 +19,7 @@ interface ScratchRootsEntityBuilder : WorkspaceEntityBuilder<ScratchRootsEntity>
 }
 
 internal object ScratchRootsEntityType : EntityType<ScratchRootsEntity, ScratchRootsEntityBuilder>() {
-  override val entityClass: Class<ScratchRootsEntity> get() = ScratchRootsEntity::class.java
+  override val entityImplClass: Class<*> get() = ScratchRootsEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ScratchRootsEntityImpl.Builder::class.java
   operator fun invoke(
     roots: List<VirtualFileUrl>,

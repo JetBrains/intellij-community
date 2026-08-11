@@ -1,6 +1,13 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 ### auto-generated section `build intellij.kotlin.formatter` start
+resourcegroup(
+    name = "formatter_resources",
+    srcs = glob(
+        ["resources-en/**/*"],
+    ),
+    strip_prefix = "resources-en",
+)
 
 jvm_library(
     name = "formatter",
@@ -13,16 +20,17 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.kotlin.formatter",
-    resource_strip_prefix = "resources-en",
+    resource_jars = [":formatter_resources"],
+    resource_strip_prefix = "resources",
     resources = glob(
-        ["resources-en/**/*"],
+        ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
     exports = ["//plugins/kotlin/formatter/minimal"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/code-style-api:codeStyle",
         "//platform/core-api:core",
         "//platform/projectModel-api:projectModel",
@@ -60,6 +68,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":formatter",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",

@@ -29,8 +29,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
 import org.jetbrains.kotlin.idea.configuration.ConfigurationResultBuilder
+import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
@@ -140,9 +140,8 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         }
     }
 
-    @Ignore("KTIJ-38638")
     @Test
-    @TargetVersions("6.0 <=> 7.6.x")
+    @TargetVersions("7.6+")
     fun testProjectWithSubmodule() {
         importProjectFromTestData()
         runInEdtAndWait {
@@ -155,7 +154,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("6.0 <=> 7.6.x")
+    @TargetVersions("7.6+")
     fun testProjectWithSubmoduleKts() {
         importProjectFromTestData()
         runInEdtAndWait {
@@ -265,6 +264,119 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
 
     @Test
     @TargetVersions("7.6+")
+    fun testConfigureAllModulesWithRepositoriesInAllprojectsKts() {
+        // project (Kotlin DSL): allprojects { repositories { mavenCentral() } }
+        // └── app (Kotlin DSL): inherits repositories from project
+        // Both modules are covered by allprojects, so the configurator does not add repositories blocks.
+        doTest("2.3.20", listOf("project", "project.app")) { files ->
+            val subModules = listOf("app")
+            checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureAllModulesWithRepositoriesNestedInAllprojectsKts() {
+        // Repositories nested in buildscript configure plugin resolution, not project dependencies.
+        // Both projects still need a top-level dependency repositories block.
+        doTest("2.3.20", listOf("project", "project.app")) { files ->
+            val subModules = listOf("app")
+            checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureAllModulesWithRepositoriesInSubprojectsKts() {
+        // project (Kotlin DSL): subprojects { repositories { mavenCentral() } }
+        // └── app (Kotlin DSL): inherits repositories from project
+        // The root project is not covered by subprojects, so the configurator adds its own repositories block.
+        doTest("2.3.20", listOf("project", "project.app")) { files ->
+            val subModules = listOf("app")
+            checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureAllModulesWithRepositoriesInAllprojectsGroovy() {
+        // project (Groovy): allprojects { repositories { mavenCentral() } }
+        // └── app (Groovy): inherits repositories from project
+        // Both modules are covered by allprojects, so the configurator does not add repositories blocks.
+        doTest("2.3.20", listOf("project", "project.app")) { files ->
+            val subModules = listOf("app")
+            checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureAllModulesWithRepositoriesInSubprojectsGroovy() {
+        // project (Groovy): subprojects { repositories { mavenCentral() } }
+        // └── app (Groovy): inherits repositories from project
+        // The root project is not covered by subprojects, so the configurator adds its own repositories block.
+        doTest("2.3.20", listOf("project", "project.app")) { files ->
+            val subModules = listOf("app")
+            checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureAllModulesWithRepositoriesInSubprojectsDeepMixed() {
+        // project (Groovy): subprojects { repositories { mavenCentral() } }
+        // └── app (Kotlin DSL, projectDir = modules/app): inherits repositories from project
+        //     └── feature (Groovy, projectDir = components/feature): inherits repositories from project
+        // The Gradle hierarchy is deliberately different from the physical directory hierarchy.
+        // The root project does not inherit from subprojects, so the configurator adds its own repositories block.
+        doTest("2.3.20", listOf("project", "project.app", "project.app.feature")) { files ->
+            val subModules = listOf("modules/app", "components/feature")
+            checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureAllModulesWithRepositoriesInIntermediateSubprojects() {
+        // project (Groovy): no repositories configuration
+        // └── app (Groovy): subprojects { repositories { mavenCentral() } }
+        //     └── feature (Groovy): inherits repositories from app
+        // Only `feature` inherits repositories, and it inherits them from the intermediate `app`, not from the root.
+        // Detecting this requires walking the whole Gradle hierarchy, so `project` and `app` get their own
+        // repositories block while `feature` does not.
+        doTest("2.3.20", listOf("project", "project.app", "project.app.feature")) { files ->
+            val subModules = listOf("app", "app/feature")
+            checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureAllModulesWithRepositoriesInAllprojectsAndIntermediateSubprojects() {
+        // project (Groovy): allprojects { repositories { mavenCentral() } }
+        // └── app (Groovy): inherits repositories from project and also configures them for its subprojects
+        //     └── feature (Groovy): inherits repositories from both project and app
+        // Every project already has an effective repository, so no top-level repositories blocks are added.
+        doTest("2.3.20", listOf("project", "project.app", "project.app.feature")) { files ->
+            val subModules = listOf("app", "app/feature")
+            checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureAllModulesWithRepositoriesNestedInAllprojectsGroovy() {
+        // Repositories nested in buildscript configure buildscript dependencies,
+        // not project dependencies. Both projects still need a top-level
+        // dependency repositories block.
+        doTest("2.3.20", listOf("project", "project.app")) { files ->
+            val subModules = listOf("app")
+            checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
     fun testConfigureRootModuleInJvmProjectGroovy() {
         doTest("2.3.0", listOf("project")) { files ->
             val subModules = listOf("app")
@@ -278,6 +390,204 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         doTest("2.3.0", listOf("project")) { files ->
             val subModules = listOf("app")
             checkFilesInMultimoduleProject(files, subModules)
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyAbsentFailOnProjectRepos() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyAbsentPreferProject() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyAbsentPreferSettings() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyAssignment() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyDefaultModeAbsent() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyDefaultModeMavenCentral() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyDevVersionPreferSettings() {
+        doSettingsRepositoriesTest("1.2.60-dev-286")
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyEmptyFailOnProjectRepos() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyEmptyPreferProject() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyEmptyPreferSettings() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyFullyQualifiedMode() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyImportedMode() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyMavenCentralFailOnProjectRepos() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyMavenCentralPreferProject() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovyMavenCentralPreferSettings() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesGroovySet() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsAbsentFailOnProjectRepos() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsMavenCentralPreferProject() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsMavenCentralPreferSettings() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("8.2+")
+    fun testSettingsRepositoriesKtsAssignment() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsDefaultModeMavenCentral() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsDevVersionPreferSettings() {
+        doSettingsRepositoriesTest("1.2.60-dev-286")
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsDefaultModeAbsent() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsEmptyFailOnProjectRepos() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsAbsentPreferProject() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsAbsentPreferSettings() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsFullyQualifiedMode() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsImportedMode() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsMavenCentralFailOnProjectRepos() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsEmptyPreferProject() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsEmptyPreferSettings() {
+        doSettingsRepositoriesTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testSettingsRepositoriesKtsSet() {
+        doSettingsRepositoriesTest()
+    }
+
+    private fun doSettingsRepositoriesTest(kotlinVersion: String = "2.3.0") {
+        doTest(kotlinVersion, listOf("project")) { files ->
+            checkFiles(files)
         }
     }
 
@@ -464,7 +774,55 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
 
     @Test
     @TargetVersions("7.6.x")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesDifferentVersions() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6.x")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesGStringShortForm() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6.x")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesGStringWithBraces() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6.x")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesGStringWithSpaces() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6.x")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesProvider() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6.x")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesProviderGet() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6.x")
     fun testConfigureKotlinVersionPluginManagementGradlePropertiesKts() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6.x")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesProviderKts() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6.x")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesProviderGetKts() {
         runJvmToolchainTest()
     }
 

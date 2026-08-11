@@ -19,15 +19,14 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.util.FontUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 import java.awt.Dimension;
@@ -43,6 +42,12 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
 
   public SearchEverywhereAction() {
     setEnabledInModalContext(false);
+  }
+
+  @Override
+  @ApiStatus.Internal
+  protected boolean requiresProject() {
+    return false;
   }
 
   @Override
@@ -63,7 +68,9 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
             .installOn(this);
         }
         else {
-          setToolTipText(IdeBundle.message("search.everywhere.action.tooltip.text", shortcutText, classesTabName));
+          setToolTipText(shortcutText == null
+                         ? IdeBundle.message("search.everywhere.action.tooltip.description.text", classesTabName)
+                         : IdeBundle.message("search.everywhere.action.tooltip.text", shortcutText, classesTabName));
         }
       }
     };
@@ -78,10 +85,10 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
                                         : ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE;
   }
 
-  protected static String getShortcut() {
+  protected static @Nullable String getShortcut() {
     Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts();
     if (shortcuts.length == 0) {
-      return "Double" + (SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.SHIFT : " Shift"); //NON-NLS
+      return null;
     }
     return KeymapUtil.getShortcutsText(shortcuts);
   }

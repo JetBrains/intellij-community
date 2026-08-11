@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.gradle.java.coverage` start
-
 jvm_library(
     name = "coverage",
     srcs = glob(
@@ -21,7 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/external-system-impl:externalSystem-impl",
         "//platform/execution",
         "//platform/smRunner",
@@ -45,6 +44,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":coverage",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/external-system-impl:externalSystem-impl_test_lib",
         "//platform/execution:execution_test_lib",
         "//platform/smRunner:smRunner_test_lib",

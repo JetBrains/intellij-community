@@ -1,5 +1,5 @@
 // "Make 'foo' public" "true"
-// K2_ERROR: Public-API inline function cannot access non-public-API function.
+// K2_ERROR: NON_PUBLIC_CALL_FROM_PUBLIC_INLINE
 class C {
     internal fun foo() = true
 

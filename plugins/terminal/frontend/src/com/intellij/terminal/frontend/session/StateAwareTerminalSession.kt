@@ -44,12 +44,15 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalPromptStartedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
 import org.jetbrains.plugins.terminal.session.impl.dto.toDto
 import org.jetbrains.plugins.terminal.session.impl.dto.toTerminalState
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModelImpl
 import org.jetbrains.plugins.terminal.view.impl.updateContent
 import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalBlocksModelImpl
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
@@ -150,6 +153,14 @@ internal class StateAwareTerminalSession(
     get() = delegate.isClosed
 
   override suspend fun hasRunningCommands(): Boolean = delegate.hasRunningCommands()
+
+  override fun processMouseEvent(
+    e: MouseEvent,
+    x: Int,
+    y: Int,
+  ): ByteArray? = delegate.processMouseEvent(e, x, y)
+
+  override fun processKeyEvent(e: KeyEvent): KeyEventProcessingResultDto = delegate.processKeyEvent(e)
 
   companion object {
     private val LOG = logger<StateAwareTerminalSession>()

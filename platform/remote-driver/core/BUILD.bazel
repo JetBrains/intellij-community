@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.driver.impl` start
-
 jvm_library(
     name = "driver-impl",
     srcs = glob(
@@ -22,7 +21,7 @@ jvm_library(
         # do not sort,
         "//libraries/kotlinx/coroutines/core",
         "//platform/remote-driver/model",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/core-api:core",
         "//platform/core-impl",
         "//platform/diagnostic/telemetry",
@@ -48,6 +47,7 @@ jvm_library(
         ":driver-impl",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/remote-driver/model:model_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/diagnostic/telemetry:telemetry_test_lib",

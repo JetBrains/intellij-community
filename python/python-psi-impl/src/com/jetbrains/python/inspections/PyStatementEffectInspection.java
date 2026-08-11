@@ -52,6 +52,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
+
 public final class PyStatementEffectInspection extends PyInspection {
 
   @Override
@@ -130,14 +132,14 @@ public final class PyStatementEffectInspection extends PyInspection {
         if (method != null) {
           // maybe the op is overridden and may produce side effects, like cout << "hello"
           PyType type = myTypeEvalContext.getType(leftExpression);
-          if (type != null &&
+          if (!isUnknown(type) &&
               !type.isBuiltin() &&
               type.resolveMember(method, null, AccessDirection.READ, getResolveContext()) != null) {
             return true;
           }
           if (rightExpression != null) {
             type = myTypeEvalContext.getType(rightExpression);
-            if (type != null) {
+            if (!isUnknown(type)) {
               String rmethod = "__r" + method.substring(2); // __add_ -> __radd__
               if (!type.isBuiltin() && type.resolveMember(rmethod, null, AccessDirection.READ, getResolveContext()) != null) {
                 return true;

@@ -3,9 +3,14 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.arrayElementType
+import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.ConvertToIsArrayOfCallFix
@@ -15,7 +20,8 @@ import org.jetbrains.kotlin.types.Variance
 
 internal object ConvertToIsArrayOfCallFixFactory {
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.createQuickFix(isExpression: KtIsExpression, type: KaType): ConvertToIsArrayOfCallFix? {
+    context(session: KaSession)
+    private fun createQuickFix(isExpression: KtIsExpression, type: KaType): ConvertToIsArrayOfCallFix? {
         if (!isExpression.platform.isJvm()) return null
         val arrayArgumentType = type.arrayElementType ?: return null
         val lhsType = isExpression.leftHandSide.expressionType ?: return null

@@ -4,6 +4,7 @@
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.BundleBase
+import com.intellij.accessibility.LinuxAccessibilitySupport
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.CliResult
@@ -382,6 +383,14 @@ fun startApplication(
 
       ClassicUiToIslandsMigration.migrateSchemeAndUiSettingsIfNeeded()
       applyIslandsTheme(afterImportSettings = false)
+
+      if (OS.CURRENT == OS.Linux && InitialConfigImportState.isFirstSession()) {
+        LinuxAccessibilitySupport.showLinuxAccessibilityDialog()
+        if (LinuxAccessibilitySupport.applyRequestedChanges()) {
+          ApplicationManagerEx.getApplicationEx().restart(true)
+        }
+      }
+
       executeApplicationStarter(starter, args)
     }
     // no need to use a pool once started
@@ -600,6 +609,7 @@ private fun setupLogger(scope: CoroutineScope, consoleLoggerJob: Job, checkSyste
   }
 }
 
+@ApiStatus.Internal
 fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<String>) {
   val buildTimeString = DateTimeFormatter.RFC_1123_DATE_TIME.format(appInfo.buildTime)
   val launchDateTime = ZonedDateTime.now()
@@ -737,6 +747,7 @@ private suspend fun <T> awaitWithCheckCanceled(deferred: CompletableDeferred<T>)
 interface AppStarter {
   fun prepareStart(args: List<String>) {}
 
+  @ApiStatus.Internal
   suspend fun start(context: InitAppContext)
 
   /* called from IDE init thread */
@@ -746,7 +757,6 @@ interface AppStarter {
   fun importFinished(newConfigDir: Path) {}
 }
 
-/** action script file contains commands for plugin (un-)installation/updates; may contain third-party commands */
 private fun runActionScript() {
   try {
     val scriptFile = PathManager.getStartupScriptDir().resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE)

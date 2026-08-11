@@ -232,8 +232,7 @@ class PluginDescriptorTest {
     })
     val descriptor = loadDescriptorInTest(barPath)
     assertThat(descriptor).isNotNull
-      .isMarkedEnabled()
-      .hasExactlyEnabledContentModules("bar/module")
+      .hasExactlyContentModules("bar/module")
   }
 
   @Test
@@ -248,8 +247,7 @@ class PluginDescriptorTest {
     assertThatThrownBy {
       val descriptor = loadDescriptorInTest(barPath)
       assertThat(descriptor).isNotNull
-        .isNotMarkedEnabled()
-        .doesNotHaveEnabledContentModules()
+        .doesNotHaveContentModules()
     }.hasMessageContaining("Cannot resolve bar.module.xml")
   }
 
@@ -265,8 +263,7 @@ class PluginDescriptorTest {
     assertThatThrownBy {
       val descriptor = loadDescriptorInTest(barPath)
       assertThat(descriptor).isNotNull
-        .isNotMarkedEnabled()
-        .doesNotHaveEnabledContentModules()
+        .doesNotHaveContentModules()
     }.hasMessageContaining("Cannot resolve bar/module.sub.xml") // note that only the last slash is substituted
   }
 
@@ -281,8 +278,7 @@ class PluginDescriptorTest {
     })
     val descriptor = loadDescriptorInTest(barPath)
     assertThat(descriptor).isNotNull
-      .isMarkedEnabled()
-      .hasExactlyEnabledContentModules("bar/module/sub")
+      .hasExactlyContentModules("bar/module/sub")
   }
 
   @Test
@@ -303,10 +299,8 @@ class PluginDescriptorTest {
     """.trimIndent())
     val descriptor = loadDescriptorInTest(pluginDirPath)
     assertThat(descriptor).isNotNull
-      .isMarkedEnabled()
-      .hasExactlyEnabledContentModules("foo.module")
+      .hasExactlyContentModules("foo.module")
     assertThat(descriptor.contentModules[0])
-      .isMarkedEnabled()
       .hasExactlyApplicationServices("foo.module.service")
   }
 
@@ -401,7 +395,7 @@ class PluginDescriptorTest {
   }
 
   @Test
-  fun `core plugin has implicit host and product mode plugin aliases`() {
+  fun `core plugin has implicit host and arch plugin aliases`() {
     val path = plugin(PluginManagerCore.CORE_PLUGIN_ID) {}.installAt(pluginDirPath)
     val descriptor = loadDescriptorInTest(path)
     assertThat(descriptor).isNotNull
@@ -409,31 +403,13 @@ class PluginDescriptorTest {
     if (hostIds.isEmpty()) {
       logger<PluginDescriptorTest>().warn("No host OS plugin aliases")
     }
-    val productAliases = productModeAliasesForCorePlugin()
-    if (productAliases.isEmpty()) {
-      logger<PluginDescriptorTest>().warn("No product mode plugin aliases")
+    val archIds = PluginCpuArchRequirement.getHostCpuArchModuleIds()
+    if (archIds.isEmpty()) {
+      logger<PluginDescriptorTest>().warn("No cpu arch plugin aliases")
     }
     assertThat(descriptor.pluginAliases)
       .containsAll(hostIds)
-      .containsAll(productAliases)
-  }
-
-  @Test
-  fun `core plugin has implicit CPU arch mode plugin alias`() {
-    val path = plugin(PluginManagerCore.CORE_PLUGIN_ID) {}.installAt(pluginDirPath)
-    val descriptor = loadDescriptorInTest(path)
-    assertThat(descriptor).isNotNull
-    val hostIds = PluginCpuArchRequirement.getHostCpuArchModuleIds()
-    if (hostIds.isEmpty()) {
-      logger<PluginDescriptorTest>().warn("No host arch plugin aliases")
-    }
-    val productAliases = productModeAliasesForCorePlugin()
-    if (productAliases.isEmpty()) {
-      logger<PluginDescriptorTest>().warn("No product mode plugin aliases")
-    }
-    assertThat(descriptor.pluginAliases)
-      .containsAll(hostIds)
-      .containsAll(productAliases)
+      .containsAll(archIds)
   }
 
   @Test
@@ -453,12 +429,10 @@ class PluginDescriptorTest {
     val (bar, err) = runAndReturnWithLoggedError { loadDescriptorInTest(pluginPath) }
     assertThat(err).hasMessageContainingAll("bar.module", "plugin 'bar'", "element 'content'")
     assertThat(bar).isNotNull
-      .isMarkedEnabled()
-      .hasExactlyEnabledContentModules("bar.module")
+      .hasExactlyContentModules("bar.module")
     val barModule = bar.contentModules[0]
     assertThat(barModule).isNotNull
-      .isMarkedEnabled()
-      .doesNotHaveEnabledContentModules()
+      .doesNotHaveContentModules()
     assertThat(barModule.contentModules).hasSize(0)
   }
 
@@ -478,7 +452,7 @@ class PluginDescriptorTest {
       }
     }.installAt(pluginDirPath)
     val foo = loadDescriptorInTest(pluginPath)
-    assertThat(foo).hasExactlyEnabledContentModules("foo.internal", "foo.private", "foo.public")
+    assertThat(foo).hasExactlyContentModules("foo.internal", "foo.private", "foo.public")
     val contentModules = foo.contentModules.sortedBy { it.moduleId.name }
     assertThat(contentModules[0].visibility).isEqualTo(ModuleVisibility.INTERNAL)
     assertThat(contentModules[1].visibility).isEqualTo(ModuleVisibility.PRIVATE)
@@ -497,7 +471,7 @@ class PluginDescriptorTest {
       }
     }.installAt(pluginDirPath)
     val plugin = loadDescriptorInTest(pluginPath)
-    assertThat(plugin).hasExactlyEnabledContentModules("module1", "module2")
+    assertThat(plugin).hasExactlyContentModules("module1", "module2")
     assertThat(plugin.contentModules[0].moduleId).isEqualTo(PluginModuleId("module1", "my_namespace_1"))
     assertThat(plugin.contentModules[1].moduleId).isEqualTo(PluginModuleId("module2", "my_namespace_2"))
   }
@@ -556,7 +530,7 @@ class PluginDescriptorTest {
   fun `unexpected visibility value for content module`() {
     val (plugin, errors) = runAndReturnWithLoggedErrors { loadDescriptorFromTestDataDir("unexpectedVisibility") as PluginMainDescriptor }
     assertThat(errors.joinToString { it.message ?: "" }).contains("Unexpected", "visibility", "foo")
-    assertThat(plugin).hasExactlyEnabledContentModules("my.module")
+    assertThat(plugin).hasExactlyContentModules("my.module")
     assertThat(plugin.contentModules[0].visibility).isEqualTo(ModuleVisibility.PRIVATE)
   }
 

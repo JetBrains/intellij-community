@@ -16,14 +16,7 @@ class PostProcessor(metaclass=PostProcessorMetaClass):
     @classmethod
     def pp_key(cls) -> str: ...
     def to_screen(
-        self,
-        text: str,
-        prefix: bool = True,
-        *,
-        message: str,
-        skip_eol: bool = False,
-        quiet: bool | None = None,
-        only_once: bool = False,
+        self, text: str, prefix: bool = True, *, skip_eol: bool = False, quiet: bool | None = None, only_once: bool = False
     ) -> None: ...
     def report_warning(self, text: str, only_once: bool = False) -> None: ...
     def deprecation_warning(self, msg: str) -> None: ...

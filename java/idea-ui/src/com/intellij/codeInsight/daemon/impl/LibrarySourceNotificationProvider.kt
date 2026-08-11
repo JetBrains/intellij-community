@@ -20,7 +20,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.impl.source.PsiExtensibleClass
 import com.intellij.psi.util.PsiFormatUtil.SHOW_EXTENDS_IMPLEMENTS
 import com.intellij.psi.util.PsiFormatUtil.SHOW_FQ_CLASS_NAMES
 import com.intellij.psi.util.PsiFormatUtil.SHOW_NAME
@@ -96,10 +95,10 @@ internal class LibrarySourceNotificationProvider : EditorNotificationProvider {
     srcMembers.size != clsMembers.size || srcMembers.map(format).sorted() != clsMembers.map(format).sorted()
 
   private fun fields(c: PsiClass): List<PsiField> =
-    if (c is PsiExtensibleClass) c.ownFields else c.fields.asList()
+    c.fields.asList()
 
   private fun methods(c: PsiClass): List<PsiMethod> =
-    (if (c is PsiExtensibleClass) c.ownMethods else c.methods.asList()).filterNot(::ignoreMethod)
+    c.methods.asList().filterNot(::ignoreMethod)
 
   private fun ignoreMethod(m: PsiMethod): Boolean =
     if (m.isConstructor) {
@@ -110,7 +109,7 @@ internal class LibrarySourceNotificationProvider : EditorNotificationProvider {
     }
 
   private fun inners(c: PsiClass): List<PsiClass> =
-    if (c is PsiExtensibleClass) c.ownInnerClasses else c.innerClasses.asList()
+    c.innerClasses.asList()
 
   private fun format(f: PsiField) = formatVariable(f, FIELD, PsiSubstitutor.EMPTY)
   private fun format(m: PsiMethod) = formatMethod(m, PsiSubstitutor.EMPTY, METHOD, PARAMETER)

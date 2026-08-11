@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.comment
 
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.computationStateFlow
+import com.intellij.collaboration.async.flatMapLatestEach
 import com.intellij.collaboration.async.mapDataToModel
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.stateInNow
@@ -20,6 +21,7 @@ import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.findCumulativeChange
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -75,6 +77,9 @@ internal class GHPRThreadsViewModelsImpl(
   private val cs = parentCs.childScope(javaClass.name)
   override val canComment: Boolean = dataProvider.reviewData.canComment()
 
+  private val _newComments = MutableStateFlow<List<GHPRReviewNewCommentEditorViewModelImpl>>(emptyList())
+  override val newComments: StateFlow<Collection<GHPRReviewNewCommentEditorViewModel>> = _newComments.asStateFlow()
+
   private val changesFetchFlow = with(dataProvider.changesData) {
     computationStateFlow(changesNeedReloadSignal.withInitial(Unit)) {
       loadChanges().also {
@@ -83,13 +88,18 @@ internal class GHPRThreadsViewModelsImpl(
     }
   }.shareIn(cs, SharingStarted.Lazily, 1)
 
+  private val newCommentsWithPositions: Flow<Array<NewCommentAndPosition>> =
+    newComments.flatMapLatestEach { comment ->
+      comment.position.map { position -> NewCommentAndPosition(comment, position) }
+    }
+
   private val threadOrder: StateFlow<ComputedResult<TreeSet<ThreadIdAndPosition>>?> =
-    combine(changesFetchFlow, dataProvider.reviewData.threadsComputationFlow) { allChangesResult, allThreadsResult ->
+    combine(changesFetchFlow, dataProvider.reviewData.threadsComputationFlow, newCommentsWithPositions) { allChangesResult, allThreadsResult, newComments ->
       val allChanges = allChangesResult.getOrNull() ?: return@combine ComputedResult.loading()
       val allThreads = allThreadsResult.getOrNull() ?: return@combine ComputedResult.loading()
 
       ComputedResult.compute {
-        createSortedThreadPositionsAndIds(allChanges, allThreads)
+        createSortedThreadPositionsAndIds(allChanges, allThreads, newComments)
       }
     }.stateInNow(cs, ComputedResult.loading())
 
@@ -144,9 +154,6 @@ internal class GHPRThreadsViewModelsImpl(
           }
         }
       }.map { it.getOrNull().orEmpty() }.stateInNow(cs, emptyMap())
-
-  private val _newComments = MutableStateFlow<List<GHPRReviewNewCommentEditorViewModelImpl>>(emptyList())
-  override val newComments: StateFlow<Collection<GHPRReviewNewCommentEditorViewModel>> = _newComments.asStateFlow()
 
   override fun requestNewComment(position: GHPRReviewCommentPosition): GHPRReviewNewCommentEditorViewModel {
     val updated = _newComments.updateAndGet { list ->
@@ -255,6 +262,7 @@ internal class GHPRThreadsViewModelsImpl(
     private fun createSortedThreadPositionsAndIds(
       allChanges: GitBranchComparisonResult,
       allThreads: List<GHPullRequestReviewThread>,
+      newComments: Array<NewCommentAndPosition>,
     ): TreeSet<ThreadIdAndPosition> {
       val changeIndices = allChanges.changes.mapIndexed { idx, change -> change to idx }.toMap()
 
@@ -273,10 +281,28 @@ internal class GHPRThreadsViewModelsImpl(
           ))
       }
 
+      val newCommentLocations = newComments.map { (comment, position) ->
+        val location = position.location
+        val (leftLine, rightLine) = if (location.side == Side.LEFT) location.lineIdx to -1 else -1 to location.lineIdx
+
+        ThreadIdAndPosition(
+          comment.trackingId,
+          comment.createdAt,
+          UnifiedCodeReviewItemPosition(
+            position.change,
+            leftLine,
+            rightLine
+          )
+        )
+      }
+
       val comparator = positionComparator(changeIndices::get)
       return TreeSet(Comparator<ThreadIdAndPosition> { left, right -> comparator.compare(left.positionInDiff, right.positionInDiff) }
                        .thenComparing { left, right -> left.createdAt.compareTo(right.createdAt) })
-        .apply { addAll(locations) }
+        .apply {
+          addAll(locations)
+          addAll(newCommentLocations)
+        }
     }
   }
 }
@@ -285,4 +311,9 @@ private data class ThreadIdAndPosition(
   val id: String?,
   val createdAt: Date,
   val positionInDiff: UnifiedCodeReviewItemPosition,
+)
+
+private data class NewCommentAndPosition(
+  val comment: GHPRReviewNewCommentEditorViewModel,
+  val position: GHPRReviewCommentPosition,
 )

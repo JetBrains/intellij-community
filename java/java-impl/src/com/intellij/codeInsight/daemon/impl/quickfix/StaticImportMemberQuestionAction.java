@@ -30,6 +30,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,25 +42,28 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.List;
 
-class StaticImportMemberQuestionAction<T extends PsiMember> implements QuestionAction {
+abstract class StaticImportMemberQuestionAction<T extends PsiMember> implements QuestionAction {
   private static final Logger LOG = Logger.getInstance(StaticImportMemberQuestionAction.class);
   private final Project myProject;
   private final Editor myEditor;
   private final List<? extends T> myCandidates;
   private final SmartPsiElementPointer<? extends PsiElement> myRef;
+  private final @NotNull @Nls String myMessage;
 
   StaticImportMemberQuestionAction(@NotNull Project project,
                                    Editor editor,
                                    @NotNull List<? extends T> candidates,
-                                   @NotNull SmartPsiElementPointer<? extends PsiElement> ref) {
+                                   @NotNull SmartPsiElementPointer<? extends PsiElement> ref,
+                                   @NotNull @Nls String selectorTitle) {
     myProject = project;
     myEditor = editor;
     myCandidates = candidates;
     myRef = ref;
+    myMessage = selectorTitle;
   }
 
   protected @NotNull @NlsContexts.PopupTitle String getPopupTitle() {
-    return QuickFixBundle.message("method.to.import.chooser.title");
+    return myMessage;
   }
 
   @Override
@@ -78,7 +82,7 @@ class StaticImportMemberQuestionAction<T extends PsiMember> implements QuestionA
     }
 
     if (myCandidates.size() == 1){
-      doImport(myCandidates.get(0));
+      doImport(myCandidates.getFirst());
     }
     else{
       chooseAndImport(myEditor, myProject);
@@ -86,18 +90,11 @@ class StaticImportMemberQuestionAction<T extends PsiMember> implements QuestionA
     return true;
   }
 
-  protected void doImport(@NotNull T toImport) {
-    Project project = toImport.getProject();
-    PsiElement element = myRef.getElement();
-    if (element == null) return;
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
-    WriteCommandAction.runWriteCommandAction(project, QuickFixBundle.message("add.import"), null, () ->
-      AddSingleMemberStaticImportAction.bindAllClassRefs(element.getContainingFile(), toImport, toImport.getName(), toImport.getContainingClass()));
-  }
+  abstract protected void doImport(@NotNull T toImport);
 
   private void chooseAndImport(@NotNull Editor editor, @NotNull Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      doImport(myCandidates.get(0));
+      doImport(myCandidates.getFirst());
       return;
     }
     BaseListPopupStep<T> step =

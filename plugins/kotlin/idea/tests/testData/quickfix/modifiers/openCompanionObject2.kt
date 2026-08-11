@@ -1,5 +1,5 @@
 // "Make 'Foo' not open" "true"
-// K2_ERROR: Modifier 'open' is not applicable to 'companion object'.
+// K2_ERROR: WRONG_MODIFIER_TARGET
 class A {
     <caret>open companion object Foo {
         fun a(): Int = 1

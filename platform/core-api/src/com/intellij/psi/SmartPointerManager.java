@@ -3,6 +3,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,11 +14,11 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.NonExtendable
 public abstract class SmartPointerManager {
-  public abstract @NotNull SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile psiFile, @NotNull TextRange range);
-
   public static SmartPointerManager getInstance(Project project) {
     return project.getService(SmartPointerManager.class);
   }
+
+  public abstract @NotNull SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile psiFile, @NotNull TextRange range);
 
   /**
    * Creates a smart pointer to the specified PSI element
@@ -28,6 +29,7 @@ public abstract class SmartPointerManager {
    * @return a pointer to the specified element which can survive PSI reparse
    * @see #createSmartPsiElementPointer(PsiElement)
    */
+  @RequiresReadLock
   public static @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createPointer(@NotNull E element) {
     return getInstance(element.getProject()).createSmartPsiElementPointer(element);
   }
@@ -39,6 +41,7 @@ public abstract class SmartPointerManager {
    * @param element the element to create a pointer to.
    * @return the smart pointer instance.
    */
+  @RequiresReadLock
   public abstract @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element);
 
   /**
@@ -48,6 +51,7 @@ public abstract class SmartPointerManager {
    * @param containingFile the result of {@code element.getContainingFile()}.
    * @return the smart pointer instance.
    */
+  @RequiresReadLock
   public abstract @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element,
                                                                                                          @Nullable PsiFile containingFile);
 
@@ -67,6 +71,7 @@ public abstract class SmartPointerManager {
 
   /**
    * This method is cheaper than dereferencing both pointers and comparing the result.
+   * Does not require ReadLock. Can acquire ReadLock by itself.
    *
    * @param pointer1 smart pointer to compare
    * @param pointer2 smart pointer to compare

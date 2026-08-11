@@ -3,10 +3,7 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.AdjustableUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.ImmutableActionChangeRange;
-import com.intellij.openapi.command.undo.MutableActionChangeRange;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.editor.Document;
@@ -26,20 +23,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-
 
 abstract class UndoRedo {
   private final @Nullable Project project;
   private final @Nullable FileEditor editor;
   private final @NotNull UndoRedoStacksHolder stacksHolder;
   private final @NotNull UndoRedoStacksHolder stacksHolderReversed;
-  private final @NotNull SharedUndoRedoStacksHolder sharedStacksHolder;
-  private final @NotNull SharedUndoRedoStacksHolder sharedStacksHolderReversed;
   private final @NotNull UndoProblemReport undoProblemReport;
   protected final @NotNull UndoableGroup undoableGroup;
   private final UndoCapabilities undoCapabilities;
@@ -50,8 +42,6 @@ abstract class UndoRedo {
     @Nullable FileEditor editor,
     @NotNull UndoRedoStacksHolder stacksHolder,
     @NotNull UndoRedoStacksHolder stacksHolderReversed,
-    @NotNull SharedUndoRedoStacksHolder sharedStacksHolder,
-    @NotNull SharedUndoRedoStacksHolder sharedStacksHolderReversed,
     @NotNull UndoCapabilities undoCapabilities,
     boolean isRedo
   ) {
@@ -59,8 +49,6 @@ abstract class UndoRedo {
     this.editor = editor;
     this.stacksHolder = stacksHolder;
     this.stacksHolderReversed = stacksHolderReversed;
-    this.sharedStacksHolder = sharedStacksHolder;
-    this.sharedStacksHolderReversed = sharedStacksHolderReversed;
     this.undoCapabilities = undoCapabilities;
     this.isRedo = isRedo;
     this.undoProblemReport = new UndoProblemReport(project, isRedo);
@@ -111,26 +99,13 @@ abstract class UndoRedo {
       return false;
     }
 
-    Map<DocumentReference, Map<Integer, MutableActionChangeRange>> reference2Ranges = decompose(undoableGroup, isRedo);
-    boolean shouldMove = false;
-    for (Map.Entry<DocumentReference, Map<Integer, MutableActionChangeRange>> entry : reference2Ranges.entrySet()) {
-      MovementAvailability availability = sharedStacksHolder.canMoveToStackTop(entry.getKey(), entry.getValue());
-      if (availability == MovementAvailability.CANNOT_MOVE) {
-        undoProblemReport.reportCannotAdjust(Collections.singleton(entry.getKey()));
-        return false;
-      }
-      if (availability == MovementAvailability.CAN_MOVE) {
-        shouldMove = true;
-      }
-    }
-
     if (!(disableConfirmation || !undoCapabilities.isConfirmationSupported()) && undoableGroup.shouldAskConfirmation(isRedo) && !isNeverAskUser()) {
       if (!askUser()) {
         return false;
       }
     }
     else {
-      if (!shouldMove && editor != null) {
+      if (editor != null) {
         EditorAndState stateToRestore = getBeforeState();
         FileEditorState restoredState = restore(stateToRestore, true);
         if (restoredState != null) {
@@ -161,35 +136,9 @@ abstract class UndoRedo {
       return false;
     }
 
-    if (shouldMove) {
-      for (Map.Entry<DocumentReference, Map<Integer, MutableActionChangeRange>> entry : reference2Ranges.entrySet()) {
-        var affected = sharedStacksHolder.moveToStackTop(entry.getKey(), entry.getValue());
-        if (affected != null) {
-          for (ImmutableActionChangeRange range : affected) {
-            MutableActionChangeRange mutableRange = entry.getValue().get(range.getId());
-            if (mutableRange != null) {
-              mutableRange.setState(range);
-            }
-          }
-        }
-      }
-    }
-
     stacksHolder.removeFromStacks(undoableGroup);
     if (!drop) {
       stacksHolderReversed.addToStacks(undoableGroup);
-    }
-
-    for (Map.Entry<DocumentReference, Map<Integer, MutableActionChangeRange>> entry : reference2Ranges.entrySet()) {
-      DocumentReference reference = entry.getKey();
-      int rangeCount = entry.getValue().size();
-      // All related ranges must be on the shared stack's top at this moment
-      // so just pick them one by one and move to reverse stack
-      for (int i = 0; i < rangeCount; i++) {
-        ImmutableActionChangeRange changeRange = sharedStacksHolder.removeLastFromStack(reference);
-        ImmutableActionChangeRange inverted = changeRange.asInverted().toImmutable(drop);
-        sharedStacksHolderReversed.addToStack(reference, inverted);
-      }
     }
 
     try {
@@ -199,9 +148,7 @@ abstract class UndoRedo {
       return false;
     }
 
-    if (!shouldMove) {
-      restore(getAfterState(), false);
-    }
+    restore(getAfterState(), false);
 
     return true;
   }
@@ -318,7 +265,8 @@ abstract class UndoRedo {
     if (!undoCapabilities.isConfirmationSupported()) {
       return true;
     }
-    String message = IdeBundle.message("undo.conflicting.change.confirmation") + "\n" + getActionName(other.undoableGroup.getCommandName()) + "?";
+    String message = IdeBundle.message("undo.conflicting.change.confirmation") + "\n" +
+                     getActionName(other.undoableGroup.getCommandName()) + "?";
     return showDialog(message);
   }
 
@@ -363,30 +311,6 @@ abstract class UndoRedo {
   @Override
   public String toString() {
     return (isRedo ? "Redo" : "Undo") + "{" + undoableGroup + "}";
-  }
-
-  private @NotNull Map<DocumentReference, Map<Integer, MutableActionChangeRange>> decompose(@NotNull UndoableGroup group, boolean isRedo) {
-    if (!undoCapabilities.isPerClientSupported()) {
-      return Collections.emptyMap();
-    }
-    Map<DocumentReference, Map<Integer, MutableActionChangeRange>> reference2Ranges = new HashMap<>();
-    for (UndoableAction action : group.getActions()) {
-      if (!(action instanceof AdjustableUndoableAction adjustable)) {
-        continue;
-      }
-      DocumentReference[] affected = adjustable.getAffectedDocuments();
-      if (affected == null) {
-        continue;
-      }
-      for (DocumentReference reference : affected) {
-        Map<Integer, MutableActionChangeRange> savedChangeRanges = reference2Ranges.computeIfAbsent(reference, r -> new HashMap<>());
-        for (MutableActionChangeRange changeRange : adjustable.getChangeRanges(reference)) {
-          MutableActionChangeRange range = isRedo ? changeRange.asInverted() : changeRange;
-          savedChangeRanges.put(range.getId(), range);
-        }
-      }
-    }
-    return reference2Ranges;
   }
 
   /**

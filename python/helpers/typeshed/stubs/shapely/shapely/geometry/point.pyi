@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import TypeAlias, overload
+from typing import Literal, TypeAlias, overload
 from typing_extensions import Self
 
 from .._typing import ArrayLikeSeq
@@ -32,6 +32,8 @@ class Point(BaseGeometry):
     def m(self) -> float: ...
     def svg(self, scale_factor: float = 1.0, fill_color: str | None = None, opacity: float | None = None) -> str: ...  # type: ignore[override]
     # more precise base overrides
+    @property
+    def geom_type(self) -> Literal["Point"]: ...
     @property
     def boundary(self) -> GeometryCollection: ...  # empty geometry collection
     @property

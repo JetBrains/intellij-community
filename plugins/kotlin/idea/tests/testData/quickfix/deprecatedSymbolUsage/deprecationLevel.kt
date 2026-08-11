@@ -1,5 +1,5 @@
 // "Replace with 'b()'" "true"
-// K2_ERROR: 'fun a(): Unit' is deprecated. b!.
+// K2_ERROR: DEPRECATION_ERROR
 @Deprecated("b!", ReplaceWith("b()"), DeprecationLevel.ERROR)
 fun a() {}
 

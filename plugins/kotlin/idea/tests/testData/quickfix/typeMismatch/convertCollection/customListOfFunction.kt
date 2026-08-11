@@ -1,6 +1,6 @@
 // "Replace 'listOf(1)' with 'mutableListOf(1)'" "false"
-// K2_ERROR: Return type mismatch: expected 'MutableList<Int>', actual 'List<Int>'.
-// K2_AFTER_ERROR: Return type mismatch: expected 'MutableList<Int>', actual 'List<Int>'.
+// K2_AFTER_ERROR: RETURN_TYPE_MISMATCH
+// K2_ERROR: RETURN_TYPE_MISMATCH
 
 fun <T> listOf(vararg elements: T): List<T> = emptyList()
 

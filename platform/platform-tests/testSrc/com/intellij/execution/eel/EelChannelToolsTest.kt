@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(EelSendApi::class)
 
 package com.intellij.execution.eel
@@ -6,7 +6,10 @@ package com.intellij.execution.eel
 import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.ReadResult.EOF
 import com.intellij.platform.eel.ReadResult.NOT_EOF
+import com.intellij.platform.eel.ThrowsChecked
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelReceiveChannelException
 import com.intellij.platform.eel.channels.EelSendApi
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.channels.sendWholeBuffer
@@ -54,6 +57,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Nested
@@ -229,6 +233,9 @@ class EelChannelToolsTest {
         return NOT_EOF
       }
 
+      @Throws(EelReceiveChannelException::class)
+      @ThrowsChecked(EelReceiveChannelException::class)
+      @EelDelicateApi
       override fun available(): Int {
         TODO("Not yet implemented")
       }
@@ -288,7 +295,9 @@ class EelChannelToolsTest {
         byteCounter -= 1
         return NOT_EOF
       }
-
+      @Throws(EelReceiveChannelException::class)
+      @ThrowsChecked(EelReceiveChannelException::class)
+      @EelDelicateApi
       override fun available(): Int {
         TODO("Not yet implemented")
       }
@@ -355,6 +364,7 @@ class EelChannelToolsTest {
     awaitForCondition {
       Assertions.assertEquals(bytesCount, input.available(), "Wrong number of bytes available")
     }
+    @OptIn(EelDelicateApi::class)
     pipe.closePipe(null)
     awaitForCondition {
       Assertions.assertEquals(0, input.available(), "Closed channel available must be 0 bytes")
@@ -548,7 +558,7 @@ class EelChannelToolsTest {
       val pipe = EelOutputChannel(false)
       pipe.exposedSource.closeForReceive()
       try {
-        pipe.sendWholeBuffer(ByteBuffer.wrap("D".toByteArray()))
+        pipe.sendWholeBuffer(wrap("D".toByteArray()))
         fail("Writing into closed channel must be an error")
       }
       catch (e: EelChannelClosedException) {
@@ -565,7 +575,7 @@ class EelChannelToolsTest {
 
       pipe.ensureClosed(error)
       try {
-        pipe.sendWholeBuffer(ByteBuffer.wrap("D".toByteArray()))
+        pipe.sendWholeBuffer(wrap("D".toByteArray()))
         fail("Writing into broken pipe must be an error")
       }
       catch (e: EelChannelClosedException) {
@@ -588,7 +598,7 @@ class EelChannelToolsTest {
     val pipe = EelPipe(prefersDirectBuffers = false)
     pipe.source.closeForReceive()
     try {
-      pipe.sink.send(ByteBuffer.wrap("D".toByteArray()))
+      pipe.sink.send(wrap("D".toByteArray()))
       fail("Writing into closed channel must be an error")
     }
     catch (e: IOException) {
@@ -603,9 +613,10 @@ class EelChannelToolsTest {
     val error = Exception("some error")
     val expectedMessageError = "Pipe was broken with message: ${error.message}"
 
+    @OptIn(EelDelicateApi::class)
     pipe.closePipe(error)
     try {
-      pipe.sink.send(ByteBuffer.wrap("D".toByteArray()))
+      pipe.sink.send(wrap("D".toByteArray()))
       fail("Writing into broken pipe must be an error")
     }
     catch (e: IOException) {
@@ -698,7 +709,81 @@ class EelChannelToolsTest {
     eelChannel.lines().collect { line ->
       result.add(line.trim())
     }
-    Assertions.assertArrayEquals(lines.toTypedArray(), result.toTypedArray(), "Wrong lines collected")
+    assertArrayEquals(lines.toTypedArray(), result.toTypedArray(), "Wrong lines collected")
+  }
+
+  /**
+   * The terminator is not part of the line, and a stream ending on one has no last line to report.
+   */
+  @CartesianTest
+  fun testLinesFraming(@IntRangeSource(from = 1, to = 4) blockSize: Int): Unit = timeoutRunBlocking {
+    suspend fun collect(text: String): List<String> {
+      val channel = ByteArrayInputStreamLimited(text.encodeToByteArray(), blockSize).consumeAsEelChannel()
+      val result = mutableListOf<String>()
+      channel.lines(Charsets.UTF_8).collect(result::add)
+      return result
+    }
+
+    assertEquals(listOf("one", "two"), collect("one\ntwo\n"), "Terminated stream")
+    assertEquals(listOf("one", "two"), collect("one\ntwo"), "Unterminated last line")
+    assertEquals(listOf("a", "", "b"), collect("a\n\nb\n"), "Empty line in the middle")
+    assertEquals(listOf<String>(), collect(""), "Empty stream")
+    assertEquals(listOf(""), collect("\n"), "Nothing but a terminator")
+    assertEquals(listOf("a", "b"), collect("a\r\nb\r\n"), "CRLF, possibly split between reads")
+    assertEquals(listOf("50%\r100%"), collect("50%\r100%\n"), "A lone CR does not end a line")
+    assertEquals(listOf("a\r"), collect("a\r"), "A CR is only dropped as the first half of a CRLF")
+  }
+
+  /**
+   * Guards against reading byte by byte, which makes the read cost scale with the payload size.
+   */
+  @Test
+  fun testLinesReadInChunks(): Unit = timeoutRunBlocking {
+    val bytes = ("a".repeat(512 * 1024) + "\n").encodeToByteArray()
+    val stream = ByteArrayInputStreamLimited(bytes, bytes.size)
+    stream.consumeAsEelChannel().lines(Charsets.UTF_8).collect { }
+    assertTrue(stream.reads.get() < bytes.size / 1024, "One line of ${bytes.size} bytes took ${stream.reads} reads")
+  }
+
+  /**
+   * The buffer size bounds what a single read takes from the channel, not the length of a line.
+   */
+  @Test
+  fun testLinesBufferSize(): Unit = timeoutRunBlocking {
+    val line = "a".repeat(4096)
+    val bytes = "$line\n".encodeToByteArray()
+    val stream = ByteArrayInputStreamLimited(bytes, bytes.size)
+    val result = mutableListOf<String>()
+    stream.consumeAsEelChannel().lines(Charsets.UTF_8, 64).collect(result::add)
+    assertEquals(listOf(line), result, "Wrong lines collected")
+    assertTrue(stream.reads.get() >= bytes.size / 64, "${bytes.size} bytes in 64-byte reads took ${stream.reads} reads")
+  }
+
+  @Nested
+  inner class ReversibleAdapters {
+    @Test
+    fun `InputStream to EelReceiveChannel to InputStream`() {
+      val source = mockk<InputStream>()
+      assertSame(source, source.consumeAsEelChannel().consumeAsInputStream())
+    }
+
+    @Test
+    fun `OutputStream to EelSendChannel to OutputStream`() {
+      val sink = mockk<OutputStream>()
+      assertSame(sink, sink.asEelChannel().asOutputStream())
+    }
+
+    @Test
+    fun `EelReceiveChannel to InputStream to EelReceiveChannel`() {
+      val source = mockk<EelReceiveChannel>()
+      assertSame(source, source.consumeAsInputStream().consumeAsEelChannel())
+    }
+
+    @Test
+    fun `EelSendChannel to OutputStream to EelSendChannel`() {
+      val sink = mockk<EelSendChannel>()
+      assertSame(sink, sink.asOutputStream().asEelChannel())
+    }
   }
 }
 
@@ -733,8 +818,13 @@ private class ByteArrayChannelLimited(private val blockSize: Int) : WritableByte
  */
 private class ByteArrayInputStreamLimited(data: ByteArray, private val blockSize: Int) : InputStream() {
   private val iterator = data.iterator()
+
+  /** One read per `receive`, so this also counts the reads of the channel above the stream. */
+  val reads: AtomicInteger = AtomicInteger()
+
   override fun read(): Int = if (iterator.hasNext()) iterator.next().toInt() else -1
   override fun read(b: ByteArray, off: Int, len: Int): Int {
+    reads.incrementAndGet()
     if (!iterator.hasNext()) return -1
     val bytesToWrite = min(len, blockSize)
     var i = 0

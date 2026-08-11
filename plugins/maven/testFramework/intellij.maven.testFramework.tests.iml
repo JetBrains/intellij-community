@@ -39,7 +39,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.repository.search" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.usageView" scope="TEST" />
@@ -61,6 +60,7 @@
     <orderEntry type="module" module-name="intellij.java.testFramework.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.repository.search.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.maven.testFramework" />
 </module>

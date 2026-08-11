@@ -37,4 +37,8 @@ object ClientIdContextElementPrecursor : CopyableThreadContextElement<Unit>, Cor
 
   override val key: CoroutineContext.Key<*>
     get() = this
+
+  override fun toString(): String {
+    return "ClientIdPrecursor"
+  }
 }

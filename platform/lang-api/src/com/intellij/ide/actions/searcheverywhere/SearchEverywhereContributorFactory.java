@@ -8,7 +8,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Factory for creating {@link SearchEverywhereContributor} entities.
  * @param <Item> type of elements returned by {@link SearchEverywhereContributor}
+ * @deprecated The old Search Everywhere API is being sunset.
+ * Implement {@link com.intellij.platform.searchEverywhere.SeItemsProviderFactory} instead.
  */
+@Deprecated
 public interface SearchEverywhereContributorFactory<Item> {
 
   /**

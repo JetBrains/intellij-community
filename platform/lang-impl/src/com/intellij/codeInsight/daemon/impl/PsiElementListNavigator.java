@@ -26,6 +26,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,6 +139,7 @@ public final class PsiElementListNavigator {
   }
 
   // Helper makes it easier to customize shown popup.
+  @ApiStatus.Internal
   public static class NavigateOrPopupHelper<T extends NavigatablePsiElement> {
 
     private final T @NotNull [] myTargets;

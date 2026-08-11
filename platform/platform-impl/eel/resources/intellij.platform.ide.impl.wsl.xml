@@ -1,7 +1,10 @@
-<idea-plugin visibility="internal">
+<idea-plugin visibility="public">
+  <module value="com.intellij.platform.ide.impl.wsl"/>
+
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.pty4j"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.eel.nioFs.impl"/>
@@ -11,6 +14,7 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
 

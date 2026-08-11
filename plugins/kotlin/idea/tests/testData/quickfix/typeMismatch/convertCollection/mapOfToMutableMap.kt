@@ -1,5 +1,5 @@
 // "Replace 'mapOf(…)' with 'mutableMapOf(…)'" "true"
-// K2_ERROR: Return type mismatch: expected 'MutableMap<String, Int>', actual 'Map<String, Int>'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 
 fun baz(): MutableMap<String, Int> {
     return mapOf<caret>("key" to 1)

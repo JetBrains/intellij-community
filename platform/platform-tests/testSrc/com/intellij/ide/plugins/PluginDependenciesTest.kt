@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
@@ -22,6 +23,7 @@ import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.FileVisitResult
 
@@ -93,8 +95,8 @@ internal class PluginDependenciesTest {
     val bar = pluginSet.findEnabledPlugin(PluginId.getId("bar")) as PluginMainDescriptor
     val fooDescriptor = bar.dependencies.first { it.pluginId == PluginId.getId("foo") }.subDescriptor!!
     val bazDescriptor = bar.dependencies.first { it.pluginId == PluginId.getId("baz") }.subDescriptor!!
-    assertThat(fooDescriptor.isMarkedForLoading).isTrue
-    assertThat(bazDescriptor.isMarkedForLoading).isFalse
+    assertThat(fooDescriptor.isLoaded).isTrue
+    assertThat(bazDescriptor.isLoaded).isFalse
   }
 
   @Test
@@ -857,6 +859,49 @@ internal class PluginDependenciesTest {
   @Nested
   inner class ImplicitDependencyAdditionTests {
     @Test
+    @Timeout(10)
+    fun `soft compatibility dependency on self is ignored`() {
+      plugin("foo") {}.installAt(pluginDirPath)
+      val pluginSet = PluginSetTestBuilder.fromPath(pluginDirPath)
+        .withCompatibilityDependenciesForRemainingCandidatesProvider { descriptor, remainingCandidates ->
+          check(remainingCandidates.resolvePluginId(descriptor.pluginId) === descriptor)
+          sequenceOf(DependencyRef.of(descriptor.pluginId))
+        }
+        .build()
+
+      val foo = pluginSet.getEnabledPlugin("foo")
+      assertThat(pluginSet.resolvedPluginSet.getDirectResolvedDependencies(foo)).doesNotContain(foo)
+    }
+
+    @Test
+    fun `soft compatibility dependency bypasses module visibility check`() {
+      plugin("provider") {
+        content(namespace = "jetbrains") {
+          module("provider.private", ModuleLoadingRuleValue.REQUIRED) {
+            packagePrefix = "provider.private"
+            moduleVisibility = ModuleVisibilityValue.PRIVATE
+          }
+        }
+      }.installAt(pluginDirPath)
+      plugin("consumer") {}.installAt(pluginDirPath)
+
+      val pluginSet = PluginSetTestBuilder.fromPath(pluginDirPath)
+        .withCompatibilityDependenciesForRemainingCandidatesProvider { descriptor, _ ->
+          if (descriptor.pluginId == PluginId.getId("consumer")) {
+            sequenceOf(DependencyRef.of(PluginModuleId("provider.private", PluginModuleId.JETBRAINS_NAMESPACE)))
+          }
+          else {
+            emptySequence()
+          }
+        }
+        .build()
+
+      val consumer = pluginSet.getEnabledPlugin("consumer")
+      val privateModule = pluginSet.getEnabledModule("provider.private")
+      assertThat(consumer).hasExactDirectParentClassloaders(privateModule)
+    }
+
+    @Test
     fun `legacy plugin gets implicit java dependency when all modules marker is present`() {
       // marker enables implicit dependencies for legacy plugins
       plugin("com.intellij.modules.all") {}.installAt(pluginDirPath)
@@ -1027,15 +1072,6 @@ internal class PluginDependenciesTest {
         }
       }.installAt(pluginDirPath)
 
-      plugin("full.line.provider") {
-        pluginAlias("org.jetbrains.completion.full.line")
-        content(namespace = "jetbrains") {
-          module("intellij.fullLine.core") { packagePrefix = "com.intellij.fullLine.core"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
-          module("intellij.fullLine.local") { packagePrefix = "com.intellij.fullLine.local"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
-          module("intellij.fullLine.core.impl") { packagePrefix = "com.intellij.fullLine.core.impl"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
-        }
-      }.installAt(pluginDirPath)
-
       plugin("cwm.provider") {
         pluginAlias("com.jetbrains.codeWithMe")
         content(namespace = "jetbrains") {
@@ -1061,7 +1097,6 @@ internal class PluginDependenciesTest {
         dependencies {
           plugin(PluginManagerCore.JAVA_PLUGIN_ALIAS_ID.idString)
           plugin("com.intellij.modules.rider")
-          plugin("org.jetbrains.completion.full.line")
           plugin("com.jetbrains.codeWithMe")
           plugin("intellij.rider.plugins.cwm")
           plugin("com.intellij.modules.json")
@@ -1073,15 +1108,11 @@ internal class PluginDependenciesTest {
       assertThat(consumer).hasExactDirectParentClassloaders(
         pluginSet.getEnabledPlugin("java.provider"),
         pluginSet.getEnabledPlugin("rider.provider"),
-        pluginSet.getEnabledPlugin("full.line.provider"),
         pluginSet.getEnabledPlugin("cwm.provider"),
         pluginSet.getEnabledPlugin("cwm.rider.provider"),
         pluginSet.getEnabledPlugin("json.provider"),
         pluginSet.getEnabledModule("intellij.java.backend"),
         pluginSet.getEnabledModule("intellij.rider"),
-        pluginSet.getEnabledModule("intellij.fullLine.core"),
-        pluginSet.getEnabledModule("intellij.fullLine.local"),
-        pluginSet.getEnabledModule("intellij.fullLine.core.impl"),
         pluginSet.getEnabledModule("intellij.cwm"),
         pluginSet.getEnabledModule("intellij.rider.plugins.cwm"),
         pluginSet.getEnabledModule("intellij.json.backend"),
@@ -1129,17 +1160,19 @@ internal class PluginDependenciesTest {
     }
 
     @Test
-    fun `external non bundled descriptors get implicit compatibility modules`() {
+    fun `external non bundled descriptors get soft compatibility modules`() {
       val compatibilityModuleIds = listOf(
         "intellij.libraries.groovy",
         "intellij.platform.structureView",
         "intellij.platform.todo",
+        "intellij.platform.bookmarks",
+        "intellij.platform.smRunner",
       )
       plugin("compatibility.modules.provider") {
         vendor = "JetBrains"
         content(namespace = "jetbrains") {
           for (moduleId in compatibilityModuleIds) {
-            module(moduleId) { packagePrefix = moduleId; moduleVisibility = ModuleVisibilityValue.PUBLIC }
+            module(moduleId, ModuleLoadingRuleValue.REQUIRED) { packagePrefix = moduleId; moduleVisibility = ModuleVisibilityValue.PUBLIC }
           }
         }
       }.installAt(pluginDirPath)
@@ -1163,8 +1196,7 @@ internal class PluginDependenciesTest {
 
       val pluginSet = buildPluginSet()
       val compatibilityModules = compatibilityModuleIds.map { pluginSet.getEnabledModule(it) }.toTypedArray()
-      val optionalTarget = pluginSet.getEnabledPlugin("optional.target")
-      val (externalConsumer, jetbrainsConsumer) = pluginSet.getEnabledPlugins("external.consumer", "jetbrains.consumer")
+      val (optionalTarget, externalConsumer, jetbrainsConsumer) = pluginSet.getEnabledPlugins("optional.target", "external.consumer", "jetbrains.consumer")
       val externalOptionalDescriptor = externalConsumer.dependencies.single { it.pluginId == PluginId.getId("optional.target") }.subDescriptor!!
       val jetbrainsOptionalDescriptor = jetbrainsConsumer.dependencies.single { it.pluginId == PluginId.getId("optional.target") }.subDescriptor!!
 
@@ -1174,6 +1206,27 @@ internal class PluginDependenciesTest {
       assertThat(jetbrainsConsumer).hasExactDirectParentClassloaders(optionalTarget)
       assertThat(jetbrainsOptionalDescriptor).hasExactDirectParentClassloaders(optionalTarget)
       assertThat(pluginSet.getEnabledModule("jetbrains.consumer.module")).doesNotHaveDirectParentClassloaders(*compatibilityModules)
+    }
+
+    @Test
+    fun `unavailable soft compatibility module does not exclude external plugin`() {
+      plugin("bookmarks.provider") {
+        vendor = "JetBrains"
+        content(namespace = "jetbrains") {
+          module("intellij.platform.bookmarks", ModuleLoadingRuleValue.REQUIRED) {
+            packagePrefix = "intellij.platform.bookmarks"
+            moduleVisibility = ModuleVisibilityValue.PUBLIC
+            dependencies {
+              module("unavailable.module")
+            }
+          }
+        }
+      }.installAt(pluginDirPath)
+      plugin("external.consumer") {}.installAt(pluginDirPath)
+
+      val pluginSet = buildPluginSet()
+
+      assertThat(pluginSet).hasExactlyEnabledPlugins("external.consumer")
     }
 
     @Test
@@ -1239,35 +1292,6 @@ internal class PluginDependenciesTest {
       assertThat(consumer).hasExactDirectParentClassloaders(
         pluginSet.getEnabledPlugin("java.alias.provider"),
         pluginSet.getEnabledModule("intellij.java.backend"),
-      )
-    }
-
-    @Test
-    fun `depends on full line alias adds full line modules`() {
-      plugin("full.line.alias.provider") {
-        pluginAlias("org.jetbrains.completion.full.line")
-      }.installAt(pluginDirPath)
-
-      plugin("full.line.modules") {
-        content(namespace = "jetbrains") {
-          module("intellij.fullLine.core") { packagePrefix = "com.intellij.fullLine.core"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
-          module("intellij.fullLine.local") { packagePrefix = "com.intellij.fullLine.local"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
-          module("intellij.fullLine.core.impl") { packagePrefix = "com.intellij.fullLine.core.impl"; moduleVisibility = ModuleVisibilityValue.PUBLIC }
-        }
-      }.installAt(pluginDirPath)
-
-      plugin("consumer") {
-        vendor = "JetBrains"
-        depends("org.jetbrains.completion.full.line")
-      }.installAt(pluginDirPath)
-
-      val pluginSet = buildPluginSet()
-      val consumer = pluginSet.getEnabledPlugin("consumer")
-      assertThat(consumer).hasExactDirectParentClassloaders(
-        pluginSet.getEnabledPlugin("full.line.alias.provider"),
-        pluginSet.getEnabledModule("intellij.fullLine.core"),
-        pluginSet.getEnabledModule("intellij.fullLine.local"),
-        pluginSet.getEnabledModule("intellij.fullLine.core.impl"),
       )
     }
 
@@ -1448,6 +1472,39 @@ internal class PluginDependenciesTest {
       assertThat(withPlatform).hasExactDirectParentClassloaders(*moduleDescriptors.toTypedArray())
       assertThat(withLang).hasExactDirectParentClassloaders(*moduleDescriptors.toTypedArray())
       assertThat(withDependencies).hasExactDirectParentClassloaders()
+    }
+
+    @Test
+    fun `unavailable module extracted from core does not exclude plugin depending on platform alias`() {
+      plugin("platform.alias.provider") {
+        vendor = "JetBrains"
+        pluginAlias("com.intellij.modules.platform")
+      }.installAt(pluginDirPath)
+
+      plugin("tasks.provider") {
+        vendor = "JetBrains"
+        content(namespace = "jetbrains") {
+          module("intellij.platform.tasks", ModuleLoadingRuleValue.REQUIRED) {
+            packagePrefix = "intellij.platform.tasks"
+            moduleVisibility = ModuleVisibilityValue.PUBLIC
+            dependencies {
+              module("unavailable.module")
+            }
+          }
+        }
+      }.installAt(pluginDirPath)
+
+      plugin("consumer") {
+        vendor = "JetBrains"
+        depends("com.intellij.modules.platform")
+      }.installAt(pluginDirPath)
+
+      val pluginSet = buildPluginSet()
+
+      assertThat(pluginSet).hasExactlyEnabledPlugins("consumer", "platform.alias.provider")
+      assertThat(pluginSet.getEnabledPlugin("consumer")).hasExactDirectParentClassloaders(
+        pluginSet.getEnabledPlugin("platform.alias.provider")
+      )
     }
   }
 

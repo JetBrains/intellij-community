@@ -2,5 +2,5 @@
 
 package a.b
 
-@<error descr="[INVISIBLE_MEMBER] Cannot access 'InlineOnly': it is internal in 'kotlin.internal'">kotlin.internal.<error descr="[INVISIBLE_REFERENCE] Cannot access 'InlineOnly': it is internal in 'kotlin.internal'">InlineOnly</error></error>
+@<error descr="[INVISIBLE_MEMBER]">kotlin.internal.<error descr="[INVISIBLE_REFERENCE]">InlineOnly</error></error>
 inline fun foo() {}

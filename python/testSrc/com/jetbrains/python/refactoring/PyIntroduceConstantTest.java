@@ -7,9 +7,13 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.constant.PyIntroduceConstantHandler;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 
 @TestDataPath("$CONTENT_ROOT/../testData/refactoring/introduceConstant/")
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyIntroduceConstantTest extends PyIntroduceTestCase {
   public void testPy1840() {
     doTest();
@@ -28,7 +32,7 @@ public class PyIntroduceConstantTest extends PyIntroduceTestCase {
   }
 
   public void testSuggestUniqueNames() {  // PY-4409
-    doTestSuggestions(PyExpression.class, "S1");
+    doTestSuggestions(PyExpression.class, "L1");
   }
 
   public void testSuggestUniqueNamesGlobalScope() {  // PY-4409

@@ -6,6 +6,9 @@ import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTempla
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.util.ObjectUtils;
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.codeInsight.postfix.PyEditablePostfixTemplate;
 import com.jetbrains.python.codeInsight.postfix.PyPostfixTemplateExpressionCondition;
 import com.jetbrains.python.codeInsight.postfix.PyPostfixTemplateProvider;
@@ -15,6 +18,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Collections;
 
+@Subsystems.CodeCompletion
+@Components.Postfix
+@Layers.Functional
 public class PyEditablePostfixTemplatesTest extends PyPostfixTemplateTestCase {
 
   public void testEditableTemplateBoolean() {

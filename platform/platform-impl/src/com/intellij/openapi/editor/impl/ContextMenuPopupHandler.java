@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorPopupHandler;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ public abstract class ContextMenuPopupHandler implements EditorPopupHandler {
   /**
    * {@link ContextMenuPopupHandler} specification, which uses an action group registered in {@link ActionManager} under given id.
    */
+  @ApiStatus.Internal
   public abstract static class ById extends ContextMenuPopupHandler {
     @Override
     public @Nullable ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {

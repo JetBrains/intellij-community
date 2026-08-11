@@ -3,7 +3,7 @@
 // ACTION: Replace overloaded operator with function call
 // ACTION: Replace with safe (?.) call
 // ACTION: Surround with null check
-// K2_ERROR: Operator call is prohibited on a nullable receiver of type 'List<String>?'. Use '?.'-qualified call instead.
+// K2_ERROR: UNSAFE_OPERATOR_CALL
 
 fun test(l: List<String>?, s: String) {
     if (s <caret>in l) {}

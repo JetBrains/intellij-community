@@ -37,6 +37,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression
  */
 class PyDocStringHighlightingAnnotator : PyAnnotatorBase() {
   override fun annotate(element: PsiElement, holder: PyAnnotationHolder) {
+    if (holder.isBatchMode()) return
     element.accept(PyDocStringAnnotatorVisitor(holder))
   }
 }

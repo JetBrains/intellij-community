@@ -20,9 +20,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
         val primitiveTypeStringNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = true, type = "String")
         val primitiveTypeIntNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = true, type = "Int")
         val primitiveTypeSetNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Set")
-
         var typeMetadata: StorageTypeMetadata
-
         typeMetadata = FinalClassMetadata.ObjectMetadata(
             fqName = "org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptEntitySource",
             properties = listOf(
@@ -40,9 +38,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
             ),
             supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource")
         )
-
         addMetadata(typeMetadata)
-
         typeMetadata = FinalClassMetadata.ClassMetadata(
             fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationId",
             properties = listOf(
@@ -73,9 +69,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
             ),
             supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")
         )
-
         addMetadata(typeMetadata)
-
         typeMetadata = FinalClassMetadata.ClassMetadata(
             fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId",
             properties = listOf(
@@ -101,13 +95,19 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     name = "presentableName",
                     valueType = primitiveTypeStringNotNullable,
                     withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "scope",
+                    valueType = primitiveTypeStringNotNullable,
+                    withDefault = false
                 )
             ),
             supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")
         )
-
         addMetadata(typeMetadata)
-
         typeMetadata = EntityMetadata(
             fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity",
             entityDataFqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.impl.KotlinScriptEntityData",
@@ -167,6 +167,14 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                             isKey = false,
                                             isOpen = false,
                                             name = "presentableName",
+                                            valueType = primitiveTypeStringNotNullable,
+                                            withDefault = false
+                                        ),
+                                        OwnPropertyMetadata(
+                                            isComputable = false,
+                                            isKey = false,
+                                            isOpen = false,
+                                            name = "scope",
                                             valueType = primitiveTypeStringNotNullable,
                                             withDefault = false
                                         )
@@ -424,9 +432,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
             extProperties = listOf(),
             isAbstract = false
         )
-
         addMetadata(typeMetadata)
-
         typeMetadata = EntityMetadata(
             fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity",
             entityDataFqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.impl.KotlinScriptLibraryEntityData",
@@ -444,6 +450,14 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                         isNullable = false,
                         typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")
                     ),
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "scope",
+                    valueType = primitiveTypeStringNotNullable,
                     withDefault = false
                 ),
                 OwnPropertyMetadata(
@@ -523,6 +537,14 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                     name = "presentableName",
                                     valueType = primitiveTypeStringNotNullable,
                                     withDefault = false
+                                ),
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
+                                    name = "scope",
+                                    valueType = primitiveTypeStringNotNullable,
+                                    withDefault = false
                                 )
                             ),
                             supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")
@@ -534,9 +556,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
             extProperties = listOf(),
             isAbstract = false
         )
-
         addMetadata(typeMetadata)
-
         typeMetadata = EntityMetadata(
             fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity",
             entityDataFqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.impl.ScriptCompilationConfigurationEntityData",
@@ -651,18 +671,12 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
             extProperties = listOf(),
             isAbstract = false
         )
-
         addMetadata(typeMetadata)
     }
 
     override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity", metadataHash = -1743471275)
-        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity", metadataHash = 748449801)
-        addMetadataHash(
-            typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity",
-            metadataHash = 2055694198
-        )
-        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId", metadataHash = 1246211390)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity", metadataHash = 299416926)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId", metadataHash = 923959333)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkId", metadataHash = 206069110)
         addMetadataHash(
             typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationId",
@@ -673,11 +687,16 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.LocationData", metadataHash = -1954134759)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.PositionData", metadataHash = 224932890)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.SeverityData", metadataHash = -1336558338)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity", metadataHash = 1529203819)
+        addMetadataHash(
+            typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity",
+            metadataHash = 2055694198
+        )
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -341682740)
         addMetadataHash(
             typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptEntitySource",
             metadataHash = -2072272738
         )
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = 415699451)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = -376256168)
     }
 }

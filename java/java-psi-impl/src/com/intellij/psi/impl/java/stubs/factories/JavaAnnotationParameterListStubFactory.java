@@ -5,20 +5,21 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiAnnotationParameterList;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
+import com.intellij.psi.impl.java.stubs.PsiAnnotationParameterListStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiAnnotationParameterListStubImpl;
 import com.intellij.psi.stubs.LightStubElementFactory;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaAnnotationParameterListStubFactory implements LightStubElementFactory<PsiAnnotationParameterListStubImpl, PsiAnnotationParameterList> {
+public class JavaAnnotationParameterListStubFactory implements LightStubElementFactory<PsiAnnotationParameterListStub, PsiAnnotationParameterList> {
   @Override
   public @NotNull PsiAnnotationParameterListStubImpl createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     return new PsiAnnotationParameterListStubImpl(parentStub);
   }
 
   @Override
-  public PsiAnnotationParameterList createPsi(@NotNull PsiAnnotationParameterListStubImpl stub) {
+  public PsiAnnotationParameterList createPsi(@NotNull PsiAnnotationParameterListStub stub) {
     return JavaStubElementType.getFileStub(stub).getPsiFactory().createAnnotationParameterList(stub);
   }
   

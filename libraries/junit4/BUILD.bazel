@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.junit4` start
-
 jvm_library(
     name = "junit4",
     srcs = glob(
@@ -16,12 +15,12 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:junit4",
+        "@lib//:libraries-junit4-_j_unit4",
         "//libraries/hamcrest",
     ],
     runtime_deps = [
         # do not sort,
-        "@lib//:junit4",
+        "@lib//:libraries-junit4-_j_unit4",
         "//libraries/hamcrest",
     ],
 )
@@ -38,7 +37,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:junit4",
+        "@lib//:libraries-junit4-_j_unit4",
         "//libraries/hamcrest",
         "//libraries/hamcrest:hamcrest_test_lib",
     ],

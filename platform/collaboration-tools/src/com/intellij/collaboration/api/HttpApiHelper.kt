@@ -27,12 +27,12 @@ interface HttpApiHelper {
   /**
    * Creates a request builder from the given URI String.
    */
-  fun request(uri: String): HttpRequest.Builder
+  suspend fun request(uri: String): HttpRequest.Builder
 
   /**
    * Creates a request builder from the given URI.
    */
-  fun request(uri: URI): HttpRequest.Builder
+  suspend fun request(uri: URI): HttpRequest.Builder
 
   /**
    * Sends the given request and awaits a response in a suspended cancellable way.
@@ -76,9 +76,11 @@ private class HttpApiHelperImpl(
   val client: HttpClient
     get() = clientFactory.createClient()
 
-  override fun request(uri: String): HttpRequest.Builder = request(URI.create(uri))
+  override suspend fun request(uri: String): HttpRequest.Builder = request(URI.create(uri))
 
-  override fun request(uri: URI): HttpRequest.Builder = HttpRequest.newBuilder(uri).apply(requestConfigurer::configure)
+  override suspend fun request(uri: URI): HttpRequest.Builder = HttpRequest.newBuilder(uri).apply {
+    requestConfigurer.configureSuspend(this)
+  }
 
   override suspend fun <T> sendAndAwaitCancellable(request: HttpRequest, bodyHandler: HttpResponse.BodyHandler<T>): HttpResponse<out T> {
     val cancellableBodyHandler = CancellableWrappingBodyHandler(bodyHandler)

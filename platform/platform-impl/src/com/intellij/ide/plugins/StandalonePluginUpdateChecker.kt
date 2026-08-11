@@ -27,10 +27,12 @@ import java.io.StringWriter
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
+import org.jetbrains.annotations.ApiStatus
 
 sealed class PluginUpdateStatus {
   val timestamp: Long = System.currentTimeMillis()
 
+  @ApiStatus.Internal
   object LatestVersionInstalled : PluginUpdateStatus()
 
   class Update(
@@ -40,6 +42,7 @@ sealed class PluginUpdateStatus {
 
   class CheckFailed(val message: String, val detail: String? = null) : PluginUpdateStatus()
 
+  @ApiStatus.Internal
   companion object {
     fun fromException(message: String, e: Exception): PluginUpdateStatus {
       val writer = StringWriter()
@@ -247,6 +250,7 @@ open class StandalonePluginUpdateChecker(
 
   override fun dispose(): Unit = Unit
 
+  @ApiStatus.Internal
   companion object {
     private const val INITIAL_UPDATE_DELAY = 2000L
 

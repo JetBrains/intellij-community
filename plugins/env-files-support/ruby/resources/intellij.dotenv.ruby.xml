@@ -1,8 +1,15 @@
 <idea-plugin package="ru.adelf.idea.dotenv.ruby">
   <dependencies>
     <plugin id="com.intellij.modules.ruby"/>
+    <module name="intellij.ruby.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="ru.adelf.idea.dotenv"/>
-      <module name="intellij.ruby.backend"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.projectModel"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="ruby" implementationClass="ru.adelf.idea.dotenv.ruby.RubyEnvCompletionProvider"/>

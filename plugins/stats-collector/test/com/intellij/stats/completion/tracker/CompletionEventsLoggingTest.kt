@@ -44,12 +44,12 @@ class CompletionEventsLoggingTest : CompletionLoggingTestBase() {
         checkSelectedCorrectId(itemsOnStart, "run")
     }
 
-    private fun checkLoggedAllElements(itemsOnStart: MutableList<LookupElement>) {
+    private fun checkLoggedAllElements(itemsOnStart: List<LookupElement>) {
         assertThat(completionStartedEvent.newCompletionListItems).hasSize(itemsOnStart.size)
         assertThat(completionStartedEvent.completionListIds).hasSize(itemsOnStart.size)
     }
 
-    private fun checkSelectedCorrectId(itemsOnStart: MutableList<LookupElement>, selectedString: String) {
+    private fun checkSelectedCorrectId(itemsOnStart: List<LookupElement>, selectedString: String) {
         val selectedIndex = itemsOnStart.indexOfFirst { it.lookupString == selectedString }
         val selectedId = completionStartedEvent.completionListIds[selectedIndex]
         assertThat(trackedEvents.last().extractSelectedId()).isEqualTo(selectedId)

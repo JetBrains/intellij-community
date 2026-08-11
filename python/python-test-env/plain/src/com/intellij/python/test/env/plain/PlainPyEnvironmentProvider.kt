@@ -137,13 +137,19 @@ class PlainPyEnvironmentProvider : PyEnvironmentProvider<PlainPyEnvironmentSpec>
       listOf(
         pythonDir.resolve("python.exe"),
         pythonDir.resolve("Scripts").resolve("python.exe"),
-        pythonDir.resolve("bin").resolve("python.exe")
+        pythonDir.resolve("bin").resolve("python.exe"),
+        pythonDir.resolve("install").resolve("python.exe"),
+        pythonDir.resolve("install").resolve("Scripts").resolve("python.exe"),
+        pythonDir.resolve("install").resolve("bin").resolve("python.exe"),
       )
     } else {
       listOf(
         pythonDir.resolve("bin").resolve("python3"),
         pythonDir.resolve("bin").resolve("python"),
-        pythonDir.resolve("python")
+        pythonDir.resolve("python"),
+        pythonDir.resolve("install").resolve("bin").resolve("python3"),
+        pythonDir.resolve("install").resolve("bin").resolve("python"),
+        pythonDir.resolve("install").resolve("python"),
       )
     }
 

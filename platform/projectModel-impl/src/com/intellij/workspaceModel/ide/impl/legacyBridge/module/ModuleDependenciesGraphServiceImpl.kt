@@ -12,88 +12,129 @@ import com.intellij.platform.workspace.jps.entities.SdkDependency
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
-import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.projectModel.LibraryOrSdkDependencyEdge
 import com.intellij.projectModel.ModuleDependenciesGraph
 import com.intellij.projectModel.ModuleDependenciesGraphService
 
 internal class ModuleDependenciesGraphServiceImpl(project: Project): ModuleDependenciesGraphService {
 
-  private val entityStore: VersionedEntityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage
-
-  fun exportedDependentsGraph(): ModuleDependenciesGraph = entityStore.cachedValue(dependentsGraph)
+  private val workspaceModel: WorkspaceModelInternal = WorkspaceModel.getInstance(project) as WorkspaceModelInternal
 
   override fun getModuleDependenciesGraph(): ModuleDependenciesGraph {
-    return exportedDependentsGraph()
+    val loaded = workspaceModel.entityStorage.cachedValue(loadedDependentsGraph)
+    val unloaded = workspaceModel.unloadedEntitiesStorage.cachedValue(unloadedDirectDependentsGraph)
+    return CompositeModuleDependenciesGraph(loaded, unloaded)
   }
 
-  private val dependentsGraph = CachedValue { storage ->
-    buildGraph(storage)
-  }
+  private val loadedDependentsGraph = CachedValue { storage -> buildLoadedDependents(storage) }
+  private val unloadedDirectDependentsGraph = CachedValue { storage -> buildUnloadedDirectDependents(storage) }
 
   private data class ModuleDependencyEdge(
     val dependent: ModuleEntity,
     val exported: Boolean,
   )
 
-  companion object {
-    fun buildGraph(storage: EntityStorage): ModuleDependenciesGraph {
-      return object : ModuleDependenciesGraph {
-        private val moduleDirectDependents: Map<ModuleId, List<ModuleDependencyEdge>>
-        private val libraryDependents: Map<SymbolicEntityId<*>, List<LibraryOrSdkDependencyEdge>>
+  private class LoadedDependents(
+    val moduleDirectDependents: Map<ModuleId, List<ModuleDependencyEdge>>,
+    val libraryDependents: Map<SymbolicEntityId<*>, List<LibraryOrSdkDependencyEdge>>,
+  )
 
-        init {
-          val dependentsMap = HashMap<ModuleId, MutableList<ModuleDependencyEdge>>()
-          val libraryDependentsMap = HashMap<SymbolicEntityId<*>, MutableList<LibraryOrSdkDependencyEdge>>()
+  private class UnloadedDirectDependents(
+    val moduleDirectDependents: Map<ModuleId, List<ModuleEntity>>,
+  )
 
-          for (module in storage.entities(ModuleEntity::class.java)) {
-            module.dependencies.forEachIndexed { index, dep ->
-              when (dep) {
-                  is ModuleDependency -> {
-                    dependentsMap
-                      .computeIfAbsent(dep.module) { mutableListOf() }
-                      .add(ModuleDependencyEdge(module, dep.exported))
-                  }
-                is LibraryDependency -> {
-                  libraryDependentsMap.computeIfAbsent(dep.library) { mutableListOf() }
-                    .add(LibraryOrSdkDependencyEdge(module, index))
-                  dep.library
-                }
-                is SdkDependency -> {
-                  libraryDependentsMap.computeIfAbsent(dep.sdk) { mutableListOf() }
-                    .add(LibraryOrSdkDependencyEdge(module, index))
-                }
-                else -> {}
-              }
-            }
+  private class CompositeModuleDependenciesGraph(
+    private val loaded: LoadedDependents,
+    private val unloaded: UnloadedDirectDependents,
+  ) : ModuleDependenciesGraph {
+
+    override fun getLibraryOrSdkDependants(libraryOrSdk: SymbolicEntityId<*>): Collection<LibraryOrSdkDependencyEdge> {
+      return loaded.libraryDependents[libraryOrSdk] ?: emptyList()
+    }
+
+    override fun getModuleDependants(module: ModuleEntity): Collection<ModuleEntity> {
+      val result = HashSet<ModuleEntity>()
+      val queue = ArrayDeque<ModuleEntity>()
+      queue.add(module)
+
+      while (queue.isNotEmpty()) {
+        val current = queue.removeFirst()
+        val edges = loaded.moduleDirectDependents[current.symbolicId] ?: continue
+
+        for (edge in edges) {
+          if (result.add(edge.dependent) && edge.exported) {
+            queue.add(edge.dependent)
           }
-
-          this.libraryDependents = libraryDependentsMap
-          this.moduleDirectDependents = dependentsMap
-        }
-
-        override fun getLibraryOrSdkDependants(libraryOrSdk: SymbolicEntityId<*>): Collection<LibraryOrSdkDependencyEdge> {
-          return libraryDependents[libraryOrSdk] ?: emptyList()
-        }
-
-        override fun getModuleDependants(module: ModuleEntity): Collection<ModuleEntity> {
-          val result = HashSet<ModuleEntity>()
-          val queue = ArrayDeque<ModuleEntity>()
-          queue.add(module)
-
-          while (queue.isNotEmpty()) {
-            val current = queue.removeFirst()
-            val edges = moduleDirectDependents[current.symbolicId] ?: emptyList()
-
-            for (edge in edges) {
-              if (result.add(edge.dependent) && edge.exported) {
-                queue.add(edge.dependent)
-              }
-            }
-          }
-          return result
         }
       }
+      return result
+    }
+
+    override fun getModuleUnloadedDependents(module: ModuleEntity): Collection<ModuleEntity> {
+      val result = LinkedHashSet<ModuleEntity>()
+      val visited = HashSet<ModuleEntity>()
+      val queue = ArrayDeque<ModuleEntity>()
+
+      queue.add(module)
+      visited.add(module)
+      while (queue.isNotEmpty()) {
+        val current = queue.removeFirst()
+        unloaded.moduleDirectDependents[current.symbolicId]?.let {
+          result.addAll(it)
+        }
+
+        val edges = loaded.moduleDirectDependents[current.symbolicId] ?: continue
+        for (edge in edges) {
+          if (edge.exported && visited.add(edge.dependent)) {
+            queue.add(edge.dependent)
+          }
+        }
+      }
+      return result
+    }
+  }
+
+  companion object {
+    private fun buildLoadedDependents(storage: EntityStorage): LoadedDependents {
+      val dependentsMap = HashMap<ModuleId, MutableList<ModuleDependencyEdge>>()
+      val libraryDependentsMap = HashMap<SymbolicEntityId<*>, MutableList<LibraryOrSdkDependencyEdge>>()
+
+      for (module in storage.entities(ModuleEntity::class.java)) {
+        module.dependencies.forEachIndexed { index, dep ->
+          when (dep) {
+            is ModuleDependency -> {
+              dependentsMap
+                .computeIfAbsent(dep.module) { mutableListOf() }
+                .add(ModuleDependencyEdge(module, dep.exported))
+            }
+            is LibraryDependency -> {
+              libraryDependentsMap.computeIfAbsent(dep.library) { mutableListOf() }
+                .add(LibraryOrSdkDependencyEdge(module, index))
+            }
+            is SdkDependency -> {
+              libraryDependentsMap.computeIfAbsent(dep.sdk) { mutableListOf() }
+                .add(LibraryOrSdkDependencyEdge(module, index))
+            }
+            else -> {}
+          }
+        }
+      }
+
+      return LoadedDependents(dependentsMap, libraryDependentsMap)
+    }
+
+    private fun buildUnloadedDirectDependents(storage: EntityStorage): UnloadedDirectDependents {
+      val moduleDirectDependents = HashMap<ModuleId, MutableList<ModuleEntity>>()
+      for (unloadedModule in storage.entities(ModuleEntity::class.java)) {
+        for (dep in unloadedModule.dependencies) {
+          if (dep is ModuleDependency) {
+            moduleDirectDependents
+              .computeIfAbsent(dep.module) { mutableListOf() }
+              .add(unloadedModule)
+          }
+        }
+      }
+      return UnloadedDirectDependents(moduleDirectDependents)
     }
   }
 }

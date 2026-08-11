@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.analysis.AnalysisScope;
@@ -29,6 +29,11 @@ import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.codeInspection.reference.RefParameter;
 import com.intellij.codeInspection.reference.RefParameterImpl;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.LocalQuickFixWithModCommandFallback;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -37,11 +42,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiEllipsisType;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -49,6 +56,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -245,7 +253,7 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
     return true;
   }
 
-  public static final class InlineParameterValueFix implements LocalQuickFix {
+  public static final class InlineParameterValueFix implements LocalQuickFixWithModCommandFallback {
     private final String myValue;
     private final String myParameterName;
 
@@ -271,20 +279,28 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+      InlineParameterContext context = getContext(descriptor.getPsiElement());
+      if (context == null) return;
+      final PsiExpression expression = getExpression(project, context.parameter());
+      inlineSameParameterValue(context.method(), context.parameter(), expression);
+    }
+
+    private @NotNull PsiExpression getExpression(@NotNull Project project, @NotNull PsiParameter parameter) {
+      String text = parameter.isVarArgs() ? "new " + ((PsiEllipsisType)parameter.getType()).getComponentType().getCanonicalText() + "[]{" + myValue + "}" : myValue;
+      final PsiExpression expression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(text, parameter);
+      return expression;
+    }
+
+    private @Nullable InlineParameterContext getContext(@NotNull PsiElement element) {
       final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-      if (method == null) return;
+      if (method == null) return null;
       PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false);
       if (parameter == null) {
         parameter =
           ContainerUtil.find(method.getParameterList().getParameters(), (param) -> Comparing.strEqual(param.getName(), myParameterName));
       }
-      if (parameter == null) return;
-      String text = parameter.isVarArgs() 
-                    ? "new " + ((PsiEllipsisType)parameter.getType()).getComponentType().getCanonicalText() + "[]{" + myValue + "}" 
-                    : myValue;
-      final PsiExpression expression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(text, parameter);
-      inlineSameParameterValue(method, parameter, expression);
+      if (parameter == null) return null;
+      return new InlineParameterContext(method, parameter);
     }
 
     @Override
@@ -298,8 +314,12 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
       return false;
     }
 
+    @Override
+    public @NotNull ModCommandAction getFallbackModCommandAction() {
+      return new InlineParameterValueModCommand();
+    }
+
     public static void inlineSameParameterValue(PsiMethod method, PsiParameter parameter, PsiExpression defToInline) {
-      final MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
       Collection<PsiMethod> methods = new ArrayList<>();
       methods.add(method);
       Project project = method.getProject();
@@ -316,7 +336,56 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
       }
 
       int parameterIndex = method.getParameterList().getParameterIndex(parameter);
+      ParametersWithConflicts parametersWithConflicts = findParametersToInline(methods, parameterIndex);
+      if (!preview) {
+        if (!BaseRefactoringProcessor.processConflicts(project, parametersWithConflicts.conflicts())) return;
+      }
+
+      if (preview) {
+        Collection<PsiReference> calls = ReferencesSearch.search(method, new LocalSearchScope(method.getContainingFile())).findAll();
+        inlineParameterAndDeleteArguments(parameter, parameterIndex, defToInline, parametersWithConflicts.paramsToInline(),
+                                          ContainerUtil.map(calls, PsiReference::getElement));
+      }
+      else {
+        WriteAction.run(() -> inlineParameters(defToInline, parametersWithConflicts.paramsToInline()));
+        removeParameter(method, parameter);
+      }
+    }
+
+    private static void inlineParameterAndDeleteArguments(@NotNull PsiParameter parameter,
+                                                          int parameterIndex,
+                                                          @NotNull PsiExpression defToInline,
+                                                          @NotNull Map<PsiParameter, Collection<PsiReferenceExpression>> paramsToInline,
+                                                          @NotNull Collection<PsiElement> calls) {
+      inlineParameters(defToInline, paramsToInline);
+      final boolean vararg = parameter.isVarArgs();
+      parameter.delete();
+      for (PsiElement call : calls) {
+        PsiElement parent = call.getParent();
+        if (parent instanceof PsiMethodCallExpression methodCallExpression) {
+          PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+          PsiExpression[] arguments = argumentList.getExpressions();
+          if (vararg) {
+            if (arguments.length > parameterIndex) {
+              PsiExpression firstVararg = arguments[parameterIndex];
+              PsiElement from = firstVararg;
+              PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(firstVararg);
+              if (prev instanceof PsiJavaToken token && token.getTokenType() == JavaTokenType.COMMA) {
+                from = token;
+              }
+              argumentList.deleteChildRange(from, arguments[arguments.length - 1]);
+            }
+          }
+          else {
+            arguments[parameterIndex].delete();
+          }
+        }
+      }
+    }
+
+    private static @NotNull ParametersWithConflicts findParametersToInline(Collection<PsiMethod> methods, int parameterIndex) {
       Map<PsiParameter, Collection<PsiReferenceExpression>> paramsToInline = new HashMap<>();
+      final MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
       for (PsiMethod psiMethod : methods) {
         PsiParameter psiParameter = psiMethod.getParameterList().getParameters()[parameterIndex];
         RefactoringConflictsUtil.getInstance().analyzeMethodConflictsAfterParameterDelete(psiMethod, psiParameter, conflicts);
@@ -329,33 +398,7 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
         }
         paramsToInline.put(psiParameter, refsToInline);
       }
-      if (!preview) {
-        if (!BaseRefactoringProcessor.processConflicts(project, conflicts)) return;
-      }
-
-      if (preview) {
-        inlineParameters(defToInline, paramsToInline);
-        final boolean vararg = parameter.isVarArgs();
-        parameter.delete();
-        Collection<PsiReference> calls = ReferencesSearch.search(method, new LocalSearchScope(method.getContainingFile())).findAll();
-        for (PsiReference call : calls) {
-          PsiElement parent = call.getElement().getParent();
-          if (parent instanceof PsiMethodCallExpression methodCallExpression) {
-            PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-            PsiExpression[] arguments = argumentList.getExpressions();
-            if (vararg) {
-              argumentList.deleteChildRange(arguments[parameterIndex], arguments[arguments.length - 1]);
-            }
-            else {
-              arguments[parameterIndex].delete();
-            }
-          }
-        }
-      }
-      else {
-        WriteAction.run(() -> inlineParameters(defToInline, paramsToInline));
-        removeParameter(method, parameter);
-      }
+      return new ParametersWithConflicts(paramsToInline, conflicts);
     }
 
     private static void inlineParameters(PsiExpression defToInline, Map<PsiParameter, Collection<PsiReferenceExpression>> paramsToInline) {
@@ -399,6 +442,59 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
 
     public String getParamName() {
       return myParameterName;
+    }
+
+    private record InlineParameterContext(@NotNull PsiMethod method, @NotNull PsiParameter parameter) {
+    }
+
+    private record ParametersWithConflicts(@NotNull Map<PsiParameter, Collection<PsiReferenceExpression>> paramsToInline, @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
+    }
+
+    private final class InlineParameterValueModCommand implements ModCommandAction {
+      @Override
+      public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+        PsiElement element = context.element();
+        if (element == null) return null;
+        InlineParameterContext inlineContext = getContext(element);
+
+        if (inlineContext == null) return null;
+
+        if (OverridingMethodsSearch.search(inlineContext.method()).findFirst() != null) return null;
+
+        return Presentation.of(getName());
+      }
+
+      @Override
+      public @NotNull ModCommand perform(@NotNull ActionContext context) {
+        PsiElement element = context.element();
+        if (element == null) return ModCommand.nop();
+        InlineParameterContext inlineContext = getContext(element);
+        if (inlineContext == null) return ModCommand.nop();
+
+        PsiParameter parameter = inlineContext.parameter();
+        PsiMethod method = inlineContext.method();
+        Collection<PsiReference> calls = ReferencesSearch.search(method, GlobalSearchScope.projectScope(method.getProject())).findAll();
+        return ModCommand.psiUpdate(method, (methodCopy, updater) -> {
+          PsiParameter parameterCopy = updater.getWritable(parameter);
+          PsiExpression expression = getExpression(methodCopy.getProject(), parameterCopy);
+          List<PsiMethod> methods = new ArrayList<>();
+          methods.add(methodCopy);
+
+          if (!CommonRefactoringUtil.checkReadOnlyStatus(methodCopy.getProject(), methods, false)) return;
+
+          int parameterIndex = methodCopy.getParameterList().getParameterIndex(parameterCopy);
+          ParametersWithConflicts parametersWithConflicts = findParametersToInline(methods, parameterIndex);
+          if (!parametersWithConflicts.conflicts().isEmpty()) return;
+
+          List<PsiElement> writableCalls = ContainerUtil.map(calls, call -> updater.getWritable(call.getElement()));
+          inlineParameterAndDeleteArguments(parameterCopy, parameterIndex, expression, parametersWithConflicts.paramsToInline(), writableCalls);
+        });
+      }
+
+      @Override
+      public @NotNull String getFamilyName() {
+        return InlineParameterValueFix.this.getFamilyName();
+      }
     }
   }
 

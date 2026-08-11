@@ -1,2 +1,2 @@
-// INSPECTION_CLASS: org.jetbrains.kotlin.idea.inspections.conventionNameCalls.ReplaceGetOrSetInspection
-// K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ReplaceGetOrSetInspection
+// INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections..conventionNameCalls.ReplaceGetOrSetInspection
+// K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.ReplaceGetOrSetInspection

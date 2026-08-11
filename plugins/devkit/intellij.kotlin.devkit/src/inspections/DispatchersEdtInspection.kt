@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression

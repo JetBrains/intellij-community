@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.k2
 
 import com.intellij.psi.util.findParentOfType
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.artifacts.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Case

@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
@@ -70,9 +71,7 @@ internal class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOptio
     fun checkState(provider: DebuggerTitleInfoProvider) {
       fun action() {
         ThreadingAssertions.assertEventDispatchThread()
-        debuggerSessionStarted = XDebuggerManager.getInstance(project)?.let {
-          provider.isEnabled() && it.debugSessions.isNotEmpty()
-        } ?: false
+        debuggerSessionStarted = provider.isEnabled() && project.serviceIfCreated<XDebuggerManager>()?.debugSessions?.isNotEmpty() == true
         provider.updateNotify()
       }
 

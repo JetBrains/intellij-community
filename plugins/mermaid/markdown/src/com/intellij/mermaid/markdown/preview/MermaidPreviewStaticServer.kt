@@ -4,6 +4,7 @@ package com.intellij.mermaid.markdown.preview
 import com.intellij.mermaid.markdown.jcef.MermaidBrowserExtension
 import com.intellij.mermaid.markdown.jcef.determineMermaidTheme
 import com.intellij.mermaid.markdown.preview.MermaidPreviewStaticServer.Companion.guessContentType
+import com.intellij.mermaid.markdown.preview.MermaidPreviewStaticServer.Companion.obtainStaticIndexUrl
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.Urls
@@ -23,6 +24,7 @@ import org.jetbrains.io.FileResponses
 import org.jetbrains.io.send
 import java.nio.ByteBuffer
 import java.util.Date
+import java.util.concurrent.atomic.AtomicLong
 
 internal class MermaidPreviewStaticServer : HttpRequestHandler() {
   private fun obtainStaticPath(path: String): String {
@@ -86,7 +88,8 @@ internal class MermaidPreviewStaticServer : HttpRequestHandler() {
       request,
       context.channel(),
       ByteBuffer.wrap(content),
-      guessContentType(resourceName)
+      guessContentType(resourceName),
+      cacheable = resourceName !in themeDependentResources
     )
     return true
   }
@@ -98,6 +101,15 @@ internal class MermaidPreviewStaticServer : HttpRequestHandler() {
     @Suppress("ConstPropertyName")
     private const val prefixPath = "/$endpointPrefix"
 
+    /**
+     * Theme-generated resources ([PreviewThemeStyles], [determineMermaidTheme]) referenced by a stable relative URL.
+     * Served no-store: otherwise a 304 revalidation after a theme change would keep serving the stale copy.
+     */
+    private val themeDependentResources = setOf("index.css", "mermaid-theme.js")
+
+    /** Bumped per [obtainStaticIndexUrl] call: a unique URL forces a real reload instead of a JCEF no-op / bfcache restore. */
+    private val navigationCounter = AtomicLong()
+
     @JvmStatic
     fun getInstance(): MermaidPreviewStaticServer {
       val point = EP_NAME
@@ -107,7 +119,7 @@ internal class MermaidPreviewStaticServer : HttpRequestHandler() {
     @JvmStatic
     fun obtainStaticIndexUrl(): String {
       val port = BuiltInServerManager.getInstance().port
-      val raw = "http://localhost:$port/$endpointPrefix/index.html?isStandaloneViewer=true"
+      val raw = "http://localhost:$port/$endpointPrefix/index.html?isStandaloneViewer=true&nav=${navigationCounter.incrementAndGet()}"
       val url = Urls.parseEncoded(raw)
       requireNotNull(url) { "Could not parse url!" }
       return BuiltInServerManager.getInstance().addAuthToken(url).toExternalForm()
@@ -141,10 +153,10 @@ internal class MermaidPreviewStaticServer : HttpRequestHandler() {
       return System.getProperty("developmentBuild").toBoolean()
     }
 
-    private fun sendResource(request: HttpRequest, channel: Channel, resource: ByteBuffer?, contentType: String) {
+    private fun sendResource(request: HttpRequest, channel: Channel, resource: ByteBuffer?, contentType: String, cacheable: Boolean) {
       val lastModified = ApplicationInfo.getInstance().buildDate.timeInMillis
       // buildDate won't work as modification stamp in development runs, since IDE build does not change
-      if (!isDevelopmentBuild()) {
+      if (cacheable && !isDevelopmentBuild()) {
         if (FileResponses.checkCache(request, channel, lastModified)) {
           return
         }
@@ -160,8 +172,13 @@ internal class MermaidPreviewStaticServer : HttpRequestHandler() {
       )
       with(response) {
         headers()[HttpHeaderNames.CONTENT_TYPE] = contentType
-        headers()[HttpHeaderNames.CACHE_CONTROL] = "no-cache"
-        headers()[HttpHeaderNames.LAST_MODIFIED] = Date(lastModified)
+        if (cacheable) {
+          headers()[HttpHeaderNames.CACHE_CONTROL] = "no-cache"
+          headers()[HttpHeaderNames.LAST_MODIFIED] = Date(lastModified)
+        }
+        else {
+          headers()[HttpHeaderNames.CACHE_CONTROL] = "no-store"
+        }
         send(channel, request)
       }
     }

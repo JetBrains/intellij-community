@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge
 
 import com.intellij.diff.merge.MergeTestBase.SidesState.BOTH
@@ -12,6 +12,13 @@ import com.intellij.diff.util.TextDiffType.DELETED
 import com.intellij.diff.util.TextDiffType.INSERTED
 import com.intellij.diff.util.TextDiffType.MODIFIED
 import com.intellij.diff.util.ThreeSide
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataMap
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataSnapshotProvider
+import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.ui.UIUtil
 
 class MergeTest : MergeTestBase() {
@@ -1030,4 +1037,31 @@ class MergeTest : MergeTestBase() {
       0.resolve()
     }
   }
+
+  // IJPL-248454: closing the merge window disposes the viewer (and with it the merge model, whose line
+  // arrays get cleared) before the result document is saved. Saving builds a UI data context (e.g. via
+  // TrailingSpacesStripper) that snapshots the already-disposed viewer. The snapshot must not read line
+  // numbers from the cleared model: getSelectedChange used to throw IndexOutOfBoundsException because the
+  // change list was still populated while MergeModelBase had already been emptied.
+  fun testUiDataSnapshotAfterDisposeDoesNotThrow() {
+    doTest1("x", "x", "y") {
+      assertTrue(activeChanges().isNotEmpty())
+
+      // Mirror MergeRequestProcessor.dispose(): destroyViewer() runs first ...
+      Disposer.dispose(mergeViewer)
+
+      // ... then the result-document save triggers a UI data snapshot of the now-disposed viewer.
+      viewer.uiDataSnapshot(NoOpDataSink)
+    }
+  }
+}
+
+private object NoOpDataSink : DataSink {
+  override operator fun <T : Any> set(key: DataKey<T>, data: T?) {}
+  override fun <T : Any> setNull(key: DataKey<T>) {}
+  override fun <T : Any> lazyValue(key: DataKey<T>, data: (DataMap) -> T?) {}
+  override fun <T : Any> lazyNull(key: DataKey<T>) {}
+  override fun uiDataSnapshot(provider: UiDataProvider) {}
+  override fun dataSnapshot(provider: DataSnapshotProvider) {}
+  override fun uiDataSnapshot(provider: DataProvider) {}
 }

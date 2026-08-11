@@ -18,7 +18,6 @@ jps_test(
 ### skip generation section `test intellij.kotlin.jvm.debugger.test.compose`
 
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test.compose` start
-
 jvm_library(
     name = "compose",
     srcs = glob(
@@ -29,7 +28,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        "//plugins/kotlin/plugin/k2",
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "//platform/execution.serviceView/plugin",
     ],
 )
@@ -54,6 +53,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":compose",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/execution.serviceView/plugin:plugin_test_lib",
     ],
     deps = [
@@ -62,8 +62,6 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/base/testFramework",
         "//plugins/kotlin/base/testFramework:testFramework_test_lib",
         "//platform/testFramework",
@@ -83,7 +81,8 @@ jvm_library(
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//android/compose-ide-plugin",
         "//android/compose-ide-plugin:compose-ide-plugin_test_lib",
         "//java/debugger/impl",
@@ -95,6 +94,10 @@ jvm_library(
         "//plugins/kotlin/tests-compose:tests-compose_test_lib",
         "//plugins/kotlin/jvm-debugger/test/compose/testFramework",
         "//plugins/kotlin/jvm-debugger/test/compose/testFramework:testFramework_test_lib",
+        "//android/logcat/gradle",
+        "//android/logcat/gradle:gradle_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test.compose` end

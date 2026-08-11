@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.completion
+package com.intellij.gradle.completion.tests
 
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionSorter
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.gradle.completion.DependencyCompletionLoadingAdvertiser
 import com.intellij.patterns.ElementPattern
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.LOCAL
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.SERVER

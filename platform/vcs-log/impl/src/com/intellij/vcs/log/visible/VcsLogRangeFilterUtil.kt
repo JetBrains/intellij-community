@@ -86,14 +86,15 @@ private fun resolveCommit(
   storage: VcsLogStorage, dataPack: VcsLogGraphData,
   root: VirtualFile, refName: String,
 ): CommitId? {
-  if (VcsLogUtil.isFullHash(refName)) {
+  val provider = dataPack.logProviders[root]
+  if (provider != null && provider.isFullHash(root, refName)) {
     val commitId = CommitId(HashImpl.build(refName), root)
     return if (storage.containsCommit(commitId)) commitId else null
   }
 
   val ref = dataPack.refsModel.findBranch(refName, root)
   if (ref != null) return CommitId(ref.commitHash, root)
-  if (refName.length >= VcsLogUtil.SHORT_HASH_LENGTH && VcsLogUtil.HASH_REGEX.matcher(refName).matches()) {
+  if (refName.length >= VcsLogUtil.SHORT_HASH_LENGTH && VcsLogUtil.GIT_HASH_REGEX.matcher(refName).matches()) {
     // don't search for too short hashes: high probability to treat a ref, existing not in all roots, as a hash
     return storage.findCommitId(CommitIdByStringCondition(refName))
   }

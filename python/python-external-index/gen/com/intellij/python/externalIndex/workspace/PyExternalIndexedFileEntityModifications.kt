@@ -18,7 +18,7 @@ internal interface PyExternalIndexedFileEntityBuilder : WorkspaceEntityBuilder<P
 }
 
 internal object PyExternalIndexedFileEntityType : EntityType<PyExternalIndexedFileEntity, PyExternalIndexedFileEntityBuilder>() {
-  override val entityClass: Class<PyExternalIndexedFileEntity> get() = PyExternalIndexedFileEntity::class.java
+  override val entityImplClass: Class<*> get() = PyExternalIndexedFileEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = PyExternalIndexedFileEntityImpl.Builder::class.java
   operator fun invoke(
     file: VirtualFileUrl,

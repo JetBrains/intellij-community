@@ -1,0 +1,12 @@
+{
+  "extends": "@jetbrains/intellij-webview/tsconfig.view.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "types": ["node"],
+    "paths": {
+      "@jetbrains/intellij-webview-testkit": ["../../webview-src/packages/testkit/src/index.ts"],
+      "@jetbrains/intellij-webview-testkit/node": ["../../webview-src/packages/testkit/src/node.ts"]
+    }
+  },
+  "include": ["build.ts", "vite.config.ts", "playwright.config.ts", "views/**/*.ts", "views/**/*.tsx", "views/**/*.d.ts", "test/**/*.ts", "test/**/*.tsx"]
+}

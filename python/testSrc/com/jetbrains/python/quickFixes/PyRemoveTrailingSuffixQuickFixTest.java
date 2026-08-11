@@ -3,7 +3,11 @@ package com.jetbrains.python.quickFixes;
 
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyRemoveTrailingSuffixQuickFixTest extends PyQuickFixTestCase {
 
   public void testFixl() {

@@ -5,5 +5,8 @@ import com.intellij.platform.icons.IconManager
 import com.intellij.platform.icons.design.BlendMode
 import com.intellij.platform.icons.design.Color
 
-fun tintColorFilter(color: Color, blendMode: BlendMode = BlendMode.SrcIn): ColorFilter =
+fun ColorFilter.Companion.tint(color: Color, blendMode: BlendMode = BlendMode.SrcIn): ColorFilter =
     IconManager.colorFilters().tintColor(color, blendMode)
+
+@Deprecated("Use ColorFilter.tint(color, blendMode)", replaceWith = ReplaceWith("tintColorFilter(color, blendMode)"))
+fun tintColorFilter(color: Color, blendMode: BlendMode = BlendMode.SrcIn): ColorFilter = ColorFilter.tint(color, blendMode)

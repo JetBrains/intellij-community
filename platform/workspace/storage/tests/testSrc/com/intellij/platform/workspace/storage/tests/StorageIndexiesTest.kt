@@ -6,7 +6,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildSubEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildSubSubEntity
@@ -54,7 +54,7 @@ class StorageIndexesTest {
 
   @Test
   fun `check virtual file index`() {
-    val virtualFileUrlManager = VirtualFileUrlManagerImpl()
+    val virtualFileUrlManager = ConcurrentVirtualFileUrlManager()
     val sourceUrl = virtualFileUrlManager.getOrCreateFromUrl("/source".toPathWithScheme())
     val directory = virtualFileUrlManager.getOrCreateFromUrl("/tmp/example".toPathWithScheme())
     val firstRoot = virtualFileUrlManager.getOrCreateFromUrl("/m2/root/one".toPathWithScheme())

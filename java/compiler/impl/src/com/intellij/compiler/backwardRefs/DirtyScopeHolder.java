@@ -52,6 +52,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
@@ -148,7 +149,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
     }
   }
 
-  public void upToDateCheckFinished(@Nullable Collection<@NotNull Module> allModules, @Nullable Collection<@NotNull Module> compiledModules) {
+  public void upToDateCheckFinished(@Nullable Collection<@NotNull Module> allModules, @Nullable @Unmodifiable Collection<@NotNull Module> compiledModules) {
     compilationFinished(() -> {
       if (allModules != null) myVFSChangedModules.addAll(allModules);
       if (compiledModules != null) compiledModules.forEach(myVFSChangedModules::remove);

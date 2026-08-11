@@ -47,11 +47,13 @@ kotlin {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
     }
+    implementation(project(":fleet.util.logging.api"))
+  }
+  sourceSets.jvmMain.dependencies {
     api(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
       exclude(group = "org.slf4j", module = "slf4j-jdk14")
     }
-    implementation(project(":fleet.util.logging.api"))
   }
   // KOTLIN__MARKER_END
 }

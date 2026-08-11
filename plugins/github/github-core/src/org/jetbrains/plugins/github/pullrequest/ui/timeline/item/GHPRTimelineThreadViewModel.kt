@@ -40,6 +40,7 @@ import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThreadSubjectType
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRNewThreadCommentViewModel
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -67,6 +68,7 @@ interface GHPRTimelineThreadViewModel
   val isPending: StateFlow<Boolean>
 
   val filePath: String
+  val isFileComment: Boolean
   val patchHunkWithAnchor: StateFlow<Pair<PatchHunk, LineRange?>?>
 
   val mainCommentVm: StateFlow<GHPRReviewThreadCommentViewModel?>
@@ -103,6 +105,7 @@ internal class UpdateableGHPRTimelineThreadViewModel internal constructor(
   override val author: GHActor = initialData.author ?: dataContext.securityService.ghostUser
   override val createdAt: Date = initialData.createdAt
   override val filePath: String = initialData.path
+  override val isFileComment: Boolean = initialData.subjectType == GHPullRequestReviewThreadSubjectType.FILE
 
   override val isOutdated: StateFlow<Boolean> = dataState.mapState { it.isOutdated }
   override val isPending: StateFlow<Boolean> = dataState.mapState {
@@ -205,9 +208,12 @@ internal class UpdateableGHPRTimelineThreadViewModel internal constructor(
   }
 
   private fun calcDiffWithAnchor(thread: GHPullRequestReviewThread): Pair<PatchHunk, LineRange?>? {
+    // GitHub returns an empty diff hunk for file-level comments and some outdated threads: there is nothing to anchor a diff to.
+    if (thread.diffHunk.isBlank()) return null
+
     val patchReader = PatchReader(PatchHunkUtil.createPatchFromHunk("_", thread.diffHunk))
     val hunk = patchReader.readTextPatches().firstOrNull()?.hunks?.firstOrNull() ?: run {
-      LOG.error("Failed to parse diff hunk for thread ${thread.id}",
+      LOG.error("Failed to parse non-empty diff hunk for thread ${thread.id}",
                 Attachment("threadData.txt", thread.toString()),
                 Attachment("threadDiffHunk.txt", thread.diffHunk))
       return null

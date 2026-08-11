@@ -1,0 +1,23 @@
+<html>
+<body>
+<p>Reports invalid definitions and usages of classes decorated with <code>@dataclasses.dataclass</code> from the
+  standard <code>dataclasses</code> module.</p>
+<p>
+  Detected problems include mutable default values used without <code>default_factory</code>, <code>InitVar</code>
+  fields declared without a <code>__post_init__</code> method, a <code>__post_init__</code> signature that doesn't
+  match the declared init-only variables, and conflicting <code>dataclass</code> arguments or hand-written dunder
+  methods.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+import dataclasses
+
+
+@dataclasses.dataclass
+class FullName:
+    first: str
+    middle: str = ""
+    last: str
+</code></pre>
+</body>
+</html>

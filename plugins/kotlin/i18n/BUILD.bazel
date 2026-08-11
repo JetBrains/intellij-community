@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.i18n` start
-
 jvm_library(
     name = "i18n",
     srcs = glob(
@@ -21,7 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/core-impl",
@@ -29,7 +28,7 @@ jvm_library(
         "//plugins/java-i18n",
         "//plugins/properties/properties-psi-impl:backend-psi",
         "//plugins/kotlin/code-insight/api",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
     ],
 )
 
@@ -45,6 +44,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":i18n",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",
@@ -52,6 +52,7 @@ jvm_library(
         "//plugins/java-i18n:java-i18n_test_lib",
         "//plugins/properties/properties-psi-impl:backend-psi_test_lib",
         "//plugins/kotlin/code-insight/api:api_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.i18n` end

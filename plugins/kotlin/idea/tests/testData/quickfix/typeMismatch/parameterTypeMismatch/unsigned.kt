@@ -1,6 +1,6 @@
 // "Change parameter 'u' type of function 'takeUInt' to 'Int'" "true"
 // WITH_STDLIB
-// K2_ERROR: Argument type mismatch: actual type is 'Int', but 'UInt' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 fun takeUInt(u: UInt) = 0
 

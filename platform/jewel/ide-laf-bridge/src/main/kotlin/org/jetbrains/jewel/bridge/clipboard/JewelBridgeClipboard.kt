@@ -39,6 +39,7 @@ internal class JewelBridgeClipboard : Clipboard {
     // itself. Hence, we build a facade Clipboard that delegates to the IntelliJ CopyPasteManager.
     override val nativeClipboard: NativeClipboard by lazy { JewelAwtClipboardBridge(copyPasteManager) }
 
+    @Suppress("UnreachableCode")
     override suspend fun getClipEntry(): ClipEntry? {
         logger.debug("getClipEntry called. CopyPasteManager available: ${copyPasteManager != null}")
 

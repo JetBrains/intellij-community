@@ -16,6 +16,7 @@ import java.nio.file.Path
  * Represents an isolated file system, which is accessible to the IDE but not to the OS.
  */
 @TestOnly
+@Deprecated("This test framework is abandoned. Also, it uses mocks inside. Please use `@TestApplicationWithEel` instead")
 interface IsolatedFileSystem {
   /**
    * EelAPI representing the isolated file system.
@@ -38,6 +39,7 @@ interface IsolatedFileSystem {
  * The local file system would not be able to recognize these paths, so you can test whether your feature is eel-agnostic.
  */
 @TestOnly
+@Deprecated("This test framework is abandoned. Also, it uses mocks inside. Please use `@TestApplicationWithEel` instead")
 fun eelFixture(os: EelPlatform = currentOs): TestFixture<IsolatedFileSystem> {
   return testFixture("eel-test-fixture", eelInitializer(os))
 }
@@ -46,6 +48,7 @@ fun eelFixture(os: EelPlatform = currentOs): TestFixture<IsolatedFileSystem> {
  * Creates a temporary directory on an environment corresponding to the receiver Eel.
  */
 @TestOnly
+@Deprecated("This test framework is abandoned. Also, it uses mocks inside. Please use `@TestApplicationWithEel` instead")
 fun TestFixture<IsolatedFileSystem>.tempDirFixture(): TestFixture<Path> {
   return testFixture("eel-temp-dir-for-project", eelTempDirectoryFixture(this))
 }

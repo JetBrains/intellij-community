@@ -1,4 +1,5 @@
 // "Convert expression to 'Int'" "true"
+// K2_ERROR: INCOMPATIBLE_TYPES
 fun test(b: Byte, i: Int) {
     when (i) {
         <caret>b -> {}

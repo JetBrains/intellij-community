@@ -10,6 +10,20 @@ There are two API surfaces:
 The current release version is read from [`gradle.properties`](../gradle.properties) via `jewel.release.version`. By
 default, the Metalava scripts validate and update dumps for that version.
 
+## CI and the pinned Kotlin version
+
+These validation and update scripts are `.main.kts` Kotlin scripts. The
+[Jewel Checks workflow](../../../.github/workflows/jewel-checks.yml) runs them (API dump checks and Metalava) using a
+Kotlin compiler pinned via its `KOTLIN_VERSION` env and installed by the
+[`setup-kotlin`](../../../.github/actions/setup-kotlin/action.yml) action, so CI does not depend on whichever Kotlin the
+runner image happens to ship.
+
+[`gradle/libs.versions.toml`](../gradle/libs.versions.toml) (`kotlin`) is the source of truth for the Kotlin version;
+`KOTLIN_VERSION` in the workflow must match it. **When you upgrade Kotlin, bump both in the same change** so the build
+and CI stay aligned. A `JewelBuildTest` test asserts the two values are equal, so CI fails fast if they drift. Keep the
+pinned version below 2.4.0 until the `.main.kts` regression resolving helpers imported across a `@file:Import` boundary
+is fixed (see JEWEL-1339); otherwise the API dump and Metalava jobs will fail.
+
 ## Validate API dumps
 
 To validate all Jewel API dumps, run this from the Jewel root:

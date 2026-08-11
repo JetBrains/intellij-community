@@ -1,8 +1,8 @@
 // "Create extension property 'A.Companion.foo'" "true"
-// K2_ERROR: Unresolved reference 'foo'.
-// K2_AFTER_ERROR: Extension property must have accessors or be abstract.
-// K2_AFTER_ERROR: Unresolved reference 'Companion'.
-// K2_AFTER_ERROR: Unresolved reference 'foo'.
+// K2_AFTER_ERROR: EXTENSION_PROPERTY_MUST_HAVE_ACCESSORS_OR_BE_ABSTRACT
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 class A<T>(val n: T)
 
 fun test() {

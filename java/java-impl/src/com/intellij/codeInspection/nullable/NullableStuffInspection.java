@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -33,7 +33,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.group;
 import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.separator;
 
 public class NullableStuffInspection extends NullableStuffInspectionBase {
   @Override
@@ -44,18 +46,47 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox("REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE", JavaBundle.message("inspection.nullable.problems.method.overrides.notnull.option")),
-      checkbox("REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL", JavaBundle.message("inspection.nullable.problems.method.overrides.option"),
-               checkbox("IGNORE_EXTERNAL_SUPER_NOTNULL", JavaBundle.message("inspection.nullable.problems.ignore.external.notnull"))),
-      checkbox("REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE", JavaBundle.message("inspection.nullable.problems.method.non.annotated.type.argument.option")),
-      checkbox("REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED", JavaBundle.message("inspection.nullable.problems.notnull.overrides.option")),
-      checkbox("REPORT_NOT_ANNOTATED_GETTER", JavaBundle.message("inspection.nullable.problems.not.annotated.getters.for.annotated.fields")),
-      checkbox("REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER", JavaBundle.message("inspection.nullable.problems.notnull.parameters.with.null.literal.option")),
-      checkbox("REPORT_NULLABILITY_ANNOTATION_ON_LOCALS", JavaBundle.message("inspection.nullable.problems.nullability.on.locals")),
-      checkbox("REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS", JavaBundle.message(
-        "inspection.nullable.problems.notnull.to.nullable.assignment.conflicts")),
-      checkbox("REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER", JavaBundle.message(
-        "inspection.nullable.problems.redundant.nullability.inside.container")),
+      group(JavaBundle.message("inspection.nullable.problems.group.overrides"),
+            checkbox("REPORT_NULLABLE_RETURN_OVERRIDES_NOTNULL",
+                     JavaBundle.message("inspection.nullable.problems.option.nullable.return.overrides.notnull"))
+              .description(JavaBundle.message("inspection.nullable.problems.option.nullable.return.overrides.notnull.description")),
+            checkbox("REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE",
+                     JavaBundle.message("inspection.nullable.problems.option.notnull.parameter.overrides.nullable"))
+              .description(JavaBundle.message("inspection.nullable.problems.option.notnull.parameter.overrides.nullable.description")),
+            checkbox("REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL",
+                     JavaBundle.message("inspection.nullable.problems.option.nullable.parameter.overrides.notnull"))
+              .description(JavaBundle.message("inspection.nullable.problems.option.nullable.parameter.overrides.notnull.description")),
+            checkbox("REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL",
+                     JavaBundle.message("inspection.nullable.problems.option.not.annotated.overrides.notnull"))
+              .description(JavaBundle.message("inspection.nullable.problems.option.not.annotated.overrides.notnull.description")),
+            checkbox("REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED",
+                     JavaBundle.message("inspection.nullable.problems.option.notnull.parameter.overrides.not.annotated"))
+              .description(JavaBundle.message("inspection.nullable.problems.option.notnull.parameter.overrides.not.annotated.description")),
+            separator(),
+            // not nested under a single option on purpose: it also applies to the nullable-parameter check above
+            checkbox("IGNORE_EXTERNAL_SUPER_NOTNULL",
+                     JavaBundle.message("inspection.nullable.problems.option.ignore.external.notnull"))
+              .description(JavaBundle.message("inspection.nullable.problems.option.ignore.external.notnull.description"))),
+      group(JavaBundle.message("inspection.nullable.problems.group.generics"),
+            checkbox("REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE",
+                     JavaBundle.message("inspection.nullable.problems.option.unspecified.type.argument"))
+              .description(JavaBundle.message("inspection.nullable.problems.option.unspecified.type.argument.description")),
+            checkbox("REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS",
+                     JavaBundle.message("inspection.nullable.problems.option.notnull.to.nullable.assignment"))
+              .description(JavaBundle.message("inspection.nullable.problems.option.notnull.to.nullable.assignment.description"))),
+      group(JavaBundle.message("inspection.nullable.problems.group.declarations"),
+            checkbox("REPORT_NOT_ANNOTATED_GETTER",
+                     JavaBundle.message("inspection.nullable.problems.option.field.accessors.not.annotated"))
+              .description(JavaBundle.message("inspection.nullable.problems.option.field.accessors.not.annotated.description")),
+            checkbox("REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER",
+                     JavaBundle.message("inspection.nullable.problems.option.null.passed.to.notnull.parameter"))
+              .description(JavaBundle.message("inspection.nullable.problems.option.null.passed.to.notnull.parameter.description")),
+            checkbox("REPORT_NULLABILITY_ANNOTATION_ON_LOCALS",
+                     JavaBundle.message("inspection.nullable.problems.option.annotation.on.local.or.catch"))
+              .description(JavaBundle.message("inspection.nullable.problems.option.annotation.on.local.or.catch.description")),
+            checkbox("REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER",
+                     JavaBundle.message("inspection.nullable.problems.option.redundant.annotation.under.container"))
+              .description(JavaBundle.message("inspection.nullable.problems.option.redundant.annotation.under.container.description"))),
       JavaConfigurationDialogKind.NULLABILITY_ANNOTATIONS.button()
     );
   }

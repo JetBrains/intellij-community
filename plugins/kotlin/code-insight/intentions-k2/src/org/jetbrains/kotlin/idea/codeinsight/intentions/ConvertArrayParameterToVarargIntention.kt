@@ -1,0 +1,88 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea.codeinsight.intentions
+
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.arrayElementType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtTypeProjection
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.types.Variance
+
+internal class ConvertArrayParameterToVarargIntention :
+    KotlinApplicableModCommandAction<KtParameter, KtTypeReference>(KtParameter::class) {
+
+    override fun getFamilyName(): @IntentionFamilyName String =
+        KotlinBundle.message("convert.to.vararg.parameter")
+
+    override fun isApplicableByPsi(element: KtParameter): Boolean =
+        !element.isLambdaParameter && !element.isVarArg && !element.isFunctionTypeParameter
+
+    override fun getActionPresentation(context: ActionContext, element: KtParameter): Presentation? = analyze(element) {
+        val typeReference = element.typeReference ?: return null
+        val symbol = element.symbol as? KaValueParameterSymbol ?: return null
+        val type = symbol.returnType as? KaClassType? ?: return null
+        val actionName = when {
+            type.isPrimitiveArray -> familyName
+            type.classId == StandardClassIds.Array -> {
+                val typeArgument = typeReference.typeElement?.typeArgumentsAsTypes?.firstOrNull()
+                val typeProjection = typeArgument?.parent as? KtTypeProjection
+                if (typeProjection?.hasModifier(KtTokens.IN_KEYWORD) != false) return null
+                if (!typeProjection.hasModifier(KtTokens.OUT_KEYWORD) &&
+                    !(type.arrayElementType?.let { !it.isMarkedNullable && it.classId in KaStandardTypeClassIds.PRIMITIVES } ?: true)
+                ) {
+                    KotlinBundle.message("0.may.break.code", familyName)
+                } else {
+                    familyName
+                }
+            }
+
+            else -> return null
+        }
+        return Presentation.of(actionName)
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    context(session: KaSession)
+    override fun prepareContext(element: KtParameter): KtTypeReference? {
+        val symbol = element.symbol as? KaValueParameterSymbol ?: return null
+        val elementType = symbol.returnType.arrayElementType ?: return null
+        val newType = elementType.render(position = Variance.IN_VARIANCE)
+        return KtPsiFactory(element.project).createType(newType)
+    }
+
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtParameter,
+        elementContext: KtTypeReference,
+        updater: ModPsiUpdater,
+    ) {
+        val typeReference = element.typeReference ?: return
+        shortenReferences(typeReference.replace(elementContext) as KtTypeReference)
+        element.addModifier(KtTokens.VARARG_KEYWORD)
+    }
+}
+
+private val KaClassType.isPrimitiveArray: Boolean
+    get() {
+        return StandardClassIds.elementTypeByPrimitiveArrayType.containsKey(classId)
+    }

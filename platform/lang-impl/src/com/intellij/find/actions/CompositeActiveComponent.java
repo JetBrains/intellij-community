@@ -2,11 +2,13 @@
 package com.intellij.find.actions;
 
 import com.intellij.ui.ActiveComponent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 
+@ApiStatus.Internal
 public final class CompositeActiveComponent implements ActiveComponent {
   private final ActiveComponent[] myComponents;
   private final JPanel myComponent;

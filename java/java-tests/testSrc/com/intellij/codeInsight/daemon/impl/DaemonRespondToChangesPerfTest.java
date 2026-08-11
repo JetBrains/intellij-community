@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.completion.CompletionContributor;
@@ -122,7 +122,7 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
     @NonNls String filePath = "/psi/resolve/Thinlet.java";
     configureByFile(filePath);
     type(' ');
-    CompletionContributor.forLanguage(getFile().getLanguage());
+    CompletionContributor.forLanguage(getFile().getLanguage(), getEditor());
     myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR);
 
     int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, false));
@@ -219,7 +219,7 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
     configureByFile(filePath);
 
     type(' ');
-    CompletionContributor.forLanguage(getFile().getLanguage());
+    CompletionContributor.forLanguage(getFile().getLanguage(), getEditor());
     long s = System.currentTimeMillis();
     myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR);
     if (DEBUG) {

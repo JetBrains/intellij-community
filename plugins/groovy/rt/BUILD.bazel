@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.groovy.rt` start
-
 jvm_library(
     name = "rt",
     srcs = glob(
@@ -23,7 +22,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//libraries/groovy",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//plugins/groovy/rt-constants:constants-rt",
     ],
 )
@@ -49,6 +48,7 @@ jvm_library(
         # do not sort,
         ":rt",
         "//libraries/groovy:groovy_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//plugins/groovy/rt-constants:constants-rt_test_lib",
     ],
 )

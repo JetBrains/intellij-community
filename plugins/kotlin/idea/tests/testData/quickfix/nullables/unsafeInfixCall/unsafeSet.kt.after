@@ -1,5 +1,5 @@
 // "Replace with safe (?.) call" "true"
-// K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'Int?'.
+// K2_ERROR: UNSAFE_CALL
 
 operator fun Int.set(row: Int, column: Int, value: Int) {}
 fun foo(arg: Int?) {

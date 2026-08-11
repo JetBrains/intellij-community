@@ -1,8 +1,33 @@
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
 
-### auto-generated section `build intellij.platform.lang.impl` start
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
 
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
+
+jps_test(
+    name = "lang-tests_test",
+    timeout = "long",
+    data = [
+        ":testData",
+    ] + ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
+        "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
+        "-Dintellij.build.test.ignoreFirstAndLastTests=true",
+    ],
+    tags = ["community-aggregator"],
+    runtime_deps = [":lang-tests_test_lib"],
+)
+### skip generation section `test intellij.platform.lang.tests`
+
+### auto-generated section `build intellij.platform.lang.impl` start
 kt_javac_options(
     name = "custom-javac-options",
     add_exports = [
@@ -41,6 +66,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//platform/boot",
+        "//platform/kernel/rpc.lite",
         "//platform/core-api:core",
         "//platform/diff-api:diff",
         "//platform/editor-ui-api:editor-ui",
@@ -76,7 +102,7 @@ jvm_library(
         "//platform/built-in-server-api:builtInServer",
         "//libraries/miglayout-swing",
         "//platform/ide-core/plugins",
-        "@lib//:jna",
+        "//libraries/jna",
         "//libraries/lz4",
         "//platform/util",
         "//platform/service-container",
@@ -135,7 +161,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/storages",
         "//platform/util-ex",
-        "//platform/platform-impl/internal",
         "//platform/util/concurrency",
         "//platform/platform-impl/ui",
         "//platform/eel-provider",
@@ -154,6 +179,9 @@ jvm_library(
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/locking-impl",
         "//fleet/rhizomedb",
+        "//platform/testIntegration",
+        "//platform/testIntegration-ui",
+        "//platform/eel-nioFs",
     ],
 )
 
@@ -178,6 +206,7 @@ jvm_library(
         # do not sort,
         ":lang-impl",
         "//platform/boot:boot_test_lib",
+        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/diff-api:diff_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
@@ -213,6 +242,7 @@ jvm_library(
         "//platform/built-in-server-api:builtInServer_test_lib",
         "//libraries/miglayout-swing:miglayout-swing_test_lib",
         "//platform/ide-core/plugins:plugins_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//libraries/lz4:lz4_test_lib",
         "//platform/util:util_test_lib",
         "//platform/service-container:service-container_test_lib",
@@ -270,7 +300,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/util/storages:storages_test_lib",
         "//platform/util-ex:util-ex_test_lib",
-        "//platform/platform-impl/internal:internal_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/platform-impl/ui:ui_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
@@ -289,6 +318,9 @@ jvm_library(
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//platform/locking-impl:locking-impl_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/testIntegration:testIntegration_test_lib",
+        "//platform/testIntegration-ui:testIntegration-ui_test_lib",
+        "//platform/eel-nioFs:eel-nioFs_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.lang.impl` end
@@ -303,7 +335,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.lang.impl` end
 
 ### auto-generated section `build intellij.platform.lang.tests` start
-
 jvm_library(
     name = "lang-tests",
     srcs = glob(
@@ -429,7 +460,12 @@ jvm_library(
         "//platform/vcs-api:vcs_test_lib",
         "//libraries/oro-matcher",
         "//libraries/oro-matcher:oro-matcher_test_lib",
-        "@lib//:junit4",
+        "//platform/libraries/cglib",
+        "//platform/libraries/cglib:cglib_test_lib",
+        "//libraries/misc/plugin",
+        "//libraries/misc/plugin:plugin_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/platform-impl:ide-impl",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
@@ -461,6 +497,8 @@ jvm_library(
         "//platform/analysis-impl:analysis-impl_test_lib",
         "//platform/structure-view-impl:structureView",
         "//platform/structure-view-impl:structureView_test_lib",
+        "//platform/structure-view-impl/plugin",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//libraries/commons/logging",
         "//libraries/commons/logging:logging_test_lib",
         "//platform/testFramework",
@@ -540,6 +578,14 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
+        "//platform/todo/plugin",
+        "//platform/todo/plugin:plugin_test_lib",
+        "//java/plugin",
+        "//java/plugin:plugin_test_lib",
+        "//aether-dependency-resolver/plugin",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
+        "//java/java-backend:backend",
+        "//java/java-backend:backend_test_lib",
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//platform/project-frame",
@@ -548,6 +594,16 @@ jvm_library(
         "//platform/platform-impl:ide-impl-tests_test_lib",
         "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests",
         "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests_test_lib",
+        "//platform/testRunner",
+        "//platform/testRunner:testRunner_test_lib",
+        "//platform/testRunner/plugin",
+        "//platform/testRunner/plugin:plugin_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
+        "//platform/bazel-runfiles",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.lang.tests` end
@@ -560,11 +616,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.lang.tests` end
-
-### auto-generated section `test intellij.platform.lang.tests` start
-
-jps_test(
-    name = "lang-tests_test",
-    runtime_deps = [":lang-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.lang.tests` end

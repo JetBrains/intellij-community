@@ -13,7 +13,7 @@ class DefaultTabPainterAdapter(override val tabPainter: JBTabPainter) : TabPaint
     val info = label.info
     val rect = Rectangle(0, 0, label.width, label.height)
     val g2d = g as Graphics2D
-    if (info == tabs.selectedInfo && tabs.getVisibleInfos().size > 1) {
+    if (info == tabs.selectedInfo && (tabs.getVisibleInfos().size > 1 || label.showSingleSelection)) {
       tabPainter.paintSelectedTab(
         position = tabs.tabsPosition,
         g = g2d,

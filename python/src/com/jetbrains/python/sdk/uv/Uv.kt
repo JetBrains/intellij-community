@@ -5,6 +5,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.sdk.add.v2.PathHolder
@@ -27,8 +28,8 @@ internal interface UvLowLevel<P : PathHolder> {
   /**
   * Manage project dependencies by adding/removing them to the project along side installation
   */
-  suspend fun addDependency(pyPackages: PythonPackageInstallRequest, options: List<String>, workspaceMember: PyWorkspaceMember? = null): PyResult<Unit>
-  suspend fun removeDependencies(pyPackages: Array<out String>, workspaceMember: PyWorkspaceMember? = null): PyResult<Unit>
+  suspend fun addDependency(pyPackages: PythonPackageInstallRequest, options: List<String>, workspaceMember: PyWorkspaceMember? = null, dependencyGroup: PyDependencyGroup? = null): PyResult<Unit>
+  suspend fun removeDependencies(pyPackages: Array<out String>, workspaceMember: PyWorkspaceMember? = null, dependencyGroup: PyDependencyGroup? = null): PyResult<Unit>
 
   /**
    * Managing environment packages directly w/o depending or changing the project

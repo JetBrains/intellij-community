@@ -2,12 +2,15 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.isBooleanType
-import org.jetbrains.kotlin.analysis.api.components.isPrimitive
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.withNullability
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.SurroundWithLambdaForTypeMismatchFix
 import org.jetbrains.kotlin.psi.KtExpression
@@ -38,13 +41,15 @@ internal object SurroundWithLambdaForTypeMismatchFixFactory {
         )
     }
 
-    private fun KaSession.createFixIfAvailable(
+    @OptIn(KaExperimentalApi::class)
+    context(session: KaSession)
+    private fun createFixIfAvailable(
         element: PsiElement?,
         expectedType: KaType,
         actualType: KaType,
     ): SurroundWithLambdaForTypeMismatchFix? {
         if (element !is KtExpression || expectedType !is KaFunctionType) return null
-        if (expectedType.arity > 1) return null
+        if (expectedType.parameters.size > 1) return null
         val lambdaReturnType = expectedType.returnType
 
         if (actualType.withNullability(isMarkedNullable = false).isSubtypeOf(lambdaReturnType) ||
@@ -56,5 +61,6 @@ internal object SurroundWithLambdaForTypeMismatchFixFactory {
     }
 
     context(_: KaSession)
-    private fun KaType.isPrimitiveNumberType(): Boolean = isPrimitive && !isBooleanType
+    private fun KaType.isPrimitiveNumberType(): Boolean =
+        classId in KaStandardTypeClassIds.PRIMITIVES && classId != KaStandardTypeClassIds.BOOLEAN
 }

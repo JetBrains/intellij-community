@@ -13,14 +13,38 @@
   ]]></description>
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.syntax.psi"/>
+    <module name="intellij.platform.util.ui"/>
+    <!-- endregion -->
   </dependencies>
 
   <content namespace="jetbrains">
     <module name="intellij.json.frontend.split"/>
     <module name="intellij.json" loading="embedded"/>
-    <module name="intellij.json.backend"/>
+    <module name="intellij.json.backend" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.json.networknt.wrapper" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.json.networknt.wrapper.libraries.jsonSchemaValidator" loading="required"/>
     <module name="intellij.json.backend.regexp" loading="optional"/>
     <module name="intellij.json.structureView" loading="optional"/>
     <module name="intellij.json.syntax" loading="embedded"/>
   </content>  
+
+  <content>
+    <module name="intellij.libraries.joni" loading="required"/>
+  </content>
 </idea-plugin>

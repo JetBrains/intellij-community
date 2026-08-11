@@ -33,6 +33,7 @@ import com.intellij.ui.components.JBLabelDecorator;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JCheckBox;
@@ -44,6 +45,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class MoveFilesOrDirectoriesDialog extends RefactoringDialog {
   private static final String MOVE_FILE = "MoveFile";
   private static final String RECENT_KEYS = "MoveFile.RECENT_KEYS";

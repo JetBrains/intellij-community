@@ -10,7 +10,6 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.getOrNull
@@ -18,13 +17,14 @@ import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.findPackageSpecification
-import com.jetbrains.python.packaging.pyRequirement
+import com.intellij.python.requirements.pyRequirement
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
-import com.jetbrains.python.util.ShowingMessageErrorSync
+import com.jetbrains.python.errorProcessing.ErrorSink
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -46,7 +46,7 @@ import org.jetbrains.annotations.Nls
 @ApiStatus.Experimental
 class PythonPackageManagerUI private constructor(
   @get:ApiStatus.Internal val manager: PythonPackageManager,
-  @get:ApiStatus.Internal val sink: ErrorSink = ShowingMessageErrorSync,
+  @get:ApiStatus.Internal val sink: ErrorSink = ErrorSink(),
 ) {
   @ApiStatus.Internal
   val project: Project = manager.project
@@ -87,13 +87,14 @@ class PythonPackageManagerUI private constructor(
    * @return List of all installed packages or null if the operation was failed.
    */
   @ApiStatus.Internal
-  suspend fun installPackagesRequestBackground(
+  internal suspend fun installPackagesRequestBackground(
     installRequest: PythonPackageInstallRequest,
     options: List<String> = emptyList(),
     module: Module? = null,
+    dependencyGroup: PyDependencyGroup? = null,
   ): List<PythonPackage>? {
     return executeCommand(getProgressTitle(installRequest)) {
-      manager.installPackage(installRequest, options, module)
+      manager.installPackage(installRequest, options, module, dependencyGroup)
     }
   }
 
@@ -135,6 +136,7 @@ class PythonPackageManagerUI private constructor(
   suspend fun uninstallPackagesBackground(
     packages: List<String>,
     workspaceMember: PyWorkspaceMember? = null,
+    dependencyGroup: PyDependencyGroup? = null,
   ): List<PythonPackage>? {
     val progressTitle = if (packages.size > 1) {
       PyBundle.message("python.packaging.uninstall.packages")
@@ -145,7 +147,7 @@ class PythonPackageManagerUI private constructor(
 
     return executeCommand(progressTitle
     ) {
-      manager.uninstallPackage(*packages.toTypedArray(), workspaceMember = workspaceMember)
+      manager.uninstallPackage(*packages.toTypedArray(), workspaceMember = workspaceMember, dependencyGroup = dependencyGroup)
     }
   }
 
@@ -198,7 +200,7 @@ class PythonPackageManagerUI private constructor(
     @JvmStatic
     @JvmOverloads
     @ApiStatus.Internal
-    fun forSdk(project: Project, sdk: Sdk, sink: ErrorSink = ShowingMessageErrorSync): PythonPackageManagerUI {
+    fun forSdk(project: Project, sdk: Sdk, sink: ErrorSink = ErrorSink()): PythonPackageManagerUI {
       val packageManager = PythonPackageManager.forSdk(project, sdk)
       return PythonPackageManagerUI(packageManager, sink)
     }
@@ -206,6 +208,6 @@ class PythonPackageManagerUI private constructor(
     @ApiStatus.Experimental
     fun forPackageManager(
       packageManager: PythonPackageManager,
-    ): PythonPackageManagerUI = PythonPackageManagerUI(packageManager, ShowingMessageErrorSync)
+    ): PythonPackageManagerUI = PythonPackageManagerUI(packageManager, ErrorSink())
   }
 }

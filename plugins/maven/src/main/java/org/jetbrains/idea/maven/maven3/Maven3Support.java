@@ -51,10 +51,12 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
     final List<Path> classpath = new ArrayList<>();
 
     if (MavenUtil.isRunningFromSources()) {
+      // JPS module outputs only - no assembled plugin layout to read from
       MavenLog.LOG.debug("collecting classpath for local run");
       prepareClassPathForLocalRunAndUnitTests(distribution.getVersion(), classpath);
     }
     else {
+      // an installed IDE *and* a dev build: both ship the same plugin layout
       MavenLog.LOG.debug("collecting classpath for production");
       prepareClassPathForProduction(distribution.getVersion(), classpath);
     }
@@ -76,7 +78,7 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
 
   private void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<Path> classpath) {
     BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
-    BundledMavenDownloader.INSTANCE.downloadMaven3LibsSync(communityRoot);
+    Path maven3Libs = BundledMavenDownloader.INSTANCE.downloadMaven3LibsSync(communityRoot);
 
     classpath.add(PathManager.getJarForClass(MavenId.class));
     classpath.add(locateModuleOutput("intellij.maven.server"));
@@ -84,9 +86,8 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
     classpath.add(locateModuleOutput("intellij.maven.server.telemetry"));
     classpath.addAll(MavenUtil.collectClasspath(MavenServerTelemetryClasspathUtil.TELEMETRY_CLASSES));
 
-    Path parentFile = MavenUtil.getMavenPluginParentFile();
     classpath.add(locateModuleOutput("intellij.maven.server.m3.common"));
-    addDir(classpath, parentFile.resolve("maven3-server-common/lib"), f -> true);
+    addDir(classpath, maven3Libs, ignored -> true);
 
     classpath.add(locateModuleOutput("intellij.maven.server.m3.impl"));
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {

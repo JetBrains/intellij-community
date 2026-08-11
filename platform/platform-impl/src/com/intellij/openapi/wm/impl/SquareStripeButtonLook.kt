@@ -3,14 +3,17 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionButtonComponent
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.toolWindow.ResizeStripeManager
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.ui.icons.HoledIcon
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBValue
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
+import java.awt.Component
 import java.awt.Graphics
 import java.awt.Insets
 import java.awt.Point
@@ -22,13 +25,39 @@ import javax.swing.UIManager
 /**
  * @author Konstantin Bulenkov
  */
-internal open class SquareStripeButtonLook(private val button: ActionButton) : IdeaActionButtonLook() {
+@ApiStatus.Internal
+open class SquareStripeButtonLook(private val button: AbstractSquareStripeButton) : IdeaActionButtonLook() {
   companion object {
-    fun getIconPadding(isLeft: Boolean): Insets {
-      return JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding(
-        isLeft,
-        ResizeStripeManager.isShowNames()
-      )
+
+    fun getIconPadding(c: Component): Insets {
+      val toolbarAnchor = c.getToolbarAnchor() ?: return JBUI.emptyInsets()
+      return getIconPadding(toolbarAnchor)
+    }
+
+    fun getIconPadding(toolbarAnchor: ToolWindowAnchorEnum): Insets {
+      val extension = ToolWindowExtension.getInstance()
+      if (extension != null) {
+        return extension.getIconPadding(toolbarAnchor)
+      }
+
+      return when (toolbarAnchor) {
+        ToolWindowAnchorEnum.LEFT,
+        ToolWindowAnchorEnum.RIGHT,
+          -> JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding(
+          toolbarAnchor == ToolWindowAnchorEnum.LEFT, ResizeStripeManager.isShowNames())
+        else -> JBUI.emptyInsets() // Not possible without ToolWindowExtension
+      }
+    }
+
+    fun getTextOffset(c: Component): Int {
+      val toolbarAnchor = c.getToolbarAnchor() ?: return 0
+      val isLeft = when (toolbarAnchor) {
+        ToolWindowAnchorEnum.LEFT -> true
+        ToolWindowAnchorEnum.RIGHT -> false
+        else -> return 0
+      }
+
+      return JBUI.CurrentTheme.Toolbar.stripeToolbarTextOffset(isLeft)
     }
   }
 
@@ -36,7 +65,7 @@ internal open class SquareStripeButtonLook(private val button: ActionButton) : I
     val initialColor = getStateBackground(component, state) ?: return
     val rect = Rectangle(component.size).also {
       JBInsets.removeFrom(it, component.insets)
-      JBInsets.removeFrom(it, getIconPadding(component.isOnTheLeftStripe()))
+      JBInsets.removeFrom(it, getIconPadding(component))
     }
 
     val color = getBackgroundColor(initialColor)
@@ -65,7 +94,7 @@ internal open class SquareStripeButtonLook(private val button: ActionButton) : I
 
     val rect = Rectangle(component.size).also {
       JBInsets.removeFrom(it, component.insets)
-      JBInsets.removeFrom(it, getIconPadding(component.isOnTheLeftStripe()))
+      JBInsets.removeFrom(it, getIconPadding(component))
     }
 
     val color = if (state == ActionButtonComponent.PUSHED) JBUI.CurrentTheme.ActionButton.pressedBorder()
@@ -84,7 +113,7 @@ internal open class SquareStripeButtonLook(private val button: ActionButton) : I
   override fun getIconPosition(actionButton: ActionButtonComponent, icon: Icon): Point {
     val rect = Rectangle(actionButton.getWidth(), actionButton.getHeight())
     JBInsets.removeFrom(rect, actionButton.insets)
-    JBInsets.removeFrom(rect, getIconPadding(button.isOnTheLeftStripe()))
+    JBInsets.removeFrom(rect, getIconPadding(button))
     if (icon is HoledIcon) {
       // If the icon has a badge, we need to make sure that the original icon stays in place and not "dancing"
       // as the badge is added and removed (e.g., a build is starting and finishing).
@@ -112,7 +141,23 @@ internal open class SquareStripeButtonLook(private val button: ActionButton) : I
     super.paintIcon(g, actionButton, toStrokeIcon(icon, UIManager.getColor("ToolWindow.Button.selectedForeground")))
   }
 
-  override fun getButtonArc() = JBUI.CurrentTheme.Toolbar.stripeButtonArc(UISettings.getInstance().compactMode)
+  override fun getButtonArc(): JBValue = JBUI.CurrentTheme.Toolbar.stripeButtonArc(UISettings.getInstance().compactMode)
+
+  open fun paintDraggingButton(g: Graphics, toolbarAnchor: ToolWindowAnchorEnum) {
+    val areaSize = button.size.also {
+      JBInsets.removeFrom(it, button.insets)
+      JBInsets.removeFrom(it, getIconPadding(toolbarAnchor))
+    }
+
+    val color = JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
+    val rect = Rectangle(areaSize)
+    paintLookBackground(g, rect, color)
+    val icon = button.icon
+    val x = (areaSize.width - icon.iconWidth) / 2
+    val y = (areaSize.height - icon.iconHeight) / 2
+    paintIcon(g, button, icon, x, y)
+    paintLookBorder(g, rect, color)
+  }
 }
 
 private fun centerIcon(rect: Rectangle, icon: Icon): Point {

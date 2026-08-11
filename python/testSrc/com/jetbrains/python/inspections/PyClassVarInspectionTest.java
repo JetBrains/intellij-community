@@ -1,10 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyClassVarInspectionTest extends PyInspectionTestCase {
 
   public void testCanAssignOnClassAttribute() {
@@ -111,6 +117,19 @@ public class PyClassVarInspectionTest extends PyInspectionTestCase {
                                                   x = 1  # type: int
                                               class B(A):
                                                   <warning descr="Cannot override instance variable 'x' (previously declared in base class 'A') with class variable">x</warning> = 2  # type: ClassVar[int]"""));
+  }
+
+  // A final attribute initialized in a class body must be inferred as a class variable, but it makes more sense
+  // to report it in PyFinalInspection
+  @TestFor(issues = "PY-88933")
+  public void testOverrideClassVarWithFinalNotReportedAsInstanceVariable() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("""
+                                              from typing import ClassVar, Final
+                                              class A:
+                                                  x: ClassVar[int]
+                                              class B(A):
+                                                  x: Final[int] = 1"""));
   }
 
   public void testOverrideClassVarWithImplicitThenExplicitMultiFile() {
@@ -340,7 +359,7 @@ public class PyClassVarInspectionTest extends PyInspectionTestCase {
                                               from typing import ClassVar
                                               
                                               class Clazz:
-                                                  a: ClassVar[int] = <warning descr="Expected type 'int', got 'str' instead">"abc"</warning>
+                                                  a: ClassVar[int] = <warning descr="Expected type 'int', got 'Literal[\\"abc\\"]' instead">"abc"</warning>
                                                   b: ClassVar[int] = <warning descr="Expected type 'int', got 'float' instead">1.0</warning>
                                                   d: ClassVar[list[str]] = <warning descr="Expected type 'list[str]', got 'list[int]' instead">[1, 2]</warning>
                                                   e: ClassVar[dict[str, int]] = <warning descr="Expected type 'dict[str, int]', got 'dict[str, str]' instead">{"a": "b"}</warning>

@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.update.UpdatedFiles
+import git4idea.GitBranch
 import git4idea.branch.GitBranchPair
 import git4idea.branch.GitBrancher
 import git4idea.commands.Git
@@ -27,12 +28,15 @@ internal class GitResetUpdater(
   override fun doUpdate(): GitUpdateResult {
     val localBranchName = branchPair.source.name
     val remoteBranchName = branchPair.target.name
-
-    if (!hasRemoteChanges(remoteBranchName)) return GitUpdateResult.NOTHING_TO_UPDATE
-
     performBranchReset(localBranchName, remoteBranchName)
 
-    return if (!hasRemoteChanges(remoteBranchName)) GitUpdateResult.SUCCESS else GitUpdateResult.ERROR
+    return if (!hasRemoteChanges(branchPair.target)) GitUpdateResult.SUCCESS else GitUpdateResult.ERROR
+  }
+
+  override fun hasRemoteChanges(remoteBranch: GitBranch): Boolean {
+    // We should still reset and drop local commits in case when remote branch has no new commits
+    val remoteHash = checkNotNull(repository.branches.getHash(remoteBranch)?.asString()) { "Failed to resolve remote branch hash" }
+    return repository.currentRevision != remoteHash
   }
 
   private fun performBranchReset(

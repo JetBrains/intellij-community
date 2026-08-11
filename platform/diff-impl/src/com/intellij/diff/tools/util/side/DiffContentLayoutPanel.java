@@ -26,6 +26,7 @@ public class DiffContentLayoutPanel extends JBPanel<DiffContentLayoutPanel> {
 
   public DiffContentLayoutPanel(@NotNull JComponent content) {
     myContent = content;
+    setBackground(DiffUtil.getDiffContentBackground());
 
     initLayout(this, myTitle, myTopBreadcrumbs, myContent, myBottomBreadcrumbs);
   }
@@ -113,10 +114,6 @@ public class DiffContentLayoutPanel extends JBPanel<DiffContentLayoutPanel> {
 
         totalWidth = Math.max(size.width, totalWidth);
         totalHeight += size.height;
-
-        if (component == myTitle && size.height != 0) {
-          totalHeight += DiffUtil.TITLE_GAP.get();
-        }
       }
 
       return new Dimension(totalWidth, totalHeight);
@@ -136,7 +133,6 @@ public class DiffContentLayoutPanel extends JBPanel<DiffContentLayoutPanel> {
 
       myTitle.setBounds(0, y, width, titleSize.height);
       y += titleSize.height;
-      if (titleSize.height != 0) y += DiffUtil.TITLE_GAP.get();
 
       myTopBreadcrumbs.setBounds(0, y, width, topSize.height);
       y += topSize.height;

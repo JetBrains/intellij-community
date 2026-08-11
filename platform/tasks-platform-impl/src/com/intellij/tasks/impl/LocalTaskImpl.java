@@ -24,6 +24,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.util.xmlb.annotations.XMap;
 import icons.TasksIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,14 +77,17 @@ public class LocalTaskImpl extends LocalTask {
   private List<String> myPropertiesToShowInPreview = new ArrayList<>();
 
   /** for serialization */
+  @ApiStatus.Internal
   public LocalTaskImpl() {
   }
 
+  @ApiStatus.Internal
   public LocalTaskImpl(@NotNull String id, @NotNull @Nls String summary) {
     myId = id;
     mySummary = summary;
   }
 
+  @ApiStatus.Internal
   public LocalTaskImpl(Task origin) {
 
     myId = origin.getId();

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -21,7 +22,7 @@ import java.util.List;
 public interface CustomLanguageASTComparator {
   LanguageExtension<CustomLanguageASTComparator> EXTENSION_POINT_NAME = new LanguageExtension<>("com.intellij.tree.CustomLanguageASTComparator");
 
-  static List<CustomLanguageASTComparator> getMatchingComparators(@NotNull PsiFile file) {
+  static @Unmodifiable List<CustomLanguageASTComparator> getMatchingComparators(@NotNull PsiFile file) {
     return EXTENSION_POINT_NAME.allForLanguage(file.getLanguage());
   }
 

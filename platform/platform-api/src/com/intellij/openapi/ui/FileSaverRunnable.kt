@@ -33,7 +33,7 @@ open class FileSaverRunnable<T : JComponent>(
   protected fun chooseFile(descriptor: FileChooserDescriptor) {
     val saverDescriptor = FileSaverDescriptor(descriptor)
     val initialFile = getInitialFile()
-    val virtualFileWrapper = FileChooserFactory.getInstance().createSaveFileDialog(saverDescriptor, textComponent).save(initialFile.first, initialFile.second)
+    val virtualFileWrapper = FileChooserFactory.getInstance().createSaveFileDialog(saverDescriptor, project).save(initialFile.first, initialFile.second)
     virtualFileWrapper?.file?.let { onFileChosen(it) }
   }
 

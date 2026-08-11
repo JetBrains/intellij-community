@@ -48,7 +48,7 @@ public class LineSetIncrementalUpdateTest {
     CharSequence newText = StringUtil.replaceSubSequence(initialText, start, end, replacement);
 
     LineSet initial = LineSet.createLineSet(initialText);
-    LineSet updated = initial.update(initialText, start, end, replacement, false);
+    LineSet updated = initial.update(initialText, start, end, replacement);
     LineSet fresh = LineSet.createLineSet(newText);
 
     assertEquals(fresh.getLineCount(), updated.getLineCount(), "line count");

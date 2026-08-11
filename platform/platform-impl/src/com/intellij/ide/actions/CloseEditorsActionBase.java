@@ -27,7 +27,10 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
   protected List<Pair<EditorComposite, EditorWindow>> getFilesToClose(@NotNull AnActionEvent event) {
     List<Pair<EditorComposite, EditorWindow>> result = new ArrayList<>();
     DataContext dataContext = event.getDataContext();
-    Project project = event.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = event.getData(CommonDataKeys.PROJECT);
+    if (project == null) {
+      return result;
+    }
     FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);
     EditorWindow[] windows = editorWindow == null ? fileEditorManager.getWindows() : new EditorWindow[]{editorWindow};
@@ -56,14 +59,14 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) {
+      return;
+    }
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
       project, () -> {
         List<Pair<EditorComposite, EditorWindow>> filesToClose = getFilesToClose(e);
-        for (int i = 0; i != filesToClose.size(); ++i) {
-          final Pair<EditorComposite, EditorWindow> we = filesToClose.get(i);
-          we.getSecond().closeFile(we.getFirst().getFile());
-        }
+        FileEditorManagerEx.getInstanceEx(project).closeFilesWithChecks(filesToClose);
       }, IdeBundle.message("command.close.all.unmodified.editors"), null
     );
   }

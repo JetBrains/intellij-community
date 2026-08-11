@@ -128,8 +128,8 @@ class CompoundDumpItem<T : DumpItem>(
 
   companion object {
     @JvmStatic
-    fun mergeThreadDumpItems(originalItems: List<MergeableDumpItem>): List<DumpItem> {
-      val groups = originalItems.groupBy { it.mergeableToken }
+    fun mergeThreadDumpItems(originalItems: List<DumpItem>): List<DumpItem> {
+      val groups = originalItems.groupBy { if (it is MergeableDumpItem) it.mergeableToken else MergeableToken.Unique(it) }
       // Map every original treeId to the treeId of the representative of the merge group
       val idToCompoundId = hashMapOf<Long, Long?>()
       for ((token, items) in groups) {
@@ -148,11 +148,11 @@ class CompoundDumpItem<T : DumpItem>(
 }
 
 @ApiStatus.Internal
-fun toDumpItems(threadStates: List<ThreadState>): List<MergeableDumpItem> =
+fun toDumpItems(threadStates: List<ThreadState>): List<DumpItem> =
   toDumpItems(threadStates, emptyList())
 
 @ApiStatus.Internal
-fun toDumpItems(threadStates: List<ThreadState>, threadContainerDescriptors: List<JavaThreadContainerDesc>): List<MergeableDumpItem> {
+fun toDumpItems(threadStates: List<ThreadState>, threadContainerDescriptors: List<JavaThreadContainerDesc>): List<DumpItem> {
   val threadDumpItems = threadStates.map { ThreadDumpItemFactory.createDumpItem(it) }
 
   val statesToItems = threadStates.zip(threadDumpItems).toMap()
@@ -181,7 +181,17 @@ fun toDumpItems(threadStates: List<ThreadState>, threadContainerDescriptors: Lis
 @ApiStatus.Internal
 data class JavaThreadContainerDesc(val name: String, val containerId: Long, val parentId: Long?)
 
-internal class JavaThreadDumpItem(private val threadState: ThreadState) : MergeableDumpItem {
+internal fun createJavaThreadDumpItem(threadState: ThreadState): DumpItem {
+  val item = JavaThreadDumpItem(threadState)
+  val count = threadState.similarThreadsCount
+  return if (count > 1) {
+    CompoundDumpItem(item, count)
+  } else {
+    item
+  }
+}
+
+private class JavaThreadDumpItem(private val threadState: ThreadState) : MergeableDumpItem {
   override val name: String = threadState.name
 
   override val isContainer: Boolean
@@ -315,6 +325,7 @@ internal class JavaThreadDumpItem(private val threadState: ThreadState) : Mergea
       if (threadState.awaitingThreads != otherThreadState.awaitingThreads) return false
       if (threadState.deadlockedThreads != otherThreadState.deadlockedThreads) return false
       if (this.comparableStackTrace != other.comparableStackTrace) return false
+      if (parentTreeId != other.item.parentTreeId) return false
       return true
     }
 
@@ -328,7 +339,8 @@ internal class JavaThreadDumpItem(private val threadState: ThreadState) : Mergea
         threadState.extraState,
         threadState.awaitingThreads,
         threadState.deadlockedThreads,
-        comparableStackTrace
+        comparableStackTrace,
+        parentTreeId
       )
     }
   }

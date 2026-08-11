@@ -20,10 +20,9 @@ import org.jetbrains.annotations.ApiStatus
 
 class PythonInstallPackageFilter(val project: Project, var editor: EditorImpl? = null) : Filter {
   override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
-
     val (pythonSdk, packageName) = getInstallablePackageName(project, editor, line) ?: return null
-
-    val info = InstallPackageButtonItem(project, pythonSdk, entireLength - line.length + "ModuleNotFoundError:".length, packageName)
+    val info = InstallPackageButtonItem(project, pythonSdk, entireLength, packageName)
+    
     return Filter.Result(
       listOf(
         info,

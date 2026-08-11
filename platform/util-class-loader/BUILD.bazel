@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.util.classLoader` start
-
 jvm_library(
     name = "util-classLoader",
     srcs = glob(
@@ -17,7 +16,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util/rt-java8",
     ],
 )
@@ -35,6 +34,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":util-classLoader",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util/rt-java8:rt-java8_test_lib",
     ],
 )

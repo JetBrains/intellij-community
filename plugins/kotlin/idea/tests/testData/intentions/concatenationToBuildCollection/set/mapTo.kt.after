@@ -1,7 +1,0 @@
-fun main() {
-    val a = buildSet {
-        addAll(setOf(1,2))
-        addAll(listOf(1).mapTo(mutableListOf()) { it })
-    }
-}
-

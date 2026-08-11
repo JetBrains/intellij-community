@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.AddCallSuperQuickFix;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -40,7 +41,6 @@ import java.util.Optional;
 
 import static com.jetbrains.python.PyNames.CANONICAL_SELF;
 import static com.jetbrains.python.PyNames.INIT;
-import static com.jetbrains.python.PyNames.OBJECT;
 import static com.jetbrains.python.PyNames.SUPER;
 import static com.jetbrains.python.PyNames.__CLASS__;
 
@@ -69,7 +69,7 @@ public final class PyMissingConstructorInspection extends PyInspection {
       final PsiElement[] superClasses = node.getSuperClassExpressions();
 
       if (superClasses.length == 0 ||
-          superClasses.length == 1 && OBJECT.equals(superClasses[0].getText()) ||
+          superClasses.length == 1 && PyNames.OBJECT.equals(superClasses[0].getText()) ||
           !superHasNonAbstractConstructor(node, myTypeEvalContext)) {
         return;
       }

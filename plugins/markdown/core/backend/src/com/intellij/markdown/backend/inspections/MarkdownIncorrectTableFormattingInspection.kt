@@ -1,0 +1,60 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.markdown.backend.inspections
+
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasValidAlignment
+import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.isCorrectlyFormatted
+import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnAlignment
+import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
+import com.intellij.markdown.backend.intentions.IntentionOnElementAtCaretWrapper
+import com.intellij.markdown.backend.intentions.FixCellAlignmentIntention
+import com.intellij.markdown.backend.intentions.ReformatTableIntention
+import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
+class MarkdownIncorrectTableFormattingInspection: LocalInspectionTool() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    return object: MarkdownElementVisitor() {
+      override fun visitTable(table: MarkdownTable) {
+        super.visitTable(table)
+        val tableStyle = getTableStyle(table.containingFile)
+        if (!table.isCorrectlyFormatted(tableStyle, checkAlignment = false)) {
+          holder.registerProblem(
+            table,
+            MarkdownBundle.message("markdown.incorrect.table.formatting.inspection.description"),
+            ReformatTableFix()
+          )
+        }
+      }
+
+      override fun visitElement(element: PsiElement) {
+        super.visitElement(element)
+        val cell = element as? MarkdownTableCell ?: return
+        val table = cell.parentTable ?: return
+        val tableStyle = getTableStyle(cell.containingFile)
+        val alignment = table.getColumnAlignment(cell.columnIndex)
+        if (alignment != MarkdownTableSeparatorRow.CellAlignment.NONE) {
+          if (!cell.hasValidAlignment(tableStyle)) {
+            holder.registerProblem(
+              element,
+              MarkdownBundle.message("markdown.incorrect.table.formatting.inspection.local.cell.description"),
+              FixCellAlignmentFix()
+            )
+          }
+        }
+      }
+    }
+  }
+
+  private class ReformatTableFix: IntentionOnElementAtCaretWrapper(ReformatTableIntention())
+
+  private class FixCellAlignmentFix: IntentionOnElementAtCaretWrapper(FixCellAlignmentIntention())
+}

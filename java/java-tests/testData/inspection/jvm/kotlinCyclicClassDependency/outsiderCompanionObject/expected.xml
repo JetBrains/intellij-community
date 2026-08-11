@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.kt</file>
+    <line>1</line>
+    <problem_class id="CyclicClassDependency" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Cyclic class dependency</problem_class>
+    <description>Class 'Foo' is cyclically dependent on class 'Bar'</description>
+  </problem>
+  <problem>
+    <file>Test.kt</file>
+    <line>6</line>
+    <problem_class id="CyclicClassDependency" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Cyclic class dependency</problem_class>
+    <description>Class 'Companion' is cyclically dependent on class 'Bar'</description>
+  </problem>
+  <problem>
+    <file>Test.kt</file>
+    <line>15</line>
+    <problem_class id="CyclicClassDependency" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Cyclic class dependency</problem_class>
+    <description>Class 'Bar' is cyclically dependent on classes 'Foo' and 'Foo.Companion'</description>
+  </problem>
+</problems>

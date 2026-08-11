@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("TestOnlyProblems", "ReplaceGetOrSet", "HardCodedStringLiteral")
 
+@file:ApiStatus.Internal
 package com.intellij.ide.plugins
 
 import com.intellij.diagnostic.PluginException
@@ -39,6 +40,7 @@ import io.github.classgraph.ScanResult
 import java.awt.Component
 import java.lang.reflect.Constructor
 import kotlin.properties.Delegates.notNull
+import org.jetbrains.annotations.ApiStatus
 
 internal class CreateAllServicesAndExtensionsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {

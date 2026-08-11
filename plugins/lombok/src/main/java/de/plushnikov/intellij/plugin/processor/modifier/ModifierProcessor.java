@@ -24,9 +24,9 @@ public interface ModifierProcessor {
   boolean isSupported(@NotNull PsiModifierList modifierList);
 
   /**
-   * Compute modification of  response for {@link PsiAugmentProvider#transformModifiers(PsiModifierList, Set)}.
+   * Compute modification of response for {@link PsiAugmentProvider#transformModifiers(PsiModifierList, Set)}.
    *
-   * @param modifierList Modifier List that will have mosifiers augmented
+   * @param modifierList Modifier List that will have modifiers augmented
    * @param modifiers    Set of modifiers that is currently present for the list
    */
   void transformModifiers(@NotNull PsiModifierList modifierList, final @NotNull Set<String> modifiers);

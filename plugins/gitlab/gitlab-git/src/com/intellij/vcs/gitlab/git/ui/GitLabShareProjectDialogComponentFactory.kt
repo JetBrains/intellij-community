@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGroupDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNamespaceDTO
+import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
@@ -70,7 +71,7 @@ internal object GitLabShareProjectDialogComponentFactory {
               vm.accounts.value.none { it.server == server && it.name == username }
             }) as? LoginResult.Success ?: return@link
 
-            vm.updateAccount(account, token)
+            vm.updateAccount(account, GitLabCredentials.Token(token))
           }.align(AlignX.RIGHT)
         }
 
@@ -83,7 +84,7 @@ internal object GitLabShareProjectDialogComponentFactory {
               vm.accounts.value.none { it.server == server && it.name == username }
             }) as? LoginResult.Success ?: return@link
 
-            vm.updateAccount(account, token)
+            vm.updateAccount(account, GitLabCredentials.Token(token))
           }
         }.visibleIf(vm.reloginRequired.asObservableIn(cs))
 

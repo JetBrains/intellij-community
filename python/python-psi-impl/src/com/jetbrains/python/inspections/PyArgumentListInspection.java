@@ -9,13 +9,9 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.util.XmlStringUtil;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonUiService;
@@ -33,23 +29,23 @@ import com.jetbrains.python.psi.PyKeywordArgument;
 import com.jetbrains.python.psi.PyStarArgument;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ParamHelper;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.PyABCUtil;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public final class PyArgumentListInspection extends PyInspection {
   @Override
@@ -82,24 +78,31 @@ public final class PyArgumentListInspection extends PyInspection {
     }
 
     @Override
+    public void visitPyStarArgument(@NotNull PyStarArgument node) {
+      if (node.isKeyword()) return;
+      ProblemHighlightType override = downgradeHighlightForTypeEngine ? ProblemHighlightType.INFORMATION : null;
+      checkKnownSizeTupleSpreadInCall(node, getHolder(), getResolveContext(), override);
+    }
+
+    @Override
     public void visitPyDecorator(@NotNull PyDecorator deco) {
       if (deco.hasArgumentList()) return;
-      final PyCallableType callableType = ContainerUtil.getFirstItem(deco.multiResolveCallee(getResolveContext()));
+      final PyCallableType callableType =
+        ContainerUtil.getFirstItem(deco.multiResolveCallee(getResolveContext()));
       if (callableType != null) {
         final PyCallable callable = callableType.getCallable();
         if (callable == null) return;
-        final int firstParamOffset = callableType.getImplicitOffset();
         final List<PyCallableParameter> params = callableType.getParameters(myTypeEvalContext);
         if (params == null) return;
 
-        final PyCallableParameter allegedFirstParam = ContainerUtil.getOrElse(params, firstParamOffset - 1, null);
+        final PyCallableParameter allegedFirstParam = ContainerUtil.getOrElse(params, 0, null);
         if (allegedFirstParam == null || allegedFirstParam.isKeywordContainer()) {
           // no parameters left to pass function implicitly, or wrong param type
-          registerProblem(deco, PyPsiBundle.message("INSP.function.lacks.positional.argument",
+          registerProblem(deco, PyPsiBundle.problemMessage("INSP.function.lacks.positional.argument",
                                                     callable.getName())); // TODO: better names for anon lambdas
         }
         else { // possible unfilled params
-          for (int i = firstParamOffset; i < params.size(); i++) {
+          for (int i = 1; i < params.size(); i++) {
             final PyCallableParameter parameter = params.get(i);
             if (parameter.isKeywordOnlySeparator() || parameter.isPositionOnlySeparator()) {
               continue;
@@ -107,12 +110,24 @@ public final class PyArgumentListInspection extends PyInspection {
             // param tuples, non-starred or non-default won't do
             if (!parameter.isKeywordContainer() && !parameter.isPositionalContainer() && !parameter.hasDefaultValue()) {
               final String parameterName = parameter.getName();
-              registerProblem(deco, PyPsiBundle.message("INSP.parameter.unfilled", parameterName == null ? "(...)" : parameterName));
+              registerProblem(deco, PyPsiBundle.problemMessage("INSP.parameter.unfilled", parameterName == null ? "(...)" : parameterName));
             }
           }
         }
       }
       // else: this case is handled by arglist visitor
+    }
+
+    @Override
+    public void visitPyClass(@NotNull PyClass node) {
+      // A class definition implicitly calls `__init_subclass__` of its base classes with the
+      // class-definition keyword arguments (e.g. `z="a"` in `class B(A, z="a")`).
+      if (node.getArguments(null).isEmpty()) return;
+      final PyArgumentList argumentList = node.getSuperClassExpressionList();
+      if (argumentList == null) return;
+      final List<PyCallExpression.PyArgumentsMapping> mappings = PyCallExpressionHelper.mapArguments(node, getResolveContext());
+      final ProblemHighlightType override = downgradeHighlightForTypeEngine ? ProblemHighlightType.INFORMATION : null;
+      highlightMappingProblems(argumentList, getHolder(), mappings, myTypeEvalContext, override);
     }
   }
 
@@ -120,7 +135,7 @@ public final class PyArgumentListInspection extends PyInspection {
                                             @NotNull ProblemsHolder holder,
                                             @NotNull PyResolveContext resolveContext,
                                             @Nullable ProblemHighlightType highlightOverride) {
-    if (node.getParent() instanceof PyClass) return; // `(object)` in `class Foo(object)` is also an arg list
+    if (node.getParent() instanceof PyClass) return; // `(object)` in `class Foo(object)` is also an arg list, handled in `visitPyClass`
     final PyCallExpression call = node.getCallExpression();
     if (call == null) return;
 
@@ -137,6 +152,18 @@ public final class PyArgumentListInspection extends PyInspection {
       }
     }
 
+    highlightMappingProblems(node, holder, mappings, context, highlightOverride);
+  }
+
+  /**
+   * Highlights unexpected arguments, unfilled parameters or otherwise incorrect arguments described by {@code mappings}
+   * on the given argument list {@code node} (a call's argument list or a class' base classes list).
+   */
+  private static void highlightMappingProblems(@NotNull PyArgumentList node,
+                                               @NotNull ProblemsHolder holder,
+                                               @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                               @NotNull TypeEvalContext context,
+                                               @Nullable ProblemHighlightType highlightOverride) {
     if (!mappings.isEmpty()) {
       boolean specificMismatchKindReported = false;
       if (ContainerUtil.all(mappings, mapping -> !mapping.getUnmappedArguments().isEmpty())) {
@@ -151,7 +178,65 @@ public final class PyArgumentListInspection extends PyInspection {
         highlightIncorrectArguments(node, holder, mappings, context, highlightOverride);
       }
     }
-    highlightStarArgumentTypeMismatch(node, holder, context, null); // NOT covered by Pyrefly
+  }
+
+  private static void checkKnownSizeTupleSpreadInCall(@NotNull PyStarArgument node,
+                                                      @NotNull ProblemsHolder holder,
+                                                      @NotNull PyResolveContext resolveContext,
+                                                      @Nullable ProblemHighlightType highlightOverride) {
+    PyExpression expr = node.getExpression();
+    if (expr == null) return;
+
+    PyType type = resolveContext.getTypeEvalContext().getType(expr);
+    if (!(type instanceof PyTupleType tupleType) || tupleType.isHomogeneous()) return;
+
+    PsiElement parent = node.getParent();
+    if (!(parent instanceof PyArgumentList argList)) return;
+    if (!(argList.getParent() instanceof PyCallExpression callExpr)) return;
+
+    int nonKeywordStarCount = 0;
+    for (PyExpression arg : argList.getArguments()) {
+      if (arg instanceof PyStarArgument sa && !sa.isKeyword()) nonKeywordStarCount++;
+    }
+    if (nonKeywordStarCount != 1) return;
+
+    List<PyCallExpression.PyArgumentsMapping> mappings = callExpr.multiMapArguments(resolveContext);
+    if (mappings.size() != 1) return;
+
+    List<PyCallableParameter> variadicParams = mappings.get(0).getParametersMappedToVariadicPositionalArguments();
+    if (variadicParams.isEmpty()) return;
+
+    int positionalAfter = 0;
+    boolean seenNode = false;
+    for (PyExpression arg : argList.getArguments()) {
+      if (arg == node) {
+        seenNode = true;
+        continue;
+      }
+      if (seenNode && !(arg instanceof PyKeywordArgument) && !(arg instanceof PyStarArgument)) {
+        positionalAfter++;
+      }
+    }
+
+    int filled = tupleType.getElementCount() + positionalAfter;
+    if (filled >= variadicParams.size()) return;
+
+    ASTNode argListNode = argList.getNode();
+    if (argListNode == null) return;
+    ASTNode rparNode = argListNode.findChildByType(PyTokenTypes.RPAR);
+    if (rparNode == null) return;
+    PsiElement rpar = rparNode.getPsi();
+
+    for (int i = filled; i < variadicParams.size(); i++) {
+      PyCallableParameter param = variadicParams.get(i);
+      if (param.isPositionalContainer() || param.isKeywordContainer()) break;
+      if (!param.hasDefaultValue()) {
+        String name = param.getName();
+        if (name != null) {
+          registerProblem(holder, rpar, PyPsiBundle.problemMessage("INSP.parameter.unfilled", name), highlightOverride);
+        }
+      }
+    }
   }
 
   private static void registerProblem(@NotNull ProblemsHolder holder,
@@ -165,6 +250,17 @@ public final class PyArgumentListInspection extends PyInspection {
     else {
       holder.registerProblem(element, message, fixes);
     }
+  }
+
+  private static void registerProblem(@NotNull ProblemsHolder holder,
+                                      @NotNull PsiElement element,
+                                      @NotNull PyInspectionMessages.ProblemMessage message,
+                                      @Nullable ProblemHighlightType highlightOverride) {
+    ProblemsHolder.ProblemBuilder builder = holder.problem(element, message.description()).tooltip(message.tooltip());
+    if (highlightOverride != null) {
+      builder = builder.highlight(highlightOverride);
+    }
+    builder.register();
   }
 
   private static boolean objectMethodCallViaSuper(@NotNull PyCallExpression call, @NotNull PyFunction function) {
@@ -201,34 +297,6 @@ public final class PyArgumentListInspection extends PyInspection {
     }
 
     return false;
-  }
-
-  private static void highlightStarArgumentTypeMismatch(PyArgumentList node, ProblemsHolder holder, TypeEvalContext context,
-                                                        @Nullable ProblemHighlightType highlightOverride) {
-    for (PyExpression arg : node.getArguments()) {
-      if (!(arg instanceof PyStarArgument starArgument)) {
-        continue;
-      }
-      PyExpression content = PyUtil.peelArgument(PsiTreeUtil.findChildOfType(arg, PyExpression.class));
-      if (content == null) {
-        continue;
-      }
-      PyType argType = context.getType(content);
-      if (argType != null && !PyTypeChecker.isUnknown(argType, context)) {
-        if (starArgument.isKeyword()) {
-          if (!PyABCUtil.isSubtype(argType, PyNames.MAPPING, context)) {
-            // TODO: check that the key type is compatible with `str`
-            registerProblem(holder, arg, PyPsiBundle.message("INSP.expected.dict.got.type", argType.getName()), highlightOverride);
-          }
-        }
-        else {
-          // *
-          if (!PyABCUtil.isSubtype(argType, PyNames.ITERABLE, context)) {
-            registerProblem(holder, arg, PyPsiBundle.message("INSP.expected.iterable.got.type", argType.getName()), highlightOverride);
-          }
-        }
-      }
-    }
   }
 
   private static Set<String> getDuplicateKeywordArguments(@NotNull PyArgumentList node) {
@@ -287,10 +355,7 @@ public final class PyArgumentListInspection extends PyInspection {
     }
     else {
       // all mappings have unmapped arguments so we couldn't determine desired argument list and suggest appropriate quick fixes
-      registerProblem(holder, node,
-                      addPossibleCalleesRepresentation(PyPsiBundle.message("INSP.unexpected.arg(s)"), mappings, context,
-                                                       holder.isOnTheFly()),
-                      highlightOverride);
+      registerCallMismatchProblem(holder, node, node, mappings, context, highlightOverride);
     }
   }
 
@@ -307,17 +372,14 @@ public final class PyArgumentListInspection extends PyInspection {
         psi -> {
           if (mappings.size() != 1 ||
               ContainerUtil.exists(mappings.get(0).getUnmappedParameters(), parameter -> parameter.getName() == null)) {
-            registerProblem(holder, psi,
-                            addPossibleCalleesRepresentation(PyPsiBundle.message("INSP.parameter(s).unfilled"), mappings, context,
-                                                             holder.isOnTheFly()),
-                            highlightOverride);
+            registerCallMismatchProblem(holder, psi, node, mappings, context, highlightOverride);
           }
           else {
             StreamEx
               .of(mappings.get(0).getUnmappedParameters())
               .map(PyCallableParameter::getName)
               .filter(Objects::nonNull)
-              .forEach(name -> registerProblem(holder, psi, PyPsiBundle.message("INSP.parameter.unfilled", name), highlightOverride));
+              .forEach(name -> registerProblem(holder, psi, PyPsiBundle.problemMessage("INSP.parameter.unfilled", name), highlightOverride));
           }
         }
       );
@@ -328,60 +390,65 @@ public final class PyArgumentListInspection extends PyInspection {
                                                   @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
                                                   @NotNull TypeEvalContext context,
                                                   @Nullable ProblemHighlightType highlightOverride) {
-    registerProblem(holder, node,
-                    addPossibleCalleesRepresentation(PyPsiBundle.message("INSP.incorrect.arguments"), mappings, context,
-                                                     holder.isOnTheFly()),
-                    highlightOverride);
+    registerCallMismatchProblem(holder, node, node, mappings, context, highlightOverride);
   }
 
-  private static @NlsSafe @NotNull String addPossibleCalleesRepresentation(@NotNull @InspectionMessage String prefix,
-                                                                           @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
-                                                                           @NotNull TypeEvalContext context,
-                                                                           boolean isOnTheFly) {
-    final @NlsSafe String separator = isOnTheFly ? "<br>" : " ";
-    final @NlsSafe String possibleCalleesRepresentation = calculatePossibleCalleesRepresentation(mappings, context, isOnTheFly);
+  /**
+   * Reports a call that matches none of several candidate signatures, using the same model and messaging as
+   * {@link PyTypeCheckerInspectionProblemRegistrar} via {@link PyMismatchTooltips}: a header naming the
+   * common callee, an "Argument types" row built from the provided arguments (a keyword argument shows as
+   * {@code keyword=type}; an argument that maps to no candidate stands out), and one "Expected one of" row
+   * per candidate built from its parameters (an unfilled parameter stands out).
+   *
+   * @param element the element to highlight (the argument list, or its closing parenthesis for unfilled params)
+   * @param node    the argument list whose arguments populate the "Argument types" row
+   */
+  private static void registerCallMismatchProblem(@NotNull ProblemsHolder holder,
+                                                  @NotNull PsiElement element,
+                                                  @NotNull PyArgumentList node,
+                                                  @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                                  @NotNull TypeEvalContext context,
+                                                  @Nullable ProblemHighlightType highlightOverride) {
+    final List<PyCallable> callables = ContainerUtil.map(mappings, mapping -> {
+      final PyCallableType callableType = mapping.getCallableType();
+      return callableType == null ? null : callableType.getCallable();
+    });
 
-    if (isOnTheFly) {
-      return XmlStringUtil.wrapInHtml(
-        prefix + separator +
-        PyPsiBundle.message("INSP.possible.callees") + ":" + separator +
-        possibleCalleesRepresentation
-      );
+    final List<PyMismatchTooltips.Slot> argumentSlots = new ArrayList<>();
+    for (PyExpression argument : node.getArguments()) {
+      final boolean matched = ContainerUtil.exists(mappings, mapping -> !containsIdentity(mapping.getUnmappedArguments(), argument));
+      argumentSlots.add(PyMismatchTooltips.argumentSlot(argument, context.getType(argument), context, matched));
+    }
+
+    final List<List<PyMismatchTooltips.Slot>> expectedRows = new ArrayList<>();
+    for (PyCallExpression.PyArgumentsMapping mapping : mappings) {
+      final List<PyMismatchTooltips.Slot> row = new ArrayList<>();
+      final PyCallableType callableType = mapping.getCallableType();
+      final List<PyCallableParameter> parameters = callableType == null ? null : callableType.getParameters(context);
+      if (parameters != null) {
+        for (PyCallableParameter parameter : parameters) {
+          if (parameter.isPositionOnlySeparator() || parameter.isKeywordOnlySeparator()) continue;
+          final boolean matched = !containsIdentity(mapping.getUnmappedParameters(), parameter);
+          row.add(PyMismatchTooltips.parameterSlot(parameter, context, matched));
+        }
+      }
+      expectedRows.add(row);
+    }
+
+    final PyInspectionMessages.ProblemMessage header = PyMismatchTooltips.header(callables);
+    final @InspectionMessage String description = PyMismatchTooltips.description(header, argumentSlots, expectedRows);
+    final ProblemHighlightType type = highlightOverride != null ? highlightOverride : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+
+    if (holder.isOnTheFly()) {
+      holder.problem(element, description).highlight(type)
+        .tooltip(PyMismatchTooltips.tooltip(header, argumentSlots, expectedRows)).register();
     }
     else {
-      return prefix + "." + separator +
-             PyPsiBundle.message("INSP.possible.callees") + ":" + separator +
-             possibleCalleesRepresentation;
+      holder.problem(element, description).highlight(type).register();
     }
   }
 
-
-  private static @NotNull @NlsSafe String calculatePossibleCalleesRepresentation(@NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
-                                                                                 @NotNull TypeEvalContext context,
-                                                                                 boolean isOnTheFly) {
-    return StreamEx
-      .of(mappings)
-      .map(PyCallExpression.PyArgumentsMapping::getCallableType)
-      .nonNull()
-      .map(callableType -> XmlStringUtil.escapeString(calculatePossibleCalleeRepresentation(callableType, context)))
-      .nonNull()
-      .collect(Collectors.joining(isOnTheFly ? "<br>" : " "));
-  }
-
-  private static @Nullable @NlsSafe String calculatePossibleCalleeRepresentation(@NotNull PyCallableType callableType,
-                                                                                 @NotNull TypeEvalContext context) {
-    final String name = callableType.getCallable() != null ? callableType.getCallable().getName() : "";
-    final List<PyCallableParameter> callableParameters = callableType.getParameters(context);
-    if (callableParameters == null) return null;
-
-    final String parameters = ParamHelper.getPresentableText(callableParameters, true, context);
-    final String callableNameAndParameters = name + parameters;
-
-    return Optional
-      .ofNullable(PyUtil.as(callableType.getCallable(), PyFunction.class))
-      .map(PyFunction::getContainingClass)
-      .map(PyClass::getName)
-      .map(className -> PyNames.INIT.equals(name) ? className + parameters : className + "." + callableNameAndParameters)
-      .orElse(callableNameAndParameters);
+  private static boolean containsIdentity(@NotNull List<?> list, @NotNull Object element) {
+    return ContainerUtil.exists(list, candidate -> candidate == element);
   }
 }

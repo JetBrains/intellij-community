@@ -1,6 +1,6 @@
 // "Apply all 'Change to star projection' fixes in file" "true"
-// K2_ERROR: Cannot check for instance of erased type 'List<Int>'.
-// K2_ERROR: Cannot check for instance of erased type 'List<String>'.
+// K2_ERROR: CANNOT_CHECK_FOR_ERASED
+// K2_ERROR: CANNOT_CHECK_FOR_ERASED
 
 fun isStringList(list: Any?) = list is (List<<caret>String>)
 fun isIntList(list: Any?) = list is (List<Int>)

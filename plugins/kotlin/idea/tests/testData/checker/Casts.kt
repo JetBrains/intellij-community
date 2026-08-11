@@ -9,7 +9,7 @@ fun test() : Unit {
   checkSubtype<Int?>(x)
   checkSubtype<Int>(y)
   checkSubtype<Int>(x as Int)
-  checkSubtype<Int>(y <warning descr="[USELESS_CAST] No cast needed">as Int</warning>)
+  checkSubtype<Int>(y <warning descr="[USELESS_CAST]">as Int</warning>)
   checkSubtype<Int?>(x as Int?)
   checkSubtype<Int?>(y as Int?)
   checkSubtype<Int?>(x as Int?)

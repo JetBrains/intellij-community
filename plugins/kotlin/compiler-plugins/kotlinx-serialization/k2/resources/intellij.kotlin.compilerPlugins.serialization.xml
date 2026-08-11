@@ -1,10 +1,22 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.k2">
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.refactorings"/>
-    <!-- endregion -->
+    <module name="intellij.kotlin.refactorings.base"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.k2"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="kotlin.fir.frontend-independent"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.k2.quickfixes.SerializationK2QuickFixContributor"/>
   </extensions>

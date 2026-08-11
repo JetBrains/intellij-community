@@ -1,6 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -14,6 +17,8 @@ import javax.swing.JTree;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertTreeEqual;
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyStructureViewTest extends PyTestCase {
   private static final String TEST_DIRECTORY = "structureView/";
 

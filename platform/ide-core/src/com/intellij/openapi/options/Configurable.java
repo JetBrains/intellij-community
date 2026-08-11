@@ -197,6 +197,24 @@ public interface Configurable extends UnnamedConfigurable {
   }
 
   /**
+   * This marker interface tells the Settings dialog to show a New icon for the configurable.
+   * Parent sections inherit this marker from child configurables.
+   */
+  @ApiStatus.Experimental
+  interface NewOptions {
+
+  }
+
+  /**
+   * Marker interface for leaf configurables that intentionally diverge between {@link NewOptions}
+   * and the New badges rendered in their UI.
+   */
+  @ApiStatus.Internal
+  interface NewOptionsMismatchAllowed {
+
+  }
+
+  /**
    * This marker interface notifies the Settings dialog to not add an empty border to the Swing form.
    * Required when the Swing form is a tabbed pane.
    */

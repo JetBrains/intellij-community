@@ -14,18 +14,15 @@ fun String.hyphenateTestName(): String {
   fun hyphenateString(input: String) = input
     .replace(Regex("( )+"), "-")
     .replace(" ", "-").trim()
-    .replaceFirstChar { it.lowercase(Locale.getDefault()) }.toCharArray()
-    .map {
-      if (it.isUpperCase()) "-${it.lowercaseChar()}"
-      else it
-    }
-    .joinToString(separator = "")
+    .replace(Regex("([A-Z]+)([A-Z][a-z])"), "$1-$2")
+    .replace(Regex("([a-z0-9])([A-Z])"), "$1-$2")
+    .lowercase(Locale.getDefault())
 
   val hyphenatedPath = try {
     val originalPath = Path(this)
 
     var convertedPath = Path("")
-    (0 until originalPath.nameCount).map { pathNameIndex ->
+    (0 until originalPath.nameCount).forEach { pathNameIndex ->
       convertedPath = convertedPath.resolve(hyphenateString(originalPath.getName(pathNameIndex).name))
     }
 

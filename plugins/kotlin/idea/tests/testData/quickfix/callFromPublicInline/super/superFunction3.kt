@@ -1,5 +1,5 @@
 // "Remove 'inline' modifier" "true"
-// K2_ERROR: Accessing super members from public-API inline function is deprecated.
+// K2_ERROR: SUPER_CALL_FROM_PUBLIC_INLINE
 open class Base {
     fun baseFun(param: Any) {}
 }

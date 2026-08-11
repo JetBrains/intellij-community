@@ -11,7 +11,7 @@ import com.intellij.psi.formatter.common.AbstractBlock
 
 class PyDocstringFormattingModelBuilder : CustomFormattingModelBuilder {
   override fun isEngagedToFormat(context: PsiElement): Boolean =
-    context.containingFile?.language == PyDocstringLanguageDialect.getInstance()
+    context.containingFile?.language == PyDoctestLanguageDialect.getInstance()
 
   override fun createModel(formattingContext: FormattingContext): FormattingModel {
     return DocumentBasedFormattingModel(PyDocstringBlock(formattingContext),

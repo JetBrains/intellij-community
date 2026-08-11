@@ -1,6 +1,6 @@
 // "Change parameter 'args' type of function 'bar' to 'Array<String>'" "true"
 // WITH_STDLIB
-// K2_ERROR: Argument type mismatch: actual type is 'Array<String>', but 'String' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 fun foo(list: List<String>) {
     bar(list.toType<caret>dArray())
 }

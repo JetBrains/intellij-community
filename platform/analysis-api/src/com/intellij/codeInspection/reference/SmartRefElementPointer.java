@@ -32,7 +32,7 @@ public interface SmartRefElementPointer {
 
   RefEntity getRefElement();
 
-  void writeExternal(Element parentNode);
+  void writeExternal(@NotNull Element parentNode);
 
   boolean resolve(@NotNull RefManager manager);
 

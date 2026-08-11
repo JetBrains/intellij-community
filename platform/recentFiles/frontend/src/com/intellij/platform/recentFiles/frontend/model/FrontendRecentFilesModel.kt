@@ -15,7 +15,6 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
-import com.intellij.platform.recentFiles.frontend.RecentFilesExcluder
 import com.intellij.platform.recentFiles.frontend.SwitcherVirtualFile
 import com.intellij.platform.recentFiles.frontend.createFilesSearchRequestRequest
 import com.intellij.platform.recentFiles.frontend.createFilesUpdateRequest
@@ -27,6 +26,7 @@ import com.intellij.platform.recentFiles.shared.RecentFilesCoroutineScopeProvide
 import com.intellij.platform.recentFiles.shared.RecentFilesEvent
 import com.intellij.platform.recentFiles.shared.RecentFilesState
 import com.intellij.platform.recentFiles.shared.SwitcherRpcDto
+import com.intellij.platform.recentFiles.shared.isAllowedInRecentFilesModel
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -42,36 +42,11 @@ class FrontendRecentFilesModel(private val project: Project) {
   private val modelState = FrontendRecentFilesMutableState(project)
   fun getRecentFiles(fileKind: RecentFileKind): List<SwitcherVirtualFile> {
     val capturedModelState = modelState.chooseStateToReadFrom(fileKind).value.entries
-    val filteredModel = filterOutExcludedFiles(capturedModelState, fileKind)
 
     return when (fileKind) {
-      RecentFileKind.RECENTLY_OPENED_UNPINNED -> considerOpenedEditorWindowsForFiles(filteredModel)
-      else -> filteredModel
+      RecentFileKind.RECENTLY_OPENED_UNPINNED -> considerOpenedEditorWindowsForFiles(capturedModelState)
+      else -> capturedModelState
     }
-  }
-
-  private fun filterOutExcludedFiles(
-    capturedModelState: List<SwitcherVirtualFile>,
-    fileKind: RecentFileKind,
-  ): List<SwitcherVirtualFile> {
-    val filteredModel = capturedModelState.filter { fileModel ->
-      val file = fileModel.virtualFile ?: return@filter true
-      val excluder = RecentFilesExcluder.EP_NAME.findFirstSafe { ext ->
-        when (fileKind) {
-          RecentFileKind.RECENTLY_EDITED -> ext.isExcludedFromRecentlyEdited(project, file)
-          RecentFileKind.RECENTLY_OPENED, RecentFileKind.RECENTLY_OPENED_UNPINNED -> ext.isExcludedFromRecentlyOpened(project, file)
-        }
-      }
-      excluder == null
-    }
-    LOG.trace {
-      val modelData = if (filteredModel.size != capturedModelState.size)
-        "After filtering: ${filteredModel.joinToString { it.virtualFile?.name ?: "null" }}"
-      else
-        ""
-      "Return requested $fileKind list: ${capturedModelState.joinToString { it.virtualFile?.name ?: "null" }} $modelData"
-    }
-    return filteredModel
   }
 
   private fun considerOpenedEditorWindowsForFiles(filteredModel: List<SwitcherVirtualFile>): List<SwitcherVirtualFile> {
@@ -101,36 +76,58 @@ class FrontendRecentFilesModel(private val project: Project) {
 
   fun applyFrontendChanges(filesKind: RecentFileKind, files: List<VirtualFile>, changeKind: FileChangeKind) {
     if (files.isEmpty()) return
-    LOG.trace { "Applying frontend changes for kind: $filesKind, changeKind: $changeKind, files: ${files.joinToString { it.name }}" }
+    val filesToApply = if (changeKind == FileChangeKind.REMOVED) files
+    else files.filter {
+      isAllowedInRecentFilesModel(project, filesKind, it)
+    }
+    if (changeKind != FileChangeKind.REMOVED) {
+      val filesToRemove = files - filesToApply.toSet()
+      if (filesToRemove.isNotEmpty()) {
+        when (filesKind) {
+          RecentFileKind.RECENTLY_EDITED -> applyFrontendChanges(RecentFileKind.RECENTLY_EDITED, filesToRemove, FileChangeKind.REMOVED)
+          RecentFileKind.RECENTLY_OPENED, RecentFileKind.RECENTLY_OPENED_UNPINNED -> {
+            applyFrontendChanges(RecentFileKind.RECENTLY_OPENED, filesToRemove, FileChangeKind.REMOVED)
+            applyFrontendChanges(RecentFileKind.RECENTLY_OPENED_UNPINNED, filesToRemove, FileChangeKind.REMOVED)
+          }
+        }
+      }
+    }
+    if (filesToApply.isEmpty()) return
+
+    LOG.trace { "Applying frontend changes for kind: $filesKind, changeKind: $changeKind, files: ${filesToApply.joinToString { it.name }}" }
     modelUpdateScope.launch {
       val frontendStateToUpdate = modelState.chooseStateToWriteTo(filesKind)
-      val fileModels = files.map { convertVirtualFileToViewModel(it, project) }
+      val fileModels = filesToApply.map { convertVirtualFileToViewModel(it, project) }
 
       frontendStateToUpdate.update { oldList ->
-        when (changeKind) {
+        val updatedEntries = when (changeKind) {
           FileChangeKind.ADDED -> {
             val maybeItemsWithRichMetadata = oldList.entries.associateBy { it }
             val effectiveModelsToInsert = fileModels.map { fileModel -> maybeItemsWithRichMetadata[fileModel] ?: fileModel }
-            RecentFilesState(effectiveModelsToInsert + (oldList.entries - effectiveModelsToInsert.toSet()))
+            effectiveModelsToInsert + (oldList.entries - effectiveModelsToInsert.toSet())
           }
           FileChangeKind.REMOVED -> {
-            RecentFilesState(oldList.entries - fileModels.toSet())
+            oldList.entries - fileModels.toSet()
           }
           FileChangeKind.UPDATED_AND_PUT_ON_TOP -> {
-            RecentFilesState(fileModels + oldList.entries - fileModels.toSet())
+            fileModels + oldList.entries - fileModels.toSet()
           }
           else -> {
-            oldList
+            oldList.entries
           }
         }
+        RecentFilesState(updatedEntries.filter { fileModel ->
+          val file = fileModel.virtualFile ?: return@filter true
+          isAllowedInRecentFilesModel(project, filesKind, file)
+        })
       }
 
       when (changeKind) {
         FileChangeKind.REMOVED -> {
-          FileSwitcherApi.getInstance().updateRecentFilesBackendState(createHideFilesRequest(filesKind, files, project))
+          FileSwitcherApi.getInstance().updateRecentFilesBackendState(createHideFilesRequest(filesKind, filesToApply, project))
         }
         else -> {
-          FileSwitcherApi.getInstance().updateRecentFilesBackendState(createFilesUpdateRequest(filesKind, files, true, project))
+          FileSwitcherApi.getInstance().updateRecentFilesBackendState(createFilesUpdateRequest(filesKind, filesToApply, true, project))
         }
       }
     }

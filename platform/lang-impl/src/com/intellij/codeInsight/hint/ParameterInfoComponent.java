@@ -85,6 +85,7 @@ import static com.intellij.codeInsight.hint.ParameterInfoControlPresentationUtil
 import static com.intellij.codeInsight.hint.ParameterInfoControlPresentationUtilKt.selectedSignatureAlpha;
 import static com.intellij.codeWithMe.ClientIdKt.isForeignClientOnServer;
 
+@ApiStatus.Internal
 @VisibleForTesting
 public final class ParameterInfoComponent extends JPanel {
 

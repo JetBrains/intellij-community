@@ -1,12 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.execution.lineMarker.RunLineMarkerContributor.Info
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.jetbrains.python.fixtures.PyTestCase
 
+@Subsystems.TestRunner
+@Components.Pytest
+@Layers.Functional
 open class PyTestRunLineMarkerTest : PyTestCase() {
   companion object {
     const val TESTS_DIR = "/pyTestLineMarker/"

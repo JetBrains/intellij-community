@@ -9,4 +9,4 @@ fun foo(list: List<String>) {
         if (x > 1000) break
     }
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UseWithIndexInspection$createQuickFix$1
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.UseWithIndexInspection$createQuickFix$1

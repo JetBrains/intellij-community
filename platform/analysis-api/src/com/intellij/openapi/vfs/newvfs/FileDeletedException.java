@@ -3,9 +3,7 @@ package com.intellij.openapi.vfs.newvfs;
 
 import org.jetbrains.annotations.ApiStatus;
 
-/**
- * VFS requested to do something with a file that was deleted.
-  */
+/** VFS requested to do something with a file that was deleted. */
 @ApiStatus.Internal
 public class FileDeletedException extends RuntimeException /*implements ControlFlowException?*/ {
   private final int deletedFileId;

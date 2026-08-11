@@ -1,0 +1,5 @@
+package test
+
+class Client {
+  fun test(u: Util): List<String> = u.box() as List<String>
+}

@@ -23,29 +23,30 @@ import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.approximateToSuperPublicDenotableOrSelf
-import org.jetbrains.kotlin.analysis.api.components.directSupertypes
-import org.jetbrains.kotlin.analysis.api.components.directlyOverriddenSymbols
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.hasFlexibleNullability
-import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.components.isNothingType
-import org.jetbrains.kotlin.analysis.api.components.isNullable
-import org.jetbrains.kotlin.analysis.api.components.isUnitType
-import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.components.returnType
-import org.jetbrains.kotlin.analysis.api.components.smartCastInfo
-import org.jetbrains.kotlin.analysis.api.components.withNullability
+import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.directlyOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.isLocal
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
+import org.jetbrains.kotlin.analysis.api.types.approximateToDenotableSupertypeOrSelf
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.directSupertypes
+import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseValueExpression
@@ -291,7 +292,7 @@ object CallableReturnTypeUpdaterUtils {
             // case, for example, calling `getAllSuperTypes` would put `Any` at middle if one of the super type in the hierarchy has
             // multiple super types.
             .bfs { it.directSupertypes(shouldApproximate = true).iterator() }
-            .map { with(session) { it.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true) } }
+            .map { it.approximateToDenotableSupertypeOrSelf(allowLocalDenotableTypes = false) }
             .distinctBy { createTypeByKtType(it) }
             .let { types ->
                 when {
@@ -307,7 +308,7 @@ object CallableReturnTypeUpdaterUtils {
     }
 
     private fun KaClassType.isLocal(): Boolean =
-        classId.isLocal
+        symbol.isLocal
 
     @ApiStatus.Internal
     @OptIn(KaExperimentalApi::class)
@@ -333,7 +334,7 @@ object CallableReturnTypeUpdaterUtils {
                 }
             }
 
-            val approximatedDefaultType = declarationType.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = approximateLocalTypes).let {
+            val approximatedDefaultType = declarationType.approximateToDenotableSupertypeOrSelf(allowLocalDenotableTypes = !approximateLocalTypes).let {
                 if (cannotBeNull) it.withNullability(false)
                 else it
             }
@@ -368,7 +369,7 @@ object CallableReturnTypeUpdaterUtils {
         ) {
             // Note that `isNothing` returns true for both `Nothing` and `Nothing?`
             val types = allTypes.toList()
-            val targetType = types.firstOrNull { !it.isNothingType } ?: types.first()
+            val targetType = types.firstOrNull { it.classId != KaStandardTypeClassIds.NOTHING } ?: types.first()
             return createByKtTypes(targetType)
         }
         val chooseElement = declaration.containingKtFile.findDescendantOfType<PsiComment>()?.takeIf {
@@ -401,7 +402,7 @@ object CallableReturnTypeUpdaterUtils {
             @OptIn(KaExperimentalApi::class)
             context(_: KaSession)
             internal fun createTypeByKtType(ktType: KaType): Type = Type(
-                isUnit = ktType.isUnitType && !ktType.isMarkedNullable,
+                isUnit = ktType.classId == KaStandardTypeClassIds.UNIT && !ktType.isMarkedNullable,
                 isError = ktType is KaErrorType,
                 longTypeRepresentation = ktType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES_WITHOUT_PARAMETER_NAMES, position = Variance.OUT_VARIANCE),
                 shortTypeRepresentation = ktType.render(KaTypeRendererForSource.WITH_SHORT_NAMES_WITHOUT_PARAMETER_NAMES, position = Variance.OUT_VARIANCE),

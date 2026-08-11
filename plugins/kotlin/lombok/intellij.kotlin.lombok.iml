@@ -38,14 +38,14 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.analysis-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.api" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" />
     <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.analysis-api-platform-interface" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-fir" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.base.psi" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />

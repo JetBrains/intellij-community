@@ -55,6 +55,7 @@ import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.CommentUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.fixes.AddSerialVersionUIDFix;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -296,11 +297,12 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
       PsiDocComment docComment = psiClass.getDocComment();
       if (docComment != null) {
         PsiDocTag[] params = docComment.findTagsByName("param");
-        PsiDocComment ctorComment = JavaPsiFacade.getElementFactory(psiClass.getProject()).createDocCommentFromText("/**\n*/");
+        PsiDocComment ctorComment = JavaPsiFacade.getElementFactory(psiClass.getProject())
+          .createDocCommentFromText(CommentUtil.convertToDocComment(docComment, ""));
         for (PsiDocTag param : params) {
           ctorComment.add(param);
         }
-        result.append(ctorComment.getText());
+        result.append(ctorComment.getText()).append("\n");
       }
       result.append(canonicalConstructor.getText());
     }

@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.junit.kotlin.tests.k2` start
-
 jvm_library(
     name = "kotlin-tests-k2",
     srcs = glob(
@@ -11,7 +10,7 @@ jvm_library(
     ),
     module_name = "intellij.junit.kotlin.tests.k2",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/kotlin/plugin/k2"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -30,7 +29,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-tests-k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
     ],
     deps = [
         # do not sort,
@@ -54,6 +53,8 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.junit.kotlin.tests.k2` end
@@ -68,7 +69,6 @@ exports_files(
 ### auto-generated section `iml intellij.junit.kotlin.tests.k2` end
 
 ### auto-generated section `test intellij.junit.kotlin.tests.k2` start
-
 jps_test(
     name = "kotlin-tests-k2_test",
     runtime_deps = [":kotlin-tests-k2_test_lib"],

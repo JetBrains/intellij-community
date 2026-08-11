@@ -4,7 +4,7 @@ import one.util.streamex.StreamEx;
 
 public class PrependToEmpty {
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     StreamEx.empty().prepend(1).forEach(x -> {});
   }
 }

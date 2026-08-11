@@ -7,13 +7,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.TrustedProjectUtil
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 
-internal class MarkdownExportAction: AnAction() {
+internal class MarkdownExportAction : AnAction() {
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
     val virtualFile = getFileToConvert(event) ?: return
-    MarkdownExportDialog(virtualFile, virtualFile.path, project).show()
+    TrustedProjectUtil.executeIfTrusted(project) {
+      MarkdownExportDialog(virtualFile, virtualFile.path, project).show()
+    }
   }
 
   override fun update(event: AnActionEvent) {

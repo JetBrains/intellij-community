@@ -8,10 +8,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.components.evaluate
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.isStringType
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
@@ -70,7 +71,7 @@ fun isStringPlusExpressionWithoutNewLineInOperands(expression: KtBinaryExpressio
 
     if (!expression.containNoNewLine()) return false
 
-    if (expression.expressionType?.isStringType != true) return false
+    if (expression.expressionType?.classId != KaStandardTypeClassIds.STRING) return false
     val plusOperation = expression.operationReference.mainReference.resolveToSymbol() as? KaCallableSymbol
     val classContainingPlus = plusOperation?.containingDeclaration as? KaNamedClassSymbol
     return if (classContainingPlus != null) {

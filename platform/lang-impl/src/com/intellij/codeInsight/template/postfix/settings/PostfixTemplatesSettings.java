@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.completion.group.GroupedCompletionContributor;
@@ -38,7 +38,7 @@ public final class PostfixTemplatesSettings implements PersistentStateComponent<
 
   private boolean postfixTemplatesEnabled = true;
   private boolean templatesCompletionEnabled = true;
-  private boolean showAsSeparateGroup = false;
+  private boolean showAsSeparateGroup = true;
   private int myShortcut = TemplateSettings.TAB_CHAR;
 
   public boolean isTemplateEnabled(@NotNull PostfixTemplate template, @NotNull PostfixTemplateProvider provider) {
@@ -72,7 +72,7 @@ public final class PostfixTemplatesSettings implements PersistentStateComponent<
   }
 
   public boolean isShowAsSeparateGroup() {
-    return showAsSeparateGroup && GroupedCompletionContributor.isGroupEnabledInApp();
+    return showAsSeparateGroup && GroupedCompletionContributor.isGroupEnabled(null);
   }
 
   public void setShowAsSeparateGroup(boolean showAsSeparateGroup) {

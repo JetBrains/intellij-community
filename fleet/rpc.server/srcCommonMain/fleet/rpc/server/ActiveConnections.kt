@@ -81,7 +81,7 @@ class ActiveConnections : ConnectionListener {
     )
     socket2endpoint.update {
       check(!it.containsKey(key)) { "key $key is not unique" }
-      it.put(key, endpoint)
+      it.putting(key, endpoint)
     }
   }
 
@@ -90,6 +90,6 @@ class ActiveConnections : ConnectionListener {
       socketId = socketId,
       kind = kind,
     )
-    socket2endpoint.update { it.remove(key) }
+    socket2endpoint.update { it.removing(key) }
   }
 }

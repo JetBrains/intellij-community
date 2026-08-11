@@ -1,7 +1,7 @@
 // "Make 'Foo' data class" "false"
 // ERROR: Destructuring declaration initializer of type Pair must have a 'component3()' function
-// K2_ERROR: Destructuring of type 'Pair' requires operator function 'component3()'.
-// K2_AFTER_ERROR: Destructuring of type 'Pair' requires operator function 'component3()'.
+// K2_AFTER_ERROR: COMPONENT_FUNCTION_MISSING
+// K2_ERROR: COMPONENT_FUNCTION_MISSING
 
 data class Pair(val first: Int, val second: Int)
 

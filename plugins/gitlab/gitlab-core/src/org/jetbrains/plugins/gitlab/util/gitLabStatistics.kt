@@ -450,8 +450,8 @@ internal class GitLabMetricsLoader(private val project: Project) {
     val account = defaultAccountManager.account.takeIf { it?.server == serverPath }
                   ?: accountManager.accountsState.value.firstOrNull { it.server == serverPath }
                   ?: return null
-    val token = accountManager.findCredentials(account) ?: return null
-    return service<GitLabApiManager>().getClient(serverPath, token) to account
+    val credentials = accountManager.findCredentials(account) ?: return null
+    return service<GitLabApiManager>().getClient(serverPath, credentials.accessToken) to account
   }
 
   private suspend fun chooseRepo(): GitLabProjectMapping? {

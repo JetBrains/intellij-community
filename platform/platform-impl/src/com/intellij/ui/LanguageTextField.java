@@ -17,7 +17,6 @@ package com.intellij.ui;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -32,6 +31,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,14 +96,13 @@ public class LanguageTextField extends EditorTextField {
       final PsiFileFactory factory = PsiFileFactory.getInstance(notNullProject);
 
       long stamp = LocalTimeCounter.currentTime();
-      PsiFile psiFile = ReadAction.computeBlocking(
-        () -> factory.createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, value, stamp, true, false));
+      PsiFile psiFile = factory.createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, value, stamp, true, false);
       documentCreator.customizePsiFile(psiFile);
 
       // No need to guess project in getDocument - we already know it
       Document document;
       try (AccessToken ignored = ProjectLocator.withPreferredProject(psiFile.getVirtualFile(), notNullProject)) {
-        document = ReadAction.computeBlocking(() -> PsiDocumentManager.getInstance(notNullProject).getDocument(psiFile));
+        document = ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(notNullProject)).getDocumentForNonPhysicalLightFile(psiFile);
       }
       assert document != null;
       return document;

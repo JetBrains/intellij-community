@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.codeWithMe.ClientId
@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.UIUtil
 
+// TODO: reconsider because CWM is no longer supported, IJPL-248573
 internal class ClientCurrentEditorProvider(val session: ClientAppSession) : CurrentEditorProvider {
   override fun getCurrentEditor(project: Project?): FileEditor? {
     if (session.isDisposed) {

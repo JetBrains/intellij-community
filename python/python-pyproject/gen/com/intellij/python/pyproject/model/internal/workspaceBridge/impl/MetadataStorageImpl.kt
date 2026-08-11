@@ -15,9 +15,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
   override fun initializeMetadata() {
     val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
     val primitiveTypeMapNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Map")
-
     var typeMetadata: StorageTypeMetadata
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlWorkspaceEntity",
                                   entityDataFqName = "com.intellij.python.pyproject.model.internal.workspaceBridge.impl.PyProjectTomlWorkspaceEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -36,7 +34,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
                                                                             ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
                                                                                                                     typeMetadata = FinalClassMetadata.ClassMetadata(
-                                                                                                                      fqName = "com.intellij.python.common.tools.ToolId",
+                                                                                                                      fqName = "com.intellij.python.community.common.tools.ToolId",
                                                                                                                       properties = listOf(
                                                                                                                         OwnPropertyMetadata(
                                                                                                                           isComputable = false,
@@ -94,14 +92,13 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                            isNullable = true),
                                                                              withDefault = false)),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
   }
 
   override fun initializeMetadataHash() {
     addMetadataHash(typeFqn = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlWorkspaceEntity",
-                    metadataHash = 86695699)
-    addMetadataHash(typeFqn = "com.intellij.python.common.tools.ToolId", metadataHash = -1193602517)
+                    metadataHash = -1990101490)
+    addMetadataHash(typeFqn = "com.intellij.python.community.common.tools.ToolId", metadataHash = -1960368624)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleId", metadataHash = 369441961)
   }
 }

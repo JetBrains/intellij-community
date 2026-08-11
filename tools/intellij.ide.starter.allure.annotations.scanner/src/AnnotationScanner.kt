@@ -76,13 +76,15 @@ private class Args(
 
 private fun parseArgs(args: Array<String>): Args {
   val cwd = Paths.get(System.getProperty("user.dir")).toAbsolutePath().normalize()
-  var sourceRoots: List<String> = listOf("python/junit5Tests/tests", "python/testSrc")
+  var sourceRoots: List<String>? = null
+  var sourceRootsFile: String? = null
   var output = "build/annotation-report.json"
   var repoRoot: Path = cwd
 
   for (arg in args) {
     when {
       arg.startsWith("--source-roots=") -> sourceRoots = arg.substringAfter("=").split(",").map { it.trim() }.filter { it.isNotEmpty() }
+      arg.startsWith("--source-roots-file=") -> sourceRootsFile = arg.substringAfter("=")
       arg.startsWith("--output=") -> output = arg.substringAfter("=")
       arg.startsWith("--repo-root=") -> repoRoot = Paths.get(arg.substringAfter("=")).toAbsolutePath().normalize()
       arg == "--help" || arg == "-h" -> {
@@ -93,19 +95,39 @@ private fun parseArgs(args: Array<String>): Args {
     }
   }
 
+  val roots = when {
+    sourceRoots != null && sourceRootsFile != null -> error("--source-roots and --source-roots-file are mutually exclusive (use --help for usage)")
+    sourceRoots != null -> sourceRoots
+    sourceRootsFile != null -> readSourceRoots(repoRoot.resolve(sourceRootsFile).normalize())
+    else -> error("Either --source-roots or --source-roots-file is required (use --help for usage)")
+  }
+
   return Args(
-    sourceRoots = sourceRoots.map { repoRoot.resolve(it).normalize() },
+    sourceRoots = roots.map { repoRoot.resolve(it).normalize() },
     output = repoRoot.resolve(output).normalize(),
     repoRoot = repoRoot,
   )
 }
 
+/**
+ * Reads a source-root list: one repository-relative path per line, blank lines and `#` comments ignored.
+ */
+private fun readSourceRoots(file: Path): List<String> {
+  if (!Files.exists(file)) error("Source roots file does not exist: $file")
+  val roots = Files.readAllLines(file).map { it.trim() }.filter { it.isNotEmpty() && !it.startsWith("#") }
+  if (roots.isEmpty()) error("Source roots file lists no paths: $file")
+  return roots
+}
+
 private fun printUsage() {
   println("""
-    |Usage: AnnotationScanner [--source-roots=<comma-separated paths>] [--output=<path>] [--repo-root=<path>]
+    |Usage: AnnotationScanner (--source-roots=<comma-separated paths> | --source-roots-file=<path>)
+    |                         [--output=<path>] [--repo-root=<path>]
+    |
+    |Exactly one of --source-roots / --source-roots-file is required. A source-roots file holds one
+    |repository-relative path per line; blank lines and '#' comments are ignored.
     |
     |Defaults (relative to repo root):
-    |  --source-roots=python/junit5Tests/tests,python/testSrc
     |  --output=build/annotation-report.json
     |  --repo-root=<current working directory>
     |
@@ -118,13 +140,15 @@ private fun printUsage() {
 fun main(args: Array<String>) {
   val parsed = parseArgs(args)
 
+  // A root that no longer exists means the list is stale, and skipping it would silently shrink the report.
+  val missingRoots = parsed.sourceRoots.filter { !Files.exists(it) }
+  if (missingRoots.isNotEmpty()) {
+    error(missingRoots.joinToString("\n", prefix = "Source root(s) do not exist:\n") { "  $it" })
+  }
+
   val records = mutableListOf<TestRecord>()
   val unannotated = mutableListOf<UnannotatedRecord>()
   for (root in parsed.sourceRoots) {
-    if (!Files.exists(root)) {
-      System.err.println("warn: source root does not exist: $root")
-      continue
-    }
     val files = Files.walk(root).use { stream ->
       stream
         .filter {

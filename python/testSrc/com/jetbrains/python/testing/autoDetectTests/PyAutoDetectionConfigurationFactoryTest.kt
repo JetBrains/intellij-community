@@ -1,5 +1,8 @@
 package com.jetbrains.python.testing.autoDetectTests
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
 import com.intellij.testFramework.ExtensionTestUtil
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -11,6 +14,9 @@ import com.jetbrains.python.testing.PyTestFactory
 import com.jetbrains.python.testing.PyUnitTestFactory
 import com.jetbrains.python.testing.PythonTestConfigurationType
 
+@Subsystems.TestRunner
+@Components.Unittest
+@Layers.Functional
 class PyAutoDetectionConfigurationFactoryTest : PyTestCase() {
 
   private lateinit var autoDetectFactory: PyAutoDetectionConfigurationFactory

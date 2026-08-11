@@ -36,6 +36,7 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
 internal class FileNotInSourceRootChecker : ProjectActivity {
   override suspend fun execute(project: Project) {
@@ -44,7 +45,9 @@ internal class FileNotInSourceRootChecker : ProjectActivity {
 }
 
 private const val GROUP: Int = 1234
-private const val JAVA_DONT_CHECK_OUT_OF_SOURCE_FILES: String = "com.intellij.ide.FileNotInSourceRootChecker.no.check"
+
+@ApiStatus.Internal
+public const val JAVA_DONT_CHECK_OUT_OF_SOURCE_FILES: String = "com.intellij.ide.FileNotInSourceRootChecker.no.check"
 
 @Service(Service.Level.PROJECT)
 private class FileNotInSourceRootService(

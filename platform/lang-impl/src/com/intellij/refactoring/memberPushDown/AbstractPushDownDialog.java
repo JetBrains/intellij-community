@@ -24,7 +24,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public abstract class AbstractPushDownDialog<MemberInfo extends MemberInfoBase<Member>,
                                              Member extends PsiElement,
                                              Klass extends PsiElement> extends RefactoringDialog {

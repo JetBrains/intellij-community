@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.lang.folding.CustomFoldingSurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
@@ -11,6 +14,8 @@ import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithTr
 import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithWhileSurrounder;
 
 
+@Subsystems.Refactoring
+@Layers.Functional
 public class PySurroundWithTest extends PyTestCase {
   public void testSurroundWithIf() {
     doTest(new PyWithIfSurrounder());

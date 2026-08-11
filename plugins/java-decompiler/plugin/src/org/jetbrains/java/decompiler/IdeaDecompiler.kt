@@ -98,7 +98,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
             service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
               if (DynamicPlugins.checkCanUnloadWithoutRestart(plugin)) {
                 withContext(Dispatchers.EDT) {
-                  DynamicPlugins.unloadPlugin(plugin, DynamicPlugins.UnloadPluginOptions(save = false))
+                  DynamicPlugins.unloadPlugin(plugin)
                 }
               }
             }

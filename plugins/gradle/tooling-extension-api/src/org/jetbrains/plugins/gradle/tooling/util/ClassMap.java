@@ -2,20 +2,21 @@
 package org.jetbrains.plugins.gradle.tooling.util;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 // duplicate of com.intellij.util.containers.ClassMap
 public final class ClassMap<T> {
-  private final Map<Class<?>, T> myMap;
+  private final ConcurrentMap<Class<?>, T> myMap;
 
   public ClassMap() {
-    this(new HashMap<Class<?>, T>());
+    this(new ConcurrentHashMap<>());
   }
 
-  private ClassMap(@NotNull Map<Class<?>, T> map) {
+  private ClassMap(@NotNull ConcurrentMap<Class<?>, T> map) {
     myMap = map;
   }
 
@@ -31,19 +32,28 @@ public final class ClassMap<T> {
     if (t != null) {
       return t;
     }
-    for (Class<?> aClass1 : aClass.getInterfaces()) {
-      t = get(aClass1);
-      if (t != null) {
-        myMap.put(aClass, t);
-        return t;
+
+    T bySuperType = getBySuperType(aClass);
+
+    if (bySuperType != null) {
+      T previous = myMap.putIfAbsent(aClass, bySuperType);
+      return previous == null ? bySuperType : previous;
+    }
+    return null;
+  }
+
+  @Nullable private T getBySuperType(@NotNull Class<?> aClass) {
+    for (Class<?> iface : aClass.getInterfaces()) {
+      T byInterface = get(iface);
+      if (byInterface != null) {
+        return byInterface;
       }
     }
     Class<?> superclass = aClass.getSuperclass();
     if (superclass != null) {
-      t = get(superclass);
-      if (t != null) {
-        myMap.put(aClass, t);
-        return t;
+      T bySuperclass = get(superclass);
+      if (bySuperclass != null) {
+        return bySuperclass;
       }
     }
     return null;

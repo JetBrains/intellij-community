@@ -16,8 +16,8 @@ public class IntervalTreeTest extends LightPlatformTestCase {
   private final DocumentImpl document = new DocumentImpl(" ".repeat(1000));
   private final RangeMarkerTreeForTests tree = new RangeMarkerTreeForTests() {
     @Override
-    public byte getTasteFlags(@NotNull RangeMarkerEx interval) {
-      return ((RangeMarkerImpl)interval).isStickingToRight() ? MY_TASTE_FLAG : 0;
+    public byte getFlavorFlags(@NotNull RangeMarkerEx interval) {
+      return ((RangeMarkerImpl)interval).isStickingToRight() ? MY_FLAVOR_FLAG : 0;
     }
   };
 
@@ -37,7 +37,7 @@ public class IntervalTreeTest extends LightPlatformTestCase {
     RangeMarkerImpl r23 = create(2, 3);
     create(3, 4);
 
-    try (MarkupIterator<RangeMarkerEx> iterator = tree.overlappingDeliciousIterator(new TextRange(0, 4), MY_TASTE_FLAG)) {
+    try (MarkupIterator<RangeMarkerEx> iterator = tree.overlappingDeliciousIterator(new TextRange(0, 4), MY_FLAVOR_FLAG)) {
       assertOrderedEquals(()->iterator, r01, r23);
     }
   }
@@ -76,22 +76,23 @@ public class IntervalTreeTest extends LightPlatformTestCase {
       int end = start + 1;
       //System.out.println("m = " + start);
       RangeMarkerImpl m = create(start, end);
-      if (tree.getTasteFlags(m) == MY_TASTE_FLAG) {
+      if (tree.getFlavorFlags(m) == MY_FLAVOR_FLAG) {
         delicis++;
       }
     }
 
-    try (MarkupIterator<RangeMarkerEx> iterator = tree.overlappingDeliciousIterator(new TextRange(0, N), MY_TASTE_FLAG)) {
+    try (MarkupIterator<RangeMarkerEx> iterator = tree.overlappingDeliciousIterator(new TextRange(0, N), MY_FLAVOR_FLAG)) {
       int c = 0;
       while (iterator.hasNext()) {
         RangeMarkerEx next = iterator.next();
-        assertEquals(MY_TASTE_FLAG, tree.getTasteFlags(next));
+        assertEquals(MY_FLAVOR_FLAG, tree.getFlavorFlags(next));
         c++;
       }
       assertEquals(delicis, c);
     }
   }
-  private static final byte MY_TASTE_FLAG = 1; // IntervalTreeImpl.nextAvailableTasteFlag(); do not waste precious bits for tests
+  /// see [IntervalTreeImpl#nextAvailableFlavorFlag()]; do not waste precious bits for tests
+  private static final byte MY_FLAVOR_FLAG = 1;
   public void testDeliciousIterationMustBeFastStress() {
     int N = 5000000;
     int delicis=0;
@@ -107,7 +108,7 @@ public class IntervalTreeTest extends LightPlatformTestCase {
       }
       int end = start + 1;
       RangeMarkerImpl m = create(start, end);
-      if (tree.getTasteFlags(m) == MY_TASTE_FLAG) {
+      if (tree.getFlavorFlags(m) == MY_FLAVOR_FLAG) {
         delicis++;
       }
     }
@@ -118,11 +119,12 @@ public class IntervalTreeTest extends LightPlatformTestCase {
     for (int i=0;i<10;i++) {
       int finalDelicis = delicis;
       long dt = TimeoutUtil.measureExecutionTime(() -> {
-        try (MarkupIterator<RangeMarkerEx> iterator = tree.overlappingDeliciousIterator(new TextRange(0, document.getTextLength()), MY_TASTE_FLAG)) {
+        try (MarkupIterator<RangeMarkerEx> iterator = tree.overlappingDeliciousIterator(new TextRange(0, document.getTextLength()),
+                                                                                        MY_FLAVOR_FLAG)) {
           int c = 0;
           while (iterator.hasNext()) {
             RangeMarkerEx next = iterator.next();
-            assertEquals(MY_TASTE_FLAG, tree.getTasteFlags(next));
+            assertEquals(MY_FLAVOR_FLAG, tree.getFlavorFlags(next));
             c++;
           }
           assertEquals(finalDelicis, c);
@@ -130,12 +132,13 @@ public class IntervalTreeTest extends LightPlatformTestCase {
       });
       AtomicInteger all = new AtomicInteger();
       long t = TimeoutUtil.measureExecutionTime(() -> {
-        try (MarkupIterator<RangeMarkerEx> iterator = new FilteringMarkupIterator<>(tree.overlappingIterator(new TextRange(0, document.getTextLength())),
-                                                                                    h -> all.incrementAndGet() >= 0 && tree.getTasteFlags(h) == MY_TASTE_FLAG)) {
+        try (MarkupIterator<RangeMarkerEx> iterator = FilteringMarkupIterator.create(tree.overlappingIterator(new TextRange(0, document.getTextLength())),
+                                                                                    h -> all.incrementAndGet() >= 0 && tree.getFlavorFlags(h) ==
+                                                                                                                       MY_FLAVOR_FLAG)) {
           int c = 0;
           while (iterator.hasNext()) {
             RangeMarkerEx next = iterator.next();
-            assertEquals(MY_TASTE_FLAG, tree.getTasteFlags(next));
+            assertEquals(MY_FLAVOR_FLAG, tree.getFlavorFlags(next));
             c++;
           }
           assertEquals(finalDelicis, c);
@@ -152,8 +155,8 @@ public class IntervalTreeTest extends LightPlatformTestCase {
     byte MY_OTHER_FLAG = 2;
     final RangeMarkerTreeForTests tree = new RangeMarkerTreeForTests() {
       @Override
-      public byte getTasteFlags(@NotNull RangeMarkerEx interval) {
-        return interval.isGreedyToRight() ? MY_TASTE_FLAG : interval.isGreedyToLeft() ? MY_OTHER_FLAG : 0;
+      public byte getFlavorFlags(@NotNull RangeMarkerEx interval) {
+        return interval.isGreedyToRight() ? MY_FLAVOR_FLAG : interval.isGreedyToLeft() ? MY_OTHER_FLAG : 0;
       }
     };
 
@@ -164,11 +167,12 @@ public class IntervalTreeTest extends LightPlatformTestCase {
       tree.verifyProperties();
     }
 
-    try (MarkupIterator<RangeMarkerEx> iterator = tree.overlappingDeliciousIterator(new TextRange(0, document.getTextLength()), MY_TASTE_FLAG)) {
+    try (MarkupIterator<RangeMarkerEx> iterator = tree.overlappingDeliciousIterator(new TextRange(0, document.getTextLength()),
+                                                                                    MY_FLAVOR_FLAG)) {
       int c = 0;
       while (iterator.hasNext()) {
         RangeMarkerEx next = iterator.next();
-        assertEquals(MY_TASTE_FLAG, tree.getTasteFlags(next));
+        assertEquals(MY_FLAVOR_FLAG, tree.getFlavorFlags(next));
         c++;
       }
       assertEquals(N/2, c);
@@ -177,7 +181,7 @@ public class IntervalTreeTest extends LightPlatformTestCase {
       int c = 0;
       while (iterator.hasNext()) {
         RangeMarkerEx next = iterator.next();
-        assertEquals(MY_OTHER_FLAG, tree.getTasteFlags(next));
+        assertEquals(MY_OTHER_FLAG, tree.getFlavorFlags(next));
         c++;
       }
       assertEquals(N/2, c);
@@ -186,8 +190,8 @@ public class IntervalTreeTest extends LightPlatformTestCase {
 
   private static class RangeMarkerTreeForTests extends RangeMarkerTree<RangeMarkerEx> {
     @Override
-    public byte getTasteFlags(@NotNull RangeMarkerEx interval) {
-      return super.getTasteFlags(interval);
+    public byte getFlavorFlags(@NotNull RangeMarkerEx interval) {
+      return super.getFlavorFlags(interval);
     }
 
     @Override

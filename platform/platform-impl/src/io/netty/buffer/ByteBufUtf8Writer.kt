@@ -2,9 +2,11 @@
 package io.netty.buffer
 
 import com.intellij.util.text.CharArrayCharSequence
+import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.io.Writer
 
+@ApiStatus.Internal
 class ByteBufUtf8Writer(private val buffer: ByteBuf) : Writer() {
   fun write(inputStream: InputStream, length: Int) {
     buffer.writeBytes(inputStream, length)

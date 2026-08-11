@@ -62,7 +62,7 @@ def infer_flags(bytecode, is_async=None):
         bytecode,
         (_bytecode.Bytecode, _bytecode.ConcreteBytecode, _bytecode.ControlFlowGraph),
     ):
-        msg = "Expected a Bytecode, ConcreteBytecode or ControlFlowGraph " "instance not %s"
+        msg = "Expected a Bytecode, ConcreteBytecode or ControlFlowGraph instance not %s"
         raise ValueError(msg % bytecode)
 
     instructions = bytecode.get_instructions() if isinstance(bytecode, _bytecode.ControlFlowGraph) else bytecode
@@ -150,9 +150,7 @@ def infer_flags(bytecode, is_async=None):
     # next set the GENERATOR flag if relevant
     else:
         if sure_async:
-            raise ValueError(
-                "The is_async argument is False but bytecodes " "that can only be used in async functions have " "been detected."
-            )
+            raise ValueError("The is_async argument is False but bytecodes that can only be used in async functions have been detected.")
 
         if maybe_generator:
             flags |= CompilerFlags.GENERATOR

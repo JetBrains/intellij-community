@@ -8,7 +8,7 @@ import com.intellij.openapi.observable.operation.OperationExecutionId
 import com.intellij.openapi.observable.operation.OperationExecutionStatus
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 @ApiStatus.NonExtendable
 abstract class AbstractObservableOperationTrace : ObservableTaskOperationTrace {
 

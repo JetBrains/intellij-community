@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LeakingThis")
 
 package com.intellij.openapi.fileEditor.impl.text
@@ -183,7 +183,7 @@ open class TextEditorComponent(
     /**
      * Just calculates
      */
-    get() = FileDocumentManager.getInstance().getDocument(file) != null
+    get() = FileDocumentManager.getInstance().canHaveDocument(file)
 
   private fun updateValidProperty(textEditor: TextEditorImpl) {
     val oldValid = isValid

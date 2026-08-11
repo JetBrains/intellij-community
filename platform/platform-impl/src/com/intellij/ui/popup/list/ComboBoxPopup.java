@@ -26,6 +26,7 @@ import com.intellij.ui.render.CompositeRenderer;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,6 +102,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     default void customizeListRendererComponent(JComponent component) {}
   }
 
+  @ApiStatus.Internal
   public interface SelectionListener<T> extends EventListener {
     void setSelectedItem(@NotNull T value);
   }

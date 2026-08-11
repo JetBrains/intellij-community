@@ -6,6 +6,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.IOException
 import java.nio.channels.FileChannel
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.FileVisitResult
@@ -46,6 +47,67 @@ fun copyDir(sourceDir: Path, targetDir: Path, dirFilter: Predicate<Path>? = null
   val dirFilter = dirFilter ?: Predicate { true }
   val fileFilter = fileFilter ?: Predicate { true }
   Files.walkFileTree(sourceDir, CopyDirectoryVisitor(sourceDir, targetDir, dirFilter, fileFilter))
+}
+
+/**
+ * Hardlinks [file] into [target] instead of copying it, falling back to a copy whenever a link is
+ * impossible - a different filesystem, a read-only share, a filesystem without hardlinks.
+ *
+ * Only for a [file] that is an entry of an immutable cache, and only for a [target] that nothing will
+ * rewrite in place: a link makes the two the same bytes on disk, so patching the target afterwards
+ * would corrupt the cache for every later build. Distributions are therefore always copied - only an
+ * in-process dev-mode assembly turns this on, through `BuildOptions.linkImmutableCacheEntries`.
+ */
+fun linkOrCopyFile(file: Path, target: Path) {
+  Files.createDirectories(target.parent)
+  doLinkOrCopyFile(file = file, target = target, isSymbolicLink = Files.isSymbolicLink(file))
+}
+
+/**
+ * [linkOrCopyFile] for a caller that has already created `target.parent` and already knows whether
+ * [file] is a symbolic link, so that neither costs an extra syscall per file of a tree.
+ */
+private fun doLinkOrCopyFile(file: Path, target: Path, isSymbolicLink: Boolean) {
+  // a symlink is recreated, never hardlinked: `link` follows symlinks on macOS but not on Linux, so a hardlinked
+  // one would mean a different thing per OS - and what a tree of frameworks needs is the link itself
+  if (!isSymbolicLink) {
+    try {
+      Files.deleteIfExists(target)
+      Files.createLink(target, file)
+      return
+    }
+    catch (_: IOException) {
+    }
+    catch (_: UnsupportedOperationException) {
+    }
+  }
+  Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING, LinkOption.NOFOLLOW_LINKS)
+}
+
+/**
+ * [linkOrCopyFile] for a whole tree. Same constraints, and the same reason for them.
+ *
+ * Symbolic links are reproduced as links, as [copyDir] does - a JCEF or JBR tree is a tree of macOS
+ * frameworks, where dereferencing one would both break the framework layout and multiply its size.
+ */
+fun linkOrCopyDir(sourceDir: Path, targetDir: Path) {
+  Files.createDirectories(targetDir)
+  Files.walkFileTree(sourceDir, object : SimpleFileVisitor<Path>() {
+    override fun preVisitDirectory(directory: Path, attributes: BasicFileAttributes): FileVisitResult {
+      Files.createDirectories(targetDir.resolve(sourceDir.relativize(directory).toString()))
+      return FileVisitResult.CONTINUE
+    }
+
+    override fun visitFile(sourceFile: Path, attributes: BasicFileAttributes): FileVisitResult {
+      // `walkFileTree` does not follow links, so a link to a directory arrives here too, as a file
+      doLinkOrCopyFile(
+        file = sourceFile,
+        target = targetDir.resolve(sourceDir.relativize(sourceFile).toString()),
+        isSymbolicLink = attributes.isSymbolicLink,
+      )
+      return FileVisitResult.CONTINUE
+    }
+  })
 }
 
 inline fun writeNewFile(file: Path, task: (FileChannel) -> Unit) {

@@ -65,6 +65,12 @@ public class MarkdownColorSettingsPage implements ColorSettingsPage {
 
     result.put("footnote_def", MarkdownHighlighterColors.FOOTNOTE_DEFINITION);
 
+    result.put("alert_note", MarkdownHighlighterColors.ALERT_TITLE_NOTE);
+    result.put("alert_tip", MarkdownHighlighterColors.ALERT_TITLE_TIP);
+    result.put("alert_important", MarkdownHighlighterColors.ALERT_TITLE_IMPORTANT);
+    result.put("alert_warning", MarkdownHighlighterColors.ALERT_TITLE_WARNING);
+    result.put("alert_caution", MarkdownHighlighterColors.ALERT_TITLE_CAUTION);
+
     return result;
   }
 
@@ -158,6 +164,12 @@ public class MarkdownColorSettingsPage implements ColorSettingsPage {
       put("markdown.editor.colors.term", MarkdownHighlighterColors.TERM);
 
       put("markdown.editor.colors.footnote_definition", MarkdownHighlighterColors.FOOTNOTE_DEFINITION);
+
+      put("markdown.editor.colors.alert.title.note", MarkdownHighlighterColors.ALERT_TITLE_NOTE);
+      put("markdown.editor.colors.alert.title.tip", MarkdownHighlighterColors.ALERT_TITLE_TIP);
+      put("markdown.editor.colors.alert.title.important", MarkdownHighlighterColors.ALERT_TITLE_IMPORTANT);
+      put("markdown.editor.colors.alert.title.warning", MarkdownHighlighterColors.ALERT_TITLE_WARNING);
+      put("markdown.editor.colors.alert.title.caution", MarkdownHighlighterColors.ALERT_TITLE_CAUTION);
     }
 
     public AttributesDescriptor @NotNull [] get() {

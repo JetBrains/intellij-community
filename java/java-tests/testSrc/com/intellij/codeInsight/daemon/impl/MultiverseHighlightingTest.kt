@@ -11,13 +11,23 @@ import com.intellij.codeInsight.multiverse.SingleEditorContext
 import com.intellij.codeInsight.multiverse.anyContext
 import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.codeInsight.multiverse.defaultContext
+import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.multiverse.LibraryContextImpl
+import com.intellij.multiverse.ModuleContextImpl
+import com.intellij.multiverse.SdkContextImpl
 import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.rootManager
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
@@ -127,6 +137,70 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
     DaemonCodeAnalyzerEx.processHighlights(document, project, null, 0, document.textLength,
                                            Processors.cancelableCollectProcessor(allInfos))
     return allInfos
+  }
+
+  // Reproduces the root cause of the daemon error
+  // "PsiFile's context does not match the context of the editor.
+  //  File's context = LibraryContextImpl(...); Editor's context = DefaultContext"
+  // (TextEditorHighlightingPassRegistrarImpl.instantiatePasses, added under IJPL-240162).
+  //
+  // EditorContextManagerImpl.getEditorContexts caches its result per editor and only refreshes it on
+  // CodeInsightContextManager.contextsChanged. When the editor's document is momentarily not backed by
+  // a VirtualFile (FileDocumentManager.getFile == null, e.g. before the document<->file mapping is
+  // ready), it returns the DefaultContext fallback. If that fallback is cached, the editor stays pinned
+  // to DefaultContext even after the real (library/module) context becomes available, while the
+  // FileViewProvider for the same file is correctly inferred to its real context -> the contexts
+  // diverge and highlighting logs the error.
+  fun testDefaultContextOfFilelessDocumentIsNotCached() {
+    assertTrue("multiverse support must be enabled for this test", isSharedSourceSupportEnabled(project))
+
+    val factory = EditorFactory.getInstance()
+    val document = factory.createDocument("class C {}")
+    val fileLessEditor = factory.createEditor(document, project)
+    try {
+      assertNull("precondition: the document must not be backed by a VirtualFile",
+                 FileDocumentManager.getInstance().getFile(document))
+
+      // The editor context resolves to the default fallback because the file is unknown...
+      assertEquals(defaultContext(), EditorContextManager.getEditorContext(fileLessEditor, project))
+
+      // ...but this fallback must NOT be cached: otherwise the editor stays pinned to DefaultContext
+      // and later highlighting of a real-context file fails the editor-vs-file context check.
+      assertNull("the default fallback for a file-less document must not be cached",
+                 EditorContextManager.getCachedEditorContext(fileLessEditor, project))
+    }
+    finally {
+      factory.releaseEditor(fileLessEditor)
+    }
+  }
+
+  // IJPL-248901: ProjectModel contexts must be identified by their stable symbolic id
+  // (ModuleId / LibraryId / SdkId), NOT by the EntityPointer. An EntityPointer's id encodes the
+  // entity's slot in the current WorkspaceModel storage (arrayId in the high 32 bits), so the same
+  // module resolved against two storage generations (e.g. after a full storage replace on the
+  // remote-dev backend) yields pointers that are not equal. That made the editor's context and the
+  // file's context for the same module compare unequal and triggered
+  // "PsiFile's context does not match the context of the editor" with two ModuleContextImpl values
+  // that differed only by EntityPointer id. Keying on the symbolic id makes them generation-stable.
+  fun testProjectModelContextsAreIdentifiedBySymbolicId() {
+    val module = ModuleContextImpl(ModuleId("m"), project)
+    val sameModule = ModuleContextImpl(ModuleId("m"), project)
+    assertEquals(module, sameModule)
+    assertEquals(module.hashCode(), sameModule.hashCode())
+    assertFalse("different modules must not be equal", module == ModuleContextImpl(ModuleId("other"), project))
+
+    val tableId = LibraryTableId.ProjectLibraryTableId
+    val library = LibraryContextImpl(LibraryId("lib", tableId), project)
+    val sameLibrary = LibraryContextImpl(LibraryId("lib", tableId), project)
+    assertEquals(library, sameLibrary)
+    assertEquals(library.hashCode(), sameLibrary.hashCode())
+    assertFalse("different libraries must not be equal", library == LibraryContextImpl(LibraryId("other", tableId), project))
+
+    val sdk = SdkContextImpl(SdkId("sdk", "JavaSDK"), project)
+    val sameSdk = SdkContextImpl(SdkId("sdk", "JavaSDK"), project)
+    assertEquals(sdk, sameSdk)
+    assertEquals(sdk.hashCode(), sameSdk.hashCode())
+    assertFalse("different SDKs must not be equal", sdk == SdkContextImpl(SdkId("other", "JavaSDK"), project))
   }
 
   private fun getContexts(): List<ModuleContext> {

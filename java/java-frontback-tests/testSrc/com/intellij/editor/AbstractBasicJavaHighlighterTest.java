@@ -93,4 +93,41 @@ public abstract class AbstractBasicJavaHighlighterTest extends LightPlatformCode
     myEditorsToRelease.add(editor);
     return editor;
   }
+
+  /// See IDEA-390719
+  public void testMarkdownJavadocImproperReset() {
+    String input = """
+      ///a b
+      /// cd
+      class Benchmark {}
+      """;
+    Editor editor = initDocument(input);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      myDocument.insertString(12, " [");
+    });
+    CheckHighlighterConsistency.performCheck(editor);
+  }
+
+  /// See IDEA-390719
+  public void testClassicJavadocImproperReset() {
+    String input = """
+      /**
+       * {@snippet :
+       *   class H{}
+       * }
+       *
+       * 
+       */
+      class Benchmark {}
+      """;
+    Editor editor = initDocument(input);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      myDocument.insertString(45, """
+        {@snippet :
+          {{{{
+         }
+        """);
+    });
+    CheckHighlighterConsistency.performCheck(editor);
+  }
 }

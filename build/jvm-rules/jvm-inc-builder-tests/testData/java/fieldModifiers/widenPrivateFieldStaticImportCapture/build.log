@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/Owner.class
+End of files
+Compiling files:
+  java/fieldModifiers/widenPrivateFieldStaticImportCapture/a/ppp/Owner.java
+End of files
+Cleaning output files:
+  rrr/Use.class
+End of files
+Compiling files:
+  java/fieldModifiers/widenPrivateFieldStaticImportCapture/a/rrr/Use.java
+End of files
+------------------------------------------
+Exit code: ERROR

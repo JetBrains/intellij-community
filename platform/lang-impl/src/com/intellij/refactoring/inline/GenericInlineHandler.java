@@ -24,6 +24,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ import java.util.function.Consumer;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
+@ApiStatus.Internal
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public final class GenericInlineHandler {
   private static final Logger LOG = Logger.getInstance(GenericInlineHandler.class);

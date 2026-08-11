@@ -3,6 +3,7 @@ package com.intellij.codeInsight.codeVision.ui.model
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionEntryExtraActionModel
 import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -10,6 +11,7 @@ import javax.swing.Icon
  * Creates lense with counter
  * Pattern [{count} {text}]
  */
+@ApiStatus.Internal
 class CounterCodeVisionEntry(val count: Int,
                              @Nls val text: String,
                              providerId: String,

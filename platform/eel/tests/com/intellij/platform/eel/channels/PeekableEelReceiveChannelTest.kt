@@ -1,16 +1,23 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(EelDelicateApi::class)
+@file:Suppress("ClassName")
 
 package com.intellij.platform.eel.channels
 
 import com.intellij.platform.eel.ReadResult
+import com.intellij.platform.eel.provider.utils.EelPipe
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
+import kotlin.time.Duration.Companion.milliseconds
 
 @Suppress("checkedExceptions")
 class PeekableEelReceiveChannelTest {
@@ -56,14 +63,47 @@ class PeekableEelReceiveChannelTest {
     channel.available() shouldBe 2 + 3
   }
 
-  @Test
-  fun `test readLine`() = runBlocking {
-    val channel = PeekableEelReceiveChannel(delegate("o\n\nworld".toByteArray()))
-    channel.prepend(ByteBuffer.wrap("hell".toByteArray()))
+  @Nested
+  inner class `test readLine` {
+    @Test
+    fun `hello world`() = runBlocking {
+      val channel = PeekableEelReceiveChannel(delegate("o\n\nworld".toByteArray()))
+      channel.prepend(ByteBuffer.wrap("hell".toByteArray()))
 
-    channel.readLine(StandardCharsets.UTF_8) shouldBe "hello"
-    channel.readLine(StandardCharsets.UTF_8) shouldBe ""
-    channel.readLine(StandardCharsets.UTF_8) shouldBe "world"
-    channel.readLine(StandardCharsets.UTF_8) shouldBe null
+      channel.readLine(StandardCharsets.UTF_8) shouldBe "hello"
+      channel.readLine(StandardCharsets.UTF_8) shouldBe ""
+      channel.readLine(StandardCharsets.UTF_8) shouldBe "world"
+      channel.readLine(StandardCharsets.UTF_8) shouldBe null
+    }
+
+    @Test
+    fun `chunk boundary inside utf8 glyph`(): Unit = runBlocking {
+      val channel = PeekableEelReceiveChannel(delegate(byteArrayOf(0xE2.toByte(), 0x82.toByte(), 0xAC.toByte())))
+      channel.readLine(StandardCharsets.UTF_8, 2) shouldContain "€"
+    }
+  }
+
+  @Test
+  fun `test readUntil`() = runBlocking {
+    val pipe = EelPipe(prefersDirectBuffers = false)
+    launch {
+      pipe.sink.send(ByteBuffer.wrap(byteArrayOf(1, 2)))
+      delay(50.milliseconds)
+      pipe.sink.send(ByteBuffer.wrap(byteArrayOf(3, 4)))
+      pipe.sink.send(ByteBuffer.wrap(byteArrayOf(5, 6, 7)))
+    }
+
+    val result = StringBuilder()
+    val channel = pipe.source.peekable()
+    channel.readUntil(6.toByte()) { buffer, last ->
+      val data = ByteArray(buffer.remaining()) { buffer.get(it) }.joinToString { it.toUByte().toString() }
+      result.append("$data $last\n")
+    }
+    result.toString() shouldBe """
+      1, 2 false
+      3, 4 false
+      5 true
+      
+    """.trimIndent()
   }
 }

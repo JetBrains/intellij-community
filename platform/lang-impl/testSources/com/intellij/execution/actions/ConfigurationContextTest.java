@@ -26,6 +26,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.Assert;
 
 import java.util.List;
@@ -197,7 +198,7 @@ public class ConfigurationContextTest extends BasePlatformTestCase {
   }
 
   @NotNull
-  private List<RunnerAndConfigurationSettings> getConfigurationsFromContext() {
+  private @Unmodifiable List<RunnerAndConfigurationSettings> getConfigurationsFromContext() {
     DataContext dataContext = createDataContext();
     List<ConfigurationFromContext> list = PreferredProducerFind.getConfigurationsFromContext(
       dataContext.getData(Location.DATA_KEY),

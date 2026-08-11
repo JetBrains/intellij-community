@@ -44,6 +44,7 @@ internal object TestPluginXmlGenerator : PipelineNode {
       generateTestPluginXml(
         spec = plan.spec,
         productPropertiesClass = plan.productClass,
+        productName = plan.productName,
         projectRoot = model.projectRoot,
         moduleDependencies = plan.moduleDependencies,
         pluginDependencies = plan.pluginDependencies,

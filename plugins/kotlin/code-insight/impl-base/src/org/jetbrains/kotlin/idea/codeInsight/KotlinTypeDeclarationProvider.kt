@@ -8,17 +8,22 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.abbreviationOrSelf
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.upperBoundIfFlexible
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
@@ -117,10 +122,11 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationPlaceAwareProvider
         callSiteReferenceProvider: (() -> PsiReference?)? = null,
         typeFromSymbol: (KaCallableSymbol) -> KaType?
     ): Array<PsiElement> {
-        analyze(this) {
-            val symbol = symbol as? KaCallableSymbol ?: return PsiElement.EMPTY_ARRAY
-            val callSiteReferenceElement = callSiteReferenceProvider?.invoke()?.element as? KtElement
+        val callSiteReferenceElement = callSiteReferenceProvider?.invoke()?.element as? KtElement
+
+        analyze(callSiteReferenceElement ?: this) {
             val smartCastType = (callSiteReferenceElement as? KtExpression)?.smartCastInfo?.smartCastType
+            val symbol = symbol as? KaCallableSymbol ?: return PsiElement.EMPTY_ARRAY
             val type = smartCastType ?: typeFromSymbol(symbol) ?: return PsiElement.EMPTY_ARRAY
             val unwrappedType = type.upperBoundIfFlexible().abbreviationOrSelf
             val targetPsiElement = unwrappedType.symbol?.psi

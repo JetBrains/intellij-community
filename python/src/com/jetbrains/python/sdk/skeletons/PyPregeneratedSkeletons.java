@@ -17,8 +17,10 @@ package com.jetbrains.python.sdk.skeletons;
 
 import com.jetbrains.python.sdk.InvalidSdkException;
 
+import java.nio.file.Path;
+
 
 public interface PyPregeneratedSkeletons {
 
-  void unpackPreGeneratedSkeletons(String skeletonDir) throws InvalidSdkException;
+  void unpackPreGeneratedSkeletons(Path skeletonDir) throws InvalidSdkException;
 }

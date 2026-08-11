@@ -1,16 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl
 
-import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.undo.DocumentReference
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.DocumentReferenceProvider
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.command.undo.UndoableAction
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
@@ -23,7 +19,6 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
-
 
 @ApiStatus.Internal
 object UndoDocumentUtil {
@@ -56,14 +51,16 @@ object UndoDocumentUtil {
 
   @JvmStatic
   fun getDocReference(project: Project, editorProvider: CurrentEditorProvider): DocumentReference? {
-    val editor = getCurrentEditor(project, editorProvider)
-    if (editor != null) {
-      val file = FileDocumentManager.getInstance().getFile(editor.getDocument())
-      if (file != null && file.isValid()) {
-        return DocumentReferenceManager.getInstance().create(file)
-      }
+    val fileEditor = editorProvider.getCurrentEditor(project)
+    if (fileEditor !is TextEditor) {
+      return null
     }
-    return null
+    val document = fileEditor.getEditor().document
+    val file = FileDocumentManager.getInstance().getFile(document)
+    if (file == null || !file.isValid) {
+      return null
+    }
+    return DocumentReferenceManager.getInstance().create(file)
   }
 
   @JvmStatic
@@ -147,19 +144,6 @@ object UndoDocumentUtil {
       }
     }
     return readOnlyDocs
-  }
-
-  private fun getCurrentEditor(project: Project, editorProvider: CurrentEditorProvider): Editor? {
-    val application = ApplicationManager.getApplication()
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
-      return CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext())
-    } else {
-      val fileEditor = editorProvider.getCurrentEditor(project)
-      if (fileEditor is TextEditor) {
-        return fileEditor.getEditor()
-      }
-    }
-    return null
   }
 
   private fun getOriginalDocument(document: Document): Document {

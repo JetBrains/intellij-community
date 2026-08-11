@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
  */
 @Internal
 data class PyProjectTable(
-  val name: String? = null,
+  val name: String,
   val version: String? = null,
   val requiresPython: String? = null,
   val authors: List<PyProjectContact>? = null,
@@ -53,6 +53,23 @@ data class PyProjectDependencies(
    */
   val allDepsFromGroups: Set<String> = depGroupsToDeps.values.flatten().toSet()
 }
+
+/**
+ * Where a dependency group lives in `pyproject.toml`. The two PEPs (621 and 735) put group-style
+ * dependencies in different tables, and package managers expose different CLI flags for each:
+ * uv for example uses `--optional` for PEP 621 and `--group` for PEP 735.
+ */
+@Internal
+enum class PyDependencyGroupKind {
+  /** PEP 735 — `[dependency-groups]` table. */
+  DEPENDENCY_GROUP,
+
+  /** PEP 621 — `[project.optional-dependencies]` table. */
+  OPTIONAL_DEPENDENCY,
+}
+
+@Internal
+data class PyDependencyGroup(val name: String, val kind: PyDependencyGroupKind = PyDependencyGroupKind.DEPENDENCY_GROUP)
 
 /**
  * Represents a file object.

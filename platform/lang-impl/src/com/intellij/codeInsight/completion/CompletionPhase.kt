@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.trace
@@ -26,6 +27,7 @@ import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
@@ -384,7 +386,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       @JvmStatic
       fun loadContributorsOutsideEdt(editor: Editor, file: PsiFile) {
         ThreadingAssertions.assertBackgroundThread()
-        CompletionContributor.forLanguage(PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().offset))
+        CompletionContributor.forLanguage(PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().offset), editor)
       }
 
       @ApiStatus.Internal
@@ -424,6 +426,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   }
 
   /** see doc of [CompletionPhase] */
+  @ApiStatus.Internal
   class Synchronous internal constructor(indicator: CompletionProgressIndicator) : CompletionPhase(indicator) {
     override fun newCompletionStarted(invocationCount: Int, repeated: Boolean): Int {
       assertPhase(NoCompletion.javaClass) // will fail and log valuable info
@@ -433,6 +436,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   }
 
   /** see doc of [CompletionPhase] */
+  @ApiStatus.Internal
   class BgCalculation internal constructor(indicator: CompletionProgressIndicator) : CompletionPhase(indicator) {
     @JvmField
     internal var modifiersChanged: Boolean = false
@@ -443,30 +447,39 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       cancelOnEditorLoseFocus(indicator)
     }
 
+    @RequiresEdt
     private fun restartOnWriteAction() {
+      if (ApplicationManagerEx.getApplicationEx().isWriteActionPending) {
+        doRestartBecauseOfWriteAction()
+        return
+      }
       ApplicationManager.getApplication().addApplicationListener(object : ApplicationListener {
         override fun beforeWriteActionStart(action: Any) {
-          if (!indicator!!.lookup.isLookupDisposed && !indicator.isCanceled) {
-            withExplicitClientId(ownerId) {
-              indicator.cancel()
-              if (EDT.isCurrentThreadEdt()) {
-                indicator.scheduleRestart()
-              }
-              else {
-                // this branch is possible because completion can be canceled on background write action
-                ApplicationManager.getApplication().invokeLater(
-                  /* runnable = */ { indicator.scheduleRestart() },
-
-                  // since we break the synchronous execution here, it is possible that some other EDT event finishes completion before us
-                  // in this case, the current indicator becomes obsolete, and we don't need to reschedule the session anymore
-
-                  /* expired = */ { CompletionServiceImpl.currentCompletionProgressIndicator != indicator }
-                )
-              }
-            }
-          }
+          doRestartBecauseOfWriteAction()
         }
       }, this)
+    }
+
+    private fun doRestartBecauseOfWriteAction() {
+      if (!indicator!!.lookup.isLookupDisposed && !indicator.isCanceled) {
+        withExplicitClientId(ownerId) {
+          indicator.cancel()
+          if (EDT.isCurrentThreadEdt()) {
+            indicator.scheduleRestart()
+          }
+          else {
+            // this branch is possible because completion can be canceled on background write action
+            ApplicationManager.getApplication().invokeLater(
+              /* runnable = */ { indicator.scheduleRestart() },
+
+              // since we break the synchronous execution here, it is possible that some other EDT event finishes completion before us
+              // in this case, the current indicator becomes obsolete, and we don't need to reschedule the session anymore
+
+              /* expired = */ { CompletionServiceImpl.currentCompletionProgressIndicator != indicator }
+            )
+          }
+        }
+      }
     }
 
     private fun cancelOnEditorLoseFocus(indicator: CompletionProgressIndicator) {
@@ -494,6 +507,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   }
 
   /** see doc of [CompletionPhase] */
+  @ApiStatus.Internal
   class ItemsCalculated internal constructor(indicator: CompletionProgressIndicator) : CompletionPhase(indicator) {
     override fun newCompletionStarted(invocationCount: Int, repeated: Boolean): Int {
       requireNotNull(indicator) { "`ItemsCalculated#indicator` is not-null as its constructor accepts not-null `indicator`" }.closeAndFinish(false)
@@ -502,6 +516,15 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   }
 
   abstract class ZombiePhase internal constructor(indicator: CompletionProgressIndicator?) : CompletionPhase(indicator) {
+    internal fun expireOnEditorRelease(editor: Editor) {
+      val phase = this
+      EditorUtil.disposeWithEditor(editor, Disposable {
+        if (CompletionServiceImpl.completionPhase === phase) {
+          CompletionServiceImpl.setCompletionPhase(NoCompletion)
+        }
+      })
+    }
+
     internal fun expireOnAnyEditorChange(editor: Editor) {
       editor.getDocument().addDocumentListener(object : DocumentListener {
         override fun beforeDocumentChange(e: DocumentEvent) {
@@ -522,12 +545,14 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   }
 
   /** see doc of [CompletionPhase] */
+  @ApiStatus.Internal
   class InsertedSingleItem internal constructor(
     indicator: CompletionProgressIndicator,
     @JvmField
     val restorePrefix: Runnable
   ) : ZombiePhase(indicator) {
     init {
+      expireOnEditorRelease(indicator.editor)
       expireOnAnyEditorChange(indicator.editor)
     }
 
@@ -541,8 +566,10 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   }
 
   /** see doc of [CompletionPhase] */
+  @ApiStatus.Internal
   class NoSuggestionsHint internal constructor(hint: LightweightHint?, indicator: CompletionProgressIndicator) : ZombiePhase(indicator) {
     init {
+      expireOnEditorRelease(indicator.editor)
       expireOnAnyEditorChange(indicator.editor)
       if (hint != null) {
         val hintListener = HintListener { CompletionServiceImpl.setCompletionPhase(NoCompletion) }
@@ -564,6 +591,13 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   ) : ZombiePhase(null) {
     private val myTracker: ActionTracker = ActionTracker(editor, this)
     private val myEditor: Editor = editor
+
+    init {
+      // Do not call expireOnAnyEditorChange here: EmptyAutoPopup must survive document/caret changes
+      // so that allowsSkippingNewAutoPopup can suppress a redundant re-popup while the user keeps typing.
+      // We only need to release the editor when it is disposed (IJPL-249705).
+      expireOnEditorRelease(editor)
+    }
 
     fun allowsSkippingNewAutoPopup(editor: Editor, toType: Char): Boolean {
       if (myEditor === editor && !myTracker.hasAnythingHappened() && !CompletionProgressIndicator.shouldRestartCompletion(editor, restartingPrefixConditions, toType.toString())) {

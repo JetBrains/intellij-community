@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.NonExternalClassifierExtendingStateOrPropsInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.js.NonExternalClassifierExtendingStateOrPropsInspection

@@ -39,6 +39,8 @@ abstract class UsagesCountManagerBase<ELEMENT>(project: Project, private val con
    * Counts the number of usages of a specified member.
    * Cache contains number of usages outside the current file on hard ref.
    * On any change in file, the cache is cleared everywhere but in this file.
+   * Returns [Int.MAX_VALUE] if the count exceeds the display cap,
+   * negative value if the search is disabled, or the number of usages in the normal case.
    */
   fun countMemberUsages(file: PsiFile, member: ELEMENT): Int {
     val virtualFile = PsiUtilCore.getVirtualFile(file)
@@ -67,9 +69,11 @@ abstract class UsagesCountManagerBase<ELEMENT>(project: Project, private val con
       val localScope = GlobalSearchScope.fileScope(file)
       val externalScope = GlobalSearchScope.notScope(localScope)
       val externalUsages = externalUsagesCache.getOrPut(key) { configuration.countUsages(file, superMembers, externalScope) }
-      if (externalUsages < 0) return externalUsages
+      // a negative value means "not computed", Int.MAX_VALUE means "exceeded the display cap"; in both cases
+      // propagate the sentinel as-is instead of summing (also avoids Int overflow on the addition below)
+      if (externalUsages < 0 || externalUsages == Int.MAX_VALUE) return externalUsages
       val localUsages = configuration.countUsages(file, superMembers, localScope)
-      if (localUsages < 0) return localUsages
+      if (localUsages < 0 || localUsages == Int.MAX_VALUE) return localUsages
       return externalUsages + localUsages
     }
   }
@@ -82,5 +86,9 @@ interface UsageCounterConfigurationBase<ELEMENT> {
     return CollectionFactory.createConcurrentWeakKeySoftValueMap()
   }
 
+  /**
+   * Returns the number of usages, or one of two sentinels: a negative value when the count could not be
+   * computed, and [Int.MAX_VALUE] when the count exceeded the display cap (rendered as "N+").
+   */
   fun countUsages(file: PsiFile, members: List<ELEMENT>, scope: SearchScope): Int
 }

@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.aalto.xml"/>
+    <module name="intellij.platform.diff"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.libraries.xerces"/>
@@ -12,7 +13,6 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
-    <module name="intellij.platform.diff"/>
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution.impl"/>
@@ -22,6 +22,7 @@
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.polySymbols.backend"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.util.diff"/>
@@ -223,23 +224,23 @@
 
     <localInspection language="XML" shortName="CheckValidXmlInScriptTagBody" enabledByDefault="true" level="ERROR"
                      bundle="messages.XmlBundle" key="html.inspections.check.valid.script.tag"
-                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     groupBundle="messages.XmlAnalysisBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.xml.util.CheckValidXmlInScriptBodyInspection"/>
     <localInspection language="XML" shortName="RequiredAttributes" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="xml.inspections.required.attributes.display.name"
-                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     groupBundle="messages.XmlAnalysisBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection"/>
     <localInspection language="HTML" shortName="HtmlUnknownTag" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="html.inspections.unknown.tag"
-                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     groupBundle="messages.XmlAnalysisBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection"/>
     <localInspection language="HTML" shortName="HtmlUnknownAttribute" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="html.inspections.unknown.attribute"
-                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     groupBundle="messages.XmlAnalysisBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection"/>
     <localInspection language="HTML" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="html.inspections.unknown.boolean.attribute"
-                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     groupBundle="messages.XmlAnalysisBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownBooleanAttributeInspection"/>
 
     <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.XmlCodeFoldingOptionsProvider" id="XML" order="after Android,after C++,after General,after Go,after Handlebars,after JAVA,after JavaScript,after JPAQL,after JSON,after Kubernetes,after LinkerScript,after Markdown,after ObjectiveC,after PHP,after Python,after Ruby,after Rust,after SQL,after Swift"/>
@@ -255,69 +256,69 @@
     <intentionAction>
       <language>XML</language>
       <categoryKey>xml.category</categoryKey>
-      <bundleName>messages.XmlBundle</bundleName>
+      <bundleName>messages.XmlAnalysisBundle</bundleName>
       <className>com.intellij.xml.actions.XmlSplitTagAction</className>
     </intentionAction>
     <intentionAction>
       <language>XML</language>
       <categoryKey>xml.category</categoryKey>
-      <bundleName>messages.XmlBundle</bundleName>
+      <bundleName>messages.XmlAnalysisBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.RemoveTagAndPromoteChildrenIntentionAction</className>
     </intentionAction>
     <intentionAction>
       <language>XML</language>
       <categoryKey>xml.category</categoryKey>
-      <bundleName>messages.XmlBundle</bundleName>
+      <bundleName>messages.XmlAnalysisBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.CDataToTextIntention</className>
     </intentionAction>
     <intentionAction>
       <language>XML</language>
       <categoryKey>xml.category</categoryKey>
-      <bundleName>messages.XmlBundle</bundleName>
+      <bundleName>messages.XmlAnalysisBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.TextToCDataIntention</className>
     </intentionAction>
     <intentionAction>
       <language>XML</language>
       <categoryKey>xml.category</categoryKey>
-      <bundleName>messages.XmlBundle</bundleName>
+      <bundleName>messages.XmlAnalysisBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.RearrangeAttributesIntention</className>
     </intentionAction>
     <intentionAction>
       <language>XML</language>
       <categoryKey>xml.category</categoryKey>
-      <bundleName>messages.XmlBundle</bundleName>
+      <bundleName>messages.XmlAnalysisBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.AddSchemaPrefixIntention</className>
     </intentionAction>
 
     <intentionAction>
       <language>XML</language>
       <categoryKey>xml.category</categoryKey>
-      <bundleName>messages.XmlBundle</bundleName>
+      <bundleName>messages.XmlAnalysisBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.AddXsiSchemaLocationForExtResourceAction</className>
     </intentionAction>
     <intentionAction>
       <language>XML</language>
       <categoryKey>xml.category</categoryKey>
-      <bundleName>messages.XmlBundle</bundleName>
+      <bundleName>messages.XmlAnalysisBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction</className>
     </intentionAction>
     <intentionAction>
       <language>XML</language>
       <categoryKey>xml.category</categoryKey>
-      <bundleName>messages.XmlBundle</bundleName>
+      <bundleName>messages.XmlAnalysisBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction</className>
     </intentionAction>
 
     <intentionAction>
       <language>XML</language>
       <categoryKey>xml.category</categoryKey>
-      <bundleName>messages.XmlBundle</bundleName>
+      <bundleName>messages.XmlAnalysisBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.ConvertSchemaPrefixToDefaultIntention</className>
     </intentionAction>
     <intentionAction>
       <language>XML</language>
       <categoryKey>xml.category</categoryKey>
-      <bundleName>messages.XmlBundle</bundleName>
+      <bundleName>messages.XmlAnalysisBundle</bundleName>
       <className>com.intellij.codeInsight.intentions.XmlChooseColorIntentionAction</className>
     </intentionAction>
 

@@ -1,5 +1,5 @@
 // "Use inherited visibility" "true"
-// K2_ERROR: Cannot change access privilege internal for 'run' in 'A'.
+// K2_ERROR: CANNOT_CHANGE_ACCESS_PRIVILEGE
 open class A {
     protected open fun run() {}
 }

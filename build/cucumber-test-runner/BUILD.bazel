@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.cucumber.testRunner` start
-
 jvm_library(
     name = "cucumber-testRunner",
     srcs = glob(

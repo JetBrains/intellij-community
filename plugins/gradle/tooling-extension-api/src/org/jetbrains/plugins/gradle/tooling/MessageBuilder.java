@@ -25,12 +25,6 @@ public interface MessageBuilder {
   @NotNull MessageBuilder withException(Exception e);
 
   @CheckReturnValue
-  @NotNull MessageBuilder withLocation(Message.FilePosition filePosition);
-
-  @CheckReturnValue
-  @NotNull MessageBuilder withLocation(String filePath, int line, int column);
-
-  @CheckReturnValue
   @NotNull MessageBuilder withProject(Project project);
 
   @CheckReturnValue

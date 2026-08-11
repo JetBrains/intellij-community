@@ -1,6 +1,14 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.python.uv.backend` start
+create_kotlinc_options(
+    name = "custom_backend",
+    opt_in = [
+        "kotlin.time.ExperimentalTime",
+        "com.jetbrains.python.PyInternalExecApi",
+    ],
+)
 
 jvm_library(
     name = "backend",
@@ -12,6 +20,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_backend",
     module_name = "intellij.python.uv.backend",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -22,7 +31,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//python/python-uv/common",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util",
         "//python/python-pyproject:pyproject",
         "//platform/core-api:core",
@@ -31,6 +40,11 @@ jvm_library(
         "//python/python-pytools:pytools",
         "//python/python-exec-service:community-execService",
         "//platform/eel-provider",
+        "//platform/execution",
+        "//python/python-sdk/backend",
+        "//platform/remote-core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util/jdom",
     ],
 )
 
@@ -41,12 +55,14 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_backend",
     module_name = "intellij.python.uv.backend",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
         ":backend",
         "//python/python-uv/common:common_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util:util_test_lib",
         "//python/python-pyproject:pyproject_test_lib",
         "//platform/core-api:core_test_lib",
@@ -55,6 +71,11 @@ jvm_library(
         "//python/python-pytools:pytools_test_lib",
         "//python/python-exec-service:community-execService_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
+        "//platform/remote-core:remote-core_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.uv.backend` end

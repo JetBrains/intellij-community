@@ -20,7 +20,10 @@ import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewBrowserActions
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor.Companion.PREVIEW_BROWSER
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor.Companion.PREVIEW_BROWSER_ACTIONS
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -53,6 +56,14 @@ object MarkdownActionUtil {
     }
   }
 
+  @RequiresEdt
+  @JvmStatic
+  fun findPreviewBrowserActions(event: AnActionEvent): MarkdownPreviewBrowserActions? {
+    val editor = findMarkdownPreviewEditor(event)
+    return editor?.getUserData(PREVIEW_BROWSER)?.get() as? MarkdownPreviewBrowserActions
+           ?: event.dataContext.getData(PREVIEW_BROWSER_ACTIONS)?.get()
+  }
+
   /**
    * @param strictMarkdown If true, requires pure Markdown language;
    * if false, allows Markdown-compatible languages (such as Jupyter).
@@ -62,7 +73,7 @@ object MarkdownActionUtil {
   fun findMarkdownEditor(event: AnActionEvent, strictMarkdown: Boolean = false): Editor? {
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return null
     return when {
-      if (strictMarkdown) file.language.isMarkdownLanguage() else file.language.supportsMarkdown(event.dataContext) ->
+      if (strictMarkdown) file.language.isMarkdownLanguage() else file.supportsMarkdown(event.dataContext) ->
         event.getData(CommonDataKeys.EDITOR)
       else -> null
     }

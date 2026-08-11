@@ -4,7 +4,7 @@ package org.intellij.plugins.markdown.preview
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import junit.framework.TestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
-import org.intellij.plugins.markdown.ui.preview.jcef.impl.IncrementalDOMBuilder
+import com.intellij.markdown.jcef.preview.impl.IncrementalDOMBuilder
 import java.io.File
 
 /**

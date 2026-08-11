@@ -342,8 +342,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
         AlienCommitWorkflow workflow = new AlienCommitWorkflow(myVcs);
         AlienCommitChangeListDialog dialog = new AlienCommitChangeListDialog(workflow, changeList);
-        SingleChangeListCommitWorkflowHandler handler =
-          new SingleChangeListCommitWorkflowHandler(workflow, dialog, comment, changes);
+        SingleChangeListCommitWorkflowHandler handler = new SingleChangeListCommitWorkflowHandler(workflow, dialog, comment, changes, true);
         handler.activate();
       }
     }.queue();

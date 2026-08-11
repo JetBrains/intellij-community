@@ -15,7 +15,7 @@
  */
 package com.intellij.uiDesigner.core;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -25,8 +25,10 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 
 import static com.intellij.uiDesigner.core.SpansTest.setDefaults;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public final class GapsTest extends TestCase {
+public final class GapsTest {
+  @Test
   public void test1() {
     final JPanel panel = new JPanel(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), 10, 0));
 
@@ -52,6 +54,7 @@ public final class GapsTest extends TestCase {
   /**
    * field (span 2) | field (span 1)
    */
+  @Test
   public void test2() {
     final JPanel panel = new JPanel(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), 7, 0));
 
@@ -85,6 +88,7 @@ public final class GapsTest extends TestCase {
    * btn1   |    btn2  | btn4
    * btn3 (span 2)    |
    */
+  @Test
   public void test3() {
     final JPanel panel = new JPanel(new GridLayoutManager(2, 3, new Insets(0, 0, 0, 0), 7, 0));
 
@@ -124,6 +128,7 @@ public final class GapsTest extends TestCase {
    * btn1   |    btn2  | btn4
    * btn3 (span 2)    |
    */
+  @Test
   public void test3a() {
     final JPanel panel = new JPanel(new GridLayoutManager(2, 3, new Insets(0, 0, 0, 0), 1000, 0));
 
@@ -163,6 +168,7 @@ public final class GapsTest extends TestCase {
    * btn1   |    btn2
    * btn3 (span 2)
    */
+  @Test
   public void test3b() {
     final JPanel panel = new JPanel(new GridLayoutManager(2, 3, new Insets(0, 0, 0, 0), 1000, 0));
 
@@ -199,6 +205,7 @@ public final class GapsTest extends TestCase {
    * ----
    * btn2
    */
+  @Test
   public void test4() {
     final JPanel panel = new JPanel(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), 0, 7));
 
@@ -228,6 +235,7 @@ public final class GapsTest extends TestCase {
    * ----
    * btn2
    */
+  @Test
   public void test5() {
     final JPanel panel = new JPanel(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), 0, 7));
 
@@ -259,6 +267,7 @@ public final class GapsTest extends TestCase {
    * ----- (very big gap)
    * btn2
    */
+  @Test
   public void test6() {
     final JPanel panel = new JPanel(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), 0, 500));
 

@@ -8,7 +8,6 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.Class
 import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus.Internal
 
 private val GROUP = EventLogGroup(
   id = "editor.notification.panel",
@@ -44,7 +43,6 @@ private val HANDLER_INVOKED_EVENT = GROUP.registerEvent(
   eventField2 = Class("handler_class"),
 )
 
-@Internal
 internal fun logNotificationShown(
   project: Project,
   provider: EditorNotificationProvider,
@@ -52,7 +50,6 @@ internal fun logNotificationShown(
   NOTIFICATION_SHOWN_EVENT.log(project, provider)
 }
 
-@Internal
 internal fun logHandlerInvoked(
   project: Project,
   provider: EditorNotificationProvider,
@@ -61,7 +58,6 @@ internal fun logHandlerInvoked(
   HANDLER_INVOKED_EVENT.log(project, provider, handlerClass)
 }
 
-@Internal
 internal class EditorNotificationUsagesCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP

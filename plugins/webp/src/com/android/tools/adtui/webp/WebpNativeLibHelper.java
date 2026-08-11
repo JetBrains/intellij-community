@@ -17,7 +17,8 @@ package com.android.tools.adtui.webp;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.system.CpuArch;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,14 +40,14 @@ public final class WebpNativeLibHelper {
 
   public static @NotNull String getDecoderVersion() {
     // A decoded result of calling `WebPGetDecoderVersion()`; we don't want to load the native library just to get this constant.
-    return "1.3.2";
+    return "1.6.0";
   }
 
   public static @NotNull String getEncoderVersion() {
     return getDecoderVersion();
   }
 
-  public static boolean loadNativeLibraryIfNeeded() {
+  static boolean loadNativeLibraryIfNeeded() {
     if (!sJniLibLoadAttempted) {
       try {
         loadNativeLibrary();
@@ -76,18 +77,26 @@ public final class WebpNativeLibHelper {
   }
 
   public static @Nullable Path getLibLocation() {
-    String platformName;
-    if (SystemInfo.isWindows) platformName = "win";
-    else if (SystemInfo.isMac) platformName = "mac";
-    else if (SystemInfo.isLinux) platformName = "linux";
-    else return null;
-    var relativePath = "lib/libwebp/" + platformName + '/' + System.mapLibraryName("webp_jni");
-
-    // A terrible hack for dev environment.
-    var local = Path.of(PluginPathManager.getPluginHomePath("webp"), relativePath);
-    if (Files.exists(local)) return local;
-
-    var resource = PluginPathManager.getPluginResource(WebpNativeLibHelper.class, relativePath);
-    return resource != null ? resource.toPath().toAbsolutePath() : null;
+    var location = System.getProperty(WebpMetadata.TEST_LIB_LOCATION);
+    if (location != null) {
+      return Path.of(location, System.mapLibraryName("webp_jni"));
+    }
+    else {
+      var platformName = switch (OS.CURRENT) {
+        case Windows -> "win";
+        case macOS -> "mac";
+        case Linux -> "linux";
+        default -> null;
+      };
+      var archName = switch (CpuArch.CURRENT) {
+        case X86_64 -> "amd64";
+        case ARM64 -> "aarch64";
+        default -> null;
+      };
+      if (platformName == null || archName == null) return null;
+      var relativePath = "lib/libwebp/" + platformName + '/' + archName + '/' + System.mapLibraryName("webp_jni");
+      var resource = PluginPathManager.getPluginResource(WebpNativeLibHelper.class, relativePath);
+      return resource != null ? resource.toPath().toAbsolutePath() : null;
+    }
   }
 }

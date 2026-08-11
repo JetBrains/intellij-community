@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.base.plugin.tests` start
-
 jvm_library(
     name = "kotlin-base-plugin-tests",
     srcs = glob(
@@ -14,7 +13,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:junit4",
+        "//libraries/junit4",
         "//platform/testFramework",
         "//platform/core-api:core",
         "//platform/core-impl",
@@ -29,7 +28,7 @@ jvm_library(
         "//jps/model-api:model",
         "//jps/model-serialization",
         "@lib//:kotlinc-kotlin-jps-common",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/projectModel-api:projectModel",
     ],
 )
@@ -56,7 +55,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//platform/core-api:core",
@@ -83,7 +83,8 @@ jvm_library(
         "//jps/model-serialization",
         "//jps/model-serialization:model-serialization_test_lib",
         "@lib//:kotlinc-kotlin-jps-common",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
     ],
@@ -100,7 +101,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.base.plugin.tests` end
 
 ### auto-generated section `test intellij.kotlin.base.plugin.tests` start
-
 jps_test(
     name = "kotlin-base-plugin-tests_test",
     runtime_deps = [":kotlin-base-plugin-tests_test_lib"],

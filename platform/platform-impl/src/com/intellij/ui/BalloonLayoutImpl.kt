@@ -1,10 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ui
 
 import com.intellij.notification.Notification
+import com.intellij.notification.NotificationLocation
 import com.intellij.notification.impl.NotificationCollector
+import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.popup.Balloon
@@ -12,11 +14,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -38,6 +42,7 @@ import java.awt.event.ComponentEvent
 import java.util.function.IntSupplier
 import javax.swing.JLayeredPane
 import javax.swing.JRootPane
+import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.milliseconds
 
 private val visibleCount: Int
@@ -262,45 +267,89 @@ open class BalloonLayoutImpl(private val parent: JRootPane, insets: Insets) : Ba
       remove(balloons[0], true)
       columns = createColumns(layoutRec)
     }
+    // Welcome screen notifications have a custom bottom-anchored layout
+    // (e.g. next to the notification bell icon) and must always stack upwards from the bottom right.
+    val location = if (this is WelcomeBalloonLayoutImpl) {
+      NotificationLocation.BOTTOM_RIGHT
+    } else {
+      NotificationsConfigurationImpl.getInstanceImpl().notificationLocation
+    }
     val pane = UIUtil.findComponentOfType(parent, ToolWindowPane::class.java)
     val layeredPane = pane?.getLayeredPane()
-    var eachColumnX = (if (layeredPane == null) this.layeredPane!!.width else layeredPane.x + layeredPane.width) - 4
+    var eachColumnX = if (location.isLeft) {
+      (layeredPane?.x ?: 0) + 4
+    } else {
+      (if (layeredPane == null) this.layeredPane!!.width else layeredPane.x + layeredPane.width) - 4
+    }
     if (pane != null && ExperimentalUI.isNewUI()) {
       eachColumnX += pane.x
       if (pane.parent.componentCount == 1) {
         eachColumnX += pane.parent.x
       }
     }
-    doLayout(balloons = columns[0], startX = eachColumnX + 4, bottomY = this.layeredPane!!.bounds.maxY.toInt())
+    val startX = if (location.isLeft) eachColumnX - 4 else eachColumnX + 4
+    doLayout(balloons = columns[0], startX = startX, bottomY = this.layeredPane!!.bounds.maxY.toInt())
   }
 
   private fun doLayout(balloons: List<Balloon>, startX: Int, bottomY: Int) {
-    var y = bottomY
-    val pane = UIUtil.findComponentOfType(parent, ToolWindowPane::class.java)
-    val helper = getFrameHelper(parent.parent as? Window)
-    if (pane != null) {
-      y -= pane.bottomHeight
-      if (SystemInfoRt.isMac && !ExperimentalUI.isNewUI()) {
-        if (helper == null || !helper.isInFullScreen) {
-          y -= UIUtil.getTransparentTitleBarHeight(parent)
+    // Welcome screen notifications have a custom bottom-anchored layout
+    // (e.g. next to the notification bell icon) and must always stack upwards from the bottom right.
+    val location = if (this is WelcomeBalloonLayoutImpl) {
+      NotificationLocation.BOTTOM_RIGHT
+    } else {
+      NotificationsConfigurationImpl.getInstanceImpl().notificationLocation
+    }
+
+    val startY = if (location.isTop) {
+      val pane = UIUtil.findComponentOfType(parent, ToolWindowPane::class.java)
+      var y = insets.top + JBUI.scale(10)
+      if (pane != null && pane.isShowing) {
+        val paneLocation = SwingUtilities.convertPoint(pane, 0, 0, layeredPane)
+        y = maxOf(y, paneLocation.y + JBUI.scale(10))
+      }
+      y
+    } else {
+      var y = bottomY
+      val pane = UIUtil.findComponentOfType(parent, ToolWindowPane::class.java)
+      val helper = getFrameHelper(parent.parent as? Window)
+      if (pane != null) {
+        y -= pane.bottomHeight
+        if (SystemInfoRt.isMac && !ExperimentalUI.isNewUI()) {
+          if (helper == null || !helper.isInFullScreen) {
+            y -= UIUtil.getTransparentTitleBarHeight(parent)
+          }
         }
       }
-    }
-    if (helper != null) {
-      val statusBar = helper.statusBar?.component
-      if (statusBar != null && statusBar.isVisible) {
-        y -= statusBar.height
+      if (helper != null) {
+        val statusBar = helper.statusBar?.component
+        if (statusBar != null && statusBar.isVisible) {
+          y -= statusBar.height
+        }
       }
+      y
     }
-    setBounds(balloons = balloons, startX = startX, startY = y)
+    setBounds(balloons = balloons, startX = startX, startY = startY)
   }
 
   protected open fun setBounds(balloons: List<Balloon>, startX: Int, startY: Int) {
+    // Welcome screen notifications have a custom bottom-anchored layout
+    // (e.g. next to the notification bell icon) and must always stack upwards from the bottom right.
+    val location = if (this is WelcomeBalloonLayoutImpl) {
+      NotificationLocation.BOTTOM_RIGHT
+    } else {
+      NotificationsConfigurationImpl.getInstanceImpl().notificationLocation
+    }
     var y = startY
     for (balloon in balloons) {
       val bounds = Rectangle(getSize(balloon))
-      y -= bounds.height
-      bounds.setLocation(startX - bounds.width, y)
+      val x = if (location.isLeft) startX else startX - bounds.width
+      if (location.isTop) {
+        bounds.setLocation(x, y)
+        y += bounds.height
+      } else {
+        y -= bounds.height
+        bounds.setLocation(x, y)
+      }
       balloon.setBounds(bounds)
     }
   }

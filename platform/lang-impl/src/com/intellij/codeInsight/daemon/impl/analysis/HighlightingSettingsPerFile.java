@@ -7,7 +7,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.featureStatistics.fusCollectors.InspectionWidgetUsageCollector;
 import com.intellij.ide.EssentialHighlightingMode;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -155,6 +155,26 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
       myUrlToSettings.put(url, settings.toArray(new FileHighlightingSetting[0]));
     }
     incModificationCount();
+    removeInvalidUrlsInBackground();
+  }
+
+  private void removeInvalidUrlsInBackground() {
+    // we can't do findFileByUrl() in foreground/inside read action because it can be very expensive, especially when it's remote fs, see e.g. IJPL-248102
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      myUrlToSettings.keySet().removeIf(url -> {
+        // remove invalid entries to make sure we save only the valid ones
+        VirtualFile file;
+        try {
+          file = VirtualFileManager.getInstance().findFileByUrl(url);
+        }
+        catch (Throwable _) {
+          // remote file systems e.g. ThinClientVirtualFileSystem throw TimeoutException when the client has trouble connecting to host
+          // write the file entry in this case anyway, hoping it will be resolved on the next save
+          file = NullVirtualFile.INSTANCE;
+        }
+        return file == null;
+      });
+    });
   }
 
   @Override
@@ -164,26 +184,14 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
     entries.sort(Map.Entry.comparingByKey());
     for (Map.Entry<String, FileHighlightingSetting[]> entry : entries) {
       String url = entry.getKey();
-      // remove invalid entries to make sure we save only the valid ones
-      VirtualFile file;
-      try {
-        file = ReadAction.computeBlocking(() -> VirtualFileManager.getInstance().findFileByUrl(url));
+      Element child = new Element(SETTING_TAG);
+      child.setAttribute(FILE_ATT, url);
+      FileHighlightingSetting[] settings = entry.getValue();
+      for (int i = 0; i < settings.length; i++) {
+        FileHighlightingSetting fileHighlightingSetting = settings[i];
+        child.setAttribute(ROOT_ATT_PREFIX + i, fileHighlightingSetting.toString());
       }
-      catch (Throwable _) {
-        // remote file systems e.g. ThinClientVirtualFileSystem throw TimeoutException when the client has trouble connecting to host
-        // write the file entry in this case anyway, hoping it will be resolved on the next save
-        file = NullVirtualFile.INSTANCE;
-      }
-      if (file != null) {
-        Element child = new Element(SETTING_TAG);
-        child.setAttribute(FILE_ATT, url);
-        FileHighlightingSetting[] settings = entry.getValue();
-        for (int i = 0; i < settings.length; i++) {
-          FileHighlightingSetting fileHighlightingSetting = settings[i];
-          child.setAttribute(ROOT_ATT_PREFIX + i, fileHighlightingSetting.toString());
-        }
-        element.addContent(child);
-      }
+      element.addContent(child);
     }
     return element;
   }

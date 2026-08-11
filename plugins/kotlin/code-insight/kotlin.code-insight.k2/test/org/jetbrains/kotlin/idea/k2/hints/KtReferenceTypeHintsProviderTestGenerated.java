@@ -23,6 +23,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("AnnotatedType.kt")
+    public void testAnnotatedType() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/AnnotatedType.kt");
+    }
+
     @TestMetadata("AnonymousAnyCollectionElement.kt")
     public void testAnonymousAnyCollectionElement() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/AnonymousAnyCollectionElement.kt");
@@ -156,6 +161,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
     @TestMetadata("ImportedEnumEntry.kt")
     public void testImportedEnumEntry() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/ImportedEnumEntry.kt");
+    }
+
+    @TestMetadata("InnerClassWithGenerics.kt")
+    public void testInnerClassWithGenerics() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/InnerClassWithGenerics.kt");
     }
 
     @TestMetadata("JavaFQName.kt")

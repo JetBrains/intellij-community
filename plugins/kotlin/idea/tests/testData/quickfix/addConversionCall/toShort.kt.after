@@ -1,5 +1,5 @@
 // "Convert expression to 'Short'" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'Int', but 'Short' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 fun takeShort(x: Short) {}
 

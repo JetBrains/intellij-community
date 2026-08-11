@@ -1,7 +1,7 @@
 // "Create class 'BookKeeper'" "true"
-// K2_AFTER_ERROR: Return type mismatch: expected 'Man', actual 'BookKeeper'.
+// K2_AFTER_ERROR: RETURN_TYPE_MISMATCH
+// K2_ERROR: UNRESOLVED_REFERENCE
 
-// K2_ERROR: Unresolved reference 'BookKeeper'.
 package pack
 
 import pack.Currrency.EUR

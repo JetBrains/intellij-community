@@ -15,16 +15,19 @@
  */
 package com.intellij.uiDesigner.core;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import java.awt.Dimension;
 import java.awt.Insets;
 
-public final class Layout4Test extends TestCase{
-  
-  
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public final class Layout4Test {
+
+
+  @Test
   public void test1() {
     final JPanel panel = new JPanel(new GridLayoutManager(2,2, new Insets(0,0,0,0), 0, 0));
 

@@ -1,5 +1,5 @@
 // "Change return type of enclosing function 'boo' to 'String'" "true"
-// K2_ERROR: Return type mismatch: expected 'Int', actual 'String'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 fun boo(): Int {
     return ((if (true) {
         val a = ""

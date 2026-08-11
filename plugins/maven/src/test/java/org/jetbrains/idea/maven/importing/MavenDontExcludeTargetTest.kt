@@ -1,34 +1,49 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenDontExcludeTargetTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenDontExcludeTargetTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   
   fun testDontExcludeTargetTest() = runBlocking {
-    MavenProjectsManager.getInstance(project).importingSettings.isExcludeTargetFolder = false
+    MavenProjectsManager.getInstance(maven.project).importingSettings.isExcludeTargetFolder = false
 
-    val classA = createProjectSubFile("target/classes/A.class")
-    val testClass = createProjectSubFile("target/test-classes/ATest.class")
+    val classA = maven.createProjectSubFile("target/classes/A.class")
+    val testClass = maven.createProjectSubFile("target/test-classes/ATest.class")
 
-    val a = createProjectSubFile("target/a.txt")
-    val aaa = createProjectSubFile("target/aaa/a.txt")
+    val a = maven.createProjectSubFile("target/a.txt")
+    val aaa = maven.createProjectSubFile("target/aaa/a.txt")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    val fileIndex = ProjectRootManager.getInstance(project).getFileIndex()
+    val fileIndex = ProjectRootManager.getInstance(maven.project).getFileIndex()
 
     withContext(Dispatchers.EDT) {
       assert(!fileIndex.isInContent(classA))
@@ -40,18 +55,18 @@ class MavenDontExcludeTargetTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDontExcludeTargetTest2() = runBlocking {
-    MavenProjectsManager.getInstance(project).importingSettings.isExcludeTargetFolder = false
+    MavenProjectsManager.getInstance(maven.project).importingSettings.isExcludeTargetFolder = false
 
-    val realClassA = createProjectSubFile("customOutput/A.class")
-    val realTestClass = createProjectSubFile("customTestOutput/ATest.class")
+    val realClassA = maven.createProjectSubFile("customOutput/A.class")
+    val realTestClass = maven.createProjectSubFile("customTestOutput/ATest.class")
 
-    val classA = createProjectSubFile("target/classes/A.class")
-    val testClass = createProjectSubFile("target/test-classes/ATest.class")
+    val classA = maven.createProjectSubFile("target/classes/A.class")
+    val testClass = maven.createProjectSubFile("target/test-classes/ATest.class")
 
-    val a = createProjectSubFile("target/a.txt")
-    val aaa = createProjectSubFile("target/aaa/a.txt")
+    val a = maven.createProjectSubFile("target/a.txt")
+    val aaa = maven.createProjectSubFile("target/aaa/a.txt")
 
-    importProjectAsync(
+    maven.importProjectAsync(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -63,7 +78,7 @@ class MavenDontExcludeTargetTest : MavenMultiVersionImportingTestCase() {
         </build>
         """.trimIndent())
 
-    val fileIndex = ProjectRootManager.getInstance(project).getFileIndex()
+    val fileIndex = ProjectRootManager.getInstance(maven.project).getFileIndex()
 
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {

@@ -1,0 +1,9 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.rpc"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.klogger"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

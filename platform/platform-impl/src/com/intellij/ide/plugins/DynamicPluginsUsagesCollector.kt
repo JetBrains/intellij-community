@@ -7,7 +7,6 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.time.Duration
 
-@Internal
 internal object DynamicPluginsUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -35,14 +34,12 @@ internal object DynamicPluginsUsagesCollector : CounterUsagesCollector() {
     eventField3 = EventFields.Boolean("restart_required"),
   )
 
-  @Internal
   internal fun logDescriptorLoad(
     descriptor: IdeaPluginDescriptor,
   ) {
     LOAD_SUCCESS_EVENT.log(descriptor)
   }
 
-  @Internal
   internal fun logDescriptorUnload(
     descriptor: IdeaPluginDescriptor,
     success: Boolean,
@@ -51,7 +48,6 @@ internal object DynamicPluginsUsagesCollector : CounterUsagesCollector() {
       .log(descriptor)
   }
 
-  @Internal
   internal fun logPaidPluginsLoaded(
     duration: Duration,
     count: Int,

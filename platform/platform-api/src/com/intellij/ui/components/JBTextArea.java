@@ -2,7 +2,6 @@
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ObjectUtils;
@@ -147,7 +146,7 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
     @Override
     public String getAccessibleDescription() {
       String description = super.getAccessibleDescription();
-      if (description == null && StringUtil.isEmpty(getText())) {
+      if (description == null && getDocument().getLength() == 0) {
         //noinspection HardCodedStringLiteral
         String emptyText = myEmptyText.toString();
         if (!emptyText.isEmpty()) {

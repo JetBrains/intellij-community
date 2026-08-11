@@ -44,6 +44,7 @@ import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.coalesce;
 
+@ApiStatus.Internal
 @InternalIgnoreDependencyViolation
 public class DefaultModuleRendererFactory extends ModuleRendererFactory {
 

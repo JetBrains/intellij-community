@@ -3,6 +3,7 @@ package com.intellij.modcompletion;
 
 import com.intellij.codeInsight.completion.BaseCompletionParameters;
 import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionProcess;
 import com.intellij.codeInsight.completion.CompletionSorter;
 import com.intellij.codeInsight.completion.CompletionType;
@@ -18,6 +19,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -69,7 +71,7 @@ public interface ModCompletionItemProvider extends PossiblyDumbAware {
    * @param language language to get providers for
    * @return language-specific completion providers
    */
-  static List<ModCompletionItemProvider> forLanguage(Language language) {
+  static @Unmodifiable List<ModCompletionItemProvider> forLanguage(Language language) {
     return EP_NAME.forKey(language);
   }
 
@@ -99,7 +101,8 @@ public interface ModCompletionItemProvider extends PossiblyDumbAware {
     PsiElement element,
     PrefixMatcher matcher,
     int invocationCount,
-    CompletionType type
+    CompletionType type,
+    @Nullable CompletionParameters oldParameters
   )
     implements BaseCompletionParameters {
     /**
@@ -160,6 +163,12 @@ public interface ModCompletionItemProvider extends PossiblyDumbAware {
     @Override
     public int getInvocationCount() {
       return invocationCount();
+    }
+
+    @Override
+    public CompletionParameters asCompletionParameters() {
+      if (oldParameters != null) return oldParameters;
+      throw new UnsupportedOperationException("No CompletionParameters object available. Try to use BaseCompletionParameters instead.");
     }
   }
 }

@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleWithElementSourceModuleKindOrProduction
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
-import org.jetbrains.kotlin.idea.debugger.evaluate.util.KotlinK2CodeFragmentUtils
+import org.jetbrains.kotlin.idea.base.analysis.KotlinK2CodeFragmentUtils
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtBlockCodeFragment
 import org.jetbrains.kotlin.psi.KtExpression

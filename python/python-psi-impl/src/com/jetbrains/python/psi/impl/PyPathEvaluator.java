@@ -27,24 +27,30 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 
 public class PyPathEvaluator extends PyEvaluator {
 
-  private final String myContainingFilePath;
+  private final @Nullable String myContainingFilePath;
 
-  public PyPathEvaluator(String containingFilePath) {
+  public PyPathEvaluator(@Nullable String containingFilePath) {
     myContainingFilePath = containingFilePath;
   }
 
-  public static @Nullable String evaluatePath(PyExpression expr) {
+  private static @NotNull String toSystemIndependentName(@NotNull String path) {
+    return path.replace('\\', '/');
+  }
+
+  public static @Nullable String evaluatePath(@Nullable PyExpression expr) {
     if (expr == null) {
       return null;
     }
     VirtualFile vFile = expr.getContainingFile().getVirtualFile();
-    Object result = new PyPathEvaluator(vFile == null ? null : vFile.getPath()).evaluate(expr);
-    return result instanceof String ? (String)result : null;
+    Object evaluatedPath = new PyPathEvaluator(vFile == null ? null : vFile.getPath()).evaluate(expr);
+    return evaluatedPath instanceof String result ? result : null;
   }
 
   @Override
@@ -61,7 +67,9 @@ public class PyPathEvaluator extends PyEvaluator {
     }
     if (expression.isCalleeText(PyNames.DIRNAME) && args.length == 1) {
       Object argValue = evaluate(args[0]);
-      return argValue instanceof String ? Paths.get((String)argValue).getParent().toFile().getPath() : null;
+      if (!(argValue instanceof String path)) return null;
+      Path parent = Paths.get(path).getParent();
+      return parent == null ? null : toSystemIndependentName(parent.toString());
     }
     else if (expression.isCalleeText(PyNames.JOIN) && args.length >= 1) {
       return evaluatePathInJoin(args, args.length);
@@ -73,15 +81,16 @@ public class PyPathEvaluator extends PyEvaluator {
     else if (expression.isCalleeText(PyNames.ABSPATH) && args.length == 1) {
       Object argValue = evaluate(args[0]);
       // relative to directory of 'containingFilePath', not file
-      if (!(argValue instanceof String)) {
+      if (!(argValue instanceof String path)) {
         return null;
       }
-      if (FileUtil.isAbsolutePlatformIndependent((String)argValue)) {
-        return argValue;
+      if (FileUtil.isAbsolutePlatformIndependent(path)) {
+        return path;
       }
       else {
-        String path = Paths.get(myContainingFilePath).resolveSibling((String)argValue).toFile().getPath();
-        return FileUtil.toSystemIndependentName(path);
+        if (myContainingFilePath == null) return null;
+        final Path siblingPath = Paths.get(myContainingFilePath).resolveSibling(path);
+        return toSystemIndependentName(siblingPath.toString());
       }
     }
     return super.evaluateCall(expression);
@@ -96,29 +105,36 @@ public class PyPathEvaluator extends PyEvaluator {
       return ".";
     }
     if (!expression.isQualified() && PyNames.FILE.equals(expression.getReferencedName())) {
-      return FileUtil.toSystemIndependentName(myContainingFilePath);
+      return myContainingFilePath == null ? null : toSystemIndependentName(myContainingFilePath);
     }
     if ("parent".equals(expression.getName()) && expression.isQualified()) {
       Object qualifier = evaluate(expression.getQualifier());
-      if (qualifier instanceof String) {
-        return Paths.get((String)qualifier).getParent().toFile().getPath();
+      if (qualifier instanceof String qualifierPath) {
+        Path parentPath = Paths.get(qualifierPath).getParent();
+        return parentPath == null ? null : toSystemIndependentName(parentPath.toString());
       }
     }
     return super.evaluateReference(expression);
   }
 
-  public String evaluatePathInJoin(PyExpression[] args, int endElement) {
+  public @Nullable String evaluatePathInJoin(PyExpression[] args, int endElement) {
     String result = null;
     for (int i = 0; i < endElement; i++) {
       Object arg = evaluate(args[i]);
-      if (!(arg instanceof String)) {
+      if (!(arg instanceof String path)) {
         return null;
       }
       if (result == null) {
-        result = (String)arg;
+        result = path;
       }
       else {
-        result = FileUtil.toSystemIndependentName(Paths.get(result, (String)arg).toFile().getPath());
+        try {
+          final Path resolvedPath = Paths.get(result).resolve(path);
+          result = toSystemIndependentName(resolvedPath.toString());
+        }
+        catch (InvalidPathException e) {
+          return null;
+        }
       }
     }
     return result;
@@ -130,8 +146,14 @@ public class PyPathEvaluator extends PyEvaluator {
     if (operator == PyTokenTypes.DIV) {
       final Object lhs = evaluate(expression.getLeftExpression());
       final Object rhs = evaluate(expression.getRightExpression());
-      if (lhs instanceof String && rhs instanceof String) {
-        return FileUtil.toSystemIndependentName(Paths.get((String)lhs, (String)rhs).toFile().getPath());
+      if (lhs instanceof String lhsPath && rhs instanceof String rhsPath) {
+        try {
+          final Path resolvedPath = Paths.get(lhsPath).resolve(rhsPath);
+          return toSystemIndependentName(resolvedPath.toString());
+        }
+        catch (InvalidPathException e) {
+          return null;
+        }
       }
     }
     return super.evaluateBinary(expression);

@@ -22,8 +22,11 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.toPythonPackages
+import com.jetbrains.python.conda.loadLocalPythonCondaPath
 import com.jetbrains.python.packaging.management.DependenciesExporter
+import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
+import com.jetbrains.python.packaging.management.PythonManagerCliSpec
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerEngine
@@ -48,6 +51,10 @@ internal class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
 
   private val condaPackageEngine = CondaPackageManagerEngine(sdk)
   private val pipPackageEngine = PipPackageManagerEngine(project, sdk)
+
+  override val cliSpecs: List<PythonManagerCliSpec> = listOf(
+    PythonManagerCliSpec("conda", { loadLocalPythonCondaPath() }),
+  )
 
   override val dependenciesExporter: DependenciesExporter
     get() = object : DependenciesExporter {
@@ -117,6 +124,7 @@ internal class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
     installRequest: PythonPackageInstallRequest,
     options: List<String>,
     module: Module?,
+    dependencyGroup: PyDependencyGroup?,
   ): PyResult<Unit> = when (installRequest) {
     is PythonPackageInstallRequest.ByLocation -> pipPackageEngine.installPackageCommand(installRequest, options)
     is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> installSeveralPackages(installRequest.specifications, options)
@@ -133,7 +141,7 @@ internal class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
       manager.updatePackageCommand(*specs.toTypedArray())
     }
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?): PyResult<Unit> {
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> {
     val installedPackagesForRemove = listInstalledPackagesSnapshot().mapNotNull {
       it.takeIf { it.name in pythonPackages }
     }
@@ -141,12 +149,12 @@ internal class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
     val pipPackages = installedPackagesForRemove - condaPackages
 
     if (condaPackages.isNotEmpty()) {
-      condaPackageEngine.uninstallPackageCommand(*condaPackages.map { it.name }.toTypedArray(), workspaceMember = workspaceMember).getOr {
+      condaPackageEngine.uninstallPackageCommand(*condaPackages.map { it.name }.toTypedArray(), workspaceMember = workspaceMember, dependencyGroup = dependencyGroup).getOr {
         return it
       }
     }
     if (pipPackages.isNotEmpty()) {
-      pipPackageEngine.uninstallPackageCommand(*pipPackages.map { it.name }.toTypedArray(), workspaceMember = workspaceMember).getOr {
+      pipPackageEngine.uninstallPackageCommand(*pipPackages.map { it.name }.toTypedArray(), workspaceMember = workspaceMember, dependencyGroup = dependencyGroup).getOr {
         return it
       }
     }

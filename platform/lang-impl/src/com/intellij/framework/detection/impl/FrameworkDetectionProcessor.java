@@ -16,6 +16,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.FileContentImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -26,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class FrameworkDetectionProcessor {
   public static final Set<String> SKIPPED_DIRECTORIES = Collections.singleton("node_modules");
 

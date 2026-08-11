@@ -9,6 +9,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -38,7 +39,7 @@ public final class JavaMethodParameterTypesIndex extends StringStubIndexExtensio
     return getMethodParameterTypes(s, project, scope);
   }
 
-  public Collection<PsiMethod> getMethodParameterTypes(final @NotNull String s, final @NotNull Project project, final @NotNull GlobalSearchScope scope) {
+  public @Unmodifiable Collection<PsiMethod> getMethodParameterTypes(final @NotNull String s, final @NotNull Project project, final @NotNull GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), s, project, new JavaSourceFilterScope(scope), PsiMethod.class);
   }
 }

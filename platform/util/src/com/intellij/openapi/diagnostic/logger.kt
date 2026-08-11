@@ -1,8 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic
 
 import com.intellij.util.ExceptionUtilRt
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
 import java.lang.invoke.MethodHandles
 import java.util.concurrent.CancellationException
@@ -60,6 +61,38 @@ inline fun Logger.debug(t: Throwable? = null, lazyMessage: () -> @NonNls String)
     debug(lazyMessage(), t)
   }
 }
+
+/**
+ * Logs a stable, constant [message] at ERROR level and the variable [details] at WARN level.
+ *
+ * A `Logger.error` report is turned into a CI test failure named after its message. When the message
+ * embeds per-occurrence diagnostics, otherwise-identical failures stop merging into a single one. This
+ * helper keeps the ERROR [message] constant — so the failures group together — while the variable
+ * [details] go to the log and are attached to the error report (as an [Attachment]) so they can be
+ * submitted to Diogen.
+ *
+ * Use this instead of interpolating variable data into a `Logger.error` message.
+ */
+fun Logger.errorWithWarnDetails(message: @NonNls String, details: @NonNls String, t: Throwable? = null) {
+  warn(message, details, t)
+  val attachment = Attachment("details.txt", details).also { it.isIncluded = true }
+  if (t == null) error(message, attachment)
+  else error(message, t, attachment)
+}
+
+/**
+ * Throws an exception with stable [message] with the variable [details] attached (see [errorWithWarnDetails]),
+ *
+ * Use for unrecoverable "should never happen" conditions where the caller cannot meaningfully continue.
+ */
+@Contract("_, _, _ -> fail")
+fun Logger.fatalErrorWithWarnDetails(message: @NonNls String, details: @NonNls String, t: Throwable? = null): Nothing {
+  warn(message, details, t)
+  val attachment = Attachment("details.txt", details).also { it.isIncluded = true }
+  throw RuntimeExceptionWithAttachments(message, t, attachment)
+}
+
+private fun Logger.warn(message: @NonNls String, details: @NonNls String, t: Throwable?) = warn("$message: $details", t)
 
 inline fun Logger.trace(@NonNls lazyMessage: () -> String) {
   if (isTraceEnabled) {

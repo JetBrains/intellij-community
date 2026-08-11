@@ -14,6 +14,8 @@ import org.easymock.internal.MocksControl;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +25,8 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyPullUpInfoModelTest extends PyTestCase {
   private PyPullUpInfoModel mySut;
   private List<PyMemberInfo<PyElement>> myMemberInfos;

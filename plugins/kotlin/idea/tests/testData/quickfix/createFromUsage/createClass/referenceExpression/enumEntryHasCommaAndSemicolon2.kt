@@ -1,5 +1,5 @@
 // "Create enum constant 'C'" "true"
-// K2_ERROR: Unresolved reference 'C'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 enum class Baz {
     A,
     B, ;

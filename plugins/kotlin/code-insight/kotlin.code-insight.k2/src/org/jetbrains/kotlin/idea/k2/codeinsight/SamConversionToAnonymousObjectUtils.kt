@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol

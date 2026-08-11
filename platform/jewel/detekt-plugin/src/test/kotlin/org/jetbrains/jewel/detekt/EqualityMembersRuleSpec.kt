@@ -90,7 +90,9 @@ class EqualityMembersRuleSpec {
                     |}
                     |
                     |override fun toString(): String {
-                    |    return "DataFuncTest(a=$a)"
+                    |    return "DataFuncTest(" +
+                    |        "a=$a" +
+                    |        ")"
                     |}
                     |}
                     """
@@ -139,7 +141,9 @@ class EqualityMembersRuleSpec {
                     |}
                     |
                     |override fun toString(): String {
-                    |    return "DataFuncTest(a=$a)"
+                    |    return "DataFuncTest(" +
+                    |        "a=$a" +
+                    |        ")"
                     |}
                     |}
                     """
@@ -327,7 +331,10 @@ class EqualityMembersRuleSpec {
                     |}
                     |
                     |override fun toString(): String {
-                    |    return "DataFuncTest(a=$a, b=$b)"
+                    |    return "DataFuncTest(" +
+                    |        "a=$a, " +
+                    |        "b=$b" +
+                    |        ")"
                     |}
                     |}
                     """
@@ -388,7 +395,10 @@ class EqualityMembersRuleSpec {
                     |}
                     |
                     |override fun toString(): String {
-                    |    return "DataFuncTest(a=$a, b=$b)"
+                    |    return "DataFuncTest(" +
+                    |        "a=$a, " +
+                    |        "b=$b" +
+                    |        ")"
                     |}
                     |}
                     """
@@ -450,7 +460,10 @@ class EqualityMembersRuleSpec {
                     |}
                     |
                     |override fun toString(): String {
-                    |    return "DataFuncTest(a=$a, b=$b)"
+                    |    return "DataFuncTest(" +
+                    |        "a=$a, " +
+                    |        "b=$b" +
+                    |        ")"
                     |}
                     |}
                     """
@@ -520,7 +533,10 @@ class EqualityMembersRuleSpec {
                     |}
                     |
                     |override fun toString(): String {
-                    |    return "DataFuncTest(a=$a, b=$b)"
+                    |    return "DataFuncTest(" +
+                    |        "a=$a, " +
+                    |        "b=$b" +
+                    |        ")"
                     |}
                     |}
                     """

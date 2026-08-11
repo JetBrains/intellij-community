@@ -18,10 +18,8 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.AnnotationUtil.getRelatedType;
-import static com.intellij.util.ObjectUtils.tryCast;
 
 /// Encapsulates information related to a nullability annotation.
-///
 @NotNullByDefault
 public final class NullabilityAnnotationWrapper {
   private final NullabilityAnnotationInfo info;
@@ -37,8 +35,7 @@ public final class NullabilityAnnotationWrapper {
   public static @Nullable NullabilityAnnotationWrapper from(PsiAnnotation annotation) {
     TypeNullability typeNullability = JavaTypeNullabilityUtil.getNullabilityFromAnnotations(new PsiAnnotation[]{annotation});
     NullabilityAnnotationInfo info = typeNullability.toNullabilityAnnotationInfo();
-    if (info == null) return null;
-    return new NullabilityAnnotationWrapper(info);
+    return info == null ? null : new NullabilityAnnotationWrapper(info);
   }
 
   /// Evaluates whether the wrapped annotation is redundant within the scope of a container annotation
@@ -70,9 +67,8 @@ public final class NullabilityAnnotationWrapper {
 
   /// @return modifier list owner
   public @Nullable PsiModifierListOwner listOwner() {
-    return annotation().getOwner() instanceof PsiModifierList modifierList
-           ? tryCast(modifierList.getParent(), PsiModifierListOwner.class)
-           : null;
+    if (!(annotation().getOwner() instanceof PsiModifierList modifierList)) return null;
+    return modifierList.getParent() instanceof PsiModifierListOwner owner ? owner : null;
   }
 
   /// @return related type of wrapped annotation
@@ -82,8 +78,7 @@ public final class NullabilityAnnotationWrapper {
 
   /// @return target type of wrapped annotation
   public @Nullable PsiType targetType() {
-    PsiModifierListOwner listOwner = listOwner();
-    return listOwner == null ? null : PsiUtil.getTypeByPsiElement(listOwner);
+    return PsiUtil.getTypeByPsiElement(listOwner());
   }
 
   /// @return qualified name of wrapped annotation

@@ -1,19 +1,25 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.conda
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.UsefulTestCase.refreshRecursively
 import com.intellij.testFramework.junit5.TestApplication
-import com.jetbrains.python.packaging.PyRequirementParser
+import com.intellij.python.requirements.parser.PyRequirementParser
 import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.jetbrains.python.testDataPath
 import org.junit.jupiter.api.Test
 import java.io.File
 
 @TestApplication
+@Subsystems.Interpreters
+@Components.Conda
+@Layers.Functional
 class CondaEnvironmentTest {
   @Test
   fun testParse() {

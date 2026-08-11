@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.issue.quickfix
 
 import com.intellij.build.issue.BuildIssueQuickFix
@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.util.GradleUtil
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
 
@@ -19,12 +20,12 @@ class GradleWrapperSettingsOpenQuickFix(private val myProjectPath: String, priva
   override val id: String = "open_gradle_wrapper_settings"
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-    showWrapperPropertiesFile(project, myProjectPath, mySearch)
+    showWrapperPropertiesFile(project, Path.of(myProjectPath), mySearch)
     return completedFuture<Any>(null)
   }
 
   companion object {
-    fun showWrapperPropertiesFile(project: Project, projectPath: String, search: String?) {
+    fun showWrapperPropertiesFile(project: Project, projectPath: Path, search: String?) {
       val wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath) ?: return
       OpenFileQuickFix.showFile(project, wrapperPropertiesFile, search)
     }

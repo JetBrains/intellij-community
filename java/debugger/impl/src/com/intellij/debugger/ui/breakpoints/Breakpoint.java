@@ -453,8 +453,14 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       }
       if (!buf.isEmpty()) {
         var msg = buf.toString();
-        // TODO IDEA-389143 Provide stack for non-instrumented breakpoints?
-        printLoggingBreakpointMessage(this, debugProcess, msg, null);
+        List<StackFrameItem> navigationStack;
+        try {
+          navigationStack = StackFrameItem.createFrames(context.getSuspendContext(), false);
+        }
+        catch (EvaluateException ignored) {
+          navigationStack = null;
+        }
+        printLoggingBreakpointMessage(this, debugProcess, msg, navigationStack);
       }
     }
     if (isRemoveAfterHit()) {

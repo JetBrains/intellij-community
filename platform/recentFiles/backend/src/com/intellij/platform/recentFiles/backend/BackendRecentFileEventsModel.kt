@@ -33,6 +33,7 @@ import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
 import com.intellij.platform.recentFiles.shared.RecentFilesEvent
 import com.intellij.platform.recentFiles.shared.SwitcherRpcDto
+import com.intellij.platform.recentFiles.shared.isAllowedInRecentFilesModel
 import com.intellij.problems.ProblemListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation
@@ -44,7 +45,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.Icon
 import kotlin.time.Duration.Companion.milliseconds
@@ -114,6 +114,7 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
     val metadata =
       metadataRequest.frontendRecentFiles
         .mapNotNull { frontendFileId -> frontendFileId.virtualFile() }
+        .filter { isAllowedInRecentFilesModel(project, metadataRequest.filesKind, it) }
         .map { frontendFile ->
           readAction {
             createRecentFileViewModel(frontendFile, project)
@@ -130,9 +131,12 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
 
   suspend fun emitRecentFiles(searchRequest: RecentFilesBackendRequest.FetchFiles) {
     LOG.debug("Switcher emit recent files: $searchRequest")
+    EditorHistoryManager.preloadHistory(project)
+
     val targetFlow = chooseTargetFlow(searchRequest.filesKind)
 
     targetFlow.emit(BackendRecentFilesEvent.AllItemsRemoved())
+
     val freshRecentFiles = collectRecentFiles(searchRequest)
     if (freshRecentFiles != null) {
       targetFlow.emit(freshRecentFiles)
@@ -183,10 +187,11 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
   private suspend fun processOrderChangeEvent(event: OrderChangeEvent) {
     when (event.changeKind) {
       FileChangeKind.ADDED -> {
-        val models = createRecentFilesViewModels(event.files)
-        val fileEvent = BackendRecentFilesEvent.ItemsAdded(models)
-
         for (fileKind in RecentFileKind.entries) {
+          val models = createRecentFilesViewModels(
+            event.files.filter { isAllowedInRecentFilesModel(project, fileKind, it) }
+          )
+          val fileEvent = BackendRecentFilesEvent.ItemsAdded(models)
           chooseTargetFlow(fileKind).emit(fileEvent)
         }
       }
@@ -214,12 +219,12 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
 
     val filesToUpdate = files.filter { file -> knownFilesByKind.values.any { known -> known.contains(file) } }
 
-    val models = createRecentFilesViewModels(filesToUpdate)
-    assert(models.size == filesToUpdate.size)
-
     for (fileKind in RecentFileKind.entries) {
       val knownFiles = knownFilesByKind[fileKind]!!
-      val eventModels = models.filterIndexed { index, _ -> knownFiles.contains(filesToUpdate[index]) }
+      val filesForKind = filesToUpdate.filter { file ->
+        knownFiles.contains(file) && isAllowedInRecentFilesModel(project, fileKind, file)
+      }
+      val eventModels = createRecentFilesViewModels(filesForKind)
 
       val fileEvent = BackendRecentFilesEvent.ItemsUpdated(eventModels, putOnTop)
       chooseTargetFlow(fileKind).emit(fileEvent)
@@ -266,6 +271,7 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
       getFilesToShow(project = project,
                      recentFileKind = filter.filesKind,
                      filesFromFrontendEditorSelectionHistory = filter.frontendEditorSelectionHistory.mapNotNull(VirtualFileId::virtualFile))
+        .filter { isAllowedInRecentFilesModel(project, filter.filesKind, it) }
         .map {
           readAction {
             createRecentFileViewModel(it, project)
@@ -298,8 +304,6 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
 
 private data class OrderChangeEvent(val changeKind: FileChangeKind, val files: List<VirtualFile>)
 
-
-@ApiStatus.Internal
 internal sealed interface BackendRecentFilesEvent {
   class ItemsUpdated(val batch: List<BackendRecentFilePresentation>, val putOnTop: Boolean) : BackendRecentFilesEvent
   class ItemsAdded(val batch: List<BackendRecentFilePresentation>) : BackendRecentFilesEvent
@@ -318,7 +322,6 @@ internal class BackendRecentFilePresentation(
   val virtualFile: VirtualFile,
 )
 
-@ApiStatus.Internal
 internal fun BackendRecentFilesEvent.toRpcModel(): RecentFilesEvent = when (this) {
   is BackendRecentFilesEvent.ItemsUpdated -> RecentFilesEvent.ItemsUpdated(batch.map { it.toRpcModel() }, putOnTop)
   is BackendRecentFilesEvent.ItemsAdded -> RecentFilesEvent.ItemsAdded(batch.map { it.toRpcModel() })

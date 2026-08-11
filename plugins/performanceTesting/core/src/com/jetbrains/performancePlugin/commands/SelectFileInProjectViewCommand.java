@@ -26,7 +26,6 @@ public class SelectFileInProjectViewCommand extends AbstractCallbackBasedCommand
   protected void execute(@NotNull ActionCallback callback, @NotNull PlaybackContext context) {
     String filePath = getText().split(" ", 2)[1];
     VirtualFile file = findFile(filePath, context.getProject());
-    ProjectView.getInstance(context.getProject()).select(null, file, true);
-    callback.setDone();
+    ProjectView.getInstance(context.getProject()).selectCB(null, file, true).notify(callback);
   }
 }

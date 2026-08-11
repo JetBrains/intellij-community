@@ -349,7 +349,7 @@ class ShellExecOptionsCustomizerTest(private val eelHolder: EelHolder) {
     val nioDir = this
     Assertions.assertThat(nioDir.getEelDescriptor()).isEqualTo(descriptor)
     Assertions.assertThat(nioDir).isDirectory()
-    val eelDir = nioDir.asEelPath(descriptor)
+    val eelDir = nioDir.asEelPath()
     Assertions.assertThat(eelDir.descriptor).isEqualTo(descriptor)
     return Directory(nioDir, eelDir, descriptor)
   }
@@ -411,7 +411,7 @@ class ShellExecOptionsCustomizerTest(private val eelHolder: EelHolder) {
   }
 
   private fun CustomizationResult.assertSinglePathEnv(envName: String, expectedPath: Path) {
-    val expectedValue = expectedPath.asEelPath(eelApi.descriptor).toString()
+    val expectedValue = expectedPath.asEelPath().toString()
     Assertions.assertThat(shellExecOptions.envs[envName]).isEqualTo(expectedValue)
   }
 }

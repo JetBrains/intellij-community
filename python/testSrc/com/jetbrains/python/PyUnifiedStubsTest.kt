@@ -3,6 +3,10 @@
  */
 package com.jetbrains.python
 
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.fixtures.PyTestCase
@@ -15,6 +19,9 @@ import com.jetbrains.python.psi.PyFile
  *
  * @author traff
  */
+@Subsystems.CodeInsight
+@Components.Parsing
+@Layers.Functional
 class PyUnifiedStubsTest : PyTestCase() {
   override fun getTestDataPath() = PythonTestUtil.getTestDataPath()!!
 

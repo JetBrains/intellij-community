@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.completion.ranking.kotlin.jar
+  modules:
+  - name: intellij.libraries.completion.ranking.kotlin
+    libraries:
+      completion-ranking-kotlin:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar

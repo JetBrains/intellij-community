@@ -5,7 +5,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.venv.PY_REQ_TOOL_ID
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
@@ -16,6 +16,7 @@ import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUti
 import com.jetbrains.python.packaging.setupPy.SetupPyHelpers.SETUP_PY
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
@@ -27,6 +28,8 @@ import com.jetbrains.python.sdk.configuration.prepareSdkCreator
 internal class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override val toolId: ToolId = PY_REQ_TOOL_ID // This is nonsense, but will be dropped soon
+
+  override val potentialDependencyFiles: Set<String> = setOf(PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT.fileName.toString(), SETUP_PY)
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(

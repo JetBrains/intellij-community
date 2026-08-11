@@ -12,26 +12,37 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.psi.KtElement
 
 @ApiStatus.Internal
-fun <T> runSmartAnalyze(useSiteElement: KtElement, action: KaSession.() -> T): T =
+fun <T> runSmartAnalyze(useSiteElement: KtElement, action: context(KaSession) () -> T): T =
     ReadAction.nonBlocking<T> { analyze(useSiteElement, action) }
         .inSmartMode(runReadAction { useSiteElement.project })
         .executeSynchronously()
 
 @ApiStatus.Internal
-suspend fun <T> smartAnalyze(useSiteElement: KtElement, action: KaSession.() -> T): T =
+suspend fun <T> smartAnalyze(useSiteElement: KtElement, action: context(KaSession) () -> T): T =
     smartReadAction(readAction { useSiteElement.project }) {
         analyze(useSiteElement, action)
     }
 
 @ApiStatus.Internal
-fun <T> runDumbAnalyze(useSiteElement: KtElement, fallback: T, action: KaSession.() -> T): T = ReadAction.nonBlocking<T> {
+fun <T> runDumbAnalyze(useSiteElement: KtElement, fallback: T, action: context(KaSession) () -> T): T = ReadAction.nonBlocking<T> {
     if (DumbService.isDumb(useSiteElement.project)) return@nonBlocking fallback
     try {
         analyze(useSiteElement, action)
+    } catch (_: IndexNotReadyException) {
+        fallback
+    }
+}.executeSynchronously()
+
+@ApiStatus.Internal
+fun <T> runDumbAnalyze(useSiteModule: KaModule, fallback: T, action: context(KaSession) () -> T): T = ReadAction.nonBlocking<T> {
+    if (DumbService.isDumb(useSiteModule.project)) return@nonBlocking fallback
+    try {
+        analyze(useSiteModule, action)
     } catch (_: IndexNotReadyException) {
         fallback
     }
@@ -56,7 +67,7 @@ inline fun <T> internalDumbAction(fallback: T, isDumb: () -> Boolean, action: ()
 }
 
 @ApiStatus.Internal
-suspend fun <T> dumbAnalyze(useSiteElement: KtElement, fallback: T, action: KaSession.() -> T): T =
+suspend fun <T> dumbAnalyze(useSiteElement: KtElement, fallback: T, action: context(KaSession) () -> T): T =
     dumbAction(readAction { useSiteElement.project }, fallback) {
         readAction { analyze(useSiteElement, action) }
     }

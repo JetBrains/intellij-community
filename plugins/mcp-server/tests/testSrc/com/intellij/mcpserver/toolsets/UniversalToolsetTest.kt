@@ -161,6 +161,19 @@ class UniversalToolsetTest : GeneralMcpToolsetTestBase() {
   }
 
   @Test
+  fun parse_args_to_json_accepts_array_for_object_schema() {
+    val jsonArgs = parseUniversalArgs(
+      listOf("--payload", "[]"),
+      buildJsonObject {
+        put("payload", buildJsonObject { put("type", JsonPrimitive("object")) })
+      },
+    )
+
+    assertThat(jsonArgs["payload"]).isInstanceOf(JsonArray::class.java)
+    assertThat(jsonArgs["payload"].toString()).isEqualTo("[]")
+  }
+
+  @Test
   fun parse_args_to_json_rejects_malformed_array_parameter() {
     val error = assertThrows(McpExpectedError::class.java) {
       parseUniversalArgs(
@@ -178,14 +191,14 @@ class UniversalToolsetTest : GeneralMcpToolsetTestBase() {
   fun parse_args_to_json_rejects_wrong_structured_json_shape() {
     val error = assertThrows(McpExpectedError::class.java) {
       parseUniversalArgs(
-        listOf("--payload", "[]"),
+        listOf("--items", "{\"enabled\":true}"),
         buildJsonObject {
-          put("payload", buildJsonObject { put("type", JsonPrimitive("object")) })
+          put("items", buildJsonObject { put("type", JsonPrimitive("array")) })
         },
       )
     }
 
-    assertThat(error.mcpErrorText).contains("Parameter 'payload' expects a JSON object")
+    assertThat(error.mcpErrorText).contains("Parameter 'items' expects a JSON array")
   }
 
   @Test

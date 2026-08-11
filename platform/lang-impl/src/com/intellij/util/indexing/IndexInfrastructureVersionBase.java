@@ -16,6 +16,7 @@ import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TemplateLanguageStubBaseVersion;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -27,6 +28,7 @@ import java.util.Objects;
 import java.util.SortedMap;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public class IndexInfrastructureVersionBase {
   private static final Logger LOG = Logger.getInstance(IndexInfrastructureVersionBase.class);
   // base versions: it is required to have 100% match on that indexes in order to load it to an IDE.

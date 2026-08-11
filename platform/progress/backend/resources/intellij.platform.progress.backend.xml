@@ -1,10 +1,11 @@
-<idea-plugin package="com.intellij.platform.progress.backend">
+<idea-plugin visibility="internal" package="com.intellij.platform.progress.backend">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.rhizomedb"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.kernel"/>
   </dependencies>
   <!-- endregion -->

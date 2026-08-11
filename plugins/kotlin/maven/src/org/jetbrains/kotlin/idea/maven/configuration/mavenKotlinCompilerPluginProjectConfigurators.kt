@@ -4,12 +4,18 @@ package org.jetbrains.kotlin.idea.maven.configuration
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.xml.XmlFile
+import com.intellij.util.CommonProcessors
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
 import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.allopen.AllOpenPluginNames
+import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.ConfigurationResultBuilder
 import org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator
@@ -25,11 +31,12 @@ import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Com
 import org.jetbrains.kotlin.idea.maven.createChildTag
 import org.jetbrains.kotlin.idea.maven.findSubTagOrCreate
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import java.nio.file.Files
+import kotlin.io.path.relativeTo
 
 abstract class AbstractMavenKotlinCompilerPluginProjectConfigurator: KotlinCompilerPluginProjectConfigurator {
     override fun isApplicable(module: Module): Boolean =
-        module.findSuitablePomFileWithPlugin(kotlinPluginId) != null
+        AdvancedSettings.getBoolean("kotlin.enable.autoconfiguration") &&
+            module.findSuitablePomFileWithPlugin(kotlinPluginId) != null
 
     override fun configureModule(module: Module, configurationResultBuilder: ConfigurationResultBuilder) {
         val project = module.project
@@ -153,7 +160,7 @@ class LombokMavenKotlinCompilerPluginProjectConfigurator : AbstractMavenKotlinCo
         val configPath = module.findLombokConfigPath() ?: return
         val configurationElement = kotlinPlugin.configuration.ensureTagExists()
         val pluginOptions = configurationElement.findSubTagOrCreate("pluginOptions")
-        val option = "lombok:config=$configPath"
+        val option = $$"lombok:config=${project.basedir}/$$configPath"
         if (pluginOptions.findSubTags("option").any { it.value.text == option }) return
 
         pluginOptions.add(pluginOptions.createChildTag("option", option))
@@ -180,15 +187,21 @@ class JpaMavenKotlinCompilerPluginProjectConfigurator : AbstractMavenKotlinCompi
 private fun Module.findLombokConfigPath(): String? {
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
     val mavenProject = mavenProjectsManager.findProject(this) ?: return null
-    val moduleConfig = mavenProject.directoryPath.resolve("lombok.config")
-    if (Files.exists(moduleConfig)) return "lombok.config"
-
-    val parentConfig = mavenProject.parentId
-        ?.let(mavenProjectsManager::findProject)
-        ?.directoryPath
-        ?.resolve("lombok.config")
-        ?.takeIf(Files::exists)
-    return parentConfig?.toString()
+    val projectPath = mavenProject.directoryPath
+    val processor = CommonProcessors.FindFirstProcessor<VirtualFile>()
+    for (scope in arrayOf(GlobalSearchScopes.directoryScope(project, mavenProject.file.parent, true), project.projectScope())) {
+        FilenameIndex.processFilesByNames(
+            setOf("lombok.config"),
+            false,
+            scope,
+            null,
+            processor
+        )
+        processor.foundValue?.let {
+            return it.toNioPath().relativeTo(projectPath).toString()
+        }
+    }
+    return null
 }
 
 internal fun PomFile.addAllOpenKotlinCompilerPluginPreset(kotlinPlugin: MavenDomPlugin, kotlinCompilerPluginId: String) {

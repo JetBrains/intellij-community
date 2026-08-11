@@ -18,6 +18,7 @@ import com.intellij.platform.icons.impl.rendering.DefaultRenderingContext
 @Suppress("UNCHECKED_CAST")
 class IntelliJIconRendererManager: DefaultIconRendererManager() {
   private val imageProvider = IntelliJImageResourceProvider()
+  private val themeContext = IntelliJThemeContext()
 
   override fun createRenderer(layer: IconLayer, renderingContext: RenderingContext): IconLayerRenderer {
     if (layer is SwingIconLayer) {
@@ -27,11 +28,11 @@ class IntelliJIconRendererManager: DefaultIconRendererManager() {
     }
   }
 
-  override fun createUpdateFlow(scope: CoroutineScope?, updateCallback: (Int) -> Unit): MutableIconUpdateFlow {
+  override fun createUpdateFlow(scope: CoroutineScope?, onUpdate: (suspend (Int) -> Unit)?): MutableIconUpdateFlow {
     if (scope != null) {
-      return CoroutineBasedMutableIconUpdateFlow(scope, updateCallback)
+      return CoroutineBasedMutableIconUpdateFlow(scope, onUpdate)
     } else {
-      return IntelliJMutableIconUpdateFlowImpl(updateCallback)
+      return IntelliJMutableIconUpdateFlowImpl(onUpdate)
     }
   }
 
@@ -48,6 +49,7 @@ class IntelliJIconRendererManager: DefaultIconRendererManager() {
         StartupUiUtil.isDarkTheme,
         knownModifiers?.stroke
       ),
+      themeContext,
       imageProvider
     )
   }

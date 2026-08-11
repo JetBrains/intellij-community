@@ -37,6 +37,11 @@ fun setPageSizeAndReload(pageSize: Int, grid: DataGrid) {
 
   val loader = grid.getDataHookup().getLoader()
   val source = GridRequestSource(DataGridRequestPlace(grid))
-  if (GridUtilCore.isPageSizeUnlimited(pageSize)) loader.load(source, 0)
-  else loader.reloadCurrentPage(source)
+  val numberOfRows = grid.resultView.getViewRowCount()
+  if (GridUtilCore.isPageSizeUnlimited(pageSize) || pageSize > numberOfRows) {
+    loader.load(source, 0)
+  }
+  else {
+    loader.reloadCurrentPage(source)
+  }
 }

@@ -1,5 +1,5 @@
 // "Remove @ from annotation argument" "true"
-// K2_ERROR: Annotations cannot be used as annotation arguments.
+// K2_ERROR: ANNOTATION_USED_AS_ANNOTATION_ARGUMENT
 
 annotation class Y()
 annotation class X(val value: Y, val y: Y)

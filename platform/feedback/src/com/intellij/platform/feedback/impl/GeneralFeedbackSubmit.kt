@@ -24,6 +24,9 @@ import javax.net.ssl.HttpsURLConnection
 private const val TEST_FEEDBACK_URL = "https://forms-stgn.w3jbcom-nonprod.aws.intellij.net/feedback"
 private const val PRODUCTION_FEEDBACK_URL = "https://forms-service.jetbrains.com/feedback"
 
+/** When set, replaces both feedback submission URLs — lets a UI/integration test point real dialog submission at a local mock server instead of the real staging/production endpoint. */
+private const val FEEDBACK_URL_OVERRIDE_PROPERTY = "platform.feedback.test.submission.url"
+
 private const val FEEDBACK_FORM_ID_ONLY_DATA = "feedback/ide"
 private const val FEEDBACK_FORM_ID_WITH_DETAILED_ANSWER = "v2/feedback/ide_with_detailed_answer"
 
@@ -114,10 +117,11 @@ fun submitFeedback(feedbackData: FeedbackRequestDataHolder,
                    onError: () -> Unit,
                    feedbackRequestType: FeedbackRequestType = FeedbackRequestType.TEST_REQUEST) {
   ApplicationManager.getApplication().executeOnPooledThread {
+    val urlOverride = System.getProperty(FEEDBACK_URL_OVERRIDE_PROPERTY)
     val feedbackUrl = when (feedbackRequestType) {
       FeedbackRequestType.NO_REQUEST -> return@executeOnPooledThread
-      FeedbackRequestType.TEST_REQUEST -> TEST_FEEDBACK_URL
-      FeedbackRequestType.PRODUCTION_REQUEST -> PRODUCTION_FEEDBACK_URL
+      FeedbackRequestType.TEST_REQUEST -> urlOverride ?: TEST_FEEDBACK_URL
+      FeedbackRequestType.PRODUCTION_REQUEST -> urlOverride ?: PRODUCTION_FEEDBACK_URL
     }
 
     val regionalFeedbackUrl = RegionUrlMapper.tryMapUrlBlocking(feedbackUrl)

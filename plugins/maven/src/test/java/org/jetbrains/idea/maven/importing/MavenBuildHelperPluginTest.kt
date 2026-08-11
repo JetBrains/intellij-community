@@ -1,14 +1,30 @@
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
+import com.intellij.maven.testFramework.fixtures.updateProjectPom
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenBuildHelperPluginTest : MavenDomTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenBuildHelperPluginTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
     
   @Test
   fun testCompletion() = runBlocking {
-    importProjectAsync(
+    maven.importProjectAsync(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -53,7 +69,7 @@ class MavenBuildHelperPluginTest : MavenDomTestCase() {
           </properties>
         """.trimIndent())
 
-    updateProjectPom(
+    maven.updateProjectPom(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -98,6 +114,6 @@ class MavenBuildHelperPluginTest : MavenDomTestCase() {
           </properties>
         """.trimIndent())
 
-    assertCompletionVariants(projectPom, "someNewProperty1", "someNewProperty2")
+    maven.assertCompletionVariants(maven.projectPom, "someNewProperty1", "someNewProperty2")
   }
 }

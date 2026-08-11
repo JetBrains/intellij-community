@@ -44,7 +44,7 @@ abstract class AbstractSmartStepIntoTest : KotlinLightCodeInsightFixtureTestCase
                     val suffix = if (target is KotlinMethodSmartStepTarget && targets.targetsWithDeclaration(target.getDeclaration()).count() > 1) {
                         "_${target.methodInfo.ordinal}"
                     } else ""
-                    "${target.presentation}$suffix"
+                    "${target.presentation.singleLine()}$suffix"
                 }
             }
         }
@@ -79,6 +79,8 @@ abstract class AbstractSmartStepIntoTest : KotlinLightCodeInsightFixtureTestCase
 
         return sb.toString()
     }
+
+    private fun String.singleLine(): String = lineSequence().joinToString(" ") { it.trim() }
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 }

@@ -125,7 +125,7 @@ class GeventDidPatchModuleEvent(GeventDidPatchEvent):
 class IGeventWillPatchAllEvent(IGeventWillPatchEvent):
     patch_all_arguments: Mapping[str, Any]
     patch_all_kwargs: Mapping[str, Any]
-    def will_patch_module(module_name: str) -> bool: ...
+    def will_patch_module(module_name: str) -> bool: ...  # pyrefly: ignore [invalid-annotation]
 
 class _PatchAllMixin:
     def __init__(self, patch_all_arguments: Mapping[str, Any], patch_all_kwargs: Mapping[str, Any]) -> None: ...

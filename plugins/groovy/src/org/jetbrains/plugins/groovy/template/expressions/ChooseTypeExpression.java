@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.template.expressions;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -17,17 +17,20 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.SmartTypePointer;
 import com.intellij.psi.SmartTypePointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SubtypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,24 +46,21 @@ public class ChooseTypeExpression extends Expression {
   protected final SmartTypePointer myTypePointer;
   private final List<SmartTypePointer> myItems;
   private final boolean myAddDefType;
-  private final boolean mySelectDef;
+  private final GroovyApplicationSettings.Type mySelectDef;
 
   public ChooseTypeExpression(TypeConstraint @NotNull [] constraints, PsiManager manager, GlobalSearchScope resolveScope) {
     this(constraints, manager, resolveScope, true);
   }
 
-  public ChooseTypeExpression(TypeConstraint[] constraints,
-                              PsiManager manager,
-                              GlobalSearchScope resolveScope,
-                              boolean addDefType) {
-    this(constraints, manager, resolveScope, addDefType, false);
+  public ChooseTypeExpression(TypeConstraint[] constraints, PsiManager manager, GlobalSearchScope resolveScope, boolean addDefType) {
+    this(constraints, manager, resolveScope, addDefType, GroovyApplicationSettings.Type.TYPED);
   }
 
   public ChooseTypeExpression(TypeConstraint[] constraints,
                               PsiManager manager,
                               GlobalSearchScope resolveScope,
                               boolean addDefType,
-                              boolean selectDef) {
+                              GroovyApplicationSettings.Type selectDef) {
     myAddDefType = addDefType;
 
     SmartTypePointerManager typePointerManager = SmartTypePointerManager.getInstance(manager.getProject());
@@ -70,7 +70,8 @@ public class ChooseTypeExpression extends Expression {
     mySelectDef = selectDef;
   }
 
-  private static @NotNull List<SmartTypePointer> createItems(TypeConstraint @NotNull [] constraints, @NotNull SmartTypePointerManager typePointerManager) {
+  private static @NotNull List<SmartTypePointer> createItems(TypeConstraint @NotNull [] constraints, 
+                                                             @NotNull SmartTypePointerManager typePointerManager) {
     List<SmartTypePointer> result = new ArrayList<>();
 
     for (TypeConstraint constraint : constraints) {
@@ -86,7 +87,8 @@ public class ChooseTypeExpression extends Expression {
     return result;
   }
 
-  private static void processSuperTypes(@NotNull PsiType type, @NotNull List<SmartTypePointer> result, @NotNull SmartTypePointerManager typePointerManager) {
+  private static void processSuperTypes(@NotNull PsiType type, @NotNull List<SmartTypePointer> result, 
+                                        @NotNull SmartTypePointerManager typePointerManager) {
     result.add(typePointerManager.createSmartTypePointer(type));
     PsiType[] superTypes = type.getSuperTypes();
     for (PsiType superType : superTypes) {
@@ -94,9 +96,9 @@ public class ChooseTypeExpression extends Expression {
     }
   }
 
-  private static @NotNull PsiType chooseType(TypeConstraint @NotNull [] constraints, @NotNull GlobalSearchScope scope, @NotNull PsiManager manager) {
-    if (constraints.length > 0) return constraints[0].getDefaultType();
-    return PsiType.getJavaLangObject(manager, scope);
+  private static @NotNull PsiType chooseType(TypeConstraint @NotNull [] constraints, @NotNull GlobalSearchScope scope,
+                                             @NotNull PsiManager manager) {
+    return constraints.length > 0 ? constraints[0].getDefaultType() : PsiType.getJavaLangObject(manager, scope);
   }
 
   @Override
@@ -107,8 +109,13 @@ public class ChooseTypeExpression extends Expression {
     }
     PsiType type = myTypePointer.getType();
     if (type != null) {
-      if (myAddDefType && (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || mySelectDef)) {
-        return new TextResult(GrModifier.DEF);
+      if (myAddDefType && (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || mySelectDef != GroovyApplicationSettings.Type.TYPED)) {
+        return switch (mySelectDef) {
+          case DEF, TYPED -> new TextResult(GrModifier.DEF);
+          case VAR -> new TextResult(GrModifier.VAR);
+          case VAL -> new TextResult(GrModifier.VAL);
+          case FINAL -> new TextResult(PsiModifier.FINAL);
+        };
       }
 
       type = TypesUtil.unboxPrimitiveTypeWrapper(type);
@@ -150,13 +157,23 @@ public class ChooseTypeExpression extends Expression {
     }
 
     if (myAddDefType) {
-      LookupElementBuilder def = LookupElementBuilder.create(GrModifier.DEF).bold();
-      if (mySelectDef) {
-        result.addFirst(def);
+      List<LookupElementBuilder> keywords = new ArrayList<>(4);
+      keywords.add(LookupElementBuilder.create(GrModifier.DEF).bold());
+      keywords.add(LookupElementBuilder.create(PsiModifier.FINAL).bold());
+      PsiFile file = context.getPsiFile();
+      if (file == null || GroovyConfigUtils.isAtLeastGroovy30(file)) {
+        keywords.add(LookupElementBuilder.create(GrModifier.VAR).bold());
+        if (file == null || GroovyConfigUtils.isAtLeastGroovy60(file)) {
+          keywords.add(LookupElementBuilder.create(GrModifier.VAL).bold());
+        }
       }
-      else {
-        result.add(def);
+      switch (mySelectDef) {
+        case DEF -> result.addFirst(keywords.removeFirst());
+        case FINAL -> result.addFirst(keywords.remove(1));
+        case VAR -> result.addFirst(keywords.size() > 2 ? keywords.remove(1) : keywords.removeFirst());
+        case VAL -> result.addFirst(keywords.size() > 3 ? keywords.remove(2) : keywords.removeFirst());
       }
+      result.addAll(keywords);
     }
 
     return result.toArray(LookupElement.EMPTY_ARRAY);

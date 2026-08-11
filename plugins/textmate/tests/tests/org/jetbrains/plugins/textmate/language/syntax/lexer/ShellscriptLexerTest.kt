@@ -14,6 +14,9 @@ class ShellscriptLexerTest : TextMateLexerTestCase() {
   @Test
   fun heredoc() = doTest("heredoc.sh", "heredoc_after.sh")
 
+  @Test
+  fun functionDefinition() = doTest("function_definition.sh", "function_definition_after.sh")
+
   override val testDirRelativePath = "shellscript"
   override val bundleName = TestUtil.SHELLSCRIPT
 }

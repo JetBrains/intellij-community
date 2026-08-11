@@ -32,6 +32,7 @@ import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.DocumentUtil
+import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.isEmpty
@@ -79,15 +80,15 @@ class InlineBreakpointInlayManager(private val project: Project, parentScope: Co
   private val breakpointModificationStamp = AtomicLong(0)
 
   init {
-    val busConnection = project.messageBus.connect()
     if (!project.isDefault) {
+      val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
       EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
         override fun editorCreated(event: EditorFactoryEvent) {
           initializeInNewEditor(event.editor)
         }
 
         override fun editorReleased(event: EditorFactoryEvent) {
-          XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).inlineBreakpointsCache.editorReleased(event.editor)
+          breakpointManager.inlineBreakpointsCache.editorReleased(event.editor)
         }
       }, project)
 
@@ -99,7 +100,7 @@ class InlineBreakpointInlayManager(private val project: Project, parentScope: Co
         }, project)
       }
 
-      XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).subscribeOnBreakpointsChanges(busConnection) {
+      breakpointManager.subscribeOnBreakpointsChanges(scope.asDisposable()) {
         breakpointModificationStamp.incrementAndGet()
       }
     }

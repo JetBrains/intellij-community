@@ -1,23 +1,53 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
+import com.intellij.maven.testFramework.fixtures.assertUnorderedPathsAreEqual
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.createSettingsXml
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.initProjectsManager
+import com.intellij.maven.testFramework.fixtures.mavenGeneralSettings
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.projectPath
+import com.intellij.maven.testFramework.fixtures.projectsTree
+import com.intellij.maven.testFramework.fixtures.updateSettingsXml
+import com.intellij.maven.testFramework.fixtures.waitForImportWithinTimeout
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.nio.file.Paths
 
-class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase() {
-  override fun setUp() {
-    super.setUp()
-    initProjectsManager(true)
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenProjectsManagerSettingsXmlTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+
+  // Forwarders to keep the legacy bodies one-to-one (these were inherited members of the base test class).
+  private val projectsTree get() = maven.projectsTree
+  private val projectPath get() = maven.projectPath
+
+  @BeforeEach
+  fun setUp() {
+    maven.initProjectsManager(true)
   }
 
   @Test
   fun testUpdatingProjectsOnSettingsXmlChange() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -29,7 +59,7 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
                          <sourceDirectory>${'$'}{prop}</sourceDirectory>
                        </build>
                        """.trimIndent())
-    createModulePom("m",
+    maven.createModulePom("m",
                     """
                       <groupId>test</groupId>
                       <artifactId>m</artifactId>
@@ -43,7 +73,7 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
                         <sourceDirectory>${'$'}{prop}</sourceDirectory>
                       </build>
                       """.trimIndent())
-    updateSettingsXml("""
+    maven.updateSettingsXml("""
                         <profiles>
                           <profile>
                             <id>one</id>
@@ -56,14 +86,14 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
                           </profile>
                         </profiles>
                         """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
     val roots = projectsTree.rootProjects
     val parentNode = roots[0]
     val childNode = projectsTree.getModules(roots[0])[0]
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value1")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value1")))
-    waitForImportWithinTimeout {
-      updateSettingsXml("""
+    maven.waitForImportWithinTimeout {
+      maven.updateSettingsXml("""
                         <profiles>
                           <profile>
                             <id>one</id>
@@ -83,8 +113,8 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
     deleteSettingsXmlAndWaitForImport()
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/\${prop}")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/\${prop}")))
-    waitForImportWithinTimeout {
-      updateSettingsXml("""
+    maven.waitForImportWithinTimeout {
+      maven.updateSettingsXml("""
                         <profiles>
                           <profile>
                             <id>one</id>
@@ -105,15 +135,15 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
   @Test
   fun testUpdatingProjectsOnSettingsXmlCreationAndDeletion() = runBlocking {
     deleteSettingsXmlAndWaitForImport()
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
     assertUnorderedElementsAreEqual(projectsTree.availableProfiles)
-    waitForImportWithinTimeout {
-      createSettingsXml("""
+    maven.waitForImportWithinTimeout {
+      maven.createSettingsXml("""
                         <profiles>
                           <profile>
                             <id>one</id>
@@ -128,8 +158,12 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
   }
 
   private suspend fun deleteSettingsXmlAndWaitForImport() {
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Paths.get(dir.toString(), "settings.xml"))!!
-    waitForImportWithinTimeout {
+    // Delete whatever the active user settings.xml is: the fixture bootstraps it under project.basePath, but
+    // updateSettingsXml/createSettingsXml write it under maven.dir — so resolve the current path instead of guessing
+    // a fixed location (the first call in a "create then delete" test would otherwise NPE on a missing maven.dir copy).
+    val settingsPath = maven.mavenGeneralSettings.userSettingsFile
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Paths.get(settingsPath)) ?: return
+    maven.waitForImportWithinTimeout {
       edtWriteAction {
         f.delete(this)
       }

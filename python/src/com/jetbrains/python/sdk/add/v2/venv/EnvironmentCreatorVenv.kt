@@ -82,6 +82,8 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
         selectedSdkProperty = model.state.baseInterpreter,
         validationRequestor = validationRequestor,
         onPathSelected = model::addManuallyAddedSystemPython,
+        // venv creation requires Python 3.8+; older bases stay selectable but are flagged invalid.
+        additionalValidation = { venvBaseVersionError(it) },
       )
 
 
@@ -103,10 +105,6 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
       row("") {
         checkBox(message("sdk.create.custom.inherit.packages"))
           .bindSelected(model.venvViewModel.inheritSitePackages)
-      }
-      row("") {
-        checkBox(message("available.to.all.projects"))
-          .bindSelected(model.venvViewModel.makeAvailableForAllProjects)
       }
     }
   }
@@ -136,7 +134,7 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
       type = InterpreterType.VIRTUALENV,
       target = target.toStatisticsField(),
       globalSitePackage = model.venvViewModel.inheritSitePackages.get(),
-      makeAvailableToAllProjects = model.venvViewModel.makeAvailableForAllProjects.get(),
+      makeAvailableToAllProjects = false,
       previouslyConfigured = false,
       isWSLContext = false, // todo fix for wsl
       creationMode = InterpreterCreationMode.CUSTOM

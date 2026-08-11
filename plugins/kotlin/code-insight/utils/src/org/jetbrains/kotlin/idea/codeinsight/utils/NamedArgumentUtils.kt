@@ -4,13 +4,10 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import com.intellij.psi.PsiComment
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.varargArrayType
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
@@ -18,8 +15,9 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.contextParameters
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.varargArrayType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.getCallElement
@@ -28,8 +26,6 @@ import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespace
-import kotlin.collections.firstOrNull
-import kotlin.collections.get
 
 object NamedArgumentUtils {
     fun addArgumentName(element: KtValueArgument, argumentName: Name) {
@@ -54,7 +50,6 @@ object NamedArgumentUtils {
      * Associates each argument of [call] with its argument name if `argumentName = argument` is valid for all arguments. Optionally,
      * starts at [startArgument] if it's not `null`.
      */
-    @OptIn(KaContextParameterApi::class)
     context(_: KaSession)
     fun associateArgumentNamesStartingAt(
         call: KtCallElement,
@@ -86,7 +81,6 @@ object NamedArgumentUtils {
      * The method also works for [argument] that is [KtLambdaArgument], since
      * the argument name can be used after moving [KtLambdaArgument] inside parentheses.
      */
-    @OptIn(KaContextParameterApi::class)
     context(_: KaSession)
     fun getStableNameFor(argument: KtValueArgument): Name? {
         val callElement: KtCallElement = getCallElement(argument) ?: return null
@@ -96,7 +90,6 @@ object NamedArgumentUtils {
         return getNameForNameableArgument(argument, callElement, resolvedCall)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun getNameForNameableArgument(
         argument: KtValueArgument,
@@ -118,7 +111,7 @@ object NamedArgumentUtils {
         return null
     }
 
-    @OptIn(KaExperimentalApi::class, KaContextParameterApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun isMappingBroken(resolvedCall: KaFunctionCall<*>, argument: KtValueArgument): Boolean {
         val valueArgumentMapping = resolvedCall.valueArgumentMapping
@@ -141,7 +134,6 @@ object NamedArgumentUtils {
         return realArgumentType?.isSubtypeOf(associatedType) != true
     }
 
-    @OptIn(KaContextParameterApi::class)
     context(_: KaSession)
     private fun hasAmbiguousVararg(argument: KtValueArgument, resolvedCall: KaFunctionCall<*>): Boolean {
         val varargParam = resolvedCall.symbol.valueParameters.find { it.isVararg } ?: return false
@@ -161,7 +153,6 @@ object NamedArgumentUtils {
         return !argument.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm)
     }
 
-    @OptIn(KaContextParameterApi::class)
     context(_: KaSession)
     private fun getNameForValueParameter(
         argument: KtValueArgument,
@@ -197,7 +188,6 @@ object NamedArgumentUtils {
         return null
     }
 
-    @OptIn(KaExperimentalApi::class, KaContextParameterApi::class)
     context(_: KaSession)
     private fun getNameForContextParameter(
         argument: KtValueArgument,

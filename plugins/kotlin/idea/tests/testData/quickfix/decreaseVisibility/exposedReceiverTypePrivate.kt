@@ -1,6 +1,6 @@
 // "Make 'foo' private" "true"
 // PRIORITY: HIGH
-// K2_ERROR: 'public' member exposes its 'internal' receiver type 'A'.
+// K2_ERROR: EXPOSED_RECEIVER_TYPE
 internal class A
 
 fun <caret>A.foo() {}

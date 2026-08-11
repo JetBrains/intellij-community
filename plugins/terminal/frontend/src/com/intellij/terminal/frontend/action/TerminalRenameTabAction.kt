@@ -4,8 +4,7 @@ import com.intellij.ide.actions.ToolWindowTabRenameActionBase
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.TerminalTitle
-import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
-import com.intellij.terminal.frontend.toolwindow.findTabByContent
+import com.intellij.terminal.frontend.toolwindow.getTerminalTab
 import com.intellij.terminal.frontend.toolwindow.impl.getFullTitleText
 import com.intellij.ui.content.Content
 import org.jetbrains.annotations.Nls
@@ -19,26 +18,26 @@ internal class TerminalRenameTabAction : ToolWindowTabRenameActionBase(
   TerminalBundle.message("action.RenameSession.newSessionName.label")
 ), DumbAware {
   override fun getContentDisplayNameToEdit(content: Content, project: Project): String {
-    return getReworkedTerminalTitle(content, project)
+    return getReworkedTerminalTitle(content)
            ?: getClassicTerminalTitle(content)
            ?: content.displayName
   }
 
   override fun applyContentDisplayName(content: Content, project: Project, @Nls newContentName: String) {
-    val title = findTerminalTitle(content, project) ?: return
+    val title = findTerminalTitle(content) ?: return
     title.change {
       userDefinedTitle = newContentName
     }
   }
 
-  private fun findTerminalTitle(content: Content, project: Project): TerminalTitle? {
-    val terminalView = TerminalToolWindowTabsManager.getInstance(project).findTabByContent(content)?.view
+  private fun findTerminalTitle(content: Content): TerminalTitle? {
+    val terminalView = content.getTerminalTab()?.view
     val terminalWidget = TerminalToolWindowManager.findWidgetByContent(content)
     return terminalView?.title ?: terminalWidget?.terminalTitle
   }
 
-  private fun getReworkedTerminalTitle(content: Content, project: Project): String? {
-    val view = TerminalToolWindowTabsManager.getInstance(project).findTabByContent(content)?.view ?: return null
+  private fun getReworkedTerminalTitle(content: Content): String? {
+    val view = content.getTerminalTab()?.view ?: return null
     return view.getFullTitleText()
   }
 

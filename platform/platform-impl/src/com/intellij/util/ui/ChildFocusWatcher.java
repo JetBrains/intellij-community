@@ -10,7 +10,9 @@ import java.awt.Component;
 import java.awt.Toolkit;
 import java.awt.event.AWTEventListener;
 import java.awt.event.FocusEvent;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public abstract class ChildFocusWatcher implements AWTEventListener, Disposable {
   private final JComponent myParent;
 

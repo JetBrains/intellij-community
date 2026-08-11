@@ -67,7 +67,6 @@ internal class EditorSchemesPanel(val colorAndFontsOptions: ColorAndFontOptions,
   override fun useBoldForNonRemovableSchemes(): Boolean = false
 }
 
-@ApiStatus.Internal
 internal fun preselectEditorSchemeInColorSchemeConfigurable(component: JComponent,
                                                            currentOptions: ColorAndFontOptions,
                                                            schemeName: String?) {

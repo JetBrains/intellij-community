@@ -28,6 +28,7 @@ import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import kotlinx.coroutines.Job;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -40,6 +41,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public final class ParameterInfoTaskRunnerUtil {
   public static final int DEFAULT_PROGRESS_POPUP_DELAY_MS = 1000;
 

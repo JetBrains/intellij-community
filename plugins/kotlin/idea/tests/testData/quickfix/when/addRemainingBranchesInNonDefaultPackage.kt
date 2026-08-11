@@ -1,7 +1,7 @@
 // "Add remaining branches" "true"
 // ERROR: Unresolved reference: TODO
 // ERROR: Unresolved reference: TODO
-// K2_ERROR: 'when' expression must be exhaustive. Add the 'R', 'G' branches or an 'else' branch.
+// K2_ERROR: NO_ELSE_IN_WHEN
 package test
 enum class Color { R, G, B }
 fun test(c: Color) = wh<caret>en(c) {

@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.multiplatformSupport` start
-
 jvm_library(
     name = "multiplatformSupport",
     srcs = glob(
@@ -19,7 +18,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -33,7 +32,11 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.multiplatformSupport",
     visibility = ["//visibility:public"],
-    runtime_deps = [":multiplatformSupport"],
+    runtime_deps = [
+        # do not sort,
+        ":multiplatformSupport",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.multiplatformSupport` end
 

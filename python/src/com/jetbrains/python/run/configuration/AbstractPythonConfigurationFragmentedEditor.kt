@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run.configuration
 
-import com.intellij.diagnostic.logging.LogsGroupFragment
 import com.intellij.execution.ui.BeforeRunComponent
 import com.intellij.execution.ui.BeforeRunFragment
 import com.intellij.execution.ui.CommonParameterFragments
@@ -46,7 +45,7 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
 
     customizeFragments(fragments)
     fragments.add(PyEditorExtensionFragment())
-    fragments.add(LogsGroupFragment())
+    fragments.add(createLogGroupFragment())
     return fragments
   }
 

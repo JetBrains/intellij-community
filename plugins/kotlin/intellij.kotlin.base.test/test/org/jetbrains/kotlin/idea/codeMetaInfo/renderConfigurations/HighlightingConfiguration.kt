@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations
 import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
 import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.TestableLineMarkerNavigator
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.TestableLineMarkerNavigator
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.FileLevelHighlightingCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.LineMarkerCodeMetaInfo

@@ -3,7 +3,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
-import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.SEP
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
 import com.intellij.testFramework.TestDataPath
@@ -28,8 +28,8 @@ internal class MonorepoUvWorkspaceSetOnParentTest {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule("8840337-uv-workspace", contentRoot = ".", sourceRoots = listOf(".")),
-      ExpectedModule("myorg-core", contentRoot = "libs${SEP}core", sourceRoots = listOf("libs${SEP}core${SEP}src")),
-      ExpectedModule("myorg-frontend", contentRoot = "apps${SEP}frontend", sourceRoots = listOf("apps${SEP}frontend${SEP}src"), deps = listOf("myorg-core")),
+      ExpectedModule("myorg-core", contentRoot = "libs" / "core", sourceRoots = listOf("libs" / "core" / "src")),
+      ExpectedModule("myorg-frontend", contentRoot = "apps" / "frontend", sourceRoots = listOf("apps" / "frontend" / "src"), deps = listOf("myorg-core")),
     )
   }
 }

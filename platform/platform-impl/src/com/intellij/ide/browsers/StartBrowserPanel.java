@@ -27,6 +27,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.Url;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,7 @@ import java.awt.Insets;
 import java.lang.reflect.Method;
 import java.util.ResourceBundle;
 
+@ApiStatus.Internal
 public final class StartBrowserPanel {
   private final JCheckBox myStartBrowserCheckBox;
   private final ComboboxWithBrowseButton myBrowserComboBox;

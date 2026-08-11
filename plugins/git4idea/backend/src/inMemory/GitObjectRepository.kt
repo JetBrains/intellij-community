@@ -11,6 +11,7 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitHandlerInputProcessorUtil
 import git4idea.commands.GitLineHandler
 import git4idea.commands.GitObjectType
+import git4idea.config.GitConfigUtil
 import git4idea.config.gpg.isGpgSignEnabledCached
 import git4idea.inMemory.objects.GitObject
 import git4idea.inMemory.objects.Oid
@@ -30,6 +31,8 @@ internal class GitObjectRepository(val repository: GitRepository) {
   }
 
   private val objectCache: MutableMap<Oid, GitObject> = HashMap()
+
+  private val oidByteSize = repository.fullHashLength / 2
 
   val emptyTree by lazy { createTree(emptyMap()) }
 
@@ -257,7 +260,7 @@ internal class GitObjectRepository(val repository: GitRepository) {
         }
         GitObjectType.TREE -> {
           LOG.debug("Parsing tree object: $oid")
-          val entries = GitObject.Tree.parseBody(body)
+          val entries = GitObject.Tree.parseBody(body, oidByteSize)
           createTree(body, oid, entries)
         }
         GitObjectType.BLOB -> {

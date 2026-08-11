@@ -1,0 +1,4 @@
+class Test<`foo bar`> {
+}
+
+fun <`foo bar`> Test<`foo bar`>.<caret>baz(value: `foo bar`): `foo bar` = value

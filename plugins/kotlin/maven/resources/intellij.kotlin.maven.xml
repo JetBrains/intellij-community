@@ -1,10 +1,41 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.maven">
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.maven"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.psi"/>
-    <!-- endregion -->
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.statistics"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.codeInsight.descriptions"/>
+    <module name="intellij.kotlin.formatter"/>
+    <module name="intellij.kotlin.migration"/>
+    <module name="intellij.kotlin.projectConfiguration"/>
+    <module name="intellij.kotlin.references"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.vcs.core"/>
+    <module name="intellij.xml.analysis"/>
+    <module name="intellij.xml.psi"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <projectConfigurator id="kotlinJavaMavenConfigurator" implementation="org.jetbrains.kotlin.idea.maven.configuration.KotlinJavaMavenConfigurator"/>
@@ -83,23 +114,6 @@
                      language="XML"
                      hasStaticDescription="true"
                      level="WARNING" key="inspection.different.kotlin.maven.version.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.maven.inspections.DeprecatedMavenDependencyInspection"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
-                     enabledByDefault="true"
-                     cleanupTool="true"
-                     language="XML"
-                     hasStaticDescription="true"
-                     level="WARNING" key="inspection.deprecated.maven.dependency.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.maven.inspections.MavenCoroutinesDeprecationInspection"
-                     groupPathKey="group.path.kotlin.migration"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.maven"
-                     enabledByDefault="false"
-                     language="XML"
-                     cleanupTool="true"
-                     hasStaticDescription="true"
-                     level="ERROR" key="inspection.maven.coroutines.deprecation.display.name" bundle="messages.KotlinBundle"/>
 
     <intentionAction>
       <language>XML</language>

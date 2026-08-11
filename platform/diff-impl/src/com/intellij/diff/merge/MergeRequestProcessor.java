@@ -6,6 +6,8 @@ import com.intellij.diff.DiffManagerEx;
 import com.intellij.diff.DiffNotificationIdsHolder;
 import com.intellij.diff.actions.impl.DiffNextDifferenceAction;
 import com.intellij.diff.actions.impl.DiffPreviousDifferenceAction;
+import com.intellij.diff.impl.ui.DiffHeaderToolbarPanel;
+import com.intellij.diff.impl.ui.DiffHeaderToolbarUtil;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeys;
@@ -25,14 +27,13 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -43,6 +44,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -108,6 +110,10 @@ public abstract class MergeRequestProcessor implements Disposable {
     myAvailableTools = DiffManagerEx.getInstance().getMergeTools();
 
     myMainPanel = new MyPanel();
+    myMainPanel.setBackground(JBColor.lazy(() -> {
+      EditorColorsManager manager = EditorColorsManager.getInstance();
+      return manager.getGlobalScheme().getDefaultBackground();
+    }));
     myContentPanel = new Wrapper();
     myToolbarPanel = new Wrapper();
     myToolbarPanel.setFocusable(true);
@@ -115,12 +121,19 @@ public abstract class MergeRequestProcessor implements Disposable {
     myToolbarStatusPanel = new Wrapper();
     myNotificationPanel = new Wrapper();
     myButtonsPanel = new Wrapper();
+    myButtonsPanel.setOpaque(true);
 
     myPanel = JBUI.Panels.simplePanel(myMainPanel);
 
-    JPanel topPanel = JBUI.Panels.simplePanel(myToolbarPanel)
-      .addToRight(myRightToolbarPanel)
-      .addToBottom(myNotificationPanel);
+
+    DiffHeaderToolbarPanel headerPanel = new DiffHeaderToolbarPanel(new BorderLayout());
+    var headerLayoutPanel = DiffHeaderToolbarUtil.createLayoutPanel(myToolbarPanel, myToolbarStatusPanel, myRightToolbarPanel);
+    headerPanel.add(headerLayoutPanel, BorderLayout.CENTER);
+
+    var topPanel = JBUI.Panels.simplePanel()
+      .addToTop(headerPanel)
+      .addToBottom(myNotificationPanel)
+      .andTransparent();
 
     myMainPanel.add(topPanel, BorderLayout.NORTH);
     myMainPanel.add(myContentPanel, BorderLayout.CENTER);
@@ -290,6 +303,7 @@ public abstract class MergeRequestProcessor implements Disposable {
                               @Nullable List<? extends AnAction> rightViewerActions) {
     ActionGroup group = collectToolbarActions(viewerActions);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, group, true);
+    toolbar.getComponent().setOpaque(false);
     toolbar.setShowSeparatorTitles(true);
 
     toolbar.setTargetComponent(myContentPanel.getTargetComponent());
@@ -298,28 +312,11 @@ public abstract class MergeRequestProcessor implements Disposable {
     recursiveRegisterShortcutSet(group, myMainPanel, null);
 
     DefaultActionGroup rightGroup = new DefaultActionGroup();
-    rightGroup.add(new StatusPanelAction(myToolbarStatusPanel));
-    DiffUtil.addActionBlock(rightGroup, rightViewerActions, true);
+    DiffUtil.addActionBlock(rightGroup, rightViewerActions, false);
     ActionToolbar rightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, rightGroup, true);
     rightToolbar.setTargetComponent(myContentPanel.getTargetComponent());
+    rightToolbar.getComponent().setOpaque(false);
     myRightToolbarPanel.setContent(rightToolbar.getComponent());
-  }
-
-  private static final class StatusPanelAction extends DumbAwareAction implements CustomComponentAction {
-    private final JComponent myStatusPanel;
-
-    StatusPanelAction(@NotNull JComponent statusPanel) {
-      myStatusPanel = statusPanel;
-    }
-
-    @Override
-    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      return myStatusPanel;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-    }
   }
 
   private @NotNull MergeTool getFittedTool(@NotNull MergeRequest request) {

@@ -17,6 +17,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import java.awt.event.KeyEvent;
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class CtrlYActionChooser {
   private static final String ASK_ABOUT_SHORTCUT = "ask.about.ctrl.y.shortcut.v2";
   private static final Set<String> TARGET_KEYMAPS = new HashSet<>() {{

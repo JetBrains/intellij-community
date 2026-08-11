@@ -2,6 +2,8 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.libraries.miglayout.swing"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
@@ -12,6 +14,7 @@
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.lang"/>
@@ -20,4 +23,32 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <toolWindow factoryClass="com.intellij.internal.inspector.themePicker.UiThemeColorPickerToolWindowFactory"
+                id="UI Theme Color Picker" icon="AllIcons.Toolwindows.ToolWindowPalette"
+                anchor="right" canCloseContents="false" doNotActivateOnStart="true"/>
+  </extensions>
+
+  <actions resource-bundle="messages.IdeUiInspectorBundle">
+    <group id="UiInspectorGroup" searchable="false" internal="true">
+      <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction">
+        <abbreviation value="uii"/>
+        <mouse-shortcut keymap="$default" keystroke="control alt button1"/>
+      </action>
+      <action id="UiThemeColorPickerAction" internal="true"
+              class="com.intellij.internal.inspector.themePicker.ToggleUiThemeColorPickerAction"/>
+      <action id="CopyUiLabel" internal="true" class="com.intellij.internal.inspector.CopyUiLabelAction">
+        <mouse-shortcut keymap="$default" keystroke="control alt button3"/>
+        <mouse-shortcut keymap="$default" keystroke="control alt shift button3"/>
+      </action>
+
+      <group id="Internal.PMM" popup="true">
+        <action id="ApplyFixedWindowSize" internal="true" class="com.intellij.internal.inspector.ApplyWindowSizeAction"/>
+        <action id="ConfigureDefaultSize" internal="true" class="com.intellij.internal.inspector.ConfigureCustomSizeAction"/>
+      </group>
+
+      <add-to-group group-id="Internal.UI"/>
+    </group>
+  </actions>
 </idea-plugin>

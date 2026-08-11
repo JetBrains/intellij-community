@@ -13,7 +13,6 @@ public final class EventCountDumper {
     String enrichedDump = threadDump.getRawDump() +
                           "\n" + EVENT_COUNTS_HEADER +
                           "\nPosted: " + eventQueue.getPostedEventCount() +
-                          "\nPosted (system): " + eventQueue.getPostedSystemEventCount() +
                           "\nReturned: " + eventQueue.getReturnedEventCount();
     return new ThreadDump(enrichedDump, threadDump.getEDTStackTrace(), threadDump.getThreadInfos());
   }

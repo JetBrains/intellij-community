@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter
+import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationModuleNameResolver
 import com.intellij.openapi.project.Project
 
 class JavaApplicationRunConfigurationImporter : RunConfigurationImporter {
@@ -24,8 +25,7 @@ class JavaApplicationRunConfigurationImporter : RunConfigurationImporter {
       throw IllegalArgumentException("Unexpected type of run configuration: ${runConfiguration::class.java}")
     }
 
-    val moduleName = cfg["moduleName"] as? String
-    val module = moduleName?.let(modelsProvider.modifiableModuleModel::findModuleByName)
+    val module = RunConfigurationModuleNameResolver.findModule (modelsProvider, cfg["moduleName"] as? String)
     if (module != null) {
       runConfiguration.setModule(module)
     }

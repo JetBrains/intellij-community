@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.NonNls
  * and that's why it has built-in support of interruption.
  */
 interface DaemonBoundCodeVisionProvider {
+  @ApiStatus.Internal
   companion object {
     const val EP_NAME: String = "com.intellij.codeInsight.daemonBoundCodeVisionProvider"
     val extensionPoint: ExtensionPointName<DaemonBoundCodeVisionProvider> = ExtensionPointName.create(EP_NAME)

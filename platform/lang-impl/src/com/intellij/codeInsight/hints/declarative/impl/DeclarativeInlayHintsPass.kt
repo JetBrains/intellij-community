@@ -36,6 +36,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.IntFunction
 
+@ApiStatus.Internal
 class DeclarativeInlayHintsPass(
   private val rootElement: PsiElement,
   private val editor: Editor,
@@ -104,6 +105,7 @@ class DeclarativeInlayHintsPass(
     positionKeeper.restorePosition(false)
   }
 
+  @ApiStatus.Internal
   companion object {
     @ApiStatus.Internal
     val passSourceId: String = DeclarativeInlayHintsPass::class.java.name

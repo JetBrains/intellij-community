@@ -13,10 +13,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class CustomScopeItem implements ModelScopeItem {
   private final Project myProject;
   private boolean mySearchInLib;

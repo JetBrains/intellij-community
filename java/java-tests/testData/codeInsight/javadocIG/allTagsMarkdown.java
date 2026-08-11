@@ -1,4 +1,5 @@
 import java.lang.Math;
+import java.lang.Deprecated;
 
 class X {
 
@@ -30,6 +31,7 @@ class X {
   /// @provides Math
   /// @uses Math
   /// @hidden
+  @Deprecated
   public <T extends Number> double calculate<caret>Md(T a, T b) {
     return a.doubleValue() + b.doubleValue();
   }

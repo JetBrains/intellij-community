@@ -24,7 +24,7 @@ interface GradleProjectEntityBuilder : WorkspaceEntityBuilder<GradleProjectEntit
 }
 
 internal object GradleProjectEntityType : EntityType<GradleProjectEntity, GradleProjectEntityBuilder>() {
-  override val entityClass: Class<GradleProjectEntity> get() = GradleProjectEntity::class.java
+  override val entityImplClass: Class<*> get() = GradleProjectEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = GradleProjectEntityImpl.Builder::class.java
   operator fun invoke(
     buildId: GradleBuildEntityId,

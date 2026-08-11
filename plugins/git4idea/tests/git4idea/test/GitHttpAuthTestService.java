@@ -21,10 +21,13 @@ import com.intellij.openapi.project.Project;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.commands.GitHttpAuthenticator;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.List;
 
 public class GitHttpAuthTestService extends GitHttpAuthService {
   GitHttpAuthTestService(CoroutineScope coroutineScope) {
@@ -83,6 +86,11 @@ public class GitHttpAuthTestService extends GitHttpAuthService {
     @Override
     public boolean wasRequested() {
       return false;
+    }
+
+    @Override
+    public @Nls @Nullable String getPresentableErrorMessage(@NotNull List<String> errorOutput) {
+      return null;
     }
   };
 }

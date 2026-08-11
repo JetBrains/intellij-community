@@ -2,6 +2,7 @@
 package com.intellij.find.ngrams;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.util.indexing.CustomInputsIndexFileBasedIndexExtension;
@@ -67,7 +68,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
     return new DataIndexer<>() {
       @Override
       public @NotNull Map<Integer, Void> map(@NotNull FileContent inputData) {
-        return TrigramBuilder.getTrigramsAsMap(inputData.getContentAsText());
+        return TrigramBuilder.getTrigramsAsMap(inputData.getContentAsText(), () -> ProgressManager.checkCanceled());
       }
     };
   }

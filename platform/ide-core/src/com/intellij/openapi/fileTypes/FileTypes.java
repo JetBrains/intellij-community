@@ -2,11 +2,19 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
+import org.jetbrains.annotations.ApiStatus;
 
+/**
+ * Declares several standard file types,
+ * Please use direct properties instead.
+ */
+@ApiStatus.NonExtendable
 public class FileTypes {
   protected FileTypes() { }
 
   public static final FileType ARCHIVE = ArchiveFileType.INSTANCE;
+
   public static final FileType UNKNOWN = UnknownFileType.INSTANCE;
+
   public static final LanguageFileType PLAIN_TEXT = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("PLAIN_TEXT");
 }

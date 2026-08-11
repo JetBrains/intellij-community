@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Locale;
@@ -118,10 +119,33 @@ public final class PathUtilRt {
 
   @NotNull
   public static String suggestFileName(@NotNull String text, boolean allowDots, boolean allowSpaces) {
+    return suggestFileName(text, allowDots, allowSpaces, FS_CHARSET);
+  }
+
+  /**
+   * Same as {@link #suggestFileName(String, boolean, boolean)}, but with an explicitly specified filesystem charset
+   * ({@link #suggestFileName(String, boolean, boolean)} uses the current {@code sun.jnu.encoding}).
+   * <p>
+   * In addition to replacing characters that are invalid in file names, this also replaces any character that cannot be
+   * encoded with {@code fsCharset}. Otherwise such a name would later blow up in {@code sun.nio.fs.UnixPath.encode}
+   * with {@code InvalidPathException: Malformed input or input contains unmappable characters} on systems whose
+   * {@code sun.jnu.encoding} is a non-Unicode charset (e.g. ASCII/POSIX, common in minimal Linux containers).
+   * A typical offender is the narrow no-break space (U+202F) that the JDK's CLDR locale data inserts before AM/PM
+   * markers in localized times; it is neither {@link Character#isWhitespace whitespace} nor an invalid file-name char,
+   * so it survives the other filters.
+   *
+   * @param fsCharset the target filesystem charset; {@code null} means no encodability restriction
+   */
+  @NotNull
+  public static String suggestFileName(@NotNull String text, boolean allowDots, boolean allowSpaces, @Nullable Charset fsCharset) {
+    CharsetEncoder fsEncoder = fsCharset != null && fsCharset.canEncode() ? fsCharset.newEncoder() : null;
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
-      if (!isValidFileNameChar(c, Platform.CURRENT, true) || (!allowDots && c == '.') || (!allowSpaces && Character.isWhitespace(c))) {
+      if (!isValidFileNameChar(c, Platform.CURRENT, true) ||
+          (!allowDots && c == '.') ||
+          (!allowSpaces && Character.isWhitespace(c)) ||
+          (fsEncoder != null && !fsEncoder.canEncode(c))) {
         result.append('_');
       }
       else {

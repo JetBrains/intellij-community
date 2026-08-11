@@ -24,7 +24,7 @@ import java.nio.file.Path
 @ExtendWith(TestFailureLogger::class)
 class ModelBuildingStageTest {
   @Test
-  fun `execute reads static module set wrapper from disk`(@TempDir tempDir: Path) {
+  fun `execute reads build-declared module set wrapper from disk`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
       val jps = jpsProject(tempDir) {
         module("intellij.grid.core.plugin") {
@@ -87,6 +87,9 @@ class ModelBuildingStageTest {
       model.pluginGraph.query {
         val plugin = requireNotNull(plugin(wrapperModule.value))
         assertThat(plugin.isModuleSetWrapper).isTrue()
+        val bundledPluginNames = mutableListOf<String>()
+        requireNotNull(product("Idea")).bundles { bundledPluginNames.add(it.name().value) }
+        assertThat(bundledPluginNames).contains(wrapperModule.value)
 
         val contentNames = mutableListOf<String>()
         plugin.containsContent { module, _ -> contentNames.add(module.name().value) }

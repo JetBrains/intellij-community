@@ -1,6 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.idea.TestFor
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.psi.PsiElement
@@ -12,6 +16,9 @@ import org.junit.jupiter.params.provider.ValueSource
 /**
  *  tests for the `regex` package
  */
+@Subsystems.CodeInsight
+@Components.Parsing
+@Layers.Functional
 class PyRegexTest : PyTestCase() {
   fun `test avoid class failing because there are no tests`() {
     // TODO: delete this when we refactor to JUnit5

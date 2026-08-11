@@ -10,7 +10,7 @@ from typing_extensions import override
 
 class Tuple(Func):
     function: str
-    output_field: Field
+    output_field: Field[Any, Any]
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterator[Expression]: ...
     @override

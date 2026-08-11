@@ -18,19 +18,53 @@ project
 
 project.sub-kotlin
 
-project.sub-kotlin.main
+project.sub-kotlin.commonMain
     externalProjectId = :sub-kotlin
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     targetPlatform = JS
 
-project.sub-kotlin.test
+project.sub-kotlin.commonTest
     externalProjectId = :sub-kotlin
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
-    additionalVisibleModuleNames = :sub-kotlin:main
+    additionalVisibleModuleNames = :sub-kotlin:commonMain, :sub-kotlin:jsMain, :sub-kotlin:webMain
+    targetPlatform = JS
+
+project.sub-kotlin.jsMain
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :sub-kotlin:commonMain, :sub-kotlin:webMain
+    targetPlatform = JS
+
+project.sub-kotlin.jsTest
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :sub-kotlin:commonTest, :sub-kotlin:webTest
+    additionalVisibleModuleNames = :sub-kotlin:commonMain, :sub-kotlin:jsMain, :sub-kotlin:webMain
+    targetPlatform = JS
+
+project.sub-kotlin.webMain
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :sub-kotlin:commonMain
+    targetPlatform = JS
+
+project.sub-kotlin.webTest
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :sub-kotlin:commonTest
+    additionalVisibleModuleNames = :sub-kotlin:commonMain, :sub-kotlin:jsMain, :sub-kotlin:webMain
     targetPlatform = JS
 
 

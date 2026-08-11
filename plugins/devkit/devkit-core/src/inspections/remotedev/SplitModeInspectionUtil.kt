@@ -6,31 +6,28 @@ package org.jetbrains.idea.devkit.inspections.remotedev
 import com.intellij.lang.xml.XMLLanguage
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.xml.XmlFile
 import com.intellij.xml.util.XmlStringUtil
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.ContentDescriptor.ModuleDescriptor
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.ApiUsagePolicy
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.ModuleAnalysis
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.ResolvedModuleKind
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeAnalysisFlags
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 internal object SplitModeInspectionUtil {
   @Nls
@@ -40,15 +37,13 @@ internal object SplitModeInspectionUtil {
   }
 
   @Nls
-  fun buildNonNativePluginMessage(actualModuleKind: ResolvedModuleKind): String {
+  fun buildImplicitModuleKindMessage(actualModuleKind: ResolvedModuleKind): String {
     val shortMessage = when (actualModuleKind.kind) {
       SplitModeApiRestrictionsService.ModuleKind.FRONTEND ->
         DevKitBundle.message("inspection.remote.dev.plugin.indirect.frontend.dependencies.message")
       SplitModeApiRestrictionsService.ModuleKind.BACKEND ->
         DevKitBundle.message("inspection.remote.dev.plugin.indirect.backend.dependencies.message")
-      SplitModeApiRestrictionsService.ModuleKind.MIXED ->
-        DevKitBundle.message("inspection.remote.dev.plugin.mixed.dependencies.message")
-      else -> error("Unsupported plugin kind for non-native plugin message: ${actualModuleKind.kind}")
+      else -> error("Unsupported implicit plugin kind message: ${actualModuleKind.kind}")
     }
     return buildDetailedPlainTextMessage(shortMessage, null, actualModuleKind.reasoning)
   }
@@ -141,28 +136,11 @@ internal object SplitModeInspectionUtil {
   }
 
   fun ensureRestrictionsServiceIsLoaded(restrictionsService: SplitModeApiRestrictionsService): Boolean {
-    if (restrictionsService.isLoaded()) {
-      return true
-    }
-
-    restrictionsService.scheduleLoadRestrictions()
-    if (restrictionsService.isLoaded()) {
-      return true
-    }
-
-    val loadedInTime = runBlockingCancellable {
-      withTimeoutOrNull(1.seconds) {
-        while (!restrictionsService.isLoaded()) {
-          delay(10.milliseconds)
-        }
-        true
-      }
-    }
-    return loadedInTime == true
+    return restrictionsService.ensureLoaded()
   }
 
   fun isAllowedForSplitModeInspection(file: PsiFile): Boolean {
-    val restrictionsService = SplitModeApiRestrictionsService.getInstance()
+    val restrictionsService = SplitModeApiRestrictionsService.getInstance(file.project)
     if (shouldSuppressForSingleModuleExternalPlugin(file)) {
       return false
     }
@@ -176,28 +154,21 @@ internal object SplitModeInspectionUtil {
   }
 
   /**
-   * When a main plugin.xml becomes frontend-only, backend-only, or mixed because of its dependencies
+   * When a main plugin.xml becomes frontend-only or backend-only because of its dependencies implicitly
    * (and not because the author explicitly declared platform.frontend/platform.backend/platform.monolith),
-   * the UI should show a single root-level plugin state error instead of many XML-specific warnings.
+   * the UI should show a single root-level plugin state warning instead of many XML-specific warnings.
    */
-  fun shouldReportSinglePluginLevelError(file: PsiFile, moduleAnalysis: ModuleAnalysis): Boolean {
-    if (SplitModeAnalysisFlags.isXmlInspectionsForNonNativePluginEnabled()) {
-      return false
-    }
+  fun shouldReportSinglePluginLevelErrorInsteadOfManyNestedErrors(file: PsiFile, moduleAnalysis: ModuleAnalysis): Boolean {
+    return !SplitModeAnalysisFlags.isShowAllErrorsInModulesWithImplicitKind()
+           && isImplicitFrontendOrBackendMainPluginXml(file, moduleAnalysis)
+  }
 
+  fun isImplicitFrontendOrBackendMainPluginXml(file: PsiFile, moduleAnalysis: ModuleAnalysis): Boolean {
     val currentXmlFile = file as? XmlFile ?: return false
     val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return false
-    if (!isMainPluginXml(currentXmlFile, module)) {
-      return false
-    }
-
-    if (moduleAnalysis.resolvedModuleKind.kind !in NON_NATIVE_PLUGIN_XML_KINDS) {
-      return false
-    }
-    if (moduleAnalysis.evidence.hasOwnExplicitPlatformDependency) {
-      return false
-    }
-    return true
+    return isMainPluginXml(currentXmlFile, module)
+           && moduleAnalysis.resolvedModuleKind.kind in IMPLICIT_PLUGIN_XML_KINDS
+           && !moduleAnalysis.evidence.hasOwnExplicitPlatformDependency
   }
 
   fun shouldSuppressForPredefinedModuleKind(file: PsiFile, restrictionsService: SplitModeApiRestrictionsService): Boolean {
@@ -217,7 +188,7 @@ internal object SplitModeInspectionUtil {
       restrictionsService.getPredefinedModuleKind(module, ideaPlugin = ideaPlugin)
     }
 
-    return predefinedModuleKind != null
+    return predefinedModuleKind != null && predefinedModuleKind.apiUsagePolicy == ApiUsagePolicy.DEFAULT
   }
 
   fun shouldSuppressForSingleModuleExternalPlugin(file: PsiFile): Boolean {
@@ -236,14 +207,31 @@ internal object SplitModeInspectionUtil {
     val moduleVirtualFile = contentModuleDescriptor.virtualFile ?: return emptySequence()
     val moduleName = moduleVirtualFile.nameWithoutExtension
     val psiManager = contentModuleDescriptor.manager
-    @Suppress("UNCHECKED_CAST")
-    return PluginIdDependenciesIndex.findFilesIncludingContentModule(contentModuleDescriptor.project, moduleVirtualFile).asSequence()
+    val indexedMatches = PluginIdDependenciesIndex.findFilesIncludingContentModule(contentModuleDescriptor.project, moduleVirtualFile)
+      .asSequence()
       .flatMap { dependingFile ->
-        val psiFile = psiManager.findFile(dependingFile) as? XmlFile ?: return@flatMap emptySequence<PsiElement>()
-        val plugin = DescriptorUtil.getIdeaPlugin(psiFile) ?: return@flatMap emptySequence<PsiElement>()
-        val modules = plugin.content.flatMap { it.moduleEntry }
-        modules.filter { it.name.stringValue == moduleName }.asSequence()
-      } as? Sequence<ModuleDescriptor> ?: emptySequence()
+        findDependingContentModuleEntries(psiManager.findFile(dependingFile) as? XmlFile, moduleName)
+      }
+      .toList()
+    if (indexedMatches.isNotEmpty()) {
+      return indexedMatches.asSequence()
+    }
+
+    val project = contentModuleDescriptor.project
+    return FilenameIndex.getAllFilesByExt(project, "xml", GlobalSearchScopesCore.projectProductionScope(project))
+      .asSequence()
+      .mapNotNull { xmlFile -> psiManager.findFile(xmlFile) as? XmlFile }
+      .flatMap { pluginXml -> findDependingContentModuleEntries(pluginXml, moduleName) }
+  }
+
+  private fun findDependingContentModuleEntries(
+    pluginXml: XmlFile?,
+    moduleName: String,
+  ): Sequence<ModuleDescriptor> {
+    val plugin = pluginXml?.let(DescriptorUtil::getIdeaPlugin) ?: return emptySequence()
+    return plugin.content.asSequence()
+      .flatMap { contentDescriptor -> contentDescriptor.moduleEntry.asSequence() }
+      .filter { moduleDescriptor -> moduleDescriptor.name.stringValue == moduleName }
   }
 
   private fun shouldSuppressForSingleModuleExternalPlugin(module: Module): Boolean {
@@ -270,9 +258,8 @@ internal object SplitModeInspectionUtil {
     return contentModuleDescriptor?.virtualFile != currentXmlFile.virtualFile
   }
 
-  private val NON_NATIVE_PLUGIN_XML_KINDS = setOf(
+  private val IMPLICIT_PLUGIN_XML_KINDS = setOf(
     SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
     SplitModeApiRestrictionsService.ModuleKind.BACKEND,
-    SplitModeApiRestrictionsService.ModuleKind.MIXED,
   )
 }

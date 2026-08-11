@@ -160,7 +160,7 @@ public final class WithByFieldProcessor extends AbstractFieldProcessor {
   }
 
   public @Nullable PsiMethod createWithByMethod(@NotNull PsiField psiField,
-                                                @NotNull String methodModifier,
+                                                @PsiModifier.ModifierConstant @NotNull String methodModifier,
                                                 @NotNull AccessorsInfo accessorsInfo,
                                                 @Nullable String nameHint) {
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.OldDirectoryCleaner
@@ -18,6 +18,10 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
+private const val OLD_DIRECTORIES_SCAN_SCHEDULED = "ide.updates.old.dirs.scan.scheduled"
+private const val OLD_DIRECTORIES_SCAN_DELAY_DAYS = 7
+private const val OLD_DIRECTORIES_SHELF_LIFE_DAYS = 180
+
 internal class UpdateCheckerProjectActivity : ProjectActivity {
   private val isStarted = AtomicBoolean(false)
 
@@ -36,44 +40,38 @@ internal class UpdateCheckerProjectActivity : ProjectActivity {
     val current = ApplicationInfo.getInstance().build
     UpdateCheckerService.checkIfPreviousUpdateFailed(current)
     UpdateCheckerService.showSnapUpdateNotification(project, current)
-
     UpdateCheckerService.pruneUpdateSettings()
     UpdateCheckerService.showUpdatedPluginsNotification(project)
 
     withContext(Dispatchers.IO) {
       deleteOldApplicationDirectories()
-
       UpdateInstaller.cleanupPatch()
     }
   }
-}
 
-private const val OLD_DIRECTORIES_SCAN_SCHEDULED = "ide.updates.old.dirs.scan.scheduled"
-private const val OLD_DIRECTORIES_SCAN_DELAY_DAYS = 7
-private const val OLD_DIRECTORIES_SHELF_LIFE_DAYS = 180
+  private suspend fun deleteOldApplicationDirectories() {
+    val propertyService = serviceAsync<PropertiesComponent>()
+    if (InitialConfigImportState.isConfigImported()) {
+      val scheduledAt = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(OLD_DIRECTORIES_SCAN_DELAY_DAYS.toLong())
+      UpdateCheckerService.LOG.info("scheduling old directories scan after " + DateFormatUtil.formatDateTime(scheduledAt))
+      propertyService.setValue(OLD_DIRECTORIES_SCAN_SCHEDULED, scheduledAt.toString())
+      OldDirectoryCleaner.Stats.scheduled()
+    }
+    else {
+      val scheduledAt = propertyService.getLong(OLD_DIRECTORIES_SCAN_SCHEDULED, 0L)
+      var now: Long = 0
+      if (scheduledAt != 0L && (System.currentTimeMillis().also { now = it }) >= scheduledAt) {
+        OldDirectoryCleaner.Stats.started(TimeUnit.MILLISECONDS.toDays(now - scheduledAt).toInt() + OLD_DIRECTORIES_SCAN_DELAY_DAYS)
+        UpdateCheckerService.LOG.info("starting old directories scan")
+        val expireAfter = now - TimeUnit.DAYS.toMillis(OLD_DIRECTORIES_SHELF_LIFE_DAYS.toLong())
 
-suspend fun deleteOldApplicationDirectories() {
-  val propertyService = serviceAsync<PropertiesComponent>()
-  if (InitialConfigImportState.isConfigImported()) {
-    val scheduledAt = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(OLD_DIRECTORIES_SCAN_DELAY_DAYS.toLong())
-    UpdateCheckerService.LOG.info("scheduling old directories scan after " + DateFormatUtil.formatDateTime(scheduledAt))
-    propertyService.setValue(OLD_DIRECTORIES_SCAN_SCHEDULED, scheduledAt.toString())
-    OldDirectoryCleaner.Stats.scheduled()
-  }
-  else {
-    val scheduledAt = propertyService.getLong(OLD_DIRECTORIES_SCAN_SCHEDULED, 0L)
-    var now: Long = 0
-    if (scheduledAt != 0L && (System.currentTimeMillis().also { now = it }) >= scheduledAt) {
-      OldDirectoryCleaner.Stats.started(TimeUnit.MILLISECONDS.toDays(now - scheduledAt).toInt() + OLD_DIRECTORIES_SCAN_DELAY_DAYS)
-      UpdateCheckerService.LOG.info("starting old directories scan")
-      val expireAfter = now - TimeUnit.DAYS.toMillis(OLD_DIRECTORIES_SHELF_LIFE_DAYS.toLong())
-
-      coroutineToIndicator {
-        @Suppress("UsagesOfObsoleteApi")
-        OldDirectoryCleaner(expireAfter).seekAndDestroy(null, ProgressManager.getGlobalProgressIndicator())
+        coroutineToIndicator {
+          @Suppress("UsagesOfObsoleteApi")
+          OldDirectoryCleaner(expireAfter).seekAndDestroy(null, ProgressManager.getGlobalProgressIndicator())
+        }
+        propertyService.unsetValue(OLD_DIRECTORIES_SCAN_SCHEDULED)
+        UpdateCheckerService.LOG.info("old directories scan complete")
       }
-      propertyService.unsetValue(OLD_DIRECTORIES_SCAN_SCHEDULED)
-      UpdateCheckerService.LOG.info("old directories scan complete")
     }
   }
 }

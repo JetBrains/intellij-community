@@ -96,6 +96,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 
 private const val MAX_RECENT_COUNT = 100
 private val projectKey = Key.create<Project>("project-widget-project")
+private val showChevronKey = Key.create<Boolean>("project-widget-show-chevron")
 
 internal class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelectionPredicateSupplier {
   override fun getPredicate(): Predicate<AnAction> {
@@ -116,8 +117,12 @@ internal class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelecti
 @ApiStatus.Internal
 open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   override fun createPopup(event: AnActionEvent): JBPopup? {
-    val step = createStep(createActionGroup(event), event.dataContext)
-    return event.project?.let { createPopup(it = it, step = step) }
+    val project = event.project
+    if (project == null) return null
+    val group = createActionGroup(event)
+    if (group.childrenCount == 0) return null
+    val step = createStep(group, event.dataContext)
+    return createPopup(project = project, step = step)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -151,6 +156,7 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     val widget = component as? ToolbarComboButton ?: return
     widget.isOpaque = false
     widget.positionListeners?.setProjectFromPresentation(presentation)
+    widget.showChevron = presentation.getClientProperty(showChevronKey) ?: true
   }
 
   override fun update(e: AnActionEvent) {
@@ -159,6 +165,9 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     e.presentation.setText(projectName, false)
     e.presentation.description = FileUtil.getLocationRelativeToUserHome(project?.guessProjectDir()?.path) ?: projectName
     e.presentation.putClientProperty(projectKey, project)
+
+    e.presentation.putClientProperty(showChevronKey, !hideProjectSwitching(e) || UpdatesInfoProviderManager.getInstance().getUpdateActions().isNotEmpty())
+
     val icons = buildList {
       UpdatesInfoProviderManager.getInstance().getUpdateIcons().let { updateIcons ->
         for (icon in updateIcons) {
@@ -182,7 +191,7 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     }
   }
 
-  private fun createPopup(it: Project, step: ListPopupStep<PopupFactoryImpl.ActionItem>): ListPopup {
+  private fun createPopup(project: Project, step: ListPopupStep<PopupFactoryImpl.ActionItem>): ListPopup {
     val widgetRenderer = ProjectWidgetRenderer()
     val renderer = Function<ListCellRenderer<Any>, ListCellRenderer<out Any>> { base ->
       ListCellRenderer<PopupFactoryImpl.ActionItem> { list, value, index, isSelected, cellHasFocus ->
@@ -202,7 +211,7 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
       }
     }
 
-    val result = JBPopupFactory.getInstance().createListPopup(it, step, renderer)
+    val result = JBPopupFactory.getInstance().createListPopup(project, step, renderer)
 
     if (result is ListPopupImpl) {
       ClientProperty.put(result.list, AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
@@ -224,7 +233,10 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     popupStep.updateStepItems(listPopup.list)
   }
 
-  private fun createActionGroup(initEvent: AnActionEvent): ActionGroup {
+  private fun hideProjectSwitching(e: AnActionEvent): Boolean =
+    ProjectWidgetActionsFilter.EP_NAME.extensionList.any { it.shouldHideProjectSwitchingActions(e) }
+
+  private fun createActionGroup(initEvent: AnActionEvent): DefaultActionGroup {
     val result = DefaultActionGroup()
 
     UpdatesInfoProviderManager.getInstance()
@@ -235,10 +247,7 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
         result.addSeparator()
       }
 
-    val hide = ProjectWidgetActionsFilter.EP_NAME.extensionList.any {
-      it.shouldHideProjectSwitchingActions(initEvent)
-    }
-    if (!hide) {
+    if (!hideProjectSwitching(initEvent)) {
       val group = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
       result.addAll(group.getChildren(initEvent).asList())
 

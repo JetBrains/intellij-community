@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.serviceView
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -90,10 +90,6 @@ fun setServiceViewImplementationForNextIdeRun(shouldEnableSplitImplementation: B
   getValueIfExists("services.view.split.enabled")?.setValue(shouldEnableSplitImplementation)
   getValueIfExists("services.view.split.run.luxing.enabled")?.setValue(shouldEnableSplitImplementation)
 
-  if (shouldEnableSplitImplementation) {
-    // do not disable debugger since it is a separate functionality, only enable it if services are enabled as well
-    getValueIfExists("xdebugger.toolwindow.split.remdev")?.setValue(true)
-  }
   getValueIfExists("docker.split.service.view.enabled")?.setValue(shouldEnableSplitImplementation)
   getValueIfExists("docker.registry.split.service.view.enabled")?.setValue(shouldEnableSplitImplementation)
 }
@@ -103,7 +99,6 @@ fun getServiceViewRegistryFlagsState(): Map<String, Boolean> {
   return mapOf(
     "services.view.split.enabled" to Registry.`is`("services.view.split.enabled", true),
     "services.view.split.run.luxing.enabled" to Registry.`is`("services.view.split.run.luxing.enabled", true),
-    "xdebugger.toolwindow.split.remdev" to Registry.`is`("xdebugger.toolwindow.split.remdev", true),
     "docker.split.service.view.enabled" to Registry.`is`("docker.split.service.view.enabled", true),
     "docker.registry.split.service.view.enabled" to Registry.`is`("docker.registry.split.service.view.enabled", true),
   )

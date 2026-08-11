@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -34,6 +35,8 @@ import javax.swing.Icon;
 
 public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue, PsiDeclaredTarget {
   public static final Icon YAML_KEY_ICON = PlatformIcons.PROPERTY_ICON;
+
+  private static final char LEFT_SQUARE_BRACKET = '[';
 
   public YAMLKeyValueImpl(final @NotNull ASTNode node) {
     super(node);
@@ -84,6 +87,10 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
       return ((YAMLScalar)keyElement).getTextValue();
     }
     if (keyElement instanceof YAMLCompoundValue) {
+      String compoundText = keyElement.getText();
+      if (StringUtil.startsWithChar(compoundText, LEFT_SQUARE_BRACKET)) {
+        return compoundText;
+      }
       return ((YAMLCompoundValue)keyElement).getTextValue();
     }
 
@@ -127,7 +134,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     }
 
     final YAMLElementGenerator generator = YAMLElementGenerator.getInstance(getProject());
-    if (isExplicit()) {
+    if (isExplicitKey()) {
       if (findChildByType(YAMLTokenTypes.COLON) == null) {
         add(generator.createColon());
         add(generator.createSpace());
@@ -206,11 +213,6 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 
-  private boolean isExplicit() {
-    final ASTNode child = getNode().getFirstChildNode();
-    return child != null && child.getElementType() == YAMLTokenTypes.QUESTION;
-  }
-
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof YamlPsiElementVisitor) {
@@ -225,5 +227,13 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   public @Nullable TextRange getNameIdentifierRange() {
     PsiElement key = getKey();
     return key == null ? null : key.getTextRangeInParent();
+  }
+
+  @Override
+  public boolean isExplicitKey() {
+    PsiElement firstChild = getFirstChild();
+    IElementType elementType = PsiUtilCore.getElementType(firstChild);
+
+    return YAMLTokenTypes.QUESTION.equals(elementType);
   }
 }

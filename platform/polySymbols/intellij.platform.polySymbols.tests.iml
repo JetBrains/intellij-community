@@ -16,7 +16,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
@@ -34,5 +34,6 @@
     <orderEntry type="module" module-name="intellij.platform.polySymbols" />
     <orderEntry type="module" module-name="intellij.platform.polySymbols.testFramework" />
     <orderEntry type="module" module-name="intellij.java.rt" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
   </component>
 </module>

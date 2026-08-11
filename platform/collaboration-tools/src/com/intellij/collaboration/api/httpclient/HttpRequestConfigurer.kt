@@ -4,5 +4,7 @@ package com.intellij.collaboration.api.httpclient
 import java.net.http.HttpRequest
 
 interface HttpRequestConfigurer {
-  fun configure(builder: HttpRequest.Builder): HttpRequest.Builder
+  @Deprecated("Use suspend version", ReplaceWith("configureSuspend"))
+  fun configure(builder: HttpRequest.Builder): HttpRequest.Builder = builder
+  suspend fun configureSuspend(builder: HttpRequest.Builder): HttpRequest.Builder = configure(builder)
 }

@@ -1,5 +1,5 @@
 // "Change type of 'y' to 'Int'" "true"
-// K2_ERROR: Operator call 'component2()' returns 'Int', but 'String' is expected.
+// K2_ERROR: COMPONENT_FUNCTION_RETURN_TYPE_MISMATCH
 class A {
     operator fun component1() = 42
     operator fun component2() = 42

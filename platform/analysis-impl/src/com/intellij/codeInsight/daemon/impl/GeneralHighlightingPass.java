@@ -41,7 +41,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,7 +55,7 @@ import java.util.function.Predicate;
 
 @ApiStatus.Internal
 public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware
-  permits NasueousGeneralHighlightingPass {
+  permits NauseousGeneralHighlightingPass {
   static final Logger LOG = Logger.getInstance(GeneralHighlightingPass.class);
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
   static final Predicate<? super PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> {
@@ -73,6 +72,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
   private volatile boolean myHasErrorElement;
   private volatile boolean myHasErrorSeverity;
   private final boolean myRunAnnotators;
+  private final boolean myBatchMode;
   private final HighlightInfoUpdater myHighlightInfoUpdater;
   private final HighlightVisitorRunner myHighlightVisitorRunner;
 
@@ -86,11 +86,13 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
                           boolean runAnnotators,
                           boolean runVisitors,
                           boolean highlightErrorElements,
+                          boolean batchMode,
                           @NotNull HighlightInfoUpdater highlightInfoUpdater) {
     super(psiFile.getProject(), document, AnalysisBundle.message("pass.syntax"), psiFile, editor, TextRange.create(startOffset, endOffset), true, HighlightInfoProcessor.getEmpty());
     myUpdateAll = updateAll;
     myPriorityRange = priorityRange;
     myRunAnnotators = runAnnotators;
+    myBatchMode = batchMode;
     myHighlightInfoUpdater = highlightInfoUpdater;
 
     PsiUtilCore.ensureValid(psiFile);
@@ -109,10 +111,6 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
 
   private @NotNull PsiFile getFile() {
     return myFile;
-  }
-
-  public static void assertHighlightingPassNotRunning() {
-    HighlightVisitorRunner.assertHighlightingPassNotRunning();
   }
 
   @Override
@@ -248,7 +246,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
                                                                    myUpdateAll, () -> createInfoHolder(getFile()), resultSink);
     AnnotationSession session = AnnotationSessionImpl.create(getFile());
     setupAnnotationSession(session, myPriorityRange, restrictRange, getHighlightingSession().getMinimumSeverity());
-    AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(session, false) : null;
+    AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(session, myBatchMode) : null;
     if (annotatorRunner == null) {
       runnable.run();
       return true;
@@ -260,7 +258,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
   public static final int POST_UPDATE_ALL = 5;
   private static final AtomicInteger RESTART_REQUESTS = new AtomicInteger();
 
-  @TestOnly
+  @ApiStatus.Internal
   public static boolean isRestartPending() {
     return RESTART_REQUESTS.get() > 0;
   }
@@ -327,7 +325,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
   @RequiresBackgroundThread
   private void reportErrorsToWolf(boolean hasErrors) {
     ThreadingAssertions.assertBackgroundThread();
-    if (!getFile().getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
+    if (!getFile().getViewProvider().correspondsToRealFile()) return; // e.g. errors in evaluate expression
     Project project = getFile().getProject();
     if (!PsiManager.getInstance(project).isInProject(getFile())) return; // do not report problems in libraries
     VirtualFile file = getFile().getVirtualFile();

@@ -176,7 +176,7 @@ object DocRenderItemUpdaterListeners {
 
     companion object {
       private fun findItem(editor: Editor, y: Int, neighborOffset: Int): DocRenderItem? {
-        val document = editor.document
+        val document = editor.elfDocument
         val lineNumber = document.getLineNumber(neighborOffset)
         val searchStartOffset = document.getLineStartOffset(0.coerceAtLeast(lineNumber - 1))
         val searchEndOffset = document.getLineEndOffset(lineNumber)

@@ -11,9 +11,9 @@ interface Foo {
 }
 
 object FakeFoo : Foo {
-    override <!HIGHLIGHTING("severity='ERROR'; descr='[CONFLICTING_OVERLOADS] Conflicting overloads: fun composableFunction(param: Boolean): Boolean fun composableFunction(param: Boolean): Boolean'")!>fun composableFunction(param: Boolean)<!> = true
-    @Composable override <!HIGHLIGHTING("severity='ERROR'; descr='[CONFLICTING_OVERLOADS] Conflicting overloads: fun nonComposableFunction(param: Boolean): Boolean fun nonComposableFunction(param: Boolean): Boolean'")!>fun nonComposableFunction(param: Boolean)<!> = true
-    override val nonComposableProperty: Boolean @Composable <!HIGHLIGHTING("severity='ERROR'; descr='[CONFLICTING_OVERLOADS] Conflicting overloads: get(): Boolean get(): Boolean'")!>get()<!> = true
+    override <!HIGHLIGHTING("severity='ERROR'; descr='[CONFLICTING_OVERLOADS]'")!>fun composableFunction(param: Boolean)<!> = true
+    @Composable override <!HIGHLIGHTING("severity='ERROR'; descr='[CONFLICTING_OVERLOADS]'")!>fun nonComposableFunction(param: Boolean)<!> = true
+    override val nonComposableProperty: Boolean @Composable <!HIGHLIGHTING("severity='ERROR'; descr='[CONFLICTING_OVERLOADS]'")!>get()<!> = true
 }
 
 interface Bar {
@@ -25,8 +25,8 @@ interface Bar {
 }
 
 object FakeBar : Bar {
-    override <!HIGHLIGHTING("severity='ERROR'; descr='[CONFLICTING_OVERLOADS] Conflicting overloads: fun composableFunction(param: Boolean): Boolean fun composableFunction(param: Boolean): Boolean'")!>fun composableFunction(param: Boolean)<!> = true
-    override <!HIGHLIGHTING("severity='ERROR'; descr='[CONFLICTING_OVERLOADS] Conflicting overloads: get(): Boolean get(): Boolean'")!>val composableProperty: Boolean<!> = true
-    @Composable override <!HIGHLIGHTING("severity='ERROR'; descr='[CONFLICTING_OVERLOADS] Conflicting overloads: fun nonComposableFunction(param: Boolean): Boolean fun nonComposableFunction(param: Boolean): Boolean'")!>fun nonComposableFunction(param: Boolean)<!> = true
-    override val nonComposableProperty: Boolean @Composable <!HIGHLIGHTING("severity='ERROR'; descr='[CONFLICTING_OVERLOADS] Conflicting overloads: get(): Boolean get(): Boolean'")!>get()<!> = true
+    override <!HIGHLIGHTING("severity='ERROR'; descr='[CONFLICTING_OVERLOADS]'")!>fun composableFunction(param: Boolean)<!> = true
+    override <!HIGHLIGHTING("severity='ERROR'; descr='[CONFLICTING_OVERLOADS]'")!>val composableProperty: Boolean<!> = true
+    @Composable override <!HIGHLIGHTING("severity='ERROR'; descr='[CONFLICTING_OVERLOADS]'")!>fun nonComposableFunction(param: Boolean)<!> = true
+    override val nonComposableProperty: Boolean @Composable <!HIGHLIGHTING("severity='ERROR'; descr='[CONFLICTING_OVERLOADS]'")!>get()<!> = true
 }

@@ -19,7 +19,7 @@ import com.intellij.python.junit5Tests.framework.metaInfo.TestMethodInfoData
 import com.intellij.python.test.env.junit5.pyVenvFixture
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.TestDataPath
-import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.pathInProjectFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
@@ -53,7 +53,7 @@ import kotlin.io.path.readText
 internal class PyRequirementsTxtGenerationTest {
   private val tempPathFixture = tempPathFixture()
   private val projectFixture = projectFixture()
-  private val moduleFixture = projectFixture.moduleFixture(tempPathFixture)
+  private val moduleFixture = projectFixture.pyModuleFixture(tempPathFixture)
   private val sourceRoot = moduleFixture.sourceRootFixture(
     pathFixture = projectFixture.pathInProjectFixture(Path("")),
   )

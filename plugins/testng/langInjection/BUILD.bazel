@@ -1,0 +1,43 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.testng.langInjection` start
+jvm_library(
+    name = "langInjection",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.testng.langInjection",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/IntelliLang:langInjection"],
+)
+
+jvm_library(
+    name = "langInjection_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.testng.langInjection",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":langInjection",
+        "//plugins/IntelliLang:langInjection_test_lib",
+    ],
+)
+### auto-generated section `build intellij.testng.langInjection` end
+
+### auto-generated section `iml intellij.testng.langInjection` start
+exports_files(
+    [
+        "intellij.testng.langInjection.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.testng.langInjection` end

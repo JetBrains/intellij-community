@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.java.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="PROVIDED" />
   </component>
 </module>

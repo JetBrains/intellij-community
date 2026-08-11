@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetPresentabl
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem.Companion.openProjectAndLogRecent
 import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.eel.EelUnavailableException
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.BitUtil
@@ -100,17 +101,17 @@ open class ReopenProjectAction @JvmOverloads constructor(
     IdeEventQueue.getInstance().popupManager.closeAllPopups()
 
     val project = e.project
+    val file = Path.of(projectPath).normalize()
 
     try {
       runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.title.project.initialization")) {
-        EelInitialization.runEelInitialization(projectPath)
+        EelInitialization.runEelInitialization(file.getEelDescriptor())
       }
     } catch (e : EelUnavailableException) {
       showReopenDialog(e.message, project)
       return
     }
 
-    val file = Path.of(projectPath).normalize()
     if (Files.notExists(file)) {
       showReopenDialog(IdeBundle.message("message.the.path.0.does.not.exist.maybe.on.remote", FileUtil.toSystemDependentName(projectPath)), project)
       return

@@ -310,6 +310,12 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
         beforeInside(KtNodeTypes.PROPERTY, KtNodeTypes.LABELED_EXPRESSION).spacesNoLineBreak(1)
         before(KtNodeTypes.PROPERTY).lineBreakInCode()
 
+        val spacesAfterContextParameterList = if (kotlinCustomSettings.SPACE_AFTER_CONTEXT_PARAMETER_LIST_IN_FUNCTION_TYPE) 1 else 0
+        betweenInside(KtTokens.CONTEXT_KEYWORD, KtTokens.LPAR, KtNodeTypes.CONTEXT_PARAMETER_LIST)
+            .spacesNoLineBreak(0)
+        betweenInside(TokenSet.create(KtNodeTypes.CONTEXT_PARAMETER_LIST), TokenSet.create(KtNodeTypes.VALUE_PARAMETER_LIST, KtNodeTypes.FUNCTION_TYPE_RECEIVER), KtNodeTypes.FUNCTION_TYPE)
+            .spacing(spacesAfterContextParameterList, spacesAfterContextParameterList, 0, true, 0)
+
         after(KtTokens.DOC_COMMENT).lineBreakInCode()
 
         // =============== Spacing ================
@@ -431,6 +437,8 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
 
         afterInside(KtTokens.LPAR, KtNodeTypes.VALUE_PARAMETER_LIST).spaces(0, kotlinCommonSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE)
         beforeInside(KtTokens.RPAR, KtNodeTypes.VALUE_PARAMETER_LIST).spaces(0, kotlinCommonSettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE)
+        afterInside(KtTokens.LPAR, KtNodeTypes.CONTEXT_PARAMETER_LIST).spaces(0, kotlinCommonSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE)
+        beforeInside(KtTokens.RPAR, KtNodeTypes.CONTEXT_PARAMETER_LIST).spaces(0, kotlinCommonSettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE)
         afterInside(KtTokens.LT, KtNodeTypes.TYPE_PARAMETER_LIST).spaces(0)
         beforeInside(KtTokens.GT, KtNodeTypes.TYPE_PARAMETER_LIST).spaces(0)
         afterInside(KtTokens.LT, KtNodeTypes.TYPE_ARGUMENT_LIST).spaces(0)

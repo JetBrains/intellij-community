@@ -5,8 +5,12 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryTestUtil;
+import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
+import java.io.File;
+import java.util.Arrays;
 
 /// Variant of [GenerateJavadocTest] to handle Markdown comment generation
 /// Since the workflow for Markdown comments is different ([com.intellij.codeInsight.completion.CompletionContributor]-based),
@@ -28,9 +32,11 @@ public class GenerateJavadocMarkdownTest extends LightFixtureCompletionTestCase 
   public void testMethodFull() { doTestWithTemplates(); }
   public void testMethodAbstract() { doTestWithTemplates(); }
 
+  /* Tests with this name are expecting to explicitly have no generation available */
   public void testGenerationDisabled01() { doTestWithTemplates(); }
   public void testGenerationDisabled02() { doTestWithTemplates(); }
   public void testGenerationDisabled03() { doTestWithTemplates(); }
+
   public void testDanglingDoc() { doTestWithTemplates(); }
   public void testNoClassCastException() { doTestWithTemplates(); }
 
@@ -53,14 +59,35 @@ public class GenerateJavadocMarkdownTest extends LightFixtureCompletionTestCase 
 
   private void doTest() {
     String name = getTestName(true);
-    configureByFile(name + ".before.java");
+    String beforeFile = name + ".before.java";
+    String afterFile = name + ".after.java";
+  
+    configureByFile(beforeFile);
     performAction();
-    checkResultByFile(name + ".after.java");
+  
+    // For tests that do not have changes, fallback on the before file
+    File after = new File(getTestDataPath(), afterFile);
+    checkResultByFile(after.exists() ? afterFile : beforeFile);
   }
   
   private void performAction() {
     myFixture.completeBasic();
-    if (myItems.length <= 1)
+    if (myItems.length == 1) {
       myFixture.type("\t");
+      return;
+    }
+    
+    // Either no action, or there are way too many actions available
+    String targetItem = RefactorJBundle.message("insert.javadoc.template");
+    boolean actionFound = ContainerUtil.exists(myItems, element-> {
+      return element.getLookupString().equals(targetItem);
+    });
+    boolean noActionExpected = getTestName(false).contains("GenerationDisabled");
+    if (actionFound) {
+      if (noActionExpected) {
+        fail("The action was found but was expected to not be present");
+      }
+      fail("The action should not be available when there are multiple choices: " + Arrays.toString(myItems));
+    }
   }
 }

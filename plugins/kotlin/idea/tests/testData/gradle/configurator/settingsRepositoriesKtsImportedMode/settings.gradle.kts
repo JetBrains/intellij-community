@@ -1,0 +1,7 @@
+import org.gradle.api.initialization.resolve.RepositoriesMode.*
+
+rootProject.name = "project"
+
+dependencyResolutionManagement {
+    repositoriesMode.set(PREFER_SETTINGS)
+}

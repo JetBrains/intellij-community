@@ -15,7 +15,7 @@ import kotlinx.coroutines.runBlocking
  */
 @RequiresEdt
 @RequiresBlockingContext
-fun <T> pyModalBlocking(modalTaskOwner: ModalTaskOwner = ModalTaskOwner.guess(), code: suspend () -> T): T =
+internal fun <T> pyModalBlocking(modalTaskOwner: ModalTaskOwner = ModalTaskOwner.guess(), code: suspend () -> T): T =
   runWithModalProgressBlocking(modalTaskOwner, PySdkBundle.message("python.sdk.run.wait"), TaskCancellation.nonCancellable()) {
     code.invoke()
   }

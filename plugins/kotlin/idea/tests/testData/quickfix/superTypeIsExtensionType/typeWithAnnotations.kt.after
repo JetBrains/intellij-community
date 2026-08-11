@@ -1,5 +1,5 @@
 // "Convert supertype to '(String, T) -> Unit'" "true"
-// K2_ERROR: Extension or contextual function type is not allowed as a supertype.
+// K2_ERROR: SUPERTYPE_IS_EXTENSION_OR_CONTEXT_FUNCTION_TYPE
 @Target(AnnotationTarget.TYPE)
 annotation class TestA
 @Target(AnnotationTarget.TYPE)

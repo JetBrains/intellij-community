@@ -3,29 +3,46 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenFolderResolverTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenFolderResolverTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   
   private lateinit var myTestSyncViewManager: SyncViewManager
   private val myEvents: MutableList<BuildEvent> = ArrayList()
 
-  public override fun setUp() {
-    super.setUp()
-    myTestSyncViewManager = object : SyncViewManager(project) {
+  @BeforeEach
+  fun setUp() {
+    myTestSyncViewManager = object : SyncViewManager(maven.project) {
       override fun onEvent(buildId: Any, event: BuildEvent) {
         myEvents.add(event)
       }
     }
-    project.replaceService(SyncViewManager::class.java, myTestSyncViewManager, testRootDisposable)
+    maven.project.replaceService(SyncViewManager::class.java, myTestSyncViewManager, maven.disposable)
   }
 
   @Test
   fun `test generate sources problems reported to console`() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
                   <version>1</version>
@@ -55,8 +72,8 @@ class MavenFolderResolverTest : MavenMultiVersionImportingTestCase() {
                     </plugins>
                   </build>
                   """.trimIndent())
-    importProjectAsync()
-    MavenFolderResolver(project).resolveFoldersAndImport()
+    maven.importProjectAsync()
+    MavenFolderResolver(maven.project).resolveFoldersAndImport()
     assertEvent { it.message.contains("Please set my-custom-property system property") }
   }
 

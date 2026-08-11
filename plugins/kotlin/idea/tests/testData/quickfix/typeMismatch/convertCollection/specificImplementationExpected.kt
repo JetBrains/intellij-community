@@ -1,6 +1,6 @@
 // "Replace 'listOf(1)' with 'mutableListOf(1)'" "false"
-// K2_ERROR: Return type mismatch: expected 'ArrayList<Int>', actual 'List<Int>'.
-// K2_AFTER_ERROR: Return type mismatch: expected 'ArrayList<Int>', actual 'List<Int>'.
+// K2_AFTER_ERROR: RETURN_TYPE_MISMATCH
+// K2_ERROR: RETURN_TYPE_MISMATCH
 import java.util.ArrayList
 
 fun foo(): ArrayList<Int> {

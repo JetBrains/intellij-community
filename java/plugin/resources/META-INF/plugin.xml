@@ -41,6 +41,7 @@
 
     <module name="intellij.jsp.spi" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.indexing.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.indexing.serializers" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.analysis.impl" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.structureView" required-if-available="intellij.platform.backend"/>
 
@@ -58,6 +59,7 @@
     <module name="intellij.java.ui" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.debugger.libraries.jb.jdi" loading="embedded"/>
     <module name="intellij.java.debugger.memory.agent" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.remoteServers.impl" loading="optional"/>
     <module name="intellij.java.uast.ide" required-if-available="intellij.platform.backend"/>
@@ -101,7 +103,9 @@
     <module name="intellij.java.jam.impl"/>
     <module name="intellij.java.jam"/>
     <module name="intellij.profiler.ultimate"/>
+    <module name="intellij.profiler.ultimate.vcs"/>
     <module name="intellij.debugger.jvm.advanced.java"/>
+    <module name="intellij.debugger.jvm.advanced.mcpServer" loading="optional"/>
     <module name="intellij.debugger.logpoints.shared"/>
     <module name="intellij.debugger.logpoints.backend"/>
     <module name="intellij.debugger.logpoints.frontend"/>
@@ -110,5 +114,9 @@
     <module name="intellij.debugger.logpoints.java"/>
     <module name="intellij.java.copyright"/>
     <module name="intellij.java.promo"/>
+  </content>
+  <content>
+    <module name="intellij.libraries.completion.ranking.java" loading="required"/>
+    <module name="intellij.libraries.test.discovery" loading="embedded"/>
   </content>
 </idea-plugin>

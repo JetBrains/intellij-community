@@ -1,0 +1,2 @@
+package ppp;
+public class Box<V, K> { public K key; }  // parameters reordered: first argument now binds V

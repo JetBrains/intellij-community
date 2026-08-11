@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 
 
 public interface LookupElementInteractivity {
@@ -9,6 +10,7 @@ public interface LookupElementInteractivity {
 
   boolean isInsertHandlerInteractive(LookupElement element);
 
+  @ApiStatus.Internal
   final class Simple implements LookupElementInteractivity {
     private final boolean myInteractive;
 

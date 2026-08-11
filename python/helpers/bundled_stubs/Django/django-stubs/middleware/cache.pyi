@@ -3,7 +3,7 @@ from typing import Any
 from django.core.cache import BaseCache
 from django.http.request import HttpRequest
 from django.http.response import HttpResponse, HttpResponseBase
-from django.utils.deprecation import MiddlewareMixin, _AsyncGetResponseCallable, _GetResponseCallable
+from django.utils.deprecation import MiddlewareMixin, _AnyGetResponseCallable
 
 class UpdateCacheMiddleware(MiddlewareMixin):
     cache_timeout: float
@@ -26,7 +26,7 @@ class CacheMiddleware(UpdateCacheMiddleware, FetchFromCacheMiddleware):
     cache_timeout: float
     def __init__(
         self,
-        get_response: _GetResponseCallable | _AsyncGetResponseCallable,
+        get_response: _AnyGetResponseCallable,
         cache_timeout: float | None = ...,
         page_timeout: float | None = ...,
         **kwargs: Any,

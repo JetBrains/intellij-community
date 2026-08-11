@@ -4,7 +4,7 @@ package com.intellij.platform.workspace.storage.tests
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.assertConsistency
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.testEntities.entities.DataClassX
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.OoChildEntity
@@ -35,7 +35,7 @@ class ReferencesInStorageTest {
 
   @BeforeEach
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManagerImpl()
+    virtualFileManager = ConcurrentVirtualFileUrlManager()
   }
 
   @Test

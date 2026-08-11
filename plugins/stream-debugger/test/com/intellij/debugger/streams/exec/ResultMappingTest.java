@@ -106,16 +106,4 @@ public class ResultMappingTest extends TraceExecutionTestCase {
   public void testPrimitiveMinMapping() {
     doTest(false);
   }
-
-  public void testAllMatchExtraCalls() {
-    doTest(false);
-  }
-
-  public void testAnyMatchExtraCalls() {
-    doTest(false);
-  }
-
-  public void testNoneMatchExtraCalls() {
-    doTest(false);
-  }
 }

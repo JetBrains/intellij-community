@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.psi.PsiReference
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddDependencyQuickFixHelper
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.createRenameUnresolvedReferenceFix
 import org.jetbrains.kotlin.psi.KtElement

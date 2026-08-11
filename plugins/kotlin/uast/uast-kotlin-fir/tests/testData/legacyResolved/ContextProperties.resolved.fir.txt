@@ -1,0 +1,16 @@
+UTypeReferenceExpression (name = C2) -> USimpleNameReferenceExpression (identifier = C2) -> Kotlin_Light_Class:ClassOrObject: C2
+UTypeReferenceExpression (name = C1) -> USimpleNameReferenceExpression (identifier = C1) -> Kotlin_Light_Class:ClassOrObject: C1
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = C1) -> Kotlin_Light_Class:ClassOrObject: C1
+UTypeReferenceExpression (name = C2) -> USimpleNameReferenceExpression (identifier = C2) -> Kotlin_Light_Class:ClassOrObject: C2
+UTypeReferenceExpression (name = C1) -> USimpleNameReferenceExpression (identifier = C1) -> Kotlin_Light_Class:ClassOrObject: C1
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = C1) -> Kotlin_Light_Class:ClassOrObject: C1
+UTypeReferenceExpression (name = C1) -> USimpleNameReferenceExpression (identifier = C1) -> Kotlin_Light_Class:ClassOrObject: C1
+UTypeReferenceExpression (name = C2) -> USimpleNameReferenceExpression (identifier = C2) -> Kotlin_Light_Class:ClassOrObject: C2
+UTypeReferenceExpression (name = C1) -> USimpleNameReferenceExpression (identifier = C1) -> Kotlin_Light_Class:ClassOrObject: C1
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = C1) -> Kotlin_Light_Class:ClassOrObject: C1
+UTypeReferenceExpression (name = C3) -> USimpleNameReferenceExpression (identifier = C3) -> Kotlin_Light_Class:ClassOrObject: C3
+UTypeReferenceExpression (name = C4) -> USimpleNameReferenceExpression (identifier = C4) -> Kotlin_Light_Class:ClassOrObject: C4
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = C4) -> Kotlin_Light_Class:ClassOrObject: C4
+UTypeReferenceExpression (name = C3) -> USimpleNameReferenceExpression (identifier = C3) -> Kotlin_Light_Class:ClassOrObject: C3
+UTypeReferenceExpression (name = C4) -> USimpleNameReferenceExpression (identifier = C4) -> Kotlin_Light_Class:ClassOrObject: C4
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = C4) -> Kotlin_Light_Class:ClassOrObject: C4

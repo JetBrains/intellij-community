@@ -423,7 +423,7 @@ def overload(func: _F) -> _F: ...
 def no_type_check(arg: _F) -> _F: ...
 
 if sys.version_info < (3, 15):
-    @deprecated("Deprecated since Python 3.13; removed in Python 3.15.")
+    @deprecated("Deprecated; removed in Python 3.15.")
     def no_type_check_decorator(decorator: Callable[_P, _T]) -> Callable[_P, _T]: ...
 
 if sys.version_info >= (3, 15):
@@ -814,7 +814,7 @@ class Mapping(Collection[_KT], Generic[_KT, _VT_co]):
     @overload
     def get(self, key: _KT, /) -> _VT_co | None: ...
     @overload
-    def get(self, key: _KT, default: _VT_co, /) -> _VT_co: ...  # type: ignore[misc] # pyright: ignore[reportGeneralTypeIssues] # Covariant type as parameter
+    def get(self, key: _KT, default: _VT_co, /) -> _VT_co: ...  # type: ignore[misc] # pyright: ignore[reportGeneralTypeIssues] # Covariant type as parameter  # pyrefly: ignore [invalid-variance]
     @overload
     def get(self, key: _KT, default: _T, /) -> _VT_co | _T: ...
 
@@ -1049,6 +1049,7 @@ if sys.version_info >= (3, 11):
 class NamedTuple(tuple[Any, ...]):
     _field_defaults: ClassVar[dict[str, Any]]
     _fields: ClassVar[tuple[str, ...]]
+    __match_args__: ClassVar[tuple[str, ...]] = ...
     # __orig_bases__ sometimes exists on <3.12, but not consistently
     # So we only add it to the stub on 3.12+.
     if sys.version_info >= (3, 12):
@@ -1060,12 +1061,15 @@ class NamedTuple(tuple[Any, ...]):
     @deprecated("Creating a typing.NamedTuple using keyword arguments is deprecated and support will be removed in Python 3.15")
     def __init__(self, typename: str, fields: None = None, /, **kwargs: Any) -> None: ...
 
+    @final
     @classmethod
-    def _make(cls, iterable: Iterable[Any]) -> typing_extensions.Self: ...
+    def _make(cls, iterable: Iterable[Any]) -> typing_extensions.Self: ...  # ty:ignore[invalid-type-form]
+    @final
     def _asdict(self) -> dict[str, Any]: ...
-    def _replace(self, **kwargs: Any) -> typing_extensions.Self: ...
+    @final
+    def _replace(self, **kwargs: Any) -> typing_extensions.Self: ...  # ty:ignore[invalid-type-form]
     if sys.version_info >= (3, 13):
-        def __replace__(self, **kwargs: Any) -> typing_extensions.Self: ...
+        def __replace__(self, **kwargs: Any) -> typing_extensions.Self: ...  # ty:ignore[invalid-type-form]
 
 # Internal mypy fallback type for all typed dicts (does not exist at runtime)
 # N.B. Keep this mostly in sync with typing_extensions._TypedDict/mypy_extensions._TypedDict
@@ -1082,6 +1086,10 @@ class _TypedDict(Mapping[str, object], metaclass=ABCMeta):
     if sys.version_info >= (3, 13):
         __readonly_keys__: ClassVar[frozenset[str]]
         __mutable_keys__: ClassVar[frozenset[str]]
+    if sys.version_info >= (3, 15):
+        # PEP 728
+        __closed__: ClassVar[bool | None]
+        __extra_items__: ClassVar[Any]  # AnnotationForm
 
     def copy(self) -> typing_extensions.Self: ...
     # Using Never so that only calls using mypy plugin hook that specialize the signature

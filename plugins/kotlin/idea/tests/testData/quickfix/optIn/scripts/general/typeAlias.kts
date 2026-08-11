@@ -5,7 +5,7 @@
 // ACTION: Opt in for 'AliasMarker' in containing file 'typeAlias.kts'
 // ACTION: Opt in for 'AliasMarker' in module 'light_idea_test_case'
 // ACTION: Opt in for 'AliasMarker' on 'AliasMarkerUsage'
-// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@AliasMarker' or '@OptIn(AliasMarker::class)'
+// K2_ERROR: OPT_IN_USAGE_ERROR
 
 @RequiresOptIn
 annotation class AliasMarker

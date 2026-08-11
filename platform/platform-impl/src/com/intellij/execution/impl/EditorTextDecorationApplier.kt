@@ -62,8 +62,41 @@ sealed interface EditorTextDecorationApplier {
  * A parent disposable ensures that the applier unsubscribes from the editor listeners.
  */
 @ApiStatus.Experimental
-fun createEditorTextDecorationApplier(editor: EditorEx, parentDisposable: Disposable): EditorTextDecorationApplier =
-  EditorTextDecorationApplierImpl(editor, parentDisposable)
+fun createEditorTextDecorationApplier(
+  editor: EditorEx,
+  parentDisposable: Disposable,
+  builder: (EditorTextDecorationApplierBuilder.() -> Unit)? = null,
+): EditorTextDecorationApplier = EditorTextDecorationApplierBuilderImpl(editor, parentDisposable).run {
+  builder?.invoke(this)
+  build()
+}
+
+/**
+ * A builder to set optional attributes of an [EditorTextDecorationApplier] being created.
+ *
+ * An instance of a builder is passed to the function passed to [createEditorTextDecorationApplier] as the last parameter.
+ */
+@ApiStatus.Experimental
+sealed interface EditorTextDecorationApplierBuilder {
+  /**
+   * If `true`, a hyperlink click only consumes the mouse
+   * event when the modifier key (Cmd on macOS, Ctrl elsewhere) is pressed.
+   * Plain click on a visible link won't consume the mouse event and it will reach other listeners.
+   * Defaults to `false` - consume the mouse event if it was somehow handled (either open the link or show the hint).
+   */
+  var consumeOnlyOnCtrlClick: Boolean
+}
+
+private class EditorTextDecorationApplierBuilderImpl(
+  private val editor: EditorEx,
+  private val parentDisposable: Disposable,
+) : EditorTextDecorationApplierBuilder {
+  override var consumeOnlyOnCtrlClick: Boolean = false
+
+  fun build(): EditorTextDecorationApplier {
+    return EditorTextDecorationApplierImpl(editor, parentDisposable, consumeOnlyOnCtrlClick)
+  }
+}
 
 /** The base interface for editor decorations. */
 @ApiStatus.Experimental
@@ -315,7 +348,11 @@ private data class InlayDecorationImpl(
   val inlayProvider: InlayProvider,
 ) : InlayDecoration
 
-private class EditorTextDecorationApplierImpl(private val editor: EditorEx, parentDisposable: Disposable) : EditorTextDecorationApplier {
+private class EditorTextDecorationApplierImpl(
+  private val editor: EditorEx,
+  parentDisposable: Disposable,
+  private val consumeOnlyOnCtrlClick: Boolean,
+) : EditorTextDecorationApplier {
   private val highlightersById = hashMapOf<EditorTextDecorationId, RangeHighlighterEx>()
   private val inlaysById = hashMapOf<EditorTextDecorationId, com.intellij.openapi.editor.Inlay<*>>()
   private val hyperlinkInteraction = EditorHyperlinkInteraction(editor, MyEffectSupplier(), parentDisposable)
@@ -424,16 +461,27 @@ private class EditorTextDecorationApplierImpl(private val editor: EditorEx, pare
     return result
   }
 
+  private fun consumeIfCtrlClickGuaranteesFollow(event: EditorMouseEvent) {
+    if (consumeOnlyOnCtrlClick && event.isCtrlPressed && hoveredHyperlink != null) {
+      event.consume()
+    }
+  }
+
   private inner class MyMouseListener : EditorMouseListener {
     private var mousePressedEvent: EditorMouseEvent? = null
 
     override fun mousePressed(event: EditorMouseEvent) {
       mousePressedEvent = event
+      consumeIfCtrlClickGuaranteesFollow(event)
     }
 
     override fun mouseReleased(event: EditorMouseEvent) {
       val mousePressedEvent = this.mousePressedEvent?.mouseEvent
       this.mousePressedEvent = null
+      // Covers the case where mouseReleased ends up too far from the press to be treated as a
+      // click below (e.g., a drag started on the link): followLink is never called then.
+      consumeIfCtrlClickGuaranteesFollow(event)
+
       val mouseReleasedEvent = event.mouseEvent
       val sensitivity = EditorImpl.dragSensitivity()
       if (
@@ -447,7 +495,11 @@ private class EditorTextDecorationApplierImpl(private val editor: EditorEx, pare
         val hyperlink = findDecoration(event)
         val action = hyperlink?.link?.action
         if (action != null) {
-          hyperlinkInteraction.followLink(hyperlink.highlighter, event) { 
+          hyperlinkInteraction.followLink(
+            hyperlink.highlighter,
+            event,
+            consumeOnlyOnCtrlClick,
+          ) {
             runCatching {
               SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
                 action(event)
@@ -477,6 +529,10 @@ private class EditorTextDecorationApplierImpl(private val editor: EditorEx, pare
         hyperlinkInteraction.linkHovered(highlightedLink.highlighter, e)
         hoveredHyperlink = highlightedLink.link
       }
+    }
+
+    override fun mouseDragged(e: EditorMouseEvent) {
+      consumeIfCtrlClickGuaranteesFollow(e)
     }
   }
 

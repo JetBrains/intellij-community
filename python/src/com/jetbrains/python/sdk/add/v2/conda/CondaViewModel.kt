@@ -2,8 +2,6 @@
 package com.jetbrains.python.sdk.add.v2.conda
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -19,6 +17,7 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonToolViewModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
+import com.jetbrains.python.sdk.conda.CONDA_TOOL
 import com.jetbrains.python.sdk.conda.findConda
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
@@ -29,8 +28,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
-
-private val LOG: Logger = fileLogger()
 
 class CondaViewModel<P : PathHolder>(
   val fileSystem: FileSystem<P>,
@@ -50,6 +47,7 @@ class CondaViewModel<P : PathHolder>(
     toolVersionPrefix = "conda",
     backProperty = condaExecutable,
     propertyGraph = propertyGraph,
+    toolCommandSpec = CONDA_TOOL.toCommandSpec(),
     defaultPathSupplier = {
       findConda(fileSystem)
     }

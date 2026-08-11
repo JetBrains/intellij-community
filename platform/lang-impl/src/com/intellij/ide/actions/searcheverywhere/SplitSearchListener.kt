@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 interface SplitSearchListener {
   fun searchStarted(pattern: String, tabId: String)
   fun searchFinished(count: Int)

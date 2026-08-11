@@ -1,19 +1,21 @@
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
-load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
 jps_test(
     name = "monorepo-tests_test",
-    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
+    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON],
     jvm_flags = [
-        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
     ],
     runtime_deps = [":monorepo-tests_test_lib"],
 )
 ### skip generation section `test intellij.platform.testFramework.monorepo.tests`
 
 ### auto-generated section `build intellij.platform.testFramework.monorepo` start
-
 jvm_library(
     name = "monorepo",
     srcs = glob(
@@ -38,6 +40,7 @@ jvm_library(
         "//platform/util",
         "//jps/model-serialization",
         "//platform/testFramework",
+        "//platform/bazel-runfiles",
     ],
 )
 
@@ -60,7 +63,8 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/coroutines/test",
         "//libraries/kotlinx/coroutines/test:test_test_lib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//jps/model-api:model_test_lib",
         "//tools/apiDump:apiDump_test_lib",
         "//platform/util/diff",
@@ -79,6 +83,7 @@ jvm_library(
         "//java/java-runtime:rt_test_lib",
         "//platform/runtime/repository",
         "//platform/runtime/repository:repository_test_lib",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.monorepo` end
@@ -93,7 +98,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.testFramework.monorepo` end
 
 ### auto-generated section `build intellij.platform.testFramework.monorepo.tests` start
-
 jvm_library(
     name = "monorepo-tests",
     srcs = glob(
@@ -134,7 +138,8 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/coroutines/test",
         "//libraries/kotlinx/coroutines/test:test_test_lib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//jps/model-api:model",
         "//jps/model-api:model_test_lib",
         "//tools/apiDump",

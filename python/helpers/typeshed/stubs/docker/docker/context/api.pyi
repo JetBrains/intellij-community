@@ -1,4 +1,5 @@
-from collections.abc import Sequence
+from _typeshed import Incomplete
+from collections.abc import Mapping, Sequence
 
 from docker.context.context import Context
 from docker.tls import TLSConfig
@@ -21,6 +22,10 @@ class ContextAPI:
     def contexts(cls) -> Sequence[Context]: ...
     @classmethod
     def get_current_context(cls) -> Context: ...
+    @classmethod
+    def kwargs_from_context(
+        cls, name: str | None = None, environment: Mapping[str, str | None] | None = None
+    ) -> dict[str, Incomplete]: ...  # TODO: Use TypedDict, use SupportsGet
     @classmethod
     def set_current_context(cls, name: str = "default") -> None: ...
     @classmethod

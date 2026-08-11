@@ -45,6 +45,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.ScrollBarPainter;
 import com.intellij.util.text.StringTokenizer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -336,8 +337,16 @@ public final class ConsoleViewUtil {
   public static @NotNull InputFilter computeInputFilter(@NotNull ConsoleView consoleView,
                                                         @NotNull Project project,
                                                         @NotNull GlobalSearchScope searchScope) {
+    return computeInputFilter(consoleView, project, searchScope, Collections.emptyList());
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull InputFilter computeInputFilter(@NotNull ConsoleView consoleView,
+                                                        @NotNull Project project,
+                                                        @NotNull GlobalSearchScope searchScope,
+                                                        @NotNull List<? extends InputFilter> customFilters) {
     List<ConsoleInputFilterProvider> inputFilters = ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS.getExtensionList();
-    if (inputFilters.isEmpty()) {
+    if (inputFilters.isEmpty() && customFilters.isEmpty()) {
       return (text, contentType) -> null;
     }
     List<InputFilter> allFilters = new ArrayList<>();
@@ -349,6 +358,7 @@ public final class ConsoleViewUtil {
         allFilters.addAll(Arrays.asList(eachProvider.getDefaultFilters(project)));
       }
     }
+    allFilters.addAll(customFilters);
     return new CompositeInputFilter(project, allFilters);
   }
 }

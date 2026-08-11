@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java.inliner;
 
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
@@ -27,8 +27,10 @@ public final class AssertInstanceOfInliner implements CallInliner {
     PsiExpression wantedClass = expressions[0];
     PsiExpression objectToTest = expressions[1];
     builder.pushExpression(wantedClass)
+      .pushForWrite(builder.createTempVariable(objectToTest.getType()))
       .pushExpression(objectToTest)
       .boxUnbox(objectToTest, PsiType.getJavaLangObject(call.getManager(), call.getResolveScope()))
+      .assign()
       .splice(2, 0, 0, 1);
     if (expressions.length == 3) {
       builder.pushExpression(expressions[2]).pop();

@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 
 private const val NEW_DIR: String = "NewDir"
 
-private class KotlinActionsManager: ActionConfigurationCustomizer, ActionConfigurationCustomizer.LightCustomizeStrategy {
+internal class KotlinActionsManager: ActionConfigurationCustomizer, ActionConfigurationCustomizer.LightCustomizeStrategy {
     override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
         actionRegistrar.replaceAction(NEW_DIR, CreateKotlinAwareDirectoryOrPackageAction())
     }

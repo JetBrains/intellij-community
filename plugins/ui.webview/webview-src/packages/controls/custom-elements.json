@@ -1,0 +1,141 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "WebView controls aligned with Int UI Kit: Islands and IntelliJ Platform UI Guidelines.",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/action-button/action-button.ts",
+      "declarations": [{ "kind": "class", "name": "JbActionButton", "tagName": "jb-action-button" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/button/button.ts",
+      "declarations": [{ "kind": "class", "name": "JbButton", "tagName": "jb-button" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/checkbox/checkbox.ts",
+      "declarations": [{ "kind": "class", "name": "JbCheckbox", "tagName": "jb-checkbox" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/combobox/combobox.ts",
+      "declarations": [{ "kind": "class", "name": "JbCombobox", "tagName": "jb-combobox" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/context-help/context-help.ts",
+      "declarations": [{ "kind": "class", "name": "JbContextHelp", "tagName": "jb-context-help" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/disclosure/disclosure.ts",
+      "declarations": [{ "kind": "class", "name": "JbDisclosure", "tagName": "jb-disclosure" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/dropdown-link/dropdown-link.ts",
+      "declarations": [{ "kind": "class", "name": "JbDropdownLink", "tagName": "jb-dropdown-link" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/expandable-text-field/expandable-text-field.ts",
+      "declarations": [{ "kind": "class", "name": "JbExpandableTextField", "tagName": "jb-expandable-text-field" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/field/field.ts",
+      "declarations": [{ "kind": "class", "name": "JbField", "tagName": "jb-field" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/field-group/field-group.ts",
+      "declarations": [{ "kind": "class", "name": "JbFieldGroup", "tagName": "jb-field-group" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/help-text/help-text.ts",
+      "declarations": [{ "kind": "class", "name": "JbHelpText", "tagName": "jb-help-text" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/icon/icon.ts",
+      "declarations": [{ "kind": "class", "name": "JbIcon", "tagName": "jb-icon" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/label/label.ts",
+      "declarations": [{ "kind": "class", "name": "JbLabel", "tagName": "jb-label" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/menu-button/menu-button.ts",
+      "declarations": [{ "kind": "class", "name": "JbMenuButton", "tagName": "jb-menu-button" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/number-field/number-field.ts",
+      "declarations": [{ "kind": "class", "name": "JbNumberField", "tagName": "jb-number-field" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/password-field/password-field.ts",
+      "declarations": [{ "kind": "class", "name": "JbPasswordField", "tagName": "jb-password-field" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/radio/radio.ts",
+      "declarations": [{ "kind": "class", "name": "JbRadio", "tagName": "jb-radio" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/radio-group/radio-group.ts",
+      "declarations": [{ "kind": "class", "name": "JbRadioGroup", "tagName": "jb-radio-group" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/segmented-control/segmented-control.ts",
+      "declarations": [{ "kind": "class", "name": "JbSegmentedControl", "tagName": "jb-segmented-control" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/select/select.ts",
+      "declarations": [{ "kind": "class", "name": "JbSelect", "tagName": "jb-select" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/separator/separator.ts",
+      "declarations": [{ "kind": "class", "name": "JbSeparator", "tagName": "jb-separator" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/slider/slider.ts",
+      "declarations": [{ "kind": "class", "name": "JbSlider", "tagName": "jb-slider" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/spinner/spinner.ts",
+      "declarations": [{ "kind": "class", "name": "JbSpinner", "tagName": "jb-spinner" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/tabs/tabs.ts",
+      "declarations": [{ "kind": "class", "name": "JbTabs", "tagName": "jb-tabs" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/text/text.ts",
+      "declarations": [{ "kind": "class", "name": "JbText", "tagName": "jb-text" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/text-area/text-area.ts",
+      "declarations": [{ "kind": "class", "name": "JbTextArea", "tagName": "jb-text-area" }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/elements/text-field/text-field.ts",
+      "declarations": [{ "kind": "class", "name": "JbTextField", "tagName": "jb-text-field" }]
+    }
+  ]
+}

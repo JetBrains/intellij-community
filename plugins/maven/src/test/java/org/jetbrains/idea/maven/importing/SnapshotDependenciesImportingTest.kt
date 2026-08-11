@@ -1,28 +1,53 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertModuleLibDep
+import com.intellij.maven.testFramework.fixtures.assertModuleLibDeps
+import com.intellij.maven.testFramework.fixtures.assertModuleModuleDeps
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.downloadArtifacts
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.removeFromLocalRepository
+import com.intellij.maven.testFramework.fixtures.repositoryPathCanonical
+import com.intellij.maven.testFramework.fixtures.updateSettingsXmlFully
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.executeGoal
+import org.jetbrains.idea.maven.fixtures.hasMavenInstallation
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.exists
 
-class SnapshotDependenciesImportingTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class SnapshotDependenciesImportingTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   private var remoteRepoDir: Path? = null
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     // disable local mirrors
-    updateSettingsXmlFully("<settings></settings>")
-  }
+    maven.updateSettingsXmlFully("<settings></settings>")
 
-  override fun setUpInWriteAction() {
-    super.setUpInWriteAction()
-
-    remoteRepoDir = dir.resolve("remote")
+    remoteRepoDir = maven.dir.resolve("remote")
     remoteRepoDir!!.createDirectories()
   }
 
@@ -37,9 +62,9 @@ class SnapshotDependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   private suspend fun performTestWithDependencyVersion(version: String) {
-    if (!hasMavenInstallation()) return
+    if (!maven.hasMavenInstallation()) return
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -50,7 +75,7 @@ class SnapshotDependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("m1", """<groupId>test</groupId>
+    maven.createModulePom("m1", """<groupId>test</groupId>
 <artifactId>m1</artifactId>
 <version>1</version>
 ${repositoriesSection()}<dependencies>
@@ -63,7 +88,7 @@ $version</version>
 </dependencies>
 """)
 
-    createModulePom("m2", """
+    maven.createModulePom("m2", """
    <groupId>test</groupId>
    <artifactId>m2</artifactId>
    <version>
@@ -71,28 +96,28 @@ $version</version>
    ${distributionManagementSection()}
    """.trimIndent())
 
-    importProjectAsync()
-    assertModules("project", "m1", "m2")
-    assertModuleModuleDeps("m1", "m2")
+    maven.importProjectAsync()
+    maven.assertModules("project", "m1", "m2")
+    maven.assertModuleModuleDeps("m1", "m2")
 
     // in order to force maven to resolve dependency into remote one we have to
     // clean up local repository.
     deploy("m2")
-    removeFromLocalRepository("test")
+    maven.removeFromLocalRepository("test")
 
-    importProjectAsync()
+    maven.importProjectAsync()
 
-    assertModules("project", "m1", "m2")
-    assertModuleModuleDeps("m1", "m2")
+    maven.assertModules("project", "m1", "m2")
+    maven.assertModuleModuleDeps("m1", "m2")
   }
 
   @Test
   fun testNamingLibraryTheSameWayRegardlessAvailableSnapshotVersion() = runBlocking {
-    if (!hasMavenInstallation()) return@runBlocking
+    if (!maven.hasMavenInstallation()) return@runBlocking
 
     deployArtifact("test", "foo", "1-SNAPSHOT")
 
-    importProjectAsync("""<groupId>test</groupId>
+    maven.importProjectAsync("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
 ${repositoriesSection()}<dependencies>
@@ -103,17 +128,17 @@ ${repositoriesSection()}<dependencies>
   </dependency>
 </dependencies>
 """)
-    assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT")
+    maven.assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT")
 
-    removeFromLocalRepository("test")
+    maven.removeFromLocalRepository("test")
 
-    importProjectAsync()
-    assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT")
+    maven.importProjectAsync()
+    maven.assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT")
   }
 
   @Test
   fun testAttachingCorrectJavaDocsAndSources() = runBlocking {
-    if (!hasMavenInstallation()) return@runBlocking
+    if (!maven.hasMavenInstallation()) return@runBlocking
 
     deployArtifact("test", "foo", "1-SNAPSHOT",
                    """
@@ -143,9 +168,9 @@ ${repositoriesSection()}<dependencies>
                      </build>
                      """.trimIndent())
 
-    removeFromLocalRepository("test")
+    maven.removeFromLocalRepository("test")
 
-    importProjectAsync("""<groupId>test</groupId>
+    maven.importProjectAsync("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
 ${repositoriesSection()}<dependencies>
@@ -156,24 +181,24 @@ ${repositoriesSection()}<dependencies>
   </dependency>
 </dependencies>
 """)
-    assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT")
+    maven.assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT")
 
-    downloadArtifacts()
+    maven.downloadArtifacts()
 
-    assertModuleLibDep("project",
+    maven.assertModuleLibDep("project",
                        "Maven: test:foo:1-SNAPSHOT",
-                       "jar://" + repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
-                       "jar://" + repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
-                       "jar://" + repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
+                       "jar://" + maven.repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
 
-    assertTrue(repositoryPath.resolve("test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar").exists())
-    assertTrue(repositoryPath.resolve("test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar").exists())
-    assertTrue(repositoryPath.resolve("test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar").exists())
+    assertTrue(maven.repositoryPath.resolve("test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar").exists())
+    assertTrue(maven.repositoryPath.resolve("test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar").exists())
+    assertTrue(maven.repositoryPath.resolve("test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar").exists())
   }
 
   @Test
   fun testCorrectlyUpdateRootEntriesWithActualPathForSnapshotDependencies() = runBlocking {
-    if (!hasMavenInstallation()) return@runBlocking
+    if (!maven.hasMavenInstallation()) return@runBlocking
 
     deployArtifact("test", "foo", "1-SNAPSHOT",
                    """
@@ -202,9 +227,9 @@ ${repositoriesSection()}<dependencies>
                        </plugins>
                      </build>
                      """.trimIndent())
-    removeFromLocalRepository("test")
+    maven.removeFromLocalRepository("test")
 
-    importProjectAsync("""<groupId>test</groupId>
+    maven.importProjectAsync("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
 ${repositoriesSection()}<dependencies>
@@ -215,15 +240,15 @@ ${repositoriesSection()}<dependencies>
   </dependency>
 </dependencies>
 """)
-    assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT")
+    maven.assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT")
 
-    downloadArtifacts()
+    maven.downloadArtifacts()
 
-    assertModuleLibDep("project",
+    maven.assertModuleLibDep("project",
                        "Maven: test:foo:1-SNAPSHOT",
-                       "jar://" + repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
-                       "jar://" + repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
-                       "jar://" + repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
+                       "jar://" + maven.repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
 
 
     deployArtifact("test", "foo", "1-SNAPSHOT",
@@ -253,19 +278,19 @@ ${repositoriesSection()}<dependencies>
                        </plugins>
                      </build>
                      """.trimIndent())
-    removeFromLocalRepository("test")
+    maven.removeFromLocalRepository("test")
 
-    assertModuleLibDep("project",
+    maven.assertModuleLibDep("project",
                        "Maven: test:foo:1-SNAPSHOT",
-                       "jar://" + repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
-                       "jar://" + repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
-                       "jar://" + repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
+                       "jar://" + maven.repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
   }
 
   private fun deployArtifact(groupId: String, artifactId: String, version: String, tail: String = "") {
     val moduleName = "___$artifactId"
 
-    createProjectSubFile("$moduleName/src/main/java/Foo.java",
+    maven.createProjectSubFile("$moduleName/src/main/java/Foo.java",
                          """
                            /**
                             * some doc
@@ -273,7 +298,7 @@ ${repositoriesSection()}<dependencies>
                            public class Foo { }
                            """.trimIndent())
 
-    val m = createModulePom(moduleName,
+    val m = maven.createModulePom(moduleName,
                             """
                                    <groupId>
                                    $groupId</groupId>
@@ -289,7 +314,7 @@ ${repositoriesSection()}<dependencies>
   }
 
   private fun deploy(modulePath: String) {
-    executeGoal(modulePath, "deploy")
+    maven.executeGoal(modulePath, "deploy")
   }
 
   private fun repositoriesSection(): String {

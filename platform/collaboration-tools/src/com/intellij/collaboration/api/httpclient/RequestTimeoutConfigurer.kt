@@ -9,6 +9,6 @@ open class RequestTimeoutConfigurer : HttpRequestConfigurer {
 
   protected open val readTimeoutMillis = HttpRequests.READ_TIMEOUT.toLong()
 
-  final override fun configure(builder: HttpRequest.Builder): HttpRequest.Builder = builder
+  final override suspend fun configureSuspend(builder: HttpRequest.Builder): HttpRequest.Builder = builder
     .timeout(Duration.ofMillis(readTimeoutMillis))
 }

@@ -4,5 +4,5 @@
 // HIGHLIGHTER_ATTRIBUTES_KEY
 
 fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>castSpecial<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>p<!>: <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>String<!>) {
-    val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>v<!> = <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>p<!> <!HIGHLIGHTING("severity='WARNING'; descr='[USELESS_CAST] Cast is redundant.'; highlightingTextAttributesKey='NOT_USED_ELEMENT_ATTRIBUTES'")!>as <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>String<!><!>
+    val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>v<!> = <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>p<!> <!HIGHLIGHTING("severity='WARNING'; descr='[USELESS_CAST]'; highlightingTextAttributesKey='NOT_USED_ELEMENT_ATTRIBUTES'")!>as <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>String<!><!>
 }

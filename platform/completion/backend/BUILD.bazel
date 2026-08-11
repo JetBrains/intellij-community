@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.completion.backend` start
-
 jvm_library(
     name = "backend",
     srcs = glob(
@@ -22,7 +21,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/completion/common",
         "//platform/kernel/shared:kernel",
         "//platform/kernel/rpc.backend",
@@ -42,6 +41,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":backend",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/completion/common:common_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
         "//platform/kernel/rpc.backend:rpc.backend_test_lib",

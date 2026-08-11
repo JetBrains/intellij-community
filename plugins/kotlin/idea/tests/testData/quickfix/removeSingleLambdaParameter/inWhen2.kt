@@ -1,5 +1,5 @@
 // "Remove parameter 's'" "true"
-// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedSymbolInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.UnusedSymbolInspection
 fun test(i: Int) {
     val p: (String) -> Boolean =
         when (i) {

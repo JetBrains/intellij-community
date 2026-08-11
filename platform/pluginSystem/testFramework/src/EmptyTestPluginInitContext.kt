@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.pluginSystem.testFramework
 
-import com.intellij.ide.plugins.AmbiguousPluginSet
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.ide.plugins.PluginInitializationContext
+import com.intellij.ide.plugins.PluginInitializationContext.RemainingCandidatesView
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.PluginModuleId
@@ -30,12 +30,15 @@ abstract class EmptyTestPluginInitContext : PluginInitializationContext {
     pluginSet: UnambiguousPluginSet,
   ): Sequence<DependencyRef> = emptySequence()
 
+  override fun provideCompatibilityDependenciesForRemainingCandidates(
+    descriptor: IdeaPluginDescriptorImpl,
+    remainingCandidates: RemainingCandidatesView,
+  ): Sequence<DependencyRef> = emptySequence()
+
   override fun provideModuleExclusionsImposedByProductRules(pluginSet: UnambiguousPluginSet): Sequence<Pair<PluginModuleDescriptor, ProductRulesImposedExclusionReason>> =
     emptySequence()
 
-  override fun provideCustomRuntimeModuleGroupAffiliation(module: PluginModuleDescriptor, pluginSet: UnambiguousPluginSet): PluginModuleDescriptor? = null
-
   override fun shouldIncludeContentModulesForDependsEdgeTarget(resolvedTarget: PluginMainDescriptor): Boolean = true
 
-  override fun runConfigurationDuringStartup(totalPluginSet: AmbiguousPluginSet) {}
+  override fun runConfigurationDuringStartup(candidateSubset: UnambiguousPluginSet) {}
 }

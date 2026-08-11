@@ -9,8 +9,8 @@
 // ACTION: Introduce local variable
 // ERROR: 'is' over enum entry is not allowed, use comparison instead
 // ERROR: Use of enum entry names as types is not allowed, use enum type instead
-// K2_ERROR: 'is' over enum entry is prohibited. Use comparison instead.
-// K2_AFTER_ERROR: 'is' over enum entry is prohibited. Use comparison instead.
+// K2_AFTER_ERROR: IS_ENUM_ENTRY
+// K2_ERROR: IS_ENUM_ENTRY
 enum class Foo { A }
 
 fun test(foo: Foo): Int = when (foo) {

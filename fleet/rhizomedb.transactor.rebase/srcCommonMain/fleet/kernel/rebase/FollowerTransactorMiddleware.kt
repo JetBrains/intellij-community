@@ -13,7 +13,7 @@ class FollowerTransactorMiddleware(
 ) : TransactorMiddleware {
 
   companion object {
-    private val logger = logger<FollowerTransactorMiddleware>()
+    private val logger by lazy { logger<FollowerTransactorMiddleware>() }
   }
 
   override fun ChangeScope.performChange(next: ChangeScope.() -> Unit): Unit = run {

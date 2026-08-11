@@ -1,6 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -39,9 +41,20 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   @ApiStatus.Internal
   public RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register, boolean forceDocumentStrongReference) {
-    this(forceDocumentStrongReference ? document : ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(document), document),
-         document,
-         document.getTextLength(), start, end, register, false, false);
+    this(fileOrDocument(document, forceDocumentStrongReference),
+         document, document.getTextLength(), start, end, register, false, false);
+  }
+
+  private static @NotNull Object/*Document|VirtualFile*/ fileOrDocument(@NotNull DocumentEx document, boolean forceDocumentStrongReference) {
+    if (forceDocumentStrongReference) {
+      return document;
+    }
+    Application application = ApplicationManager.getApplication();
+    FileDocumentManager fdm = application == null ? null : application.getServiceIfCreated(FileDocumentManager.class);
+    if (fdm == null) {
+      return document;
+    }
+    return ObjectUtils.notNull(fdm.getFile(document), document);
   }
 
   // The constructor which creates a marker without a document and saves it in the virtual file directly. Can be cheaper than loading the entire document.
@@ -80,6 +93,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     document.registerRangeMarker(this, start, end, greedyToLeft, greedyToRight, layer);
   }
 
+  @ApiStatus.Internal
   protected void unregisterInTree() {
     RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
     if (!isValid(node)) {
@@ -157,8 +171,8 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   @Override
   public final @NotNull DocumentEx getDocument() {
     Object file = myDocumentOrFile;
-    DocumentEx document =
-      file instanceof VirtualFile ? (DocumentEx)FileDocumentManager.getInstance().getDocument((VirtualFile)file) : (DocumentEx)file;
+    DocumentEx document = file instanceof VirtualFile ? (DocumentEx)FileDocumentManager.getInstance().getDocument((VirtualFile)file)
+                                                      : (DocumentEx)file;
     if (document == null) {
       LOG.error("document is null; isValid=" + isValid()+"; file="+file);
     }
@@ -344,18 +358,18 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     }
 
     // Changes inside marker's area. Expand/collapse.
-    if (intervalStart <= offset && intervalEnd >= offset + oldLength) {
+    if (intervalStart <= offset && offset + oldLength <= intervalEnd) {
       return TextRangeScalarUtil.toScalarRange(intervalStart, intervalEnd + newLength - oldLength);
     }
 
     // At this point we either have (myStart xor myEnd inside changed area) or whole area changed.
 
     // Replacing prefix or suffix...
-    if (intervalStart >= offset && intervalStart <= offset + oldLength && intervalEnd > offset + oldLength) {
+    if (offset <= intervalStart && intervalStart <= offset + oldLength && offset + oldLength < intervalEnd) {
       return TextRangeScalarUtil.toScalarRange(offset + newLength, intervalEnd + newLength - oldLength);
     }
 
-    if (intervalEnd <= offset + oldLength && intervalStart < offset) {
+    if (intervalStart < offset && offset + oldLength >= intervalEnd) {
       return TextRangeScalarUtil.toScalarRange(intervalStart, offset);
     }
 
@@ -474,7 +488,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   @NotNull
-  TextRange reCalcTextRangeAfterReload(@NotNull DocumentImpl document, int tabSize) {
+  TextRange reCalcTextRangeAfterReload(@NotNull Document document, int tabSize) {
     return getTextRange();
   }
 

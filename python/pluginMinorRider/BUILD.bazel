@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.community.plugin.minorRider` start
-
 jvm_library(
     name = "community-plugin-minorRider",
     srcs = glob(

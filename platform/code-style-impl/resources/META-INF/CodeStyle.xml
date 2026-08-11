@@ -43,6 +43,10 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.IndentStrategy"/>
     </extensionPoint>
 
+    <extensionPoint name="lang.formatter.alignmentWhitespacePolicy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.formatting.AlignmentWhitespacePolicy"/>
+    </extensionPoint>
+
     <extensionPoint name="fileIndentOptionsProvider" interface="com.intellij.psi.codeStyle.FileIndentOptionsProvider" dynamic="true"/>
     <extensionPoint name="fileCodeStyleProvider" interface="com.intellij.psi.codeStyle.FileCodeStyleProvider" dynamic="true"/>
     <extensionPoint name="codeFormattingDataPreparer" interface="com.intellij.psi.impl.source.codeStyle.CodeFormattingDataPreparer" dynamic="true"/>
@@ -63,5 +67,12 @@
     <projectSettings service="com.intellij.psi.codeStyle.LegacyCodeStyleSettingsManager"/>
     <applicationSettings service="com.intellij.psi.codeStyle.AppCodeStyleSettingsManager"/>
     <projectSettings service="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"/>
+    <formattingService implementation="com.intellij.formatting.service.ExternalFormatProcessorAdapter" order="first"/>
+    <postFormatProcessor implementation="com.intellij.formatting.LineCommentAddSpacePostFormatProcessor"/>
+    <applicationService serviceInterface="com.intellij.formatting.service.AsyncDocumentFormattingSupportFactory"
+                        serviceImplementation="com.intellij.formatting.service.AsyncDocumentFormattingSupportFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.psi.codeStyle.CodeStyleManager" open="true"
+                    serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl"/>
+    <lang.formatter.restriction implementation="com.intellij.lang.InvalidPsiAutoFormatRestriction"/>
   </extensions>
 </idea-plugin>

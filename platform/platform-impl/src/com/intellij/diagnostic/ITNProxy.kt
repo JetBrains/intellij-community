@@ -10,7 +10,6 @@ import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.UnhandledException
 import com.intellij.openapi.diagnostic.logger
@@ -20,7 +19,6 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.buildData.productInfo.CustomPropertyNames
 import com.intellij.platform.ide.productInfo.IdeProductInfo
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.ui.LicensingFacade
 import com.intellij.util.net.ssl.CertificateManager
@@ -28,7 +26,6 @@ import com.intellij.util.system.CpuArch
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -55,13 +52,9 @@ import javax.net.ssl.X509TrustManager
 import kotlin.io.path.Path
 import kotlin.io.path.bufferedReader
 
-@Service
-internal class ITNProxyCoroutineScopeHolder(coroutineScope: CoroutineScope) {
+internal object DiagnosticDispatchers {
   @JvmField
-  val dispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(2)
-
-  @JvmField
-  internal val coroutineScope: CoroutineScope = coroutineScope.childScope("ITNProxy call", dispatcher)
+  val Default: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(2)
 }
 
 @ApiStatus.Internal
@@ -97,11 +90,13 @@ object ITNProxy {
     template["protocol.version"] = "1.1"
     template["user.login"] = "idea_anonymous"
     template["user.password"] = "guest"
-    template["os.cpu.arch"] = if (CpuArch.isEmulated()) "${CpuArch.CURRENT}(emulated)" else "${CpuArch.CURRENT}"
-    template["os.name"] = OS.CURRENT.name
-    template["os.version"] = OS.CURRENT.version()
     template["java.version"] = SystemInfo.JAVA_RUNTIME_VERSION
     template["java.vm.vendor"] = SystemInfo.JAVA_VENDOR
+    template["os.name"] = OS.CURRENT.name
+    template["os.version"] = OS.CURRENT.version()
+    template["os.cpu.arch"] = if (CpuArch.isEmulated()) "${CpuArch.CURRENT}(emulated)" else "${CpuArch.CURRENT}"
+    template["os.cpu.count"] = Runtime.getRuntime().availableProcessors().toString()
+    template["coroutines.default.pool.max.size"] = coroutineDefaultPoolMaxSize().toString()
     template
   }
 
@@ -363,6 +358,7 @@ object ITNProxy {
         .takeIf { it.isNotEmpty() }
         ?.joinToString(",") { it.idString }
         ?.let { append(builder, "plugins.nonbundled", it) }
+      appendDynamicPluginUnloadInfo(builder, event)
 
       if (errorBean.isAutoReportedByPlatform) {
         append(builder, "report.automatic", "true")
@@ -376,6 +372,22 @@ object ITNProxy {
 
     return builder
   }
+
+  private fun appendDynamicPluginUnloadInfo(builder: StringBuilder, event: IdeaLoggingEvent) {
+    val message = event.data as? AbstractMessage ?: return
+    if (DynamicPluginUnloadDiagnosticState.wasUnloadAttemptedBefore(message.date.time)) {
+      append(builder, "plugins.dynamic.unload.attempted", "true")
+    }
+  }
+
+  /**
+   * The maximum number of threads the Kotlin coroutines `Dispatchers.Default` pool may use, i.e. its parallelism
+   * (kotlinx.coroutines `CORE_POOL_SIZE`). Overridable via the `kotlinx.coroutines.scheduler.core.pool.size` system
+   * property; otherwise defaults to `max(2, availableProcessors)`.
+   */
+  private fun coroutineDefaultPoolMaxSize(): Int =
+    System.getProperty("kotlinx.coroutines.scheduler.core.pool.size")?.trim()?.toIntOrNull()
+    ?: maxOf(2, Runtime.getRuntime().availableProcessors())
 
   private fun append(builder: StringBuilder, key: String, value: String?) {
     if (!value.isNullOrEmpty()) {

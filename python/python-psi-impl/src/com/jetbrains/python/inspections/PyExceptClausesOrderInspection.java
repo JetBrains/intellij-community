@@ -16,10 +16,12 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam;
 import com.jetbrains.python.inspections.quickfix.PyMoveExceptQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExceptPart;
@@ -58,13 +60,16 @@ public final class PyExceptClausesOrderInspection extends PyInspection {
             PsiElement element = ((PyReferenceExpression)exceptClass).followAssignmentsChain(getResolveContext()).getElement();
             if (element instanceof PyClass pyClass) {
               if (exceptClasses.contains(pyClass)) {
-                registerProblem(exceptClass, PyPsiBundle.message("INSP.bad.except.exception.class.already.caught", pyClass.getName()));
+                registerProblem(exceptClass, PyPsiBundle.problemMessage("INSP.bad.except.exception.class.already.caught",
+                                                                        CodifiedParam.ofReference(pyClass)));
               }
               else {
                 for (PyClass superClass : pyClass.getSuperClasses(null)) {
                   if (exceptClasses.contains(superClass)) {
-                    registerProblem(exceptClass, PyPsiBundle
-                                      .message("INSP.bad.except.superclass.of.exception.class.already.caught", superClass.getName(), pyClass.getName()),
+                    registerProblem(exceptClass,
+                                    PyPsiBundle.problemMessage("INSP.bad.except.superclass.of.exception.class.already.caught",
+                                                               CodifiedParam.ofReference(superClass), CodifiedParam.ofReference(pyClass)),
+                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                     new PyMoveExceptQuickFix());
                   }
                 }

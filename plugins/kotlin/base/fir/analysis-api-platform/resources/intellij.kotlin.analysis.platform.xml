@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform" visibility="internal">
+<idea-plugin visibility="internal">
 
   <extensions defaultExtensionNs="com.intellij">
     <registryKey
@@ -64,13 +64,32 @@
               topic="com.intellij.openapi.project.DumbModeListenerBackgroundable"/>
   </projectListeners>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
+    <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.base.analysis.platform"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.searching"/>
-    <!-- endregion -->
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.k2"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.platform.interface"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.low.level.api.fir"/>
   </dependencies>
+  <!-- endregion -->
 
 </idea-plugin>

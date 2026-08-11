@@ -45,19 +45,21 @@ private fun createQuickFixIfApplicable(ref: KtSimpleNameReference): CreateString
   if (resourceName.isEmpty()) return null
 
   val composeResourcesDirVirtualFile = module.getComposeResourcesDir() ?: return null
-  val valuesDir = composeResourcesDirVirtualFile.findChild(ResourceType.STRING.dirName) ?: return null
-  val stringsVirtualFile = valuesDir.findChild(STRINGS_XML_FILENAME) ?: return null
+  val valuesDir = composeResourcesDirVirtualFile.findChild(ResourceType.STRING.dirName)
+  val stringsVirtualFile = valuesDir?.findChild(STRINGS_XML_FILENAME)
 
-  val stringsXmlFile = element.manager.findFile(stringsVirtualFile) as? XmlFile ?: return null
-  val rootTag = stringsXmlFile.rootTag ?: return null
+  val rootTag = stringsVirtualFile
+    ?.let { element.manager.findFile(it) as? XmlFile }
+    ?.rootTag
 
-  if (rootTag.hasSubTagWithName(resourceType.typeName, resourceName)) return null
+  if (rootTag?.hasSubTagWithName(resourceType.typeName, resourceName) == true) return null
 
   return CreateStringResourceQuickFix(
     resourceName = resourceName,
     resourceType = resourceType,
     sourceKtFileUrl = element.containingFile.virtualFile.url,
-    stringsXmlUrl = stringsVirtualFile.url
+    stringsXmlUrl = stringsVirtualFile?.url,
+    composeResourcesDirUrl = composeResourcesDirVirtualFile.url,
   )
 }
 

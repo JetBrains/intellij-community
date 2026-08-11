@@ -2,6 +2,7 @@
 @file:Suppress("OVERRIDE_DEPRECATION", "ReplaceGetOrSet", "LeakingThis", "ReplaceJavaStaticMethodWithKotlinAnalog")
 @file:OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 
+@file:Internal
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
@@ -602,7 +603,9 @@ open class FileEditorManagerImpl(
       }
 
       for (provider in item.newProviders) {
-        composite.addEditor(editor = provider.createEditor(project, item.composite.file), provider = provider)
+        val editor = provider.createEditor(project, item.composite.file)
+        postProcessFileEditorWithProvider(editorWithProvider = FileEditorWithProvider(editor, provider), editorPropertyChangeListener = editorPropertyChangeListener)
+        composite.addEditor(editor = editor, provider = provider)
       }
 
       for (splitters in getAllSplitters()) {
@@ -711,6 +714,20 @@ open class FileEditorManagerImpl(
     }
     scheduleUpdateFileName(file)
     queueUpdateFile(file)
+  }
+
+  @RequiresEdt
+  override fun hasPinnedEditorTab(file: VirtualFile): Boolean {
+    return windows.any { window -> window.isFileOpen(file) && window.isFilePinned(file) }
+  }
+
+  @RequiresEdt
+  override fun setPinnedEditorTab(file: VirtualFile, pinned: Boolean) {
+    windows.forEach { window ->
+      if (window.isFileOpen(file)) {
+        window.setFilePinned(file, pinned)
+      }
+    }
   }
 
   override fun updateFileName(file: VirtualFile) {
@@ -872,13 +889,68 @@ open class FileEditorManagerImpl(
    * @return true if all the checks were successfully passed and the file can be closed
    */
   private fun canCloseFile(file: VirtualFile): Boolean {
-    val checks = VirtualFilePreCloseCheck.EP_NAME.extensionsIfPointIsRegistered
-    return checks.all { it.canCloseFile(file) }
+    return canCloseAllFiles(listOf(file))
+  }
+
+  private fun canCloseAllFiles(files: Collection<VirtualFile>): Boolean {
+    return files.isEmpty() || filterClosableFiles(files).size == files.size
+  }
+
+  private fun filterClosableFiles(files: Collection<VirtualFile>): List<VirtualFile> {
+    val filesToClose = files.toMutableList()
+
+    for (check in VirtualFilePreCloseCheck.EP_NAME.extensionsIfPointIsRegistered) {
+      filesToClose.retainAll(check.filterFilesToClose(filesToClose).toHashSet())
+
+      if (filesToClose.isEmpty()) {
+        break
+      }
+    }
+
+    return filesToClose
   }
 
   @RequiresEdt
   override fun closeFileWithChecks(file: VirtualFile, window: EditorWindow): Boolean {
     return closeFile(window = window, composite = window.getComposite(file) ?: return false, runChecks = true)
+  }
+
+  /**
+   * Closes the requested files that pass pre-close checks.
+   *
+   * @return `true` if every requested file was closed, or was already closed
+   */
+  @RequiresEdt
+  override fun closeFilesWithChecks(filesWithWindows: List<Pair<EditorComposite, EditorWindow>>): Boolean {
+    val filesToClose = filesWithWindows.filter { it.second.getComposite(it.first.file) != null }
+    if (filesToClose.isEmpty()) {
+      return true
+    }
+    val filesToCheck = filesToClose.mapTo(LinkedHashSet()) { it.first.file }
+    val closableFiles = filterClosableFiles(filesToCheck)
+    if (closableFiles.isEmpty()) {
+      return false
+    }
+    val closableFilesSet = closableFiles.toHashSet()
+
+    openFileSetModificationCount.increment()
+    WriteIntentReadAction.run {
+      for (fileWithWindow in filesToClose) {
+        if (fileWithWindow.first.file !in closableFilesSet) {
+          continue
+        }
+
+        val window = fileWithWindow.second
+        val currentComposite = window.getComposite(fileWithWindow.first.file)
+        if (currentComposite != null) {
+          window.closeFile(file = currentComposite.file, composite = currentComposite)
+        }
+      }
+    }
+
+    // Some requested files may have been rejected by a pre-close check.
+    // Return true only if all requested files were approved for closing.
+    return closableFiles.size == filesToCheck.size
   }
 
   @RequiresEdt
@@ -1029,6 +1101,8 @@ open class FileEditorManagerImpl(
   }
 
   override suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
+    EditorHistoryManager.preloadHistory(project)
+
     if (!ClientId.isCurrentlyUnderLocalId) {
       return clientFileEditorManager?.openFileAsync(
         file = file,
@@ -1396,7 +1470,7 @@ open class FileEditorManagerImpl(
     else if (fileEntry != null) {
       for (editorWithProvider in composite.allEditorsWithProviders) {
         val state = fileEntry.providers.get(editorWithProvider.provider.editorTypeId)
-          ?.let { editorWithProvider.provider.readState(it, project, file) }
+          ?.let { editorWithProvider.provider.readState(it, project, lazyOf(file)) }
         if (state != null && state != FileEditorState.INSTANCE) {
           restoreEditorState(
             fileEditorWithProvider = editorWithProvider,
@@ -1925,6 +1999,8 @@ open class FileEditorManagerImpl(
     newEditorWithProvider: FileEditorWithProvider?,
     publisher: FileEditorManagerListener,
   ) {
+    EditorHistoryManager.preloadHistory(project) // make sure we preload it out of EDT
+
     oldEditorWithProvider?.fileEditor?.deselectNotify()
     val newEditor = newEditorWithProvider?.fileEditor
     if (newEditor != null) {

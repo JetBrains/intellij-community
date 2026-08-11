@@ -1,11 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
 import com.intellij.testFramework.LightProjectDescriptor
 import com.jetbrains.python.fixtures.PyInspectionTestCase
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.testing.pyTestFixtures.PyTestUnpassedFixtureInspection
 
+@Subsystems.Inspections
+@Layers.Functional
 class PyTestUnpassedFixtureInspectionTest : PyInspectionTestCase() {
   override fun getInspectionClass(): Class<out PyInspection> {
     return PyTestUnpassedFixtureInspection::class.java

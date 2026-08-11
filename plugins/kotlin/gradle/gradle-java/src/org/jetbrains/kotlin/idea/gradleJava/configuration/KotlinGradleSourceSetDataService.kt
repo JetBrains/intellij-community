@@ -141,7 +141,7 @@ class KotlinGradleProjectDataService : AbstractProjectDataService<ModuleData, Vo
     override fun getTargetDataKey() = ProjectKeys.MODULE
 
     override fun postProcess(
-        toImport: MutableCollection<out DataNode<ModuleData>>,
+        toImport: Collection<DataNode<ModuleData>>,
         projectData: ProjectData?,
         project: Project,
         modelsProvider: IdeModifiableModelsProvider
@@ -173,7 +173,7 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
     override fun getTargetDataKey() = ProjectKeys.LIBRARY
 
     override fun postProcess(
-        toImport: MutableCollection<out DataNode<LibraryData>>,
+        toImport: Collection<DataNode<LibraryData>>,
         projectData: ProjectData?,
         project: Project,
         modelsProvider: IdeModifiableModelsProvider

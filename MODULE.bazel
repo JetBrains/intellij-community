@@ -1,14 +1,14 @@
 module(name = "community")
 
-bazel_dep(name = "bazel_features", version = "1.43.0")
+bazel_dep(name = "bazel_features", version = "1.47.0")
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "rules_kotlin", version = "2.2.2")
 archive_override(
     module_name = "rules_kotlin",
-    sha256 = "5c9b4664b3f926624a405f1d39ce74bcfc0a46b319df4f20d2ee63bdfed9c43e",
-    strip_prefix = "rules_kotlin-ffbc4307c3a55f61e05c12481b6dcb929d6e2b1f",
-    url = "https://github.com/JetBrains/rules_kotlin/archive/ffbc4307c3a55f61e05c12481b6dcb929d6e2b1f.zip",
+    sha256 = "cd26fd62ec0d026ad4d143dedfef3e6ca858a2d0be483f57109897b27069b2c3",
+    strip_prefix = "rules_kotlin-4db4cd06b0ca11742f7dccec5e19fd642c5c2cb1",
+    url = "https://github.com/JetBrains/rules_kotlin/archive/4db4cd06b0ca11742f7dccec5e19fd642c5c2cb1.zip",
 )
 
 bazel_dep(name = "rules_java", version = "9.6.1")
@@ -31,6 +31,9 @@ single_version_override(
     patches = [
         "//:build/jvm-rules/rules-jvm-external-6.10-make-coursier-repo-targets-shell-free-and-hermetic.patch",
         "//:build/jvm-rules/rules-jvm-external-6.10-default-to-maven-resolver.patch",
+        "//:build/jvm-rules/rules-jvm-external-6.10-optional-source-jars.patch",
+        "//:build/jvm-rules/rules-jvm-external-6.10-coursier-optional-file-field.patch",
+        "//:build/jvm-rules/rules-jvm-external-6.10-fix-multi-repo-hash.patch",
     ],
     version = "6.10",
 )
@@ -69,8 +72,8 @@ local_path_override(
     path = "build/jvm-rules",
 )
 
-bazel_dep(name = "windows_support", version = "0.1.7")
-bazel_dep(name = "llvm", version = "0.8.1")
+bazel_dep(name = "windows_support", version = "0.2.0")
+bazel_dep(name = "llvm", version = "0.8.9")
 single_version_override(
     module_name = "llvm",
     patch_strip = 1,
@@ -91,6 +94,7 @@ kotlin_test_deps = use_repo_rule("//plugins/kotlin:kotlin_test_dependencies.bzl"
 kotlin_test_deps(name = "kotlin_test_deps")
 
 include("//:debugger_test_deps.MODULE.bazel")
+include("//platform/jewel:jewel_deps.MODULE.bazel")
 
 jbr_toolchains = use_extension("@community//build:jbr-toolchains.bzl", "jbr_toolchains")
 
@@ -124,9 +128,65 @@ override_repo(
     remote_java_tools_windows = "remote_java_tools_windows_with_vc_redist",
 )
 
+# bun as a declared Bazel input, so a test that needs the JS runtime does not depend on
+# `tools/bun.cmd` having populated its per-user cache — the wrapper downloads on demand, which a
+# sandboxed test cannot do (`sandbox = True` implies `block-network`). See //build:bun for the
+# host-selected alias, and plugins/air/docs/decisions/0016-bazel-provided-bun.md for why the AIR
+# architecture gate needs it.
+#
+# The version and checksums must stay in sync with `tools/bun.cmd`; `BunToolConsistencyTest` enforces
+# that. The checksums are the upstream release archives', which is what `sha256` here wants too.
+BUN_VERSION = "1.3.14"
+
+# A mirror of the GitHub release, byte-identical: `bazel_downloader.cfg` routes github.com through
+# cache-redirector.jetbrains.com, and the redirector does not serve the `oven-sh/bun` repo.
+BUN_BASE_URL = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/bun"
+
+BUN_PLATFORMS = {
+    "linux_x64": "951ee2aee855f08595aeec6225226a298d3fea83a3dcd6465c09cbccdf7e848f",
+    "linux_aarch64": "a27ffb63a8310375836e0d6f668ae17fa8d8d18b88c37c821c65331973a19a3b",
+    "windows_x64": "0a0620930b6675d7ba440e81f4e0e00d3cfbe096c4b140d3fff02205e9e18922",
+    "windows_aarch64": "89841f5a57f2348b67ec0839b718f4bf4ea7d07c371c9ba4b77b6c790f918953",
+    "darwin_x64": "4183df3374623e5bab315c547cfa0974533cd457d86b73b639f7a87974cd6633",
+    "darwin_aarch64": "d8b96221828ad6f97ac7ac0ab7e95872341af763001e8803e8267652c2652620",
+}
+
+[
+    http_archive(
+        name = "bun_%s" % platform,
+        build_file = "//build:BUILD.bun.bazel",
+        sha256 = sha256,
+        # the release zip nests everything under a directory named after the archive
+        strip_prefix = "bun-%s" % platform.replace("_", "-"),
+        url = "{base}/{version}/bun-{platform}.zip".format(
+            base = BUN_BASE_URL,
+            platform = platform.replace("_", "-"),
+            version = BUN_VERSION,
+        ),
+    )
+    for platform, sha256 in BUN_PLATFORMS.items()
+]
+
 # Register the extension that runs jps-to-bazel converter and provides target lists for dev-build.
 # This creates the @jps_dynamic_deps_community repository.
 use_repo(
     use_extension("//build:jps_dynamic_deps_community.bzl", "jps_dynamic_deps_community_extension"),
     "jps_dynamic_deps_community",
 )
+
+# Hermetic node/npm used by the KMP resolver (//fleet/build/rules:kmp.bzl) to resolve
+# the NPM dependencies declared by the `package.json` embedded in KMP klibs.
+bazel_dep(name = "rules_nodejs", version = "6.7.4")
+
+node = use_extension("@rules_nodejs//nodejs:extensions.bzl", "node")
+use_repo(
+    node,
+    "nodejs_darwin_amd64",
+    "nodejs_darwin_arm64",
+    "nodejs_linux_amd64",
+    "nodejs_linux_arm64",
+    "nodejs_windows_amd64",
+    "nodejs_windows_arm64",
+)
+
+include("//:fleet/kmp.MODULE.bazel")

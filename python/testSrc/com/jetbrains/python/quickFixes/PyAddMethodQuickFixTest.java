@@ -17,10 +17,14 @@ package com.jetbrains.python.quickFixes;
 
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.inspections.PyClassHasNoInitInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyAddMethodQuickFixTest extends PyQuickFixTestCase {
 
   public void testAddInit() {

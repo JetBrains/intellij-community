@@ -14,16 +14,19 @@ import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonColors
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle
 
+/** Creates an Int UI light [SegmentedControlButtonStyle] with the provided parameters. */
 public fun SegmentedControlButtonStyle.Companion.light(
     colors: SegmentedControlButtonColors = SegmentedControlButtonColors.light(),
     metrics: SegmentedControlButtonMetrics = SegmentedControlButtonMetrics.defaults(),
 ): SegmentedControlButtonStyle = SegmentedControlButtonStyle(colors, metrics)
 
+/** Creates an Int UI dark [SegmentedControlButtonStyle] with the provided parameters. */
 public fun SegmentedControlButtonStyle.Companion.dark(
     colors: SegmentedControlButtonColors = SegmentedControlButtonColors.dark(),
     metrics: SegmentedControlButtonMetrics = SegmentedControlButtonMetrics.defaults(),
 ): SegmentedControlButtonStyle = SegmentedControlButtonStyle(colors, metrics)
 
+/** Creates an Int UI light [SegmentedControlButtonColors] with the provided parameters. */
 public fun SegmentedControlButtonColors.Companion.light(
     background: Brush = SolidColor(Color.Transparent),
     backgroundPressed: Brush = SolidColor(IntUiLightTheme.colors.gray(14)),
@@ -51,6 +54,7 @@ public fun SegmentedControlButtonColors.Companion.light(
         borderSelectedFocused = borderSelectedFocused,
     )
 
+/** Creates an Int UI dark [SegmentedControlButtonColors] with the provided parameters. */
 public fun SegmentedControlButtonColors.Companion.dark(
     background: Brush = SolidColor(Color.Transparent),
     backgroundPressed: Brush = SolidColor(IntUiDarkTheme.colors.gray(3)),
@@ -78,6 +82,7 @@ public fun SegmentedControlButtonColors.Companion.dark(
         borderSelectedFocused = borderSelectedFocused,
     )
 
+/** Creates an Int UI default [SegmentedControlButtonMetrics] with the provided parameters. */
 public fun SegmentedControlButtonMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(3.dp),
     segmentedButtonPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 6.dp),

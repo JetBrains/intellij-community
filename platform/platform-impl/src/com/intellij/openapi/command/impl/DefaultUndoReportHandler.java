@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -33,13 +33,6 @@ final class DefaultUndoReportHandler implements UndoReportHandler {
                                          @NotNull Collection<? extends DocumentReference> problemFiles,
                                          boolean isUndo) {
     return reportGeneric(project, IdeBundle.message("cannot.undo.error.other.affected.files.changed.message"), problemFiles);
-  }
-
-  @Override
-  public boolean reportCannotAdjust(@Nullable Project project,
-                                    @NotNull Collection<? extends DocumentReference> problemFiles,
-                                    boolean isUndo) {
-    return reportGeneric(project, IdeBundle.message("cannot.undo.error.other.users.overwrote.changes.message"), problemFiles);
   }
 
   @Override

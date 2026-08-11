@@ -1,0 +1,92 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.analysis"/>
+    <module name="intellij.java.analysis.impl"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.kotlin.analysis.platform"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.kdoc"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.codeInsight.api"/>
+    <module name="intellij.kotlin.codeInsight.overrideImplement"/>
+    <module name="intellij.kotlin.codeInsight.shared"/>
+    <module name="intellij.kotlin.codeInsight.utils"/>
+    <module name="intellij.kotlin.compilerPlugins.support.bundled"/>
+    <module name="intellij.kotlin.refactorings.base"/>
+    <module name="intellij.kotlin.references"/>
+    <module name="intellij.kotlin.uast"/>
+    <module name="intellij.kotlin.uast.idea"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.impl.base"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.k2"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.platform.interface"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.low.level.api.fir"/>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="kotlin.fir.frontend-independent"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider"
+                        serviceImplementation="org.jetbrains.kotlin.idea.fir.plugin.K2KotlinPluginModeProvider"/>
+    <lang.importOptimizer language="kotlin" implementationClass="org.jetbrains.kotlin.idea.imports.KotlinFirImportOptimizer"/>
+    <codeInsight.parameterInfo language="kotlin"
+                               implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelArrayAccessParameterInfoHandler"/>
+    <codeInsight.parameterInfo language="kotlin"
+                               implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelClassTypeArgumentInfoHandler"/>
+    <codeInsight.typeInfo language="kotlin"
+                          implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinHighLevelExpressionTypeProvider"/>
+    <codeInsight.parameterInfo language="kotlin"
+                               implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelFunctionParameterInfoHandler"/>
+    <codeInsight.parameterInfo language="kotlin"
+                               implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelFunctionTypeArgumentInfoHandler"/>
+    <codeInsight.parameterInfo language="kotlin"
+                               implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelLambdaParameterInfoHandler"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressionChecker"
+            serviceImplementation="org.jetbrains.kotlin.idea.inspections.suppress.KotlinK2SuppressionChecker"/>
+
+    <registryKey key="kotlin.k2.only.bundled.compiler.plugins.enabled"
+                 description="Allow only bundled K2 compiler plugins to be used"
+                 defaultValue="true"
+                 restartRequired="false"/>
+    <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider"
+                    serviceImplementation="org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsProviderIdeImpl"/>
+    <iconProvider implementation="org.jetbrains.kotlin.idea.FirKotlinIconProvider"/>
+    <targetElementEvaluator language="kotlin"
+                            implementationClass="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>
+    <targetElementUtilExtender implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>
+    <usageTargetProvider implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinUsageTargetProvider"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService"
+            serviceImplementation="org.jetbrains.kotlin.idea.fir.FirLibrarySourceScopeService"/>
+  </extensions>
+
+</idea-plugin>

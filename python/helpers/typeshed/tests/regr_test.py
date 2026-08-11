@@ -13,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Generator
 from contextlib import ExitStack, contextmanager, suppress
 from dataclasses import dataclass
@@ -20,6 +21,7 @@ from enum import IntEnum
 from functools import partial
 from pathlib import Path
 from typing import TypeAlias
+from typing_extensions import override
 
 from ts_utils.metadata import get_recursive_requirements, read_metadata
 from ts_utils.mypy import mypy_configuration_from_distribution, temporary_mypy_config_file
@@ -33,6 +35,7 @@ from ts_utils.utils import (
     get_all_testcase_directories,
     get_mypy_req,
     print_error,
+    print_skipped,
     venv_python,
 )
 
@@ -167,7 +170,7 @@ def setup_testcase_dir(package: DistributionTests, tempdir: Path, verbosity: Ver
 
 def run_testcases(
     package: DistributionTests, version: str, platform: str, *, tempdir: Path, verbosity: Verbosity
-) -> subprocess.CompletedProcess[str]:
+) -> subprocess.CompletedProcess[str] | None:
     env_vars = dict(os.environ)
     new_test_case_dir = tempdir / TEST_CASES_DIR
 
@@ -177,7 +180,6 @@ def run_testcases(
         configurations = mypy_configuration_from_distribution(package.name)
 
     with temporary_mypy_config_file(configurations) as temp_config:
-
         # "--enable-error-code ignore-without-code" is purposefully omitted.
         # See https://github.com/python/typeshed/pull/8083
         flags = [
@@ -216,18 +218,22 @@ def run_testcases(
 
         flags.extend(["--custom-typeshed-dir", str(custom_typeshed)])
 
-        # If the test-case filename ends with -py39,
-        # only run the test if --python-version was set to 3.9 or higher (for example)
+        # If the test-case filename ends with e.g. -py314,
+        # only run the test if --python-version was set to 3.14 or higher (for example)
+        files: list[str] = []
         for path in new_test_case_dir.rglob("*.py"):
-            if match := re.fullmatch(r".*-py3(\d{1,2})", path.stem):
+            if match := re.fullmatch(r".*-py3(\d\d)", path.stem):
                 minor_version_required = int(match[1])
                 assert f"3.{minor_version_required}" in SUPPORTED_VERSIONS
                 python_minor_version = int(version.split(".")[1])
                 if minor_version_required > python_minor_version:
                     continue
-            flags.append(str(path))
+            files.append(str(path))
 
-        mypy_command = [python_exe, "-m", "mypy", *flags]
+        if len(files) == 0:
+            return None
+
+        mypy_command = [python_exe, "-m", "mypy", *flags, *files]
         if verbosity is Verbosity.VERBOSE:
             description = f"{package.name}/{version}/{platform}"
             msg = f"{description}: {mypy_command=}\n"
@@ -241,15 +247,24 @@ def run_testcases(
 
 
 @dataclass(frozen=True)
-class Result:
+class Result(metaclass=ABCMeta):
     code: int
+
+    @abstractmethod
+    def print_description(self, verbosity: Verbosity) -> None:
+        raise NotImplementedError
+
+
+@dataclass(frozen=True)
+class RunResult(Result):
     command_run: str
     stderr: str
     stdout: str
     test_case_dir: Path
     tempdir: Path
 
-    def print_description(self) -> None:
+    @override
+    def print_description(self, verbosity: Verbosity) -> None:
         if self.code:
             print(f"{self.command_run}:", end=" ")
             print_error("FAILURE\n")
@@ -258,6 +273,18 @@ class Result:
                 print_error(self.stderr, fix_path=replacements)
             if self.stdout:
                 print_error(self.stdout, fix_path=replacements)
+
+
+@dataclass(frozen=True)
+class NoTestsResult(Result):
+    package: str
+    version: str
+    platform: str
+
+    @override
+    def print_description(self, verbosity: Verbosity) -> None:
+        if verbosity != Verbosity.QUIET:
+            print_skipped(f"No test cases found for {self.package!r} on Python {self.version} for platform {self.platform!r}.")
 
 
 def test_testcase_directory(
@@ -269,7 +296,10 @@ def test_testcase_directory(
         _PRINT_QUEUE.put(f"Running {msg}...")
 
     proc_info = run_testcases(package=package, version=version, platform=platform, tempdir=tempdir, verbosity=verbosity)
-    return Result(
+    if proc_info is None:
+        return NoTestsResult(0, package.name, version, platform)
+
+    return RunResult(
         code=proc_info.returncode,
         command_run=msg,
         stderr=proc_info.stderr,
@@ -399,7 +429,7 @@ def main() -> ReturnCode:
     print()
 
     for result in results:
-        result.print_description()
+        result.print_description(verbosity)
 
     code = max(result.code for result in results)
 

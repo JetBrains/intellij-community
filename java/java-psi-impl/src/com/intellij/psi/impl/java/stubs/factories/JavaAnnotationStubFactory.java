@@ -5,6 +5,7 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
+import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.stubs.LightStubElementFactory;
@@ -12,7 +13,7 @@ import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaAnnotationStubFactory implements LightStubElementFactory<PsiAnnotationStubImpl, PsiAnnotation> {
+public class JavaAnnotationStubFactory implements LightStubElementFactory<PsiAnnotationStub, PsiAnnotation> {
   @Override
   public @NotNull PsiAnnotationStubImpl createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     String text = LightTreeUtil.toFilteredString(tree, node, null);
@@ -20,7 +21,7 @@ public class JavaAnnotationStubFactory implements LightStubElementFactory<PsiAnn
   }
 
   @Override
-  public PsiAnnotation createPsi(@NotNull PsiAnnotationStubImpl stub) {
+  public PsiAnnotation createPsi(@NotNull PsiAnnotationStub stub) {
     return JavaStubElementType.getFileStub(stub).getPsiFactory().createAnnotation(stub);
   }
   

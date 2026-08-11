@@ -14,7 +14,7 @@ _ContextValues: TypeAlias = dict[str, Any] | Context
 
 class ContextPopException(Exception): ...
 
-class ContextDict(dict):
+class ContextDict(dict[Any, Any]):
     context: BaseContext
     def __init__(self, context: BaseContext, *args: Any, **kwargs: Any) -> None: ...
     def __enter__(self) -> Self: ...
@@ -77,7 +77,7 @@ class RequestContext(Context):
         self,
         request: HttpRequest,
         dict_: dict[str, Any] | None = None,
-        processors: list[Callable] | None = None,
+        processors: list[Callable[..., Any]] | None = None,
         use_l10n: bool | None = None,
         use_tz: bool | None = None,
         autoescape: bool = True,

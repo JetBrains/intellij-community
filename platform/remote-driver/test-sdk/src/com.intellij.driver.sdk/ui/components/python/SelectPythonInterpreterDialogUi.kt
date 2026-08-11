@@ -8,7 +8,7 @@ fun IdeaFrameUI.selectPythonInterpreterDialog(func: SelectPythonInterpreterDialo
   x(SelectPythonInterpreterDialogUi::class.java) { byTitle("Select Python Interpreter") }.apply(func)
 
 class SelectPythonInterpreterDialogUi(data: ComponentData) : UiComponent(data) {
-  val comboBox = x { byClass("ComboBox") }
+  val pathSelector = x { byClass("NioPathTextField") }
   val refreshButton = x { byAccessibleName("Refresh") }
   val okButton = x { byAccessibleName("OK") }
 }

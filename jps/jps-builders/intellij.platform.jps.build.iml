@@ -72,11 +72,11 @@
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="library" scope="PROVIDED" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
-    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.libraries.mvstore" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" />
     <orderEntry type="module" module-name="intellij.libraries.maven.resolver.provider" />
-    <orderEntry type="library" name="netty-codec-protobuf" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.codec.protobuf" />
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
     <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
     <orderEntry type="library" name="kotlin-metadata" level="project" />

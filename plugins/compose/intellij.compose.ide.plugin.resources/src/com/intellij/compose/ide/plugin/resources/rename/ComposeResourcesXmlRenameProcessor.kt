@@ -1,12 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources.rename
 
 import com.intellij.compose.ide.plugin.resources.ANDROID_RESOURCE_REFERENCE
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesDataProvider
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesXmlBase
 import com.intellij.compose.ide.plugin.resources.STRINGS_XML_FILENAME
 import com.intellij.compose.ide.plugin.resources.VALUES_DIRNAME
-import com.intellij.compose.ide.plugin.resources.getAllComposeResourcesDirs
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
 import com.intellij.ide.TitledHandler
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -16,7 +16,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.xml.XmlAttributeValue
@@ -38,8 +37,8 @@ import kotlin.reflect.KProperty
 internal class ComposeResourcesXmlRenameProcessor : RenameXmlAttributeProcessor() {
   override fun canProcessElement(element: PsiElement): Boolean {
     if (element !is XmlAttributeValue || !element.isValueString) return false
-    val resourceDirectoryPath = element.containingFile.parent?.parent?.virtualFile ?: return false
-    return element.project.getAllComposeResourcesDirs().any { it.directoryPath == resourceDirectoryPath.toNioPathOrNull() }
+    return ComposeResourcesDataProvider.findProviderForProject(element.project)
+      ?.getComposeDataForResourceFile(element.containingFile) != null
   }
 
   override fun renameElement(element: PsiElement, newName: String, usages: Array<out UsageInfo?>, listener: RefactoringElementListener?) {

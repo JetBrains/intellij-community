@@ -264,6 +264,7 @@ com.intellij.xdebugger.breakpoints.XBreakpointManager
 - a:addBreakpointListener(com.intellij.xdebugger.breakpoints.XBreakpointType,com.intellij.xdebugger.breakpoints.XBreakpointListener):V
 - a:addBreakpointListener(com.intellij.xdebugger.breakpoints.XBreakpointType,com.intellij.xdebugger.breakpoints.XBreakpointListener,com.intellij.openapi.Disposable):V
 - a:addLineBreakpoint(com.intellij.xdebugger.breakpoints.XLineBreakpointType,java.lang.String,I,com.intellij.xdebugger.breakpoints.XBreakpointProperties):com.intellij.xdebugger.breakpoints.XLineBreakpoint
+- a:addLineBreakpoint(com.intellij.xdebugger.breakpoints.XLineBreakpointType,java.lang.String,I,com.intellij.xdebugger.breakpoints.XBreakpointProperties,com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo):com.intellij.xdebugger.breakpoints.XLineBreakpoint
 - a:addLineBreakpoint(com.intellij.xdebugger.breakpoints.XLineBreakpointType,java.lang.String,I,com.intellij.xdebugger.breakpoints.XBreakpointProperties,Z):com.intellij.xdebugger.breakpoints.XLineBreakpoint
 - a:findBreakpointAtLine(com.intellij.xdebugger.breakpoints.XLineBreakpointType,com.intellij.openapi.vfs.VirtualFile,I):com.intellij.xdebugger.breakpoints.XLineBreakpoint
 - a:findBreakpointsAtLine(com.intellij.xdebugger.breakpoints.XLineBreakpointType,com.intellij.openapi.vfs.VirtualFile,I):java.util.Collection
@@ -334,6 +335,16 @@ com.intellij.xdebugger.breakpoints.XLineBreakpoint
 - a:getType():com.intellij.xdebugger.breakpoints.XLineBreakpointType
 - a:isTemporary():Z
 - a:setTemporary(Z):V
+f:com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo
+- f:getLogExpressionIfEnabled():java.lang.String
+- f:getSuspendPolicy():com.intellij.xdebugger.breakpoints.SuspendPolicy
+- f:isTemporary():Z
+f:com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo$Builder
+- <init>():V
+- f:build():com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo
+- f:setLogExpressionIfEnabled(java.lang.String):com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo$Builder
+- f:setSuspendPolicy(com.intellij.xdebugger.breakpoints.SuspendPolicy):com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo$Builder
+- f:setTemporary(Z):com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo$Builder
 a:com.intellij.xdebugger.breakpoints.XLineBreakpointType
 - com.intellij.xdebugger.breakpoints.XBreakpointType
 - p:<init>(java.lang.String,java.lang.String):V
@@ -716,6 +727,7 @@ com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer
 com.intellij.xdebugger.hotswap.HotSwapProvider
 - a:createChangesCollector(com.intellij.xdebugger.hotswap.HotSwapSession,kotlinx.coroutines.CoroutineScope,com.intellij.xdebugger.hotswap.SourceFileChangesListener):com.intellij.xdebugger.hotswap.SourceFileChangesCollector
 - a:performHotSwap(com.intellij.xdebugger.hotswap.HotSwapSession):V
+- restart():V
 com.intellij.xdebugger.hotswap.HotSwapResultListener
 - a:onCanceled():V
 - a:onFailure():V
@@ -735,6 +747,7 @@ com.intellij.xdebugger.hotswap.SourceFileChangesCollector
 - a:resetChanges():V
 com.intellij.xdebugger.hotswap.SourceFileChangesListener
 - a:onChangesCanceled():V
+- a:onIncompatibleChanges(java.lang.String):V
 - a:onNewChanges():V
 a:com.intellij.xdebugger.settings.DebuggerConfigurableProvider
 - sf:EXTENSION_POINT:com.intellij.openapi.extensions.ExtensionPointName

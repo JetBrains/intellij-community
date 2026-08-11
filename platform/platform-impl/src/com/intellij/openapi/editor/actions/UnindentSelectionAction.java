@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 public final class UnindentSelectionAction extends EditorAction {
   public UnindentSelectionAction() {
     super(new Handler());
+    setInjectedContext(true);
   }
 
   private static final class Handler extends EditorWriteActionHandler.ForEachCaret {

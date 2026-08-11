@@ -3,7 +3,11 @@ package com.jetbrains.python.packaging.ui
 
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.SimpleTextAttributes
@@ -15,6 +19,12 @@ import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.packaging.cache.firstPageOrEmpty
 import com.jetbrains.python.packaging.cache.remainingItemsAfterPageIndex
 import com.jetbrains.python.packaging.repository.PyPiPackageRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.Component
 import javax.swing.DefaultListSelectionModel
 import javax.swing.JList
@@ -77,26 +87,37 @@ internal class PyManagePackagesDialog(
   }
 
   private inner class PyPackagesModel(packages: MutableList<RepoPackage>) : PackagesModel(packages) {
+    private var filterJob: Job? = null
+    private val coroutineScope: CoroutineScope
+      get() = ApplicationManager.getApplication().service<PyManagePackagesDialogService>().coroutineScope
+    
     override fun filter(filter: String) {
-      val result = PyPiPackageRepository.search(filter)
-      val page = result.firstPageOrEmpty()
-      val filtered = page.map { RepoPackage(it, null, null) }.toList()
-      val toSelect = filtered.find { StringUtil.equalsIgnoreCase(it.name, filter) }
+      filterJob?.cancel()
+      filterJob = coroutineScope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
+        val result = PyPiPackageRepository.search(filter)
+        val page = result.firstPageOrEmpty().successOrNull?.asSequence() ?: emptySequence()
+        val filtered = page.map { RepoPackage(it, null, null) }.toList()
+        val toSelect = filtered.find { StringUtil.equalsIgnoreCase(it.name, filter) }
 
-      myView.clear()
-      myPackages.clearSelection()
-      myView.addAll((filtered))
-      if (toSelect != null) myPackages.setSelectedValue(toSelect, true)
+        if (isActive) {
+          withContext(Dispatchers.EDT) {
+            myView.clear()
+            myPackages.clearSelection()
+            myView.addAll((filtered))
+            if (toSelect != null) myPackages.setSelectedValue(toSelect, true)
 
-      if (result.pages.size > 1) {
-        myView.add(MoreItemsNotice(result.remainingItemsAfterPageIndex(0)))
-        moreItemsIndex = filtered.size
+            if (result.pages.size > 1) {
+              myView.add(MoreItemsNotice(result.remainingItemsAfterPageIndex(0)))
+              moreItemsIndex = filtered.size
+            }
+            else {
+              moreItemsIndex = null
+            }
+
+            fireContentsChanged(this, 0, myView.size)
+          }
+        }
       }
-      else {
-        moreItemsIndex = null
-      }
-
-      fireContentsChanged(this, 0, myView.size)
     }
   }
 
@@ -128,3 +149,6 @@ internal class PyManagePackagesDialog(
 }
 
 private class MoreItemsNotice(val hiddenCount: Int) : RepoPackage("empty", null, null)
+
+@Service
+private class PyManagePackagesDialogService(val coroutineScope: CoroutineScope)

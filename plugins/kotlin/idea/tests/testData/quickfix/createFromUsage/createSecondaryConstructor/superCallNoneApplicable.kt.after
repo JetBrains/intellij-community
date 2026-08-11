@@ -1,7 +1,7 @@
 // "Create secondary constructor" "true"
 // K2_ACTION: "Add primary constructor to 'A'" "true"
-// K2_ERROR: No value passed for parameter 'y'.
-// K2_ERROR: None of the following candidates is applicable:<br><br>constructor(x: Int, y: Int): A<br>constructor(x: Int, y: String): A
+// K2_ERROR: NONE_APPLICABLE
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
 
 open class A {
     constructor(x: Int, y: Int)

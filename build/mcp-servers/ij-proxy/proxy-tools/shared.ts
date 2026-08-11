@@ -2,35 +2,16 @@
 
 import path from 'node:path'
 import {z, type ZodType} from 'zod'
-import type {SearchEntry, SearchItem, ToolResultLike, UpstreamToolCaller} from './types'
-
-export const TRUNCATION_MARKER = '<<<...content truncated...>>>'
-const FULL_READ_MAX_LINES = 200_000
-const READ_FILE_MAX_LINE_LENGTH = 500
-const NUMBERED_READ_OUTPUT_REGEX = /^L(\d+): ?(.*)$/
+import type {SearchEntry, SearchItem, ToolResultLike} from './types'
 
 export interface ResolvedPath {
   absolute: string
   relative: string
 }
 
-export type TruncateMode = 'NONE' | 'START' | 'END'
-
-export interface ReadFileTextOptions {
-  maxLinesCount?: number | null
-  truncateMode?: TruncateMode | null
-}
-
 const nonEmptyStringSchema = z.string().refine((value) => value.trim() !== '', {
   message: 'must be a non-empty string'
 })
-const positiveIntSchema = z.coerce.number().int().refine((value) => Number.isFinite(value) && value > 0, {
-  message: 'must be a positive integer'
-})
-const nonNegativeIntSchema = z.coerce.number().int().refine((value) => Number.isFinite(value) && value >= 0, {
-  message: 'must be a non-negative integer'
-})
-
 function parseWithMessage<T>(schema: ZodType<T>, value: unknown, message: string): T {
   const parsed = schema.safeParse(value)
   if (!parsed.success) {
@@ -43,16 +24,6 @@ export function requireString(value: unknown, label: string): string {
   return parseWithMessage(nonEmptyStringSchema, value, `${label} must be a non-empty string`)
 }
 
-export function toPositiveInt(value: unknown, fallback: number | undefined, label: string): number | undefined {
-  if (value === undefined || value === null) return fallback
-  return parseWithMessage(positiveIntSchema, value, `${label} must be a positive integer`)
-}
-
-export function toNonNegativeInt(value: unknown, fallback: number | undefined, label: string): number | undefined {
-  if (value === undefined || value === null) return fallback
-  return parseWithMessage(nonNegativeIntSchema, value, `${label} must be a non-negative integer`)
-}
-
 export function resolvePathInProject(projectPath: string, inputPath: unknown, label: string): ResolvedPath {
   const rawPath = requireString(inputPath, label)
   const absolute = path.isAbsolute(rawPath) ? path.normalize(rawPath) : path.resolve(projectPath, rawPath)
@@ -63,10 +34,25 @@ export function resolvePathInProject(projectPath: string, inputPath: unknown, la
   return {absolute, relative}
 }
 
-export function normalizeEntryPath<T>(projectPath: string, filePath: T): T extends string ? string : T {
-  if (typeof filePath !== 'string' || filePath === '') return filePath as T extends string ? string : T
-  if (path.isAbsolute(filePath)) return filePath as T extends string ? string : T
-  return path.resolve(projectPath, filePath) as T extends string ? string : T
+/**
+ * Render a path the way the client sees it: project-relative with POSIX separators when the
+ * file is inside the project, otherwise a normalized absolute path. Used to key lint results
+ * so the two IDEs of a dual-IDE setup agree on identity.
+ */
+export function normalizeProjectRelativePath(projectPath: string, filePath: string): string {
+  if (!filePath) return ''
+  if (path.isAbsolute(filePath)) {
+    const relative = path.relative(projectPath, filePath)
+    if (!relative.startsWith('..') && !path.isAbsolute(relative)) {
+      return toPosixPath(relative)
+    }
+    return path.normalize(filePath)
+  }
+  return toPosixPath(path.normalize(filePath))
+}
+
+function toPosixPath(value: string): string {
+  return value.replace(/\\/g, '/')
 }
 
 export function extractTextFromResult(result: unknown): string | null {
@@ -158,13 +144,6 @@ function extractItemsFromValue(value: unknown): SearchItem[] | null {
   return null
 }
 
-function itemsToEntries(items: SearchItem[]): SearchEntry[] {
-  return items.map((item) => ({
-    filePath: item.filePath,
-    lineNumber: item.startLine,
-  }))
-}
-
 export function extractItems(result: unknown): SearchItem[] {
   const structured = extractStructuredContent(result)
   const fromStructured = extractItemsFromValue(structured)
@@ -201,168 +180,10 @@ function extractResultsMapFromValue(value: unknown): Record<string, SearchEntry[
   return results
 }
 
-export function extractResultsMap(result: unknown): Record<string, SearchEntry[]> | null {
-  const structured = extractStructuredContent(result)
-  return extractResultsMapFromValue(structured)
-}
-
-export function extractFileList(result: unknown): string[] {
-  const resultsMap = extractResultsMap(result)
-  if (resultsMap) {
-    return extractFileListFromResults(resultsMap)
-  }
-  const structured = extractStructuredContent(result)
-  if (!structured) return []
-  if (Array.isArray(structured)) {
-    const items = extractItemsFromValue(structured)
-    if (items) return items.map((item) => item.filePath)
-    return structured as string[]
-  }
-  const structuredRecord = structured as Record<string, unknown>
-  const items = extractItemsFromValue(structuredRecord)
-  if (items) return items.map((item) => item.filePath)
-  if (Array.isArray(structuredRecord.files)) return structuredRecord.files as string[]
-  return []
-}
-
-export function extractEntries(result: unknown): SearchEntry[] {
-  const resultsMap = extractResultsMap(result)
-  if (resultsMap) return flattenResultsMap(resultsMap)
-  const structured = extractStructuredContent(result)
-  if (structured) {
-    const structuredRecord = structured as Record<string, unknown>
-    if (Array.isArray(structuredRecord.entries)) return structuredRecord.entries as SearchEntry[]
-    if (Array.isArray(structuredRecord.results)) return structuredRecord.results as SearchEntry[]
-    const items = extractItemsFromValue(structuredRecord)
-    if (items) return itemsToEntries(items)
-    if (Array.isArray(structured)) {
-      const fromItems = extractItemsFromValue(structured)
-      if (fromItems) return itemsToEntries(fromItems)
-      return structured as SearchEntry[]
-    }
-  }
-  return []
-}
-
 function flattenResultsMap(results: Record<string, SearchEntry[]>): SearchEntry[] {
   const entries: SearchEntry[] = []
   for (const groupEntries of Object.values(results)) {
     entries.push(...groupEntries)
   }
   return entries
-}
-
-function extractFileListFromResults(results: Record<string, SearchEntry[]>): string[] {
-  const files: string[] = []
-  for (const entry of flattenResultsMap(results)) {
-    if (typeof entry.filePath === 'string' && entry.filePath.length > 0) {
-      files.push(entry.filePath)
-    }
-  }
-  return files
-}
-
-export function normalizeLineEndings(text: string): string {
-  return text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-}
-
-export function formatReadLine(line: string): string {
-  if (line.length <= READ_FILE_MAX_LINE_LENGTH) return line
-  const boundaryIndex = READ_FILE_MAX_LINE_LENGTH - 1
-  const boundaryChar = line.charCodeAt(boundaryIndex)
-  if (boundaryChar >= 0xD800 && boundaryChar <= 0xDBFF) {
-    return Array.from(line).slice(0, READ_FILE_MAX_LINE_LENGTH).join('')
-  }
-  return line.slice(0, READ_FILE_MAX_LINE_LENGTH)
-}
-
-export async function readFileTextExact(
-  relativePath: string,
-  callUpstreamTool: UpstreamToolCaller
-): Promise<string> {
-  try {
-    const result = await callUpstreamTool('read_file', {
-      file_path: relativePath,
-      offset: 1,
-      limit: FULL_READ_MAX_LINES
-    })
-    const text = extractTextFromResult(result)
-    if (typeof text === 'string') {
-      return renderRawTextFromReadOutput(text)
-    }
-  } catch {
-    // Fall back to the legacy tool below.
-  }
-
-  return readFileTextLegacy(relativePath, {truncateMode: 'NONE'}, callUpstreamTool)
-}
-
-export async function readFileTextLegacy(
-  relativePath: string,
-  {maxLinesCount, truncateMode}: ReadFileTextOptions = {},
-  callUpstreamTool: UpstreamToolCaller
-): Promise<string> {
-  const args: Record<string, unknown> = {pathInProject: relativePath}
-  const resolvedMaxLinesCount = maxLinesCount !== undefined && maxLinesCount !== null
-    ? maxLinesCount
-    : truncateMode === 'NONE'
-      ? FULL_READ_MAX_LINES
-      : undefined
-  if (resolvedMaxLinesCount !== undefined && resolvedMaxLinesCount !== null) {
-    args.maxLinesCount = resolvedMaxLinesCount
-  }
-  if (truncateMode) {
-    args.truncateMode = truncateMode
-  }
-  const result = await callUpstreamTool('get_file_text_by_path', args)
-  const text = extractTextFromResult(result)
-  if (typeof text !== 'string') {
-    throw new Error('Failed to read file contents')
-  }
-  return text
-}
-
-export function renderRawTextFromReadOutput(text: string): string {
-  const numberedLines = parseNumberedReadOutput(text)
-  if (numberedLines.length === 0) {
-    throw new Error('Failed to read file contents')
-  }
-
-  const rawLines: string[] = []
-  for (let index = 0; index < numberedLines.length; index += 1) {
-    const {lineNumber, lineText} = numberedLines[index]
-    const expectedLineNumber = index + 1
-    if (lineNumber !== expectedLineNumber) {
-      throw new Error('Failed to read file contents')
-    }
-    rawLines.push(lineText)
-  }
-  return rawLines.join('\n')
-}
-
-function parseNumberedReadOutput(text: string): Array<{lineNumber: number; lineText: string}> {
-  const normalized = normalizeLineEndings(text)
-  if (normalized === '') {
-    return []
-  }
-
-  return normalized.split('\n').map((line) => {
-    const match = NUMBERED_READ_OUTPUT_REGEX.exec(line)
-    if (!match) {
-      throw new Error('Failed to read file contents')
-    }
-    return {
-      lineNumber: Number.parseInt(match[1], 10),
-      lineText: match[2] ?? ''
-    }
-  })
-}
-
-export function splitLines(text: string): string[] {
-  const normalized = normalizeLineEndings(text)
-  const lines = normalized.split('\n')
-  if (lines.length > 0 && lines[lines.length - 1] === '') {
-    lines.pop()
-  }
-  return lines
 }

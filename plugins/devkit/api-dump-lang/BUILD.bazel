@@ -1,8 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.devkit.apiDump.lang` start
+jps_test(
+    name = "apiDump-lang-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":apiDump-lang-tests_test_lib"],
+)
+### skip generation section `test intellij.devkit.apiDump.lang.tests`
 
+### auto-generated section `build intellij.devkit.apiDump.lang` start
 jvm_library(
     name = "apiDump-lang",
     srcs = glob(
@@ -29,7 +36,7 @@ jvm_library(
         "//platform/indexing-api:indexing",
         "//platform/usageView-impl",
         "//platform/workspace/jps",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//platform/ide-core",
         "//platform/analysis-api:analysis",
@@ -62,6 +69,7 @@ jvm_library(
         "//platform/indexing-api:indexing_test_lib",
         "//platform/usageView-impl:usageView-impl_test_lib",
         "//platform/workspace/jps:jps_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/usageView:usageView_test_lib",
@@ -88,7 +96,6 @@ exports_files(
 ### auto-generated section `iml intellij.devkit.apiDump.lang` end
 
 ### auto-generated section `build intellij.devkit.apiDump.lang.tests` start
-
 jvm_library(
     name = "apiDump-lang-tests",
     srcs = glob(
@@ -134,7 +141,8 @@ jvm_library(
         "//platform/usageView-impl:usageView-impl_test_lib",
         "//platform/workspace/jps",
         "//platform/workspace/jps:jps_test_lib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:kotlin-stdlib",
         "//platform/ide-core",
         "//platform/analysis-api:analysis",
@@ -155,6 +163,12 @@ jvm_library(
         "//java/java-impl:impl_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//plugins/devkit:devkit-plugin-main-noKotlin",
+        "//plugins/devkit:devkit-plugin-main-noKotlin_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.apiDump.lang.tests` end
@@ -167,11 +181,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.devkit.apiDump.lang.tests` end
-
-### auto-generated section `test intellij.devkit.apiDump.lang.tests` start
-
-jps_test(
-    name = "apiDump-lang-tests_test",
-    runtime_deps = [":apiDump-lang-tests_test_lib"],
-)
-### auto-generated section `test intellij.devkit.apiDump.lang.tests` end

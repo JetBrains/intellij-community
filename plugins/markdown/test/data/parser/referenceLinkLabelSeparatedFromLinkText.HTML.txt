@@ -1,0 +1,5 @@
+HtmlFile:referenceLinkLabelSeparatedFromLinkText.md
+  PsiElement(HTML_DOCUMENT)
+    PsiElement(XML_PROLOG)
+      <empty list>
+  PsiElement(MARKDOWN_OUTER_BLOCK)('T030 [P] [US3] Implement the thing\n\n[foo] [bar]\n\n[foo]\n[bar]\n\n[foo][bar]\n\n![foo] [bar]\n\n![foo][bar]\n\n[bar]: /url "title"')

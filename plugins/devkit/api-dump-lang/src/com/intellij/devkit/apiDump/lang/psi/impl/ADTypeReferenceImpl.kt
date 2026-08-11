@@ -23,9 +23,8 @@ internal abstract class ADTypeReferenceImpl(type: IElementType) : ADPsiElementIm
     referenceSet.references
 
   override fun subtreeChanged() {
-    val referenceSet = getUserData(refKey) ?: return
-    val range = TextRange(0, this.textLength)
-    referenceSet.reparse(this, range)
+    super.subtreeChanged()
+    putUserData(refKey, null)
   }
 }
 

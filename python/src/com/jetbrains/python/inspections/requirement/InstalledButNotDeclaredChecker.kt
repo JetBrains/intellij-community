@@ -1,35 +1,41 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.requirement
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil
-import com.jetbrains.python.packaging.PyPIPackageUtil.INSTANCE
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyPackageUtil
+import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.toRequirements
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.pip.PyPiPackageCache
 
-class InstalledButNotDeclaredChecker(val ignoredPackages: Collection<String>, val pythonPackageManager: PythonPackageManager) {
-  fun getUndeclaredPackageName(importedPyModule: String): String? {
-    val packageName = PyPsiPackageUtil.moduleToPackageName(importedPyModule)
-    if (isIgnoredOrStandardPackage(importedPyModule))
+internal class InstalledButNotDeclaredChecker(
+  private val ignoredPackages: Collection<PyPackageName>,
+  private val declared: List<PythonPackage>,
+) {
+  fun getUndeclaredPackageName(importedPyModule: String): PyPackageName? {
+    val packageName = PyPackageName.from(PyPsiPackageUtil.moduleToPackageName(importedPyModule))
+    if (isIgnoredOrStandardPackage(packageName, importedPyModule))
       return null
 
-    val declared = pythonPackageManager.listDeclaredPackagesSnapshot() ?: return null
+    val pyPiCacheService = ApplicationManager.getApplication().service<PyPiPackageCache>()
 
-    if (!INSTANCE.isInPyPI(packageName))
+    if (packageName.name !in pyPiCacheService)
       return null
 
-    val requirements = declared.toRequirements()
-    if (requirements.any { it.name == packageName }) {
+    if (declared.toRequirements().any { PyPackageName.from(it.name) == packageName }) {
+
       return null
     }
 
     return packageName
   }
 
-
-  private fun isIgnoredOrStandardPackage(packageName: String): Boolean =
+  private fun isIgnoredOrStandardPackage(packageName: PyPackageName, importedPyModule: String): Boolean =
     ignoredPackages.contains(packageName) ||
-    packageName == PyPackageUtil.SETUPTOOLS ||
-    PyStdlibUtil.getPackages()?.contains(packageName) == true
+    importedPyModule == PyPackageUtil.SETUPTOOLS ||
+    PyStdlibUtil.getPackages()?.contains(importedPyModule) == true
 }

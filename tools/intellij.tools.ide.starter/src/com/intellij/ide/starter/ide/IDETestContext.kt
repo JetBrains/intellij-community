@@ -47,13 +47,11 @@ import org.kodein.di.newInstance
 import org.w3c.dom.Element
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.Base64
 import javax.xml.xpath.XPath
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.copyTo
 import kotlin.io.path.copyToRecursively
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
@@ -61,10 +59,7 @@ import kotlin.io.path.deleteIfExists
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.extension
-import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
 import kotlin.io.path.notExists
 import kotlin.io.path.readBytes
 import kotlin.io.path.readText
@@ -95,7 +90,7 @@ open class IDETestContext(
     )
   }
 
-  open fun copy(ide: InstalledIde? = null, resolvedProjectHome: Path? = null, sdk: SdkObject? = null): IDETestContext {
+  open fun copy(ide: InstalledIde? = null, resolvedProjectHome: Path? = null, sdk: SdkObject? = testCase.sdk): IDETestContext {
     require(sdk == null || testCase.projectInfo != NoProject) { "project must be specified to setup project SDK" }
     return IDETestContext(paths, ide ?: this.ide, testCase.copy(sdk = sdk), testName, resolvedProjectHome ?: this._resolvedProjectHome, profilerType,
                           publishers, isReportPublishingEnabled, preserveSystemDir)
@@ -298,6 +293,11 @@ open class IDETestContext(
     }
   }
 
+  // Removing this file allows to run IDE with Safe Mode dialog.
+  fun deleteTrustedPathsXml(): IDETestContext = apply {
+    paths.configDir.resolve("options/trusted-paths.xml").deleteRecursivelyQuietly()
+  }
+
   fun wipeProjectsDir(): IDETestContext = apply {
     val path = paths.systemDir / "projects"
     logOutput("Cleaning project cache dir for $this at $path")
@@ -489,8 +489,13 @@ open class IDETestContext(
         collectNativeThreads = collectNativeThreads,
         stdOut = stdOut
       )
-      configure(runContext)
-
+      try {
+        configure(runContext)
+      }
+      catch (throwable: Throwable) {
+        runContext.publishArtifacts()
+        throw throwable
+      }
       try {
         val ideRunResult = runContext.runIdeSuspending()
         if (isReportPublishingEnabled) {
@@ -755,8 +760,13 @@ open class IDETestContext(
     return this
   }
 
-  fun withProjectSdk(sdkObject: SdkObject) = copy(sdk = sdkObject)
+  /**
+   * Creates a copy and doesn't modify the current test context!
+   * Be sure to chain your calls.
+   */
+  fun copyWithProjectSdk(sdkObject: SdkObject): IDETestContext = copy(sdk = sdkObject)
 
+  @Deprecated("Use chained copyWithProjectSdk instead")
   fun setupSdk(sdkObjects: SdkObject?, cleanDirs: Boolean = true): IDETestContext = computeWithSpan("setupSdk") {
     if (sdkObjects == null) return this
     try {
@@ -794,23 +804,6 @@ open class IDETestContext(
     applyVMOptionsPatch {
       addSystemProperty("kotest.assertions.collection.enumerate.size", Int.MAX_VALUE)
     }
-
-  fun collectJBRDiagnosticFiles(javaProcessId: Long) {
-    if (javaProcessId == 0L) return
-    val userHome = System.getProperty("user.home")
-    val pathUserHome = Paths.get(userHome)
-    val javaErrorInIdeaFile = pathUserHome.resolve("java_error_in_idea_$javaProcessId.log")
-    val jbrErrFile = pathUserHome.resolve("jbr_err_pid$javaProcessId.log")
-    if (javaErrorInIdeaFile.exists()) {
-      javaErrorInIdeaFile.copyTo(paths.jbrDiagnostic.resolve(javaErrorInIdeaFile.name).createParentDirectories())
-    }
-    if (jbrErrFile.exists()) {
-      jbrErrFile.copyTo(paths.jbrDiagnostic.resolve(jbrErrFile.name).createParentDirectories())
-    }
-    if (paths.jbrDiagnostic.exists() && paths.jbrDiagnostic.listDirectoryEntries().isNotEmpty()) {
-      publishArtifact(paths.jbrDiagnostic)
-    }
-  }
 
   fun acceptNonTrustedCertificates(): IDETestContext {
     writeConfigFile("options/certificates.xml", """

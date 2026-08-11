@@ -353,6 +353,12 @@ class GitLogProvider(private val project: Project) : VcsLogProvider, VcsIndexabl
     return getCorrectedVcsRoot(repositoryManager, detectedRoot, filePath)
   }
 
+  @CalledInAny
+  override fun isFullHash(root: VirtualFile, hash: String): Boolean {
+    val repository = repositoryManager.getRepositoryForRootQuick(root) ?: return false
+    return hash.length == repository.fullHashLength && GitUtil.isPossibleHash(hash)
+  }
+
   @Suppress("UNCHECKED_CAST")
   override fun <T> getPropertyValue(property: VcsLogProperties.VcsLogProperty<T>): T? {
     return when (property) {

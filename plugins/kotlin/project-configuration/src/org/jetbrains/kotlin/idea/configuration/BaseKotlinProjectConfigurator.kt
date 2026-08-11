@@ -7,6 +7,7 @@ import com.intellij.openapi.application.readAndEdtWriteAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -15,7 +16,9 @@ import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootMap
 import org.jetbrains.kotlin.idea.base.projectStructure.allModules
@@ -32,6 +35,10 @@ import kotlin.io.path.relativeTo
 abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
 
     override fun getStatus(moduleSourceRootGroup: ModuleSourceRootGroup): ConfigureKotlinStatus {
+        if (!AdvancedSettings.getBoolean("kotlin.enable.autoconfiguration")) {
+            return ConfigureKotlinStatus.NON_APPLICABLE
+        }
+
         val module = moduleSourceRootGroup.baseModule
         if (!isApplicable(module)) {
             return ConfigureKotlinStatus.NON_APPLICABLE
@@ -86,7 +93,7 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
             FileDocumentManager.getInstance().saveAllDocuments()
             KotlinProjectConfigurationService.getInstance(project).queueSyncIfPossible()
 
-            val changes = readAction { result.changedFiles.calculateChanges() }
+            val changes = readAction { result.changedFiles.collectChangedFiles() }
             notificationHolder
                 .showAutoConfiguredNotification(module.name, changes)
 
@@ -246,7 +253,7 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
                             // attempt to configure compiler plugin during the same step as kotlin configuration
                             // when module dependency is known
                             configureCompilerPluginsForModules(
-                                postConfigurationModules(project, applicableModules),
+                                postConfigurationModules(project, modules),
                                 resultBuilder
                             )
                         }
@@ -317,4 +324,15 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
         }
     }
 
+    @Nls
+    protected fun getFixText(state: LanguageFeature.State, featureShortName: String): String {
+        return when (state) {
+            LanguageFeature.State.ENABLED -> {
+                KotlinProjectConfigurationBundle.message("fix.change.feature.support.enabled", featureShortName)
+            }
+            LanguageFeature.State.DISABLED -> {
+                KotlinProjectConfigurationBundle.message("fix.change.feature.support.disabled", featureShortName)
+            }
+        }
+    }
 }

@@ -9,7 +9,6 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.todo.SmartTodoItemPointer;
 import com.intellij.ide.todo.TodoFilter;
 import com.intellij.ide.todo.TodoTreeBuilder;
-import com.intellij.ide.todo.rpc.TodoResult;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -17,7 +16,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -57,22 +55,6 @@ public final class TodoFileNode extends PsiFileNode {
       PsiFile psiFile = getValue();
       assert psiFile != null;
 
-      if (shouldUseSplitTodo()) {
-        VirtualFile virtualFile = psiFile.getVirtualFile();
-        if (virtualFile == null) {
-          return Collections.emptyList();
-        }
-
-        List<TodoResult> results = myBuilder.getCachedRemoteTodos(virtualFile);
-
-        List<TodoRemoteItemNode> children = new ArrayList<>(results.size());
-        for (TodoResult result : results) {
-          TodoRemoteItemNode.Value value = new TodoRemoteItemNode.Value(virtualFile, result.getNavigationOffset(), result.getLength(), result.getLine(), result.getPresentation());
-          children.add(new TodoRemoteItemNode(getProject(), value, myBuilder));
-        }
-        return Collections.unmodifiableList(children);
-      }
-
       List<? extends TodoItem> items = findAllTodos(psiFile, myBuilder.getTodoTreeStructure().getSearchHelper());
       List<TodoItemNode> children = new ArrayList<>(items.size());
 
@@ -105,11 +87,15 @@ public final class TodoFileNode extends PsiFileNode {
                                                                @NotNull PsiTodoSearchHelper helper) {
     List<TodoItem> todoItems = new ArrayList<>(Arrays.asList(helper.findTodoItems(psiFile)));
 
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
     psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
         if (element instanceof PsiLanguageInjectionHost) {
-          InjectedLanguageManager.getInstance(psiFile.getProject()).enumerate(element, (injectedPsi, places) -> {
+          injectedLanguageManager.enumerate(element, (injectedPsi, places) -> {
+            if (injectedLanguageManager.shouldInspectionsBeLenient(injectedPsi)) {
+              return;
+            }
             if (places.size() == 1) {
               Document document = PsiDocumentManager.getInstance(injectedPsi.getProject()).getCachedDocument(injectedPsi);
               if (!(document instanceof DocumentWindow)) return;

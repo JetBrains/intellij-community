@@ -81,7 +81,7 @@ internal class PersistentBidirectionalMapImpl<K, V>(
         }
 
         val keys = valueToKeysMap[prevValue]!!
-        val newKeys = keys.remove(key)
+        val newKeys = keys.removing(key)
         if (newKeys.isEmpty()) {
           valueToKeysMap.remove(prevValue)
         }
@@ -91,7 +91,7 @@ internal class PersistentBidirectionalMapImpl<K, V>(
       }
 
       val existingKeys = valueToKeysMap[value]
-      val newKeys = existingKeys?.add(key) ?: persistentListOf(key)
+      val newKeys = existingKeys?.adding(key) ?: persistentListOf(key)
       valueToKeysMap[value] = newKeys
       return prevValue
     }
@@ -104,7 +104,7 @@ internal class PersistentBidirectionalMapImpl<K, V>(
       check(keys.isNotEmpty()) { "Map is broken. Cannot find keys of removed value." }
 
       if (keys.size > 1) {
-        val updatedKeysList = keys.remove(key)
+        val updatedKeysList = keys.removing(key)
         valueToKeysMap[value] = updatedKeysList
       }
       else {

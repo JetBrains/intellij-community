@@ -18,9 +18,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
             ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
         val primitiveTypeBooleanNotNullable =
             ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Boolean")
-
         var typeMetadata: StorageTypeMetadata
-
         typeMetadata = EntityMetadata(
             fqName = "com.intellij.workspaceModel.test.api.SimpleEntity",
             entityDataFqName = "com.intellij.workspaceModel.test.api.impl.SimpleEntityData",
@@ -80,7 +78,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
             extProperties = listOf(),
             isAbstract = false
         )
-
         addMetadata(typeMetadata)
     }
 

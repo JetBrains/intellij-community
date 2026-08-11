@@ -17,7 +17,7 @@ import java.util.Set;
 public interface ParentProviderElementType {
   @NotNull
   @Unmodifiable
-  Set<IElementType> getParents();
+  Set<@NotNull IElementType> getParents();
 
 
   /**

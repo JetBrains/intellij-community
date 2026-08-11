@@ -14,6 +14,7 @@ import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.ApiStatus
 
 
 @ApiStatus.Internal
-class PipPackageManagerEngine(
+internal class PipPackageManagerEngine(
   private val project: Project,
   private val sdk: Sdk,
 ) : PythonPackageManagerEngine {
@@ -65,7 +66,7 @@ class PipPackageManagerEngine(
     ).mapSuccess { }
   }
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?): PyResult<Unit> {
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> {
     val result = runPackagingTool(
       operation = "uninstall",
       arguments = pythonPackages.toList()
@@ -141,17 +142,18 @@ class PipPackageManagerEngine(
           return@mapNotNull null
         }
 
-        val argsStr = options + listOf(
-          "--index-url",
-          url
-        ) + specs.map { it.nameWithVersionSpec }
+        val argsStr = buildList {
+          addAll(options)
+          addAll(listOf("--index-url", url))
+          specs.mapTo(this) { it.nameWithVersionSpecs }
+        }
 
         Args().addArgs(argsStr)
       }
 
     val pypi = mutableListOf<Args>()
     if (pypiSpecs.isNotEmpty()) {
-      pypi.add(Args().addArgs(options + pypiSpecs.map { it.nameWithVersionsSpec }))
+      pypi.add(Args().addArgs(options + pypiSpecs.map { it.nameWithVersionSpecs }))
     }
 
     return pypi + byRepository

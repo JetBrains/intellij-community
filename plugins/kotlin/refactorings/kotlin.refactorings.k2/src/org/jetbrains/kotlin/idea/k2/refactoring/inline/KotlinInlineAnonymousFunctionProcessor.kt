@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.OperatorToFunctionConverter
+import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CodeInliner
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.fullyExpandCall
 import org.jetbrains.kotlin.idea.k2.refactoring.util.LambdaToAnonymousFunctionUtil

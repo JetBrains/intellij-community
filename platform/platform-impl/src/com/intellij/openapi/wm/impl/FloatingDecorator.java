@@ -29,6 +29,7 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -112,6 +113,8 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
       // Therefore we use native WM decoration.
       contentPane.add(decorator, BorderLayout.CENTER);
     }
+
+    rootPane.setBorder(JBUI.CurrentTheme.Window.getDialogBorder(isUndecorated()));
 
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     ToolWindowImpl toolWindow = decorator.toolWindow;

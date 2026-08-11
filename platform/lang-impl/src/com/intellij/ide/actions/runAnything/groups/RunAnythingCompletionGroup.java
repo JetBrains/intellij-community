@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -15,6 +16,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class RunAnythingCompletionGroup<V, P extends RunAnythingProvider<V>> extends RunAnythingGroupBase {
   private final @NotNull P myProvider;
 

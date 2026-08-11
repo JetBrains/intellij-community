@@ -3,49 +3,56 @@ package com.intellij.terminal.frontend.toolwindow.impl
 import com.intellij.ide.DataManager
 import com.intellij.ide.dnd.DnDDropHandler
 import com.intellij.ide.dnd.DnDEvent
+import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.FileCopyPasteUtil.getFileListFromAttachedObject
 import com.intellij.ide.dnd.TransferableWrapper
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.isPosix
-import com.intellij.platform.eel.isWindows
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.ide.productMode.IdeProductMode
-import com.intellij.psi.PsiFileSystemItem
+import com.intellij.terminal.frontend.toolwindow.impl.TerminalFilePathHandler.getPathAsText
 import com.intellij.terminal.frontend.view.TerminalView
-import com.intellij.terminal.frontend.view.completion.escapeShellArgument
+import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModel
 import com.intellij.util.asDisposable
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.jetbrains.plugins.terminal.fus.TerminalCommandUsageStatistics
+import org.jetbrains.plugins.terminal.fus.TerminalInsertedContentSource
+import org.jetbrains.plugins.terminal.fus.TerminalInsertedContentType
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
-import org.jetbrains.plugins.terminal.session.ShellName
-import org.jetbrains.plugins.terminal.session.guessShellName
-import org.jetbrains.plugins.terminal.startup.TerminalLocalPathTranslator
-import org.jetbrains.plugins.terminal.util.getNow
+import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
+import java.awt.datatransfer.DataFlavor
 import java.nio.file.Path
+import kotlin.io.path.isDirectory
 
 /**
  * Handles terminal drag-and-drop behavior
  *
- * - Drop on the terminal view: inserts dropped file/directory paths into the active terminal
+ * - Drop on the terminal view: inserts dropped file/directory paths into the active terminal;
+ *   a drop that carries no files but provides plain text (e.g. text dragged from an editor
+ *   or a custom tree exporting a string) inserts that text as is
  * - Drop on the tab bar: creates a new terminal tab using the first item's directory as the working directory
  *
- * Supports drops from Project View (PSI elements) and native OS file managers
+ * Supports drops from Project View (PSI elements), native OS file managers, and plain-text drag sources
  */
 internal object TerminalDnDHandler {
   fun installHandler(window: ToolWindowEx, coroutineScope: CoroutineScope) {
@@ -62,25 +69,60 @@ internal object TerminalDnDHandler {
   private fun getDropHandler(window: ToolWindowEx, coroutineScope: CoroutineScope): DnDDropHandler = DnDDropHandler { event ->
     val dataContext = getDataContext(event) ?: return@DnDDropHandler
     val terminalView = dataContext.getData(TerminalView.DATA_KEY)
+    // Scrolling model can be absent in the alternate buffer
+    val scrollingModel = dataContext.terminalEditor?.getUserData(TerminalOutputScrollingModel.KEY)
     if (terminalView != null) {
-      handleDropOnTerminalView(event, terminalView)
+      handleDropOnTerminalView(window.project, event, terminalView, scrollingModel)
     }
     else {
       handleDropOnTab(window, coroutineScope, event, dataContext)
     }
   }
 
-  private fun handleDropOnTerminalView(event: DnDEvent, terminalView: TerminalView) {
-    val context = getTerminalDropContext(terminalView) ?: return
+  private fun handleDropOnTerminalView(
+    project: Project,
+    event: DnDEvent,
+    terminalView: TerminalView,
+    scrollingModel: TerminalOutputScrollingModel?,
+  ) {
     val data = TerminalDropData(event)
+    val context = getTerminalContext(terminalView) ?: return
+    val modalityState = ModalityState.current()
+    val fileSource = if (event.attachedObject is DnDNativeTarget.EventInfo) {
+      TerminalInsertedContentSource.EXTERNAL_APP
+    }
+    else TerminalInsertedContentSource.IDE
 
     terminalView.coroutineScope.launch {
-      val droppedFiles = data.virtualFiles ?: resolveVirtualFiles(data.paths)
-      val textToInsert = getTextToInsertForFiles(droppedFiles, context).ifEmpty { return@launch }
+      val text = when {
+        data.virtualFiles.isNotEmpty() -> getVirtualFilesAsText(data.virtualFiles, context, project.getEelDescriptor())
+        data.paths.isNotEmpty() -> getPathAsText(data.paths, context)
+        else -> data.text
+      }
+
+      if (text.isNullOrBlank()) {
+        return@launch
+      }
 
       terminalView.createSendTextBuilder()
         .useBracketedPasteMode()
-        .send(textToInsert)
+        .send(text)
+
+      val commandLine = terminalView.getRunningProcessCommandLine()
+      val processExecutable = commandLine?.let {
+        TerminalCommandUsageStatistics.getLoggableCommandData(commandLine, expandAbsoluteOrRelativePath = true).command
+      }
+      ReworkedTerminalUsageCollector.logContentInserted(
+        project = project,
+        contentType = getDroppedContentType(data),
+        fileSource = fileSource,
+        processExecutable = processExecutable,
+      )
+
+      withContext(Dispatchers.UI + modalityState.asContextElement()) {
+        IdeFocusManager.getInstance(project).requestFocusInProject(terminalView.preferredFocusableComponent, project)
+        scrollingModel?.scrollToCursor(true)
+      }
     }
   }
 
@@ -88,16 +130,28 @@ internal object TerminalDnDHandler {
     val contentManager = dataContext.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER) ?: return
     val data = TerminalDropData(event)
 
-    coroutineScope.launch {
-      val project = window.project
-      val droppedFiles = data.virtualFiles ?: resolveVirtualFiles(data.paths)
-      val dir = getDirectory(droppedFiles.firstOrNull(), project) ?: return@launch
+    val openingWay = if (event.attachedObject is DnDNativeTarget.EventInfo) {
+      TerminalTabOpeningWay.DND_FILE_TO_TOOLWINDOW_FROM_EXTERNAL_APP
+    }
+    else TerminalTabOpeningWay.DND_FILE_TO_TOOLWINDOW_FROM_IDE
+    val fusInfo = TerminalStartupFusInfo(openingWay)
 
-      val fusInfo = TerminalStartupFusInfo(TerminalOpeningWay.DND_FILE_TO_TOOLWINDOW)
+    coroutineScope.launch {
+      val droppedFiles = if (data.virtualFiles.isNotEmpty()) {
+        data.virtualFiles.mapNotNull { getNioPathForFile(it, window.project.getEelDescriptor()) }
+      }
+      else data.paths
+
+      val filePath = droppedFiles.firstOrNull() ?: return@launch
+      if (!TerminalFilePathHandler.isSameEnvironment(filePath, window.project.getEelDescriptor())) {
+        return@launch
+      }
+
+      val dir = getDirectory(filePath) ?: return@launch
       withContext(Dispatchers.EDT) {
         createTerminalTab(
-          project,
-          workingDirectory = dir.path,
+          window.project,
+          workingDirectory = dir.toString(),
           contentManager = contentManager,
           startupFusInfo = fusInfo
         )
@@ -114,88 +168,93 @@ internal object TerminalDnDHandler {
     return DataManager.getInstance().getDataContext(deepestComponent)
   }
 
-  private fun getDirectory(file: VirtualFile?, project: Project): VirtualFile? {
-    if (file == null) return null
-
-    val filePath = file.toNioPathOrNull() ?: return null
-    if (!isSameEnvironment(filePath, project.getEelDescriptor()))
-      return null
-
-    return if (file.isDirectory) file else file.parent
-  }
-
-  private fun getTerminalDropContext(terminalView: TerminalView): TerminalDropContext? {
-    val eelDescriptor = terminalView.sessionDeferred.getNow()?.eelDescriptor ?: return null
-    val shellName = terminalView.startupOptionsDeferred.getNow()?.guessShellName() ?: ShellName.of("unknown")
-    return TerminalDropContext(eelDescriptor, shellName)
-  }
-
-  private fun getTextToInsertForFiles(files: List<VirtualFile>, context: TerminalDropContext): String {
-    return files.mapNotNull { file -> getPathToInsert(file, context.eelDescriptor) }
-      .joinToString(" ") { path -> escapeShellArgument(path, context.shellName) }
-  }
-
-  private fun getPathToInsert(file: VirtualFile, eelDescriptor: EelDescriptor): String? {
-    // RemDev and Monolith modes expose different VFS shapes, so keep the checks separate.
-    return if (IdeProductMode.isFrontend) getPathInFrontend(file) else getPathInMonolith(file, eelDescriptor)
-  }
-
-  private fun getPathInFrontend(file: VirtualFile): String? {
-    // In RemDev frontend, only paths from the remote machine should be inserted.
-    // This proxy is intentionally conservative: it is not a perfect remote-file check,
-    // but it accepts files dropped from the remote Project View.
-    return file.path.takeIf { !file.isInLocalFileSystem }
-  }
-
-  private fun getPathInMonolith(file: VirtualFile, eelDescriptor: EelDescriptor): String? {
-    // In monolith, VFS files should be local first.
-    if (!file.isInLocalFileSystem) return null
-
-    val nioPath = file.toNioPathOrNull() ?: return null
-    // Normal case: paste only paths from the same EEL machine as the shell. This covers local,
-    // WSL, and Docker paths that already belong to the shell environment.
-    if (isSameEnvironment(nioPath, eelDescriptor)) {
-      return runCatching { nioPath.asEelPath().toString() }.getOrNull()
+  private fun getVirtualFilesAsText(
+    files: List<VirtualFile>,
+    terminalContext: TerminalProcessContext,
+    projectEelDescriptor: EelDescriptor,
+  ): String {
+    val paths = files.mapNotNull {
+      getNioPathForFile(it, projectEelDescriptor)
     }
-
-    // Special case for WSL shells: Windows drives are mounted inside WSL, so a local Windows file
-    // can still be meaningful to the shell after translation, for example C:\work -> /mnt/c/work.
-    return translateLocalPathToWsl(nioPath, eelDescriptor)
+    return getPathAsText(paths, terminalContext)
   }
 
-  private fun isSameEnvironment(filePath: Path, eelDescriptor: EelDescriptor): Boolean {
-    val fileMachine = filePath.getEelDescriptor().getResolvedEelMachine() ?: return false
-    val eelMachine = eelDescriptor.getResolvedEelMachine() ?: return false
-    return fileMachine == eelMachine
-  }
+  private fun getNioPathForFile(file: VirtualFile, projectEelDescriptor: EelDescriptor): Path? {
+    file.toNioPathOrNull()?.let { return it }
 
-  private fun translateLocalPathToWsl(nioPath: Path, eelDescriptor: EelDescriptor): String? {
-    val fileDescriptor = nioPath.getEelDescriptor()
-    if (fileDescriptor != LocalEelDescriptor || !LocalEelDescriptor.osFamily.isWindows || !eelDescriptor.osFamily.isPosix) {
-      return null
+    // Handle the case of ThinClientNodeVirtualFile (file dropped from the Project View in RemDev).
+    // It doesn't implement [VirtualFile.toNioPathOrNull], so we need to reconstruct the path manually.
+    return if (IdeProductMode.isFrontend) {
+      try {
+        EelPath.parse(file.path, projectEelDescriptor).asNioPath()
+      }
+      catch (_: EelPathException) {
+        null
+      }
+      catch (_: IllegalArgumentException) {
+        null
+      }
     }
-
-    return TerminalLocalPathTranslator(eelDescriptor).translateAbsoluteLocalPathToRemote(nioPath)?.toString()
+    else null
   }
 
-  private suspend fun resolveVirtualFiles(paths: List<Path>): List<VirtualFile> = withContext(Dispatchers.IO) {
-    paths.mapNotNull { path -> VfsUtil.findFile(path, true) }
+  private fun getDirectory(filePath: Path?): Path? {
+    if (filePath == null) return null
+    return if (filePath.isDirectory()) filePath else filePath.parent
   }
 
-  private data class TerminalDropContext(
-    val eelDescriptor: EelDescriptor,
-    val shellName: ShellName,
-  )
+  /**
+   * It is expected that passed [TerminalDropData] contains at least one file or non-null text.
+   */
+  private fun getDroppedContentType(data: TerminalDropData): TerminalInsertedContentType {
+    return if (data.virtualFiles.isNotEmpty()) {
+      when {
+        data.virtualFiles.size > 1 -> TerminalInsertedContentType.MULTIPLE_ITEMS
+        data.virtualFiles.single().isDirectory -> TerminalInsertedContentType.DIRECTORY
+        else -> TerminalInsertedContentType.FILE
+      }
+    }
+    else if (data.paths.isNotEmpty()) {
+      when {
+        data.paths.size > 1 -> TerminalInsertedContentType.MULTIPLE_ITEMS
+        data.paths.single().isDirectory() -> TerminalInsertedContentType.DIRECTORY
+        else -> TerminalInsertedContentType.FILE
+      }
+    }
+    else if (data.text != null) {
+      TerminalInsertedContentType.TEXT
+    }
+    else error("It is expected that passed TerminalDropData contains at least one file or non-null text")
+  }
 }
 
 internal class TerminalDropData(event: DnDEvent) {
-  val virtualFiles: List<VirtualFile>? = (event.attachedObject as? TransferableWrapper)
-    ?.getPsiElements()
-    ?.filterIsInstance<PsiFileSystemItem>()
-    ?.map { it.virtualFile }
-    ?.takeIf { it.isNotEmpty() }
+  val virtualFiles: List<VirtualFile> = (event.attachedObject as? TransferableWrapper)
+    ?.getVirtualFiles()
+    ?.toList()
+    ?: emptyList()
 
-  val paths: List<Path> = if (virtualFiles == null)
+  val paths: List<Path> = if (virtualFiles.isEmpty()) {
     getFileListFromAttachedObject(event.attachedObject).map { it.toPath() }
+  }
   else emptyList()
+
+  /** Plain text payload of a drop that carries no files; inserted into the terminal as is. */
+  val text: String? = if (virtualFiles.isEmpty() && paths.isEmpty()) {
+    getDroppedText(event.attachedObject)
+  }
+  else null
+}
+
+private fun getDroppedText(attachedObject: Any?): String? {
+  val transferable = (attachedObject as? DnDNativeTarget.EventInfo)?.transferable ?: return null
+  return try {
+    if (transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+      transferable.getTransferData(DataFlavor.stringFlavor) as? String
+    }
+    else null
+  }
+  catch (_: Exception) {
+    null
+  }
 }

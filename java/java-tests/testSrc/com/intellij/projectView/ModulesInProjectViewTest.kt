@@ -6,12 +6,16 @@ import com.intellij.ide.projectView.impl.PackageViewPane
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.Queryable
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.project.stateStore
+import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
+import com.intellij.workspaceModel.ide.registerProjectRoot
 
 abstract class ModulesInProjectViewTestCase : BaseProjectViewTestCase() {
   init {
@@ -115,6 +119,29 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
       ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded"))
     }
     assertStructureEqual(expected)
+  }
+
+  fun `test module and plain project root`() {
+    val root = directoryContent {
+      dir("module") {
+        dir("subdir") {}
+      }
+      dir("projectRoot") {
+        dir("subdir") {}
+      }
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addContentRoot(createModule("module"), root.findChild("module")!!)
+    runWithModalProgressBlocking(myProject, "") {
+      registerProjectRoot(myProject, root.findChild("projectRoot")!!.toNioPath())
+    }
+    assertStructureEqual("""
+          |Project
+          | module
+          |  subdir
+          | projectRoot
+          |  subdir
+          |
+          """.trimMargin())
   }
 
   fun `test do not show parent groups for single module`() {
@@ -239,6 +266,36 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
       """.trimMargin())
   }
 
+  // BAZEL-3331: reproduces the "dummy module" case where a directory belongs to a different module than the files inside it.
+  fun `test directory with children from another module is shown in flatten packages mode`() {
+    val root = directoryContent {
+      dir("moduleA") {
+        file("File1.kt")
+        file("File2.kt")
+      }
+    }.generateInVirtualTempDir()
+    val moduleADir = root.findChild("moduleA")!!
+    val file1 = moduleADir.findChild("File1.kt")!!
+    val file2 = moduleADir.findChild("File2.kt")!!
+    val moduleA = createModule("moduleA")
+    PsiTestUtil.addContentRoot(moduleA, moduleADir)
+    PsiTestUtil.addSourceRoot(moduleA, moduleADir)
+    val moduleB = createModule("moduleB")
+    PsiTestUtil.addSourceRoot(moduleB, file1)
+    PsiTestUtil.addSourceRoot(moduleB, file2)
+    val projectFileIndex = ProjectRootManager.getInstance(myProject).fileIndex
+    assertEquals(moduleA, projectFileIndex.getModuleForFile(moduleADir))
+    assertEquals(moduleB, projectFileIndex.getModuleForFile(file1))
+    assertEquals(moduleB, projectFileIndex.getModuleForFile(file2))
+    assertFalse(ModuleRootManager.getInstance(moduleA).fileIndex.isInContent(file1))
+    myStructure.isFlattenPackages = true
+    val psiDirectory = PsiManager.getInstance(myProject).findDirectory(moduleADir)!!
+    assertStructureEqual(psiDirectory, """
+      moduleA
+       File1.kt
+       File2.kt
+      """.trimIndent())
+  }
 }
 
 class ModulesInPackageViewTest : ModulesInProjectViewTestCase() {

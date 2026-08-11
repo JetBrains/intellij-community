@@ -6,7 +6,7 @@
 // ACTION: Make 'InternalString' public
 // ACTION: Make 'User' internal
 // ACTION: Make 'User' private
-// K2_ERROR: 'public' generic exposes its 'internal' parameter bound type argument 'InternalString'.
+// K2_ERROR: EXPOSED_TYPE_PARAMETER_BOUND
 
 internal open class InternalString
 

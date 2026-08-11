@@ -9,7 +9,6 @@ import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
 import com.jetbrains.python.packaging.common.ProjectUrl
 import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.pip.PyPiPackageCache
 import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.repository.buildPackageDetailsBySimpleDetailsProtocol
@@ -17,11 +16,15 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 object CondaPackageRepository : PyPackageRepository("Conda", null, null) {
+  override var enabled: Boolean
+    get() = service<com.jetbrains.python.packaging.repository.PyPackageRepositories>().isDefaultRepoEnabled(name)
+    set(value) { service<com.jetbrains.python.packaging.repository.PyPackageRepositories>().setDefaultRepoEnabled(name, value) }
+
   override fun search(needle: String, pageSize: Int): PythonPackageSearchResult =
     service<CondaPackageCache>().search(needle, pageSize)
 
   override fun getSize(): Int =
-    service<PyPiPackageCache>().size
+    service<CondaPackageCache>().size
 
   override fun getProjectUrl(packageName: String): ProjectUrl {
     val encoded = URLEncoder.encode(packageName, StandardCharsets.UTF_8)

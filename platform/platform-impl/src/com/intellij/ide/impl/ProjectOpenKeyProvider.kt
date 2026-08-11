@@ -6,7 +6,9 @@ import com.intellij.ide.environment.EnvironmentKeyProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import java.util.function.Supplier
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ProjectOpenKeyProvider : EnvironmentKeyProvider {
   object Keys {
     val PROJECT_OPEN_PROCESSOR: EnvironmentKey = EnvironmentKey.create("project.open.type")

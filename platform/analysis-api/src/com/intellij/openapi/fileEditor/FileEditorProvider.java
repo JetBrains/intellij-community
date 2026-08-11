@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -8,9 +8,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ReflectionUtil;
+import kotlin.Lazy;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Should be registered via {@link #EP_FILE_EDITOR_PROVIDER}.
@@ -18,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * Synchronous providers are queried and constructed on the UI thread, so {@link #accept(Project, VirtualFile)} and
  * {@link #createEditor(Project, VirtualFile)} must remain lightweight. If editor creation needs indexing, PSI, or other
  * expensive work, implement {@link AsyncFileEditorProvider} to offload preparation to a background thread and only build
- * UI on the EDT.
+ * the UI on the EDT.
  *
  * @see DumbAware
  */
@@ -35,6 +38,7 @@ public interface FileEditorProvider extends PossiblyDumbAware {
    *
    * @param file file to be tested for acceptance.
    * @return {@code true} if provider can create valid editor for the specified {@code file}.
+   * @see #acceptRequiresReadAction()
    */
   boolean accept(@NotNull Project project, @NotNull VirtualFile file);
 
@@ -66,8 +70,35 @@ public interface FileEditorProvider extends PossiblyDumbAware {
   }
 
   /**
-   * Deserializes state from the specified {@code sourceElement}.
+   * Deserializes state from the specified {@code sourceElement} and file.
+   *
+   * @param sourceElement serialized state
+   * @param project Project context
+   * @param file lazily located {@link VirtualFile}, can be null
    */
+  @SuppressWarnings("BoundedWildcard")
+  default @NotNull FileEditorState readState(@NotNull Element sourceElement,
+                                             @NotNull Project project,
+                                             @NotNull Lazy<@Nullable VirtualFile> file) {
+    // If the provider does not override the deprecated readState, the findFileByUrl fallback below would only feed the
+    // default readState, which returns FileEditorState.INSTANCE anyway. Skip the potentially blocking file lookup then.
+    if (!ReflectionUtil.hasOverriddenMethod(getClass(), FileEditorProvider.class, "readState",
+                                            Element.class, Project.class, VirtualFile.class)) {
+      return FileEditorState.INSTANCE;
+    }
+
+    var vFile = file.getValue();
+    if (vFile == null) return FileEditorState.INSTANCE;
+
+    return readState(sourceElement, project, vFile);
+  }
+
+  /**
+   * Deserializes state from the specified {@code sourceElement}.
+   *
+   * @deprecated implement {@link #readState(Element, Project, Lazy)} instead
+   */
+  @Deprecated
   default @NotNull FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
     return FileEditorState.INSTANCE;
   }

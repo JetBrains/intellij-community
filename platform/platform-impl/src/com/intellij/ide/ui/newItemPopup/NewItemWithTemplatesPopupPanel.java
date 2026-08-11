@@ -14,6 +14,7 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.AbstractListModel;
@@ -108,10 +109,12 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     add(templatesListHolder, BorderLayout.CENTER);
   }
 
+  @ApiStatus.Internal
   public void addTemplatesVisibilityListener(TemplatesListVisibilityListener listener) {
     myVisibilityListeners.add(listener);
   }
 
+  @ApiStatus.Internal
   public void removeTemplatesVisibilityListener(TemplatesListVisibilityListener listener) {
     myVisibilityListeners.remove(listener);
   }
@@ -148,6 +151,7 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     return list;
   }
 
+  @ApiStatus.Internal
   protected final class MyListModel extends AbstractListModel<T> {
 
     private final List<T> myItems = new ArrayList<>();

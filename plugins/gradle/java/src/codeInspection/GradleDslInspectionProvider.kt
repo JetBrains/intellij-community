@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.codeInspection
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -46,7 +46,7 @@ interface GradleDslInspectionProvider {
   fun getAvoidDependencyNamedArgumentsNotationInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor
 
   /**
-   * @see com.intellij.gradle.java.properties.codeInspection.GradleRedundantKotlinStdLibInspection
+   * @see GradleRedundantKotlinStdLibInspection
    */
   fun isRedundantKotlinStdLibInspectionAvailable(file: PsiFile): Boolean
   fun getRedundantKotlinStdLibInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor

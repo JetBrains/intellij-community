@@ -1,12 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
-import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -21,9 +19,7 @@ public class ParameterHintsPassFactory implements TextEditorHighlightingPassFact
 
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-    boolean serialized = ((TextEditorHighlightingPassRegistrarImpl)registrar).isSerializeCodeInsightPasses();
-    int[] ghl = serialized ? new int[]{Pass.UPDATE_ALL} : null;
-    registrar.registerTextEditorHighlightingPass(this, ghl, null, false, -1);
+    registrar.registerTextEditorHighlightingPass(this, null, null, false, -1);
   }
 
   @Override

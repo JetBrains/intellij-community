@@ -17,12 +17,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElement> extends AnAction {
   protected final @NotNull Class<T> myClass;
   protected final @NotNull Class<? extends PsiFile> myFileClass;

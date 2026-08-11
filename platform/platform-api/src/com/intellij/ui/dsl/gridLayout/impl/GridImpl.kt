@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.gridLayout.impl
 
-import com.intellij.ui.dsl.UiDslException
-import com.intellij.ui.dsl.checkTrue
 import com.intellij.ui.dsl.gridLayout.Constraints
-import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.Grid
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.GridLayoutComponentProperty
@@ -14,7 +11,6 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGapsX
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.scale.JBUIScale
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Insets
 import java.awt.Rectangle
@@ -23,7 +19,6 @@ import javax.swing.JComponent
 import kotlin.math.max
 import kotlin.math.min
 
-@ApiStatus.Internal
 internal class GridImpl : Grid {
 
   override val resizableColumns: MutableSet<Int> = mutableSetOf()
@@ -39,9 +34,7 @@ internal class GridImpl : Grid {
   private val cells = mutableListOf<Cell>()
 
   fun register(component: JComponent, constraints: Constraints) {
-    if (!isEmpty(constraints)) {
-      throw UiDslException("Some cells are occupied already: $constraints")
-    }
+    check(isEmpty(constraints)) { "Some cells are occupied already: $constraints" }
 
     cells.add(ComponentCell(constraints, component))
   }
@@ -49,9 +42,7 @@ internal class GridImpl : Grid {
   fun setConstraints(component: JComponent, constraints: Constraints) {
     for ((i, cell) in cells.withIndex()) {
       if (cell is ComponentCell && cell.component === component) {
-        if (!isEmpty(constraints, cell.constraints)) {
-          throw UiDslException("Some cells are occupied already: $constraints")
-        }
+        check(isEmpty(constraints, cell.constraints)) { "Some cells are occupied already: $constraints" }
 
         cells[i] = ComponentCell(constraints, component)
         return
@@ -60,9 +51,7 @@ internal class GridImpl : Grid {
   }
 
   fun registerSubGrid(constraints: Constraints): Grid {
-    if (!isEmpty(constraints)) {
-      throw UiDslException("Some cells are occupied already: $constraints")
-    }
+    check(isEmpty(constraints)) { "Some cells are occupied already: $constraints" }
 
     val result = GridImpl()
     cells.add(GridCell(constraints, result))
@@ -655,7 +644,7 @@ private class BaselineData {
   fun registerBaseline(layoutCellData: LayoutCellData, baseline: Int) {
     val constraintsGaps = layoutCellData.scaledGaps
     val constraintsVisualPaddings = layoutCellData.scaledVisualPaddings
-    checkTrue(isSupportedBaseline(layoutCellData.cell.constraints))
+    check(isSupportedBaseline(layoutCellData.cell.constraints))
     val rowBaselineData = getOrCreate(layoutCellData)
 
     rowBaselineData.maxAboveBaseline = max(rowBaselineData.maxAboveBaseline,
@@ -668,7 +657,7 @@ private class BaselineData {
    * Returns data for single available row
    */
   fun get(verticalAlign: VerticalAlign): RowBaselineData? {
-    checkTrue(rowBaselineData.size <= 1)
+    check(rowBaselineData.size <= 1)
     return rowBaselineData.firstNotNullOfOrNull { it.value }?.get(verticalAlign)
   }
 
@@ -696,7 +685,6 @@ private fun isSupportedBaseline(constraints: Constraints): Boolean {
   return constraints.baselineAlign && constraints.verticalAlign != VerticalAlign.FILL && constraints.height == 1
 }
 
-@ApiStatus.Internal
 internal class PreCalculationData(val minimumSize: Dimension, val preferredSize: Dimension, val constraints: Constraints) {
 
   var calculatedMinimumSize: Dimension = Dimension(minimumSize.width, minimumSize.height)
@@ -707,7 +695,6 @@ internal class PreCalculationData(val minimumSize: Dimension, val preferredSize:
   var calculatedPreferredSize: Dimension = Dimension(max(minimumSize.width, preferredSize.width), max(minimumSize.height, preferredSize.height))
 }
 
-@ApiStatus.Internal
 internal data class SizeConstrainsData(val minimumSize: Dimension, val preferredSize: Dimension, val outsideGaps: Gaps)
 
 private fun UnscaledGaps.scale(): Gaps = Gaps(JBUIScale.scale(top), JBUIScale.scale(left), JBUIScale.scale(bottom), JBUIScale.scale(right))

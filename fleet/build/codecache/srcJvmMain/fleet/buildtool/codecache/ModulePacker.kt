@@ -4,7 +4,6 @@ import com.intellij.util.lang.ImmutableZipFile
 import fleet.buildtool.codecache.specs.NativeLibrariesExtractorSpec
 import fleet.buildtool.codecache.specs.NativeLibraryExtractor
 import fleet.buildtool.codecache.specs.MoveFileSpec
-import fleet.buildtool.codecache.specs.ScrambledJarSpec
 import fleet.buildtool.codecache.specs.ShadowedJarSpec
 import fleet.buildtool.fs.extractZip
 import fleet.buildtool.platform.Arch
@@ -43,7 +42,6 @@ private typealias Jar = Path
 
 data class PackedJar(
   val path: Path,
-  val needsScrambling: Boolean,
   val nativeFilesByPlatform: Map<Platform, List<Path>>,
 )
 
@@ -66,7 +64,6 @@ class ModulePacker(
   private val version: String?,
   private val logger: Logger,
   private val shadowedJarSpecs: List<ShadowedJarSpec>,
-  private val scrambledJarSpecs: List<ScrambledJarSpec> = emptyList(),
   private val moveFileSpecs: List<MoveFileSpec> = emptyList(),
 ) {
   private val cache = ConcurrentHashMap<Path, CacheEntry>()
@@ -89,8 +86,7 @@ class ModulePacker(
           true -> shadowing.shadowedJar
           false -> null
         }
-        val needsScrambling = scrambledJarSpecs.any { it.needsScrambling(jar) }
-        pack(jar, needsScrambling, shadowed)
+        pack(jar, shadowed)
       }
     }
     return PackedModule(
@@ -105,12 +101,11 @@ class ModulePacker(
    * Also, extracts JNA native libraries files from the resulting jar and expose them through [PackedJar.nativeFiles].
    *
    * @param file either a directory of classes representing an output of compilation of a module, or a `jar` to be repacked as immutable
-   * @param needsScrambling whether the resulting packed jar will require scrambling in further step of the build tool
    * @param shadowed if specified, a jar to shadow (extract inside) the resulting packed jar
    */
   @OptIn(ExperimentalPathApi::class)
-  private fun pack(file: Path, needsScrambling: Boolean, shadowed: Path?): PackedJar {
-    logger.info("Packing/repacking '$file' (needsScrambling=$needsScrambling, shadowing=$shadowed)")
+  private fun pack(file: Path, shadowed: Path?): PackedJar {
+    logger.info("Packing/repacking '$file' (shadowing=$shadowed)")
     require(shadowedJarSpecs.none { file.name.matches(it.shadowedJarPattern) }) {
       "${file.name} should have been shadowed, contact #fleet-support"
     }
@@ -118,12 +113,11 @@ class ModulePacker(
       when (existing) {
         null -> {
           directory.createDirectories()
-          logger.debug("'{}' (needsScrambling={}, shadowing={}) not found in cache, packing it...", file, needsScrambling, shadowed)
+          logger.debug("'{}' (shadowing={}) not found in cache, packing it...", file, shadowed)
           val nativeLibrariesExtractorSpec = (nativeLibraryExtractor as? NativeLibraryExtractor.ExtractTo)?.specificationFor(fileToPack.name)
           val jar = when {
             Files.isDirectory(fileToPack) -> packToImmutableJar(
               path = fileToPack,
-              needsScrambling = needsScrambling,
               shadowed = shadowed,
               target = when {
                 version != null -> directory.resolve("${fileToPack.fileName}-$version.jar")
@@ -135,7 +129,6 @@ class ModulePacker(
 
             nativeLibrariesExtractorSpec != null -> repackToImmutableJarExtractingNativeFiles(
               fileToPack,
-              needsScrambling,
               shadowed,
               targetDirectory = directory,
               nativeLibrariesTargetDirectory = nativeLibraryExtractor.directory,
@@ -145,7 +138,6 @@ class ModulePacker(
 
             fileToPack.name.endsWith(".jar") -> packToImmutableJar(
               path = fileToPack,
-              needsScrambling = needsScrambling,
               shadowed = shadowed,
               target = directory.resolve(fileToPack.name),
               logger = logger,
@@ -162,13 +154,6 @@ class ModulePacker(
         }
 
         else -> {
-          require(needsScrambling == existing.jar.needsScrambling) {
-            """
-            |'$file' has already been packed/repacked but with different instructions about scrambling, this is very likely a bug in the build tool, contact #fleet-support
-            |Existing: ${existing.jar.needsScrambling}
-            |Current: ${needsScrambling}
-          """.trimMargin()
-          }
           require(shadowed == existing.shadowed) {
             """
             |'$file' has already been packed/repacked but with different instructions about shadowing, this is very likely a bug in the build tool, contact #fleet-support
@@ -183,7 +168,7 @@ class ModulePacker(
   }
 }
 
-fun packToImmutableJar(path: Path, needsScrambling: Boolean, shadowed: Path?, target: Path, logger: Logger, moveFilesSpec: List<MoveFileSpec> = emptyList()): PackedJar {
+fun packToImmutableJar(path: Path, shadowed: Path?, target: Path, logger: Logger, moveFilesSpec: List<MoveFileSpec> = emptyList()): PackedJar {
   target.deleteIfExists()
   target.parent.createDirectories()
   val intermediateJar = when {
@@ -197,7 +182,6 @@ fun packToImmutableJar(path: Path, needsScrambling: Boolean, shadowed: Path?, ta
                                moveFilesSpec) // order of jars list matters, shadowed content overrides original content (reason: DebugProbes.kt of shadowed `:dock-coroutines` subproject must override `kotlin-stdlib` ones)
   return PackedJar(
     path = jar,
-    needsScrambling = needsScrambling,
     nativeFilesByPlatform = emptyMap(),
   )
 }
@@ -205,7 +189,6 @@ fun packToImmutableJar(path: Path, needsScrambling: Boolean, shadowed: Path?, ta
 @OptIn(ExperimentalPathApi::class)
 private fun repackToImmutableJarExtractingNativeFiles(
   jar: Path,
-  needsScrambling: Boolean,
   shadowed: Path?,
   targetDirectory: Path,
   nativeLibrariesTargetDirectory: Path,
@@ -233,7 +216,6 @@ private fun repackToImmutableJarExtractingNativeFiles(
   tmp.deleteRecursively()
   return PackedJar(
     path = jar,
-    needsScrambling = needsScrambling,
     nativeFilesByPlatform = nativeFiles,
   )
 }

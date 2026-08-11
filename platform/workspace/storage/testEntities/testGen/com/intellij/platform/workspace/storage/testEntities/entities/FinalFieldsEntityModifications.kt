@@ -19,7 +19,7 @@ interface FinalFieldsEntityBuilder : WorkspaceEntityBuilder<FinalFieldsEntity> {
 }
 
 internal object FinalFieldsEntityType : EntityType<FinalFieldsEntity, FinalFieldsEntityBuilder>() {
-  override val entityClass: Class<FinalFieldsEntity> get() = FinalFieldsEntity::class.java
+  override val entityImplClass: Class<*> get() = FinalFieldsEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = FinalFieldsEntityImpl.Builder::class.java
   operator fun invoke(
     descriptor: AnotherDataClass,

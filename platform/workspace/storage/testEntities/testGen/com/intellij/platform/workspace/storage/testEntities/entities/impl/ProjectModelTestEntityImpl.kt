@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -15,7 +14,6 @@ import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
@@ -31,7 +29,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ProjectMode
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTestEntityData) : ProjectModelTestEntity,
                                                                                                 WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ProjectModelTestEntity::class.java,
                                                                                 ProjectModelTestEntity::class.java,
@@ -46,7 +43,6 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
                                                                                ConnectionId.ConnectionType.ONE_TO_ONE,
                                                                                true)
     private val connections = listOf<ConnectionId>(PARENTENTITY_CONNECTION_ID, CHILDRENENTITIES_CONNECTION_ID, CONTENTROOT_CONNECTION_ID)
-
   }
 
   override val info: String
@@ -62,11 +58,11 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
   override val parentEntity: ProjectModelTestEntity?
     get() = snapshot.instrumentation.getParent(PARENTENTITY_CONNECTION_ID, this) as? ProjectModelTestEntity
   override val childrenEntities: List<ProjectModelTestEntity>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(CHILDRENENTITIES_CONNECTION_ID, this) as? Sequence<ProjectModelTestEntity>)?.toList()
-            ?: error("Children childrenEntities not found for ProjectModelTestEntity")
+            ?: error("Children list childrenEntities not found for ProjectModelTestEntity")
   override val contentRoot: ContentRootTestEntity?
     get() = snapshot.instrumentation.getOneChild(CONTENTROOT_CONNECTION_ID, this) as? ContentRootTestEntity
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -77,33 +73,11 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
     return connections
   }
 
-
   internal class Builder(result: ProjectModelTestEntityData?) :
     ModifiableWorkspaceEntityBase<ProjectModelTestEntity, ProjectModelTestEntityData>(result), ProjectModelTestEntityBuilder {
     internal constructor() : this(ProjectModelTestEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity ProjectModelTestEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -140,14 +114,12 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var info: String
       get() = getEntityData().info
@@ -162,7 +134,6 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
         checkModificationAllowed()
         getEntityData(true).descriptor = value
         changedProperty.add("descriptor")
-
       }
     override var parentEntity: ProjectModelTestEntityBuilder?
       get() {
@@ -181,11 +152,10 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
 // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          @Suppress("UNCHECKED_CAST")
+          val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+          value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -194,28 +164,29 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
         else {
 // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            @Suppress("UNCHECKED_CAST")
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("parentEntity")
       }
 
     // List of non-abstract referenced types
-    var _childrenEntities: List<ProjectModelTestEntity>? = emptyList()
     override var childrenEntities: List<ProjectModelTestEntityBuilder>
       get() {
 // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDRENENTITIES_CONNECTION_ID, this)!!
+          @Suppress("UNCHECKED_CAST")
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDRENENTITIES_CONNECTION_ID, this)
             .toList() as List<ProjectModelTestEntityBuilder>) + (this.entityLinks[EntityLink(true,
                                                                                              CHILDRENENTITIES_CONNECTION_ID)] as? List<ProjectModelTestEntityBuilder>
                                                                  ?: emptyList())
         }
         else {
+          @Suppress("UNCHECKED_CAST")
           this.entityLinks[EntityLink(true, CHILDRENENTITIES_CONNECTION_ID)] as? List<ProjectModelTestEntityBuilder> ?: emptyList()
         }
       }
@@ -227,10 +198,8 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
 // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, CHILDRENENTITIES_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
+              item_value.entityLinks[EntityLink(false, CHILDRENENTITIES_CONNECTION_ID)] = this
+              @Suppress("UNCHECKED_CAST")
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -241,13 +210,11 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDRENENTITIES_CONNECTION_ID)] = this
             }
-// else you're attaching a new entity to an existing entity that is not modifiable
           }
           this.entityLinks[EntityLink(true, CHILDRENENTITIES_CONNECTION_ID)] = value
         }
         changedProperty.add("childrenEntities")
       }
-
     override var contentRoot: ContentRootTestEntityBuilder?
       get() {
         val _diff = diff
@@ -264,10 +231,8 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -277,7 +242,6 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = value
         }
         changedProperty.add("contentRoot")
@@ -285,34 +249,16 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
 
     override fun getEntityClass(): Class<ProjectModelTestEntity> = ProjectModelTestEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ProjectModelTestEntityData : WorkspaceEntityData<ProjectModelTestEntity>() {
   lateinit var info: String
   lateinit var descriptor: Descriptor
-
   internal fun isInfoInitialized(): Boolean = ::info.isInitialized
   internal fun isDescriptorInitialized(): Boolean = ::descriptor.isInitialized
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ProjectModelTestEntity> {
-    val modifiable = ProjectModelTestEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): ProjectModelTestEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = ProjectModelTestEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): ProjectModelTestEntity = ProjectModelTestEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<ProjectModelTestEntity, *> = ProjectModelTestEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.ProjectModelTestEntity") as EntityMetadata
   }

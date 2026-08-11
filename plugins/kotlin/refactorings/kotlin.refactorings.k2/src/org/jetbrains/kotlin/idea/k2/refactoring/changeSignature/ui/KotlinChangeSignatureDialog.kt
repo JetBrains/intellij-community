@@ -18,16 +18,17 @@ import com.intellij.util.Consumer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -52,6 +53,7 @@ import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtTypeCodeFragment
 import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.kotlin.types.Variance
+import java.util.Locale.getDefault
 
 @OptIn(KaAllowAnalysisOnEdt::class)
 internal class KotlinChangeSignatureDialog(
@@ -60,7 +62,7 @@ internal class KotlinChangeSignatureDialog(
     methodDescriptor: KotlinMethodDescriptor,
     context: PsiElement,
     @NlsContexts.Command private val commandName: String?
-) : KotlinBaseChangeSignatureDialog<KotlinParameterInfo, Visibility, KotlinMethodDescriptor>(
+) : KotlinBaseChangeSignatureDialog<KotlinParameterInfo, KaSymbolVisibility, KotlinMethodDescriptor>(
     project,
     editor,
     methodDescriptor,
@@ -73,7 +75,7 @@ internal class KotlinChangeSignatureDialog(
         return allowAnalysisOnEdt {
             analyze(typeRef) {
                 val ktType = typeRef.type
-                return ktType !is KaErrorType
+                ktType !is KaErrorType
             }
         }
     }
@@ -87,7 +89,9 @@ internal class KotlinChangeSignatureDialog(
         validateButtonsAsync()
     }
 
-    override fun createParametersInfoModel(method: KotlinMethodDescriptor): KotlinCallableParameterTableModel<KotlinParameterInfo, Visibility> {
+    override fun createParametersInfoModel(
+        method: KotlinMethodDescriptor
+    ): KotlinCallableParameterTableModel<KotlinParameterInfo, KaSymbolVisibility> {
         fun createRowItemInner(
             parameterInfo: KotlinParameterInfo?,
             typeContext: PsiElement,
@@ -135,21 +139,21 @@ internal class KotlinChangeSignatureDialog(
             }
         }
         return when (method.kind) {
-            Kind.FUNCTION -> object : KotlinFunctionParameterTableModel<KotlinParameterInfo, Visibility>(method, myDefaultValueContext) {
+            Kind.FUNCTION -> object : KotlinFunctionParameterTableModel<KotlinParameterInfo, KaSymbolVisibility>(method, myDefaultValueContext) {
                 override fun createRowItem(parameterInfo: KotlinParameterInfo?): ParameterTableModelItemBase<KotlinParameterInfo> {
                     return createRowItemInner(parameterInfo, myTypeContext, myDefaultValueContext)
                 }
             }
 
             Kind.PRIMARY_CONSTRUCTOR -> object :
-                KotlinPrimaryConstructorParameterTableModel<KotlinParameterInfo, Visibility>(method, myDefaultValueContext) {
+                KotlinPrimaryConstructorParameterTableModel<KotlinParameterInfo, KaSymbolVisibility>(method, myDefaultValueContext) {
                 override fun createRowItem(parameterInfo: KotlinParameterInfo?): ParameterTableModelItemBase<KotlinParameterInfo> {
                     return createRowItemInner(parameterInfo, myTypeContext, myDefaultValueContext)
                 }
             }
 
             Kind.SECONDARY_CONSTRUCTOR -> object :
-                KotlinSecondaryConstructorParameterTableModel<KotlinParameterInfo, Visibility>(method, myDefaultValueContext) {
+                KotlinSecondaryConstructorParameterTableModel<KotlinParameterInfo, KaSymbolVisibility>(method, myDefaultValueContext) {
                 override fun createRowItem(parameterInfo: KotlinParameterInfo?): ParameterTableModelItemBase<KotlinParameterInfo> {
                     return createRowItemInner(parameterInfo, myTypeContext, myDefaultValueContext)
                 }
@@ -242,13 +246,13 @@ internal class KotlinChangeSignatureDialog(
 
     private fun KotlinChangeInfo.getNewSignature(): String {
         val buffer = StringBuilder()
-        val isCustomizedVisibility = visibility != Visibilities.DEFAULT_VISIBILITY
+        val isCustomizedVisibility = visibility != KaSymbolVisibility.PUBLIC
 
         if (methodDescriptor.kind == Kind.PRIMARY_CONSTRUCTOR) {
             buffer.append(newName)
 
             if (isCustomizedVisibility) {
-                buffer.append(' ').append(visibility).append(" constructor ")
+                buffer.append(' ').append(visibility?.name?.lowercase(getDefault())).append(" constructor ")
             }
         } else {
             val contextParameters = getNonReceiverParameters().filter { it.isContextParameter }
@@ -259,7 +263,7 @@ internal class KotlinChangeSignatureDialog(
             }
 
             if (!KtPsiUtil.isLocal(methodDescriptor.method) && isCustomizedVisibility) {
-                buffer.append(visibility).append(' ')
+                buffer.append(visibility?.name?.lowercase(getDefault())).append(' ')
             }
 
             buffer.append(if (methodDescriptor.kind == Kind.SECONDARY_CONSTRUCTOR) KtTokens.CONSTRUCTOR_KEYWORD else KtTokens.FUN_KEYWORD).append(' ')
@@ -293,13 +297,14 @@ internal class KotlinChangeSignatureDialog(
         return buffer.toString()
     }
 
-    override fun createVisibilityControl(): VisibilityPanelBase<Visibility> = ComboBoxVisibilityPanel(
+    override fun createVisibilityControl(): VisibilityPanelBase<KaSymbolVisibility> = ComboBoxVisibilityPanel(
         arrayOf(
-            Visibilities.Internal,
-            Visibilities.Private,
-            Visibilities.Protected,
-            Visibilities.Public
-        )
+            KaSymbolVisibility.INTERNAL,
+            KaSymbolVisibility.PRIVATE,
+            KaSymbolVisibility.PROTECTED,
+            KaSymbolVisibility.PUBLIC
+        ),
+        arrayOf("internal", "private", "protected", "public")
     )
 }
 

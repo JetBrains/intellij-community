@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionResult
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.pinned.items.PinToTopMemberValue
@@ -28,7 +29,13 @@ import java.util.Collections
 class XDebuggerPinToTopAction : XDebuggerTreeSplitActionBase() {
 
     companion object {
-        fun pinToTopField(mouseEvent: MouseEvent?, node: XValueNodeImpl) {
+        /**
+         * Toggles the pinned state of [node].
+         *
+         * @return `false` if the node cannot be pinned at all, in which case nothing was changed and no view rebuild
+         * was requested. The reason is logged as a warning.
+         */
+        fun pinToTopField(mouseEvent: MouseEvent?, node: XValueNodeImpl): Boolean {
           val event = AnActionEvent.createFromInputEvent(
             mouseEvent,
             XDebuggerPinToTopAction::class.java.name,
@@ -39,11 +46,14 @@ class XDebuggerPinToTopAction : XDebuggerTreeSplitActionBase() {
               .add(XDebuggerTree.SELECTED_NODES, Collections.singletonList(node))
               .build()
           )
-          if (node.name != null) { // to follow the "perform" logic
-            performImpl(node.tree.project, node)
-            val action = ActionManager.getInstance().getAction("XDebugger.PinToTop")
-            ActionsCollectorImpl.onAfterActionInvoked(action, event, AnActionResult.PERFORMED)
+          if (node.name == null) { // to follow the "perform" logic
+            LOG.warn("Pin to top refused: node has no name, value container is ${node.valueContainer.javaClass.name}")
+            return false
           }
+          val performed = performImpl(node.tree.project, node)
+          val action = ActionManager.getInstance().getAction("XDebugger.PinToTop")
+          ActionsCollectorImpl.onAfterActionInvoked(action, event, AnActionResult.PERFORMED)
+          return performed
         }
     }
 
@@ -78,14 +88,23 @@ class XDebuggerPinToTopAction : XDebuggerTreeSplitActionBase() {
   }
 }
 
-private fun performImpl(project: Project, node: XValueNodeImpl) {
-  if (!node.canBePinned())
-    return
+private val LOG = logger<XDebuggerPinToTopAction>()
+
+private fun performImpl(project: Project, node: XValueNodeImpl): Boolean {
+  if (!node.canBePinned()) {
+    LOG.warn("Pin to top refused for '${node.name}': the value cannot be pinned" +
+             " (value container is ${node.valueContainer.javaClass.name}, pin info is ${node.getPinInfo()})")
+    return false
+  }
 
   val pinToTopManager = XDebuggerPinToTopManager.getInstance(project)
 
   val pinInfo = node.getPinInfo()
-                ?: return
+  if (pinInfo == null) {
+    LOG.warn("Pin to top refused for '${node.name}': no pin info, both the parent tag of the value" +
+             " and the tag of its parent node are null")
+    return false
+  }
 
   val pinNode = !node.isPinned(pinToTopManager)
   if (pinNode) {
@@ -97,4 +116,5 @@ private fun performImpl(project: Project, node: XValueNodeImpl) {
   node.parentPinToTopValue?.onChildPinned(pinNode, pinInfo)
 
   DebuggerUIUtil.rebuildTreeAndViews(node.tree)
+  return true
 }

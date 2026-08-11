@@ -1,0 +1,28 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_warningLevel_deprecation-a.kotlin_module
+  test/Util.class
+End of files
+Compiling files:
+  kotlin/warningLevel/deprecation/a/util.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_warningLevel_deprecation-a.kotlin_module
+  test/Client.class
+End of files
+Compiling files:
+  kotlin/warningLevel/deprecation/a/client.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_warningLevel_deprecation-a.kotlin_module
+  test/Util.class
+End of files
+Compiling files:
+  kotlin/warningLevel/deprecation/a/client.kt
+  kotlin/warningLevel/deprecation/a/util.kt
+End of files
+------------------------------------------
+Exit code: OK

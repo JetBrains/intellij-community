@@ -73,7 +73,7 @@ internal class CustomWrapOnlyRecalculationManager(
     deferredCustomWraps.clear()
   }
 
-  override fun recalculate() {
+  override fun recalculate(reason: String) {
     storage.removeAll()
     softWrapNotifier.notifySoftWrapsChanged()
     deferredFoldRegions.clear()
@@ -111,7 +111,7 @@ internal class CustomWrapOnlyRecalculationManager(
   override fun onBulkDocumentUpdateStarted() {}
 
   override fun onBulkDocumentUpdateFinished() {
-    recalculate()
+    recalculate("bulk document update finished")
   }
 
   override fun beforeFoldRegionDisposed(region: FoldRegion) {

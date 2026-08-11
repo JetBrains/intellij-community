@@ -3,6 +3,7 @@ package com.intellij.psi.impl.file.impl
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl
+import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -13,6 +14,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.AbstractFileViewProvider
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerEx
+import com.intellij.psi.impl.source.tree.mvcc.ConcurrentWeakVersionedValueHashMap
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.AtomicMapCache
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -40,7 +43,7 @@ internal class MultiverseFileViewProviderCache(
 
   // todo IJPL-339 don't store map for a single item
   private val cache = AtomicMapCache<VirtualFile, FileProviderMap> {
-    CollectionFactory.createConcurrentWeakValueMap()
+    ConcurrentWeakVersionedValueHashMap()
   }
 
   // todo IJPL-339 do clear only under write lock
@@ -132,21 +135,24 @@ internal class MultiverseFileViewProviderCache(
       }
     }
 
-    val firstEntry = fileMap.entries.firstOrNull()
-    if (firstEntry == null ||
-        !evaluator.isRecreatedViewProviderIsIdentical(vFile, firstEntry.value as AbstractFileViewProvider, firstEntry.key)
-    ) {
+    if (!canFileMapBeResurrected(vFile, fileMap)) {
       dropPossibleInvalidation(fileMap)
       remove(vFile)
       return null
     }
 
-    val contextMapping = reassignProvidersWithOutdatedContextToActualContexts(vFile, fileMap)
-    if (contextMapping.isNotEmpty()) {
-      SmartPointerManagerEx.getInstanceEx(project).getTracker(vFile)?.pushContextMapping(contextMapping)
+    // we intentionally do not perform lazy reassignment of code insight contexts to virtual files
+    // reassignment of code insight contexts is a complex operation that involves complicated concurrency invariants
+    // hence, we defer reassignment until this view provider is accessed under read lock
+    // for quick access inside psi versioning transaction, we allow ourselves to observe a not-yet-assigned context
+    if (!InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+      val contextMapping = reassignProvidersWithOutdatedContextToActualContexts(vFile, fileMap)
+      if (contextMapping.isNotEmpty()) {
+        SmartPointerManagerEx.getInstanceEx(project).getTracker(vFile)?.pushContextMapping(contextMapping)
+      }
+      dropPossibleInvalidation(fileMap)
     }
 
-    dropPossibleInvalidation(fileMap)
 
     return fileMap
   }
@@ -260,6 +266,28 @@ internal class MultiverseFileViewProviderCache(
         }
       }
     }
+  }
+
+  override fun canViewProviderBeResurrected(viewProvider: AbstractFileViewProvider): Boolean {
+    val vFile = viewProvider.virtualFile
+    val fileMap = cache[vFile] ?: return false
+
+    return canFileMapBeResurrected(vFile, fileMap)
+  }
+
+  override fun getRecreationFailureReason(viewProvider: AbstractFileViewProvider): String? {
+    val vFile = viewProvider.virtualFile
+    if (!vFile.isValid) return "View provider resurrection failed: virtual file is invalid: $vFile"
+    if (cache[vFile] == null) return "View provider resurrection failed: no cached view providers for $vFile"
+
+    return evaluator.getRecreationFailureReason(vFile, viewProvider, viewProvider.codeInsightContext)
+  }
+
+  private fun canFileMapBeResurrected(vFile: VirtualFile, fileMap: FileProviderMap): Boolean {
+    if (!vFile.isValid()) return false
+
+    val firstEntry = fileMap.entries.firstOrNull()
+    return firstEntry != null && evaluator.getRecreationFailureReason(vFile, firstEntry.value as AbstractFileViewProvider, firstEntry.key) == null
   }
 
   override fun evaluateValidity(viewProvider: AbstractFileViewProvider): Boolean {

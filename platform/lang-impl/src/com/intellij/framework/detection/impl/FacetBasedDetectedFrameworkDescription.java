@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Collection;
 import java.util.Set;
 
+@ApiStatus.Internal
 public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C extends FacetConfiguration> extends DetectedFrameworkDescription {
   private static final Logger LOG = Logger.getInstance(FacetBasedDetectedFrameworkDescription.class);
   private final FacetBasedFrameworkDetector<F, C> myDetector;

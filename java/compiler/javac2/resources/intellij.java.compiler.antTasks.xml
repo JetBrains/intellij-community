@@ -1,4 +1,9 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.asm"/>
+  </dependencies>
+  <!-- endregion -->
 
 </idea-plugin>
 

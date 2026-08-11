@@ -104,7 +104,9 @@ public final class GetterProcessor extends AbstractClassProcessor {
     }
   }
 
-  public @NotNull Collection<PsiMethod> createFieldGetters(@NotNull PsiClass psiClass, @NotNull String methodModifier, @Nullable String nameHint) {
+  public @NotNull Collection<PsiMethod> createFieldGetters(@NotNull PsiClass psiClass,
+                                                           @PsiModifier.ModifierConstant @NotNull String methodModifier,
+                                                           @Nullable String nameHint) {
     Collection<PsiMethod> result = new ArrayList<>();
 
     final Collection<PsiField> getterFields = filterGetterFields(psiClass);

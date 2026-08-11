@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  Api.class
+  META-INF/kotlin_withJava_kotlinUsedInJava_jvmSyntheticRemoved-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/jvmSyntheticRemoved/a/Api.kt
+End of files
+Cleaning output files:
+  Use.class
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/jvmSyntheticRemoved/a/Use.java
+End of files
+------------------------------------------
+Exit code: ERROR

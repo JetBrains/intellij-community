@@ -1,4 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:ApiStatus.Internal
+
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider
@@ -26,6 +28,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InputEvent
 import java.util.Objects
 
+@ApiStatus.Internal
 class DaemonTooltipActionProvider : TooltipActionProvider {
   override fun getTooltipAction(info: HighlightInfo, editor: Editor, psiFile: PsiFile): TooltipAction? {
     val intention = extractMostPriorityFixFromHighlightInfo(info, editor, psiFile) ?: return null

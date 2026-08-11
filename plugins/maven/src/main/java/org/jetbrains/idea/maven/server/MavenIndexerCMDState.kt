@@ -119,13 +119,13 @@ class MavenIndexerCMDState(
       addMavenLibs(classpath, distribution.mavenHome)
       addIndexerRTLibs(classpath)
       if (MavenUtil.isRunningFromSources()) {
-        // we are running from some kind of sources build, packed or not.
+        // JPS module outputs only - no assembled plugin layout to read from
         MavenLog.LOG.debug("collecting classpath for local run")
         prepareClassPathForLocalRunAndUnitTests(classpath)
         addDependenciesFromMavenRepo(classpath)
       }
       else {
-        // we are running in production
+        // an installed IDE *and* a dev build: both ship the same plugin layout
         MavenLog.LOG.debug("collecting classpath for production")
         prepareClassPathForProduction(distribution.version!!, classpath)
       }

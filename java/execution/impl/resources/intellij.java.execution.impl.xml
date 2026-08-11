@@ -1,4 +1,4 @@
-<idea-plugin visibility="public">
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.java-capable"/>
@@ -14,12 +14,42 @@
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.miglayout.swing"/>
+    <module name="intellij.libraries.test.discovery"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.testRunner"/>
-    <module name="intellij.platform.vcs.impl"/>
-    <module name="intellij.platform.vcs.impl.lang"/>
+    <module name="intellij.platform.threadDumpParser"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+
+  <xi:include href="/META-INF/RegistryKeysExecutionImpl.xml"/>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.runConfigurationExtension" interface="com.intellij.execution.RunConfigurationExtension"
@@ -28,6 +58,13 @@
 
     <extensionPoint qualifiedName="com.intellij.threadDumpProvider"
                     interface="com.intellij.execution.impl.ThreadDumpProvider" dynamic="true"/>
+    <!--
+      Affected-test discovery can use VCS changelists and changed ranges in full IDEs. The implementation
+      is registered from intellij.java.vcs so Java execution remains loadable in Language Server products
+      where VCS content modules are intentionally absent.
+    -->
+    <extensionPoint qualifiedName="com.intellij.execution.testDiscoveryVcsHelper"
+                    interface="com.intellij.execution.testDiscovery.TestDiscoveryVcsHelper" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -82,7 +119,6 @@
     <threadDumpProvider implementation="com.intellij.execution.impl.AttachAPIThreadDumpProvider" order="last"/>
     <applicationSettings service="com.intellij.execution.filters.StackTraceFoldingSettings"/>
     <postStartupActivity implementation="com.intellij.execution.testDiscovery.TestDiscoveryIndex$MyPostStartUpActivity"/>
-    <vcs.changeListDecorator implementation="com.intellij.execution.testDiscovery.AffectedTestsInChangeListPainter"/>
     <projectService serviceImplementation="com.intellij.execution.testDiscovery.JavaAutoRunManager"/>
     <runConfigurationExtension implementation="com.intellij.execution.testDiscovery.TestDiscoveryExtension"/>
     <projectSettings service="com.intellij.execution.testDiscovery.JavaAutoRunManager"/>
@@ -106,14 +142,5 @@
       <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Stop"/>
     </action>
 
-    <group id="ChangesViewPopupMenuRunGroup">
-      <reference ref="RunContextPopupGroup"/>
-      <add-to-group group-id="ChangesViewPopupMenu" anchor="before" relative-to-action="ShowDiscoveredTests"/>
-    </group>
-
-    <action class="com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction" id="ShowDiscoveredTests">
-      <add-to-group group-id="RunTestGroup" anchor="last"/>
-      <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
-    </action>
   </actions>
 </idea-plugin>

@@ -5,16 +5,16 @@
 // ERROR: None of the following functions can be called with the arguments supplied: <br>public open fun overloadedMethod(i: Int): Unit defined in JavaUtilClass<br>public open fun overloadedMethod(i: String!): Unit defined in JavaUtilClass
 // ERROR: Unresolved reference: unresolved
 // AFTER-WARNING: Variable 'bottom' is never used
-// K2_ERROR: No value passed for parameter 'i'.
-// K2_ERROR: No value passed for parameter 'i'.
-// K2_ERROR: None of the following candidates is applicable:<br><br>static fun overloadedMethod(i: Int): Unit<br>static fun overloadedMethod(i: String!): Unit
-// K2_ERROR: None of the following candidates is applicable:<br><br>static fun overloadedMethod(i: Int): Unit<br>static fun overloadedMethod(i: String!): Unit
-// K2_ERROR: Unresolved reference 'unresolved'.
-// K2_AFTER_ERROR: No value passed for parameter 'i'.
-// K2_AFTER_ERROR: No value passed for parameter 'i'.
-// K2_AFTER_ERROR: None of the following candidates is applicable:<br><br>static fun overloadedMethod(i: Int): Unit<br>static fun overloadedMethod(i: String!): Unit
-// K2_AFTER_ERROR: None of the following candidates is applicable:<br><br>static fun overloadedMethod(i: Int): Unit<br>static fun overloadedMethod(i: String!): Unit
-// K2_AFTER_ERROR: Unresolved reference 'unresolved'.
+// K2_AFTER_ERROR: NONE_APPLICABLE
+// K2_AFTER_ERROR: NONE_APPLICABLE
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: NONE_APPLICABLE
+// K2_ERROR: NONE_APPLICABLE
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 fun foo() {
     <caret>JavaUtilClass.overloadedMethod()

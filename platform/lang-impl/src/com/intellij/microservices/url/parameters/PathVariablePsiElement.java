@@ -13,6 +13,7 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ import static java.util.Objects.requireNonNull;
  *
  * @see PathVariableDeclaringReference
  */
+@ApiStatus.Internal
 public class PathVariablePsiElement extends CommonFakeNavigatablePomTarget {
 
   private final Pattern myNameValidationPattern;

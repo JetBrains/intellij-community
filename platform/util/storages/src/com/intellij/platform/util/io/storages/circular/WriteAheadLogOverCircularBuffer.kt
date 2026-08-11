@@ -9,6 +9,7 @@ import com.intellij.platform.util.io.storages.KeyDescriptorEx
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory
 import com.intellij.platform.util.io.storages.appendonlylog.InvalidRecordIdException
 import com.intellij.platform.util.io.storages.circular.CircularBytesBuffer.QueueFullException
+import com.intellij.platform.util.io.storages.circular.CircularBytesBuffer.ReadDecision
 import com.intellij.platform.util.io.storages.enumerator.DurableEnumerator
 import com.intellij.platform.util.io.storages.enumerator.DurableEnumeratorFactory
 import com.intellij.util.ExceptionUtil
@@ -100,8 +101,6 @@ class WriteAheadLogOverCircularBuffer(
 
         //check consistency: pathId could be resolved:
         pathById(record.pathId)
-
-        false /* do not consume the record! */
       }
 
       //apply records that were not applied at the end of previous session (if any):
@@ -118,6 +117,28 @@ class WriteAheadLogOverCircularBuffer(
     flusherThread = flusherThreadFactory?.newThread { flushInBackground() }?.also { it.start() }
   }
 
+  //The crucial invariant WAL maintains is 'for every file it's pending writes are always processed (applied) in FIFO order,
+  // regardless of # of threads concurrently processing them'. Violation of this invariant clearly leads to data corruption.
+  // How does this invariant maintained:
+  // [circularBytesBuffer] itself stores records in FIFO order, and iteration _in isolation_ goes through the records in FIFO
+  // order -- but it is not clear why >1 threads doing that in parallel should always end up applying writes in !FIFO order still.
+  //For this we rely on [circularBytesBuffer] 'once-only' consuming semantics, and 'at-most-one' + 'barrier' semantics of
+  // .readMaybeConsuming() -- see its javadocs.
+  // Indeed: let A1, A2 be the sequence of writes pending for file F -- A1 enqueued earlier than A2, hence we want it to always
+  // be processed/applied earlier too. Any thread T attempting to apply A2 -- must pass through A1 first during the buffer scanning,
+  // because of scanning FIFO order. And during this pass-through T either process/applies the A1 itself, or observe that A1 is
+  // already processed/applied by someone else.
+  // The only non-trivial case is when A1 is processed by other thread T' _concurrently_ with T coming on it. But this is also
+  // safe: T coming on A1 while some other T' is processing it must wait for T' processing to finish -- T can't process A1
+  // because of 'at-most-one' processing semantics, and T can't skip through A1 because of barrier semantics, so wait is the only
+  // option -> when the wait is finished A1 is either (already consumed and applied by T') or (T' processing fails -> this thread
+  // gets it's chance to process and apply A1) -> in all those cases A1 is applied before A2.
+  //The logic still holds even for selective records processing in flush(fileId): flush(fileId) skips all the records not belonging
+  // to fileId without attempting to acquire/wait for a lease for them -- which could break global FIFO order across all the records.
+  // But we don't really need global FIFO ordering for all the writes, we need strict FIFO only for the writes for the same file,
+  // which still holds in this case.
+  
+
   override fun openFor(path: Path): WriteAheadLog.PerFileWriter {
     val pathId = pathEnumerator.enumerate(path.absolute())
     return PerFileWriterImpl(pathId)
@@ -126,7 +147,7 @@ class WriteAheadLogOverCircularBuffer(
   override fun hasUnfinished(): Boolean = circularBytesBuffer.hasUnprocessedRecords()
 
   override fun flush(): Int {
-    val flushedEntries = circularBytesBuffer.read { entryDataBuffer ->
+    val flushedEntries = circularBytesBuffer.readConsuming { entryDataBuffer ->
       val record = readRecord(entryDataBuffer)
       val path = pathById(record.pathId)
       //RC: we don't need synchronization here as long, as circularBytesBuffer guarantees an entry could be 'consumed'
@@ -134,7 +155,6 @@ class WriteAheadLogOverCircularBuffer(
       //    I.e., it is responsibility of circularBytesBuffer to ensure the synchronization needed
       channelWriter.write(path, record.offsetInFile, record.data)
       forget(record.pathId)
-      true //consume
     }
     totalEntriesFlushed.addAndGet(flushedEntries.toLong())
     return flushedEntries
@@ -245,16 +265,22 @@ class WriteAheadLogOverCircularBuffer(
 
   /** drain only records for a given pathId */
   private fun flush(pathId: Int): Int {
+    if (!hasUnfinished(pathId)) {
+      return 0
+    }
+
     val path = pathById(pathId)
-    val flushedEntries = circularBytesBuffer.read { entryDataBuffer ->
-      val record = readRecord(entryDataBuffer)
-      if (pathId == record.pathId) {
-        channelWriter.write(path, record.offsetInFile, record.data)
-        forget(record.pathId)
-        true
+    val flushedEntries = circularBytesBuffer.readMaybeConsuming { entryDataBuffer ->
+      if (readPathId(entryDataBuffer) == pathId) {
+        ReadDecision.consumeBy { leasedEntryDataBuffer ->
+          val record = readRecord(leasedEntryDataBuffer)
+          check(record.pathId == pathId) { "Leased WAL record pathId(=${record.pathId}) differs from requested pathId(=$pathId)" }
+          channelWriter.write(path, record.offsetInFile, record.data)
+          forget(record.pathId)
+        }
       }
-      else {
-        false // consume only writes for given pathId
+      else { // skip writes unrelated to the given pathId
+        ReadDecision.skip()
       }
     }
     totalEntriesFlushed.addAndGet(flushedEntries.toLong())
@@ -344,23 +370,20 @@ class WriteAheadLogOverCircularBuffer(
       if (record.pathId == pathId) {
         maxOffset = maxOf(maxOffset, record.offsetInFile + record.data.remaining())
       }
-      false //do not consume
     }
     return maxOffset
   }
 
   private fun applyUnfinished(pathId: Int, offsetInFile: Long, length: Int, targetBuffer: ByteBuffer, offsetInBuffer: Int) {
-    synchronized(pendingRecordsLock) {
-      if (!pendingRecordsByPathId.containsKey(pathId)) {
-        return@synchronized
-      }
-      circularBytesBuffer.read { entryData ->
-        val record = readRecord(entryData)
-        if (record.pathId == pathId) {
-          val bytesCopied = applyToBuffer(record, offsetInFile, length, targetBuffer, offsetInBuffer)
-          bytesCopiedByApplyUnfinished.addAndGet(bytesCopied.toLong())
-        }
-        false //do not consume
+    if (!hasUnfinished(pathId)) {
+      return
+    }
+
+    circularBytesBuffer.read { entryData ->
+      val record = readRecord(entryData)
+      if (record.pathId == pathId) {
+        val bytesCopied = applyToBuffer(record, offsetInFile, length, targetBuffer, offsetInBuffer)
+        bytesCopiedByApplyUnfinished.addAndGet(bytesCopied.toLong())
       }
     }
   }
@@ -375,8 +398,9 @@ class WriteAheadLogOverCircularBuffer(
     /** @GuardedBy(walInstancesForStatistics) */
     private val walInstancesForStatistics = newSetFromMap(WeakHashMap<WriteAheadLogOverCircularBuffer, Boolean>())
 
+    @JvmStatic
     private fun readRecord(entryData: ByteBuffer): Record {
-      val pathId = entryData.getInt()
+      val pathId = readPathId(entryData)
       val fileOffset = entryData.getLong()
 
       //MAYBE RC: just entryData is enough? -- the buffer is only used just above, so it is relatively safe, and
@@ -385,18 +409,21 @@ class WriteAheadLogOverCircularBuffer(
       return Record(pathId, fileOffset, recordData)
     }
 
+    @JvmStatic
+    private fun readPathId(entryData: ByteBuffer): Int = entryData.int
+
     /**
      * Copy record's data into the targetBuffer
      * @return # of bytes copied
      */
+    @JvmStatic
     private fun applyToBuffer(record: Record, offsetInFile: Long, length: Int, targetBuffer: ByteBuffer, offsetInBuffer: Int): Int {
-      val targetRangeStart = offsetInFile
       val targetRangeEnd = offsetInFile + length
 
       val recordRangeStart = record.offsetInFile
       val recordRangeEnd = record.offsetInFile + record.data.remaining()
 
-      val overlapStart = maxOf(targetRangeStart, recordRangeStart)
+      val overlapStart = maxOf(offsetInFile, recordRangeStart)
       val overlapEnd = minOf(targetRangeEnd, recordRangeEnd)
       val bytesOverlapped = (overlapEnd - overlapStart).toInt()
       if (bytesOverlapped <= 0) {
@@ -404,7 +431,7 @@ class WriteAheadLogOverCircularBuffer(
       }
 
       targetBuffer.put(
-        offsetInBuffer + (overlapStart - targetRangeStart).toInt(),
+        offsetInBuffer + (overlapStart - offsetInFile).toInt(),
         record.data,
         (overlapStart - recordRangeStart).toInt(),
         bytesOverlapped

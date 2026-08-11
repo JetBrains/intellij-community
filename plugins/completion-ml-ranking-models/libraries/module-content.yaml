@@ -1,0 +1,14 @@
+- name: dist.all/lib/intellij.completionMlRankingModels.libraries.jar
+  modules:
+  - name: intellij.completionMlRankingModels.libraries
+    libraries:
+      completion-ranking-css-exp:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-css/0/completion-ranking-css-0.jar
+      completion-ranking-dart-exp:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-dart/0/completion-ranking-dart-0.jar
+      completion-ranking-html-exp:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-html/0/completion-ranking-html-0.jar
+      completion-ranking-python-exp:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0/completion-ranking-python-0.jar
+      completion-ranking-scala-exp:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-scala/0/completion-ranking-scala-0.jar

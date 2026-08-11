@@ -15,6 +15,7 @@ import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,7 @@ import java.util.ResourceBundle;
 
 import static com.intellij.openapi.util.Pair.pair;
 
+@ApiStatus.Internal
 public final class ImportSchemeChooserDialog extends DialogWrapper {
   private final JPanel contentPane;
   private final JBList<String> mySchemeList;

@@ -4,8 +4,6 @@ package com.intellij.platform.testFramework.junit5.codeInsight.fixture
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
-import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
-import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionInlayRenderer
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.hints.InlayDumpUtil
 import com.intellij.codeInsight.multiverse.CodeInsightContext
@@ -23,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.BasePlatformTestCase.assertEquals
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
@@ -96,18 +93,7 @@ class CodeVisionTestFixture(
 
 
   private fun dumpCodeVisionHints(sourceText: String): String {
-    return InlayDumpUtil.dumpInlays(
-      sourceText, editor,
-      filter = {
-        val rendererSupported = it.renderer is CodeVisionInlayRenderer
-        if (onlyCodeVisionHintsAllowed && !rendererSupported) error("renderer not supported")
-        rendererSupported
-      },
-      renderer = { _, inlay ->
-        inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[",
-                                                                             postfix = "]",
-                                                                             separator = "   ") { it.longPresentation }
-      })
+    return CodeVisionTestCase.dumpCodeVisionHints(sourceText, editor, onlyCodeVisionHintsAllowed)
   }
 }
 

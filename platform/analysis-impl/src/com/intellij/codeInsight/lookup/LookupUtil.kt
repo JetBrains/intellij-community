@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup
 
 import com.intellij.codeInsight.completion.PrefixMatcher
@@ -21,7 +21,8 @@ object LookupUtil {
 
   @JvmStatic
   fun insertLookupInDocumentWindowIfNeeded(project: Project,
-                                           editor: Editor, caretOffset: Int,
+                                           editor: Editor,
+                                           caretOffset: Int,
                                            prefix: Int,
                                            lookupString: String): Int {
     val injectedDocument = getInjectedDocument(project, editor, caretOffset)
@@ -61,7 +62,9 @@ object LookupUtil {
 
   @JvmStatic
   fun getCaseCorrectedLookupString(item: LookupElement, prefixMatcher: PrefixMatcher, prefix: String): String {
-    val lookupString = item.lookupString
+    @Suppress("DEPRECATION")
+    val lookupString = (item as? LookupElementWithOverriddenLookupString)?.getOverriddenLookupString() ?: item.lookupString
+
     if (item.isCaseSensitive) {
       return lookupString
     }

@@ -82,7 +82,7 @@ public class JDParser {
 
     if (!isMarkdown && !JAVADOC_HEADER.equals(docTextInfo.commentHeader)) return null;
 
-    List<Boolean> markers = new ArrayList<>();
+    List<LineMarker> markers = new ArrayList<>();
 
     List<String> l = toArray(docTextInfo.comment, markers, isMarkdown);
     if (l == null) return null;
@@ -192,7 +192,7 @@ public class JDParser {
   private void parse(@Nullable String text, @NotNull JDComment comment) {
     if (text == null) return;
 
-    List<Boolean> markers = new ArrayList<>();
+    List<LineMarker> markers = new ArrayList<>();
     List<String> l = toArray(text, markers, comment.getIsMarkdown());
 
     //if it is - we are dealing with multiline comment:
@@ -224,13 +224,11 @@ public class JDParser {
 
     StringBuilder sb = new StringBuilder();
     String tag = null;
-    boolean isInsidePreTag = false;
-    FenceInfo currentCodeFence = null;
 
     for (int i = 0; i <= size; i++) {
       String line = i == size ? null : l.get(i);
       if (i == size || !line.isEmpty()) {
-        if (i == size || line.charAt(0) == '@' && !isInsidePreTag && currentCodeFence == null) {
+        if (i == size || line.charAt(0) == '@' && !markers.get(i).isIn(LineMarker.CODE_FENCE, LineMarker.PRE_TAG, LineMarker.SNIPPET)) {
           if (tag == null) {
             comment.setDescription(sb.toString());
           }
@@ -275,17 +273,6 @@ public class JDParser {
           sb.append('\n');
         }
       }
-
-      if (line != null) {
-        isInsidePreTag = isInsidePreTag
-                         ? !lineHasClosingPreTag(line)
-                         : lineHasUnclosedPreTag(line);
-        if (currentCodeFence == null) {
-          currentCodeFence = findCodeFence(line, true);
-        } else if (currentCodeFence.isClosedBy(line)) {
-          currentCodeFence = null;
-        }
-      }
     }
   }
 
@@ -308,8 +295,8 @@ public class JDParser {
     }
   }
 
-  private static void preprocessLines(List<String> l, List<Boolean> markers, boolean isMarkdown) {
-    FenceInfo currentCodeFence = null;
+  /// Remove leading tokens on every line, as well as spaces depending on [LineMarker]s
+  private static void preprocessLines(List<String> l, List<LineMarker> markers, boolean isMarkdown) {
     // preprocess strings - removes leading token
     for (int i = 0; i < l.size(); i++) {
       String line = l.get(i);
@@ -317,34 +304,24 @@ public class JDParser {
       if (!line.isEmpty()) {
         if(!isMarkdown){
           if (line.charAt(0) == '*') {
-            if ((markers.get(i)).booleanValue()) {
-              if (line.length() > 1 && line.charAt(1) == ' ') {
-                line = line.substring(2);
-              }
-              else {
-                line = line.substring(1);
-              }
+            if (markers.get(i).isMarked()) {
+              line = line.substring((line.length() > 1 && line.charAt(1) == ' ') ? 2 : 1);
             }
             else {
               line = line.substring(1).trim();
             }
           }
         } else {
-          // Note: Markdown comments are not trimmed like html ones, except for javadoc tags
+          // Note: Markdown comments are not trimmed like HTML ones, except for javadoc tags
           String newLine;
           int tagStart = CharArrayUtil.shiftForward(line, 3, " \t");
-          if (tagStart != line.length() && line.charAt(tagStart) == '@' && currentCodeFence == null) {
+          if (tagStart != line.length() && line.charAt(tagStart) == '@' && !markers.get(i).isMarked()) {
             newLine = line.substring(tagStart);
           } else {
             newLine = StringUtil.trimStart(line, "/// ");
             if (Strings.areSameInstance(newLine, line)) {
               newLine = StringUtil.trimStart(line, "///");
             }
-          }
-          if (currentCodeFence == null) {
-            currentCodeFence = findCodeFence(newLine, true);
-          } else if (currentCodeFence.isClosedBy(newLine)) {
-            currentCodeFence = null;
           }
           line = newLine;
         }
@@ -353,20 +330,66 @@ public class JDParser {
     }
   }
 
-  /**
-   * Breaks the specified string by the specified separators into array of strings
-   *
-   * @param s       the specified string
-   * @param markers if this parameter is not null then it will be filled with Boolean values:
-   *                true if the corresponding line in returned list is inside &lt;pre&gt; tag or a markdown codeblock,
-   *                false if it is outside
-   * @return list of strings (lines)
-   */
-  private @Nullable List<String> toArray(@Nullable String s, @Nullable List<Boolean> markers, boolean markdownComment) {
+  /// Describes why a line produced by {@link #toArray} is marked, i.e. must be preserved as-is
+  /// and neither wrapped nor merged with adjacent lines. Knowing the concrete cause (instead of a
+  /// plain boolean) allows callers to adapt their behavior to the specific construct.
+  /// {@link #NONE} means the line is not marked and can be freely reformatted.
+  enum LineMarker {
+    /// The line is not marked and can be freely reformatted.
+    NONE,
+    /// The line is inside an HTML `<pre>` tag.
+    PRE_TAG,
+    /// The line is inside a Markdown code fence.
+    CODE_FENCE,
+    /// The line follows a tag whose indentation must be preserved (see {@link #TAGS_TO_KEEP_INDENTS_AFTER}).
+    KEEP_INDENTS_TAG,
+    /// The line is inside a multiline TODO comment
+    /// The IDE only consider multiline comments to be part of a _TO DO_ section if the following lines have additional indents
+    MULTILINE_TODO,
+    /// The line is inside a `{@snippet ...}` tag.
+    SNIPPET,
+    /// The line is a Markdown header, which cannot be split.
+    MARKDOWN_HEADER;
+
+    boolean isMarked() {
+      return this != NONE;
+    }
+
+    boolean isIn(LineMarker... markers) {
+      return ArrayUtil.contains(this, markers);
+    }
+  }
+
+  /// Computes the {@link LineMarker} for a line given the parsing state. The order of the checks
+  /// defines the precedence of the reported cause; the resulting {@link LineMarker#isMarked()} value
+  /// is the logical OR of all the given conditions.
+  private static @NotNull LineMarker computeLineMarker(int preCount,
+                                                       @Nullable FenceInfo fenceInfo,
+                                                       int firstLineToKeepIndents,
+                                                       boolean isInMultilineTodo,
+                                                       int snippetBraceBalance,
+                                                       boolean isMarkdownHeader) {
+    if (fenceInfo != null) return LineMarker.CODE_FENCE;
+    if (snippetBraceBalance != 0) return LineMarker.SNIPPET;
+    if (preCount > 0) return LineMarker.PRE_TAG;
+    if (firstLineToKeepIndents >= 0) return LineMarker.KEEP_INDENTS_TAG;
+    if (isMarkdownHeader) return LineMarker.MARKDOWN_HEADER;
+    if (isInMultilineTodo) return LineMarker.MULTILINE_TODO;
+    return LineMarker.NONE;
+  }
+
+  /// Breaks the specified string by the specified separators into array of strings
+  ///
+  /// @param s       the specified string
+  /// @param markers A list that will be filled by the function with a {@link LineMarker} per returned line, describing why the line must be
+  ///                kept as-is (e.g. inside a `<pre>` tag or a Markdown code block), or
+  ///                {@link LineMarker#NONE} if it can be freely reformatted
+  /// @return list of strings (lines)
+  private @Nullable List<String> toArray(@Nullable String s, @NotNull List<LineMarker> markers, boolean markdownComment) {
     if (s == null) return null;
     s = markdownComment ? s.stripTrailing() : s.strip();
     if (s.isEmpty()) return null;
-    boolean p2nl = markers != null && mySettings.JD_P_AT_EMPTY_LINES && !markdownComment;
+    boolean p2nl = mySettings.JD_P_AT_EMPTY_LINES && !markdownComment;
     List<String> list = new ArrayList<>();
     StringTokenizer st = new StringTokenizer(s, "\n", true);
     boolean first = true;
@@ -383,12 +406,12 @@ public class JDParser {
       String token = st.nextToken();
       curPos += token.length();
 
-      String lineWithoutAsterisk = getLineWithoutLeadingTokens(token, markdownComment);
+      String cleanedLine = getLineWithoutLeadingTokens(token, markdownComment);
       if (!isInMultilineTodo) {
-        if (isMultilineTodoStart(lineWithoutAsterisk)) {
+        if (isMultilineTodoStart(cleanedLine)) {
           isInMultilineTodo = true;
         }
-        else if (containsTagToKeepIndentsAfter(lineWithoutAsterisk) && firstLineToKeepIndents < 0) {
+        else if (containsTagToKeepIndentsAfter(cleanedLine) && firstLineToKeepIndents < 0) {
           firstLineToKeepIndents = list.size();
         }
       }
@@ -400,18 +423,18 @@ public class JDParser {
       if ("\n".equals(token)) {
         if (!first) {
           list.add("");
-          if (markers != null) markers.add(preCount > 0 || firstLineToKeepIndents >= 0 || isInMultilineTodo || fenceInfo != null);
+          markers.add(computeLineMarker(preCount, fenceInfo, firstLineToKeepIndents, isInMultilineTodo, 0, false));
         }
         first = false;
       }
       else {
         first = true;
-        if (isInMultilineTodo && StringUtil.isEmpty(lineWithoutAsterisk)) {
+        if (isInMultilineTodo && StringUtil.isEmpty(cleanedLine)) {
           isInMultilineTodo = false;
         }
         if (p2nl && isParaTag(token) && s.indexOf(P_END_TAG, curPos) < 0) {
           list.add(isSelfClosedPTag(token) ? SELF_CLOSED_P_TAG : P_START_TAG);
-          markers.add(preCount > 0 || firstLineToKeepIndents >= 0 || fenceInfo != null);
+          markers.add(computeLineMarker(preCount, fenceInfo, firstLineToKeepIndents, false, 0, false));
           continue;
         }
 
@@ -421,34 +444,29 @@ public class JDParser {
 
         list.add(token);
 
-        if (markers != null) {
-          if (snippetBraceBalance == 0) {
-            if (lineHasUnclosedSnippetTag(token)) snippetBraceBalance = 1;
-          } else {
-            snippetBraceBalance += getLineSnippetTagBraceBalance(token);
+        if (snippetBraceBalance == 0) {
+          if (lineHasUnclosedSnippetTag(token)) snippetBraceBalance = 1;
+        }
+        else {
+          snippetBraceBalance += getLineSnippetTagBraceBalance(token);
+        }
+        if (lineHasUnclosedPreTag(token)) preCount++;
+
+        fenceFound = false;
+        if (markdownComment && fenceInfo == null) {
+          fenceInfo = findCodeFence(cleanedLine, true);
+          if (fenceInfo != null) {
+            fenceFound = true; // code fences must open and close on different lines
           }
-          if (lineHasUnclosedPreTag(token)) preCount++;
+        }
 
-          fenceFound = false;
-          if (markdownComment && fenceInfo == null) {
-            fenceInfo = findCodeFence(lineWithoutAsterisk, true);
-            if (fenceInfo != null) {
-              fenceFound = true; // code fences must open and close on different lines
-            }
-          }
+        markers.add(computeLineMarker(preCount, fenceInfo, firstLineToKeepIndents, isInMultilineTodo, snippetBraceBalance,
+                                      markdownComment && isStartOfMarkdownHeader(token)) /* Markdown titles cannot be split */);
 
-          markers.add(preCount > 0
-                      || fenceInfo != null
-                      || firstLineToKeepIndents >= 0
-                      || isInMultilineTodo
-                      || snippetBraceBalance != 0
-                      || (markdownComment && isStartOfMarkdownHeader(token)) /* Markdown titles cannot be split */);
-
-          if (lineHasClosingPreTag(token)) preCount--;
-          if (markdownComment && fenceInfo != null && !fenceFound) {
-            if (fenceInfo.isClosedBy(lineWithoutAsterisk)) {
-              fenceInfo = null;
-            }
+        if (lineHasClosingPreTag(token)) preCount--;
+        if (markdownComment && fenceInfo != null && !fenceFound) {
+          if (fenceInfo.isClosedBy(cleanedLine)) {
+            fenceInfo = null;
           }
         }
 
@@ -548,13 +566,13 @@ public class JDParser {
   @Contract("null, _, _ -> null")
   private List<String> toArrayWrapping(@Nullable String s, int width, boolean markdownComment) {
     List<String> list = new ArrayList<>();
-    List<Pair<String, Boolean>> pairs = splitToParagraphs(s, markdownComment);
+    List<Pair<String, LineMarker>> pairs = splitToParagraphs(s, markdownComment);
     if (pairs == null) {
       return null;
     }
-    for (Pair<String, Boolean> pair : pairs) {
+    for (Pair<String, LineMarker> pair : pairs) {
       String seq = pair.getFirst();
-      boolean isMarked = pair.getSecond();
+      boolean isMarked = pair.getSecond().isMarked();
 
       if (seq.isEmpty()) {
         // keep empty lines
@@ -570,7 +588,6 @@ public class JDParser {
         }
         else {
           // wrap paragraph
-
           int wrapPos = computeWrapPosition(seq, width);
 
           // wrap now
@@ -650,37 +667,33 @@ public class JDParser {
     return line.length();
   }
 
-  /**
-   * Processes given string and produces on its basis set of pairs like {@code '(string; flag)'} where {@code 'string'}
-   * is interested line and {@code 'flag'} indicates if it is wrapped to {@code <pre>} tag.
-   *
-   * @param s   string to process
-   * @return    processing result
-   */
+  /// Splits the input text into paragraphs/lines associated with their [LineMarker]
+  ///
+  /// @param s string to process
+  /// @return A list of paragraphs and their associated [LineMarker]
   @Contract("null, _ -> null")
-  private List<Pair<String, Boolean>> splitToParagraphs(@Nullable String s, boolean markdownComment) {
+  private List<Pair<String, LineMarker>> splitToParagraphs(@Nullable String s, boolean markdownComment) {
     if (s == null) return null;
     s = trimIfNecessary(s, markdownComment);
     if (s.isEmpty()) return null;
 
-    List<Pair<String, Boolean>> result = new ArrayList<>();
+    List<Pair<String, LineMarker>> result = new ArrayList<>();
 
     StringBuilder sb = new StringBuilder();
-    List<Boolean> markers = new ArrayList<>();
-    List<String> list = toArray(s, markers, markdownComment);
-    Boolean[] marks = markers.toArray(new Boolean[0]);
-    markers.clear();
-    assert list != null;
-    for (int i = 0; i < list.size(); i++) {
-      String s1 = list.get(i);
-      if (marks[i].booleanValue()) {
+    List<LineMarker> markers = new ArrayList<>();
+    List<String> lines = toArray(s, markers, markdownComment);
+    assert lines != null;
+    for (int i = 0; i < lines.size(); i++) {
+      String s1 = lines.get(i);
+      LineMarker marker = markers.get(i);
+      if (marker.isMarked()) {
         endParagraph(result, sb);
-        result.add(Pair.create(s1, marks[i]));
+        result.add(Pair.create(s1, marker));
       }
       else {
         if (s1.isEmpty() || s1.equals(SELF_CLOSED_P_TAG) || isKeepLineFeedsIn(s1)) {
           endParagraph(result, sb);
-          result.add(Pair.create(s1, marks[i]));
+          result.add(Pair.create(s1, marker));
         }
         else {
           if (markdownComment && isStartOfMarkdownConstruct(s1)) {
@@ -699,7 +712,7 @@ public class JDParser {
       }
     }
     if (!mySettings.JD_PRESERVE_LINE_FEEDS && !sb.isEmpty()) {
-      result.add(new Pair<>(sb.toString(), false));
+      result.add(new Pair<>(sb.toString(), LineMarker.NONE));
     }
     return result;
   }
@@ -749,9 +762,9 @@ public class JDParser {
     return line.startsWith(TABLE_ROW_START) && StringUtil.getOccurrenceCount(line, TABLE_ROW_START) > 1;
   }
 
-  private static void endParagraph(@NotNull List<? super Pair<String, Boolean>> result, @NotNull StringBuilder sb) {
+  private static void endParagraph(@NotNull List<? super Pair<String, LineMarker>> result, @NotNull StringBuilder sb) {
     if (!sb.isEmpty()) {
-      result.add(new Pair<>(sb.toString(), false));
+      result.add(new Pair<>(sb.toString(), LineMarker.NONE));
       sb.setLength(0);
     }
   }

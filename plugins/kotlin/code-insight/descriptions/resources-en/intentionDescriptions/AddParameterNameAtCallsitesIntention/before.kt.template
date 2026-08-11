@@ -1,0 +1,4 @@
+fun test(param: String) {}
+
+test("a")
+test("b")

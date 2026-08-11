@@ -8,7 +8,6 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.memory.agent.MemoryAgent;
@@ -20,15 +19,11 @@ import com.intellij.debugger.memory.filtering.InstanceProviderEx;
 import com.intellij.debugger.memory.utils.AndroidUtil;
 import com.intellij.debugger.memory.utils.ErrorsValueGroup;
 import com.intellij.debugger.memory.utils.InstanceJavaValue;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
-import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
@@ -87,7 +82,7 @@ class InstancesView extends InstancesViewBase {
   private final InstancesTree myInstancesTree;
   private final XDebuggerExpressionEditor myFilterConditionEditor;
 
-  private final MyNodeManager myNodeManager;
+  private final NodeManagerImpl myNodeManager;
   private final Consumer<? super String> myWarningMessageConsumer;
 
   private final JButton myFilterButton = new JButton(CommonBundle.message("button.filter"));
@@ -114,7 +109,7 @@ class InstancesView extends InstancesViewBase {
     myClassName = classType.name();
     myDebugSession = session;
     myDebugProcess = (DebugProcessImpl)(DebuggerManager.getInstance(session.getProject()).getDebugProcess(session.getDebugProcess().getProcessHandler()));
-    myNodeManager = new MyNodeManager(session.getProject());
+    myNodeManager = new NodeManagerImpl(session.getProject());
     myWarningMessageConsumer = warningMessageConsumer;
 
     final XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
@@ -236,28 +231,6 @@ class InstancesView extends InstancesViewBase {
   public FilteringProgressView getProgress() {
     return myProgress;
   }
-
-  private static final class MyNodeManager extends NodeManagerImpl {
-    MyNodeManager(Project project) {
-      super(project, null);
-    }
-
-    @Override
-    public @NotNull DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
-      return new DebuggerTreeNodeImpl(null, descriptor);
-    }
-
-    @Override
-    public DebuggerTreeNodeImpl createMessageNode(MessageDescriptor descriptor) {
-      return new DebuggerTreeNodeImpl(null, descriptor);
-    }
-
-    @Override
-    public @NotNull DebuggerTreeNodeImpl createMessageNode(String message) {
-      return new DebuggerTreeNodeImpl(null, new MessageDescriptor(message));
-    }
-  }
-
 
   private class MyFilteringCallback implements FilteringTaskCallback {
     private final ErrorsValueGroup myErrorsGroup = new ErrorsValueGroup();

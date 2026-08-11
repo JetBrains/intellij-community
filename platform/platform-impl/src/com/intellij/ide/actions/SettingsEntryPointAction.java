@@ -99,6 +99,7 @@ import java.util.concurrent.CancellationException;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public final class SettingsEntryPointAction extends ActionGroup
   implements CustomComponentAction, Toggleable, DumbAware, RightAlignedToolbarAction, TooltipDescriptionProvider {
 
@@ -612,6 +613,7 @@ public final class SettingsEntryPointAction extends ActionGroup
   /**
    * Marker interface to suppress automatic dots "..." addition after the action name.
    */
+  @ApiStatus.Internal
   public interface NoDots {
   }
 

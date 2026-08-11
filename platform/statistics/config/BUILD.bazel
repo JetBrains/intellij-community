@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.statistics.config` start
-
 jvm_library(
     name = "config",
     srcs = glob(
@@ -20,7 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/reflect",
         "//libraries/jackson/jackson",
@@ -44,6 +43,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":config",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlin/reflect:reflect_test_lib",
         "//libraries/jackson/jackson:jackson_test_lib",
         "//libraries/jackson/databind:databind_test_lib",

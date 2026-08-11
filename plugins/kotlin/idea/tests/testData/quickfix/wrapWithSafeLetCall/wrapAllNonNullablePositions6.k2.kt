@@ -7,7 +7,7 @@
 // ACTION: Replace with safe (?.) call
 // ACTION: Surround with null check
 // WITH_STDLIB
-// K2_ERROR: Operator call is prohibited on a nullable receiver of type 'A?'. Use '?.'-qualified call instead.
+// K2_ERROR: UNSAFE_OPERATOR_CALL
 
 interface A {
     operator fun plus(a: A): A = this

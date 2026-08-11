@@ -1,15 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.debugger.impl.backend
 
-import com.intellij.debugger.actions.FreezeThreadAction
-import com.intellij.debugger.actions.InterruptThreadAction
 import com.intellij.debugger.actions.MuteRendererUtils
-import com.intellij.debugger.actions.ResumeThreadAction
 import com.intellij.debugger.actions.StepOutOfBlockActionUtils
 import com.intellij.debugger.actions.ThreadDumpAction
 import com.intellij.debugger.engine.AsyncStacksUtils
 import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.JavaExecutionStack
+import com.intellij.debugger.engine.JavaThreadOperations
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.executeOnDMT
 import com.intellij.debugger.engine.withDebugContext
@@ -138,16 +136,10 @@ internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
     val executionStack = (executionStackModel.executionStack as? JavaExecutionStack) ?: return
     val threadProxy = executionStack.threadProxy
     val managerThread = context.managerThread ?: return
-    when(command) {
-      ThreadCommand.RESUME -> {
-        ResumeThreadAction.resumeThread(threadProxy, debugProcess, managerThread)
-      }
-      ThreadCommand.FREEZE -> {
-        FreezeThreadAction.freezeThread(threadProxy, debugProcess, managerThread)
-      }
-      ThreadCommand.INTERRUPT -> {
-        InterruptThreadAction.interruptThread(threadProxy, debugProcess, managerThread)
-      }
+    when (command) {
+      ThreadCommand.RESUME -> JavaThreadOperations.resumeThread(threadProxy, debugProcess, managerThread)
+      ThreadCommand.FREEZE -> JavaThreadOperations.freezeThread(threadProxy, debugProcess, managerThread)
+      ThreadCommand.INTERRUPT -> JavaThreadOperations.interruptThread(threadProxy, debugProcess, managerThread)
     }
   }
 

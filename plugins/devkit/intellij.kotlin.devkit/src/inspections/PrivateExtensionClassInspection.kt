@@ -6,9 +6,11 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex
@@ -52,8 +54,12 @@ internal class PrivateExtensionClassInspection : LocalInspectionTool() {
   }
 
   private fun isRegisteredAction(psiClass: PsiClass): Boolean {
+    val module = ModuleUtilCore.findModuleForPsiElement(psiClass) ?: return false
+    // do not use psiClass.resolveScope for private class, it is too small
+    val privateActionMentionedScope = GlobalSearchScope.moduleWithDependentsScope(module)
+
     return InheritanceUtil.isInheritor(psiClass, "com.intellij.openapi.actionSystem.AnAction")
-           && IdeaPluginRegistrationIndex.isRegisteredActionOrGroup(psiClass, psiClass.resolveScope)
+           && IdeaPluginRegistrationIndex.isRegisteredActionOrGroup(psiClass, privateActionMentionedScope)
   }
 
   private class InternalVisibilityFix : LocalQuickFix {

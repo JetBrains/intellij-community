@@ -51,10 +51,11 @@ fun gradleProjectRootFixture(
 
 fun TestFixture<GradleTestFixture>.projectFixture(
   projectRootFixture: TestFixture<Path>,
+  numProjectSyncs: Int = 1,
 ): TestFixture<Project> = testFixture {
   val gradle = this@projectFixture.init()
   val projectRoot = projectRootFixture.init()
-  val project = gradle.openProject(projectRoot)
+  val project = gradle.openProject(projectRoot, numProjectSyncs)
   initialized(project) {
     project.closeProjectAsync()
   }

@@ -1,7 +1,7 @@
 // "Surround with lambda" "false"
 // ERROR: Type mismatch: inferred type is String but (Int, Int) -> String was expected
-// K2_ERROR: Argument type mismatch: actual type is 'String', but '(Int, Int) -> String' was expected.
-// K2_AFTER_ERROR: Argument type mismatch: actual type is 'String', but '(Int, Int) -> String' was expected.
+// K2_AFTER_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 fun simple() {
     str(<caret>"foo")
 }

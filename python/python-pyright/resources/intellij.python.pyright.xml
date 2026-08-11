@@ -1,0 +1,35 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="com.intellij.modules.json"/>
+    <module name="intellij.json"/>
+    <module name="intellij.libraries.eclipse.lsp4j"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.lsp"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.python.lsp.core"/>
+    <module name="intellij.python.pytools"/>
+    <module name="intellij.python.pytools.ui"/>
+    <module name="intellij.xml.parser"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.lsp.integrationProvider implementation="com.intellij.python.pyright.PyrightLspIntegrationProvider"/>
+    <projectSettings service="com.intellij.python.pyright.PyrightConfiguration"/>
+    <projectSettings service="com.intellij.python.pyright.BasedpyrightConfiguration"/>
+    <python.pytools.pyTool implementation="com.intellij.python.pyright.PyrightPyTool"/>
+    <python.pytools.pyTool implementation="com.intellij.python.pyright.BasedpyrightPyTool"/>
+  </extensions>
+</idea-plugin>

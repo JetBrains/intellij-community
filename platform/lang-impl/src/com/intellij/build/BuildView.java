@@ -2,7 +2,6 @@
 package com.intellij.build;
 
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.OutputBuildEvent;
 import com.intellij.build.events.StartBuildEvent;
 import com.intellij.build.process.BuildProcessHandler;
 import com.intellij.execution.actions.StopAction;
@@ -19,6 +18,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RunContentActionsContributor;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.ui.ConsoleViewWithDelegateKt;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -53,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -152,17 +153,9 @@ public class BuildView extends CompositeView<ExecutionConsole>
   }
 
   private void processEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
-    if (event instanceof OutputBuildEvent && (event.getParentId() == null || event.getParentId() == myBuildDescriptor.getId())) {
-      ExecutionConsole consoleView = getConsoleView();
-      if (consoleView instanceof BuildProgressListener) {
-        ((BuildProgressListener)consoleView).onEvent(buildId, event);
-      }
-    }
-    else {
-      BuildTreeConsoleView eventView = getEventView();
-      if (eventView != null) {
-        eventView.onEvent(buildId, event);
-      }
+    BuildTreeConsoleView eventView = getEventView();
+    if (eventView != null) {
+      eventView.onEvent(buildId, event);
     }
   }
 
@@ -182,8 +175,8 @@ public class BuildView extends CompositeView<ExecutionConsole>
       myExecutionConsole = runContentDescriptor != null &&
                            runContentDescriptor.getExecutionConsole() != null &&
                            runContentDescriptor.getExecutionConsole() != this ?
-                           runContentDescriptor.getExecutionConsole() : new BuildTextConsoleView(myProject, false,
-                                                                                                 myBuildDescriptor.getExecutionFilters());
+                           runContentDescriptor.getExecutionConsole() :
+                           new BuildTextConsoleView(myProject, false, Collections.emptyList());
       if (runContentDescriptor != null && runContentDescriptor.getExecutionConsole() != this) {
         Disposer.register(this, runContentDescriptor);
       }
@@ -200,7 +193,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
         ExecutionConsole consoleView =
           executionConsole instanceof ConsoleView ? wrapWithToolbar((ConsoleView)executionConsole) : executionConsole;
         addViewAndShowIfNeeded(consoleView, CONSOLE_VIEW_NAME, myViewManager.isConsoleEnabledByDefault(), false);
-        if (executionConsole instanceof ConsoleViewImpl consoleViewImpl) {
+        if (ConsoleViewWithDelegateKt.unwrapDelegate(executionConsole) instanceof ConsoleViewImpl consoleViewImpl) {
           consoleViewImpl.getEditor().setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));
         }
         buildTree = false;
@@ -220,14 +213,11 @@ public class BuildView extends CompositeView<ExecutionConsole>
 
     BuildProcessHandler processHandler = myBuildDescriptor.getProcessHandler();
     if (myExecutionConsole instanceof ConsoleView consoleView) {
-      if (!(consoleView instanceof BuildTextConsoleView)) {
-        myBuildDescriptor.getExecutionFilters().forEach(consoleView::addMessageFilter);
-      }
+      myBuildDescriptor.getExecutionFilters().forEach(consoleView::addMessageFilter);
 
       if (processHandler != null) {
-        assert consoleView != null;
         consoleView.attachToProcess(processHandler);
-        Consumer<? super ConsoleView> attachedConsoleConsumer = myBuildDescriptor.getAttachedConsoleConsumer();
+        var attachedConsoleConsumer = myBuildDescriptor.getAttachedConsoleConsumer();
         if (attachedConsoleConsumer != null) {
           attachedConsoleConsumer.consume(consoleView);
         }
@@ -463,6 +453,9 @@ public class BuildView extends CompositeView<ExecutionConsole>
     BuildTreeConsoleView eventView = getEventView();
     if (eventView != null) return eventView;
     ExecutionConsole executionConsole = getConsoleView();
+    if (executionConsole != null) {
+      executionConsole = ConsoleViewWithDelegateKt.unwrapDelegate(executionConsole);
+    }
     if (executionConsole instanceof OccurenceNavigator) {
       return (OccurenceNavigator)executionConsole;
     }

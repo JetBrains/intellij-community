@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.action
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
@@ -12,10 +11,9 @@ import javax.swing.AbstractAction
 
 internal class GHPRRemoveReviewerAction(
   scope: CoroutineScope,
-  private val project: Project,
   private val reviewFlowVm: GHPRReviewFlowViewModel,
-  private val reviewer: GHPullRequestRequestedReviewer
-) : AbstractAction(CollaborationToolsBundle.message("review.details.action.remove.reviewer", reviewer.name ?: reviewer.shortName)) {
+  private val reviewer: GHPullRequestRequestedReviewer,
+) : AbstractAction(CollaborationToolsBundle.message("review.details.action.remove.reviewer", reviewer.getPresentableName())) {
 
   init {
     scope.launch {

@@ -1,3 +1,3 @@
 class Stack[T]:
-    def pop() -> T:
+    def pop(self) -> T:
         pass

@@ -35,11 +35,14 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
+import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalBlocksModelStateDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalCommandBlockDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalOutputModelStateDto
 import org.jetbrains.plugins.terminal.session.impl.dto.toDto
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockIdImpl
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -190,7 +193,8 @@ internal class EchoingTerminalSession(
       trimmedCharsCount = 0,
       firstLineTrimmedCharsCount = 0,
       cursorOffset = screen.cursorOffset,
-      highlightings = emptyList()
+      highlightings = emptyList(),
+      osc8Hyperlinks = emptyList(),
     )
     val commandBlock = TerminalCommandBlockDto(
       id = TerminalBlockIdImpl(0),
@@ -210,9 +214,28 @@ internal class EchoingTerminalSession(
       startupOptions = startupOptions.toDto(),
       sessionState = sessionState.toDto(),
       outputModelState = outputModelState,
-      alternateBufferState = TerminalOutputModelStateDto("", 0, 0, 0, 0, emptyList()),
+      alternateBufferState = TerminalOutputModelStateDto("", 0, 0, 0, 0, emptyList(), emptyList()),
       blocksModelState = TerminalBlocksModelStateDto(listOf(commandBlock), 1),
     )
+  }
+
+  override fun processMouseEvent(e: MouseEvent, x: Int, y: Int): ByteArray? {
+    return null
+  }
+
+  override fun processKeyEvent(e: KeyEvent): KeyEventProcessingResultDto {
+    if (e.id == KeyEvent.KEY_TYPED && !Character.isISOControl(e.keyChar)) {
+      return KeyEventProcessingResultDto.StringResult(e.keyChar.toString(), shouldScrollToBottom = true)
+    }
+
+    val bytes = when (e.keyCode) {
+      KeyEvent.VK_BACK_SPACE -> byteArrayOf(Ascii.BS)
+      KeyEvent.VK_ENTER -> byteArrayOf(Ascii.CR)
+      KeyEvent.VK_LEFT -> byteArrayOf(Ascii.ESC, '['.code.toByte(), 'D'.code.toByte())
+      KeyEvent.VK_RIGHT -> byteArrayOf(Ascii.ESC, '['.code.toByte(), 'C'.code.toByte())
+      else -> return KeyEventProcessingResultDto.Unhandled
+    }
+    return KeyEventProcessingResultDto.BytesResult(bytes, shouldScrollToBottom = true)
   }
 
   override suspend fun hasRunningCommands(): Boolean {

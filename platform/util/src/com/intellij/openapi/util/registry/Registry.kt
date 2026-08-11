@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.awt.Color
 import java.io.IOException
@@ -71,11 +72,11 @@ class Registry {
       get() = registrySupplier?.invoke() ?: staticRegistry
 
     @JvmStatic
-    fun get(key: String): RegistryValue = getInstance().resolveValue(key)
+    fun get(@NonNls key: String): RegistryValue = getInstance().resolveValue(key)
 
     @Experimental
     @Internal
-    fun booleanValueHotSupplier(key: String, defaultValue: Boolean = false): () -> Boolean {
+    fun booleanValueHotSupplier(@NonNls key: String, defaultValue: Boolean = false): () -> Boolean {
       val valueHandle by lazy(mode = LazyThreadSafetyMode.NONE) {
         // no check for LoadingState - do not use `getInstance()` here
         registry.resolveValue(key)
@@ -93,14 +94,14 @@ class Registry {
     @Suppress("FunctionName")
     @Internal
     @JvmStatic
-    fun _getWithoutStateCheck(key: String): RegistryValue = registry.resolveValue(key)
+    fun _getWithoutStateCheck(@NonNls key: String): RegistryValue = registry.resolveValue(key)
 
     @Throws(MissingResourceException::class)
     @JvmStatic
-    fun `is`(key: String): Boolean = getInstance().resolveValue(key).asBoolean()
+    fun `is`(@NonNls key: String): Boolean = getInstance().resolveValue(key).asBoolean()
 
     @JvmStatic
-    fun `is`(key: String, defaultValue: Boolean): Boolean {
+    fun `is`(@NonNls key: String, defaultValue: Boolean): Boolean {
       if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
         return defaultValue
       }
@@ -115,10 +116,10 @@ class Registry {
 
     @Throws(MissingResourceException::class)
     @JvmStatic
-    fun intValue(key: String): Int = getInstance().resolveValue(key).asInteger()
+    fun intValue(@NonNls key: String): Int = getInstance().resolveValue(key).asInteger()
 
     @JvmStatic
-    fun intValue(key: String, defaultValue: Int): Int {
+    fun intValue(@NonNls key: String, defaultValue: Int): Int {
       if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
         LoadingState.COMPONENTS_REGISTERED.checkOccurred()
         return defaultValue
@@ -133,7 +134,7 @@ class Registry {
     }
 
     @JvmStatic
-    fun doubleValue(key: String, defaultValue: Double): Double {
+    fun doubleValue(@NonNls key: String, defaultValue: Double): Double {
       if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
         LoadingState.COMPONENTS_REGISTERED.checkOccurred()
         return defaultValue
@@ -149,14 +150,14 @@ class Registry {
 
     @Throws(MissingResourceException::class)
     @JvmStatic
-    fun doubleValue(key: String): Double = getInstance().resolveValue(key).asDouble()
+    fun doubleValue(@NonNls key: String): Double = getInstance().resolveValue(key).asDouble()
 
     @Throws(MissingResourceException::class)
     @JvmStatic
-    fun stringValue(key: String): String = getInstance().resolveValue(key).asString()
+    fun stringValue(@NonNls key: String): String = getInstance().resolveValue(key).asString()
 
     @JvmStatic
-    fun stringValue(key: String, defaultValue: String): String {
+    fun stringValue(@NonNls key: String, defaultValue: String): String {
       if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
         LoadingState.COMPONENTS_REGISTERED.checkOccurred()
         return defaultValue
@@ -172,7 +173,7 @@ class Registry {
 
     @Throws(MissingResourceException::class)
     @JvmStatic
-    fun getColor(key: String, defaultValue: Color?): Color? = getInstance().resolveValue(key).asColor(defaultValue)
+    fun getColor(@NonNls key: String, defaultValue: Color?): Color? = getInstance().resolveValue(key).asColor(defaultValue)
 
     @Throws(IOException::class)
     private fun loadFromBundledConfig(): Map<String, String>? {
@@ -208,7 +209,7 @@ class Registry {
     }
 
     @JvmStatic
-    fun intValue(key: String, defaultValue: Int, minValue: Int, maxValue: Int): Int {
+    fun intValue(@NonNls key: String, defaultValue: Int, minValue: Int, maxValue: Int): Int {
       require(defaultValue in minValue..maxValue) {
         "Wrong values for default:min:max ($defaultValue:$minValue:$maxValue)"
       }
@@ -363,7 +364,7 @@ class Registry {
     RegistryValue(registry = this, key = it, keyDescriptor = contributedKeys.get(it))
   }
 
-  private fun resolveValue(key: String): RegistryValue = values.computeIfAbsent(key, valueProducer)
+  private fun resolveValue(@NonNls key: String): RegistryValue = values.computeIfAbsent(key, valueProducer)
 
   @TestOnly
   @Internal
@@ -374,12 +375,12 @@ class Registry {
   }
 
   @Internal
-  fun getBundleValueOrNull(key: String): @NlsSafe String? {
+  fun getBundleValueOrNull(@NonNls key: String): @NlsSafe String? {
     return contributedKeys.get(key)?.defaultValue ?: loadFromBundledConfig()?.get(key)
   }
 
   @Throws(MissingResourceException::class)
-  internal fun getBundleValue(key: String, keyDescriptor: RegistryKeyDescriptor?): @NlsSafe String {
+  internal fun getBundleValue(@NonNls key: String, keyDescriptor: RegistryKeyDescriptor?): @NlsSafe String {
     return keyDescriptor?.defaultValue
            ?: contributedKeys[key]?.defaultValue
            ?: loadFromBundledConfig()?.get(key)

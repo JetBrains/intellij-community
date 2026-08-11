@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame
 
 import com.intellij.openapi.project.Project
@@ -15,7 +15,6 @@ import com.intellij.ui.awt.AnchoredPoint
 import com.intellij.util.asDisposable
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
@@ -30,12 +29,7 @@ object FrameNotificationUtils {
   @JvmStatic
   fun showNotification(project: Project, session: XDebugSession?, @NlsSafe content: String) {
     val proxy = session?.let { XDebuggerEntityConverter.asProxy(it) }
-    if (SplitDebuggerMode.isSplitDebugger()) {
-      FRAME_NOTIFICATION_REMOTE_TOPIC.sendToClient(project, FrameNotificationRequest(proxy?.id, content))
-    }
-    else {
-      showNotificationImpl(project, proxy, content)
-    }
+    FRAME_NOTIFICATION_REMOTE_TOPIC.sendToClient(project, FrameNotificationRequest(proxy?.id, content))
   }
 
   fun showNotificationImpl(project: Project, session: XDebugSessionProxy?, @NlsSafe content: String) {

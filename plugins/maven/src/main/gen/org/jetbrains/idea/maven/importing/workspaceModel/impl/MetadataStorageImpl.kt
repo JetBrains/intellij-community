@@ -14,9 +14,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
   override fun initializeMetadata() {
     val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
     val primitiveTypeListNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "List")
-
     var typeMetadata: StorageTypeMetadata
-
     typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "org.jetbrains.idea.maven.importing.workspaceModel.MavenEntitySource",
                                                      properties = listOf(OwnPropertyMetadata(isComputable = false,
                                                                                              isKey = false,
@@ -28,9 +26,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                  fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
                                                                                              withDefault = false)),
                                                      supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettingsEntity",
                                   entityDataFqName = "org.jetbrains.idea.maven.importing.workspaceModel.impl.MavenProjectsTreeSettingsEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -52,7 +48,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
   }
 

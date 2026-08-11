@@ -46,7 +46,7 @@ class SeAdaptedItemsProvider(override val contributor: SearchEverywhereContribut
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     scopeProviderDelegate?.let { scopeProviderDelegate ->
-      val isEverywhere = SeEverywhereFilter.isEverywhere(params.filter)
+      val isEverywhere = SeEverywhereFilterImpl.isEverywhere(params.filter)
 
       if (isEverywhere != null) {
         // For adapted providers which are shown in a separate tab,

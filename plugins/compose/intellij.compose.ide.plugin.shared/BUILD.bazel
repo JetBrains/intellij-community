@@ -1,9 +1,8 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.compose.ide.plugin.shared` start
-
 create_kotlinc_options(
     name = "custom_ide-plugin-shared",
     x_context_parameters = True,
@@ -44,14 +43,17 @@ jvm_library(
         "//platform/util",
         "//platform/util:util-ui",
         "//plugins/kotlin/base/indices",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
-        "@lib//:kotlinc-analysis-api-provided",
+        "//plugins/kotlin/references",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//java/java-psi-api:psi",
         "//plugins/kotlin/code-insight/api",
         "//platform/lang-impl",
         "//plugins/kotlin/code-insight/utils",
         "//plugins/kotlin/base/psi",
+        "//plugins/kotlin/base/facet",
+        "//plugins/kotlin/base/util",
     ],
 )
 
@@ -84,14 +86,17 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//platform/util:util-ui_test_lib",
         "//plugins/kotlin/base/indices:indices_test_lib",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
-        "@lib//:kotlinc-analysis-api-provided",
+        "//plugins/kotlin/references:references_test_lib",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//java/java-psi-api:psi_test_lib",
         "//plugins/kotlin/code-insight/api:api_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
         "//plugins/kotlin/code-insight/utils:utils_test_lib",
         "//plugins/kotlin/base/psi:psi_test_lib",
+        "//plugins/kotlin/base/facet:facet_test_lib",
+        "//plugins/kotlin/base/util:util_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.shared` end
@@ -106,7 +111,6 @@ exports_files(
 ### auto-generated section `iml intellij.compose.ide.plugin.shared` end
 
 ### auto-generated section `build intellij.compose.ide.plugin.shared.tests` start
-
 create_kotlinc_options(
     name = "custom_ide-plugin-shared-tests",
     opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
@@ -166,11 +170,14 @@ jvm_library(
         "//plugins/kotlin/tests-common:common-tests_test_lib",
         "//plugins/kotlin/test-framework",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
-        "@lib//:kotlin-test-assertions-core-jvm",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//libraries/mockk",
         "//libraries/mockk:mockk_test_lib",
         "//libraries/mockk/jvm",
@@ -191,6 +198,8 @@ jvm_library(
         "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
         "//plugins/kotlin/base/compiler-configuration",
         "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.shared.tests` end
@@ -205,7 +214,6 @@ exports_files(
 ### auto-generated section `iml intellij.compose.ide.plugin.shared.tests` end
 
 ### auto-generated section `test intellij.compose.ide.plugin.shared.tests` start
-
 jps_test(
     name = "ide-plugin-shared-tests_test",
     runtime_deps = [":ide-plugin-shared-tests_test_lib"],

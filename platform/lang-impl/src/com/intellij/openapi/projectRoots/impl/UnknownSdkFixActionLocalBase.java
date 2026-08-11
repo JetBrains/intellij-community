@@ -2,7 +2,6 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -18,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
 
 @ApiStatus.Internal
 public abstract class UnknownSdkFixActionLocalBase extends UnknownSdkFixActionBase {
@@ -58,7 +59,7 @@ public abstract class UnknownSdkFixActionLocalBase extends UnknownSdkFixActionBa
           ApplicationManager.getApplication().invokeLater(() -> runWithEvents());
         }
         catch (Throwable t) {
-          if (t instanceof ControlFlowException) throw t;
+          rethrowControlFlowException(t);
 
           //must be logged in the applyLocalFix
         }

@@ -40,9 +40,13 @@ data class DB(
   override fun <T> DbContext<Q>.cachedQuery(query: CachedQuery<T>): CachedQueryResult<T> =
     cachedQueryImpl(queryCache, query)
 
-  fun mutable(defaultPart: Part): MutableDb =
+  fun mutable(
+    defaultPart: Part,
+    registerEntityTypeOnEntityCreation: Boolean = true,
+  ): MutableDb =
     MutableDb(dbBefore = this,
               defaultPart = defaultPart,
+              registerEntityTypeOnEntityCreation = registerEntityTypeOnEntityCreation,
               queryCache = queryCache,
               index = index)
 

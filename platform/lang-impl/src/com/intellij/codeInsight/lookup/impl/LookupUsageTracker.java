@@ -30,6 +30,7 @@ import com.intellij.lang.documentation.ide.impl.DocumentationPopupListener;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.EditorKind;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IncompleteDependenciesService;
@@ -57,7 +58,7 @@ import static com.intellij.ide.actions.ToolwindowFusEventFields.TOOLWINDOW;
 public final class LookupUsageTracker extends CounterUsagesCollector {
   public static final String FINISHED_EVENT_ID = "finished";
   public static final String GROUP_ID = "completion";
-  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 43);
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 44);
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
@@ -245,6 +246,10 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
 
     private void triggerLookupUsed(@NotNull FinishType finishType, @Nullable LookupElement currentItem,
                                    char completionChar) {
+      if (Elf.getElf().isUnsupportedOperationGuardActive()) {
+        // TODO: why fus is collected on EDT during typing?
+        return;
+      }
       List<EventPair<?>> data = ReadAction.computeBlocking(() -> getCommonUsageInfo(finishType, currentItem, completionChar));
 
       final List<EventPair<?>> additionalData = new ArrayList<>();

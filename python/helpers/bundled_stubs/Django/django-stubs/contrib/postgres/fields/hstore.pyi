@@ -8,14 +8,12 @@ from django.db.models.fields.mixins import CheckFieldDefaultMixin
 from django.db.models.sql.compiler import SQLCompiler, _AsSqlType
 from typing_extensions import override
 
-class HStoreField(CheckPostgresInstalledMixin, CheckFieldDefaultMixin, Field):
+class HStoreField(CheckPostgresInstalledMixin, CheckFieldDefaultMixin, Field[Any, Any]):
     @override
     def get_transform(self, name: str) -> Any: ...
-    @override
-    def formfield(self, **kwargs: Any) -> Any: ...  # type: ignore[override]
 
 class KeyTransform(Transform):
-    output_field: ClassVar[TextField]
+    output_field: ClassVar[TextField[Any, Any]]
 
     def __init__(self, key_name: str, *args: Any, **kwargs: Any) -> None: ...
     @override
@@ -26,9 +24,9 @@ class KeyTransformFactory:
     def __call__(self, *args: Any, **kwargs: Any) -> KeyTransform: ...
 
 class KeysTransform(Transform):
-    output_field: ClassVar[ArrayField]
+    output_field: ClassVar[ArrayField[Any, Any]]
 
 class ValuesTransform(Transform):
-    output_field: ClassVar[ArrayField]
+    output_field: ClassVar[ArrayField[Any, Any]]
 
 __all__ = ["HStoreField"]

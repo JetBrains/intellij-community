@@ -1,0 +1,10 @@
+// WITH_STDLIB
+fun foo() {
+    val items = listOf("a", "b", "c")
+    repeat(3) {
+        items.forEach { value ->
+            if (value == "b") return@forEach
+            println(value)
+        }
+    }
+}

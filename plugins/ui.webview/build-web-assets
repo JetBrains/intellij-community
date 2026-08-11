@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+set -euo pipefail
+
+workspace="${BUILD_WORKSPACE_DIRECTORY:-$(git rev-parse --show-toplevel)}"
+webview_src_dir="${WEBVIEW_SRC_DIR:-}"
+
+if [[ -z "$webview_src_dir" ]]; then
+  echo "WEBVIEW_SRC_DIR is required" >&2
+  exit 2
+fi
+
+cd "$workspace/$webview_src_dir"
+exec bun run build

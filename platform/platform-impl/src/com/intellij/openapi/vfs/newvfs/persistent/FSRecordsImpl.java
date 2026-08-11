@@ -109,8 +109,6 @@ public final class FSRecordsImpl implements Closeable {
   //          of OS crash, and it is still quite a good chance either VFS or other IDE-critical on-disk structures get corrupted.
   //          So, maybe drop background VFS flush entirely?
   private static final boolean BACKGROUND_VFS_FLUSH = getBooleanProperty("vfs.flushing.use-background-flush", true);
-  /** Not a lot of sense in gentle flusher for memory-mapped VFS storages */
-  private static final boolean USE_GENTLE_FLUSHER = getBooleanProperty("vfs.flushing.use-gentle-flusher", false);
 
 
   /** Supported values: 'none', 'slru', 'mru' */
@@ -383,7 +381,7 @@ public final class FSRecordsImpl implements Closeable {
 
     if (BACKGROUND_VFS_FLUSH) {
       ScheduledExecutorService scheduler = AppExecutorUtil.getAppScheduledExecutorService();
-      flushingTask = PersistentFSConnection.startFlusher(scheduler, connection, USE_GENTLE_FLUSHER);
+      flushingTask = PersistentFSConnection.startFlusher(scheduler, connection);
     }
     else {
       flushingTask = null;

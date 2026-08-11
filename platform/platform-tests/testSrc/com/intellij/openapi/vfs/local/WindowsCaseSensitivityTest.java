@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -22,6 +22,7 @@ import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -44,8 +45,8 @@ public class WindowsCaseSensitivityTest extends BareTestFixtureTestCase {
   public static void setUp() {
     assumeWindows();
     assumeTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
-    assumeTrue("'fsutil.exe' not found in %Path%", PathEnvironmentVariableUtil.findInPath("fsutil.exe") != null);
-    assumeTrue("'wsl.exe' not found in %Path% (needed for 'setCaseSensitiveInfo')", PathEnvironmentVariableUtil.findInPath("wsl.exe") != null);
+    assumeTrue("'fsutil.exe' not found in %Path%", PathEnvironmentVariableUtil.findFirst("fsutil.exe") != null);
+    assumeTrue("'wsl.exe' not found in %Path% (needed for 'setCaseSensitiveInfo')", PathEnvironmentVariableUtil.findFirst("wsl.exe") != null);
   }
 
   @Test
@@ -73,18 +74,59 @@ public class WindowsCaseSensitivityTest extends BareTestFixtureTestCase {
     assertTrue(README.isCaseSensitive());
   }
 
-  private static VirtualFile createChildData(VirtualFile dir, String name) throws IOException {
-    return WriteAction.computeAndWait(() -> dir.createChildData(null, name));
+  @Test
+  public void testChangeCSAndCreateNewFileMustLeadToImmediateCSFlagUpdate() throws Exception {
+    File dir = myTempDir.newDirectory();
+    VirtualDirectoryImpl vDir = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    assertNotNull(vDir);
+    assertEquals(FileAttributes.CaseSensitivity.UNKNOWN, vDir.getChildrenCaseSensitivity());
+
+    IoTestUtil.setCaseSensitivity(dir, true);
+
+    VirtualFile readme = createChildData(vDir, "readme.txt");
+    VirtualFile README = createChildData(vDir, "README.TXT");
+    assertTrue(vDir.isCaseSensitive());
+    assertNotEquals("Should be different files", readme, README);
   }
 
   @Test
+  public void vfsEventMustBeFiredOnCaseSensitivityChange() throws IOException {
+    File dir = myTempDir.newDirectory("xxx");
+    assertTrue(dir.exists());
+    VirtualDirectoryImpl vDir = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    Semaphore eventFound = new Semaphore(1);
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener(){
+      @Override
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+        VFileEvent changeEvent = ContainerUtil.find(events, event -> event instanceof VFilePropertyChangeEvent
+                                                                     && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY)
+                                                                     && vDir.equals(event.getFile())
+                                                                     && ((VFilePropertyChangeEvent)event).getNewValue() == FileAttributes.CaseSensitivity.SENSITIVE);
+        if (changeEvent != null) {
+          eventFound.up();
+        }
+      }
+    });
+
+    IoTestUtil.setCaseSensitivity(dir, true);
+
+    assertEquals(FileAttributes.CaseSensitivity.SENSITIVE, vDir.getChildrenCaseSensitivity());
+    UIUtil.pump();
+    eventFound.waitFor();
+  }
+
+  @Test
+  @Ignore("Can't change case-sensitivity on non-empty folder")
   public void testChangeCaseSensitivityMidWayMustNotLeadToCollisions() throws Exception {
     File dir = myTempDir.newDirectory();
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
     assertNotNull(vDir);
     assertFalse(vDir.isCaseSensitive());
     VirtualFile readme = createChildData(vDir, "readme.txt");
+
+    //TODO RC: can't change case-sensitivity on non-empty folder -- but without it the test is meaningless
     IoTestUtil.setCaseSensitivity(dir, true);
+
     vDir.refresh(false, true);
     VirtualFile README = createChildData(vDir, "README.TXT");  // must not fail with "already exists" exception
     assertTrue(vDir.isCaseSensitive());
@@ -92,58 +134,27 @@ public class WindowsCaseSensitivityTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testChangeCSAndCreateNewFileMustLeadToImmediateCSFlagUpdate() throws Exception {
-    File dir = myTempDir.newDirectory();
-    VirtualDirectoryImpl vDir = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
-    assertNotNull(vDir);
-    assertEquals(FileAttributes.CaseSensitivity.UNKNOWN, vDir.getChildrenCaseSensitivity());
-    VirtualFile readme = createChildData(vDir, "readme.txt");
-    IoTestUtil.setCaseSensitivity(dir, true);
-    VirtualFile README = createChildData(vDir, "README.TXT");
-    assertTrue(vDir.isCaseSensitive());
-    assertNotEquals(readme, README);
-  }
-
-  @Test
+  @Ignore("Can't change case-sensitivity on non-empty folder")
   public void testChangeCSInDirectoryWithManyChildrenMustLeadToChildrenResort() throws Exception {
     File dir = myTempDir.newDirectory();
     assertTrue(new File(dir, "xt_esp.h").createNewFile());
     assertTrue(new File(dir, "xt_LED.h").createNewFile());
     VirtualDirectoryImpl root = (VirtualDirectoryImpl)myTempDir.getVirtualFileRoot();
-    root.getCachedChildren().get(0).getChildren();
+    root.getCachedChildren().getFirst().getChildren();
     VirtualDirectoryImpl vDir = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
     assertNotNull(vDir);
     assertEquals(2, vDir.getCachedChildren().size());
     assertEquals(FileAttributes.CaseSensitivity.UNKNOWN, vDir.getChildrenCaseSensitivity());
+
+    //TODO RC: can't change case-sensitivity on non-empty folder, but without it the test is meaningless
     IoTestUtil.setCaseSensitivity(dir, true);
-    VirtualFile v3 = createChildData(vDir, "xt_MARK.h");
+
+    createChildData(vDir, "xt_MARK.h");
     // no assertion "child wrongly placed before blah blah"
     assertTrue(vDir.isCaseSensitive());
   }
 
-  @Test
-  public void vfsEventMustBeFiredOnCaseSensitivityChange() throws IOException {
-    String childName = "0";
-    File ioFile = myTempDir.newFile("xxx/" + childName);
-    assertTrue(ioFile.exists());
-    VirtualDirectoryImpl dir = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile.getParentFile());
-    Semaphore eventFound = new Semaphore(1);
-    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener(){
-      @Override
-      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
-        VFileEvent changeEvent = ContainerUtil.find(events, event -> event instanceof VFilePropertyChangeEvent
-                 && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY)
-                 && dir.equals(event.getFile())
-                 && ((VFilePropertyChangeEvent)event).getNewValue() == FileAttributes.CaseSensitivity.SENSITIVE);
-        if (changeEvent != null) {
-          eventFound.up();
-        }
-      }
-    });
-    IoTestUtil.setCaseSensitivity(ioFile.getParentFile(), true);
-    assertNotNull(dir.findChild(childName));
-    assertEquals(FileAttributes.CaseSensitivity.SENSITIVE, dir.getChildrenCaseSensitivity());
-    UIUtil.pump();
-    eventFound.waitFor();
+  private static VirtualFile createChildData(VirtualFile dir, String name) throws IOException {
+    return WriteAction.computeAndWait(() -> dir.createChildData(null, name));
   }
 }

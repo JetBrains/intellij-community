@@ -14,7 +14,8 @@ internal fun ByteBuffer.putPartially(src: ByteBuffer): Int {
   else {
     // Slice, put, and set size back
     val l = src.limit()
-    dst.put(src.limit(src.position() + dst.remaining()))
+    src.limit(src.position() + dst.remaining())
+    dst.put(src)
     src.limit(l)
   }
   val bytesRead = bytesBeforeRead - src.remaining()

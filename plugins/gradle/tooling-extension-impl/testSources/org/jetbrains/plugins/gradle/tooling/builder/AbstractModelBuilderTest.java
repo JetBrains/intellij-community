@@ -6,7 +6,6 @@ import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAct
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState;
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider;
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider;
-import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.ApplicationRule;
@@ -26,7 +25,6 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver;
 import org.jetbrains.plugins.gradle.tooling.TargetJavaVersionWatcher;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.junit.After;
 import org.junit.Assert;
@@ -40,7 +38,6 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -148,12 +145,10 @@ public abstract class AbstractModelBuilderTest {
       .addProjectImportModelProviders(GradleClassBuildModelProvider.createAll(IdeaProject.class))
       .addProjectImportModelProviders(modelProviders);
 
-    Path targetPathMapperInitScript = GradleInitScriptUtil.createTargetPathMapperInitScript();
-    Path mainInitScript = GradleInitScriptUtil.createMainInitScript(false, Collections.emptySet());
-    ExternalSystemExecutionSettings executionSettings = new GradleExecutionSettings()
-      .withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, targetPathMapperInitScript.toString())
-      .withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, mainInitScript.toString())
-      .withVmOptions(getDefaultGradleVmOptions());
+    GradleExecutionSettings executionSettings = new GradleExecutionSettings();
+    executionSettings.addInitScript(GradleInitScriptUtil.createTargetPathMapperInitScript());
+    executionSettings.addInitScript(gradleVersion, GradleInitScriptUtil.createMainInitScript(false, Collections.emptySet()));
+    executionSettings.withVmOptions(getDefaultGradleVmOptions());
 
     GradleConnector connector = GradleConnector.newConnector()
       .useDistribution(GradleUtil.getWrapperDistributionUri(gradleVersion))

@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -13,10 +15,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
@@ -24,9 +24,7 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -39,16 +37,20 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.FinalUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -100,9 +102,26 @@ public final class BindFieldsFromParametersAction implements ModCommandAction, D
   private static boolean isAvailable(@NotNull PsiParameter psiParameter) {
     PsiType type = FieldFromParameterUtils.getSubstitutedType(psiParameter);
     if (type != null && !type.isAssignableFrom(psiParameter.getType())) return false;
+    if (isPassedToChainedConstructor(psiParameter)) return false;
     PsiClass targetClass = PsiTreeUtil.getParentOfType(psiParameter, PsiClass.class);
     return FieldFromParameterUtils.isAvailable(psiParameter, type, targetClass) &&
            psiParameter.getLanguage().isKindOf(JavaLanguage.INSTANCE);
+  }
+
+  /**
+   * Tells whether {@code parameter} is passed as an argument to the {@code super(...)}/{@code this(...)} call of its
+   * constructor.
+   */
+  private static boolean isPassedToChainedConstructor(@NotNull PsiParameter parameter) {
+    if (!(parameter.getDeclarationScope() instanceof PsiMethod method) || !method.isConstructor()) return false;
+    PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
+    if (call == null) return false;
+    for (PsiExpression arg : call.getArgumentList().getExpressions()) {
+      if (arg instanceof PsiReferenceExpression ref && ref.resolve() == parameter) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -120,21 +139,22 @@ public final class BindFieldsFromParametersAction implements ModCommandAction, D
     List<PsiParameter> availableParameters = getAvailableParameters(method);
 
     return selectParameters(method, availableParameters, parameters -> ModCommand.psiUpdate(context, updater -> {
-      MultiMap<PsiType, PsiParameter> types = new MultiMap<>();
-      List<PsiParameter> writable = ContainerUtil.map(parameters, updater::getWritable);
-      for (PsiParameter parameter : writable) {
-        types.putValue(parameter.getType(), parameter);
+      Map<PsiType, Integer> types = new HashMap<>();
+      Map<PsiParameter, PsiParameter> parameterMap = StreamEx.of(parameters).mapToEntry(updater::getWritable).toCustomMap(LinkedHashMap::new);
+      for (PsiParameter parameter : parameterMap.values()) {
+        types.merge(parameter.getType(), 1, Integer::sum);
       }
       CodeStyleSettings allSettings = CodeStyleSettingsManager.getInstance(context.project())
         .cloneSettings(CodeStyle.getSettings(context.file()));
       JavaCodeStyleSettings settings = allSettings.getCustomSettings(JavaCodeStyleSettings.class);
 
       boolean preferLongerNames = settings.PREFER_LONGER_NAMES;
-      for (PsiParameter selected : writable) {
-        settings.PREFER_LONGER_NAMES = preferLongerNames || types.get(selected.getType()).size() > 1;
+      
+      parameterMap.forEach((orig, selected) -> {
+        settings.PREFER_LONGER_NAMES = preferLongerNames || types.getOrDefault(selected.getType(), 0) > 1;
         CodeStyle.runWithLocalSettings(context.project(), allSettings,
-                                       () -> processParameter(context.project(), selected, usedNames));
-      }
+                                       () -> processParameter(context.project(), orig, selected, usedNames));
+      });
     }));
   }
 
@@ -147,36 +167,13 @@ public final class BindFieldsFromParametersAction implements ModCommandAction, D
 
     List<@NotNull ParameterClassMember> members = sortByParameterIndex(
       ContainerUtil.map(parameters, ParameterClassMember::new), method);
-    List<ParameterClassMember> selection = getInitialSelection(method, members);
+    // Parameters forwarded to a super()/this() call are already filtered out in isAvailable(), so every
+    // available parameter is selected by default.
     return ModCommand.chooseMultipleMembers(
       JavaBundle.message("dialog.title.choose.0.parameters", method.isConstructor() ? "Constructor" : "Method"),
                                members,
-                               selection,
+                               members,
                                function.compose(elements -> ContainerUtil.map(elements, e -> ((ParameterClassMember)e).getParameter())));
-  }
-
-  /**
-   * Exclude parameters passed to super() or this() calls from initial selection
-   */
-  private static @Unmodifiable List<ParameterClassMember> getInitialSelection(@NotNull PsiMethod method,
-                                                                List<@NotNull ParameterClassMember> members) {
-    Set<PsiElement> resolvedInSuperOrThis = new HashSet<>();
-    PsiCodeBlock body = method.getBody();
-    LOG.assertTrue(body != null);
-    PsiStatement[] statements = body.getStatements();
-    if (statements.length > 0 &&
-        statements[0] instanceof PsiExpressionStatement statement &&
-        statement.getExpression() instanceof PsiMethodCallExpression call) {
-      PsiMethod calledMethod = call.resolveMethod();
-      if (calledMethod != null && calledMethod.isConstructor()) {
-        for (PsiExpression arg : call.getArgumentList().getExpressions()) {
-          if (arg instanceof PsiReferenceExpression ref) {
-            ContainerUtil.addIfNotNull(resolvedInSuperOrThis, ref.resolve());
-          }
-        }
-      }
-    }
-    return ContainerUtil.findAll(members, member -> !resolvedInSuperOrThis.contains(member.getParameter()));
   }
 
   private static @NotNull List<@NotNull ParameterClassMember> sortByParameterIndex(@NotNull List<@NotNull ParameterClassMember> members, @NotNull PsiMethod method) {
@@ -184,7 +181,7 @@ public final class BindFieldsFromParametersAction implements ModCommandAction, D
     return members.stream().sorted(Comparator.comparingInt(o -> parameterList.getParameterIndex(o.getParameter()))).toList();
   }
 
-  private static void processParameter(@NotNull Project project, @NotNull PsiParameter parameter, @NotNull Set<String> usedNames) {
+  private static void processParameter(@NotNull Project project, @NotNull PsiParameter orig, @NotNull PsiParameter parameter, @NotNull Set<String> usedNames) {
     PsiType type = FieldFromParameterUtils.getSubstitutedType(parameter);
     if (type == null) return;
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
@@ -226,19 +223,16 @@ public final class BindFieldsFromParametersAction implements ModCommandAction, D
 
     boolean maybeFinal = !isMethodStatic && method.isConstructor();
     boolean isFinal = maybeFinal && targetClass.getConstructors().length == 1;
+    NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(project).findOwnNullabilityInfo(orig);
     PsiField field = FieldFromParameterUtils.createFieldAndAddAssignment(
-      project, targetClass, method, parameter, type, fieldName, isMethodStatic, isFinal);
+      project, targetClass, method, parameter, info, type, fieldName, isMethodStatic, isFinal);
     if (field != null && maybeFinal && !isFinal && FinalUtils.canBeFinal(field)) {
       Objects.requireNonNull(field.getModifierList()).setModifierProperty(PsiModifier.FINAL, true);
     }
   }
 
   private static boolean isFieldAssigned(PsiField field, PsiMethod method) {
-    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(method)).asIterable()) {
-      if (reference instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiReferenceExpression)reference)) {
-        return true;
-      }
-    }
-    return false;
+    return ReferencesSearch.search(field, new LocalSearchScope(method)).anyMatch(
+      reference -> reference instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiReferenceExpression)reference));
   }
 }

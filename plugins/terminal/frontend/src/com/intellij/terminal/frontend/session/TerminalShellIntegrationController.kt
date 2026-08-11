@@ -3,41 +3,54 @@ package com.intellij.terminal.frontend.session
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.EventDispatcher
-import com.jediterm.terminal.Terminal
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
+import org.jetbrains.plugins.terminal.session.impl.TerminalAliasesReceivedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCommandFinishedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCommandStartedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCompletionFinishedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalPromptFinishedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalPromptStartedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalShellIntegrationEvent
 import java.util.HexFormat
 import java.util.Locale
 
-internal class TerminalShellIntegrationController(terminalController: Terminal) {
+/**
+ * Parses the OSC 1341 shell-integration commands emitted by the bundled shell-integration scripts into
+ * [TerminalShellIntegrationEventsListener] callbacks.
+ */
+internal class TerminalShellIntegrationController {
   private val dispatcher = EventDispatcher.create(TerminalShellIntegrationEventsListener::class.java)
 
   private var currentCommand: String? = null
 
-  init {
-    terminalController.addCustomCommandListener { args: List<String> ->
-      try {
-        when (args.getOrNull(0)) {
-          "initialized" -> processInitializedEvent(args)
-          "command_started" -> processCommandStartedEvent(args)
-          "command_finished" -> processCommandFinishedEvent(args)
-          "prompt_started" -> dispatcher.multicaster.promptStarted()
-          "prompt_finished" -> dispatcher.multicaster.promptFinished()
-          "aliases_received" -> processAliasesReceivedEvent(args)
-          "completion_finished" -> processCompletionFinishedEvent(args)
-          else -> LOG.warn("Unknown shell integration event: $args")
-        }
+  /** Whether the shell reported its integration scripts as loaded (the `initialized` event). */
+  var isShellIntegrationEnabled: Boolean = false
+    private set
+
+  fun processCustomCommand(args: List<String>) {
+    try {
+      when (args.getOrNull(0)) {
+        "initialized" -> processInitializedEvent(args)
+        "command_started" -> processCommandStartedEvent(args)
+        "command_finished" -> processCommandFinishedEvent(args)
+        "prompt_started" -> dispatcher.multicaster.promptStarted()
+        "prompt_finished" -> dispatcher.multicaster.promptFinished()
+        "aliases_received" -> processAliasesReceivedEvent(args)
+        "completion_finished" -> processCompletionFinishedEvent(args)
+        else -> LOG.warn("Unknown shell integration event: $args")
       }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (t: Throwable) {
-        LOG.error("Exception during processing shell integration event: $args", t)
-      }
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (t: Throwable) {
+      LOG.error("Exception during processing shell integration event: $args", t)
     }
   }
 
   private fun processInitializedEvent(args: List<String>) {
+    isShellIntegrationEnabled = true
     val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValueOrNull(args.getOrNull(1))
     dispatcher.multicaster.initialized(currentDirectory)
   }
@@ -71,6 +84,40 @@ internal class TerminalShellIntegrationController(terminalController: Terminal) 
 
   fun addListener(listener: TerminalShellIntegrationEventsListener) {
     dispatcher.addListener(listener)
+  }
+
+  /**
+   * Registers a listener that projects the shell-integration callbacks into the corresponding
+   * [TerminalShellIntegrationEvent]s and passes them to [sink], synchronously on the
+   * [processCustomCommand] thread. `initialized` produces no event — observe it via
+   * [isShellIntegrationEnabled] or a plain [addListener].
+   */
+  fun addEventSink(sink: (TerminalShellIntegrationEvent) -> Unit) {
+    addListener(object : TerminalShellIntegrationEventsListener {
+      override fun commandStarted(command: String) {
+        sink(TerminalCommandStartedEvent(command))
+      }
+
+      override fun commandFinished(command: String, exitCode: Int, currentDirectory: String?) {
+        sink(TerminalCommandFinishedEvent(command, exitCode, currentDirectory))
+      }
+
+      override fun promptStarted() {
+        sink(TerminalPromptStartedEvent)
+      }
+
+      override fun promptFinished() {
+        sink(TerminalPromptFinishedEvent)
+      }
+
+      override fun aliasesReceived(aliasesRaw: String) {
+        sink(TerminalAliasesReceivedEvent(aliasesRaw))
+      }
+
+      override fun completionFinished(result: String) {
+        sink(TerminalCompletionFinishedEvent(result))
+      }
+    })
   }
 
   fun removeListener(listener: TerminalShellIntegrationEventsListener) {

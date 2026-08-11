@@ -14,6 +14,7 @@ import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +39,7 @@ import java.util.Set;
 
 import static com.intellij.util.ui.SwingTextTrimmer.THREE_DOTS_AT_LEFT;
 
+@ApiStatus.Internal
 public final class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent implements Disposable, Weighted {
 
   private static final Logger LOG = Logger.getInstance(BreadcrumbsComponent.class);

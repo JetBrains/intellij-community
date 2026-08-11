@@ -10,6 +10,7 @@ import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.Cursor;
 import java.util.Collection;
@@ -73,7 +74,7 @@ public final class LinearGraphUtils {
       }
 
       @Override
-      public @NotNull List<Integer> getNodes(final int nodeIndex, final @NotNull NodeFilter filter) {
+      public @NotNull @Unmodifiable List<Integer> getNodes(final int nodeIndex, final @NotNull NodeFilter filter) {
         return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex, filter.edgeFilter), edge -> {
           if (isEdgeUp(edge, nodeIndex)) return edge.getUpNodeIndex();
           if (isEdgeDown(edge, nodeIndex)) return edge.getDownNodeIndex();

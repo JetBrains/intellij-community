@@ -10,13 +10,14 @@ import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.insertColumn
 import org.intellij.plugins.markdown.editor.tables.TableUtils
+import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 
 internal abstract class InsertTableColumnAction(private val insertAfter: Boolean = true): ColumnBasedTableAction() {
   override fun performAction(editor: Editor, table: MarkdownTable, columnIndex: Int) {
     runWriteAction {
       executeCommand(table.project) {
-        table.insertColumn(editor.document, columnIndex, after = insertAfter)
+        table.insertColumn(editor.document, columnIndex, tableStyle = getTableStyle(table.containingFile), after = insertAfter)
       }
     }
   }
@@ -31,7 +32,9 @@ internal abstract class InsertTableColumnAction(private val insertAfter: Boolean
 
   override fun update(event: AnActionEvent, table: MarkdownTable?, columnIndex: Int?) {
     super.update(event, table, columnIndex)
-    event.presentation.isEnabledAndVisible = table?.hasCorrectBorders() == true
+    if (event.presentation.isEnabledAndVisible) {
+      event.presentation.isEnabledAndVisible = table?.hasCorrectBorders() == true
+    }
   }
 
   class InsertBefore: InsertTableColumnAction(insertAfter = false)

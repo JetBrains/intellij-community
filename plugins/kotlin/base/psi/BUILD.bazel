@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.base.psi` start
-
 jvm_library(
     name = "psi",
     srcs = glob(
@@ -21,7 +20,10 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin/references",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//libraries/guava",
         "//platform/core-api:core",
         "//plugins/kotlin/base/util",
@@ -32,6 +34,7 @@ jvm_library(
         "//platform/code-style-api:codeStyle",
         "//platform/lang-impl",
         "//platform/lang-api:lang",
+        "//java/java-psi-impl:psi-impl",
     ],
 )
 
@@ -47,6 +50,10 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":psi",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//libraries/guava:guava_test_lib",
         "//platform/core-api:core_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",
@@ -57,6 +64,7 @@ jvm_library(
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/lang-api:lang_test_lib",
+        "//java/java-psi-impl:psi-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.psi` end

@@ -2,12 +2,11 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.FrozenDocument;
+import com.intellij.openapi.editor.impl.RMTreeReference;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
@@ -17,9 +16,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.FileContentUtilCore;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -40,7 +39,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
   private static final Key<Boolean> BIG_FILE_PREVIEW = Key.create("BIG_FILE_PREVIEW");
   private static final Object lock = new Object();
-  private final Map<VirtualFile, Document> myDocumentCache = CollectionFactory.createConcurrentWeakValueMap();
+  private final Map<VirtualFile, DocumentEx> myDocumentCache = CollectionFactory.createConcurrentWeakValueMap();
   private static final Map<Document, Boolean> nonPhysicalFilesDocumentsCache = CollectionFactory.createConcurrentWeakMap();
 
   @ApiStatus.Experimental
@@ -50,12 +49,25 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   }
 
   @Override
-  @RequiresReadLock(generateAssertion = false) // assert for real file
   public final @Nullable Document getDocument(@NotNull VirtualFile file) {
-    EditorLockFreeTyping.assertReadAccess(file);
+    InternalPsiVersioning.assertReadAccessOrVersionedEnvironment();
+    return getDocumentWithoutReadAccessAssert(file);
+  }
+
+  @ApiStatus.Internal
+  public final @Nullable Document getDocumentForLightVirtualFile(@NotNull LightVirtualFile file) {
+    return getDocumentWithoutReadAccessAssert(file);
+  }
+
+  private @Nullable DocumentEx getDocumentWithoutReadAccessAssert(@NotNull VirtualFile file) {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document != null) {
       return document;
+    }
+
+    if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+      assertDocumentInitializedIfVersionedEnvironment(file);
+      return null;
     }
 
     if (!file.isValid() || file.isDirectory() || isBinaryWithoutDecompiler(file)) {
@@ -98,6 +110,13 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     fileContentLoaded(file, document);
 
     return document;
+  }
+
+  @ApiStatus.Internal
+  public static void assertDocumentInitializedIfVersionedEnvironment(@NotNull VirtualFile file) {
+    throw new IllegalStateException("Attempt to interact with uninitialized document " + file + " in versioned environment.\n" +
+              "It is assumed that versioned environment is used after the initialization process of the editor, and there are enough hard references to document at this point.\n" +
+              "To fix this error, ensure that you are not interacting with a document before it is fully loaded.");
   }
 
   private static void fireFileBindingChanged(Document document, @Nullable VirtualFile oldFile, @Nullable VirtualFile newFile) {
@@ -193,7 +212,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     nonPhysicalFilesDocumentsCache.remove(document);
     file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
     document.putUserData(FILE_KEY, null);
-    DocumentImpl.processQueue(); // document maybe stuck in RangeMarkerTree queue
+    RMTreeReference.processQueue(); // document maybe stuck in RangeMarkerTree queue
     fireFileBindingChanged(document, file, null);
   }
 
@@ -231,11 +250,11 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     return (int)(largeFilePreviewSize / bytesPerChar);
   }
 
-  private void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {
+  private void cacheDocument(@NotNull VirtualFile file, @NotNull DocumentEx document) {
     myDocumentCache.put(file, document);
   }
 
-  private Document getDocumentFromCache(@NotNull VirtualFile file) {
+  private DocumentEx getDocumentFromCache(@NotNull VirtualFile file) {
     return myDocumentCache.get(file);
   }
 
@@ -256,7 +275,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
 
   @TestOnly
   @ApiStatus.Internal
-  public @Nullable Document getFileCachedDocument(@NotNull VirtualFile virtualFile) {
+  public @Nullable Document getDocumentFromCacheInTests(@NotNull VirtualFile virtualFile) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       throw new IllegalStateException("This method is only for unit tests");
     }

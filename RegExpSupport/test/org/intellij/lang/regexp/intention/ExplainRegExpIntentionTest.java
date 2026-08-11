@@ -102,18 +102,26 @@ public final class ExplainRegExpIntentionTest extends BasePlatformTestCase {
              """);
   }
 
+  public void testNegatedRange() {
+    doTest("[^.-^]",
+           """
+             [^.-^] Negated Character Class (https://www.regular-expressions.info/charclass.html#negated) – matches a character not in the range FULL STOP to CIRCUMFLEX ACCENT (49 characters)
+               .-^ Range (https://www.regular-expressions.info/charclass.html) – matches a character in the range FULL STOP to CIRCUMFLEX ACCENT (49 characters)
+             """);
+  }
+
   public void testExactlyNTimes() {
     Registry.get("explain.regexp.intention.nested.quantifiers").setValue(true, myFixture.getTestRootDisposable());
     doTest("[0-9]{3}-[0-9]{4}",
            """
              [0-9]{3}-[0-9]{4} – matches elements in order
                [0-9]{3} Quantifier (https://www.regular-expressions.info/repeat.html) – matches exactly 3 times
-                 [0-9] Character Class (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
-                   0-9 Range (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
+                 [0-9] Character Class (https://www.regular-expressions.info/charclass.html) – matches a character in the range DIGIT ZERO to DIGIT NINE (10 characters)
+                   0-9 Range (https://www.regular-expressions.info/charclass.html) – matches a character in the range DIGIT ZERO to DIGIT NINE (10 characters)
                - – matches the HYPHEN-MINUS character
                [0-9]{4} Quantifier (https://www.regular-expressions.info/repeat.html) – matches exactly 4 times
-                 [0-9] Character Class (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
-                   0-9 Range (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
+                 [0-9] Character Class (https://www.regular-expressions.info/charclass.html) – matches a character in the range DIGIT ZERO to DIGIT NINE (10 characters)
+                   0-9 Range (https://www.regular-expressions.info/charclass.html) – matches a character in the range DIGIT ZERO to DIGIT NINE (10 characters)
              """);
   }
 
@@ -122,12 +130,12 @@ public final class ExplainRegExpIntentionTest extends BasePlatformTestCase {
     doTest("[0-9]{3}-[0-9]{4}",
            """
              [0-9]{3}-[0-9]{4} – matches elements in order
-               [0-9] Character Class (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
-                 0-9 Range (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
+               [0-9] Character Class (https://www.regular-expressions.info/charclass.html) – matches a character in the range DIGIT ZERO to DIGIT NINE (10 characters)
+                 0-9 Range (https://www.regular-expressions.info/charclass.html) – matches a character in the range DIGIT ZERO to DIGIT NINE (10 characters)
                {3} Quantifier (https://www.regular-expressions.info/repeat.html) – matches the previous element exactly 3 times
                - – matches the HYPHEN-MINUS character
-               [0-9] Character Class (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
-                 0-9 Range (https://www.regular-expressions.info/charclass.html) – matches 1 character from DIGIT ZERO to DIGIT NINE (10 characters)
+               [0-9] Character Class (https://www.regular-expressions.info/charclass.html) – matches a character in the range DIGIT ZERO to DIGIT NINE (10 characters)
+                 0-9 Range (https://www.regular-expressions.info/charclass.html) – matches a character in the range DIGIT ZERO to DIGIT NINE (10 characters)
                {4} Quantifier (https://www.regular-expressions.info/repeat.html) – matches the previous element exactly 4 times
              """);
   }

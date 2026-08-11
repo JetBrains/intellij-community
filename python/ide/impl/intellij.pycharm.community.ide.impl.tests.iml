@@ -57,7 +57,7 @@
     <orderEntry type="module" module-name="intellij.platform.usageView" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.sdk.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs" scope="TEST" />
     <orderEntry type="module" module-name="intellij.featuresTrainer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.featuresTrainer" scope="RUNTIME" />
@@ -67,26 +67,24 @@
     <orderEntry type="module" module-name="intellij.platform.whatsNew" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.experiment" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jna" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jna" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.services.systemPython" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.services.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.impl.pipenv" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.venv" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pyproject" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.hatch" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.semver" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.nonModalWelcomeScreen" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.nonModalWelcomeScreen.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.execService" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.sdkConfigurator.common" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.sdk.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.uv.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.execService.python" scope="TEST" />

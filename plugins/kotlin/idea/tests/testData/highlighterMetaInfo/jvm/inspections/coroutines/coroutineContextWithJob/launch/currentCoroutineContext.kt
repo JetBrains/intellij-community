@@ -12,4 +12,4 @@ import kotlinx.coroutines.currentCoroutineContext
 suspend fun CoroutineScope.test() {
     launch(currentCoroutineContext()) {}
 }
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutineContextWithJobInspection

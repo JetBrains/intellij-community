@@ -3,10 +3,12 @@ package com.intellij.tools;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 
+@ApiStatus.Internal
 public class ToolSelectDialog extends DialogWrapper {
   private final BaseToolsPanel myToolsPanel;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -154,7 +154,7 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
     doTest(new GrUnresolvedAccessInspection());
   }
 
-  public void testEnumConstantConstructors() {
+  public void testEnumConstantConstructors21() {
     doTest();
   }
 

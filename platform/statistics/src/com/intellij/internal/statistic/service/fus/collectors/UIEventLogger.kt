@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId
 import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.eventLog.events.EventId3
+import com.intellij.internal.statistic.eventLog.events.FusInputEvent
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.FileType
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object UIEventLogger : CounterUsagesCollector() {
 
-  private val uiEventGroup = EventLogGroup("ui.event", 23)
+  private val uiEventGroup = EventLogGroup("ui.event", 24)
 
   @JvmField
   val NavBarShowPopup: EventId = uiEventGroup.registerEvent("NavBarShowPopup")
@@ -139,9 +140,10 @@ object UIEventLogger : CounterUsagesCollector() {
   )
 
   @JvmField
-  val StatusBarWidgetClicked: EventId1<Class<*>> = uiEventGroup.registerEvent(
+  val StatusBarWidgetClicked: EventId2<Class<*>, FusInputEvent?> = uiEventGroup.registerEvent(
     "StatusBarWidgetClicked",
     EventFields.Class("class"),
+    EventFields.InputEvent,
   )
 
   @JvmField

@@ -1,5 +1,5 @@
 // "Convert string to character literal" "true"
-// K2_ERROR: Incompatible types 'Char' and 'String'.
+// K2_ERROR: INCOMPATIBLE_TYPES
 fun test(c: Char) {
     when (c) {
         <caret>"." -> {}

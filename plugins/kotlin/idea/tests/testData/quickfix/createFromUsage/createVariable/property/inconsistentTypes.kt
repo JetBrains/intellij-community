@@ -2,10 +2,10 @@
 // K2_ACTION: "Create property 'foo'" "true"
 // ERROR: Type mismatch: inferred type is A<Int> but Int was expected
 // ERROR: Property must be initialized or be abstract
-// K2_ERROR: Return type mismatch: expected 'Int', actual 'A<Int>'.
-// K2_ERROR: Unresolved reference 'foo' on receiver of type 'A<Int>'.
-// K2_AFTER_ERROR: Property must be initialized or be abstract.
-// K2_AFTER_ERROR: Return type mismatch: expected 'Int', actual 'A<Int>'.
+// K2_AFTER_ERROR: MUST_BE_INITIALIZED_OR_BE_ABSTRACT
+// K2_AFTER_ERROR: RETURN_TYPE_MISMATCH
+// K2_ERROR: RETURN_TYPE_MISMATCH
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 class A<T>(val n: T)
 

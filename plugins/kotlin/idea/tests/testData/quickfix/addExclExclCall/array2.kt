@@ -1,5 +1,5 @@
 // "Add non-null asserted (a[0]!!) call" "true"
-// K2_ERROR: Return type mismatch: expected 'String', actual 'String?'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 
 fun foo(a: Array<String?>): String {
     return <caret>a[0]

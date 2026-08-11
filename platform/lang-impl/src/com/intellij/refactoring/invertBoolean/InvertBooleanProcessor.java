@@ -17,6 +17,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import java.util.Objects;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
+@ApiStatus.Internal
 public final class InvertBooleanProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(InvertBooleanProcessor.class);
   private final InvertBooleanDelegate myDelegate;

@@ -22,7 +22,7 @@ interface ArtifactOutputPackagingElementEntityBuilder : WorkspaceEntityBuilder<A
 
 internal object ArtifactOutputPackagingElementEntityType :
   EntityType<ArtifactOutputPackagingElementEntity, ArtifactOutputPackagingElementEntityBuilder>() {
-  override val entityClass: Class<ArtifactOutputPackagingElementEntity> get() = ArtifactOutputPackagingElementEntity::class.java
+  override val entityImplClass: Class<*> get() = ArtifactOutputPackagingElementEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ArtifactOutputPackagingElementEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,

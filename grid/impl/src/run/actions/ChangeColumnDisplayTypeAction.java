@@ -72,13 +72,13 @@ public class ChangeColumnDisplayTypeAction extends ActionGroup implements DumbAw
   }
 
   public static boolean isIntegerOrBigInt(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull CoreGrid<GridRow, GridColumn> grid) {
-    int type = GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(GridCellRequestKt.requestColumn(grid, columnIdx));
+    int type = GridCellEditorHelper.get(grid).guessJdbcTypeForColumn(GridCellRequestKt.requestColumn(grid, columnIdx));
     return ObjectFormatterUtil.isIntegerOrBigInt(type);
   }
 
   public static boolean isBinary(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull CoreGrid<GridRow, GridColumn> grid) {
     GridCellRequest<GridRow, GridColumn> request = GridCellRequestKt.requestColumn(grid, columnIdx);
-    int type = GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(request);
+    int type = GridCellEditorHelper.get(grid).guessJdbcTypeForColumn(request);
     GridColumn column = request.getColumn();
     return ObjectFormatterUtil.isBinary(column, type);
   }

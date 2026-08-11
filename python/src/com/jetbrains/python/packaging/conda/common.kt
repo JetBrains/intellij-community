@@ -2,26 +2,16 @@
 package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.parser.icons.PythonParserIcons
-import javax.swing.Icon
 
 class CondaPackage(
   name: String, version: String,
   editableMode: Boolean,
   val installedWithPip: Boolean = false,
 ) : PythonPackage(name, version, editableMode) {
-  override val sourceRepoIcon: Icon = if (installedWithPip) {
-    PythonParserIcons.PythonFile
-  }
-  else {
-    PythonCommunityImplCondaIcons.Anaconda
-  }
-
   override fun toString(): String {
     return "CondaPackage(name='$name', version='$version', installedWithPip=$installedWithPip)"
   }

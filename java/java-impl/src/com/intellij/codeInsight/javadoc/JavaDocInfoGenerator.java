@@ -697,6 +697,11 @@ public class JavaDocInfoGenerator {
     else if (myElement instanceof PsiPackage pkg) {
       generatePackageJavaDoc(buffer, pkg, generatePrologue);
     }
+    else if (myElement instanceof PsiPackageStatement psiPackage) {
+      PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(psiPackage.getPackageName());
+      if (aPackage == null) return false;
+      generatePackageJavaDoc(buffer, aPackage, generatePrologue);
+    }
     else if (myElement instanceof PsiJavaModule module) {
       generateModuleJavaDoc(buffer, module, generatePrologue);
     }
@@ -2573,6 +2578,11 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateDeprecatedSection(StringBuilder buffer, PsiDocComment comment) {
+    if (comment.isMarkdownComment() &&
+        comment.getOwner() instanceof PsiModifierListOwner owner &&
+        !owner.hasAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED)) {
+      return;
+    }
     generateSingleTagSection(buffer, comment, "deprecated", JavaBundle.messagePointer("javadoc.deprecated"));
   }
 

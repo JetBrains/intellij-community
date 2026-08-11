@@ -5,7 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
-import com.jetbrains.python.psi.PyCallSiteOwner;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyLambdaExpression;
@@ -18,6 +17,7 @@ import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyExpectedTypeJudgement;
 import com.jetbrains.python.psi.types.PyFunctionTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -25,10 +25,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static com.intellij.util.containers.ContainerUtil.map;
+import static com.jetbrains.python.psi.types.PyTypeUtil.toStream;
+import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 
 public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExpression {
@@ -52,11 +53,16 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
 
     @Nullable PyType expected = PyExpectedTypeJudgement.getExpectedType(this, context);
 
-    if (expected instanceof PyCallableType expectedCallable) {
-      var params = new ArrayList<PyCallableParameter>();
-      var rawActualParams = getParameterList().getParameters();
-      var rawExpectedParams = expectedCallable.getParameters(context);
-      if (rawExpectedParams != null) {
+    List<PyType> result = toStream(expected).<PyType>map(item -> {
+        if (!(item instanceof PyCallableType expectedCallable)) {
+          return null;
+        }
+        var params = new ArrayList<PyCallableParameter>();
+        var rawActualParams = getParameterList().getParameters();
+        var rawExpectedParams = expectedCallable.getParameters(context);
+        if (rawExpectedParams == null) {
+          return null;
+        }
         // commence actual parameter to expected parameter mapping
         // currently we only map positional arguments TODO: PY-85576
         var actualParams = ContainerUtil.filter(rawActualParams, element -> !(element instanceof PySlashParameter));
@@ -85,11 +91,13 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
         if (supported) {
           return new PyFunctionTypeImpl(this, params);
         }
-      }
-    }
-    return new PyFunctionTypeImpl(
-      this, map(getParameterList().getParameters(), param -> PyCallableParameterImpl.psi(param, null))
-    );
+        return null;
+      })
+      .nonNull()
+      .toList();
+    return result.isEmpty() ? new PyFunctionTypeImpl(
+      this, map(getParameterList().getParameters(), param -> PyCallableParameterImpl.psi(param, PyAnyType.getUnknown()))
+    ) : PyUnionType.union(result);
   }
 
   @Override
@@ -118,19 +126,6 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
         PyUnionType.union(yieldTypes), PyUnionType.union(sendTypes), context.getType(body), this);
     }
     return context.getType(body);
-  }
-
-  @Override
-  public @Nullable PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteOwner callSite) {
-    return context.getReturnType(this);
-  }
-
-  @Override
-  public @Nullable PyType getCallType(@Nullable PyExpression receiver,
-                                      @Nullable PyCallSiteOwner pyCallSiteExpression,
-                                      @NotNull Map<PyExpression, PyCallableParameter> parameters,
-                                      @NotNull TypeEvalContext context) {
-    return context.getReturnType(this);
   }
 
   @Override

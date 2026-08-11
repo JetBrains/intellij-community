@@ -15,6 +15,7 @@ import com.intellij.compiler.server.BuildManagerListener
 import com.intellij.compiler.server.CustomBuilderMessageHandler
 import com.intellij.compiler.server.PortableCachesLoadListener
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
@@ -176,7 +177,11 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
         })
     }
 
-    private fun installBtaFileWatcherIfApplicable() {
+    /**
+     * Installs the BTA file watcher if / when it is applicable for this project; idempotent
+     */
+    @ApiStatus.Internal
+    fun installBtaFileWatcherIfApplicable() {
         if (!BtaFileWatcher.isApplicable(project)) return
         if (!btaWatcherInstalled.compareAndSet(false, true)) return
         BtaFileWatcher(project).watchIn(coroutineScope) { updatedModules ->
@@ -185,6 +190,11 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
             }
         }
     }
+
+    @get:TestOnly
+    @get:ApiStatus.Internal
+    val isBtaFileWatcherInstalled: Boolean
+        get() = btaWatcherInstalled.get()
 
     private fun onExternalCompilationDetected(compiledModules: Collection<Module>) {
         val allModules = if (!initialized) allModules() else null
@@ -204,7 +214,10 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
     }
 
     internal class KCRIIsUpToDateConsumer : IsUpToDateCheckConsumer {
-        override fun isApplicable(project: Project): Boolean = isEnabled(project) && KotlinCompilerReferenceIndexStorage.hasIndex(project)
+        override fun isApplicable(project: Project): Boolean = TrustedProjects.isProjectTrusted(project)
+                && isEnabled(project)
+                && KotlinCompilerReferenceIndexStorage.hasIndex(project)
+
         override fun isUpToDate(project: Project, isUpToDate: Boolean) {
             if (!isUpToDate) {
                 return

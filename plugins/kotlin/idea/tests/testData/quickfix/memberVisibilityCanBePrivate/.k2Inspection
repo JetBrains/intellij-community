@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.k2.codeinsight.inspections.K2MemberVisibilityCanBePrivateInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.K2MemberVisibilityCanBePrivateInspection

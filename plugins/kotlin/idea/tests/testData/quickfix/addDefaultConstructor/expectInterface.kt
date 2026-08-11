@@ -4,14 +4,14 @@
 // ACTION: Introduce import alias
 // ACTION: Remove constructor call
 // ERROR: This class does not have a constructor
-// K2_ERROR: 'public abstract actual interface A : Any' has no corresponding 'expect' declaration
-// K2_ERROR: A: 'expect' and corresponding 'actual' are declared in the same module.
-// K2_ERROR: A: 'expect' and corresponding 'actual' are declared in the same module.
-// K2_ERROR: This type does not have a constructor.
-// K2_AFTER_ERROR: 'public abstract actual interface A : Any' has no corresponding 'expect' declaration
-// K2_AFTER_ERROR: A: 'expect' and corresponding 'actual' are declared in the same module.
-// K2_AFTER_ERROR: A: 'expect' and corresponding 'actual' are declared in the same module.
-// K2_AFTER_ERROR: This type does not have a constructor.
+// K2_AFTER_ERROR: ACTUAL_WITHOUT_EXPECT
+// K2_AFTER_ERROR: EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE
+// K2_AFTER_ERROR: EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE
+// K2_AFTER_ERROR: NO_CONSTRUCTOR
+// K2_ERROR: ACTUAL_WITHOUT_EXPECT
+// K2_ERROR: EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE
+// K2_ERROR: EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE
+// K2_ERROR: NO_CONSTRUCTOR
 
 expect interface A
 

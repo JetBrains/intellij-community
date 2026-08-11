@@ -46,7 +46,8 @@ class NewProjectMicronautDialogUI(data: ComponentData) : UiComponent(data) {
       .click()
   }
 
-  val nameTextField: JTextFieldUI = textField({and(byAccessibleName("Name:"), byClass("JBTextField"))})
+  val nameTextField: JTextFieldUI = textField{and(byAccessibleName("Name:"), byClass("JBTextField"))}
   val nextButton: JButtonUiComponent = button("Next")
   val createButton: JButtonUiComponent = button("Create")
+  val cancelButton: JButtonUiComponent = button("Cancel")
 }

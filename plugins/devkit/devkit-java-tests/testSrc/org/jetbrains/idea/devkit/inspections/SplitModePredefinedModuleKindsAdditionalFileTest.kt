@@ -2,24 +2,24 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.openapi.util.registry.RegistryManager
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
 import org.junit.Assert
-import java.nio.file.Files
 
-internal class SplitModePredefinedModuleKindsAdditionalFileTest : LightJavaCodeInsightFixtureTestCase() {
-  fun testAdditionalPredefinedModuleKindsFileReplacesBundledListWhenPresent() {
-    val additionalFile = Files.createTempFile("split-mode-predefined-module-kinds", ".json")
-    Files.writeString(
-      additionalFile,
+private const val PREDEFINED_MODULE_KINDS_PROJECT_RELATIVE_PATH =
+  "community/plugins/devkit/devkit-core/resources/remotedevInspectionData/PredefinedModuleKinds.json5"
+
+internal class SplitModePredefinedModuleKindsSourceModeTest : BasePlatformTestCase() {
+  fun testProjectPredefinedModuleKindsOverrideBundledListWhenProjectModeEnabled() {
+    withPredefinedModuleKindsSourceMode(
+      "project",
       """
         [
-          {"moduleName": "custom.split.mode.frontend", "moduleKind": "frontend"}
+          // JSON5 project overrides are accepted.
+          {kind: 'moduleId', id: 'custom.split.mode.frontend', moduleKind: 'frontend'},
         ]
-      """.trimIndent()
-    )
-
-    withAdditionalPredefinedModuleKindsFile(additionalFile.toString()) { service ->
+      """.trimIndent(),
+    ) { service ->
       Assert.assertEquals(
         SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
         service.getPredefinedDependencyKind("custom.split.mode.frontend"),
@@ -28,11 +28,8 @@ internal class SplitModePredefinedModuleKindsAdditionalFileTest : LightJavaCodeI
     }
   }
 
-  fun testMissingAdditionalPredefinedModuleKindsFileFallsBackToBundledList() {
-    val missingPath = Files.createTempFile("split-mode-predefined-module-kinds-missing", ".json")
-    Files.deleteIfExists(missingPath)
-
-    withAdditionalPredefinedModuleKindsFile(missingPath.toString()) { service ->
+  fun testProjectOrBundledModeFallsBackToBundledListWhenProjectFileIsMissing() {
+    withPredefinedModuleKindsSourceMode("project-or-bundled", null) { service ->
       Assert.assertEquals(
         SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
         service.getPredefinedDependencyKind("intellij.platform.frontend"),
@@ -48,21 +45,60 @@ internal class SplitModePredefinedModuleKindsAdditionalFileTest : LightJavaCodeI
     }
   }
 
-  private fun withAdditionalPredefinedModuleKindsFile(
-    filePath: String,
+  fun testProjectPredefinedModuleKindsReloadAfterProjectFileChange() {
+    withPredefinedModuleKindsSourceMode(
+      "project",
+      """
+        [
+          {kind: 'moduleId', id: 'custom.split.mode.frontend', moduleKind: 'frontend'},
+        ]
+      """.trimIndent(),
+    ) { service ->
+      Assert.assertTrue(service.ensureLoadedBlocking())
+      Assert.assertEquals(
+        SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
+        service.getPredefinedDependencyKind("custom.split.mode.frontend"),
+      )
+      Assert.assertNull(service.getPredefinedDependencyKind("custom.split.mode.backend"))
+
+      createProjectResourceFile(
+        project,
+        PREDEFINED_MODULE_KINDS_PROJECT_RELATIVE_PATH,
+        """
+          [
+            {kind: 'moduleId', id: 'custom.split.mode.backend', moduleKind: 'backend'},
+          ]
+        """.trimIndent(),
+      )
+
+      Assert.assertTrue(service.ensureLoadedBlocking())
+      Assert.assertNull(service.getPredefinedDependencyKind("custom.split.mode.frontend"))
+      Assert.assertEquals(
+        SplitModeApiRestrictionsService.ModuleKind.BACKEND,
+        service.getPredefinedDependencyKind("custom.split.mode.backend"),
+      )
+    }
+  }
+
+  private fun withPredefinedModuleKindsSourceMode(
+    sourceMode: String,
+    projectFileContent: String?,
     action: (SplitModeApiRestrictionsService) -> Unit,
   ) {
-    val service = SplitModeApiRestrictionsService.getInstance()
-    val registryValue = RegistryManager.getInstance().get("devkit.remote.dev.split.mode.analysis.predefined.module.kinds.additional.file")
+    val projectFile = projectFileContent?.let { createProjectResourceFile(project, PREDEFINED_MODULE_KINDS_PROJECT_RELATIVE_PATH, it) }
+    val registryValue = RegistryManager.getInstance().get("devkit.split.mode.analysis.predefined.module.kinds.source")
     val previousValue = registryValue.asString()
     try {
-      registryValue.setValue(filePath)
+      registryValue.setValue(sourceMode)
+      val service = SplitModeApiRestrictionsService.getInstance(project)
       service.reloadRestrictionsForTest()
       action(service)
     }
     finally {
       registryValue.setValue(previousValue)
-      service.reloadRestrictionsForTest()
+      if (projectFile != null) {
+        deleteProjectResourceFile(project, projectFile)
+      }
     }
   }
 }

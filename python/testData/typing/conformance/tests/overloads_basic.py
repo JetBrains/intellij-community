@@ -58,4 +58,3 @@ def map(
 
 def map(func: Any, iter1: Any, iter2: Any = ...) -> Any:
     raise NotImplementedError
-

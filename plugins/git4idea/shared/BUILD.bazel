@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.vcs.git.shared` start
-
 jvm_library(
     name = "shared",
     srcs = glob(
@@ -20,6 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//platform/kernel/rpc",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
@@ -60,6 +60,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":shared",
+        "//platform/kernel/rpc:rpc_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//platform/core-api:core_test_lib",

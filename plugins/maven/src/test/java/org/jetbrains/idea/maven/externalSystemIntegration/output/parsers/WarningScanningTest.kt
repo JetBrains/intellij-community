@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test
 class WarningScanningTest {
   companion object {
     private val tempDir = tempPathFixture()
-    private val project = projectFixture(tempDir, openAfterCreation = true)
+    private val project = projectFixture(tempDir, openAfterCreation = false)
   }
 
   private fun testCase(vararg lines: String): MavenBuildToolLogTester {

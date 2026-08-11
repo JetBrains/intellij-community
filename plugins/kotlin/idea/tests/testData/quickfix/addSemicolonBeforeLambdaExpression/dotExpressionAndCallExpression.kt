@@ -1,6 +1,6 @@
 // "Terminate preceding call with semicolon" "true"
-// K2_ERROR: Expression is treated as a trailing lambda argument; consider separating it from the call with semicolon.
-// K2_ERROR: Unresolved reference 'invoke' on receiver of type 'Unit'.
+// K2_ERROR: UNEXPECTED_TRAILING_LAMBDA_ON_A_NEW_LINE
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 fun doSomething() {}
 fun Any.foo() {}

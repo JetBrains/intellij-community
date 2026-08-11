@@ -8,7 +8,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
@@ -29,6 +28,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -92,7 +92,7 @@ public final class ExtensionPointClassIndex extends PluginXmlIndexBase<String, I
 
   @Override
   protected Map<String, IntList> performIndexing(IdeaPlugin plugin) {
-    final Map<String, IntList> result = FactoryMap.create(key -> new IntArrayList());
+    final Map<String, IntList> result = new HashMap<>();
     ExtensionPointIndex.indexExtensionPoints(plugin, point -> {
       int offset = point.getXmlTag().getTextOffset();
       if (addToIndex(result, point.getInterface(), offset)) return;
@@ -107,7 +107,7 @@ public final class ExtensionPointClassIndex extends PluginXmlIndexBase<String, I
 
   private static boolean addToIndex(Map<String, IntList> map, GenericAttributeValue<PsiClass> value, int offset) {
     if (!DomUtil.hasXml(value)) return false;
-    map.get(value.getStringValue()).add(offset);
+    map.computeIfAbsent(value.getStringValue(), _ -> new IntArrayList()).add(offset);
     return true;
   }
 

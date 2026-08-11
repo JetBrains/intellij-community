@@ -1,6 +1,6 @@
 // "Let the anonymous object implement interface 'Runnable'" "true"
-// K2_ERROR: Argument type mismatch: actual type is '<anonymous>', but 'Runnable' was expected.
-// K2_ERROR: Syntax error: Incomplete code.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: SYNTAX
 
 fun foo(r: Runnable) {}
 

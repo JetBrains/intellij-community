@@ -1,7 +1,7 @@
 // "/(Create member function 'A.B.foo')|(Create member function 'B.foo')/" "true"
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
-// K2_ERROR: Unresolved reference 'foo' on receiver of type 'A<T (of class A<T>)>.B<U (of class B<U, Outer(T)>)>'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 class A<T>(val n: T) {
     inner class B<U>(val m: U) {

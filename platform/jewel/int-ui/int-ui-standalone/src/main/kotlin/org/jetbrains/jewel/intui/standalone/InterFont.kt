@@ -39,5 +39,6 @@ private val InterFontFamily =
         Font(resource = "/fonts/inter/Inter-BlackItalic.ttf", weight = FontWeight.Black, style = FontStyle.Italic),
     )
 
+/** The Inter font family, bundled with Jewel for use in standalone (non-IDE) applications. */
 public val FontFamily.Companion.Inter: FontFamily
     get() = InterFontFamily

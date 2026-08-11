@@ -13,6 +13,7 @@ import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyReferenceExpression;
@@ -87,21 +88,7 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
 
   @Override
   public @NotNull List<PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext) {
-    final Function<PyCallableType, PyCallableType> mapping = callableType -> {
-      if (!hasArgumentList()) {
-        // NOTE: that +1 thing looks fishy
-        final TypeEvalContext context = resolveContext.getTypeEvalContext();
-        return new PyCallableTypeImpl(callableType.getParameters(context),
-                                      callableType.getReturnType(context),
-                                      callableType.getCallable(),
-                                      callableType.getModifier(),
-                                      callableType.getImplicitOffset() + 1);
-      }
-
-      return callableType;
-    };
-
-    return ContainerUtil.map(PyCallExpressionHelper.multiResolveCallee(this, resolveContext), mapping);
+    return PyCallExpressionHelper.multiResolveCallee(this, resolveContext);
   }
 
   @Override

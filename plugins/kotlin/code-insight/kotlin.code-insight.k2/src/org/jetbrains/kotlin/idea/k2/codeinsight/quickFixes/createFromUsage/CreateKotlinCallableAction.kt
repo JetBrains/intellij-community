@@ -21,7 +21,7 @@ import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.text.UniqueNameGenerator
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -32,10 +32,10 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.Creat
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
 import org.jetbrains.kotlin.idea.refactoring.getContainer
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
-import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
@@ -84,7 +84,11 @@ internal class CreateKotlinCallableAction(
         (request as? CreateMethodFromKotlinUsageRequest)?.callTypeParameterInfo ?: CallTypeParameterInfo.EMPTY
 
     private val parameterCandidates: List<ParamCandidate> = run {
-        val raw = (call as? KtElement ?: pointerToContainer.element as? KtElement)?.let { element -> allowAnalysisFromWriteActionInEdt(element) { analyze(it) { renderCandidatesOfParameterTypes(request.expectedParameters, it) } } } ?: emptyList()
+        val raw = (call as? KtElement ?: pointerToContainer.element as? KtElement)?.let { element ->
+            allowAnalysisFromWriteActionInEdt(
+                element
+            ) { renderCandidatesOfParameterTypes(request.expectedParameters, it) }
+        } ?: emptyList()
         if (callTypeParamInfo.substitutionMap.isEmpty()) return@run raw
         val nameGenerator = UniqueNameGenerator()
         raw.map { candidate ->
@@ -99,7 +103,11 @@ internal class CreateKotlinCallableAction(
     }
 
     private val candidatesOfRenderedReturnType: List<String> = run {
-        val raw = (call as? KtElement ?: pointerToContainer.element as? KtElement)?.let { element -> allowAnalysisFromWriteActionInEdt(element) { analyze(it) { renderCandidatesOfReturnType(request, it) } } } ?: emptyList()
+        val raw = (call as? KtElement ?: pointerToContainer.element as? KtElement)?.let { element ->
+            allowAnalysisFromWriteActionInEdt(
+                element
+            ) { renderCandidatesOfReturnType(request, it) }
+        } ?: emptyList()
         if (callTypeParamInfo.substitutionMap.isEmpty()) return@run raw
         raw.map { callTypeParamInfo.substitutionMap[it] ?: it }
     }

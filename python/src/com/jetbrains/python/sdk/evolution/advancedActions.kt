@@ -1,32 +1,26 @@
 package com.jetbrains.python.sdk.evolution
 
 import com.intellij.icons.AllIcons
-import com.intellij.python.sdk.ui.PySdkUiBundle
-import com.intellij.python.sdk.ui.evolution.sdk.EvoModuleSdk
-import com.intellij.python.sdk.ui.evolution.ui.EvoSelectSdkProvider
-import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLazyNodeElement
-import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLeafElement
-import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeSection
-import com.jetbrains.python.Result
+import com.intellij.openapi.module.Module
+import com.intellij.python.sdk.backend.evolution.EvoSelectSdkProvider
+import com.intellij.python.sdk.backend.evolution.evoActionLeaf
+import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
+import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.collectAddInterpreterActions
+import javax.swing.Icon
 
+internal class AdvancedSelectSdkProvider : EvoSelectSdkProvider {
+  override val id: String get() = "advanced"
+  override val label: String get() = "Advanced"
+  override val icon: Icon get() = AllIcons.Toolwindows.ToolWindowInternal
 
-internal class AdvancedSelectSdkProvider() : EvoSelectSdkProvider {
-  override fun getTreeElement(evoModuleSdk: EvoModuleSdk) = EvoTreeLazyNodeElement(
-    text = PySdkUiBundle.message("evo.sdk.status.bar.popup.select.advanced"),
-    icon = AllIcons.Toolwindows.ToolWindowInternal
-  ) {
-
-    val baseIdeActions = collectAddInterpreterActions(ModuleOrProject.ModuleAndProject(evoModuleSdk.module)) { }
-
-    val section = EvoTreeSection(
-      label = null,
-      elements = baseIdeActions.map { action ->
-        EvoTreeLeafElement(action)
-      }
-    )
-
-    Result.success(listOf(section))
+  override suspend fun loadSections(module: Module): EvoLoadResultDto {
+    val actions = collectAddInterpreterActions(ModuleOrProject.ModuleAndProject(module)) { }
+    val leaves = actions.map { action ->
+      val title = action.templatePresentation.text ?: ""
+      evoActionLeaf(title = title, icon = action.templatePresentation.icon ?: icon)
+    }
+    return EvoLoadResultDto.Ok(listOf(EvoSectionDto(label = null, leaves = leaves)))
   }
 }

@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.testExtensions` start
-
 jvm_library(
     name = "testExtensions",
     srcs = glob(
@@ -34,7 +33,7 @@ jvm_library(
         "//platform/testFramework",
         "//platform/util/jdom",
         "@lib//:memoryfilesystem",
-        "@lib//:junit4",
+        "//libraries/junit4",
         "//libraries/assertj-core",
         "//libraries/snakeyaml",
         "//libraries/fastutil",
@@ -69,6 +68,7 @@ jvm_library(
         "//platform/projectModel-impl:projectModel-impl_test_lib",
         "//platform/testFramework:testFramework_test_lib",
         "//platform/util/jdom:jdom_test_lib",
+        "//libraries/junit4:junit4_test_lib",
         "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/snakeyaml:snakeyaml_test_lib",
         "//libraries/fastutil:fastutil_test_lib",

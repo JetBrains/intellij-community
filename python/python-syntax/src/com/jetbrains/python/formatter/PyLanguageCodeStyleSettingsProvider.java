@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyleAbstractConfigurable;
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleConfigurable;
@@ -17,6 +18,8 @@ import com.jetbrains.python.PySyntaxBundle;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.WRAP_VALUES;
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
@@ -86,6 +89,11 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
                                    "KEEP_BLANK_LINES_IN_DECLARATIONS",
                                    "KEEP_BLANK_LINES_IN_CODE");
       consumer.renameStandardOption("BLANK_LINES_AFTER_IMPORTS", PySyntaxBundle.message("formatter.around.top.level.imports"));
+      consumer.renameStandardOption("BLANK_LINES_AROUND_CLASS", PySyntaxBundle.message("formatter.around.nested.classes"));
+      consumer.renameStandardOption("BLANK_LINES_AROUND_METHOD",
+                                    PySyntaxBundle.message("formatter.around.methods.and.nested.functions"));
+      consumer.renameStandardOption("KEEP_BLANK_LINES_IN_DECLARATIONS", PySyntaxBundle.message("formatter.keep.around.declarations"));
+      consumer.renameStandardOption("KEEP_BLANK_LINES_IN_CODE", PySyntaxBundle.message("formatter.keep.in.rest.of.code"));
 
       consumer.showCustomOption(PyCodeStyleSettings.class, "BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS",
                                 PySyntaxBundle.message("formatter.around.top.level.classes.and.function"), getInstance().BLANK_LINES);
@@ -108,6 +116,13 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
                                    "METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE",
                                    "ALIGN_MULTILINE_PARAMETERS_IN_CALLS");
 
+      consumer.renameStandardOption("METHOD_PARAMETERS_WRAP", PySyntaxBundle.message("formatter.function.declaration.parameters"));
+      consumer.renameStandardOption("CALL_PARAMETERS_WRAP", PySyntaxBundle.message("formatter.function.call.arguments"));
+
+      consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_CONSECUTIVE_ASSIGNMENTS",
+                                PySyntaxBundle.message("formatter.align.consecutive.assignments"),
+                                ApplicationBundle.message("wrapping.assignment.statement"));
+
       consumer.showCustomOption(PyCodeStyleSettings.class,
                                 "USE_TRAILING_COMMA_IN_ARGUMENTS_LIST",
                                 PySyntaxBundle.message("formatter.force.trailing.comma.if.multiline"),
@@ -117,6 +132,18 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
                                 "USE_TRAILING_COMMA_IN_PARAMETER_LIST",
                                 PySyntaxBundle.message("formatter.force.trailing.comma.if.multiline"),
                                 ApplicationBundle.message("wrapping.method.parameters"));
+
+      // "Use continuation indent" checkboxes
+      consumer.showCustomOption(PyCodeStyleSettings.class, "USE_CONTINUATION_INDENT_FOR_PARAMETERS",
+                                PySyntaxBundle.message("formatter.use.continuation.indent"),
+                                getInstance().WRAPPING_METHOD_PARAMETERS);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "USE_CONTINUATION_INDENT_FOR_ARGUMENTS",
+                                PySyntaxBundle.message("formatter.use.continuation.indent"),
+                                getInstance().WRAPPING_METHOD_ARGUMENTS_WRAPPING);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS",
+                                PySyntaxBundle.message("formatter.use.continuation.indent"),
+                                PySyntaxBundle.message("formatter.collections.and.comprehensions"));
+
 
       consumer.showCustomOption(PyCodeStyleSettings.class, "NEW_LINE_AFTER_COLON",
                                 PySyntaxBundle.message("formatter.single.clause.statements"),
@@ -207,8 +234,35 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
   }
 
   @Override
+  public @NotNull CommonCodeStyleSettings getDefaultCommonSettings() {
+    // Return the Python-specific subclass so it carries the active code style profile baseline for
+    // common fields (PY-85946). Seed indent options and run customizeDefaults() for the indent /
+    // keep-blank-lines baseline.
+    PyCommonCodeStyleSettings defaultSettings = new PyCommonCodeStyleSettings();
+    defaultSettings.initIndentOptions();
+    //noinspection ConstantConditions
+    customizeDefaults(defaultSettings, defaultSettings.getIndentOptions());
+    // customizeDefaults() overrides a few wrap/align fields back to their historical values, so
+    // re-apply the modern profile afterwards when the opt-in flag is on. Otherwise those fields
+    // (METHOD/CALL_PARAMETERS_WRAP, ALIGN_MULTILINE_PARAMETERS_IN_CALLS) would diverge from the active
+    // "default" scheme and be reported as "modified".
+    if (PyCodeStyleDefaultsKt.isPyNewFormatterDefaultsActive()) {
+      PyDefaultStyleGuide.applyToCommonSettings(defaultSettings);
+    }
+    return defaultSettings;
+  }
+
+  @Override
   public @Nullable CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new PyCodeStyleSettings(settings);
+  }
+
+  @Override
+  public @NotNull List<CodeStylePropertyAccessor> getAdditionalAccessors(@NotNull Object codeStyleObject) {
+    if (codeStyleObject instanceof PyCodeStyleSettings pyCodeStyleSettings) {
+      return List.of(new PyCodeStylePropertyAccessor(pyCodeStyleSettings));
+    }
+    return super.getAdditionalAccessors(codeStyleObject);
   }
 
   @Override
@@ -251,6 +305,10 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
             print(platform.processor())""";
   private static final String WRAP_SETTINGS_PREVIEW = """
     from module import foo, bar, baz, quux
+
+    short = 1
+    long_name = 2
+    counter += 1
 
     long_expression = component_one + component_two + component_three + component_four + component_five + component_six
 

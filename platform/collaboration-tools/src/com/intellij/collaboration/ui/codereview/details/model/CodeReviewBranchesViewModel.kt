@@ -15,6 +15,9 @@ interface CodeReviewBranchesViewModel {
   val canShowInLog: Boolean get() = false
   fun fetchAndShowInLog() {}
 
+  val canCheckoutInNewWorktree: Boolean get() = false
+  fun checkoutInNewWorktree() {}
+
   fun showBranches()
 }
 

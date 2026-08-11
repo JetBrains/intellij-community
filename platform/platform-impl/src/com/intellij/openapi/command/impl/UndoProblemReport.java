@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.function.Predicate;
-
 
 final class UndoProblemReport {
   private final @Nullable Project project;
@@ -27,10 +26,6 @@ final class UndoProblemReport {
 
   void reportClashingDocuments(@NotNull Collection<? extends DocumentReference> problemFiles) {
     doWithReportHandler(handler -> handler.reportClashingDocuments(project, problemFiles, isUndo));
-  }
-
-  void reportCannotAdjust(@NotNull Collection<? extends DocumentReference> problemFiles) {
-    doWithReportHandler(handler -> handler.reportCannotAdjust(project, problemFiles, isUndo));
   }
 
   void reportException(@NotNull UnexpectedUndoException e) {

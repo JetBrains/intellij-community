@@ -5,12 +5,16 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.platform.testFramework.plugins.PluginTestHandle
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration.Companion.minutes
 
 internal class MyStartupActivity : StartupActivity {
   override fun runActivity(project: Project) {
     val service = project.getService(MyProjectService::class.java)
     if (service != null) {
-      service.executed = true
+      service.executed.complete(Unit)
     }
   }
 }
@@ -24,7 +28,14 @@ internal class MyProjectService : PluginTestHandle<Unit, Boolean> {
     LOG.info("MyProjectService initialized")
   }
 
-  var executed = false
+  var executed = CompletableDeferred<Unit>()
 
-  override fun test(arg: Unit): Boolean = executed
+  override fun test(arg: Unit): Boolean {
+    runBlocking {
+      withTimeout(1.minutes) {
+        executed.await()
+      }
+    }
+    return true
+  }
 }

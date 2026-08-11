@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.extensions` start
-
 jvm_library(
     name = "extensions",
     srcs = glob(
@@ -29,9 +28,10 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core",
         "//platform/diagnostic",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
+        "//platform/util/coroutines",
     ],
 )
 
@@ -55,7 +55,8 @@ jvm_library(
         ":extensions",
         "//platform/util/jdom:jdom_test_lib",
         "//platform/util:util_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//libraries/assertj-core",
         "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
@@ -68,8 +69,10 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/testFramework/core",
         "//platform/testFramework/core:core_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.extensions` end

@@ -1,4 +1,4 @@
-// "Transform body to single exit-point form" "true-preview"
+// "Transform method body to single exit-point form" "true-preview"
 class Test {
     int foo(int i) {
         int result = -1;

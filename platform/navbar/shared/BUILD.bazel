@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.navbar` start
-
 jvm_library(
     name = "navbar",
     srcs = glob(
@@ -22,7 +21,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/core-ui",
         "//platform/util",
         "//platform/ide-core-impl",
@@ -44,6 +43,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":navbar",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/util:util_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",

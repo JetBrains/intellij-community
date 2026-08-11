@@ -97,10 +97,10 @@ private suspend fun<T> handleScopeImpl(outerScope: CoroutineScope, body: suspend
         override val coroutineContext: CoroutineContext get() = context
         override fun <T> handle(launcher: Launcher<T>): Handle<T> {
           val handle = outerScope.handle(launcher)
-          handles.updateAndFetch { hs -> hs.add(handle) }
+          handles.updateAndFetch { hs -> hs.adding(handle) }
           handle.job.invokeOnCompletion {
             handles.updateAndFetch { hs ->
-              hs.remove(handle)
+              hs.removing(handle)
             }
           }
           return handle

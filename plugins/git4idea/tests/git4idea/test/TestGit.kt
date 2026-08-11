@@ -38,6 +38,8 @@ class TestGitImpl : GitImpl() {
   var mergeListener: ((GitRepository) -> Unit)? = null
   @Volatile
   var pushListener: ((GitRepository) -> Unit)? = null
+  @Volatile
+  var runHookListener: ((repository: GitRepository, hookName: String, hookArgs: List<String>, stdinLines: List<String>) -> Unit)? = null
 
   @Volatile
   private var rebaseShouldFail: (GitRepository) -> Boolean = { false }
@@ -148,6 +150,14 @@ class TestGitImpl : GitImpl() {
     return super.merge(repository, branchToMerge, additionalParams, *listeners)
   }
 
+  override fun runHook(repository: GitRepository,
+                       hookName: String,
+                       hookArgs: List<String>,
+                       stdinLines: List<String>): GitCommandResult {
+    runHookListener?.invoke(repository, hookName, hookArgs, stdinLines)
+    return super.runHook(repository, hookName, hookArgs, stdinLines)
+  }
+
   fun setShouldRebaseFail(shouldFail: (GitRepository) -> Boolean) {
     rebaseShouldFail = shouldFail
   }
@@ -178,6 +188,7 @@ class TestGitImpl : GitImpl() {
     pushListener = null
     stashListener = null
     mergeListener = null
+    runHookListener = null
   }
 
   private fun failOrCallRebase(repository: GitRepository, delegate: () -> GitRebaseCommandResult): GitRebaseCommandResult {

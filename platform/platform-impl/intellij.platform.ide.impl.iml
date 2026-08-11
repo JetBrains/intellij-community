@@ -42,7 +42,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
-    <orderEntry type="library" name="jna" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jna" />
     <orderEntry type="module" module-name="intellij.libraries.winp" />
     <orderEntry type="module" module-name="intellij.libraries.swingx" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
@@ -67,6 +67,7 @@
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="diogen-analysis" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="slf4j-api" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="slf4j-jdk14" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
@@ -95,7 +96,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="library" name="zip-signer" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.libraries.classgraph" />
     <orderEntry type="module" module-name="intellij.libraries.protobuf" scope="RUNTIME" />
@@ -134,7 +134,7 @@
     <orderEntry type="module" module-name="intellij.libraries.pty4j" />
     <orderEntry type="module" module-name="intellij.platform.settings" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
-    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.libraries.lz4" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.platform.util.io.storages" />
@@ -176,5 +176,6 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="fleet.rhizomedb" />
     <orderEntry type="library" name="jetbrains.intellij.deps.java.atk.wrapper.linux" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.eel.nioFs.impl" />
   </component>
 </module>

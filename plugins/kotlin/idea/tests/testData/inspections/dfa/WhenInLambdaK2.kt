@@ -2,7 +2,7 @@
 fun foo(x: Any) {
     inlineFn {
         when (x) {
-            is <error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'Abc'.">Abc</error> -> <error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'd'.">d</error>
+            is <error descr="[UNRESOLVED_REFERENCE]">Abc</error> -> <error descr="[UNRESOLVED_REFERENCE]">d</error>
             else -> null
         }
     }

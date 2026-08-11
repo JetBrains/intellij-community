@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="/__webview/wvi-bridge.js"></script>
+  <script src="/__webview/wvi-platform-features.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebView Controls Showcase</title>
+  <script>
+    window.addEventListener("contextmenu", function (event) { event.preventDefault(); }, true);
+  </script>
+  <script type="module" src="./view.js"></script>
+  <link rel="modulepreload" href="./assets/lit.js">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body class="ij-webview-root controls-showcase-root">
+  <main id="root" class="showcase-shell">Loading controls...</main>
+  <noscript>This showcase requires JavaScript enabled.</noscript>
+</body>
+</html>

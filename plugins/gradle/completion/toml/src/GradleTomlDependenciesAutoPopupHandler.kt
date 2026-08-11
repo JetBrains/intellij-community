@@ -12,7 +12,10 @@ import org.toml.lang.TomlLanguage
 internal class GradleTomlDependenciesAutoPopupHandler : TypedHandlerDelegate() {
   override fun checkAutoPopup(charTyped: Char, project: Project, editor: Editor, file: PsiFile): Result {
     if (!useDependencyCompletionService()) return Result.CONTINUE
-    if (file.language !is TomlLanguage || charTyped != '"') return Result.CONTINUE
+    if (file.language !is TomlLanguage) return Result.CONTINUE
+    if (charTyped != '"' && !charTyped.isLetterOrDigit() && charTyped != '-' && charTyped != '.' && charTyped != ':') {
+      return Result.CONTINUE
+    }
 
     val offset = editor.caretModel.offset
     AutoPopupController.getInstance(project).scheduleAutoPopup(editor) { psiFile ->

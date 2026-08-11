@@ -6,7 +6,13 @@ import com.intellij.openapi.util.NlsSafe
 internal data class ModuleAnalysis(
   val resolvedModuleKind: ResolvedModuleKind,
   val evidence: ModuleKindEvidence = ModuleKindEvidence(),
+  val apiUsagePolicy: ApiUsagePolicy = ApiUsagePolicy.DEFAULT,
 )
+
+internal enum class ApiUsagePolicy(val id: String) {
+  DEFAULT("default"),
+  BACKEND_WITH_NON_UI_API_PERMIT("backendWithNonUiApiPermit"),
+}
 
 internal data class ModuleKindEvidence(
   val hasOwnFrontendEvidence: Boolean = false,

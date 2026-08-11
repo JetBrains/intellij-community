@@ -1,11 +1,16 @@
 package com.jetbrains.python.inspections
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyFile
 import junit.framework.TestCase
 
+@Subsystems.Inspections
+@Layers.Functional
 class PyChangeLocalityDetectorTest : PyTestCase() {
 
   fun `test top level function body change`() = checkChangeScope("""

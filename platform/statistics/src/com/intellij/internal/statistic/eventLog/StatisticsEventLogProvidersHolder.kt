@@ -18,6 +18,10 @@ import java.util.concurrent.atomic.AtomicReference
 
 @Service(Service.Level.APP)
 internal class StatisticsEventLogProvidersHolder(coroutineScope: CoroutineScope) {
+  // Cache for empty providers by [recorderId] to avoid creating new instances on every call
+  // must be defined first, as some rogue extensions may query it during init
+  private val emptyProviders: MutableMap<String, StatisticsEventLoggerProvider> = ConcurrentHashMap()
+
   // Small temporary inconsistency between `eventLoggerProviders` and `eventLoggerProvidersExt` doesn't really matter,
   // and it will be smaller than other white noise in data.
   private val eventLoggerProviders: AtomicReference<Map<String, StatisticsEventLoggerProvider>> =
@@ -25,22 +29,31 @@ internal class StatisticsEventLogProvidersHolder(coroutineScope: CoroutineScope)
   private val eventLoggerProvidersExt: AtomicReference<Map<String, Collection<StatisticsEventLoggerProvider>>> =
     AtomicReference(calculateEventLogProviderExt())
 
-  // Cache for empty providers by [recorderId] to avoid creating new instances on every call
-  private val emptyProviders: MutableMap<String, StatisticsEventLoggerProvider> = ConcurrentHashMap()
-
   init {
     if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(EP_NAME)) {
-      EP_NAME.addChangeListener(coroutineScope) { eventLoggerProviders.set(calculateEventLogProvider()) }
-      EP_NAME.addChangeListener(coroutineScope) { eventLoggerProvidersExt.set(calculateEventLogProviderExt()) }
+      EP_NAME.addChangeListener(coroutineScope) { updateProviders() }
     }
+    // Must be called after addChangeListener to avoid a race condition
+    updateProviders()
+  }
+
+  private fun updateProviders() {
+    eventLoggerProvidersExt.set(calculateEventLogProviderExt())
+    eventLoggerProviders.set(calculateEventLogProvider())
   }
 
   private fun getOrCreateEmptyProvider(recorderId: String): StatisticsEventLoggerProvider {
     return emptyProviders.computeIfAbsent(recorderId) { EmptyStatisticsEventLoggerProvider(recorderId) }
   }
 
-  fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider =
-    eventLoggerProviders.get()[recorderId] ?: getOrCreateEmptyProvider(recorderId)
+  fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider {
+    val cached = eventLoggerProviders.get()[recorderId]
+    if (cached != null) return cached
+    // The provider may have registered after the cache was built due to deferred EP
+    // notifications during the initial plugin-loading batch. Refresh synchronously.
+    updateProviders()
+    return eventLoggerProviders.get()[recorderId] ?: getOrCreateEmptyProvider(recorderId)
+  }
 
   fun getEventLogProviders(): Collection<StatisticsEventLoggerProvider> =
     eventLoggerProviders.get().values

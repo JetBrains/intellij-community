@@ -1,6 +1,7 @@
 from _typeshed import FileDescriptorOrPath
 from collections.abc import Iterable, Mapping
-from typing import NoReturn, Protocol, type_check_only
+from typing import Protocol, type_check_only
+from typing_extensions import Never
 
 from paramiko.auth_strategy import AuthStrategy
 from paramiko.channel import Channel, ChannelFile, ChannelStderrFile, ChannelStdinFile
@@ -43,14 +44,9 @@ class SSHClient(ClosingContextManager):
         look_for_keys: bool = True,
         compress: bool = False,
         sock: _SocketLike | None = None,
-        gss_auth: bool = False,
-        gss_kex: bool = False,
-        gss_deleg_creds: bool = True,
-        gss_host: str | None = None,
         banner_timeout: float | None = None,
         auth_timeout: float | None = None,
         channel_timeout: float | None = None,
-        gss_trust_dns: bool = True,
         passphrase: str | None = None,
         disabled_algorithms: Mapping[str, Iterable[str]] | None = None,
         transport_factory: _TransportFactory | None = None,
@@ -84,7 +80,7 @@ class AutoAddPolicy(MissingHostKeyPolicy):
     def missing_host_key(self, client: SSHClient, hostname: str, key: PKey) -> None: ...
 
 class RejectPolicy(MissingHostKeyPolicy):
-    def missing_host_key(self, client: SSHClient, hostname: str, key: PKey) -> NoReturn: ...
+    def missing_host_key(self, client: SSHClient, hostname: str, key: PKey) -> Never: ...
 
 class WarningPolicy(MissingHostKeyPolicy):
     def missing_host_key(self, client: SSHClient, hostname: str, key: PKey) -> None: ...

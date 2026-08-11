@@ -1,4 +1,4 @@
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 
 from networkx.classes.graph import Graph, _Node
 from networkx.utils.backends import _dispatchable
@@ -12,8 +12,8 @@ def birank(
     *,
     alpha: float | None = None,
     beta: float | None = None,
-    top_personalization: dict[str, int] | None = None,
-    bottom_personalization: dict[str, int] | None = None,
+    top_personalization: Mapping[_Node, float] | None = None,
+    bottom_personalization: Mapping[_Node, float] | None = None,
     max_iter: int = 100,
     tol: float = 1.0e-6,
     weight: str | None = "weight",

@@ -212,7 +212,7 @@ class McpToolsMarkdownExporterTest {
     val expected = md(
       "# Tools",
       "",
-      "## GeneralToolset",
+      "## General",
       "",
       "### ping",
       "Performs no work.",
@@ -240,9 +240,9 @@ class McpToolsMarkdownExporterTest {
 
     val output = McpToolsMarkdownExporter.generateMarkdown(tools)
 
-    // FileToolset comes before GeneralToolset (case-insensitive alphabetical).
-    val fileIdx = output.indexOf("## FileToolset")
-    val generalIdx = output.indexOf("## GeneralToolset")
+    // FileToolset comes before GeneralToolset (case-insensitive alphabetical), rendered via presentableName.
+    val fileIdx = output.indexOf("## File")
+    val generalIdx = output.indexOf("## General")
     // Within FileToolset: Reader, writer (case-insensitive name sort: "reader" < "writer").
     val readerIdx = output.indexOf("### Reader")
     val writerIdx = output.indexOf("### writer")

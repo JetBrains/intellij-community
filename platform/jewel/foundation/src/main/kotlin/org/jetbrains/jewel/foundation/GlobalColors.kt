@@ -69,6 +69,7 @@ public class GlobalColors(
             "toolwindowBackground=$toolwindowBackground" +
             ")"
 
+    /** Companion object for [GlobalColors]. */
     public companion object
 }
 
@@ -94,18 +95,6 @@ public class TextColors(
     public val error: Color,
     public val warning: Color,
 ) {
-    @Deprecated(
-        "Use the primary constructors with disabledSelected and warning, instead.",
-        ReplaceWith("TextColors(normal, selected, disabled, disabled, info, error, normal)"),
-    )
-    public constructor(
-        normal: Color,
-        selected: Color,
-        disabled: Color,
-        info: Color,
-        error: Color,
-    ) : this(normal, selected, disabled, disabled, info, error, normal)
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -138,6 +127,7 @@ public class TextColors(
         "TextColors(normal=$normal, selected=$selected, disabled=$disabled, disabledSelected=$disabledSelected, " +
             "info=$info, error=$error, warning=$warning)"
 
+    /** Companion object for [TextColors]. */
     public companion object
 }
 
@@ -173,6 +163,7 @@ public class BorderColors(public val normal: Color, public val focused: Color, p
 
     override fun toString(): String = "BorderColors(normal=$normal, focused=$focused, disabled=$disabled)"
 
+    /** Companion object for [BorderColors]. */
     public companion object
 }
 
@@ -227,6 +218,7 @@ public class OutlineColors(
             "error=$error" +
             ")"
 
+    /** Companion object for [OutlineColors]. */
     public companion object
 }
 

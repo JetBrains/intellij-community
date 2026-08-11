@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.buildScripts.devBuildServer` start
-
 jvm_library(
     name = "buildScripts-devBuildServer",
     srcs = glob(
@@ -40,6 +39,7 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/util/zip",
         "//libraries/kotlinx/serialization/protobuf",
+        "//platform/buildData",
     ],
 )
 
@@ -77,6 +77,7 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/util/zip:zip_test_lib",
         "//libraries/kotlinx/serialization/protobuf:protobuf_test_lib",
+        "//platform/buildData:buildData_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.devBuildServer` end

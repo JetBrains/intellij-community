@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  B.class
+End of files
+Compiling files:
+  java/classProperties/changeExtendsSkipAncestor/a/B.java
+End of files
+Cleaning output files:
+  Client.class
+  Sub.class
+End of files
+Compiling files:
+  java/classProperties/changeExtendsSkipAncestor/a/Client.java
+  java/classProperties/changeExtendsSkipAncestor/a/Sub.java
+End of files
+------------------------------------------
+Exit code: ERROR

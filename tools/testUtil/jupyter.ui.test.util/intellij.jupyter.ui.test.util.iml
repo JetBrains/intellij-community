@@ -6,7 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="library" name="kotlin-test-assertions-core-jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTestAssertionsCoreJvm" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" />
     <orderEntry type="module" module-name="intellij.driver.client" />

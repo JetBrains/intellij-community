@@ -1,34 +1,20 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="com.intellij.modules.kotlin.k2"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="com.intellij.modules.kotlin"/>
     <module name="intellij.devkit.workspaceModel"/>
     <module name="intellij.java.psi"/>
-    <!-- endregion -->
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.indexing"/>
   </dependencies>
+  <!-- endregion -->
 
   <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService
-      serviceInterface="com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider"
-      serviceImplementation="com.intellij.devkit.workspaceModel.k2.metaModel.WorkspaceMetaModelProviderImpl"/>
-    <localInspection language="kotlin"
-                     shortName="WorkspaceImplAbsent"
-                     projectType="INTELLIJ_PLUGIN"
-                     groupBundle="messages.DevKitWorkspaceModelBundle"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
-                     runForWholeFile="true"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.devkit.workspaceModel.k2.inspections.WorkspaceCodeAbsentInspection"
-                     key="inspection.workspace.impl.generation.display.name"/>
-    <localInspection language="kotlin"
-                     projectType="INTELLIJ_PLUGIN"
-                     groupBundle="messages.DevKitWorkspaceModelBundle"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
-                     runForWholeFile="true"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.devkit.workspaceModel.k2.inspections.WorkspaceImplObsoleteInspection"
-                     key="inspection.workspace.obsolete.model.display.name"/>
-  </extensions>
 </idea-plugin>

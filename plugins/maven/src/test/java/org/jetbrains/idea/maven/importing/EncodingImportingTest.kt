@@ -1,24 +1,39 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class EncodingImportingTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class EncodingImportingTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   
   @Test
   fun testEncodingDefinedByProperty() = runBlocking {
     val text = byteArrayOf(-12, -59, -53, -45, -44) // Russian text in koi8-r encoding.
 
-    val file = createProjectSubFile("src/main/resources/A.txt")
+    val file = maven.createProjectSubFile("src/main/resources/A.txt")
     edtWriteAction {
       file.setBinaryContent(text)
     }
 
-    importProjectAsync(
+    maven.importProjectAsync(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -38,12 +53,12 @@ class EncodingImportingTest : MavenMultiVersionImportingTestCase() {
   fun testEncodingDefinedByPluginConfig() = runBlocking {
     val text = byteArrayOf(-12, -59, -53, 45, -44) // Russian text in koi8-r encoding.
 
-    val file = createProjectSubFile("src/main/resources/A.txt")
+    val file = maven.createProjectSubFile("src/main/resources/A.txt")
     edtWriteAction {
       file.setBinaryContent(text)
     }
 
-    importProjectAsync(
+    maven.importProjectAsync(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>

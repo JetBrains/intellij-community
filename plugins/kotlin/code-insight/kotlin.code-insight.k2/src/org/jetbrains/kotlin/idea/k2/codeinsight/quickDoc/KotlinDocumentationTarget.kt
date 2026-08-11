@@ -21,14 +21,13 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
-import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.components.getExpectsForActual
-import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.scopes.staticMemberScope
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -37,24 +36,29 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.getExpectsForActual
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.kdoc.KDocContent
-import org.jetbrains.kotlin.idea.kdoc.KDocRenderer
-import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.appendHighlighted
-import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.createHighlightingManager
-import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.generateJavadoc
-import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.renderKDoc
-import org.jetbrains.kotlin.idea.kdoc.KDocTemplate
-import org.jetbrains.kotlin.idea.kdoc.findKDocByPsi
-import org.jetbrains.kotlin.idea.kdoc.insert
+import org.jetbrains.kotlin.idea.highlighting.kdoc.KDocContent
+import org.jetbrains.kotlin.idea.highlighting.kdoc.KDocRenderer
+import org.jetbrains.kotlin.idea.highlighting.kdoc.KDocRenderer.appendHighlighted
+import org.jetbrains.kotlin.idea.highlighting.kdoc.KDocRenderer.createHighlightingManager
+import org.jetbrains.kotlin.idea.highlighting.kdoc.KDocRenderer.generateJavadoc
+import org.jetbrains.kotlin.idea.highlighting.kdoc.KDocRenderer.renderKDoc
+import org.jetbrains.kotlin.idea.highlighting.kdoc.KDocTemplate
+import org.jetbrains.kotlin.idea.highlighting.kdoc.findKDocByPsi
+import org.jetbrains.kotlin.idea.highlighting.kdoc.insert
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
@@ -78,7 +82,9 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
@@ -140,6 +146,19 @@ private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiE
               return computeLocalDocumentation(declaration, originalElement, quickNavigation)
           }
       }
+
+      element is KtTypeAlias && element.docComment == null && element.getTypeReference() != null -> {
+          val typeRef = element.getTypeReference()!!
+          val resolved = (typeRef.typeElement as? KtUserType)?.referenceExpression?.mainReference?.resolve()
+          return buildString {
+              renderKotlinDeclaration(element, quickNavigation)
+              val element = resolved ?: typeRef
+              computeLocalDocumentation(element, originalElement, quickNavigation)?.let {
+                  append(it)
+              }
+          }
+      }
+
       element is KtClass && element.isEnum() -> {
           return buildString {
               renderEnumSpecialFunction(originalElement, element, quickNavigation)
@@ -258,10 +277,10 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
         // element is not an KtReferenceExpression, but KtClass of enum
         // so reference extracted from originalElement
         analyze(referenceExpression) {
-            val symbol = referenceExpression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol as? KaNamedSymbol
+            val symbol = referenceExpression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol as? KaNamedSymbol
             val name = symbol?.name?.asString()
             if (name != null && symbol is KaDeclarationSymbol) {
-                renderEnumSpecialSymbol(this, symbol, name, element, quickNavigation)
+                renderEnumSpecialSymbol(symbol, name, element, quickNavigation)
                 return
             }
         }
@@ -282,7 +301,6 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
 
                     if (callableSymbol is KaDeclarationSymbol) {
                         renderEnumSpecialSymbol(
-                            this,
                             callableSymbol,
                             callableSymbol.name?.asString() ?: memberName, // it has to be a Kotlin name rather java-visible name
                             element,
@@ -297,32 +315,30 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
     renderKotlinDeclaration(element, quickNavigation)
 }
 
+context(session: KaSession)
 private fun StringBuilder.renderEnumSpecialSymbol(
-    session: KaSession,
     symbol: KaDeclarationSymbol,
     name: String,
     element: KtClass,
     quickNavigation: Boolean
 ) {
-    with(session) {
-        val containingClass = symbol.containingDeclaration as? KaClassSymbol
-        val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedSymbol }
-        val kdoc = superClasses?.firstNotNullOfOrNull { superClass ->
-            val navigationElement = superClass.psi?.navigationElement
-            if (navigationElement is KtElement && navigationElement.containingKtFile.isCompiled || navigationElement is PsiCompiledElement) {
-                null //no need to search documentation in decompiled code
-            } else {
-                navigationElement?.findDescendantOfType<KDoc> { doc ->
-                    doc.getChildrenOfType<KDocSection>().any { it.findTagByName(name) != null }
-                }
+    val containingClass = symbol.containingDeclaration as? KaClassSymbol
+    val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedSymbol }
+    val kdoc = superClasses?.firstNotNullOfOrNull { superClass ->
+        val navigationElement = superClass.psi?.navigationElement
+        if (navigationElement is KtElement && navigationElement.containingKtFile.isCompiled || navigationElement is PsiCompiledElement) {
+            null //no need to search documentation in decompiled code
+        } else {
+            navigationElement?.findDescendantOfType<KDoc> { doc ->
+                doc.getChildrenOfType<KDocSection>().any { it.findTagByName(name) != null }
             }
         }
+    }
 
-        renderKotlinSymbol(symbol, element, false, false) {
-            if (!quickNavigation && kdoc != null) {
-                description {
-                    renderKDoc(kdoc.getDefaultSection())
-                }
+    renderKotlinSymbol(symbol, element, false, false) {
+        if (!quickNavigation && kdoc != null) {
+            description {
+                renderKDoc(kdoc.getDefaultSection())
             }
         }
     }
@@ -343,7 +359,7 @@ internal fun PsiElement?.isModifier() =
 private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
     declaration: KtDeclaration,
     onlyDefinition: Boolean,
-    symbolFinder: KaSession.(KaSymbol) -> KaSymbol? = { it },
+    symbolFinder: context(KaSession) (KaSymbol) -> KaSymbol? = { it },
     preBuild: KDocTemplate.() -> Unit = {}
 ) {
     analyze(declaration) {

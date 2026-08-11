@@ -15,9 +15,12 @@
  */
 package com.intellij.uiDesigner.core;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public final class EliminateTest extends TestCase{
+import static org.junit.jupiter.api.Assertions.fail;
+
+public final class EliminateTest {
+  @Test
   public void test1() {
     // 11
     //  2
@@ -33,6 +36,7 @@ public final class EliminateTest extends TestCase{
     );
   }
 
+  @Test
   public void test2(){
     // 111
     //  2
@@ -48,6 +52,7 @@ public final class EliminateTest extends TestCase{
     );
   }
 
+  @Test
   public void test3(){
     // 11
     // 2
@@ -63,6 +68,7 @@ public final class EliminateTest extends TestCase{
     );
   }
 
+  @Test
   public void test4(){
     // 12
     // 33
@@ -80,6 +86,7 @@ public final class EliminateTest extends TestCase{
     );
   }
 
+  @Test
   public void test5(){
     // 112
     //  333
@@ -97,6 +104,7 @@ public final class EliminateTest extends TestCase{
     );
   }
 
+  @Test
   public void test7(){
     // 11 222
     //  3333
@@ -114,6 +122,7 @@ public final class EliminateTest extends TestCase{
     );
   }
 
+  @Test
   public void test8(){
     //   111
     // 222
@@ -129,6 +138,7 @@ public final class EliminateTest extends TestCase{
     );
   }
 
+  @Test
   public void test9(){
     // 1 22
     // 333
@@ -146,6 +156,7 @@ public final class EliminateTest extends TestCase{
     );
   }
 
+  @Test
   public void test9a(){
     // 122
     // 33
@@ -163,6 +174,7 @@ public final class EliminateTest extends TestCase{
     );
   }
 
+  @Test
   public void test10(){
     // 1 2
     doTest(

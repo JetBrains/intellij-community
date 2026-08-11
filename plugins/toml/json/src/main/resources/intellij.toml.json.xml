@@ -1,8 +1,20 @@
 <idea-plugin visibility="internal">
     <dependencies>
-        <module name="intellij.toml.core"/>
-        <module name="intellij.platform.backend"/>
-        <module name="intellij.json.backend"/>
+      <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+      <module name="intellij.json.backend"/>
+      <module name="intellij.libraries.stream"/>
+      <module name="intellij.platform.analysis"/>
+      <module name="intellij.platform.backend"/>
+      <module name="intellij.platform.codeStyle"/>
+      <module name="intellij.platform.core"/>
+      <module name="intellij.platform.core.impl"/>
+      <module name="intellij.platform.editor.ui"/>
+      <module name="intellij.platform.ide.impl"/>
+      <module name="intellij.platform.lang"/>
+      <module name="intellij.platform.lang.impl"/>
+      <module name="intellij.platform.util.ui"/>
+      <module name="intellij.toml.core"/>
+      <!-- endregion -->
     </dependencies>
 
     <extensionPoints>

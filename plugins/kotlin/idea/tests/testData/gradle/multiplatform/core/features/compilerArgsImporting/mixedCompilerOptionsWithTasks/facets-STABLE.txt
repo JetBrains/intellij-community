@@ -1,0 +1,114 @@
+MODULES
+project
+
+project.androidTest
+    languageLevel = 2.2
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in CompilationOptInAnnotation,JvmCompileOptInAnnotation
+
+project.appleMain
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in=CompilationOptInAnnotation
+
+project.appleTest
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+
+project.commonMain
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in=CompilationOptInAnnotation
+
+project.commonTest
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+
+project.iosArm64Main
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in CompilationOptInAnnotation
+
+project.iosArm64Test
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in CompilationOptInAnnotation
+
+project.iosMain
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in=CompilationOptInAnnotation
+
+project.iosTest
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+
+project.iosX64Main
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in CompilationOptInAnnotation
+
+project.iosX64Test
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in CompilationOptInAnnotation
+
+project.jsMain
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -main call -opt-in CompilationOptInAnnotation
+
+project.jsTest
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -main call -opt-in CompilationOptInAnnotation
+
+project.jvmAndroidMain
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in=CompilationOptInAnnotation
+
+project.jvmAndroidTest
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+
+project.jvmMain
+    languageLevel = 2.2
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in CompilationOptInAnnotation,JvmCompileOptInAnnotation
+
+project.jvmTest
+    languageLevel = 2.2
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in CompilationOptInAnnotation,JvmCompileOptInAnnotation
+
+project.main
+    languageLevel = 2.2
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in CompilationOptInAnnotation,JvmCompileOptInAnnotation
+
+project.nativeMain
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in=CompilationOptInAnnotation
+
+project.nativeTest
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+
+project.unitTest
+    languageLevel = 2.2
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in CompilationOptInAnnotation,JvmCompileOptInAnnotation
+
+project.webMain
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+
+project.webTest
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+
+
+Test configuration:
+- showing only following facet fields: languageLevel, apiLevel, compilerSettings

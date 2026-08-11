@@ -1,3 +1,5 @@
+@file:ApiStatus.Internal
+
 package com.intellij.microservices.url.inlay
 
 import com.intellij.codeInsight.hints.InlayPresentationFactory
@@ -5,6 +7,7 @@ import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.ScaleAwarePresentationFactory
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
+import org.jetbrains.annotations.ApiStatus
 
 private val priorityComparator: Comparator<UrlPathInlayHintsProviderSemElement> = Comparator.comparingInt { it.groupInfo.priority }
 

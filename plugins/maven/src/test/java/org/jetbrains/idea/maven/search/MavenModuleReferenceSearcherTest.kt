@@ -1,6 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.search
 
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.awaitConfiguration
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -12,13 +18,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
-import org.jetbrains.idea.maven.fixtures.awaitConfiguration
-import org.jetbrains.idea.maven.fixtures.createModulePom
-import org.jetbrains.idea.maven.fixtures.createProjectPom
 import org.jetbrains.idea.maven.fixtures.findTagValue
-import org.jetbrains.idea.maven.fixtures.importProjectAsync
-import org.jetbrains.idea.maven.fixtures.mavenDomFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
@@ -37,8 +37,9 @@ class MavenModuleReferenceSearcherTest(mavenVersion: String, modelVersion: Strin
   private suspend fun renameDirectory(directory: PsiDirectory, newName: String) {
     // The rename refactoring resolves the <module> references via ReferencesSearch, which MavenModuleReferenceSearcher
     // answers by walking ModuleManager.getModules() and the MavenProjectsManager model. Make sure the import has fully
-    // settled (workspace model committed, smart mode) before renaming, otherwise the reference is intermittently not
-    // found and the <module> path is left unchanged (flaky).
+    // settled (Maven model AND workspace model committed, smart mode) before renaming, otherwise the reference is
+    // intermittently not found and the <module> path is left unchanged (flaky).
+    maven.awaitConfiguration()
     IndexingTestUtil.suspendUntilIndexesAreReady(maven.project)
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
@@ -292,6 +293,7 @@ class MavenModuleReferenceSearcherTest(mavenVersion: String, modelVersion: Strin
                   <parent>
                     <groupId>group</groupId>
                     <artifactId>parent</artifactId>
+                    <version>1</version>
                   </parent>
                   """.trimIndent())
     maven.importProjectAsync()

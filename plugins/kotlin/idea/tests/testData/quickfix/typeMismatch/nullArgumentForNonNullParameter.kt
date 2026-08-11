@@ -1,5 +1,5 @@
 // "Change parameter 's' type of primary constructor of class 'Foo' to 'String?'" "true"
-// K2_ERROR: Null cannot be a value of a non-null type 'String'.
+// K2_ERROR: NULL_FOR_NONNULL_TYPE
 class Foo(s: String) {
 
 }

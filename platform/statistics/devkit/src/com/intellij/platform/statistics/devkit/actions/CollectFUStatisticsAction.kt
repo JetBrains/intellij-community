@@ -12,7 +12,6 @@ import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent
 import com.intellij.ide.util.gotoByName.ListChooseByNameModel
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.config.SerializationHelper
-import com.intellij.platform.statistics.devkit.StatisticsDevKitUtil
 import com.intellij.internal.statistic.eventLog.LogEventSerializer
 import com.intellij.internal.statistic.eventLog.newLogEvent
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
@@ -33,6 +32,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.statistics.devkit.StatisticsDevKitUtil
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.containers.ContainerUtil
@@ -128,7 +128,7 @@ private class StatisticsCollectorRunner(
 
     val collector = item.usagesCollector
     val metrics = when (collector) {
-      is ApplicationUsagesCollector -> collector.getMetrics()
+      is ApplicationUsagesCollector -> collector.getMetricsAsync()
       is ProjectUsagesCollector -> collector.collect(project)
       else -> throw IllegalArgumentException("Unsupported collector: $collector")
     }

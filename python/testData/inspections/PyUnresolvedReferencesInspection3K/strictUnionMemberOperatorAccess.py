@@ -35,7 +35,9 @@ def all_union_members_match_no_any(x: A | B):
 
 def some_union_members_match_no_any(x: A | B | None):
     print(<weak_warning descr="Member 'None' of 'A | B | None' does not have attribute '__pos__'">+</weak_warning>x)
-    print(x <weak_warning descr="Member 'None' of 'A | B | None' does not have attribute '__add__'">+</weak_warning> 1)
+    # should be reported because None in the union does not define '__add__' and the RHS int.__radd__
+    # is not applicable to None; see: PY-90532
+    print(x + 1)
     print(x<weak_warning descr="Member 'None' of 'A | B | None' does not have attribute '__getitem__'">[</weak_warning>42])
 
 
@@ -53,7 +55,9 @@ def all_union_members_match_with_any(x: A | B | Any):
 
 def some_union_members_match_with_any(x: A | B | None | Any):
     print(<weak_warning descr="Member 'None' of 'A | B | None | Any' does not have attribute '__pos__'">+</weak_warning>x)
-    print(x <weak_warning descr="Member 'None' of 'A | B | None | Any' does not have attribute '__add__'">+</weak_warning> 1)
+    # should be reported because None in the union does not define '__add__' and the RHS int.__radd__
+    # is not applicable to None; see: PY-90532
+    print(x + 1)
     print(x<weak_warning descr="Member 'None' of 'A | B | None | Any' does not have attribute '__getitem__'">[</weak_warning>42])
 
 

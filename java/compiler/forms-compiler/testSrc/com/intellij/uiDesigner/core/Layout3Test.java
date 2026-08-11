@@ -15,7 +15,7 @@
  */
 package com.intellij.uiDesigner.core;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -23,8 +23,10 @@ import java.awt.Dimension;
 import java.awt.Insets;
 
 import static com.intellij.uiDesigner.core.SpansTest.setDefaults;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public final class Layout3Test extends TestCase {
+public final class Layout3Test {
+  @Test
   public void test1() {
     final JPanel panel = new JPanel(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), 0, 0));
 

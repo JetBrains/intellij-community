@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.boot` start
-
 jvm_library(
     name = "boot",
     srcs = glob(
@@ -22,7 +21,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//platform/util-class-loader:util-classLoader",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util/zip",
     ],
 )
@@ -41,6 +40,7 @@ jvm_library(
         # do not sort,
         ":boot",
         "//platform/util-class-loader:util-classLoader_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util/zip:zip_test_lib",
     ],
 )

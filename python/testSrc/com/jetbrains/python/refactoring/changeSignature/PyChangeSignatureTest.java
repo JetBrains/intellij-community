@@ -18,6 +18,8 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PySingleStarParameter;
 import com.jetbrains.python.psi.PySlashParameter;
 import org.jetbrains.annotations.Nullable;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,6 +32,8 @@ import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMET
  */
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
 @TestDataPath("$CONTENT_ROOT/../testData/")
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyChangeSignatureTest extends PyTestCase {
 
   public void testChooseSuperMethod() {

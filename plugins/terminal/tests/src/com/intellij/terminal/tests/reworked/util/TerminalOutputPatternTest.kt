@@ -4,6 +4,7 @@ package com.intellij.terminal.tests.reworked.util
 import com.jediterm.terminal.TextStyle
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.jetbrains.plugins.terminal.session.impl.Osc8Hyperlink
 import org.jetbrains.plugins.terminal.session.impl.StyleRange
 import org.junit.Test
 
@@ -156,6 +157,15 @@ class TerminalOutputPatternTest {
   }
 
   @Test
+  fun `parse style spanning multiple lines`() {
+    val pattern = outputPattern("<s1>hello\nworld</s1>")
+    assertThat(pattern.text).isEqualTo("hello\nworld")
+    assertThat(pattern.styles).containsExactly(
+      styleRange(0, 11, TerminalOutputPattern.STYLES[0])
+    )
+  }
+
+  @Test
   fun `parse all nine styles`() {
     val pattern = outputPattern("<s1>1</s1><s2>2</s2><s3>3</s3><s4>4</s4><s5>5</s5><s6>6</s6><s7>7</s7><s8>8</s8><s9>9</s9>")
     assertThat(pattern.text).isEqualTo("123456789")
@@ -208,6 +218,52 @@ class TerminalOutputPatternTest {
     assertThat(pattern.cursorOffset).isEqualTo(3)
   }
 
+  // Parsing tests: OSC8 links
+
+  @Test
+  fun `parse single link`() {
+    val pattern = outputPattern("hello <a href=\"https://example.com\">world</a>")
+    assertThat(pattern.text).isEqualTo("hello world")
+    assertThat(pattern.osc8Hyperlinks).containsExactly(
+      osc8Hyperlink(6, 11, "https://example.com")
+    )
+  }
+
+  @Test
+  fun `parse empty link tag produces no link`() {
+    val pattern = outputPattern("<a href=\"https://example.com\"></a>")
+    assertThat(pattern.text).isEqualTo("")
+    assertThat(pattern.osc8Hyperlinks).isEmpty()
+  }
+
+  @Test
+  fun `parse multiple links`() {
+    val pattern = outputPattern("<a href=\"https://a\">aa</a> <a href=\"https://b\">bb</a>")
+    assertThat(pattern.text).isEqualTo("aa bb")
+    assertThat(pattern.osc8Hyperlinks).containsExactly(
+      osc8Hyperlink(0, 2, "https://a"),
+      osc8Hyperlink(3, 5, "https://b"),
+    )
+  }
+
+  @Test
+  fun `parse link with cursor inside`() {
+    val pattern = outputPattern("<a href=\"https://example.com\">wor<cursor>ld</a>")
+    assertThat(pattern.text).isEqualTo("world")
+    assertThat(pattern.osc8Hyperlinks).containsExactly(
+      osc8Hyperlink(0, 5, "https://example.com")
+    )
+    assertThat(pattern.cursorOffset).isEqualTo(3)
+  }
+
+  @Test
+  fun `parse link and style side by side`() {
+    val pattern = outputPattern("<s1>hi</s1> <a href=\"https://example.com\">there</a>")
+    assertThat(pattern.text).isEqualTo("hi there")
+    assertThat(pattern.styles).containsExactly(styleRange(0, 2, TerminalOutputPattern.STYLES[0]))
+    assertThat(pattern.osc8Hyperlinks).containsExactly(osc8Hyperlink(3, 8, "https://example.com"))
+  }
+
   // Parsing validation tests
 
   @Test
@@ -215,13 +271,6 @@ class TerminalOutputPatternTest {
     assertThatThrownBy { outputPattern("<s1>hello <s2>world</s2></s1>") }
       .isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("Nested")
-  }
-
-  @Test
-  fun `style spanning multiple lines throws`() {
-    assertThatThrownBy { outputPattern("<s1>hello\nworld</s1>") }
-      .isInstanceOf(IllegalArgumentException::class.java)
-      .hasMessageContaining("multiple lines")
   }
 
   @Test
@@ -284,6 +333,48 @@ class TerminalOutputPatternTest {
     assertThat(pattern.styles).containsExactly(
       styleRange(0, 5, TerminalOutputPattern.STYLES[0])
     )
+  }
+
+  @Test
+  fun `link without href throws`() {
+    assertThatThrownBy { outputPattern("<a>text</a>") }
+      .isInstanceOf(IllegalArgumentException::class.java)
+      .hasMessageContaining("href")
+  }
+
+  @Test
+  fun `nested link tags throw`() {
+    assertThatThrownBy { outputPattern("<a href=\"https://a\">hello <a href=\"https://b\">world</a></a>") }
+      .isInstanceOf(IllegalArgumentException::class.java)
+      .hasMessageContaining("Nested")
+  }
+
+  @Test
+  fun `style nested inside link throws`() {
+    assertThatThrownBy { outputPattern("<a href=\"https://example.com\"><s1>text</s1></a>") }
+      .isInstanceOf(IllegalArgumentException::class.java)
+      .hasMessageContaining("Nested")
+  }
+
+  @Test
+  fun `link nested inside style throws`() {
+    assertThatThrownBy { outputPattern("<s1><a href=\"https://example.com\">text</a></s1>") }
+      .isInstanceOf(IllegalArgumentException::class.java)
+      .hasMessageContaining("Nested")
+  }
+
+  @Test
+  fun `link spanning multiple lines throws`() {
+    assertThatThrownBy { outputPattern("<a href=\"https://example.com\">hello\nworld</a>") }
+      .isInstanceOf(IllegalArgumentException::class.java)
+      .hasMessageContaining("multiple lines")
+  }
+
+  @Test
+  fun `cursor at boundary inside link throws`() {
+    assertThatThrownBy { outputPattern("<a href=\"https://example.com\"><cursor>hello</a>") }
+      .isInstanceOf(IllegalArgumentException::class.java)
+      .hasMessageContaining("boundary")
   }
 
   // toString round-trip tests
@@ -351,6 +442,21 @@ class TerminalOutputPatternTest {
   @Test
   fun `toString cursor only`() {
     assertToStringRoundTrip("<cursor>")
+  }
+
+  @Test
+  fun `toString with link`() {
+    assertToStringRoundTrip("hello <a href=\"https://example.com\">world</a>")
+  }
+
+  @Test
+  fun `toString with link and cursor`() {
+    assertToStringRoundTrip("<a href=\"https://example.com\">wor<cursor>ld</a>")
+  }
+
+  @Test
+  fun `toString with link and style side by side`() {
+    assertToStringRoundTrip("<s1>hi</s1> <a href=\"https://example.com\">there</a>")
   }
 
   private fun assertToStringRoundTrip(input: String) {
@@ -445,6 +551,29 @@ class TerminalOutputPatternTest {
     val partialMerge = outputPattern("<s1>ab</s1> <s1>c</s1>")
     assertThat(split).isEqualTo(partialMerge)
     assertThat(split.hashCode()).isEqualTo(partialMerge.hashCode())
+  }
+
+  @Test
+  fun `same link pattern is equal`() {
+    val a = outputPattern("<a href=\"https://example.com\">hello</a>")
+    val b = outputPattern("<a href=\"https://example.com\">hello</a>")
+    assertThat(a).isEqualTo(b)
+    assertThat(a.hashCode()).isEqualTo(b.hashCode())
+  }
+
+  @Test
+  fun `different link uri not equal`() {
+    assertThat(outputPattern("<a href=\"https://a\">hello</a>"))
+      .isNotEqualTo(outputPattern("<a href=\"https://b\">hello</a>"))
+  }
+
+  @Test
+  fun `link vs no link not equal`() {
+    assertThat(outputPattern("<a href=\"https://example.com\">hello</a>")).isNotEqualTo(outputPattern("hello"))
+  }
+
+  private fun osc8Hyperlink(startOffset: Long, endOffset: Long, uri: String): Osc8Hyperlink {
+    return Osc8Hyperlink(startOffset, endOffset, uri)
   }
 
   private fun styleRange(

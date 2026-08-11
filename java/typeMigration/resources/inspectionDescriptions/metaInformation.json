@@ -1,0 +1,8 @@
+{
+  "inspections": [
+    {
+      "id": "Guava",
+      "codeQualityCategory": "Code Style"
+    }
+  ]
+}

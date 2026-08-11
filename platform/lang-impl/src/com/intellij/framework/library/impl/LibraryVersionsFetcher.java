@@ -9,11 +9,13 @@ import com.intellij.framework.library.DownloadableLibraryFileDescription;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.download.impl.FileSetVersionsFetcherBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
 import java.util.List;
 
+@ApiStatus.Internal
 public class LibraryVersionsFetcher extends FileSetVersionsFetcherBase<FrameworkLibraryVersion, DownloadableLibraryFileDescription> implements DownloadableLibraryDescription {
 
   public LibraryVersionsFetcher(@NotNull String groupId, URL @NotNull [] localUrls) {

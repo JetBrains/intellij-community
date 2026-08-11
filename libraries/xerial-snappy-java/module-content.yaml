@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.xerial.snappy.java.jar
+  modules:
+  - name: intellij.libraries.xerial.snappy.java
+    libraries:
+      xerial.snappy.java:
+      - name: $MAVEN_REPOSITORY$/org/xerial/snappy/snappy-java/1/snappy-java-1.jar

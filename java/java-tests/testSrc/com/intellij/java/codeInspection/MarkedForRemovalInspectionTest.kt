@@ -32,6 +32,8 @@ class MarkedForRemovalInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testOverride() = doTest()
 
+  fun testOverridesNonDeprecatedInterface() = doTest()
+
   fun testDefaultConstructorInSuper() = doTest()
   
   fun testWithSince() = doTest()

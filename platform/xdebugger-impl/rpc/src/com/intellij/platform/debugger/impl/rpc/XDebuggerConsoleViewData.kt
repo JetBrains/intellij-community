@@ -30,7 +30,7 @@ data class RemoteXDebuggerConsoleViewData(
 )
 
 @ApiStatus.Internal
-suspend fun ConsoleView.toRpc(lifetimeScope: CoroutineScope, debugProcess: XDebugProcess?): XDebuggerConsoleViewData {
+suspend fun ConsoleView.toRpc(lifetimeScope: CoroutineScope, debugProcess: XDebugProcess): XDebuggerConsoleViewData {
   val remoteData = XDebuggerConsoleViewConverter.EP_NAME.extensionList.firstNotNullOfOrNull {
     it.convert(this, lifetimeScope, debugProcess)
   }
@@ -38,7 +38,7 @@ suspend fun ConsoleView.toRpc(lifetimeScope: CoroutineScope, debugProcess: XDebu
 }
 
 @ApiStatus.Internal
-suspend fun XDebuggerConsoleViewData.consoleView(processHandler: ProcessHandler): ConsoleView? {
+suspend fun XDebuggerConsoleViewData.consoleView(lifetimeScope: CoroutineScope, processHandler: ProcessHandler): ConsoleView? {
   if (localConsole != null) {
     return localConsole
   }
@@ -46,7 +46,7 @@ suspend fun XDebuggerConsoleViewData.consoleView(processHandler: ProcessHandler)
     return null
   }
   val consoleView = XDebuggerConsoleViewConverter.EP_NAME.extensionList.firstNotNullOfOrNull {
-    it.convert(remoteData, processHandler)
+    it.convert(remoteData, lifetimeScope, processHandler)
   }
   return consoleView
 }
@@ -65,7 +65,11 @@ interface XDebuggerConsoleViewConverter {
     internal val EP_NAME = ExtensionPointName.create<XDebuggerConsoleViewConverter>("com.intellij.xdebugger.consoleViewDataConverter")
   }
 
-  suspend fun convert(consoleView: ConsoleView, lifetimeScope: CoroutineScope, debugProcess: XDebugProcess?): RemoteXDebuggerConsoleViewData?
+  suspend fun convert(consoleView: ConsoleView, lifetimeScope: CoroutineScope, debugProcess: XDebugProcess): RemoteXDebuggerConsoleViewData?
 
-  suspend fun convert(remoteData: RemoteXDebuggerConsoleViewData, processHandler: ProcessHandler): ConsoleView?
+  suspend fun convert(
+    remoteData: RemoteXDebuggerConsoleViewData,
+    lifetimeScope: CoroutineScope,
+    processHandler: ProcessHandler,
+  ): ConsoleView?
 }

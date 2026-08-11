@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.NewRdCompletionSupport;
 import com.intellij.codeInsight.completion.command.configuration.CommandCompletionSettingsService;
+import com.intellij.codeInsight.completion.commands.JavaCommandCompletionSupport;
 import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -15,7 +16,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
-import com.intellij.openapi.editor.EditorThreading;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -85,7 +86,7 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
   }
 
   protected void autoPopupMemberLookup(@NotNull Project project, @NotNull Editor editor) {
-    if (NewRdCompletionSupport.isFrontendRdCompletionOn()) {
+    if (NewRdCompletionSupport.isFrontendRdCompletionOn(editor)) {
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor, new FrontendAutoPopupMemberLookupCondition(editor));
     }
   }
@@ -226,6 +227,10 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
           return Result.STOP;
         }
       }
+      if (Elf.getElf().isUnsupportedOperationGuardActive()) {
+        // commitDocument is not supported yet for lock-free typing
+        return Result.CONTINUE;
+      }
       PsiDocumentManager.getInstance(project).commitDocument(doc);
       final PsiElement leaf = file.findElementAt(offset);
       if (PsiTreeUtil.getParentOfType(leaf, PsiArrayInitializerExpression.class, false, PsiCodeBlock.class, PsiMember.class) != null) {
@@ -272,6 +277,10 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
   }
 
   private static boolean isAtTopLevelInClassBody(int offset, @NotNull Editor editor, @NotNull PsiFile file) {
+    if (Elf.getElf().isUnsupportedOperationGuardActive()) {
+      // commitDocument is not supported yet for lock-free typing
+      return false;
+    }
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
     PsiElement element = file.findElementAt(offset);
     if (element == null && offset > 0) {
@@ -442,6 +451,10 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
       int line = document.getLineNumber(offset);
       int lineStart = document.getLineStartOffset(line);
       if (StringUtil.isEmptyOrSpaces(document.getCharsSequence().subSequence(lineStart, offset))) {
+        if (Elf.getElf().isUnsupportedOperationGuardActive()) {
+          // commitDocument is not supported yet for lock-free typing
+          return false;
+        }
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
         CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
         return true;
@@ -475,7 +488,7 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
       return false;
     }
 
-    EditorThreading.assertWriteAllowed();
+    Elf.getElf().assertWriteAllowed();
 
     // Note, this feature may be rewritten using only lexer if needed.
     // In that case accuracy will not be 100%, but good enough.
@@ -552,7 +565,7 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
 
   @Override
   public @NotNull Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (NewRdCompletionSupport.isFrontendRdCompletionOn()) {
+    if (NewRdCompletionSupport.isFrontendRdCompletionOn(editor)) {
       return doCheckAutoPopup(charTyped, project, editor, file);
     }
     else {
@@ -600,7 +613,14 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
 
       //do not show lookup when typing varargs ellipsis
       final PsiElement prevSibling = PsiTreeUtil.prevVisibleLeaf(lastElement);
-      if (prevSibling == null || ".".equals(prevSibling.getText())) return false;
+      if (prevSibling == null) return false;
+      if (".".equals(prevSibling.getText())) {
+        if (!(".".equals(lastElement.getText()) &&
+              CommandCompletionSettingsService.getInstance().commandCompletionEnabled() &&
+              JavaCommandCompletionSupport.isAfterTypeElementDotsInParameterList(file, offset - 2, 2))) {
+          return false;
+        }
+      }
       PsiElement parent = prevSibling;
       do {
         parent = parent.getParent();
@@ -615,6 +635,15 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
             prevSibling instanceof PsiIdentifier identifier &&
             parameter.getIdentifyingElement() == identifier) {
           return true;
+        }
+        if (CommandCompletionSettingsService.getInstance().commandCompletionEnabled() &&
+            parent instanceof PsiParameterList &&
+            ".".equals(prevSibling.getText()) &&
+            ".".equals(lastElement.getText())) {
+          PsiElement prevPrevSibling = PsiTreeUtil.prevVisibleLeaf(prevSibling);
+          return prevPrevSibling != null &&
+                 prevPrevSibling.getParent() instanceof PsiJavaCodeReferenceElement javaCodeReferenceElement &&
+                 javaCodeReferenceElement.getParent() instanceof PsiTypeElement;
         }
         return false;
       }

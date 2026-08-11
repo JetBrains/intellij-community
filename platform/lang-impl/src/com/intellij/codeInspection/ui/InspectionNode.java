@@ -26,7 +26,7 @@ public class InspectionNode extends InspectionTreeNode {
 
   @Override
   public @Nullable String getTailText() {
-    final String shortName = getToolWrapper().getShortName();
+    String shortName = getToolWrapper().getShortName();
     return myProfile.getTools(shortName, null).isEnabled() ? null : InspectionsBundle.message("inspection.node.disabled.state");
   }
 

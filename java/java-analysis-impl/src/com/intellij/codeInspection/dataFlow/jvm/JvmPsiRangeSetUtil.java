@@ -12,9 +12,13 @@ import com.intellij.psi.PsiArrayInitializerMemberValue;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
+import com.intellij.psi.impl.light.LightCompactConstructorParameter;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
@@ -75,6 +79,15 @@ public final class JvmPsiRangeSetUtil {
    */
   public static @NotNull LongRangeSet fromPsiElement(@Nullable PsiModifierListOwner owner) {
     if (owner == null) return LongRangeSet.all();
+    if (owner instanceof LightRecordCanonicalConstructor.LightRecordConstructorParameter p) {
+      PsiRecordComponent component = JavaPsiRecordUtil.getComponentForCanonicalConstructorParameter(p);
+      if (component != null) {
+        owner = component;
+      }
+    }
+    else if (owner instanceof LightCompactConstructorParameter p) {
+      owner = p.getRecordComponent();
+    }
     return StreamEx.of(AnnotationUtil.findAnnotation(owner, JETBRAINS_RANGE), owner.getAnnotation(JETBRAINS_RANGE))
                    .nonNull()
                    .append(AnnotationUtil.findAnnotations(owner, ANNOTATIONS))

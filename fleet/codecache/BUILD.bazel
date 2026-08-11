@@ -1,8 +1,29 @@
+load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build fleet.codecache` start
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_codecache",
+    module_name = "fleet.codecache",
+    plugins = ["@lib//:kotlin-serialization-plugin"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@community//fleet/bundles:wasmjs_module_lib",
+        "@community//fleet/ktor/client/core:wasmjs_module_lib",
+        "@community//fleet/modules/api:wasmjs_module_lib",
+        "@community//fleet/util/logging/api:wasmjs_module_lib",
+        "@kmp_deps//:org_jetbrains_annotations",
+        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_collections_immutable",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_io_core",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_json",
+    ],
+)
 
+### auto-generated section `build fleet.codecache` start
 create_kotlinc_options(
     name = "custom_codecache",
     opt_in = [
@@ -40,11 +61,12 @@ jvm_library(
         "@lib//:kotlinx-coroutines-core",
         "@lib//:kotlin-stdlib",
         "//fleet/bundles",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//fleet/util/logging/api",
         "@lib//:kotlinx-serialization-core",
         "@lib//:kotlinx-serialization-json",
         "@lib//:kotlinx-collections-immutable",
+        "@lib//:kotlinx-io-core",
         "//fleet/ktor/client/core",
         "//fleet/modules/api",
     ],
@@ -64,6 +86,7 @@ jvm_library(
         # do not sort,
         ":codecache",
         "//fleet/bundles:bundles_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//fleet/util/logging/api:api_test_lib",
         "//fleet/ktor/client/core:core_test_lib",
         "//fleet/modules/api:api_test_lib",

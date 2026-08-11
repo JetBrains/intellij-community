@@ -8,12 +8,14 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.RegexValidator;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.PropertiesInspectionBase;
+import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.PropertiesQuickFixFactory;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -24,6 +26,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -33,6 +37,10 @@ import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,12 +48,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public final class UnusedPropertyInspection extends PropertiesInspectionBase {
   private static final ExtensionPointName<ImplicitPropertyUsageProvider>
     EP_NAME = new ExtensionPointName<>("com.intellij.properties.implicitPropertyUsageProvider");
+  private static final Key<CachedValue<Map<String, Boolean>>>
+    USAGE_CACHE_KEY = Key.create("UnusedProperty.usageCache");
 
   public static final String SHORT_NAME = "UnusedProperty";
 
@@ -142,10 +153,12 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
           if (unescapedKey != null && property.getPropertiesFile().findPropertiesByKey(unescapedKey).size() > 1) {
             // PropertiesAnnotator already registers RemovePropertyFix for duplicate keys on the fly
             holder.registerProblem(key, message);
-          } else {
+          }
+          else {
             holder.registerProblem(key, message, PropertiesQuickFixFactory.getInstance().createRemovePropertyFromBundleLocalFix(property));
           }
-        } else {
+        }
+        else {
           String message = PropertiesBundle.message("unused.property.problem.descriptor.name.offline", unescapedKey);
           holder.registerProblem(key, message, PropertiesQuickFixFactory.getInstance().createRemovePropertyFromBundleLocalFix(property));
         }
@@ -178,6 +191,21 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
   }
 
   public static boolean isPropertyUsed(@NotNull Property property, @NotNull UnusedPropertiesSearchHelper helper, boolean isOnTheFly) {
+    PsiFile file = property.getContainingFile();
+    final Map<String, Boolean> cache = CachedValuesManager.getCachedValue(file, USAGE_CACHE_KEY, () -> {
+      ModificationTracker codeChanges = PsiModificationTracker.getInstance(file.getProject())
+        .forLanguages(language -> language != PropertiesLanguage.INSTANCE && language != Language.ANY);
+      return CachedValueProvider.Result.create(new ConcurrentHashMap<>(), codeChanges);
+    });
+
+    String key = property.getKey();
+    if (key != null && isOnTheFly) {
+      Boolean cached = cache.get(key);
+      if (cached != null) {
+        return cached;
+      }
+    }
+
     final ProgressIndicator original = ProgressManager.getInstance().getProgressIndicator();
     if (original != null) {
       if (original.isCanceled()) return true;
@@ -185,19 +213,24 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
     }
 
     if (isImplicitlyUsed(property)) {
-      return true;
+      return putAndGet(isOnTheFly, cache, key, true);
     }
 
     String name = property.getName();
-    if (name == null) return true;
+    if (name == null) return putAndGet(isOnTheFly, cache, key, true);
 
     PsiSearchHelper searchHelper = helper.getSearchHelper();
-    if (mayHaveUsages(property, name, searchHelper, helper.getOwnUseScope(), isOnTheFly)) return true;
+    if (mayHaveUsages(property, name, searchHelper, helper.getOwnUseScope(), isOnTheFly)) return putAndGet(isOnTheFly, cache, key, true);
 
-    final GlobalSearchScope widerScope = isOnTheFly ? getWidestUseScope(property.getKey(), property.getProject(), helper.getModule())
+    final GlobalSearchScope widerScope = isOnTheFly ? getWidestUseScope(key, property.getProject(), helper.getModule())
                                                     : GlobalSearchScope.projectScope(property.getProject());
-    if (widerScope != null && mayHaveUsages(property, name, searchHelper, widerScope, isOnTheFly)) return true;
-    return false;
+    if (widerScope != null && mayHaveUsages(property, name, searchHelper, widerScope, isOnTheFly)) return putAndGet(isOnTheFly, cache, key, true);
+    return putAndGet(isOnTheFly, cache, key, false);
+  }
+
+  private static boolean putAndGet(boolean isOnTheFly, @NotNull Map<String, Boolean> cache, @Nullable String key, boolean value) {
+    if (isOnTheFly && key != null) cache.put(key, value);
+    return value;
   }
 
   private static boolean mayHaveUsages(@NotNull PsiElement property,

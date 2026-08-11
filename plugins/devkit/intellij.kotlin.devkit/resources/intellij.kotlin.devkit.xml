@@ -4,10 +4,35 @@
     <plugin id="org.jetbrains.kotlin"/>
     <module name="intellij.devkit.core"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.codeInsight.fixes"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
+    <module name="intellij.kotlin.codeInsight.utils"/>
+    <module name="intellij.kotlin.refactorings.base"/>
+    <module name="intellij.kotlin.references"/>
+    <module name="intellij.kotlin.uast.base"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.polySymbols"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.xml.analysis"/>
     <module name="intellij.xml.dom"/>
     <module name="intellij.xml.psi"/>
+    <module name="kotlin.fir.frontend-independent"/>
   </dependencies>
   <!-- endregion -->
 
@@ -124,6 +149,14 @@
                      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtPolySymbolPropertyTypeInspection"
                      key="inspection.polySymbol.property.type.mismatch.display.name"/>
 
+    <localInspection language="kotlin" shortName="KotlinApplicableInspectionBaseSimpleCallExpression"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupBundle="messages.DevKitBundle"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KotlinApplicableInspectionBaseSimpleCallExpressionInspection"
+                     key="inspection.kotlin.applicable.inspection.base.simple.call.expression.display.name"/>
+
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteUseScopeEnlarger"/>
     <methodReferencesSearch implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteMethodReferenceSearcher"/>
     <overridingMethodsSearch implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteMethodImplementationSearcher"/>
@@ -171,7 +204,7 @@
       language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtUElementAsPsiCheckProvider"/>
     <staticInitializationInExtensionsVisitorProvider language="kotlin"
-      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtStaticInitializationInExtensionsVisitorProvider"/>
+                                                     implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtStaticInitializationInExtensionsVisitorProvider"/>
     <methodNameProvider
       language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtMethodNameProvider"/>

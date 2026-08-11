@@ -1,0 +1,13 @@
+// ERROR: 'when' expression must be exhaustive, add necessary 'else' branch
+// AFTER_ERROR: 'when' expression must be exhaustive, add necessary 'else' branch
+// WITH_STDLIB
+// K2_AFTER_ERROR: NO_ELSE_IN_WHEN
+// K2_ERROR: NO_ELSE_IN_WHEN
+fun test() {
+    val x = <caret>when {
+        false -> {
+            println(1)
+            1
+        }
+    }
+}

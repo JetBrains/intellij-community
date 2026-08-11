@@ -117,22 +117,24 @@ public final class CommandSeparator implements CommandListener {
   }
 
   private void notifyCommand(@Nullable CommandEvent event, boolean isStart) {
-    CmdEvent cmdEvent = ProgressManager.getInstance().computeInNonCancelableSection(
-      () -> CmdEventTransform.getInstance().create(event, isStart)
-    );
-    if (isStart) {
-      publisher.onCommandStarted(cmdEvent);
-    } else {
-      publisher.onCommandFinished(cmdEvent);
-    }
-    UndoSpy undoSpy = UndoSpy.getInstance();
-    if (undoSpy != null) {
+    // the main client of CommandSeparator is UndoManager.
+    // PCE thrown in the middle of onCommandStarted or commandFinished is harmful for its internal state.
+    ProgressManager.getInstance().executeNonCancelableSection(() -> {
+      CmdEvent cmdEvent = CmdEventTransform.getInstance().create(event, isStart);
       if (isStart) {
-        undoSpy.commandStarted(cmdEvent);
+        publisher.onCommandStarted(cmdEvent);
       } else {
-        undoSpy.commandFinished(cmdEvent);
+        publisher.onCommandFinished(cmdEvent);
       }
-    }
+      UndoSpy undoSpy = UndoSpy.getInstance();
+      if (undoSpy != null) {
+        if (isStart) {
+          undoSpy.commandStarted(cmdEvent);
+        } else {
+          undoSpy.commandFinished(cmdEvent);
+        }
+      }
+    });
   }
 
   private void assertInsideCommand() {

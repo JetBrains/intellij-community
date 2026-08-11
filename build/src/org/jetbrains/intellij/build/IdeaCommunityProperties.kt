@@ -80,7 +80,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
       "intellij.platform.util.zip",
     )
     mavenArtifacts.validateForMavenCentralPublication = { module ->
-      JewelMavenArtifacts.isPublishedJewelModule(module)
+      JewelMavenArtifacts.isPublishedJewelModule(module) || JewelMavenArtifacts.isPublishedPlatformDependency(module)
     }
     mavenArtifacts.patchCoordinates = { module, coordinates ->
       when {
@@ -97,10 +97,12 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
     mavenArtifacts.addPomMetadata = { module, model ->
       when {
         JewelMavenArtifacts.isPublishedJewelModule(module) -> JewelMavenArtifacts.addPomMetadata(module, model)
+        JewelMavenArtifacts.isPublishedPlatformDependency(module) -> JewelMavenArtifacts.addPlatformPomMetadata(module, model)
       }
     }
     mavenArtifacts.isJavadocJarRequired = {
-      JewelMavenArtifacts.isPublishedJewelModule(it) && it.name != "intellij.platform.jewel.intUi.decoratedWindow"
+      JewelMavenArtifacts.isPublishedPlatformDependency(it) ||
+      (JewelMavenArtifacts.isPublishedJewelModule(it) && it.name != "intellij.platform.jewel.intUi.decoratedWindow")
     }
     mavenArtifacts.validate = { context, artifacts ->
       JewelMavenArtifacts.validate(context, artifacts)
@@ -162,8 +164,8 @@ open class AndroidStudioProperties(communityHomeDir: Path) : IdeaCommunityProper
     productLayout.productImplementationModules += "intellij.idea.android.customization"
 
     val defaultBundledPlugins = IDEA_BUNDLED_PLUGINS
-      .remove("intellij.mcpserver")
-      .remove("intellij.featuresTrainer")
+      .removing("intellij.mcpserver.plugin")
+      .removing("intellij.featuresTrainer")
 
     productLayout.bundledPluginModules = defaultBundledPlugins + persistentListOf(
       "intellij.android.compose-ide-plugin",
@@ -201,7 +203,6 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
   }
 
   include(CommunityProductFragments.javaIdeBaseFragment())
-  deprecatedInclude("intellij.idea.community.customization", "META-INF/tips-intellij-idea-community.xml")
 
   module("intellij.platform.coverage")
   module("intellij.platform.coverage.agent")
@@ -212,7 +213,6 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
   module("intellij.platform.customization.min")
   module("intellij.idea.customization.base")
   module("intellij.idea.customization.backend")
-  module("intellij.platform.tips")
 
   if (System.getProperty("idea.platform.prefix") == "AndroidStudio") {
     module("intellij.idea.android.customization")

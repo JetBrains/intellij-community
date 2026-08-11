@@ -25,7 +25,7 @@ data class ThreadDumpState(
  * Converts parsed threads and containers into dump items consumed by the thread dump UI.
  */
 @ApiStatus.Internal
-fun ThreadDumpState.dumpItems(): List<MergeableDumpItem> {
+fun ThreadDumpState.dumpItems(): List<DumpItem> {
   return toDumpItems(threadStates, threadContainerDescriptors)
 }
 
@@ -39,7 +39,11 @@ fun parseIntelliJThreadDump(text: String): ThreadDumpState {
   val threadStates = mutableListOf<ThreadState>()
   val threadContainerDescriptors = mutableListOf<JavaThreadContainerDesc>()
   for (threadState in parsedThreadStates) {
-    if (threadState.type == IntelliJThreadDumpMetadata.CONTAINER_TYPE) {
+    val coroutineThreadStates = parseCoroutineDump(threadState.stackTrace)
+    if (coroutineThreadStates != null) {
+      threadStates.addAll(coroutineThreadStates)
+    }
+    else if (threadState.type == IntelliJThreadDumpMetadata.CONTAINER_TYPE) {
       val containerId = threadState.uniqueId ?: continue
       threadContainerDescriptors.add(
         JavaThreadContainerDesc(

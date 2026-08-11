@@ -23,6 +23,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.rmi.RemoteException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
 
@@ -32,6 +34,12 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
 
   @Override
   protected void customizeComponents(@Nullable MavenWorkspaceMap workspaceMap) {
+    if (isJsr330Container()) {
+      registerCustomArtifactResolverOverrideAsHigherPrioritySisuBeans();
+      super.customizeComponents(workspaceMap);
+      return;
+    }
+
     super.customizeComponents(workspaceMap);
 
     ArtifactResolver customResolver = createCustomArtifactResolver(workspaceMap);
@@ -99,6 +107,16 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
           MavenServerGlobals.getLogger().warn(e);
         }
       }
+    }
+  }
+
+
+  private void registerCustomArtifactResolverOverrideAsHigherPrioritySisuBeans() {
+    ArtifactResolver customResolver = createCustomArtifactResolver(null);
+    if (customResolver != null) {
+      Map<Class<?>, Object> override = new HashMap<>();
+      override.put(ArtifactResolver.class, customResolver);
+      registerSharedInjectorOverrides("intellij-maven-aether-resolver", override);
     }
   }
 

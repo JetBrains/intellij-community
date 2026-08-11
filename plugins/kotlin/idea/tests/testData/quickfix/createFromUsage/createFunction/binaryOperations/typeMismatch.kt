@@ -1,5 +1,5 @@
 // "Create member function 'A.times'" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'String', but 'Int' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 class A
 
 operator fun A.times(i: Int) = this

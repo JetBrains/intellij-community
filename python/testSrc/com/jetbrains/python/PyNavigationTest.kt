@@ -1,5 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
+
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2.GTDUOutcome
@@ -20,6 +24,9 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 
+@Subsystems.CodeInsight
+@Components.Navigation
+@Layers.Functional
 class PyNavigationTest : PyTestCase() {
 
   // PY-35129

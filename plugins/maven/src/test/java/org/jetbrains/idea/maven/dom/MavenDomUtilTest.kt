@@ -2,16 +2,27 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.ide.highlighter.XmlFileType
-import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.maven.testFramework.fixtures.mavenFixture
+import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 
-class MavenDomUtilTest : MavenTestCase() {
+@TestApplication
+class MavenDomUtilTest {
+  private val maven by mavenFixture()
 
+  @Test
   fun testIsProjectFileWithModel400() {
-    assertFalse(MavenDomUtil.isProjectFileWithModel410(
-      createXmlFile("""
+    assertFalse(runReadAction {
+      MavenDomUtil.isProjectFileWithModel410(
+        createXmlFile("""
         <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -22,13 +33,16 @@ class MavenDomUtilTest : MavenTestCase() {
     <artifactId>test</artifactId>
     <version>1</version>
     </project>
-      """.trimIndent())
-    ))
+        """.trimIndent())
+      )
+    })
   }
 
+  @Test
   fun testIsProjectFileWithModel410() {
-    assertTrue(MavenDomUtil.isProjectFileWithModel410(
-      createXmlFile("""
+    assertTrue(runReadAction {
+      MavenDomUtil.isProjectFileWithModel410(
+        createXmlFile("""
         <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.1.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -39,13 +53,16 @@ class MavenDomUtilTest : MavenTestCase() {
     <artifactId>test</artifactId>
     <version>1</version>
     </project>
-      """.trimIndent())
-    ))
+        """.trimIndent())
+      )
+    })
   }
 
+  @Test
   fun testIsProjectFileWithModel410Incomplete() {
-    assertFalse(MavenDomUtil.isProjectFileWithModel410(
-      createXmlFile("""
+    assertFalse(runReadAction {
+      MavenDomUtil.isProjectFileWithModel410(
+        createXmlFile("""
         <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.1.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -55,14 +72,17 @@ class MavenDomUtilTest : MavenTestCase() {
     <artifactId>test</artifactId>
     <version>1</version>
     </project>
-      """.trimIndent())
-    ))
+        """.trimIndent())
+      )
+    })
   }
 
 
+  @Test
   fun testIsProjectFileWithModel410Incomplete2() {
-    assertFalse(MavenDomUtil.isProjectFileWithModel410(
-      createXmlFile("""
+    assertFalse(runReadAction {
+      MavenDomUtil.isProjectFileWithModel410(
+        createXmlFile("""
         <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -73,13 +93,16 @@ class MavenDomUtilTest : MavenTestCase() {
     <artifactId>test</artifactId>
     <version>1</version>
     </project>
-      """.trimIndent())
-    ))
+        """.trimIndent())
+      )
+    })
   }
 
+  @Test
   fun testIsProjectFileWithModel410NoModel() {
-    assertTrue(MavenDomUtil.isProjectFileWithModel410(
-      createXmlFile("""
+    assertTrue(runReadAction {
+      MavenDomUtil.isProjectFileWithModel410(
+        createXmlFile("""
         <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.1.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -89,14 +112,17 @@ class MavenDomUtilTest : MavenTestCase() {
     <artifactId>test</artifactId>
     <version>1</version>
     </project>
-      """.trimIndent())
-    ))
+        """.trimIndent())
+      )
+    })
   }
 
+  @Test
   fun testIsProjectFileWithModel400NoModelVersionInferred() {
     // 4.0.0 namespace without modelVersion tag - should infer 4.0.0 and return false
-    assertFalse(MavenDomUtil.isProjectFileWithModel410(
-      createXmlFile("""
+    assertFalse(runReadAction {
+      MavenDomUtil.isProjectFileWithModel410(
+        createXmlFile("""
         <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -106,14 +132,17 @@ class MavenDomUtilTest : MavenTestCase() {
     <artifactId>test</artifactId>
     <version>1</version>
     </project>
-      """.trimIndent())
-    ))
+        """.trimIndent())
+      )
+    })
   }
 
+  @Test
   fun testIsProjectFileWithModel410HttpsNoModelVersion() {
     // https namespace without modelVersion tag - should infer 4.1.0 and return true
-    assertTrue(MavenDomUtil.isProjectFileWithModel410(
-      createXmlFile("""
+    assertTrue(runReadAction {
+      MavenDomUtil.isProjectFileWithModel410(
+        createXmlFile("""
         <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="https://maven.apache.org/POM/4.1.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -123,14 +152,17 @@ class MavenDomUtilTest : MavenTestCase() {
     <artifactId>test</artifactId>
     <version>1</version>
     </project>
-      """.trimIndent())
-    ))
+        """.trimIndent())
+      )
+    })
   }
 
+  @Test
   fun testGetXmlProjectModelVersionInferredFromNamespace410() {
     // When modelVersion tag is missing, should infer from namespace
-    assertEquals("4.1.0", MavenDomUtil.getXmlProjectModelVersion(
-      createXmlFile("""
+    assertEquals("4.1.0", runReadAction {
+      MavenDomUtil.getXmlProjectModelVersion(
+        createXmlFile("""
         <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.1.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -140,14 +172,17 @@ class MavenDomUtilTest : MavenTestCase() {
     <artifactId>test</artifactId>
     <version>1</version>
     </project>
-      """.trimIndent())
-    ))
+        """.trimIndent())
+      )
+    })
   }
 
+  @Test
   fun testGetXmlProjectModelVersionInferredFromNamespace400() {
     // When modelVersion tag is missing, should infer from namespace
-    assertEquals("4.0.0", MavenDomUtil.getXmlProjectModelVersion(
-      createXmlFile("""
+    assertEquals("4.0.0", runReadAction {
+      MavenDomUtil.getXmlProjectModelVersion(
+        createXmlFile("""
         <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -157,14 +192,17 @@ class MavenDomUtilTest : MavenTestCase() {
     <artifactId>test</artifactId>
     <version>1</version>
     </project>
-      """.trimIndent())
-    ))
+        """.trimIndent())
+      )
+    })
   }
 
+  @Test
   fun testGetXmlProjectModelVersionExplicitTakesPrecedence() {
     // When modelVersion tag is present, use it even if namespace differs
-    assertEquals("4.0.0", MavenDomUtil.getXmlProjectModelVersion(
-      createXmlFile("""
+    assertEquals("4.0.0", runReadAction {
+      MavenDomUtil.getXmlProjectModelVersion(
+        createXmlFile("""
         <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.1.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -175,25 +213,31 @@ class MavenDomUtilTest : MavenTestCase() {
     <artifactId>test</artifactId>
     <version>1</version>
     </project>
-      """.trimIndent())
-    ))
+        """.trimIndent())
+      )
+    })
   }
 
+  @Test
   fun testGetXmlProjectModelVersionNoNamespace() {
     // When no namespace and no modelVersion tag, return null
-    assertNull(MavenDomUtil.getXmlProjectModelVersion(
-      createXmlFile("""
+    assertNull(runReadAction {
+      MavenDomUtil.getXmlProjectModelVersion(
+        createXmlFile("""
         <?xml version="1.0" encoding="UTF-8"?>
 <project>
     <groupId>test</groupId>
     <artifactId>test</artifactId>
     <version>1</version>
     </project>
-      """.trimIndent())
-    ))
+        """.trimIndent())
+      )
+    })
   }
 
   fun createXmlFile(text: String): PsiFile {
-    return PsiFileFactory.getInstance(project).createFileFromText("pom.xml", XmlFileType.INSTANCE, text);
+    return runReadAction {
+      PsiFileFactory.getInstance (maven.project).createFileFromText("pom.xml", XmlFileType.INSTANCE, text)
+    }
   }
 }

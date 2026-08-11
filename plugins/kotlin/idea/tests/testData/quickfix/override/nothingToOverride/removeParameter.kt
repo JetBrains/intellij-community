@@ -1,6 +1,6 @@
 // "Change function signature to 'fun f()'" "true"
-// K2_ERROR: 'f' overrides nothing. Potential signatures for overriding:<br>fun f(): Unit
-// K2_ERROR: Class 'B' is not abstract and does not implement abstract member:<br>fun f(): Unit
+// K2_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
+// K2_ERROR: NOTHING_TO_OVERRIDE
 interface A {
     fun f()
 }

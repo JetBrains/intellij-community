@@ -1,4 +1,4 @@
-// "Transform body to single exit-point form" "true-preview"
+// "Transform method body to single exit-point form" "true-preview"
 class Test {
     int fo<caret>o(int i) {
         // comment 1

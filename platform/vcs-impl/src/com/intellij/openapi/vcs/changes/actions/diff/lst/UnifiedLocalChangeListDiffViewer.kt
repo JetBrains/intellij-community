@@ -93,7 +93,8 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
   override fun createTitles(): JComponent {
     val titles = super.createTitles()
 
-    val titleWithCheckbox = JBUI.Panels.simplePanel()
+    val titleWithCheckbox = JBUI.Panels.simplePanel().andTransparent()
+    titleWithCheckbox.setName("Unified Local Change List Diff Editor Title Panel")
     if (titles != null) titleWithCheckbox.addToCenter(titles)
     titleWithCheckbox.addToLeft(excludeAllCheckboxPanel)
     return titleWithCheckbox

@@ -7,12 +7,12 @@ import com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject
 import com.intellij.ide.actions.runAnything.activity.RunAnythingNotifiableProvider.ExecutionStatus.ERROR
 import com.intellij.ide.actions.runAnything.activity.RunAnythingNotifiableProvider.ExecutionStatus.SUCCESS
 import com.intellij.notification.Notification
-import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType.INFORMATION
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.NlsActions
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Implement notifiable provider if you desire to run an arbitrary activity in the IDE, that may hasn't provide visual effects,
@@ -22,15 +22,13 @@ import com.intellij.openapi.util.NlsActions
  */
 abstract class RunAnythingNotifiableProvider<V : Any> : RunAnythingProviderBase<V>() {
 
-  private val runAnythingGroup = NotificationGroupManager.getInstance().getNotificationGroup("Run Anything")
-
   private val notificationConfigurators = LinkedHashMap<ExecutionStatus, NotificationBuilder.() -> Unit>()
 
   /**
    * Runs an activity silently.
    *
    * @param dataContext 'Run Anything' data context
-   * @return true if succeed, false is failed
+   * @return true if succeeded, false is failed
    */
   protected abstract fun run(dataContext: DataContext, value: V): Boolean
 
@@ -55,10 +53,12 @@ abstract class RunAnythingNotifiableProvider<V : Any> : RunAnythingProviderBase<
     notification.notify(project)
   }
 
+  @ApiStatus.Internal
   protected fun notification(after: ExecutionStatus = SUCCESS, configure: NotificationBuilder.() -> Unit) {
     notificationConfigurators[after] = configure
   }
 
+  @ApiStatus.Internal
   protected inner class NotificationBuilder(val dataContext: DataContext, val value: V) {
     private val actions = ArrayList<ActionData>()
 
@@ -71,11 +71,13 @@ abstract class RunAnythingNotifiableProvider<V : Any> : RunAnythingProviderBase<
     }
 
     fun build(): Notification {
-      val notification = runAnythingGroup.createNotification(content, INFORMATION).setIcon(AllIcons.Actions.RunAnything).setTitle(title, subtitle)
-      for (actionData in actions) {
-        val action = object : AnAction(actionData.name) {
+      val notification = Notification("Run Anything", content, INFORMATION)
+        .setIcon(AllIcons.Actions.RunAnything)
+        .setTitle(title, subtitle)
+      for ((name, perform) in actions) {
+        val action = object : AnAction(name) {
           override fun actionPerformed(e: AnActionEvent) {
-            actionData.perform()
+            perform()
             notification.expire()
           }
         }
@@ -85,6 +87,7 @@ abstract class RunAnythingNotifiableProvider<V : Any> : RunAnythingProviderBase<
     }
   }
 
+  @ApiStatus.Internal
   protected enum class ExecutionStatus { SUCCESS, ERROR }
 
   private data class ActionData(@NlsActions.ActionText val name: String, val perform: () -> Unit)

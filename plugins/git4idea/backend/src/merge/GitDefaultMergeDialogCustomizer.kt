@@ -2,6 +2,7 @@
 package git4idea.merge
 
 import com.intellij.diff.DiffEditorTitleCustomizer
+import com.intellij.diff.util.DiffUtil
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
@@ -383,8 +384,9 @@ internal fun getTitleWithCommitsRangeDetailsCustomizer(
 
 internal fun getTitleWithShowDetailsAction(@Nls title: String, action: () -> Unit): JPanel =
   BorderLayoutPanel()
-    .addToCenter(JBLabel(title).setCopyable(true))
+    .addToCenter(JBLabel(title).setCopyable(true).apply { foreground = DiffUtil.getDiffContentForeground() })
     .addToRight(ActionLink(GitBundle.message("merge.dialog.customizer.show.details.link.label")) { action() })
+    .andTransparent()
 
 private fun Boolean.toInt() = if (this) 1 else 0
 

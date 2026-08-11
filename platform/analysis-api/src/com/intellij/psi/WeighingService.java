@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -25,7 +26,7 @@ public final class WeighingService {
     return new WeighingComparable<>(element, location, array);
   }
 
-  public static <T, Loc> List<Weigher> getWeighers(Key<? extends Weigher<T, Loc>> key) {
+  public static <T, Loc> @Unmodifiable List<Weigher> getWeighers(Key<? extends Weigher<T, Loc>> key) {
     return COLLECTOR.forKey(key);
   }
 }

@@ -13,8 +13,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.actions.diff.WrapperCombinedBlockProducer
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.isToolWindowTabVertical
 import com.intellij.openapi.vcs.changes.ui.CommitToolWindowUtil
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.vcs.changes.viewModel.ChangesViewProxy
@@ -35,17 +33,9 @@ internal class ChangesViewEditorDiffPreview(
     PreviewOnNextDiffAction().registerCustomShortcutSet(targetComponent, this)
 
     cs.launch(Dispatchers.UiWithModelAccess) {
-      changesView.diffRequests.collectLatest { (diffAction, clientId) ->
+      changesView.diffRequests.collectLatest { clientId ->
         withExplicitClientId(clientId) {
-          when (diffAction) {
-            ChangesViewDiffAction.SINGLE_CLICK_DIFF_PREVIEW -> {
-              if (!isSplitterPreviewPresent()) {
-                val opened = openPreview(false)
-                if (!opened) closePreview()
-              }
-            }
-            ChangesViewDiffAction.PERFORM_DIFF -> performDiffAction();
-          }
+          performDiffAction()
         }
       }
     }
@@ -88,9 +78,6 @@ internal class ChangesViewEditorDiffPreview(
     super.dispose()
     cs.cancel()
   }
-
-  private fun isSplitterPreviewPresent() =
-    ChangesViewContentManager.shouldHaveSplitterDiffPreview(project, isToolWindowTabVertical(project, LOCAL_CHANGES))
 
   private inner class PreviewOnNextDiffAction : DumbAwareAction() {
     init {

@@ -11,11 +11,10 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
-import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.pathInProjectFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
-import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonMockSdk
 import com.jetbrains.python.inspections.interpreter.PyInterpreterNotificationProvider
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
@@ -32,7 +31,7 @@ import kotlin.time.Duration.Companion.seconds
 class PyInterpreterInspectionTest {
   private val testDisposable by disposableFixture()
   private val projectFixture = projectFixture(openAfterCreation = true)
-  private val moduleFixture = projectFixture.moduleFixture(moduleType = PyNames.PYTHON_MODULE_ID)
+  private val moduleFixture = projectFixture.pyModuleFixture()
   private val sourceRootFixture = moduleFixture.sourceRootFixture(
     pathFixture = projectFixture.pathInProjectFixture(Path.of("")),
   )

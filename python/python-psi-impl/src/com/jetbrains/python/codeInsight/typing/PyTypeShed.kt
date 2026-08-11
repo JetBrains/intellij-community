@@ -16,14 +16,31 @@
 package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiManager
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.QualifiedName
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.psi.LanguageLevel
+import org.toml.lang.psi.TomlFile
+import org.toml.lang.psi.TomlFileType
+import org.toml.lang.psi.TomlKeyValue
+import org.toml.lang.psi.TomlLiteral
+import org.toml.lang.psi.ext.TomlLiteralKind
+import org.toml.lang.psi.ext.kind
 import java.io.File
 
 /**
@@ -33,6 +50,10 @@ import java.io.File
  *
  */
 object PyTypeShed {
+  private const val METADATA_TOML = "METADATA.toml"
+  private const val PARTIAL_STUB_KEY = "partial_stub"
+  private val PARTIAL_THIRD_PARTY_STUB_PACKAGE_KEY =
+    Key.create<CachedValue<Boolean>>("PyTypeShed.partialThirdPartyStubPackage")
 
   private val stdlibNamesAvailableOnlyInSubsetOfSupportedLanguageLevels = mapOf(
     // name to python versions when this name was introduced and removed
@@ -230,6 +251,24 @@ object PyTypeShed {
   fun isInStandardLibrary(file: VirtualFile): Boolean =
     stdlibRoot?.let { VfsUtilCore.isAncestor(it, file, false) } == true
 
+  fun isInPartialThirdPartyStubPackage(element: PsiElement): Boolean {
+    val file = (element as? PsiFileSystemItem)?.virtualFile ?: element.containingFile?.virtualFile ?: return false
+    val distributionRoot = getThirdPartyDistributionRoot(file) ?: return false
+    return isPartialThirdPartyStubPackage(element.project, distributionRoot)
+  }
+
+  private fun getThirdPartyDistributionRoot(file: VirtualFile): VirtualFile? {
+    val stubsRoot = thirdPartyStubRoot ?: return null
+    if (!VfsUtilCore.isAncestor(stubsRoot, file, false)) return null
+
+    var current = if (file.isDirectory) file else file.parent
+    while (current != null && current.parent != stubsRoot) {
+      current = current.parent
+    }
+
+    return current?.takeIf { it.parent == stubsRoot }
+  }
+
   /**
    * Find the directory containing .pyi stubs for the package [packageName] under `typeshed/stubs`.
    *
@@ -237,5 +276,39 @@ object PyTypeShed {
    */
   fun getStubRootForPackage(packageName: String): VirtualFile? {
     return thirdPartyStubRoot?.findChild(packageName)
+  }
+
+  private fun isPartialThirdPartyStubPackage(project: Project, distributionRoot: VirtualFile): Boolean {
+    val psiDirectory = PsiManager.getInstance(project).findDirectory(distributionRoot) ?: return false
+    val metadataFile = distributionRoot.findChild(METADATA_TOML)
+    return CachedValuesManager.getManager(project).getCachedValue(psiDirectory, PARTIAL_THIRD_PARTY_STUB_PACKAGE_KEY, {
+      val metadataPsiFile = metadataFile?.let { PsiManager.getInstance(project).findFile(it) as? TomlFile }
+      val isPartial = when {
+        metadataPsiFile != null -> hasPartialStubMarker(metadataPsiFile)
+        metadataFile != null -> readPartialStubMarker(project, metadataFile)
+        else -> false
+      }
+      CachedValueProvider.Result.create(
+        isPartial,
+        metadataPsiFile ?: metadataFile ?: psiDirectory,
+        VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS,
+      )
+    }, false)
+  }
+
+  private fun readPartialStubMarker(project: Project, metadataFile: VirtualFile): Boolean {
+    val metadataText = FileDocumentManager.getInstance().getCachedDocument(metadataFile)?.text ?: VfsUtilCore.loadText(metadataFile)
+    val psiFile =
+      PsiFileFactory.getInstance(project).createFileFromText(METADATA_TOML, TomlFileType, metadataText) as? TomlFile ?: return false
+    return hasPartialStubMarker(psiFile)
+  }
+
+  private fun hasPartialStubMarker(metadataFile: TomlFile): Boolean {
+    val partialStubEntry = metadataFile.children
+                             .filterIsInstance<TomlKeyValue>()
+                             .firstOrNull { it.key.text == PARTIAL_STUB_KEY } ?: return false
+    val literal = partialStubEntry.value as? TomlLiteral ?: return false
+
+    return literal.kind is TomlLiteralKind.Boolean && literal.text == "true"
   }
 }

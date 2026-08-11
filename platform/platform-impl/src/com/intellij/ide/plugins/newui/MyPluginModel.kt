@@ -155,14 +155,16 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   fun clear(parentComponent: JComponent?) {
     UiPluginManager.getInstance().resetSession(mySessionId.toString(), false, parentComponent) {
-      applyChangedStates(it)
+      applyChangedStates(it.changedEnabledStates)
       updateEnabledStateInUi()
+      applyChangedUpdateSourcesToUI(it.updateSourceStatesToRevert)
     }
   }
 
   fun cancel(parentComponent: JComponent?, removeSession: Boolean) {
     UiPluginManager.getInstance().resetSession(mySessionId.toString(), removeSession, parentComponent) {
-      applyChangedStates(it)
+      applyChangedStates(it.changedEnabledStates)
+      applyChangedUpdateSourcesToUI(it.updateSourceStatesToRevert)
     }
   }
 
@@ -230,11 +232,8 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
   }
 
-  var pluginUpdatesService: PluginUpdatesService
-    get() = myPluginUpdatesService!!
-    set(service) {
-      myPluginUpdatesService = service
-    }
+  val pluginUpdatesService: PluginUpdatesService
+    get() = PluginUpdatesService.getInstance()
 
   val sessionId: String
     get() = mySessionId.toString()
@@ -465,7 +464,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     for (panel in myDetailPanels) {
       if (panel.isShowingPlugin(descriptor.pluginId)) {
         panel.setPlugin(installedDescriptor)
-        panel.finishInstall(success, restartRequired, installedDescriptor)
+        panel.finishInstall(success, restartRequired, descriptor.pluginId, installedDescriptor)
       }
     }
 
@@ -501,7 +500,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       }
     }
     else {
-      myPluginUpdatesService!!.finishUpdate()
+      PluginUpdatesService.getInstance().rerunCallbacks()
     }
 
     info?.indicator?.cancel()
@@ -826,7 +825,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       group.titleWithEnabled(PluginModelFacade(this))
     }
     runInvalidFixCallback()
-    myPluginUpdatesService?.refreshCallbacks()
+    PluginUpdatesService.getInstance().rerunCallbacks()
   }
 
   override fun isDisabled(pluginId: PluginId): Boolean {
@@ -890,6 +889,16 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   private fun applyChangedStates(changedStates: Map<PluginId, Boolean>) {
     changedStates.forEach { (pluginId: PluginId, enabled: Boolean) ->
       super.setEnabled(pluginId, if (enabled) PluginEnabledState.ENABLED else PluginEnabledState.DISABLED)
+    }
+  }
+
+  private fun applyChangedUpdateSourcesToUI(updateSourceStates: Map<PluginId, PluginUpdateSourceState>) {
+    for ((pluginId, updateSourceState) in updateSourceStates) {
+      for (pageComponent in myDetailPanels) {
+        if (!pageComponent.isShowingPlugin(pluginId)) continue
+
+        pageComponent.updatePluginUpdateSource(updateSourceState.value)
+      }
     }
   }
 

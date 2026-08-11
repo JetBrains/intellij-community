@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ public abstract class ReloadablePanel<T> {
   private volatile @Nullable DataProvider<T> myDataProvider;
   private volatile @Nullable UpdateStatus myUpdateStatus;
 
+  @ApiStatus.Internal
   protected JPanel myActionPanel;
   public ReloadablePanel() {
     myErrorMessage.setForeground(JBColor.RED);

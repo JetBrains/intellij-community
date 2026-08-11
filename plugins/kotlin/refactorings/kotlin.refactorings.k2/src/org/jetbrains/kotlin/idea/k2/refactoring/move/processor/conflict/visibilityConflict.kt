@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict
 
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
@@ -19,23 +19,23 @@ import com.intellij.util.containers.toMultiMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.containingSymbol
-import org.jetbrains.kotlin.analysis.api.components.createUseSiteVisibilityChecker
-import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.isSubClassOf
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.visibility.createUseSiteVisibilityChecker
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModuleOfTypeSafe
@@ -77,7 +77,7 @@ private fun MoveRenameUsageInfo.isVisibleBeforeMove(): Boolean {
         val declaration = upToDateReferencedElement as? PsiNamedElement ?: return false
         declaration.isVisibleTo(element ?: return false)
     } catch (e: Exception) {
-        if (e is ControlFlowException) throw e
+        rethrowControlFlowException(e)
         fileLogger().error(e)
         return true
     }

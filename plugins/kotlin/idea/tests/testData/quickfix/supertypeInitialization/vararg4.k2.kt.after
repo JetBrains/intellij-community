@@ -1,5 +1,5 @@
 // "Add constructor parameters from A(vararg String)" "true"
-// K2_ERROR: This type has a constructor, so it must be initialized here.
+// K2_ERROR: SUPERTYPE_NOT_INITIALIZED
 open class A(vararg strings: String = arrayOf("a", "b"))
 
 class B(vararg strings: String = arrayOf("a", "b")) : A<caret>(*strings)

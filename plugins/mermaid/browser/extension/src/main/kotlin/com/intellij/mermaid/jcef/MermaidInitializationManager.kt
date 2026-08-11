@@ -29,7 +29,9 @@ internal object MermaidInitializationManager {
     console.log("Performing mermaid initialization")
     val theme = Configuration.mermaidTheme
     console.log("Applying mermaid theme: $theme")
-    Mermaid.core.initialize(SimpleMermaidConfig(theme = theme))
+    val config: dynamic = js("{}")
+    config.theme = theme
+    Mermaid.core.initialize(config)
     registerExternalDiagrams()
   }
 

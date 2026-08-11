@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.util.ref.GCWatcher;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -9,6 +12,8 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyDeprecationTest extends PyTestCase {
   @Override
   protected void setUp() throws Exception {
@@ -135,6 +140,63 @@ public class PyDeprecationTest extends PyTestCase {
   public void testAbcDeprecatedAbstracts() {
     myFixture.enableInspections(PyDeprecationInspection.class);
     myFixture.configureByFile("deprecation/abcDeprecatedAbstracts.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedOverloadedCallee() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedOverloadedCallee.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedPropertyAugAssign() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedPropertyAugAssign.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedCallableInstance() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedCallableInstance.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedFunctionReference() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedFunctionReference.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedAugAssignAdd() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedAugAssignAdd.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedInDefiningModule() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedInDefiningModule.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedProtocolMethod() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedProtocolMethod.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80732
+  public void testDeprecatedOverloadWithArgs() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.copyDirectoryToProject("deprecation/deprecatedOverloadWithArgs", "");
+    myFixture.configureByFile("main.py");
     myFixture.checkHighlighting(true, false, false);
   }
 }

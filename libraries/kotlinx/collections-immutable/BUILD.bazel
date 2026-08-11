@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.kotlinx.collections.immutable` start
-
 jvm_library(
     name = "libraries-kotlinx-collections-immutable",
     srcs = glob(

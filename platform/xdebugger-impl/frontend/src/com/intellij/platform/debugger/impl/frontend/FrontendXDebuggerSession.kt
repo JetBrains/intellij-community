@@ -45,7 +45,6 @@ import com.intellij.platform.debugger.impl.rpc.XSuspendContextDto
 import com.intellij.platform.debugger.impl.rpc.XValueMarkerId
 import com.intellij.platform.debugger.impl.rpc.actionIds
 import com.intellij.platform.debugger.impl.rpc.consoleView
-import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
 import com.intellij.platform.debugger.impl.shared.childScopeCancelledOnSessionEvents
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
@@ -76,6 +75,7 @@ import com.intellij.xdebugger.impl.rpc.toRpc
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
+import fleet.rpc.client.durable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -84,7 +84,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -208,7 +207,7 @@ class FrontendXDebuggerSession(
   override val processHandler: ProcessHandler = createFrontendProcessHandler(project, sessionDto.processHandlerDto)
 
   private val consoleViewDeferred: Deferred<ConsoleView?> = scope.async {
-    sessionDto.consoleViewData?.consoleView(processHandler)
+    sessionDto.consoleViewData?.consoleView(tabScope, processHandler)
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -259,7 +258,7 @@ class FrontendXDebuggerSession(
       val processDescriptorDeferred = sessionDto.processDescriptor
       if (processDescriptorDeferred != null) {
         val processDescriptor = processDescriptorDeferred.await()
-        FrontendDescriptorStateManager.getInstance(project).registerProcessDescriptor(id, processDescriptor, cs)
+        FrontendCustomDescriptorStateManager.getInstance(project).registerProcessDescriptor(id, processDescriptor, cs)
       }
       sessionDto.sessionEvents.toFlow().collect { event ->
         with(event) {
@@ -407,18 +406,6 @@ class FrontendXDebuggerSession(
     val backendRunContentDescriptorId = tabInfo.backendRunContendDescriptorId.await()
     val executionEnvironmentId = tabInfo.executionEnvironmentId
 
-    suspend fun onTabClosed() {
-      try {
-        tabInfo.tabClosedCallback.send(Unit)
-      }
-      catch (_: ClosedSendChannelException) {
-        // closed on the backend
-      }
-      finally {
-        tabScope.cancel()
-      }
-    }
-
     val proxy = this@FrontendXDebuggerSession
     val contentToReuse = tabInfo.contentToReuse
     val tab = withContext(Dispatchers.EDT) {
@@ -445,12 +432,12 @@ class FrontendXDebuggerSession(
     }
     val runContentDescriptor = tab.runContentDescriptor
     if (runContentDescriptor == null) {
-      onTabClosed()
+      tabScope.cancel()
       thisLogger().error("Run content descriptor is not set for tab")
       return
     }
     runContentDescriptor.coroutineScope.awaitCancellationAndInvoke {
-      onTabClosed()
+      tabScope.cancel()
     }
 
     val executionEnvDto = tabInfo.executionEnvironmentProxyDto
@@ -459,11 +446,6 @@ class FrontendXDebuggerSession(
       // Set actual content in monolith.
       // see com.intellij.execution.impl.ExecutionManagerImpl.doStartRunProfile
       executionEnvDto.executionEnvironment?.contentToReuse = runContentDescriptor
-    }
-
-    tabScope.launch(Dispatchers.EDT) {
-      tabInfo.showTab.await()
-      tab.showTab(contentToReuse)
     }
 
     // don't subscribe on additional tabs if we have [ExecutionEnvironment] (it means this is Monolith)
@@ -480,6 +462,8 @@ class FrontendXDebuggerSession(
     }
 
     tabScope.launch(Dispatchers.EDT) {
+      tabInfo.showTab.await()
+      tab.showTab(contentToReuse)
       pausedFlow.toFlow().collectLatest { paused ->
         tab.onPause(paused.pausedByUser, paused.topFrameIsAbsent)
       }
@@ -555,9 +539,11 @@ class FrontendXDebuggerSession(
     val suspendContext = getCurrentSuspendContext()
     val scope = suspendContext?.lifetimeScope ?: coroutineScope.childScopeForRunningExecutionStack()
     scope.launch {
-      XDebugSessionApi.getInstance()
-        .computeRunningExecutionStacks(id, suspendContext?.id)
-        .collectExecutionStackGroupEvents(project, scope, container)
+      durable {
+        XDebugSessionApi.getInstance()
+          .computeRunningExecutionStacks(id, suspendContext?.id)
+          .collectExecutionStackGroupEvents(project, scope, container)
+      }
     }
   }
 
@@ -638,7 +624,7 @@ class FrontendXDebuggerSession(
   override fun muteBreakpoints(value: Boolean) {
     // Optimistic update
     sessionData.isBreakpointsMuted = value
-    manager.breakpointsManager.getLineBreakpointManager().queueAllBreakpointsUpdate()
+    manager.breakpointsManager.getLineBreakpointVisualizationManager().queueAllBreakpointsUpdate()
   }
 
   override fun isInactiveSlaveBreakpoint(breakpoint: XBreakpointProxy): Boolean {
@@ -746,4 +732,3 @@ private suspend fun Flow<XExecutionStackGroupsEvent>.collectExecutionStackGroupE
     }
   }
 }
-

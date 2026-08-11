@@ -44,7 +44,7 @@ public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
     add(myVMParametersComponent);
     super.addComponents();
 
-    myInputRedirectPanel = new ProgramInputRedirectPanel();
+    myInputRedirectPanel = new ProgramInputRedirectPanel(myProject);
     add(myInputRedirectPanel);
   }
 

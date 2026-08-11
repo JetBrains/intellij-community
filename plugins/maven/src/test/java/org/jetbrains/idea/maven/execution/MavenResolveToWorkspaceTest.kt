@@ -15,21 +15,41 @@
  */
 package org.jetbrains.idea.maven.execution
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.roots.ProjectRootManager
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.setIgnoredFilesPathForNextImport
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.junit.Test
 import java.io.BufferedInputStream
 import java.io.FileInputStream
 import java.util.Properties
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.api.Assertions.assertNull
 
-abstract class MavenResolveToWorkspaceTest : MavenMultiVersionImportingTestCase() {
+abstract @TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenResolveToWorkspaceTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun testIgnoredProject() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -40,19 +60,19 @@ abstract class MavenResolveToWorkspaceTest : MavenMultiVersionImportingTestCase(
                        </modules>
                        """.trimIndent())
 
-    val moduleA = createModulePom("moduleA", """
+    val moduleA = maven.createModulePom("moduleA", """
       <groupId>test</groupId>
       <artifactId>moduleA</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    val moduleIgnored = createModulePom("moduleIgnored", """
+    val moduleIgnored = maven.createModulePom("moduleIgnored", """
       <groupId>test</groupId>
       <artifactId>moduleIgnored</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    val moduleB = createModulePom("moduleB", """
+    val moduleB = maven.createModulePom("moduleB", """
       <groupId>test</groupId>
       <artifactId>moduleB</artifactId>
       <version>1</version>
@@ -71,24 +91,24 @@ abstract class MavenResolveToWorkspaceTest : MavenMultiVersionImportingTestCase(
       """.trimIndent()
     )
 
-    setIgnoredFilesPathForNextImport(listOf(moduleIgnored.getPath()))
+    maven.setIgnoredFilesPathForNextImport(listOf(moduleIgnored.getPath()))
 
-    importProjectAsync()
+    maven.importProjectAsync()
 
-    setIgnoredFilesPathForNextImport(listOf(moduleIgnored.getPath()))
+    maven.setIgnoredFilesPathForNextImport(listOf(moduleIgnored.getPath()))
 
     //assertModules("project", "moduleA", "moduleB");
-    WriteAction.run<RuntimeException> { ProjectRootManager.getInstance(project).setProjectSdk(createJdk()) }
+    WriteAction.run<RuntimeException> { ProjectRootManager.getInstance(maven.project).setProjectSdk(com.intellij.testFramework.IdeaTestUtil.getMockJdk17()) }
 
     val runnerParameters = MavenRunnerParameters(moduleB.getParent().getPath(), null, false, listOf("jetty:run"), emptyMap())
     runnerParameters.isResolveToWorkspace = true
 
-    val runnerSettings = MavenRunner.getInstance(project).settings.clone()
+    val runnerSettings = MavenRunner.getInstance(maven.project).settings.clone()
     runnerSettings.setJreName(MavenRunnerSettings.USE_INTERNAL_JAVA)
 
-    val parameters = MavenExternalParameters.createJavaParameters(project,
+    val parameters = MavenExternalParameters.createJavaParameters(maven.project,
                                                                   runnerParameters,
-                                                                  MavenProjectsManager.getInstance(project).getGeneralSettings(),
+                                                                  MavenProjectsManager.getInstance(maven.project).getGeneralSettings(),
                                                                   runnerSettings,
                                                                   null)
 

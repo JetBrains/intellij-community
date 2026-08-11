@@ -1,0 +1,16 @@
+// EXIST: generateCloudLicense, generateTrialLicense
+// ABSENT: generateSecret
+
+// FILE: activateServer.main.kts
+@file:Import("apiClient.kts")
+
+generate<caret>
+
+// FILE: apiClient.kts
+fun generateCloudLicense() {}
+
+fun generateTrialLicense() {}
+
+private fun generateSecret() {}
+
+val cloudToken = 1

@@ -1,7 +1,7 @@
 from array import array
 from collections.abc import Iterator
-from typing import Any, Generic, Literal, NoReturn, overload
-from typing_extensions import Self, TypeVar, deprecated
+from typing import Any, Generic, Literal, overload
+from typing_extensions import Never, Self, TypeVar, deprecated
 
 import numpy as np
 from numpy.typing import NDArray
@@ -301,7 +301,7 @@ _GeoT_co = TypeVar("_GeoT_co", bound=Geometry, default=BaseGeometry, covariant=T
 class BaseMultipartGeometry(BaseGeometry, Generic[_GeoT_co]):
     __slots__: list[str] = []
     @property
-    def coords(self) -> NoReturn: ...
+    def coords(self) -> Never: ...
     @property
     def geoms(self) -> GeometrySequence[Self]: ...
     def svg(self, scale_factor: float = 1.0, color: str | None = None) -> str: ...  # type: ignore[override]

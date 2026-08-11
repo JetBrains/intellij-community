@@ -137,7 +137,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @Override
-  public @NotNull Set<Module> getModulesForFile(@NotNull VirtualFile file, boolean honorExclusion) {
+  public @NotNull @Unmodifiable Set<Module> getModulesForFile(@NotNull VirtualFile file, boolean honorExclusion) {
     List<WorkspaceFileSetWithCustomData<ModuleRelatedRootData>> fileSet = myWorkspaceFileIndex.findFileSetsWithCustomData(
       file, honorExclusion, true, true, false, false, false, false, ModuleRelatedRootData.class
     );
@@ -145,7 +145,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @Override
-  public @NotNull List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
+  public @NotNull @Unmodifiable List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
     return myDirectoryIndex.getOrderEntries(file);
   }
 

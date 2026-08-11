@@ -1,6 +1,6 @@
 // "Add 1st parameter to function 'foo'" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'String', but '() -> Unit' was expected.
-// K2_ERROR: Too many arguments for 'fun foo(f: () -> Unit): Unit'.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: TOO_MANY_ARGUMENTS
 fun foo(f: () -> Unit) {}
 
 fun test() {

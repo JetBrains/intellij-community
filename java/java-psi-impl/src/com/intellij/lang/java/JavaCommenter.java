@@ -3,13 +3,17 @@ package com.intellij.lang.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.CodeDocumentationAwareCommenterEx;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class JavaCommenter implements CodeDocumentationAwareCommenterEx {
@@ -94,5 +98,13 @@ public final class JavaCommenter implements CodeDocumentationAwareCommenterEx {
   @Override
   public String getDocumentationLineCommentPrefix() {
     return "///";
+  }
+
+  @Override
+  public boolean shouldUseDocumentationLineComments(@NotNull PsiFile file, boolean isLineCommentPreferred) {
+    if (isLineCommentPreferred) {
+      return PsiUtil.isAvailable(JavaFeature.MARKDOWN_COMMENT, file);
+    }
+    return false;
   }
 }

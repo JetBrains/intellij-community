@@ -50,7 +50,7 @@ public abstract class SdkHomeConfigurable implements SearchableConfigurable {
       public boolean isFileSelectable(@Nullable VirtualFile file) {
         return file != null && isSdkHome(file);
       }
-    }.withTitle(GroovyBundle.message("select.framework.0.home.title", myFrameworkName)));
+    }.withTitle(GroovyBundle.message("select.framework.0.home.title", myFrameworkName)).withEnvironmentRestricted(true));
     return myPanel;
   }
 

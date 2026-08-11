@@ -18,13 +18,24 @@
     <orderEntry type="module" module-name="intellij.gradle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.java.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.java.groovy" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.dependencyUpdater" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.android.gradle.dsl.groovy" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.maven.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.structuralSearch.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.properties" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
   </component>
 </module>

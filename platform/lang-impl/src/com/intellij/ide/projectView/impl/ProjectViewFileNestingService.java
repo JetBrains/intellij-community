@@ -13,6 +13,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.util.containers.SortedList;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -56,11 +57,13 @@ public final class ProjectViewFileNestingService implements PersistentStateCompo
     return result;
   }
 
+  @ApiStatus.Internal
   @Override
   public MyState getState() {
     return myState;
   }
 
+  @ApiStatus.Internal
   @Override
   public void loadState(final @NotNull MyState state) {
     myState = state;
@@ -86,6 +89,7 @@ public final class ProjectViewFileNestingService implements PersistentStateCompo
     return myModCount;
   }
 
+  @ApiStatus.Internal
   public static final class MyState {
     @XCollection(propertyElementName = "nesting-rules")
     public List<NestingRule> myRules = new SortedList<>(Comparator.comparing(o -> o.getParentFileSuffix()));

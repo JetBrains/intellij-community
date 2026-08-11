@@ -5,12 +5,14 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.SimpleTextAttributes
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Font
 
 // please consider talking to someone from Rider Team before changing anything here
 
+@ApiStatus.Internal
 data class RichString(val textRange: TextRange, var attributes: SimpleTextAttributes, val richText: RichText) {
   val text: String get() = richText.text.substring(textRange.startOffset, textRange.endOffset)
 }

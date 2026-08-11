@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -9,8 +9,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -29,7 +29,7 @@ public final class TabOutScopesTrackerImpl implements TabOutScopesTracker {
 
   @Override
   public void registerScopeRange(@NotNull Editor editor, int rangeStart, int rangeEnd, int tabOutOffset) {
-    EditorThreading.assertWriteAllowed();
+    Elf.getElf().assertWriteAllowed();
 
     if (editor.isDisposed()) throw new IllegalArgumentException(editor + " is already disposed");
     if (rangeStart > rangeEnd) {
@@ -108,7 +108,7 @@ public final class TabOutScopesTrackerImpl implements TabOutScopesTracker {
     private Tracker(@NotNull EditorImpl editor) {
       myEditor = editor;
       Disposable editorDisposable = editor.getDisposable();
-      myEditor.getElfDocument().addDocumentListener(this, editorDisposable);
+      myEditor.getDocument().addDocumentListener(this, editorDisposable);
     }
 
     private List<RangeMarker> getCurrentScopes(boolean create) {
@@ -119,7 +119,7 @@ public final class TabOutScopesTrackerImpl implements TabOutScopesTracker {
     }
 
     private void registerScope(final int offsetStart, final int offsetEnd, final int caretShift) {
-      RangeMarker marker = myEditor.getElfDocument().createRangeMarker(offsetStart, offsetEnd);
+      RangeMarker marker = myEditor.getDocument().createRangeMarker(offsetStart, offsetEnd);
       marker.setGreedyToLeft(true);
       marker.setGreedyToRight(true);
       if (caretShift > 1) marker.putUserData(CARET_SHIFT, caretShift);

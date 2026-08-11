@@ -108,6 +108,7 @@ public final class FileTypeDetectionService {
   private static final int CHUNK_SIZE = 10;
   private static final int OUR_MAX_FILE_SIZE_TO_LOG = 512;
 
+  private final boolean allowDetectionByContent = getBooleanProperty("com.intellij.openapi.fileTypes.impl.FileTypeDetectionService.allowDetectionByContent", true);
   private final AtomicInteger counterAutoDetect = new AtomicInteger();
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
 
@@ -229,7 +230,7 @@ public final class FileTypeDetectionService {
 
   @NotNull
   FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content, @Nullable FileType fileTypeByName) {
-    if (!isDetectable(file)) {
+    if (!allowDetectionByContent || !isDetectable(file)) {
       if (fileTypeByName == DetectedByContentFileType.INSTANCE) {
         // allow opening empty file in IDEA's editor
         return DetectedByContentFileType.INSTANCE;
@@ -243,7 +244,7 @@ public final class FileTypeDetectionService {
     // while vfs events are processing do not access cache, it can be in invalid state;
     if (!myCanUseCachedDetectedFileType) {
       try {
-        return detectFromContent(file, getFirstBytes(file, content), fileTypeByName);
+        return detectFromContent(file, getFirstBytes(file, content), fileTypeByName, true);
       }
       catch (IOException e) {
         return UnknownFileType.INSTANCE;
@@ -556,15 +557,18 @@ public final class FileTypeDetectionService {
 
   private @NotNull FileType detectFromContentAndCache(@NotNull VirtualFile file, byte @Nullable [] content, @Nullable FileType fileTypeByName) throws IOException {
     long start = System.currentTimeMillis();
+    boolean saveDetectedSeparators = true;
     if (content == null) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-      if (document != null) {
+      if (document != null && file.isCharsetSet()) {
         content = document.getText().getBytes(file.getCharset());
+        // separators already detected, since the Document is live. Detecting them again would reset them to LF (because document normalizes line separators to \n)
+        saveDetectedSeparators = false;
       }
     }
 
     ByteArraySequence bytes = getFirstBytes(file, content);
-    FileType fileType = detectFromContent(file, bytes, fileTypeByName);
+    FileType fileType = detectFromContent(file, bytes, fileTypeByName, saveDetectedSeparators);
     cacheAutoDetectedFileType(file, fileType);
     counterAutoDetect.incrementAndGet();
     long elapsed = System.currentTimeMillis() - start;
@@ -588,12 +592,13 @@ public final class FileTypeDetectionService {
     return n;
   }
 
-  private @NotNull FileType detectFromContent(@NotNull VirtualFile file, @NotNull ByteArraySequence bytes, @Nullable FileType fileTypeByName) throws IOException {
+  private @NotNull FileType detectFromContent(@NotNull VirtualFile file, @NotNull ByteArraySequence bytes, @Nullable FileType fileTypeByName,
+                                              boolean saveDetectedSeparators) throws IOException {
     List<FileTypeRegistry.FileTypeDetector> detectors = FileTypeRegistry.FileTypeDetector.EP_NAME.getExtensionList();
     // use PlainTextFileType because it doesn't supply its own charset detector
     // help set charset in the process to avoid double charset detection from content
     FileType fileType = LoadTextUtil.processTextFromBinaryPresentationOrNull(bytes,
-                                                                             file, true, true,
+                                                                             file, saveDetectedSeparators, true,
                                                                              PlainTextFileType.INSTANCE, (@Nullable CharSequence text) -> {
         if (toLog()) {
           log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): bytes length=" + bytes.length() +

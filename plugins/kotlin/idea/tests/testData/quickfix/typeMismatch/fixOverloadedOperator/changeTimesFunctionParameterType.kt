@@ -1,5 +1,5 @@
 // "Change parameter 'a' type of function 'times' to 'String'" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'String', but 'A' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 interface A {
     operator fun times(a: A): A
 }

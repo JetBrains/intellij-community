@@ -16,7 +16,7 @@
     #- id: org.jetbrains.kotlin:kotlin-compiler
     #  version: 2.2.0-RC-RC
     #  runtimeDeps:
-    #    - "@lib//:jetbrains-annotations"
+    #    - "@lib//:libraries-jetbrains-annotations-jetbrains-annotations"
     #    - "@lib//:kotlinx-coroutines-core"
     - id: org.jetbrains.kotlin:kotlin-metadata-jvm
       version: 2.2.0-RC

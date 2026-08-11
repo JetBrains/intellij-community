@@ -1,18 +1,36 @@
 package org.jetbrains.idea.maven.inspections.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.inspections.MavenRedundantVersionInspection
-import org.junit.Test
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.checkHighlighting
+import com.intellij.maven.testFramework.fixtures.createPomXml
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenRedundantVersionTest : MavenDomTestCase() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenRedundantVersionTest(mavenVersion: String, modelVersion: String) {
 
-    fixture.enableInspections(MavenRedundantVersionInspection::class.java)
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
+  @BeforeEach
+  fun setUp() {
+    maven.fixture.enableInspections(MavenRedundantVersionInspection::class.java)
 
     runBlocking {
-      importProjectAsync("""
+      maven.importProjectAsync("""
                        <groupId>test</groupId>
                        <artifactId>test</artifactId>
                        <version>1.0</version>
@@ -22,18 +40,18 @@ class MavenRedundantVersionTest : MavenDomTestCase() {
 
   @Test
   fun testHighlighting1() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>my.group</groupId>
                        <artifactId>childA</artifactId>
                        <version>1.0</version>
                        """.trimIndent())
 
-    checkHighlighting()
+    maven.checkHighlighting()
   }
 
   @Test
   fun testHighlighting2() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>childGroupId</groupId>
                        <artifactId>childA</artifactId>
                        <version>2.0</version>
@@ -45,12 +63,12 @@ class MavenRedundantVersionTest : MavenDomTestCase() {
                        </parent>
                        """.trimIndent())
 
-    checkHighlighting()
+    maven.checkHighlighting()
   }
 
   @Test
   fun testHighlighting3() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <artifactId>childA</artifactId>
                        <warning descr="Definition of version is redundant, because it's inherited from the parent"><version>1.0</version></warning>
                          
@@ -61,12 +79,12 @@ class MavenRedundantVersionTest : MavenDomTestCase() {
                        </parent>
                        """.trimIndent())
 
-    checkHighlighting()
+    maven.checkHighlighting()
   }
 
   @Test
   fun testQuickFix() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <artifactId>childA</artifactId>
                        <groupId>mavenParent</groupId>
                        <version<caret>>1.0</version>
@@ -77,14 +95,14 @@ class MavenRedundantVersionTest : MavenDomTestCase() {
                        </parent>
                        """.trimIndent())
 
-    fixture.configureFromExistingVirtualFile(projectPom)
-    fixture.doHighlighting()
+    maven.fixture.configureFromExistingVirtualFile(maven.projectPom)
+    maven.fixture.doHighlighting()
 
-    val intention =  fixture.availableIntentions.singleOrNull{it.text.startsWith("Remove ") && it.text.contains("version")}
-    assertNotNull("Cannot find intention", intention)
-    fixture.launchAction(intention!!)
+    val intention =  maven.fixture.availableIntentions.singleOrNull{it.text.startsWith("Remove ") && it.text.contains("version")}
+    assertNotNull(intention, "Cannot find intention")
+    maven.fixture.launchAction(intention!!)
 
-    fixture.checkResult(createPomXml("""
+    maven.fixture.checkResult(maven.createPomXml("""
                                                        <artifactId>childA</artifactId>
                                                        <groupId>mavenParent</groupId>
                                                            <parent>

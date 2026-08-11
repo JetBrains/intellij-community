@@ -152,9 +152,6 @@ public final class DvcsUtil {
     if (hash.length() < VcsLogUtil.SHORT_HASH_LENGTH) {
       LOG.debug("Unexpectedly short hash: [" + hash + "]");
     }
-    if (hash.length() > VcsLogUtil.FULL_HASH_LENGTH) {
-      LOG.debug("Unexpectedly long hash: [" + hash + "]");
-    }
     return VcsLogUtil.getShortHash(hash);
   }
 

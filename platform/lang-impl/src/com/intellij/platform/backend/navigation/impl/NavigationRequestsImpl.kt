@@ -41,7 +41,9 @@ internal class NavigationRequestsImpl : NavigationRequests {
       null
     }
     val elementRangeMarker = if (elementRange != null) {
-      FileDocumentManager.getInstance().getDocument(file, project)?.createRangeMarker(elementRange)
+      val document = FileDocumentManager.getInstance().getDocument(file, project)
+      if (document != null && elementRange.endOffset >= document.textLength) null
+      else document?.createRangeMarker(elementRange)
     }
     else {
       null

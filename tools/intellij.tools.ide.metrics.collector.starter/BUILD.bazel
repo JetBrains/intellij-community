@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.tools.ide.metrics.collector.starter` start
-
 jvm_library(
     name = "ide-metrics-collector-starter",
     srcs = glob(
@@ -54,7 +53,8 @@ jvm_library(
         "//platform/diagnostic/telemetry:telemetry_test_lib",
         "//libraries/opentelemetry:opentelemetry_test_lib",
         "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
-        "@lib//:kotlin-test-assertions-core-jvm",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/mockito",

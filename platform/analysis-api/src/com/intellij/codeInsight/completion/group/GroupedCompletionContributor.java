@@ -3,9 +3,11 @@ package com.intellij.codeInsight.completion.group;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a contributor for grouped code completion. Implementations of this interface are intended to define specific
@@ -24,7 +26,7 @@ public interface GroupedCompletionContributor {
    *
    * @return true if grouped code completion is enabled at the application level, otherwise false.
    */
-  static boolean isGroupEnabledInApp() {
-    return ApplicationManager.getApplication().getService(GroupedCompletion.class).isEnabled();
+  static boolean isGroupEnabled(@Nullable Editor editor) {
+    return ApplicationManager.getApplication().getService(GroupedCompletion.class).isEnabled(editor);
   }
 }

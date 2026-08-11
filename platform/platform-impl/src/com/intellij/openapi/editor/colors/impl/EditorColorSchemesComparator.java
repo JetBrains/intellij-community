@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.ui.ExperimentalUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -13,6 +14,7 @@ import static com.intellij.openapi.editor.colors.EditorColorsScheme.getDefaultSc
 /**
  * Defines the order in which editor color schemes are displayed.
  */
+@ApiStatus.Internal
 public final class EditorColorSchemesComparator implements Comparator<EditorColorsScheme> {
   public static final EditorColorSchemesComparator INSTANCE = new EditorColorSchemesComparator();
 

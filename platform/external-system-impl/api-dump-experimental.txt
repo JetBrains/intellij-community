@@ -18,16 +18,9 @@
 - com.intellij.openapi.externalSystem.model.ExternalSystemException
 - com.intellij.build.issue.BuildIssueProvider
 - <init>(com.intellij.build.issue.BuildIssue):V
+- <init>(java.util.List):V
 - getBuildIssue():com.intellij.build.issue.BuildIssue
-*a:com.intellij.openapi.externalSystem.service.execution.AbstractOutputMessageDispatcher
-- com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcher
-- *sf:Companion:com.intellij.openapi.externalSystem.service.execution.AbstractOutputMessageDispatcher$Companion
-- <init>(com.intellij.build.BuildProgressListener):V
-- f:close():V
-- pa:closeAndGetFuture():java.util.concurrent.CompletableFuture
-- invokeOnCompletion(java.util.function.Consumer):V
-- onEvent(java.lang.Object,com.intellij.build.events.BuildEvent):V
-*f:com.intellij.openapi.externalSystem.service.execution.AbstractOutputMessageDispatcher$Companion
+- getBuildIssues():java.util.List
 *f:com.intellij.openapi.externalSystem.service.execution.ExternalSystemEventDispatcher
 - com.intellij.build.BuildEventDispatcher
 - <init>(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,com.intellij.build.BuildProgressListener):V

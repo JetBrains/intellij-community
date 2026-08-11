@@ -22,7 +22,7 @@ interface GradleVersionCatalogEntityBuilder : WorkspaceEntityBuilder<GradleVersi
 }
 
 internal object GradleVersionCatalogEntityType : EntityType<GradleVersionCatalogEntity, GradleVersionCatalogEntityBuilder>() {
-  override val entityClass: Class<GradleVersionCatalogEntity> get() = GradleVersionCatalogEntity::class.java
+  override val entityImplClass: Class<*> get() = GradleVersionCatalogEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = GradleVersionCatalogEntityImpl.Builder::class.java
   operator fun invoke(
     name: String,
@@ -46,7 +46,6 @@ fun MutableEntityStorage.modifyGradleVersionCatalogEntity(
 
 var GradleBuildEntityBuilder.versionCatalogs: List<GradleVersionCatalogEntityBuilder>
   by WorkspaceEntity.extensionBuilder(GradleVersionCatalogEntity::class.java)
-
 
 @JvmOverloads
 @JvmName("createGradleVersionCatalogEntity")

@@ -3,7 +3,6 @@ package com.intellij.database.run.ui
 import com.intellij.database.DataGridBundle
 import com.intellij.database.datagrid.CellColors
 import com.intellij.database.datagrid.DataGrid
-import com.intellij.database.datagrid.GridCellRequest
 import com.intellij.database.datagrid.GridColumn
 import com.intellij.database.datagrid.GridMutator
 import com.intellij.database.datagrid.GridRequestSource
@@ -23,7 +22,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
@@ -291,18 +289,6 @@ class ArrayGridViewer(private val grid: DataGrid) : CellViewer {
   }
 
   override fun dispose(): Unit = Unit
-}
-
-class ArrayGridCellViewerFactory : CellViewerFactory {
-  override fun getSuitability(request: GridCellRequest<GridRow, GridColumn>): Suitability {
-    if (!Registry.`is`("database.new.arrays.editor", false)) return Suitability.NONE
-    if (GridUtil.getSettings(request.grid as DataGrid)?.isEditArrayAsText ?: false) return Suitability.NONE
-    if (!request.isValid()) return Suitability.NONE
-    if (!isArrayCell(request)) return Suitability.NONE
-    return Suitability.MAX
-  }
-
-  override fun createViewer(grid: DataGrid): CellViewer = ArrayGridViewer(grid)
 }
 
 private fun toList(value: Any?): List<Any?>? = when (value) {

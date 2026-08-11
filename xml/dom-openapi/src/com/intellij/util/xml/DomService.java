@@ -67,5 +67,10 @@ public abstract class DomService {
     SHOW, SHOW_CHILDREN, SKIP
   }
 
-  public abstract @NotNull StructureViewBuilder createSimpleStructureViewBuilder(@NotNull XmlFile file, @NotNull Function<DomElement, StructureViewMode> modeProvider);
+  public @NotNull StructureViewBuilder createSimpleStructureViewBuilder(
+    @NotNull XmlFile file,
+    @NotNull Function<DomElement, StructureViewMode> modeProvider
+  ) {
+    throw new UnsupportedOperationException();
+  }
 }

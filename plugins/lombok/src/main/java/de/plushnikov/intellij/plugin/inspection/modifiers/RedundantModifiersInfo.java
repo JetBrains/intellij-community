@@ -11,6 +11,7 @@ public class RedundantModifiersInfo {
   private final RedundantModifiersInfoType redundantModifiersInfoType;
   private final String[] modifiers;
   private final @InspectionMessage String description;
+  @PsiModifier.ModifierConstant
   private final String dontRunOnModifier;
 
   public RedundantModifiersInfo(@NotNull RedundantModifiersInfoType redundantModifiersInfoType,

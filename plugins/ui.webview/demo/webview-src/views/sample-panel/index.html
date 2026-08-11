@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebView React Rich UI Sample</title>
+  <script>
+    // Suppress browser right-click context menu in WebView.
+    window.addEventListener("contextmenu", function (e) { e.preventDefault(); }, true);
+  </script>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body class="ij-webview-root sample-root">
+  <div id="root">Loading React sample...</div>
+  <noscript>This sample requires JavaScript enabled.</noscript>
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>

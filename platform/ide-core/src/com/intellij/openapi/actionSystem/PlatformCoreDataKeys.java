@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SlowOperations;
 import kotlin.jvm.functions.Function0;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.Component;
 
@@ -24,14 +25,14 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
   /**
    * @see com.intellij.openapi.actionSystem.PlatformDataKeys#LAST_ACTIVE_FILE_EDITOR
    */
-  public static final DataKey<FileEditor> FILE_EDITOR = DataKey.create("fileEditor");
+  public static final DataKey<FileEditor> FILE_EDITOR = DataKey.create(Names.FILE_EDITOR_KEY_NAME);
 
   /**
    * Returns {@link Boolean#TRUE} if action is executed in modal context and
    * {@link Boolean#FALSE} if action is executed not in modal context. If context
    * is unknown returns {@code null}.
    */
-  public static final DataKey<Boolean> IS_MODAL_CONTEXT = DataKey.create("isModalContext");
+  public static final DataKey<Boolean> IS_MODAL_CONTEXT = DataKey.create(Names.IS_MODAL_CONTEXT_KEY_NAME);
 
   /**
    * Returns help id.
@@ -48,7 +49,7 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
   /**
    * Returns {@link Component} currently in focus, DataContext should be retrieved for.
    */
-  public static final DataKey<Component> CONTEXT_COMPONENT = DataKey.create("contextComponent");
+  public static final DataKey<Component> CONTEXT_COMPONENT = DataKey.create(Names.CONTEXT_COMPONENT_KEY_NAME);
 
   /**
    * A key to use to split a data provider into fast EDT and potentially slow BGT parts,
@@ -101,4 +102,10 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
    * @see CommonDataKeys#PSI_ELEMENT
    */
   public static final DataKey<PsiElement[]> PSI_ELEMENT_ARRAY = DataKey.create("psi.Element.array");
+  @ApiStatus.Internal
+  public interface Names {
+    String FILE_EDITOR_KEY_NAME = "fileEditor";
+    String CONTEXT_COMPONENT_KEY_NAME = "contextComponent";
+    String IS_MODAL_CONTEXT_KEY_NAME = "isModalContext";
+  }
 }

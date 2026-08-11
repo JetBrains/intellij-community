@@ -11,16 +11,42 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <plugin id="com.intellij.modules.jcef"/>
-    <module name="intellij.libraries.jcef"/>
-    <module name="intellij.platform.ui.jcef"/>
+    <module name="intellij.libraries.commons.imaging"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.xml.parser"/>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.xml.psi.impl"/>
     <!-- endregion -->
   </dependencies>
 
   <content namespace="jetbrains">
+    <module name="intellij.platform.images.jcef" loading="optional"/>
     <module name="intellij.platform.images.copyright"/>
     <module name="intellij.platform.images.xdebugger"/>
   </content>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.intellij.images.svgImageViewerProvider"
+                    interface="org.intellij.images.editor.impl.SvgImageViewerProvider"
+                    dynamic="true"/>
+  </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>

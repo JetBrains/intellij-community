@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2026 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,8 +100,7 @@ public final class SimplifiableConditionalExpressionInspection extends BaseInspe
       PsiExpression replacement = generator.getReplacement();
       if (replacement != null) {
         PsiElement parent = expression.getParent();
-        if (parent instanceof PsiLambdaExpression &&
-            !LambdaUtil.isSafeLambdaBodyReplacement((PsiLambdaExpression)parent, () -> replacement)) {
+        if (parent instanceof PsiLambdaExpression lambda && !LambdaUtil.isSafeLambdaBodyReplacement(lambda, () -> replacement)) {
           return;
         }
       }

@@ -3,11 +3,13 @@
   <dependencies>
     <module name="intellij.platform.backend"/>
     <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.serviceView"/>
     <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.project"/>
   </dependencies>
   <!-- endregion -->
 

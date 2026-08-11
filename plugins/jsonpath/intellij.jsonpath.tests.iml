@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.guava" scope="TEST" />
@@ -29,6 +30,7 @@
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
     <orderEntry type="module" module-name="intellij.jsonpath" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.jsonpath" />
 </module>

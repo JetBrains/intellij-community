@@ -225,7 +225,11 @@ public final class QualifiedNameFinder {
       }
       else if (owner instanceof PyFile) {
         if (builtinCache.isBuiltin(element)) {
-          return name;
+          // Builtins are always qualified with "builtins" — including in Python 2, whose runtime module is "__builtin__" —
+          // so that consumers have a single canonical qualifier to match against (see PyNames.FQN.unqualifyBuiltinName).
+          // Computed deterministically instead of via findShortestImportableName, which may resolve the builtins file
+          // inconsistently under resolve-cache pressure.
+          return PyBuiltinCache.BUILTIN_MODULE_3K + "." + name;
         }
         else {
           final VirtualFile virtualFile = ((PyFile)owner).getVirtualFile();

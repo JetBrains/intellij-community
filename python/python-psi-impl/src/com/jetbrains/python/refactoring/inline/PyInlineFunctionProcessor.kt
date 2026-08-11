@@ -423,11 +423,12 @@ class PyInlineFunctionProcessor(
     selfUsed: Boolean,
   ): Map<String, PyExpression> {
     val mapping = PyCallExpressionHelper.mapArguments(callSite, context).firstOrNull() ?: error("Can't map arguments for ${reference.name}")
-    val mappedParams = mapping.mappedParameters
-    val firstImplicit = mapping.implicitParameters.firstOrNull()
+    val selfParameter = myFunction.parameterList.parameters.firstOrNull()?.takeIf { it.isSelf }
+    val isBoundMethod = selfParameter != null &&
+                        mapping.callableType?.getParameters(context.typeEvalContext)?.firstOrNull()?.parameter !== selfParameter
 
-    val self = firstImplicit?.let { first ->
-      val qualifier = reference.qualifier ?: error("Function $myFunction has first implicit parameter, but no qualifier")
+    val self = selfParameter?.takeIf { isBoundMethod }?.let { first ->
+      val qualifier = reference.qualifier ?: error("Function $myFunction has a self parameter, but the call has no qualifier")
       val selfReplacement = when {
         !selfUsed -> qualifier
         qualifier is PyReferenceExpression && !qualifier.isQualified -> qualifier
@@ -436,7 +437,7 @@ class PyInlineFunctionProcessor(
       mapOf(first.name!! to selfReplacement)
     } ?: emptyMap()
 
-    val passedArguments = mappedParams.asSequence()
+    val passedArguments = mapping.mappedParameters.asSequence()
       .map { (arg, param) ->
         val argValue = if (arg is PyKeywordArgument) arg.valueExpression!! else arg
         tryExtractDeclaration(param.name!!, argValue, declarations, generatedNames, scopeAnchor, languageLevel)

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.diagnostic.Checks.fail
@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
@@ -57,6 +56,10 @@ open class TreeHandlerDiffRequestProcessor(
 
   final override fun iterateAllChanges(): Iterable<Wrapper> {
     return handler.iterateAllChanges(tree)
+  }
+
+  final override fun iterateChangesInSameGroup(change: Wrapper): Iterable<Wrapper> {
+    return handler.iterateChangesFromSameGroup(tree, change)
   }
 
   final override fun selectChange(change: Wrapper) {
@@ -217,7 +220,6 @@ abstract class TreeHandlerEditorDiffPreview(
   init {
     tree.doubleClickHandler = Processor { e -> handleDoubleClick(e) }
     tree.enterKeyHandler = Processor { _ -> handleEnterKey() }
-    tree.addSelectionListener { handleSingleClick() }
     PreviewOnNextDiffAction().registerCustomShortcutSet(targetComponent, this)
 
     UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
@@ -234,21 +236,6 @@ abstract class TreeHandlerEditorDiffPreview(
   open fun handleEnterKey(): Boolean {
     if (!isPreviewOnEnter()) return false
     return performDiffAction()
-  }
-
-  protected open fun isOpenPreviewWithSingleClickEnabled(): Boolean = false
-  protected open fun isOpenPreviewWithSingleClick(): Boolean {
-    if (!isOpenPreviewWithSingleClickEnabled()) return false
-    if (!VcsConfiguration.getInstance(project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) return false
-    return true
-  }
-
-  protected open fun handleSingleClick() {
-    if (!isOpenPreviewWithSingleClick()) return
-    val opened = openPreview(false)
-    if (!opened) {
-      closePreview() // auto-close editor tab if nothing to preview
-    }
   }
 
   protected open fun isOpenPreviewWithNextDiffShortcut(): Boolean = true
@@ -329,6 +316,13 @@ abstract class ChangesTreeDiffPreviewHandler {
   abstract fun iterateSelectedChanges(tree: ChangesTree): Iterable<@JvmWildcard Wrapper>
 
   abstract fun iterateAllChanges(tree: ChangesTree): Iterable<@JvmWildcard Wrapper>
+
+  /**
+   * Changes that belong to the same group (e.g. changelist) as [change].
+   * Used to scope the file counter / "Go to change" popup to the current change's group.
+   * Defaults to all changes for trees without grouping.
+   */
+  open fun iterateChangesFromSameGroup(tree: ChangesTree, change: Wrapper): Iterable<@JvmWildcard Wrapper> = iterateAllChanges(tree)
 
   abstract fun selectChange(tree: ChangesTree, change: Wrapper)
 

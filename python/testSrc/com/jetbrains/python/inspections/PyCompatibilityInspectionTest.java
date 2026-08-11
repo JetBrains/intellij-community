@@ -1,6 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,6 +18,8 @@ import java.util.List;
 /**
  * User : catherine
  */
+@Subsystems.Inspections
+@Layers.Functional
 public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
 
   @Override
@@ -303,6 +308,11 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
   // PY-79967
   public void testTemplateStrings() {
     doTest(LanguageLevel.PYTHON313);
+  }
+
+  // PEP 798: unpacking (* and **) in comprehensions is not supported before Python 3.15
+  public void testUnpackingInComprehensions() {
+    testAgainstVersions(LanguageLevel.PYTHON315, LanguageLevel.PYTHON314);
   }
 
   private void doTest(@NotNull LanguageLevel level) {

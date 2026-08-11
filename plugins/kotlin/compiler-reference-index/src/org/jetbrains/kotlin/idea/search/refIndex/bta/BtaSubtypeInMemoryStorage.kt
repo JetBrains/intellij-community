@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex.bta
 
 import com.intellij.openapi.diagnostic.logger
@@ -18,7 +18,7 @@ import kotlin.io.path.readBytes
 class BtaSubtypeInMemoryStorage private constructor(
     // TODO KTIJ-37735: use persistent hash map to avoid retaining all CRI data in memory
     private val subtypes: Map<Int, Collection<String>>,
-) {
+) : BtaInMemoryStorage {
     operator fun get(key: FqName, deep: Boolean): Sequence<FqName> = getSubtypes(key, deep).map(::FqName)
 
     private fun getSubtypes(key: FqName, deep: Boolean): Sequence<String> {

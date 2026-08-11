@@ -11,6 +11,7 @@ import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.JBIterator;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -27,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class FilteringSpeedSearch<T extends DefaultMutableTreeNode, U> extends SpeedSearch implements FilteringTree.FilteringTreeUserObjectMatcher<U> {
   private final JTextComponent myField;
   private final FilteringTree<T, U> myFilteringTree;

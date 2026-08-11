@@ -7,6 +7,12 @@ import org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 
+/**
+ * A [MarkdownRendererExtension] that renders GitHub Flavored Markdown alert blocks.
+ *
+ * @param alertStyling The styling to apply to alert blocks.
+ * @param rootStyling The root [MarkdownStyling] used for rendering content inside alerts.
+ */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public class GitHubAlertRendererExtension(alertStyling: AlertStyling, rootStyling: MarkdownStyling) :

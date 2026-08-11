@@ -1,5 +1,5 @@
 // "Add '<*>'" "true"
-// K2_ERROR: One type argument expected. Use 'List<*>' if you do not intend to pass type arguments.
+// K2_ERROR: NO_TYPE_ARGUMENTS_ON_RHS
 public fun foo(a: Any) {
     a is kotlin.collections.List<caret>
 }

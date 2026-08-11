@@ -4,8 +4,8 @@
 // ACTION: Change parameter 'block' type of function 'str' to 'Object'
 // ACTION: Create function 'str'
 // ACTION: Introduce import alias
-// K2_ERROR: Argument type mismatch: actual type is 'Object', but '() -> String' was expected.
-// K2_AFTER_ERROR: Argument type mismatch: actual type is 'Object', but '() -> String' was expected.
+// K2_AFTER_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 fun fn() {
     str(<caret>Object())
 }

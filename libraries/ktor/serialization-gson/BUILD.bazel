@@ -1,0 +1,42 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.ktor.serialization.gson` start
+jvm_library(
+    name = "libraries-ktor-serialization-gson",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.ktor.serialization.gson",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-ktor-serialization-gson-ktor-serialization-gson"],
+    runtime_deps = ["@lib//:libraries-ktor-serialization-gson-ktor-serialization-gson"],
+)
+
+jvm_library(
+    name = "libraries-ktor-serialization-gson_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.ktor.serialization.gson",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-ktor-serialization-gson-ktor-serialization-gson"],
+    runtime_deps = [":libraries-ktor-serialization-gson"],
+)
+### auto-generated section `build intellij.libraries.ktor.serialization.gson` end
+
+### auto-generated section `iml intellij.libraries.ktor.serialization.gson` start
+exports_files(
+    [
+        "intellij.libraries.ktor.serialization.gson.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.ktor.serialization.gson` end

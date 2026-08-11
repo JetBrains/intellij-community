@@ -15,44 +15,75 @@
  */
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.maven.testFramework.fixtures.MavenCustomRepositoryHelper
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
+import com.intellij.maven.testFramework.fixtures.downloadArtifacts
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenGeneralSettings
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.projectsTree
+import com.intellij.maven.testFramework.fixtures.updateSettingsXmlFully
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.RunAll.Companion.runAll
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.createDummyArtifact
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
-import org.junit.Test
+import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import kotlin.io.path.exists
 
-class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class ArtifactsDownloadingTest(mavenVersion: String, modelVersion: String) {
 
-  override fun skipPluginResolution() = false
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion,
+    skipPluginResolution = false,
+  )
+  
+
 
   private var defaultDownloadSourcesPolicy: Boolean = true
 
-  override fun setUp() {
-    super.setUp()
-    defaultDownloadSourcesPolicy = MavenProjectsManager.getInstance(project).importingSettings.isDownloadSourcesAutomatically
-    MavenProjectsManager.getInstance(project).importingSettings.isDownloadSourcesAutomatically = false
+  @BeforeEach
+  fun setUp() {
+    val helper = MavenCustomRepositoryHelper(maven.dir, "plugins", "local1")
+    helper.copy("plugins", "local1")
+    maven.repositoryPath = helper.getTestData("local1")
+    defaultDownloadSourcesPolicy = MavenProjectsManager.getInstance(maven.project).importingSettings.isDownloadSourcesAutomatically
+    MavenProjectsManager.getInstance(maven.project).importingSettings.isDownloadSourcesAutomatically = false
   }
 
-  override fun tearDown() {
+  @AfterEach
+  fun tearDown() {
     runAll(
       ThrowableRunnable<Throwable> {
-        MavenProjectsManager.getInstance(project).importingSettings.isDownloadSourcesAutomatically = defaultDownloadSourcesPolicy
+        MavenProjectsManager.getInstance(maven.project).importingSettings.isDownloadSourcesAutomatically = defaultDownloadSourcesPolicy
       },
       ThrowableRunnable<Throwable> {
-        super.tearDown()
       },
     )
   }
 
   @Test
   fun JavadocsAndSources() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -65,15 +96,15 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
                     </dependencies>
                     """.trimIndent())
 
-    val sources = repositoryPath.resolve("junit/junit/4.0/junit-4.0-sources.jar")
-    val javadoc = repositoryPath.resolve("junit/junit/4.0/junit-4.0-javadoc.jar")
+    val sources = maven.repositoryPath.resolve("junit/junit/4.0/junit-4.0-sources.jar")
+    val javadoc = maven.repositoryPath.resolve("junit/junit/4.0/junit-4.0-javadoc.jar")
 
     assertFalse(sources.exists())
     assertFalse(javadoc.exists())
 
-    mavenGeneralSettings.isWorkOffline = false
+    maven.mavenGeneralSettings.isWorkOffline = false
 
-    downloadArtifacts()
+    maven.downloadArtifacts()
 
     assertTrue(sources.exists())
     assertTrue(javadoc.exists())
@@ -81,7 +112,7 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
 
   @Test
   fun IgnoringOfflineSetting() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -94,29 +125,29 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
                     </dependencies>
                     """.trimIndent())
 
-    val sources = repositoryPath.resolve("junit/junit/4.0/junit-4.0-sources.jar")
-    val javadoc = repositoryPath.resolve("junit/junit/4.0/junit-4.0-javadoc.jar")
+    val sources = maven.repositoryPath.resolve("junit/junit/4.0/junit-4.0-sources.jar")
+    val javadoc = maven.repositoryPath.resolve("junit/junit/4.0/junit-4.0-javadoc.jar")
 
-    assertFalse("Sources folder should not exist at test start", sources.exists())
-    assertFalse("Javadoc folder should not exist at test start", javadoc.exists())
+    assertFalse(sources.exists(), "Sources folder should not exist at test start")
+    assertFalse(javadoc.exists(), "Javadoc folder should not exist at test start")
 
-    mavenGeneralSettings.isWorkOffline = true
+    maven.mavenGeneralSettings.isWorkOffline = true
 
-    val downloadResult = downloadArtifacts()
+    val downloadResult = maven.downloadArtifacts()
 
     val expectedResult = setOf(MavenId("junit", "junit", "4.0"))
-    assertEquals("Resolved sources", expectedResult, downloadResult.resolvedSources)
-    assertEquals("Resolved javadocs", expectedResult, downloadResult.resolvedDocs)
-    assertEquals("Unresolved sources", emptySet<MavenId>(), downloadResult.unresolvedSources)
-    assertEquals("Unresolved javadocs", emptySet<MavenId>(), downloadResult.unresolvedDocs)
+    assertEquals(expectedResult, downloadResult.resolvedSources, "Resolved sources")
+    assertEquals(expectedResult, downloadResult.resolvedDocs, "Resolved javadocs")
+    assertEquals(emptySet<MavenId>(), downloadResult.unresolvedSources, "Unresolved sources")
+    assertEquals(emptySet<MavenId>(), downloadResult.unresolvedDocs, "Unresolved javadocs")
 
-    assertTrue("Sources folder should exist",sources.exists())
-    assertTrue("Javadoc folder should exist",javadoc.exists())
+    assertTrue(sources.exists(), "Sources folder should exist")
+    assertTrue(javadoc.exists(), "Javadoc folder should exist")
   }
 
   @Test
   fun DownloadingSpecificDependency() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -134,14 +165,14 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
                     </dependencies>
                     """.trimIndent())
 
-    val sources = repositoryPath.resolve("jmock/jmock/1.2.0/jmock-1.2.0-sources.jar")
-    val javadoc = repositoryPath.resolve("jmock/jmock/1.2.0/jmock-1.2.0-javadoc.jar")
+    val sources = maven.repositoryPath.resolve("jmock/jmock/1.2.0/jmock-1.2.0-sources.jar")
+    val javadoc = maven.repositoryPath.resolve("jmock/jmock/1.2.0/jmock-1.2.0-javadoc.jar")
     assertFalse(sources.exists())
     assertFalse(javadoc.exists())
 
-    val project = projectsTree.rootProjects[0]
+    val project = maven.projectsTree.rootProjects[0]
     val dep = project.dependencies[0]
-    projectsManager.downloadArtifacts(
+    maven.projectsManager.downloadArtifacts(
       MavenDownloadSourcesRequest.builder()
         .forProjects(listOf(project))
         .forArtifacts(listOf(dep))
@@ -152,13 +183,13 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
 
     assertTrue(sources.exists())
     assertTrue(javadoc.exists())
-    assertFalse(repositoryPath.resolve("junit/junit/4.0/junit-4.0-sources.jar").exists())
-    assertFalse(repositoryPath.resolve("junit/junit/4.0/junit-4.0-javadoc.jar").exists())
+    assertFalse(maven.repositoryPath.resolve("junit/junit/4.0/junit-4.0-sources.jar").exists())
+    assertFalse(maven.repositoryPath.resolve("junit/junit/4.0/junit-4.0-javadoc.jar").exists())
   }
 
   @Test
   fun ReturningNotFoundArtifacts() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -176,8 +207,8 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
                     </dependencies>
                     """.trimIndent())
 
-    val project = projectsTree.rootProjects[0]
-    val unresolvedArtifacts = projectsManager.downloadArtifacts(
+    val project = maven.projectsTree.rootProjects[0]
+    val unresolvedArtifacts = maven.projectsManager.downloadArtifacts(
       MavenDownloadSourcesRequest.builder()
         .forProjects(listOf(project))
         .forAllArtifacts()
@@ -193,7 +224,7 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
 
   @Test
   fun JavadocsAndSourcesForTestDeps() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -207,13 +238,13 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
                     </dependencies>
                     """.trimIndent())
 
-    val sources = repositoryPath.resolve("junit/junit/4.0/junit-4.0-sources.jar")
-    val javadoc = repositoryPath.resolve("junit/junit/4.0/junit-4.0-javadoc.jar")
+    val sources = maven.repositoryPath.resolve("junit/junit/4.0/junit-4.0-sources.jar")
+    val javadoc = maven.repositoryPath.resolve("junit/junit/4.0/junit-4.0-javadoc.jar")
 
     assertFalse(sources.exists())
     assertFalse(javadoc.exists())
 
-    downloadArtifacts()
+    maven.downloadArtifacts()
 
     assertTrue(sources.exists())
     assertTrue(javadoc.exists())
@@ -222,32 +253,32 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
   @Test
   @Throws(Exception::class)
   fun JavadocsAndSourcesForDepsWithClassifiersAndType() = runBlocking {
-    val remoteRepo = FileUtilRt.toSystemIndependentName(dir.resolve("repo").toString())
-    updateSettingsXmlFully("""<settings>
+    val remoteRepo = FileUtilRt.toSystemIndependentName(maven.dir.resolve("repo").toString())
+    maven.updateSettingsXmlFully("""<settings>
 <mirrors>
   <mirror>
     <id>central</id>
     <url>
-${VfsUtilCore.pathToUrl(pathTransformer.toRemotePath(remoteRepo)!!)}</url>
+${VfsUtilCore.pathToUrl(RemotePathTransformerFactory.createForProject(maven.project).toRemotePath(remoteRepo)!!)}</url>
     <mirrorOf>*</mirrorOf>
   </mirror>
 </mirrors>
 </settings>
 """)
 
-    createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-sources.jar")
-    createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-javadoc.jar")
+    maven.createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-sources.jar")
+    maven.createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-javadoc.jar")
 
-    createDummyArtifact(remoteRepo, "/xxx/yyy/1/yyy-1-test-sources.jar")
-    createDummyArtifact(remoteRepo, "/xxx/yyy/1/yyy-1-test-javadoc.jar")
+    maven.createDummyArtifact(remoteRepo, "/xxx/yyy/1/yyy-1-test-sources.jar")
+    maven.createDummyArtifact(remoteRepo, "/xxx/yyy/1/yyy-1-test-javadoc.jar")
 
-    createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-sources.jar")
-    createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-javadoc.jar")
+    maven.createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-sources.jar")
+    maven.createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-javadoc.jar")
 
-    createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-foo-sources.jar")
-    createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-foo-javadoc.jar")
+    maven.createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-foo-sources.jar")
+    maven.createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-foo-javadoc.jar")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -274,36 +305,36 @@ ${VfsUtilCore.pathToUrl(pathTransformer.toRemotePath(remoteRepo)!!)}</url>
                     </dependencies>
                     """.trimIndent())
 
-    val files1 = listOf(repositoryPath.resolve("xxx/xxx/1/xxx-1-sources.jar"),
-                        repositoryPath.resolve("xxx/xxx/1/xxx-1-javadoc.jar"),
-                        repositoryPath.resolve("xxx/yyy/1/yyy-1-test-sources.jar"),
-                        repositoryPath.resolve("xxx/yyy/1/yyy-1-test-javadoc.jar"))
+    val files1 = listOf(maven.repositoryPath.resolve("xxx/xxx/1/xxx-1-sources.jar"),
+                        maven.repositoryPath.resolve("xxx/xxx/1/xxx-1-javadoc.jar"),
+                        maven.repositoryPath.resolve("xxx/yyy/1/yyy-1-test-sources.jar"),
+                        maven.repositoryPath.resolve("xxx/yyy/1/yyy-1-test-javadoc.jar"))
 
-    val files2 = listOf(repositoryPath.resolve("xxx/xxx/1/xxx-1-foo-sources.jar"),
-                        repositoryPath.resolve("xxx/xxx/1/xxx-1-foo-javadoc.jar"),
-                        repositoryPath.resolve("xxx/zzz/1/zzz-1-test-foo-sources.jar"),
-                        repositoryPath.resolve("xxx/zzz/1/zzz-1-test-foo-javadoc.jar"))
-
-    for (each in files1) {
-      assertFalse(each.toString(), each.exists())
-    }
-    for (each in files2) {
-      assertFalse(each.toString(), each.exists())
-    }
-    downloadArtifacts()
+    val files2 = listOf(maven.repositoryPath.resolve("xxx/xxx/1/xxx-1-foo-sources.jar"),
+                        maven.repositoryPath.resolve("xxx/xxx/1/xxx-1-foo-javadoc.jar"),
+                        maven.repositoryPath.resolve("xxx/zzz/1/zzz-1-test-foo-sources.jar"),
+                        maven.repositoryPath.resolve("xxx/zzz/1/zzz-1-test-foo-javadoc.jar"))
 
     for (each in files1) {
-      assertTrue(each.toString(), each.exists())
+      assertFalse(each.exists(), each.toString())
     }
     for (each in files2) {
-      assertFalse(each.toString(), each.exists())
+      assertFalse(each.exists(), each.toString())
+    }
+    maven.downloadArtifacts()
+
+    for (each in files1) {
+      assertTrue(each.exists(), each.toString())
+    }
+    for (each in files2) {
+      assertFalse(each.exists(), each.toString())
     }
   }
 
   @Test
   fun DownloadingPlugins() = runBlocking {
     try {
-      importProjectAsync("""
+      maven.importProjectAsync("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
                       <version>1</version>
@@ -318,7 +349,7 @@ ${VfsUtilCore.pathToUrl(pathTransformer.toRemotePath(remoteRepo)!!)}</url>
                       </build>
                       """.trimIndent())
 
-      val f = repositoryPath.resolve("org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar")
+      val f = maven.repositoryPath.resolve("org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar")
 
       assertTrue(f.exists())
     }
@@ -330,10 +361,10 @@ ${VfsUtilCore.pathToUrl(pathTransformer.toRemotePath(remoteRepo)!!)}</url>
 
   @Test
   fun DownloadBuildExtensionsOnResolve() = runBlocking {
-    val f = repositoryPath.resolve("org/apache/maven/wagon/wagon-ftp/2.10/wagon-ftp-2.10.pom")
+    val f = maven.repositoryPath.resolve("org/apache/maven/wagon/wagon-ftp/2.10/wagon-ftp-2.10.pom")
     assertFalse(f.exists())
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>

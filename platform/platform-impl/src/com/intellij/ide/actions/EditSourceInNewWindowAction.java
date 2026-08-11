@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -24,8 +25,15 @@ public final class EditSourceInNewWindowAction extends DumbAwareAction implement
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
-    FileEditorManager manager = FileEditorManager.getInstance(project);
-    ((FileEditorManagerImpl)manager).openFileInNewWindow(getVirtualFiles(e)[0]);
+    FileEditorManagerImpl manager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
+    VirtualFile file = getVirtualFiles(e)[0];
+    file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, true);
+    try {
+      manager.openFileInNewWindow(file);
+    }
+    finally {
+      file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, false);
+    }
   }
 
   private static VirtualFile[] getVirtualFiles(@NotNull AnActionEvent e) {

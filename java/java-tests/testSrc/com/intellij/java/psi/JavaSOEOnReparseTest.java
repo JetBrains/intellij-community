@@ -15,15 +15,18 @@
  */
 package com.intellij.java.psi;
 
+import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.util.ref.GCUtil;
 import org.intellij.lang.annotations.Language;
 
 @SkipSlowTestLocally
+@DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 public class JavaSOEOnReparseTest extends LightDaemonAnalyzerTestCase {
   private StringBuilder getHugeExpr() {
     int N = 100_000;
@@ -67,6 +70,8 @@ public class JavaSOEOnReparseTest extends LightDaemonAnalyzerTestCase {
       getEditor().getDocument().insertString(pos, "\".\"+");
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     });
+    // Let PSI from the previous tree leave the highlighting soft maps and reach their reference queues.
+    GCUtil.tryGcSoftlyReachableObjects();
     doTestConfiguredFile(false, false, null);
 
     // modify huge binary expression (2)

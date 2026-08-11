@@ -367,7 +367,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * <h3>Obsolescence notice</h3>
    * <p>
    * See {@link ProgressIndicator} notice.
-   * Use {@link com.intellij.openapi.application.ReadAction#computeCancellable} instead.
+   * Use {@link com.intellij.openapi.application.ReadAction#computeCancellableUnsafe} instead.
    * </p>
    * <hr>
    *

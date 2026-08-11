@@ -5,9 +5,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.application
 import com.intellij.util.io.sanitizeFileName
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
@@ -16,7 +18,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.div
-import org.jetbrains.annotations.TestOnly
 import kotlin.math.min
 
 private val LOG = logger<LanguageServiceLoggerService>()
@@ -56,7 +57,9 @@ class LanguageServiceLoggerService(private val cs: CoroutineScope) {
   }
 }
 
-private const val MAX_LOG_FILE_COUNT = 5
+private val MAX_LOG_FILE_COUNT
+  get() = System.getProperty("lsp.server.logging.maxLogFiles")?.toIntOrNull()
+          ?: Registry.get("lsp.server.logging.maxLogFiles").asInteger()
 private val LOG_FILENAME_SUFFIX_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSS")
 private val LOG_PATH_DIR = Path.of(PathManager.getLogPath()) / "language-services"
 

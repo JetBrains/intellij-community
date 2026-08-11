@@ -1,8 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.platform.debugger.impl.backend.hotswap.BackendXDebuggerHotSwapApi
-import com.intellij.platform.debugger.impl.rpc.InternalSplitConfigurationApi
 import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
@@ -66,9 +65,6 @@ class BackendXDebuggerRemoteApiProviders : RemoteApiProvider {
     }
     remoteApi(remoteApiDescriptor<XDependentBreakpointManagerApi>()) {
       BackendXDependentBreakpointManagerApi()
-    }
-    remoteApi(remoteApiDescriptor<InternalSplitConfigurationApi>()) {
-      BackendInternalSplitConfigurationApi()
     }
     remoteApi(remoteApiDescriptor<XMixedModeApi>()) {
       BackendXMixedModeApi()

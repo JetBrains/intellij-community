@@ -1,5 +1,5 @@
 // "Create class 'Nested'" "true"
-// K2_ERROR: Unresolved reference 'Nested'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 class A {
     // TARGET_PARENT:
     class B {

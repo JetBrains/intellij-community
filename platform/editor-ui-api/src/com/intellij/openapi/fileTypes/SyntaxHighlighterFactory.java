@@ -23,7 +23,7 @@ public abstract class SyntaxHighlighterFactory {
   @Deprecated
   public static final SyntaxHighlighterLanguageFactory LANGUAGE_FACTORY = new SyntaxHighlighterLanguageFactory();
 
-  public static SyntaxHighlighterLanguageFactory getLanguageFactory() {
+  public static @NotNull SyntaxHighlighterLanguageFactory getLanguageFactory() {
     return LANGUAGE_FACTORY;
   }
 
@@ -37,7 +37,7 @@ public abstract class SyntaxHighlighterFactory {
    * @return {@code SyntaxHighlighter} interface implementation for the given file type
    */
   @RequiresReadLock(generateAssertion = false)
-  public static SyntaxHighlighter getSyntaxHighlighter(@NotNull Language language, @Nullable Project project, @Nullable VirtualFile file) {
+  public static @NotNull SyntaxHighlighter getSyntaxHighlighter(@NotNull Language language, @Nullable Project project, @Nullable VirtualFile file) {
     return getLanguageFactory().forLanguage(language).getSyntaxHighlighter(project, file);
   }
 

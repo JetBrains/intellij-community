@@ -18,25 +18,32 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.io.File
+import java.lang.ref.WeakReference
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 
 internal open class LocalBuildLayoutParameters(
-  private val project: Project,
+  project: Project,
   private val projectPath: Path?,
 ) : BuildLayoutParameters {
 
+  // Weak reference so a cache entry retained beyond the project's lifetime does not pin the disposed Project.
+  private val projectRef = WeakReference(project)
+
+  private fun requireProject(): Project =
+    projectRef.get() ?: error("Project has been garbage collected; LocalBuildLayoutParameters must not be used past its project's lifetime")
+
   override val gradleHome: TargetValue<Path>? by lazy { findGradleHome()?.let { TargetValue.fixed(it) } }
   override val gradleVersion: GradleVersion? by lazy { guessGradleVersion() }
-  override val gradleUserHomePath: TargetValue<Path> by lazy { TargetValue.fixed(findGradleUserHomeDir(project)) }
+  override val gradleUserHomePath: TargetValue<Path> by lazy { TargetValue.fixed(findGradleUserHomeDir(requireProject())) }
 
   protected open fun getGradleProjectSettings(): GradleProjectSettings? {
     return projectPath?.let { getGradleSettings().getLinkedProjectSettings(it.toCanonicalPath()) }
   }
 
-  private fun getGradleSettings() = GradleSettings.getInstance(project)
+  private fun getGradleSettings() = GradleSettings.getInstance(requireProject())
 
   private val wrapperConfiguration: WrapperConfiguration? by lazy {
     val distributionType = getGradleProjectSettings()?.distributionType ?: return@lazy null
@@ -52,11 +59,11 @@ internal open class LocalBuildLayoutParameters(
   private fun findGradleHome(): Path? {
     val gradleProjectSettings = getGradleProjectSettings() ?: return null
     return when (gradleProjectSettings.distributionType) {
-      null -> GradleInstallationManager.getInstance().getAutodetectedGradleHome(project)
+      null -> GradleInstallationManager.getInstance().getAutodetectedGradleHome(requireProject())
       DistributionType.LOCAL -> gradleProjectSettings.gradleHomePath
       DistributionType.WRAPPED -> {
         val projectNioPath = projectPath?.toCanonicalPath()
-        val localSettings = GradleLocalSettings.getInstance(project)
+        val localSettings = GradleLocalSettings.getInstance(requireProject())
         return localSettings.getGradleHome(projectNioPath)?.let { Path.of(it) }
       }
       else -> tryToFindGradleInstallation(gradleProjectSettings)

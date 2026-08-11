@@ -1,0 +1,7 @@
+{
+  "mainFile": "A/src/foo/Foo.kt",
+  "targetPackage": "bar",
+  "targetSourceRoot": "A/src",
+  "withRuntime": "true",
+  "modulesWithRuntime": ["A"]
+}

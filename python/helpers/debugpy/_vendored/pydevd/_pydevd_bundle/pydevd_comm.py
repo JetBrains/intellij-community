@@ -1,4 +1,4 @@
-""" pydevd - a debugging daemon
+"""pydevd - a debugging daemon
 This is the daemon you launch for python remote debugging.
 
 Protocol:
@@ -129,7 +129,9 @@ from _pydev_bundle import _pydev_completer
 
 from pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle import pydevd_console
+from _pydevd_bundle import pydevd_timeout
 from _pydev_bundle.pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
+from contextlib import contextmanager
 from io import StringIO
 
 # CMD_XXX constants imported for backward compatibility
@@ -1174,6 +1176,24 @@ def _evaluate_response(py_db, request, result, error_message=""):
 _global_frame = None
 
 
+@contextmanager
+def _console_interrupt_scope(py_db, context):
+    """
+    While a repl evaluation runs, registers a callback that allows interrupting it on request
+    (e.g. Ctrl+C in the debug console) by raising a KeyboardInterrupt in this thread. The
+    callback must be created here so it targets the thread that actually runs the evaluation.
+    """
+    if context != "repl":
+        yield
+        return
+
+    py_db.set_console_interrupt_callback(pydevd_timeout.create_interrupt_this_thread_callback())
+    try:
+        yield
+    finally:
+        py_db.set_console_interrupt_callback(None)
+
+
 def internal_evaluate_expression_json(py_db, request, thread_id):
     """
     :param EvaluateRequest request:
@@ -1197,7 +1217,7 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
         # If we're not in a repl (watch, hover, ...) don't show warnings.
         ctx = filter_all_warnings()
 
-    with ctx:
+    with ctx, _console_interrupt_scope(py_db, context):
         try_exec = False
         if frame_id is None:
             if _global_frame is None:
@@ -1217,11 +1237,8 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
             eval_result = pydevd_vars.evaluate_expression(py_db, frame, expression, is_exec=False)
             is_error = isinstance_checked(eval_result, ExceptionOnEvaluate)
             if is_error:
-                if context == "hover":  # In a hover it doesn't make sense to do an exec.
-                    _evaluate_response(py_db, request, result="", error_message="Exception occurred during evaluation.")
-                    return
-                elif context == "watch":
-                    # If it's a watch, don't show it as an exception object, rather, format
+                if context in ["watch", "hover"]:
+                    # If it's hover or watch, don't show it as an exception object, rather, format
                     # it and show it as a string (with success=False).
                     msg = "%s: %s" % (
                         eval_result.result.__class__.__name__,
@@ -1245,12 +1262,16 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
 
         if try_exec:
             try:
-                pydevd_vars.evaluate_expression(py_db, frame, expression, is_exec=True)
+                exec_result = pydevd_vars.evaluate_expression(py_db, frame, expression, is_exec=True)
             except (Exception, KeyboardInterrupt):
                 _evaluate_response_return_exception(py_db, request, *sys.exc_info())
                 return
-            # No result on exec.
-            _evaluate_response(py_db, request, result="")
+            # Use simple string formatting rather than the richer obtain_as_variable path
+            # (which provides type info, variablesReference, etc.) because the exec path is
+            # typically reached when there is no frameId, meaning thread_id="*" and no
+            # frame_tracker is available to build a structured variable response.
+            result = "%s" % (exec_result,) if exec_result is not None else ""
+            _evaluate_response(py_db, request, result=result)
             return
 
         # Ok, we have the result (could be an error), let's put it into the saved variables.
@@ -1261,7 +1282,7 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
             return
 
         safe_repr_custom_attrs = {}
-        if context in ("clipboard", "repl"):
+        if context == "clipboard":
             safe_repr_custom_attrs = dict(
                 maxstring_outer=2**64,
                 maxstring_inner=2**64,
@@ -1531,13 +1552,14 @@ def build_exception_info_response(dbg, thread_id, thread, request_seq, set_addit
                                 if line_col_info.end_lineno is not None and lineno < line_col_info.end_lineno:
                                     line_text = "\n".join(linecache.getlines(filename_in_utf8)[lineno : line_col_info.end_lineno + 1])
                                 frame_summary = traceback.FrameSummary(
-                                    filename_in_utf8, 
-                                    lineno, 
-                                    method_name, 
-                                    line=line_text, 
-                                    end_lineno=line_col_info.end_lineno, 
-                                    colno=line_col_info.colno, 
-                                    end_colno=line_col_info.end_colno)
+                                    filename_in_utf8,
+                                    lineno,
+                                    method_name,
+                                    line=line_text,
+                                    end_lineno=line_col_info.end_lineno,
+                                    colno=line_col_info.colno,
+                                    end_colno=line_col_info.end_colno,
+                                )
                                 stack_summary.append(frame_summary)
                             else:
                                 frame_summary = traceback.FrameSummary(filename_in_utf8, lineno, method_name, line=line_text)

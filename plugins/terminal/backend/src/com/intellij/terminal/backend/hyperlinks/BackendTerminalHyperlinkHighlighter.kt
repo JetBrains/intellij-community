@@ -39,7 +39,6 @@ import org.jetbrains.plugins.terminal.hyperlinks.session.toDto
 import org.jetbrains.plugins.terminal.view.TerminalLineIndex
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import java.awt.event.MouseEvent
-import java.util.Deque
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -71,7 +70,7 @@ internal class BackendTerminalHyperlinkHighlighter(
 
   /**
    * The latest known trim threshold.
-   * Used by [isValid] to drop results whose offsets fall in a region trimmed after the running task started.
+   * Used by [buildEvent] to drop results whose offsets fall in a region trimmed after the running task started.
    * Updated on every content update by [applyUpdate].
    */
   private var currentTrimStartOffset: TerminalOffset = TerminalOffset.of(0)
@@ -93,9 +92,6 @@ internal class BackendTerminalHyperlinkHighlighter(
   val fakeMouseEvent: MouseEvent
     get() = fakeMouseEventJob.getCompleted()
 
-  // If we have nothing to do, then both of these will be null.
-  // If either is not null, it's possible that there will be no results,
-  // but we may have to do some cleanup nevertheless or start a new task.
   fun mayHaveWorkToDo(): Boolean = currentTaskState.value.mayHaveWorkToDo()
 
   init {
@@ -193,37 +189,46 @@ internal class BackendTerminalHyperlinkHighlighter(
   }
 
   /**
-   * Drains the next batch of hyperlink results and rolls the task state forward.
+   * Drains the batches the running task has finished and rolls the task state forward.
    *
-   * Returns 0, 1, or 2 events:
-   * - At most one [TerminalHyperlinksOutputEvent.HyperlinksUpdated] carrying newly computed results.
-   * - At most one [TerminalHyperlinksOutputEvent.TaskFinished], emitted if the currently running task has finished.
-   *   When both events fire in the same call, `TaskFinished` comes after the `HyperlinksUpdated` in the returned list.
+   * Returns one [TerminalHyperlinksOutputEvent.HyperlinksUpdated] per finished batch — each a self-contained update
+   * for a disjoint covered range — followed by a [TerminalHyperlinksOutputEvent.TaskFinished]
+   * if the currently running task has just finished.
    */
   fun collectResultsAndMaybeStartNewTask(): List<TerminalHyperlinksOutputEvent> {
     val runnerBefore = currentTaskRunner
-    val hyperlinksEvent = runnerBefore?.getNextOutputEvent { isValid(it) }
+    val events = ArrayList<TerminalHyperlinksOutputEvent>()
+    if (runnerBefore != null) {
+      val batches = runnerBefore.drainCompletedBatches()
+      // The running task's filter must still be the current one, otherwise its results are stale and the
+      // re-processing triggered by the filter change (FiltersUpdated) will recompute the whole output anyway.
+      if (runnerBefore.filter === filterWrapper.getFilter()) {
+        events += batches.mapNotNull { buildEvent(it) }
+      }
+    }
 
     maybeStartNewTask()
-    val taskFinished = if (runnerBefore != null && currentTaskRunner !== runnerBefore) {
-      TerminalHyperlinksOutputEvent.TaskFinished(documentModificationStamp = runnerBefore.task.modificationStamp)
+    if (runnerBefore != null && currentTaskRunner !== runnerBefore) {
+      events += TerminalHyperlinksOutputEvent.TaskFinished(documentModificationStamp = runnerBefore.task.modificationStamp)
     }
-    else null
-    return listOfNotNull(hyperlinksEvent, taskFinished)
+    return events
   }
 
-  private fun isValid(taskResult: TaskResult): Boolean {
-    val currentFilter = filterWrapper.getFilter()
-    val currentTaskRunner = checkNotNull(currentTaskRunner) { "The task runner must be present since we have results" }
-    if (currentTaskRunner.filter !== currentFilter) return false
-    if (TerminalOffset.of(taskResult.absoluteStartOffset) < currentTrimStartOffset) return false // trimmed
-    val pendingTask = pendingTask
-    return if (pendingTask == null) {
-      true // No updates since the current task started, therefore, all results are valid
-    }
-    else {
-      taskResult.absoluteEndOffset <= pendingTask.startAbsoluteOffset
-    }
+  /**
+   * Turns a finished [batch] into an update for its covered range, clamped to the current trim threshold.
+   * Returns `null` when the batch's filter is stale or its whole range has already been trimmed away.
+   */
+  private fun buildEvent(batch: BatchResult): TerminalHyperlinksOutputEvent.HyperlinksUpdated? {
+    val trimStart = currentTrimStartOffset.toAbsolute()
+    val coveredStartOffset = maxOf(batch.coveredStartOffset, trimStart)
+    if (batch.coveredEndOffset <= coveredStartOffset) return null // fully trimmed away
+    val links = batch.links.filter { it.absoluteStartOffset >= trimStart }
+    return TerminalHyperlinksOutputEvent.HyperlinksUpdated(
+      documentModificationStamp = batch.modificationStamp,
+      coveredStartOffset = coveredStartOffset,
+      coveredEndOffset = batch.coveredEndOffset,
+      hyperlinks = links,
+    )
   }
 
   private fun maybeStartNewTask() {
@@ -233,9 +238,9 @@ internal class BackendTerminalHyperlinkHighlighter(
       LOG.debug { "Can't start a new task because ${currentTaskRunner.task} is still running" }
       return
     }
-    val unprocessedResults = currentTaskRunner?.resultsCount()
-    if (unprocessedResults != null && unprocessedResults > 0) {
-      LOG.debug { "Can't start a new task because ${currentTaskRunner.task} has $unprocessedResults unprocessed results" }
+    val pendingBatches = currentTaskRunner?.pendingBatchCount()
+    if (pendingBatches != null && pendingBatches > 0) {
+      LOG.debug { "Can't start a new task because ${currentTaskRunner.task} has $pendingBatches undelivered batches" }
       return
     }
     val pending = pendingTask
@@ -289,6 +294,11 @@ private data class TaskState(
   val currentTaskRunner: HighlightTaskRunner?,
   val pendingTask: HighlightTask?,
 ) {
+  /**
+   * If we have nothing to do, then both of these will be null.
+   * If either is not null, it's possible that there will be no results,
+   * but we may have to do some cleanup nevertheless or start a new task.
+   */
   fun mayHaveWorkToDo(): Boolean = currentTaskRunner != null || pendingTask != null
 }
 
@@ -304,15 +314,23 @@ private data class HighlightTask(
   val startOffset: TerminalOffset,
   val modificationStamp: Long,
 ) {
-  val startAbsoluteOffset: Long get() = startOffset.toAbsolute()
-
   fun hasWorkToDo(): Boolean = endLine.toAbsolute() >= startLine.toAbsolute()
+
+  fun absoluteOffsetOf(charsRelativeOffset: Int): Long = (startOffset + charsRelativeOffset.toLong()).toAbsolute()
 
   override fun toString(): String =
     "HighlightTask(startLine=$startLine, startOffset=$startOffset, endLineInclusive=$endLine, chars=${charsSequence.length})"
 }
 
 private typealias TaskResult = TerminalFilterResultInfoDto
+
+/** A batch of lines the task has finished processing, holding the links list for its covered range. */
+private data class BatchResult(
+  val coveredStartOffset: Long,  // absolute, inclusive
+  val coveredEndOffset: Long,    // absolute, exclusive
+  val links: List<TaskResult>,
+  val modificationStamp: Long,
+)
 
 private class HighlightTaskRunner(
   hyperlinkId: AtomicLong,
@@ -321,13 +339,11 @@ private class HighlightTaskRunner(
   private val continueCondition: (HighlightTaskRunner) -> Boolean,
 ) {
   private val isRunning = AtomicBoolean(true)
-  private var isFirstEvent = true
 
   private val processor = HyperlinkProcessor(hyperlinkId)
   private val hypertext: HypertextInput = HypertextFromCharSequenceAdapter(task.charsSequence)
 
-  val topResults = LinkedBlockingDeque<TaskResult>()
-  val bottomResults = LinkedBlockingDeque<TaskResult>()
+  private val completedBatches = LinkedBlockingDeque<BatchResult>()
 
   private val topStartLine: TerminalLineIndex = task.startLine
   private val taskEnd: TerminalLineIndex = task.endLine
@@ -339,7 +355,7 @@ private class HighlightTaskRunner(
 
   fun isRunning(): Boolean = isRunning.get()
 
-  fun resultsCount(): Int = topResults.size + bottomResults.size
+  fun pendingBatchCount(): Int = completedBatches.size
 
   private operator fun TerminalLineIndex.plus(count: Int) = TerminalLineIndex.of(toAbsolute() + count)
   private operator fun TerminalLineIndex.minus(count: Int) = TerminalLineIndex.of(toAbsolute() - count)
@@ -366,7 +382,7 @@ private class HighlightTaskRunner(
   private suspend fun computeBottomResults() {
     val results = processor.processBatch(hypertext, task, filter, bottomStartLine, bottomStopLineInclusive)
     LOG.debug { "Produced at the bottom: ${describe(results)} in lines $bottomStartLine-$bottomStopLineInclusive" }
-    bottomResults += results
+    enqueueCompletedBatch(bottomStartLine, bottomStopLineInclusive, results)
   }
 
   private suspend fun computeTopResults() {
@@ -374,87 +390,33 @@ private class HighlightTaskRunner(
     while (firstBatchLine <= topStopLineInclusive && continueCondition(this)) {
       val lastBatchLine = (firstBatchLine + BATCH_SIZE - 1).coerceAtMost(topStopLineInclusive)
       val results = processor.processBatch(hypertext, task, filter, firstBatchLine, lastBatchLine)
-      topResults += results
       LOG.debug { "Produced at the top: ${describe(results)} in lines $firstBatchLine-$lastBatchLine" }
+      enqueueCompletedBatch(firstBatchLine, lastBatchLine, results)
       firstBatchLine = lastBatchLine + 1
       currentAbsoluteLine = firstBatchLine.toAbsolute()
     }
   }
 
-  fun getNextOutputEvent(predicate: (TaskResult) -> Boolean): TerminalHyperlinksOutputEvent? {
-    return createEvent(collectResults(predicate))
+  private fun enqueueCompletedBatch(startLine: TerminalLineIndex, endLineInclusive: TerminalLineIndex, links: List<TaskResult>) {
+    if (endLineInclusive.toAbsolute() < startLine.toAbsolute()) return
+    val relativeStartLine = (startLine.toAbsolute() - task.startLine.toAbsolute()).toInt()
+    val coveredStartOffset = task.absoluteOffsetOf(hypertext.getLineStartOffset(relativeStartLine))
+    val coveredEndOffset = if (endLineInclusive.toAbsolute() >= taskEnd.toAbsolute()) {
+      task.absoluteOffsetOf(task.charsSequence.length) // the batch reaches the end of the task text
+    }
+    else {
+      val relativeNextLine = (endLineInclusive.toAbsolute() + 1 - task.startLine.toAbsolute()).toInt()
+      task.absoluteOffsetOf(hypertext.getLineStartOffset(relativeNextLine)) // start of the line after the batch
+    }
+    completedBatches += BatchResult(coveredStartOffset, coveredEndOffset, links, task.modificationStamp)
   }
 
-  private fun collectResults(predicate: (TaskResult) -> Boolean): List<TaskResult> {
-    val results = ArrayList<TaskResult>(topResults.size + bottomResults.size)
-    collectValidAndRemoveInvalidResults(topResults, results, predicate)
-    collectValidAndRemoveInvalidResults(bottomResults, results, predicate)
-    LOG.debug { "Got ${describe(results)} from the task $task" }
-    return results
-  }
-
-  private fun collectValidAndRemoveInvalidResults(
-    from: Deque<TaskResult>,
-    to: MutableList<TaskResult>,
-    predicate: (TaskResult) -> Boolean,
-  ) {
-    // It's important to do everything in one loop because results are added asynchronously into the same deque.
-    // If we try to split this thing into "remove trimmed - collect valid - remove invalid" parts,
-    // we'll get flaky bugs because after removing trimmed results there may be nothing left,
-    // but when we start collecting "valid" results,
-    // it might happen that there are more trimmed (invalid) results are added as we go.
-    var count = 0
-    var valid = 0
+  fun drainCompletedBatches(): List<BatchResult> {
+    val batches = ArrayList<BatchResult>(completedBatches.size)
     while (true) {
-      val nextResult = from.pollFirst() ?: break
-      ++count
-      if (predicate(nextResult)) {
-        to += nextResult
-        ++valid
-      }
+      batches += completedBatches.pollFirst() ?: break
     }
-    LOG.debug { "Processed $count results, removed ${count - valid} invalid ones" }
-  }
-
-  private fun createEvent(hyperlinks: List<TaskResult>): TerminalHyperlinksOutputEvent? {
-    var send: Boolean
-    var remove: Boolean
-    val isRunning = isRunning()
-    when {
-      hyperlinks.isNotEmpty() && isFirstEvent -> { // First results.
-        remove = true // Because it's the first event for this affected range.
-        send = true // Because we have something to send.
-      }
-      hyperlinks.isNotEmpty() && !isFirstEvent -> { // Not first results.
-        remove = false // Already removed.
-        send = true // Because we have something to send.
-      }
-      // now the hyperlinks.isEmpty() cases:
-      isFirstEvent && isRunning -> { // No results yet, but the task is still running.
-        remove = false
-        send = false // Maybe the results just aren't ready yet, let's not remove to avoid flickering.
-      }
-      isFirstEvent && !isRunning -> { // No results at all.
-        remove = true // The task is complete, no new links, but we must remove the old ones.
-        send = true // No point in waiting as the task is complete.
-      }
-      // hyperlinks.isEmpty() && !isFirstEvent
-      else -> { // There were some results, but there are no new ones.
-        remove = false // Nothing to remove, nothing to report.
-        send = false
-      }
-    }
-    LOG.debug {
-      "createEvent: isNotEmpty=${hyperlinks.isNotEmpty()}, isFirst=$isFirstEvent, isRunning=$isRunning => " +
-      "send=$send, remove=$remove"
-    }
-    if (!send) return null
-    isFirstEvent = false
-    return TerminalHyperlinksOutputEvent.HyperlinksUpdated(
-      documentModificationStamp = task.modificationStamp,
-      removeFromOffset = if (remove) task.startAbsoluteOffset else null,
-      hyperlinks = hyperlinks,
-    )
+    return batches
   }
 
   private fun describe(results: List<TaskResult>) = buildString {
@@ -533,9 +495,6 @@ private class HyperlinkProcessor(
     }
     return listOfNotNull(notInlayResult, inlayResult)
   }
-
-  private fun HighlightTask.absoluteOffsetOf(charsRelativeOffset: Int): Long =
-    (startOffset + charsRelativeOffset.toLong()).toAbsolute()
 }
 
 private class HypertextFromCharSequenceAdapter(private val chars: CharSequence) : HypertextInput {

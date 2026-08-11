@@ -13,7 +13,8 @@ interface Constants {
     END("end"),
     SCOPE_NAME("scopeName"),
     MATCH("match"),
-    BEGIN("begin");
+    BEGIN("begin"),
+    APPLY_END_PATTERN_LAST("applyEndPatternLast");
 
     companion object {
       fun fromName(name: String): StringKey? {
@@ -30,7 +31,8 @@ interface Constants {
   enum class CaptureKey(val value: String) {
     CAPTURES("captures"),
     BEGIN_CAPTURES("beginCaptures"),
-    END_CAPTURES("endCaptures");
+    END_CAPTURES("endCaptures"),
+    WHILE_CAPTURES("whileCaptures");
 
     companion object {
       fun fromName(name: String): CaptureKey? {

@@ -413,9 +413,12 @@ def describe_environment(header):
     info("{0}", get_environment_description(header))
 
 
-stderr = LogFile("<stderr>", sys.stderr,
-                 levels=os.getenv("DEBUGPY_LOG_STDERR", "warning error").split(),
-                 close_file=False)
+stderr = LogFile(
+    "<stderr>",
+    sys.stderr,
+    levels=os.getenv("DEBUGPY_LOG_STDERR", "warning error").split(),
+    close_file=False,
+)
 
 
 @atexit.register

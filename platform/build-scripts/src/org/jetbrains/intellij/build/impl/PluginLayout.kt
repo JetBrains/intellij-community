@@ -383,7 +383,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     fun withPlatformExecutable(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, pattern: String) {
       val key = SupportedDistribution(os, arch, libc)
       val existing = layout.executablePatterns.get(key) ?: persistentListOf()
-      layout.executablePatterns = layout.executablePatterns.put(key, existing.add(pattern))
+      layout.executablePatterns = layout.executablePatterns.putting(key, existing.adding(pattern))
     }
 
     /**
@@ -519,7 +519,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      * @param relativeOutputFile target path relative to the plugin root directory
      */
     fun withResourceArchiveFromModule(moduleName: String, resourcePath: String, relativeOutputFile: String) {
-      layout.resourcePaths = layout.resourcePaths.add(ModuleResourceData(
+      layout.resourcePaths = layout.resourcePaths.adding(ModuleResourceData(
         moduleName = moduleName,
         resourcePath = resourcePath,
         relativeOutputPath = relativeOutputFile,

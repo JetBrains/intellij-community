@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +57,9 @@ public class PyMakeFunctionReturnTypeQuickFix extends PsiUpdateModCommandAction<
         type = unwrappedType.get();
       }
     }
-    return type;
+    // Annotate with the wide type (e.g. `int`), not a one-return literal like `Literal[42]`, including literals nested
+    // inside generic return types such as `Generator[...]` or `Callable[..., ...]`.
+    return PyLiteralType.upcastLiteralToClassDeep(type, context);
   }
 
   @Override

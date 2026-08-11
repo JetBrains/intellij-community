@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.createParentDirectories
@@ -323,6 +324,52 @@ internal class PluginXIncludeTest {
     val pluginSet: PluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins(pluginId)
     assertThat(pluginSet.getEnabledPlugin(pluginId)).hasExactlyExtensionPointsNames("before", "included", "after")
+  }
+
+  @Test
+  @SystemProperty(propertyKey = "plugin.include.enabled", propertyValue = "true")
+  fun `includeIf attribute is ignored and warns`() {
+    val pluginId = "org.jetbrains.kotlin"
+    @Suppress("XmlPathReference")
+    pluginDirPath.resolve("META-INF/plugin.xml").writeXml("""
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <id>$pluginId</id>
+        <xi:include href="a.xml" includeIf="plugin.include.enabled"/>
+      </idea-plugin>
+    """.trimIndent())
+    pluginDirPath.resolve("META-INF/a.xml").writeXml(includes(), appServices = listOf("included"))
+
+    val (pluginSet, warnings) = runAndReturnWithLoggedWarnings { buildPluginSet() }
+
+    assertThat(pluginSet).hasExactlyEnabledPlugins(pluginId)
+    assertThat(pluginSet.getEnabledPlugin(pluginId)).hasExactlyApplicationServices()
+    assertThat(warnings).hasSize(1)
+    assertThat(warnings.single())
+      .contains("includeIf attribute support is disabled and has no effect anymore IJPL-215563")
+      .contains("plugin id=$pluginId")
+  }
+
+  @Test
+  @SystemProperty(propertyKey = "plugin.include.disabled", propertyValue = "false")
+  fun `includeUnless attribute is ignored and warns`() {
+    val pluginId = "org.jetbrains.kotlin"
+    @Suppress("XmlPathReference")
+    pluginDirPath.resolve("META-INF/plugin.xml").writeXml("""
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <id>$pluginId</id>
+        <xi:include href="a.xml" includeUnless="plugin.include.disabled"/>
+      </idea-plugin>
+    """.trimIndent())
+    pluginDirPath.resolve("META-INF/a.xml").writeXml(includes(), appServices = listOf("included"))
+
+    val (pluginSet, warnings) = runAndReturnWithLoggedWarnings { buildPluginSet() }
+
+    assertThat(pluginSet).hasExactlyEnabledPlugins(pluginId)
+    assertThat(pluginSet.getEnabledPlugin(pluginId)).hasExactlyApplicationServices()
+    assertThat(warnings).hasSize(1)
+    assertThat(warnings.single())
+      .contains("includeUnless attribute support is disabled and has no effect anymore IJPL-215563")
+      .contains("plugin id=$pluginId")
   }
 
   @Test

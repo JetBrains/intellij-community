@@ -48,7 +48,7 @@ internal class ShellCompletionSuggestionContextImpl(
       icon = icon,
       prefixReplacementIndex = prefixReplacementIndex,
       isHidden = isHidden,
-      shouldEscape = shouldEscape,
+      shouldEscape = shouldEscape && insertValue == null,
     )
   }
 
@@ -64,7 +64,7 @@ internal class ShellCompletionSuggestionContextImpl(
       icon = icon,
       prefixReplacementIndex = prefixReplacementIndex,
       isHidden = isHidden,
-      shouldEscape = shouldEscape,
+      shouldEscape = shouldEscape && insertValue == null,
     )
   }
 }

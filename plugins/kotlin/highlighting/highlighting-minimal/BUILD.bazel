@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.highlighting.minimal` start
-
 jvm_library(
     name = "kotlin-highlighting-minimal",
     srcs = glob(
@@ -22,7 +21,7 @@ jvm_library(
         # do not sort,
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/editor-ui-api:editor-ui",
         "//platform/analysis-impl",
         "//platform/core-ui",
@@ -50,6 +49,7 @@ jvm_library(
         ":kotlin-highlighting-minimal",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/analysis-impl:analysis-impl_test_lib",
         "//platform/core-ui:core-ui_test_lib",

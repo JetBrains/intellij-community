@@ -44,6 +44,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
    */
   @RequiresBackgroundThread(generateAssertion = false)
   public final @NotNull ProcessOutput runProcess() {
+    // OSProcessHandler.waitFor asserts background thread inside
     return myProcessRunner.runProcess();
   }
 
@@ -54,6 +55,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
    */
   @RequiresBackgroundThread(generateAssertion = false)
   public ProcessOutput runProcess(int timeoutInMilliseconds) {
+    // OSProcessHandler.waitFor asserts background thread inside
     return myProcessRunner.runProcess(timeoutInMilliseconds);
   }
 

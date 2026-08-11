@@ -6,7 +6,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.components.KaCompiledFile
+import org.jetbrains.kotlin.analysis.api.compilation.KaCompiledFile
 import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.isEvaluationEntryPoint

@@ -119,6 +119,7 @@ interface IdeStartupWizard {
   suspend fun run()
 }
 
+@Internal
 enum class StartupWizardStage {
   InitialStart,
   ProductChoicePage,
@@ -131,6 +132,7 @@ enum class StartupWizardStage {
   WizardProgressPage
 }
 
+@Internal
 object IdeStartupWizardCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("wizard.startup", 7)
 

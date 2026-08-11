@@ -11,6 +11,7 @@ import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
 import com.intellij.project.isDirectoryBased
+import org.jetbrains.idea.maven.config.MavenConfigSettings
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.project.MavenImportingSettings
@@ -101,7 +102,7 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     val toolchainFinder = ToolchainFinder()
     val allToolchainRequirements = manager.projects.flatMap { toolchainFinder.allToolchainRequirements(it) }.toSet()
     usages.add(HAS_TOOLCHAIN_REQUIREMENTS.metric(allToolchainRequirements.isNotEmpty()))
-    usages.add(HAS_CUSTOM_TOOLCHAINS_FILE.metric(generalSettings.toolchainsPathString.isNotBlank()))
+    usages.add(HAS_CUSTOM_TOOLCHAINS_FILE.metric(generalSettings.mavenConfig?.getFilePath(MavenConfigSettings.ALTERNATE_TOOLCHAINS_SETTINGS) != null))
     allToolchainRequirements
       .filter { it.type == "jdk" }
       .mapNotNull { it.params["version"] }

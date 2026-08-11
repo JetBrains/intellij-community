@@ -20,7 +20,7 @@ interface ArtifactRootElementEntityBuilder : WorkspaceEntityBuilder<ArtifactRoot
 }
 
 internal object ArtifactRootElementEntityType : EntityType<ArtifactRootElementEntity, ArtifactRootElementEntityBuilder>() {
-  override val entityClass: Class<ArtifactRootElementEntity> get() = ArtifactRootElementEntity::class.java
+  override val entityImplClass: Class<*> get() = ArtifactRootElementEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ArtifactRootElementEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,

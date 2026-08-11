@@ -147,15 +147,23 @@ public final class AnnotationUtilEx {
     boolean visitVariable(@NotNull PsiVariable variable);
   }
 
-  public static void visitAnnotatedElements(@Nullable PsiElement element, AnnotatedElementVisitor visitor) {
+  /**
+   * Walks up the element tree visiting annotated elements.
+   *
+   * @param considerCall when {@code false} the walk stops at the enclosing method call; when {@code true} it keeps
+   *                     walking past the call (used by {@code String.format}/{@code String.formatted} injection).
+   */
+  public static void visitAnnotatedElements(@Nullable PsiElement element, AnnotatedElementVisitor visitor, boolean considerCall) {
     if (element == null) return;
     for (PsiElement cur = ContextComputationProcessor.getTopLevelInjectionTarget(element); cur != null; cur = cur.getParent()) {
-      if (cur instanceof PsiMethodCallExpression) break;
-      if (!visitAnnotatedElementInner(cur, visitor)) return;
+      if (!considerCall && cur instanceof PsiMethodCallExpression) break;
+      if (!visitAnnotatedElementInner(cur, visitor, considerCall)) return;
     }
   }
 
-  private static boolean visitAnnotatedElementInner(@NotNull PsiElement element, @NotNull AnnotatedElementVisitor visitor) {
+  private static boolean visitAnnotatedElementInner(@NotNull PsiElement element,
+                                                    @NotNull AnnotatedElementVisitor visitor,
+                                                    boolean considerCall) {
     final PsiElement parent = element.getParent();
 
     if (element instanceof PsiReferenceExpression) {
@@ -210,7 +218,9 @@ public final class AnnotationUtilEx {
       return true;
     }
     else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCall) {
-      return visitor.visitMethodParameter((PsiExpression)element, (PsiCall)parent.getParent());
+      boolean keepWalking = visitor.visitMethodParameter((PsiExpression)element, (PsiCall)parent.getParent());
+      // For format injection keep walking past the call so the element its result flows into is still visited.
+      return keepWalking || considerCall;
     }
     return true;
   }

@@ -5,6 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiFile
@@ -33,11 +34,12 @@ import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractGradleKotlinCompilerPluginProjectConfigurator : KotlinCompilerPluginProjectConfigurator {
     override fun isApplicable(module: Module): Boolean =
-        module.project.getTopLevelBuildScriptPsiFile() != null
+        AdvancedSettings.getBoolean("kotlin.enable.autoconfiguration") &&
+                module.getTopLevelBuildScriptPsiFile() != null
 
     override fun configureModule(module: Module, configurationResultBuilder: ConfigurationResultBuilder) {
         val project = module.project
-        val topLevelFile = project.getTopLevelBuildScriptPsiFile() ?: return
+        val topLevelFile = module.getTopLevelBuildScriptPsiFile() ?: return
         val moduleFile = module.getBuildScriptPsiFile().takeIf { it != topLevelFile }
 
         project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", topLevelFile.name), null) {
@@ -67,8 +69,7 @@ abstract class AbstractGradleKotlinCompilerPluginProjectConfigurator : KotlinCom
     }
 
     override fun configureModuleModCommand(module: Module): ModCommand {
-        val project = module.project
-        val topLevelFile = project.getTopLevelBuildScriptPsiFile() ?: return ModCommand.nop()
+        val topLevelFile = module.getTopLevelBuildScriptPsiFile() ?: return ModCommand.nop()
 
         val actionContext = ActionContext.from(null, topLevelFile)
         return ModCommand.psiUpdate(actionContext) { updater ->

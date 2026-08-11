@@ -33,6 +33,13 @@ public sealed interface MarkdownMode {
     public class EditorPreview(public val scrollingSynchronizer: ScrollingSynchronizer?) : MarkdownMode
 }
 
+/**
+ * Provides a [MarkdownMode] to the composition via [LocalMarkdownMode], making it available to all descendant
+ * composables.
+ *
+ * @param mode The [MarkdownMode] to provide.
+ * @param content The composable content that will have access to the provided [mode].
+ */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable

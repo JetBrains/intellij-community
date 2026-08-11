@@ -22,14 +22,14 @@ public final class DefaultFileCollectionDependency extends AbstractExternalDepen
   }
 
   public DefaultFileCollectionDependency(Collection<File> files) {
-    super(new DefaultExternalDependencyId(null, files.toString(), null));
-    this.files = new ArrayList<>(files);
+    super(new DefaultExternalDependencyId(null, getDependencyName(files), null));
+    setFiles(files);
     excludedFromIndexing = false;
   }
 
   public DefaultFileCollectionDependency(FileCollectionDependency dependency) {
     super(dependency);
-    files = new ArrayList<>(dependency.getFiles());
+    setFiles(dependency.getFiles());
     excludedFromIndexing = dependency.isExcludedFromIndexing();
   }
 
@@ -40,6 +40,11 @@ public final class DefaultFileCollectionDependency extends AbstractExternalDepen
 
   public void setFiles(@NotNull Collection<File> files) {
     this.files = new ArrayList<>(files);
+    setName(getDependencyName(this.files));
+  }
+
+  private static @NotNull String getDependencyName(@NotNull Collection<?> files) {
+    return files.toString();
   }
 
   @Override

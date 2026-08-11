@@ -10,12 +10,15 @@ import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.InputValidatorEx
 import com.intellij.openapi.ui.MasterDetailsComponent
 import com.intellij.openapi.ui.Messages
@@ -30,9 +33,12 @@ import com.jetbrains.python.sdk.ModuleOrProject.ProjectOnly
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.collectAddInterpreterActions
 import com.jetbrains.python.sdk.customizeWithSdkValue
+import com.jetbrains.python.sdk.filterAssignablePythonSdks
 import com.jetbrains.python.sdk.isAssociatedWithAnotherModule
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.noInterpreterMarker
+import com.jetbrains.python.sdk.renameSdk
+import com.jetbrains.python.onFailure
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -44,8 +50,6 @@ import javax.swing.tree.TreePath
  * the list.
  */
 internal class PythonInterpreterMasterDetails(private val moduleOrProject: ModuleOrProject, private val parentConfigurable: Configurable) : MasterDetailsComponent() {
-  private val pythonConfigurableInterpreterList: PyConfigurableInterpreterList = PyConfigurableInterpreterList.getInstance(moduleOrProject.project)
-
   private val project = moduleOrProject.project
 
   // Temporary hack as lots of legacy code accept nullable module. Remove after legacy code migrated to ModuleOrProject.
@@ -54,7 +58,9 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
     is ProjectOnly -> null
   }
 
-  internal val projectSdksModel = pythonConfigurableInterpreterList.model
+  // The dialog owns a short-lived editable SDK model instead of sharing a cached project-level one. It is reloaded
+  // from the live SDK table in `reset()` and disposed in `disposeUIResources()` (PY-90077).
+  internal val projectSdksModel = ProjectSdksModel()
 
   /**
    * Indicates whether Python paths of one or more interpreters have been changed by user via Python Paths dialog.
@@ -101,10 +107,7 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
     ) {
       val configurable = (value as? DefaultMutableTreeNode)?.userObject as? PythonInterpreterDetailsConfigurable
       val sdk = configurable?.sdk
-      // The name might have been changed with "Rename" action and stored in `displayName`, while the change not being reflected in `sdk`
-      // instance yet
-      val currentSdkName = configurable?.displayName
-      customizeWithSdkValue(sdk, noInterpreterMarker, nullSdkValue = null, actualSdkName = currentSdkName)
+      customizeWithSdkValue(sdk, noInterpreterMarker, nullSdkValue = null)
     }
   }
 
@@ -115,10 +118,14 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
   }
 
   private val allPythonSdksInEdit: List<Sdk>
-    get() = pythonConfigurableInterpreterList.getAllPythonSdks(module)
+    get() = project.filterAssignablePythonSdks(projectSdksModel.sdks.toList(), module)
 
   override fun reset() {
     pythonPathsModified = false
+
+    // Reload the editable model from the live SDK table so interpreters added elsewhere (e.g. the "Add Interpreter"
+    // link or the status-bar widget) appear immediately; the tree is then built from these editable copies.
+    projectSdksModel.reset(project)
 
     myRoot.removeAllChildren()
 
@@ -149,6 +156,11 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
     // Do not use `projectSdksModel.isModified` flag solely to optimize the method, because `isModified` remains `false` in case of
     // non-structural changes (f.e. if a JDK has been changed)
     projectSdksModel.apply(this)
+  }
+
+  override fun disposeUIResources() {
+    super.disposeUIResources()
+    projectSdksModel.disposeUIResources()
   }
 
   override fun createActions(fromPopup: Boolean): List<AnAction> =
@@ -207,7 +219,8 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
     override fun actionPerformed(e: AnActionEvent) {
       val selectedSdk = getSelectedSdk() ?: return
       val initialName = selectedSdk.name
-      val allNames: List<String> = myRoot.children().asSequence().mapNotNull { (it as? MyNode)?.displayName }.toList()
+      // SDK names must be unique across the whole project JDK table (all SDK types), not only among the interpreters shown here.
+      val allNames: List<String> = ProjectJdkTable.getInstance().allJdks.map { it.name }
       val name = Messages.showInputDialog(
         myTree,
         PyBundle.message("python.interpreters.rename.interpreter.dialog.message"),
@@ -234,8 +247,23 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
       )
       // Skip changing the name if either the dialog is cancelled or the name is not changed
       if (name == null || name == initialName) return
-      // Delegate changing the name to the configurable
-      selectedConfigurable?.displayName = name
+      ApplicationManager.getApplication().runWriteAction {
+        // Rename the registered SDK in the project JDK table and re-point the project/module references to it.
+        project.renameSdk(initialName, name).onFailure {
+          // The rename dialog already rejects duplicate names, so this is only a defensive fallback.
+          thisLogger().warn("Cannot rename interpreter '$initialName' to '$name': $it")
+          return@runWriteAction
+        }
+
+        // `renameSdk` renamed the registered SDK. For an existing interpreter the tree shows a separate editable copy from
+        // `ProjectSdksModel`; rename it too so that `ProjectSdksModel.apply()` does not revert the change.
+        if (selectedSdk.name == initialName) {
+          selectedSdk.sdkModificator.let {
+            it.name = name
+            it.commitChanges()
+          }
+        }
+      }
       (myTree.model as? DefaultTreeModel)?.nodeChanged(selectedNode)
       myTree.revalidate()
     }

@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -14,6 +13,7 @@ import com.intellij.util.PathMappingSettings
 import com.intellij.util.containers.ComparatorUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.Transient
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.util.xmlb.annotations.XMap
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.ApiStatus
   name = "PyConsoleOptionsProvider",
   storages = [Storage(StoragePathMacros.WORKSPACE_FILE)]
 )
-class PyConsoleOptions : PersistentStateComponent<PyConsoleOptions.State> {
+class PyConsoleOptions(private val project: Project) : PersistentStateComponent<PyConsoleOptions.State> {
   private val myState: State = State()
 
   val pythonConsoleSettings: PyConsoleSettings get() = myState.myPythonConsoleState
@@ -61,8 +61,7 @@ class PyConsoleOptions : PersistentStateComponent<PyConsoleOptions.State> {
     set(value) {
       myState.myCommandQueueEnabled = value
       if (!value) {
-        ApplicationManager.getApplication()
-          .getService(CommandQueueForPythonConsoleService::class.java).disableCommandQueue()
+        project.getService(CommandQueueForPythonConsoleService::class.java).disableCommandQueue()
       }
     }
 
@@ -87,7 +86,6 @@ class PyConsoleOptions : PersistentStateComponent<PyConsoleOptions.State> {
     myState.myCodeCompletionOption = state.myCodeCompletionOption
   }
 
-  @ApiStatus.Internal
   companion object {
     @JvmStatic
     fun getInstance(project: Project): PyConsoleOptions = project.getService(PyConsoleOptions::class.java)
@@ -125,6 +123,15 @@ class PyConsoleOptions : PersistentStateComponent<PyConsoleOptions.State> {
     @JvmField
     var mySdkHome: String? = null
 
+    /**
+     * Resolved [Sdk] object, kept only as transient runtime state and shuttled to/from the Console Settings UI
+     * via [apply]/[reset]. It is intentionally **not serialized** ([Transient]):
+     * - the persisted interpreter reference is the path [mySdkHome] (`sdk-home`), from which the SDK is resolved
+     *   at launch time (see `findPythonSdkAndModule`); and
+     * - [Sdk] is an interface, so persisting it made deserialization try to instantiate the interface and fail
+     *   with `NoSuchElementException: List is empty` ([PY-90067](https://youtrack.jetbrains.com/issue/PY-90067)).
+     */
+    @Transient
     @JvmField
     var mySdk: Sdk? = null
 
@@ -230,6 +237,8 @@ class PyConsoleOptions : PersistentStateComponent<PyConsoleOptions.State> {
     @Attribute("sdk-home")
     override fun getSdkHome(): String? = mySdkHome
 
+    // Not serialized, see [mySdk].
+    @Transient
     override fun getSdk(): Sdk? = mySdk
 
     @Attribute("module-name")
@@ -296,7 +305,7 @@ class PyConsoleOptions : PersistentStateComponent<PyConsoleOptions.State> {
       myEnvs = envs
     }
 
-    override fun getMappingSettings(): PathMappingSettings? = getMappings()
+    override fun getMappingSettings(): PathMappingSettings = getMappings()
 
     override fun setMappingSettings(mappingSettings: PathMappingSettings?) {
     }

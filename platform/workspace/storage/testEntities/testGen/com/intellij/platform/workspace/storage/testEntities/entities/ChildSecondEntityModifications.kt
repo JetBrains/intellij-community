@@ -19,7 +19,7 @@ interface ChildSecondEntityBuilder : WorkspaceEntityBuilder<ChildSecondEntity>, 
 }
 
 internal object ChildSecondEntityType : EntityType<ChildSecondEntity, ChildSecondEntityBuilder>() {
-  override val entityClass: Class<ChildSecondEntity> get() = ChildSecondEntity::class.java
+  override val entityImplClass: Class<*> get() = ChildSecondEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ChildSecondEntityImpl.Builder::class.java
   operator fun invoke(
     commonData: String,

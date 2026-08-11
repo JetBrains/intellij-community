@@ -23,7 +23,6 @@ else:
 import tomlkit
 from packaging.requirements import Requirement
 from packaging.specifiers import Specifier
-from tomlkit.items import String
 
 from .paths import PYPROJECT_PATH, STUBS_PATH, distribution_path
 
@@ -174,6 +173,7 @@ class StubMetadata:
     distribution: Annotated[str, "The name of the distribution on PyPI"]
     version_spec: Annotated[Specifier, "Upstream versions that the stubs are compatible with"]
     dependencies: Annotated[list[Requirement], "The parsed dependencies as listed in METADATA.toml"]
+    optional_dependencies: Annotated[list[Requirement], "The parsed optional dependencies as listed in METADATA.toml"]
     extra_description: str | None
     stub_distribution: Annotated[str, "The name under which the distribution is uploaded to PyPI"]
     upstream_repository: Annotated[str, "The URL of the upstream repository"] | None
@@ -188,11 +188,20 @@ class StubMetadata:
     def is_obsolete(self) -> bool:
         return self.obsolete is not None
 
+    @property
+    def all_dependencies(self) -> list[Requirement]:
+        """The dependencies and optional dependencies of this stubs package.
+
+        Does not include the stubtest dependencies.
+        """
+        return self.dependencies + self.optional_dependencies
+
 
 _KNOWN_METADATA_FIELDS: Final = frozenset(
     {
         "version",
         "dependencies",
+        "optional-dependencies",
         "extra-description",
         "stub-distribution",
         "upstream-repository",
@@ -263,6 +272,10 @@ def read_metadata(distribution: str) -> StubMetadata:
     assert isinstance(dependencies_s, list)
     dependencies = [parse_dependencies(distribution, dep) for dep in dependencies_s]
 
+    optional_dependencies_s = data.get("optional-dependencies", [])
+    assert isinstance(optional_dependencies_s, list)
+    optional_dependencies = [parse_dependencies(distribution, dep) for dep in optional_dependencies_s]
+
     extra_description = data.get("extra-description")
     assert isinstance(extra_description, (str, type(None)))
 
@@ -298,12 +311,15 @@ def read_metadata(distribution: str) -> StubMetadata:
             assert num_url_path_parts == 2, bad_github_url_msg
 
     obsolete_since = data.get("obsolete-since")
-    assert isinstance(obsolete_since, (String, type(None)))
-    if obsolete_since:
-        comment = obsolete_since.trivia.comment
-        since_date_string = comment.removeprefix("# Released on ")
-        since_date = datetime.date.fromisoformat(since_date_string)
-        obsolete = ObsoleteMetadata(since_version=obsolete_since, since_date=since_date)
+    assert isinstance(obsolete_since, (dict, type(None)))
+    if obsolete_since is not None:
+        obsolete_table: dict[str, object] = obsolete_since
+        obsolete_since_version = obsolete_table.get("version")
+        obsolete_since_date = obsolete_table.get("date")
+        assert isinstance(obsolete_since_version, str)
+        assert isinstance(obsolete_since_date, str)
+        since_date = datetime.date.fromisoformat(obsolete_since_date)
+        obsolete = ObsoleteMetadata(since_version=obsolete_since_version, since_date=since_date)
     else:
         obsolete = None
     no_longer_updated = data.get("no-longer-updated", False)
@@ -341,6 +357,7 @@ def read_metadata(distribution: str) -> StubMetadata:
         distribution=distribution,
         version_spec=version_spec,
         dependencies=dependencies,
+        optional_dependencies=optional_dependencies,
         extra_description=extra_description,
         stub_distribution=stub_distribution,
         upstream_repository=upstream_repository,
@@ -374,7 +391,7 @@ def update_metadata(distribution: str, **new_values: object) -> dict[str, object
         new_key = key.replace("_", "-")
         data[new_key] = data.pop(key)
     with path.open("w", encoding="UTF-8") as f:
-        tomlkit.dump(data, f)  # pyright: ignore[reportUnknownMemberType] # tomlkit.dump has partially unknown Mapping type
+        tomlkit.dump(data, f)
     return data
 
 
@@ -410,7 +427,7 @@ def read_dependencies(distribution: str) -> PackageDependencies:
     pypi_name_to_typeshed_name_mapping = get_pypi_name_to_typeshed_name_mapping()
     typeshed: list[Requirement] = []
     external: list[Requirement] = []
-    for dependency in read_metadata(distribution).dependencies:
+    for dependency in read_metadata(distribution).all_dependencies:
         if dependency.name in pypi_name_to_typeshed_name_mapping:
             req = Requirement(str(dependency))  # copy the requirement
             req.name = pypi_name_to_typeshed_name_mapping[dependency.name]

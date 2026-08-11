@@ -226,7 +226,7 @@ public class OutputChecker {
         result = replacePath(result, DebuggerUtilsImpl.getIdeaRtPath(), "!RT_JAR!");
       }
 
-      var junit4JarPaths = StringUtil.join(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"), java.io.File.pathSeparator);
+      var junit4JarPaths = StringUtil.join(IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4").getClassesPaths(), java.io.File.pathSeparator);
       result = replacePath(result, junit4JarPaths, "!JUNIT4_JARS!");
 
       @SuppressWarnings("removal") var homeDirectory = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomeDirectory();
@@ -239,6 +239,8 @@ public class OutputChecker {
       if (!StringUtil.isEmpty(HOST_NAME)) {
         result = StringUtil.replace(result, HOST_NAME, "!HOST_NAME!", true);
       }
+      result = result.replace("0:0:0:0:0:0:0:1", "!HOST_NAME!");
+      result = result.replace("::1", "!HOST_NAME!");
       result = result.replace("127.0.0.1", "!HOST_NAME!");
 
       var productionFile = Path.of(PathUtil.getJarPathForClass(OutputChecker.class));

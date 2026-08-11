@@ -18,6 +18,7 @@ import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -84,7 +85,7 @@ public final class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> 
     return FileBasedIndex.getInstance().getContainingFiles(NAME, moduleName, new JavaAutoModuleFilterScope(scope));
   }
 
-  public static @NotNull Collection<String> getAllKeys(@NotNull Project project) {
+  public static @NotNull @Unmodifiable Collection<String> getAllKeys(@NotNull Project project) {
     return FileBasedIndex.getInstance().getAllKeys(NAME, project);
   }
 }

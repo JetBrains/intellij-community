@@ -8,8 +8,8 @@
 // ACTION: Add getter and setter
 // ACTION: Add setter
 // ERROR: Property must be initialized or be abstract
-// K2_ERROR: Property must be initialized or be abstract.
-// K2_AFTER_ERROR: Property must be initialized or be abstract.
+// K2_AFTER_ERROR: MUST_BE_INITIALIZED_OR_BE_ABSTRACT
+// K2_ERROR: MUST_BE_INITIALIZED_OR_BE_ABSTRACT
 
 class A {
     private var a: String?<caret>

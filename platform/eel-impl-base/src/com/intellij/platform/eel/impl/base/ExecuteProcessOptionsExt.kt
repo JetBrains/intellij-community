@@ -3,6 +3,7 @@ package com.intellij.platform.eel.impl.base
 
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelProcess
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.ApiStatus
@@ -14,11 +15,15 @@ import kotlin.coroutines.cancellation.CancellationException
  * Used by implementors to support [scope]
  */
 @ApiStatus.Internal
-fun EelExecApi.ExecuteProcessOptions.bindProcessToScopeIfSet(process: EelProcess) {
+fun EelExecApi.ExecuteProcessOptions.bindProcessToScopeIfSet(
+  process: EelProcess,
+  killExecutionScope: CoroutineScope? = null,
+) {
   scope?.bindProcessToScopeImpl(
     warn = logger::warning,
     processNameForDebug = commandLineForDebug,
-    ProcessFunctions(
+    killExecutionScope = killExecutionScope,
+    processFunctions = ProcessFunctions(
       waitForExit = {
         try {
           process.exitCode.await()

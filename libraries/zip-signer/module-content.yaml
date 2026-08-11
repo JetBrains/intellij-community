@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.zip.signer.jar
+  modules:
+  - name: intellij.libraries.zip.signer
+    libraries:
+      zip-signer:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/marketplace-zip-signer/0/marketplace-zip-signer-0.jar

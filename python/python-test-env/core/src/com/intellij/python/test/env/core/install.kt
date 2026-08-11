@@ -2,6 +2,7 @@ package com.intellij.python.test.env.core
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.io.Decompressor
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -91,6 +92,7 @@ suspend fun installPipPackages(
   executeProcess(command, logger, "pip")
 }
 
+@OptIn(LowLevelLocalMachineAccess::class)
 fun markExecutable(logger: Logger, executable: Path) {
   if (OS.CURRENT != OS.Windows) {
     logger.info("Setting executable permissions")
@@ -111,16 +113,15 @@ fun markExecutable(logger: Logger, executable: Path) {
  *
  * @param archiveFile Path to the archive file
  * @param targetDir Directory where archive contents will be extracted
- * @param prefixToStrip Path prefix to strip during extraction (e.g., "uv-x86_64-unknown-linux-gnu" for UV archives)
+ * @param prefixToStrip Path prefix to strip during extraction. If null, archive paths are extracted as-is.
  * @throws IllegalStateException if archive format is not supported
  */
 @ApiStatus.Internal
-fun unpackArchive(archiveFile: Path, targetDir: Path, prefixToStrip: String? = null) {
+fun unpackArchive(archiveFile: Path, targetDir: Path, prefixToStrip: String?) {
   val fileName = archiveFile.fileName.toString()
   when {
     fileName.endsWith(".tar.gz", ignoreCase = true) || fileName.endsWith(".tgz", ignoreCase = true) -> {
       val decompressor = Decompressor.Tar(archiveFile)
-        .removePrefixPath("python")
       if (prefixToStrip != null) {
         decompressor.removePrefixPath(prefixToStrip)
       }
@@ -128,7 +129,6 @@ fun unpackArchive(archiveFile: Path, targetDir: Path, prefixToStrip: String? = n
     }
     fileName.endsWith(".zip", ignoreCase = true) -> {
       val decompressor = Decompressor.Zip(archiveFile).withZipExtensions()
-        .removePrefixPath("python")
       if (prefixToStrip != null) {
         decompressor.removePrefixPath(prefixToStrip)
       }

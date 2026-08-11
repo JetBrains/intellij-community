@@ -6,7 +6,6 @@ import com.intellij.ui.dsl.builder.RowsRange
 import com.intellij.ui.layout.ComponentPredicate
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 @ApiStatus.NonExtendable
 internal open class RowsRangeImpl(val panel: PanelImpl, val startIndex: Int) : RowsRange {
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -74,6 +74,7 @@ public interface GroovyCommonClassNames {
   String GROOVY_TRAIT_IMPLEMENTED = "org.codehaus.groovy.transform.trait.Traits.Implemented";
 
   Set<String> DEFAULT_INSTANCE_EXTENSIONS = unmodifiableSet(ContainerUtil.newLinkedHashSet(
+    "org.codehaus.groovy.runtime.ArrayGroovyMethods",
     "org.codehaus.groovy.runtime.DateGroovyMethods",
     "org.codehaus.groovy.runtime.DefaultGroovyMethods",
     "org.codehaus.groovy.runtime.EncodingGroovyMethods",
@@ -82,6 +83,7 @@ public interface GroovyCommonClassNames {
     "org.codehaus.groovy.runtime.ResourceGroovyMethods",
     "org.codehaus.groovy.runtime.SocketGroovyMethods",
     "org.codehaus.groovy.runtime.SqlGroovyMethods",
+    "org.codehaus.groovy.runtime.StreamGroovyMethods",
     "org.codehaus.groovy.runtime.StringGroovyMethods",
     "org.codehaus.groovy.runtime.SwingGroovyMethods",
     "org.codehaus.groovy.runtime.XmlGroovyMethods",

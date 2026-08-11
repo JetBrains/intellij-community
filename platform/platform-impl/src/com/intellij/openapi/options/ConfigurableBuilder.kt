@@ -20,7 +20,6 @@ abstract class ConfigurableBuilder
 @Deprecated("Use BeanConfigurable", level = DeprecationLevel.HIDDEN)
 protected constructor() : UiDslUnnamedConfigurable.Simple(), UiDslUnnamedConfigurable, ConfigurableWithOptionDescriptors {
 
-  @ApiStatus.Internal
   internal class CallbackAccessor(private val myGetter: Supplier<Boolean>, private val mySetter: Setter<in Boolean?>) {
 
     var value: Boolean
@@ -28,7 +27,6 @@ protected constructor() : UiDslUnnamedConfigurable.Simple(), UiDslUnnamedConfigu
       set(value) = mySetter.set(value)
   }
 
-  @ApiStatus.Internal
   internal class BeanField(
     private val myAccessor: CallbackAccessor,
     internal val title: @NlsContexts.Checkbox String,

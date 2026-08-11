@@ -1,25 +1,30 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.toolchains
 
-import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.buildtool.MavenSyncSession
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
+import com.intellij.maven.testFramework.fixtures.mavenFixture
 import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.createTempFile
 
-internal class ToolchainsResolverTest : MavenTestCase() {
+@TestApplication
+internal class ToolchainsResolverTest {
+  private val maven by mavenFixture()
 
-  override fun runInDispatchThread() = false
-
+  @Test
   fun testShouldReturnSameResolutionSession() {
-    val mavenSession = MavenSyncSession(project, MavenSyncSpec.incremental("test"), MavenProjectsTree(project))
+    val mavenSession = MavenSyncSession(maven.project, MavenSyncSpec.incremental("test"), MavenProjectsTree(maven.project))
 
     val first = ToolchainResolverSession.forSession(mavenSession)
     val second = ToolchainResolverSession.forSession(mavenSession)
@@ -27,8 +32,9 @@ internal class ToolchainsResolverTest : MavenTestCase() {
   }
 
 
+  @Test
   fun testShouldInstallSdkInIdea() = runBlocking {
-    val mavenSession = MavenSyncSession(project, MavenSyncSpec.incremental("test"), MavenProjectsTree(project))
+    val mavenSession = MavenSyncSession(maven.project, MavenSyncSpec.incremental("test"), MavenProjectsTree(maven.project))
     val toolchainsFile = createTempFile("test", "toolchains.xml")
     val sdkFile = createTempDirectory("testSdk")
     var jdk: Sdk? = null

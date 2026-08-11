@@ -10,7 +10,7 @@ import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 import com.intellij.grazie.text.CheckerRunner
-import com.intellij.grazie.text.ProofreadingService.Companion.registerProblems
+import com.intellij.grazie.text.ProofreadingService.registerProblems
 import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContent.TextDomain

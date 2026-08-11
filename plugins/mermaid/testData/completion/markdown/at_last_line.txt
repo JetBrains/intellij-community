@@ -1,5 +1,5 @@
 MarkdownFile(0,65)
-  markdown: Markdown:ATX_1(0,8)
+  Markdown:Markdown:ATX_1(0,8)
     PsiElement(Markdown:Markdown:ATX_HEADER)('#')(0,1)
     MarkdownHeaderContent(Markdown:ATX_CONTENT)(1,8)
       PsiWhiteSpace(' ')(1,2)

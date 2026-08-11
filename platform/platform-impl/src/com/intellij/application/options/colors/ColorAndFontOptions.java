@@ -527,7 +527,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   @Override
   public @NotNull Configurable @NotNull [] buildConfigurables() {
     myDisposeCompleted = false;
-    initAll();
+    // Skip initAll() if the shared model already contains MyColorScheme objects from another active
+    // ColorAndFontOptions instance (e.g. an open non-modal Settings dialog).  Calling initAll() would
+    // wipe unsaved edits via dropSchemes().  This path is hit when Search Everywhere or other code
+    // enumerates configurables and triggers buildConfigurables() on a throwaway instance.
+    if (!hasMyColorSchemesInModel()) {
+      initAll();
+    }
 
     List<ColorAndFontPanelFactory> panelFactories = createPanelFactories();
 
@@ -668,6 +674,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
        return DisplayPriority.FONT_SETTINGS;
      }
    }
+
+  private boolean hasMyColorSchemesInModel() {
+    for (EditorColorsScheme scheme : myModel.allSchemes()) {
+      if (scheme instanceof MyColorScheme) return true;
+    }
+    return false;
+  }
 
   private void initAll() {
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -1033,8 +1046,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     public @Nullable Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor> getFallbackKeyDescriptor() {
       return myBaseAttributeDescriptor;
     }
-    @Override
-    public boolean isTransparencyEnabled() { return true; }
   }
 
   private static final class EditorSettingColorDescription extends ColorAndFontDescription implements UiInspectorContextProvider {

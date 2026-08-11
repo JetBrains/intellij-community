@@ -15,13 +15,13 @@ import com.intellij.util.PlatformIcons
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.allSupertypes
-import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.components.containingSymbol
-import org.jetbrains.kotlin.analysis.api.components.defaultType
-import org.jetbrains.kotlin.analysis.api.components.importableFqName
-import org.jetbrains.kotlin.analysis.api.components.isUnitType
-import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.types.allSupertypes
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
+import org.jetbrains.kotlin.analysis.api.types.defaultType
+import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -107,7 +108,7 @@ internal object AddMemberToSupertypeFixFactory {
     if (memberElement is KtNamedFunction) {
       if (classSymbol.classKind != KaClassKind.INTERFACE && classSymbol.modality != KaSymbolModality.ABSTRACT && classSymbol.modality != KaSymbolModality.SEALED) {
         val returnType = (callableSymbol as KaNamedFunctionSymbol).returnType
-        sourceCode += if (!returnType.isUnitType) {
+        sourceCode += if (returnType.classId != KaStandardTypeClassIds.UNIT) {
           val bodyText = getFunctionBodyTextFromTemplate(project, TemplateKind.FUNCTION, callableSymbol.name.asString(),
                                                          callableSymbol.returnType.render(position = Variance.OUT_VARIANCE),
                                                          classSymbol.importableFqName)

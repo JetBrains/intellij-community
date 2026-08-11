@@ -3,6 +3,7 @@ package git4idea.workingTrees
 
 import com.intellij.CommonBundle
 import com.intellij.dvcs.repo.repositoryId
+import com.intellij.ide.GeneralSettings
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.PropertiesComponent
@@ -52,14 +53,17 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Window
 import kotlinx.coroutines.withContext
+import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.minutes
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-internal class GitWorkingTreesService(private val project: Project, val coroutineScope: CoroutineScope) {
+class GitWorkingTreesService(private val project: Project, val coroutineScope: CoroutineScope) {
   init {
     if (!ApplicationManager.getApplication().isUnitTestMode && !ApplicationManager.getApplication().isHeadlessEnvironment) {
       scheduleBackgroundRefresh()
@@ -133,11 +137,16 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
 
     fun getInstance(project: Project): GitWorkingTreesService = project.getService(GitWorkingTreesService::class.java)
 
+    fun isWorktreeCreationSupported(repository: GitRepository): Boolean {
+      val status = getWorktreeSupportStatus(repository.project)
+      return status is GitWorktreeSupportStatus.SingleRepository && status.repository == repository
+    }
+
     /**
      * Working trees UI currently supports only the `single repository` case.
      * The returned value distinguishes unsupported, single-repository, and multi-repository project states.
      */
-    fun getWorktreeSupportStatus(project: Project?): GitWorktreeSupportStatus {
+    internal fun getWorktreeSupportStatus(project: Project?): GitWorktreeSupportStatus {
       if (project == null || !GitWorkingTreesUtil.isWorkingTreesFeatureEnabled()) return GitWorktreeSupportStatus.Unsupported
       val repositories = GitRepositoryManager.getInstance(project).repositories
       return when (repositories.size) {
@@ -188,7 +197,7 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
     }
   }
 
-  suspend fun createWorkingTree(repository: GitRepository, data: GitWorkingTreeDialogData): Result {
+  internal suspend fun createWorkingTree(repository: GitRepository, data: GitWorkingTreeDialogData): Result {
     return withBackgroundProgress(project, GitBundle.message("progress.title.creating.worktree"), cancellable = true) {
       val newBranchName = when {
         data.newBranchName != null -> data.newBranchName
@@ -205,7 +214,51 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
     }
   }
 
-  fun openWorkingTreeProject(tree: GitWorkingTree) {
+  fun isCurrentProjectLinkedWorktree(): Boolean {
+    if (!GitWorkingTreesUtil.isWorkingTreesFeatureEnabled()) return false
+    val repository = GitRepositoryManager.getInstance(project).repositories.singleOrNull() ?: return false
+    return repository.workingTreeHolder.getWorkingTrees().any { it.isCurrent && !it.isMain }
+  }
+
+  fun deleteCurrentProjectWorktree() {
+    val currentProject = project
+    val worktrees = GitRepositoryManager.getInstance(currentProject).repositories.singleOrNull()
+      ?.workingTreeHolder?.getWorkingTrees() ?: return
+    val currentWorktree = worktrees.find { it.isCurrent && !it.isMain } ?: return
+    val mainWorktreePath = worktrees.find { it.isMain }?.path?.path ?: return
+
+    // Runs on the application scope, not the closing project's scope, and removes the worktree through the still-open
+    // main project so the git command and notifications don't target the disposed worktree project.
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+      val confirmed = withContext(Dispatchers.UiWithModelAccess) {
+        MessageDialogBuilder.yesNo(
+          GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.title"),
+          GitBundle.message("Git.WorkingTrees.delete.current.worktree.confirm.message", currentWorktree.path.name)
+        )
+          .yesText(GitBundle.message("Git.WorkingTrees.delete.worktrees.button.close.delete"))
+          .noText(GitBundle.message("Git.WorkingTrees.delete.worktrees.button.do.not.delete"))
+          .ask(currentProject)
+      }
+      if (!confirmed) return@launch
+
+      closeProject(currentProject)
+
+      val mainProject = ProjectUtil.findProject(Path(mainWorktreePath)) ?: return@launch
+      val mainRepository = GitRepositoryManager.getInstance(mainProject).repositories.singleOrNull() ?: return@launch
+
+      val commandResult = withBackgroundProgress(mainProject, GitBundle.message("progress.title.deleting.worktree"), cancellable = true) {
+        service<Git>().deleteWorkingTree(mainRepository, currentWorktree)
+      }
+      if (commandResult.success()) {
+        notifyWorkingTreeDeletedSuccess(mainProject, mainRepository, currentWorktree)
+      }
+      else {
+        notifyWorkingTreeDeletedError(mainProject, commandResult.errorOutputAsHtmlString)
+      }
+    }
+  }
+
+  fun openWorkingTreeProject(tree: GitWorkingTree, onProjectOpened: ((Project) -> Unit)? = null) {
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.Default) {
       if (!Path(tree.path.path).exists()) {
         VcsNotifier.getInstance(project).notifyMinorWarning(
@@ -222,7 +275,10 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
 
         return@launch
       }
-      ProjectUtil.openOrImportAsync(Path(tree.path.path))
+      val worktreeProject = openProjectInNewWindow(Path(tree.path.path))
+      if (worktreeProject != null) {
+        onProjectOpened?.invoke(worktreeProject)
+      }
     }
   }
 
@@ -260,7 +316,7 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
       MessageDialogBuilder.yesNo(
         GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.title"),
         GitBundle.message("Git.WorkingTrees.delete.worktrees.worktree.opened.close.or.cancel",
-                          tree.path.presentableUrl, existingProject.name)
+                          tree.path.name, existingProject.name)
       )
         .yesText(GitBundle.message("Git.WorkingTrees.delete.worktrees.button.close.delete"))
         .noText(GitBundle.message("Git.WorkingTrees.delete.worktrees.button.do.not.delete"))
@@ -288,7 +344,7 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
     VcsNotifier.getInstance(project).notifySuccess(GitNotificationIdsHolder.WORKING_TREE_DELETED,
                                                    "",
                                                    GitBundle.message("Git.WorkingTrees.delete.worktree.success.message",
-                                                                     tree.path.presentableUrl))
+                                                                     tree.path.name))
   }
 
   private fun notifyWorkingTreeDeletedError(project: Project, @NlsSafe errorOutput: String) {
@@ -346,6 +402,18 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
         "",
         GitBundle.message("Git.WorkingTrees.prune.worktree.success.message")
       )
+    }
+  }
+
+  suspend fun openProjectInNewWindow(path: Path): Project? {
+    val generalSettings = GeneralSettings.getInstance()
+    val savedConfirmOpen = generalSettings.confirmOpenNewProject
+    try {
+      generalSettings.confirmOpenNewProject = GeneralSettings.OPEN_PROJECT_ASK
+      return ProjectUtil.openOrImportAsync(path)
+    }
+    finally {
+      generalSettings.confirmOpenNewProject = savedConfirmOpen
     }
   }
 }

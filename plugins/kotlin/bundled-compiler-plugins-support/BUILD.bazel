@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.compilerPlugins.support.bundled` start
-
 create_kotlinc_options(
     name = "custom_compilerPlugins-support-bundled",
     opt_in = ["org.jetbrains.kotlin.K1Deprecation"],
@@ -20,11 +19,15 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_compilerPlugins-support-bundled",
     module_name = "intellij.kotlin.compilerPlugins.support.bundled",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/core-api:core",
         "//platform/lang-api:lang",
         "@lib//:kotlinc-allopen-compiler-plugin",
@@ -55,6 +58,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":compilerPlugins-support-bundled",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//plugins/kotlin/base/plugin:plugin_test_lib",

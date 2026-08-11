@@ -1,2 +1,2 @@
-public record Param<R>(R r) {
+record Param<R>(R r) {
 }

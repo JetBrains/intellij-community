@@ -17,7 +17,7 @@
     <applicationService serviceImplementation="com.intellij.platform.templates.ProjectTemplateExportable"/>
     <projectTemplateFileProcessor implementation="com.intellij.platform.templates.SystemFileProcessor"/>
 
-    <moduleRendererFactory implementation="com.intellij.ide.util.DefaultModuleRendererFactory" order="last,before platform"/>
+    <moduleRendererFactory implementation="com.intellij.ide.util.DefaultModuleRendererFactory" order="last,before platform" id="default"/>
 
     <moduleConfigurationEditorProvider implementation="com.intellij.openapi.module.WebModuleConfigurationEditorProvider"/>
 

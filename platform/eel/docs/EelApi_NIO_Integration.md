@@ -62,7 +62,7 @@ Creates a temporary file in the appropriate environment based on the project. If
 **Example:**
 ```kotlin
 // Create a temporary file for a Git commit message
-val messageFile = EelPathUtils.createTemporaryFile(project, "git-commit-", ".msg", true)
+val messageFile = EelProjectUtils.createTemporaryFile(project, "git-commit-", ".msg", true)
 // For a WSL project: creates file in WSL temp directory
 // For a local project: creates file in local temp directory
 ```
@@ -83,7 +83,7 @@ Similar to createTemporaryFile, but creates a directory instead.
 **Example:**
 ```kotlin
 // Create a temporary directory for build artifacts
-val buildDir = EelPathUtils.createTemporaryDirectory(project, "build-", "-temp")
+val buildDir = EelProjectUtils.createTemporaryDirectory(project, "build-", "-temp")
 ```
 
 #### getSystemFolder
@@ -99,13 +99,13 @@ Gets the system folder for a project, EelDescriptor, or EelApi, respectively. Th
 **Example:**
 ```kotlin
 // Get system folder for a project
-val sysFolder = EelPathUtils.getSystemFolder(project)
+val sysFolder = EelSystemFolderUtils.getSystemFolder(project)
 // For WSL project: \\wsl.localhost\Ubuntu\home\user\.IdeaIC2024.3
 // For local project: C:\Users\user\.IdeaIC2024.3
 
 // Get system folder for a specific EEL
 val eelApi = descriptor.toEelApi()
-val sysFolder = EelPathUtils.getSystemFolder(eelApi)
+val sysFolder = EelSystemFolderUtils.getSystemFolder(eelApi)
 ```
 
 #### transferLocalContentToRemote

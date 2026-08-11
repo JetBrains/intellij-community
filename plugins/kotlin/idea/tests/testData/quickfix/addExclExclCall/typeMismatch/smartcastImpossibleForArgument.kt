@@ -1,5 +1,5 @@
 // "Add non-null asserted (s!!) call" "true"
-// K2_ERROR: Smart cast to 'String' is impossible, because 's' is a property that has an open or custom getter.
+// K2_ERROR: SMARTCAST_IMPOSSIBLE
 
 open class MyClass {
     open val s: String? = null

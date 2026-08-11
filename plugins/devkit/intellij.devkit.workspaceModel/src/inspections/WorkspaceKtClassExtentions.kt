@@ -4,6 +4,7 @@ package com.intellij.devkit.workspaceModel.inspections
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.psi.PsiElement
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import java.util.LinkedList
 import java.util.function.Predicate
 
+@OptIn(WorkspaceEntityInternalApi::class)
 private val workspaceModelClasses: List<String> = listOfNotNull(
   WorkspaceEntity::class.qualifiedName,
   EntitySource::class.qualifiedName,
@@ -92,6 +94,7 @@ internal fun KtClass.isWorkspaceEntityDeclaration(): Boolean {
          !workspaceSupers.contains(WorkspaceEntity.Builder::class.qualifiedName)
 }
 
+@OptIn(WorkspaceEntityInternalApi::class)
 internal fun KtClass.isWorkspaceEntityImplementation(): Boolean {
   val workspaceSupers = getWorkspaceSupers()
   return workspaceSupers.contains(WorkspaceEntity::class.qualifiedName) && workspaceSupers.contains(WorkspaceEntityBase::class.qualifiedName)

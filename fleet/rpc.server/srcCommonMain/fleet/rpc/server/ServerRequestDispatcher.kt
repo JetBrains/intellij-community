@@ -3,6 +3,7 @@ package fleet.rpc.server
 
 import fleet.multiplatform.shims.MultiplatformConcurrentHashMap
 import fleet.rpc.EndpointKind
+import fleet.rpc.core.ProtocolVersion
 import fleet.rpc.core.TransportMessage
 import fleet.util.UID
 import fleet.util.channels.use
@@ -28,7 +29,7 @@ import kotlinx.coroutines.withContext
 class ServerRequestDispatcher(private val connectionListener: ConnectionListener?) : RequestDispatcher {
 
   companion object {
-    private val log = logger<ServerRequestDispatcher>()
+    private val log by lazy { logger<ServerRequestDispatcher>() }
   }
 
   private val bannedEndpoints = MutableStateFlow<Set<UID>>(emptySet())
@@ -49,15 +50,19 @@ class ServerRequestDispatcher(private val connectionListener: ConnectionListener
   override suspend fun handleConnection(
     route: UID,
     endpoint: EndpointKind,
-    presentableName: String?,
+    protocolVersion: ProtocolVersion,
     send: SendChannel<TransportMessage>,
     receive: ReceiveChannel<TransportMessage>,
+    presentableName: String?,
   ) {
     withContext(CoroutineName("handleConnection $route")) {
       val socketId = UID.random()
-      log.info { "handleConnection endpoint: $endpoint, route: $route, socket id: $socketId" }
+      log.info { "handleConnection endpoint: $endpoint, route: $route, socket id: $socketId, $protocolVersion" }
       receive.consume {
         send.use {
+          check(protocolVersion == ProtocolVersion.current) {
+            "Protocol version mismatch; client: $protocolVersion, current: ${ProtocolVersion.current}"
+          }
           bannedEndpoints.first { !it.contains(route) }
           try {
             val existing = connections.put(route, send)

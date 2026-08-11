@@ -37,21 +37,8 @@ internal fun readTabStripScrollbarStyle(isDark: Boolean): ScrollbarStyle =
     ScrollbarStyle(
         colors = readScrollbarColors(isDark),
         metrics = readScrollbarMetrics(),
-        trackClickBehavior = TrackClickBehavior.JumpToSpot,
-        scrollbarVisibility =
-            ScrollbarVisibility.AlwaysVisible(
-                trackThickness = 5.dp,
-                trackThicknessExpanded = 5.dp,
-                trackPadding = PaddingValues(1.dp),
-                trackPaddingExpanded = PaddingValues(),
-                trackPaddingWithBorder = PaddingValues(1.dp),
-                trackColorAnimationDuration = 125.milliseconds,
-                expandAnimationDuration = 125.milliseconds,
-                thumbColorAnimationDuration = 125.milliseconds,
-                lingerDuration = 700.milliseconds,
-                scrollbarBackgroundColorLight = Color.Unspecified,
-                scrollbarBackgroundColorDark = Color.Unspecified,
-            ),
+        trackClickBehavior = readTrackClickBehavior(),
+        scrollbarVisibility = readScrollbarVisibility(),
     )
 
 private fun readScrollbarColors(isDark: Boolean) =
@@ -291,6 +278,7 @@ private fun readScrollbarVisibility() =
         ScrollbarVisibility.AlwaysVisible.windowsAndLinux()
     }
 
+/** Creates the default [ScrollbarVisibility.WhenScrolling] for the current platform: macOS or Windows/Linux. */
 public fun ScrollbarVisibility.WhenScrolling.Companion.default(): ScrollbarVisibility.WhenScrolling =
     if (hostOs.isMacOS) {
         ScrollbarVisibility.WhenScrolling.macOs()
@@ -298,6 +286,7 @@ public fun ScrollbarVisibility.WhenScrolling.Companion.default(): ScrollbarVisib
         ScrollbarVisibility.WhenScrolling.windowsAndLinux()
     }
 
+/** Creates a [ScrollbarVisibility.WhenScrolling] configured with macOS-specific dimensions and animations. */
 public fun ScrollbarVisibility.WhenScrolling.Companion.macOs(
     trackThickness: Dp = 11.dp,
     trackThicknessExpanded: Dp = 14.dp,
@@ -319,6 +308,7 @@ public fun ScrollbarVisibility.WhenScrolling.Companion.macOs(
         lingerDuration = lingerDuration,
     )
 
+/** Creates a [ScrollbarVisibility.WhenScrolling] configured with Windows/Linux-specific dimensions and animations. */
 public fun ScrollbarVisibility.WhenScrolling.Companion.windowsAndLinux(
     trackThickness: Dp = 11.dp,
     trackThicknessExpanded: Dp = 14.dp,
@@ -340,6 +330,7 @@ public fun ScrollbarVisibility.WhenScrolling.Companion.windowsAndLinux(
         lingerDuration = lingerDuration,
     )
 
+/** Creates the default [ScrollbarVisibility.AlwaysVisible] for the current platform: macOS or Windows/Linux. */
 public fun ScrollbarVisibility.AlwaysVisible.Companion.default(): ScrollbarVisibility.AlwaysVisible =
     if (hostOs.isMacOS) {
         ScrollbarVisibility.AlwaysVisible.macOs()
@@ -347,6 +338,7 @@ public fun ScrollbarVisibility.AlwaysVisible.Companion.default(): ScrollbarVisib
         ScrollbarVisibility.AlwaysVisible.windowsAndLinux()
     }
 
+/** Creates a [ScrollbarVisibility.AlwaysVisible] configured with macOS-specific dimensions and colors. */
 public fun ScrollbarVisibility.AlwaysVisible.Companion.macOs(
     trackThickness: Dp = 14.dp,
     trackPadding: PaddingValues = PaddingValues(2.dp),
@@ -364,6 +356,7 @@ public fun ScrollbarVisibility.AlwaysVisible.Companion.macOs(
         scrollbarBackgroundColorDark = scrollbarBackgroundColorDark,
     )
 
+/** Creates a [ScrollbarVisibility.AlwaysVisible] configured with Windows/Linux-specific dimensions. */
 public fun ScrollbarVisibility.AlwaysVisible.Companion.windowsAndLinux(
     trackThickness: Dp = 10.dp,
     trackPadding: PaddingValues = PaddingValues(0.5.dp),

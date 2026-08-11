@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="intellij.xml.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.yaml.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.langInjection" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" scope="TEST" />
@@ -37,5 +38,15 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.uast.ide" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.todo.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.lucene.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner.plugin" scope="TEST" />
   </component>
 </module>

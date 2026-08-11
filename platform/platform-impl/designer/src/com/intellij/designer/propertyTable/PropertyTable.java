@@ -33,6 +33,7 @@ import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,6 +79,7 @@ import java.util.Set;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public abstract class PropertyTable extends JBTable {
   private static final Logger LOG = Logger.getInstance(PropertyTable.class);
   private static final Comparator<String> GROUP_COMPARATOR = (o1, o2) -> StringUtil.compare(o1, o2, true);

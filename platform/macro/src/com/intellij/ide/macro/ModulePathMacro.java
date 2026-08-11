@@ -9,7 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEnumerator;
 import org.jetbrains.annotations.NotNull;
 
-public final class ModulePathMacro extends Macro implements PathMacro {
+public final class ModulePathMacro extends Macro implements PathListMacro {
   @Override
   public @NotNull String getName() {
     return "ModuleSourcePath";

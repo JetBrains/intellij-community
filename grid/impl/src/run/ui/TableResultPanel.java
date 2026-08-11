@@ -24,6 +24,7 @@ import com.intellij.database.datagrid.GridSelection;
 import com.intellij.database.datagrid.GridSortingModel;
 import com.intellij.database.datagrid.GridUtilCore;
 import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.ResultViewColumn;
 import com.intellij.database.datagrid.ModelIndexSet;
 import com.intellij.database.datagrid.RawIndexConverter;
 import com.intellij.database.datagrid.ResultView;
@@ -580,6 +581,20 @@ public class TableResultPanel extends UserDataHolderBase
       expectedToModel.put(initialPosition, modelIndex);
     }
     myResultView.restoreColumnsOrder(expectedToModel);
+    restoreColumnWidths();
+  }
+
+  private void restoreColumnWidths() {
+    if (!(myResultView instanceof ResultViewWithColumns resultView)) return;
+    GridModel<GridRow, GridColumn> model = getDataModel(DATA_WITH_MUTATIONS);
+    for (ModelIndex<GridColumn> modelIndex : model.getColumnIndices().asIterable()) {
+      GridColumn column = model.getColumn(modelIndex);
+      if (column == null) continue;
+      int width = getInitialColumnWidth(column);
+      if (width <= 0) continue;
+      ResultViewColumn viewColumn = resultView.getLayoutColumnForDataColumn(modelIndex);
+      if (viewColumn != null) viewColumn.setColumnWidthByUser(width);
+    }
   }
 
   @Override
@@ -1351,8 +1366,11 @@ public class TableResultPanel extends UserDataHolderBase
 
   private void dropModelDependentCache() {
     if (!(myResultView instanceof ResultViewWithColumns resultViewWithColumns)) return;
-    for (var columnIdx : getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asIterable()) {
-      var layoutColumn = resultViewWithColumns.getLayoutColumn(columnIdx);
+    GridModel<GridRow, GridColumn> model = getDataModel(DATA_WITH_MUTATIONS);
+    // layout columns are backed by rows in a transposed view
+    var columnDataIndices = myResultView.isTransposed() ? model.getRowIndices().asIterable() : model.getColumnIndices().asIterable();
+    for (var columnDataIdx : columnDataIndices) {
+      var layoutColumn = resultViewWithColumns.getLayoutColumn(columnDataIdx);
       if (layoutColumn != null) {
         layoutColumn.dropModelDependentCache();
       }
@@ -1551,6 +1569,11 @@ public class TableResultPanel extends UserDataHolderBase
 
   protected @Nullable DisplayType getInitialDisplayType(@NotNull GridColumn column) {
     return null;
+  }
+
+  /** Restored user-set column width, or 0 when there is none. */
+  protected int getInitialColumnWidth(@NotNull GridColumn column) {
+    return 0;
   }
 
   @Override
@@ -1832,7 +1855,10 @@ public class TableResultPanel extends UserDataHolderBase
     GridSelection<GridRow, GridColumn> selection = getSelectionModel().store();
     resetOrderingAndVisibility();
     if (myResultView instanceof ResultViewWithRows) ((ResultViewWithRows)myResultView).resetRowHeights();
-    if (myResultView instanceof ResultViewWithColumns) ((ResultViewWithColumns)myResultView).createDefaultColumnsFromModel();
+    if (myResultView instanceof ResultViewWithColumns) {
+      ((ResultViewWithColumns)myResultView).resetColumnWidths();
+      ((ResultViewWithColumns)myResultView).createDefaultColumnsFromModel();
+    }
     myResultView.resetLayout();
     int[] modelIndices = copy.selectedModelIndices(this);
     selection.addSelectedColumns(this, ModelIndexSet.forColumns(this, modelIndices));

@@ -1,5 +1,5 @@
 // "Change function signature to 'fun <T : Number> f(a: T)'" "true"
-// K2_ERROR: 'f' overrides nothing. Potential signatures for overriding:<br>fun <T : Number> f(a: T): Unit
+// K2_ERROR: NOTHING_TO_OVERRIDE
 open class A {
     open fun <T : Number> f(a: T) {}
 }

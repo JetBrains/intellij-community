@@ -16,16 +16,20 @@ import org.jetbrains.jewel.ui.component.styling.ComboBoxStyle
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
+/** Provides access to [IntUiDefaultComboBoxStyleFactory] for creating default-style [ComboBoxStyle] instances. */
 public val ComboBoxStyle.Companion.Default: IntUiDefaultComboBoxStyleFactory
     get() = IntUiDefaultComboBoxStyleFactory
 
+/** Factory object for creating Int UI default [ComboBoxStyle] instances. */
 public object IntUiDefaultComboBoxStyleFactory {
+    /** Creates an Int UI light default [ComboBoxStyle] with the provided parameters. */
     public fun light(
         colors: ComboBoxColors = ComboBoxColors.Default.light(),
         metrics: ComboBoxMetrics = ComboBoxMetrics.defaultWithRowCount(maxPopupRowCount = 10),
         icons: ComboBoxIcons = ComboBoxIcons.defaults(),
     ): ComboBoxStyle = ComboBoxStyle(colors, metrics, icons)
 
+    /** Creates an Int UI dark default [ComboBoxStyle] with the provided parameters. */
     public fun dark(
         colors: ComboBoxColors = ComboBoxColors.Default.dark(),
         metrics: ComboBoxMetrics = ComboBoxMetrics.defaultWithRowCount(maxPopupRowCount = 10),
@@ -33,16 +37,20 @@ public object IntUiDefaultComboBoxStyleFactory {
     ): ComboBoxStyle = ComboBoxStyle(colors, metrics, icons)
 }
 
+/** Provides access to [IntUiUndecoratedComboBoxStyleFactory] for creating undecorated [ComboBoxStyle] instances. */
 public val ComboBoxStyle.Companion.Undecorated: IntUiUndecoratedComboBoxStyleFactory
     get() = IntUiUndecoratedComboBoxStyleFactory
 
+/** Factory object for creating Int UI undecorated [ComboBoxStyle] instances. */
 public object IntUiUndecoratedComboBoxStyleFactory {
+    /** Creates an Int UI light undecorated [ComboBoxStyle] with the provided parameters. */
     public fun light(
         colors: ComboBoxColors = ComboBoxColors.Undecorated.light(),
         metrics: ComboBoxMetrics = ComboBoxMetrics.undecoratedWithRowCount(maxPopupRowCount = 10),
         icons: ComboBoxIcons = ComboBoxIcons.defaults(),
     ): ComboBoxStyle = ComboBoxStyle(colors, metrics, icons)
 
+    /** Creates an Int UI dark undecorated [ComboBoxStyle] with the provided parameters. */
     public fun dark(
         colors: ComboBoxColors = ComboBoxColors.Undecorated.dark(),
         metrics: ComboBoxMetrics = ComboBoxMetrics.undecoratedWithRowCount(maxPopupRowCount = 10),
@@ -50,10 +58,13 @@ public object IntUiUndecoratedComboBoxStyleFactory {
     ): ComboBoxStyle = ComboBoxStyle(colors, metrics, icons)
 }
 
+/** Provides access to [IntUiDefaultComboBoxColorsFactory] for creating default-style [ComboBoxColors] instances. */
 public val ComboBoxColors.Companion.Default: IntUiDefaultComboBoxColorsFactory
     get() = IntUiDefaultComboBoxColorsFactory
 
+/** Factory object for creating Int UI default [ComboBoxColors] instances. */
 public object IntUiDefaultComboBoxColorsFactory {
+    /** Creates an Int UI light default [ComboBoxColors] with the provided parameters. */
     public fun light(
         background: Color = IntUiLightTheme.colors.gray(14),
         backgroundDisabled: Color = IntUiLightTheme.colors.gray(13),
@@ -91,6 +102,7 @@ public object IntUiDefaultComboBoxColorsFactory {
             borderHovered = borderHovered,
         )
 
+    /** Creates an Int UI dark default [ComboBoxColors] with the provided parameters. */
     public fun dark(
         background: Color = IntUiDarkTheme.colors.gray(2),
         backgroundDisabled: Color = background,
@@ -129,10 +141,13 @@ public object IntUiDefaultComboBoxColorsFactory {
         )
 }
 
+/** Provides access to [IntUiUndecoratedComboBoxColorsFactory] for creating undecorated [ComboBoxColors] instances. */
 public val ComboBoxColors.Companion.Undecorated: IntUiUndecoratedComboBoxColorsFactory
     get() = IntUiUndecoratedComboBoxColorsFactory
 
+/** Factory object for creating Int UI undecorated [ComboBoxColors] instances. */
 public object IntUiUndecoratedComboBoxColorsFactory {
+    /** Creates an Int UI light undecorated [ComboBoxColors] with the provided parameters. */
     public fun light(
         background: Color = Color.Transparent,
         backgroundDisabled: Color = background,
@@ -165,6 +180,7 @@ public object IntUiUndecoratedComboBoxColorsFactory {
             borderHovered = Color.Transparent,
         )
 
+    /** Creates an Int UI dark undecorated [ComboBoxColors] with the provided parameters. */
     public fun dark(
         background: Color = Color.Transparent,
         backgroundDisabled: Color = background,
@@ -198,6 +214,7 @@ public object IntUiUndecoratedComboBoxColorsFactory {
         )
 }
 
+/** Creates an Int UI default [ComboBoxMetrics] constrained by a maximum popup row count. */
 public fun ComboBoxMetrics.Companion.defaultWithRowCount(
     arrowAreaSize: DpSize = DpSize(28.dp, 28.dp),
     minSize: DpSize = DpSize(77.dp, 28.dp),
@@ -218,6 +235,7 @@ public fun ComboBoxMetrics.Companion.defaultWithRowCount(
         maxPopupRowCount,
     )
 
+/** Creates an Int UI default [ComboBoxMetrics] constrained by a maximum popup height. */
 public fun ComboBoxMetrics.Companion.default(
     arrowAreaSize: DpSize = DpSize(28.dp, 28.dp),
     minSize: DpSize = DpSize(77.dp, 28.dp),
@@ -238,6 +256,7 @@ public fun ComboBoxMetrics.Companion.default(
         8, // For backwards compatibility
     )
 
+/** Creates an Int UI undecorated [ComboBoxMetrics] constrained by a maximum popup row count. */
 public fun ComboBoxMetrics.Companion.undecoratedWithRowCount(
     arrowAreaSize: DpSize = DpSize(28.dp, 28.dp),
     minSize: DpSize = DpSize(77.dp, 28.dp),
@@ -258,6 +277,7 @@ public fun ComboBoxMetrics.Companion.undecoratedWithRowCount(
         maxPopupRowCount,
     )
 
+/** Creates an Int UI undecorated [ComboBoxMetrics] constrained by a maximum popup height. */
 public fun ComboBoxMetrics.Companion.undecorated(
     arrowAreaSize: DpSize = DpSize(28.dp, 28.dp),
     minSize: DpSize = DpSize(77.dp, 28.dp),
@@ -278,5 +298,6 @@ public fun ComboBoxMetrics.Companion.undecorated(
         8,
     )
 
+/** Creates a default [ComboBoxIcons] with the provided parameters. */
 public fun ComboBoxIcons.Companion.defaults(chevronDown: IconKey = AllIconsKeys.General.ChevronDown): ComboBoxIcons =
     ComboBoxIcons(chevronDown)

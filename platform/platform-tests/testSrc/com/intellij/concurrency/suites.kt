@@ -6,6 +6,7 @@ import com.intellij.openapi.application.impl.BlockingSuspendingReadActionTest
 import com.intellij.openapi.application.impl.CancellableReadActionWithIndicatorTest
 import com.intellij.openapi.application.impl.CancellableReadActionWithJobTest
 import com.intellij.openapi.application.impl.EdtCoroutineDispatcherTest
+import com.intellij.openapi.application.impl.EdtWriteActionTest
 import com.intellij.openapi.application.impl.ImplicitReadTest
 import com.intellij.openapi.application.impl.LaterInvocatorTest
 import com.intellij.openapi.application.impl.LockDowngradingTest
@@ -82,6 +83,7 @@ import org.junit.platform.suite.api.Suite
   PlatformUtilitiesTest::class,
   WriteIntentReadActionTest::class,
   NonBlockingFlushQueueTest::class,
+  EdtWriteActionTest::class,
 
   // propagation
   ThreadContextPropagationTest::class,

@@ -3,6 +3,7 @@ package com.intellij.ide.starter.utils
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.runner.SetupException
+import com.intellij.ide.starter.utils.Git.setConfigProperty
 import com.intellij.openapi.application.PathManager
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
@@ -47,13 +48,19 @@ object Git {
 
   @Throws(IOException::class, InterruptedException::class)
   fun getLocalCurrentCommitHash(repositoryDirectory: Path): String {
+    return getCommitHash(repositoryDirectory, "HEAD")
+  }
+
+  @Throws(IOException::class, InterruptedException::class)
+  fun getCommitHash(repositoryDirectory: Path, branchName: String): String {
+    require(branchName.isNotEmpty()) { "Branch name must not be empty" }
     val stdout = ExecOutputRedirect.ToString()
 
     ProcessExecutor(
-      "git-local-current-commit-get",
+      "git-commit-get",
       workDir = repositoryDirectory.toAbsolutePath(),
       timeout = 1.minutes,
-      args = listOf("git", "rev-parse", "HEAD"),
+      args = listOf("git", "rev-parse", branchName),
       stdoutRedirect = stdout
     ).start()
 
@@ -225,11 +232,15 @@ object Git {
   }
 
 
-  fun checkout(repositoryDirectory: Path, branchName: String = "") {
+  fun checkout(repositoryDirectory: Path, branchName: String, isForce: Boolean = false) {
+    require(branchName.isNotEmpty()) { "Branch name should not be empty" }
     val cmdName = "git-checkout"
 
     val arguments = mutableListOf("git", "checkout")
-    if (branchName.isNotEmpty()) arguments.add(branchName)
+    if (isForce) {
+      arguments.add("-f")
+    }
+    arguments.add(branchName)
 
     ProcessExecutor(
       presentableName = cmdName,
@@ -242,14 +253,53 @@ object Git {
     ).start()
   }
 
-  fun fetch(repositoryDirectory: Path) {
-    val cmdName = "git-fetch"
+  fun checkoutNewBranch(repositoryDirectory: Path, branchName: String) {
+    require(branchName.isNotEmpty()) { "Branch name should not be empty" }
+    val cmdName = "git-checkout-new-branch"
+    val stdout = ExecOutputRedirect.ToString()
+
+    val arguments = mutableListOf("git", "checkout", "-b", branchName)
 
     ProcessExecutor(
       presentableName = cmdName,
       workDir = repositoryDirectory.toAbsolutePath(),
       timeout = 10.minutes,
-      args = listOf("git", "fetch"),
+      args = arguments,
+      stdoutRedirect = stdout,
+      stderrRedirect = stdout,
+      onlyEnrichExistedEnvVariables = true
+    ).start()
+  }
+
+  fun createBranch(repositoryDirectory: Path, branchName: String, startPoint: String = "") {
+    val cmdName = "git-create-branch"
+    val stdout = ExecOutputRedirect.ToString()
+
+    val arguments = mutableListOf("git", "branch", branchName)
+    if (startPoint.isNotEmpty()) {
+      arguments.add(startPoint)
+    }
+    ProcessExecutor(
+      cmdName,
+      workDir = repositoryDirectory.toAbsolutePath(),
+      timeout = 1.minutes,
+      args = arguments,
+      stdoutRedirect = stdout,
+      onlyEnrichExistedEnvVariables = true
+    ).start()
+  }
+
+  fun fetch(repositoryDirectory: Path, remote: String = "") {
+    val cmdName = "git-fetch"
+
+    val arguments = mutableListOf("git", "fetch")
+    if (remote.isNotEmpty()) arguments.add(remote)
+
+    ProcessExecutor(
+      presentableName = cmdName,
+      workDir = repositoryDirectory.toAbsolutePath(),
+      timeout = 10.minutes,
+      args = arguments,
       stdoutRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
       stderrRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
       onlyEnrichExistedEnvVariables = true
@@ -284,6 +334,43 @@ object Git {
     ).start()
   }
 
+  fun merge(repositoryDirectory: Path, branchName: String, vararg options: String) {
+    require(branchName.isNotEmpty()) { "Branch name should not be empty" }
+    val cmdName = "git-merge"
+    ProcessExecutor(
+      presentableName = cmdName,
+      workDir = repositoryDirectory.toAbsolutePath(),
+      timeout = 10.minutes,
+      args = buildList {
+        add("git")
+        add("merge")
+        addAll(options)
+        add(branchName)
+      },
+      stdoutRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
+      stderrRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
+      onlyEnrichExistedEnvVariables = true
+    ).start()
+  }
+
+  fun push(repositoryDirectory: Path, branch: String = "master", remote: String = "origin", setUpstream: Boolean = false) {
+    val cmdName = "git-push"
+
+    val arguments = mutableListOf("git", "push")
+    if (setUpstream) arguments.add("-u")
+    arguments.addAll(listOf(remote, branch))
+
+    ProcessExecutor(
+      presentableName = cmdName,
+      workDir = repositoryDirectory.toAbsolutePath(),
+      timeout = 10.minutes,
+      args = arguments,
+      stdoutRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
+      stderrRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
+      onlyEnrichExistedEnvVariables = true
+    ).start()
+  }
+
   fun deleteBranch(workDir: Path, targetBranch: String) {
     val stdout = ExecOutputRedirect.ToString()
     ProcessExecutor(
@@ -294,12 +381,16 @@ object Git {
     ).start()
   }
 
-  fun init(workDir: Path) {
+  fun init(workDir: Path, bare: Boolean = false) {
     val stdout = ExecOutputRedirect.ToString()
     ProcessExecutor(
       "git-init",
       workDir = workDir, timeout = 1.minutes,
-      args = listOf("git", "init"),
+      args = buildList {
+        add("git")
+        add("init")
+        if (bare) add("--bare")
+      },
       stdoutRedirect = stdout
     ).start()
   }
@@ -314,6 +405,90 @@ object Git {
     ).start()
   }
 
+  fun add(workDir: Path, filePath: String) {
+    require(filePath.isNotEmpty()) { "File path should not be empty" }
+
+    val cmdName = "git-add"
+    val stdout = ExecOutputRedirect.ToString()
+    ProcessExecutor(
+      presentableName = cmdName,
+      workDir = workDir,
+      timeout = 1.minutes,
+      args = buildList {
+        add("git")
+        add("add")
+        add(filePath)
+      },
+      stdoutRedirect = stdout,
+      stderrRedirect = stdout,
+    ).start()
+  }
+
+  fun rm(workDir: Path, filePath: String) {
+    require(filePath.isNotEmpty()) { "File path should not be empty" }
+
+    val cmdName = "git-rm"
+    val stdout = ExecOutputRedirect.ToString()
+    ProcessExecutor(
+      presentableName = cmdName,
+      workDir = workDir,
+      timeout = 1.minutes,
+      args = listOf("git", "rm", filePath),
+      stdoutRedirect = stdout,
+      stderrRedirect = stdout,
+    ).start()
+  }
+
+  fun mv(workDir: Path, from: String, to: String) {
+    require(from.isNotEmpty() && to.isNotEmpty()) { "Paths should not be empty" }
+
+    val cmdName = "git-mv"
+    val stdout = ExecOutputRedirect.ToString()
+    ProcessExecutor(
+      presentableName = cmdName,
+      workDir = workDir,
+      timeout = 1.minutes,
+      args = listOf("git", "mv", from, to),
+      stdoutRedirect = stdout,
+      stderrRedirect = stdout,
+    ).start()
+  }
+
+  fun commit(workDir: Path, message: String): String {
+    require(message.isNotEmpty()) { "Message should not be empty" }
+
+    val cmdName = "git-commit"
+    val stdout = ExecOutputRedirect.ToString()
+    val arguments = mutableListOf("git", "commit", "-m", message)
+
+    ProcessExecutor(
+      presentableName = cmdName,
+      workDir = workDir.toAbsolutePath(),
+      timeout = 1.minutes,
+      args = arguments,
+      stdoutRedirect = stdout,
+      stderrRedirect = stdout,
+      onlyEnrichExistedEnvVariables = true
+    ).start()
+
+    return getLocalCurrentCommitHash(workDir)
+  }
+
+  fun move(workDir: Path, source: String, destination: String) {
+    require(source.isNotEmpty() && destination.isNotEmpty()) { "Source and destination must not be empty" }
+
+    val stdout = ExecOutputRedirect.ToString()
+    ProcessExecutor(
+      presentableName = "git-mv",
+      workDir = workDir.toAbsolutePath(),
+      timeout = 1.minutes,
+      args = listOf("git", "mv", source, destination),
+      stdoutRedirect = stdout,
+      stderrRedirect = stdout,
+      onlyEnrichExistedEnvVariables = true
+    ).start()
+  }
+
   fun pruneWorktree(pathToDir: Path) {
     val stdout = ExecOutputRedirect.ToString()
     ProcessExecutor(
@@ -322,6 +497,53 @@ object Git {
       args = listOf("git", "worktree", "prune"),
       stdoutRedirect = stdout
     ).start()
+  }
+
+  fun worktreeAdd(workDir: Path, branchName: String, worktreePath: String, startPoint: String = "") {
+    val stdout = ExecOutputRedirect.ToString()
+
+    val arguments = mutableListOf("git", "worktree", "add", "-b", branchName, worktreePath)
+    if (startPoint.isNotEmpty()) {
+      arguments.add(startPoint)
+    }
+
+    ProcessExecutor(
+      "git-worktree-add",
+      workDir = workDir, timeout = 1.minutes,
+      args = arguments,
+      stdoutRedirect = stdout,
+      onlyEnrichExistedEnvVariables = true
+    ).start()
+  }
+
+  fun worktreeRemove(workDir: Path, worktreePath: String) {
+    val stdout = ExecOutputRedirect.ToString()
+    ProcessExecutor(
+      "git-worktree-remove",
+      workDir = workDir,
+      timeout = 1.minutes,
+      args = listOf("git", "worktree", "remove", "--force", worktreePath),
+      stdoutRedirect = stdout,
+      onlyEnrichExistedEnvVariables = true
+    ).start()
+  }
+
+  fun worktreeListPorcelain(workDir: Path): String? {
+    val stdout = ExecOutputRedirect.ToString()
+    return try {
+      ProcessExecutor(
+        "git-worktree-list",
+        workDir = workDir,
+        timeout = 1.minutes,
+        args = listOf("git", "worktree", "list", "--porcelain"),
+        stdoutRedirect = stdout,
+        onlyEnrichExistedEnvVariables = true
+      ).start()
+      stdout.read()
+    }
+    catch (_: Exception) {
+      null
+    }
   }
 
   fun getStatus(pathToDir: Path): String {
@@ -333,6 +555,30 @@ object Git {
       stdoutRedirect = stdout
     ).start()
     return stdout.read()
+  }
+
+  fun getStagedFiles(repositoryDirectory: Path): String {
+    val stdout = ExecOutputRedirect.ToString()
+    ProcessExecutor(
+      "git-diff-cached-name-only",
+      workDir = repositoryDirectory.toAbsolutePath(),
+      timeout = 1.minutes,
+      args = listOf("git", "diff", "--cached", "--name-only"),
+      stdoutRedirect = stdout
+    ).start()
+    return stdout.read().trim()
+  }
+
+  fun getUnstagedFiles(repositoryDirectory: Path): String {
+    val stdout = ExecOutputRedirect.ToString()
+    ProcessExecutor(
+      "git-diff-name-only",
+      workDir = repositoryDirectory.toAbsolutePath(),
+      timeout = 1.minutes,
+      args = listOf("git", "diff", "--name-only"),
+      stdoutRedirect = stdout
+    ).start()
+    return stdout.read().trim()
   }
 
   fun getDiff(pathToDir: Path, diffStart: String, diffEnd: String): String {
@@ -415,6 +661,35 @@ object Git {
     return stdout.read().trim()
   }
 
+  /**
+   * Returns the parent commit hashes of [ref] (one per parent), via `git rev-parse <ref>^@`.
+   * A root commit yields an empty list.
+   */
+  fun getParentCommits(repositoryDirectory: Path, ref: String = "HEAD"): List<String> {
+    val stdout = ExecOutputRedirect.ToString()
+    ProcessExecutor(
+      "git-rev-parse-parents",
+      workDir = repositoryDirectory.toAbsolutePath(),
+      timeout = 1.minutes,
+      args = listOf("git", "rev-parse", "$ref^@"),
+      stdoutRedirect = stdout
+    ).start()
+    return stdout.read().trim().lines().filter { it.isNotBlank() }
+  }
+
+  fun getLog(repositoryDirectory: Path, count: Int): List<String> {
+    require(count > 0) { "Count must be positive" }
+    val stdout = ExecOutputRedirect.ToString()
+    ProcessExecutor(
+      "git-log-oneline",
+      workDir = repositoryDirectory.toAbsolutePath(),
+      timeout = 1.minutes,
+      args = listOf("git", "log", "--oneline", "-n$count"),
+      stdoutRedirect = stdout
+    ).start()
+    return stdout.read().trim().lines().filter { it.isNotBlank() }
+  }
+
   fun createWorktree(dir: Path, targetBranch: String, worktree_dir: String, commit: String = ""): String {
     val stdout = ExecOutputRedirect.ToString()
     val stderr = ExecOutputRedirect.ToString()
@@ -463,6 +738,70 @@ object Git {
       workDir = dir, timeout = 1.minutes,
       args = listOf("git", "config", "--local", propertyName, "$value"),
       stdoutRedirect = stdout
+    ).start()
+  }
+
+  fun getConfigProperty(repositoryDirectory: Path, propertyName: String): String {
+    require(propertyName.isNotEmpty()) { "Property name must not be empty" }
+    val propertyValue = ExecOutputRedirect.ToString()
+
+    runCatching {
+      ProcessExecutor(
+        propertyName,
+        workDir = repositoryDirectory.toAbsolutePath(),
+        timeout = 10.seconds,
+        args = listOf("git", "config", propertyName),
+        stdoutRedirect = propertyValue,
+        stderrRedirect = ExecOutputRedirect.ToString(),
+        onlyEnrichExistedEnvVariables = true
+      ).start()
+    }
+
+    return propertyValue.read().trim()
+  }
+
+  /**
+   * Returns the URL configured for [remote], or an empty string if the remote is not configured.
+   */
+  fun getRemoteUrl(repositoryDirectory: Path, remote: String): String {
+    val stdout = ExecOutputRedirect.ToString()
+    runCatching {
+      ProcessExecutor(
+        "git-remote-get-url",
+        workDir = repositoryDirectory.toAbsolutePath(),
+        timeout = 10.seconds,
+        args = listOf("git", "remote", "get-url", remote),
+        stdoutRedirect = stdout,
+        stderrRedirect = ExecOutputRedirect.ToString(),
+        onlyEnrichExistedEnvVariables = true
+      ).start()
+    }
+    return stdout.read().trim()
+  }
+
+  fun addRemote(repositoryDirectory: Path, remote: String, url: String) {
+    val cmdName = "git-remote-add"
+    ProcessExecutor(
+      presentableName = cmdName,
+      workDir = repositoryDirectory.toAbsolutePath(),
+      timeout = 1.minutes,
+      args = listOf("git", "remote", "add", remote, url),
+      stdoutRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
+      stderrRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
+      onlyEnrichExistedEnvVariables = true
+    ).start()
+  }
+
+  fun setRemoteUrl(repositoryDirectory: Path, remote: String, url: String) {
+    val cmdName = "git-remote-set-url"
+    ProcessExecutor(
+      presentableName = cmdName,
+      workDir = repositoryDirectory.toAbsolutePath(),
+      timeout = 1.minutes,
+      args = listOf("git", "remote", "set-url", remote, url),
+      stdoutRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
+      stderrRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
+      onlyEnrichExistedEnvVariables = true
     ).start()
   }
 
@@ -515,5 +854,50 @@ object Git {
     return System.currentTimeMillis() - start
   }
 
+  /**
+   * Returns a list of tracked files modified since the last commit (both staged and unstaged).
+   * Untracked files (e.g. qodana.yaml added by the test framework) are not included.
+   */
+  @Throws(IOException::class, InterruptedException::class)
+  fun getModifiedTrackedFiles(repositoryDirectory: Path): List<String> {
+    val stdout = ExecOutputRedirect.ToString()
+    ProcessExecutor(
+      "git-diff-name-only",
+      workDir = repositoryDirectory.toAbsolutePath(),
+      timeout = 1.minutes,
+      args = listOf("git", "diff", "--name-only", "HEAD"),
+      stdoutRedirect = stdout,
+      stderrRedirect = ExecOutputRedirect.ToStdOut("[git-diff-name-only]"),
+      onlyEnrichExistedEnvVariables = true
+    ).start()
+    return stdout.read().trim().lines().filter { it.isNotBlank() }
+  }
 }
 
+/**
+ * Configures git user.name and user.email for the repository if not already set.
+ * Configuration is applied locally (repository-level, not global).
+ *
+ * @param repositoryDirectory path to the git repository
+ * @param userName the user name to set if not configured (default: "Test User")
+ * @param userEmail the user email to set if not configured (default: "test-user@jetbrains.com")
+ */
+fun Git.configureGitUserIfNotSet(
+  repositoryDirectory: Path,
+  userName: String = "Test User",
+  userEmail: String = "test-user@jetbrains.com",
+) {
+  val currentUserName = getConfigProperty(repositoryDirectory, "user.name")
+  val currentUserEmail = getConfigProperty(repositoryDirectory, "user.email")
+
+  setPropertyIfEmpty(repositoryDirectory, "user.name", currentUserName, userName)
+  setPropertyIfEmpty(repositoryDirectory, "user.email", currentUserEmail, userEmail)
+}
+
+private fun setPropertyIfEmpty(repositoryDirectory: Path, propertyName: String, currentValue: String, defaultValue: String) {
+  if (currentValue.isEmpty()) {
+    require(defaultValue.isNotEmpty()) { "defaultValue must not be empty" }
+    setConfigProperty(repositoryDirectory, propertyName, defaultValue)
+    logOutput("Git $propertyName set to '$defaultValue' for repository: $repositoryDirectory")
+  }
+}

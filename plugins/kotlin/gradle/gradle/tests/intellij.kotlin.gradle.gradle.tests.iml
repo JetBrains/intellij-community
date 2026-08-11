@@ -9,12 +9,12 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
-    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" />
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
@@ -33,7 +33,6 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="kotlin.jvm.shared" />
     <orderEntry type="module" module-name="intellij.kotlin.migration" />
-    <orderEntry type="module" module-name="kotlin.inspections" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.groovy" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.common" />
@@ -47,7 +46,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.native" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
-    <orderEntry type="library" exported="" name="kotlin-tooling-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.tooling.core" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.jvm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.completion.tests.shared" scope="TEST" />
@@ -55,5 +54,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
   </component>
 </module>

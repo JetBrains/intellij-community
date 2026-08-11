@@ -54,68 +54,6 @@ import org.jetbrains.jewel.ui.util.isDark
  * @param enabled Controls whether the tooltip can be shown. When false, it will never show
  * @param style The visual styling configuration for the tooltip
  * @param tooltipPlacement The placement strategy for positioning the tooltip relative to the content
- * @param autoHideBehavior The delay before the tooltip is automatically hidden. Jewel offers three options, matching
- *   Swing behavior. [AutoHideBehavior.Normal] is a shorter delay (10 seconds) to be used when the tooltip text is a
- *   single line. [AutoHideBehavior.Long] is a longer delay (30 seconds) to be used when the tooltip text is multi-line.
- *   [AutoHideBehavior.Never] to never hide the tooltip. [AutoHideBehavior.Normal] and [AutoHideBehavior.Long] durations
- *   can be altered using [org.jetbrains.jewel.ui.component.styling.TooltipMetrics].
- * @param content The component for which to show the tooltip on hover
- * @see com.intellij.ide.HelpTooltip
- */
-@Suppress("DEPRECATION")
-@Deprecated("Please, use the overload without the [AutoHideBehavior].")
-@Composable
-public fun Tooltip(
-    tooltip: @Composable () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    style: TooltipStyle = JewelTheme.tooltipStyle,
-    tooltipPlacement: TooltipPlacement = style.metrics.placement,
-    autoHideBehavior: AutoHideBehavior = AutoHideBehavior.Normal,
-    content: @Composable () -> Unit,
-) {
-    JewelTooltipArea(
-        tooltip = {
-            TooltipImpl(
-                enabled = enabled,
-                style = style,
-                autoHideBehavior =
-                    when (autoHideBehavior) {
-                        AutoHideBehavior.Normal -> TooltipAutoHideBehavior.Normal
-                        AutoHideBehavior.Long -> TooltipAutoHideBehavior.Long
-                        AutoHideBehavior.Never -> TooltipAutoHideBehavior.Never
-                    },
-                tooltip = tooltip,
-            )
-        },
-        modifier = modifier,
-        delayMillis = style.metrics.showDelay.inWholeMilliseconds.toInt(),
-        tooltipPlacement = tooltipPlacement,
-        cornerSize = style.metrics.cornerSize,
-        content = content,
-    )
-}
-
-/**
- * A tooltip component that follows the standard visual styling.
- *
- * Provides a floating tooltip that appears when hovering over or focusing the target content. The tooltip follows
- * platform conventions for timing, positioning, and appearance, supporting both mouse and keyboard navigation.
- *
- * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/tooltip.html)
- *
- * **Usage example:**
- * [`Tooltips.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Tooltips.kt)
- *
- * **Swing equivalent:**
- * [`HelpTooltip`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ide/HelpTooltip.java)
- * and [How to Use Tool Tips](https://docs.oracle.com/javase/tutorial/uiswing/components/tooltip.html)
- *
- * @param tooltip The content to be displayed in the tooltip
- * @param modifier Modifier to apply to the content's wrapper
- * @param enabled Controls whether the tooltip can be shown. When false, it will never show
- * @param style The visual styling configuration for the tooltip
- * @param tooltipPlacement The placement strategy for positioning the tooltip relative to the content
  * @param content The component for which to show the tooltip on hover
  * @see com.intellij.ide.HelpTooltip
  */
@@ -253,16 +191,3 @@ public fun rememberPopupPositionProviderAtFixedPosition(
             )
         }
     }
-
-// TODO: When removing it, please replace usages with [TooltipAutoHideBehavior]
-@Deprecated(
-    "Replace with TooltipAutoHideBehavior",
-    replaceWith =
-        ReplaceWith("TooltipAutoHideBehavior", "org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior"),
-    level = DeprecationLevel.WARNING,
-)
-public enum class AutoHideBehavior {
-    Never,
-    Normal,
-    Long,
-}

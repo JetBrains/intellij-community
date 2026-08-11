@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.ide.util.io.impl` start
-
 jvm_library(
     name = "ide-util-io-impl",
     srcs = glob(
@@ -25,7 +24,7 @@ jvm_library(
         "//libraries/winp",
         "//platform/util",
         "//libraries/proxy-vole",
-        "@lib//:jna",
+        "//libraries/jna",
         "//libraries/jackson3/jackson:libraries-jackson3",
     ],
 )
@@ -50,6 +49,7 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//libraries/proxy-vole:proxy-vole_test_lib",
         "//libraries/rhino:rhino_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
     ],
 )

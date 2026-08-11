@@ -1,6 +1,6 @@
 // WITH_STDLIB
 // PROBLEM: none
-// K2_ERROR: Cannot infer type for type parameter 'T'. Specify it explicitly.
-// K2_ERROR: Function invocation 'arrayOf(...)' expected.
-// K2_ERROR: Unresolved reference 'compareTo'.
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: FUNCTION_CALL_EXPECTED
+// K2_ERROR: UNRESOLVED_REFERENCE
 val test<caret> = arrayOf<java.lang.String.valueOf(1)>

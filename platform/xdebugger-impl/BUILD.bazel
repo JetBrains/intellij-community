@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.debugger.impl` start
-
 create_kotlinc_options(
     name = "custom_debugger-impl",
     x_context_parameters = True,
@@ -79,7 +78,6 @@ jvm_library(
         "//libraries/jackson/databind",
         "//platform/kernel/shared:kernel",
         "//platform/forms_rt:java-guiForms-rt",
-        "//platform/platform-impl/internal",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
         "//platform/project/shared:project",
@@ -148,7 +146,6 @@ jvm_library(
         "//libraries/jackson/databind:databind_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
-        "//platform/platform-impl/internal:internal_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//platform/project/shared:project_test_lib",
@@ -175,7 +172,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.debugger.impl` end
 
 ### auto-generated section `build intellij.platform.debugger.impl.tests` start
-
 create_kotlinc_options(
     name = "custom_debugger-impl-tests",
     x_context_parameters = True,
@@ -332,6 +328,10 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//fleet/rhizomedb",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.debugger.impl.tests` end
@@ -346,7 +346,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.debugger.impl.tests` end
 
 ### auto-generated section `test intellij.platform.debugger.impl.tests` start
-
 jps_test(
     name = "debugger-impl-tests_test",
     runtime_deps = [":debugger-impl-tests_test_lib"],

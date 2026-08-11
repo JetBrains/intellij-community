@@ -18,13 +18,35 @@ class ProcessFunctions(
   val waitForExit: suspend () -> Unit,
   private val killProcess: suspend () -> Unit,
 ) {
-  suspend fun killAndJoin(warn: (String) -> Unit, processNameForDebug: String) {
-    withContext(NonCancellable) {
-      warn("Sending kill to $processNameForDebug")
-      killProcess()
-      warn("Kill sent to $processNameForDebug, waiting")
-      waitForExit()
-      warn("Process $processNameForDebug died")
+
+  private suspend fun killAndJoinInternal(
+    warn: (String) -> Unit,
+    processNameForDebug: String,
+  ) {
+    warn("Sending kill to $processNameForDebug")
+    killProcess()
+    warn("Kill sent to $processNameForDebug, waiting")
+    waitForExit()
+    warn("Process $processNameForDebug died")
+  }
+
+  suspend fun killAndJoin(
+    warn: (String) -> Unit,
+    processNameForDebug: String,
+    killExecutionScope: CoroutineScope? = null,
+  ) {
+    if (killExecutionScope == null) {
+      withContext(NonCancellable) {
+        killAndJoinInternal(warn, processNameForDebug)
+      }
+    }
+    else {
+      val killJob = killExecutionScope.launch(CoroutineName("kill+join $processNameForDebug") + Dispatchers.IO) {
+        killAndJoinInternal(warn, processNameForDebug)
+      }
+      withContext(NonCancellable) {
+        killJob.join()
+      }
     }
   }
 }
@@ -37,12 +59,13 @@ class ProcessFunctions(
 fun CoroutineScope.bindProcessToScopeImpl(
   warn: (String) -> Unit,
   processNameForDebug: String,
+  killExecutionScope: CoroutineScope? = null,
   processFunctions: ProcessFunctions,
 ) {
   val context = CoroutineName("Waiting for process $processNameForDebug") + Dispatchers.IO
 
   suspend fun killAndJoin() {
-    processFunctions.killAndJoin(warn, processNameForDebug)
+    processFunctions.killAndJoin(warn, processNameForDebug, killExecutionScope)
   }
 
   if (!isActive) {

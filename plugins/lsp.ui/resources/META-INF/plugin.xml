@@ -1,13 +1,31 @@
-<idea-plugin package="com.intellij.lsp.ui" allow-bundled-update="true">
-  <name>LSP Servers</name>
+<idea-plugin allow-bundled-update="true">
+  <name>LSP Connection Manager</name>
   <id>com.intellij.lsp.ui</id>
-  <category>Other Tools</category>
-  <description><![CDATA[
-    This plugin provides a UI for managing LSP servers.
-  ]]></description>
+  <category>IDE Settings</category>
   <vendor>JetBrains</vendor>
+  <description><![CDATA[
+    Provides UI for managing LSP servers via configuration. Just add server settings to .
+  ]]></description>
 
-  <incompatible-with>com.intellij.jetbrains.client</incompatible-with>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
+    <!-- endregion -->
+  </dependencies>
+  <content namespace="jetbrains"/>
+
+  <resource-bundle>messages.LspUiBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectConfigurable id="lsp.servers"
@@ -15,11 +33,9 @@
                          key="lsp.settings.display.name"
                          instance="com.intellij.lsp.ui.settings.LspServersConfigurable"
                          parentId="tools"/>
-    <platform.lsp.clientProvider implementation="com.intellij.lsp.ui.ConfigurableLspClientProvider"/>
-
-    <!-- Statistics -->
+    <platform.lsp.integrationProvider implementation="com.intellij.lsp.ui.ConfigurableLspIntegrationProvider"/>
+    <pluginAdvertiserSuppressor implementation="com.intellij.lsp.ui.LspConfiguredPluginAdvertiserSuppressor"/>
     <statistics.projectUsagesCollector implementation="com.intellij.lsp.ui.statistics.LspServerUsagesCollector"/>
     <projectSettings service="com.intellij.lsp.ui.settings.LspServerSettings"/>
   </extensions>
-  <resource-bundle>messages.LspUiBundle</resource-bundle>
 </idea-plugin>

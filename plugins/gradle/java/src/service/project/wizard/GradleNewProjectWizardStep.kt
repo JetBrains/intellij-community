@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.wizard
 
 import com.intellij.CommonBundle
@@ -293,7 +293,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     if (GradleJvmSupportMatrix.isJavaSupportedByIdea(javaVersion)) {
       return null
     }
-    val oldestSupportedJavaVersion = GradleJvmSupportMatrix.getOldestSupportedJavaVersionByIdea()
+    val oldestSupportedJavaVersion = GradleJvmSupportMatrix.suggestOldestSupportedJavaVersionByIdea()
     return errorWithDialog(
       withDialog = withDialog,
       message = GradleBundle.message(
@@ -316,7 +316,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     if (GradleJvmSupportMatrix.isGradleSupportedByIdea(gradleVersion)) {
       return null
     }
-    val oldestSupportedGradleVersion = GradleJvmSupportMatrix.getOldestSupportedGradleVersionByIdea()
+    val oldestSupportedGradleVersion = GradleJvmSupportMatrix.suggestOldestSupportedGradleVersionByIdea()
     return errorWithDialog(
       withDialog = withDialog,
       message = GradleBundle.message(

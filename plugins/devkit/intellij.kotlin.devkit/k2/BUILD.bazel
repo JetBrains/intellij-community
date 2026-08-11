@@ -1,8 +1,7 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.devkit.k2` start
-
 create_kotlinc_options(
     name = "custom_k2",
     opt_in = [
@@ -33,8 +32,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
-        "@lib//:kotlinc-analysis-api-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
@@ -42,7 +41,7 @@ jvm_library(
         "//platform/lang-impl",
         "//java/java-psi-api:psi",
         "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
         "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
         "//platform/core-impl",
         "//plugins/devkit/devkit-core:core",
@@ -63,8 +62,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":k2",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
-        "@lib//:kotlinc-analysis-api-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
@@ -72,7 +71,7 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//java/java-psi-api:psi_test_lib",
         "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit_test_lib",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
         "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//plugins/devkit/devkit-core:core_test_lib",

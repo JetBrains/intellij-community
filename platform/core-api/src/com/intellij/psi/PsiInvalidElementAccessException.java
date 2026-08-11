@@ -262,7 +262,7 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
     if (!vFile.isValid()) {
       return vFile + " is invalid";
     }
-    if (!provider.isPhysical()) {
+    if (!provider.correspondsToRealFile()) {
       PsiElement context = psiFile.getContext();
       if (context != null && !context.isValid()) {
         return "invalid context: " + findOutInvalidationReason(context);
@@ -289,7 +289,7 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
       return "different providers: " + provider + "(" + id(provider) + "); " + p + "(" + id(p) + ")";
     }
 
-    if (!provider.isPhysical()) {
+    if (!provider.correspondsToRealFile()) {
       return "non-physical provider: " + provider; // "dummy" file?
     }
 

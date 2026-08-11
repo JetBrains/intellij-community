@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.parsing;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
 import com.intellij.lang.LanguageASTFactory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
@@ -28,6 +30,8 @@ import java.util.Collection;
 
 
 @TestDataPath("$CONTENT_ROOT/../testData/psi/")
+@Subsystems.Parsing
+@Layers.Functional
 public class PythonParsingTest extends ParsingTestCase {
   private LanguageLevel myLanguageLevel = LanguageLevel.getDefault();
 
@@ -1451,6 +1455,11 @@ public class PythonParsingTest extends ParsingTestCase {
   // `Unresolved reference 'lazy'` suggestion to install the `lazy` package.
   public void testLazyImportOnOlderPython() {
     doTest(LanguageLevel.PYTHON314);
+  }
+
+  // PEP 798: unpacking (* and **) in comprehensions and generator expressions
+  public void testUnpackingInComprehensions() {
+    doTest(LanguageLevel.PYTHON315);
   }
 
   public void doTest() {

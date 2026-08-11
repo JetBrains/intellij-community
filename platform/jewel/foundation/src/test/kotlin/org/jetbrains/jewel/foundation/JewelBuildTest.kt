@@ -1,8 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.foundation
 
+import com.intellij.platform.bazel.runfiles.BazelRunfiles
 import java.io.File
 import java.util.Properties
+import org.junit.Assert.assertEquals
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 
 private const val JEWEL_MARKER_FILE_NAME = "JEWEL_MARKER"
@@ -29,7 +32,52 @@ internal class JewelBuildTest {
         }
     }
 
+    @Test
+    fun `KOTLIN_VERSION in the jewel-checks workflow should match the build Kotlin in libs versions toml`() {
+        val jewelHome = findJewelHomeDir()
+
+        val libsVersionsToml = jewelHome.resolve("gradle/libs.versions.toml")
+        if (!libsVersionsToml.isFile) {
+            error("Cannot load the libs.versions.toml file from ${libsVersionsToml.absolutePath}")
+        }
+
+        // The workflow lives at the repository root, outside the Jewel tree, so it is not present in
+        // every environment that runs these tests (e.g. the Bazel sandbox). Skip when it is missing.
+        val workflowFile = jewelHome.parentFile?.parentFile?.resolve(".github/workflows/jewel-checks.yml")
+        assumeTrue(
+            "Skipping: the jewel-checks workflow is not available in this environment " +
+                "(${workflowFile?.absolutePath}).",
+            workflowFile?.isFile == true,
+        )
+
+        // libs.versions.toml is the source of truth; the workflow must follow it.
+        val buildKotlin = readBuildKotlinVersion(libsVersionsToml)
+        check(buildKotlin.isNotBlank()) {
+            "Could not find a `kotlin = \"...\"` entry under [versions] in ${libsVersionsToml.absolutePath}"
+        }
+
+        val ciKotlin = readWorkflowKotlinVersion(workflowFile!!)
+        check(ciKotlin.isNotBlank()) { "Could not find a `KOTLIN_VERSION:` env entry in ${workflowFile.absolutePath}" }
+
+        val errorMessage = buildString {
+            appendLine("The Kotlin version is out of sync between the Jewel build and the Jewel Checks CI workflow!")
+            appendLine("Build Kotlin (source of truth): '$buildKotlin'")
+            appendLine("Workflow KOTLIN_VERSION:        '$ciKotlin'")
+            appendLine("----------------------------------------------------------")
+            appendLine("To fix, set KOTLIN_VERSION in '.github/workflows/jewel-checks.yml' to '$buildKotlin'")
+            appendLine("so it matches the 'kotlin' version in 'platform/jewel/gradle/libs.versions.toml'.")
+        }
+
+        assertEquals(errorMessage, buildKotlin, ciKotlin)
+    }
+
     private fun findJewelHomeDir(): File {
+        if (BazelRunfiles.isRunningFromBazel) {
+            val jewelHome = BazelRunfiles.findRunfilesDirectoryUnderCommunityOrUltimate("platform/jewel").toFile()
+            println("Found Jewel folder at ${jewelHome.absolutePath} (Bazel runfiles)")
+            return jewelHome
+        }
+
         val initialFile = File(".").canonicalFile
 
         val ultimateJewel = initialFile.resolve("community/platform/jewel")
@@ -68,4 +116,16 @@ internal class JewelBuildTest {
         val properties = Properties().apply { file.inputStream().use { load(it) } }
         return properties.getProperty("jewel.release.version").orEmpty()
     }
+
+    // Matches the `kotlin = "<version>"` entry under [versions] (not kotlinpoet, kotlinx*, etc.).
+    private fun readBuildKotlinVersion(libsVersionsToml: File): String =
+        Regex("""(?m)^\s*kotlin\s*=\s*"([^"]+)"""").find(libsVersionsToml.readText())?.groupValues?.get(1).orEmpty()
+
+    // Matches the `KOTLIN_VERSION: <version>` workflow env entry (with or without surrounding quotes).
+    private fun readWorkflowKotlinVersion(workflowFile: File): String =
+        Regex("""(?m)^\s*KOTLIN_VERSION:\s*"?([^"\s#]+)"?""")
+            .find(workflowFile.readText())
+            ?.groupValues
+            ?.get(1)
+            .orEmpty()
 }

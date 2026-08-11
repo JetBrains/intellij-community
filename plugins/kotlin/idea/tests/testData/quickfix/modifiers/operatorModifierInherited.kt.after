@@ -1,5 +1,5 @@
 // "Add 'operator' modifier" "true"
-// K2_ERROR: 'operator' modifier is required on 'fun get(idx: Int): Any' defined in 'Foo'.
+// K2_ERROR: OPERATOR_MODIFIER_REQUIRED
 open class Foo {
     operator fun get(idx: Int): Any = 5
 }

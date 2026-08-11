@@ -19,7 +19,7 @@ class K2JavaApiUsageInspectionTest : KotlinJavaApiUsageInspectionTest() {
               return 0
           }
       
-          fun <error descr="Usage of API documented as @since 1.8+"><error descr="[VIRTUAL_MEMBER_HIDDEN] 'reversed' hides member of supertype 'Comparator' and needs an 'override' modifier.">reversed</error></error>(): Comparator<String> {
+          fun <error descr="Usage of API documented as @since 1.8+"><error descr="[VIRTUAL_MEMBER_HIDDEN]">reversed</error></error>(): Comparator<String> {
               return this
           }
       }

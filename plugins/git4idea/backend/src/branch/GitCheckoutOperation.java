@@ -35,6 +35,7 @@ import git4idea.config.GitSharedSettings;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
+import git4idea.util.GitFreezingProcess;
 import git4idea.util.GitPreservingProcess;
 import io.opentelemetry.api.trace.Tracer;
 import one.util.streamex.StreamEx;
@@ -104,6 +105,10 @@ class GitCheckoutOperation extends GitBranchOperation {
 
   @Override
   protected void execute() {
+    new GitFreezingProcess(myProject, getOperationName(), this::doExecuteWithTracing).execute();
+  }
+
+  private void doExecuteWithTracing() {
     Tracer tracer = TelemetryManager.getInstance().getTracer(VcsScope);
     TraceKt.use(tracer.spanBuilder(Operation.Checkout.getName()).setAttribute("branch", myNewBranch != null ? myNewBranch : "null"), _ -> {
       StructuredIdeActivity checkoutActivity = CHECKOUT_ACTIVITY.started(myProject, () -> List.of(

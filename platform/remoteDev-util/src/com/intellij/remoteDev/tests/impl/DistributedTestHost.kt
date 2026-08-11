@@ -26,6 +26,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.fatalErrorWithWarnDetails
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.adviseSuspend
@@ -187,7 +188,10 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           // Create test class
           val testModuleId = System.getProperty("distributed.test.module", "intellij.rdct.tests.distributed._test")
           val testModule = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(testModuleId, PluginModuleId.JETBRAINS_NAMESPACE))
-                           ?: error("Test module '$testModuleId' is not found")
+          if (testModule == null) {
+            LOG.fatalErrorWithWarnDetails("Distributed test module is not enabled in the plugin set when the test session started",
+                                          "testModuleId=$testModuleId")
+          }
 
           LOG.info("Test class will be loaded from '${testModule.pluginId}' plugin")
 

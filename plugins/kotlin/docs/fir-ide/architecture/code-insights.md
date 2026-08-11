@@ -7,7 +7,6 @@ Intentions can be considered as small refactoring actions.
 
 ### Location
 - `kotlin.code-insight.intentions.k2`
-- `kotlin.code-insight.intentions.shared`
 
 Preferably, an intention should extend `KotlinApplicableModCommandAction`.
 It works over the ModCommand API that allows to perform analysis on a background thread.\
@@ -55,7 +54,6 @@ They inspect code and report some kind of warnings and can recommend how to chan
 
 ### Location
 - `kotlin.code-insight.inspections.k2`
-- `kotlin.code-insight.inspections.shared`
 
 There are several classes for inspections: `KotlinApplicableInspectionBase.Simple`, `KotlinDiagnosticBasedInspectionBase`,
 and `AbstractKotlinInspection`.

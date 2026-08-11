@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.RuntimeJsonMappingException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.pyproject.PyDependencyGroup
+import com.intellij.python.pyproject.PyDependencyGroupKind
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.ExecErrorReason
@@ -19,6 +21,7 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
+import com.jetbrains.python.packaging.pip.PipParseUtils
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
@@ -69,8 +72,9 @@ private class UvLowLevelImpl<P : PathHolder>(
       venvArgs.add("--clear")
     }
     addPythonArg(venvArgs)
-    uvCli.runUv(cwd, null, true, *venvArgs.toTypedArray())
-      .getOr { return it }
+    uvCli.runUv(cwd, null, true, *venvArgs.toTypedArray()).onFailure {
+      uvCli.runUv(cwd, null, true, *venvArgs.toTypedArray(), "--force").getOr { return it }
+    }.getOr { return it }
 
     val resolvedVenvPath = venvPath?.let { fileSystem.resolvePythonBinary(it) }
     if (resolvedVenvPath != null) {
@@ -127,16 +131,9 @@ private class UvLowLevelImpl<P : PathHolder>(
   override suspend fun listPackages(): PyResult<List<PythonPackage>> {
     val out = uvCli.runUv(cwd, venvPath, false, "pip", "list", "--format", "json")
       .getOr { return it }
-
-    data class PackageInfo(val name: String, val version: String)
-
-    val mapper = jacksonObjectMapper()
-      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    val packages = mapper.readValue<List<PackageInfo>>(out).map {
-      PythonPackage(it.name, it.version, false)
-    }
-
-    return PyExecResult.success(packages)
+    // `uv pip list --format json` emits the same schema as `pip list --format json`,
+    // including the `editable_project_location` field for editable installs.
+    return PyExecResult.success(PipParseUtils.parseListResult(out))
   }
 
   override suspend fun listOutdatedPackages(): PyResult<List<PythonOutdatedPackage>> {
@@ -167,7 +164,7 @@ private class UvLowLevelImpl<P : PathHolder>(
   }
 
   override suspend fun listProjectStructureTree(): PyResult<String> {
-    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--frozen", "--no-dedupe")
+    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--frozen", "--no-dedupe", "--all-groups")
       .getOr { return it }
 
     return PyExecResult.success(out)
@@ -199,25 +196,42 @@ private class UvLowLevelImpl<P : PathHolder>(
     pyPackages: PythonPackageInstallRequest,
     options: List<String>,
     workspaceMember: PyWorkspaceMember?,
+    dependencyGroup: PyDependencyGroup?,
   ): PyResult<Unit> {
-    val args = mutableListOf("add")
-    if (workspaceMember != null) {
-      args.add("--package")
-      args.add(workspaceMember.name)
+    // Group flags (`--group` / `--optional`) and `--package` arrive pre-formatted inside [options]
+    // when the caller goes through PythonPackageManagerUI.installPackagesRequestBackground(installOptions,…),
+    // which derives them from the structured InstallOptions. Callers that don't go through the UI
+    // layer can feed the raw dependencyGroup / workspaceMember params instead — leaving them null
+    // is fine when the flags are already in [options].
+    val args = buildList {
+      add("add")
+      workspaceMember?.let { add("--package"); add(it.name) }
+      if (dependencyGroup != null && dependencyGroup.name != "main") {
+        val flag = if (dependencyGroup.kind == PyDependencyGroupKind.OPTIONAL_DEPENDENCY) "--optional" else "--group"
+        add(flag); add(dependencyGroup.name)
+      }
+      val editableFlag = when (pyPackages) {
+        is PythonPackageInstallRequest.ByLocation -> "-e" in options && pyPackages.location.scheme == "file"
+        is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> false
+      }
+      if (editableFlag) add("--editable")
+      addAll(pyPackages.formatPackageName())
+      addAll(options.filter { it != "-e" })
     }
-    args.addAll(pyPackages.formatPackageName())
-    args.addAll(options)
     uvCli.runUv(cwd, venvPath, true, *args.toTypedArray())
       .getOr { return it }
-
     return PyExecResult.success(Unit)
   }
 
-  override suspend fun removeDependencies(pyPackages: Array<out String>, workspaceMember: PyWorkspaceMember?): PyResult<Unit> {
+  override suspend fun removeDependencies(pyPackages: Array<out String>, workspaceMember: PyWorkspaceMember?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> {
     val args = mutableListOf("remove")
     if (workspaceMember != null) {
       args.add("--package")
       args.add(workspaceMember.name)
+    }
+    if (dependencyGroup != null && dependencyGroup.name != "main") {
+      args.add("--group")
+      args.add(dependencyGroup.name)
     }
     args.addAll(pyPackages)
 
@@ -276,8 +290,8 @@ private class UvLowLevelImpl<P : PathHolder>(
   }
 
   fun PythonPackageInstallRequest.formatPackageName(): Array<String> = when (this) {
-    is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> specifications.map { it.nameWithVersionsSpec }.toTypedArray()
-    is PythonPackageInstallRequest.ByLocation -> error("UV does not support installing from location uri")
+    is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> specifications.map { it.nameWithVersionSpecs }.toTypedArray()
+    is PythonPackageInstallRequest.ByLocation -> arrayOf(location.toString())
   }
 
   private fun partitionPackagesBySource(installRequest: PythonPackageInstallRequest, options: List<String>): List<Array<String>> {
@@ -292,15 +306,18 @@ private class UvLowLevelImpl<P : PathHolder>(
 
     val result = mutableListOf<Array<String>>()
     if (pypiSpecs.isNotEmpty()) {
-      result.add((options + pypiSpecs.map { it.nameWithVersionsSpec }).toTypedArray())
+      result.add((options + pypiSpecs.map { it.nameWithVersionSpecs }).toTypedArray())
     }
 
     nonPypi
       .groupBy { it.repository.urlForInstallation?.toString() }
       .forEach { (url, specs) ->
         if (url == null || specs.isEmpty()) return@forEach
-        val names = specs.map { it.nameWithVersionsSpec }
-        result.add((options + listOf("--index-url", url) + names).toTypedArray())
+        result.add(buildList {
+          addAll(options)
+          addAll(listOf("--index-url", url))
+          specs.mapTo(this) { it.nameWithVersionSpecs }
+        }.toTypedArray())
       }
 
     return result

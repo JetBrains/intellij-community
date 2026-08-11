@@ -43,7 +43,6 @@ import java.util.TreeSet
  * - `PLUGIN_DEP` → `contentModules[].suppressPlugins`
  * - `PLUGIN_XML_MODULE` → `plugins[].suppressModules`
  * - `PLUGIN_XML_PLUGIN` → `plugins[].suppressPlugins`
- * - `LIBRARY_REPLACEMENT` → `contentModules[].suppressLibraries`
  * - `TEST_LIBRARY_SCOPE` → `contentModules[].suppressTestLibraryScope`
  *
  * ## Stale Detection
@@ -62,7 +61,6 @@ internal object SuppressionConfigGenerator : PipelineNode {
     Slots.PRODUCT_MODULE_DEPS,
     Slots.CONTENT_MODULE_PLAN,
     Slots.PLUGIN_DEPENDENCY_PLAN,
-    Slots.LIBRARY_SUPPRESSIONS,
     Slots.TEST_LIBRARY_SCOPE_SUPPRESSIONS,
   )
 
@@ -92,7 +90,6 @@ internal object SuppressionConfigGenerator : PipelineNode {
     }
 
     // From validators
-    allUsages.addAll(ctx.get(Slots.LIBRARY_SUPPRESSIONS))
     allUsages.addAll(ctx.get(Slots.TEST_LIBRARY_SCOPE_SUPPRESSIONS))
 
     // From DSL test plugin auto-add suppressions
@@ -165,7 +162,7 @@ internal object SuppressionConfigGenerator : PipelineNode {
 
     val moduleCount = suppressionMaps.contentModules.size + mergedPlugins.size
     val suppressionCount = suppressionMaps.contentModules.values.sumOf {
-      it.suppressModules.size + it.suppressPlugins.size + it.suppressLibraries.size + it.suppressTestLibraryScope.size
+      it.suppressModules.size + it.suppressPlugins.size + it.suppressTestLibraryScope.size
     } + mergedPlugins.values.sumOf { it.suppressModules.size + it.suppressPlugins.size }
 
     ctx.publish(Slots.SUPPRESSION_CONFIG, SuppressionConfigOutput(
@@ -207,17 +204,13 @@ private fun buildSuppressionsFromUsages(
       ?.mapTo(TreeSet()) { ContentModuleName(it.suppressedDep) } ?: emptySet()
     val suppressPlugins = byModuleAndType.get(moduleName to SuppressionType.PLUGIN_DEP)
       ?.mapTo(TreeSet()) { PluginId(it.suppressedDep) } ?: emptySet()
-    val suppressLibraries = byModuleAndType.get(moduleName to SuppressionType.LIBRARY_REPLACEMENT)
-      ?.mapTo(TreeSet()) { it.suppressedDep } ?: emptySet()
     val suppressTestLibraryScope = byModuleAndType.get(moduleName to SuppressionType.TEST_LIBRARY_SCOPE)
       ?.mapTo(TreeSet()) { it.suppressedDep } ?: emptySet()
 
-    if (suppressModules.isNotEmpty() || suppressPlugins.isNotEmpty() ||
-        suppressLibraries.isNotEmpty() || suppressTestLibraryScope.isNotEmpty()) {
+    if (suppressModules.isNotEmpty() || suppressPlugins.isNotEmpty() || suppressTestLibraryScope.isNotEmpty()) {
       contentModules.put(moduleName, ContentModuleSuppression(
         suppressModules = suppressModules,
         suppressPlugins = suppressPlugins,
-        suppressLibraries = suppressLibraries,
         suppressTestLibraryScope = suppressTestLibraryScope,
       ))
     }
@@ -254,7 +247,6 @@ private fun buildSuppressionsFromUsages(
 private val CONTENT_MODULE_TYPES = setOf(
   SuppressionType.MODULE_DEP,
   SuppressionType.PLUGIN_DEP,
-  SuppressionType.LIBRARY_REPLACEMENT,
   SuppressionType.TEST_LIBRARY_SCOPE,
 )
 
@@ -302,12 +294,6 @@ private fun countStaleSuppressions(
       if (Triple(moduleName, dep.value, SuppressionType.PLUGIN_DEP) !in usageKeys) {
         staleCount++
         staleDetails.add("PLUGIN_DEP: $moduleName -> ${dep.value}")
-      }
-    }
-    for (dep in suppression.suppressLibraries) {
-      if (Triple(moduleName, dep, SuppressionType.LIBRARY_REPLACEMENT) !in usageKeys) {
-        staleCount++
-        staleDetails.add("LIBRARY_REPLACEMENT: $moduleName -> $dep")
       }
     }
     for (dep in suppression.suppressTestLibraryScope) {

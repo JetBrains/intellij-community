@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.jvm.debugger.evaluation` start
-
 jvm_library(
     name = "kotlin-jvm-debugger-evaluation",
     srcs = glob(
@@ -25,8 +24,8 @@ jvm_library(
         "//platform/core-impl",
         "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections",
         "//java/debugger/impl",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "@lib//:kotlin-stdlib",
         "//java/debugger/openapi:java-debugger",
         "//platform/analysis-impl",
@@ -61,6 +60,8 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections_test_lib",
         "//java/debugger/impl:impl_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//java/debugger/openapi:java-debugger_test_lib",
         "//platform/analysis-impl:analysis-impl_test_lib",
         "//java/java-analysis-impl:analysis-impl_test_lib",

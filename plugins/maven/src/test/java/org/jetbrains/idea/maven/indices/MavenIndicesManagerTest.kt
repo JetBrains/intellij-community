@@ -1,7 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices
 
+import com.intellij.maven.testFramework.fixtures.MavenIndicesTestFixture
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.testRootDisposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
+import com.intellij.testFramework.UsefulTestCase.assertSize
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.indices.MavenIndicesManager.Companion.addArchetype
 import org.jetbrains.idea.maven.indices.MavenIndicesManager.Companion.getInstance
@@ -11,7 +18,13 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenSettingsCache
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -20,25 +33,27 @@ import java.util.concurrent.TimeUnit
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.copyToRecursively
 
-class MavenIndicesManagerTest : MavenIndicesTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenIndicesManagerTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   private var myIndicesFixture: MavenIndicesTestFixture? = null
 
-  override fun setUp() {
-    super.setUp()
-    myIndicesFixture = MavenIndicesTestFixture(dir, project, getTestRootDisposable())
+  @BeforeEach
+  fun setUp() {
+    myIndicesFixture = MavenIndicesTestFixture(maven.dir, maven.project, maven.testRootDisposable)
     myIndicesFixture!!.setUp()
   }
 
-  override fun tearDown() {
-    try {
-      myIndicesFixture!!.tearDown()
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+  @AfterEach
+  fun tearDown() {
+    myIndicesFixture!!.tearDown()
   }
 
   @Test
@@ -71,8 +86,8 @@ class MavenIndicesManagerTest : MavenIndicesTestCase() {
   fun testAddingFilesToIndex() = runBlocking{
     val localRepo = myIndicesFixture!!.repositoryHelper.getTestData("local2")
 
-    MavenProjectsManager.getInstance(project).getGeneralSettings().setLocalRepository(localRepo.toString())
-    MavenSettingsCache.getInstance(project).reloadAsync()
+    MavenProjectsManager.getInstance(maven.project).getGeneralSettings().setLocalRepository(localRepo.toString())
+    MavenSettingsCache.getInstance(maven.project).reloadAsync()
     myIndicesFixture!!.indicesManager.scheduleUpdateIndicesListAndWait()
     myIndicesFixture!!.indicesManager.waitForGavUpdateCompleted()
     val localIndex = myIndicesFixture!!.indicesManager.getCommonGavIndex()
@@ -87,7 +102,7 @@ class MavenIndicesManagerTest : MavenIndicesTestCase() {
     val latch = CountDownLatch(1)
     val addedFiles: MutableSet<File?> = ConcurrentHashMap.newKeySet<File?>()
     val failedToAddFiles: MutableSet<File?> = ConcurrentHashMap.newKeySet<File?>()
-    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
+    ApplicationManager.getApplication().getMessageBus().connect(maven.testRootDisposable)
       .subscribe<MavenIndexerListener>(MavenIndicesManager.INDEXER_TOPIC, object : MavenIndexerListener {
         override fun gavIndexUpdated(repo: MavenRepositoryInfo, added: Set<File>, failedToAdd: Set<File>) {
           addedFiles.addAll(added)
@@ -96,8 +111,8 @@ class MavenIndicesManagerTest : MavenIndicesTestCase() {
         }
       })
 
-    val indexingScheduled = getInstance(project).scheduleArtifactIndexing(null, artifactFile, localRepo.toString())
-    assertTrue("Failed to schedule indexing", indexingScheduled)
+    val indexingScheduled = getInstance(maven.project).scheduleArtifactIndexing(null, artifactFile, localRepo.toString())
+    assertTrue(indexingScheduled, "Failed to schedule indexing")
 
     latch.await(1, TimeUnit.MINUTES)
 
@@ -105,7 +120,7 @@ class MavenIndicesManagerTest : MavenIndicesTestCase() {
     assertSize(1, addedFiles)
 
     val indexedUri = Path.of(addedFiles.iterator().next()!!.absolutePath).toUri().toString()
-    assertTrue("Junit pom not indexed", indexedUri.endsWith("local2/junit/junit/4.0/junit-4.0.pom"))
+    assertTrue(indexedUri.endsWith("local2/junit/junit/4.0/junit-4.0.pom"), "Junit pom not indexed")
 
     myIndicesFixture!!.indicesManager.waitForGavUpdateCompleted()
     myIndicesFixture!!.indicesManager.waitForLuceneUpdateCompleted()
@@ -122,6 +137,6 @@ class MavenIndicesManagerTest : MavenIndicesTestCase() {
       actualNames.add(each.groupId + ":" + each.artifactId)
     }
     val id = MavenId(archetypeId)
-    assertTrue(actualNames.toString(), actualNames.contains(id.groupId + ":" + id.artifactId))
+    assertTrue(actualNames.contains(id.groupId + ":" + id.artifactId), actualNames.toString())
   }
 }

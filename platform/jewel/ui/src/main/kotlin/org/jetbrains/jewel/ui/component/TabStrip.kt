@@ -1,10 +1,5 @@
 package org.jetbrains.jewel.ui.component
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.horizontalScroll
@@ -36,7 +31,6 @@ import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.semantics.CollectionInfo
 import androidx.compose.ui.semantics.collectionInfo
-import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.util.fastRoundToInt
 import org.jetbrains.annotations.ApiStatus
@@ -148,30 +142,7 @@ public fun TabStrip(
             }
         }
 
-        val scrollbarVisibility = style.scrollbarStyle.scrollbarVisibility
-
-        AnimatedVisibility(
-            visible = tabStripState.isHovered,
-            enter =
-                fadeIn(
-                    tween(
-                        durationMillis = scrollbarVisibility.thumbColorAnimationDuration.inWholeMilliseconds.toInt(),
-                        delayMillis = 0,
-                        easing = LinearEasing,
-                    )
-                ),
-            exit =
-                fadeOut(
-                    tween(
-                        durationMillis = scrollbarVisibility.thumbColorAnimationDuration.inWholeMilliseconds.toInt(),
-                        delayMillis = scrollbarVisibility.lingerDuration.inWholeMilliseconds.toInt(),
-                        easing = LinearEasing,
-                    )
-                ),
-            modifier = Modifier.semantics { hideFromAccessibility() },
-        ) {
-            HorizontalScrollbar(scrollState, style = style.scrollbarStyle, modifier = Modifier.fillMaxWidth())
-        }
+        HorizontalScrollbar(scrollState, style = style.scrollbarStyle, modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -234,13 +205,23 @@ public fun TabStrip(tabs: List<TabData>, style: TabStyle, modifier: Modifier = M
     TabStrip(tabs, style, modifier, enabled, remember { MutableInteractionSource() })
 }
 
+/** Sealed base class representing the data and callbacks for a single tab in a [TabStrip]. */
 @Suppress("AbstractClassCanBeInterface") // Binary compatibility: sealed class cannot be changed to interface
 @Immutable
 public sealed class TabData {
+    /** Whether this tab is currently selected. */
     public abstract val selected: Boolean
+
+    /** The composable content to be displayed within the tab. */
     public abstract val content: @Composable TabContentScope.(tabState: TabState) -> Unit
+
+    /** Whether this tab can be closed by the user. */
     public abstract val closable: Boolean
+
+    /** Called when the user attempts to close the tab. */
     public abstract val onClose: () -> Unit
+
+    /** Called when the user clicks the tab. */
     public abstract val onClick: () -> Unit
 
     /**
@@ -368,7 +349,10 @@ public sealed class TabData {
  */
 @Immutable
 @JvmInline
-public value class TabStripState(public val state: ULong) : FocusableComponentState {
+public value class TabStripState(
+    /** The raw bit-masked state value. */
+    public val state: ULong
+) : FocusableComponentState {
     override val isActive: Boolean
         get() = state and CommonStateBitMask.Active != 0UL
 
@@ -384,6 +368,7 @@ public value class TabStripState(public val state: ULong) : FocusableComponentSt
     override val isPressed: Boolean
         get() = state and CommonStateBitMask.Pressed != 0UL
 
+    /** Returns a copy of this [TabStripState] with the given fields replaced by their new values. */
     public fun copy(
         enabled: Boolean = isEnabled,
         focused: Boolean = isFocused,
@@ -396,7 +381,9 @@ public value class TabStripState(public val state: ULong) : FocusableComponentSt
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, isHovered=$isHovered, " +
             "isPressed=$isPressed, isActive=$isActive)"
 
+    /** Companion object for [TabStripState]. */
     public companion object {
+        /** Constructs a [TabStripState] from individual flags/parameters. */
         public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,

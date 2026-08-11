@@ -156,6 +156,7 @@ open class EditorCellViewer(
   }
 
   override fun dispose() {
+    editor.document.removeDocumentListener(updateDocumentListener)
     if (!editor.isDisposed) {
       EditorFactory.getInstance().releaseEditor(editor)
     }

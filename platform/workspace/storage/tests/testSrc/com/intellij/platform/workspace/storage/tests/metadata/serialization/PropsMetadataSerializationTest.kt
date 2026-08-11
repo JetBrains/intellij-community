@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.metadata.serialization
 
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import org.junit.Assert
@@ -20,7 +20,7 @@ class PropsMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
     Assert.assertEquals("""
       Start comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ComputablePropEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ComputablePropEntity"
         Sizes of cache properties (3) and current properties (4) are different    Result: not equal
@@ -38,7 +38,7 @@ class PropsMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
     Assert.assertEquals("""
       Start comparing cache: Final class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropEntityId"     with current: Final class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedComputablePropEntityId"
         Start comparing cache: Own property "text"     with current: Own property "texts"
@@ -61,7 +61,7 @@ class PropsMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
   }
 
 
@@ -79,7 +79,7 @@ class PropsMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
   }
 
   @Test
@@ -92,7 +92,7 @@ class PropsMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
     Assert.assertEquals("""
       Start comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.NullToNotNullEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.NullToNotNullEntity"
         Start comparing cache: Own property "nullString"     with current: Own property "nullString"
@@ -118,6 +118,6 @@ class PropsMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), ConcurrentVirtualFileUrlManager())
   }
 }

@@ -51,6 +51,20 @@ class JavaUastApiTest : AbstractJavaUastTest() {
   }
 
   @Test
+  fun testMalformedRecordParametersDoNotReportConversionFailure() {
+    for (text in listOf(
+      "public record R(int x) { int x; }",            // illegal explicit field shadowing the component
+      "public record R(int x) { static int x = 0; }"  // static field shadowing the component
+    )) {
+      val file = myFixture.configureByText("R.java", text)
+      val uFile = file.toUElementOfType<UFile>()!!
+      val constructor = uFile.classes[0].methods.first { it.isConstructor }
+      TestCase.assertEquals("record component must be converted to a parameter for: $text",
+                            1, constructor.uastParameters.size)
+    }
+  }
+
+  @Test
   fun testTypeReference() {
     val file = configureUFile("Simple/TypeReference.java")
     val localVar = file.findElementByText<ULocalVariable>("String s;")

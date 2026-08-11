@@ -1,13 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("TestOnlyProblems") // KTIJ-19938
 
 package com.intellij.platform.backend.documentation.impl
 
 import com.intellij.lang.documentation.ide.impl.DocumentationUsageCollector
 import com.intellij.lang.documentation.ide.impl.getClassRefForStatistics
+import com.intellij.lang.documentation.impl.documentationTargets
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.backend.documentation.AsyncDocumentation
@@ -20,7 +22,9 @@ import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.LinkResolveResult
 import com.intellij.platform.backend.documentation.ResolvedTarget
+import com.intellij.psi.PsiFile
 import com.intellij.util.AsyncSupplier
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +34,7 @@ import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
 fun DocumentationTarget.documentationRequest(): DocumentationRequest {
@@ -197,10 +202,35 @@ private fun contentUpdater(target: DocumentationTarget, url: String): ContentUpd
 }
 
 @TestOnly
+@RequiresBackgroundThread(generateAssertion = false)
 fun computeDocumentationBlocking(targetPointer: Pointer<out DocumentationTarget>): DocumentationData? {
   return runBlockingMaybeCancellable {
-    withTimeout(1000 * 60) {
+    withTimeout(60.seconds) {
       computeDocumentation(targetPointer)
+    }
+  }
+}
+
+@TestOnly
+fun computeHtmlDocBlocking(editor: Editor, psiFile: PsiFile): String? {
+  return runBlockingMaybeCancellable {
+    withTimeout(60.seconds) {
+      val pointer = readAction {
+        documentationTargets(psiFile, editor.caretModel.offset).firstOrNull()?.createPointer()
+      }
+      if (pointer == null) return@withTimeout null
+      computeDocumentationBlocking(pointer)?.html
+    }
+  }
+}
+
+@TestOnly
+fun computeDocHintBlocking(editor: Editor, psiFile: PsiFile): String? {
+  return runBlockingMaybeCancellable {
+    withTimeout(60.seconds) {
+      readAction {
+        documentationTargets(psiFile, editor.caretModel.offset).firstOrNull()?.computeDocumentationHint()
+      }
     }
   }
 }

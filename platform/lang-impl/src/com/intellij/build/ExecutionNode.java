@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
+import com.intellij.pom.NonNavigatable;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.SmartList;
@@ -49,11 +50,9 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   private static final Icon NODE_ICON_SKIPPED = AllIcons.RunConfigurations.TestIgnored;
   private static final Icon NODE_ICON_STATISTICS = ICON_16;
   private static final Icon NODE_ICON_SIMPLE = ICON_16;
-  private static final Icon NODE_ICON_DEFAULT = ICON_16;
   private static final Icon NODE_ICON_RUNNING = new AnimatedIcon.Default();
 
   private final List<ExecutionNode> myChildrenList = new ArrayList<>(); // Accessed from the async model thread only.
-  private List<ExecutionNode> myVisibleChildrenList = null;  // Accessed from the async model thread only.
   private final AtomicInteger myErrors = new AtomicInteger();
   private final AtomicInteger myWarnings = new AtomicInteger();
   private final AtomicInteger myInfos = new AtomicInteger();
@@ -68,7 +67,6 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   private final Supplier<Boolean> myIsCorrectThread;
   private volatile @Nullable Navigatable myNavigatable;
   private volatile @Nullable NullableLazyValue<Icon> myPreferredIconValue;
-  private Predicate<? super ExecutionNode> myFilter;
   private boolean myAlwaysLeaf;
   private boolean myAlwaysVisible;
 
@@ -79,14 +77,14 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     myAutoExpandNode = isAutoExpandNode;
     myIsCorrectThread = isCorrectThread;
     myHintData = new HintData();
+
+    if (parentNode != null) {
+      parentNode.add(this);
+    }
   }
 
   boolean isAlwaysVisible() {
     return myAlwaysVisible;
-  }
-
-  private boolean nodeIsVisible(ExecutionNode node) {
-    return node.myAlwaysVisible || myFilter == null || myFilter.test(node);
   }
 
   @Override
@@ -143,6 +141,11 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     myTitle = title;
   }
 
+  public @BuildEventsNls.Hint @Nullable String getHint() {
+    assert myIsCorrectThread.get();
+    return myHint;
+  }
+
   public void setHint(@BuildEventsNls.Hint @Nullable String hint) {
     assert myIsCorrectThread.get();
     myHint = hint;
@@ -151,20 +154,11 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   public void add(@NotNull ExecutionNode node) {
     assert myIsCorrectThread.get();
     myChildrenList.add(node);
-    node.setFilter(myFilter);
-    if (myVisibleChildrenList != null) {
-      if (nodeIsVisible(node)) {
-        myVisibleChildrenList.add(node);
-      }
-    }
   }
 
   void removeChildren() {
     assert myIsCorrectThread.get();
     myChildrenList.clear();
-    if (myVisibleChildrenList != null) {
-      myVisibleChildrenList.clear();
-    }
     myErrors.set(0);
     myWarnings.set(0);
     myInfos.set(0);
@@ -202,45 +196,14 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   }
 
   public ExecutionNode setEndTime(long endTime) {
-    return setEndTime(endTime, true);
-  }
-  @Nullable
-  @ApiStatus.Internal
-  ExecutionNode setEndTime(long endTime, boolean reapplyParentFilterIfRequired) {
     assert myIsCorrectThread.get();
     this.endTime = endTime;
-    return reapplyParentFilterIfRequired ? reapplyParentFilterIfRequired(null) : null;
-  }
-
-  private ExecutionNode reapplyParentFilterIfRequired(@Nullable ExecutionNode result) {
-    assert myIsCorrectThread.get();
-    if (myParentNode != null) {
-      List<ExecutionNode> parentVisibleChildrenList = myParentNode.myVisibleChildrenList;
-      if (parentVisibleChildrenList != null) {
-        Predicate<? super ExecutionNode> filter = myParentNode.myFilter;
-        if (myAlwaysVisible || filter != null) {
-          boolean wasPresent = parentVisibleChildrenList.contains(this);
-          boolean shouldBePresent = myAlwaysVisible || filter.test(this);
-          if (shouldBePresent != wasPresent) {
-            if (shouldBePresent) {
-              myParentNode.maybeReapplyFilter();
-            }
-            else {
-              parentVisibleChildrenList.remove(this);
-            }
-            result = myParentNode;
-          }
-        }
-      }
-      return myParentNode.reapplyParentFilterIfRequired(result);
-    }
-    return result;
+    return null;
   }
 
   public @NotNull List<ExecutionNode> getChildList() {
     assert myIsCorrectThread.get();
-    List<ExecutionNode> visibleList = myVisibleChildrenList;
-    return Objects.requireNonNullElse(visibleList, myChildrenList);
+    return myChildrenList;
   }
 
   public @Nullable ExecutionNode getParent() {
@@ -252,54 +215,24 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     return this;
   }
 
-  public Predicate<? super ExecutionNode> getFilter() {
-    assert myIsCorrectThread.get();
-    return myFilter;
-  }
-
-  public void setFilter(@Nullable Predicate<? super ExecutionNode> filter) {
-    assert myIsCorrectThread.get();
-    myFilter = filter;
-    for (ExecutionNode node : myChildrenList) {
-      node.setFilter(myFilter);
-    }
-    if (filter == null) {
-      myVisibleChildrenList = null;
-    }
-    else {
-      if (myVisibleChildrenList == null) {
-        myVisibleChildrenList = Collections.synchronizedList(new ArrayList<>());
-      }
-      maybeReapplyFilter();
-    }
-  }
-
-  private void maybeReapplyFilter() {
-    assert myIsCorrectThread.get();
-    if (myVisibleChildrenList != null) {
-      myVisibleChildrenList.clear();
-      myChildrenList.stream().filter(it -> nodeIsVisible(it)).forEachOrdered(myVisibleChildrenList::add);
-    }
-  }
-
   public boolean isRunning() {
     return endTime <= 0 && !isSkipped(myResult) && !isFailed(myResult);
   }
 
   public boolean hasWarnings() {
     return myWarnings.get() > 0 ||
-           (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.WARNING);
+           (myResult instanceof MessageEventResult result && result.getKind() == MessageEvent.Kind.WARNING);
   }
 
   public boolean hasInfos() {
     return myInfos.get() > 0 ||
-           (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.INFO);
+           (myResult instanceof MessageEventResult result && result.getKind() == MessageEvent.Kind.INFO);
   }
 
   public boolean isFailed() {
     return isFailed(myResult) ||
            myErrors.get() > 0 ||
-           (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.ERROR);
+           (myResult instanceof MessageEventResult result && result.getKind() == MessageEvent.Kind.ERROR);
   }
 
   public @Nullable EventResult getResult() {
@@ -307,14 +240,9 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   }
 
   public ExecutionNode setResult(@Nullable EventResult result) {
-    return setResult(result, true);
-  }
-
-  @ApiStatus.Internal
-  ExecutionNode setResult(@Nullable EventResult result, boolean reapplyParentFilterIfRequired) {
     assert myIsCorrectThread.get();
     myResult = result;
-    return reapplyParentFilterIfRequired ? reapplyParentFilterIfRequired(null) : null;
+    return null;
   }
 
   public boolean isAutoExpandNode() {
@@ -336,18 +264,23 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     myNavigatable = navigatable;
   }
 
+  public @Nullable Navigatable getNavigatable() {
+    List<Navigatable> navigatables = getNavigatables();
+    return navigatables.size() == 1 ? navigatables.getFirst() : null;
+  }
+
   public @NotNull List<Navigatable> getNavigatables() {
-    if (myNavigatable != null) {
+    if (myNavigatable != null && myNavigatable != NonNavigatable.INSTANCE) {
       return Collections.singletonList(myNavigatable);
     }
     if (myResult == null) return Collections.emptyList();
 
-    if (myResult instanceof FailureResult) {
-      List<Navigatable> result = new SmartList<>();
-      for (Failure failure : ((FailureResult)myResult).getFailures()) {
-        ContainerUtil.addIfNotNull(result, failure.getNavigatable());
+    if (myResult instanceof FailureResult result) {
+      List<Navigatable> navigatables = new SmartList<>();
+      for (Failure failure : result.getFailures()) {
+        ContainerUtil.addIfNotNull(navigatables, failure.getNavigatable());
       }
-      return result;
+      return navigatables;
     }
     return Collections.emptyList();
   }
@@ -361,9 +294,6 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     };
   }
 
-  /**
-   * @return the top most node whose parent structure has changed. Returns null if only node itself needs to be updated.
-   */
   public @Nullable ExecutionNode reportChildMessageKind(MessageEvent.Kind kind) {
     assert myIsCorrectThread.get();
     if (kind == MessageEvent.Kind.ERROR) {
@@ -375,7 +305,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     else if (kind == MessageEvent.Kind.INFO) {
       myInfos.incrementAndGet();
     }
-    return reapplyParentFilterIfRequired(null);
+    return null;
   }
 
   @Nullable
@@ -387,11 +317,12 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   }
 
   Icon getCurrentIcon() {
-    if (myPreferredIconValue != null) {
-      return myPreferredIconValue.getValue();
+    var preferredIconValue = myPreferredIconValue;
+    if (preferredIconValue != null) {
+      return preferredIconValue.getValue();
     }
-    else if (myResult instanceof MessageEventResult) {
-      return getIcon(((MessageEventResult)myResult).getKind());
+    else if (myResult instanceof MessageEventResult result) {
+      return getIcon(result.getKind());
     }
     else {
       return isRunning() ? NODE_ICON_RUNNING :

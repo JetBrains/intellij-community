@@ -2,7 +2,6 @@
 package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
@@ -11,7 +10,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.actions.ExportToXMLAction;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +23,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -35,6 +35,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
+import com.jetbrains.performancePlugin.LogDirHandler;
 import com.jetbrains.performancePlugin.PerformanceTestingBundle;
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
 import com.jetbrains.performancePlugin.utils.ResultsToFileProcessor;
@@ -117,7 +118,7 @@ public class InspectionCommandEx extends AbstractCommand {
     }
     else {
       if (StringUtil.isNotEmpty(myOptions.directory)) {
-        VirtualFile directory = VfsUtil.findRelativeFile(ProjectUtil.guessProjectDir(project), myOptions.directory);
+        VirtualFile directory = VfsUtil.findRelativeFile(ProjectUtil.guessProjectDir(project), myOptions.directory.split("/"));
         if (directory != null) {
           PsiDirectory psiDirectory = ReadAction.compute(() -> PsiManager.getInstance(project).findDirectory(directory));
           if (psiDirectory != null) {
@@ -137,7 +138,7 @@ public class InspectionCommandEx extends AbstractCommand {
       @Override
       public void addView(@NotNull InspectionResultsView view, @NotNull String title, boolean isOffline) {
         super.addView(view, title, isOffline);
-        ToolWindow resultWindow = ProblemsView.getToolWindow(project);
+        ToolWindow resultWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROBLEMS_VIEW);
         if (resultWindow != null && myOptions.hideResults) {
           resultWindow.hide();
         }
@@ -180,7 +181,7 @@ public class InspectionCommandEx extends AbstractCommand {
                   if (ApplicationManagerEx.isInIntegrationTest()) {
                     if (warningCount < Integer.MAX_VALUE) {
                       Path perfMetricsPath =
-                        Paths.get(PathManager.getLogPath()).resolve("performance-metrics").resolve("inspectionMetrics.json");
+                        LogDirHandler.currentLogDir().resolve("performance-metrics").resolve("inspectionMetrics.json");
                       ResultsToFileProcessor.writeMetricsToJson(perfMetricsPath, "inspection_execution", (int)warningCount, null);
                     }
                     else {

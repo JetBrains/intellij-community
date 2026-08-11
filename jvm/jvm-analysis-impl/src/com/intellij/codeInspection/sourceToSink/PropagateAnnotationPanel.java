@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
-import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -37,6 +36,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -145,7 +146,7 @@ public final class PropagateAnnotationPanel extends JPanel implements Disposable
       annotateButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          ToolWindow toolWindow = ProblemsView.getToolWindow(myProject);
+          ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROBLEMS_VIEW);
           if (toolWindow == null) return;
           ContentManager contentManager = toolWindow.getContentManager();
           contentManager.removeContent(myContent, true);

@@ -1,0 +1,21 @@
+# typeshed uses `# type: ignore` comments to silence mypy and pyright; pyrefly
+# should not treat them as suppressing its own errors. Keep in sync with the
+# `respect-type-ignore-comments` setting in ty.toml.
+enabled-ignores = ["pyrefly"]
+
+# These imports are intentionally optional and are also ignored by mypy and pyright.
+ignore-missing-imports = [
+    "branca",
+    "folium",
+    "pydot",
+    "pygraphviz.*",
+    "scipy.*",
+    "twisted.*",
+    "xyzservices",
+]
+
+[errors]
+# Incompatible overrides and deprecations are inherited from the implementation
+# and are not actionable in typeshed. Keep in sync with pyrightconfig.json.
+deprecated = false
+bad-override = false

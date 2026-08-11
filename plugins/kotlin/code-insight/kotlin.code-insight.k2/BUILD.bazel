@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.codeInsight` start
-
 create_kotlinc_options(
     name = "custom_kotlin-codeInsight",
     opt_in = [
@@ -12,11 +11,6 @@ create_kotlinc_options(
         "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
     ],
     x_context_parameters = True,
-)
-
-jvm_provided_library(
-    name = "plugins_kotlin_code-insight_descriptions_provided",
-    lib = "//plugins/kotlin/code-insight/descriptions",
 )
 
 jvm_library(
@@ -39,9 +33,10 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-analysis-api-platform-interface",
+        "//plugins/kotlin/references",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
         "//java/java-indexing-api:indexing",
         "//platform/analysis-api:analysis",
         "//platform/code-style-api:codeStyle",
@@ -71,15 +66,16 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//java/java-psi-impl:psi-impl",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+        "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
         "//java/java-impl:impl",
-        "@lib//:kotlinc-analysis-api-impl-base",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
         "//libraries/guava",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
         "//plugins/kotlin/base/analysis",
         "//plugins/kotlin/base/facet",
         "//plugins/kotlin/code-insight/utils",
-        "@lib//:kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//plugins/kotlin/formatter/minimal",
         "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
         "//java/openapi:java",
@@ -94,16 +90,16 @@ jvm_library(
         "//platform/util/text-matching",
         "//platform/util/jdom",
         "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
-        "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
         "//libraries/fastutil",
         "//plugins/kotlin/kotlin.searching",
         "//plugins/kotlin/base/statistics",
         "//platform/editor-ui-ex:editor-ex",
+        "//plugins/kotlin/code-insight/descriptions",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/lang-api:lang",
         "//platform/statistics",
         "//plugins/kotlin/base/platforms",
-        ":plugins_kotlin_code-insight_descriptions_provided",
+        "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
     ],
 )
 
@@ -120,6 +116,10 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-codeInsight",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
         "//java/java-indexing-api:indexing_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
@@ -149,13 +149,16 @@ jvm_library(
         "//java/java-psi-api:psi_test_lib",
         "//java/java-psi-impl:psi-impl_test_lib",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
+        "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting_test_lib",
         "//java/java-impl:impl_test_lib",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_test_lib",
         "//libraries/guava:guava_test_lib",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
         "//plugins/kotlin/base/analysis:analysis_test_lib",
         "//plugins/kotlin/base/facet:facet_test_lib",
         "//plugins/kotlin/code-insight/utils:utils_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//plugins/kotlin/formatter/minimal:minimal_test_lib",
         "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings_test_lib",
         "//java/openapi:java_test_lib",
@@ -170,17 +173,16 @@ jvm_library(
         "//platform/util/text-matching:text-matching_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement_test_lib",
-        "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
         "//plugins/kotlin/kotlin.searching:kotlin.searching_test_lib",
         "//plugins/kotlin/base/statistics:statistics_test_lib",
         "//platform/editor-ui-ex:editor-ex_test_lib",
-        "//plugins/kotlin/code-insight/descriptions",
         "//plugins/kotlin/code-insight/descriptions:descriptions_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//plugins/kotlin/base/platforms:platforms_test_lib",
+        "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.codeInsight` end
@@ -195,7 +197,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.codeInsight` end
 
 ### auto-generated section `build intellij.kotlin.codeInsight.tests` start
-
 create_kotlinc_options(
     name = "custom_kotlin-codeInsight-tests",
     opt_in = [
@@ -214,6 +215,11 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.codeInsight.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
+    ],
 )
 
 jvm_library(
@@ -236,6 +242,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-codeInsight-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
@@ -243,10 +250,18 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
+        "@lib//:kotlinc-kotlin-script-runtime",
+        "@lib//:kotlinc-kotlin-scripting-common",
+        "@lib//:kotlinc-kotlin-scripting-jvm",
+        "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+        "@lib//:kotlinc-kotlin-scripting-dependencies",
         "//java/java-indexing-api:indexing",
         "//java/java-indexing-api:indexing_test_lib",
         "//platform/analysis-api:analysis",
@@ -261,6 +276,8 @@ jvm_library(
         "//platform/indexing-api:indexing_test_lib",
         "//jps/model-api:model",
         "//jps/model-api:model_test_lib",
+        "//platform/workspace/storage",
+        "//platform/workspace/storage:storage_test_lib",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/refactoring",
@@ -269,8 +286,6 @@ jvm_library(
         "//platform/structure-view-impl:structureView_test_lib",
         "//platform/usageView-impl",
         "//platform/usageView-impl:usageView-impl_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/util:util_test_lib",
         "//plugins/kotlin/base/psi",
@@ -314,22 +329,26 @@ jvm_library(
         "//java/java-psi-impl:psi-impl_test_lib",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
+        "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
+        "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting_test_lib",
         "//java/java-impl:impl",
         "//java/java-impl:impl_test_lib",
-        "@lib//:kotlinc-analysis-api-impl-base",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_test_lib",
         "//libraries/guava",
         "//libraries/guava:guava_test_lib",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
         "//plugins/kotlin/base/analysis",
         "//plugins/kotlin/base/analysis:analysis_test_lib",
         "//plugins/kotlin/base/facet",
         "//plugins/kotlin/base/facet:facet_test_lib",
         "//plugins/kotlin/code-insight/utils",
         "//plugins/kotlin/code-insight/utils:utils_test_lib",
-        "@lib//:kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//plugins/kotlin/formatter/minimal",
         "//plugins/kotlin/formatter/minimal:minimal_test_lib",
         "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
@@ -340,6 +359,8 @@ jvm_library(
         "//plugins/kotlin/kotlin.searching/base:base_test_lib",
         "//platform/ide-core-impl",
         "//platform/ide-core",
+        "//platform/backend/workspace",
+        "//platform/backend/workspace:workspace_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//plugins/kotlin/base/indices",
@@ -354,8 +375,6 @@ jvm_library(
         "//platform/util/jdom:jdom_test_lib",
         "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
         "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement_test_lib",
-        "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
-        "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared_test_lib",
         "//libraries/fastutil",
         "//libraries/fastutil:fastutil_test_lib",
         "//plugins/kotlin/kotlin.searching",
@@ -372,6 +391,8 @@ jvm_library(
         "//plugins/kotlin/bundled-compiler-plugins-support:compilerPlugins-support-bundled_test_lib",
         "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
         "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
+        "//plugins/kotlin/base/scripting/scripting.shared",
+        "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
@@ -382,6 +403,12 @@ jvm_library(
         "//plugins/kotlin/base/code-insight:kotlin-base-codeInsight-tests_test_lib",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
+        "//plugins/kotlin/scripting",
+        "//plugins/kotlin/scripting:scripting_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.tests` end
@@ -396,7 +423,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.codeInsight.tests` end
 
 ### auto-generated section `test intellij.kotlin.codeInsight.tests` start
-
 jps_test(
     name = "kotlin-codeInsight-tests_test",
     runtime_deps = [":kotlin-codeInsight-tests_test_lib"],

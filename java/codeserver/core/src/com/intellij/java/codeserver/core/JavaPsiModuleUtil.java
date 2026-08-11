@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaModuleGraphHelper;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -27,7 +28,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiPackageAccessibilityStatement;
+import com.intellij.psi.PsiProvidesStatement;
 import com.intellij.psi.PsiRequiresStatement;
+import com.intellij.psi.PsiUsesStatement;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.PsiJavaModuleModificationTracker;
 import com.intellij.psi.impl.light.LightJavaModule;
@@ -277,6 +280,67 @@ public final class JavaPsiModuleUtil {
    */
   public static @NotNull Set<PsiJavaModule> getAllTransitiveDependencies(@NotNull PsiJavaModule source) {
     return getRequiresGraph(source).getAllDependencies(source, true);
+  }
+
+  /**
+   * Finds the JPMS modules that supply (via {@code provides}) a service that the given {@code modules} consume
+   * (via {@code uses}), together with each such provider's own {@code requires} closure. The search is repeated
+   * for newly found providers, since a provider may itself {@code uses} further services.
+   * <p>
+   * These provider modules have no {@code requires} edge from {@code modules}, so a launcher that follows only
+   * {@code requires} must add them to the module path explicitly for a cross-module {@link java.util.ServiceLoader}
+   * lookup to bind them — mirroring the JVM's automatic service binding during module resolution. This is the
+   * execution-independent core of {@code JavaParametersUtil.putProvidersOnModulePath}.
+   *
+   * @param project current project
+   * @param modules modules whose consumed services should be satisfied
+   * @return the additional provider modules (and their dependencies); does not include the input {@code modules}
+   */
+  public static @NotNull Set<PsiJavaModule> collectServiceProviders(@NotNull Project project,
+                                                                    @NotNull Collection<PsiJavaModule> modules) {
+    Set<PsiJavaModule> known = new HashSet<>(modules);
+    Set<PsiJavaModule> providers = new LinkedHashSet<>();
+    Collection<PsiJavaModule> frontier = modules;
+    while (true) {
+      Set<String> usedServices = new HashSet<>();
+      for (PsiJavaModule module : frontier) {
+        for (PsiUsesStatement use : module.getUses()) {
+          PsiClassType usedType = use.getClassType();
+          if (usedType != null) usedServices.add(usedType.getCanonicalText());
+        }
+      }
+      if (usedServices.isEmpty()) break;
+
+      Set<PsiJavaModule> added = new LinkedHashSet<>();
+      GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+      JavaModuleSearch.allModules(project, scope).forEach(candidate -> {
+        if (known.contains(candidate)) return true;
+        for (PsiProvidesStatement provide : candidate.getProvides()) {
+          PsiClassType providedType = provide.getInterfaceType();
+          if (providedType != null && usedServices.contains(providedType.getCanonicalText())) {
+            if (known.add(candidate)) added.add(candidate);
+            for (PsiJavaModule dependency : getAllDependencies(candidate)) {
+              if (known.add(dependency)) added.add(dependency);
+            }
+            break;
+          }
+        }
+        return true;
+      });
+      if (added.isEmpty()) break;
+      providers.addAll(added);
+      frontier = added;
+    }
+    return providers;
+  }
+
+  /**
+   * @param module JPMS module
+   * @return the virtual file backing the module descriptor (the {@code module-info}, or the root for a
+   * {@link LightJavaModule}/automatic module); null if the module lost its backing file
+   */
+  public static @Nullable VirtualFile getModuleDescriptorFile(@NotNull PsiJavaModule module) {
+    return getVirtualFile(module);
   }
 
   /**

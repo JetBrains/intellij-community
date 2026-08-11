@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -23,6 +23,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.system.OS;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitConfigurationCache;
 import org.jetbrains.annotations.NonNls;
@@ -266,9 +267,9 @@ public class GitExecutableDetector {
 
     @Override
     public void runDetection() {
-      String executableName = SystemInfo.isWindows ? WIN_EXECUTABLE : UNIX_EXECUTABLE;
-      File executableFromEnv = PathEnvironmentVariableUtil.findInPath(executableName, getPathEnv(), null);
-      String path = executableFromEnv != null ? executableFromEnv.getAbsolutePath() : null;
+      var executableName = OS.CURRENT == OS.Windows ? WIN_EXECUTABLE : UNIX_EXECUTABLE;
+      var executableFromEnv = PathEnvironmentVariableUtil.findFirst(executableName, getPathEnv());
+      var path = executableFromEnv != null ? executableFromEnv.toString() : null;
       myEnvExecutable.set(new DetectionResult(path));
     }
   }

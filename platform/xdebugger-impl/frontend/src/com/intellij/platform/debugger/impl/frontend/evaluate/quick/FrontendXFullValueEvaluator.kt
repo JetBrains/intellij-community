@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorDto
 import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorResult
 import com.intellij.platform.debugger.impl.rpc.XValueApi
-import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.xdebugger.frame.XFullValueEvaluator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +18,6 @@ import java.util.function.Supplier
 
 internal class FrontendXFullValueEvaluator(
   private val xValueCs: CoroutineScope,
-  private val xValueId: XValueId,
   private val dto: XFullValueEvaluatorDto,
 ) : XFullValueEvaluator() {
   private val linkAttributes = dto.attributes?.let {
@@ -68,7 +66,7 @@ internal class FrontendXFullValueEvaluator(
   override fun startEvaluation(callback: XFullValueEvaluationCallback) {
     xValueCs.launch(Dispatchers.EDT) {
       val job = currentCoroutineContext().job
-      XValueApi.getInstance().evaluateFullValue(xValueId).collect { result ->
+      XValueApi.getInstance().evaluateFullValue(dto.id).collect { result ->
         if (callback.isObsolete) {
           job.cancel()
           return@collect

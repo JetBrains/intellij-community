@@ -42,7 +42,7 @@ class JUnitPackageConfigurationProducerTest : JavaCodeInsightFixtureTestCase() {
     val module = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), name, moduleDir)
     PsiTestUtil.addSourceRoot(module, moduleDir.createDirectory("test"), true)
     if (withTestDependency) {
-      PsiTestUtil.addProjectLibrary(module, "JUnit4", IntelliJProjectConfiguration.Companion.getProjectLibraryClassesRootPaths("JUnit4"))
+      PsiTestUtil.addProjectLibrary(module, "JUnit4", IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4").classesPaths)
     }
     return moduleDir
   }

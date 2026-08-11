@@ -1,5 +1,5 @@
 // "Convert expression to 'Byte'" "true"
-// K2_ERROR: Initializer type mismatch: expected 'Byte', actual 'Double'.
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
 fun test(d: Double) {
     val x: Byte = d<caret>
 }

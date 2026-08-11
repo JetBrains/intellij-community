@@ -42,6 +42,7 @@ internal class DependencyCollectorBean : BaseKeyedLazyInstance<DependencyCollect
  * The plugins which need to be suggested must define "dependencySupport"
  * with a coordinate that corresponds to one of the dependencies with the same "kind".
  */
+@ApiStatus.Internal
 interface DependencyCollector {
   /**
    * Returns the list of dependencies for the given project. Each element in the returned list is the name/coordinate of a dependency.

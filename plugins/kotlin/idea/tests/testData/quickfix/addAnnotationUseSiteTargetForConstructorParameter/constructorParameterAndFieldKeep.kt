@@ -1,4 +1,5 @@
 // "Add use-site target 'param'" "true"
+// LANGUAGE_VERSION: 2.3
 // ACTION "Change use-site target to 'field'"
 // COMPILER_ARGUMENTS: -XXLanguage:+AnnotationDefaultTargetMigrationWarning
 

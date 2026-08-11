@@ -5,6 +5,21 @@
     <module name="intellij.java.debugger"/>
     <module name="intellij.java.debugger.impl"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.libraries.asm"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.projectModel"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

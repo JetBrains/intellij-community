@@ -17,24 +17,21 @@ import org.jetbrains.idea.maven.server.MavenServerGlobals;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.List;
 
 @Named
 @Singleton
 @Priority(10)
 public class Maven40PluginDependenciesResolver implements PluginDependenciesResolver {
+
   private final PluginDependenciesResolver delegate;
 
   @Inject
   public Maven40PluginDependenciesResolver(DefaultPluginDependenciesResolver delegate) {
     this.delegate = delegate;
-  }
-
-  private static PluginDependenciesResolver findDefaultResolver(List<PluginDependenciesResolver> allResolvers) {
-    for (PluginDependenciesResolver resolver : allResolvers) {
-      if (resolver instanceof DefaultPluginDependenciesResolver) return resolver;
-    }
-    throw new RuntimeException("DefaultPluginDependenciesResolver not found");
   }
 
   @Override
@@ -43,6 +40,7 @@ public class Maven40PluginDependenciesResolver implements PluginDependenciesReso
     return delegate.resolve(plugin, repositories, session);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public DependencyNode resolve(Plugin plugin, Artifact pluginArtifact, DependencyFilter dependencyFilter,
                                 List<RemoteRepository> repositories, RepositorySystemSession session)
@@ -57,8 +55,35 @@ public class Maven40PluginDependenciesResolver implements PluginDependenciesReso
                                         List<RemoteRepository> remotePluginRepositories,
                                         RepositorySystemSession repositorySession)
     throws PluginResolutionException {
+    //noinspection deprecation
     return retryResolution(
       () -> delegate.resolvePlugin(plugin, artifact, dependencyFilter, remotePluginRepositories, repositorySession)
+    );
+  }
+
+
+  @Override
+  public DependencyResult resolvePluginAndFlatten(
+    Plugin plugin,
+    Artifact pluginArtifact,
+    DependencyFilter dependencyFilter,
+    List<RemoteRepository> repositories,
+    RepositorySystemSession session)
+    throws PluginResolutionException {
+    return retryResolution(
+      () -> delegate.resolvePluginAndFlatten(plugin, pluginArtifact, dependencyFilter, repositories, session)
+    );
+  }
+
+  @Override
+  public DependencyResult resolveCoreExtensionAndFlatten(
+    Plugin plugin,
+    DependencyFilter dependencyFilter,
+    List<RemoteRepository> repositories,
+    RepositorySystemSession session)
+    throws PluginResolutionException {
+    return retryResolution(
+      () -> delegate.resolveCoreExtensionAndFlatten(plugin, dependencyFilter, repositories, session)
     );
   }
 

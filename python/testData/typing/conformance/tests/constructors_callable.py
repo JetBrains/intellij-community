@@ -182,8 +182,9 @@ class Class8(Generic[T]):
 
 r8 = accepts_callable(Class8)
 reveal_type(r8)  # `def [T] (x: list[T], y: list[T]) -> Class8[T]`
+r8([""], "not a list")  # E: no assignment of T makes the second argument valid
 assert_type(r8([""], [""]), Class8[str])
-r8([1], [""])  # E
+r8([1], [""])  # E?: T = int | str is a potential solution
 
 
 class Class9:
@@ -193,5 +194,6 @@ class Class9:
 
 r9 = accepts_callable(Class9)
 reveal_type(r9)  # `def [T] (x: list[T], y: list[T]) -> Class9`
+r9([""], "not a list")  # E: no assignment of T makes the second argument valid
 assert_type(r9([""], [""]), Class9)
-r9([1], [""])  # E
+r9([1], [""])  # E?: T = int | str is a potential solution

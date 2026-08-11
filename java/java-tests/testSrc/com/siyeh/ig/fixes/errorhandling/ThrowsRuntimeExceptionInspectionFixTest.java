@@ -39,6 +39,10 @@ public class ThrowsRuntimeExceptionInspectionFixTest extends IGQuickFixesTestCas
     doTest(InspectionGadgetsBundle.message("throws.runtime.exception.move.quickfix", "RuntimeException"));
   }
 
+  public void testMoveThrowsExistingCommentMarkdown() {
+    doTest(InspectionGadgetsBundle.message("throws.runtime.exception.move.quickfix", "RuntimeException"));
+  }
+
   public void testRemoveThrows() {
     doTest(InspectionGadgetsBundle.message("throws.runtime.exception.quickfix", "RuntimeException"));
   }

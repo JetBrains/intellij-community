@@ -2,9 +2,11 @@
 package org.jetbrains.kotlin.idea.core.script.k2.configurations
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
+import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -19,10 +21,10 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.asNio
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.psi.PsiManager
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.URLUtil
@@ -38,28 +40,34 @@ import org.jetbrains.kotlin.idea.core.script.k2.getVirtualFile
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId
 import org.jetbrains.kotlin.idea.core.script.k2.modules.modifyKotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptProcessingFilter
 import org.jetbrains.kotlin.idea.core.script.shared.definition.javaHomePath
 import org.jetbrains.kotlin.idea.core.script.shared.definition.jdkSupplier
-import org.jetbrains.kotlin.idea.core.script.shared.smartRefineScriptCompilationConfiguration
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.v1.awaitExternalSystemInitialization
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
+import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
+import org.jetbrains.kotlin.scripting.resolve.getScriptCollectedData
+import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.notExists
 import kotlin.io.path.pathString
 import kotlin.script.experimental.api.ResultWithDiagnostics
+import kotlin.script.experimental.api.ScriptCollectedData
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.dependencies
 import kotlin.script.experimental.api.dependenciesSources
 import kotlin.script.experimental.api.ide
@@ -129,6 +137,10 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         }
     }
 
+    private class CircularScriptException(override val message: String) : Throwable(message)
+    private val notificationGroup: NotificationGroup
+        get() = NotificationGroupManager.getInstance().getNotificationGroup("KotlinScriptNotificationGroup")
+
     private suspend fun update(virtualFile: VirtualFile, definition: ScriptDefinition) {
         if (KotlinScriptEntityProvider.provide(project, virtualFile) != null) return
 
@@ -138,24 +150,31 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         val (rootConfiguration, importedConfigurations) = try {
             val rootConfiguration = resolveConfiguration(virtualFile, definition)
             val importedConfigurations = topologicalSort(nodes = listOf(rootConfiguration), reportCycle = {
-                throw IllegalStateException(
+                throw CircularScriptException(
                     KotlinBaseScriptingBundle.message(
                         "script.part.circular.file.import.chain", it.valueOrNull()?.script?.name ?: "<null>"
                     )
                 )
             }) {
                 this.valueOrNull()?.importedScripts.orEmpty().map {
-                    smartRefineScriptCompilationConfiguration(it, definition, project, null)
+                    resolveConfiguration(it, definition)
                 }
             }.reversed()
 
             rootConfiguration to importedConfigurations
         } catch (e: Throwable) {
-            NotificationGroupManager.getInstance().getNotificationGroup("KotlinScriptNotificationGroup").createNotification(
-                KotlinBaseScriptingBundle.message("circular.script.import"),
-                e.message ?: KotlinBaseScriptingBundle.message("script.configuration.failed.unknown", virtualFile.name),
-                NotificationType.ERROR,
-            ).notify(project)
+            when (e) {
+                is CircularScriptException -> notificationGroup.createNotification(
+                    KotlinBaseScriptingBundle.message("circular.script.import"),
+                    e.message,
+                    NotificationType.ERROR,
+                )
+                else -> notificationGroup.createNotification(
+                    KotlinBaseScriptingBundle.message("script.processing.failed"),
+                    e.message ?: KotlinBaseScriptingBundle.message("script.configuration.failed.unknown", virtualFile.name),
+                    NotificationType.ERROR,
+                )
+            }.notify(project)
             return
         }
 
@@ -163,7 +182,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
             is ResultWithDiagnostics.Success<ScriptCompilationConfigurationWrapper> -> rootConfiguration.value.configuration
             is ResultWithDiagnostics.Failure -> {
                 rootConfiguration.reports.forEach {
-                    NotificationGroupManager.getInstance().getNotificationGroup("KotlinScriptNotificationGroup").createNotification(
+                    notificationGroup.createNotification(
                         KotlinBaseScriptingBundle.message("script.configuration.failed", virtualFile.name),
                         it.message,
                         when (it.severity) {
@@ -181,11 +200,20 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
 
         project.workspaceModel.update("updating kotlin script entities [$KotlinScriptEntitySource]") { storage ->
             if (!storage.containsScriptEntity(scriptUrl)) {
-                val libraryIds = generateScriptLibraryEntities(project, configuration, definition).toList()
-                for ((id, sources) in libraryIds) {
-                    val existingLibrary = storage.resolve(id)
+                val libraries = generateScriptLibraryEntities(project, configuration, definition).toList()
+                val libraryIds = mutableListOf<KotlinScriptLibraryEntityId>()
+                for ((scope, classes, sources) in libraries) {
+                    val libraryId = KotlinScriptLibraryEntityId(scope, classes)
+                    libraryIds += libraryId
+
+                    val existingLibrary = storage.resolve(libraryId)
                     if (existingLibrary == null) {
-                        storage addEntity KotlinScriptLibraryEntity(id.classes, setOf(scriptUrl), KotlinScriptEntitySource) {
+                        storage addEntity KotlinScriptLibraryEntity(
+                            scope,
+                            classes,
+                            setOf(scriptUrl),
+                            KotlinScriptEntitySource
+                        ) {
                             this.sources += sources
                         }
                     } else {
@@ -195,7 +223,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
                         }
                     }
                 }
-                storage addEntity KotlinScriptEntity(scriptUrl, libraryIds.map { it.first }, KotlinScriptEntitySource) {
+                storage addEntity KotlinScriptEntity(scriptUrl, libraryIds, KotlinScriptEntitySource) {
                     this.configurationId = configuration.getOrCreateScriptConfigurationId(storage, KotlinScriptEntitySource)
                     this.sdkId = configuration.sdkId
                 }
@@ -237,12 +265,50 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         virtualFile: VirtualFile,
         definition: ScriptDefinition,
     ): ScriptCompilationConfigurationResult {
-        val configuration = definition.compilationConfiguration.withUpdatedJdkHome(virtualFile)
-        val scriptSource = VirtualFileScriptSource(virtualFile)
-        return withBackgroundProgress(
-            project, title = KotlinBaseScriptingBundle.message("progress.title.dependency.resolution", virtualFile.name)
-        ) {
-            smartRefineScriptCompilationConfiguration(scriptSource, definition, project, configuration)
+        val providedConfiguration = definition.compilationConfiguration.withUpdatedJdkHome(virtualFile)
+        val collectedData = smartReadAction(project) {
+            val ktFile = PsiManager.getInstance(project).findFile(virtualFile) as? KtFile ?: error("Unable to load PSI from ${virtualFile.path}")
+            getScriptCollectedData(ktFile, providedConfiguration, definition.contextClassLoader)
+        }
+
+        return refineScriptCompilationConfiguration(
+            compilationConfiguration = providedConfiguration,
+            sourceCode = VirtualFileScriptSource(virtualFile),
+            collectedData = collectedData,
+            knownVirtualFileSources = null,
+            definition = definition
+        )
+    }
+
+    private suspend fun resolveConfiguration(
+        sourceCode: SourceCode,
+        definition: ScriptDefinition,
+    ): ScriptCompilationConfigurationResult {
+        return when (sourceCode) {
+            is KtFileScriptSource -> {
+                val collectedData = smartReadAction(project) {
+                    getScriptCollectedData(
+                        sourceCode.ktFile,
+                        definition.compilationConfiguration,
+                        definition.contextClassLoader
+                    )
+                }
+                refineScriptCompilationConfiguration(
+                    compilationConfiguration = definition.compilationConfiguration,
+                    sourceCode = sourceCode,
+                    collectedData = collectedData,
+                    knownVirtualFileSources = null,
+                    definition = definition
+                )
+            }
+            is VirtualFileScriptSource -> resolveConfiguration(sourceCode.virtualFile, definition)
+            else -> refineScriptCompilationConfiguration(
+                compilationConfiguration = definition.compilationConfiguration,
+                sourceCode = sourceCode,
+                collectedData = ScriptCollectedData(emptyMap()),
+                knownVirtualFileSources = null,
+                definition = definition
+            )
         }
     }
 

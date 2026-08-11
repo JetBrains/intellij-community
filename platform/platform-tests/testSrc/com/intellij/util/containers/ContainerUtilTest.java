@@ -4,6 +4,7 @@ package com.intellij.util.containers;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.UnfairTextRange;
@@ -13,6 +14,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.assertj.core.api.Assertions;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
 
@@ -29,6 +31,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.SequencedCollection;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ForkJoinPool;
@@ -492,112 +496,141 @@ public class ContainerUtilTest {
   }
 
   @Test
-  public void testAggregateFunctionsReturnReallyUnmodifiableCollections() {
+  public void testAggregateFunctionsReallyWorkAndReturnReallyUnmodifiableCollections() {
     ContainerUtil.Options.RETURN_REALLY_UNMODIFIABLE_COLLECTION_FROM_METHODS_MARKED_UNMODIFIABLE = true; // in case the test was started without ApplicationImpl init
-    assertUnmodifiable(ContainerUtil.append(new ArrayList<>(Arrays.asList(1, 2)), 3));
-    assertUnmodifiable(ContainerUtil.append(new ArrayList<>(Arrays.asList(1, 2)), 3, 4));
-    assertUnmodifiable(ContainerUtil.classify(List.of("a", "b").iterator(), s-> s));
-    assertUnmodifiable(ContainerUtil.collect(new ArrayList<>(Arrays.asList("a", "b")).iterator()));
-    assertUnmodifiable(ContainerUtil.collect(new ArrayList<>(Arrays.asList("a", "b")).iterator(), Conditions.alwaysTrue()));
-    assertUnmodifiable(ContainerUtil.collect(new ArrayList<>(Arrays.asList("a", "b")).iterator(), new FilteringIterator.InstanceOf<>(String.class)));
-    assertUnmodifiable(ContainerUtil.concat(new ArrayList<>(Arrays.asList(1, 2)), new ArrayList<>(Arrays.asList(1, 2))));
-    assertUnmodifiable(ContainerUtil.concat(new ArrayList<>(Arrays.asList(1, 2)), new ArrayList<>(Arrays.asList(1, 2)), new ArrayList<>(Arrays.asList(1, 2))));
-    assertUnmodifiable(ContainerUtil.concat(List.of(new ArrayList<>(Arrays.asList(1, 2)), new ArrayList<>(Arrays.asList(1, 2)), new ArrayList<>(Arrays.asList(1, 2)))));
-    assertUnmodifiable(ContainerUtil.concat(new String[]{"a","b"}, s->List.of(s, s)));
-    assertUnmodifiable(ContainerUtil.copyList(new ArrayList<>(Arrays.asList("a", "b"))));
-    assertUnmodifiable(ContainerUtil.diff(new HashMap<>(Map.of("a", "b")), new HashMap<>(Map.of("f", "c"))));
+    assertUnmodifiable(ContainerUtil.append(new ArrayList<>(Arrays.asList(1, 2)), 3), 1, 2, 3);
+    assertUnmodifiable(ContainerUtil.append(new ArrayList<>(Arrays.asList(1, 2)), 3, 4), 1, 2,3,4);
+    assertUnmodifiable(ContainerUtil.classify(List.of("a", "b").iterator(), s-> s), "a", Set.of("a"), "b", Set.of("b"));
+    assertUnmodifiable(ContainerUtil.collect(new ArrayList<>(Arrays.asList("a", "b")).iterator()), "a", "b");
+    assertUnmodifiable(ContainerUtil.collect(new ArrayList<>(Arrays.asList("a", "b")).iterator(), Conditions.alwaysTrue()),"a", "b");
+    assertUnmodifiable(ContainerUtil.collect(new ArrayList<>(Arrays.asList("a", "b")).iterator(), new FilteringIterator.InstanceOf<>(String.class)),"a", "b");
+    assertUnmodifiable(ContainerUtil.concat(new ArrayList<>(Arrays.asList(1, 2)), new ArrayList<>(Arrays.asList(1, 2))),1,2,1,2);
+    assertUnmodifiable(ContainerUtil.concat(new ArrayList<>(Arrays.asList(1, 2)), new ArrayList<>(Arrays.asList(1, 2)), new ArrayList<>(Arrays.asList(1, 2))),1,2,1,2,1,2);
+    assertUnmodifiable(ContainerUtil.concat(List.of(new ArrayList<>(Arrays.asList(1, 2)), new ArrayList<>(Arrays.asList(1, 2)), new ArrayList<>(Arrays.asList(1, 2)))),1,2,1,2,1,2);
+    assertUnmodifiable(ContainerUtil.concat(new String[]{"a","b"}, s->List.of(s, s)),"a","a","b","b");
+    assertUnmodifiable(ContainerUtil.copyList(new ArrayList<>(Arrays.asList("a", "b"))),"a","b");
+    assertUnmodifiable(ContainerUtil.diff(new HashMap<>(Map.of("a", "b")), new HashMap<>(Map.of("f", "c"))), "a", Couple.of("b",null), "f", Couple.of(null, "c"));
+    assertUnmodifiable(ContainerUtil.diff(Map.of("a", "b"), Map.of("f", "c")), "a", Couple.of("b",null), "f", Couple.of(null, "c"));
+    assertUnmodifiable(ContainerUtil.diff(Map.of("a", "b"), Map.of("a", "c")),"a", Couple.of("b","c"));
     assertUnmodifiable(ContainerUtil.emptyList());
-    assertUnmodifiable(ContainerUtil.findAll(new String[]{"a","b"}, s->!s.isEmpty()));
-    assertUnmodifiable(ContainerUtil.findAll(new ArrayList<>(Arrays.asList("a", "b")), s->!s.isEmpty()));
-    assertUnmodifiable(ContainerUtil.findAll(new ArrayList<>(Arrays.asList("a", "b")), String.class));
-    assertUnmodifiable(ContainerUtil.findAll(new String[]{"a","b"}, String.class));
-    assertUnmodifiable(ContainerUtil.filter(new String[]{"a","b"}, s->!s.isEmpty()));
-    assertUnmodifiable(ContainerUtil.filter(new ArrayList<>(Arrays.asList("a", "b")), s->!s.isEmpty()));
-    assertUnmodifiable(ContainerUtil.filter(new HashMap<>(Map.of("a", "b")), s-> s != null));
-    assertUnmodifiable(ContainerUtil.filterIsInstance(new String[]{"a","b"}, String.class));
-    assertUnmodifiable(ContainerUtil.filterIsInstance(new ArrayList<>(Arrays.asList("a", "b")), String.class));
-    assertUnmodifiable(ContainerUtil.flatMap(List.of(1, 2, 3 ), t->List.of(t, t)));
-    //noinspection unchecked
-    assertUnmodifiable(ContainerUtil.flatten(new Collection[]{new ArrayList<>(Arrays.asList("a", "b")), new ArrayList<>(Arrays.asList("a", "b"))}));
-    assertUnmodifiable(ContainerUtil.flatten(List.of(new ArrayList<>(Arrays.asList("a", "b")), new ArrayList<>(Arrays.asList("a", "b")))));
-    assertUnmodifiable(ContainerUtil.intersection(new ArrayList<>(Arrays.asList("a", "b")), new ArrayList<>(Arrays.asList("a", "b"))));
-    assertUnmodifiable(ContainerUtil.intersection(new HashMap<>(Map.of("a", "b")), new HashMap<>(Map.of("a", "b"))));
-    assertUnmodifiable(ContainerUtil.mergeSortedLists(new ArrayList<>(Arrays.asList("a", "b")), new ArrayList<>(Arrays.asList("a", "b")), String::compareTo, true));
-    assertUnmodifiable(ContainerUtil.map(new ArrayList<>(Arrays.asList("a", "b")), s->!s.isEmpty()));
-    assertUnmodifiable(ContainerUtil.map((Iterable<String>)new ArrayList<>(Arrays.asList("a", "b")), s->!s.isEmpty()));
-    assertUnmodifiable(ContainerUtil.map(new ArrayList<>(Arrays.asList("a", "b")).iterator(), s->!s.isEmpty()));
-    assertUnmodifiable(ContainerUtil.map(new String[]{"a","b"}, s->!s.isEmpty()));
-    assertUnmodifiable(ContainerUtil.map2LinkedSet(new ArrayList<>(Arrays.asList("a", "b")), t->t));
-    assertUnmodifiable(ContainerUtil.map2Map(List.of("a", "b"), s-> Pair.create(s, s)));
-    assertUnmodifiable(ContainerUtil.map2Map(List.of(Pair.create("a", "b"), Pair.create("c", "e"))));
-    assertUnmodifiable(ContainerUtil.map2Map(new String[]{"a", "b"}, s-> Pair.create(s, s)));
-    assertUnmodifiable(ContainerUtil.map2MapNotNull(List.of("a", "b"), s-> Pair.create(s, s)));
-    assertUnmodifiable(ContainerUtil.map2MapNotNull(new String[]{"a", "b"}, s-> Pair.create(s, s)));
-    assertUnmodifiable(ContainerUtil.map2Set(new ArrayList<>(Arrays.asList("a", "b")), t->t));
-    assertUnmodifiable(ContainerUtil.map2Set(new String[]{"a","b"}, t->t));
-    assertUnmodifiable(ContainerUtil.map2SetNotNull(new ArrayList<>(Arrays.asList("a", "b")), t->t));
-    assertUnmodifiable(ContainerUtil.mapNotNull(new ArrayList<>(Arrays.asList("a", "b")), s->!s.isEmpty()));
-    assertUnmodifiable(ContainerUtil.mapNotNull((Iterable<String>)new ArrayList<>(Arrays.asList("a", "b")), s->!s.isEmpty()));
-    assertUnmodifiable(ContainerUtil.mapNotNull(new String[]{"a","b"}, s->!s.isEmpty()));
-    assertUnmodifiable(ContainerUtil.newMapFromKeys(Arrays.asList("a", "b").iterator(), k->k));
-    assertUnmodifiable(ContainerUtil.newMapFromValues(Arrays.asList("a", "b").iterator(), k->k));
-    assertUnmodifiable(ContainerUtil.notNullize(new HashSet<>(Arrays.asList("a", "b"))));
-    assertUnmodifiable(ContainerUtil.notNullize(new ArrayList<>(Arrays.asList("a", "b"))));
-    assertUnmodifiable(ContainerUtil.notNullize(new HashMap<>(Map.of("a", "b"))));
-    assertUnmodifiable(ContainerUtil.packNullables("a", "b"));
-    assertUnmodifiable(ContainerUtil.prepend(new ArrayList<>(Arrays.asList("a", "b")), "c"));
-    assertUnmodifiable(ContainerUtil.reverse(new ArrayList<>(Arrays.asList("a", "b"))));
-    assertUnmodifiable(ContainerUtil.skipNulls(new ArrayList<>(Arrays.asList(1, 2))));
-    assertUnmodifiable(ContainerUtil.skipNulls(new ArrayList<>(Arrays.asList(1, 2, null))));
-    assertUnmodifiable(ContainerUtil.sorted(new ArrayList<>(Arrays.asList(1, 2))));
-    assertUnmodifiable(ContainerUtil.sorted(new ArrayList<>(Arrays.asList(1, 2)), Comparator.comparingInt(t -> t.hashCode())));
-    assertUnmodifiable(ContainerUtil.sorted((Iterable<Integer>)new ArrayList<>(Arrays.asList(1, 2)), Comparator.comparingInt(t -> t.hashCode())));
-    assertUnmodifiable(ContainerUtil.subArrayAsList(new String[]{"a","b"}, 0, 1));
-    assertUnmodifiable(ContainerUtil.toList(new StringTokenizer("xxx")));
-    assertUnmodifiable(ContainerUtil.union(new HashSet<>(Arrays.asList("a", "b")), new HashSet<>(Arrays.asList("a", "b"))));
-    assertUnmodifiable(ContainerUtil.union(new ArrayList<>(Arrays.asList("a", "b")), new ArrayList<>(Arrays.asList("a", "b"))));
-    assertUnmodifiable(ContainerUtil.union(new HashMap<>(Map.of("a", "b")), new HashMap<>(Map.of("a", "b"))));
-    assertUnmodifiable(ContainerUtil.unmodifiableOrEmptyList(new ArrayList<>(Arrays.asList("a", "b"))));
-    assertUnmodifiable(ContainerUtil.unmodifiableOrEmptySet(new HashSet<>(Arrays.asList("a", "b"))));
-    assertUnmodifiable(ContainerUtil.unmodifiableOrEmptyMap(new HashMap<>(Map.of("a", "b"))));
-    assertUnmodifiable(ContainerUtil.remove(List.of("x","y"), 0));
-    assertUnmodifiable(ContainerUtil.remove(List.of("x","y"), "x"));
-    assertUnmodifiable(ContainerUtil.remove(List.of("x","y"), "z"));
+    assertUnmodifiable(ContainerUtil.findAll(new String[]{"a","b"}, s->!s.isEmpty()),"a","b");
+    assertUnmodifiable(ContainerUtil.findAll(new ArrayList<>(Arrays.asList("a", "b")), s->!s.isEmpty()),"a","b");
+    assertUnmodifiable(ContainerUtil.findAll(new ArrayList<>(Arrays.asList("a", "b")), String.class),"a","b");
+    assertUnmodifiable(ContainerUtil.findAll(new String[]{"a","b"}, String.class),"a","b");
+    assertUnmodifiable(List.of(ContainerUtil.findAllAsArray(new String[]{"a","b"}, s->s.length()<2)),"a","b");
+    assertUnmodifiable(List.of(ContainerUtil.findAllAsArray(new String[]{"a","bb"}, s->s.length()<2)),"a");
+    assertUnmodifiable(List.of(ContainerUtil.findAllAsArray(new String[]{"aa","bb"}, s->s.length()<2)));
+    assertUnmodifiable(ContainerUtil.filter(new String[]{"a","b"}, s->!s.isEmpty()),"a","b");
+    assertUnmodifiable(ContainerUtil.filter(new ArrayList<>(Arrays.asList("a", "b")), s->!s.isEmpty()),"a","b");
+    assertUnmodifiable(ContainerUtil.filter(new HashMap<>(Map.of("a", "b")), s-> !s.equals("xxx")), "a", "b");
+    assertUnmodifiable(ContainerUtil.filter(new HashMap<>(Map.of("a", "b","aa","b")), s-> s.length() > 1),"aa","b");
+    assertUnmodifiable(ContainerUtil.filter(new HashMap<>(Map.of("a", "b")), s-> s.length() > 1));
+    assertUnmodifiable(ContainerUtil.filterIsInstance(new String[]{"a","b"}, String.class),"a","b");
+    assertUnmodifiable(ContainerUtil.filterIsInstance(new ArrayList<>(Arrays.asList("a", "b")), String.class),"a","b");
+    assertUnmodifiable(ContainerUtil.flatMap(List.of(1, 2, 3 ), t->List.of(t, t)),1,1,2,2,3,3);
+    //noinspection unchecked,RedundantArrayCreation
+    assertUnmodifiable(ContainerUtil.flatten(new Collection[]{new ArrayList<>(Arrays.asList("a", "b")), new ArrayList<>(Arrays.asList("a", "b"))}),"a","b","a","b");
+    assertUnmodifiable(ContainerUtil.flatten(List.of(new ArrayList<>(Arrays.asList("a", "b")), new ArrayList<>(Arrays.asList("a", "b")))),"a","b","a","b");
+    assertUnmodifiable(ContainerUtil.intersection(new ArrayList<>(Arrays.asList("a", "b")), new ArrayList<>(Arrays.asList("a", "b"))),"a","b");
+    assertUnmodifiable(ContainerUtil.intersection(new HashMap<>(Map.of("a", "b")), new HashMap<>(Map.of("a", "b"))),"a","b");
+    assertUnmodifiable(ContainerUtil.mergeSortedLists(new ArrayList<>(Arrays.asList("a", "b")), new ArrayList<>(Arrays.asList("a", "b")), String::compareTo, true),"a","b");
+    assertUnmodifiable(ContainerUtil.mergeSortedLists(new ArrayList<>(Arrays.asList("a", "b")), new ArrayList<>(Arrays.asList("c", "d")), String::compareTo, true),"a","b","c","d");
+    assertUnmodifiable(ContainerUtil.mergeSortedLists(new ArrayList<>(Arrays.asList("a", "c")), new ArrayList<>(Arrays.asList("b", "d")), String::compareTo, true),"a","b","c","d");
+    assertUnmodifiable(ContainerUtil.mergeSortedLists(new ArrayList<>(Arrays.asList("a", "b","c","d")), new ArrayList<>(Arrays.asList("b", "d")), String::compareTo, true),"a","b","c","d");
+    assertUnmodifiable(ContainerUtil.mergeSortedLists(new ArrayList<>(Arrays.asList("a", "b","c","d")), new ArrayList<>(Arrays.asList("b", "d")), String::compareTo, false),"a","b","b","c","d","d");
+    assertUnmodifiable(ContainerUtil.mergeSortedLists(List.of(), List.of("b", "d"), String::compareTo, false),"b","d");
+    assertUnmodifiable(ContainerUtil.mergeSortedLists(List.of(), List.of("b"), String::compareTo, false),"b");
+    assertUnmodifiable(ContainerUtil.mergeSortedLists(List.of(), List.of(), String::compareTo, false));
+    assertUnmodifiable(ContainerUtil.map(new ArrayList<>(Arrays.asList("a", "b")), s->s+s),"aa","bb");
+    assertUnmodifiable(ContainerUtil.map((Iterable<String>)new ArrayList<>(Arrays.asList("a", "b")), s->s+s),"aa","bb");
+    assertUnmodifiable(ContainerUtil.map(new ArrayList<>(Arrays.asList("a", "b")).iterator(), s->s+s),"aa","bb");
+    assertUnmodifiable(ContainerUtil.map(new String[]{"a","b"}, s->s+s),"aa","bb");
+    assertUnmodifiable(ContainerUtil.map2LinkedSet(new ArrayList<>(Arrays.asList("a", "b")), t->t+t),"aa","bb");
+    assertUnmodifiable(ContainerUtil.map2Map(List.of("a", "b"), s-> Pair.create(s, s)),"a","a","b","b");
+    assertUnmodifiable(ContainerUtil.map2Map(List.of(Pair.create("a", "b"), Pair.create("c", "e"))),"a","b","c","e");
+    assertUnmodifiable(ContainerUtil.map2Map(new String[]{"a", "b"}, s-> Pair.create(s, s)),"a","a","b","b");
+    assertUnmodifiable(ContainerUtil.map2MapNotNull(List.of("a", "b"), s-> Pair.create(s, s)),"a","a","b","b");
+    assertUnmodifiable(ContainerUtil.map2MapNotNull(new String[]{"a", "b"}, s-> Pair.create(s, s)),"a","a","b","b");
+    assertUnmodifiable(ContainerUtil.map2Set(new ArrayList<>(Arrays.asList("a", "b")), t->t),"a","b");
+    assertUnmodifiable(ContainerUtil.map2Set(new String[]{"a","b"}, t->t),"a","b");
+    assertUnmodifiable(ContainerUtil.map2Set(new String[]{"a","b"}, t->t+t),"bb","aa");
+    assertUnmodifiable(ContainerUtil.map2SetNotNull(new ArrayList<>(Arrays.asList("a", "b")), t->t),"a","b");
+    assertUnmodifiable(ContainerUtil.mapNotNull(new ArrayList<>(Arrays.asList("a", "b")), s->s+s),"aa","bb");
+    assertUnmodifiable(ContainerUtil.mapNotNull((Iterable<String>)new ArrayList<>(Arrays.asList("a", "b")), s->s),"a","b");
+    assertUnmodifiable(ContainerUtil.mapNotNull(new String[]{"a","b"}, s->s),"a","b");
+    assertUnmodifiable(ContainerUtil.newMapFromKeys(Arrays.asList("a", "b").iterator(), k->k+k),"a","aa","b","bb");
+    assertUnmodifiable(ContainerUtil.newMapFromValues(Arrays.asList("a", "b").iterator(), k->k),"a","a","b","b");
+    assertUnmodifiable(ContainerUtil.notNullize(new HashSet<>(Arrays.asList("a", "b"))),"a","b");
+    assertUnmodifiable(ContainerUtil.notNullize(new ArrayList<>(Arrays.asList("a", "b"))),"a","b");
+    assertUnmodifiable(ContainerUtil.notNullize(new HashMap<>(Map.of("a", "b"))),"a","b");
+    assertUnmodifiable(ContainerUtil.packNullables("a", "b"),"a","b");
+    assertUnmodifiable(ContainerUtil.packNullables("a", null),"a");
+    assertUnmodifiable(ContainerUtil.packNullables(null, null));
+    assertUnmodifiable(ContainerUtil.packNullables(new Object[]{null}));
+    assertUnmodifiable(ContainerUtil.prepend(new ArrayList<>(Arrays.asList("a", "b")), "c"),"c","a","b");
+    assertUnmodifiable(ContainerUtil.reverse(new ArrayList<>(Arrays.asList("a", "b"))),"b","a");
+    assertUnmodifiable(ContainerUtil.skipNulls(new ArrayList<>(Arrays.asList(1, 2))),1,2);
+    assertUnmodifiable(ContainerUtil.skipNulls(new ArrayList<>(Arrays.asList(1, 2, null))),1,2);
+    assertUnmodifiable(ContainerUtil.sorted(new ArrayList<>(Arrays.asList(1, 2))),1,2);
+    assertUnmodifiable(ContainerUtil.sorted(new ArrayList<>(Arrays.asList(2, 1))),1,2);
+    assertUnmodifiable(ContainerUtil.sorted(new ArrayList<>(Arrays.asList(1, 2)), Comparator.comparingInt(t -> t.hashCode())),1,2);
+    assertUnmodifiable(ContainerUtil.sorted(new ArrayList<>(Arrays.asList(2, 1)), Comparator.comparingInt(t -> t.hashCode())),1,2);
+    assertUnmodifiable(ContainerUtil.sorted((Iterable<Integer>)new ArrayList<>(Arrays.asList(1, 2)), Comparator.comparingInt(t -> t.hashCode())),1,2);
+    assertUnmodifiable(ContainerUtil.subArrayAsList(new String[]{"a","b"}, 0, 1), "a");
+    assertUnmodifiable(ContainerUtil.toList(new StringTokenizer("xxx")),"xxx");
+    assertUnmodifiable(ContainerUtil.toList(new StringTokenizer("xxx yyy")),"xxx", "yyy");
+    assertUnmodifiable(ContainerUtil.union(new HashSet<>(Arrays.asList("a", "b")), new HashSet<>(Arrays.asList("a", "b"))),"a","b");
+    assertUnmodifiable(ContainerUtil.union(new ArrayList<>(Arrays.asList("a", "b")), new ArrayList<>(Arrays.asList("a", "b"))),"a","b");
+    assertUnmodifiable(ContainerUtil.union(new HashMap<>(Map.of("a", "b")), new HashMap<>(Map.of("a", "b"))),"a","b");
+    assertUnmodifiable(ContainerUtil.unmodifiableOrEmptyList(new ArrayList<>(Arrays.asList("a", "b"))),"a","b");
+    assertUnmodifiable(ContainerUtil.unmodifiableOrEmptySet(new HashSet<>(Arrays.asList("a", "b"))),"a","b");
+    assertUnmodifiable(ContainerUtil.unmodifiableOrEmptyMap(new HashMap<>(Map.of("a", "b"))),"a","b");
+    assertUnmodifiable(ContainerUtil.remove(List.of("x","y"), 0),"y");
+    assertUnmodifiable(ContainerUtil.remove(List.of("x","y"), "x"),"y");
+    assertUnmodifiable(ContainerUtil.remove(List.of("x","y"), "z"),"x","y");
   }
 
-  private static <K, V> void assertUnmodifiable(Map<K, V> map) {
-    assertFalse(map.isEmpty());
-    assertThrowsUOE(map, () -> map.clear());
+  private static <K, V> void assertUnmodifiable(Map<K, V> map, Object... expectedPairs) {
+    Map<Object, Object> expectedMap = ContainerUtil.map2Map(IntStream.range(0, expectedPairs.length / 2).mapToObj(i -> Pair.create(expectedPairs[2 * i], expectedPairs[2 * i + 1])).toList());
+    assertEquals(expectedMap, map);
+    // for some reason Collections.emptyMap() does not throw for some noop modifications
+    if (map != Collections.emptyMap()) {
+      assertThrowsUOE(map, ()->map.clear());
+      assertThrowsUOE(map, ()->map.putAll(new HashMap<>(map)));
+      assertThrowsUOE(map, ()->map.remove(null));
+      assertThrowsUOE(map, ()->map.remove(null, null));
+      assertThrowsUOE(map, ()->map.replaceAll((_, _)->null));
+      assertThrowsUOE(map, ()->map.merge(null, map.values().iterator().next(), (_, _)->null));
+      assertThrowsUOE(map, ()->map.merge(map.keySet().iterator().next(), map.values().iterator().next(), (_, _)->null));
+      //noinspection RedundantCollectionOperation
+      assertThrowsUOE(map, ()-> map.keySet().clear());
+      //noinspection RedundantCollectionOperation
+      assertThrowsUOE(map, ()-> map.values().clear());
+      //noinspection RedundantCollectionOperation
+      assertThrowsUOE(map, ()-> map.entrySet().clear());
+      //noinspection RedundantCollectionOperation
+      assertThrowsUOE(map, ()-> map.keySet().remove(map.keySet().iterator().next()));
+      assertThrowsUOE(map, ()-> map.values().remove(map.values().iterator().next()));
+      assertThrowsUOE(map, ()-> {
+        Iterator<Map.Entry<K, V>> iterator = map.entrySet().iterator();
+        iterator.next();
+        iterator.remove();
+      });
+    }
+    //noinspection DataFlowIssue
     assertThrowsUOE(map, ()->map.put(null, null));
+    //noinspection DataFlowIssue
     assertThrowsUOE(map, ()->map.putIfAbsent(null, null));
-    assertThrowsUOE(map, ()->map.putAll(new HashMap<>(map)));
-    assertThrowsUOE(map, ()->map.remove(null));
-    assertThrowsUOE(map, ()->map.remove(null, null));
     assertThrowsUOE(map, ()->map.computeIfAbsent(null, _->null));
     assertThrowsUOE(map, ()->map.compute(null, (_, _)->null));
     assertThrowsUOE(map, ()->map.computeIfPresent(null, (_, _)->null));
     assertThrowsUOE(map, ()->map.computeIfAbsent(null, _->null));
-    assertThrowsUOE(map, ()->map.replaceAll((_, _)->null));
+    //noinspection DataFlowIssue
     assertThrowsUOE(map, ()->map.replace(null, null));
+    //noinspection DataFlowIssue
     assertThrowsUOE(map, ()->map.replace(null, null, null));
     //noinspection DataFlowIssue
     assertThrowsUOE(map, ()->map.merge(null, null, (_, _)->null));
-    assertThrowsUOE(map, ()->map.merge(null, map.values().iterator().next(), (_, _)->null));
-    assertThrowsUOE(map, ()->map.merge(map.keySet().iterator().next(), map.values().iterator().next(), (_, _)->null));
-    //noinspection RedundantCollectionOperation
-    assertThrowsUOE(map, ()-> map.keySet().clear());
-    //noinspection RedundantCollectionOperation
-    assertThrowsUOE(map, ()-> map.keySet().remove(map.keySet().iterator().next()));
-    //noinspection RedundantCollectionOperation
-    assertThrowsUOE(map, ()-> map.values().clear());
-    assertThrowsUOE(map, ()-> map.values().remove(map.values().iterator().next()));
-    assertThrowsUOE(map, ()-> {
-      Iterator<Map.Entry<K, V>> iterator = map.entrySet().iterator();
-      iterator.next();
-      iterator.remove();
-    });
-    //noinspection RedundantCollectionOperation
-    assertThrowsUOE(map, ()-> map.entrySet().clear());
   }
 
   private static void assertThrowsUOE(Collection<?> collection, ThrowingRunnable runnable) {
@@ -606,13 +639,20 @@ public class ContainerUtilTest {
     assertEquals(sizeBefore, collection.size());
   }
 
-  private static void assertThrowsUOE(Map<?, ?> collection, ThrowingRunnable runnable) {
+  private static void assertThrowsUOE(@NotNull Map<?, ?> collection, ThrowingRunnable runnable) {
     int sizeBefore = collection.size();
     assertThrows(UnsupportedOperationException.class, runnable);
     assertEquals(sizeBefore, collection.size());
   }
 
-  private static <T> void assertUnmodifiable(Collection<T> collection) {
+  @SafeVarargs
+  private static <T> void assertUnmodifiable(Collection<T> collection, T... expected) {
+    if (collection instanceof SequencedCollection) {
+      assertEquals(Arrays.asList(expected), new ArrayList<>(collection));
+    }
+    else {
+      assertEquals(Set.of(expected), new HashSet<>(collection));
+    }
     //noinspection SizeReplaceableByIsEmpty
     assertEquals(collection.size() ==0, collection.isEmpty());
     assertThrowsUOE(collection, ()->collection.add(null));

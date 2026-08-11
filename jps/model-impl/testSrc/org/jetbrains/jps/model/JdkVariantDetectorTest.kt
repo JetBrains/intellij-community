@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model
 
 import com.intellij.testFramework.rules.TempDirectory
@@ -18,7 +18,9 @@ import org.jetbrains.jps.model.java.JdkVersionDetector.Variant.JBR
 import org.jetbrains.jps.model.java.JdkVersionDetector.Variant.Kona
 import org.jetbrains.jps.model.java.JdkVersionDetector.Variant.Liberica
 import org.jetbrains.jps.model.java.JdkVersionDetector.Variant.Microsoft
+import org.jetbrains.jps.model.java.JdkVersionDetector.Variant.Ojdkbuild
 import org.jetbrains.jps.model.java.JdkVersionDetector.Variant.Oracle
+import org.jetbrains.jps.model.java.JdkVersionDetector.Variant.RedHat
 import org.jetbrains.jps.model.java.JdkVersionDetector.Variant.SapMachine
 import org.jetbrains.jps.model.java.JdkVersionDetector.Variant.Semeru
 import org.jetbrains.jps.model.java.JdkVersionDetector.Variant.Temurin
@@ -389,6 +391,25 @@ class JdkVariantDetectorTest {
        |OS_NAME="Darwin"
     """.trimMargin()
 
+  private val RELEASE_RED_HAT_25 =
+    """|IMPLEMENTOR="Red Hat, Inc."
+       |IMPLEMENTOR_VERSION="(Red_Hat-25.0.3.0.9-1)"
+       |JAVA_RUNTIME_VERSION="25.0.3+9-LTS"
+       |JAVA_VERSION="25.0.3"
+       |JAVA_VERSION_DATE="2026-04-21"
+       |LIBC="gnu"
+       |MODULES="java.base ..."
+    """.trimMargin()
+
+  private val RELEASE_OJDKBUILD_17 =
+    """|IMPLEMENTOR="ojdkbuild"
+       |IMPLEMENTOR_VERSION="21.9"
+       |JAVA_VERSION="17.0.3"
+       |JAVA_VERSION_DATE="2022-04-19"
+       |LIBC="default"
+       |MODULES="java.base ..."
+    """.trimMargin()
+
   private val RELEASE_UNKNOWN_21 =
     """|IMPLEMENTOR="Foo"
        |IMPLEMENTOR_VERSION="Foo-1234"
@@ -424,6 +445,8 @@ class JdkVariantDetectorTest {
   @Test fun `GraalVM CE 16`() = assertVariant(GraalVMCE, RELEASE_GRAALVM_CE_16_0_1)
   @Test fun `Semeru 16`() = assertVariant(Semeru, RELEASE_SEMERU_16_0_2)
   @Test fun `Temurin 17`() = assertVariant(Temurin, RELEASE_TEMURIN_17_0_1)
+  @Test fun `Red Hat 25`() = assertVariant(RedHat, RELEASE_RED_HAT_25)
+  @Test fun `ojdkbuild 17`() = assertVariant(Ojdkbuild, RELEASE_OJDKBUILD_17)
   @Test fun `Unknown variant`() = assertVariant(Unknown, RELEASE_UNKNOWN_21)
 
   @Test fun `GraalVM 21 - version string`() = assertEquals(

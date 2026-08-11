@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.SuperCa
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.SuperCallLookupObject
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.FirSuperEntriesProvider.getSuperClassesAvailableForSuperCall
-import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
+import org.jetbrains.kotlin.idea.completion.implCommon.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name

@@ -16,10 +16,13 @@ import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.SegmentedControlButtonState
 
+/** Combines [SegmentedControlButtonColors] and [SegmentedControlButtonMetrics] to style a segmented control button. */
 @Stable
 @GenerateDataFunctions
 public class SegmentedControlButtonStyle(
+    /** The color tokens for the segmented control button. */
     public val colors: SegmentedControlButtonColors,
+    /** The size and spacing metrics for the segmented control button. */
     public val metrics: SegmentedControlButtonMetrics,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -42,25 +45,43 @@ public class SegmentedControlButtonStyle(
 
     override fun toString(): String = "SegmentedControlButtonStyle(colors=$colors, metrics=$metrics)"
 
+    /** Companion object for [SegmentedControlButtonStyle]. */
     public companion object
 }
 
+/** Holds color tokens for a segmented control button in its various states. */
 @Immutable
 @GenerateDataFunctions
 public class SegmentedControlButtonColors(
+    /** The background brush in the default state. */
     public val background: Brush,
+    /** The background brush when the button is pressed. */
     public val backgroundPressed: Brush,
+    /** The background brush when the button is hovered. */
     public val backgroundHovered: Brush,
+    /** The background brush when the button is selected. */
     public val backgroundSelected: Brush,
+    /** The background brush when the button is selected and focused. */
     public val backgroundSelectedFocused: Brush,
+    /** The content (foreground) color in the default state. */
     public val content: Color,
+    /** The content (foreground) color when the button is disabled. */
     public val contentDisabled: Color,
+    /** The border brush in the default state. */
     public val border: Brush,
+    /** The border brush when the button is selected. */
     public val borderSelected: Brush,
+    /** The border brush when the button is selected and disabled. */
     public val borderSelectedDisabled: Brush,
+    /** The border brush when the button is selected and focused. */
     public val borderSelectedFocused: Brush,
 ) {
 
+    /**
+     * Returns a [State] holding the content color appropriate for the given [state].
+     *
+     * @param state The current [SegmentedControlButtonState].
+     */
     @Composable
     public fun contentFor(state: SegmentedControlButtonState): State<Color> =
         rememberUpdatedState(
@@ -70,6 +91,13 @@ public class SegmentedControlButtonColors(
             }
         )
 
+    /**
+     * Returns a [State] holding the background brush appropriate for the given [state] and focus status.
+     *
+     * @param state The current [SegmentedControlButtonState].
+     * @param isFocused Whether the button (via its containing segmented control) currently has focus, which further
+     *   differentiates the selected appearance.
+     */
     @Composable
     public fun backgroundFor(state: SegmentedControlButtonState, isFocused: Boolean): State<Brush> =
         rememberUpdatedState(
@@ -83,6 +111,13 @@ public class SegmentedControlButtonColors(
             }
         )
 
+    /**
+     * Returns a [State] holding the border brush appropriate for the given [state] and focus status.
+     *
+     * @param state The current [SegmentedControlButtonState].
+     * @param isFocused Whether the button (via its containing segmented control) currently has focus, which further
+     *   differentiates the selected border appearance.
+     */
     @Composable
     public fun borderFor(state: SegmentedControlButtonState, isFocused: Boolean): State<Brush> =
         rememberUpdatedState(
@@ -146,15 +181,21 @@ public class SegmentedControlButtonColors(
             ")"
     }
 
+    /** Companion object for [SegmentedControlButtonColors]. */
     public companion object
 }
 
+/** Holds size and spacing metrics for a segmented control button. */
 @Stable
 @GenerateDataFunctions
 public class SegmentedControlButtonMetrics(
+    /** The corner radius of the segmented control button. */
     public val cornerSize: CornerSize,
+    /** The inner padding of the segmented control button. */
     public val segmentedButtonPadding: PaddingValues,
+    /** The minimum size of the segmented control button. */
     public val minSize: DpSize,
+    /** The width of the button border. */
     public val borderWidth: Dp,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -188,6 +229,7 @@ public class SegmentedControlButtonMetrics(
             ")"
     }
 
+    /** Companion object for [SegmentedControlButtonMetrics]. */
     public companion object
 }
 
@@ -207,6 +249,7 @@ private fun <T> SegmentedControlButtonState.chooseValueIgnoreCompat(
         else -> normal
     }
 
+/** CompositionLocal providing the current [SegmentedControlButtonStyle]. */
 public val LocalSegmentedControlButtonStyle: ProvidableCompositionLocal<SegmentedControlButtonStyle> =
     staticCompositionLocalOf {
         error("No LocalSegmentedControlButtonStyle provided. Have you forgotten the theme?")

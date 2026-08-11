@@ -4,12 +4,14 @@ package org.jetbrains.yaml.meta.impl;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.meta.model.YamlArrayType;
 import org.jetbrains.yaml.meta.model.YamlMetaType;
 import org.jetbrains.yaml.meta.model.YamlScalarType;
+import org.jetbrains.yaml.psi.YAMLAnchor;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLValue;
 
@@ -38,6 +40,11 @@ public abstract class YamlUnknownKeysInspectionBase extends YamlMetaTypeInspecti
 
       if ("<<".equals(keyValue.getKey().getText())) {
         // validation of merge types is not supported, but at least there should be no red code
+        return;
+      }
+
+      YAMLValue value = keyValue.getValue();
+      if (value != null && PsiTreeUtil.getChildOfType(value, YAMLAnchor.class) != null) {
         return;
       }
 

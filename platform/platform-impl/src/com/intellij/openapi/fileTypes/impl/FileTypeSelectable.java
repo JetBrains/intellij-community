@@ -2,8 +2,10 @@
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.fileTypes.FileType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public interface FileTypeSelectable {
   void selectFileType(@NotNull FileType fileType);
 }

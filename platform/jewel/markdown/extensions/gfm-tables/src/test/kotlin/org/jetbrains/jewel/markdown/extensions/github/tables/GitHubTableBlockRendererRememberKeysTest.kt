@@ -3,6 +3,7 @@
 package org.jetbrains.jewel.markdown.extensions.github.tables
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -12,9 +13,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.markdown.Markdown
+import org.jetbrains.jewel.markdown.extensions.LocalMarkdownBlockRenderer
+import org.jetbrains.jewel.markdown.extensions.LocalMarkdownProcessor
+import org.jetbrains.jewel.markdown.extensions.LocalMarkdownStyling
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.rendering.DefaultMarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.testing.MarkdownTestTheme
@@ -48,13 +53,7 @@ public class GitHubTableBlockRendererRememberKeysTest {
             setContent {
                 MarkdownTestTheme {
                     val renderer = DefaultMarkdownBlockRenderer(markdownStyling, listOf(rendererExtension))
-                    renderer.render(
-                        blocks,
-                        enabled = true,
-                        onUrlClick = onUrlClick,
-                        onTextClick = {},
-                        modifier = Modifier,
-                    )
+                    renderer.RenderBlocks(blocks, enabled = true, onUrlClick = onUrlClick, modifier = Modifier)
                 }
             }
 
@@ -96,11 +95,10 @@ public class GitHubTableBlockRendererRememberKeysTest {
             setContent {
                 MarkdownTestTheme {
                     val renderer = DefaultMarkdownBlockRenderer(markdownStyling, listOf(rendererExtension))
-                    renderer.render(
-                        blocks,
+                    renderer.RenderBlocks(
+                        blocks = blocks,
                         enabled = enabled,
                         onUrlClick = { url -> clickedUrl = url },
-                        onTextClick = {},
                         modifier = Modifier,
                     )
                 }
@@ -119,6 +117,34 @@ public class GitHubTableBlockRendererRememberKeysTest {
             onNodeWithText("Click me").performClick()
             waitForIdle()
             assertTrue("Link should not be clickable when disabled", clickedUrl == null)
+        }
+    }
+
+    @Test
+    public fun `Markdown picks up block renderer from composition local`() {
+        runComposeUiTest {
+            val styling = createMarkdownTestStyling()
+            val processor = MarkdownProcessor(listOf(GitHubTableProcessorExtension))
+            val renderer =
+                DefaultMarkdownBlockRenderer(
+                    styling,
+                    listOf(GitHubTableRendererExtension(createTableStyling(), styling)),
+                )
+
+            setContent {
+                MarkdownTestTheme {
+                    CompositionLocalProvider(
+                        LocalMarkdownStyling provides styling,
+                        LocalMarkdownProcessor provides processor,
+                        LocalMarkdownBlockRenderer provides renderer,
+                    ) {
+                        Markdown("| a | b |\n|---|---|\n| c | d |")
+                    }
+                }
+            }
+
+            waitForIdle()
+            onNodeWithText("c").assertExists()
         }
     }
 

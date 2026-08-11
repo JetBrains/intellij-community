@@ -1,14 +1,14 @@
 // "Make 'A' 'abstract'" "false"
 // ERROR: Class 'A' is not abstract and does not implement abstract member public abstract fun foo(): String defined in I
 // ERROR: Primary constructor is required for value class
-// K2_ERROR: Class 'A' is not abstract and does not implement abstract member:<br>fun foo(): String
-// K2_ERROR: Primary constructor is required for value classes.
-// K2_AFTER_ERROR: Class 'A' is not abstract and does not implement abstract member:<br>fun foo(): String
-// K2_AFTER_ERROR: Primary constructor is required for value classes.
 // ACTION: Create test
 // ACTION: Extract 'A' from current file
 // ACTION: Implement members
 // ACTION: Rename file to A.kt
+// K2_AFTER_ERROR: ABSENCE_OF_PRIMARY_CONSTRUCTOR_FOR_VALUE_CLASS
+// K2_AFTER_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
+// K2_ERROR: ABSENCE_OF_PRIMARY_CONSTRUCTOR_FOR_VALUE_CLASS
+// K2_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
 interface I {
     fun foo(): String
 }

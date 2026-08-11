@@ -1,6 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.featureTraining.ifs
 
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import training.featuresSuggester.FeatureSuggesterTestUtils.copyCurrentSelection
 import training.featuresSuggester.FeatureSuggesterTestUtils.cutBetweenLogicalPositions
 import training.featuresSuggester.FeatureSuggesterTestUtils.deleteSymbolAtCaret
@@ -17,6 +21,9 @@ import training.featuresSuggester.IntroduceVariableSuggesterTest
  * Note: when user is declaring variable and it's name starts with any language keyword suggestion will not be thrown
  * Use `intellij.python.tests` module as a classpath to run this test locally
  */
+@Subsystems.IDE
+@Components.FeatureTrainer
+@Layers.Functional
 class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
   override val testingCodeFileName = "PythonCodeExample.py"
 

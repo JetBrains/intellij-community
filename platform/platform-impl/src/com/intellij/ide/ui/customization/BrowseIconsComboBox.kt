@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.ComboboxSpeedSearch
 import com.intellij.ui.IconManager
@@ -212,9 +213,14 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
   private fun browseIconAndSelect() {
     val descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
       .withExtensionFilter(IdeBundle.message("icon.file.filter.label"), "svg", "png")
+      .withEnvironmentRestricted(true)
     descriptor.title = IdeBundle.message("title.browse.icon")
     descriptor.description = IdeBundle.message("prompt.browse.icon.for.selected.action")
-    val iconFile = FileChooser.chooseFile(descriptor, null, null)
+    val currentIconPath = (selectedItem as? ActionIconInfo)?.iconPath
+    val toSelect = currentIconPath?.let { path ->
+      runCatching { LocalFileSystem.getInstance().findFileByPath(path) }.getOrNull()
+    }
+    val iconFile = FileChooser.chooseFile(descriptor, null, toSelect)
     if (iconFile != null) {
       val icon = try {
         loadCustomIcon(iconFile.path)

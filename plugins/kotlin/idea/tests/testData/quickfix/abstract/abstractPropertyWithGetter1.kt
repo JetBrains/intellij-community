@@ -1,5 +1,5 @@
 // "Make 'i' not abstract" "true"
-// K2_ERROR: Abstract property 'i' in non-abstract class 'B'.
+// K2_ERROR: ABSTRACT_PROPERTY_IN_NON_ABSTRACT_CLASS
 class B {
     <caret>abstract val i: Int = 0
         get() = field

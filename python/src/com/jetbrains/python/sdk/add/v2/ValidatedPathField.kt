@@ -64,7 +64,7 @@ import javax.swing.event.DocumentEvent
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
-interface PathValidator<T, P : PathHolder, VP : ValidatedPath<T, P>> {
+internal interface PathValidator<T, P : PathHolder, VP : ValidatedPath<T, P>> {
   /**
    * [backProperty] should only be used in [PathValidator] and its inheritors
    */
@@ -105,6 +105,7 @@ private object ValidationInProgressExtension : ExtendableTextComponent.Extension
 internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
   val fileSystem: FileSystem<P>,
   val pathValidator: PathValidator<T, P, VP>,
+  val canBeEdited: Boolean,
   browseFolderDialogTitle: @Nls String,
   isFileSelectionMode: Boolean,
 ) : TextFieldWithBrowseButton() {
@@ -145,6 +146,7 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
   }
 
   init {
+    setButtonVisible(canBeEdited)
     addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
         textInputFlow.value = text
@@ -190,7 +192,7 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
         }
         else {
           editorMode.store(false)
-          isEnabled = true
+          isEnabled = canBeEdited
 
           pathValidator.backProperty.get()?.validationResult?.let { validationResult ->
             validationResult
@@ -287,13 +289,13 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
   }
 }
 
-private fun <T, P : PathHolder, V : ValidatedPath<T, P>> Panel.installToolRow(
+private fun <T, P : PathHolder, V : ValidatedPath<T, P>> Panel.missingToolRow(
   fileSystem: FileSystem<*>,
   missingExecutableText: @Nls String,
-  installAction: ActionLink,
+  installAction: ActionLink?,
   validatedPathField: ValidatedPathField<T, P, V>,
 ): Row {
-  val selectExecutableLink = if (fileSystem.isBrowsable) ActionLink(message("sdk.create.custom.select.executable.link")) {
+  val selectExecutableLink = if (fileSystem.isBrowsable && fileSystem.toolPathCanBePersisted) ActionLink(message("sdk.create.custom.select.executable.link")) {
     validatedPathField.button.doClick()
   }
   else null
@@ -318,6 +320,7 @@ internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePath
   installAction: ActionLink? = null,
   isFileSelectionMode: Boolean = true,
   venvExistenceValidationState: ObservableProperty<VenvExistenceValidationState>? = null,
+  canBeEdited: Boolean = true,
 ): ValidatedPathField<T, P, VP> {
 
   val validatedPathField = ValidatedPathField(
@@ -325,13 +328,14 @@ internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePath
     pathValidator = pathValidator,
     browseFolderDialogTitle = labelText,
     isFileSelectionMode = isFileSelectionMode,
+    canBeEdited = canBeEdited,
   )
 
-  if (missingExecutableText != null && installAction != null && !fileSystem.isReadOnly) {
-    installToolRow(
+  if (missingExecutableText != null) {
+    missingToolRow(
       fileSystem = fileSystem,
       missingExecutableText = missingExecutableText,
-      installAction = installAction,
+      installAction = if (canBeEdited) installAction else null,
       validatedPathField = validatedPathField
     ).visibleIf(pathValidator.backProperty.transform { it?.pathHolder == null }.and(pathValidator.isDirtyValue.not()))
   }

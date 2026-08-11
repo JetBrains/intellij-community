@@ -1,7 +1,7 @@
 // "Make '<init>' public explicitly" "true"
 // PRIORITY: HIGH
 // COMPILER_ARGUMENTS: -Xexplicit-api=strict
-// K2_ERROR: Visibility must be specified in explicit API mode.
+// K2_ERROR: NO_EXPLICIT_VISIBILITY_IN_API_MODE
 
 public class Foo5 {
     constructor<caret>() {}

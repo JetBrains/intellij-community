@@ -1,6 +1,0 @@
-com/jetbrains/fus/reporting/model/lion3/LogEvent
-com/jetbrains/fus/reporting/model/lion3/LogEventAction
-tools/jackson/core/JsonParser
-tools/jackson/databind/DeserializationContext
-tools/jackson/databind/JsonNode
-tools/jackson/databind/ValueDeserializer

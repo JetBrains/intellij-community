@@ -47,6 +47,7 @@ import com.intellij.util.ui.update.Update;
 import com.intellij.util.ui.update.UpdateQueue;
 import kotlin.Unit;
 import kotlinx.coroutines.Dispatchers;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,7 +131,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
 
     int delayMillis = ApplicationManager.getApplication().isHeadlessEnvironment() ? 0 : 200;
 
-    myQueue = DebouncedUpdates.<Unit>forComponent(breadcrumbs, "Breadcrumbs.Queue", delayMillis)
+    myQueue = DebouncedUpdates.<Unit>forComponent(editor.getComponent(), "Breadcrumbs.Queue", delayMillis)
       .withContext(CoroutinesKt.getEDT(Dispatchers.INSTANCE))
       .restartTimerOnAdd(true)
       .runLatest(ignored -> updateCrumbsAsync())
@@ -293,6 +294,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     }
   }
 
+  @ApiStatus.Internal
   protected @Nullable CrumbHighlightInfo getHighlightInfo(Crumb crumb) {
     if (crumb instanceof NavigatableCrumb) {
       final TextRange range = ((NavigatableCrumb)crumb).getHighlightRange();
@@ -303,6 +305,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     return null;
   }
 
+  @ApiStatus.Internal
   protected static final class CrumbHighlightInfo {
     public final @NotNull TextRange range;
     public final @Nullable CrumbPresentation presentation;

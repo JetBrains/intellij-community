@@ -46,6 +46,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -117,6 +118,7 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -148,18 +150,19 @@ public final class DaemonListeners implements Disposable {
   private List<Editor> myActiveEditors = Collections.emptyList();
   private final AtomicLong myFoldingStateChanged = new AtomicLong();
   // some expensive flags, e.g. isMarkedExcluded and isCodeFragment are computed in BGT
-  private final Alarm myRecomputeFlagsInBGT = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+  private final Alarm myRecomputeFlagsInBGT;
 
-  DaemonListeners(@NotNull Project project, @NotNull DaemonCodeAnalyzerImpl daemonCodeAnalyzer) {
+  DaemonListeners(@NotNull Project project, @NotNull DaemonCodeAnalyzerImpl daemonCodeAnalyzer, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
+    myRecomputeFlagsInBGT = new Alarm(coroutineScope, Alarm.ThreadToUse.POOLED_THREAD);
 
     if (project.isDefault()) {
       myPsiChangeHandler = null;
       return;
     }
 
-    SimpleMessageBusConnection connection = myProject.getMessageBus().simpleConnect();
+    SimpleMessageBusConnection connection = myProject.getMessageBus().connect(coroutineScope);
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
@@ -217,7 +220,8 @@ public final class DaemonListeners implements Disposable {
               intentionsUI.invalidateForEditor(editor);
             }
           }, ModalityState.current(), myProject.getDisposed());
-          if (!psiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
+          boolean elfGuard = Elf.getElf().isUnsupportedOperationGuardActive(); // hasEventSystemEnabledUncommittedDocuments is not supported yet for lock-free typing
+          if (elfGuard || !psiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
             // daemon might want to auto-import a reference if the caret is close enough
             // but do not restart a daemon too early before PSI is committed,
             // because the typing would cause canceling daemon twice otherwise: on caret movement during typing and later on PSI commit after the doc modification
@@ -327,7 +331,7 @@ public final class DaemonListeners implements Disposable {
       }
     });
     Predicate<Document> isDocumentWorthBothering = document -> worthBothering(document, project);
-    myPsiChangeHandler = new PsiChangeHandler(myProject, daemonCodeAnalyzer.getFileStatusMap(), this, isDocumentWorthBothering);
+    myPsiChangeHandler = new PsiChangeHandler(myProject, daemonCodeAnalyzer.getFileStatusMap(), this, coroutineScope, isDocumentWorthBothering);
 
     connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override

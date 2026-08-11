@@ -287,7 +287,7 @@ class CtrlMouseHandler2(
       return
     }
     val (editor, offset, _) = request
-    if (!checkRanges(result, editor.document)) {
+    if (editor.isDisposed || !checkRanges(result, editor.document)) {
       return
     }
     val hint = showHint(editor, offset, result)

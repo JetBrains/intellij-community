@@ -1,6 +1,6 @@
 // "Create secondary constructor" "true"
 // K2_ACTION: "Add primary constructor to 'A'" "true"
-// K2_ERROR: Too many arguments for 'constructor(): A'.
+// K2_ERROR: TOO_MANY_ARGUMENTS
 
 open class A {
 

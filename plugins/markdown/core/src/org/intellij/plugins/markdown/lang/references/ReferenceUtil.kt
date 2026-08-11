@@ -4,6 +4,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.project.Project
 import com.intellij.patterns.PlatformPatterns
+import com.intellij.patterns.PsiElementPattern
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.search.FileTypeIndex
@@ -12,7 +13,6 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import org.intellij.plugins.markdown.lang.MarkdownFileType
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination
 import org.jetbrains.annotations.ApiStatus
 
@@ -43,6 +43,6 @@ object ReferenceUtil {
     return FileTypeRegistry.getInstance().getFileTypeByFileName(this) != UnknownFileType.INSTANCE
   }
 
-  val linkDestinationPattern = PlatformPatterns.psiElement(MarkdownLinkDestination::class.java)
-    .inFile(PlatformPatterns.psiFile(MarkdownFile::class.java))
+  val linkDestinationPattern: PsiElementPattern.Capture<MarkdownLinkDestination> =
+    PlatformPatterns.psiElement(MarkdownLinkDestination::class.java)
 }

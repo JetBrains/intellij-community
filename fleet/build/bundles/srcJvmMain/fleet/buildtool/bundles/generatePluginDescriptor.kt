@@ -2,7 +2,6 @@ package fleet.buildtool.bundles
 
 import fleet.buildtool.sign.FleetSigner
 import fleet.buildtool.sign.jetSignJsonContentType
-import fleet.buildtool.scrambling.JarScrambler
 import fleet.bundles.LayerSelector
 import fleet.bundles.PluginDescriptor
 import fleet.bundles.PluginName
@@ -38,8 +37,7 @@ suspend fun generatePluginDescriptor(
   pluginId: String,
   pluginVersion: String,
   shipVersion: PluginVersion,
-  projectPluginsPluginDescriptors: List<Path>,
-  projectPluginResolvedPluginConfigurations: List<Path>,
+  dependencyPluginNames: List<String>,
   marketplaceUrl: String,
 
   defaultIcon: Path?,
@@ -58,7 +56,6 @@ suspend fun generatePluginDescriptor(
 
   logger: Logger,
   signer: FleetSigner,
-  scrambler: JarScrambler,
 
   pluginPartsFileOutput: Path,
   pluginDescriptorFileOutput: Path,
@@ -78,18 +75,14 @@ suspend fun generatePluginDescriptor(
 
   val temporaryDir = createTempDirectory("resolvedConfigurationCache")
 
-  logger.info("[fleet-dependencies] Resolving Marketplace and project plugins dependencies for requirements map...")
-  val resolvedDependencies = resolvePluginsDependencies(
-    // we cannot use the resolved configuration built by [GenerateResolvedPluginsConfigurationTask] as it includes that plugin itself, it has a different purpose all together, see [GenerateResolvedPluginsConfigurationTask]'s description
-    cacheDirectory = temporaryDir,
-    projectPluginDescriptors = projectPluginsPluginDescriptors,
-    projectPluginResolvedPluginConfigurations = projectPluginResolvedPluginConfigurations,
-    shipVersion = shipVersion,
-    logger = logger,
-  )
-  val dependencies = resolvedDependencies.bundlesToLoad.associate { descriptor ->
-    descriptor.name to CompatibleWith(descriptor.version)
-  }.filter { (name, _) -> name.name != "SHIP" }
+  // Dependency plugin names are provided directly by the build system (the transitive closure of plugin_deps).
+  // All project plugins share the ship version, so we no longer parse dependency descriptors / resolved
+  // configurations or re-run dependency resolution -- we just map each name to CompatibleWith(shipVersion).
+  val dependencies = dependencyPluginNames
+    .filter { it != "SHIP" }
+    .distinct()
+    .sorted()
+    .associate { PluginName(it) to CompatibleWith(shipVersion) }
 
   val pluginName = PluginName(pluginId)
   val pluginVersion = PluginVersion.fromString(pluginVersion)
@@ -99,26 +92,19 @@ suspend fun generatePluginDescriptor(
       .filterJarsByLayer(alreadyIncludedJarsByLayer, temporaryDir.resolve("filteredJars"), logger)
       .let { moduleJars ->
         when (shouldPackModuleJars) {
-          false -> moduleJars // do not pack and modify module jars. Consider it is already done on the previous steps (immutableJars task)
+          // do not pack and modify module jars (consider it already done on the previous steps, immutableJars task);
+          // just place them into the descriptor output directory
+          false -> moduleJars.mapValues { (_, paths) ->
+            paths.map { it.copyTo(jarsUsedInDescriptor.resolve(it.name), overwrite = true) }
+          }
           true -> moduleJars
             .packModuleJars(
-              outputDirectory = temporaryDir.resolve("packedJars"),
+              outputDirectory = jarsUsedInDescriptor,
               logger = logger,
               pluginId = pluginId,
             )
-            .scrambleModuleJars(
-              fullClasspath = runtimeClasspathByLayer,
-              outputDirectory = temporaryDir.resolve("scrambledJars"),
-              logger = logger,
-              scrambler = scrambler,
-            )
         }
       }
-
-  outputModuleJarsByLayer.flatMap { (_, paths) -> paths }
-    .forEach {
-      it.copyTo(jarsUsedInDescriptor.resolve(it.name), overwrite = true)
-    }
 
   val documentationZipsDirectory = temporaryDir.resolve("documentationZips").also {
     // recreating directories so that build will be reproducible

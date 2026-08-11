@@ -87,7 +87,7 @@ private class AsteriskStripperLexer(
   /** Enables markdown mode if necessary  */
   fun selectLexerMode(buffer: CharSequence, startOffset: Int) {
     myMarkdownMode = buffer.startsWith("///", startOffset)
-    myFlex.setMarkdownMode(myMarkdownMode)
+    myFlex._reset(myMarkdownMode)
   }
 
   fun doLocateToken() {

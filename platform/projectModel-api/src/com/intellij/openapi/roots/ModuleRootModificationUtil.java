@@ -20,6 +20,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * Provides methods for modifying the JPS project model.
+ * When working with Java projects, it's better to use {@link com.intellij.openapi.roots.JavaProjectModelModificationService} instead, that
+ * will modify the build files of the original build system.
+ */
 public final class ModuleRootModificationUtil {
   private ModuleRootModificationUtil() { 
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,6 +19,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -87,6 +88,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
         return super.getPreferredSize();
       }
     };
+    scrollPane.setBorder(JBUI.Borders.empty());
     myPanel.add(scrollPane,
                 new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                                        JBInsets.emptyInsets(), 0, 0));
@@ -428,6 +430,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     return renamed == null ? defaultTitle : renamed;
   }
 
+  @ApiStatus.Internal
   protected static final class MyTreeCellRenderer implements TreeCellRenderer {
     private final SimpleColoredComponent myLabel;
     private final JCheckBox              myCheckBox;

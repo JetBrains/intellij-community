@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.lists
 
 import com.intellij.application.options.CodeStyle
@@ -18,15 +18,14 @@ import com.intellij.psi.PsiParameterList
 import com.intellij.psi.PsiRecordHeader
 import com.intellij.psi.util.PsiTreeUtil
 
-
-public abstract class AbstractJavaSplitJoinContext : CommaListSplitJoinContext() {
+internal abstract class AbstractJavaSplitJoinContext : CommaListSplitJoinContext() {
   override fun isValidIntermediateElement(data: ListWithElements, element: PsiElement): Boolean {
     return super.isValidIntermediateElement(data, element) ||
            element is PsiComment && element.tokenType === JavaTokenType.C_STYLE_COMMENT
   }
 }
 
-public class JavaSplitJoinArgumentsContext : AbstractJavaSplitJoinContext() {
+internal class JavaSplitJoinArgumentsContext : AbstractJavaSplitJoinContext() {
   override fun extractData(context: PsiElement): ListWithElements? =
     getCallArgumentsList(context)?.let { ListWithElements(it, it.expressions.asList()) }
 
@@ -51,7 +50,7 @@ public class JavaSplitJoinArgumentsContext : AbstractJavaSplitJoinContext() {
   override fun getSplitText(data: ListWithElements): String = JavaBundle.message("intention.family.put.arguments.on.separate.lines")
 }
 
-public class JavaSplitJoinParametersContext : AbstractJavaSplitJoinContext() {
+internal class JavaSplitJoinParametersContext : AbstractJavaSplitJoinContext() {
   override fun extractData(context: PsiElement): ListWithElements? =
     PsiTreeUtil.getParentOfType(context, PsiParameterList::class.java, false)?.let { ListWithElements(it, it.parameters.toList()) }
 
@@ -65,7 +64,7 @@ public class JavaSplitJoinParametersContext : AbstractJavaSplitJoinContext() {
   override fun getJoinText(data: ListWithElements): String = JavaBundle.message("intention.family.put.parameters.on.one.line")
 }
 
-public class JavaSplitJoinRecordComponentsContext : AbstractJavaSplitJoinContext() {
+internal class JavaSplitJoinRecordComponentsContext : AbstractJavaSplitJoinContext() {
   override fun extractData(context: PsiElement): ListWithElements? =
     PsiTreeUtil.getParentOfType(context, PsiRecordHeader::class.java, false, PsiCodeBlock::class.java, PsiExpression::class.java)
       ?.let { ListWithElements(it, it.recordComponents.toList()) }

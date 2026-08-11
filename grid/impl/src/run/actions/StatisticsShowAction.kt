@@ -49,7 +49,7 @@ abstract class StatisticsShowAction(private val presentationMode: StatisticsPane
  * This class is needed to make the popup close after choosing an option.
  * Because all actions in the group are toggle actions, then this group is considered multi-closable.
  */
-class StatisticsShowActionGroup : DefaultActionGroup(), DumbAware, Frontend {
+open class StatisticsShowActionGroup : DefaultActionGroup(), DumbAware, Frontend {
   init {
     addSeparator(DataGridBundle.message("action.Console.StatisticsShow.separator"))
   }

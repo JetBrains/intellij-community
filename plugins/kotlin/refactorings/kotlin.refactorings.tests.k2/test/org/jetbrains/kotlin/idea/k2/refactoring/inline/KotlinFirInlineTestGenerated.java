@@ -699,6 +699,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                     runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/property/ClassObjectProperty.kt");
                 }
 
+                @TestMetadata("dontProvideExplicitContextTwice.kt")
+                public void testDontProvideExplicitContextTwice() throws Exception {
+                    runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/property/dontProvideExplicitContextTwice.kt");
+                }
+
                 @TestMetadata("expect.kt")
                 public void testExpect() throws Exception {
                     runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/property/expect.kt");
@@ -707,6 +712,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 @TestMetadata("fromCompanionObject.kt")
                 public void testFromCompanionObject() throws Exception {
                     runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/property/fromCompanionObject.kt");
+                }
+
+                @TestMetadata("inContext.kt")
+                public void testInContext() throws Exception {
+                    runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/property/inContext.kt");
                 }
 
                 @TestMetadata("inheritance.kt")
@@ -2604,6 +2614,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/thisAsStatement.kt");
             }
 
+            @TestMetadata("thisQualifier.kt")
+            public void testThisQualifier() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/thisQualifier.kt");
+            }
+
             @TestMetadata("thisWithOperator.kt")
             public void testThisWithOperator() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/thisWithOperator.kt");
@@ -2672,6 +2687,31 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             @TestMetadata("withContextParameters1.kt")
             public void testWithContextParameters1() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/withContextParameters1.kt");
+            }
+
+            @TestMetadata("withExplicitContextArguments.kt")
+            public void testWithExplicitContextArguments() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/withExplicitContextArguments.kt");
+            }
+
+            @TestMetadata("withExplicitContextArgumentsAndUsageInside.kt")
+            public void testWithExplicitContextArgumentsAndUsageInside() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/withExplicitContextArgumentsAndUsageInside.kt");
+            }
+
+            @TestMetadata("withExplicitContextArgumentsDifferentNames.kt")
+            public void testWithExplicitContextArgumentsDifferentNames() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/withExplicitContextArgumentsDifferentNames.kt");
+            }
+
+            @TestMetadata("withExplicitContextArgumentsTrailingLambda.kt")
+            public void testWithExplicitContextArgumentsTrailingLambda() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/withExplicitContextArgumentsTrailingLambda.kt");
+            }
+
+            @TestMetadata("withImplicitContextArguments.kt")
+            public void testWithImplicitContextArguments() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/withImplicitContextArguments.kt");
             }
 
             @TestMetadata("withImportAlias.kt")

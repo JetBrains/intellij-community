@@ -26,7 +26,9 @@ private const val CUSTOM_ICON_ENABLED_BY_DEFAULT = true
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 class MacCustomAppIcon {
+  @ApiStatus.Internal
   companion object {
     fun available(): Boolean {
       if (!SystemInfo.isMac || PluginManagerCore.isRunningFromSources()) {

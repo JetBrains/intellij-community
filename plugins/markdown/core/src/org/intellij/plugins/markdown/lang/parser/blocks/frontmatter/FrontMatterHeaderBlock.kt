@@ -14,7 +14,7 @@ internal class FrontMatterHeaderBlock(
   private val startPosition: LookaheadText.Position,
   constraints: MarkdownConstraints,
   private val productionHolder: ProductionHolder,
-  private val openingDelimiterText: String
+  private val openingDelimiterText: CharSequence
 ): MarkerBlockImpl(constraints, productionHolder.mark()) {
   private var lastContentPosition: LookaheadText.Position? = null
   private lateinit var closingDelimiterPosition: LookaheadText.Position
@@ -56,7 +56,7 @@ internal class FrontMatterHeaderBlock(
     return MarkerBlock.ProcessingResult.CANCEL
   }
 
-  private fun isClosingDelimiter(line: String): Boolean {
+  private fun isClosingDelimiter(line: CharSequence): Boolean {
     return isYamlDelimiters(openingDelimiterText, line) || isTomlDelimiters(openingDelimiterText, line)
   }
 

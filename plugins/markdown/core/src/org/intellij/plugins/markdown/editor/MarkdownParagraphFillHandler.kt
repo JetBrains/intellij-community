@@ -5,13 +5,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.isMarkdownLanguage
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 
 internal class MarkdownParagraphFillHandler: ParagraphFillHandler() {
   override fun isAvailableForElement(element: PsiElement?): Boolean {
-    return element?.parentOfType<MarkdownParagraph>(withSelf = true) != null
+    val target = element ?: return false
+    return target.supportsMarkdown() &&
+           target.parentOfType<MarkdownParagraph>(withSelf = true) != null
   }
 
   override fun atWhitespaceToken(element: PsiElement?): Boolean {
@@ -24,6 +26,6 @@ internal class MarkdownParagraphFillHandler: ParagraphFillHandler() {
 
   override fun isAvailableForFile(psiFile: PsiFile?): Boolean {
     val file = psiFile ?: return false
-    return file.language.isMarkdownLanguage()
+    return file.supportsMarkdown()
   }
 }

@@ -3,11 +3,11 @@
 // ACTION: Change to 'var'
 // ERROR: Val cannot be reassigned
 // ERROR: Val cannot be reassigned
-// K2_ERROR: 'val' cannot be reassigned.
-// K2_ERROR: 'val' cannot be reassigned.
-// K2_AFTER_ERROR: 'val' cannot be reassigned.
-// K2_AFTER_ERROR: 'val' cannot be reassigned.
 // WITH_STDLIB
+// K2_AFTER_ERROR: VAL_REASSIGNMENT
+// K2_AFTER_ERROR: VAL_REASSIGNMENT
+// K2_ERROR: VAL_REASSIGNMENT
+// K2_ERROR: VAL_REASSIGNMENT
 
 fun foo() {
     val x = 1

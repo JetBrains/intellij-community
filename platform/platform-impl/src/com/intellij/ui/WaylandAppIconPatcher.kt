@@ -12,7 +12,6 @@ import java.awt.Window
 import java.awt.event.WindowEvent
 
 internal class WaylandAppIconPatcher(coroutineScope: CoroutineScope) {
-
   init {
     if (StartupUiUtil.isWaylandToolkit()) {
       coroutineScope.launch(Dispatchers.UI) {
@@ -25,7 +24,7 @@ internal class WaylandAppIconPatcher(coroutineScope: CoroutineScope) {
     val window = event.source as? Window ?: return
 
     if (event.id == WindowEvent.WINDOW_OPENED) {
-      updateAppWindowIcon(window)
+      AppUIUtil.updateAppWindowIcon(window)
     }
   }
 }

@@ -1,7 +1,7 @@
 // "Add constructor parameters from Base(Int, Int)" "true"
-// K2_ERROR: No value passed for parameter 'class'.
-// K2_ERROR: No value passed for parameter 'fun'.
-// K2_ERROR: This type has a constructor, so it must be initialized here.
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: SUPERTYPE_NOT_INITIALIZED
 open class Base(`fun`: Int, val `class`: Int)
 
 class C : Base<caret>

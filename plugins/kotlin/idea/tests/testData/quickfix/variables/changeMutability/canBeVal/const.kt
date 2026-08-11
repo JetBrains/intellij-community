@@ -1,5 +1,5 @@
 // "Change to 'val'" "true"
-// K2_ERROR: Modifier 'const' is not applicable to 'vars'.
+// K2_ERROR: WRONG_MODIFIER_TARGET
 object Test {
     <caret>const var foo = "123"
 }

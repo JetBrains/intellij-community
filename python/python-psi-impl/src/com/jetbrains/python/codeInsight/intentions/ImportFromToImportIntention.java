@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStarImportElement;
 import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -164,7 +165,7 @@ public final class ImportFromToImportIntention extends PyBaseIntentionAction {
           if (ref != null) {
             PsiElement target = ref.getReference().resolve();
             final TypeEvalContext context = TypeEvalContext.codeAnalysis(psiFile.getProject(), psiFile);
-            if (target instanceof PyExpression && context.getType((PyExpression)target) instanceof PyModuleType) {
+            if (target instanceof PyTypedElement && context.getType((PyTypedElement)target) instanceof PyModuleType) {
               return false;
             }
           }

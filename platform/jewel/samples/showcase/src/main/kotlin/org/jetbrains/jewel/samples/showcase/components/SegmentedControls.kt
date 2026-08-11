@@ -13,6 +13,7 @@ import org.jetbrains.jewel.ui.component.SegmentedControl
 import org.jetbrains.jewel.ui.component.SegmentedControlButtonData
 import org.jetbrains.jewel.ui.component.Text
 
+/** Showcases the [SegmentedControl] component. */
 @Composable
 public fun SegmentedControls(modifier: Modifier = Modifier) {
     var selectedButtonIndex by remember { mutableIntStateOf(0) }

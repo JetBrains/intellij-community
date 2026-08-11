@@ -5,6 +5,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.project.Project
 import com.intellij.projectImport.ProjectOpenProcessor
 import java.nio.file.Path
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Handles requests to open a non-project file from the command line.
@@ -22,6 +23,7 @@ interface CommandLineProjectOpenProcessor {
    */
   suspend fun openProjectAndFile(file: Path, tempProject: Boolean, options: OpenProjectTask = OpenProjectTask()): Project?
 
+  @ApiStatus.Internal
   companion object {
     suspend fun openProjectAndFile(file: Path, tempProject: Boolean, options: OpenProjectTask = OpenProjectTask()): Project? {
       val project = ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()

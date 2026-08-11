@@ -2,8 +2,7 @@
 package com.intellij.gradle.java.groovy.service.resolve
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.module.ModuleUtilCore.findModuleForPsiElement
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.PatternCondition
 import com.intellij.psi.PsiClass
@@ -39,11 +38,8 @@ internal fun PsiClass?.isResolvedInGradleScript() = this is GroovyScriptClass &&
 
 internal fun PsiFile?.isGradleScript() = this?.originalFile?.virtualFile?.extension == EXTENSION
 
-@get:ApiStatus.Internal
-val PsiElement.module: Module?
-  get() = containingFile?.originalFile?.virtualFile?.let { ProjectFileIndex.getInstance(project).getModuleForFile(it) }
-
 @ApiStatus.Internal
 fun PsiElement.getLinkedGradleProjectPath() : String? {
+  val module = findModuleForPsiElement(this)
   return ExternalSystemApiUtil.getExternalProjectPath(module)
 }

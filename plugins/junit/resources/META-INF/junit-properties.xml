@@ -1,7 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <properties.implicitPropertyUsageProvider implementation="com.intellij.execution.junit2.properties.JUnitImplicitPropertyUsageProvider"/>
-    <completion.contributor language="Properties" implementationClass="com.intellij.execution.junit2.properties.JUnitPropertiesCompletionContributor"/>
-    <psi.referenceContributor language="Properties" implementation="com.intellij.execution.junit2.properties.JUnitPropertiesReferenceContributor"/>
-  </extensions>
-</idea-plugin>

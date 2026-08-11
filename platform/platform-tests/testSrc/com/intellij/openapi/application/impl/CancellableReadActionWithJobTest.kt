@@ -30,7 +30,7 @@ class CancellableReadActionWithJobTest : CancellableReadActionTests() {
       assertNull(ProgressManager.getGlobalProgressIndicator())
       application.assertReadAccessNotAllowed()
 
-      val result = computeCancellable {
+      val result = computeCancellableUnsafe {
         val readJob = requireNotNull(Cancellation.currentJob())
         assertJobIsChildOf(job = readJob, parent = currentJob)
         assertNull(ProgressManager.getGlobalProgressIndicator())
@@ -48,7 +48,7 @@ class CancellableReadActionWithJobTest : CancellableReadActionTests() {
   fun cancellation() {
     blockingContextTest {
       assertThrows<ProcessCanceledException> {
-        computeCancellable {
+        computeCancellableUnsafe {
           testNoExceptions()
           checkNotNull(Cancellation.currentJob()).cancel()
           testExceptions()
@@ -96,7 +96,7 @@ class CancellableReadActionWithJobTest : CancellableReadActionTests() {
   fun `throws inside non-cancellable read action when a write is requested during computation`() {
     blockingContextTest {
       runReadAction {
-        computeCancellable {
+        computeCancellableUnsafe {
           testNoExceptions()
         }
       }

@@ -41,10 +41,10 @@ public final class LongLineInspection extends LocalInspectionTool {
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,
                                                  @NotNull LocalInspectionToolSession session) {
-    final PsiFile file = holder.getFile();
+    PsiFile file = holder.getFile();
     if (InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file) != null) return PsiElementVisitor.EMPTY_VISITOR;
     FileViewProvider viewProvider = file.getViewProvider();
-    final Document document = viewProvider.getDocument();
+    Document document = viewProvider.getDocument();
     if (document == null) return PsiElementVisitor.EMPTY_VISITOR;
 
     return new PsiElementVisitor() {
@@ -52,30 +52,30 @@ public final class LongLineInspection extends LocalInspectionTool {
       @Override
       public void visitFile(@NotNull PsiFile psiFile) {
         if (viewProvider.getBaseLanguage() != psiFile.getLanguage()) return;
-        final CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(file);
-        final int codeStyleRightMargin = codeStyleSettings.getRightMargin(file.getLanguage());
-        final int tabSize = codeStyleSettings.getTabSize(file.getFileType());
-        final TextRange restrictRange = session.getRestrictRange();
-        final CharSequence text = document.getImmutableCharSequence();
-        final int lineCount = document.getLineCount();
-        final TextRange range = restrictRange.intersection(psiFile.getTextRange());
+        CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(file);
+        int codeStyleRightMargin = codeStyleSettings.getRightMargin(file.getLanguage());
+        int tabSize = codeStyleSettings.getTabSize(file.getFileType());
+        TextRange restrictRange = session.getRestrictRange();
+        CharSequence text = document.getImmutableCharSequence();
+        int lineCount = document.getLineCount();
+        TextRange range = restrictRange.intersection(psiFile.getTextRange());
         if (range == null || range.isEmpty()) return;
 
         int line = document.getLineNumber(range.getStartOffset());
         while (true) {
-          final int lineStart = document.getLineStartOffset(line);
+          int lineStart = document.getLineStartOffset(line);
           if (lineStart > range.getEndOffset()) {
             break;
           }
-          final int lineEnd = document.getLineEndOffset(line);
+          int lineEnd = document.getLineEndOffset(line);
           int count = 0;
           for (int i = lineStart; i < lineEnd; i++) {
             count += (text.charAt(i) == '\t') ? tabSize : 1;
             if (count > codeStyleRightMargin) {
               String message =
                 LangBundle.message("inspection.message.line.longer.than.allowed.by.code.style.columns", codeStyleRightMargin);
-              final TextRange problemRange = new TextRange(i, lineEnd);
-              final PsiElement element = findElementInRange(psiFile, problemRange);
+              TextRange problemRange = new TextRange(i, lineEnd);
+              PsiElement element = findElementInRange(psiFile, problemRange);
               if (!ignoreFor(element)) {
                 holder.registerProblem(element, problemRange.shiftLeft(element.getTextRange().getStartOffset()), message);
               }
@@ -90,12 +90,12 @@ public final class LongLineInspection extends LocalInspectionTool {
   }
 
   private static @Nullable PsiElement findElementInRange(@NotNull PsiFile file, @NotNull TextRange range) {
-    final Language language = file.getLanguage();
+    Language language = file.getLanguage();
     FileViewProvider viewProvider = file.getViewProvider();
     // Use FileViewProvider because PsiFile.findElementAt() can return elements from different PsiFiles in multi-root languages
-    final PsiElement left = viewProvider.findElementAt(range.getStartOffset(), language);
+    PsiElement left = viewProvider.findElementAt(range.getStartOffset(), language);
     if (left == null) return null;
-    final PsiElement right = viewProvider.findElementAt(range.getEndOffset() - 1, language);
+    PsiElement right = viewProvider.findElementAt(range.getEndOffset() - 1, language);
     if (right == null) return null;
     return PsiTreeUtil.findCommonParent(left, right);
   }

@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyTargetExpression
@@ -8,6 +11,8 @@ import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.TypeEvalContext
 
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyCallableParameterMappingTest : PyTestCase() {
 
   fun testEmpty() {

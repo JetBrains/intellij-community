@@ -211,9 +211,25 @@ internal class SpeedSearchableLazyColumnKeyActions(
     }
 }
 
+/**
+ * Defines the DSL scope for adding items to a [SpeedSearchableLazyColumn], associating each entry with its searchable
+ * text content.
+ */
 @ExperimentalJewelApi
 @ApiStatus.Experimental
 public interface SpeedSearchableLazyColumnScope {
+    /**
+     * Adds a list of items to the column, associating each item with its searchable text content.
+     *
+     * @param T The type of items in the list.
+     * @param items The list of items to display.
+     * @param textContent A function that returns the searchable text for a given item, or `null` if the item should not
+     *   be matched.
+     * @param key A function that returns a stable, unique key for a given item.
+     * @param contentType A function that returns the content type for a given item, used for composition reuse.
+     * @param selectable A function that returns whether a given item is selectable.
+     * @param itemContent The composable content for each item.
+     */
     public fun <T : Any> items(
         items: List<T>,
         textContent: (item: T) -> String?,
@@ -223,6 +239,16 @@ public interface SpeedSearchableLazyColumnScope {
         itemContent: @Composable SelectableLazyItemScope.(item: T) -> Unit,
     )
 
+    /**
+     * Adds a single item to the column, associating it with its searchable text content.
+     *
+     * @param key A stable, unique key for this item.
+     * @param textContent A function that returns the searchable text for this item, or `null` if the item should not be
+     *   matched.
+     * @param contentType The content type for this item, used for composition reuse.
+     * @param selectable Whether this item is selectable.
+     * @param content The composable content for this item.
+     */
     public fun item(
         key: Any,
         textContent: () -> String?,
@@ -231,6 +257,16 @@ public interface SpeedSearchableLazyColumnScope {
         content: @Composable (SelectableLazyItemScope.() -> Unit),
     )
 
+    /**
+     * Adds a sticky header item to the column, associating it with its searchable text content.
+     *
+     * @param key A stable, unique key for this header.
+     * @param textContent A function that returns the searchable text for this header, or `null` if the header should
+     *   not be matched.
+     * @param contentType The content type for this header, used for composition reuse.
+     * @param selectable Whether this header is selectable.
+     * @param content The composable content for this header.
+     */
     public fun stickyHeader(
         key: Any,
         textContent: () -> String?,
@@ -281,6 +317,22 @@ internal class SpeedSearchableLazyColumnScopeImpl(
     }
 }
 
+/**
+ * Keeps the list selection in sync with the speed-search matches.
+ *
+ * Whenever [SpeedSearchState.matchingIndexes] changes while the search is active, the selection is decided as follows:
+ * 1. If a currently selected item still matches, keep it selected (scrolling to it if it is offscreen).
+ * 2. Otherwise, if a selection exists, select the visible match closest to it.
+ * 3. Otherwise, select the topmost visible match.
+ * 4. If no match is visible, select the first match after the viewport.
+ * 5. Failing that, select the first match before the viewport, i.e., the first match from the top of the list.
+ *
+ * Steps 3–5 amount to a single rule: a forward scan starting at the top of the viewport that wraps around to the top of
+ * the list. This deliberately preserves the user's rough position instead of always jumping to the first match, and
+ * mirrors Swing's `SpeedSearchBase.findElement` (forward from the current position, wrap to the top — including
+ * wrapping to the *first* match from the top rather than the nearest one above) rather than `ListWithFilter`'s
+ * always-select-row-0 behavior.
+ */
 @Composable
 internal fun SpeedSearchableLazyColumnScrollEffect(
     selectableLazyListState: SelectableLazyListState,
@@ -345,8 +397,9 @@ internal fun SpeedSearchableLazyColumnScrollEffect(
                     return@combine
                 }
 
-                // If any of the visible items match the filter, just select the one closest to any of the selected
-                // items
+                // If any of the visible items match the filter, select the one closest to any of the currently
+                // selected items. When there is no selection left to anchor to (e.g. the previously selected item
+                // was filtered out), fall back to the first visible match so the first result is always selected.
                 val indexOfVisibleMatches =
                     visibleItemIndexes.filter { indexesMatchingSearchText.binarySearch(it) >= 0 }
 
@@ -358,7 +411,7 @@ internal fun SpeedSearchableLazyColumnScrollEffect(
                                 ?.let { visibleMatchIndex to it }
                         }
                         .minByOrNull { (it.first - it.second).absoluteValue }
-                        ?.first
+                        ?.first ?: indexOfVisibleMatches.firstOrNull()
 
                 if (bestVisibleMatch != null) {
                     selectableLazyListState.selectedKeys = setOfNotNull(keyValues.getOrNull(bestVisibleMatch))

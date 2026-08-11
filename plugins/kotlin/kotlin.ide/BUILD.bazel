@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.ide` start
-
 jvm_library(
     name = "kotlin.ide",
     srcs = glob(
@@ -13,6 +12,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.kotlin.ide",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -28,7 +31,7 @@ jvm_library(
         "//platform/core-impl",
         "//platform/analysis-api:analysis",
         "//platform/lang-impl",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//plugins/kotlin/base/project-structure",
         "//plugins/kotlin/base/resources:kotlin-base-resources",
         "//libraries/jsoup",
@@ -43,7 +46,7 @@ jvm_library(
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/analysis",
         "//plugins/kotlin/base/facet",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
         "//java/openapi:java",
         "//platform/analysis-impl",
         "//platform/util/jdom",
@@ -83,6 +86,7 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//plugins/kotlin/base/project-structure:project-structure_test_lib",
         "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
         "//libraries/jsoup:jsoup_test_lib",
@@ -97,7 +101,7 @@ jvm_library(
         "//plugins/kotlin/base/util:util_test_lib",
         "//plugins/kotlin/base/analysis:analysis_test_lib",
         "//plugins/kotlin/base/facet:facet_test_lib",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
         "//java/openapi:java_test_lib",
         "//platform/analysis-impl:analysis-impl_test_lib",
         "//platform/util/jdom:jdom_test_lib",

@@ -3,17 +3,17 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object PluginInitializationDiagnosticUtils {
-  fun logExclusionTree(logger: Logger, resolvedPluginSet: ResolvedPluginSet, incompletePlugins: Map<PluginId, PluginMainDescriptor>) {
-    val broadResolveContext by lazy { AmbiguousPluginSet.build(resolvedPluginSet.originalPluginSet.plugins + incompletePlugins.values) }
+  fun getLogMessageForRootExclusionReason(reason: DescriptorExclusionReason): String = reason.logMessage()
+
+  fun logExclusionTree(logger: Logger, resolvedPluginSet: ResolvedPluginSet) {
     val exclusionChildren = LinkedHashMap<IdeaPluginDescriptorImpl, ArrayList<IdeaPluginDescriptorImpl>>()
     val roots = LinkedHashSet<IdeaPluginDescriptorImpl>()
-    for (plugin in resolvedPluginSet.originalPluginSet.plugins) {
+    for (plugin in resolvedPluginSet.candidateSet.plugins) {
       for (descriptor in plugin.sequenceAllDescriptors()) {
         if (resolvedPluginSet.isResolved(descriptor)) continue
         val chain = descriptor.sequenceDescriptorExclusionChain(resolvedPluginSet::getExclusionReason).take(2).toList()
@@ -56,13 +56,18 @@ object PluginInitializationDiagnosticUtils {
 
     val dependencyIsNotResolvedRoots = roots.asSequence().filter { resolvedPluginSet.getExclusionReason(it) is DependencyIsNotResolved }.toSet()
     roots.removeAll(dependencyIsNotResolvedRoots)
+
+    val childFreeOnDemandRoots = roots.filter {
+      resolvedPluginSet.getExclusionReason(it) is OnDemandContentModuleHasNoDependentsLeft && exclusionChildren[it].isNullOrEmpty()
+    }.toSet()
+    roots.removeAll(childFreeOnDemandRoots)
+
     val logHeader = "Plugin set resolution:\n"
     val logBuilder = StringBuilder().apply {
       append(logHeader)
       dependencyIsNotResolvedRoots.map { resolvedPluginSet.getExclusionReason(it) as DependencyIsNotResolved }.groupBy { it.dependency }
         .forEach { (ref, roots) ->
-          appendDependencyIsNotResolvedLogMessage(ref, broadResolveContext, resolvedPluginSet)
-
+          appendDependencyIsNotResolvedLogMessage(ref)
           // a bit of duplication, but I guess it's alright for this code
           val (childFreeExclusions, otherRoots) = roots.partition { (exclusionChildren[it.descriptor]?.size ?: 0) == 0 }
           if (childFreeExclusions.isNotEmpty()) {
@@ -75,6 +80,9 @@ object PluginInitializationDiagnosticUtils {
         }
       for (root in roots) {
         writeExclusionTree(root, 0)
+      }
+      if (childFreeOnDemandRoots.isNotEmpty()) {
+        appendLine("excluded on-demand modules (no dependents left): ${childFreeOnDemandRoots.joinToString(", ") { it.shortLogDescription }}")
       }
     }
     if (logBuilder.last() == '\n') {
@@ -98,21 +106,19 @@ object PluginInitializationDiagnosticUtils {
 
   fun buildSingleExclusionChainMessage(
     resolvedPluginSet: ResolvedPluginSet,
-    incompletePlugins: Map<PluginId, PluginMainDescriptor>,
     descriptor: IdeaPluginDescriptorImpl,
   ): String? {
     if (resolvedPluginSet.isResolved(descriptor)) {
       return null
     }
     // TODO decrease code duplication
-    val broadResolveContext by lazy { AmbiguousPluginSet.build(resolvedPluginSet.originalPluginSet.plugins + incompletePlugins.values) }
     val chain = descriptor.sequenceDescriptorExclusionChain(resolvedPluginSet::getExclusionReason).toList().reversed()
     val msgBuilder = StringBuilder().apply {
       if (chain.firstOrNull()?.let { resolvedPluginSet.getExclusionReason(it) } is DependencyIsNotResolved) {
         val rootCause = resolvedPluginSet.getExclusionReason(chain[0])!! as DependencyIsNotResolved
-        appendDependencyIsNotResolvedLogMessage(rootCause.dependency, broadResolveContext, resolvedPluginSet)
+        appendDependencyIsNotResolvedLogMessage(rootCause.dependency)
         for ((index, excludedDescriptor) in chain.withIndex()) {
-          appendLine()
+          if (index > 0) appendLine()
           val exclusionReason = resolvedPluginSet.getExclusionReason(excludedDescriptor)!!
           appendIndentString(index + 1)
           append(exclusionReason.logMessage())
@@ -147,7 +153,11 @@ object PluginInitializationDiagnosticUtils {
       is DependencyIsNotVisible -> "$logDescr depends on ${dependencyModule.shortLogDescription} which is not visible"
       is ExcludedByEnvironmentConfiguration -> "$logDescr is excluded: ${reason.logMessage}"
       is IncompatibleWithAnotherModule -> "$logDescr is incompatible with ${preferredIncompatibleModule.shortLogDescription}"
-      is PackagePrefixConflictWithAnotherModule -> "$logDescr declares the same package prefix as in ${preferredConflictingModule.shortLogDescription}"
+      is OnDemandContentModuleHasNoDependentsLeft -> "$logDescr is on-demand and has no dependents left"
+      is PackagePrefixConflictWithAnotherModule -> "$logDescr declares the same package prefix as in " +
+                                                   "${preferredConflictingModule.shortLogDescription}: " +
+                                                   "${formatPackagePrefixConflictDetails(descriptor)} conflicts with " +
+                                                   formatPackagePrefixConflictDetails(preferredConflictingModule)
       is PartOfDependencyCycle -> buildString {
         appendLine("The following modules form a dependency cycle:")
         explainCycle(dependencyCycle, fmtNode = { it.shortLogDescription })
@@ -160,26 +170,20 @@ object PluginInitializationDiagnosticUtils {
           fmtDeps = { it.joinToString(", ") { it.representativeModule.shortLogDescription } }
         )
       }
-      is ProductRulesImposedExclusion -> "$logDescr is excluded by product rules: ${this.productReason}"
+      is ProductRulesImposedExclusion -> "$logDescr is excluded: ${productReason.getLogMessage()}"
+      is PluginDeclaresConflictingId -> "$logDescr declares conflicting id with ${this.conflictingModule.shortLogDescription}: ${conflictingPluginId ?: conflictingModuleId}"
+      is PluginIsIncompatibleWithProduct -> "$logDescr is incompatible with the product: ${incompatibilityReason.getLogMessageForRootExclusionReason(descriptor)}"
+      is PluginIsMarkedDisabled -> "$logDescr is marked disabled"
+      is PluginVersionIsSuperseded -> "$logDescr is superseded by ${supersededBy.shortLogDescription}"
     }
   }
 
-  private fun StringBuilder.appendDependencyIsNotResolvedLogMessage(
-    ref: DependencyRef,
-    broadResolveContext: AmbiguousPluginSet,
-    resolvedPluginSet: ResolvedPluginSet,
-  ) {
-    val disabledPlugin = broadResolveContext.resolveReference(ref).firstOrNull { resolvedPluginSet.initContext.isPluginDisabled(it.pluginId) }
-    if (disabledPlugin != null) {
-      appendLine("${disabledPlugin.shortLogDescription} is marked disabled")
+  private fun StringBuilder.appendDependencyIsNotResolvedLogMessage(ref: DependencyRef) {
+    when (ref) {
+      is DependencyRef.ContentModule -> append("module ${ref.moduleId.name} (namespace=${ref.moduleId.namespace})")
+      is DependencyRef.Plugin -> append("plugin ${ref.pluginId.idString}")
     }
-    else {
-      when (ref) {
-        is DependencyRef.ContentModule -> append("module ${ref.moduleId.name} (namespace=${ref.moduleId.namespace})")
-        is DependencyRef.Plugin -> append("plugin ${ref.pluginId.idString}")
-      }
-      appendLine(" is not resolved")
-    }
+    appendLine(" is not resolved")
   }
 
   private fun StringBuilder.appendIndentString(indent: Int) {

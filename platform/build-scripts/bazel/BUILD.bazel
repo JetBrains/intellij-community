@@ -1,7 +1,7 @@
 load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("@rules_java//java:defs.bzl", "java_binary", "java_import", "java_test")
 load("@rules_java//toolchains:default_java_toolchain.bzl", "default_java_toolchain")
-load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin")
+load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin", "kt_kotlinc_options")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 exports_files(
@@ -44,9 +44,15 @@ kt_jvm_library(
     ],
 )
 
+kt_kotlinc_options(
+    name = "jps_to_bazel_kotlinc_options",
+    jvm_target = "17",
+)
+
 kt_jvm_library(
     name = "jps_to_bazel-lib",
     srcs = glob(["src/**/*.kt"]),
+    kotlinc_opts = ":jps_to_bazel_kotlinc_options",
     runtime_deps = [],
     deps = [
         ":kotlin_serialization",
@@ -70,6 +76,7 @@ kt_jvm_library(
     name = "bazel-generator-integration-tests-lib",
     srcs = glob(["test/**/*.kt"]),
     associates = [":jps_to_bazel-lib"],
+    kotlinc_opts = ":jps_to_bazel_kotlinc_options",
     deps = [
         "@j2b_maven//:junit_junit",
         "@j2b_maven//:net_bytebuddy_byte_buddy",

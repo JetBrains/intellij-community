@@ -36,7 +36,13 @@ import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultTreeModel
 
 object CodeReviewChangeListComponentFactory {
-  val SELECTED_CHANGES = DataKey.create<List<RefComparisonChange>>("Code.Review.Change.List.Selected.RefComparisonChanges")
+  @Deprecated(
+    "Moved to CodeReviewChangeListDataKeys.SELECTED_CHANGES",
+    ReplaceWith("CodeReviewChangeListDataKeys.SELECTED_CHANGES",
+                "com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListDataKeys")
+  )
+  val SELECTED_CHANGES: DataKey<List<RefComparisonChange>>
+    get() = CodeReviewChangeListDataKeys.SELECTED_CHANGES
 
   fun createIn(cs: CoroutineScope, vm: CodeReviewChangeListViewModel,
                progressModel: CodeReviewProgressTreeModel<*>?,
@@ -113,7 +119,7 @@ object CodeReviewChangeListComponentFactory {
         VcsTreeModelData.uiDataSnapshot(sink, project, this)
         sink[CommonDataKeys.NAVIGATABLE] = getSelectedFiles().singleOrNull()?.let { OpenFileDescriptor(project, it) }
         sink[CommonDataKeys.NAVIGATABLE_ARRAY] = ChangesUtil.getNavigatableArray(project, getSelectedFiles())
-        sink[SELECTED_CHANGES] = getSelectedChanges()
+        sink[CodeReviewChangeListDataKeys.SELECTED_CHANGES] = getSelectedChanges()
       }
 
       private fun getSelectedChanges(): List<RefComparisonChange> =

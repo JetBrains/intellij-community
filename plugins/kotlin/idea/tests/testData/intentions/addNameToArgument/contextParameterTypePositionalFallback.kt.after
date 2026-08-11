@@ -5,15 +5,15 @@
 // AFTER-WARNING: Parameter 'y' is never used
 // AFTER-WARNING: Parameter 'z' is never used
 // AFTER-WARNING: Parameter 'a' is never used
+// K2_AFTER_ERROR: ARGUMENT_PASSED_TWICE
+// K2_AFTER_ERROR: NO_CONTEXT_ARGUMENT
+// K2_AFTER_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: ARGUMENT_PASSED_TWICE
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: TOO_MANY_ARGUMENTS
 
-// K2_ERROR: Argument already passed for this parameter.
-// K2_ERROR: No context argument for 'x: String' found.
-// K2_ERROR: No context argument for 'y: Int' found.
-// K2_ERROR: No context argument for 'z: Boolean' found.
-// K2_ERROR: Too many arguments for 'context(x: String, y: Int, z: Boolean) fun foo(a: String): String'.
-// K2_AFTER_ERROR: Argument already passed for this parameter.
-// K2_AFTER_ERROR: No context argument for 'x: String' found.
-// K2_AFTER_ERROR: No context argument for 'y: Int' found.
 
 context(x: String, y: Int, z: Boolean)
 fun foo(a: String): String = a

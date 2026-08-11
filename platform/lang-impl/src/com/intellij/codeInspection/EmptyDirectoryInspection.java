@@ -50,8 +50,8 @@ public final class EmptyDirectoryInspection extends GlobalInspectionTool {
                             @NotNull InspectionManager manager,
                             @NotNull GlobalInspectionContext context,
                             @NotNull ProblemDescriptionsProcessor processor) {
-    final Project project = context.getProject();
-    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    Project project = context.getProject();
+    ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     SearchScope searchScope = ReadAction.computeBlocking(() -> scope.toSearchScope());
     if (!(searchScope instanceof GlobalSearchScope globalSearchScope)) {
       return;
@@ -64,11 +64,11 @@ public final class EmptyDirectoryInspection extends GlobalInspectionTool {
         return true;
       }
       PsiDirectory directory = ReadAction.computeBlocking(() -> PsiManager.getInstance(project).findDirectory(file));
-      final RefElement refDirectory = context.getRefManager().getReference(directory);
+      RefElement refDirectory = context.getRefManager().getReference(directory);
       if (refDirectory == null || context.shouldCheck(refDirectory, this)) {
         return true;
       }
-      final String relativePath = getPathRelativeToModule(file, project);
+      String relativePath = getPathRelativeToModule(file, project);
       if (relativePath == null) {
         return true;
       }
@@ -80,8 +80,8 @@ public final class EmptyDirectoryInspection extends GlobalInspectionTool {
   }
 
   private static @Nullable String getPathRelativeToModule(VirtualFile file, Project project) {
-    final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
-    final VirtualFile[] contentRoots = rootManager.getContentRootsFromAllModules();
+    ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
+    VirtualFile[] contentRoots = rootManager.getContentRootsFromAllModules();
     for (VirtualFile otherRoot : contentRoots) {
       if (VfsUtilCore.isAncestor(otherRoot, file, false)) {
         return VfsUtilCore.getRelativePath(file, otherRoot, '/');
@@ -113,12 +113,12 @@ public final class EmptyDirectoryInspection extends GlobalInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull CommonProblemDescriptor descriptor) {
-      final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
       if (file == null) {
         return;
       }
-      final PsiManager psiManager = PsiManager.getInstance(project);
-      final PsiDirectory directory = psiManager.findDirectory(file);
+      PsiManager psiManager = PsiManager.getInstance(project);
+      PsiDirectory directory = psiManager.findDirectory(file);
       if (directory == null) {
         return;
       }

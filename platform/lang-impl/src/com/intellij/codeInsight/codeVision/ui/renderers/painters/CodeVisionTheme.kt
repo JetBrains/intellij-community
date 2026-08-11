@@ -5,7 +5,9 @@ import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.util.ui.JBUI
 import java.awt.Font
 import java.awt.Rectangle
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class CodeVisionTheme(
   var iconGap: Int = JBUI.scale(2),
   var left: Int = 0,
@@ -13,6 +15,7 @@ class CodeVisionTheme(
   var top: Int = 0,
   var bottom: Int = 0
 ) {
+  @ApiStatus.Internal
   companion object {
     fun editorFont(editor: Editor, style: EditorFontType = EditorFontType.PLAIN): Font = editor.colorsScheme.getFont(style)
 

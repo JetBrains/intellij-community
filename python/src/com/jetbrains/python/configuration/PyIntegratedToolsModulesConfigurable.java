@@ -9,8 +9,8 @@ import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
-public final class PyIntegratedToolsModulesConfigurable extends ModuleAwareProjectConfigurable<UnnamedConfigurable> {
-  public PyIntegratedToolsModulesConfigurable(@NotNull Project project) {
+final class PyIntegratedToolsModulesConfigurable extends ModuleAwareProjectConfigurable<UnnamedConfigurable> {
+  PyIntegratedToolsModulesConfigurable(@NotNull Project project) {
     super(project, PyBundle.message("configurable.PyIntegratedToolsModulesConfigurable.display.name"), "reference-python-integrated-tools");
   }
 

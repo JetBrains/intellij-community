@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.ListCellRenderer;
@@ -21,6 +22,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class GotoInspectionModel extends SimpleChooseByNameModel {
   private final Map<String, InspectionToolWrapper> myToolNames = new HashMap<>();
   private final String[] myNames;
@@ -55,8 +57,8 @@ public final class GotoInspectionModel extends SimpleChooseByNameModel {
   }
 
   @Override
-  public Object[] getElementsByName(final String name, final String pattern) {
-    final InspectionToolWrapper tool = myToolNames.get(name);
+  public Object[] getElementsByName(String name, String pattern) {
+    InspectionToolWrapper tool = myToolNames.get(name);
     if (tool == null) {
       return InspectionElement.EMPTY_ARRAY;
     }
@@ -64,7 +66,7 @@ public final class GotoInspectionModel extends SimpleChooseByNameModel {
   }
 
   @Override
-  public String getElementName(final @NotNull Object element) {
+  public String getElementName(@NotNull Object element) {
     if (element instanceof InspectionElement) {
       return getSearchString(((InspectionElement)element).getToolWrapper());
     }

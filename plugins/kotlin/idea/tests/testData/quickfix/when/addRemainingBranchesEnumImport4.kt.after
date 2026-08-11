@@ -2,7 +2,6 @@
 // WITH_STDLIB
 import Baz.*
 import Foo.*
-import Foo.B
 
 enum class Foo {
     A, B, C

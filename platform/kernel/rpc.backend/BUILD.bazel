@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.rpc.backend` start
-
 jvm_library(
     name = "rpc.backend",
     srcs = glob(
@@ -26,11 +25,13 @@ jvm_library(
     runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util",
         "//platform/extensions",
         "//platform/kernel/rpc",
         "//fleet/rpc.server",
+        "//platform/core-api:core",
+        "//platform/kernel/rpc.lite",
     ],
 )
 
@@ -53,11 +54,14 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":rpc.backend",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util:util_test_lib",
         "//platform/extensions:extensions_test_lib",
         "//platform/kernel/rpc:rpc_test_lib",
         "//platform/backend:backend_test_lib",
         "//fleet/rpc.server:rpc.server_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.rpc.backend` end

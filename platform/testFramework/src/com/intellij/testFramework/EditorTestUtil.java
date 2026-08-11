@@ -364,7 +364,7 @@ public final class EditorTestUtil {
     SoftWrapApplianceManager applianceManager = model.getApplianceManager();
     applianceManager.setWidthProvider(new TestWidthProvider(visibleWidthInPixels));
     setEditorVisibleSizeInPixels(editor, visibleWidthInPixels, visibleHeightInPixels);
-    applianceManager.recalculateIfNecessary();
+    applianceManager.recalculateIfNecessary("configureSoftWraps");
     return !model.getRegisteredSoftWraps().isEmpty();
   }
 

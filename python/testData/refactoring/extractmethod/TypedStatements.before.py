@@ -11,5 +11,5 @@ class Person:
 
 
 def f(p: Person, salutation: str, ageHolder: Ageholder):
-    return <selection>salutation + p.name + "(" + ageHolder.age + ")"</selection>
+    return <selection>salutation + p.name + "(" + str(ageHolder.age) + ")"</selection>
 

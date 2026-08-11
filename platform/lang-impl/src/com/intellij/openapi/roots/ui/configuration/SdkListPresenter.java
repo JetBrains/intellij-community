@@ -24,6 +24,7 @@ import com.intellij.util.Producer;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +50,7 @@ import static com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
 import static com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkReferenceItem;
 import static com.intellij.openapi.roots.ui.configuration.SdkListItem.SuggestedItem;
 
+@ApiStatus.Internal
 public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
   private static final Icon EMPTY_ICON = EmptyIcon.create(1, 16);
 

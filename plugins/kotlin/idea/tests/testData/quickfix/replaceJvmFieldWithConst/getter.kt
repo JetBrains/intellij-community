@@ -1,9 +1,9 @@
 // "Replace '@JvmField' with 'const'" "false"
 // WITH_STDLIB
 // ERROR: This annotation is not applicable to target 'top level property without backing field or delegate'
-// K2_ERROR: This annotation is not applicable to target 'top level property without backing field or delegate'. Applicable targets: field
-// K2_AFTER_ERROR: This annotation is not applicable to target 'top level property without backing field or delegate'. Applicable targets: field
 // ACTION: Make internal
 // ACTION: Remove explicit type specification
+// K2_AFTER_ERROR: WRONG_ANNOTATION_TARGET
+// K2_ERROR: WRONG_ANNOTATION_TARGET
 <caret>@JvmField val number: Int
     get() = 42

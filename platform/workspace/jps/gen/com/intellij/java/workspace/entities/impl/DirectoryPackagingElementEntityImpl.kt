@@ -14,7 +14,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -22,7 +21,6 @@ import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
@@ -33,7 +31,6 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class DirectoryPackagingElementEntityImpl(private val dataSource: DirectoryPackagingElementEntityData) :
   DirectoryPackagingElementEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
                                                                                 PackagingElementEntity::class.java,
@@ -48,7 +45,6 @@ internal class DirectoryPackagingElementEntityImpl(private val dataSource: Direc
                                                                             ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
                                                                             true)
     private val connections = listOf<ConnectionId>(PARENTENTITY_CONNECTION_ID, ARTIFACT_CONNECTION_ID, CHILDREN_CONNECTION_ID)
-
   }
 
   override val parentEntity: CompositePackagingElementEntity?
@@ -56,14 +52,14 @@ internal class DirectoryPackagingElementEntityImpl(private val dataSource: Direc
   override val artifact: ArtifactEntity?
     get() = snapshot.instrumentation.getParent(ARTIFACT_CONNECTION_ID, this) as? ArtifactEntity
   override val children: List<PackagingElementEntity>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(CHILDREN_CONNECTION_ID, this) as? Sequence<PackagingElementEntity>)?.toList()
-            ?: error("Children children not found for CompositePackagingElementEntity")
+            ?: error("Children list children not found for CompositePackagingElementEntity")
   override val directoryName: String
     get() {
       readField("directoryName")
       return dataSource.directoryName
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -74,34 +70,12 @@ internal class DirectoryPackagingElementEntityImpl(private val dataSource: Direc
     return connections
   }
 
-
   internal class Builder(result: DirectoryPackagingElementEntityData?) :
     ModifiableWorkspaceEntityBase<DirectoryPackagingElementEntity, DirectoryPackagingElementEntityData>(result),
     DirectoryPackagingElementEntity.Builder {
     internal constructor() : this(DirectoryPackagingElementEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity DirectoryPackagingElementEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -134,14 +108,12 @@ internal class DirectoryPackagingElementEntityImpl(private val dataSource: Direc
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
       get() {
@@ -162,11 +134,10 @@ internal class DirectoryPackagingElementEntityImpl(private val dataSource: Direc
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
 // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          @Suppress("UNCHECKED_CAST")
+          val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+          value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -175,15 +146,14 @@ internal class DirectoryPackagingElementEntityImpl(private val dataSource: Direc
         else {
 // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            @Suppress("UNCHECKED_CAST")
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("parentEntity")
       }
-
     override var artifact: ArtifactEntityBuilder?
       get() {
         val _diff = diff
@@ -199,10 +169,8 @@ internal class DirectoryPackagingElementEntityImpl(private val dataSource: Direc
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, ARTIFACT_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, ARTIFACT_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -212,12 +180,10 @@ internal class DirectoryPackagingElementEntityImpl(private val dataSource: Direc
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, ARTIFACT_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] = value
         }
         changedProperty.add("artifact")
       }
-
     override var children: List<PackagingElementEntityBuilder<out PackagingElementEntity>>
       get() {
         val _diff = diff
@@ -228,6 +194,7 @@ internal class DirectoryPackagingElementEntityImpl(private val dataSource: Direc
                                                                                              ?: emptyList())
         }
         else {
+          @Suppress("UNCHECKED_CAST")
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<PackagingElementEntityBuilder<out PackagingElementEntity>>
           ?: emptyList()
         }
@@ -240,10 +207,8 @@ internal class DirectoryPackagingElementEntityImpl(private val dataSource: Direc
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
 // Backref setup before adding to store an abstract entity
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
+              item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              @Suppress("UNCHECKED_CAST")
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -254,13 +219,11 @@ internal class DirectoryPackagingElementEntityImpl(private val dataSource: Direc
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
             }
-// else you're attaching a new entity to an existing entity that is not modifiable
           }
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
         }
         changedProperty.add("children")
       }
-
     override var directoryName: String
       get() = getEntityData().directoryName
       set(value) {
@@ -271,31 +234,15 @@ internal class DirectoryPackagingElementEntityImpl(private val dataSource: Direc
 
     override fun getEntityClass(): Class<DirectoryPackagingElementEntity> = DirectoryPackagingElementEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class DirectoryPackagingElementEntityData : WorkspaceEntityData<DirectoryPackagingElementEntity>() {
   lateinit var directoryName: String
-
   internal fun isDirectoryNameInitialized(): Boolean = ::directoryName.isInitialized
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<DirectoryPackagingElementEntity> {
-    val modifiable = DirectoryPackagingElementEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): DirectoryPackagingElementEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = DirectoryPackagingElementEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
+  override fun newInstance(): DirectoryPackagingElementEntity = DirectoryPackagingElementEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<DirectoryPackagingElementEntity, *> =
+    DirectoryPackagingElementEntityImpl.Builder(null)
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.java.workspace.entities.DirectoryPackagingElementEntity") as EntityMetadata

@@ -7,10 +7,12 @@ import com.intellij.util.textCompletion.TextCompletionCache;
 
 import java.util.Collection;
 import java.util.Collections;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Bas Leijdekkers
  */
+@ApiStatus.Internal
 public class TextFieldWithAutoCompletionWithBrowseButton
   extends ComponentWithBrowseButton<TextFieldWithAutoCompletion<String>> implements TextAccessor {
 

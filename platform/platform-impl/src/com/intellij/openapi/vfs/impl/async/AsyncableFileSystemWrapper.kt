@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.impl.async
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
@@ -224,13 +223,16 @@ class AsyncableFileSystemWrapper(
           ioTasksExecutor.execute(object : AbstractContentWriteTask(
             fileId, file,
             requestor,
-            modStamp, resolveTimeStamp(timeStamp),
+            modStamp, timeStamp, timeStampUpdateRequestedByCaller = (timeStamp > 0),
             myBuffer, myCount
           ) {
             override fun write() =
-              delegateFileSystem.getOutputStream(this.file, this.requestor, this.modStamp, this.timeStamp).use { outputStream ->
+              delegateFileSystem.getOutputStream(this.file, this.requestor, this.modStamp, /* timeStamp: */ -1).use { outputStream ->
                 outputStream.write(content, 0, contentLength)
               }
+
+            override fun updateLastModifiedTimeOfUnderlyingFile(lastModified: Long) =
+              delegateFileSystem.setTimeStamp(this.file, lastModified)
 
             override fun lastModifiedTimeOfUnderlyingFile(): Long = delegateFileSystem.getTimeStamp(this.file)
           })
@@ -354,17 +356,44 @@ abstract class AbstractContentWriteTask(
   val file: VirtualFile,
   val requestor: Any?,
   val modStamp: Long,
-  val timeStamp: Long,
+  timeStamp: Long,
+  /**
+   * Is timeStamp update explicitly requested by the API caller -- or it is an internal matter of VFS async write impl, to
+   * ensure timestamps consistency with the write while it was in pending state?
+   */
+  val timeStampUpdateRequestedByCaller: Boolean = (timeStamp > 0),
   val content: ByteArray,
   val contentLength: Int,
 ) : FileIOTaskExecutor.FileIOTask {
+
+  val timeStamp: Long = resolveTimeStamp(timeStamp)
 
   override fun fileId(): Int = fileId
 
   override fun execute(executedOnBackground: Boolean) {
     val block = {
       write()
-      updateFileTimestamp()
+
+      try {
+        updateLastModifiedTimeOfUnderlyingFile(timeStamp)
+      }
+      catch (e: IOException) {
+        //It could be we have permissions to write the file content but don't have permissions to update the file `mtime`.
+        // The error processing in this case depends on _why_ we wanted to update `mtime`:
+        // a) if this was explicitly requested in an API call like `.getOutputStream(..., timestamp)` => we should rethrow an
+        //    exception, since we can't fulfill the request
+        // b) if updating `mtime` is an internal matter of async VFS write implementation, to keep file timestamp consistent
+        //    with 'pending' state -- better not to rethrow an exception, and just update the VFS file timestamp from the
+        //    actual file timestamp -- which may create a significant jump in VFS timestamp, but it is less of an evil.
+        if (timeStampUpdateRequestedByCaller) {
+          throw e
+        }
+        else {
+          LOG.warn("[${file.path}][#$fileId]: lastModified update failed -> re-read actual timestamp to update VFS timestamp", e)
+        }
+      }
+
+      updateLastModifiedTimestampInVFS()
     }
 
     if (executedOnBackground) {
@@ -378,28 +407,34 @@ abstract class AbstractContentWriteTask(
     }
   }
 
-  private fun updateFileTimestamp() {
+  private fun updateLastModifiedTimestampInVFS() {
     //Underlying FS could have different lastModified granularity than currentTimeMillis has => re-query
     //the lastModified just set, to know how the FS actually stores it:
     val modificationTimeStampWithUnderlyingFSGranularity = lastModifiedTimeOfUnderlyingFile()
-    //val ioLastModified = Files.getLastModifiedTime(Path.of(file.path)).toMillis()
     if (modificationTimeStampWithUnderlyingFSGranularity != timeStamp) {
       //hack: call low-level API directly, because normal file.setTimestamp() causes infinite recursion & stack overflow:
-      @Suppress("TestOnlyProblems", "UsagesOfObsoleteApi")
-      FSRecords.getInstance().setTimestamp(fileId, modificationTimeStampWithUnderlyingFSGranularity)
+      val vfs = FSRecords.getInstance()
+      vfs.connection().records().updateRecord(fileId){
+        record -> record.setTimestamp(modificationTimeStampWithUnderlyingFSGranularity)
+      }
     }
   }
 
-  /** Should write `content[0..contentLength)` into a file and update the file's lastModified to timeStamp */
+  /** Should write `content[0..contentLength)` into a file, but SHOULD NOT try updating the file's lastModified to timeStamp */
   protected abstract fun write()
 
-  /** @return should return the last modified timestamp of an actual (underlying, physical) file */
+  /** @return should return the lastModified timestamp of an actual (underlying, physical) file */
   protected abstract fun lastModifiedTimeOfUnderlyingFile(): Long
+
+  /** Should set the lastModified attribute of an actual (underlying, physical) file */
+  @Throws(IOException::class)
+  protected abstract fun updateLastModifiedTimeOfUnderlyingFile(lastModified: Long)
 
   override fun isAsyncExecutionAllowed(): Boolean = ASYNC_CONTENT_WRITE_ENABLED && requestor is AsyncFileContentWriteRequestor
 
   override fun toString(): String =
-    "ContentWriteTask[#$fileId][requestor: ${requestor?.javaClass?.name}][modStamp=$modStamp, timeStamp=$timeStamp, contentLength=$contentLength]"
+    "ContentWriteTask[#$fileId][requestor: ${requestor?.javaClass?.name}]" +
+    "[modStamp=$modStamp, timeStamp=$timeStamp, contentLength=$contentLength, timeStampUpdateRequestedByCaller=$timeStampUpdateRequestedByCaller]"
 }
 
 /** Limits both: (# of tasks postponed) AND (total size of memory used by postponed tasks) */

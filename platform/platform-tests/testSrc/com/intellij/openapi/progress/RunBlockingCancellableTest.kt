@@ -2,13 +2,15 @@
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadOverriddenContextOrNull
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.ReadWriteActionSupport
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.impl.ModalityStateEx
-import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.SystemProperty
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -265,6 +267,7 @@ class RunBlockingCancellableTest : CancellationTest() {
 
   @Test
   @RegistryKey("ide.run.blocking.cancellable.assert.in.tests", "true")
+  @SystemProperty("intellij.progress.task.ignoreHeadless", "true")
   fun `runBlockingCancellable is not allowed in wa`(): Unit = timeoutRunBlocking {
     edtWriteAction {
       assertErrorLogged<java.lang.IllegalStateException> {
@@ -277,7 +280,8 @@ class RunBlockingCancellableTest : CancellationTest() {
   @Test
   @RegistryKey("ide.run.blocking.cancellable.assert.in.tests", "true")
   fun `runBlockingCancellable in inner explicit ra of wa`(): Unit = timeoutRunBlocking {
-    getGlobalThreadingSupport().runWriteAction {
+    val service = ApplicationManager.getApplication().getService(ReadWriteActionSupport::class.java)
+    service.runWriteAction {
       ReadAction.run<Throwable> {
         // checks that there are no assertions
         runBlockingCancellable {

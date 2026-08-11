@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 data class KotlinLambdaInfo(
@@ -18,13 +19,14 @@ data class KotlinLambdaInfo(
     val callerMethodInfo: CallableMemberInfo,
     val isSamSuspendMethod: Boolean
 ) {
-    val isInline = callerMethodInfo.isInline && !isNoinline && !isSam
+    val isInline: Boolean = callerMethodInfo.isInline && !isNoinline && !isSam
 
-    fun getLabel() =
+    fun getLabel(): String =
         "${callerMethodInfo.name}: $parameterName.$methodName()"
 }
 
-internal fun KaSession.KotlinLambdaInfo(
+context(session: KaSession)
+internal fun KotlinLambdaInfo(
     methodSymbol: KaFunctionSymbol,
     argumentSymbol: KaValueParameterSymbol,
     callerMethodOrdinal: Int,
@@ -45,7 +47,8 @@ internal fun KaSession.KotlinLambdaInfo(
 )
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.countParameterIndex(methodSymbol: KaFunctionSymbol, argumentSymbol: KaValueParameterSymbol): Int {
+context(session: KaSession)
+private fun countParameterIndex(methodSymbol: KaFunctionSymbol, argumentSymbol: KaValueParameterSymbol): Int {
     var resultIndex = methodSymbol.valueParameters.indexOf(argumentSymbol)
 
     if (methodSymbol.isExtension)

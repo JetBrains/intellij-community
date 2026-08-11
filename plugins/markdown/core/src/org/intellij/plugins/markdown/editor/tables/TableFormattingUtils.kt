@@ -15,6 +15,7 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnAlignment
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnCells
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
+import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
@@ -90,17 +91,19 @@ object TableFormattingUtils {
     state: CellContentState,
     maxCellWidth: Int,
     alignment: MarkdownTableSeparatorRow.CellAlignment,
+    tableStyle: TableStyle,
     preventExpand: Boolean,
     delayedCaretMoves: DelayedCaretMoves?,
   ) {
     val expectedContent = TableModificationUtils.buildRealignedCellContent(
       state.trimmedContentWithCarets,
       maxCellWidth,
-      alignment
+      alignment,
+      tableStyle
     )
     val range = cell.textRange
     val cellContent = document.charsSequence.substring(range.startOffset, range.endOffset)
-    if (preventExpand && TableCharacterWidthUtils.calculateDisplayWidth(cellContent) < maxCellWidth) {
+    if (tableStyle == TableStyle.ALIGNED && preventExpand && TableCharacterWidthUtils.calculateDisplayWidth(cellContent) < maxCellWidth) {
       return
     }
     val expectedContentWithoutCarets = expectedContent.replace(TableProps.CARET_REPLACE_CHAR.toString(), "")
@@ -123,15 +126,16 @@ object TableFormattingUtils {
     separatorRow: MarkdownTableSeparatorRow,
     columnIndex: Int,
     maxCellWidth: Int,
+    tableStyle: TableStyle,
     preventExpand: Boolean
   ) {
     val range = separatorRow.getCellRange(columnIndex)!!
     val content = document.charsSequence.substring(range.startOffset, range.endOffset)
-    if (preventExpand && content.length < maxCellWidth) {
+    if (tableStyle == TableStyle.ALIGNED && preventExpand && content.length < maxCellWidth) {
       return
     }
     val alignment = separatorRow.getCellAlignment(columnIndex)
-    val expectedContent = TableModificationUtils.buildSeparatorCellContent(alignment, maxCellWidth)
+    val expectedContent = TableModificationUtils.buildSeparatorCellContent(alignment, maxCellWidth, tableStyle)
     if (content != expectedContent) {
       document.replaceString(range.startOffset, range.endOffset, expectedContent)
     }
@@ -142,33 +146,46 @@ object TableFormattingUtils {
     carets: Iterable<Caret>,
     columnIndex: Int,
     trimToMaxContent: Boolean,
-    preventExpand: Boolean = false
+    tableStyle: TableStyle,
+    preventExpand: Boolean = false,
   ) {
     val cells = getColumnCells(columnIndex, withHeader = true).asReversed()
     val cellsStates = cells.map { it.buildCellState(document, carets) }
     val separatorRow = checkNotNull(separatorRow)
     val separatorCellRange = separatorRow.getCellRange(columnIndex)!!
-    val maxCellWidth = calculateContentsMaxWidth(
-      cells,
-      cellsStates,
-      separatorCellRange.takeIf { carets.any { separatorCellRange.containsOffset(it.offset) } },
-      trimToMaxContent
-    )
+    val maxCellWidth = if (tableStyle == TableStyle.ALIGNED) {
+      calculateContentsMaxWidth(
+        cells,
+        cellsStates,
+        separatorCellRange.takeIf { carets.any { separatorCellRange.containsOffset(it.offset) } },
+        trimToMaxContent
+      )
+    }
+    else {
+      0
+    }
     val alignment = getColumnAlignment(columnIndex)
     val contentCells = cells.asSequence().zip(cellsStates.asSequence()).takeWhile { (cell, _) -> cell.parentRow?.isHeaderRow == false }
     val useBulkMode = cells.size > BULK_REFORMAT_CELL_COUNT_THRESHOLD
     val delayedCaretMoves = if (useBulkMode) DelayedCaretMoves(document) else null
     DocumentUtil.executeInBulk(document, useBulkMode) {
       for ((cell, state) in contentCells) {
-        processCell(document, cell, state, maxCellWidth, alignment, preventExpand, delayedCaretMoves)
+        processCell(document, cell, state, maxCellWidth, alignment, tableStyle, preventExpand, delayedCaretMoves)
       }
-      processSeparator(document, separatorRow, columnIndex, maxCellWidth, preventExpand)
-      processCell(document, cells.last(), cellsStates.last(), maxCellWidth, alignment, preventExpand, delayedCaretMoves)
+      processSeparator(document, separatorRow, columnIndex, maxCellWidth, tableStyle, preventExpand)
+      processCell(document, cells.last(), cellsStates.last(), maxCellWidth, alignment, tableStyle, preventExpand, delayedCaretMoves)
     }
     delayedCaretMoves?.moveCarets()
   }
 
-  fun reformatAllColumns(table: MarkdownTable, document: Document, trimToMaxContent: Boolean = true, preventExpand: Boolean = false) {
+  fun reformatAllColumns(
+    table: MarkdownTable,
+    document: Document,
+    tableStyle: TableStyle,
+    trimToMaxContent: Boolean = true,
+    preventExpand: Boolean = false,
+    carets: Iterable<Caret> = emptyList(),
+  ) {
     val columnsIndices = table.columnsIndices
     val tableOffset = table.startOffset
     for (columnIndex in columnsIndices) {
@@ -177,7 +194,7 @@ object TableFormattingUtils {
       if (columnIndex !in currentTable.columnsIndices) {
         break
       }
-      currentTable.reformatColumnOnChange(document, emptyList(), columnIndex, trimToMaxContent, preventExpand)
+      currentTable.reformatColumnOnChange(document, carets, columnIndex, trimToMaxContent, tableStyle, preventExpand)
     }
   }
 

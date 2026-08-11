@@ -46,6 +46,7 @@ import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.delay
 import com.intellij.platform.icons.Icon
+import com.intellij.platform.icons.swing.toNewIcon
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.LocalComponent
 import org.jetbrains.jewel.foundation.actionSystem.provideData
@@ -474,11 +475,11 @@ private fun IconsShowcase() {
     )
 
     Box {
-      Icon(AllIcons.General.OpenDisk as Icon, "Build Load Changes")
+      Icon(AllIcons.General.OpenDisk.toNewIcon(), "Build Load Changes")
     }
 
     Box {
-      Icon(deferedIcon as Icon, "Deferred Icon Sample")
+      Icon(deferedIcon.toNewIcon(), "Deferred Icon Sample")
     }
   }
 }

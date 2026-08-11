@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -27,6 +28,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class ContentEntryTreeCellRenderer extends NodeRenderer {
   protected final ContentEntryTreeEditor myTreeEditor;
   private final List<? extends ModuleSourceRootEditHandler<?>> myEditHandlers;

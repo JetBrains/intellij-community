@@ -4,7 +4,7 @@ ItemPresentation:
     presentableText: arrayListOf()
     locationString: (in kotlin.collections.CollectionsKt)
     icon: RowIcon(icons=[Function, Public])
-TargetElement: @kotlin.SinceKotlin @kotlin.internal.InlineOnly public inline fun <T> arrayListOf(): java.util.ArrayList<T> /* from: kotlin.collections.ArrayList<T> */ { /* compiled code */ }
+TargetElement: @kotlin.SinceKotlin(version = "1.1")
 QualifiedName: kotlin.collections.CollectionsKt.arrayListOf
 
 NavigationItem:
@@ -13,7 +13,7 @@ ItemPresentation:
     presentableText: arrayListOf()
     locationString: (kotlin.collections)
     icon: RowIcon(icons=[Function, Public])
-TargetElement: @kotlin.SinceKotlin @kotlin.internal.InlineOnly public inline fun <T> arrayListOf(): java.util.ArrayList<T> /* from: kotlin.collections.ArrayList<T> */ { /* compiled code */ }
+TargetElement: @kotlin.SinceKotlin(version = "1.1")
 QualifiedName: (kotlin.collections).arrayListOf
 
 NavigationItem:

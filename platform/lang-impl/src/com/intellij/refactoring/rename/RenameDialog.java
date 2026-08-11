@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.find.FindBundle;
@@ -14,7 +14,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -44,6 +43,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -296,7 +296,7 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
       myCbSearchTextOccurrences.setVisible(false);
     }
 
-    List<AutomaticRenamerFactory> applicableAutoRenameFactories = ActionUtil.underModalProgress(
+    @Unmodifiable List<AutomaticRenamerFactory> applicableAutoRenameFactories = ActionUtil.underModalProgress(
       myProject,
       RefactoringBundle.message("rename.finding.auto.rename.options.modal.title"),
       () -> {
@@ -310,18 +310,20 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
       }
     );
 
-    for(AutomaticRenamerFactory factory : applicableAutoRenameFactories) {
-      gbConstraints.gridwidth = myAutoRenamerFactories.size() % 2 == 0 ? 1 : GridBagConstraints.REMAINDER;
-      gbConstraints.gridx = myAutoRenamerFactories.size() % 2;
+    gbConstraints.weightx = 1;
+    gbConstraints.fill = GridBagConstraints.BOTH;
+    Map<String, JCheckBox> existingOptions = new HashMap<>();
+    for (AutomaticRenamerFactory factory : applicableAutoRenameFactories) {
+      gbConstraints.gridwidth = existingOptions.size() % 2 == 0 ? 1 : GridBagConstraints.REMAINDER;
+      gbConstraints.gridx = existingOptions.size() % 2;
       gbConstraints.insets = gbConstraints.gridx == 0 ? JBUI.insetsBottom(4) : JBUI.insets(0, UIUtil.DEFAULT_HGAP, 4, 0);
-      gbConstraints.weightx = 1;
-      gbConstraints.fill = GridBagConstraints.BOTH;
 
-      JCheckBox checkBox = new NonFocusableCheckBox();
-      checkBox.setText(factory.getOptionName());
-      checkBox.setSelected(factory.isEnabled());
-      panel.add(checkBox, gbConstraints);
-      myAutoRenamerFactories.put(factory, checkBox);
+      myAutoRenamerFactories.put(factory, existingOptions.computeIfAbsent(factory.getOptionName(), name -> {
+        JCheckBox checkBox = new NonFocusableCheckBox(name); //NON-NLS
+        checkBox.setSelected(factory.isEnabled());
+        panel.add(checkBox, gbConstraints);
+        return checkBox;
+      }));
     }
   }
 
@@ -330,15 +332,13 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
     var preselectedScopeName = scopeService.load();
     myScopeCombo = new ScopeChooserCombo();
     myScopeCombo.initialize(myProject, false, true, preselectedScopeName, null)
-      .onSuccess(dummy -> {
+      .onSuccess(_ -> {
         var selectedScopeName = myScopeCombo.getSelectedScopeName();
         if (!Objects.equals(selectedScopeName, preselectedScopeName)) { // saved scope not found, fall back to default
           myScopeCombo.selectItem(scopeService.defaultValue());
         }
       });
-    myScopeCombo.getComboBox().addItemListener(e -> {
-      scopeService.save(myScopeCombo.getSelectedScopeName());
-    });
+    myScopeCombo.getComboBox().addItemListener(_ -> scopeService.save(myScopeCombo.getSelectedScopeName()));
     Disposer.register(myDisposable, myScopeCombo);
 
     // do not show scope chooser for local variables
@@ -384,8 +384,8 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
     final RenameProcessor processor = createRenameProcessor(newName);
 
     for (Map.Entry<AutomaticRenamerFactory, JCheckBox> e : myAutoRenamerFactories.entrySet()) {
-      e.getKey().setEnabled(e.getValue().isSelected());
       if (e.getValue().isSelected()) {
+        e.getKey().setEnabled(true);
         processor.addRenamerFactory(e.getKey());
       }
     }
@@ -436,6 +436,6 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
 
   @Override
   public void close() {
-    close(DialogWrapper.CANCEL_EXIT_CODE);
+    close(CANCEL_EXIT_CODE);
   }
 }

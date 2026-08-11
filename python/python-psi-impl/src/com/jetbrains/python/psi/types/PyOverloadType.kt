@@ -11,7 +11,7 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-class PyOverloadType(val items: List<PyCallableType?>, val impl: Ref<PyType?>?) : PyType {
+class PyOverloadType(val items: List<PyCallableType>, val impl: Ref<PyType?>?) : PyType {
 
   override fun resolveMember(
     name: String,
@@ -36,4 +36,19 @@ class PyOverloadType(val items: List<PyCallableType?>, val impl: Ref<PyType?>?) 
     }
     return visitor.visitPyType(this)
   }
+}
+
+@ApiStatus.Experimental
+fun PyOverloadType.map(mapper: (PyCallableType) -> PyCallableType?): PyType? {
+  val newItems = items.mapNotNull(mapper)
+  if (newItems.isEmpty()) return null
+  if (newItems.size == 1) return newItems.first()
+  var newImpl = impl
+  if (impl != null) {
+    val impl_ = impl.get()
+    if (impl_ is PyCallableType) {
+      newImpl = Ref.create(mapper(impl_))
+    }
+  }
+  return PyOverloadType(newItems, newImpl)
 }

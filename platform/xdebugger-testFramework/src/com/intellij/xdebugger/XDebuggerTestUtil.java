@@ -320,12 +320,12 @@ public class XDebuggerTestUtil {
   }
 
   public static <T extends XBreakpointType> XBreakpoint addBreakpoint(final @NotNull Project project,
-                                                                      final @NotNull Class<T> exceptionType,
+                                                                      final @NotNull Class<T> breakpointType,
                                                                       final @NotNull XBreakpointProperties properties) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     Ref<XBreakpoint> breakpoint = Ref.create(null);
     XBreakpointUtil.breakpointTypes()
-                   .select(exceptionType)
+                   .select(breakpointType)
                    .findFirst()
                    .ifPresent(type -> breakpoint.set(breakpointManager.addBreakpoint(type, properties)));
     return breakpoint.get();

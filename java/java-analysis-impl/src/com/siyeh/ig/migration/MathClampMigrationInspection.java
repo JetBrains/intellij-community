@@ -46,6 +46,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -336,7 +337,7 @@ public final class MathClampMigrationInspection extends BaseInspection {
   ///
   /// @param topLevelInfo     The information about the top level math call
   /// @param assignmentTarget The variable that gets assigned the result of the "clamp" operation, if any.
-  private static List<PsiExpression> getPossibleTargets(Couple<ClampInfo> topLevelInfo, @Nullable PsiExpression assignmentTarget) {
+  private static @Unmodifiable List<PsiExpression> getPossibleTargets(Couple<ClampInfo> topLevelInfo, @Nullable PsiExpression assignmentTarget) {
     List<Condition<ClampInfo>> filters = List.of(info -> {
       //Side effect, if the intended target "ends up" being a constant-like, the inspection will bail out.
       if (info.values instanceof DfConstantType<?> constant && constant.getValue() != null) return false;

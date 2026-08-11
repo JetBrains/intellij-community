@@ -18,9 +18,8 @@ var name: String
 var related: SimpleId
 var sealedClassWithLinks: SealedClassWithLinks
 }
-
 internal object SimpleSymbolicIdEntityType : EntityType<SimpleSymbolicIdEntity, SimpleSymbolicIdEntityBuilder>(){
-override val entityClass: Class<SimpleSymbolicIdEntity> get() = SimpleSymbolicIdEntity::class.java
+override val entityImplClass: Class<*> get() = SimpleSymbolicIdEntityImpl::class.java
 override val entityImplBuilderClass: Class<*> get() = SimpleSymbolicIdEntityImpl.Builder::class.java
 operator fun invoke(
 version: Int,
@@ -40,12 +39,10 @@ init?.invoke(builder)
 return builder
 }
 }
-
 fun MutableEntityStorage.modifySimpleSymbolicIdEntity(
 entity: SimpleSymbolicIdEntity,
 modification: SimpleSymbolicIdEntityBuilder.() -> Unit,
 ): SimpleSymbolicIdEntity = modifyEntity(SimpleSymbolicIdEntityBuilder::class.java, entity, modification)
-
 @JvmOverloads
 @JvmName("createSimpleSymbolicIdEntity")
 fun SimpleSymbolicIdEntity(

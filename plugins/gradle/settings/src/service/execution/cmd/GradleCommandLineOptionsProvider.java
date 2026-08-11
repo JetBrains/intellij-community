@@ -21,6 +21,8 @@ public final class GradleCommandLineOptionsProvider {
   public static final OptionGroup ENVIRONMENT_OPTIONS;
   public static final OptionGroup EXECUTING_TASKS_OPTIONS;
   public static final OptionGroup VERIFICATION_OPTIONS;
+  public static final OptionGroup DEVELOCITY_OPTIONS;
+  public static final OptionGroup DIAGNOSTIC_OPTIONS;
 
   public static final Options UNSUPPORTED_OPTIONS;
 
@@ -60,6 +62,8 @@ public final class GradleCommandLineOptionsProvider {
       // https://github.com/gradle/gradle/blob/v6.2.0/subprojects/tooling-api/src/main/java/org/gradle/tooling/LongRunningOperation.java#L149-L154
       .addOption(Option.builder("h").longOpt("help").desc(GradleCmdBundle.message("gradle.cmd.option.help")).build())
       .addOption(Option.builder("v").longOpt("version").desc(GradleCmdBundle.message("gradle.cmd.option.version")).build())
+      // Prints version information and continues. This is a launcher-level action that is not supported via the tooling API,
+      .addOption(Option.builder("V").longOpt("show-version").desc(GradleCmdBundle.message("gradle.cmd.option.show.version")).build())
       // The tooling API always runs with the daemon.
       // All the daemon-related options are unsupported by the tooling API.
       // For more details check the according Javadoc of {@link org.gradle.tooling.LongRunningOperation#withArguments}.
@@ -68,7 +72,7 @@ public final class GradleCommandLineOptionsProvider {
       .addOption(Option.builder().longOpt("no-daemon").desc(GradleCmdBundle.message("gradle.cmd.option.no.daemon")).build())
       .addOption(Option.builder().longOpt("status").desc(GradleCmdBundle.message("gradle.cmd.option.status")).build())
       .addOption(Option.builder().longOpt("stop").desc(GradleCmdBundle.message("gradle.cmd.option.stop")).build())
-      .addOption(Option.builder().longOpt("foreground").desc(GradleCmdBundle.message("gradle.cmd.option.stop")).build())
+      .addOption(Option.builder().longOpt("foreground").desc(GradleCmdBundle.message("gradle.cmd.option.foreground")).build())
     // These options are deprecated
       .addOption(Option.builder("b").longOpt("build-file").desc(GradleCmdBundle.message("gradle.cmd.option.build.file")).hasArg().build())
       .addOption(Option.builder("c").longOpt("settings-file").desc(GradleCmdBundle.message("gradle.cmd.option.settings.file")).hasArg().build());
@@ -76,9 +80,7 @@ public final class GradleCommandLineOptionsProvider {
     // Debugging options, see https://docs.gradle.org/current/userguide/command_line_interface.html#sec:command_line_debugging
     DEBUGGING_OPTIONS = new OptionGroup()
       .addOption(Option.builder("S").longOpt("full-stacktrace").desc(GradleCmdBundle.message("gradle.cmd.option.full.stacktrace")).build())
-      .addOption(Option.builder("s").longOpt("stacktrace").desc(GradleCmdBundle.message("gradle.cmd.option.stacktrace")).build())
-      .addOption(Option.builder().longOpt("scan").desc(GradleCmdBundle.message("gradle.cmd.option.scan")).build())
-      .addOption(Option.builder().longOpt("no-scan").desc(GradleCmdBundle.message("gradle.cmd.option.no.scan")).build());
+      .addOption(Option.builder("s").longOpt("stacktrace").desc(GradleCmdBundle.message("gradle.cmd.option.stacktrace")).build());
 
     // Performance options, see https://docs.gradle.org/current/userguide/command_line_interface.html#sec:command_line_performance
     PERFORMANCE_OPTIONS = new OptionGroup()
@@ -89,6 +91,8 @@ public final class GradleCommandLineOptionsProvider {
       .addOption(Option.builder().longOpt("configuration-cache-problems").desc(GradleCmdBundle.message("gradle.cmd.option.configuration.cache.problems")).hasArg().build())
       .addOption(Option.builder().longOpt("configure-on-demand").desc(GradleCmdBundle.message("gradle.cmd.option.configure.on.demand")).build())
       .addOption(Option.builder().longOpt("no-configure-on-demand").desc(GradleCmdBundle.message("gradle.cmd.option.no.configure.on.demand")).build())
+      .addOption(Option.builder().longOpt("isolated-projects").desc(GradleCmdBundle.message("gradle.cmd.option.isolated.projects")).build())
+      .addOption(Option.builder().longOpt("no-isolated-projects").desc(GradleCmdBundle.message("gradle.cmd.option.no.isolated.projects")).build())
       .addOption(Option.builder().longOpt("max-workers").desc(GradleCmdBundle.message("gradle.cmd.option.max.workers")).hasArg().build())
       .addOption(Option.builder().longOpt("parallel").desc(GradleCmdBundle.message("gradle.cmd.option.parallel")).build())
       .addOption(Option.builder().longOpt("no-parallel").desc(GradleCmdBundle.message("gradle.cmd.option.no.parallel")).build())
@@ -104,13 +108,15 @@ public final class GradleCommandLineOptionsProvider {
       .addOption(Option.builder("i").longOpt("info").desc(GradleCmdBundle.message("gradle.cmd.option.info")).build())
       .addOption(Option.builder("d").longOpt("debug").desc(GradleCmdBundle.message("gradle.cmd.option.debug")).build())
       .addOption(Option.builder().longOpt("console").desc(GradleCmdBundle.message("gradle.cmd.option.console")).hasArg().build())
+      .addOption(Option.builder().longOpt("console-unicode").desc(GradleCmdBundle.message("gradle.cmd.option.console.unicode")).hasArg().build())
+      .addOption(Option.builder().longOpt("non-interactive").desc(GradleCmdBundle.message("gradle.cmd.option.non.interactive")).build())
       .addOption(Option.builder().longOpt("warning-mode").desc(GradleCmdBundle.message("gradle.cmd.option.warning.mode")).hasArg().build());
 
     // Execution options, https://docs.gradle.org/current/userguide/command_line_interface.html#sec:command_line_execution_options
     EXECUTION_OPTIONS = new OptionGroup()
       .addOption(Option.builder().longOpt("include-build").desc(GradleCmdBundle.message("gradle.cmd.option.include.build")).hasArg().build())
       .addOption(Option.builder().longOpt("offline").desc(GradleCmdBundle.message("gradle.cmd.option.offline")).build())
-      .addOption(Option.builder().longOpt("refresh-dependencies").desc(GradleCmdBundle.message("gradle.cmd.option.refresh.dependencies")).build())
+      .addOption(Option.builder("U").longOpt("refresh-dependencies").desc(GradleCmdBundle.message("gradle.cmd.option.refresh.dependencies")).build())
       .addOption(Option.builder("m").longOpt("dry-run").desc(GradleCmdBundle.message("gradle.cmd.option.dry.run")).build())
       .addOption(Option.builder().longOpt("write-locks").desc(GradleCmdBundle.message("gradle.cmd.option.write.locks")).build())
       .addOption(Option.builder().longOpt("update-locks").desc(GradleCmdBundle.message("gradle.cmd.option.update.locks")).hasArg().build())
@@ -130,14 +136,29 @@ public final class GradleCommandLineOptionsProvider {
       .addOption(Option.builder("x").longOpt("exclude-task").desc(GradleCmdBundle.message("gradle.cmd.option.exclude.task")).hasArg().build())
       .addOption(Option.builder().longOpt("rerun-tasks").desc(GradleCmdBundle.message("gradle.cmd.option.rerun.tasks")).build())
       .addOption(Option.builder().longOpt("continue").desc(GradleCmdBundle.message("gradle.cmd.option.continue")).build())
+      .addOption(Option.builder().longOpt("no-continue").desc(GradleCmdBundle.message("gradle.cmd.option.no.continue")).build())
       .addOption(Option.builder("t").longOpt("continuous").desc(GradleCmdBundle.message("gradle.cmd.option.continuous")).build());
 
     // https://docs.gradle.org/current/userguide/dependency_verification.html
     VERIFICATION_OPTIONS = new OptionGroup()
       .addOption(Option.builder().longOpt("export-keys").desc(GradleCmdBundle.message("gradle.cmd.option.export.keys")).build())
-      .addOption(Option.builder().longOpt("refresh-keys").desc(GradleCmdBundle.message("gradle.cmd.option.export.keys")).build())
+      .addOption(Option.builder().longOpt("refresh-keys").desc(GradleCmdBundle.message("gradle.cmd.option.refresh.keys")).build())
       .addOption(Option.builder("F").longOpt("dependency-verification").desc(GradleCmdBundle.message("gradle.cmd.option.dependency.verification")).hasArg().build())
       .addOption(Option.builder("M").longOpt("write-verification-metadata").desc(GradleCmdBundle.message("gradle.cmd.option.write.verification.metadata")).hasArg().build());
+
+    // Develocity / Build Scan options, https://docs.gradle.org/current/userguide/command_line_interface.html#sec:command_line_debugging
+    DEVELOCITY_OPTIONS = new OptionGroup()
+      .addOption(Option.builder().longOpt("scan").desc(GradleCmdBundle.message("gradle.cmd.option.scan")).build())
+      .addOption(Option.builder().longOpt("no-scan").desc(GradleCmdBundle.message("gradle.cmd.option.no.scan")).build())
+      .addOption(Option.builder().longOpt("develocity-url").desc(GradleCmdBundle.message("gradle.cmd.option.develocity.url")).hasArg().build())
+      .addOption(Option.builder().longOpt("develocity-plugin-version").desc(GradleCmdBundle.message("gradle.cmd.option.develocity.plugin.version")).hasArg().build());
+
+    // Diagnostic options
+    DIAGNOSTIC_OPTIONS = new OptionGroup()
+      .addOption(Option.builder().longOpt("task-graph").desc(GradleCmdBundle.message("gradle.cmd.option.task.graph")).build())
+      .addOption(Option.builder().longOpt("problems-report").desc(GradleCmdBundle.message("gradle.cmd.option.problems.report")).build())
+      .addOption(Option.builder().longOpt("no-problems-report").desc(GradleCmdBundle.message("gradle.cmd.option.no.problems.report")).build())
+      .addOption(Option.builder().longOpt("property-upgrade-report").desc(GradleCmdBundle.message("gradle.cmd.option.property.upgrade.report")).build());
 
     OPTIONS = new Options()
       .addOptionGroup(DEBUGGING_OPTIONS)
@@ -146,7 +167,9 @@ public final class GradleCommandLineOptionsProvider {
       .addOptionGroup(EXECUTION_OPTIONS)
       .addOptionGroup(ENVIRONMENT_OPTIONS)
       .addOptionGroup(EXECUTING_TASKS_OPTIONS)
-      .addOptionGroup(VERIFICATION_OPTIONS);
+      .addOptionGroup(VERIFICATION_OPTIONS)
+      .addOptionGroup(DEVELOCITY_OPTIONS)
+      .addOptionGroup(DIAGNOSTIC_OPTIONS);
 
     // https://docs.gradle.org/current/userguide/java_testing.html#sec:test_execution
     TEST_TASK_OPTIONS = new OptionGroup()

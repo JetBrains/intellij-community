@@ -10,6 +10,6 @@ class Test {
 
   void bar(String s){}
 
-    private static record Param(String s) {
+    record Param(String s) {
     }
 }

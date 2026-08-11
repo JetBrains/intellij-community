@@ -21,7 +21,7 @@ fun completePackageNames(project: Project, sdk: Sdk, result: CompletionResultSet
     repositoryManager
       .searchPackages(result.prefixMatcher.prefix)
       .values
-      .flatMap { it.firstPageOrEmpty() }
+      .flatMap { it.firstPageOrEmpty().successOrNull ?: emptyList() }
   result.restartCompletionOnAnyPrefixChange()
   val maxPriority = packages.size
   packages.asSequence().map {

@@ -23,6 +23,7 @@ data class Line(
   val interlineHeightBelow: LineBasedHeight,
   val lineIdx: Long,
   val width: Float,
+  val ownHeight: LineBasedHeight = LineBasedHeight.ONE_LINE,
 ) {
   operator fun contains(offset: Long): Boolean {
     @Suppress("ConvertTwoComparisonsToRangeCheck")
@@ -57,6 +58,9 @@ interface Fold {
   val hasWidget: Boolean
   val defaultFolded: Boolean
   val focusable: Boolean
+
+  val showInGutter: Boolean
+    get() = true
 }
 
 /*
@@ -89,6 +93,16 @@ inline val Interval<*, Interline>.interlineOffset: Long
     Interline.Binding.AboveLine -> from
     Interline.Binding.BelowLine -> to
   }
+
+/*
+* must be a Value
+*
+* Scales a whole line: the line's own height becomes `scale` line heights and its text is rendered
+* with the font size multiplied by `scale`. When several scales intersect a line, the maximum wins.
+* */
+interface LineScale {
+  val scale: Float
+}
 
 interface Postline {
   enum class Align { Left, Right }

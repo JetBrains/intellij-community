@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.codeInsight.liveTemplates` start
-
 create_kotlinc_options(
     name = "custom_kotlin-codeInsight-liveTemplates",
     opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
@@ -30,18 +29,25 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
+        "//plugins/kotlin/references",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//platform/core-api:core",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
         "//plugins/kotlin/base/code-insight",
-        "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
         "//plugins/kotlin/completion/impl-k2:kotlin-completion-impl",
         "//platform/core-impl",
         "//platform/analysis-api:analysis",
         "//platform/editor-ui-api:editor-ui",
         "//java/java-psi-api:psi",
         "//platform/util",
+        "//plugins/kotlin/base/util",
+        "//platform/lang-impl",
+        "//platform/lang-api:lang",
+        "//java/java-impl:impl",
+        "//plugins/kotlin/base/project-structure",
+        "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
+        "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
     ],
 )
 
@@ -58,16 +64,25 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-codeInsight-liveTemplates",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//platform/core-api:core_test_lib",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
         "//plugins/kotlin/base/code-insight:code-insight_test_lib",
-        "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared_test_lib",
         "//plugins/kotlin/completion/impl-k2:kotlin-completion-impl_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//java/java-psi-api:psi_test_lib",
         "//platform/util:util_test_lib",
+        "//plugins/kotlin/base/util:util_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//java/java-impl:impl_test_lib",
+        "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+        "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement_test_lib",
+        "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.liveTemplates` end
@@ -82,7 +97,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.codeInsight.liveTemplates` end
 
 ### auto-generated section `build intellij.kotlin.codeInsight.liveTemplates.tests` start
-
 create_kotlinc_options(
     name = "custom_kotlin-codeInsight-liveTemplates-tests",
     opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
@@ -97,6 +111,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.codeInsight.liveTemplates.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -116,26 +131,30 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_kotlin-codeInsight-liveTemplates-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":kotlin-codeInsight-liveTemplates-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-codeInsight-liveTemplates-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
         "//plugins/kotlin/base/code-insight",
         "//plugins/kotlin/base/code-insight:code-insight_test_lib",
-        "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
-        "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared_test_lib",
         "//plugins/kotlin/completion/impl-k2:kotlin-completion-impl",
         "//plugins/kotlin/completion/impl-k2:kotlin-completion-impl_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/editor-ui-api:editor-ui",
@@ -155,10 +174,12 @@ jvm_library(
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/util:util_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
-        "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared-tests",
-        "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared-tests_test_lib",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
+        "//platform/util:util-ui",
+        "//platform/util:util-ui_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.liveTemplates.tests` end
@@ -173,7 +194,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.codeInsight.liveTemplates.tests` end
 
 ### auto-generated section `test intellij.kotlin.codeInsight.liveTemplates.tests` start
-
 jps_test(
     name = "kotlin-codeInsight-liveTemplates-tests_test",
     runtime_deps = [":kotlin-codeInsight-liveTemplates-tests_test_lib"],

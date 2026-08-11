@@ -151,6 +151,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -404,7 +405,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
         @Override
         protected void dispose() {
-          FindAndReplaceExecutor.getInstance().cancelActivities();
+          FindAndReplaceExecutor.getInstance(myProject).cancelActivities();
           saveSettings();
           super.dispose();
         }
@@ -426,7 +427,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       };
       myDialog.setUndecorated(true);
       if (WindowRoundedCornersManager.isAvailable()) {
-        WindowRoundedCornersManager.setRoundedCorners(myDialog.getWindow());
+        WindowRoundedCornersManager.configure(myDialog);
       }
       ApplicationManager.getApplication().getMessageBus().connect(myDialog.getDisposable()).subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
         @Override
@@ -1813,7 +1814,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
     @Override
     public void refreshTableRenderer() {
-      TableCellRenderer renderer = FindAndReplaceExecutor.getInstance().createTableCellRenderer();
+      TableCellRenderer renderer = FindAndReplaceExecutor.getInstance(myProject).createTableCellRenderer();
       if (renderer == null) renderer = new UsageTableCellRenderer();
       myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(renderer);
     }
@@ -1866,7 +1867,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     }
 
     @Override
-    public @NotNull List<@NotNull FindPopupItem> getItems() {
+    public @NotNull @Unmodifiable List<@NotNull FindPopupItem> getItems() {
       DefaultTableModel model = (DefaultTableModel)myResultsPreviewTable.getModel();
       return ContainerUtil.mapNotNull(model.getDataVector(), row -> {
         if (row.getFirst() instanceof FindPopupItem item) return item;
@@ -1962,7 +1963,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         return getValidationInfo();
       }
       setNewModel(validatedModel);
-      FindAndReplaceExecutor.getInstance().validateModel(validatedModel, (isDirectoryExists) -> {
+      FindAndReplaceExecutor.getInstance(myProject).validateModel(validatedModel, (isDirectoryExists) -> {
         FindModel currentModel = myHelper.getModel();
         if (couldSkipValidation() || isNecessaryToRevalidate(validatedModel, currentModel)) return null;
         setDirectoryExists(isDirectoryExists);
@@ -2277,7 +2278,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       myFileAndLineNumber.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       setBackground(getBackgroundColor(table, value));
       setSelectionColor(isSelected ? RenderingUtil.getBackground(table, true) : null);
-      getAccessibleContext().setAccessibleName(FindBundle.message("find.popup.found.element.accesible.name", myUsageRenderer.getAccessibleContext().getAccessibleName(), myFileAndLineNumber.getAccessibleContext().getAccessibleName()));
+      putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY,
+                        FindBundle.message("find.popup.found.element.accesible.name", myUsageRenderer.getAccessibleContext().getAccessibleName(), myFileAndLineNumber.getAccessibleContext().getAccessibleName()));
       return this;
     }
 

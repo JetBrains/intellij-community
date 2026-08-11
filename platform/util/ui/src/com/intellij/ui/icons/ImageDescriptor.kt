@@ -17,6 +17,7 @@ class ImageDescriptor(
   @JvmField val isSvg: Boolean,
   @JvmField val isDark: Boolean = false,
   @JvmField val isStroke: Boolean = false,
+  @JvmField val isModifier: Boolean = false,
 ) {
   companion object {
     const val HAS_2x: Int = 1
@@ -24,6 +25,7 @@ class ImageDescriptor(
     const val HAS_DARK_2x: Int = 4
     const val HAS_STROKE: Int = 8
     const val NO_TREE_PRESENTATION_CACHE: Int = 16
+    const val IS_MODIFIER_ICON: Int = 32
   }
 
   internal fun toSvgMapper(): SvgCacheClassifier = SvgCacheClassifier(scale = scale, isDark = isDark, isStroke = isStroke)
@@ -34,35 +36,55 @@ class ImageDescriptor(
 @Internal
 fun createImageDescriptorList(path: String, isDark: Boolean, isStroke: Boolean, pixScale: Float): List<ImageDescriptor> {
   // prefer retina images for HiDPI scale, because downscaling retina images provide a better result than up-scaling non-retina images
-  if (!path.startsWith(FILE_SCHEME_PREFIX) && path.contains("://")) {
+  val result = if (!path.startsWith(FILE_SCHEME_PREFIX) && path.contains("://")) {
     val qI = path.lastIndexOf('?')
     val isSvg = (if (qI == -1) path else path.substring(0, qI)).endsWith(".svg", ignoreCase = true)
-    return listOf(ImageDescriptor(SuffixPathTransform(""), scale = 1f, isSvg = isSvg, isDark = isDark, isStroke = false))
+    listOf(ImageDescriptor(SuffixPathTransform(""), scale = 1f, isSvg = isSvg, isDark = isDark, isStroke = false))
   }
+  else {
+    val isSvg = path.endsWith(".svg")
+    val isRetina = pixScale != 1f
 
-  val isSvg = path.endsWith(".svg")
-  val isRetina = pixScale != 1f
+    val list = ArrayList<ImageDescriptor>(5)
 
-  val list = ArrayList<ImageDescriptor>(5)
-
-  if (isStroke) {
-    addFileNameVariant(isRetina = isRetina, isDark = false, isSvg = isSvg, isStroke = true, scale = pixScale, list = list)
-  }
-
-  if (!isSvg) {
-    addFileNameVariant(isRetina = isRetina, isDark = isDark, isSvg = false, scale = pixScale, list = list)
-  }
-
-  addFileNameVariant(isRetina = isRetina, isDark = isDark, isSvg = isSvg, scale = pixScale, list = list)
-
-  // fallback to non-dark
-  if (isDark) {
-    addFileNameVariant(isRetina = isRetina, isDark = false, isSvg = isSvg, scale = pixScale, list = list)
-    if (!isSvg) {
-      addFileNameVariant(isRetina = false, isDark = false, isSvg = true, scale = pixScale, list = list)
+    if (isStroke) {
+      addFileNameVariant(isRetina = isRetina, isDark = false, isSvg = isSvg, isStroke = true, scale = pixScale, list = list)
     }
+
+    if (!isSvg) {
+      addFileNameVariant(isRetina = isRetina, isDark = isDark, isSvg = false, scale = pixScale, list = list)
+    }
+
+    addFileNameVariant(isRetina = isRetina, isDark = isDark, isSvg = isSvg, scale = pixScale, list = list)
+
+    // fallback to non-dark
+    if (isDark) {
+      addFileNameVariant(isRetina = isRetina, isDark = false, isSvg = isSvg, scale = pixScale, list = list)
+      if (!isSvg) {
+        addFileNameVariant(isRetina = false, isDark = false, isSvg = true, scale = pixScale, list = list)
+      }
+    }
+    list
   }
-  return list
+  return result.maybeSetIsModifier(path)
+}
+
+private fun List<ImageDescriptor>.maybeSetIsModifier(
+  path: String,
+): List<ImageDescriptor> = if (path.contains("/modifiers/") || path.startsWith("modifiers/")) {
+  map { descriptor ->
+    ImageDescriptor(
+      pathTransform = descriptor.pathTransform,
+      scale = descriptor.scale,
+      isSvg = descriptor.isSvg,
+      isDark = descriptor.isDark,
+      isStroke = descriptor.isStroke,
+      isModifier = true,
+    )
+  }
+}
+else {
+  this
 }
 
 // @2x is used even for SVG icons by intention
@@ -134,7 +156,7 @@ fun createImageDescriptorTransformListWithSizeSpecialization(
   }
 
   val defaultDescriptors = createImageDescriptorList(path = path, isDark = isDark, isStroke = isStroke, pixScale = pixScale)
-  return sizeSpecializedDescriptors + defaultDescriptors
+  return sizeSpecializedDescriptors.maybeSetIsModifier(path) + defaultDescriptors
 }
 
 @Internal

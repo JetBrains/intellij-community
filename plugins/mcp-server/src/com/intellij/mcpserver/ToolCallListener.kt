@@ -16,7 +16,7 @@ interface ToolCallListener {
 
   fun beforeMcpToolCall(mcpToolDescriptor: McpToolDescriptor, additionalData: McpCallInfo) {}
 
-  fun afterMcpToolCall(mcpToolDescriptor: McpToolDescriptor, events: List<McpToolSideEffectEvent>, error: Throwable?, callInfo: McpCallInfo) {}
+  fun afterMcpToolCall(mcpToolDescriptor: McpToolDescriptor, events: List<McpToolSideEffectEvent>, error: Throwable?, callInfo: McpCallInfo, result: McpToolCallResult? = null) {}
 
   fun toolActivity(mcpToolDescriptor: McpToolDescriptor, @NlsContexts.Label toolActivityDescription: String, callInfo: McpCallInfo) {}
 }

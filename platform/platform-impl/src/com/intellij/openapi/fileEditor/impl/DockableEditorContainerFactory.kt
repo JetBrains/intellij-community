@@ -51,10 +51,15 @@ internal fun createEditorDockContainer(
       get() = isSingletonEditorInWindow
 
     override fun afterFileClosed(file: VirtualFile) {
+      super.afterFileClosed(file)
       container!!.fireContentClosed(file)
     }
 
     override fun afterFileOpen(file: VirtualFile) {
+      super.afterFileOpen(file)
+      if (!loadingState) {
+        enableRichEmptyStateComponents()
+      }
       container!!.fireContentOpen(file)
     }
 

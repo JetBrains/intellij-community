@@ -1,15 +1,21 @@
 package com.intellij.ide.starter.sdk
 
+import com.intellij.ide.starter.config.ConfigurationStorage
+import com.intellij.ide.starter.config.useDockerContainer
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.runner.SetupException
 import com.intellij.ide.starter.runner.targets.TargetIdentifier
 import com.intellij.ide.starter.runner.targets.isLocal
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallRequest
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerWSL
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerEel.unpackJdkOnEel
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListDownloader
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPlatform
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.withRetryBlocking
 import java.net.URL
@@ -53,8 +59,25 @@ object JdkDownloaderFacade {
   }
 
   val allJdks: List<JdkDownloadItem>
-    get() = if (TargetIdentifier.current.isLocal()) listJDKs(JdkPredicate.forCurrentProcess())
-    else listJDKs(JdkPredicate.forEel(TargetIdentifier.current.eelApi))
+    get() = listJDKs(targetJdkPredicate())
+
+  private fun targetJdkPredicate(): JdkPredicate {
+    if (!TargetIdentifier.current.isLocal()) {
+      return JdkPredicate.forEel(TargetIdentifier.current.eelApi)
+    }
+
+    // Dockerized starter runs still report the target as local, but the IDE and its external tools
+    // execute inside a Linux container. Using the current host process here would download a macOS
+    // or Windows JDK and later pass an incompatible java binary path into the container.
+    if (ConfigurationStorage.useDockerContainer()) {
+      return JdkPredicate(
+        ideBuildNumber = null,
+        supportedPlatforms = setOf(JdkPlatform(os = "linux", arch = JdkPredicate.currentArch))
+      )
+    }
+
+    return JdkPredicate.forCurrentProcess()
+  }
 
   private fun listJDKs(predicate: JdkPredicate): List<JdkDownloadItem> {
     val allJDKs = JdkListDownloader().downloadModelForJdkInstaller(null, predicate)
@@ -65,13 +88,13 @@ object JdkDownloaderFacade {
 
     return allJDKs.map { jdk ->
       JdkDownloadItem(jdk) {
-        downloadJdkItem(jdk, predicate)
+        downloadJdkItem(jdk)
       }
     }
   }
 
-  private fun downloadJdkItem(jdk: JdkItem, predicate: JdkPredicate): JdkItemPaths {
-    val targetJdkHome = determineTargetJdkHome(predicate, jdk)
+  private fun downloadJdkItem(jdk: JdkItem): JdkItemPaths {
+    val targetJdkHome = determineTargetJdkHome(jdk)
     val targetHomeMarker = targetJdkHome.resolve("home.link")
     logOutput("Checking JDK at $targetJdkHome")
 
@@ -98,8 +121,15 @@ object JdkDownloaderFacade {
   }
 
   @Suppress("SSBasedInspection")
-  private fun determineTargetJdkHome(predicate: JdkPredicate, jdk: JdkItem): Path =
-    GlobalPaths.instance.getCacheDirectoryFor("jdks").resolve(jdk.installFolderName)
+  private fun determineTargetJdkHome(jdk: JdkItem): Path {
+    val installFolderName = if (ConfigurationStorage.useDockerContainer() && JdkPredicate.currentOS != "linux") {
+      "${jdk.installFolderName}-linux-${JdkPredicate.currentArch}"
+    }
+    else {
+      jdk.installFolderName
+    }
+    return GlobalPaths.instance.getCacheDirectoryFor("jdks").resolve(installFolderName)
+  }
 
   private fun shouldDownloadJdk(targetJdkHome: Path, targetHomeMarker: Path): Boolean =
     !Files.isRegularFile(targetHomeMarker) || @OptIn(ExperimentalPathApi::class) targetJdkHome.walk().count() < MINIMUM_JDK_FILES_COUNT
@@ -127,10 +157,6 @@ object JdkDownloaderFacade {
     val item = request.item
     val targetDir = request.installDir
 
-    val wslDistribution = wslDistributionFromPath(targetDir)
-    if (wslDistribution != null && item.os != "linux") {
-      error("Cannot install non-linux JDK into WSL environment to $targetDir from $item")
-    }
     val temp = GlobalPaths.instance.testHomePath.resolve("tmp/jdk").toAbsolutePath().toString()
     val downloadFile = Path.of(temp, "jdk-${System.nanoTime()}-${item.archiveFileName}")
     try {
@@ -145,8 +171,11 @@ object JdkDownloaderFacade {
       }
 
       try {
-        if (wslDistribution != null) {
-          JdkInstallerWSL.unpackJdkOnWsl(wslDistribution, item.packageType, downloadFile, targetDir, item.packageRootPrefix)
+        // getEelDescriptor() is a lightweight, app-independent lookup; the EEL (via eelFromPath ->
+        // toEelApi) is resolved only for a non-local target, so local installs don't require EEL
+        // infrastructure (which a headless test harness may not have).
+        if (targetDir.getEelDescriptor() !is LocalEelDescriptor) {
+          unpackJdkOnEel(eelFromPath(targetDir).eel, downloadFile, targetDir.asEelPath(), item.packageRootPrefix)
         }
         else {
           item.packageType.openDecompressor(downloadFile).let {

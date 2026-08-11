@@ -1,5 +1,5 @@
 // "Change type of 'foo' to 'Any'" "true"
-// K2_ERROR: Return type mismatch: expected 'O', actual 'P'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 class O
 class P
 

@@ -38,6 +38,7 @@ public final class Messages {
   public static final @NotNull String DEPENDENCY_DOWNLOAD_POLICY_MODEL_CACHE_GET_GROUP = "gradle.dependencyDownloadPolicyModel.cacheGet.group";
   public static final @NotNull String DEPENDENCY_DOWNLOAD_POLICY_MODEL_CACHE_SET_GROUP = "gradle.dependencyDownloadPolicyModel.cacheSet.group";
 
+  public static final @NotNull String DEPENDENCY_RESOLUTION_GROUP = "gradle.dependencyResolution.group";
   public static final @NotNull String DEPENDENCY_CLASSPATH_MODEL_GROUP = "gradle.dependencyCompileClasspathModel.group";
 
   public static final @NotNull String DEPENDENCY_ACCESSOR_MODEL_GROUP = "gradle.dependencyAccessorModel.group";

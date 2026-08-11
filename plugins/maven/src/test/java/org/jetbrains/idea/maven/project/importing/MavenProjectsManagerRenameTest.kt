@@ -1,17 +1,36 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.testFramework.UsefulTestCase.assertSameElements
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.renameModule
+import com.intellij.maven.testFramework.fixtures.updateAllProjectsFullSync
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenProjectsManagerRenameTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenProjectsManagerRenameTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   
   @Test
   fun `rename compound module`() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -22,20 +41,20 @@ class MavenProjectsManagerRenameTest : MavenMultiVersionImportingTestCase() {
                            <maven.compiler.testTarget>11</maven.compiler.testTarget>
                        </properties>
                        """.trimIndent())
-    importProjectAsync()
-    assertModules("project", "project.main", "project.test")
+    maven.importProjectAsync()
+    maven.assertModules("project", "project.main", "project.test")
 
-    renameModule("project", "group.prefix.project")
-    assertModules("group.prefix.project", "project.main", "project.test")
+    maven.renameModule("project", "group.prefix.project")
+    maven.assertModules("group.prefix.project", "project.main", "project.test")
 
     // incremental sync doesn't update module if effective pom dependencies haven't changed
-    updateAllProjectsFullSync()
-    assertModules("group.prefix.project", "group.prefix.project.main", "group.prefix.project.test")
+    maven.updateAllProjectsFullSync()
+    maven.assertModules("group.prefix.project", "group.prefix.project.main", "group.prefix.project.test")
   }
 
   @Test
   fun `rename compound module - main and test`() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -46,17 +65,17 @@ class MavenProjectsManagerRenameTest : MavenMultiVersionImportingTestCase() {
                            <maven.compiler.testTarget>11</maven.compiler.testTarget>
                        </properties>
                        """.trimIndent())
-    importProjectAsync()
-    assertModules("project", "project.main", "project.test")
+    maven.importProjectAsync()
+    maven.assertModules("project", "project.main", "project.test")
 
-    renameModule("project.main", "project.verymain")
-    renameModule("project.test", "project.verytest")
-    assertModules("project", "project.verymain", "project.verytest")
+    maven.renameModule("project.main", "project.verymain")
+    maven.renameModule("project.test", "project.verytest")
+    maven.assertModules("project", "project.verymain", "project.verytest")
 
     // incremental sync doesn't update module if effective pom dependencies haven't changed
-    updateAllProjectsFullSync()
-    val moduleNames = WorkspaceModel.getInstance(project).currentSnapshot.entities(ModuleEntity::class.java).map { it.name }.toSet()
+    maven.updateAllProjectsFullSync()
+    val moduleNames = WorkspaceModel.getInstance(maven.project).currentSnapshot.entities(ModuleEntity::class.java).map { it.name }.toSet()
     assertSameElements(moduleNames, "project", "project.main", "project.test")
-    assertModules("project", "project.main", "project.test")
+    maven.assertModules("project", "project.main", "project.test")
   }
 }

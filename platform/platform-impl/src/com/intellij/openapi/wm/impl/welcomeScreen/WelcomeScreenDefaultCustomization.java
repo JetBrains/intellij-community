@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.wm.WelcomeScreenCustomization;
 import com.intellij.ui.ExperimentalUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createShowPopupAction;
 
+@ApiStatus.Internal
 public final class WelcomeScreenDefaultCustomization implements WelcomeScreenCustomization {
 
   @Override

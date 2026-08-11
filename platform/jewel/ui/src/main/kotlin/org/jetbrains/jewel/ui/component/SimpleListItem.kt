@@ -100,6 +100,7 @@ public fun SimpleListItem(
  *   Jewel theme.
  * @param height The height of the list item; default is based on the Jewel theme's global metrics.
  * @param colorFilter Optional [ColorFilter] to apply to the icon, if any.
+ * @param onTextLayout Callback for when text layout is computed.
  * @param painterHints Optional [PainterHint]s to apply to the icon, if any.
  */
 @Composable
@@ -199,15 +200,16 @@ public fun SimpleListItem(
  *
  * @param text The text displayed in the list item.
  * @param selected Indicates whether the list item is selected.
- * @param active Indicates whether the list item is active or disabled; default is active.
  * @param modifier Optional [Modifier] to apply to the entire list item.
  * @param textModifier Optional [Modifier] to apply to specifically to the text.
  * @param iconModifier Optional [Modifier] to apply to specifically to the icon.
+ * @param active Indicates whether the list item is active or disabled; default is active.
  * @param icon Optional [IconKey] representing the icon displayed on the start side of the list item.
  * @param iconContentDescription Optional content description [String] for the icon for accessibility purposes.
  * @param style The [SimpleListItemStyle] defining the appearance of the list item; default is based on the Jewel theme.
  * @param height The height of the list item; default is based on the Jewel theme's global metrics.
  * @param colorFilter Optional [ColorFilter] to apply to the icon, if any.
+ * @param onTextLayout Callback for when text layout is computed.
  * @param painterHints Optional [PainterHint]s to apply to the icon, if any.
  */
 @Composable
@@ -350,132 +352,14 @@ public fun SimpleListItem(
     }
 }
 
-/**
- * A simple list item layout consisting of a content slot and an optional icon to its start side.
- *
- * The text will only take up one line and is ellipsized if too long to fit. The item will draw a background based on
- * the [isSelected] and [isActive] values.
- */
-@Deprecated("Use the overload with selected, active, colorFilter and hints")
-@Composable
-public fun SimpleListItem(
-    isSelected: Boolean,
-    modifier: Modifier = Modifier,
-    iconModifier: Modifier = Modifier,
-    isActive: Boolean = true,
-    icon: IconKey? = null,
-    iconContentDescription: String? = null,
-    style: SimpleListItemStyle = JewelTheme.simpleListItemStyle,
-    height: Dp = JewelTheme.globalMetrics.rowHeight,
-    content: @Composable () -> Unit,
-) {
-    val state = remember(isSelected, isActive) { ListItemState(isSelected, isActive) }
-    @Suppress("DEPRECATION")
-    SimpleListItem(state, modifier, iconModifier, icon, iconContentDescription, style, height, content)
-}
-
-/**
- * A simple list item layout consisting of a text and an optional icon to its start side.
- *
- * The text will only take up one line and is ellipsized if too long to fit. The item will draw a background based on
- * the [isSelected] and [isActive] values.
- */
-@Deprecated("Use the overload with selected, active, colorFilter and hints")
-@Composable
-public fun SimpleListItem(
-    @Nls text: String,
-    isSelected: Boolean,
-    modifier: Modifier = Modifier,
-    textModifier: Modifier = Modifier,
-    iconModifier: Modifier = Modifier,
-    isActive: Boolean = true,
-    icon: IconKey? = null,
-    iconContentDescription: String? = null,
-    style: SimpleListItemStyle = JewelTheme.simpleListItemStyle,
-    height: Dp = JewelTheme.globalMetrics.rowHeight,
-) {
-    val state = remember(isSelected, isActive) { ListItemState(isSelected, isActive) }
-    @Suppress("DEPRECATION")
-    SimpleListItem(text, state, modifier, textModifier, iconModifier, icon, iconContentDescription, style, height)
-}
-
-/**
- * A simple list item layout consisting of a text and an optional icon to its start side.
- *
- * The text will only take up one line and is ellipsized if too long to fit. The item will draw a background based on
- * the [state].
- */
-@Deprecated("Use the overload with selected, active, colorFilter and hints")
-@Composable
-public fun SimpleListItem(
-    @Nls text: String,
-    state: ListItemState,
-    modifier: Modifier = Modifier,
-    textModifier: Modifier = Modifier,
-    iconModifier: Modifier = Modifier,
-    icon: IconKey? = null,
-    iconContentDescription: String? = null,
-    style: SimpleListItemStyle = JewelTheme.simpleListItemStyle,
-    height: Dp = JewelTheme.globalMetrics.rowHeight,
-) {
-    @Suppress("DEPRECATION")
-    SimpleListItem(state, modifier, iconModifier, icon, iconContentDescription, style, height) {
-        Text(
-            text = text,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            style = JewelTheme.defaultTextStyle,
-            color = style.colors.contentFor(state).value,
-            modifier = textModifier,
-        )
-    }
-}
-
-/**
- * A simple list item layout consisting of a content slot and an optional icon to its start side.
- *
- * The text will only take up one line and is ellipsized if too long to fit. The item will draw a background based on
- * the [state].
- */
-@Deprecated("Use the overload with selected, active, colorFilter and hints")
-@Composable
-public fun SimpleListItem(
-    state: ListItemState,
-    modifier: Modifier = Modifier,
-    iconModifier: Modifier = Modifier,
-    icon: IconKey? = null,
-    iconContentDescription: String? = null,
-    style: SimpleListItemStyle = JewelTheme.simpleListItemStyle,
-    height: Dp = JewelTheme.globalMetrics.rowHeight,
-    content: @Composable () -> Unit,
-) {
-    Row(
-        modifier =
-            modifier
-                .semantics(mergeDescendants = true) {
-                    selected = state.isSelected
-                    isTraversalGroup = false
-                }
-                .fillMaxWidth()
-                .height(height)
-                .padding(style.metrics.outerPadding)
-                .background(
-                    color = style.colors.backgroundFor(state).value,
-                    shape = RoundedCornerShape(style.metrics.selectionBackgroundCornerSize),
-                )
-                .padding(style.metrics.innerPadding),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(style.metrics.iconTextGap),
-    ) {
-        if (icon != null) {
-            Icon(modifier = iconModifier.size(16.dp), key = icon, contentDescription = iconContentDescription)
-        }
-        content()
-    }
-}
-
+/** Holds the selection and activity state for a simple list item. */
 @GenerateDataFunctions
-public class ListItemState(public val isSelected: Boolean, public val isActive: Boolean = true) {
+public class ListItemState(
+    /** Whether the list item is currently selected. */
+    public val isSelected: Boolean,
+    /** Whether the list item is active (enabled and interactive). */
+    public val isActive: Boolean = true,
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

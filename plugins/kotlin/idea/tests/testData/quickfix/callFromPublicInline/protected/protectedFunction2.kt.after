@@ -1,5 +1,5 @@
 // "Make 'inlineProperty' protected" "true"
-// K2_ERROR: Protected function call from public-API inline property accessor is prohibited.
+// K2_ERROR: PROTECTED_CALL_FROM_PUBLIC_INLINE_ERROR
 open class Foo {
     protected fun protectedMethod() {}
 

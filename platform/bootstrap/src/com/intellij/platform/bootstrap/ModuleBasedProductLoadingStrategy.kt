@@ -53,7 +53,10 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       error("'$PLATFORM_ROOT_MODULE_PROPERTY' system property is not specified")
     }
 
-    val rootModule = moduleRepository.getModule(RuntimeModuleId.legacyJpsModule(rootModuleId))
+    val rootModule = moduleRepository.findModuleHeader(RuntimeModuleId.legacyJpsModule(rootModuleId))
+    if (rootModule == null) {
+      error("Root module '$rootModuleId' is not found in the module repository")
+    }
     val productModulesPath = "META-INF/$rootModuleId/product-modules.xml"
     val moduleGroupStream = rootModule.readFile(productModulesPath)
     if (moduleGroupStream == null) {
@@ -63,8 +66,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   }
 
   private fun computeInitialModeId(): String {
-    val initialModeId = if (AppMode.isIjLight()) ProductMode.LIGHT.id
-                        else System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.MONOLITH.id)
+    val initialModeId = System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.MONOLITH.id)
     if (ProductMode.findById(initialModeId) == null) {
       error("Unknown mode '$initialModeId' specified in '$PLATFORM_PRODUCT_MODE_PROPERTY' system property")
     }
@@ -128,7 +130,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         pathResolver = classpathPathResolver,
         useCoreClassLoader = useCoreClassLoader,
         classLoader = mainClassLoader,
-        jarFileForModule = { moduleId, _ -> findProductContentModuleClassesRoot(moduleId) },
+        jarFileForModule = { moduleId, moduleDir -> findProductContentModuleClassesRoot(moduleId, moduleDir) },
         pool = zipPool,
       )
     }
@@ -299,15 +301,11 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   }
 
   override fun findProductContentModuleClassesRoot(moduleId: PluginModuleId, moduleDir: Path): Path? {
-    return findProductContentModuleClassesRoot(moduleId)
-  }
-
-  private fun findProductContentModuleClassesRoot(moduleId: PluginModuleId): Path? {
-    var resolvedModule = moduleRepository.resolveModule(RuntimeModuleId.contentModule(moduleId.name, moduleId.namespace)).resolvedModule
+    var resolvedModule = moduleRepository.findModuleHeader(RuntimeModuleId.contentModule(moduleId.name, moduleId.namespace))
     if (resolvedModule == null && moduleId.namespace == PluginModuleId.JETBRAINS_NAMESPACE) {
       /* until IJPL-241655 is implemented, we may not detect proper namespace for some modules, e.g. `intellij.cwm.connection.frontend.split`,
          so try searching with a different namespace */
-      resolvedModule = moduleRepository.resolveModule(RuntimeModuleId.legacyJpsModule(moduleId.name)).resolvedModule
+      resolvedModule = moduleRepository.findModuleHeader(RuntimeModuleId.legacyJpsModule(moduleId.name))
     }
     if (resolvedModule == null) {
       // https://youtrack.jetbrains.com/issue/CPP-38280
@@ -316,13 +314,17 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       return null
     }
 
-    val paths = resolvedModule.resourceRootPaths
+    val paths = resolvedModule.ownClasspath
     val singlePath = paths.singleOrNull()
-    if (singlePath == null) {
-      error("Content modules are supposed to have only one resource root, but $moduleId have multiple: $paths")
+    if (singlePath != null) {
+      return singlePath
     }
 
-    return singlePath
+    val defaultPath = moduleDir.resolve("${moduleId.name}.jar")
+    if (defaultPath in paths) {
+      return defaultPath
+    }
+    error("Cannot determine the main classes root for $moduleId among $paths")
   }
 }
 

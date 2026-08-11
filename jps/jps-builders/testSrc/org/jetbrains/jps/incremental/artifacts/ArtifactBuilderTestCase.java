@@ -126,7 +126,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   protected static String getJUnitJarPath() {
-    List<@NotNull String> files = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4");
+    List<@NotNull String> files = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4").getClassesPaths();
     File file = null;
     for (String path : files) {
       if (path.contains("junit")) {

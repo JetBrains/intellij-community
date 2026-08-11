@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
 import com.intellij.codeInsight.AnnotationUtil
@@ -43,7 +43,10 @@ import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_AFTER_EACH
 import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_BEFORE_ALL
 import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_BEFORE_EACH
 import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_DISABLED
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_REPEATED_TEST
 import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_FACTORY
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST
 import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_TEST
 import com.siyeh.ig.psiutils.TestUtils
 import org.jetbrains.uast.UAnnotation
@@ -105,7 +108,12 @@ private class JUnitMixedAnnotationVisitor(private val sink: JvmLocalInspection.H
     }
   }
 
-  private fun annotationHighlight(method: JvmMethod, vararg annFqn: String, version: JUnitVersion, fix: (JvmAnnotation) -> List<LocalQuickFix>) {
+  private fun annotationHighlight(
+    method: JvmMethod,
+    vararg annFqn: String,
+    version: JUnitVersion,
+    fix: (JvmAnnotation) -> List<LocalQuickFix>,
+  ) {
     annFqn.mapNotNull { fqn -> method.getAnnotation(fqn) }.forEach { annotation ->
       sink.highlight(junitMessage(annotation, version), *fix(annotation).toTypedArray())
     }
@@ -118,22 +126,38 @@ private class JUnitMixedAnnotationVisitor(private val sink: JvmLocalInspection.H
 
   private companion object {
     val junit4RemoveAnnotations = arrayOf(
-      ORG_JUNIT_BEFORE, ORG_JUNIT_AFTER,
-      ORG_JUNIT_BEFORE_CLASS, ORG_JUNIT_AFTER_CLASS
+      ORG_JUNIT_BEFORE,
+      ORG_JUNIT_AFTER,
+      ORG_JUNIT_BEFORE_CLASS,
+      ORG_JUNIT_AFTER_CLASS
     )
 
     val junit5RemoveAnnotations = arrayOf(
-      ORG_JUNIT_JUPITER_API_BEFORE_EACH, ORG_JUNIT_JUPITER_API_AFTER_EACH,
-      ORG_JUNIT_JUPITER_API_BEFORE_ALL, ORG_JUNIT_JUPITER_API_AFTER_ALL
+      ORG_JUNIT_JUPITER_API_BEFORE_EACH,
+      ORG_JUNIT_JUPITER_API_AFTER_EACH,
+      ORG_JUNIT_JUPITER_API_BEFORE_ALL,
+      ORG_JUNIT_JUPITER_API_AFTER_ALL
     )
 
     val junit4Annotations = arrayOf(
-      ORG_JUNIT_TEST, ORG_JUNIT_IGNORE, ORG_JUNIT_BEFORE, ORG_JUNIT_AFTER, ORG_JUNIT_BEFORE_CLASS, ORG_JUNIT_AFTER_CLASS
+      ORG_JUNIT_TEST,
+      ORG_JUNIT_IGNORE,
+      ORG_JUNIT_BEFORE,
+      ORG_JUNIT_AFTER,
+      ORG_JUNIT_BEFORE_CLASS,
+      ORG_JUNIT_AFTER_CLASS
     )
 
     val junit5Annotations = arrayOf(
-      ORG_JUNIT_JUPITER_API_TEST, ORG_JUNIT_JUPITER_API_DISABLED, ORG_JUNIT_JUPITER_API_BEFORE_EACH, ORG_JUNIT_JUPITER_API_AFTER_EACH,
-      ORG_JUNIT_JUPITER_API_BEFORE_ALL, ORG_JUNIT_JUPITER_API_AFTER_ALL
+      ORG_JUNIT_JUPITER_API_TEST,
+      ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST,
+      ORG_JUNIT_JUPITER_API_TEST_FACTORY,
+      ORG_JUNIT_JUPITER_API_REPEATED_TEST,
+      ORG_JUNIT_JUPITER_API_DISABLED,
+      ORG_JUNIT_JUPITER_API_BEFORE_EACH,
+      ORG_JUNIT_JUPITER_API_AFTER_EACH,
+      ORG_JUNIT_JUPITER_API_BEFORE_ALL,
+      ORG_JUNIT_JUPITER_API_AFTER_ALL
     )
 
     /**
@@ -159,7 +183,7 @@ private class JUnitMixedAnnotationVisitor(private val sink: JvmLocalInspection.H
 private class RemoveAnnotationAndPrefixQuickFix(
   annotation: JvmAnnotation,
   private val prefix: String,
-  private val capitalize: Boolean = false
+  private val capitalize: Boolean = false,
 ) : LocalQuickFix {
   val annotationPointer = SmartPointerManager.createPointer(annotation as PsiAnnotation)
 
@@ -197,6 +221,7 @@ private class RemoveAnnotationAndPrefixQuickFix(
   private fun String.capitalize(): String {
     return if (capitalize) replaceFirstChar {
       if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-    } else this
+    }
+    else this
   }
 }

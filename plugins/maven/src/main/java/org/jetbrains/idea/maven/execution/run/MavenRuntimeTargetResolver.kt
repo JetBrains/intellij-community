@@ -4,8 +4,8 @@ package org.jetbrains.idea.maven.execution.run
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.utils.EelPathTransfer.FileTransferAttributesStrategy.Companion.copyWithRequiredPosixPermissions
 import com.intellij.platform.eel.provider.utils.EelPathUtils.transferContentsIfNonLocal
+import com.intellij.platform.eel.provider.utils.EelFileTransferAttributesStrategy.Companion.copyWithRequiredPosixPermissions
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration
 import org.jetbrains.idea.maven.project.BundledMaven

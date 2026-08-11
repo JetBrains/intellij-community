@@ -7,8 +7,10 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
+import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTrackableItemViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.swingAction
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
@@ -51,7 +53,7 @@ internal object GitLabMergeRequestDiffInlayComponentsFactory {
     GitLabDiscussionComponentFactory.create(project, cs, avatarIconsProvider, imageLoader, vm, place).apply {
       border = JBUI.Borders.empty(CodeReviewCommentUIUtil.getInlayPadding(CodeReviewChatItemUIUtil.ComponentType.COMPACT))
     }.let {
-      wrapInRoundedPanel(it, vm)
+      wrapInRoundedTrackablePanel(it, vm)
     }
 
   fun createDraftNote(
@@ -66,11 +68,13 @@ internal object GitLabMergeRequestDiffInlayComponentsFactory {
                                       imageLoader, vm, place).apply {
       border = JBUI.Borders.empty(CodeReviewCommentUIUtil.getInlayPadding(CodeReviewChatItemUIUtil.ComponentType.COMPACT))
     }.let {
-      wrapInRoundedPanel(it, vm)
+      wrapInRoundedTrackablePanel(it, vm)
     }
 
-  private fun wrapInRoundedPanel(component: JComponent, vm: FocusableViewModel): JComponent =
-    CodeReviewCommentUIUtil.createEditorInlayPanel(component).apply {
+  private fun <T> wrapInRoundedTrackablePanel(component: JComponent, vm: T): JComponent
+    where T : CodeReviewTrackableItemViewModel,
+          T : FocusableViewModel {
+    return CodeReviewCommentUIUtil.createEditorInlayPanel(component).apply {
       isFocusable = true
       launchOnShow("focusRequests") {
         vm.focusRequests.collect { requestFocus(false) }
@@ -84,7 +88,12 @@ internal object GitLabMergeRequestDiffInlayComponentsFactory {
       else {
         roundedPanel
       }
+    }.let {
+      UiDataProvider.wrapComponent(it) { sink ->
+        sink[CodeReviewTrackableItemViewModel.TRACKABLE_ITEM_KEY] = vm
+      }
     }
+  }
 
   fun createNewDiscussion(
     project: Project,
@@ -127,13 +136,6 @@ internal object GitLabMergeRequestDiffInlayComponentsFactory {
       border = JBUI.Borders.empty(itemType.inputPaddingInsets)
     }
 
-    return if (AdvancedSettings.getBoolean("show.review.threads.with.increased.margins")) {
-      Wrapper(CodeReviewCommentUIUtil.createEditorInlayPanel(editor)).apply {
-        border = JBUI.Borders.empty(VERTICAL_INLAY_MARGIN, LEFT_INLAY_MARGIN, VERTICAL_INLAY_MARGIN, RIGHT_INLAY_MARGIN)
-      }
-    }
-    else {
-      CodeReviewCommentUIUtil.createEditorInlayPanel(editor)
-    }
+    return wrapInRoundedTrackablePanel(editor, vm)
   }
 }

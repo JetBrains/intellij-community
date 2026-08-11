@@ -3,32 +3,36 @@ package com.intellij.platform.eel.impl.local
 
 import com.intellij.platform.eel.EelArchiveApi
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.util.io.Decompressor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
-import kotlin.io.path.Path
 
-internal object LocalEelArchiveApiImpl : EelArchiveApi {
+object LocalEelArchiveApiImpl : EelArchiveApi {
 
   @Throws(IOException::class)
   override suspend fun extract(archive: EelPath, target: EelPath) {
     // This task occupies both CPU and IO resources, so the CPU-bound dispatcher is chosen.
     withContext(Dispatchers.Default) {
-      // TODO Use file magic?
+      val archivePath = archive.asNioPath()
       val fileName = archive.fileName.lowercase()
       val decompressor = when {
-        fileName.endsWith(".zip") -> Decompressor.Zip(Path(archive.toString()))
+        fileName.endsWith(".zip") -> Decompressor.Zip(archivePath)
 
-        fileName.endsWith(".tar.gz")
+        fileName.endsWith(".tar")
+        || fileName.endsWith(".tar.gz")
+        || fileName.endsWith(".tgz")
         || fileName.endsWith(".tar.bz2")
+        || fileName.endsWith(".tbz2")
         || fileName.endsWith(".tar.xz")
-          -> Decompressor.Tar(Path(archive.toString()))
+        || fileName.endsWith(".txz")
+          -> Decompressor.Tar(archivePath)
 
-        else -> TODO("Unsupported archive: $archive")
+        else -> throw IOException("Unsupported archive: $archive")
       }
 
-      decompressor.extract(Path(target.toString()))
+      decompressor.extract(target.asNioPath())
     }
   }
 }

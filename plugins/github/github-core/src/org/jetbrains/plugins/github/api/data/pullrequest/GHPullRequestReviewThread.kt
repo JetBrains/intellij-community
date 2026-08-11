@@ -23,6 +23,7 @@ data class GHPullRequestReviewThread(
   val isResolved: Boolean,
   val isOutdated: Boolean,
   val path: String,
+  val subjectType: GHPullRequestReviewThreadSubjectType = GHPullRequestReviewThreadSubjectType.LINE,
   @JsonProperty("diffSide") val side: Side,
   val line: Int?,
   val originalLine: Int?,

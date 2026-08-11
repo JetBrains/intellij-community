@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.testng` start
-
 jvm_library(
     name = "testng",
     srcs = glob(
@@ -25,6 +24,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.testng",
     visibility = ["//visibility:public"],
     exports = ["@lib//:test_n_g"],

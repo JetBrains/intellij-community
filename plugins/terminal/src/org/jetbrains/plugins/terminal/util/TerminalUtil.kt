@@ -7,11 +7,17 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.annotations.NativePath
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.io.awaitExit
@@ -30,6 +36,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
+import org.jetbrains.plugins.terminal.LocalTtyConnectorClosingException
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.original
 import java.nio.file.Files
@@ -54,21 +61,44 @@ suspend fun TerminalStarter.closeConnectorAndStopEmulation() {
   withContext(Dispatchers.IO + NonCancellable) {
     // No exception is expected there, but let's use `try` for extra safety to ensure that `requestEmulatorStop` is called in any case.
     try {
-      val localTtyConnector = ttyConnector.original as? LocalTerminalTtyConnector
-      if (localTtyConnector != null) {
-        localTtyConnector.closeSafely()
-      }
-      else ttyConnector.close()
-
-      // `ttyConnector.close()` case above might schedule the termination as a background task.
-      // Let's await the connector closing here for some meaningful time.
-      ttyConnector.waitFor(CONNECTOR_CLOSING_TIMEOUT)
+      ttyConnector.closeAndWaitFor(CONNECTOR_CLOSING_TIMEOUT)
     }
     finally {
       // Stop reading from the connector
       requestEmulatorStop()
     }
   }
+}
+
+/**
+ * @return the exit code of the process if it was closed successfully, null otherwise.
+ */
+@ApiStatus.Internal
+suspend fun TtyConnector.closeAndWaitFor(timeout: Duration): Int? {
+  return withContext(Dispatchers.IO) {
+    val localTtyConnector = original as? LocalTerminalTtyConnector
+    if (localTtyConnector != null) {
+      localTtyConnector.closeAndWaitFor(timeout)
+    }
+    else {
+      close()
+      waitFor(timeout)
+    }
+  }
+}
+
+private suspend fun LocalTerminalTtyConnector.closeAndWaitFor(timeout: Duration): Int? {
+  try {
+    closeSafely()
+  }
+  catch (e: LocalTtyConnectorClosingException) {
+    logger<LocalTerminalTtyConnector>().warn(e.message, e.cause)
+    // No need to wait for the connector to close because closing activities failed
+    // So, let's return null immediately.
+    return null
+  }
+
+  return waitFor(timeout)
 }
 
 /**
@@ -224,4 +254,23 @@ internal fun String?.toExistentNioDirectory(labelToLogOnFailure: String? = null)
     fileLogger().warn("$labelToLogOnFailure: non-existent directory: $directory")
   }
   return null
+}
+
+/**
+ * @return null if failed to convert [remotePath] to nio Path.
+ */
+@ApiStatus.Internal
+fun convertNativePathToNioPath(remotePath: @NativePath String, descriptor: EelDescriptor): Path? {
+  val eelPath: EelPath = try {
+    EelPath.parse(remotePath, descriptor)
+  }
+  catch (_: EelPathException) {
+    return null
+  }
+  return try {
+    eelPath.asNioPath()
+  }
+  catch (_: IllegalArgumentException) {
+    null
+  }
 }

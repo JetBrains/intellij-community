@@ -55,7 +55,8 @@ open class GradleBuildTool(testContext: IDETestContext) : BuildTool(BuildToolTyp
     private const val GRADLE_DAEMON_NAME = "GradleDaemon"
     suspend fun destroyGradleDaemonProcessIfExists() {
       findAndKillProcesses("Killing java processes ending with $GRADLE_DAEMON_NAME",
-                           { p -> p.name == "java" && p.arguments.any { it.endsWith(GRADLE_DAEMON_NAME) } })
+                           processName = "java",
+                           { p -> p.arguments.any { it.endsWith(GRADLE_DAEMON_NAME) } })
     }
   }
 
@@ -68,7 +69,7 @@ open class GradleBuildTool(testContext: IDETestContext) : BuildTool(BuildToolTyp
           CoroutineScope(Dispatchers.Default).launch {
             getProcessesIdByProcessName(GRADLE_DAEMON_NAME).filter { !existingProcesses.contains(it) }.forEach {
               existingProcesses.add(it)
-              event.runContext.startCollectThreadDumpsLoop(event.runContext.logsDir,
+              event.runContext.startCollectThreadDumpsLoop({ event.runContext.lastIdeReportingData.logsDir },
                                                            event.ideProcess,
                                                            testContext.ide.resolveAndDownloadTheSameJDKOrFallback(),
                                                            testContext.ide.installationPath,

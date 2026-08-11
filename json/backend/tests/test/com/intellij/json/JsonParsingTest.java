@@ -3,6 +3,9 @@ package com.intellij.json;
 
 import com.intellij.json.psi.JsonElementTypeConverterFactory;
 import com.intellij.json.syntax.JsonLanguageDefinition;
+import com.intellij.json.syntax.JsonLazyParsingKt;
+import com.intellij.json.syntax.JsonLazyParsingVetoer;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.platform.syntax.psi.CommonElementTypeConverterFactory;
 import com.intellij.platform.syntax.psi.ElementTypeConverters;
 import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
@@ -24,7 +27,11 @@ public class JsonParsingTest extends ParsingTestCase {
     addExplicitExtension(ElementTypeConverters.getInstance(), JsonLanguage.INSTANCE, new CommonElementTypeConverterFactory());
     addExplicitExtension(ElementTypeConverters.getInstance(), JsonLanguage.INSTANCE, new JsonFileTypeConverterFactory());
     addExplicitExtension(LanguageSyntaxDefinitions.getINSTANCE(), JsonLanguage.INSTANCE, new JsonLanguageDefinition());
+    registerExtensionPoint(LAZY_PARSING_VETOER_EP, JsonLazyParsingVetoer.class);
   }
+
+  public static final ExtensionPointName<JsonLazyParsingVetoer> LAZY_PARSING_VETOER_EP =
+    new ExtensionPointName<>("com.intellij.json.lazyParsingVetoer");
 
   public JsonParsingTest() {
     super("psi", "json", new JsonParserDefinition());
@@ -43,7 +50,7 @@ public class JsonParsingTest extends ParsingTestCase {
   }
 
   protected boolean isIgnore() {
-    return !JsonElementFactory.getJsonLazyParsingIJ();
+    return !JsonLazyParsingKt.getJsonLazyParsing();
   }
 
   public void testKeywords() {

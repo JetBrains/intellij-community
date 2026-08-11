@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.frontend.FrontendApplicationInfo
@@ -205,11 +205,6 @@ internal class EditorLineBreakpointsInfo(
    }
 }
 
-internal suspend fun getAvailableBreakpointTypesFromServer(project: Project, editor: Editor, line: Int): EditorLineBreakpointsInfo {
-  return getAvailableBreakpointTypesFromServer(project, editor, line, line)?.singleOrNull()
-         ?: EditorLineBreakpointsInfo.EMPTY
-}
-
 private suspend fun getAvailableBreakpointTypesFromServer(project: Project, editor: Editor, start: Int, endInclusive: Int): List<EditorLineBreakpointsInfo>? {
   val breakpointTypesManager = FrontendXBreakpointTypesManager.getInstance(project)
   // TODO: is it possible to avoid this retry?
@@ -221,7 +216,7 @@ private suspend fun getAvailableBreakpointTypesFromServer(project: Project, edit
     val fileId = file.rpcId()
     val breakpointsInfoDtos = XBreakpointTypeApi.getInstance().getBreakpointsInfo(project.projectId(), fileId, start, endInclusive)
     val breakpointInfoList = breakpointsInfoDtos?.map { lineBreakpointInfo ->
-      val types = lineBreakpointInfo.availableTypes.mapNotNull { breakpointTypesManager.getTypeById(it) }
+      val types = lineBreakpointInfo.availableTypes.mapNotNull { breakpointTypesManager.findTypeById(it) }
       EditorLineBreakpointsInfo(types, lineBreakpointInfo.singleBreakpointVariant)
     }
     if (breakpointInfoList != null) {

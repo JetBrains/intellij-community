@@ -367,7 +367,7 @@ class MavenProjectReader(
         override suspend fun processRelativeParent(parentFile: VirtualFile): Pair<VirtualFile, RawModelReadResult>? {
           val parentModel = doReadProjectModel(myProject, parentFile, true).model
           val parentId = parentDesc?.parentId
-          if (parentId != parentModel.mavenId) return null
+          if (!isDeclaredParent(parentId, parentModel.mavenId)) return null
 
           return super.processRelativeParent(parentFile)
         }
@@ -383,6 +383,15 @@ class MavenProjectReader(
       }.process(generalSettings, projectFile, parentDesc)
     return parentModelWithProblems
   }
+
+  private fun isDeclaredParent(declared: MavenId?, actual: MavenId): Boolean {
+    if (declared == null) return false
+    if (declared == actual) return true
+    if (declared.groupId != actual.groupId || declared.artifactId != actual.artifactId) return false
+    return isUnresolvedPlaceholder(declared.version) || isUnresolvedPlaceholder(actual.version)
+  }
+
+  private fun isUnresolvedPlaceholder(version: String?): Boolean = version != null && version.contains("\${")
 
   private suspend fun addSettingsProfiles(
     projectFile: VirtualFile,

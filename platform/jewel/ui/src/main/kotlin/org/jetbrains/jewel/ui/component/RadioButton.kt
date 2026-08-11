@@ -384,9 +384,13 @@ private fun RadioButtonImage(radioButtonPainter: Painter, modifier: Modifier = M
     Box(modifier.paint(radioButtonPainter, alignment = Alignment.TopStart))
 }
 
+/** Encodes the selected, enabled, focused, hovered, pressed, and active states of a radio button as a bit mask. */
 @Immutable
 @JvmInline
-public value class RadioButtonState(public val state: ULong) : SelectableComponentState, FocusableComponentState {
+public value class RadioButtonState(
+    /** The raw bit mask encoding all state flags for this radio button. */
+    public val state: ULong
+) : SelectableComponentState, FocusableComponentState {
     override val isActive: Boolean
         get() = state and Active != 0UL
 
@@ -405,6 +409,7 @@ public value class RadioButtonState(public val state: ULong) : SelectableCompone
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
+    /** Returns a copy of this [RadioButtonState] with the given fields replaced by their new values. */
     public fun copy(
         selected: Boolean = isSelected,
         enabled: Boolean = isEnabled,
@@ -426,7 +431,9 @@ public value class RadioButtonState(public val state: ULong) : SelectableCompone
         "${javaClass.simpleName}(isSelected=$isSelected, isEnabled=$isEnabled, isFocused=$isFocused, " +
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
+    /** Companion object for [RadioButtonState]. */
     public companion object {
+        /** Constructs a [RadioButtonState] from individual flags. */
         public fun of(
             selected: Boolean,
             enabled: Boolean = true,

@@ -9,6 +9,7 @@ import com.intellij.psi.stubs.CharSequenceHashStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -29,11 +30,11 @@ public final class JavaFullClassNameIndex extends CharSequenceHashStubIndexExten
    */
   @Deprecated
   @Override
-  public Collection<PsiClass> get(@NotNull CharSequence name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+  public @Unmodifiable Collection<PsiClass> get(@NotNull CharSequence name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     return getClasses(name, project, scope);
   }
 
-  public Collection<PsiClass> getClasses(@NotNull CharSequence name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+  public @Unmodifiable Collection<PsiClass> getClasses(@NotNull CharSequence name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), name, project, new JavaSourceFilterScope(scope), PsiClass.class);
   }
 

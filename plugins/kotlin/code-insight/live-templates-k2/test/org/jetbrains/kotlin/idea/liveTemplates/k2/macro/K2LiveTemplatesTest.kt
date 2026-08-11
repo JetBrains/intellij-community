@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
-@TestRoot("code-insight/live-templates-k1")
+@TestRoot("code-insight/live-templates-k2")
 @TestMetadata("testData/simple")
 @RunWith(JUnit38ClassRunner::class)
 class K2LiveTemplatesTest : AbstractLiveTemplatesTest() {

@@ -4,6 +4,9 @@ package org.intellij.plugins.markdown.lang
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 
 /**
  * Provides support for languages that either are Markdown or are compatible with Markdown-like features.
@@ -20,6 +23,14 @@ interface MarkdownCompatibilityChecker {
   }
 
   fun isSupportedLanguage(language: Language): Boolean
+
+  fun isSupportedElement(element: PsiElement): Boolean {
+    return isSupportedLanguage(element.containingFile.language)
+  }
+
+  fun isSupportedRange(file: PsiFile, range: TextRange): Boolean {
+    return isSupportedLanguage(file.language)
+  }
   
   fun isSupportedContext(language: Language, dataContext: DataContext?): Boolean {
     return isSupportedLanguage(language)

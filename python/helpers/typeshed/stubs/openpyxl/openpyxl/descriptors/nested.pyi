@@ -1,6 +1,7 @@
 from _typeshed import ConvertibleToFloat, ConvertibleToInt, Unused
 from collections.abc import Iterable
-from typing import Any, ClassVar, Literal, NoReturn, TypeAlias, overload
+from typing import Any, ClassVar, Literal, TypeAlias, overload
+from typing_extensions import Never
 
 from openpyxl.descriptors import Strict
 from openpyxl.descriptors.base import Bool, Convertible, Descriptor, Float, Integer, MinMax, NoneSet, Set, String
@@ -153,7 +154,7 @@ class NestedText(NestedValue[_T, _N]):
     def __set__(self: NestedText[int, Literal[False]], instance: Serialisable | Strict, value: ConvertibleToInt) -> None: ...
     # If expected type (_T) is not str, it's impossible to use an Element as the value
     @overload
-    def __set__(self: NestedText[_T, Literal[True]], instance: Serialisable | Strict, value: _HasTagAndGet[Any]) -> NoReturn: ...
+    def __set__(self: NestedText[_T, Literal[True]], instance: Serialisable | Strict, value: _HasTagAndGet[Any]) -> Never: ...
     # Anything else
     @overload
     def __set__(self: NestedText[_T, Literal[True]], instance: Serialisable | Strict, value: _T | int | Any | None) -> None: ...
@@ -199,7 +200,7 @@ class NestedNoneSet(Nested[_T | None], NoneSet[_T]):
 class NestedSet(Nested[_T], Set[_T]):
     def __init__(self, name: str | None = None, *, values: Iterable[_T]) -> None: ...
 
-class NestedMinMax(Nested[_M], MinMax[_M, _N]):  # type: ignore[misc]
+class NestedMinMax(Nested[_M], MinMax[_M, _N]):  # type: ignore[misc]  # pyrefly: ignore [inconsistent-inheritance]
     @overload
     def __init__(
         self: NestedMinMax[int, Literal[True]],
@@ -268,7 +269,7 @@ class NestedMinMax(Nested[_M], MinMax[_M, _N]):  # type: ignore[misc]
         value: _HasTagAndGet[ConvertibleToFloat] | ConvertibleToFloat,
     ) -> None: ...
 
-class EmptyTag(Nested[bool], Bool[_N]):  # type: ignore[misc]
+class EmptyTag(Nested[bool], Bool[_N]):  # type: ignore[misc]  # pyrefly: ignore [inconsistent-inheritance]
     @overload
     def __init__(self: EmptyTag[Literal[True]], name: str | None = None, *, allow_none: Literal[True]) -> None: ...
     @overload

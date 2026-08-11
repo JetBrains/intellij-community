@@ -9,7 +9,7 @@ import com.intellij.diagnostic.logs.LoggerConfigFromSystemProperties;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginUtil;
-import com.intellij.ide.plugins.PluginUtilImpl;
+import com.intellij.ide.plugins.PluginUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -97,24 +97,30 @@ public final class IdeaLogger extends JulLogger {
     return StringUtil.shortenTextWithEllipsis(message, 300, 0);
   }
 
-  private static void reportToFus(Throwable t) {
+  private static void reportToFus(Throwable rawThrowable) {
     if (!LoadingState.COMPONENTS_LOADED.isOccurred() || FUS_RECURSION_GUARD.get() != null) {
       return;
     }
 
     FUS_RECURSION_GUARD.set(true);
+
+    var throwable = rawThrowable;
+    if (rawThrowable instanceof UnhandledException uh) {
+      throwable = uh.getCause();
+    }
+
     try {
       var app = ApplicationManager.getApplication();
       if (app != null && !app.isUnitTestMode() && !app.isDisposed()) {
         var pluginUtil = PluginUtil.getInstance();
         if (pluginUtil != null) {
-          var pluginId = pluginUtil.findPluginId(t);
-          var kind = DefaultIdeaErrorLogger.getOOMErrorKind(t);
-          LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
+          var pluginId = pluginUtil.findPluginId(throwable);
+          var kind = DefaultIdeaErrorLogger.getOOMErrorKind(throwable);
+          LifecycleUsageTriggerCollector.onError(pluginId, throwable, kind);
           if (pluginId != null) {
             var sinkService = UnhandledReportSinkService.getInstance();
             if (sinkService != null) { // might be null in CLI utils
-              sinkService.report(new PluginExceptionReportData(pluginId, t));
+              sinkService.report(new PluginExceptionReportData(pluginId, throwable));
             }
           }
         }
@@ -225,9 +231,14 @@ public final class IdeaLogger extends JulLogger {
 
     // do not use getInstance here - container maybe already disposed
     if (t != null && PluginManagerCore.arePluginsInitialized()) {
-      var plugin = PluginManagerCore.getPlugin(PluginUtilImpl.doFindPluginId(t));
-      if (plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate())) {
-        logSevere("Plugin to blame: " + plugin.getName() + " version: " + plugin.getVersion());
+      var pluginSet = PluginManagerCore.getPluginSetOrNull();
+      var idAndPlugin = pluginSet == null ? null : PluginUtils.findPlugin(t, pluginSet);
+      var id = idAndPlugin == null ? null : idAndPlugin.getFirst();
+      var plugin = idAndPlugin == null ? null : idAndPlugin.getSecond();
+      if (id != null && (plugin == null || !plugin.isBundled() || plugin.allowBundledUpdate())) {
+        logSevere(plugin == null
+                  ? "Plugin to blame: " + id.getIdString()
+                  : "Plugin to blame: " + plugin.getName() + " version: " + plugin.getVersion());
       }
     }
 

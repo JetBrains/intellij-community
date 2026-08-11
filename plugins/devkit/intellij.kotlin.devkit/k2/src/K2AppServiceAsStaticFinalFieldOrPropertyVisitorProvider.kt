@@ -3,7 +3,7 @@ package org.jetbrains.idea.devkit.kotlin.k2
 
 import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.idea.devkit.kotlin.inspections.KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider
-import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertPropertyToFunctionIntention
+import org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertPropertyToFunctionIntention
 
 internal class K2AppServiceAsStaticFinalFieldOrPropertyVisitorProvider : KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider() {
   override fun getConvertPropertyToFunctionIntention(): IntentionAction =

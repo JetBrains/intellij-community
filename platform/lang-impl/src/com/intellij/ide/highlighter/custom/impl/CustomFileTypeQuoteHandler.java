@@ -8,11 +8,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
  */
+@ApiStatus.Internal
 public final class CustomFileTypeQuoteHandler implements QuoteHandler {
   @Override
   public boolean isClosingQuote(@NotNull HighlighterIterator iterator, int offset) {

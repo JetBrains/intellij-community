@@ -11,8 +11,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.platform.debugger.impl.rpc.HotSwapSource;
-import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
+import com.intellij.xdebugger.hotswap.HotSwapSource;
 import org.jetbrains.annotations.NotNull;
 
 public class HotSwapAction extends AnAction {
@@ -25,8 +24,7 @@ public class HotSwapAction extends AnAction {
     DebuggerSession session = debuggerManager.getContext().getDebuggerSession();
 
     if (session != null && session.isAttached()) {
-      HotSwapStatistics.logHotSwapCalled(project, HotSwapSource.RELOAD_ALL);
-      HotSwapUI.getInstance(project).reloadChangedClasses(session, DebuggerSettings.getInstance().COMPILE_BEFORE_HOTSWAP);
+      HotSwapUI.getInstance(project).reloadChangedClasses(session, DebuggerSettings.getInstance().COMPILE_BEFORE_HOTSWAP, null, HotSwapSource.RELOAD_ALL);
     }
   }
 

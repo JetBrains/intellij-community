@@ -37,6 +37,7 @@ import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetRootsProvider;
 import com.intellij.find.FindManager;
 import com.intellij.find.actions.SearchTarget2UsageTarget;
 import com.intellij.find.findUsages.FindUsagesHandler;
@@ -514,14 +515,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
       });
       try {
-        while (!future.isDone()) {
-          try {
-            future.get(10, TimeUnit.MILLISECONDS);
-          }
-          catch (TimeoutException ignored) {
-          }
-          UIUtil.dispatchAllInvocationEvents();
-        }
+        PlatformTestUtil.waitForFuture(future);
         future.get();
       }
       catch (InterruptedException | ExecutionException e) {
@@ -1145,7 +1139,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public @NotNull Collection<UsageInfo> testFindUsages(String @NotNull ... fileNames) {
+  public @NotNull @Unmodifiable Collection<UsageInfo> testFindUsages(String @NotNull ... fileNames) {
     assertInitialized();
     if (fileNames.length > 0) {
       configureByFiles(fileNames);
@@ -1535,6 +1529,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
       ModuleRootManager.getInstance(module).orderEntries().getAllLibrariesAndSdkClassesRoots(); // instantiate all VFPs
+      // Facets may create virtual file pointers lazily on first root access (e.g. WebRoot/ConfigFile pointers).
+      // Materialize them now so they belong to the tracker baseline instead of being reported as leaks: facets of
+      // a reused light project are not disposed per-test (see LightPlatformTestCase project reuse).
+      for (Facet<?> facet : FacetManager.getInstance(module).getAllFacets()) {
+        if (facet instanceof FacetRootsProvider) {
+          ((FacetRootsProvider)facet).getFacetRoots();
+        }
+      }
     }
     if (shouldTrackVirtualFilePointers()) {
       myVirtualFilePointerTracker = new VirtualFilePointerTracker();
@@ -2448,9 +2450,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       try {
         ApplicationManager.getApplication().invokeLater(() -> {
           try {
-            boolean executed = ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, action, action.getText());
+            //PsiFile may be invalidated by any WA executed in between -> needs to be re-resolved
+            // (Resolve through the editor to preserve the language-specific PSI at the caret in template files)
+            PsiFile currentFile = requireNonNull(PsiUtilBase.getPsiFileInEditor(editor, project));
+            boolean executed = ShowIntentionActionsHandler.chooseActionAndInvoke(currentFile, editor, action, action.getText());
             if (!executed) {
-              boolean available = action.isAvailable(project, editor, file);
+              boolean available = action.isAvailable(project, editor, currentFile);
               fail("Quick fix '" + action.getText() + "' (" + action.getClass() + ")" +
                    " hasn't executed. isAvailable()=" + available);
             }
@@ -2519,6 +2524,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Disposer.register(getTestRootDisposable(), usageView);
     Ref<String> ref = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       usageView.expandAll();
       ref.set(TreeNodeTester.forNode(usageView.getRoot()).withPresenter(usageView::getNodeText).constructTextRepresentation());
     });

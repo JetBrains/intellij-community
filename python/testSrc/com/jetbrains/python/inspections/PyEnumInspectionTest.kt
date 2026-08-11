@@ -1,8 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.jetbrains.python.fixtures.PyInspectionTestCase
 
+@Subsystems.Inspections
+@Layers.Functional
 class PyEnumInspectionTest : PyInspectionTestCase() {
   fun testEnumWithMembersCannotBeSubclassed() {
     doTestByText(
@@ -56,7 +61,7 @@ class PyEnumInspectionTest : PyInspectionTestCase() {
         class Color(Enum):
           _value_: int
           RED = 1
-          GREEN = <warning descr="Type 'str' is not assignable to declared type 'int'">"green"</warning>
+          GREEN = <warning descr="Type 'Literal[\"green\"]' is not assignable to declared type 'int'">"green"</warning>
           
           R = RED
       """.trimIndent()
@@ -97,7 +102,7 @@ class PyEnumInspectionTest : PyInspectionTestCase() {
         
         class MyEnumDerived(MyEnumBase):
             FOO = auto()
-            BAR = <warning descr="Type 'int' is not assignable to declared type 'MyVal'">2</warning>
+            BAR = <warning descr="Type 'Literal[2]' is not assignable to declared type 'MyVal'">2</warning>
       """.trimIndent()
     )
   }
@@ -115,7 +120,7 @@ class PyEnumInspectionTest : PyInspectionTestCase() {
         
         class Example(StrEnum):
             FOO = auto()
-            BAR = <warning descr="Type 'int' is not assignable to declared type 'str'">1</warning>
+            BAR = <warning descr="Type 'Literal[1]' is not assignable to declared type 'str'">1</warning>
         """.trimIndent()
     )
   }

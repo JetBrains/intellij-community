@@ -1,5 +1,5 @@
 // AFTER_ERROR: Unresolved reference: bar
-// K2_AFTER_ERROR: Unresolved reference 'bar'.
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
 fun foo() {
     do <caret>if (bar()) break while (true)
 }

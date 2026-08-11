@@ -4,13 +4,15 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.handlers
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.isFunctionType
+import org.jetbrains.kotlin.analysis.api.types.isFunctionType
 import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.isFunctionType
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.MultipleArgumentsLookupObject
@@ -32,6 +34,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 /**
  * Tails are the tail of what should be inserted by smart completion after choosing a completion item to
  * move the user's caret to the place where they will likely need to invoke completion next.
+ * Each tail has a corresponding [WithTailInsertHandler] that is responsible for inserting the tail and moving the caret.
  * In some cases, the tail is already in the code, in which case rather than inserting it,
  * smart completion moves past the existing tail and places the caret after it.
  * Otherwise, the tail is inserted and the caret is moved to be after the tail.
@@ -52,13 +55,15 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
  * }
  * ```
  */
-internal enum class Tail {
-    COMMA, // Additional argument to call required
-    RPARENTH, // Call needs no more arguments, move past the closing parenthesis
-    RBRACKET, // Similar as RPARENTH but for array access
-    ELSE, // When an if expression is completed and an `else` branch is required
-    RBRACE // For lambda parameters
+internal enum class Tail(val handler: WithTailInsertHandler) {
+    COMMA(WithTailInsertHandler.COMMA), // Additional argument to call required
+    RPARENTH(WithTailInsertHandler.RPARENTH), // Call needs no more arguments, move past the closing parenthesis
+    RBRACKET(WithTailInsertHandler.RBRACKET), // Similar as RPARENTH but for array access
+    ELSE(WithTailInsertHandler.ELSE), // When an if expression is completed and an `else` branch is required
+    RBRACE(WithTailInsertHandler.RBRACE) // For lambda parameters
 }
+
+typealias ValueParameter = KaVariableSignature<KaValueParameterSymbol>
 
 /**
  * Returns the tail for a named argument
@@ -67,7 +72,7 @@ private fun namedArgumentTail(
     argumentName: Name,
     call: KaFunctionCall<*>,
 ): Tail? {
-    val usedParameterNames = (call.argumentMapping.values.map { it.name } + listOf(argumentName)).toSet()
+    val usedParameterNames = (call.valueArgumentMapping.values.map { it.name } + listOf(argumentName)).toSet()
     val notUsedParameters = call.signature.valueParameters.filter { it.name !in usedParameterNames }
     return when {
         notUsedParameters.isEmpty() -> Tail.RPARENTH // named arguments no supported for []
@@ -83,42 +88,30 @@ private fun namedArgumentTail(
 context(_: KaSession)
 private fun calculateTailForCall(argumentExpression: KtExpression, call: KaCall): Tail? {
     if (call !is KaFunctionCall<*>) return null
-    if (call.argumentMapping.isEmpty()) return null
+    if (call.valueArgumentMapping.isEmpty()) return null
 
     val argument = argumentExpression.parent ?: return null
     val argumentName = (argument as? KtValueArgument)?.getArgumentName()?.asName
     val isFunctionLiteralArgument = argument is LambdaArgument
 
-    var parameter = call.argumentMapping[argumentExpression]
+    val parameter = call.valueArgumentMapping[argumentExpression]
 
     val isArrayAccess = argument.parent is KtArrayAccessExpression
     val rparenthTail = if (isArrayAccess) Tail.RBRACKET else Tail.RPARENTH
 
-    var parameters = call.signature.valueParameters.toList()
-    if (isArrayAccess && call.argumentMapping.size == 2) {
+    var parameters = call.signature.valueParameters
+    if (isArrayAccess && call.valueArgumentMapping.size == 2) {
         // last parameter in set is used for value assigned
-        if (parameter == parameters.last()) {
-            parameter = null
+        if (parameter.isLastParameter(parameters)) {
+            return null
         }
         parameters = parameters.dropLast(1)
     }
 
-    if (parameter == null) {
-        return null
-    }
-
-    fun needCommaForParameter(parameter: KaVariableSignature<KaValueParameterSymbol>): Boolean {
-        if (parameter.symbol.hasDefaultValue) return false // parameter is optional
-        if (parameter.symbol.isVararg) return false // vararg arguments list can be empty
-        // last parameter of functional type can be placed outside parenthesis:
-        if (!isArrayAccess && parameter == parameters.last() && parameter.returnType.isFunctionType) return false
-        return true
-    }
-
     val tail = if (argumentName == null) {
         when {
-            parameter == parameters.last() -> rparenthTail
-            parameters.dropWhile { it != parameter }.drop(1).any { needCommaForParameter(it) } -> Tail.COMMA
+            parameter.isLastParameter(parameters) -> rparenthTail
+            parameters.dropWhile { it != parameter }.drop(1).any { it.needsComma(parameters, isArrayAccess) } -> Tail.COMMA
             else -> null
         }
     } else {
@@ -126,7 +119,7 @@ private fun calculateTailForCall(argumentExpression: KtExpression, call: KaCall)
     }
 
     val alreadyHasStar = (argument as? KtValueArgument)?.getSpreadElement() != null
-    return if (parameter.symbol.isVararg) {
+    return if (parameter?.symbol?.isVararg ?: return null) {
         if (isFunctionLiteralArgument) return null
 
         val varargTail = if (argumentName == null && tail == rparenthTail) {
@@ -139,6 +132,21 @@ private fun calculateTailForCall(argumentExpression: KtExpression, call: KaCall)
         tail.takeIf { !isFunctionLiteralArgument }
     }
 }
+
+@OptIn(KaExperimentalApi::class)
+context(_: KaSession)
+private fun ValueParameter.needsComma(parameters: List<ValueParameter>, isArrayAccess: Boolean): Boolean {
+    if (symbol.hasDefaultValue) return false // parameter is optional
+    if (symbol.isVararg) return false // vararg arguments list can be empty
+    // last parameter of functional type can be placed outside parenthesis:
+    if (!isArrayAccess && isLastParameter(parameters) && this.returnType.isFunctionType) return false
+    return true
+}
+
+private fun ValueParameter?.isLastParameter(parameters: List<ValueParameter>): Boolean {
+    return this == parameters.lastOrNull()
+}
+
 
 /**
  * Calculates all tails based on all possible call candidates at the position.
@@ -242,13 +250,6 @@ private fun KtExpression.calculateTails(): Set<Tail> {
     }
 }
 
-private fun Tail.getInsertHandler(): WithTailInsertHandler = when (this) {
-    Tail.COMMA -> WithTailInsertHandler.COMMA
-    Tail.RPARENTH -> WithTailInsertHandler.RPARENTH
-    Tail.RBRACKET -> WithTailInsertHandler.RBRACKET
-    Tail.ELSE -> WithTailInsertHandler.ELSE
-    Tail.RBRACE -> WithTailInsertHandler.RBRACE
-}
 
 /**
  * Adds an insertion handler to the element that inserts or moves past (if it already exists)
@@ -267,7 +268,7 @@ internal fun LookupElement.addSmartCompletionTailInsertHandler(): LookupElement 
         ?: positionContext.nameExpression.calculateTails().singleOrNull()
 
     return if (singleTail != null) {
-        LookupElementDecorator.withDelegateInsertHandler(this, singleTail.getInsertHandler())
+        LookupElementDecorator.withDelegateInsertHandler(this, singleTail.handler)
     } else {
         this
     }

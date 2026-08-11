@@ -34,10 +34,10 @@ public abstract class PsiFileFactory {
   public abstract @NotNull PsiFile createFileFromText(@NonNls @NotNull String fileName, @NotNull FileType fileType, @NotNull @NonNls CharSequence text) throws IncorrectOperationException;
 
   public abstract @NotNull PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull @NonNls CharSequence text,
-                                                      long modificationStamp, boolean eventSystemEnabled) throws IncorrectOperationException;
+                                                      long modificationStamp, boolean supportsSendingPsiEvents) throws IncorrectOperationException;
 
   public abstract @NotNull PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull @NonNls CharSequence text,
-                                                      long modificationStamp, boolean eventSystemEnabled, boolean markAsCopy) throws IncorrectOperationException;
+                                                      long modificationStamp, boolean supportsSendingPsiEvents, boolean markAsCopy) throws IncorrectOperationException;
 
   public abstract PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull Language language, @NotNull @NonNls CharSequence text) throws IncorrectOperationException;
 
@@ -46,13 +46,13 @@ public abstract class PsiFileFactory {
   }
 
   public abstract PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull Language language, @NotNull @NonNls CharSequence text,
-                                             boolean eventSystemEnabled, boolean markAsCopy) throws IncorrectOperationException;
+                                             boolean supportsSendingPsiEvents, boolean markAsCopy) throws IncorrectOperationException;
 
   public abstract PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull Language language, @NotNull @NonNls CharSequence text,
-                                             boolean eventSystemEnabled, boolean markAsCopy, boolean noSizeLimit) throws IncorrectOperationException;
+                                             boolean supportsSendingPsiEvents, boolean markAsCopy, boolean noSizeLimit) throws IncorrectOperationException;
 
   public abstract PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull Language language, @NotNull @NonNls CharSequence text,
-                                             boolean eventSystemEnabled, boolean markAsCopy, boolean noSizeLimit,
+                                             boolean supportsSendingPsiEvents, boolean markAsCopy, boolean noSizeLimit,
                                              @Nullable VirtualFile original) throws IncorrectOperationException;
 
   public abstract PsiFile createFileFromText(FileType fileType, @NonNls String fileName, @NonNls CharSequence chars, int startOffset, int endOffset) throws IncorrectOperationException;

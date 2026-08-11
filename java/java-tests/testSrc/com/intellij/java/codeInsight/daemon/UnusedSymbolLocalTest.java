@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
@@ -6,17 +6,25 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.Collection;
+import java.util.Objects;
 
 public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/unusedDecls";
@@ -79,6 +87,49 @@ public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
 
     Collection<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
     assertEquals(3, infos.size());
+  }
+
+  public void testIgnoreUsagesFromTests() throws Exception {
+    UnusedDeclarationInspection inspection = new UnusedDeclarationInspection(true);
+    inspection.setTestEntryPoints(false);
+    enableInspectionTool(inspection);
+    createTestSourceFile("BTest.java", """
+      public class BTest {
+      
+          public void foo()  {
+              B b = new B();
+              b.foo();
+      
+          }
+      }""");
+    doTest();
+  }
+
+  public void testUsagesFromTests() throws Exception {
+    createTestSourceFile("IconoclastTest.java", """
+      public class IconoclastTest {
+      
+          public void foo()  {
+              Iconoclast.pernicious();
+          }
+      }""");
+    doTest();
+  }
+
+  private void createTestSourceFile(String fileName, String text) throws IOException {
+    final @NotNull VirtualFile vDir = getTempDir().createVirtualDir();
+    VirtualFile virtualFile = WriteAction.computeAndWait(() -> {
+      if (!ModuleRootManager.getInstance(myModule).getFileIndex().isInSourceContent(vDir)) {
+        PsiTestUtil.addSourceContentToRoots(myModule, vDir, true);
+      }
+
+      VirtualFile vFile = Objects.requireNonNull(vDir.createChildData(vDir, fileName));
+      VfsUtil.saveText(vFile, text);
+      return vFile;
+    });
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
+    Objects.requireNonNull(myPsiManager.findFile(virtualFile));
+    allowTreeAccessForAllFiles();
   }
 
   private void doTest() throws Exception {

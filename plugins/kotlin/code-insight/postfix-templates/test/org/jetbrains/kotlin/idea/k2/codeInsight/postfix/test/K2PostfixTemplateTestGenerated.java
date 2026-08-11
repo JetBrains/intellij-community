@@ -137,6 +137,11 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
             performTest();
         }
 
+        @TestMetadata("dataClassWithBackticks.kt")
+        public void testDataClassWithBackticks() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("forOnMap.kt")
         public void testForOnMap() throws Exception {
             performTest();
@@ -164,6 +169,11 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
 
         @TestMetadata("map.kt")
         public void testMap() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("mapWithCustomIterator.kt")
+        public void testMapWithCustomIterator() throws Exception {
             performTest();
         }
 

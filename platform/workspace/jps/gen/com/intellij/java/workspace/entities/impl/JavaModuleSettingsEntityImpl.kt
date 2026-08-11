@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -18,7 +17,6 @@ import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
@@ -30,12 +28,10 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSettingsEntityData) : JavaModuleSettingsEntity,
                                                                                                     WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId =
       ConnectionId.create(ModuleEntity::class.java, JavaModuleSettingsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     private val connections = listOf<ConnectionId>(MODULE_CONNECTION_ID)
-
   }
 
   override val module: ModuleEntity
@@ -67,7 +63,6 @@ internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSe
       return dataSource.languageLevelId
     }
   override var manifestAttributes: Map<String, String> = dataSource.manifestAttributes
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -78,35 +73,11 @@ internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSe
     return connections
   }
 
-
   internal class Builder(result: JavaModuleSettingsEntityData?) :
     ModifiableWorkspaceEntityBase<JavaModuleSettingsEntity, JavaModuleSettingsEntityData>(result), JavaModuleSettingsEntity.Builder {
     internal constructor() : this(JavaModuleSettingsEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity JavaModuleSettingsEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-      index(this, "compilerOutput", this.compilerOutput)
-      index(this, "compilerOutputForTests", this.compilerOutputForTests)
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -141,6 +112,10 @@ internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSe
       updateChildToParentReferences(parents)
     }
 
+    override fun index() {
+      index(this, "compilerOutput", this.compilerOutput)
+      index(this, "compilerOutputForTests", this.compilerOutputForTests)
+    }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -148,7 +123,6 @@ internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSe
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var module: ModuleEntityBuilder
       get() {
@@ -167,10 +141,8 @@ internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSe
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -180,12 +152,10 @@ internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSe
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
       }
-
     override var inheritedCompilerOutput: Boolean
       get() = getEntityData().inheritedCompilerOutput
       set(value) {
@@ -235,7 +205,6 @@ internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSe
 
     override fun getEntityClass(): Class<JavaModuleSettingsEntity> = JavaModuleSettingsEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -246,25 +215,8 @@ internal class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSett
   var compilerOutputForTests: VirtualFileUrl? = null
   var languageLevelId: String? = null
   var manifestAttributes: Map<String, String> = emptyMap()
-
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<JavaModuleSettingsEntity> {
-    val modifiable = JavaModuleSettingsEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): JavaModuleSettingsEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = JavaModuleSettingsEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): JavaModuleSettingsEntity = JavaModuleSettingsEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<JavaModuleSettingsEntity, *> = JavaModuleSettingsEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.java.workspace.entities.JavaModuleSettingsEntity") as EntityMetadata
   }

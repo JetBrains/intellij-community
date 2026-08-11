@@ -6,6 +6,7 @@
   <content namespace="jetbrains">
     <module name="intellij.java.rt"/>
     <module name="intellij.libraries.hamcrest"/>
+    <module name="intellij.libraries.jetcheck"/>
     <module name="intellij.libraries.junit4"/>
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.junit5.jupiter"/>
@@ -14,6 +15,7 @@
     <module name="intellij.libraries.junit5.vintage"/>
     <module name="intellij.libraries.kotlinTest"/>
     <module name="intellij.libraries.kotlinTestAssertionsCoreJvm"/>
+    <module name="intellij.mcpserver.testFramework"/>
     <module name="intellij.mcpserver.tests"/>
     <module name="intellij.platform.testFramework"/>
     <module name="intellij.platform.testFramework.common"/>
@@ -28,5 +30,6 @@
   </content>
   <content>
     <module name="intellij.libraries.assertj.core"/>
+    <module name="intellij.libraries.opentest4j"/>
   </content>
 </idea-plugin>

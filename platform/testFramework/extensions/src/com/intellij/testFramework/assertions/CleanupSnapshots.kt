@@ -27,6 +27,9 @@ class CleanupSnapshots(private val dir: Path) : ExternalResource() {
   }
 
   override fun after() {
+    if (snapshotFileUsageListeners.isEmpty()) {
+      return
+    }
     dir.directoryStreamIfExists {
       for (file in it) {
         if (!usedPaths.contains(file) && !file.isHidden() && file.isRegularFile()) {

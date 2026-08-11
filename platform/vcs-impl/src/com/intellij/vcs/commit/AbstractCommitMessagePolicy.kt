@@ -27,6 +27,12 @@ abstract class AbstractCommitMessagePolicy(
     setCommitMessage(getNewCommitMessage() ?: CommitMessage.EMPTY)
   }
 
+  fun saveCommitMessageOnTypingStrategy() {
+    commitMessageUi.addCommitMessageListener(
+      CommitMessageOnTypingStrategy(project)
+    )
+  }
+
   /**
    * Called before execution of the commit session.
    * Used for persisting of the commit message to the commits messages history (see [VcsConfiguration.getRecentMessages]).
@@ -218,5 +224,17 @@ internal abstract class ChangeListCommitMessagePolicy(
 open class CommitMessage(val text: String, val disposable: Boolean = false) {
   companion object {
     val EMPTY: CommitMessage = CommitMessage("")
+  }
+}
+
+private class CommitMessageOnTypingStrategy(
+  project: Project,
+) : CommitMessageListener {
+
+  private val manager = ChangeListManager.getInstance(project)
+
+  override fun onTextChanged(text: String) {
+    val changeListName = manager.defaultChangeList.name
+    manager.editComment(changeListName, text)
   }
 }

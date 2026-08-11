@@ -21,6 +21,8 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProductInProcess
+import org.jetbrains.intellij.build.dev.readCustomCommand
+import org.jetbrains.intellij.build.dev.resolveAdditionalJvmArguments
 import org.kodein.di.direct
 import org.kodein.di.instance
 import java.nio.file.Path
@@ -59,6 +61,9 @@ object DevBuildServerRunnerImpl : DevBuildServerRunner {
   override suspend fun readVmOptions(installationDirectory: Path): List<String> =
     org.jetbrains.intellij.build.dev.readVmOptions(installationDirectory)
 
+  override fun readCustomCommandJvmArguments(installationDirectory: Path, command: String): List<String>? =
+    readCustomCommand(installationDirectory, command)?.resolveAdditionalJvmArguments(installationDirectory)
+
   /** Returns IDE installation directory */
   override suspend fun startDevBuild(ideInfo: IdeInfo): Path {
     mutex.withLock {
@@ -69,10 +74,11 @@ object DevBuildServerRunnerImpl : DevBuildServerRunner {
         computeWithSpan("building ide $ideInfo") {
           System.setProperty("intellij.build.console.exporter.enabled", false.toString())
           System.setProperty("intellij.build.export.opentelemetry.spans", true.toString())
+          val targetOs = if (ConfigurationStorage.useDockerContainer()) OsFamily.LINUX else OsFamily.currentOs
           buildProductInProcess(
             BuildRequest(
               projectDir = ideaRootPath,
-              os = if (ConfigurationStorage.useDockerContainer()) OsFamily.LINUX else OsFamily.currentOs,
+              os = targetOs,
               platformPrefix = ideInfo.platformPrefix,
               baseIdePlatformPrefixForFrontend = ideInfo.baseIdePlatformPrefixForFrontend,
               additionalModules = ideInfo.additionalModules,
@@ -82,6 +88,7 @@ object DevBuildServerRunnerImpl : DevBuildServerRunner {
               tracer = TestTelemetryService.instance.getTracer(),
               isBootClassPathCorrect = true,
               classesOutputDirectory = GlobalPaths.instance.compiledRootDirectory.resolve("classes"),
+              devRunDirPrefix = if (targetOs != OsFamily.currentOs) "${targetOs.name.lowercase()}-" else "",
             )
           )
         }

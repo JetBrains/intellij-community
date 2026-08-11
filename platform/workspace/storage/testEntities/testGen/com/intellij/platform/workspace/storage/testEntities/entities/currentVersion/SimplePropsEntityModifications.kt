@@ -23,7 +23,7 @@ interface SimplePropsEntityBuilder : WorkspaceEntityBuilder<SimplePropsEntity> {
 }
 
 internal object SimplePropsEntityType : EntityType<SimplePropsEntity, SimplePropsEntityBuilder>() {
-  override val entityClass: Class<SimplePropsEntity> get() = SimplePropsEntity::class.java
+  override val entityImplClass: Class<*> get() = SimplePropsEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SimplePropsEntityImpl.Builder::class.java
   operator fun invoke(
     text: String,

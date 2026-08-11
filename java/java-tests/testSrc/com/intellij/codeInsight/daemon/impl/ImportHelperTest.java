@@ -544,7 +544,8 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
 
 
   public void testAutoImportAfterUncomment() {
-    assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("java.util.ArrayList", GlobalSearchScope.allScope(getProject())));
+    assertOneElement(JavaPsiFacade.getInstance(getProject()).findClasses("java.util.ArrayList", GlobalSearchScope.allScope(getProject())));
+    assertOneElement(JavaPsiFacade.getInstance(getProject()).findClasses("java.util.HashMap", GlobalSearchScope.allScope(getProject())));
     @Language("JAVA")
     @NonNls String text = "class S { /*ArrayList l; HashMap h; <caret>*/ }";
     configureByText(text);
@@ -732,6 +733,45 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
 
     assertNoImportsAdded();
+  }
+
+  public void testUndoAfterOptimizeImportsOnTheFly() {
+    assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("java.util.Date", GlobalSearchScope.allScope(getProject())));
+    @Language("JAVA") String text = """
+      import java.util.*;
+      
+      final class UndoTestJava {
+          static void main() {
+              <caret>Date d = new Date();// Comment out this line then try undo
+          }
+      }
+      """;
+    configureByText(text);
+    CodeInsightWorkspaceSettings.getInstance(getProject()).setOptimizeImportsOnTheFly(true, getTestRootDisposable());
+    EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_COMMENT_LINE);
+    List<HighlightInfo> errors = myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
+    waitForAutoOptimizeImports();
+    assertEmpty(errors);
+    assertEquals("""
+                   final class UndoTestJava {
+                       static void main() {
+                   //        Date d = new Date();// Comment out this line then try undo
+                       }
+                   }
+                   """, getFile().getText());
+    EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_UNDO);
+    errors = myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
+    waitForAutoOptimizeImports();
+    assertEmpty(errors);
+    assertEquals("""
+                   import java.util.*;
+                   
+                   final class UndoTestJava {
+                       static void main() {
+                           Date d = new Date();// Comment out this line then try undo
+                       }
+                   }
+                   """, getFile().getText());
   }
 
   private void waitForAutoOptimizeImports() {

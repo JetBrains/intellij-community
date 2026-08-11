@@ -1,5 +1,6 @@
 // "Create annotation 'foo'" "true"
 // IGNORE_K2
+// K2_ERROR: UNRESOLVED_REFERENCE
 @[<caret>foo<String>(1, "2")] fun test() {
 
 }

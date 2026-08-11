@@ -1,5 +1,5 @@
 // "Remove forbidden opt-in annotation retention" "true"
-// K2_ERROR: Opt-in requirement marker annotation cannot be used with SOURCE retention. Use BINARY retention instead.
+// K2_ERROR: OPT_IN_MARKER_WITH_WRONG_RETENTION
 @RequiresOptIn
 <caret>@Retention(AnnotationRetention.SOURCE)
 annotation class SomeAnnotation

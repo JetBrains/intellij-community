@@ -7,20 +7,18 @@ import com.intellij.debugger.streams.core.trace.impl.TraceExpressionBuilderBase
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.psi.impl.MethodReferenceToLambdaTransformer
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.JavaPsiFacade
+
+private val LOG = logger<JavaTraceExpressionBuilder>()
 
 /**
  * @author Vitaliy.Bibaev
  */
 class JavaTraceExpressionBuilder(private val project: Project, handlerFactory: HandlerFactory, dsl: Dsl)
   : TraceExpressionBuilderBase(dsl, handlerFactory) {
-  private companion object {
-    private val LOG = Logger.getInstance(JavaTraceExpressionBuilder::class.java)
-  }
-
   override fun createTraceExpression(chain: StreamChain): String {
     val codeBlock = super.createTraceExpression(chain)
     val elementFactory = JavaPsiFacade.getElementFactory(project)

@@ -13,7 +13,7 @@ import com.intellij.mcpserver.settings.McpToolDisallowListSettings
 import com.intellij.mcpserver.settings.McpToolFilterSettings
 
 internal class McpServerApplicationUsagesCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("mcpserver", 7)
+  private val GROUP = EventLogGroup("mcpserver", 9)
   private val MCP_RUNNING = GROUP.registerEvent("mcp.running", EventFields.Enabled)
   private val MCP_BRAVE_MODE_ENABLED = GROUP.registerEvent("mcp.brave.mode.enabled", EventFields.Enabled)
   private val MCP_GLOBAL_CLIENTS = GROUP.registerEvent("mcp.global.clients",
@@ -45,7 +45,7 @@ internal class McpServerApplicationUsagesCollector : ApplicationUsagesCollector(
     val metrics = mutableSetOf<MetricEvent>()
 
     metrics.add(MCP_RUNNING.metric(mcpServerService.isRunning))
-    metrics.add(MCP_BRAVE_MODE_ENABLED.metric(settings.state.enableBraveMode))
+    metrics.add(MCP_BRAVE_MODE_ENABLED.metric(settings.enableBraveMode))
     metrics.add(MCP_ROUTER_MODE.metric(McpToolFilterSettings.getInstance().invocationMode))
 
     McpClientDetector.detectGlobalMcpClients().forEach { client ->

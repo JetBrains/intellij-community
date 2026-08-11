@@ -30,25 +30,6 @@ internal class FrontendModuleFilterImpl private constructor(
   }
 }
 
-const val PLATFORM_MODULE_SCRAMBLED_WITH_FRONTEND: String = "intellij.platform.commercial.license"
-
-val PROJECT_LIBRARIES_SCRAMBLED_WITH_FRONTEND: Set<String> = setOf(
-  "LicenseServerAPI",
-  "LicenseDecoder",
-  "jetbrains.codeWithMe.lobby.server.api",
-  "jetbrains.codeWithMe.lobby.server.common",
-)
-
-/**
- * Returns `true` if the module or library [element] from the platform part which are also included in the frontend JARs and scrambled (differently) there.
- * It's important not to include JARs for these modules and libraries in the platform part to the classpath of the frontend process, because they may cause clashes.
- */
-fun isScrambledWithFrontend(element: JpsNamedElement): Boolean = when (element) {
-  is JpsModule -> element.name == PLATFORM_MODULE_SCRAMBLED_WITH_FRONTEND
-  is JpsLibrary -> element.name in PROJECT_LIBRARIES_SCRAMBLED_WITH_FRONTEND
-  else -> false
-}
-
 internal object EmptyFrontendModuleFilter : FrontendModuleFilter {
   override fun isModuleCompatibleWithFrontend(moduleName: String): Boolean = false
 }

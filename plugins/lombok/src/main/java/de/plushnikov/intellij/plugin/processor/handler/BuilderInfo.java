@@ -49,6 +49,7 @@ public class BuilderInfo {
   private PsiVariable variableInClass;
   private PsiType fieldInBuilderType;
   private boolean deprecated;
+  @PsiModifier.ModifierConstant
   private String visibilityModifier;
   private String setterPrefix;
 
@@ -113,7 +114,7 @@ public class BuilderInfo {
     return this;
   }
 
-  public BuilderInfo withVisibilityModifier(String visibilityModifier) {
+  public BuilderInfo withVisibilityModifier(@PsiModifier.ModifierConstant String visibilityModifier) {
     this.visibilityModifier = visibilityModifier;
     return this;
   }

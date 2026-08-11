@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
@@ -453,20 +453,24 @@ public interface Editor extends UserDataHolder {
    */
   default @NotNull ProperTextRange calculateVisibleRange() {
     EditorThreading.assertInteractionAllowed();
-    return EditorThreading.compute(() -> {
-      Rectangle rect = getScrollingModel().getVisibleArea();
-      int stickyLinesHeight = getStickyLinesPanelHeight();
-
-      LogicalPosition startPosition = xyToLogicalPosition(new Point(rect.x, rect.y + stickyLinesHeight));
-      int visibleStart = logicalPositionToOffset(startPosition);
-
-      LogicalPosition endPosition = xyToLogicalPosition(new Point(rect.x + rect.width, rect.y + rect.height));
-      int visibleEnd = logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
-
-      return new ProperTextRange(visibleStart, Math.max(visibleEnd, visibleStart));
-    });
+    Rectangle rect = getScrollingModel().getVisibleArea();
+    int stickyLinesHeight = getStickyLinesPanelHeight();
+    LogicalPosition startPosition = xyToLogicalPosition(new Point(rect.x, rect.y + stickyLinesHeight));
+    int visibleStart = logicalPositionToOffset(startPosition);
+    LogicalPosition endPosition = xyToLogicalPosition(new Point(rect.x + rect.width, rect.y + rect.height));
+    int visibleEnd = logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
+    return new ProperTextRange(visibleStart, Math.max(visibleEnd, visibleStart));
   }
 
+  /**
+   * Returns the elf (editor lock-free typing) view of {@link #getDocument()}, or the
+   * document itself when lock-free typing is not active for this editor.
+   * <p>
+   * Editor painting and layout should use this view, so the user sees typed text
+   * before it is synchronized to the real document.
+   *
+   * @see com.intellij.openapi.editor.elf.Elf#getElfDocument(Document)
+   */
   @ApiStatus.Internal
   default @NotNull Document getElfDocument() {
     return getDocument();

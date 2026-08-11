@@ -119,6 +119,16 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResult();
   }
 
+  /** An inline inlay reads exactly where the hint does, so the line goes to the inlay and the hint is not painted at all. */
+  public void testInlineInlaySuppressesPlaceholder() throws Exception {
+    initText("");
+    EditorEx editor = (EditorEx)getEditor();
+    editor.setPlaceholder("placeholder");
+    editor.setShowPlaceholderWhenFocused(true);
+    editor.getInlayModel().addInlineElement(0, new MyInlayRenderer());
+    checkResult();
+  }
+
   public void testMultilineBorderWithInlays() throws Exception {
     initText("abc\ndef");
     getEditor().getInlayModel().addInlineElement(1, new MyInlayRenderer());
@@ -229,6 +239,22 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
       for (int i = 0; i < 2; i++) {
         executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
       }
+      checkResult();
+    } finally {
+      restoreSelectionState(state);
+    }
+  }
+
+  public void testNewSelectionStaysMergedAfterInlayShift() throws Exception {
+    var state = setNewSelectionEnabled(true);
+    try {
+      initText("aaaa\naaaa\naaaa\naaaa\naaaa\naaaa\naaaa\naaaa\naaaa\naaaa");
+      setNewSelectionEnabled(true);
+
+      executeAction(IdeActions.ACTION_SELECT_ALL);
+      paintEditor(false, null, null);
+
+      addBlockInlay(getEditor().getDocument().getLineStartOffset(4), true, 0, 5);
       checkResult();
     } finally {
       restoreSelectionState(state);

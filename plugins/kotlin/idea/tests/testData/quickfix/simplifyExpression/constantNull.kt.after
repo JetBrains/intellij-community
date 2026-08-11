@@ -1,5 +1,5 @@
 // "Simplify expression" "true"
-// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KotlinConstantConditionsInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KotlinConstantConditionsInspection
 
 fun alwaysNull(i: Int) {
     val zeroOrNull = if (i > 500) 0 else null

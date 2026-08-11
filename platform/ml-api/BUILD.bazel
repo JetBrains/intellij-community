@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.ml` start
-
 jvm_library(
     name = "ml",
     srcs = glob(
@@ -24,7 +23,7 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core",
         "//platform/core-api:core",
         "//platform/util",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -43,6 +42,7 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/util:util_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ml` end

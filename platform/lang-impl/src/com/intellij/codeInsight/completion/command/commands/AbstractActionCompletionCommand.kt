@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
@@ -162,6 +162,11 @@ open class ActionCommandProvider(
                                             priority = priority,
                                             previewText = previewText,
                                             highlightInfo = HighlightInfoLookup(getOffsetAwareInjection(element, range), EditorColors.SEARCH_RESULT_ATTRIBUTES, 0)) {
+      override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
+        editor?.caretModel?.moveToOffset(context.offset)
+        super.execute(offset, psiFile, editor)
+      }
+
       override fun customizeEvent(event: AnActionEvent) {
         super.customizeEvent(event)
         val dataContext = event.dataContext

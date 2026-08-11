@@ -18,7 +18,7 @@ interface MainEntityListBuilder : WorkspaceEntityBuilder<MainEntityList> {
 }
 
 internal object MainEntityListType : EntityType<MainEntityList, MainEntityListBuilder>() {
-  override val entityClass: Class<MainEntityList> get() = MainEntityList::class.java
+  override val entityImplClass: Class<*> get() = MainEntityListImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = MainEntityListImpl.Builder::class.java
   operator fun invoke(
     x: String,
@@ -40,7 +40,6 @@ fun MutableEntityStorage.modifyMainEntityList(
 
 var MainEntityListBuilder.child: List<AttachedEntityListBuilder>
   by WorkspaceEntity.extensionBuilder(AttachedEntityList::class.java)
-
 
 @JvmOverloads
 @JvmName("createMainEntityList")

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -7,7 +7,6 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.command.undo.AdjustableUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
@@ -191,14 +190,6 @@ final class UndoableGroup implements Dumpable {
       actions.getFirst().getPerformedNanoTime(),
       actions.getLast().getPerformedNanoTime()
     );
-  }
-
-  void invalidateChangeRanges(@NotNull SharedAdjustableUndoableActionsHolder adjustableUndoableActionsHolder) {
-    for (UndoableAction action : actions) {
-      if (action instanceof AdjustableUndoableAction adjustableAction) {
-        adjustableUndoableActionsHolder.remove(adjustableAction);
-      }
-    }
   }
 
   void invalidateActionsFor(@NotNull DocumentReference ref) {

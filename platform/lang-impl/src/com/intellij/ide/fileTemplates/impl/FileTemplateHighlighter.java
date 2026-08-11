@@ -21,7 +21,7 @@ public final class FileTemplateHighlighter extends SyntaxHighlighterBase {
   }
 
   @Override
-  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
+  public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(@NotNull IElementType tokenType) {
     if (tokenType == FileTemplateTokenType.MACRO || tokenType == FileTemplateTokenType.DIRECTIVE) {
       return pack(TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES);
     }

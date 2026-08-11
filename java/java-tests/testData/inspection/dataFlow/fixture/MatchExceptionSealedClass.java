@@ -1,3 +1,4 @@
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class TestExample {
@@ -10,7 +11,7 @@ class TestExample {
 
   @Nullable
   private static II getII() {
-    RI ri = new RI(null);
+    RI ri = createRi();
     if(ri.value != null) return null;
     return switch (ri) {
       case RI(<warning descr="Pattern matching will throw 'MatchException'">II.BI bi</warning>) -> bi;
@@ -18,8 +19,12 @@ class TestExample {
     };
   }
 
+  private static @NotNull RI createRi() {
+    return new RI(null);
+  }
+
   private static II getII2() {
-    RI ri = new RI(null);
+    RI ri = createRi();
     return switch (ri) {
       case RI(<warning descr="Pattern matching may throw 'MatchException'">II.BI bi</warning>) -> bi;
       case RI(II.AI ai) -> ai;

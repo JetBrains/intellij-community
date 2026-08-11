@@ -3,7 +3,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
-import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.SEP
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
 import com.intellij.testFramework.TestDataPath
@@ -27,7 +27,7 @@ internal class MonorepoPY87722Test {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule("sentinel", contentRoot = ".", sourceRoots = listOf(".")),
-      ExpectedModule("portal-api", contentRoot = "portal${SEP}api", deps = listOf("utils"), sourceRoots = listOf("portal${SEP}api${SEP}src")),
+      ExpectedModule("portal-api", contentRoot = "portal" / "api", deps = listOf("utils"), sourceRoots = listOf("portal" / "api" / "src")),
       ExpectedModule("utils", contentRoot = "utils"),
     )
   }

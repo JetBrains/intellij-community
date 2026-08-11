@@ -39,12 +39,16 @@ import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
-import com.jetbrains.python.packaging.toolwindow.actions.InstallWithOptionsPackageAction
+import com.intellij.python.pyproject.PyDependencyGroup
+import com.jetbrains.python.packaging.management.PyWorkspaceMember
+import com.jetbrains.python.packaging.toolwindow.model.DependencyGroupNode
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
-import com.jetbrains.python.packaging.toolwindow.model.ExpandResultNode
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
+import com.jetbrains.python.packaging.toolwindow.model.LoadingNode
 import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
+import com.jetbrains.python.packaging.toolwindow.model.UndeclaredPackagesGroup
+import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.isReadOnly
@@ -63,7 +67,24 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-class PyPackageDescriptionController(val project: Project) : Disposable {
+internal class PyPackageDescriptionController(
+  val project: Project,
+  /**
+   * Called when the user clicks the package name in the doc header. The doc panel doesn't own
+   * the tree, so we delegate back to the tool window so it can scroll the tree to that package
+   * and select it. Useful when the tree's focus has shifted away from the currently-displayed
+   * package and the user wants to jump back to it.
+   */
+  private val onSelectInTree: ((String) -> Unit)? = null,
+  /**
+   * Fired on the EDT after install / change-version / uninstall finishes (success or failure).
+   * The owning [PyPackageInfoPanel] uses this to reset its preview to the placeholder, because
+   * the `DisplayablePackage` we were rendering is now stale (e.g. an uninstalled row no longer
+   * exists, an install changes the version, etc.) and we don't want to keep showing dangling
+   * "Install"/"Uninstall" controls bound to the old reference.
+   */
+  private val onActionCompleted: (() -> Unit)? = null,
+) : Disposable {
   private val latestText: String
     get() = message("python.toolwindow.packages.latest.version.label")
 
@@ -82,23 +103,34 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
 
   private val installActionButton = JBOptionButton(null, emptyArray())
 
-  private val installAction = wrapAction(message("action.PyInstallPackage.text"), message("progress.text.installing")) {
+  private val installAction = wrapAction(
+    message("action.PyInstallPackage.text"),
+    message("progress.text.installing"),
+    installKey = { selectedPackage.get()?.name?.let { PyPackagingToolWindowService.packageKey(it) } },
+  ) {
     val details = selectedPackageDetails.get() ?: return@wrapAction
     val version = versionSelector.text.takeIf { it != latestText }
     val specification = details.toPackageSpecification(version) ?: return@wrapAction
-    project.service<PyPackagingToolWindowService>().installPackage(specification.toInstallRequest())
-  }
-
-  private val installWithOptionAction: Action = wrapAction(message("action.PyInstallWithOptionPackage.text"), message("progress.text.installing")) {
-    val details = selectedPackageDetails.get() ?: return@wrapAction
-    val version = versionSelector.text.takeIf { it != latestText }
-    InstallWithOptionsPackageAction.Helper.installWithOptions(project, details, version)
+    val ctx = installContextFor(selectedPackage.get())
+    project.service<PyPackagingToolWindowService>().installPackage(
+      specification.toInstallRequest(),
+      workspaceMember = ctx.workspaceMember,
+      dependencyGroup = ctx.dependencyGroup,
+    )
   }
 
   private val versionSelector = JBComboBoxLabel()
   private var versionSelectorMouseListener: MouseAdapter? = null
 
   private val progressEnabledProperty = AtomicBooleanProperty(false)
+
+  /**
+   * Mirrors the shared active-installations set ([PyPackagingToolWindowService]) for the currently
+   * selected package, so an install started elsewhere (tree link, install dialog) also disables the
+   * install button and version selector here (PY-91529). Recomputed from an install-state listener
+   * and whenever the selection changes.
+   */
+  private val sharedInstallingProperty = AtomicBooleanProperty(false)
 
   private val progressIndicatorComponent = JPanel()
 
@@ -120,6 +152,18 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
       val packageNameLabel = label("").bindText(packageNameProperty).component
       packageNameLabel.verticalAlignment = SwingConstants.CENTER
       packageNameLabel.font = packageNameLabel.font.deriveFont(Font.BOLD)
+      if (onSelectInTree != null) {
+        // Make the bold name double as a "scroll-to" affordance: click it to re-select the
+        // package in the tree on the left. Helpful when the tree's focus has drifted (e.g. user
+        // scrolled away or clicked outside the tree) but the info pane still shows this package.
+        packageNameLabel.cursor = java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR)
+        packageNameLabel.addMouseListener(object : MouseAdapter() {
+          override fun mouseClicked(e: MouseEvent) {
+            val name = selectedPackage.get()?.name ?: return
+            onSelectInTree.invoke(name)
+          }
+        })
+      }
 
       val docLink = link(message("python.toolwindow.packages.documentation.link")) {
         val docLink = packageDocumentationProperty.get() ?: return@link
@@ -167,19 +211,29 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
         versionSelector.text = it
       }
       val comboBox = cell(versionSelector)
-      comboBox.enabledIf(isManagement.and(progressEnabledProperty.not())).gap(RightGap.SMALL)
+      comboBox.enabledIf(isManagement.and(progressEnabledProperty.not()).and(sharedInstallingProperty.not())).gap(RightGap.SMALL)
+      // Editable installs (``pip install -e .``) are managed from outside the package list — the
+      // user edits the source directory directly, and there is no upstream version to switch to.
+      // Surfacing the dropdown for them would imply a fake "latest" version is selectable.
       comboBox.visibleIf(progressEnabledProperty.not().and(
         selectedPackage.transform { pkg ->
           when (pkg) {
-            is InstallablePackage, is InstalledPackage -> true
-            is RequirementPackage, is ExpandResultNode, is DisplayablePackage, null -> false
+            is InstallablePackage -> true
+            is InstalledPackage -> pkg.instance.editableLocation == null
+            is RequirementPackage,
+            is WorkspaceMember,
+            is DependencyGroupNode,
+            is UndeclaredPackagesGroup,
+            is LoadingNode,
+            null -> false
           }
         }
       ))
 
       installActionButton.action = installAction
-      installActionButton.options = arrayOf(installWithOptionAction)
+      installActionButton.options = emptyArray()
       cell(installActionButton).visibleIf(selectedPackage.transform { it is InstallablePackage }.and(isManagement).and(progressEnabledProperty.not()))
+        .enabledIf(sharedInstallingProperty.not())
         .gap(RightGap.SMALL)
 
       button(message("action.PyDeletePackage.text")) {
@@ -194,7 +248,7 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
 
   private val component = PyPackagesUiComponents.borderPanel {
     add(PyPackagesUiComponents.borderPanel {
-      border = SideBorder(JBColor.GRAY, SideBorder.BOTTOM)
+      border = SideBorder(JBColor.border(), SideBorder.BOTTOM)
       leftPanel.border = BorderFactory.createEmptyBorder(0, 10, 0, 0)
       rightPanel.border = BorderFactory.createEmptyBorder(0, 0, 0, 10)
 
@@ -205,6 +259,14 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
   }
 
   val wrappedComponent: JComponent = UiDataProvider.wrapComponent(component, UiDataProvider {})
+
+  /**
+   * Doc-only view: just the package description HTML, without the header row that hosts the
+   * name label, version dropdown, and install/delete buttons. Used by the in-tool-window
+   * documentation pane (horizontal anchor) which renders the doc full-height instead of behind a
+   * narrow toolbar (PY-89838 follow-up).
+   */
+  val docComponent: JComponent = htmlPanel.component
 
   fun setPackage(pyPackage: DisplayablePackage) {
     val newKey = pyPackage.name
@@ -227,30 +289,67 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
     val details = selectedPackageDetails.get() ?: return
     val newVersionSpec = details.toPackageSpecification(newVersion) ?: return
     val pyPackagingToolWindowService = PyPackagingToolWindowService.getInstance(project)
+    val ctx = installContextFor(selectedPackage.get())
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
-      pyPackagingToolWindowService.installPackage(newVersionSpec.toInstallRequest())
+      pyPackagingToolWindowService.installPackage(
+        newVersionSpec.toInstallRequest(),
+        workspaceMember = ctx.workspaceMember,
+        dependencyGroup = ctx.dependencyGroup,
+      )
     }
+  }
+
+  /**
+   * Collects the install-time scope ([PyWorkspaceMember] + [PyDependencyGroup]) from the current
+   * tree selection via an exhaustive [when] over the [DisplayablePackage] sealed hierarchy.
+   */
+  private data class InstallContext(val workspaceMember: PyWorkspaceMember?, val dependencyGroup: PyDependencyGroup?) {
+    companion object {
+      val NONE: InstallContext = InstallContext(null, null)
+    }
+  }
+
+  private fun installContextFor(pkg: DisplayablePackage?): InstallContext = when (pkg) {
+    is InstalledPackage -> InstallContext(pkg.workspaceMember, pkg.dependencyGroup)
+    is InstallablePackage,
+    is RequirementPackage,
+    is WorkspaceMember,
+    is DependencyGroupNode,
+    is UndeclaredPackagesGroup,
+    is LoadingNode,
+    null -> InstallContext.NONE
   }
 
   private fun suggestInstallPackage(selectedValue: String) {
     if (selectedPackage.get() !is InstalledPackage)
       return
 
-    wrapInvokeOp(message("progress.text.installing")) {
+    wrapInvokeOp(
+      message("progress.text.installing"),
+      installKey = selectedPackage.get()?.name?.let { PyPackagingToolWindowService.packageKey(it) },
+    ) {
       updatePackageVersion(selectedValue)
     }
   }
 
   private fun calculateVersionText() = (selectedPackage.get() as? InstalledPackage)?.currentVersion?.presentableText ?: latestText
 
-  private fun wrapAction(@Nls text: String, @Nls progressText: String, actionPerformed: suspend () -> Unit): Action = object : AbstractAction(text) {
+  private fun wrapAction(@Nls text: String, @Nls progressText: String, installKey: (() -> String?)? = null, actionPerformed: suspend () -> Unit): Action = object : AbstractAction(text) {
     override fun actionPerformed(e: ActionEvent) {
-      wrapInvokeOp(progressText, actionPerformed)
+      wrapInvokeOp(progressText, installKey?.invoke(), actionPerformed)
     }
   }
 
-  private fun wrapInvokeOp(@Nls progressText: String, actionPerformed: suspend () -> Unit) {
+  /**
+   * [installKey] — when non-null, records the operation in the shared active-installations map for
+   * its whole duration (PY-91529) so the tree link and the install dialog also reflect it. Left
+   * null for non-install ops (e.g. uninstall).
+   */
+  private fun wrapInvokeOp(@Nls progressText: String, installKey: String? = null, actionPerformed: suspend () -> Unit) {
     progressEnabledProperty.set(true)
+    // Capture the SDK now so mark/unmark target the same interpreter even if the selection changes.
+    val installSdk = service.currentSdk
+    if (installKey != null && installSdk != null) service.markInstalling(installSdk, installKey)
     val progressIndicator = OneLineProgressIndicator(true, true)
     progressIndicator.text = progressText
     progressIndicatorComponent.removeAll()
@@ -264,6 +363,9 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
       finally {
         withContext(Dispatchers.EDT) {
           progressEnabledProperty.set(false)
+          if (installKey != null && installSdk != null) service.unmarkInstalling(installSdk, installKey)
+          selectedPackage.set(null)
+          onActionCompleted?.invoke()
         }
         progressIndicator.stop()
       }
@@ -272,6 +374,19 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
     progressIndicator.setCancelRunnable {
       job.cancel()
     }
+  }
+
+  init {
+    // Keep [sharedInstallingProperty] in sync with the shared active-installations map: an install
+    // started from the tree or dialog, or a selection change, must re-evaluate the button state.
+    service.addInstallStateListener(this) { recomputeSharedInstalling() }
+    selectedPackage.afterChange { recomputeSharedInstalling() }
+  }
+
+  private fun recomputeSharedInstalling() {
+    val name = selectedPackage.get()?.name
+    val sdk = service.currentSdk
+    sharedInstallingProperty.set(name != null && sdk != null && service.isPackageInstalling(sdk, name))
   }
 
   override fun dispose() {

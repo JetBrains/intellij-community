@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +18,6 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -52,8 +51,8 @@ public abstract class Compressor implements Closeable {
     /** @deprecated use {@link #Tar(Path, Compression)} instead */
     @ApiStatus.Internal
     @Deprecated
-    @SuppressWarnings("IO_FILE_USAGE")
-    public Tar(@NotNull File file, @NotNull Compression compression) throws IOException {
+    @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+    public Tar(@NotNull java.io.File file, @NotNull Compression compression) throws IOException {
       this(file.toPath(), compression);
     }
 
@@ -126,8 +125,8 @@ public abstract class Compressor implements Closeable {
   public static class Zip extends Compressor {
     /** @deprecated use {@link #Zip(Path)} instead */
     @Deprecated
-    @SuppressWarnings("IO_FILE_USAGE")
-    public Zip(@NotNull File file) throws IOException {
+    @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+    public Zip(@NotNull java.io.File file) throws IOException {
       this(file.toPath());
     }
 
@@ -188,8 +187,8 @@ public abstract class Compressor implements Closeable {
   public static final class Jar extends Zip {
     /** @deprecated use {@link #Jar(Path)} instead */
     @Deprecated
-    @SuppressWarnings("IO_FILE_USAGE")
-    public Jar(@NotNull File file) throws IOException {
+    @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+    public Jar(@NotNull java.io.File file) throws IOException {
       this(file.toPath());
     }
 
@@ -218,8 +217,8 @@ public abstract class Compressor implements Closeable {
 
   /** @deprecated use {@link #addFile(String, Path)} instead */
   @Deprecated
-  @SuppressWarnings("IO_FILE_USAGE")
-  public final void addFile(@NotNull String entryName, @NotNull File file) throws IOException {
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public final void addFile(@NotNull String entryName, @NotNull java.io.File file) throws IOException {
     addFile(entryName, file.toPath());
   }
 
@@ -228,7 +227,7 @@ public abstract class Compressor implements Closeable {
   }
 
   public final void addFile(@NotNull String entryName, @NotNull Path file, long timestamp) throws IOException {
-    boolean isWindows = ArchiveBackend.Companion.isWindows$intellij_platform_util(file);
+    boolean isWindows = ArchiveBackend.isOnWindows(file);
     entryName = entryName(entryName);
     if (accept(entryName, file)) {
       addFile(file, Files.readAttributes(file, BasicFileAttributes.class), entryName, timestamp, isWindows);
@@ -270,8 +269,8 @@ public abstract class Compressor implements Closeable {
 
   /** @deprecated use {@link #addDirectory(Path)} instead */
   @Deprecated
-  @SuppressWarnings("IO_FILE_USAGE")
-  public final void addDirectory(@NotNull File directory) throws IOException {
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public final void addDirectory(@NotNull java.io.File directory) throws IOException {
     addDirectory(directory.toPath());
   }
 
@@ -282,8 +281,8 @@ public abstract class Compressor implements Closeable {
   /** @deprecated use {@link #addDirectory(String, Path)} instead */
   @ApiStatus.Internal
   @Deprecated
-  @SuppressWarnings("IO_FILE_USAGE")
-  public final void addDirectory(@NotNull String prefix, @NotNull File directory) throws IOException {
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public final void addDirectory(@NotNull String prefix, @NotNull java.io.File directory) throws IOException {
     addDirectory(prefix, directory.toPath());
   }
 
@@ -345,7 +344,7 @@ public abstract class Compressor implements Closeable {
   }
 
   private void addRecursively(String prefix, Path root, long timestampMs) throws IOException {
-    boolean isWindows = ArchiveBackend.Companion.isWindows$intellij_platform_util(root);
+    boolean isWindows = ArchiveBackend.isOnWindows(root);
     boolean traceEnabled = LOG.isTraceEnabled();
     if (traceEnabled) LOG.trace("dir=" + root + " prefix=" + prefix);
 

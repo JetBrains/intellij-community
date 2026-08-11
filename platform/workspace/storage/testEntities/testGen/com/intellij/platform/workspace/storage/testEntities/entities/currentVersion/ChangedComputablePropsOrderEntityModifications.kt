@@ -21,7 +21,7 @@ interface ChangedComputablePropsOrderEntityBuilder : WorkspaceEntityBuilder<Chan
 
 internal object ChangedComputablePropsOrderEntityType :
   EntityType<ChangedComputablePropsOrderEntity, ChangedComputablePropsOrderEntityBuilder>() {
-  override val entityClass: Class<ChangedComputablePropsOrderEntity> get() = ChangedComputablePropsOrderEntity::class.java
+  override val entityImplClass: Class<*> get() = ChangedComputablePropsOrderEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ChangedComputablePropsOrderEntityImpl.Builder::class.java
   operator fun invoke(
     someKey: Int,

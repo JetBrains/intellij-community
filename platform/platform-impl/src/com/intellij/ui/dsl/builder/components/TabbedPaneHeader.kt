@@ -8,7 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 
 @Suppress("ReplaceRangeToWithRangeUntil")
-@ApiStatus.Internal
 internal class TabbedPaneHeader : JBTabbedPane() {
 
   override fun updateUI() {

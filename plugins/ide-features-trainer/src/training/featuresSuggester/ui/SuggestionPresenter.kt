@@ -13,7 +13,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -111,7 +111,7 @@ internal class NotificationSuggestionPresenter : SuggestionPresenter {
         FeatureSuggesterStatistics.logNotificationLearnMore(suggestion.suggesterId)
 
         coroutineScope.launch {
-          serviceAsync<TipAndTrickManager>().showTipDialog(project, tip)
+          ApplicationManager.getApplication().getService(TipAndTrickManager::class.java)?.showTipDialog(project, tip)
         }
       }
 

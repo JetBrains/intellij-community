@@ -19,6 +19,7 @@ import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -35,7 +36,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @ApiStatus.Internal
@@ -56,9 +55,9 @@ public final class XDebuggerWatchesManagerImpl implements XDebuggerWatchesManage
    */
   private final Map<String, List<XWatch>> watches = new ConcurrentHashMap<>();
   /**
-   * Maps file URL to a set of inline watches.
+   * Maps file to its inline watches.
    */
-  private final Map<String, Set<InlineWatch>> inlineWatches = new ConcurrentHashMap<>();
+  private final MultiMap<VirtualFile, InlineWatch> inlineWatches = MultiMap.createConcurrent();
   private final MergingUpdateQueue myInlinesUpdateQueue;
   private final Project myProject;
 
@@ -117,7 +116,7 @@ public final class XDebuggerWatchesManagerImpl implements XDebuggerWatchesManage
 
   @Override
   public @NotNull List<InlineWatch> getInlineWatches() {
-    return inlineWatches.values().stream().flatMap(l -> l.stream()).collect(Collectors.toList());
+    return List.copyOf(inlineWatches.values());
   }
 
   @ApiStatus.Internal
@@ -127,11 +126,9 @@ public final class XDebuggerWatchesManagerImpl implements XDebuggerWatchesManage
     watches.forEach((key, value) -> expressions.add(new ConfigurationState(key, value)));
     List<InlineWatchState> inlineExpressionStates = state.getInlineExpressionStates();
     inlineExpressionStates.clear();
-    inlineWatches.values().stream()
-      .flatMap(l -> l.stream())
-      .forEach((value) -> {
-        inlineExpressionStates.add(new InlineWatchState(value.getExpression(), value.getLine(), value.getPosition().getFile().getUrl()));
-      });
+    inlineWatches.values().forEach(value -> {
+      inlineExpressionStates.add(new InlineWatchState(value.getExpression(), value.getLine(), value.getPosition().getFile().getUrl()));
+    });
     return state;
   }
 
@@ -172,15 +169,15 @@ public final class XDebuggerWatchesManagerImpl implements XDebuggerWatchesManage
       if (position == null || expression == null) continue;
 
       InlineWatch watch = new InlineWatch(expression, position);
-      inlineWatches.computeIfAbsent(inlineWatchState.getFileUrl(), (k) -> new HashSet<>()).add(watch);
+      inlineWatches.putValue(file, watch);
     }
 
     // set markers in the background
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      for (InlineWatch i : ContainerUtil.flatten(inlineWatches.values())) {
+      for (InlineWatch i : inlineWatches.values()) {
         ReadAction.nonBlocking(() -> {
           if (!i.setMarker()) {
-            inlineWatches.get(i.getPosition().getFile().getUrl()).remove(i);
+            inlineWatches.remove(i.getPosition().getFile(), i);
           }
         }).executeSynchronously();
       }
@@ -198,7 +195,7 @@ public final class XDebuggerWatchesManagerImpl implements XDebuggerWatchesManage
 
   @Override
   public void inlineWatchesRemoved(@NotNull List<InlineWatch> removed, XInlineWatchesView watchesView) {
-    inlineWatches.values().forEach(set -> removed.forEach(set::remove));
+    removeFromStorage(removed);
     getWatchesViews().filter(v -> v != watchesView).forEach(view -> view.removeInlineWatches(removed));
   }
 
@@ -218,8 +215,7 @@ public final class XDebuggerWatchesManagerImpl implements XDebuggerWatchesManage
     EDT.assertIsEdt();
     InlineWatch watch = new InlineWatch(expression, position);
     watch.setMarker();
-    String fileUrl = position.getFile().getUrl();
-    inlineWatches.computeIfAbsent(fileUrl, (k) -> new HashSet<>()).add(watch);
+    inlineWatches.putValue(position.getFile(), watch);
 
     getWatchesViews().forEach(view -> view.addInlineWatchExpression(watch, index, navigateToWatchNode));
   }
@@ -239,11 +235,14 @@ public final class XDebuggerWatchesManagerImpl implements XDebuggerWatchesManage
   }
 
   private void removeInlines(Collection<InlineWatch> remove) {
-    for (InlineWatch watch : remove) {
-      inlineWatches.get(watch.getPosition().getFile().getUrl()).remove(watch);
-    }
-
+    removeFromStorage(remove);
     getWatchesViews().forEach(view -> view.removeInlineWatches(remove));
+  }
+
+  private void removeFromStorage(Collection<InlineWatch> remove) {
+    for (InlineWatch watch : remove) {
+      inlineWatches.remove(watch.getPosition().getFile(), watch);
+    }
   }
 
   private Stream<XInlineWatchesView> getWatchesViews() {
@@ -257,10 +256,7 @@ public final class XDebuggerWatchesManagerImpl implements XDebuggerWatchesManage
   public @NotNull Collection<InlineWatch> getDocumentInlines(@NotNull Document document) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) {
-      Set<InlineWatch> inlineWatches = this.inlineWatches.get(file.getUrl());
-      if (inlineWatches != null) {
-        return new ArrayList<>(inlineWatches);
-      }
+      return List.copyOf(inlineWatches.get(file));
     }
     return Collections.emptyList();
   }

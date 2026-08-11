@@ -2,7 +2,9 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class NextWordInDifferentHumpsModeWithSelectionAction extends TextComponentEditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public NextWordInDifferentHumpsModeWithSelectionAction() {
     super(new NextPrevWordHandler(true, true, true));

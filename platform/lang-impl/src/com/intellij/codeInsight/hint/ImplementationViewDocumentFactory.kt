@@ -4,12 +4,14 @@ package com.intellij.codeInsight.hint
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 
 interface ImplementationViewDocumentFactory {
   fun createDocument(element: ImplementationViewElement): Document?
   fun tuneEditorBeforeShow(editor: EditorEx) {}
   fun tuneEditorAfterShow(editor: EditorEx) {}
 
+  @ApiStatus.Internal
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<ImplementationViewDocumentFactory> = ExtensionPointName.create(

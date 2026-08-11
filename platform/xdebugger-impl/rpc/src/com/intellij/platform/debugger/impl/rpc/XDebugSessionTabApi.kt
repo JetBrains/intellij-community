@@ -7,18 +7,16 @@ import com.intellij.execution.rpc.ExecutionEnvironmentProxyDto
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.platform.rpc.Id
-import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import com.intellij.xdebugger.ui.IXDebuggerSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.DeferredSerializer
 import fleet.rpc.core.RpcFlow
-import fleet.rpc.core.SendChannelSerializer
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -39,7 +37,8 @@ interface XDebugSessionTabApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebugSessionTabApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<XDebugSessionTabApi>())
+      // TODO: IJPL-252054
+      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<XDebugSessionTabApi>())
     }
   }
 }
@@ -82,7 +81,6 @@ data class XDebuggerSessionTabInfo(
   val executionEnvironmentId: ExecutionEnvironmentIdImpl?,
   val executionEnvironmentProxyDto: ExecutionEnvironmentProxyDto?,
   val additionalTabsComponentManagerId: XDebugSessionAdditionalTabComponentManagerId,
-  @Serializable(with = SendChannelSerializer::class) val tabClosedCallback: SendChannel<Unit>,
   @Serializable(with = DeferredSerializer::class) val backendRunContendDescriptorId: Deferred<RunContentDescriptorIdImpl>,
   @Serializable(with = DeferredSerializer::class) val showTab: Deferred<Unit>,
   @Serializable(with = DeferredSerializer::class) val tabLayouterDto: Deferred<XDebugTabLayouterDto>,

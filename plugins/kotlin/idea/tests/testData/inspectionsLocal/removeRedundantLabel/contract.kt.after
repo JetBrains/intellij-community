@@ -1,5 +1,5 @@
 // WITH_STDLIB
-// K2_ERROR: Contract should be the first statement.
+// K2_ERROR: CONTRACT_NOT_ALLOWED
 
 import kotlin.contracts.*
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
 import com.intellij.openapi.application.WriteAction;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -19,6 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -34,11 +37,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParent
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
-import java.util.List;
 
-
-public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSettings> extends AbstractInplaceIntroducer<GrVariable, PsiElement> {
+public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSettings>
+  extends AbstractInplaceIntroducer<GrVariable, PsiElement> {
 
   private SmartTypePointer myTypePointer;
   private final OccurrencesChooser.ReplaceChoice myReplaceChoice;
@@ -51,7 +54,8 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
   public GrAbstractInplaceIntroducer(@NlsContexts.Command String title,
                                      OccurrencesChooser.ReplaceChoice replaceChoice,
                                      GrIntroduceContext context) {
-    super(context.getProject(), context.getEditor(), context.getExpression(), context.getVar(), context.getOccurrences(), title, GroovyFileType.GROOVY_FILE_TYPE);
+    super(context.getProject(), context.getEditor(), context.getExpression(), context.getVar(), context.getOccurrences(), title,
+          GroovyFileType.GROOVY_FILE_TYPE);
     myReplaceChoice = replaceChoice;
     myContext = context;
     myFile = context.getPlace().getContainingFile();
@@ -67,23 +71,26 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
   }
 
   @Override
-  public GrExpression restoreExpression(@NotNull PsiFile containingFile, @NotNull GrVariable variable, @NotNull RangeMarker marker, String exprText) {
+  public GrExpression restoreExpression(@NotNull PsiFile containingFile, @NotNull GrVariable variable, @NotNull RangeMarker marker, 
+                                        String exprText) {
     if (exprText == null) return null;
     if (!variable.isValid()) return null;
     final PsiElement refVariableElement = containingFile.findElementAt(marker.getStartOffset());
     final PsiElement refVariableElementParent = refVariableElement != null ? refVariableElement.getParent() : null;
-    GrExpression expression =
-      refVariableElementParent instanceof GrNewExpression && refVariableElement.getNode().getElementType() == GroovyTokenTypes.kNEW
-      ? (GrNewExpression)refVariableElementParent
-      : refVariableElementParent instanceof GrParenthesizedExpression ? ((GrParenthesizedExpression)refVariableElementParent).getOperand() 
-                                                                      : PsiTreeUtil.getParentOfType(refVariableElement, GrReferenceExpression.class);
-    if (expression instanceof GrReferenceExpression) {
-      final String referenceName = ((GrReferenceExpression)expression).getReferenceName();
-      if (((GrReferenceExpression)expression).resolve() == variable ||
-          Comparing.strEqual(variable.getName(), referenceName) ||
-          Comparing.strEqual(exprText, referenceName)) {
-        return (GrExpression)expression
-          .replace(GroovyPsiElementFactory.getInstance(myProject).createExpressionFromText(exprText, variable));
+    GrExpression expression;
+    if (refVariableElementParent instanceof GrNewExpression e && refVariableElement.getNode().getElementType() == GroovyTokenTypes.kNEW) {
+      expression = e;
+    }
+    else if (refVariableElementParent instanceof GrParenthesizedExpression p) {
+      expression = p.getOperand();
+    }
+    else {
+      expression = PsiTreeUtil.getParentOfType(refVariableElement, GrReferenceExpression.class);
+    }
+    if (expression instanceof GrReferenceExpression ref) {
+      final String name = ref.getReferenceName();
+      if (ref.resolve() == variable || Comparing.strEqual(variable.getName(), name) || Comparing.strEqual(exprText, name)) {
+        return (GrExpression)ref.replace(GroovyPsiElementFactory.getInstance(myProject).createExpressionFromText(exprText, variable));
       }
     }
     if (expression == null) {
@@ -94,8 +101,8 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
       if (parent instanceof GrMethodCallExpression) {
         if (parent.getText().equals(exprText)) return (GrExpression)parent;
       }
-      if (parent instanceof GrExpression) {
-        expression = (GrExpression)parent;
+      if (parent instanceof GrExpression e) {
+        expression = e;
         if (expression.getText().equals(exprText)) {
           return expression;
         }
@@ -110,8 +117,8 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
       return expression;
     }
 
-    if (refVariableElementParent instanceof GrExpression && refVariableElementParent.getText().equals(exprText)) {
-      return (GrExpression)refVariableElementParent;
+    if (refVariableElementParent instanceof GrExpression e && refVariableElementParent.getText().equals(exprText)) {
+      return e;
     }
 
     return null;
@@ -160,13 +167,13 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
   }
 
   protected PsiElement @NotNull [] restoreOccurrences() {
-    List<PsiElement> result = ContainerUtil.map(getOccurrenceMarkers(), marker -> PsiImplUtil.findElementInRange(myFile, marker.getStartOffset(), marker.getEndOffset(), GrExpression.class));
-    return PsiUtilCore.toPsiElementArray(result);
+    Function<RangeMarker, PsiElement> mapping =
+      marker -> PsiImplUtil.findElementInRange(myFile, marker.getStartOffset(), marker.getEndOffset(), GrExpression.class);
+    return PsiUtilCore.toPsiElementArray(ContainerUtil.map(getOccurrenceMarkers(), mapping));
   }
 
   @Override
   protected @Nullable GrVariable createFieldToStartTemplateOn(boolean replaceAll, String @NotNull [] names) {
-
     final Settings settings = getInitialSettingsForInplace(myContext, myReplaceChoice, names);
     if (settings == null) return null;
 
@@ -199,10 +206,26 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
   protected abstract Settings getSettings();
 
   @Override
-  protected void restoreState(@NotNull GrVariable psiField) {
-    PsiType declaredType = psiField.getDeclaredType();
+  protected void restoreState(@NotNull GrVariable variable) {
+    PsiType declaredType;
+    if (variable.hasModifierProperty(GrModifier.DEF)) {
+      declaredType = GroovyPsiElementFactory.getInstance(variable.getProject()).createTypeByFQClassName("def");
+    }
+    else if (variable.hasModifierProperty(GrModifier.VAR)) {
+      declaredType = GroovyPsiElementFactory.getInstance(variable.getProject()).createTypeByFQClassName("var");
+    }
+    else if (variable.hasModifierProperty(GrModifier.VAL)) {
+      declaredType = GroovyPsiElementFactory.getInstance(variable.getProject()).createTypeByFQClassName("val");
+    }
+    else if (variable.hasModifierProperty(PsiModifier.FINAL) && variable.getTypeElementGroovy() == null) {
+      declaredType = GroovyPsiElementFactory.getInstance(variable.getProject()).createTypeByFQClassName("final");
+    }
+    else {
+      GroovyApplicationSettings.getInstance().INTRODUCE_TYPE = GroovyApplicationSettings.Type.TYPED;
+      declaredType = variable.getDeclaredType();
+    }
     myTypePointer = declaredType != null ? SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(declaredType) : null;
-    super.restoreState(psiField);
+    super.restoreState(variable);
   }
 
   protected @Nullable PsiType getSelectedType() {

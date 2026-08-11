@@ -13,7 +13,7 @@ Reports position-based destructuring declarations that use custom <code>componen
 <p><b>Examples:</b></p>
 <pre><code>
   val (x, y) = listOf(1, 2) // warning: uses custom componentN
-  for ((key, value) in mapOf(1 to "one")) { } // warning: uses custom componentN
+  for ((key, value) in mapOf(1 to "one")) { } // NO warning: key and value are Map.Entry properties
 
   data class Person(val name: String, val age: Int) {
       operator fun component3(): String = name + age

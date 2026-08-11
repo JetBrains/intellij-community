@@ -1,11 +1,12 @@
 package com.intellij.driver.sdk.ui.components.elements
 
 import com.intellij.driver.client.Remote
+import com.intellij.driver.sdk.SimpleColoredText
+import com.intellij.driver.sdk.SimpleTextAttributes
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.Icon
-import com.intellij.openapi.util.Conditions.and
 
 fun Finder.linkLabel(labelText: String): JLabelUiComponent =
   x(JLabelUiComponent::class.java) { and(byType("com.intellij.ui.components.labels.LinkLabel"), byAccessibleName(labelText)) }
@@ -19,11 +20,15 @@ fun Finder.tabbedContentTabLabel(labelText: String, contains: Boolean = false): 
         if (contains) contains(byAccessibleName(labelText)) else byAccessibleName(labelText))
   }
 
+fun Finder.actionHyperlinkLabel(accessibleName: String): JLabelUiComponent =
+  x(JLabelUiComponent::class.java) { and(byClass("ActionHyperlinkLabel"), byAccessibleName(accessibleName)) }
+
 class JLabelUiComponent(data: ComponentData) : UiComponent(data) {
 
   private val fixture by lazy { driver.cast(component, JLabelRef::class) }
 
   fun getText(): String = fixture.getText().orEmpty()
+  fun getIcon(): Icon? = fixture.getIcon()
 }
 
 class ContentTabLabelUi(data: ComponentData) : UiComponent(data) {
@@ -43,6 +48,11 @@ open class TabLabelUi(data: ComponentData) : UiComponent(data) {
   fun clickClose() {
     moveMouse()
     closeButton.click()
+  }
+
+  fun getTextAttributes(): List<Pair<String, SimpleTextAttributes>> {
+    val coloredText = tabComponent.info.getColoredText()
+    return coloredText.getTexts().zip(coloredText.getAttributes())
   }
 }
 
@@ -68,4 +78,5 @@ interface TabInfoRef {
   val text: String
   fun getFontSize(): Int
   fun getIcon(): Icon?
+  fun getColoredText(): SimpleColoredText
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.ui.popup.ActiveIcon
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.content.Content
+import org.jetbrains.annotations.ApiStatus
 
 abstract class ContentTabAction(val icon: ActiveIcon) {
   /**
@@ -26,6 +27,7 @@ abstract class ContentTabAction(val icon: ActiveIcon) {
  * Allows to add clickable icons to the tab labels of Tool Window contents
  */
 interface ContentTabActionProvider {
+  @ApiStatus.Internal
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<ContentTabActionProvider> = ExtensionPointName.create("com.intellij.contentTabActionProvider")

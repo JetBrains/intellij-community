@@ -6,10 +6,15 @@ import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.FileToolset
 import com.intellij.mcpserver.toolsets.general.PatchToolset
 import com.intellij.mcpserver.toolsets.general.ReadToolset
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAndEdtWriteAction
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.testFramework.EditorTestUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import org.assertj.core.api.Assertions.assertThat
@@ -209,6 +214,43 @@ class PatchToolsetTest : GeneralMcpToolsetTestBase() {
       renderNumberedText("updated from unsaved\n")
     )
     assertThat(Files.readString(projectFilePath(pathInProject))).isEqualTo("updated from unsaved\n")
+    Unit
+  }
+
+  @Test
+  fun apply_patch_updates_open_editor() = runBlocking(Dispatchers.Default) {
+    val pathInProject = "src/Test.java"
+    withContext(Dispatchers.EDT) {
+      val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, testJavaFile), true)
+                   ?: throw AssertionError("Could not open editor for $pathInProject")
+      EditorTestUtil.waitForLoading(editor)
+    }
+
+    val patch = buildPatch(
+      "*** Begin Patch",
+      "*** Update File: $pathInProject",
+      "@@",
+      "-Test.java content",
+      "+updated in open editor",
+      "*** End Patch",
+    )
+
+    testMcpTool(
+      PatchToolset::apply_patch.name,
+      buildJsonObject {
+        put("input", JsonPrimitive(patch))
+      },
+      "1 out of 1 operations applied."
+    )
+
+    testMcpTool(
+      ReadToolset::read_file.name,
+      buildJsonObject {
+        put("file_path", JsonPrimitive(pathInProject))
+      },
+      renderNumberedText("updated in open editor")
+    )
+    assertThat(Files.readString(projectFilePath(pathInProject))).isEqualTo("updated in open editor")
     Unit
   }
 

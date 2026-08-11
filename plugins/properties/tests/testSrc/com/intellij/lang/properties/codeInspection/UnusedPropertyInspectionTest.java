@@ -17,6 +17,8 @@ import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -24,6 +26,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.project.ProjectKt;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
@@ -156,7 +159,8 @@ public class UnusedPropertyInspectionTest extends CodeInsightFixtureTestCase<Mod
     GlobalInspectionContext inspectionContext = InspectionManager.getInstance(getProject()).createNewGlobalContext();
     List<ProblemDescriptor> descriptors = InspectionEngine.runInspectionOnFile(defaultFile, wrapper, inspectionContext);
     ProblemDescriptor unusedDescriptor = ContainerUtil.find(descriptors,
-      d -> ((Property)d.getPsiElement().getParent()).getUnescapedKey().equals("unused"));
+                                                            d -> ((Property)d.getPsiElement().getParent()).getUnescapedKey()
+                                                              .equals("unused"));
     assertNotNull(unusedDescriptor);
 
     QuickFix<?>[] fixes = unusedDescriptor.getFixes();
@@ -176,5 +180,25 @@ public class UnusedPropertyInspectionTest extends CodeInsightFixtureTestCase<Mod
     assertNotNull(PropertiesImplUtil.getPropertiesFile(defaultFile).findPropertyByKey("used"));
     assertNotNull(PropertiesImplUtil.getPropertiesFile(enFile).findPropertyByKey("used"));
     assertNotNull(PropertiesImplUtil.getPropertiesFile(frFile).findPropertyByKey("used"));
+  }
+
+  public void testEditingValueKeepsPropertyUnused() {
+    myFixture.configureByText("p.properties", "unused=value1\n");
+    assertEquals(1, myFixture.doHighlighting().stream().filter(info -> "Unused property".equals(info.getDescription())).count());
+
+    Document document = myFixture.getEditor().getDocument();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(document.getText().indexOf('=') + 1, "x"));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+    assertEquals(1, myFixture.doHighlighting().stream().filter(info -> "Unused property".equals(info.getDescription())).count());
+  }
+
+  public void testAddingReferenceMarksPropertyUsed() {
+    myFixture.configureByText("p.properties", "unused=value\n");
+    assertEquals(1, myFixture.doHighlighting().stream().filter(info -> "Unused property".equals(info.getDescription())).count());
+
+    myFixture.addFileToProject("Ref.java", "class Ref { Object key = \"unused\"; }");
+
+    assertEquals(0, myFixture.doHighlighting().stream().filter(info -> "Unused property".equals(info.getDescription())).count());
   }
 }

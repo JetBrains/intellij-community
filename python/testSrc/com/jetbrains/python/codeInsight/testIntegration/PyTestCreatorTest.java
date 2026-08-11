@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python.codeInsight.testIntegration;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,6 +36,8 @@ import java.util.Arrays;
  *
  * @author Ilya.Kazakevich
  */
+@Subsystems.CodeInsight
+@Layers.Functional
 public final class PyTestCreatorTest extends PyTestCase {
 
   public void testCreateUnitTest() {

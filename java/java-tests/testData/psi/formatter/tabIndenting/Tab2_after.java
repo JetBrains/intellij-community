@@ -1,8 +1,9 @@
+
 class A {
 		int a;
 
 		void foo(int a,
-		         int b) {
+						 int b) {
 				boolean b;
 		}
 }

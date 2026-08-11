@@ -30,6 +30,7 @@ import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.PlatformKeyboardLayoutConverter;
+import com.intellij.psi.codeStyle.PreferStartMatchMatcherWrapper;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
@@ -44,6 +45,7 @@ import com.intellij.util.indexing.ProcessorWithThrottledCancellationCheck;
 import com.intellij.util.text.matching.MatchedFragment;
 import com.intellij.util.text.matching.MatchingMode;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +72,8 @@ import static com.intellij.ide.util.gotoByName.FuzzyFileSearchExperimentOptionKt
 public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   private static final Logger LOG = Logger.getInstance(GotoFileItemProvider.class);
 
-  public static final int EXACT_MATCH_DEGREE = 5000;
+  @ApiStatus.Internal
+  public static final int EXACT_MATCH_DEGREE = PreferStartMatchMatcherWrapper.START_MATCH_WEIGHT + 3000;
   private static final int DIRECTORY_MATCH_DEGREE = 0;
   private static final int DIR_CHILD_MATCH_DEGREE = 0;
 
@@ -727,5 +730,11 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
   private static @NotNull <T> List<List<T>> group(@NotNull List<T> items, @NotNull Comparator<? super T> comparator) {
     return StreamEx.of(items).groupRuns((n1, n2) -> comparator.compare(n1, n2) == 0).toList();
+  }
+
+  @ApiStatus.Internal
+  public static boolean isInExactMatchDegreeRange(int degree) {
+    int diff = degree - EXACT_MATCH_DEGREE;
+    return diff >= -1000 && diff < 2000;
   }
 }

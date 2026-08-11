@@ -2,17 +2,27 @@
 package com.intellij.serialization
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.platform.bazel.runfiles.BazelLabel
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.CleanupSnapshots
+import com.intellij.testFramework.common.BazelTestUtil
+import com.intellij.testFramework.common.BazelTestUtil.getFileFromBazelRuntime
 import com.intellij.util.io.sanitizeFileName
 import org.junit.ClassRule
+import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
 import java.nio.file.Path
 
-internal val testSnapshotDir = Path.of(PlatformTestUtil.getCommunityPath(), "platform/object-serializer/testSnapshots")
+internal val testSnapshotDir: Path =
+  if (BazelTestUtil.isUnderBazelTest) {
+    getFileFromBazelRuntime(BazelLabel.fromString("@community//platform/object-serializer:testSnapshots"))
+  }
+  else {
+    Path.of(PlatformTestUtil.getCommunityPath(), "platform/object-serializer/testSnapshots")
+  }
 
 internal val objectSerializer
   get() = ObjectSerializer.instance

@@ -181,12 +181,21 @@ internal class GHPRReviewFileEditorViewModelImpl(
     threadsVm.lookupPreviousComment(lineToUnified(line), this::threadIsVisible)
 
   override fun getThreadPosition(threadId: String): Pair<RefComparisonChange, Int>? {
-    val position = allMappedThreads.value[threadId] ?: return null
-    return (position.change ?: return null) to (position.line ?: return null)
+    val position = allMappedThreads.value[threadId]
+    if (position != null) {
+      return (position.change ?: return null) to (position.line ?: return null)
+    }
+    return newComments.value.find { it.trackingId == threadId }?.let { newComment ->
+      newComment.position.value.let { it.change to it.location.lineIdx }
+    }
   }
 
   override fun requestThreadFocus(threadId: String) {
-    threadsVm.compactThreads.value.find { it.id == threadId }?.requestFocus()
+    threadsVm.compactThreads.value.find { it.id == threadId }?.let {
+      it.requestFocus()
+      return
+    }
+    newComments.value.find { it.trackingId == threadId }?.requestFocus()
   }
 
   /**
@@ -196,8 +205,13 @@ internal class GHPRReviewFileEditorViewModelImpl(
   private fun lineToUnified(line: Int): UnifiedCodeReviewItemPosition =
     UnifiedCodeReviewItemPosition(change, leftLine = -1, rightLine = line)
 
-  private fun threadIsVisible(threadId: String): Boolean =
-    allMappedThreads.value[threadId]?.let { it.isVisible && it.line != null && it.change?.filePathAfter != null } ?: false
+  private fun threadIsVisible(threadId: String): Boolean {
+    allMappedThreads.value[threadId]?.let {
+      return it.isVisible && it.line != null && it.change?.filePathAfter != null
+    }
+
+    return newComments.value.any { it.trackingId == threadId }
+  }
 
   override fun requestNewComment(lineIdx: Int, focus: Boolean) {
     val position = GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.SingleLine(Side.RIGHT, lineIdx))

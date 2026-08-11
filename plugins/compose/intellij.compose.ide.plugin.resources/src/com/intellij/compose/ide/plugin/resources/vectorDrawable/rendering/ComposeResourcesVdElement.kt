@@ -41,19 +41,19 @@ internal abstract class ComposeResourcesVdElement {
   companion object {
     /** Parses a color string of the forms into a packed ARGB int. */
     fun parseColorValue(color: String): Int {
-      if (!color.startsWith("#")) return 0
+      if (!color.startsWith("#")) throw IllegalArgumentException(color)
 
       val hex = color.substring(1)
 
       val fullHex = when (hex.length) {
-        3 -> "FF${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}" //#RGB
-        4 -> "${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}" //#ARGB
+        3 -> "FF${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}" // #RGB
+        4 -> "${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}" // #ARGB
         6 -> "FF$hex" // #RRGGBB
         8 -> hex // #AARRGGBB
-        else -> return 0
+        else -> throw IllegalArgumentException(color)
       }
 
-      return fullHex.toLongOrNull(16)?.toInt() ?: 0
+      return fullHex.toLongOrNull(16)?.toInt() ?: throw IllegalArgumentException(color)
     }
   }
 }

@@ -1,5 +1,5 @@
 // "Add setter" "true"
-// K2_ERROR: Property must be initialized.
+// K2_ERROR: MUST_BE_INITIALIZED
 class Test {
     var x: Int<caret>
         get() {

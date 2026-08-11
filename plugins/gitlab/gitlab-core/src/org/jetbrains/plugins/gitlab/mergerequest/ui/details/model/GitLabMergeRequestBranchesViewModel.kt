@@ -52,11 +52,11 @@ internal class GitLabMergeRequestBranchesViewModel(
     .combine(mergeRequest.details) { _, details ->
       val sourceRemote = details.getSourceRemoteDescriptor(serverPath)
       if (sourceRemote != null) {
-        GitRemoteBranchesUtil.isRemoteBranchCheckedOut(gitRemote.repository, sourceRemote, details.sourceBranch)
+        GitRemoteBranchesUtil.testRemoteBranchCheckedOut(gitRemote.repository, sourceRemote, details.sourceBranch)
       }
       else {
         val specialRef = details.getSpecialRemoteBranchForHead(gitRemote.remote)
-        GitRemoteBranchesUtil.isRemoteBranchCheckedOut(gitRemote.repository, specialRef)
+        GitRemoteBranchesUtil.testRemoteBranchCheckedOut(gitRemote.repository, specialRef)
       }
     }.modelFlow(cs, thisLogger())
 

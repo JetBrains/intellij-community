@@ -16,13 +16,16 @@ import java.util.concurrent.ConcurrentHashMap
 internal class IntelliJExtensionSupport : ExtensionSupport {
   private val languageExtensionCache = ConcurrentHashMap<ExtensionPointKey<*>, LanguageExtension<*>>()
 
-  override fun <T : Any> getExtensions(extensionPoint: ExtensionPointKey<T>): List<T> {
-    return ExtensionPointName<T>(extensionPoint.name).extensionList
+  override fun <T : Any> getExtensions(extensionPoint: ExtensionPointKey<T>): Sequence<T> {
+    return ExtensionPointName<T>(extensionPoint.name).extensionList.asSequence()
   }
 
-  override fun <T : Any> getLanguageExtensions(extensionPoint: ExtensionPointKey<T>, language: SyntaxLanguage): List<T> {
-    val languageExtension = languageExtensionCache.computeIfAbsent(extensionPoint) { ext -> LanguageExtension<T>(ext.name) } as LanguageExtension<T>
+  override fun <T : Any> getLanguageExtensions(extensionPoint: ExtensionPointKey<T>, language: SyntaxLanguage): Sequence<T> {
+    @Suppress("UNCHECKED_CAST")
+    val languageExtension = languageExtensionCache.computeIfAbsent(extensionPoint) { ext ->
+      LanguageExtension<T>(ext.name)
+    } as LanguageExtension<T>
     val ijLanguage = language.asIntelliJLanguage()
-    return languageExtension.allForLanguage(ijLanguage)
+    return languageExtension.allForLanguage(ijLanguage).asSequence()
   }
 }

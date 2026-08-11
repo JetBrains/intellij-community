@@ -302,7 +302,7 @@ def _get_source_django_18_or_lower(frame):
             if IS_DJANGO18:
                 # The debug setting was changed since Django 1.8
                 pydev_log.error_once(
-                    "WARNING: Template path is not available. Set the 'debug' option in the OPTIONS of a DjangoTemplates " "backend."
+                    "WARNING: Template path is not available. Set the 'debug' option in the OPTIONS of a DjangoTemplates backend."
                 )
             else:
                 # The debug setting for Django < 1.8

@@ -2,15 +2,10 @@
 package com.intellij.workspaceModel.codegen.impl.writer.extensions
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
-import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
-import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
-import com.intellij.workspaceModel.codegen.impl.writer.Internal
-import com.intellij.workspaceModel.codegen.impl.writer.K1Deprecation
 import com.intellij.workspaceModel.codegen.impl.writer.QualifiedName
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntity
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntityWithSymbolicId
 import com.intellij.workspaceModel.codegen.impl.writer.fqn
-import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdFieldName
 
 internal val ObjClass<*>.requiresCompatibility: Boolean
   get() = name in compatibilityEntities[module.name].orEmpty()
@@ -46,52 +41,6 @@ internal val ObjClass<*>.isStandardInterface: Boolean
 
 internal val ObjClass<*>.allSuperClasses: List<ObjClass<*>>
   get() = superTypes.filterIsInstance<ObjClass<*>>().flatMapTo(LinkedHashSet()) { it.allSuperClasses + listOf(it) }.toList()
-
-
-internal val ObjClass<*>.allFieldsWithOwnExtensions: List<ObjProperty<*, *>>
-  get() = allFieldsWithComputable + ownExtensions.filterNot { it.valueType.isEntityRef(it) }
-
-internal val ObjClass<*>.allFields: List<OwnProperty<*, *>>
-  get() {
-    val fieldsByName = LinkedHashMap<String, OwnProperty<*, *>>()
-    collectFields(this, fieldsByName, false)
-    return fieldsByName.values.toList()
-  }
-
-internal val ObjClass<*>.allFieldsWithComputable: List<OwnProperty<*, *>>
-  get() {
-    val fieldsByName = LinkedHashMap<String, OwnProperty<*, *>>()
-    collectFields(this, fieldsByName, true)
-    return fieldsByName.values.toList()
-  }
-
-internal val ObjClass<*>.additionalAnnotations: List<String>
-  get() {
-    return annotations.mapNotNull {
-      when (it.fqName) {
-        Internal.decoded -> "@${Internal}"
-        K1Deprecation.decoded -> "@${K1Deprecation}"
-        else -> null
-      }
-    }
-  }
-
-private fun collectFields(objClass: ObjClass<*>, fieldsByName: MutableMap<String, OwnProperty<*, *>>, withComputable: Boolean) {
-  for (superType in objClass.superTypes) {
-    if (superType is ObjClass<*>) {
-      collectFields(superType, fieldsByName, withComputable)
-    }
-  }
-  for (field in objClass.fields) {
-    if (withComputable
-        || field.valueKind !is ObjProperty.ValueKind.Computable
-        || field.name == symbolicIdFieldName // symbolicId is a computable field, but still we'd like to know its type
-    ) {
-      fieldsByName.remove(field.name)
-      fieldsByName[field.name] = field
-    }
-  }
-}
 
 
 internal val ObjClass<*>.builderWithTypeParameter: Boolean

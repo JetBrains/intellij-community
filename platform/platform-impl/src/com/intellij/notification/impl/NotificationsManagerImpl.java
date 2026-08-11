@@ -1282,6 +1282,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
+  @ApiStatus.Internal
   public static class DropDownAction extends LinkLabel<Void> {
     public DropDownAction(@NlsContexts.LinkLabel String text, @Nullable LinkListener<Void> listener) {
       super(text, null, listener);

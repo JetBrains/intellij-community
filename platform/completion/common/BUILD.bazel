@@ -1,8 +1,16 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.platform.completion.common` start
+jps_test(
+    name = "common-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":common-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.completion.common.tests`
+
+### auto-generated section `build intellij.platform.completion.common` start
 jvm_library(
     name = "common",
     srcs = glob(
@@ -21,8 +29,9 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//platform/kernel/rpc",
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/kernel/shared:kernel",
         "//platform/lang-impl",
         "//platform/core-api:core",
@@ -50,6 +59,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":common",
+        "//platform/kernel/rpc:rpc_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/core-api:core_test_lib",
@@ -76,7 +87,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.completion.common` end
 
 ### auto-generated section `build intellij.platform.completion.common.tests` start
-
 jvm_library(
     name = "common-tests",
     srcs = glob(
@@ -112,7 +122,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/kernel/shared:kernel",
         "//platform/kernel/shared:kernel_test_lib",
         "//platform/lang-impl",
@@ -151,11 +162,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.completion.common.tests` end
-
-### auto-generated section `test intellij.platform.completion.common.tests` start
-
-jps_test(
-    name = "common-tests_test",
-    runtime_deps = [":common-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.completion.common.tests` end

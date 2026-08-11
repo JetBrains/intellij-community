@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.buildScripts.licenses` start
-
 jvm_library(
     name = "licenses",
     srcs = glob(
@@ -17,7 +16,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//libraries/jackson3/jackson:libraries-jackson3",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
     ],
 )
@@ -35,6 +34,7 @@ jvm_library(
         # do not sort,
         ":licenses",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.licenses` end

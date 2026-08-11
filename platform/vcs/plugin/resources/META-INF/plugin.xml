@@ -1,0 +1,37 @@
+<!--suppress SplitModeMixedDependencies -->
+<!--suppress SplitModeImplicitModuleKind, AllContentModulesOptionalLoadingRule -->
+<!--suppress PluginXmlPluginLogo, AllContentModulesOptionalLoadingRule -->
+<idea-plugin>
+  <id>intellij.vcs.plugin</id>
+  <name>Version Control</name>
+  <description><![CDATA[
+    Provides the core version control support shared by all VCS integrations: the Commit and Local Changes views,
+    the VCS Log, file history, shelving, annotations, and comparison of revisions.
+    <br/>
+    Individual integrations, such as Git, Subversion, and Mercurial, build on top of this plugin.
+  ]]></description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.impl.exec"/>
+    <module name="intellij.platform.vcs.impl.debugger"/>
+    <module name="intellij.platform.vcs.impl.lang"/>
+    <module name="intellij.platform.vcs.impl.lang.actions"/>
+    <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.vcs.log.impl"/>
+    <!-- Keep public: this shared SQLite module is also depended on by VCS Log impl and Qodana. -->
+    <module name="intellij.platform.sqlite"/>
+    <!-- Required because `intellij.platform.vcs.log` is required and has a compile dependency on the graph API module. -->
+    <module name="intellij.platform.vcs.log.graph"/>
+    <module name="intellij.platform.vcs.log.graph.impl"/>
+    <module name="intellij.platform.vcs.dvcs"/>
+    <module name="intellij.platform.vcs.dvcs.impl"/>
+
+    <!-- Ultimate-only modules, ignored on CE build -->
+    <module name="intellij.platform.vcs.common.split"/>
+    <module name="intellij.platform.vcs.backend.split"/>
+    <module name="intellij.platform.vcs.impl.frontend"/>
+    <module name="intellij.platform.vcs.frontend.split"/>
+    <module name="intellij.platform.vcs.protocol.split.generated"/>
+  </content>
+</idea-plugin>

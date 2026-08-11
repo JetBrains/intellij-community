@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.lang` start
-
 jvm_library(
     name = "lang",
     srcs = glob(
@@ -28,6 +27,7 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-api:ide",
+        "//platform/testIntegration",
         "//jps/model-api:model",
         "//platform/lang-core",
         "//platform/lvcs-api:lvcs",
@@ -76,6 +76,7 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/platform-api:ide_test_lib",
+        "//platform/testIntegration:testIntegration_test_lib",
         "//jps/model-api:model_test_lib",
         "//platform/lang-core:lang-core_test_lib",
         "//platform/lvcs-api:lvcs_test_lib",
@@ -84,7 +85,8 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "@lib//:jmock",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//libraries/hamcrest",
         "//libraries/hamcrest:hamcrest_test_lib",
         "//platform/util-ex:util-ex_test_lib",

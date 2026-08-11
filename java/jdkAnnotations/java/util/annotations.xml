@@ -4058,6 +4058,9 @@
       <val name="sourceIsContainer" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.Map V getOrDefault(java.lang.Object, V) 1'>
+    <annotation name='org.jetbrains.annotations.UnknownNullability'/>
+  </item>
   <item name='java.util.Map V merge(K, V, java.util.function.BiFunction&lt;? super V,? super V,? extends V&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
@@ -5280,4 +5283,3 @@
     </annotation>
   </item>
 </root>
-

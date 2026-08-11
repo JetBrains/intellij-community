@@ -1,5 +1,5 @@
 // "Create parameter 's'" "true"
-// K2_ERROR: No parameter with name 's' found.
+// K2_ERROR: NAMED_PARAMETER_NOT_FOUND
 
 fun foo(n: Int) {
 

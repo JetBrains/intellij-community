@@ -1,8 +1,15 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build intellij.platform.buildScripts` start
+exports_files(
+    [
+        "tools/mac/scripts/makedmg.sh",
+        "tools/mac/scripts/makedmg.py",
+    ],
+    visibility = ["//visibility:public"],
+)
 
+### auto-generated section `build intellij.platform.buildScripts` start
 create_kotlinc_options(
     name = "custom_build-scripts",
     opt_in = [
@@ -84,7 +91,7 @@ jvm_library(
         "//platform/util/zip",
         "//platform/runtime/product",
         "@lib//:okhttp",
-        "@lib//:zstd-jni",
+        "//libraries/zstd-jni",
         "//platform/util/rt-java8",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//libraries/kotlinx/coroutines/core",
@@ -118,6 +125,7 @@ jvm_library(
         "@community//build:zip",
         "@lib//:com-jetbrains-fus-reporting-fus-api",
         "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        "@lib//:jetbrains-fus-reporting-api-jvm",
         "@lib//:platform-build_scripts-netty",
         "@lib//:platform-build_scripts-jetbrains-intellij-deps-coverage-reporter",
         "//libraries/ktor/client",
@@ -150,7 +158,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":build-scripts",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//libraries/commons/cli:cli_test_lib",
         "//platform/build-scripts/downloader:downloader_test_lib",
         "//libraries/commons/compress:compress_test_lib",
@@ -187,6 +196,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//platform/util/zip:zip_test_lib",
         "//platform/runtime/product:product_test_lib",
+        "//libraries/zstd-jni:zstd-jni_test_lib",
         "//platform/util/rt-java8:rt-java8_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",

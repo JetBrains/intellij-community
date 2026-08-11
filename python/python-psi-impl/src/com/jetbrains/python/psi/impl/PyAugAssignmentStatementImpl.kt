@@ -15,12 +15,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyAugAssignmentStatementImpl(astNode: ASTNode) : PyElementImpl(astNode), PyAugAssignmentStatement {
 
-  override val assignmentTarget: PyTargetExpression = object : PyTargetExpressionImpl(firstChild.node) {
-    override fun findAssignedValue(): PyExpression {
-      return this@PyAugAssignmentStatementImpl
-    }
-  }
-
   override fun acceptPyVisitor(pyVisitor: PyElementVisitor) {
     pyVisitor.visitPyAugAssignmentStatement(this)
   }
@@ -45,6 +39,8 @@ class PyAugAssignmentStatementImpl(astNode: ASTNode) : PyElementImpl(astNode), P
   }
 
   override fun getArguments(resolvedCallee: PyCallable?): List<PyExpression> {
-    return listOf(if (isRightOperator(resolvedCallee)) target else value!!)
+    // `value` may be null for an incomplete statement (e.g. `x +=` with no right-hand side),
+    // mirror PyBinaryExpression and return an empty list instead of throwing (PY-90019).
+    return listOfNotNull(if (isRightOperator(resolvedCallee)) target else value)
   }
 }

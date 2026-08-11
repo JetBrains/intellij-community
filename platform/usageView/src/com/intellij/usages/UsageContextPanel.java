@@ -9,6 +9,7 @@ import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.JComponent;
 import java.util.List;
@@ -19,10 +20,10 @@ import java.util.List;
  */
 public interface UsageContextPanel extends Disposable {
   // usage selection changes, panel should update its view for the newly select usages
-  void updateLayout(@NotNull Project project, @Nullable("null means there are no usages to show") List<? extends UsageInfo> infos);
+  void updateLayout(@NotNull Project project, @Nullable("null means there are no usages to show") @Unmodifiable List<? extends UsageInfo> infos);
 
   @ApiStatus.Internal
-  default void updateLayout(@NotNull Project project, @Nullable("null means there are no usages to show") List<? extends UsageInfo> infos,
+  default void updateLayout(@NotNull Project project, @Nullable("null means there are no usages to show") @Unmodifiable List<? extends UsageInfo> infos,
                     boolean severalFilesSelected) {
     updateLayout(project, infos);
   }

@@ -9,7 +9,7 @@ public class ExceptionInStreamWithPrimitiveResult {
   }
 
   private static void check() {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     final int sum = IntStream.of(1, 2, 3, 4).peek(x -> {
       throw new RuntimeException();
     }).reduce(0, (l, r) -> l + r);

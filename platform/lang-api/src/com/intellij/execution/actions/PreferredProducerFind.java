@@ -5,7 +5,6 @@ package com.intellij.execution.actions;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ConfigurationFromContextWrapper;
@@ -161,9 +160,11 @@ public final class PreferredProducerFind {
           String locationDisplayName = alternativeLocationsInfo.getProvider().getLocationDisplayName(alternativeLocation, originalLocation);
           configurationFromContext.setAlternativeLocationDisplayName(locationDisplayName);
           RunConfiguration configuration = configurationFromContext.getConfiguration();
-          if (configuration instanceof LocatableConfigurationBase && ((LocatableConfiguration)configuration).isGeneratedName()) {
+          if (locationDisplayName != null &&
+              configuration instanceof LocatableConfigurationBase<?> locatableConfiguration &&
+              locatableConfiguration.isGeneratedName()) {
             configuration.setName(configuration.getName() + " " + locationDisplayName);
-            ((LocatableConfigurationBase<?>)configuration).setNameChangedByUser(true);
+            locatableConfiguration.setNameChangedByUser(true);
           }
         }
 

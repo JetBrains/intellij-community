@@ -72,6 +72,18 @@ public final class DataExtractorFactories {
       .toList();
   }
 
+  /** Returns all extractor factories (built-ins, CSV formats, scripts) in the same order as the internal {@code find} method. */
+  public static @NotNull List<DataExtractorFactory> getAllExtractorFactories(
+    @Nullable CsvFormatsSettings settings,
+    @Nullable BiConsumer<String, Project> installPlugin
+  ) {
+    List<DataExtractorFactory> result = new ArrayList<>();
+    result.addAll(getBuiltInFactories());
+    result.addAll(getCsvFormats(settings));
+    result.addAll(getExtractorScripts(ExtractorsHelper.getInstance(null), installPlugin));
+    return result;
+  }
+
   public static @NotNull List<DataAggregatorFactory> getAggregatorScripts(@NotNull ExtractorsHelper provider, @Nullable BiConsumer<String, Project> installPlugin) {
     try (AccessToken ignore = SlowOperations.knownIssue("DBE-19294, EA-662240")) {
       return JBIterable.from(ExtractorScripts.getAggregatorScriptFiles())

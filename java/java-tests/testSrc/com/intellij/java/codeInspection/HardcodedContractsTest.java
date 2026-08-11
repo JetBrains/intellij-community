@@ -18,6 +18,7 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.idea.TestFor;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -126,6 +127,11 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
 
   public void testAssertJAssert() {
     addJSpecifyNullMarked(myFixture);
+    checkHighlighting();
+  }
+
+  @TestFor(issues = "IDEA-389877")
+  public void testAssertJExtracting() {
     checkHighlighting();
   }
 

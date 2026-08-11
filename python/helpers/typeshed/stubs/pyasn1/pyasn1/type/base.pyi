@@ -1,5 +1,6 @@
 from _typeshed import Incomplete, Unused
-from typing import NoReturn, final, type_check_only
+from typing import final, type_check_only
+from typing_extensions import Never
 
 from pyasn1.type import constraint, namedtype
 from pyasn1.type.tag import TagSet
@@ -42,7 +43,7 @@ class NoValue:
     def __getattr__(self, attr) -> None: ...
     # def __new__.<locals>.getPlug.<locals>.plug
     @type_check_only
-    def plug(self, *args: Unused, **kw: Unused) -> NoReturn: ...
+    def plug(self, *args: Unused, **kw: Unused) -> Never: ...
     # Magic methods assigned dynamically, priority from right to left: plug < str < int < list < dict
     __abs__ = int.__abs__
     __add__ = list.__add__

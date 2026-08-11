@@ -174,7 +174,8 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
   private static ExcludedEntriesConfigurable createExcludedConfigurable(@NotNull Project project) {
     var index = project.isDefault() ? null : ProjectRootManager.getInstance(project).getFileIndex();
     var descriptor = new FileChooserDescriptor(true, true, false, false, false, true)
-      .withFileFilter(file -> index == null || !index.isExcluded(file));
+      .withFileFilter(file -> index == null || !index.isExcluded(file))
+      .withEnvironmentRestricted(true);
 
     List<VirtualFile> allContentRoots = new ArrayList<>();
     for (final Module module : ModuleManager.getInstance(project).getModules()) {

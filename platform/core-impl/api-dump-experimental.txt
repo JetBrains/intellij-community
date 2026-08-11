@@ -20,33 +20,28 @@
 *f:com.intellij.ide.plugins.PluginDetailsService$Companion
 - f:getInstance():com.intellij.ide.plugins.PluginDetailsService
 *:com.intellij.ide.plugins.PluginDetailsService$ModuleDependencyInfo
-- a:isOptional():Z
 *f:com.intellij.ide.plugins.PluginDetailsService$ModuleDependencyInfo$OnModule
 - com.intellij.ide.plugins.PluginDetailsService$ModuleDependencyInfo
-- <init>(java.lang.String,Z):V
 - f:getName():java.lang.String
-- isOptional():Z
 *f:com.intellij.ide.plugins.PluginDetailsService$ModuleDependencyInfo$OnPlugin
 - com.intellij.ide.plugins.PluginDetailsService$ModuleDependencyInfo
-- <init>(com.intellij.openapi.extensions.PluginId,Z):V
 - f:getPluginId():com.intellij.openapi.extensions.PluginId
-- isOptional():Z
 *f:com.intellij.ide.plugins.PluginDetailsService$PluginDetails
-- <init>(com.intellij.openapi.extensions.PluginId,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.plugins.PluginDetailsService$PluginVendorInfo,java.util.Collection,java.util.Collection,Z):V
 - f:getChangeNotes():java.lang.String
 - f:getDependencies():java.util.Collection
 - f:getDescription():java.lang.String
 - f:getId():com.intellij.openapi.extensions.PluginId
 - f:getModules():java.util.Collection
 - f:getName():java.lang.String
+- f:getReleaseDate():java.time.LocalDate
+- f:getReleaseVersion():I
 - f:getVendor():com.intellij.ide.plugins.PluginDetailsService$PluginVendorInfo
 - f:getVersion():java.lang.String
 - f:isBuiltIn():Z
+- f:isLicenseOptional():Z
 *f:com.intellij.ide.plugins.PluginDetailsService$PluginModuleInfo
-- <init>(java.lang.String):V
 - f:getName():java.lang.String
 *f:com.intellij.ide.plugins.PluginDetailsService$PluginVendorInfo
-- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
 - f:getEmail():java.lang.String
 - f:getName():java.lang.String
 - f:getOrganization():java.lang.String
@@ -89,6 +84,10 @@ a:com.intellij.openapi.application.ex.ApplicationInfoEx
 a:com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 - com.intellij.openapi.fileEditor.FileDocumentManager
 - *s:isTrackable(com.intellij.openapi.vfs.VirtualFile):Z
+a:com.intellij.psi.AbstractFileViewProvider
+- com.intellij.openapi.util.UserDataHolderBase
+- com.intellij.psi.FileViewProvider
+- *p:cacheContentInVersionedEnvironment():Z
 *f:com.intellij.psi.DummyBlockType
 - sf:DUMMY_BLOCK:com.intellij.psi.tree.IElementType
 - <init>():V

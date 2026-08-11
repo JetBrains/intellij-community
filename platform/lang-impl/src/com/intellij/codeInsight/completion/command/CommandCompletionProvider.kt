@@ -27,6 +27,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement
+import com.intellij.icons.AllIcons.Actions.AiIntentionBulb
 import com.intellij.icons.AllIcons.Actions.IntentionBulbGrey
 import com.intellij.icons.AllIcons.Actions.Lightning
 import com.intellij.idea.AppMode
@@ -34,8 +35,8 @@ import com.intellij.injected.editor.DocumentWindow
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.FoldRegion
@@ -67,6 +68,7 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ProcessingContext
 import com.intellij.util.Processor
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.Unmodifiable
 
 private const val STANDARD_MEAN_PRIORITY = 100.0
@@ -76,6 +78,12 @@ private const val DEFAULT_PRIORITY = -150.0
 private val CHAR_TO_FILTER = setOf('\'', '"', '_', '-')
 
 private val CHAR_TO_FILTER_WITH_SPACE = setOf('\'', '"', '_', '-', ' ')
+
+/**
+ * Tag automatically attached to AI-backed commands, so that typing `ai` finds all of them at once.
+ * A case variant declared by a command itself is replaced with this exact spelling.
+ */
+private const val AI_COMMAND_TAG: @NonNls String = "AI"
 
 /**
  * Internal provider for handling command completion in IntelliJ-based editors.
@@ -134,7 +142,7 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     var isReadOnly = false
     var isInjected = false
     var offset = parameters.editor.caretModel.offset
-    val targetEditor = editor.getUserData(ORIGINAL_EDITOR)
+    val targetEditor = NonWriteAccessCommandCompletionSupport.originalEditor(editor)
     var originalFile = parameters.originalFile
     if (targetEditor != null) {
       isReadOnly = true
@@ -265,7 +273,7 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
 
   private fun enableFastShown(parameters: CompletionParameters) {
     if (Registry.`is`("ide.completion.command.faster.paint")) {
-      if (!GroupedCompletionContributor.isGroupEnabledInApp()) return
+      if (!GroupedCompletionContributor.isGroupEnabled(parameters.editor)) return
       if (!contributor.groupIsEnabled(parameters)) return
       val completionProgressIndicator = parameters.process as? CompletionProgressIndicator
       val count = completionProgressIndicator?.lookup?.list?.model?.size ?: 0
@@ -311,6 +319,19 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     val synonyms = command.synonyms.toMutableList()
     synonyms.remove(lookupString)
     synonyms.addFirst(lookupString)
+    // the icon is the only marker of an AI-backed command so far, there is no declarative API for it yet
+    if (command.icon === AiIntentionBulb) {
+      val aiTagIndex = synonyms.indexOfFirst { it.equals(AI_COMMAND_TAG, ignoreCase = true) }
+      if (aiTagIndex == -1) {
+        synonyms.add(AI_COMMAND_TAG)
+      }
+      else {
+        // a command may declare its own case variant ('Ai'); replace it with the standard tag,
+        // so that all AI commands are found by exactly the same one
+        synonyms[aiTagIndex] = AI_COMMAND_TAG
+        synonyms.removeAll { it != AI_COMMAND_TAG && it.equals(AI_COMMAND_TAG, ignoreCase = true) }
+      }
+    }
     if (customPrefixMatcher != null) {
       val element: LookupElement = createElement(
         lookupString = lookupString,
@@ -447,12 +468,9 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
         ProgressManager.checkCanceled()
       }
       catch (e: Exception) {
-        if (e is ControlFlowException) {
-          throw e
-        }
+        rethrowControlFlowException(e)
         if (e !is CommandCompletionUnsupportedOperationException) {
           //it was rethrown before
-          @Suppress("IncorrectCancellationExceptionHandling")
           LOG.error(e)
         }
       }
@@ -671,7 +689,7 @@ internal fun findActualIndex(suffix: String, text: CharSequence, offset: Int): I
 }
 
 internal fun findCommandCompletionType(
-  factory: CommandCompletionFactory,
+  factory: CommandCompletionSuffixProvider,
   isNonWritten: Boolean,
   offset: Int,
   editor: Editor,
@@ -724,6 +742,8 @@ internal class LimitedToleranceMatcher(
     val allLookupStrings = this.currentTags.ifEmpty { element.allLookupStrings }
     if (!matched(allLookupStrings)) return false
     if (this.otherTags.isEmpty()) return true
+    val fullyCovered = this.otherTags.firstOrNull { it.equals(prefix, ignoreCase = true) }
+    if (fullyCovered != null) return allLookupStrings.contains(fullyCovered)
     val indexOfFirst = this.otherTags.indexOfFirst { allLookupStrings.contains(it) }
     if (indexOfFirst <= 0) return true
     if (matched(this.otherTags.subList(0, indexOfFirst))) return false

@@ -65,7 +65,7 @@ public interface MarkupModelEx extends MarkupModel {
    */
   @NotNull
   default MarkupIterator<RangeHighlighterEx> overlappingErrorStripeIterator(int startOffset, int endOffset) {
-    return new FilteringMarkupIterator<>(overlappingIterator(startOffset, endOffset), h->h.getErrorStripeMarkColor(null) != null);
+    return FilteringMarkupIterator.create(overlappingIterator(startOffset, endOffset), h-> h.getErrorStripeMarkColor(null) != null);
   }
   /**
    * makes an iterator which enumerates only {@link RangeHighlighterEx}s shown on the gutter.
@@ -73,7 +73,7 @@ public interface MarkupModelEx extends MarkupModel {
    */
   @NotNull
   default MarkupIterator<RangeHighlighterEx> overlappingGutterIterator(int startOffset, int endOffset) {
-    return new FilteringMarkupIterator<>(overlappingIterator(startOffset, endOffset), h->h.isRenderedInGutter());
+    return FilteringMarkupIterator.create(overlappingIterator(startOffset, endOffset), h->h.isRenderedInGutter());
   }
 
   // optimization: creates highlighter and fires only one event: highlighterCreated

@@ -58,6 +58,14 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
     myErrors = errors;
   }
 
+  public JsonSchemaAnnotatorChecker(@NotNull Project project,
+                                     @NotNull JsonComplianceCheckerOptions options,
+                                     @NotNull Map<PsiElement, JsonValidationError> errors) {
+    myProject = project;
+    myOptions = options;
+    myErrors = errors;
+  }
+
   @Override
   public @NotNull Map<PsiElement, JsonValidationError> getErrors() {
     return myErrors;

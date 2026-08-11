@@ -21,6 +21,8 @@ public final class RuntimeModuleId {
   public static final String LEGACY_JPS_MODULE_TESTS_NAMESPACE_SUFFIX = "$legacy_jps_module_tests";
   @ApiStatus.Internal
   public static final String LEGACY_JPS_LIBRARY_NAMESPACE_SUFFIX = "$legacy_jps_library";
+  @ApiStatus.Internal
+  public static final String PLUGIN_DESCRIPTOR_MODULE_NAMESPACE = "$plugin_descriptor_module";
   private final String myName;
   private final String myNamespace;
 
@@ -58,6 +60,15 @@ public final class RuntimeModuleId {
    */
   public static @NotNull RuntimeModuleId contentModule(@NotNull String moduleName, @NotNull String namespace) {
     return new RuntimeModuleId(moduleName, namespace);
+  }
+
+  /**
+   * Creates ID for a runtime module corresponding to a plugin descriptor for the plugin with the given {@code pluginId}.
+   * It's used to represent a dependency on a plugin (or a plugin alias) coming from XML configuration files.
+   */
+  @ApiStatus.Internal
+  public static @NotNull RuntimeModuleId pluginDescriptorModule(@NotNull String pluginId) {
+    return new RuntimeModuleId(pluginId, PLUGIN_DESCRIPTOR_MODULE_NAMESPACE);
   }
 
   @ApiStatus.Internal

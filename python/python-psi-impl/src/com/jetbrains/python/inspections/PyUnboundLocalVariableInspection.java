@@ -155,21 +155,20 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
           if (resolved != null && !PyUtil.inSameFile(node, resolved)) {
             return;
           }
-          registerProblem(node, PyPsiBundle.message("INSP.unbound.name.undefined", name),
+          registerProblem(node, PyPsiBundle.problemMessage("INSP.unbound.name.undefined", name),
                           effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
         else if (scope.isGlobal(name)) {
-          registerProblem(node, PyPsiBundle.message("INSP.unbound.name.undefined", name),
+          registerProblem(node, PyPsiBundle.problemMessage("INSP.unbound.name.undefined", name),
                           effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
         else if (isNonLocal) {
-          registerProblem(node, PyPsiBundle.message("INSP.unbound.local.variable", name),
+          registerProblem(node, PyPsiBundle.problemMessage("INSP.unbound.local.variable", name),
                           effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
         else {
-          registerProblem(node, PyPsiBundle.message("INSP.unbound.local.variable", node.getName()),
+          registerProblem(node, PyPsiBundle.problemMessage("INSP.unbound.local.variable", node.getName()),
                           effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING),
-                          null,
                           new AddGlobalQuickFix());
         }
       }
@@ -233,7 +232,7 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
         final String name = var.getName();
         final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(var, name);
         if (owner == null || owner instanceof PyFile) {
-          registerProblem(var, PyPsiBundle.message("INSP.unbound.nonlocal.variable", name),
+          registerProblem(var, PyPsiBundle.problemMessage("INSP.unbound.nonlocal.variable", name),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }
@@ -241,7 +240,7 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
 
     private void registerLargeFunction(ScopeOwner owner) {
       registerProblem((owner instanceof PyFunction) ? ((PyFunction)owner).getNameIdentifier() : owner,
-                      PyPsiBundle.message("INSP.unbound.function.too.large", owner.getName()),
+                      PyPsiBundle.problemMessage("INSP.unbound.function.too.large", owner.getName()),
                       ProblemHighlightType.WEAK_WARNING);
     }
   }

@@ -150,7 +150,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
       public @NotNull AccessibleContext getAccessibleContext() {
         AccessibleContext acc = super.getAccessibleContext();
         if (column == CURRENT_ASTERISK_COL) {
-          acc.setAccessibleName(getAccessibleNameForRow(list, row, isOriginUsage));
+          putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, getAccessibleNameForRow(list, row, isOriginUsage));
         }
         return acc;
       }
@@ -194,8 +194,9 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
         SpeedSearchUtil.applySpeedSearchHighlighting(list, textChunks, false, isSelected);
 
         panel.add(textChunks);
-        panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.LINE_NUMBER_COL",
-                                                                         textChunks.getAccessibleContext().getAccessibleName()));
+        panel.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY,
+                                IdeBundle.message("ShowUsagesTableCellRenderer.accessible.LINE_NUMBER_COL",
+                                                  textChunks.getAccessibleContext().getAccessibleName()));
       }
       case USAGE_TEXT_COL -> {
         SimpleColoredComponent textChunks = new SimpleColoredComponent();
@@ -211,8 +212,9 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
         SpeedSearchUtil.applySpeedSearchHighlighting(list, textChunks, false, isSelected);
 
         panel.add(textChunks);
-        panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.USAGE_TEXT_COL",
-                                                                         textChunks.getAccessibleContext().getAccessibleName()));
+        panel.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY,
+                                IdeBundle.message("ShowUsagesTableCellRenderer.accessible.USAGE_TEXT_COL",
+                                                  textChunks.getAccessibleContext().getAccessibleName()));
 
         if (isOriginUsage) {
           SimpleColoredComponent origin;
@@ -235,8 +237,8 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
             origin.appendTextPadding(JBUIScale.scale(45));
           }
           panel.add(origin, BorderLayout.EAST);
-          panel.getAccessibleContext()
-            .setAccessibleName(panel.getAccessibleContext().getAccessibleName() + ", " + origin.getAccessibleContext().getAccessibleName());
+          panel.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY,
+                                  panel.getAccessibleContext().getAccessibleName() + ", " + origin.getAccessibleContext().getAccessibleName());
         }
       }
       default -> throw new IllegalStateException("unknown column: " + column);
@@ -383,7 +385,8 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     SpeedSearchUtil.applySpeedSearchHighlighting(table, renderer, false, isSelected);
     renderer.setMaximumSize(renderer.getPreferredSize());
     panel.add(renderer);
-    panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.FILE_GROUP_COL", renderer.getAccessibleContext().getAccessibleName()));
+    panel.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY,
+                            IdeBundle.message("ShowUsagesTableCellRenderer.accessible.FILE_GROUP_COL", renderer.getAccessibleContext().getAccessibleName()));
   }
 
   private static boolean isPath(String text) {

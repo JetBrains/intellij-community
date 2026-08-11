@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,55 +41,43 @@ import java.util.concurrent.ConcurrentHashMap
 
 interface GitLabMergeRequestChangeListViewModel
   : CodeReviewChangeListViewModel.WithDetails,
-    CodeReviewChangeListViewModel.WithGrouping {
-  val isOnLatest: Boolean
+    CodeReviewChangeListViewModel.WithGrouping
 
-  fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean)
-}
+/**
+ * A change list of the cumulative merge request diff.
+ *
+ * The viewed state is persisted per file path and the sha of the latest commit touching that path, so it only ever
+ * describes the cumulative diff. A commit-scoped change list shows a different revision of the same file, so it does not
+ * expose the viewed state at all - only this view model implements [CodeReviewChangeListViewModel.WithViewedState].
+ */
+interface GitLabMergeRequestCumulativeChangeListViewModel
+  : GitLabMergeRequestChangeListViewModel,
+    CodeReviewChangeListViewModel.WithViewedState
 
-internal class GitLabMergeRequestChangeListViewModelImpl(
+internal abstract class GitLabMergeRequestChangeListViewModelBase(
   override val project: Project,
   parentCs: CoroutineScope,
-  private val mergeRequest: GitLabMergeRequest,
-  private val parsedChanges: GitBranchComparisonResult,
+  protected val mergeRequest: GitLabMergeRequest,
+  protected val parsedChanges: GitBranchComparisonResult,
   changeList: CodeReviewChangeList,
 ) : CodeReviewChangeListViewModelBase(parentCs, changeList),
     GitLabMergeRequestChangeListViewModel {
-  private val persistentChangesViewedState = project.service<GitLabPersistentMergeRequestChangesViewedState>()
   private val preferences = project.service<GitLabMergeRequestsPreferences>()
 
   private val _showDiffRequests = MutableSharedFlow<Unit>()
   val showDiffRequests: Flow<Unit> = _showDiffRequests.asSharedFlow()
 
-  override val isOnLatest: Boolean = selectedCommit == null || parsedChanges.commits.size == 1
-
-  override val detailsByChange: StateFlow<Map<RefComparisonChange, CodeReviewChangeDetails>> =
+  protected val discussionsCountByChange: Flow<Map<RefComparisonChange, Int>> =
     combine(
       createUnresolvedDiscussionsPositionsFlow(mergeRequest),
       createUnresolvedDraftsPositionsFlow(mergeRequest),
-      persistentChangesViewedState.updatesFlow.withInitial(Unit),
-    ) { discPos, draftsPos, _ ->
+    ) { discPos, draftsPos ->
       changes.associateWith { change ->
-        val sha = parsedChanges.findLatestCommitWithChangesTo(mergeRequest.gitRemote.repository, change.filePath)
-        val isRead = !isOnLatest || sha?.let {
-          persistentChangesViewedState.isViewed(
-            mergeRequest.serverPath, mergeRequest.projectId, mergeRequest.iid,
-            mergeRequest.gitRemote.repository,
-            change.filePath, it
-          )
-        } ?: false
-
-        val patch = parsedChanges.patchesByChange[change]
-        if (patch == null) {
-          CodeReviewChangeDetails(isRead, 0)
-        }
-        else {
-          //TODO: cache?
-          val discussions = discPos.count { it.mapToLocation(patch) != null } + draftsPos.count { it.mapToLocation(patch) != null }
-          CodeReviewChangeDetails(isRead, discussions)
-        }
+        val patch = parsedChanges.patchesByChange[change] ?: return@associateWith 0
+        //TODO: cache?
+        discPos.count { it.mapToLocation(patch) != null } + draftsPos.count { it.mapToLocation(patch) != null }
       }
-    }.stateIn(cs, SharingStarted.Eagerly, emptyMap())
+    }
 
   override val grouping: StateFlow<Set<String>> = preferences.changesGroupingState
 
@@ -100,6 +89,44 @@ internal class GitLabMergeRequestChangeListViewModelImpl(
 
   // TODO: separate diff
   override fun showDiff() = showDiffPreview()
+
+  override fun setGrouping(grouping: Collection<String>) {
+    preferences.changesGrouping = grouping.toSet()
+  }
+}
+
+internal class GitLabMergeRequestCommitChangeListViewModelImpl(
+  project: Project,
+  parentCs: CoroutineScope,
+  mergeRequest: GitLabMergeRequest,
+  parsedChanges: GitBranchComparisonResult,
+  changeList: CodeReviewChangeList,
+) : GitLabMergeRequestChangeListViewModelBase(project, parentCs, mergeRequest, parsedChanges, changeList) {
+  override val detailsByChange: StateFlow<Map<RefComparisonChange, CodeReviewChangeDetails>> =
+    discussionsCountByChange.map { discussionsCount ->
+      discussionsCount.mapValues { (_, discussions) -> CodeReviewChangeDetails(isRead = true, discussions = discussions) }
+    }.stateIn(cs, SharingStarted.Eagerly, emptyMap())
+}
+
+internal class GitLabMergeRequestCumulativeChangeListViewModelImpl(
+  project: Project,
+  parentCs: CoroutineScope,
+  mergeRequest: GitLabMergeRequest,
+  parsedChanges: GitBranchComparisonResult,
+  changeList: CodeReviewChangeList,
+) : GitLabMergeRequestChangeListViewModelBase(project, parentCs, mergeRequest, parsedChanges, changeList),
+    GitLabMergeRequestCumulativeChangeListViewModel {
+  private val persistentChangesViewedState = project.service<GitLabPersistentMergeRequestChangesViewedState>()
+
+  override val detailsByChange: StateFlow<Map<RefComparisonChange, CodeReviewChangeDetails>> =
+    combine(
+      discussionsCountByChange,
+      persistentChangesViewedState.updatesFlow.withInitial(Unit),
+    ) { discussionsCount, _ ->
+      changes.associateWith { change ->
+        CodeReviewChangeDetails(isViewed(change), discussionsCount[change] ?: 0)
+      }
+    }.stateIn(cs, SharingStarted.Eagerly, emptyMap())
 
   override fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean) {
     val filePathsWithShas = changes.mapNotNull { change ->
@@ -116,8 +143,13 @@ internal class GitLabMergeRequestChangeListViewModelImpl(
     )
   }
 
-  override fun setGrouping(grouping: Collection<String>) {
-    preferences.changesGrouping = grouping.toSet()
+  private fun isViewed(change: RefComparisonChange): Boolean {
+    val sha = parsedChanges.findLatestCommitWithChangesTo(mergeRequest.gitRemote.repository, change.filePath) ?: return false
+    return persistentChangesViewedState.isViewed(
+      mergeRequest.serverPath, mergeRequest.projectId, mergeRequest.iid,
+      mergeRequest.gitRemote.repository,
+      change.filePath, sha
+    )
   }
 }
 

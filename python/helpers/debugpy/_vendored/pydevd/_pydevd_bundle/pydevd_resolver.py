@@ -190,6 +190,8 @@ class DefaultResolver:
                     name_as_str = "%r" % (name_as_str,)
 
                 if not used___dict__:
+                    if not hasattr(var, name):
+                        continue
                     attr = getattr(var, name)
                 else:
                     attr = var.__dict__[name]

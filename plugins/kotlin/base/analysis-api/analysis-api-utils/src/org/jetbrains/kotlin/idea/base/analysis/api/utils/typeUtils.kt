@@ -3,13 +3,13 @@ package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.approximateToDenotableSupertypeOrSelf
-import org.jetbrains.kotlin.analysis.api.components.defaultTypeWithStarProjections
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.components.hasCommonSubtypeWith
-import org.jetbrains.kotlin.analysis.api.components.isNullable
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.components.withNullability
+import org.jetbrains.kotlin.analysis.api.types.approximateToDenotableSupertypeOrSelf
+import org.jetbrains.kotlin.analysis.api.types.defaultTypeWithStarProjections
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.hasCommonSubtypeWith
+import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol

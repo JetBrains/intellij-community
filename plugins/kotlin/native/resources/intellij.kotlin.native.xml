@@ -1,0 +1,45 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.projectModel"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Kotlin/Native Def"
+              implementationClass="org.jetbrains.kotlin.ide.konan.NativeDefinitionsFileType"
+              fieldName="INSTANCE"
+              language="KND"
+              extensions="def"/>
+
+    <fileType.fileViewProviderFactory filetype="KNM" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
+    <filetype.stubBuilder filetype="KNM" implementationClass="com.intellij.psi.impl.compiled.ClassFileStubBuilder"/>
+    <filetype.decompiler filetype="KNM" implementationClass="com.intellij.psi.impl.compiled.ClassFileDecompiler"/>
+    <library.type implementation="org.jetbrains.kotlin.ide.konan.NativeLibraryType"/>
+    <!--suppress SplitModeXmlApiUsage -->
+    <lang.parserDefinition language="KND" implementationClass="org.jetbrains.kotlin.ide.konan.NativeDefinitionsParserDefinition"/>
+    <!--suppress SplitModeXmlApiUsage -->
+    <lang.syntaxHighlighterFactory language="KND"
+                                   implementationClass="org.jetbrains.kotlin.ide.konan.NativeDefinitionsSyntaxHighlighterFactory"/>
+    <!--suppress SplitModeXmlApiUsage -->
+    <languageInjector implementation="org.jetbrains.kotlin.ide.konan.CLanguageInjector"/>
+  </extensions>
+</idea-plugin>

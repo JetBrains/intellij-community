@@ -52,10 +52,6 @@ kotlin {
     implementation(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.core.jvm930800474.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
       isTransitive = false
     }
-    implementation(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      isTransitive = false
-      exclude(group = "org.slf4j", module = "slf4j-jdk14")
-    }
     implementation(jps.com.jetbrains.intellij.idea.idea.community.build.zip464377771.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
@@ -66,6 +62,10 @@ kotlin {
     implementation(project(":fleet.build.fs"))
   }
   sourceSets.jvmMain.dependencies {
+    implementation(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      isTransitive = false
+      exclude(group = "org.slf4j", module = "slf4j-jdk14")
+    }
     implementation(jps.com.jetbrains.intellij.platform.util.zip.squashed55996306.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }

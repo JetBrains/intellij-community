@@ -39,6 +39,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.IndexNotReadyException
@@ -839,7 +840,7 @@ private fun handleException(
   actionManager: ActionManager,
   ex: Throwable,
 ) {
-  if (ex is CancellationException) throw ex
+  rethrowControlFlowException(ex)
   if (ex is AwaitSharedData) throw ex
   if (ex is SkipOperation) {
     if (opElement.isNested()) throw ex
@@ -938,6 +939,7 @@ private class AwaitSharedData(val job: Job, message: String) : RuntimeException(
   override fun fillInStackTrace(): Throwable = this
 }
 
+@ApiStatus.Internal
 class SkipOperation(operation: String) : RuntimeException(operation) {
   override fun fillInStackTrace(): Throwable = this
 }

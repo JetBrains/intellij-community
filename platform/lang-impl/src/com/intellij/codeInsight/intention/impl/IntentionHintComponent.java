@@ -20,7 +20,8 @@ import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.actions.ActionsCollector;
-import com.intellij.ide.plugins.DynamicPlugins;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.inlinePrompt.InlinePrompt;
@@ -65,6 +66,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.ui.ExperimentalUI;
@@ -166,7 +168,13 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     myComponentHint = new MyComponentHint(myLightBulbPanel);
 
     EditorUtil.disposeWithEditor(myEditor, this);
-    DynamicPlugins.INSTANCE.onPluginUnload(this, () -> Disposer.dispose(this));
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+        @Override
+        public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          Disposer.dispose(IntentionHintComponent.this);
+        }
+      });
   }
 
   @RequiresEdt
@@ -193,6 +201,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     return showIntentionHint(project, psiFile, editor, showExpanded, icon, popup);
   }
 
+  @ApiStatus.Internal
   @RequiresEdt
   public static @NotNull IntentionHintComponent showIntentionHint(@NotNull Project project,
                                                                   @NotNull PsiFile psiFile,
@@ -253,6 +262,15 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     if (isDisposed() || !isVisible() || editor != myEditor) return false;
     hide();
     return true;
+  }
+
+  /**
+   * @return whether this component was created for the supplied editor;
+   * for a component created for an injected editor, its host editor matches as well
+   */
+  @ApiStatus.Internal
+  public boolean isForEditor(@NotNull Editor editor) {
+    return editor == myEditor || editor == InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
   }
 
   public boolean hasVisibleLightBulbOrPopup() {

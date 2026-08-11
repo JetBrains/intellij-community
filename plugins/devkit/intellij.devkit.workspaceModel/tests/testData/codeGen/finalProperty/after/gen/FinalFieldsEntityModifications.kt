@@ -14,9 +14,8 @@ interface FinalFieldsEntityBuilder: WorkspaceEntityBuilder<FinalFieldsEntity>{
 override var entitySource: EntitySource
 var descriptor: AnotherDataClass
 }
-
 internal object FinalFieldsEntityType : EntityType<FinalFieldsEntity, FinalFieldsEntityBuilder>(){
-override val entityClass: Class<FinalFieldsEntity> get() = FinalFieldsEntity::class.java
+override val entityImplClass: Class<*> get() = FinalFieldsEntityImpl::class.java
 override val entityImplBuilderClass: Class<*> get() = FinalFieldsEntityImpl.Builder::class.java
 operator fun invoke(
 descriptor: AnotherDataClass,
@@ -30,12 +29,10 @@ init?.invoke(builder)
 return builder
 }
 }
-
 fun MutableEntityStorage.modifyFinalFieldsEntity(
 entity: FinalFieldsEntity,
 modification: FinalFieldsEntityBuilder.() -> Unit,
 ): FinalFieldsEntity = modifyEntity(FinalFieldsEntityBuilder::class.java, entity, modification)
-
 @JvmOverloads
 @JvmName("createFinalFieldsEntity")
 fun FinalFieldsEntity(

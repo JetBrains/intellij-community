@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.maven.server` start
-
 jvm_library(
     name = "maven-server",
     srcs = glob(
@@ -17,13 +16,13 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util-rt",
         "//plugins/maven/model",
     ],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util-rt",
         "//platform/util/jdom",
         "//plugins/maven/model",
@@ -43,7 +42,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util-rt",
         "//platform/util-rt:util-rt_test_lib",
         "//plugins/maven/model",
@@ -52,6 +52,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":maven-server",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util-rt:util-rt_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//plugins/maven/model:model_test_lib",

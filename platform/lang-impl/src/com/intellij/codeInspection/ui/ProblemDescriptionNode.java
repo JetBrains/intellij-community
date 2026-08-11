@@ -49,7 +49,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     myDescriptor = descriptor;
     myLevel = ObjectUtils.notNull(calculatePreciseLevel(element, descriptor, presentation), () -> {
       String shortName = presentation.getToolWrapper().getShortName();
-      final InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
+      InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
       return profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
     });
     myLineNumber = myDescriptor instanceof ProblemDescriptor
@@ -61,7 +61,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
                                                              @Nullable CommonProblemDescriptor descriptor,
                                                              @NotNull InspectionToolPresentation presentation) {
     if (element == null) return null;
-    final InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
+    InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
     String shortName = presentation.getToolWrapper().getShortName();
     if (descriptor instanceof ProblemDescriptor) {
       InspectionProfileManager inspectionProfileManager = profile.getProfileManager();
@@ -151,7 +151,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     if (myDescriptor == null) return false;
     if (myElement == null || !myElement.isValid()) return false;
     if (myDescriptor instanceof ProblemDescriptor) {
-      final PsiElement psiElement = ((ProblemDescriptor)myDescriptor).getPsiElement();
+      PsiElement psiElement = ((ProblemDescriptor)myDescriptor).getPsiElement();
       return psiElement != null && psiElement.isValid();
     }
     return true;
@@ -183,7 +183,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   @Override
   public @Nullable String getTailText() {
-    final String text = super.getTailText();
+    String text = super.getTailText();
     return text == null ? "" : text;
   }
 

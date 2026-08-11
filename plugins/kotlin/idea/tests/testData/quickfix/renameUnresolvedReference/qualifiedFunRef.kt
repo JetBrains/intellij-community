@@ -5,20 +5,20 @@
 // ERROR: Unresolved reference: x
 // ERROR: Unresolved reference: x
 // ERROR: Unresolved reference: x
-// K2_ERROR: Unresolved reference 'x' on receiver of type 'A'.
-// K2_ERROR: Unresolved reference 'x' on receiver of type 'A'.
-// K2_ERROR: Unresolved reference 'x' on receiver of type 'A'.
-// K2_ERROR: Unresolved reference 'x' on receiver of type 'A'.
-// K2_ERROR: Unresolved reference 'x' on receiver of type 'A'.
-// K2_ERROR: Unresolved reference 'x' on receiver of type 'A'.
-// K2_ERROR: Unresolved reference 'x' on receiver of type 'A'.
-// K2_ERROR: Unresolved reference 'x' on receiver of type 'B'.
-// K2_AFTER_ERROR: Unresolved reference 'x' on receiver of type 'A'.
-// K2_AFTER_ERROR: Unresolved reference 'x' on receiver of type 'A'.
-// K2_AFTER_ERROR: Unresolved reference 'x' on receiver of type 'A'.
-// K2_AFTER_ERROR: Unresolved reference 'x' on receiver of type 'A'.
-// K2_AFTER_ERROR: Unresolved reference 'x' on receiver of type 'A'.
-// K2_AFTER_ERROR: Unresolved reference 'x' on receiver of type 'B'.
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 class A {
     fun f() = 1
     fun g() = ""

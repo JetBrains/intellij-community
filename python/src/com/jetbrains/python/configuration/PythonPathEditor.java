@@ -30,6 +30,7 @@ import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,16 +43,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
-public class PythonPathEditor extends SdkPathEditor {
+@ApiStatus.Internal
+class PythonPathEditor extends SdkPathEditor {
   private final @NotNull PathListModel myPathListModel;
 
   private final @NotNull List<Runnable> myReloadPathsActionCallbacks = new ArrayList<>();
 
-  public PythonPathEditor(@NlsContexts.TabTitle @NotNull String displayName,
-                          @NotNull OrderRootType orderRootType,
-                          @NotNull FileChooserDescriptor descriptor) {
+  PythonPathEditor(@NlsContexts.TabTitle @NotNull String displayName,
+                   @NotNull OrderRootType orderRootType,
+                   @NotNull FileChooserDescriptor descriptor) {
     super(displayName, orderRootType, descriptor);
     myPathListModel = new PathListModel(orderRootType, getListModel());
   }
@@ -134,13 +137,17 @@ public class PythonPathEditor extends SdkPathEditor {
     }
   }
 
+  protected @NlsSafe String getPresentablePath(VirtualFile value) {
+    return value.getPresentableUrl();
+  }
+
   private static class PathListModel {
-    private Set<VirtualFile> myAdded = new HashSet<>();
-    private Set<VirtualFile> myExcluded = new HashSet<>();
     private final Set<VirtualFile> myFoundFiles = new HashSet<>();
     private final List<VirtualFile> myFilteredOut = new ArrayList<>();
     private final DefaultListModel<VirtualFile> myListModel;
     private final OrderRootType myOrderRootType;
+    private Set<VirtualFile> myAdded = new HashSet<>();
+    private Set<VirtualFile> myExcluded = new HashSet<>();
 
     PathListModel(OrderRootType orderRootType, DefaultListModel<VirtualFile> listModel) {
       myOrderRootType = orderRootType;
@@ -203,9 +210,8 @@ public class PythonPathEditor extends SdkPathEditor {
 
     private @NotNull SdkAdditionalData collectSdkAdditionalData(@NotNull SdkModificator sdkModificator) {
       PythonSdkAdditionalData data = (PythonSdkAdditionalData)sdkModificator.getSdkAdditionalData();
-      if (data == null) {
-        data = new PythonSdkAdditionalData();
-      }
+      // We can't have sdk without additional data in python
+      Objects.requireNonNull(data);
       data.setAddedPathsFromVirtualFiles(myAdded);
       data.setExcludedPathsFromVirtualFiles(myExcluded);
       return data;
@@ -249,6 +255,10 @@ public class PythonPathEditor extends SdkPathEditor {
       return result;
     }
 
+    public boolean isExcluded(VirtualFile path) {
+      return myExcluded.contains(path);
+    }
+
     private static @NotNull List<VirtualFile> filterOutStubs(@NotNull List<VirtualFile> list, @NotNull List<VirtualFile> filteredOut) {
       List<VirtualFile> result = new ArrayList<>();
       filteredOut.clear();
@@ -279,13 +289,5 @@ public class PythonPathEditor extends SdkPathEditor {
         return false;
       }
     }
-
-    public boolean isExcluded(VirtualFile path) {
-      return myExcluded.contains(path);
-    }
-  }
-
-  protected @NlsSafe String getPresentablePath(VirtualFile value) {
-    return value.getPresentableUrl();
   }
 }

@@ -1,0 +1,7 @@
+// PROBLEM: 'protected' visibility is effectively 'private' in a final class
+// FIX: Make class open
+open class C {
+    companion object {
+        protected fun foo() {}
+    }
+}

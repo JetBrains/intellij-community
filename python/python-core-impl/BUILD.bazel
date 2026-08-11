@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.community.core.impl` start
-
 jvm_library(
     name = "community-core-impl",
     srcs = glob(
@@ -34,7 +33,7 @@ jvm_library(
         "//RegExpSupport:regexp",
         "//libraries/guava",
         "//python/python-psi-impl:psi-impl",
-        "//python/python-sdk:sdk",
+        "//python/python-sdk/backend",
         "@lib//:kotlin-stdlib",
         "//platform/core-impl",
         "//libraries/kotlinx/coroutines/core",
@@ -67,7 +66,7 @@ jvm_library(
         "//RegExpSupport:regexp_test_lib",
         "//libraries/guava:guava_test_lib",
         "//python/python-psi-impl:psi-impl_test_lib",
-        "//python/python-sdk:sdk_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
     ],

@@ -37,6 +37,7 @@ Usage: debugpy --listen | --connect
                [--log-to <path>] [--log-to-stderr]
                [--parent-session-pid <pid>]]
                [--adapter-access-token <token>]
+               [--disable-sys-remote-exec]]
                {1}
                [<arg>]...
 """.format(
@@ -56,6 +57,7 @@ class Options(object):
     adapter_access_token = None
     config: Dict[str, Any] = {}
     parent_session_pid: Union[int, None] = None
+    disable_sys_remote_exec = False
 
 
 options = Options()
@@ -186,6 +188,7 @@ switches = [
     ("--configure-.+",          "<value>",          set_config),
     ("--parent-session-pid",    "<pid>",            set_arg("parent_session_pid", lambda x: int(x) if x else None)),
     ("--adapter-access-token",   "<token>",         set_arg("adapter_access_token")),
+    ("--disable-sys-remote-exec", None,             set_const("disable_sys_remote_exec", True)),
 
     # Targets. The "" entry corresponds to positional command line arguments,
     # i.e. the ones not preceded by any switch name.
@@ -447,6 +450,37 @@ attach_pid_injected.attach(setup);
         .replace("\n", "")
         .format(script_dir=script_dir, setup=setup)
     )
+
+    # attempt pep 768 style code injection
+    if (not options.disable_sys_remote_exec) and hasattr(sys, "remote_exec"):
+        tmp_file_path = ""
+        try:
+            import tempfile
+
+            with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+                tmp_file_path = tmp_file.name
+                log.info(
+                    "Attempting to inject code at '{tmp_file_path}' using sys.remote_exec()",
+                    tmp_file_path=tmp_file_path,
+                )
+                tmp_file.write(python_code.encode())
+                tmp_file.write(
+                    """import os;os.remove("{tmp_file_path}");""".format(
+                        tmp_file_path=tmp_file_path
+                    ).encode()
+                )
+                tmp_file.flush()
+                tmp_file.close()
+                sys.remote_exec(pid, tmp_file_path)
+            return
+        except Exception as e:
+            if os.path.exists(tmp_file_path):
+                os.remove(tmp_file_path)
+            log.warning(
+                'Injecting code using sys.remote_exec() failed with error:\n"{e}"\nWill reattempt using pydevd.\n',
+                e=e,
+            )
+
     log.info("Code to be injected: \n{0}", python_code.replace(";", ";\n"))
 
     # pydevd restriction on characters in injected code.

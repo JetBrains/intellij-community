@@ -1,0 +1,13 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm'
+}
+dependencies {
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+}
+repositories {
+    mavenCentral()
+}
+kotlin {
+    jvmToolchain(11)
+}

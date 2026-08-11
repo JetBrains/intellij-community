@@ -18,6 +18,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
+import fleet.rpc.client.RpcClientDisconnectedException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -61,9 +62,17 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
     else {
       if (UiPluginManager.isCombinedPluginManagerEnabled()) {
         coroutineScope.launch(Dispatchers.IO) {
-          val pluginManager = UiPluginManager.getInstance()
-          initSessionPlugins(pluginManager.initSession(mySessionId),
-                             pluginManager.updatePluginDependencies(mySessionId.toString()))
+          try {
+            val pluginManager = UiPluginManager.getInstance()
+            initSessionPlugins(pluginManager.initSession(mySessionId),
+                               pluginManager.updatePluginDependencies(mySessionId.toString()))
+          }
+          catch (_: RpcClientDisconnectedException) {
+            // Session initialization can race with remote plugin manager disconnect.
+          }
+          finally {
+            sessionInitializedDeferred.complete(Unit)
+          }
         }
       }
       else {

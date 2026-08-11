@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
 import com.intellij.execution.ExecutionException;
@@ -6,10 +6,12 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -24,9 +26,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
+import java.io.File;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static com.intellij.junit5.JUnitRtConstants.JUNIT5_PLATFORM_VERSION;
+import static com.intellij.junit5.JUnitRtConstants.JUNIT5_VERSION;
 
 public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegrationTest {
 
@@ -52,9 +58,9 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
       .addSourceFolder(getTestContentRoot() + "/test", true));
     final ArtifactRepositoryManager repoManager = getRepoManager();
 
-    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.13.0"), repoManager);
-    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-params", "5.13.0"), repoManager);
-    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.platform", "junit-platform-suite-api", "1.13.1"),
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", JUNIT5_VERSION), repoManager);
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-params", JUNIT5_VERSION), repoManager);
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.platform", "junit-platform-suite-api", JUNIT5_PLATFORM_VERSION),
                  repoManager);
   }
 
@@ -311,6 +317,45 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
     assertTestsFinished(output, "test()");
     assertTestsFailed(output);
     assertEmpty(output.err);
+  }
+
+  public void testCollectParameterizedDoesNotExecuteBodies() throws Exception {
+    assertCollectReportsInvocationsWithoutRunningBodies("parameterized", List.of("[1] -1", "[2] 7", "[3] 0"));
+  }
+
+  public void testCollectTestFactoryDoesNotExecuteBodies() throws Exception {
+    assertCollectReportsInvocationsWithoutRunningBodies("factory", List.of("Test 1", "Test 2", "Test 3"));
+  }
+
+  /**
+   * Runs the given data-driven method of {@code collect.CollectParametersTests} in "collect" mode (the flags the IDE
+   * injects for the "run a single parameter" feature) and verifies both halves of the contract: every invocation is
+   * reported, but no test body runs — the latter proven by the test bodies appending to a marker file that must stay empty.
+   */
+  private void assertCollectReportsInvocationsWithoutRunningBodies(String methodName, List<String> params) throws Exception {
+    PsiClass aClass =
+      JavaPsiFacade.getInstance(myProject).findClass("collect.CollectParametersTests", GlobalSearchScope.projectScope(myProject));
+    assertNotNull("Test class not found", aClass);
+    PsiMethod method = aClass.findMethodsByName(methodName, false)[0];
+    RunConfiguration configuration = createConfiguration(method);
+    assertNotNull("Run configuration is null", configuration);
+
+    File marker = FileUtil.createTempFile("junit-collect-marker", ".txt", true);
+    try {
+      ProcessOutput output = doStartTestsProcess(configuration, parameters -> {
+        parameters.getVMParametersList().addProperty("junit.jupiter.extensions.autodetection.enabled", "true");
+        parameters.getVMParametersList().addProperty("idea.junit.collect.parameters", "true");
+        parameters.getVMParametersList().addProperty("idea.junit.test.marker.file", marker.getAbsolutePath());
+      });
+
+      assertEmpty(output.err);
+      List<String> res = output.messages.stream().filter(TestStarted.class::isInstance).map(m -> m.getAttributes().get("name")).toList();
+      assertEquals("all invocations should be reported during collect", params, res);
+      assertEquals("test bodies must NOT run during the collect pass", "", FileUtil.loadFile(marker).trim());
+    }
+    finally {
+      FileUtil.delete(marker);
+    }
   }
 
   private static void assertTestsStatus(ProcessOutput output, Predicate<ServiceMessage> predicate, String... testNames) {

@@ -20,7 +20,7 @@ interface GradleModuleEntityBuilder : WorkspaceEntityBuilder<GradleModuleEntity>
 }
 
 internal object GradleModuleEntityType : EntityType<GradleModuleEntity, GradleModuleEntityBuilder>() {
-  override val entityClass: Class<GradleModuleEntity> get() = GradleModuleEntity::class.java
+  override val entityImplClass: Class<*> get() = GradleModuleEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = GradleModuleEntityImpl.Builder::class.java
   operator fun invoke(
     gradleProjectId: GradleProjectEntityId,
@@ -42,7 +42,6 @@ fun MutableEntityStorage.modifyGradleModuleEntity(
 
 var ModuleEntityBuilder.gradleModuleEntity: GradleModuleEntityBuilder?
   by WorkspaceEntity.extensionBuilder(GradleModuleEntity::class.java)
-
 
 @JvmOverloads
 @JvmName("createGradleModuleEntity")

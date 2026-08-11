@@ -8,8 +8,10 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.packageDependencies.ui.PatternDialectProvider;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 @State(name = "DependencyUISettings", storages = @Storage("ui.lnf.xml"), category = SettingsCategory.UI)
 public final class DependencyUISettings implements PersistentStateComponent<DependencyUISettings> {
   public boolean UI_FLATTEN_PACKAGES = true;

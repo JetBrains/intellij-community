@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.editorActions.fillParagraph.FillParagraphAction;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -22,6 +25,8 @@ import com.jetbrains.python.fixtures.PyTestCase;
 /**
  * User : ktisha
  */
+@Subsystems.Editing
+@Layers.Functional
 public class PyFillParagraphTest extends PyTestCase {
 
   public void testDocstring() {

@@ -3,7 +3,6 @@ package com.intellij.framework.detection.impl;
 
 import com.intellij.framework.detection.FrameworkDetector;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Pair;
@@ -34,6 +33,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
 
 @ApiStatus.Internal
 public final class FrameworkDetectionIndex extends ScalarIndexExtension<String> {
@@ -86,7 +87,7 @@ public final class FrameworkDetectionIndex extends ScalarIndexExtension<String> 
           try {
             accepts = pattern.accepts(inputData);
           } catch (Exception e) {
-            if (e instanceof ControlFlowException) throw e;
+            rethrowControlFlowException(e);
             FrameworkDetector frameworkDetector = FrameworkDetectorRegistry.getInstance().getDetectorById(detectorId);
             throw new MapReduceIndexMappingException(e, frameworkDetector != null ? frameworkDetector.getClass() : null);
           }

@@ -7,44 +7,48 @@ import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.idea.AppMode
+import com.intellij.idea.IdeaLogger
 import com.intellij.internal.DebugAttachDetector
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.fs.EelFiles
-import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.SmartList
-import com.intellij.util.application
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
 import java.lang.management.ThreadInfo
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Collections
 import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.name
 
 private val FREEZE_NOTIFIER_EP: ExtensionPointName<FreezeNotifier> = ExtensionPointName("com.intellij.diagnostic.freezeNotifier")
 private val FREEZE_ANALYSIS_EP: ExtensionPointName<FreezeAnalysis> = ExtensionPointName("com.intellij.diagnostic.freezeAnalysis")
 
+private val LOG = fileLogger()
+
 internal class IdeaFreezeReporter : PerformanceListener {
   private var dumpTask: IdeaFreezeSamplingTask? = null
+  private var freezeTelemetry: FreezeReporterTelemetry? = null
   private val currentDumps = Collections.synchronizedList(ArrayList<ThreadDump>())
   private var stacktraceCommonPart: List<StackTraceElement>? = null
 
@@ -61,19 +65,13 @@ internal class IdeaFreezeReporter : PerformanceListener {
       throw ExtensionNotApplicableException.create()
     }
 
-    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
-      app.messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
-        override fun appWillBeClosed(isRestart: Boolean) {
-          appClosing = true
-        }
-      })
-
-      if (DEBUG
-          || (!PluginManagerCore.isRunningFromSources() && !AppMode.isRunningFromDevBuild())
-          || ApplicationManagerEx.isInIntegrationTest()) {
-        reportUnfinishedFreezes()
+    app.messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
+      override fun appWillBeClosed(isRestart: Boolean) {
+        appClosing = true
       }
-    }
+    })
+
+    service<UnfinishedFreezeReportService>().scheduleUnfinishedFreezesReport()
   }
 
   @Suppress("CompanionObjectInExtension")
@@ -83,25 +81,6 @@ internal class IdeaFreezeReporter : PerformanceListener {
         Files.createDirectories(appInfoFile.parent)
         Files.writeString(appInfoFile, appInfoString)
       }
-    }
-
-    internal fun report(event: LogMessage) {
-      // only report to JB
-      val plugin = PluginManagerCore.getPlugin(analyzeFreeze(event))
-      if (plugin == null || PluginManagerCore.isDevelopedByJetBrains(plugin)) {
-        MessagePool.getInstance().addErrorMessage(event)
-      }
-    }
-
-    internal fun analyzeFreeze(event: AbstractMessage): PluginId? {
-      for (attachment in event.allAttachments) {
-        if (attachment.name.startsWith(DUMP_PREFIX)) {
-          val cause = analyzeFreeze(attachment.displayText)?.plugin
-          if (cause != null) return cause
-        }
-      }
-
-      return PluginUtil.getInstance().findPluginId(event.throwable)
     }
 
     internal fun analyzeFreeze(dump: String): FreezeAnalysis.Result? {
@@ -116,18 +95,31 @@ internal class IdeaFreezeReporter : PerformanceListener {
   }
 
   override fun uiFreezeStarted(reportDir: Path, coroutineScope: CoroutineScope) {
-    if (DEBUG || !DebugAttachDetector.isAttached()) {
-      dumpTask?.stop()
-
-      reset()
-
-      val maxDumpDuration = Registry.intValue("freeze.reporter.maxDumpDuration.ms", 40000)
-      if (maxDumpDuration <= 0) {
-        return
-      }
-
-      dumpTask = IdeaFreezeSamplingTask(reportDir, maxDumpDuration, coroutineScope)
+    val telemetry = FreezeReporterTelemetry.start()
+    telemetry.freezeDetected()
+    if (!DEBUG && DebugAttachDetector.isAttached()) {
+      telemetry.finishNotSent(FreezeNotSentReason.DEBUGGER_ATTACHED)
+      return
     }
+
+    val previousDumpTask = dumpTask
+    if (previousDumpTask != null) {
+      previousDumpTask.stop()
+      freezeTelemetry?.finishNotSent(FreezeNotSentReason.INTERRUPTED_BY_NEW_FREEZE)
+      dumpTask = null
+      freezeTelemetry = null
+    }
+
+    reset()
+
+    val maxDumpDuration = FreezeReporterRegistry.maxDumpDurationMs()
+    if (maxDumpDuration <= 0) {
+      telemetry.finishNotSent(FreezeNotSentReason.SAMPLING_DISABLED)
+      return
+    }
+
+    freezeTelemetry = telemetry
+    dumpTask = IdeaFreezeSamplingTask(reportDir, maxDumpDuration, coroutineScope)
   }
 
   override fun dumpedThreads(toFile: Path, dump: ThreadDump) {
@@ -151,10 +143,12 @@ internal class IdeaFreezeReporter : PerformanceListener {
     try {
       Files.createDirectories(dir)
       Files.writeString(dir.resolve(MESSAGE_FILE_NAME), event.message)
-      ObjectOutputStream(Files.newOutputStream(dir.resolve(THROWABLE_FILE_NAME))).use { it.writeObject(event.throwable) }
+      // Store only the common stacktrace as plain text (avoid unsafe Java binary (de)serialization of the throwable).
+      Files.writeString(dir.resolve(THROWABLE_FILE_NAME), serializeStackTrace(event.throwable.stackTrace))
       saveAppInfo(dir.resolve(APP_INFO_FILE_NAME), false)
     }
-    catch (_: IOException) {
+    catch (e: IOException) {
+      LOG.infoWithDebug("Error on dumping threads", e)
     }
   }
 
@@ -168,48 +162,114 @@ internal class IdeaFreezeReporter : PerformanceListener {
     if (dumpTask == null) {
       return
     }
+    val telemetry = freezeTelemetry ?: return
 
     try {
-      if (Registry.`is`("freeze.reporter.enabled", false)) {
-        if (((durationMs / 1000).toInt() > FREEZE_THRESHOLD || ApplicationManagerEx.isInIntegrationTest()) && !stacktraceCommonPart.isNullOrEmpty()) {
-          val dumps = ArrayList(currentDumps) // defensive copy
-          if (dumpTask.isValid() && dumps.size >= 2) {
-            val attachments = ArrayList<Attachment>()
-            addDumpsAttachments(from = dumps, textMapper = { it.rawDump }, container = attachments)
-            if (reportDir != null) {
-              EP_NAME.forEachExtensionSafe { attachments.addAll(it.getAttachments(reportDir)) }
-            }
+      if (!FreezeReporterRegistry.isReporterEnabled()) {
+        telemetry.finishNotSent(FreezeNotSentReason.REPORTER_DISABLED, durationMs)
+        return
+      }
 
-            val loggingEvent = createEvent(dumpTask, durationMs, attachments, reportDir, PerformanceWatcher.getInstance(), finished = true)
-            service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
-              processDumps(dumps, reportDir, loggingEvent, durationMs)
-            }
-          }
+      LOG.debug("UI freeze recorded for $durationMs ms")
+
+      if ((durationMs / 1000).toInt() <= FreezeReporterRegistry.durationThresholdSeconds() && !ApplicationManagerEx.isInIntegrationTest()) {
+        LOG.debug("Ignoring freeze, below duration threshold")
+        telemetry.finishNotSent(FreezeNotSentReason.BELOW_DURATION_THRESHOLD, durationMs)
+        return
+      }
+
+      if (stacktraceCommonPart.isNullOrEmpty()) {
+        LOG.debug("Ignoring freeze, no common stack found in dumps")
+        telemetry.finishNotSent(FreezeNotSentReason.NO_COMMON_STACK, durationMs)
+        return
+      }
+
+      val dumps = ArrayList(currentDumps) // defensive copy
+      if (!dumpTask.isValid() || dumps.size < MIN_DUMPS_COUNT_FOR_ANALYSIS) {
+        LOG.debug("Ignoring freeze, not enough dumps collected")
+        telemetry.finishNotSent(FreezeNotSentReason.NOT_ENOUGH_DUMPS, durationMs)
+        return
+      }
+
+      val attachments = ArrayList<Attachment>()
+      addDumpsAttachments(from = dumps, textMapper = { it.rawDump }, container = attachments)
+      if (reportDir != null) {
+        EP_NAME.forEachExtensionSafe { attachments.addAll(it.getAttachments(reportDir)) }
+      }
+
+      val loggingEvent = createEvent(dumpTask, durationMs, attachments, reportDir, PerformanceWatcher.getInstance(), finished = true)
+      if (loggingEvent != null) {
+        @Suppress("RAW_RUN_BLOCKING") // we are inside PerformanceWatcher coroutineScope, safe to block
+        // todo change uiFreezeRecorded to suspend fun in API
+        runBlocking {
+          processDumps(dumps, reportDir, loggingEvent, durationMs, telemetry)
         }
       }
+      else {
+        telemetry.finishNotSent(FreezeNotSentReason.EVENT_CREATION_FAILED, durationMs)
+      }
+    }
+    catch (e: Throwable) {
+      telemetry.finishNotSent(FreezeNotSentReason.PROCESSING_FAILED, durationMs)
+      throw e
     }
     finally {
       this.dumpTask = null
+      freezeTelemetry = null
       reset()
     }
   }
 
-  private suspend fun processDumps(dumps: ArrayList<ThreadDump>, reportDir: Path?, loggingEvent: LogMessage?, durationMs: Long) {
-    if (loggingEvent != null && (application.isEAP || application.isInternal)) {
-      if (ExceptionAutoReportUtil.isAutoReportEnabled() && ExceptionAutoReportUtil.isAutoReportableException(loggingEvent)) {
-        MessagePool.getInstance().addErrorMessage(loggingEvent)
+  private suspend fun processDumps(
+    dumps: ArrayList<ThreadDump>,
+    reportDir: Path?,
+    loggingEvent: LogMessage,
+    durationMs: Long,
+    telemetry: FreezeReporterTelemetry,
+  ) {
+    try {
+      if (dumps.isEmpty()) {
+        telemetry.freezeNotSent(FreezeNotSentReason.NOT_ENOUGH_DUMPS, durationMs)
         return
       }
-      else if (application.isEAP || application.isInternal) {
-        // plugin freezes are reported separately via com.intellij.diagnostic.FreezeNotifier
-        report(loggingEvent)
+
+      LOG.debug("Reporting freeze to MessagePool")
+      reportToIndicator(loggingEvent) // always put freezes to MessagePool
+
+      val isAutoReportEnabled = ExceptionAutoReportUtil.isAutoReportEnabled()
+      if (isAutoReportEnabled && ExceptionAutoReportUtil.isAutoReportableException(loggingEvent)) {
+        LOG.debug("UI freeze will be automatically reported, do not show to user")
+
+        val reason = PluginUtil.getInstance().findPluginId(loggingEvent.throwable)
+        if (reason != null) {
+          LifecycleUsageTriggerCollector.pluginFreezeDetected(reason, durationMs, false)
+        }
+
+        telemetry.freezeQueued(durationMs)
+        return // do not show freeze notifications, reported automatically
+      }
+
+      if (isAutoReportEnabled) {
+        telemetry.freezeNotSent(FreezeNotSentReason.NOT_AUTO_REPORTABLE, durationMs)
+      }
+      else {
+        telemetry.freezeNotSent(FreezeNotSentReason.AUTO_REPORT_DISABLED, durationMs)
+      }
+
+      if (reportDir != null) {
+        LOG.debug("Reporting freeze to plugin notifications")
+
+        for (notifier in FREEZE_NOTIFIER_EP.extensionList) {
+          notifier.notifyFreeze(loggingEvent, dumps, reportDir, durationMs)
+        }
       }
     }
-
-    if (reportDir != null && loggingEvent != null && dumps.isNotEmpty()) {
-      for (notifier in FREEZE_NOTIFIER_EP.extensionList) {
-        notifier.notifyFreeze(loggingEvent, dumps, reportDir, durationMs)
-      }
+    catch (e: Throwable) {
+      telemetry.freezeNotSent(FreezeNotSentReason.PROCESSING_FAILED, durationMs)
+      throw e
+    }
+    finally {
+      telemetry.finish()
     }
   }
 
@@ -258,7 +318,8 @@ internal class IdeaFreezeReporter : PerformanceListener {
         Files.writeString(reportDir.resolve("$REPORT_PREFIX.txt"), reportText)
       }
     }
-    catch (_: IOException) { }
+    catch (_: IOException) {
+    }
 
     if (commonStack.isNullOrEmpty() || commonStack.any { skippedFrame(it) }) {
       return null
@@ -287,8 +348,27 @@ ${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}S
       message += "\n\nThe stack is from the thread that was blocking EDT"
     }
     val report = createReportAttachment(durationInSeconds, reportText)
-    return LogMessage(Freeze(commonStack), message, attachments + report)
+    val pluginId = analyzeFreeze(attachments)
+
+    return LogMessage(Freeze(pluginId, IdeaLogger.ourLastActionId, commonStack), message, attachments + report)
   }
+
+  private fun analyzeFreeze(attachments: List<Attachment>): PluginId? {
+    val dumps = attachments
+      .filter { it.name.startsWith(DUMP_PREFIX) }
+
+    val bestAttachment = when {
+      dumps.size < MIN_DUMPS_COUNT_FOR_ANALYSIS -> null
+      dumps.size == MIN_DUMPS_COUNT_FOR_ANALYSIS -> dumps[0]
+      else -> dumps[dumps.size / 2]
+    }
+
+    return bestAttachment?.let { analyzeFreeze(bestAttachment.displayText) }?.plugin
+  }
+}
+
+internal fun reportToIndicator(event: LogMessage) {
+  MessagePool.getInstance().addErrorMessage(event)
 }
 
 @ApiStatus.Internal
@@ -298,10 +378,12 @@ object FreezeAnalysisFacade {
   }
 }
 
-private class CallTreeNode(private val stackTraceElement: StackTraceElement?,
-                           private val parent: CallTreeNode?,
-                           @JvmField var time: Int,
-                           @JvmField val threadInfo: ThreadInfo?) {
+private class CallTreeNode(
+  private val stackTraceElement: StackTraceElement?,
+  private val parent: CallTreeNode?,
+  @JvmField var time: Int,
+  @JvmField val threadInfo: ThreadInfo?,
+) {
   private val children = SmartList<CallTreeNode>()
   private val depth: Int = if (parent == null) 0 else parent.depth + 1
 
@@ -383,18 +465,41 @@ private fun buildTree(threadInfos: List<ThreadInfo>, time: Int): CallTreeNode {
 
 private val EP_NAME = ExtensionPointName<FreezeProfiler>("com.intellij.diagnostic.freezeProfiler")
 
-// intentionally hardcoded and not implemented via a registry key or system property
-// to be updated when we are ready to collect freezes from the specified duration and up
-private const val FREEZE_THRESHOLD = 10
 private const val REPORT_PREFIX = "report"
 private const val DUMP_PREFIX = "dump"
 private const val MESSAGE_FILE_NAME = ".message"
-private const val THROWABLE_FILE_NAME = ".throwable"
+private const val THROWABLE_FILE_NAME = ".throwable-stack"
+
+private const val STACK_FRAME_FIELD_SEPARATOR = "\t"
+
+/**
+ * Serializes the freeze common stacktrace as plain text, one frame per line, so that the `.throwable-stack` report file does not rely on
+ * unsafe Java binary serialization. Each frame keeps its class, method, file and line so it can be reconstructed losslessly.
+ */
+@ApiStatus.Internal
+fun serializeStackTrace(stackTrace: Array<StackTraceElement>): String =
+  stackTrace.joinToString("\n") { frame ->
+    listOf(frame.className, frame.methodName, frame.fileName ?: "", frame.lineNumber.toString())
+      .joinToString(STACK_FRAME_FIELD_SEPARATOR)
+  }
+
+@ApiStatus.Internal
+fun deserializeStackTrace(text: String): List<StackTraceElement> =
+  text.lineSequence()
+    .filter { it.isNotBlank() }
+    .mapNotNull { line ->
+      val fields = line.split(STACK_FRAME_FIELD_SEPARATOR)
+      if (fields.size < 4) return@mapNotNull null
+      StackTraceElement(fields[0], fields[1], fields[2].ifEmpty { null }, fields[3].toIntOrNull() ?: -1)
+    }
+    .toList()
 
 internal const val APP_INFO_FILE_NAME: String = ".appinfo"
 
 // common stack contains more than the specified % samples
 private const val COMMON_SUB_STACK_WEIGHT = 0.25
+private const val MAX_SCATTERED_DUMPS_COUNT = 10
+private const val MIN_DUMPS_COUNT_FOR_ANALYSIS = 2
 
 /**
  * Set DEBUG = true to enable freeze-detection regardless of other settings.
@@ -407,98 +512,114 @@ private const val COMMON_SUB_STACK_WEIGHT = 0.25
  */
 private val DEBUG = "false".toBoolean()
 
-private suspend fun reportUnfinishedFreezes() {
-  serviceAsync<PerformanceWatcher>().processUnfinishedFreeze { dir, duration ->
-    val files = try {
-      withContext(Dispatchers.IO) {
-        Files.newDirectoryStream(dir).use { it.toList() }
+@Service
+internal class UnfinishedFreezeReportService(val coroutineScope: CoroutineScope) {
+  fun scheduleUnfinishedFreezesReport() {
+    if (DEBUG
+        || (!PluginManagerCore.isRunningFromSources() && !AppMode.isRunningFromDevBuild())
+        || ApplicationManagerEx.isInIntegrationTest()) {
+      coroutineScope.launch(DiagnosticDispatchers.Default) {
+        reportUnfinishedFreezes()
       }
     }
-    catch (_: IOException) {
-      return@processUnfinishedFreeze
-    }
+  }
 
-    // report deadly freeze
-    if (duration > FREEZE_THRESHOLD) {
-      try {
-        LifecycleUsageTriggerCollector.onDeadlockDetected()
-        if (isUnfinishedFreezeReportEnabled()) {
-          reportDeadlocks(files = files, duration = duration, dir = dir)
+  private suspend fun reportUnfinishedFreezes() {
+    serviceAsync<PerformanceWatcher>().processUnfinishedFreeze { dir, duration ->
+      val files = try {
+        withContext(Dispatchers.IO) {
+          Files.newDirectoryStream(dir).use { it.toList() }
         }
       }
-      catch (e: IOException) {
-        logger<IdeaFreezeReporter>().warn(e)
+      catch (_: IOException) {
+        return@processUnfinishedFreeze
       }
-    }
-    cleanup(dir)
-  }
-}
 
-private suspend fun reportDeadlocks(files: List<Path>, duration: Int, dir: Path) {
-  val attachments = ArrayList<Attachment>()
-  var message: String? = null
-  var appInfo: String? = null
-  var throwable: Throwable? = null
-  val dumps = ArrayList<String>()
+      // report deadly freeze
+      if (duration > FreezeReporterRegistry.durationThresholdSeconds()) {
+        logger<IdeaFreezeReporter>().info("Detected unfinished freeze ${dir.name} with duration ${duration}ms")
 
-  for (file in files) {
-    currentCoroutineContext().ensureActive()
-    val name = file.fileName.toString()
-
-    suspend fun readText(): String {
-      return withContext(Dispatchers.IO) {
-        EelFiles.readString(file)
-      }
-    }
-
-    when {
-      MESSAGE_FILE_NAME == name -> {
-        message = readText()
-      }
-      THROWABLE_FILE_NAME == name -> {
         try {
-          withContext(Dispatchers.IO) {
-            ObjectInputStream(Files.newInputStream(file)).use { inputStream ->
-              throwable = inputStream.readObject() as Throwable
-            }
+          LifecycleUsageTriggerCollector.onDeadlockDetected()
+          if (isUnfinishedFreezeReportEnabled()) {
+            reportDeadlocks(files = files, duration = duration, dir = dir)
           }
         }
-        catch (_: Exception) { }
+        catch (e: IOException) {
+          logger<IdeaFreezeReporter>().warn(e)
+        }
       }
-      APP_INFO_FILE_NAME == name -> {
-        appInfo = readText()
-      }
-      name.startsWith(REPORT_PREFIX) -> {
-        attachments.add(createReportAttachment(duration.toLong(), readText()))
-      }
-      name.startsWith(PerformanceWatcher.DUMP_PREFIX) -> {
-        dumps.add(readText())
-      }
+      cleanup(dir)
     }
   }
 
-  addDumpsAttachments(dumps, { it }, attachments)
-  EP_NAME.forEachExtensionSafe { attachments.addAll(it.getAttachments(dir)) }
-  if (message != null && throwable != null && !attachments.isEmpty()) {
-    val event = LogMessage(throwable, message, attachments)
-    event.appInfo = appInfo
-    IdeaFreezeReporter.report(event)
-  }
-}
+  private suspend fun reportDeadlocks(files: List<Path>, duration: Int, dir: Path) {
+    val attachments = ArrayList<Attachment>()
+    var message: String? = null
+    var appInfo: String? = null
+    var throwable: Throwable? = null
+    val dumps = ArrayList<String>()
 
-private suspend fun isUnfinishedFreezeReportEnabled(): Boolean {
-  val app = ApplicationManager.getApplication()
-  return app.isEAP || app.isInternal
-         || ExceptionAutoReportUtil.isAutoReportEnabled()
-         || System.getProperty("idea.force.freeze.reports").toBoolean()
+    for (file in files) {
+      currentCoroutineContext().ensureActive()
+      val name = file.fileName.toString()
+
+      suspend fun readText(): String {
+        return withContext(Dispatchers.IO) {
+          EelFiles.readString(file)
+        }
+      }
+
+      when {
+        MESSAGE_FILE_NAME == name -> {
+          message = readText()
+        }
+        THROWABLE_FILE_NAME == name -> {
+          try {
+            val stacktraceCommonPart = deserializeStackTrace(readText())
+            if (stacktraceCommonPart.isNotEmpty()) {
+              // Always rebuild a fresh Freeze from the stored common stacktrace text.
+              throwable = Freeze(null, null, stacktraceCommonPart)
+            }
+          }
+          catch (_: Exception) {
+          }
+        }
+        APP_INFO_FILE_NAME == name -> {
+          appInfo = readText()
+        }
+        name.startsWith(REPORT_PREFIX) -> {
+          attachments.add(createReportAttachment(duration.toLong(), readText()))
+        }
+        name.startsWith(PerformanceWatcher.DUMP_PREFIX) -> {
+          dumps.add(readText())
+        }
+      }
+    }
+
+    addDumpsAttachments(dumps, { it }, attachments)
+    EP_NAME.forEachExtensionSafe { attachments.addAll(it.getAttachments(dir)) }
+    if (message != null && throwable != null && !attachments.isEmpty()) {
+      val event = LogMessage(throwable, message, attachments)
+      event.appInfo = appInfo
+      reportToIndicator(event)
+    }
+  }
+
+  private suspend fun isUnfinishedFreezeReportEnabled(): Boolean {
+    val app = ApplicationManager.getApplication()
+    return app.isEAP || app.isInternal
+           || ExceptionAutoReportUtil.isAutoReportEnabled()
+           || System.getProperty("idea.force.freeze.reports").toBoolean()
+  }
 }
 
 private fun createReportAttachment(durationInSeconds: Long, text: String): Attachment =
   Attachment("$REPORT_PREFIX-${durationInSeconds}s.txt", text).apply { this.isIncluded = true }
 
-// get 20 scattered elements
+// get max-N scattered elements
 private fun <T> addDumpsAttachments(from: List<T>, textMapper: (T) -> String, container: MutableList<Attachment>) {
-  val size = from.size.coerceAtMost(20)
+  val size = from.size.coerceAtMost(MAX_SCATTERED_DUMPS_COUNT)
   val step = from.size / size
   for (i in 0 until size) {
     val attachment = Attachment("$DUMP_PREFIX-$i.txt", textMapper(from[i * step]))
@@ -513,7 +634,9 @@ private fun cleanup(dir: Path) {
     Files.deleteIfExists(dir.resolve(THROWABLE_FILE_NAME))
     Files.deleteIfExists(dir.resolve(APP_INFO_FILE_NAME))
   }
-  catch (_: IOException) { }
+  catch (e: IOException) {
+    LOG.debug("Unable to cleanup reporting dirs", e)
+  }
 }
 
 private fun getCauseThread(threadInfos: Array<ThreadInfo>): ThreadInfo? { // ensure sorted for better read action matching
@@ -619,3 +742,44 @@ private class IdeaFreezeSamplingTask(val reportDir: Path, maxDurationMs: Int, co
 
   fun isValid(): Boolean = sampleCount > (1000 / dumpInterval)
 }
+
+@ApiStatus.Internal
+object FreezeReporterRegistry {
+  const val ENABLED: String = "freeze.reporter.enabled"
+  const val MAX_DUMP_DURATION_MS: String = "freeze.reporter.maxDumpDuration.ms"
+  const val DURATION_THRESHOLD_SECONDS: String = "freeze.reporter.duration.threshold.seconds"
+
+  private const val DEFAULT_MAX_DUMP_DURATION_MS = 40_000
+  private const val DEFAULT_DURATION_THRESHOLD_SECONDS = 10
+
+  @Volatile
+  private var overrides = FreezeReporterOverrides()
+
+  fun setOverrides(
+    enabled: Boolean?,
+    maxDumpDurationMs: Int?,
+    durationThresholdSeconds: Int?,
+  ) {
+    overrides = FreezeReporterOverrides(enabled, maxDumpDurationMs, durationThresholdSeconds)
+  }
+
+  fun isReporterEnabled(): Boolean = overrides.enabled ?: Registry.`is`(ENABLED, false)
+
+  fun maxDumpDurationMs(): Int {
+    return overrides.maxDumpDurationMs ?: Registry.intValue(MAX_DUMP_DURATION_MS, DEFAULT_MAX_DUMP_DURATION_MS)
+  }
+
+  fun durationThresholdSeconds(): Int {
+    val threshold = overrides.durationThresholdSeconds ?: Registry.intValue(
+      DURATION_THRESHOLD_SECONDS,
+      DEFAULT_DURATION_THRESHOLD_SECONDS,
+    )
+    return threshold.coerceAtLeast(0)
+  }
+}
+
+private data class FreezeReporterOverrides(
+  val enabled: Boolean? = null,
+  val maxDumpDurationMs: Int? = null,
+  val durationThresholdSeconds: Int? = null,
+)

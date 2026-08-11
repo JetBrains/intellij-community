@@ -122,7 +122,7 @@ internal class DiscoveryService(private val coroutineScope: CoroutineScope) {
     }
   }
 
-  private fun writeInstanceInfo(jsonFile: Path, address: InetAddress, port: Int) {
+  private suspend fun writeInstanceInfo(jsonFile: Path, address: InetAddress, port: Int) {
     openOutputStream(jsonFile).use { out ->
       writeDiscoveryInfoJson(out, address, port)
     }
@@ -169,7 +169,7 @@ internal class DiscoveryService(private val coroutineScope: CoroutineScope) {
 
 @ApiStatus.Internal
 @VisibleForTesting
-fun writeDiscoveryInfoJson(out: OutputStream, address: InetAddress, port: Int) {
+suspend fun writeDiscoveryInfoJson(out: OutputStream, address: InetAddress, port: Int) {
   val appInfo = ApplicationInfo.getInstance()
   val namesInfo = ApplicationNamesInfo.getInstance()
 

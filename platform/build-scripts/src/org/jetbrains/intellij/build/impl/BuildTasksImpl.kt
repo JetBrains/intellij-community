@@ -4,7 +4,9 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
+import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
@@ -37,7 +39,6 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.PluginDistribution
-import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.add64IfNeeded
@@ -103,7 +104,12 @@ suspend fun buildNonBundledPlugins(mainPluginModules: List<String>, context: Bui
   val platformLayout = createPlatformLayout(context)
   val distState = DistributionBuilderState(platformLayout = platformLayout, pluginsToPublish = pluginsToPublishEffective, context = context)
 
-  val searchableOptionSet = buildSearchableOptions(context.createProductRunner(mainPluginModules + dependencyModules), context)
+  val searchableOptionSet = if (context.isStepSkipped(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
+    null
+  }
+  else {
+    buildSearchableOptions(context.createProductRunner(mainPluginModules + dependencyModules), context)
+  }
 
   buildNonBundledPlugins(
     pluginsToPublish = pluginsToPublish,
@@ -134,10 +140,10 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
       SoftwareBillOfMaterials.STEP_ID,
     )
     context.reportDistributionBuildNumber()
-    BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
-    BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
+    BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot)
+    BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
-    BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+    BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
     val arch = if (SystemInfoRt.isMac && CpuArch.isIntel64() && CpuArch.isEmulated()) {
       JvmArchitecture.aarch64
     }
@@ -866,6 +872,7 @@ private suspend fun buildCrossPlatformOnlyPlugins(context: BuildContext): Pair<P
 
   val targetDir = context.paths.tempDir.resolve("cross-platform-only-plugins")
 
+  val mainModuleToPluginLayout = crossPlatformPlugins.associateBy { it.mainModule }
   val builtPlugins = spanBuilder("build cross-platform-only plugins")
     .setAttribute("count", crossPlatformPlugins.size.toLong())
     .use {
@@ -883,7 +890,10 @@ private suspend fun buildCrossPlatformOnlyPlugins(context: BuildContext): Pair<P
       )
     }
 
-  return targetDir to builtPlugins
+  val descriptorsOfBuiltPlugins = builtPlugins.map { buildResult ->
+    PluginBuildDescriptor(mainModuleToPluginLayout.getValue(buildResult.mainModule), buildResult)
+  }
+  return targetDir to descriptorsOfBuiltPlugins
 }
 
 private suspend fun checkClassFiles(root: Path, isDistAll: Boolean, context: BuildContext) {
@@ -1209,6 +1219,12 @@ internal fun copyDistFiles(newDir: Path, os: OsFamily, arch: JvmArchitecture, li
     Files.createDirectories(targetFile.parent)
     if (item.content is LocalDistFileContent) {
       Files.copy(item.content.file, targetFile, StandardCopyOption.REPLACE_EXISTING)
+      // Files.copy does not preserve attributes, so re-apply the executable bit requested by the DistFile.
+      // The dev build runs binaries straight from this directory, and the Linux/macOS packagers derive the
+      // archive's executable flag from the on-disk POSIX permissions of these files.
+      if (item.content.isExecutable && os != OsFamily.WINDOWS) {
+        NioFiles.setExecutable(targetFile)
+      }
     }
     else {
       Files.write(targetFile, (item.content as InMemoryDistFileContent).data)

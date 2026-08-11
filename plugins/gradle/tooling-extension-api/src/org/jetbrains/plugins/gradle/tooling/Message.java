@@ -5,13 +5,18 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 @ApiStatus.Experimental
 public final class Message {
   private final @NotNull String myTitle;
   private final @NotNull String myText;
   private final @Nullable String myGroup;
   private final @NotNull Kind myKind;
-  private final @Nullable FilePosition myFilePosition;
+  private final @Nullable String myTargetPath;
+  private final @Nullable Failure myFailure;
 
   private final boolean myInternal;
 
@@ -20,7 +25,8 @@ public final class Message {
     @NotNull String text,
     @Nullable String group,
     @NotNull Kind kind,
-    @Nullable FilePosition filePosition,
+    @Nullable String targetPath,
+    @Nullable Failure failure,
     boolean isInternal
   ) {
     myTitle = title;
@@ -28,7 +34,8 @@ public final class Message {
     myGroup = group;
     myInternal = isInternal;
     myKind = kind;
-    myFilePosition = filePosition;
+    myTargetPath = targetPath;
+    myFailure = failure;
   }
 
   public @NotNull String getTitle() {
@@ -47,41 +54,56 @@ public final class Message {
     return myKind;
   }
 
-  public @Nullable FilePosition getFilePosition() {
-    return myFilePosition;
+  public @Nullable String getTargetPath() {
+    return myTargetPath;
+  }
+
+  public @Nullable Failure getFailure() {
+    return myFailure;
   }
 
   public boolean isInternal() {
     return myInternal;
   }
 
-  public static class FilePosition {
-    private final @NotNull String myFilePath;
-    private final int myLine;
-    private final int myColumn;
-
-    public FilePosition(@NotNull String filePath, int line, int column) {
-      myFilePath = filePath;
-      myLine = line;
-      myColumn = column;
-    }
-
-    public @NotNull String getFilePath() {
-      return myFilePath;
-    }
-
-    public int getLine() {
-      return myLine;
-    }
-
-    public int getColumn() {
-      return myColumn;
-    }
-  }
-
   public enum Kind {
     ERROR,
     WARNING,
     INFO
+  }
+
+  public static final class Failure {
+    private final @Nullable String myMessage;
+    private final @Nullable String myDescription;
+    private final @Nullable List<Failure> myCauses;
+
+    public Failure(
+      @Nullable String message,
+      @Nullable String description
+    ) {
+      this(message, description, Collections.emptyList());
+    }
+
+    public Failure(
+      @Nullable String message,
+      @Nullable String description,
+      @NotNull List<Failure> causes
+    ) {
+      myMessage = message;
+      myDescription = description;
+      myCauses = Collections.unmodifiableList(new ArrayList<>(causes));
+    }
+
+    public @Nullable String getMessage() {
+      return myMessage;
+    }
+
+    public @Nullable String getDescription() {
+      return myDescription;
+    }
+
+    public @NotNull List<Failure> getCauses() {
+      return myCauses == null ? Collections.emptyList() : myCauses;
+    }
   }
 }

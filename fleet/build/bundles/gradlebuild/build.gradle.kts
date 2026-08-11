@@ -52,10 +52,6 @@ kotlin {
     implementation(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.core.jvm930800474.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
       isTransitive = false
     }
-    implementation(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      isTransitive = false
-      exclude(group = "org.slf4j", module = "slf4j-jdk14")
-    }
     implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.core.jvm1739247612.get().let { "${it.group}:kotlinx-serialization-core:${it.version}" }) {
       isTransitive = false
     }
@@ -64,11 +60,16 @@ kotlin {
     }
     implementation(project(":fleet.build.codecache"))
     implementation(project(":fleet.build.platform"))
-    implementation(project(":fleet.build.scrambling"))
     implementation(project(":fleet.build.sign"))
     implementation(project(":fleet.codecache"))
     implementation(project(":fleet.build.fs"))
     implementation(project(":fleet.bundles"))
+  }
+  sourceSets.jvmMain.dependencies {
+    implementation(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      isTransitive = false
+      exclude(group = "org.slf4j", module = "slf4j-jdk14")
+    }
   }
   // KOTLIN__MARKER_END
 }

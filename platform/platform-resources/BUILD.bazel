@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 ### auto-generated section `build intellij.platform.resources` start
-
 resourcegroup(
     name = "resources_resources",
     srcs = glob(
@@ -23,7 +22,6 @@ jvm_library(
         ["generated/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/platform-impl/concurrency"],
 )
 
 jvm_library(
@@ -35,11 +33,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.resources",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":resources",
-        "//platform/platform-impl/concurrency:concurrency_test_lib",
-    ],
+    runtime_deps = [":resources"],
 )
 ### auto-generated section `build intellij.platform.resources` end
 

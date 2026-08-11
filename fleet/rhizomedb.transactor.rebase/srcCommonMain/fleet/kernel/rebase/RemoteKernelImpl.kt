@@ -66,7 +66,7 @@ class RemoteKernelImpl(
 ) : RemoteKernel {
 
   private companion object {
-    val log = KLoggers.logger(RemoteKernelImpl::class)
+    val log by lazy { KLoggers.logger(RemoteKernelImpl::class) }
   }
 
   override suspend fun subscribeWithChunkedSnapshot(author: UID?): RemoteKernel.SubscriptionWithChunkedSnapshot {

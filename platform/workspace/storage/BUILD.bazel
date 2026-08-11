@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.workspace.storage` start
-
 create_kotlinc_options(
     name = "custom_storage",
     jvm_target = "11",
@@ -69,7 +68,8 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//platform/util/base/multiplatform:multiplatform_test_lib",
         "//platform/util/base:base_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
         "//libraries/caffeine:caffeine_test_lib",
         "//libraries/kryo5:kryo5_test_lib",

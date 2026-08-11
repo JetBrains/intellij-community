@@ -49,6 +49,7 @@ abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(
     // TODO [targets] get rid of `!!` in `model.languageConfigForIntrospection!!`
     customToolPanel = TargetCustomToolPanel(
       project = model.project,
+      module = model.module,
       targetEnvironmentType = model.subject.getTargetType(),
       targetSupplier = ::editingTargetConfiguration,
       language = model.languageConfigForIntrospection!!,

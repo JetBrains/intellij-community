@@ -26,7 +26,11 @@ internal class TerminalRelativePathLinkFinder(
   private var lastPathSegmentStart: Int = -1
 
   private fun isLinkSeparatedFromFollowingText(linkEndExclusiveIndex: Int): Boolean {
-    return linkEndExclusiveIndex == line.length || isNonPathChar(line[linkEndExclusiveIndex])
+    val char = line.getOrElse(linkEndExclusiveIndex, ' ')
+    if (isNonPathChar(char)) return true
+    // Allow a dot after the position, e.g. "See src/Main.kt:10:20."
+    // Merge with `addLinkWithoutTrailingDot`
+    return char == '.' && isNonPathChar(line.getOrElse(linkEndExclusiveIndex + 1, ' '))
   }
 
   private fun addLink(pathEndExclusiveIndex: Int, position: Position?, checkLinkSeparatedFromFollowingText: Boolean): Boolean {
@@ -95,7 +99,7 @@ internal class TerminalRelativePathLinkFinder(
                 }
               }
               char == ':' -> {
-                val position = parsePosition(ind)
+                val position = parsePosition(line, ind)
                 addLink(ind, position, true)
                 state = ParsingState.CANCELED_PATH
               }
@@ -117,44 +121,6 @@ internal class TerminalRelativePathLinkFinder(
     if (state == ParsingState.PATH) {
       addLinkWithoutTrailingDot(ind)
     }
-  }
-
-  private fun parsePosition(colonInd: Int): Position? {
-    // Try to parse as "path: (line, column)"
-    if (line.startsWith(" (", colonInd + 1)) {
-      var i = colonInd + 3
-      val lineNumberStr = line.takeNumberFromIndex(i)
-      if (lineNumberStr != null) {
-        i += lineNumberStr.length
-        if (line.startsWith(", ", i)) {
-          i += 2
-          val columnNumberStr = line.takeNumberFromIndex(i)
-          if (columnNumberStr != null) {
-            i += columnNumberStr.length
-            if (line.getOrElse(i, ' ') == ')') {
-              return Position(lineNumberStr.safeToIntOrDefault(1), columnNumberStr.safeToIntOrDefault(1), i + 1)
-            }
-          }
-        }
-      }
-      return null
-    }
-    // Try to parse as path:line[:column]
-    var i = colonInd + 1
-    val lineNumberStr = line.takeNumberFromIndex(i)
-    if (lineNumberStr != null) {
-      i += lineNumberStr.length
-      if (line.startsWith(":", i)) {
-        i++
-        val columnNumberStr = line.takeNumberFromIndex(i)
-        if (columnNumberStr != null) {
-          i += columnNumberStr.length
-          return Position(lineNumberStr.safeToIntOrDefault(1), columnNumberStr.safeToIntOrDefault(1), i)
-        }
-      }
-      return Position(lineNumberStr.safeToIntOrDefault(1), 1, i)
-    }
-    return null
   }
 
   private fun canStartRelativePath(ind: Int): Boolean {
@@ -182,7 +148,58 @@ internal class TerminalRelativePathLinkFinder(
   }
 }
 
-private data class Position(val oneBasedLine: Int, val oneBasedColumn: Int, val linkEndExclusiveIndex: Int)
+internal fun parsePosition(line: String, colonInd: Int): Position? {
+  // Try to parse as "path: (line, column)"
+  if (line.startsWith(" (", colonInd + 1)) {
+    var i = colonInd + 3
+    val lineNumberStr = line.takeNumberFromIndex(i)
+    if (lineNumberStr != null) {
+      i += lineNumberStr.length
+      if (line.startsWith(", ", i)) {
+        i += 2
+        val columnNumberStr = line.takeNumberFromIndex(i)
+        if (columnNumberStr != null) {
+          i += columnNumberStr.length
+          if (line.getOrElse(i, ' ') == ')') {
+            return Position(lineNumberStr.safeToIntOrDefault(1), columnNumberStr.safeToIntOrDefault(1), i + 1)
+          }
+        }
+      }
+    }
+    return null
+  }
+  // Try to parse as path:line[:column] or path:line-endLine
+  var i = colonInd + 1
+  val lineNumberStr = line.takeNumberFromIndex(i)
+  if (lineNumberStr != null) {
+    i += lineNumberStr.length
+    when (line.getOrElse(i, ' ')) {
+      '-' -> {
+        // Parse line range: path:startLine-endLine
+        i++
+        val endLineNumberStr = line.takeNumberFromIndex(i)
+        if (endLineNumberStr != null) {
+          i += endLineNumberStr.length
+          // Navigate to the start line
+          return Position(lineNumberStr.safeToIntOrDefault(1), 1, i)
+        }
+      }
+      ':' -> {
+        // Parse column: path:line:column
+        i++
+        val columnNumberStr = line.takeNumberFromIndex(i)
+        if (columnNumberStr != null) {
+          i += columnNumberStr.length
+          return Position(lineNumberStr.safeToIntOrDefault(1), columnNumberStr.safeToIntOrDefault(1), i)
+        }
+      }
+    }
+    return Position(lineNumberStr.safeToIntOrDefault(1), 1, i)
+  }
+  return null
+}
+
+internal data class Position(val oneBasedLine: Int, val oneBasedColumn: Int, val linkEndExclusiveIndex: Int)
 
 private fun isSeparator(char: Char) = char == '/' || char == '\\'
 

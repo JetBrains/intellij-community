@@ -2,9 +2,11 @@
 
 package com.intellij.codeInspection.ui;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class InspectionGroupNode extends InspectionTreeNode {
   private final @Nls String myGroup;
 

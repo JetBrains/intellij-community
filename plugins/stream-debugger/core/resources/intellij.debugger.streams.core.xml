@@ -2,9 +2,31 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.debugger.streams.shared"/>
+    <module name="intellij.libraries.stream"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.debugger.impl.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.platform.debugger.streams.librarySupport" interface="com.intellij.debugger.streams.core.lib.LibrarySupportProvider" dynamic="true"/>
   </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.streams.core.statistics.StreamDebuggerStatisticsCollector"/>
+  </extensions>
+  <projectListeners>
+    <listener class="com.intellij.debugger.streams.core.StreamDebuggerSessionLifecycleListener"
+              topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
+  </projectListeners>
 </idea-plugin>

@@ -43,7 +43,10 @@ public interface InspectionToolPresentation extends InspectionToolResultExporter
   @NotNull
   HTMLComposerImpl getComposer();
 
-  QuickFixAction @NotNull [] getQuickFixes(RefEntity @NotNull ... refElements);
+  @ApiStatus.Internal
+  default QuickFixAction @NotNull [] getQuickFixes(RefEntity @NotNull ... refElements) {
+    return QuickFixAction.EMPTY;
+  }
 
   @NotNull
   GlobalInspectionContextImpl getContext();

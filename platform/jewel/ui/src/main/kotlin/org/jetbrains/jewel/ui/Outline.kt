@@ -25,6 +25,7 @@ public enum class Outline {
     /** An error outline will be drawn. */
     Error;
 
+    /** Provides the [of] factory for constructing an [Outline] from boolean warning/error flags. */
     public companion object {
         /**
          * Creates an [Outline] based on the provided boolean flags.
@@ -91,10 +92,10 @@ public fun Modifier.focusOutline(
  * component is focused.
  *
  * @param outline The [Outline] state to use.
+ * @param focused Whether the component is focused.
  * @param outlineShape The [Shape] to use for the outline.
  * @param alignment The [Stroke.Alignment] to use for the outline.
  * @param outlineWidth The width of the outline [Dp].
- * @param focused Whether the component is focused.
  */
 @Composable
 public fun Modifier.outline(

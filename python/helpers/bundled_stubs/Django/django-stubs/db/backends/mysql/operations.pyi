@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.core.management.color import Style
 from django.db.backends.base.operations import BaseDatabaseOperations
 from django.db.backends.mysql.base import DatabaseWrapper
 from django.db.models.constants import OnConflict
@@ -37,7 +38,7 @@ class DatabaseOperations(BaseDatabaseOperations):
     @override
     def quote_name(self, name: str) -> Any: ...
     @override
-    def sequence_reset_by_name_sql(self, style: Any, sequences: Any) -> Any: ...
+    def sequence_reset_by_name_sql(self, style: Style, sequences: Any) -> Any: ...
     @override
     def validate_autopk_value(self, value: Any) -> Any: ...
     @override

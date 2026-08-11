@@ -7,6 +7,7 @@
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.vcs.shared"/>
     <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.gson"/>
     <module name="intellij.libraries.guava"/>
@@ -27,13 +28,16 @@
     <module name="intellij.platform.credentialStore"/>
     <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.diff.impl"/>
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.concurrency"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.plugins"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.kernel.backend"/>
@@ -41,6 +45,7 @@
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.lvcs"/>
+    <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.rpc.topics"/>
@@ -99,6 +104,7 @@
       <language/>
       <className>com.intellij.openapi.vcs.intentions.SelectedBlockHistoryIntention</className>
     </intentionAction>
+    <vcs.fileStatusProvider implementation="com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider"/>
   </extensions>
 
   <projectListeners>

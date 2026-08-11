@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration
 
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
@@ -15,41 +14,30 @@ import javax.swing.JPanel
 /**
  * Delegates configuration to the underlying configurable that depends on Python interpreter type.
  */
-class PythonInterpreterDetailsConfigurable(project: Project,
-                                           module: Module?,
-                                           val sdk: Sdk,
-                                           parentConfigurable: Configurable) : NamedConfigurable<Sdk>() {
+internal class PythonInterpreterDetailsConfigurable(
+  project: Project,
+  module: Module?,
+  val sdk: Sdk,
+  parentConfigurable: Configurable,
+) : NamedConfigurable<Sdk>() {
 
   private val underlyingConfigurable: Configurable = createPythonInterpreterConfigurable(project, module, sdk, parentConfigurable)
-  private var initialSdkName: String = sdk.name
-  private var currentSdkName: @NlsSafe String = sdk.name
 
-  override fun isModified(): Boolean = initialSdkName != currentSdkName || underlyingConfigurable.isModified
+  override fun isModified(): Boolean = underlyingConfigurable.isModified
 
   override fun apply() {
     underlyingConfigurable.apply()
-
-    if (currentSdkName != initialSdkName) {
-      WriteAction.run<Throwable> {
-        val sdkModificator = sdk.sdkModificator
-        sdkModificator.name = currentSdkName
-        sdkModificator.commitChanges()
-        initialSdkName = currentSdkName
-      }
-    }
   }
 
-  override fun getDisplayName(): @NlsSafe String {
-    return currentSdkName
-  }
+  override fun getDisplayName(): @NlsSafe String = sdk.name
 
-  override fun setDisplayName(name: String?) {
-    currentSdkName = name.orEmpty()
-  }
+  // The interpreter is renamed via PythonInterpreterMasterDetails' "Rename" action (which mutates the SDK directly), not by inline
+  // tree editing, so there is nothing to store here.
+  override fun setDisplayName(name: String?) {}
 
   override fun getEditableObject(): Sdk = sdk
 
-  override fun getBannerSlogan(): String = currentSdkName
+  override fun getBannerSlogan(): String = sdk.name
 
   override fun createOptionsPanel(): JComponent = underlyingConfigurable.createComponent()?.apply { setDefaultBorder() } ?: JPanel()
 

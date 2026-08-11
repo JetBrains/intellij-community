@@ -79,6 +79,7 @@ import com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_STREAM
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.LambdaUtil
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiAnnotationMemberValue
 import com.intellij.psi.PsiArrayInitializerMemberValue
@@ -1049,7 +1050,22 @@ private class JUnitMalformedSignatureVisitor(
     if (InheritanceUtil.isInheritor(returnType, JAVA_UTIL_STREAM_DOUBLE_STREAM)) return PsiTypes.doubleType()
     val streamItemType = PsiUtil.substituteTypeParameter(returnType, JAVA_UTIL_STREAM_STREAM, 0, true)
     if (streamItemType != null) return streamItemType
-    return PsiUtil.substituteTypeParameter(returnType, JAVA_UTIL_ITERATOR, 0, true)
+    val iteratorItemType = PsiUtil.substituteTypeParameter(returnType, JAVA_UTIL_ITERATOR, 0, true)
+    if (iteratorItemType != null) return iteratorItemType
+    val sequenceItemType = PsiUtil.substituteTypeParameter(returnType, KOTLIN_SEQUENCES_SEQUENCE, 0, true)
+    if (sequenceItemType != null) return sequenceItemType
+    // `@MethodSource` accepts custom types that expose a parameterless `iterator()` method returning `java.util.Iterator`.
+    return getCustomIteratorItemType(returnType)
+  }
+
+  private fun getCustomIteratorItemType(type: PsiType?): PsiType? {
+    val resolveResult = PsiUtil.resolveGenericsClassInType(type)
+    val psiClass = resolveResult.element ?: return null
+    return psiClass.findMethodsByName(ITERATOR_METHOD_NAME, true).firstNotNullOfOrNull { iteratorMethod ->
+      if (iteratorMethod.parameterList.parameters.isNotEmpty()) return@firstNotNullOfOrNull null
+      val iteratorType = LambdaUtil.getSubstitutor(iteratorMethod, resolveResult).substitute(iteratorMethod.returnType)
+      PsiUtil.substituteTypeParameter(iteratorType, JAVA_UTIL_ITERATOR, 0, true)
+    }
   }
 
   private fun UDeclaration.hasProvidedParameterMismatch(): Boolean {
@@ -1681,6 +1697,8 @@ private class JUnitMalformedSignatureVisitor(
     const val METHOD_SOURCE_RETURN_TYPE = "java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments>"
     const val FIELD_SOURCE_TYPE = "java.util.Collection<org.junit.jupiter.params.provider.Arguments>"
     const val COROUTINES_CONTINUATION_TYPE = "kotlin.coroutines.Continuation<? super kotlin.Unit>"
+    const val KOTLIN_SEQUENCES_SEQUENCE = "kotlin.sequences.Sequence"
+    const val ITERATOR_METHOD_NAME = "iterator"
 
     val checkableRunners = listOf(
       "org.junit.runners.AllTests",

@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.openapi.util.NlsContexts.BorderTitle
 import com.intellij.openapi.util.NlsContexts.Checkbox
-import com.intellij.openapi.util.NlsContexts.DetailedDescription
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.util.NlsContexts.Label
@@ -28,7 +27,6 @@ import com.intellij.openapi.util.NlsContexts.RadioButton
 import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SimpleColoredComponent
@@ -38,34 +36,30 @@ import com.intellij.util.FontUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.SwingHelper.addHistoryOnExpansion
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
-import java.awt.Color
 import java.awt.Component
 import java.awt.Font
 import java.awt.LayoutManager2
 import javax.swing.Action
 import javax.swing.JCheckBox
 import javax.swing.JComponent
-import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JPasswordField
 import javax.swing.JRadioButton
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
-import javax.swing.event.HyperlinkListener
 import javax.swing.text.BadLocationException
 import javax.swing.text.JTextComponent
 import javax.swing.text.Segment
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use correspondent constructors JLabel/JBLabel/MultiLineLabel, depends on situation")
+@Deprecated("Use correspondent constructors JLabel/JBLabel/MultiLineLabel, depends on situation", level = DeprecationLevel.ERROR)
 fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false): JLabel {
-  return Label(text = text, style = style, fontColor = fontColor, bold = bold, font = null)
+  return createLabelInt(text = text, style = style, fontColor = fontColor, bold = bold, font = null)
 }
 
 /**
@@ -74,7 +68,7 @@ fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: 
  */
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use correspondent constructors JLabel/JBLabel/MultiLineLabel, depends on situation")
-private fun Label(
+private fun createLabelInt(
   @Label text: String,
   style: UIUtil.ComponentStyle? = null,
   fontColor: UIUtil.FontColor? = null,
@@ -113,7 +107,7 @@ private fun Label(
 fun noteComponent(@Label note: String, linkHandler: ((url: String) -> Unit)? = null): JComponent {
   val matcher = URLUtil.HREF_PATTERN.matcher(note)
   if (!matcher.find()) {
-    return Label(note)
+    return createLabelInt(text = note)
   }
 
   val noteComponent = SimpleColoredComponent()
@@ -139,25 +133,6 @@ fun noteComponent(@Label note: String, linkHandler: ((url: String) -> Unit)? = n
   }
 
   return noteComponent
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL, method Row.text")
-@JvmOverloads
-fun htmlComponent(@DetailedDescription text: String = "",
-                  font: Font? = null,
-                  background: Color? = null,
-                  foreground: Color? = null,
-                  lineWrap: Boolean = false,
-                  hyperlinkListener: HyperlinkListener? = BrowserHyperlinkListener.INSTANCE): JEditorPane {
-  val pane = SwingHelper.createHtmlViewer(lineWrap, font, background, foreground)
-  pane.text = text
-  pane.border = null
-  pane.disabledTextColor = UIUtil.getLabelDisabledForeground()
-  if (hyperlinkListener != null) {
-    pane.addHyperlinkListener(hyperlinkListener)
-  }
-  return pane
 }
 
 fun RadioButton(@RadioButton text: String): JRadioButton = JRadioButton(BundleBase.replaceMnemonicAmpersand(text))

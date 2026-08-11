@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertStringTemplateToBuildStringIntention
+org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertStringTemplateToBuildStringIntention

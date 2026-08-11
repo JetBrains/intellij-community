@@ -6,7 +6,9 @@ import com.intellij.util.ui.GraphicsUtil
 import java.awt.BasicStroke
 import java.awt.Color
 import java.awt.Graphics2D
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class RoundWithBackgroundBorderedPresentation(
   presentation: AbstractRoundWithBackgroundPresentation,
   val borderColor: Color? = null,

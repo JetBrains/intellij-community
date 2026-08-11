@@ -136,7 +136,7 @@ public final class InspectionTreeHtmlWriter {
       return "<b>" + escapeNonBreakingSymbols(node) + "</b>";
     }
     else if (node instanceof ProblemDescriptionNode) {
-      final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node).getDescriptor();
+      CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node).getDescriptor();
       String warningLevelName = "";
       String color = null;
       if (descriptor instanceof ProblemDescriptorBase) {
@@ -153,7 +153,7 @@ public final class InspectionTreeHtmlWriter {
         warningLevelName = StringUtil.toUpperCase(level.getSeverity().getDisplayName());
       }
 
-      final StringBuilder sb = new StringBuilder();
+      StringBuilder sb = new StringBuilder();
       sb.append("<span style=\"margin:1px;");
       if (color != null) {
         sb.append("background:#").append(color);

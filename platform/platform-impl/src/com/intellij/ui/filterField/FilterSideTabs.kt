@@ -7,7 +7,9 @@ import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class FilterSideTabs(project: Project, disposable: Disposable): SingleHeightTabs(project, disposable) {
   override fun createTabLabel(info: TabInfo): TabLabel {
     return object : SingleHeightLabel(this, info) {

@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.textmate.core` start
-
 create_kotlinc_options(
     name = "custom_core",
     opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],
@@ -43,7 +42,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
         "@lib//:kotlin-stdlib",
@@ -67,6 +66,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":core",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/kotlin/reflect:reflect_test_lib",

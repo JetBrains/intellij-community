@@ -6,6 +6,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,10 +49,12 @@ public final class SliceTreeBuilder {
     this.splitByLeafExpressions = splitByLeafExpressions;
   }
 
+  @ApiStatus.Internal
   public SliceTreeStructure getTreeStructure() {
     return sliceTreeStructure;
   }
 
+  @ApiStatus.Internal
   @Contract(pure = true)
   public @NotNull SliceRootNode getRootSliceNode() {
     return sliceTreeStructure.getRootElement();

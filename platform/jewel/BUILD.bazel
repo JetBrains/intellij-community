@@ -1,0 +1,9 @@
+filegroup(
+    name = "jewel_build_metadata",
+    srcs = [
+        "JEWEL_MARKER",
+        "gradle.properties",
+        "gradle/libs.versions.toml",
+    ],
+    visibility = ["//visibility:public"],
+)

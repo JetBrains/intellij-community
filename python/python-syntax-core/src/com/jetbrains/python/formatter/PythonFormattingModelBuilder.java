@@ -145,7 +145,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
     final PyCodeStyleSettings pySettings = settings.getCustomSettings(PyCodeStyleSettings.class);
 
     final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
-    return new SpacingBuilder(commonSettings)
+    final SpacingBuilder builder = new SpacingBuilder(commonSettings)
       .before(END_OF_LINE_COMMENT).spacing(2, 0, 0, commonSettings.KEEP_LINE_BREAKS, commonSettings.KEEP_BLANK_LINES_IN_CODE)
       .after(END_OF_LINE_COMMENT).spacing(0, 0, 1, commonSettings.KEEP_LINE_BREAKS, commonSettings.KEEP_BLANK_LINES_IN_CODE)
       // Top-level definitions are supposed to be handled in PyBlock#getSpacing
@@ -155,7 +155,8 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       // Note that ImportOptimizer gets rid of them anyway.
       // Empty lines between import groups are handles in PyBlock#getSpacing
       .between(IMPORT_STATEMENTS, IMPORT_STATEMENTS).spacing(0, Integer.MAX_VALUE, 1, false, 1)
-      .between(STATEMENT_OR_DECLARATION, STATEMENT_OR_DECLARATION).spacing(0, Integer.MAX_VALUE, 1, false, 1)
+      .between(STATEMENT_OR_DECLARATION, STATEMENT_OR_DECLARATION)
+      .spacing(0, Integer.MAX_VALUE, 1, false, commonSettings.KEEP_BLANK_LINES_IN_CODE)
 
       .between(COLON, STATEMENT_LIST).spacing(1, Integer.MAX_VALUE, 0, true, 0)
       .afterInside(COLON, EXPRESSIONS_WITH_COLON).spaceIf(pySettings.SPACE_AFTER_PY_COLON)
@@ -208,11 +209,17 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
 
       .withinPair(FSTRING_FRAGMENT_START, FSTRING_FRAGMENT_END).spaces(0)
 
-      .before(COLON).spaceIf(pySettings.SPACE_BEFORE_PY_COLON)
-      .afterInside(LPAR, FROM_IMPORT_STATEMENT).spaces(0, pySettings.FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS)
-      .betweenInside(COMMA, RPAR, FROM_IMPORT_STATEMENT).spaceIf(commonSettings.SPACE_AFTER_COMMA,
-                                                                 pySettings.FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS)
-      .beforeInside(RPAR, FROM_IMPORT_STATEMENT).spaces(0, pySettings.FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS)
+      .before(COLON).spaceIf(pySettings.SPACE_BEFORE_PY_COLON);
+
+    // Rules are matched in the order they are registered, so these have to stay between the two rules above and below.
+    withoutBlankLines(builder.afterInside(LPAR, FROM_IMPORT_STATEMENT), 0,
+                      pySettings.FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS, commonSettings);
+    withoutBlankLines(builder.betweenInside(COMMA, RPAR, FROM_IMPORT_STATEMENT), commonSettings.SPACE_AFTER_COMMA ? 1 : 0,
+                      pySettings.FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS, commonSettings);
+    withoutBlankLines(builder.beforeInside(RPAR, FROM_IMPORT_STATEMENT), 0,
+                      pySettings.FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS, commonSettings);
+
+    return builder
       .after(COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA)
       .before(COMMA).spaceIf(commonSettings.SPACE_BEFORE_COMMA)
       .after(FROM_KEYWORD).spaces(1)
@@ -266,6 +273,21 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       .around(EQUALITY_OPERATIONS).spaceIf(commonSettings.SPACE_AROUND_EQUALITY_OPERATORS)
       .around(RELATIONAL_OPERATIONS).spaceIf(commonSettings.SPACE_AROUND_RELATIONAL_OPERATORS)
       .around(SINGLE_SPACE_KEYWORDS).spaces(1);
+  }
+
+  /**
+   * Same as {@link SpacingBuilder.RuleBuilder#spaces(int, boolean)}, except that blank lines are not kept.
+   */
+  private static void withoutBlankLines(@NotNull SpacingBuilder.RuleBuilder rule,
+                                        int spaces,
+                                        boolean newLine,
+                                        @NotNull CommonCodeStyleSettings commonSettings) {
+    if (newLine) {
+      rule.parentDependentLFSpacing(spaces, spaces, commonSettings.KEEP_LINE_BREAKS, 0);
+    }
+    else {
+      rule.spacing(spaces, spaces, 0, commonSettings.KEEP_LINE_BREAKS, 0);
+    }
   }
 
   // should be all keywords?

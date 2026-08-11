@@ -5,11 +5,11 @@ import org.gradle.tooling.events.OperationDescriptor;
 import org.gradle.tooling.events.PluginIdentifier;
 import org.gradle.tooling.events.task.TaskOperationDescriptor;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Suppliers;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.InternalOperationDescriptor;
 
 import java.util.Set;
+import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class InternalTaskOperationDescriptor extends InternalOperationDescriptor implements TaskOperationDescriptor {

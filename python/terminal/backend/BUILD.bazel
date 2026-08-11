@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.terminal.backend` start
-
 jvm_library(
     name = "backend",
     srcs = glob(
@@ -21,19 +20,24 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//platform/kernel/rpc.backend",
         "//python:python-community-impl",
         "//plugins/terminal",
         "//platform/core-api:core",
         "//platform/execution",
         "//platform/projectModel-api:projectModel",
+        "//platform/backend/workspace",
+        "//platform/workspace/storage",
+        "//platform/workspace/jps",
         "@lib//:kotlin-stdlib",
-        "//python/python-sdk:sdk",
+        "//python/python-sdk/backend",
         "//platform/lang-api:lang",
         "//platform/analysis-api:analysis",
         "//platform/eel-provider",
         "//platform/ide-core",
         "//platform/platform-impl:ide-impl",
         "//python/terminal/shared",
+        "//platform/project/shared:project",
     ],
 )
 
@@ -49,6 +53,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":backend",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
         "//python:python-community-impl_test_lib",
         "//plugins/terminal:terminal_test_lib",
         "//libraries/mockito",
@@ -56,7 +61,10 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/execution:execution_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
-        "//python/python-sdk:sdk_test_lib",
+        "//platform/backend/workspace:workspace_test_lib",
+        "//platform/workspace/storage:storage_test_lib",
+        "//platform/workspace/jps:jps_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//python/junit5Tests-framework:community-junit5Tests-framework",
@@ -83,6 +91,7 @@ jvm_library(
         "//python/python-test-env/junit5",
         "//python/python-test-env/junit5:junit5_test_lib",
         "//python/terminal/shared:shared_test_lib",
+        "//platform/project/shared:project_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.terminal.backend` end

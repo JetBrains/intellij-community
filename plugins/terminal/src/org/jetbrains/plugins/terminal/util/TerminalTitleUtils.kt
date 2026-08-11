@@ -1,10 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.util
 
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabFile
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.TerminalTitleListener
 import com.intellij.util.text.UniqueNameGenerator
@@ -15,6 +18,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
+import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.settings.TerminalApplicationTitleShowingMode
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -56,10 +60,21 @@ object TerminalTitleUtils {
   @ApiStatus.Internal
   @JvmStatic
   fun createDefaultTabName(
+    project: Project,
     toolWindow: ToolWindow,
     defaultName: String = TerminalOptionsProvider.instance.tabName,
   ): @NlsSafe String {
-    val existingNames = toolWindow.contentManager.contentsRecursively.map { it.displayName }
+    val existingNames = buildSet {
+      toolWindow.contentManager.contentsRecursively
+        .mapTo(this) { content -> content.displayName }
+
+      FileEditorManager.getInstance(project).openFiles
+        .asSequence()
+        .filterIsInstance<ToolWindowEditorTabFile>()
+        .filter { it.toolWindowId == TerminalToolWindowFactory.TOOL_WINDOW_ID }
+        .mapTo(this) { it.name }
+    }
+
     return UniqueNameGenerator.generateUniqueName(
       defaultName,
       "",

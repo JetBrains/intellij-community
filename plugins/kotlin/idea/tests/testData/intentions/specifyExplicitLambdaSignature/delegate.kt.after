@@ -2,8 +2,8 @@
 // SKIP_ERRORS_BEFORE
 // ERROR: Modifier 'override' is not applicable to 'local function'
 // ERROR: Type mismatch: inferred type is () -> Unit but Base was expected
-// K2_AFTER_ERROR: Modifier 'override' is not applicable to 'local function'.
-// K2_AFTER_ERROR: Type mismatch: inferred type is '() -> Unit', but 'Base' was expected.
+// K2_AFTER_ERROR: TYPE_MISMATCH
+// K2_AFTER_ERROR: WRONG_MODIFIER_TARGET
 
 // See also KT-15075
 

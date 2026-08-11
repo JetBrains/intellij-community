@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -32,7 +32,7 @@ public abstract class BaseDataReader {
    */
   @ReviseWhenPortedToJDK("Loom")
   public BaseDataReader(SleepingPolicy sleepingPolicy) {
-    mySleepingPolicy = sleepingPolicy != null ? sleepingPolicy : SleepingPolicy.NON_BLOCKING;
+    mySleepingPolicy = sleepingPolicy != null ? sleepingPolicy : SleepingPolicy.BLOCKING;
   }
 
   protected void start(@NotNull @NonNls String presentableName) {
@@ -61,12 +61,12 @@ public abstract class BaseDataReader {
   /**
    * Please don't override this method as the BaseOSProcessProcessHandler assumes that it can be two reading modes: blocking and non-blocking.
    * Implement {@link #readAvailableBlocking} and {@link #readAvailableNonBlocking} instead.
-   *
+   * <p>
    * If the process handler assumes that reader handles the blocking mode, while it doesn't, it will result into premature stream close.
    *
    * @return true in case any data was read
-   * @see SleepingPolicy
    * @throws IOException if an exception during IO happened
+   * @see SleepingPolicy
    */
   protected boolean readAvailable() throws IOException {
     return mySleepingPolicy == SleepingPolicy.BLOCKING ? readAvailableBlocking() : readAvailableNonBlocking();
@@ -74,6 +74,7 @@ public abstract class BaseDataReader {
 
   /**
    * Non-blocking read returns the control back to the process handler when there is no data to read.
+   *
    * @see SleepingPolicy#NON_BLOCKING
    */
   protected boolean readAvailableNonBlocking() throws IOException {
@@ -82,6 +83,7 @@ public abstract class BaseDataReader {
 
   /**
    * Reader in a blocking mode blocks on IO read operation until data is received. It exits the method only after the stream is closed.
+   *
    * @see SleepingPolicy#BLOCKING
    */
   protected boolean readAvailableBlocking() throws IOException {
@@ -181,9 +183,9 @@ public abstract class BaseDataReader {
     }
   }
 
-  protected void flush() {}
+  protected void flush() { }
 
-  protected void beforeSleeping(boolean hasJustReadSomething) {}
+  protected void beforeSleeping(boolean hasJustReadSomething) { }
 
   protected abstract void close() throws IOException;
 

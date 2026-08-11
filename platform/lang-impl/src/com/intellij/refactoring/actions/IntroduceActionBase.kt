@@ -3,8 +3,10 @@ package com.intellij.refactoring.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
 
+@ApiStatus.Internal
 abstract class IntroduceActionBase : BasePlatformRefactoringAction() {
   init {
     setInjectedContext(true)

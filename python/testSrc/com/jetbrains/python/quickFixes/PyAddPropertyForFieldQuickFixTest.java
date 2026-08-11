@@ -19,9 +19,13 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.inspections.PyProtectedMemberInspection;
 
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyAddPropertyForFieldQuickFixTest")
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyAddPropertyForFieldQuickFixTest extends PyQuickFixTestCase {
   public void testProtectedMember() {
     doQuickFixTest(PyProtectedMemberInspection.class, PyPsiBundle.message("QFIX.add.property"));

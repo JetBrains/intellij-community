@@ -1,0 +1,9 @@
+<idea-plugin>
+
+  <resource-bundle>ActionTextEscapedBackslashFixBundle</resource-bundle>
+
+  <actions>
+  <action<caret> id="BundleActionEscapedBackslash"/>
+  </actions>
+
+</idea-plugin>

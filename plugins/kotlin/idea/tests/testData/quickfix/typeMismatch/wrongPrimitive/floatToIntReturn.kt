@@ -1,5 +1,5 @@
 // "Change to '1'" "true"
-// K2_ERROR: Return type mismatch: expected 'Int', actual 'Float'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 fun test(): Int {
     return 1.0F<caret>
 }

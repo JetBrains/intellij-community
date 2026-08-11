@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.impl.source.tree.TreeCopyHandler
 import dev.detekt.api.Finding
 import dev.detekt.api.Rule
+import dev.detekt.api.modifiedText
 import dev.detekt.test.FakeLanguageVersionSettings
 import dev.detekt.test.utils.compileContentForTest
 import org.assertj.core.api.Assertions.assertThat
@@ -28,7 +29,7 @@ internal fun Rule.lintAndFix(@Language("kotlin") code: String): Pair<List<Findin
     val ktFile = compileContentForTest(code)
     ensurePsiMutationSupported()
     val findings = visitFile(ktFile, FakeLanguageVersionSettings())
-    return findings to ktFile.text
+    return findings to (ktFile.modifiedText ?: ktFile.text)
 }
 
 internal fun ObjectAssert<Finding>.hasMessage(message: String) =

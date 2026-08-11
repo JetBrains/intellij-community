@@ -58,7 +58,7 @@ public final class ExcludedEntriesConfigurable implements UnnamedConfigurable, N
   private ExcludedEntriesPanel myExcludedEntriesPanel;
 
   public ExcludedEntriesConfigurable(@NotNull Project project) {
-    this(project, new FileChooserDescriptor(true, true, false, false, false, true),
+    this(project, new FileChooserDescriptor(true, true, false, false, false, true).withEnvironmentRestricted(true),
          CompilerConfiguration.getInstance(project).getExcludedEntriesConfiguration());
   }
 

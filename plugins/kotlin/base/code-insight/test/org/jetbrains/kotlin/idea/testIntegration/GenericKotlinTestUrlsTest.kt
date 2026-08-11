@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.testIntegration
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.runInEdtAndGet
 import org.jetbrains.kotlin.idea.test.KotlinPluginUnitTest
 import org.jetbrains.kotlin.psi.KtClass
@@ -47,15 +47,5 @@ class GenericKotlinTestUrlsTest {
 
         val foo = ktClass.findFunctionByName("foo") ?: error("Cannot find foo()")
         assertEquals(listOf("java:test://a.b.c.Foo/foo"), foo.genericKotlinTestUrls())
-    }
-
-    companion object {
-        @JvmStatic
-        @AfterAll
-        fun cleanupProject() {
-            runInEdtAndGet {
-                PlatformTestUtil.cleanupAllProjects()
-            }
-        }
     }
 }

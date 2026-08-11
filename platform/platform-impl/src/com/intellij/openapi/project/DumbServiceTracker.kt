@@ -2,7 +2,6 @@
 package com.intellij.openapi.project
 
 import com.intellij.platform.backend.observation.ActivityTracker
-import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -13,10 +12,6 @@ class DumbServiceTracker : ActivityTracker {
   override suspend fun isInProgress(project: Project): Boolean = DumbService.isDumb(project)
 
   override suspend fun awaitConfiguration(project: Project) {
-    suspendCancellableCoroutine {
-      DumbService.getInstance(project).runWhenSmart {
-        it.resumeWith(Result.success(Unit))
-      }
-    }
+    project.waitForSmartMode()
   }
 }

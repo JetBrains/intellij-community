@@ -37,6 +37,7 @@ import java.util.List;
 public class XmlNsPrefixAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+    if (holder.isBatchMode()) return;
     if (PsiUtilCore.getElementType(element) != XmlTokenType.XML_NAME) return;
     PsiElement parent = element.getParent();
     if (!(parent instanceof XmlTag) && !(parent instanceof XmlAttribute)) return;

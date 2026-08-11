@@ -28,13 +28,13 @@ import com.jetbrains.python.sdk.InvalidSdkException
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader
 import java.nio.file.Files
-import java.nio.file.Paths
+import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermissions
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.setPosixFilePermissions
 
-class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder: String?, project: Project?) :
+class PyTargetsSkeletonGenerator(skeletonPath: Path, pySdk: Sdk, currentFolder: String?, project: Project?) :
   PySkeletonGenerator(skeletonPath, pySdk, currentFolder) {
   private val pyRequest: HelpersAwareTargetEnvironmentRequest = checkNotNull(
     // TODO Get rid of the dependency on the default project
@@ -63,7 +63,7 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
    * Note that [mySdk] and [mySkeletonsPath] cannot be accessed directly in [TargetedBuilder]. In the other case [IllegalAccessError] is
    * thrown by access control according to [JVM specification](https://docs.oracle.com/javase/specs/jvms/se16/html/jvms-5.html#jvms-5.4.4).
    */
-  private inner class TargetedBuilder(private val sdk: Sdk, private val skeletonsPaths: String) : Builder() {
+  private inner class TargetedBuilder(private val sdk: Sdk, private val skeletonsLocalRootPath: Path) : Builder() {
     override fun runProcessWithLineOutputListener(listener: LineWiseProcessOutputListener): ProcessOutput = doRunProcess(listener)
 
     @Throws(InvalidSdkException::class)
@@ -76,7 +76,7 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
       )
       generatorScriptExecution.addParameter("-d")
       val skeletonsDownloadRoot = TargetEnvironment.DownloadRoot(
-        localRootPath = Paths.get(skeletonsPaths),
+        localRootPath = skeletonsLocalRootPath,
         targetRootPath = TargetEnvironment.TargetPath.Temporary()
       )
       targetEnvRequest.downloadVolumes += skeletonsDownloadRoot
@@ -98,8 +98,20 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
         }
       }
       // TODO: Unify code
-      if (!isLocalTarget()) {
-        val existingStateFile = Paths.get(skeletonsPath) / STATE_MARKER_FILE
+      val existingStateFile = skeletonsPath / STATE_MARKER_FILE
+      if (isLocalTarget()) {
+        // The local target maps the `-d` output to this persistent dir, so the state file is passed by
+        // its real path (no upload/download volume). Persisting bin mtime lets skeleton_status detect a
+        // rebuilt binary (e.g. after `maturin develop`) as OUTDATED for local SDKs too, not only remote.
+        if (existingStateFile.exists()) {
+          generatorScriptExecution.addParameter("--state-file")
+          generatorScriptExecution.addParameter(existingStateFile.toString())
+        }
+        else {
+          generatorScriptExecution.addParameter("--init-state-file")
+        }
+      }
+      else {
         if (existingStateFile.exists()) {
           val localRootPath = Files.createTempDirectory("generator3")
           if (Files.getFileStore(localRootPath).supportsFileAttributeView("posix")) {

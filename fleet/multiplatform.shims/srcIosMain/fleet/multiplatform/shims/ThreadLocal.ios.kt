@@ -7,10 +7,23 @@ import fleet.util.multiplatform.Actual
 internal fun threadLocalImplNative(supplier: () -> Any?): ThreadLocal<Any?> = threadLocal(supplier)
 
 private fun <T> threadLocal(supplier: () -> T) = object : ThreadLocal<T> {
-  override fun get(): T = ThreadLocalMap[this] as? T ?: supplier().also { set(it) }
-  override fun set(value: T) { ThreadLocalMap[this] = value }
+  @Suppress("UNCHECKED_CAST")
+  override fun get(): T {
+    return when (val value = ThreadLocalMap[this]) {
+      null -> supplier().also { set(it) }
+      NullValue -> null as T
+      else -> value as T
+    }
+  }
+
+  override fun set(value: T) {
+    ThreadLocalMap[this] = value ?: NullValue
+  }
+
   override fun remove() { ThreadLocalMap.remove(this) }
 }
+
+private object NullValue
 
 @kotlin.native.concurrent.ThreadLocal
 private object ThreadLocalMap: MutableMap<Any, Any?> by mutableMapOf()

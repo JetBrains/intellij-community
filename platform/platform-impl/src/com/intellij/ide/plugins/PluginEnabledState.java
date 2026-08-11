@@ -2,10 +2,12 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
+@ApiStatus.Internal
 public enum PluginEnabledState {
 
   ENABLED(true, "plugins.configurable.enabled"),

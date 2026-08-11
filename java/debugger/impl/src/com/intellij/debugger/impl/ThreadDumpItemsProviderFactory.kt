@@ -31,5 +31,5 @@ interface ThreadDumpItemsProvider {
    *
    * [suspendContext] is guaranteed to be non-null if [requiresEvaluation] is `true`.
    */
-  fun getItems(suspendContext: SuspendContextImpl?): List<MergeableDumpItem>
+  fun getItems(suspendContext: SuspendContextImpl?): List<DumpItem>
 }

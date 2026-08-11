@@ -29,6 +29,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogAggregatedStoredRefs;
 import com.intellij.vcs.log.VcsLogAggregatedStoredRefsKt;
 import com.intellij.vcs.log.VcsLogBranchFilter;
+import com.intellij.vcs.log.VcsLogBranchLikeFilter;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogDataPack;
@@ -50,6 +51,7 @@ import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcsUtil.VcsUtil;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,10 +81,18 @@ import static java.util.Collections.singletonList;
 
 public final class VcsLogUtil {
   public static final int MAX_SELECTED_COMMITS = 1000;
-  public static final int FULL_HASH_LENGTH = 40;
   public static final int SHORT_HASH_LENGTH = com.intellij.platform.vcs.VcsUtil.SHORT_HASH_LENGTH;
-  public static final Pattern HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,40}");
-  public static final Pattern HASH_PREFIX_REGEX = Pattern.compile("[a-fA-F0-9]{4,40}");
+
+  /**
+   * VCS Log should not make any assumptions about vcs-specific hash format
+   *
+   * @see git4idea.GitUtil#isPossibleHash(String)
+   */
+  @ApiStatus.Obsolete
+  public static final Pattern GIT_HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,64}");
+  @ApiStatus.Obsolete
+  public static final Pattern GIT_HASH_PREFIX_REGEX = Pattern.compile("[a-fA-F0-9]{4,64}");
+
   public static final @NlsSafe String HEAD = "HEAD";
 
   public static @NotNull Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<? extends VcsRef> refs) {
@@ -190,7 +200,9 @@ public final class VcsLogUtil {
 
   public static @Nullable @NlsSafe String getSingleFilteredBranch(@NotNull VcsLogFilterCollection filters,
                                                                   @NotNull VcsLogAggregatedStoredRefs refs) {
-    VcsLogBranchFilter filter = filters.get(VcsLogFilterCollection.BRANCH_FILTER);
+    List<VcsLogBranchLikeFilter> branchLikeFilters = ContainerUtil.filterIsInstance(filters.getFilters(), VcsLogBranchLikeFilter.class);
+    if (branchLikeFilters.size() != 1) return null;
+    VcsLogBranchFilter filter = ContainerUtil.getOnlyItem(ContainerUtil.filterIsInstance(branchLikeFilters, VcsLogBranchFilter.class));
     if (filter == null) return null;
 
     String branchName = null;
@@ -247,10 +259,6 @@ public final class VcsLogUtil {
 
   public static @NotNull @NlsSafe String getShortHash(@NotNull String hashString, int shortHashLength) {
     return com.intellij.platform.vcs.VcsUtil.getShortHash(hashString, shortHashLength);
-  }
-
-  public static boolean isFullHash(@NotNull String s) {
-    return s.length() == FULL_HASH_LENGTH && HASH_REGEX.matcher(s).matches();
   }
 
   public static @Nullable VcsRef findBranch(@NotNull VcsLogAggregatedStoredRefs refs,

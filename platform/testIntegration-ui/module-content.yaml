@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.testIntegration.ui.jar
+  modules:
+  - name: intellij.platform.testIntegration.ui

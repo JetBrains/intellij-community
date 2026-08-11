@@ -1,21 +1,15 @@
 package com.intellij.lambda.testFramework.starter
 
-import com.intellij.ide.starter.config.ConfigurationStorage
-import com.intellij.ide.starter.config.splitMode
-import com.intellij.ide.starter.coroutine.CommonScope.testSuiteSupervisorScope
+import com.intellij.ide.starter.ide.IdeRunMode
 import com.intellij.ide.starter.ide.isRemDevContext
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
-import com.intellij.ide.starter.utils.PortUtil
 import com.intellij.ide.starter.utils.catchAll
-import com.intellij.lambda.testFramework.junit.IdeRunMode
 import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import com.intellij.lambda.testFramework.utils.runIdeWithLambda
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.tools.ide.starter.bus.EventsBus
-import com.intellij.tools.ide.util.common.logOutput
-import kotlinx.coroutines.runBlocking
 
 data class RunContext(var frontendContext: IDERunContext, var backendContext: IDERunContext? = null)
 
@@ -42,17 +36,17 @@ object IdeInstance {
 
     try {
       if (isStarted() && currentIdeMode == runMode && IdeStartConfig.current == currentIdeConfig) {
-        LOG.info("IDE is already running in mode: $runMode and there were no requests to change it's config. Reusing the current instance of IDE.")
+        LOG.info("IDE is already running in mode: $runMode with config '${currentIdeConfig.key}'. Reusing the current instance of IDE.")
         return ide
       }
       else {
-        LOG.info("Starting IDE in mode: $runMode")
+        LOG.info("Starting IDE in mode: $runMode (${restartReason(runMode)})")
       }
 
       stopIde()
       currentIdeMode = runMode
       currentIdeConfig = IdeStartConfig.current
-      ConfigurationStorage.splitMode(currentIdeMode == IdeRunMode.SPLIT)
+      currentIdeMode.applyToConfiguration()
 
       EventsBus.subscribe(IdeInstance) { event: IdeLaunchEvent ->
         if (event.runContext.testContext.isRemDevContext()) {
@@ -82,7 +76,6 @@ object IdeInstance {
       _ide = testContext.runIdeWithLambda(configure = {
         IdeStartConfig.current.configureRunContext(this)
         // Artifacts will be published after each test by invoking IdeInstance.publishArtifacts
-        this.artifactsPublishingEnabled = false
       })
 
       return ide
@@ -93,71 +86,24 @@ object IdeInstance {
     }
   }
 
+  /**
+   * Why the running IDE could not be answered with. Every start after the first one costs a suite a cold
+   * launch and a re-index, so a run that expected to reuse and did not has to be able to say what changed.
+   */
+  private fun restartReason(runMode: IdeRunMode): String = when {
+    !isStarted() -> "no IDE is running"
+    currentIdeMode != runMode -> "run mode changed from $currentIdeMode"
+    else -> "config key changed from '${currentIdeConfig.key}' to '${IdeStartConfig.current.key}'"
+  }
+
   fun stopIde(): Unit = synchronized(this) {
     if (isStarted()) {
       LOG.info("Killing IDE with current ide mode: $currentIdeMode")
-
-      // Extract ports that were actually used before killing the IDE
-      val portsToWait: Set<Int> = if (this::runContext.isInitialized) {
-        extractUsedPorts(runContext)
-      }
-      else {
-        emptySet()
-      }
-
-      catchAll { _ide?.backgroundRun?.forceKill() }
+      catchAll { _ide?.backgroundRun?.closeIdeAndWait() }
       _ide = null
-
-      // Wait for ports to be released after killing the IDE to avoid port conflicts when starting the next IDE
-      if (portsToWait.isNotEmpty()) {
-        runBlocking(testSuiteSupervisorScope.coroutineContext) {
-          PortUtil.waitForPortsRelease(ports = portsToWait)
-        }
-      }
     }
     else {
       LOG.info("IDE wasn't started. Skipping killing it.")
     }
-  }
-
-  /**
-   * Extracts the ports that were actually used by the IDE from the run context's VM options.
-   * This includes JMX port (com.sun.management.jmxremote.port) and RPC port (rpc.port).
-   */
-  private fun extractUsedPorts(runContext: RunContext): Set<Int> {
-    val ports = mutableSetOf<Int>()
-
-    ports.addAll(extractPortsFromContext(runContext.frontendContext))
-    runContext.backendContext?.let { ports.addAll(extractPortsFromContext(it)) }
-
-    if (ports.isNotEmpty()) {
-      logOutput("Will wait for these ports to be released: ${ports.sorted().joinToString(", ")}")
-    }
-
-    return ports
-  }
-
-  private fun extractPortsFromContext(context: IDERunContext): Set<Int> {
-    val vmOptions = context.calculateVmOptions().data()
-    val ports = mutableSetOf<Int>()
-
-    // Extract JMX port
-    vmOptions.find { it.startsWith("-Dcom.sun.management.jmxremote.port=") }
-      ?.substringAfter("=")
-      ?.toIntOrNull()
-      ?.let { ports.add(it) }
-
-    // Extract RPC port
-    vmOptions.find { it.startsWith("-Drpc.port=") }
-      ?.substringAfter("=")
-      ?.toIntOrNull()
-      ?.let { ports.add(it) }
-
-    return ports
-  }
-
-  fun publishArtifacts(): Unit = synchronized(this) {
-    runContext.frontendContext.publishArtifacts(publish = true)
-    runContext.backendContext?.publishArtifacts(publish = true)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.repository
 
 import com.google.gson.Gson
@@ -8,12 +8,13 @@ import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.service
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.xmlb.annotations.Transient
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPIPackageUtil
-import com.jetbrains.python.packaging.PyPackageVersionComparator
+import com.intellij.python.requirements.PyPackageVersionComparator
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
 import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCacheService
@@ -32,7 +33,7 @@ import java.nio.charset.StandardCharsets
 private val GSON = Gson()
 
 internal fun PyPackageRepository.buildPackageDetailsBySimpleDetailsProtocol(packageName: String): PyResult<PythonSimplePackageDetails> {
-  val repositoryUrl = repositoryUrl ?: return PyResult.failure(MessageError("There is no repository url for $name"))
+  val repositoryUrl = repositoryUrl.ifEmpty { return PyResult.failure(MessageError("There is no repository url for $name")) }
 
   val packageDetails = runCatching {
     val packageDetailsUrl = PyPIPackageUtil.buildDetailsUrl(repositoryUrl, packageName)
@@ -68,16 +69,18 @@ internal fun PyPackageRepository.buildPackageDetailsBySimpleDetailsProtocol(pack
 open class PyPackageRepository() {
   var name: String = ""
     internal set
-  var repositoryUrl: String? = null
+
+  var repositoryUrl: String = ""
     internal set
   var login: String? = null
     internal set
   var authorizationType: PyPackageRepositoryAuthenticationType = PyPackageRepositoryAuthenticationType.NONE
     internal set
+  open var enabled: Boolean = true
 
   constructor(name: String, repositoryUrl: String?, login: String?) : this() {
     this.name = name
-    this.repositoryUrl = repositoryUrl
+    this.repositoryUrl = repositoryUrl.orEmpty()
     this.login = login
   }
 
@@ -85,9 +88,9 @@ open class PyPackageRepository() {
 
   val urlForInstallation: URL?
     get() {
-      val baseUrl = repositoryUrl ?: return null
+      val baseUrl = repositoryUrl.ifEmpty { return null }
       val userLogin = login.takeUnless { it.isNullOrBlank() } ?: return URL(baseUrl)
-      val userPassword = getPassword() ?: return URL(baseUrl)
+      val userPassword = getPassword().ifEmpty { return URL(baseUrl) }
       return buildAuthenticatedUrl(baseUrl, userLogin, userPassword)
     }
 
@@ -95,13 +98,14 @@ open class PyPackageRepository() {
     URIBuilder(baseUrl).setUserInfo(login, password).build().toURL()
 
   @Transient
-  fun getPassword(): String? = cachedPassword.get()
+  fun getPassword(): String = cachedPassword.get().orEmpty()
 
   fun setPassword(pass: String?) = cachedPassword.set(Credentials(login, pass))
 
   fun clearCredentials() = cachedPassword.set(null)
 
   @ApiStatus.Internal
+  @RequiresBackgroundThread
   fun findPackageSpecificationWithSpec(pyRequirement: PyRequirement): PythonRepositoryPackageSpecification? =
     if (hasPackage(pyRequirement))
       PythonRepositoryPackageSpecification(this, pyRequirement)
@@ -109,27 +113,32 @@ open class PyPackageRepository() {
       null
 
   @ApiStatus.Internal
+  @RequiresBackgroundThread
   fun findPackageSpecification(
     pyRequirement: PyRequirement,
   ): PythonRepositoryPackageSpecification? {
     return findPackageSpecificationWithSpec(pyRequirement)
   }
 
+  @RequiresBackgroundThread
   open fun search(needle: String, pageSize: Int = 100): PythonPackageSearchResult {
     val cache = service<PythonSimpleRepositoryCacheService>()[this] ?: return PythonPackageSearchResult(0, emptyList(), pageSize)
     return cache.search(needle, pageSize)
   }
 
+  @RequiresBackgroundThread
   open fun hasPackage(name: String): Boolean {
     val cache = service<PythonSimpleRepositoryCacheService>()[this] ?: return false
     return name in cache
   }
 
+  @RequiresBackgroundThread
   open fun getSize(): Int {
     val cache = service<PythonSimpleRepositoryCacheService>()[this] ?: return 0
     return cache.size
   }
 
+  @RequiresBackgroundThread
   open fun hasPackage(pyPackage: PyRequirement): Boolean = hasPackage(pyPackage.name)
 
   open fun buildPackageDetails(packageName: String): PyResult<PythonPackageDetails> {
@@ -142,8 +151,7 @@ open class PyPackageRepository() {
    * case.
    */
   open fun getProjectUrl(packageName: String): ProjectUrl? {
-    val base = repositoryUrl?.trimEnd('/') ?: return null
-    if (base.isEmpty()) return null
+    val base = repositoryUrl.trimEnd('/').ifEmpty { return null }
     val encoded = URLEncoder.encode(packageName, StandardCharsets.UTF_8)
     val label = name.ifBlank { DEFAULT_PROJECT_URL_LABEL }
     return ProjectUrl(label, "$base/project/$encoded/")

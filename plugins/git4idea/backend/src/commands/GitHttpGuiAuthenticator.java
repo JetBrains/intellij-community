@@ -31,6 +31,7 @@ import git4idea.remote.GitRememberedInputs;
 import git4idea.remote.GitRepositoryHostingService;
 import git4idea.remote.InteractiveGitHttpAuthDataProvider;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -257,6 +258,13 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
   }
 
+  @Override
+  public @Nullable @Nls String getPresentableErrorMessage(@NotNull List<String> errorOutput) {
+    ProviderAndData providerAndData = myProviderAndData;
+    if (providerAndData == null) return null;
+    return providerAndData.getProvider().getPresentableErrorMessage(errorOutput);
+  }
+
   /**
    * @return non-nullable http-schemed url
    */
@@ -309,6 +317,8 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     abstract void onAuthSuccess();
 
     abstract void onAuthFailure();
+
+    abstract @Nullable @Nls String getPresentableErrorMessage(@NotNull List<String> errorOutput);
   }
 
   private static final class ExtensionAdapterProvider extends AuthDataProvider {
@@ -344,6 +354,13 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     @Override
     public void onAuthFailure() {
       if (myData != null) myDelegate.forgetPassword(myProject, myUrl, myData);
+    }
+
+    @Override
+    @Nullable
+    @Nls
+    String getPresentableErrorMessage(@NotNull List<String> errorOutput) {
+      return myDelegate.getPresentableErrorMessage(errorOutput);
     }
 
     @Override
@@ -394,6 +411,11 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     public void onAuthFailure() {
       if (myDataForSession) return;
       myPasswordSafeDelegate.onAuthFailure();
+    }
+
+    @Override
+    @Nullable String getPresentableErrorMessage(@NotNull List<String> errorOutput) {
+      return null;
     }
 
     private @NotNull AuthData getDataFromDialog(@NotNull String url, @Nullable String username, boolean editableUsername) {
@@ -504,6 +526,11 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       myPasswordSafe.set(attributes, null);
     }
 
+    @Override
+    @Nullable String getPresentableErrorMessage(@NotNull List<String> errorOutput) {
+      return null;
+    }
+
     public void setData(@NotNull AuthData data) {
       myData = data;
     }
@@ -584,6 +611,9 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     @Override
     void onAuthFailure() { }
+
+    @Override
+    @Nullable String getPresentableErrorMessage(@NotNull List<String> errorOutput) { return null; }
   }
 
   private static final class ProviderAndData {

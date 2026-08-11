@@ -1,0 +1,114 @@
+<idea-plugin>
+  <actions resource-bundle="messages.UsageViewBundle">
+    <action id="UsageFiltering.ReadAccess"
+            icon="com.intellij.icons.AllIcons.Actions.ShowReadAccess"
+            class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="UsageFiltering.WriteAccess"
+            icon="com.intellij.icons.AllIcons.Actions.ShowWriteAccess"
+            class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="UsageFiltering.GeneratedCode"
+            icon="com.intellij.icons.AllIcons.Actions.GeneratedFolder"
+            class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="UsageFiltering.Imports"
+            icon="com.intellij.icons.AllIcons.Actions.ShowImportStatements"
+            class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="UsageFiltering.Comments"
+            icon="com.intellij.icons.AllIcons.Actions.InlayRenameInComments"
+            class="com.intellij.openapi.actionSystem.EmptyAction"/>
+  </actions>
+  <actions>
+    <action id="UsageView.Include" class="com.intellij.ide.actions.exclusion.IncludeTreeNodeAction"/>
+    <action id="UsageView.Exclude" class="com.intellij.ide.actions.exclusion.ExcludeTreeNodeAction" use-shortcut-of="$Delete"/>
+    <action id="QuickActionPopup" class="com.intellij.ui.switcher.ShowQuickActionPopupAction"/>
+    <action id="PopupMenu-selectPrevious" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorUp"/>
+    <action id="PopupMenu-selectNext" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorDown"/>
+    <action id="PopupMenu-selectParent" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorLeft"/>
+    <action id="PopupMenu-selectChild" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorRight"/>
+    <action id="PopupMenu-return" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorEnter"/>
+    <action id="PopupMenu-cancel" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorEscape"/>
+    <action id="DeleteRecentFilesFallback" use-shortcut-of="$Delete" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="CollapsiblePanel-toggle" class="com.intellij.openapi.actionSystem.EmptyAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="SPACE"/>
+    </action>
+    <action id="UniversalFileChooser.FocusPath" class="com.intellij.openapi.actionSystem.EmptyAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="control L"/>
+      <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta L"/>
+      <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta L"/>
+    </action>
+    <action id="SegmentedButton-left" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorLeft"/>
+    <action id="SegmentedButton-right" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorRight"/>
+    <action id="ContextHelp" class="com.intellij.ide.actions.ContextHelpAction"/>
+    <action id="TextComponent.ClearAction" class="com.intellij.ui.ClearTextAction"/>
+    <action id="FocusEditor" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="EditorAddOrRemoveCaret" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="ExpandAll" class="com.intellij.ide.actions.ExpandAllAction" icon="AllIcons.Actions.Expandall"/>
+    <action id="CollapseAll" class="com.intellij.ide.actions.CollapseAllAction" icon="AllIcons.Actions.Collapseall"/>
+    <action id="ForceRefresh" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.ForceRefresh"/>
+    <action id="Diff.FocusOppositePane" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="Diff.FocusOppositePaneAndScroll" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="Diff.ShowSettingsPopup" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="Diff.ShowInExternalTool" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.General.ExternalTools"/>
+    <action id="Diff.NextConflict" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.MoveDown"/>
+    <action id="Diff.PreviousConflict" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.MoveUp"/>
+    <action id="GotoChangedFile" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.ListFiles"/>
+    <action id="Diff.ApplyLeftSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ArrowRight"/>
+    <action id="Diff.ApplyRightSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Arrow"/>
+    <action id="Diff.AppendLeftSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ArrowRightDown"/>
+    <action id="Diff.AppendRightSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ArrowLeftDown"/>
+    <action id="Diff.IgnoreLeftSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Remove"/>
+    <action id="Diff.IgnoreRightSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Remove"/>
+    <action id="Diff.ResolveConflict" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.MagicResolve"/>
+    <action id="Diff.ApplyNonConflicts" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ApplyNotConflicts"/>
+    <action id="Diff.ApplyNonConflicts.Left" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Diff.ApplyNotConflictsLeft"/>
+    <action id="Diff.ApplyNonConflicts.Right" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Diff.ApplyNotConflictsRight"/>
+    <action id="Diff.MagicResolveConflicts" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Diff.MagicResolveToolbar"/>
+    <action id="Diff.ComparePartial.Base.Left" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Diff.Compare4LeftMiddle"/>
+    <action id="Diff.ComparePartial.Base.Right" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Diff.Compare4MiddleRight"/>
+    <action id="Diff.ComparePartial.Left.Right" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Diff.Compare4LeftRight"/>
+    <action id="Diff.CompareWithBase.Left" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Diff.Compare4LeftBottom"/>
+    <action id="Diff.CompareWithBase.Result" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Diff.Compare4MiddleBottom"/>
+    <action id="Diff.CompareWithBase.Right" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Diff.Compare4RightBottom"/>
+    <group id="compare.contents" class="com.intellij.openapi.actionSystem.EmptyActionGroup" overrides="true" keep-content="true"/>
+    <action id="NonModalWindow.PinUnpin" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="CloseGotItTooltip" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="Console.Open" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="Console.Execute" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="Console.Execute.Multiline" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="Console.SplitLine" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorSplitLine"/>
+    <action id="Console.History.Previous" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="Console.History.Next" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="Console.History.Browse" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Vcs.History"/>
+    <action id="DirDiffMenu.SynchronizeDiff" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Actions.Resume"/>
+    <action id="DirDiffMenu.SynchronizeDiff.All" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Actions.Rerun"/>
+    <action id="DirDiffMenu.EnableLeft" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Vcs.Arrow_right"/>
+    <action id="DirDiffMenu.EnableRight" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Vcs.Arrow_left"/>
+    <action id="DirDiffMenu.EnableEqual" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Vcs.Equal"/>
+    <action id="DirDiffMenu.EnableNotEqual" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Vcs.Not_equal"/>
+    <action id="SearchEverywhere.NextTab" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="SearchEverywhere.PrevTab" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="SearchEverywhere.CompleteCommand" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="SearchEverywhere.SelectItem" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="SearchEverywhere.NavigateToNextGroup" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="SearchEverywhere.NavigateToPrevGroup" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="MainMenuButton.ShowMenu" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="Diff.PrevChange" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.Back"/>
+    <action id="Diff.NextChange" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.Forward"/>
+    <action id="NextDiff" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.NextOccurence"/>
+    <action id="PreviousDiff" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.PreviousOccurence"/>
+  </actions>
+</idea-plugin>

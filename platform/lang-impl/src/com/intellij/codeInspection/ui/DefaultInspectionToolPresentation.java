@@ -16,9 +16,11 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class DefaultInspectionToolPresentation extends DefaultInspectionToolResultExporter implements InspectionToolPresentation {
   protected static final Logger LOG = Logger.getInstance(DefaultInspectionToolPresentation.class);
 

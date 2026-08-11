@@ -3,6 +3,13 @@
   <dependencies>
     <module name="intellij.gradle"/>
     <module name="intellij.gradle.completion"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.statistics"/>
     <module name="intellij.repository.search.completion"/>
     <module name="intellij.toml.core"/>
   </dependencies>

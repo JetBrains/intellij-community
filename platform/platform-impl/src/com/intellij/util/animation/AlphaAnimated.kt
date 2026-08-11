@@ -2,10 +2,8 @@
 package com.intellij.util.animation
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Experimental
 
-@Experimental
 @ApiStatus.Internal
-internal interface AlphaAnimated {
+interface AlphaAnimated {
   val alphaContext: AlphaAnimationContext
 }

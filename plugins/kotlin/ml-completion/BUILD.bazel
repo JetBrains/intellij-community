@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.completion.ml` start
-
 jvm_library(
     name = "completion-ml",
     srcs = glob(
@@ -31,7 +30,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//plugins/completion-ml-ranking",
         "//platform/platform-impl/internal",
-        "@lib//:kotlin-completion-ml-completion-ranking-kotlin",
+        "//libraries/completion-ranking-kotlin",
         "//plugins/kotlin/base/code-insight",
     ],
 )
@@ -58,6 +57,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
         "//platform/platform-impl/internal:internal_test_lib",
+        "//libraries/completion-ranking-kotlin:completion-ranking-kotlin_test_lib",
         "//plugins/kotlin/base/code-insight:code-insight_test_lib",
     ],
 )

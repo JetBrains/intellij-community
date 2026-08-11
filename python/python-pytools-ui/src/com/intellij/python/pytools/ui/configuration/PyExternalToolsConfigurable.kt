@@ -33,10 +33,10 @@ class PyExternalToolsConfigurable(private val project: Project) : BoundSearchabl
 
   /**
    * Owns the uv-state snapshot + install/upgrade actions. Its coroutine scope is supplied later by
-   * [createPanel]'s `launchOnShow` block via [UvController.onShown], so background work lives for
+   * [createPanel]'s `launchOnShow` block via [PyToolManagementController.onShown], so background work lives for
    * the panel's showing-lifetime.
    */
-  private val uv: UvController = UvController(
+  private val uv: PyToolManagementController = PyToolManagementController(
     project = project,
     onStateChanged = ::onUvStateChanged,
     refreshRow = ::refreshRow,
@@ -45,12 +45,12 @@ class PyExternalToolsConfigurable(private val project: Project) : BoundSearchabl
   /** Initialized once in [createPanel]; every method that touches it is invoked while the UI is live. */
   private lateinit var toolsTable: PyExternalToolsTable
 
-  /** Wired in as [UvController.onStateChanged]; refresh the table on EDT. The hint footer rebinds via [UvController.uvAvailable]. */
+  /** Wired in as [PyToolManagementController.onStateChanged]; refresh the table on EDT. The hint footer rebinds via [PyToolManagementController.uvAvailable]. */
   private fun onUvStateChanged() {
     toolsTable.fireAllRowsChanged()
   }
 
-  /** Wired in as [UvController.refreshRow]; delegate to the table. */
+  /** Wired in as [PyToolManagementController.refreshRow]; delegate to the table. */
   private fun refreshRow(item: ToolRow) {
     toolsTable.refreshRow(item)
   }

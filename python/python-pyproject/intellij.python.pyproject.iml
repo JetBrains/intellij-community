@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 25" allPlatforms="JVM [25]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive -opt-in=com.jetbrains.python.PyInternalExecApi" />
+        </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="25" />
+            <stringArg name="apiVersion" arg="2.4" />
+            <stringArg name="languageVersion" arg="2.4" />
+          </stringArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
@@ -13,7 +29,7 @@
     <orderEntry type="module" module-name="intellij.python.community" />
     <orderEntry type="module" module-name="intellij.python.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="module" module-name="intellij.python.sdk" />
+    <orderEntry type="module" module-name="intellij.python.sdk.backend" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.toml.core" />
     <orderEntry type="module" module-name="intellij.libraries.tuweni.toml" exported="" />
@@ -27,7 +43,7 @@
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
-    <orderEntry type="module" module-name="intellij.python.common" />
+    <orderEntry type="module" module-name="intellij.python.community.common" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
@@ -38,6 +54,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
-    <orderEntry type="module" module-name="intellij.python.requirements" />
+    <orderEntry type="module" module-name="intellij.python.requirements.backend" />
   </component>
 </module>

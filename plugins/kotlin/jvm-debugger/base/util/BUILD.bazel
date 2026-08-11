@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.jvm.debugger.base.util` start
-
 jvm_library(
     name = "util",
     srcs = glob(
@@ -21,8 +20,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/asm",
         "//platform/core-api:core",
         "//platform/util",
@@ -40,7 +39,7 @@ jvm_library(
         "//java/compiler/openapi:java-compiler",
         "//java/java-psi-api:psi",
         "//java/debugger/impl",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -56,6 +55,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":util",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//libraries/asm:asm_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/util:util_test_lib",
@@ -73,6 +74,7 @@ jvm_library(
         "//java/compiler/openapi:java-compiler_test_lib",
         "//java/java-psi-api:psi_test_lib",
         "//java/debugger/impl:impl_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.base.util` end

@@ -33,7 +33,7 @@ internal enum class MergeOperation {
  * Location of a module or module set in the repository.
  * Using enum instead of String for type safety.
  */
- enum class ModuleLocation {
+enum class ModuleLocation {
   /** Module/set is in community/ directory */
   COMMUNITY,
   /** Module/set is in ultimate/ directory */
@@ -78,22 +78,36 @@ data class ModuleSetMetadata(
 
 /**
  * JSON filter for selective analysis output.
- * Supports various filter types: products, moduleSets, composition, duplicates, mergeImpact, modulePaths,
- * moduleDependencies, moduleOwners, moduleReachability, dependencyPath, productUsage,
- * embeddedDependencyClosure, or specific items.
+ * JSON request for selective Product DSL analysis.
+ *
+ * Keep the CLI JSON-first: add compact filters here instead of adding one-off command-line flags.
  */
 @Serializable
 data class JsonFilter(
-  @JvmField val filter: String,  // "products", "moduleSets", "composition", "duplicates", "mergeImpact", "modulePaths", "product", "moduleSet", "moduleDependencies", "moduleOwners", "moduleReachability", "dependencyPath", "productUsage", "embeddedDependencyClosure"
-  @JvmField val value: String? = null,  // Product/module set name when filter is "product" or "moduleSet"
-  @JvmField val module: String? = null,  // Module name for "modulePaths", "moduleDependencies" filters
-  @JvmField val moduleSet: String? = null,  // Module set name for "moduleReachability" or "productUsage" filter
+  @JvmField val filter: String,  // Filter name, e.g. "summary", "moduleInfo", "productQuery", "dependencyPath"
+  @JvmField val value: String? = null,  // Legacy generic selector for filters that predate typed fields
+  @JvmField val module: String? = null,  // Module name selector
+  @JvmField val moduleSet: String? = null,  // Module set name selector
+  @JvmField val product: String? = null,  // Product name for product-focused compact filters
+  @JvmField val product2: String? = null,  // Second product name for product comparison
+  @JvmField val name: String? = null,  // Name substring for search-style compact filters
+  @JvmField val location: String? = null,  // Location filter for module set queries: COMMUNITY or ULTIMATE
+  @JvmField val usesModuleSet: String? = null,  // Module set usage filter for product queries
+  @JvmField val modules: List<String> = emptyList(),  // Module names for multi-module suggestions
   @JvmField val fromModule: String? = null,  // Starting module for "dependencyPath" filter
   @JvmField val toModule: String? = null,  // Target module for "dependencyPath" filter
-  @JvmField val graph: String? = null,  // Graph type for "dependencyPath" filter: "plugin" or "jps"
+  @JvmField val graph: String? = null,  // Graph type for "dependencyPath" filter: only "jps" is currently supported
   @JvmField val source: String? = null,  // Source module set name for "mergeImpact" filter
   @JvmField val target: String? = null,  // Target module set name for "mergeImpact" filter (null for inline operation)
   @JvmField val operation: String? = null,  // Operation type for "mergeImpact": "merge", "move", or "inline" (default: "merge")
+  @JvmField val check: String? = null,  // Validation check name for "validation" filter
+  @JvmField val loading: String? = null,  // Loading rule for "moduleLoading" filter
+  @JvmField val strategy: String? = null,  // Strategy filter for "unificationSuggestions"
+  @JvmField val limit: Int = 20,  // Maximum number of result entries for compact filters
+  @JvmField val minModuleCount: Int = 0,  // Minimum module count for search-style compact filters
+  @JvmField val details: Boolean = false,  // Include expanded arrays in compact filters
+  @JvmField val threshold: Double = 0.7,  // Similarity threshold for productSimilarity
+  @JvmField val minOverlapPercent: Int = 50,  // Minimum overlap for moduleSetOverlap
   @JvmField val includeDuplicates: Boolean = false,  // Include duplicate xi:include detection in output (for future unification)
   @JvmField val includeTransitive: Boolean = false,  // Include ALL transitive dependencies in moduleDependencies filter (BFS traversal)
   @JvmField val includeTestDependencies: Boolean = false,  // Include TEST-scoped target deps in moduleDependencies/dependencyPath

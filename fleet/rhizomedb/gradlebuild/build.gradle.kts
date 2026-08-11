@@ -70,13 +70,13 @@ kotlin {
     implementation(jps.org.jetbrains.kotlinx.kotlinx.collections.immutable.jvm717536558.get().let { "${it.group}:kotlinx-collections-immutable:${it.version}" }) {
       isTransitive = false
     }
-    implementation(jps.org.jetbrains.annotations1504825916.get())
     implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.core.jvm1739247612.get().let { "${it.group}:kotlinx-serialization-core:${it.version}" }) {
       isTransitive = false
     }
     implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.json.jvm231489733.get().let { "${it.group}:kotlinx-serialization-json:${it.version}" }) {
       isTransitive = false
     }
+    implementation(jps.org.jetbrains.annotations1504825916.get())
     implementation(project(":fleet.util.core"))
     implementation(project(":fleet.multiplatform.shims"))
     implementation(project(":fleet.radixTrie"))

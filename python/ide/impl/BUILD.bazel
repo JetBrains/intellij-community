@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.pycharm.community.ide.impl` start
-
 jvm_library(
     name = "impl",
     srcs = glob(
@@ -50,7 +49,7 @@ jvm_library(
         "//platform/usageView",
         "//platform/statistics",
         "//platform/core-ui",
-        "//python/python-sdk:sdk",
+        "//python/python-sdk/backend",
         "//platform/vcs-api:vcs",
         "//plugins/ide-features-trainer:featuresTrainer",
         "//platform/util/progress",
@@ -59,14 +58,14 @@ jvm_library(
         "//platform/whatsNew",
         "//platform/util/coroutines",
         "//platform/experiment",
-        "@lib//:jna",
+        "//libraries/jna",
         "//python/services/system-python",
         "//platform/eel",
         "//platform/eel-provider",
         "//python/services/shared",
         "//python/pipenv",
         "//python/python-venv:venv",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//python/python-pyproject:pyproject",
         "//python/python-hatch:hatch",
         "//libraries/semver",
@@ -76,8 +75,6 @@ jvm_library(
         "//platform/ide-core",
         "//platform/progress/shared:ide-progress",
         "//python/python-exec-service:community-execService",
-        "//python/python-sdk-configurator/common",
-        "//python/python-sdk-ui:sdk-ui",
         "//python/python-poetry/common",
         "//python/python-uv/common",
         "//python/python-exec-service/execService.python",
@@ -88,6 +85,7 @@ jvm_library(
         "//platform/util:util-ui",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
+        "//platform/backend/workspace",
     ],
 )
 
@@ -130,7 +128,7 @@ jvm_library(
         "//platform/usageView:usageView_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//platform/core-ui:core-ui_test_lib",
-        "//python/python-sdk:sdk_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
         "//platform/vcs-api:vcs_test_lib",
         "//plugins/ide-features-trainer:featuresTrainer_test_lib",
         "//python/python-features-trainer:featuresTrainer_test_lib",
@@ -140,12 +138,14 @@ jvm_library(
         "//platform/whatsNew:whatsNew_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/experiment:experiment_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//python/services/system-python:system-python_test_lib",
         "//platform/eel:eel_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
         "//python/services/shared:shared_test_lib",
         "//python/pipenv:pipenv_test_lib",
         "//python/python-venv:venv_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//python/python-pyproject:pyproject_test_lib",
         "//python/python-hatch:hatch_test_lib",
         "//platform/testFramework/junit5",
@@ -159,8 +159,6 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
         "//python/python-exec-service:community-execService_test_lib",
-        "//python/python-sdk-configurator/common:common_test_lib",
-        "//python/python-sdk-ui:sdk-ui_test_lib",
         "//python/python-poetry/common:common_test_lib",
         "//python/python-uv/common:common_test_lib",
         "//python/python-exec-service/execService.python:execService.python_test_lib",
@@ -171,6 +169,7 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/backend/workspace:workspace_test_lib",
     ],
 )
 ### auto-generated section `build intellij.pycharm.community.ide.impl` end
@@ -185,7 +184,6 @@ exports_files(
 ### auto-generated section `iml intellij.pycharm.community.ide.impl` end
 
 ### auto-generated section `build intellij.pycharm.community.ide.impl.tests` start
-
 jvm_library(
     name = "pycharm-community-ide-impl-tests",
     srcs = glob(
@@ -275,8 +273,8 @@ jvm_library(
         "//platform/statistics:statistics_test_lib",
         "//platform/core-ui",
         "//platform/core-ui:core-ui_test_lib",
-        "//python/python-sdk:sdk",
-        "//python/python-sdk:sdk_test_lib",
+        "//python/python-sdk/backend",
+        "//python/python-sdk/backend:backend_test_lib",
         "//platform/vcs-api:vcs",
         "//platform/vcs-api:vcs_test_lib",
         "//plugins/ide-features-trainer:featuresTrainer",
@@ -293,7 +291,8 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/experiment",
         "//platform/experiment:experiment_test_lib",
-        "@lib//:jna",
+        "//libraries/jna",
+        "//libraries/jna:jna_test_lib",
         "//python/services/system-python",
         "//python/services/system-python:system-python_test_lib",
         "//platform/eel",
@@ -306,7 +305,8 @@ jvm_library(
         "//python/pipenv:pipenv_test_lib",
         "//python/python-venv:venv",
         "//python/python-venv:venv_test_lib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//python/python-pyproject:pyproject",
         "//python/python-pyproject:pyproject_test_lib",
         "//python/python-hatch:hatch",
@@ -324,10 +324,6 @@ jvm_library(
         "//platform/ide-core",
         "//python/python-exec-service:community-execService",
         "//python/python-exec-service:community-execService_test_lib",
-        "//python/python-sdk-configurator/common",
-        "//python/python-sdk-configurator/common:common_test_lib",
-        "//python/python-sdk-ui:sdk-ui",
-        "//python/python-sdk-ui:sdk-ui_test_lib",
         "//python/python-poetry/common",
         "//python/python-poetry/common:common_test_lib",
         "//python/python-uv/common",
@@ -360,7 +356,6 @@ exports_files(
 ### auto-generated section `iml intellij.pycharm.community.ide.impl.tests` end
 
 ### auto-generated section `test intellij.pycharm.community.ide.impl.tests` start
-
 jps_test(
     name = "pycharm-community-ide-impl-tests_test",
     runtime_deps = [":pycharm-community-ide-impl-tests_test_lib"],

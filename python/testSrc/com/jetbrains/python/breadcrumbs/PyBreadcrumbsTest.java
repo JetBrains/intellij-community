@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python.breadcrumbs;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
+
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -24,6 +27,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyBreadcrumbsTest extends PyTestCase {
 
   @Override

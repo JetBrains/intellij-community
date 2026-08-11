@@ -13,8 +13,7 @@
     <orderEntry type="module" module-name="intellij.python.syntax" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.psi" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.psi.impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.python.sdk" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.python.sdk.ui" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.sdk.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.pyproject" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.core.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.helpersLocator" scope="RUNTIME" />

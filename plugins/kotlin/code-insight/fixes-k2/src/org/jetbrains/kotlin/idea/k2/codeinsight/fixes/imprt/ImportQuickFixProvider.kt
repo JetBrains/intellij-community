@@ -4,8 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.containingSymbol
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
@@ -13,15 +11,17 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnT
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererVisibilityModifierProvider
+import org.jetbrains.kotlin.analysis.api.session.useSiteModule
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.useSiteModule
-import org.jetbrains.kotlin.analysis.api.useSiteSession
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getDefaultImports
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
@@ -49,7 +49,8 @@ import javax.swing.Icon
  * combined from existing [AbstractImportQuickFixFactory].
  */
 object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosticWithPsi<*>> {
-    override fun KaSession.createQuickFixes(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> = getFixes(diagnostic)
+    context(session: KaSession)
+    override fun createQuickFixes(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> = getFixes(diagnostic)
 
     context(_: KaSession)
     fun getFixes(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> {
@@ -68,7 +69,7 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
             InvokeImportQuickFixFactory,
         )
 
-        return factories.flatMap { with (it) { session.createQuickFixes(diagnostics) } }
+        return factories.flatMap { with (it) { createQuickFixes(diagnostics) } }
     }
 
     @KaExperimentalApi
@@ -103,7 +104,8 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
         }
     }
 
-    internal fun KaSession.createImportFix(
+    context(session: KaSession)
+    internal fun createImportFix(
         position: KtElement,
         data: ImportData,
     ): IntentionAction {
@@ -114,6 +116,7 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
         return KotlinAddImportActionFactory.getInstance().createAddImportFix(position, text, data.importVariants)
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     internal fun createImportData(
         position: KtElement,
@@ -159,6 +162,7 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
                 SymbolBasedAutoImportVariant(
                     candidate.createPointer(),
                     candidate.getFqName(),
+                    candidate.isDeprecated,
                     candidate.psi,
                     getIconFor(candidate),
                     renderCandidate(candidate),
@@ -244,7 +248,7 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
             declaration = candidate.psi,
             // TODO consider passing whole candidate to avoid loosing information 
             statisticsInfo = K2StatisticsInfoProvider.forDeclarationSymbol(candidate.symbol),
-            isDeprecated = candidate.deprecationStatus != null,
+            isDeprecated = candidate.isDeprecated,
             fqName = candidate.getFqName(),
             // TODO consider passing whole candidate to avoid loosing information 
             expressionWeight = expressionImportWeigher.weigh(candidate.symbol),

@@ -18,6 +18,7 @@ internal class WelcomeScreenAwareActionsCustomizer : ActionConfigurationCustomiz
   override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
     actionRegistrar.run {
       replaceExistingAction("CloseProject") { WelcomeScreenAwareCloseProjectAction() }
+      replaceExistingAction("CloseAllProjects") { WelcomeScreenAwareCloseAllProjectsAction() }
       replaceExistingAction("RenameProject") { hideActionOnWelcomeScreen(it) }
       replaceExistingAction("NewDir") { hideActionOnWelcomeScreen(it) }
       replaceExistingAction("NewFile") { WelcomeScreenProxyAction(it, CreateEmptyFileAction()) }

@@ -5,7 +5,6 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.patch.BlobIndexUtil;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,15 +20,10 @@ import java.util.Date;
 import java.util.StringTokenizer;
 
 public class GitRevisionNumber implements ShortVcsRevisionNumber {
-  /**
-   * the hash from 40 zeros representing not yet created commit
-   */
-  public static final String NOT_COMMITTED_HASH = BlobIndexUtil.NOT_COMMITTED_HASH;
-
   public static final GitRevisionNumber HEAD = new GitRevisionNumber(GitUtil.HEAD);
 
   /**
-   * the revision number (40 character hashcode, tag, or reference). In some cases incomplete hashcode could be used.
+   * the revision number (hashcode, tag, or reference). In some cases incomplete hashcode could be used.
    */
   private final @NotNull String myRevisionHash;
   private final @NotNull Date myTimestamp;

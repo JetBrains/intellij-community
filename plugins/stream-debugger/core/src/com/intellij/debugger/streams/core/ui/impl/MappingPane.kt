@@ -28,16 +28,6 @@ class MappingPane(@Nls name: String,
                   private val beforeValues: List<ValueWithPosition>,
                   private val mapping: LinkedValuesMapping,
                   private val controller: TraceController) : JPanel(BorderLayout()) {
-  private companion object {
-    val DARCULA_LINE_COLOR = LineColor(regular = JBColor.GRAY,
-                                       selected = JBColor.BLUE,
-                                       inactive = JBColor.lazy { Color(92, 92, 92) })
-    val INTELLIJ_LINE_COLOR = LineColor(regular = JBColor.lazy { Color(168, 168, 168) },
-                                        selected = JBColor.lazy { Color(0, 96, 229) },
-                                        inactive = JBColor.lazy { Color(204, 204, 204) })
-
-    val STROKE = BasicStroke(JBUIScale.scale(1.toFloat()))
-  }
 
   init {
     val label = JBLabel(name, SwingConstants.CENTER)
@@ -97,4 +87,15 @@ class MappingPane(@Nls name: String,
   }
 
   private data class LineColor(val regular: JBColor, val selected: JBColor, val inactive: JBColor)
+
+  private companion object {
+    val DARCULA_LINE_COLOR = LineColor(regular = JBColor.GRAY,
+                                       selected = JBColor.BLUE,
+                                       inactive = JBColor.lazy { Color(92, 92, 92) })
+    val INTELLIJ_LINE_COLOR = LineColor(regular = JBColor.lazy { Color(168, 168, 168) },
+                                        selected = JBColor.lazy { Color(0, 96, 229) },
+                                        inactive = JBColor.lazy { Color(204, 204, 204) })
+
+    val STROKE = BasicStroke(JBUIScale.scale(1.toFloat()))
+  }
 }

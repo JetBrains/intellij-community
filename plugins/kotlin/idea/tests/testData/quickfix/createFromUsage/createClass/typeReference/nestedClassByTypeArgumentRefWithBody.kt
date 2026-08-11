@@ -1,5 +1,5 @@
 // "Create class 'X'" "true"
-// K2_ERROR: Unresolved reference 'X'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 open class A<T>
 
 class B : A<B.<caret>X>() {

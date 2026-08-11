@@ -1,0 +1,7 @@
+{
+  "anyOne": <warning descr="Validates to more than one variant">{
+    "a112": 9,
+    "b111": 9,
+    "ccc": true
+  }</warning>
+}

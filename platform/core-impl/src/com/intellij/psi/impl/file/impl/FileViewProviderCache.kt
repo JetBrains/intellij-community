@@ -7,6 +7,7 @@ import com.intellij.psi.AbstractFileViewProvider
 import com.intellij.psi.FileViewProvider
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import org.jetbrains.annotations.Contract
 
 /**
  * Storage for mapping from ([VirtualFile], [CodeInsightContext]) to [FileViewProvider]s.
@@ -145,8 +146,11 @@ internal sealed interface FileViewProviderCache {
   /**
    * Checks if [viewProvider] is still valid or not after it was marked as possibly invalidated.
    *
+   * This function changes internal state of the cache -- it may remove obsolete mappings or reassign providers
+   *
    * @return true if [viewProvider] is still valid, false otherwise.
    */
+  @Contract(pure = false)
   @RequiresReadLock
   fun evaluateValidity(viewProvider: AbstractFileViewProvider): Boolean
 
@@ -157,6 +161,19 @@ internal sealed interface FileViewProviderCache {
     vFile: VirtualFile,
     context: CodeInsightContext,
   ): FileViewProvider
+
+  /**
+   * Decides whether this view provider is still relevant --
+   * i.e., if a newly created view provider for the same virtual file is equivalent to it
+   */
+  @Contract(pure = true)
+  fun canViewProviderBeResurrected(viewProvider: AbstractFileViewProvider): Boolean
+
+  /**
+   * Explains why [viewProvider] cannot be resurrected, or returns `null` when it can.
+   */
+  @Contract(pure = true)
+  fun getRecreationFailureReason(viewProvider: AbstractFileViewProvider): String?
 
   fun interface CacheEntryConsumer {
     fun consume(file: VirtualFile, context: CodeInsightContext, provider: FileViewProvider)

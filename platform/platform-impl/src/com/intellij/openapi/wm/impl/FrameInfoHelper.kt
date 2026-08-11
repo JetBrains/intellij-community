@@ -116,7 +116,7 @@ internal fun updateFrameInfo(frameHelper: ProjectFrameHelper, frame: JFrame, las
 
   // don't report if was already reported
   if (!usePreviousBounds && oldBounds != newBounds && !ScreenUtil.intersectsVisibleScreen(frame)) {
-    logger<WindowInfoImpl>().error("Frame bounds are invalid: $newBounds")
+    logger<WindowInfoImpl>().warn("Frame bounds are invalid: $newBounds")
   }
 
   val frameInfo = oldFrameInfo ?: FrameInfo()

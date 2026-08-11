@@ -10,8 +10,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
 import com.jetbrains.python.packaging.PyRequirement
-import com.jetbrains.python.packaging.PyRequirementParser
-import com.jetbrains.python.packaging.parser.RequirementsParserHelper
+import com.intellij.python.requirements.parser.PyRequirementParser
+import com.intellij.python.requirements.parser.RequirementsParserHelper
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import kotlinx.io.IOException
 import org.jetbrains.annotations.ApiStatus

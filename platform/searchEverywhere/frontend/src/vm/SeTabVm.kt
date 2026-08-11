@@ -44,7 +44,7 @@ import com.intellij.platform.searchEverywhere.presentations.SeAdaptedItemEmptyPr
 import com.intellij.platform.searchEverywhere.presentations.SeAdaptedItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeAdaptedItem
-import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
+import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
@@ -191,7 +191,7 @@ class SeTabVmImpl(
         }.mapLatest { (searchPattern, filterData) ->
           val params = SeParams(searchPattern, filterData)
           val searchId = UUID.randomUUID().toString()
-          val disabledProviderIds = SeEverywhereFilter.from(filterData).disabledProviderIds
+          val disabledProviderIds = SeEverywhereFilterImpl.from(filterData).disabledProviderIds
 
           SeMlService.getInstanceIfEnabled()?.onStateStarted(this@SeTabVmImpl.tabId, params)
 
@@ -206,11 +206,11 @@ class SeTabVmImpl(
             val essential = tab.essentialProviderIds().filter { it !in disabledProviderIds }.toSet()
             if (essential.isEmpty()) {
               if (shouldThrottle.load()) {
-                SeLog.log(SeLog.THROTTLING) { "Will throttle with accumulation (searchId = $searchId)" }
+                SeLog.log(SeLog.THROTTLING) { "Will throttle with accumulation (pattern = $searchPattern, searchId = $searchId)" }
                 resultsFlowWithAdaptedPresentations.throttledWithAccumulation(shouldPassItem = { item -> item !is SeResultEndEvent })
               }
               else {
-                SeLog.log(SeLog.THROTTLING) { "Will not throttle (searchId = $searchId)" }
+                SeLog.log(SeLog.THROTTLING) { "Will not throttle (pattern = $searchPattern, searchId = $searchId)" }
                 resultsFlowWithAdaptedPresentations.map { event -> ThrottledOneItem(event) }
               }
             }
@@ -225,7 +225,8 @@ class SeTabVmImpl(
             item
           }
 
-          shouldThrottle.store(true)
+          // Turn on throttling for non-essential contributors only if the previous search pattern wasn't empty
+          shouldThrottle.store(searchPattern.isNotEmpty())
           SeSearchContext(searchId, tabId, searchPattern, resultsFlow)
         }.collect {
           if (!isActiveFlow.value) return@collect

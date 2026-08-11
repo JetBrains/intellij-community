@@ -2,14 +2,29 @@
 package org.jetbrains.idea.maven.statistics
 
 import com.intellij.internal.statistic.FUCollectorTestCase.collectProjectStateCollectorEvents
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenLibrariesCollectorsTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenLibrariesCollectorsTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun testShouldCollectInfoAboutLibs() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1</version>
@@ -25,7 +40,7 @@ class MavenLibrariesCollectorsTest : MavenMultiVersionImportingTestCase() {
     """.trimIndent())
 
     val metrics = collectProjectStateCollectorEvents(
-      MavenLibraryScopesCollector::class.java, project)
+      MavenLibraryScopesCollector::class.java, maven.project)
 
     val compiler = metrics.map { it.data.build() }.first {
       it["group_artifact_id"] == "junit:junit"

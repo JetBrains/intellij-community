@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.java.impl" exported="" />

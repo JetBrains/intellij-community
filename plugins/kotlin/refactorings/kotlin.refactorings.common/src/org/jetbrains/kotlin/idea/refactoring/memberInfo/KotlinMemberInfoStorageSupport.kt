@@ -13,7 +13,7 @@ interface KotlinMemberInfoStorageSupport {
         fun getInstance(): KotlinMemberInfoStorageSupport = service()
     }
 
-    fun memberConflict(member1: KtNamedDeclaration, member: KtNamedDeclaration): Boolean
+    fun memberConflict(member1: KtNamedDeclaration, member2: KtNamedDeclaration): Boolean
 
     fun isInheritor(baseClass: PsiNamedElement, aClass: PsiNamedElement): Boolean
 }

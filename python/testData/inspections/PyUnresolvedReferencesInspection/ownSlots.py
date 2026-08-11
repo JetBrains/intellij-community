@@ -30,5 +30,5 @@ def assign2():
         __slots__ = ['foo']
 
     a = A()
-    a.foo = 1
-    a.bar = 1
+    a.<warning descr="Unresolved attribute reference 'foo' for class 'A'">foo</warning> = 1
+    a.<warning descr="Unresolved attribute reference 'bar' for class 'A'">bar</warning> = 1

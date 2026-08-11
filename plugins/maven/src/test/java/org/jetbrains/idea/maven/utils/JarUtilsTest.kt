@@ -2,10 +2,14 @@
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.idea.TestFor
-import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.maven.testFramework.fixtures.mavenFixture
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.maven.MavenCustomNioRepositoryHelper
-import org.junit.Assume
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
@@ -14,8 +18,11 @@ import java.util.jar.Attributes
 import kotlin.io.path.setPosixFilePermissions
 
 
-class JarUtilsTest : MavenTestCase() {
+@TestApplication
+class JarUtilsTest {
+  private val maven by mavenFixture()
 
+  @Test
   fun testShouldReadPropertiesFromFile() {
     val jarPath = getPathToJar()
     val properties = JarUtils.loadProperties(jarPath, getEntryName())
@@ -25,12 +32,13 @@ class JarUtilsTest : MavenTestCase() {
 
   }
 
+  @Test
   fun testShouldReadPropertiesFromSymlink() {
 
-    Assume.assumeTrue(SystemInfo.isLinux || SystemInfo.isMac)
+    assumeTrue(SystemInfo.isLinux || SystemInfo.isMac)
 
     val jarPath = getPathToJar()
-    val linkPath = dir.resolve("mySymlink.jar")
+    val linkPath = maven.dir.resolve("mySymlink.jar")
     Files.createSymbolicLink(linkPath, jarPath)
     val properties = JarUtils.loadProperties(linkPath, getEntryName())
     assertNotNull(properties)
@@ -40,13 +48,14 @@ class JarUtilsTest : MavenTestCase() {
   }
 
   @TestFor(issues = ["IDEA-371006"])
+  @Test
   fun testShouldReadPropertiesFromRWSymlinkOnROFile() {
-    Assume.assumeTrue(SystemInfo.isLinux || SystemInfo.isMac)
+    assumeTrue(SystemInfo.isLinux || SystemInfo.isMac)
 
-    val jarPath = dir.resolve("myjar.jar")
+    val jarPath = maven.dir.resolve("myjar.jar")
     Files.copy(getPathToJar(), jarPath)
     jarPath.setPosixFilePermissions(EnumSet.of(PosixFilePermission.OWNER_READ))
-    val linkPath = dir.resolve("mySymlink.jar")
+    val linkPath = maven.dir.resolve("mySymlink.jar")
     Files.createSymbolicLink(linkPath, jarPath)
     jarPath.setPosixFilePermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OTHERS_WRITE))
     val properties = JarUtils.loadProperties(linkPath, getEntryName())

@@ -3,8 +3,10 @@ package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class CommandOutputLogger extends ProcessAdapter {
   private final Logger myLogger;
 

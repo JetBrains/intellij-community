@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.json.structureView` start
-
 jvm_library(
     name = "structureView",
     srcs = glob(
@@ -20,7 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//json",
         "//json/backend",
         "//platform/core-api:core",
@@ -43,6 +42,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":structureView",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//json:json_test_lib",
         "//json/backend:backend_test_lib",
         "//platform/core-api:core_test_lib",

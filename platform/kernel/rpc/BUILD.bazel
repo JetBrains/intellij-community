@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.rpc` start
-
 jvm_library(
     name = "rpc",
     srcs = glob(
@@ -25,8 +24,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
+        "//platform/kernel/klogger",
         "@lib//:kotlin-stdlib",
-        "//fleet/util/logging/api",
         "//fleet/rpc",
         "//platform/util",
         "//platform/core-api:core",
@@ -51,7 +50,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":rpc",
-        "//fleet/util/logging/api:api_test_lib",
+        "//platform/kernel/klogger:klogger_test_lib",
         "//fleet/rpc:rpc_test_lib",
         "//platform/util:util_test_lib",
         "//platform/core-api:core_test_lib",

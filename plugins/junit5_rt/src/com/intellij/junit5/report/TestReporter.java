@@ -69,7 +69,7 @@ public class TestReporter extends AbstractTestReporter {
     }
     out.add(asString(TEST_FINISHED, attributes));
 
-    state.incrementFinishCount();
+    state.markFinished(identifier.getUniqueId());
     return out;
   }
 
@@ -92,7 +92,7 @@ public class TestReporter extends AbstractTestReporter {
     List<String> out = new ArrayList<>(reportFailure(null, 0, true, TEST_IGNORED, reason));
     out.add(asString(TEST_FINISHED, attributes(ReportedField.ID, ReportedField.NAME, ReportedField.NODE_ID, ReportedField.PARENT_NODE_ID)));
 
-    state.incrementFinishCount();
+    state.markFinished(identifier.getUniqueId());
     return out;
   }
 

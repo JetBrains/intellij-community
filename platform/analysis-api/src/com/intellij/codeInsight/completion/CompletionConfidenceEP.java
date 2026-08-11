@@ -7,6 +7,7 @@ import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.LanguageExtensionWithAny;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -14,7 +15,7 @@ public final class CompletionConfidenceEP extends LanguageExtensionPoint<Complet
   private static final LanguageExtension<CompletionConfidence> INSTANCE = new LanguageExtensionWithAny<>("com.intellij.completion.confidence");
 
   @ApiStatus.Internal
-  public static List<CompletionConfidence> forLanguage(@NotNull Language language) {
+  public static @Unmodifiable List<CompletionConfidence> forLanguage(@NotNull Language language) {
     return INSTANCE.allForLanguage(language);
   }
 }

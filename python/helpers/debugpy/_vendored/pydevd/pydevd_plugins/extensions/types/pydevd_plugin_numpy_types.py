@@ -30,17 +30,13 @@ class NDArrayTypeResolveProvider(object):
     """
 
     def can_provide(self, type_object, type_name):
-        nd_array = find_mod_attr('numpy', 'ndarray')
+        nd_array = find_mod_attr("numpy", "ndarray")
         return nd_array is not None and inspect.isclass(type_object) and issubclass(type_object, nd_array)
 
-    '''
-       This resolves a numpy ndarray returning some metadata about the NDArray
-   '''
-
     def is_numeric(self, obj):
-        if not hasattr(obj, 'dtype'):
+        if not hasattr(obj, "dtype"):
             return False
-        return obj.dtype.kind in 'biufc'
+        return obj.dtype.kind in "biufc"
 
     def round_if_possible(self, obj):
         try:
@@ -49,29 +45,29 @@ class NDArrayTypeResolveProvider(object):
             return obj
 
     def resolve(self, obj, attribute):
-        if attribute == '__internals__':
+        if attribute == "__internals__":
             if not IS_PYCHARM:
                 return defaultResolver.get_dictionary(obj)
-        if attribute == 'min':
-            if self.is_numeric(obj):
+        if attribute == "min":
+            if self.is_numeric(obj) and obj.size > 0:
                 return obj.min()
             else:
                 return None
-        if attribute == 'max':
-            if self.is_numeric(obj):
+        if attribute == "max":
+            if self.is_numeric(obj) and obj.size > 0:
                 return obj.max()
             else:
                 return None
-        if attribute == 'shape':
+        if attribute == "shape":
             return obj.shape
-        if attribute == 'dtype':
+        if attribute == "dtype":
             return obj.dtype
-        if attribute == 'size':
+        if attribute == "size":
             return obj.size
-        if attribute.startswith('['):
+        if attribute.startswith("["):
             container = NdArrayItemsContainer()
             i = 0
-            format_str = '%0' + str(int(len(str(len(obj))))) + 'd'
+            format_str = "%0" + str(int(len(str(len(obj))))) + "d"
             for item in obj:
                 setattr(container, format_str % i, item)
                 i += 1
@@ -90,12 +86,15 @@ class NDArrayTypeResolveProvider(object):
         if not IS_PYCHARM:
             ret['__internals__'] = defaultResolver.get_dictionary(obj)
         if obj.size > 1024 * 1024:
-            ret['min'] = 'ndarray too big, calculating min would slow down debugging'
-            ret['max'] = 'ndarray too big, calculating max would slow down debugging'
+            ret["min"] = "ndarray too big, calculating min would slow down debugging"
+            ret["max"] = "ndarray too big, calculating max would slow down debugging"
+        elif obj.size == 0:
+            ret["min"] = "array is empty"
+            ret["max"] = "array is empty"
         else:
             if self.is_numeric(obj):
-                ret['min'] = obj.min()
-                ret['max'] = obj.max()
+                ret["min"] = obj.min()
+                ret["max"] = obj.max()
             else:
                 ret['min'] = 'not a numeric object'
                 ret['max'] = 'not a numeric object'

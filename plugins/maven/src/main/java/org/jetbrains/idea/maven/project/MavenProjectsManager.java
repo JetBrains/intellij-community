@@ -100,6 +100,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private final ModificationTracker myModificationTracker;
 
   private final AtomicReference<MavenSyncConsole> mySyncConsole = new AtomicReference<>();
+  private final CoroutineScope coroutineScope;
   private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
   protected Module myPreviewModule;
@@ -116,6 +117,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   public MavenProjectsManager(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     super(project);
 
+    this.coroutineScope = coroutineScope;
     myEmbeddersManager = new MavenEmbeddersManager(project);
     myModificationTracker = new MavenModificationTracker(this);
     mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !MavenUtil.isMavenUnitTestModeEnabled(), coroutineScope);
@@ -222,7 +224,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public MavenSyncConsole getSyncConsole() {
     if (null == mySyncConsole.get()) {
-      mySyncConsole.compareAndSet(null, new MavenSyncConsole(myProject));
+      mySyncConsole.compareAndSet(null, new MavenSyncConsole(myProject, coroutineScope));
     }
     return mySyncConsole.get();
   }
@@ -556,7 +558,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return getProjectsTree().findAggregator(mavenProject);
   }
 
-  public @Nullable MavenProject findRootProject(@NotNull MavenProject mavenProject) {
+  public @NotNull MavenProject findRootProject(@NotNull MavenProject mavenProject) {
     return getProjectsTree().findRootProject(mavenProject);
   }
 

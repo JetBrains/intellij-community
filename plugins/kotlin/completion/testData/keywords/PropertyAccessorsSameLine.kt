@@ -13,4 +13,5 @@ class Some {
 // EXIST:  {"lookupString":"set","attributes":"bold","allLookupStrings":"set","itemText":"set"}
 // EXIST:  {"lookupString":"set","tailText":"(value) = ...","attributes":"bold","allLookupStrings":"set","itemText":"set"}
 // EXIST:  {"lookupString":"set","tailText":"(value) {...}","attributes":"bold","allLookupStrings":"set","itemText":"set"}
+// EXIST:  {"lookupString":"field","attributes":"bold","allLookupStrings":"field","itemText":"field"}
 // NOTHING_ELSE

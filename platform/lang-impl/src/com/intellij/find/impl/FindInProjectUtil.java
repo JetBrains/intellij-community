@@ -79,6 +79,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -516,6 +517,7 @@ public final class FindInProjectUtil {
     }
   }
 
+  @ApiStatus.Internal
   public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation, UiDataProvider {
     protected final @NotNull Project myProject;
     protected final @NotNull FindModel myFindModel;

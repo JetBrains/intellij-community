@@ -16,15 +16,15 @@
 import java.io.*;
 class Test {
   interface InterfA {
-    <T extends Cloneable & Iterable> void foo(T x);
+    <error descr="'foo(T)' is already defined in 'Test.InterfA'"><T extends Cloneable & Iterable> void foo(T x);</error>
 
-    <T extends Iterable & Cloneable> void foo(T x);
+    <error descr="'foo(T)' is already defined in 'Test.InterfA'"><T extends Iterable & Cloneable> void foo(T x);</error>
   }
 
   class ANotSame {
-    <T extends Cloneable & Iterable> void foo(T x){}
+    <error descr="'foo(T)' is already defined in 'Test.ANotSame'"><T extends Cloneable & Iterable> void foo(T x)</error>{}
 
-    <T extends Iterable & Cloneable> void foo(T x){}
+    <error descr="'foo(T)' is already defined in 'Test.ANotSame'"><T extends Iterable & Cloneable> void foo(T x)</error>{}
   }
 
   class BNotSame extends ANotSame {

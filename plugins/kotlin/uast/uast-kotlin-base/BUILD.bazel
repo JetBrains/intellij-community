@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.uast.base` start
-
 jvm_library(
     name = "kotlin-uast-base",
     srcs = glob(
@@ -14,13 +13,18 @@ jvm_library(
     ),
     kotlinc_opts = "@community//:k11",
     module_name = "intellij.kotlin.uast.base",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/asm",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//uast/uast-common:uast",
         "//platform/core-api:core",
         "//platform/core-impl",
@@ -48,6 +52,9 @@ jvm_library(
         # do not sort,
         ":kotlin-uast-base",
         "//libraries/asm:asm_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//uast/uast-common:uast_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",

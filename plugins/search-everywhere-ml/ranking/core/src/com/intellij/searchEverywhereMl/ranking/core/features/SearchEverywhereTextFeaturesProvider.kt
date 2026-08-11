@@ -6,7 +6,8 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResul
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereTextFeaturesProvider.Fields.IS_IN_COMMENT
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.util.asSafely
@@ -38,8 +39,9 @@ internal class SearchEverywhereTextFeaturesProvider : SearchEverywhereElementFea
    */
   private fun isComment(usage: UsageInfo2UsageAdapter): Boolean? {
     val element = usage.usageInfo.psiFileRange?.element ?: return null
-    return ApplicationManager.getApplication().runReadAction<Boolean> {
-      if (!element.isValid) return@runReadAction null
+    return runReadActionBlocking {
+      if (!element.isValid) return@runReadActionBlocking null
+      if (element is PsiFileImpl && !element.isContentsLoaded) return@runReadActionBlocking null
       CommentUtilCore.isComment(element)
     }
   }

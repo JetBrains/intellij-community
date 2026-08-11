@@ -62,7 +62,8 @@ fun <ValueClass : Any> serializeToRpc(value: ValueClass, logErrorAsWarning: Bool
 }
 
 private fun shouldSkipSerializationInMonolith(): Boolean {
-  return ApplicationManager.getApplication().currentSessionOrNull?.isLocal == true
+  val application = ApplicationManager.getApplication() ?: return true
+  return application.currentSessionOrNull?.isLocal == true
           && !AppMode.isRemoteDevHost()
           && !PlatformUtils.isJetBrainsClient()
 }

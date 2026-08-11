@@ -67,6 +67,7 @@ public final @NonNls class JUnitCommonClassNames {
   public static final String ORG_JUNIT_JUPITER_API_TEST_REPORTER = "org.junit.jupiter.api.TestReporter";
   public static final String ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH = "org.junit.jupiter.api.extension.ExtendWith";
   public static final String ORG_JUNIT_JUPITER_API_TEST_INSTANCE = "org.junit.jupiter.api.TestInstance";
+  public static final String ORG_JUNIT_JUPITER_API_TEST_TEMPLATE = "org.junit.jupiter.api.TestTemplate";
   public static final String ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE = "org.junit.platform.engine.TestEngine";
   public static final String ORG_JUNIT_PLATFORM_ENGINE_CANCELLATION_TOKEN = "org.junit.platform.engine.CancellationToken";
   public static final String ORG_JUNIT_PLATFORM_ENGINE = "org.junit.platform.engine";

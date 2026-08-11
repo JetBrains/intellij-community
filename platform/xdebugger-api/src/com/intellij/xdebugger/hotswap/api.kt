@@ -5,8 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.XDebugProcess
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -17,6 +19,9 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.NonExtendable
 interface HotSwapSession<T> {
   val project: Project
+
+  @get:ApiStatus.Internal
+  val source: HotSwapSource
 
   /**
    * Get elements modified since the last hot swap.
@@ -64,6 +69,7 @@ interface HotSwapSessionManager {
  *
  * @see [HotSwapInDebugSessionEnabler]
  */
+@ApiStatus.OverrideOnly
 interface HotSwapProvider<T> {
   /**
    * Provides notifications on the file modifications during the session.
@@ -84,6 +90,14 @@ interface HotSwapProvider<T> {
    * to get a callback and use it to report the hot swap status.
    */
   fun performHotSwap(session: HotSwapSession<T>)
+
+  /**
+   * Restarts the connected [HotSwapSession] (along with the underline debug/run process).
+   *
+   * This function can be called only as after the [SourceFileChangesCollector] created by this provider
+   * reported changes as not incompatible via call of [SourceFileChangesListener.onIncompatibleChanges].
+   */
+  fun restart() {}
 }
 
 /**
@@ -103,10 +117,23 @@ interface HotSwapInDebugSessionEnabler {
   }
 }
 
+@ApiStatus.Internal
+@Serializable
+enum class HotSwapSource {
+  RELOAD_FILE,
+  RELOAD_ALL,
+  ON_REBUILD_AUTO,
+  ON_REBUILD_ASK,
+  RELOAD_MODIFIED_ACTION,
+  RELOAD_MODIFIED_BUTTON,
+  UNKNOWN,
+}
+
 /**
  * Listener to report the hot swap status.
  * @see HotSwapSession.startHotSwapListening
  */
+@ApiStatus.NonExtendable
 interface HotSwapResultListener {
   /**
    * Hot swap completed successfully, the notification is shown by [HotSwapSessionManager].
@@ -134,6 +161,7 @@ interface HotSwapResultListener {
 /**
  * Collection of the changed elements since the last hot swap.
  */
+@ApiStatus.OverrideOnly
 interface SourceFileChangesCollector<T> : Disposable {
   fun getChanges(): Set<T>
   fun resetChanges()
@@ -142,11 +170,17 @@ interface SourceFileChangesCollector<T> : Disposable {
 /**
  * Provides events on the source code changes.
  */
+@ApiStatus.NonExtendable
 interface SourceFileChangesListener {
   /**
    * Changes detected since the last reset.
    */
   fun onNewChanges()
+
+  /**
+   * Changes detected since the last reset, but they are not expected to be supported by HotSwap.
+   */
+  fun onIncompatibleChanges(reason: @NlsSafe String)
 
   /**
    * Modified files were reverted to the original state, so no changes currently available.

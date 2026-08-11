@@ -28,6 +28,7 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import com.intellij.vcs.log.ui.details.commit.getCommitDetailsBackground
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
+import com.intellij.vcs.log.ui.table.links.CommitLinksResolveListener
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -80,6 +81,7 @@ class CommitDetailsListPanel
 
   init {
     project.messageBus.connect(parent).subscribe(CommitMessageInspectionProfile.TOPIC, ProfileListener { update() })
+    project.messageBus.connect(parent).subscribe(CommitLinksResolveListener.TOPIC, CommitLinksResolveListener { update() })
 
     setStatusText(VcsLogBundle.message("vcs.log.commit.details.status"))
 

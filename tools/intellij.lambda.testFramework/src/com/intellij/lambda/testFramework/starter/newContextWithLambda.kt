@@ -14,19 +14,19 @@ import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder.LoadingInS
 fun Starter.newContextWithLambda(testName: String, config: IdeStartConfig): IDETestContext {
   try {
     AdditionalModulesForDevBuildServer.addAdditionalModules(
-      *LambdaTestPluginHolder.additionalPluginIds(OnlyFrontend).toTypedArray(),
+      *LambdaTestPluginHolder.additionalDevBuildModuleIds(OnlyFrontend).toTypedArray(),
       target = AdditionalModulesForDevBuildServer.IdeTarget.FRONTEND
     )
     AdditionalModulesForDevBuildServer.addAdditionalModules(
-      *LambdaTestPluginHolder.additionalPluginIds(OnlyBackend).toTypedArray(),
+      *LambdaTestPluginHolder.additionalDevBuildModuleIds(OnlyBackend).toTypedArray(),
       target = AdditionalModulesForDevBuildServer.IdeTarget.BACKEND
     )
     AdditionalModulesForDevBuildServer.addAdditionalModules(
-      *LambdaTestPluginHolder.additionalPluginIds(All).toTypedArray(),
+      *LambdaTestPluginHolder.additionalDevBuildModuleIds(All).toTypedArray(),
       target = AdditionalModulesForDevBuildServer.IdeTarget.ANY
     )
     AdditionalModulesForDevBuildServer.addAdditionalModules(
-      *LambdaTestPluginHolder.additionalPluginIds(Monolith).toTypedArray(),
+      *LambdaTestPluginHolder.additionalDevBuildModuleIds(Monolith).toTypedArray(),
       target = AdditionalModulesForDevBuildServer.IdeTarget.MONOLITH
     )
 
@@ -41,19 +41,19 @@ fun Starter.newContextWithLambda(testName: String, config: IdeStartConfig): IDET
   }
   finally {
     AdditionalModulesForDevBuildServer.removeAdditionalModules(
-      *LambdaTestPluginHolder.additionalPluginIds(OnlyFrontend).toTypedArray(),
+      *LambdaTestPluginHolder.additionalDevBuildModuleIds(OnlyFrontend).toTypedArray(),
       target = AdditionalModulesForDevBuildServer.IdeTarget.FRONTEND
     )
     AdditionalModulesForDevBuildServer.removeAdditionalModules(
-      *LambdaTestPluginHolder.additionalPluginIds(OnlyBackend).toTypedArray(),
+      *LambdaTestPluginHolder.additionalDevBuildModuleIds(OnlyBackend).toTypedArray(),
       target = AdditionalModulesForDevBuildServer.IdeTarget.BACKEND
     )
     AdditionalModulesForDevBuildServer.removeAdditionalModules(
-      *LambdaTestPluginHolder.additionalPluginIds(All).toTypedArray(),
+      *LambdaTestPluginHolder.additionalDevBuildModuleIds(All).toTypedArray(),
       target = AdditionalModulesForDevBuildServer.IdeTarget.ANY
     )
     AdditionalModulesForDevBuildServer.removeAdditionalModules(
-      *LambdaTestPluginHolder.additionalPluginIds(Monolith).toTypedArray(),
+      *LambdaTestPluginHolder.additionalDevBuildModuleIds(Monolith).toTypedArray(),
       target = AdditionalModulesForDevBuildServer.IdeTarget.MONOLITH
     )
   }

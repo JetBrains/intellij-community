@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "OverridingDeprecatedMember", "ReplaceNegatedIsEmptyWithIsNotEmpty",
                "PrivatePropertyName")
-@file:OptIn(FlowPreview::class)
 
 package com.intellij.openapi.wm.impl
 
@@ -26,12 +25,14 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
@@ -53,7 +54,7 @@ import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
@@ -69,6 +70,7 @@ import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import com.intellij.toolWindow.ToolWindowEntry
 import com.intellij.toolWindow.ToolWindowEventSource
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
 import com.intellij.toolWindow.ToolWindowProperty
@@ -94,7 +96,6 @@ import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.launch
@@ -117,6 +118,20 @@ import javax.swing.JRootPane
 
 private val LOG = logger<ToolWindowManagerImpl>()
 private val performShowInSeparateTask = System.getProperty("idea.toolwindow.show.separate.task", "false").toBoolean()
+
+/**
+ * Whether the editor area has claimed the focus of the editor that was just closed, because its empty state is that area's focus target.
+ *
+ * The claimed component is mounted a creation delay later, so focusing a tool window by default here would take focus the empty state is
+ * about to be given — and take it visibly, only to lose it again. A claim that ends up with nothing to focus calls
+ * [ToolWindowManagerImpl.focusToolWindowByDefault] itself, so standing down cannot leave the frame without a focus owner.
+ */
+@RequiresEdt
+private fun emptyEditorAreaClaimsClosedEditorFocus(project: Project): Boolean {
+  val fileEditorManager = project.serviceIfCreated<FileEditorManager>() as? FileEditorManagerImpl ?: return false
+  // the init job is awaited because `splitters` reaches `mainSplitters`, which exists only once that job has completed
+  return fileEditorManager.initJob.isCompleted && fileEditorManager.splitters.isEmptyStateFocusRequestPending()
+}
 
 private typealias Mutation = ((WindowInfoImpl) -> Unit)
 
@@ -182,18 +197,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         delay = SystemProperties.getIntProperty("actionSystem.keyGestureDblClickTime", 300),
         coroutineScope = coroutineScope,
       )
-      val projectFrameLayoutProfile = resolveProjectFrameToolWindowLayoutProfile(project = project, isNewUi = isNewUi)
-      if (state.noStateLoaded) {
-        loadDefault(projectFrameLayoutProfile)
-      }
       @Suppress("LeakingThis")
       state.scheduledLayout.afterChange(this) { dl ->
         dl?.let { toolWindowSetInitializer.scheduleSetLayout(it) }
       }
       state.scheduledLayout.get()?.let { toolWindowSetInitializer.scheduleSetLayout(it) }
-      applyProjectFrameLayoutPolicy(projectFrameLayoutProfile) { layout ->
-        toolWindowSetInitializer.scheduleSetLayout(layout)
-      }
+      // the frame-type layout profile is resolved in `doInit`, once `projectFrameTypeId` is known
     }
   }
 
@@ -410,6 +419,22 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     projectFrameTypeId: String? = this.projectFrameTypeId,
   ) {
     this.projectFrameTypeId = projectFrameTypeId
+
+    // resolved here rather than in the constructor: the layout profile is keyed by frame type, and
+    // `projectFrameTypeId` is only known now. `initUi` below consumes whatever layout we schedule.
+    val projectFrameLayoutProfile = resolveProjectFrameToolWindowLayoutProfile(
+      projectFrameTypeId = projectFrameTypeId,
+      project = project,
+      isNewUi = isNewUi,
+    )
+    if (state.noStateLoaded) {
+      // `noStateLoaded` is set exactly when no layout was scheduled, so this cannot overwrite a restored one
+      loadDefault(projectFrameLayoutProfile)
+    }
+    applyProjectFrameLayoutPolicy(projectFrameLayoutProfile) { layout ->
+      toolWindowSetInitializer.scheduleSetLayout(layout)
+    }
+
     withContext(ModalityState.any().asContextElement()) {
       val defaultPaneInitialization = launch(Dispatchers.EDT) {
         this@ToolWindowManagerImpl.projectFrame = pane.frame
@@ -437,7 +462,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         coroutineScope.launch(Dispatchers.EDT) {
           @Suppress("DEPRECATION")
           focusManager.doWhenFocusSettlesDown(ExpirableRunnable.forProject(project) {
-            if (!FileEditorManager.getInstance(project).hasOpenFiles()) {
+            if (!FileEditorManager.getInstance(project).hasOpenFiles() && !emptyEditorAreaClaimsClosedEditorFocus(project)) {
               focusToolWindowByDefault()
             }
           })
@@ -496,21 +521,17 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   internal fun isToolWindowRegistrationSuppressed(toolWindowId: String): Boolean {
     return service<ProjectFrameToolWindowLayoutService>().isToolWindowRegistrationSuppressed(
-      frameType = projectFrameTypeId,
       profileId = getProjectFrameToolWindowLayoutProfileId(),
       toolWindowId = toolWindowId,
     )
   }
 
   internal fun getSuppressedToolWindowIds(): Set<String> {
-    return service<ProjectFrameToolWindowLayoutService>().getSuppressedToolWindowIds(
-      frameType = projectFrameTypeId,
-      profileId = getProjectFrameToolWindowLayoutProfileId(),
-    )
+    return service<ProjectFrameToolWindowLayoutService>().getSuppressedToolWindowIds(getProjectFrameToolWindowLayoutProfileId())
   }
 
   private fun getProjectFrameToolWindowLayoutProfileId(): String? {
-    return service<ProjectFrameCapabilitiesService>().getUiPolicy(project)?.toolWindowLayoutProfileId
+    return service<ProjectFrameTypeService>().getToolWindowLayoutProfileId(projectFrameTypeId)
   }
 
   private fun getDefaultToolWindowPaneIfInitialized(): ToolWindowPane {
@@ -541,12 +562,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
   }
 
-  private fun loadDefault(
-    projectFrameLayoutProfile: ProjectFrameToolWindowLayoutProfile? = resolveProjectFrameToolWindowLayoutProfile(
-      project = project,
-      isNewUi = isNewUi,
-    ),
-  ) {
+  private fun loadDefault(projectFrameLayoutProfile: ProjectFrameToolWindowLayoutProfile?) {
     val layout = projectFrameLayoutProfile?.profile?.layout ?: ToolWindowDefaultLayoutManager.getInstance().getLayoutCopy()
     toolWindowSetInitializer.scheduleSetLayout(layout)
   }
@@ -651,7 +667,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   // mutate operation must use info from layout and not from decorator
-  internal fun getRegisteredMutableInfoOrLogError(id: String): WindowInfoImpl {
+  @ApiStatus.Internal
+  fun getRegisteredMutableInfoOrLogError(id: String): WindowInfoImpl {
     var info = layoutState.getInfo(id)
     if (info == null) {
       val entry = idToEntry.get(id) ?: throw IllegalStateException("window with id=\"$id\" isn't registered")
@@ -1049,6 +1066,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         info.order = layout.getNextOrder(paneId = info.safeToolWindowPaneId, anchor = task.anchor)
         layout.addInfo(task.id, info)
       }
+    }
+
+    // The new UI (without a ToolWindowExtension) does not have top stripes, and their presence is considered an error
+    if (isNewUi && info.anchor == ToolWindowAnchor.TOP && !ToolWindowExtension.exists) {
+      info.anchor = ToolWindowAnchor.LEFT
     }
 
     val disposable = Disposer.newDisposable(task.id)
@@ -1889,7 +1911,14 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     fireStateChanged(ToolWindowManagerEventType.MovedOrResized, toolWindow)
   }
 
-  private fun focusToolWindowByDefault() {
+  /**
+   * Focuses the most recently active visible tool window, where the editor area has nothing to hand focus to.
+   *
+   * Also called from the editor area itself, for a claim on the focus of an emptied area that could not be kept — see
+   * [EditorsSplitters.requestEmptyStateFocusWhenPresented].
+   */
+  @RequiresEdt
+  internal fun focusToolWindowByDefault() {
     var toFocus: ToolWindowEntry? = null
     for (each in activeStack.stack) {
       if (each.readOnlyWindowInfo.isVisible) {

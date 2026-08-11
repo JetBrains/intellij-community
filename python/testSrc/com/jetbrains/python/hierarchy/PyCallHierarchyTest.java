@@ -15,6 +15,10 @@
  */
 package com.jetbrains.python.hierarchy;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Components;
+
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
 import com.intellij.psi.PsiElement;
@@ -27,6 +31,9 @@ import com.jetbrains.python.psi.PyFunction;
 /**
  * @author novokrest
  */
+@Subsystems.CodeInsight
+@Components.CallHierarchy
+@Layers.Functional
 public class PyCallHierarchyTest extends PyTestCase {
   private static final String CALLER_VERIFICATION_SUFFIX = "_caller_verification.xml";
   private static final String CALLEE_VERIFICATION_SUFFIX = "_callee_verification.xml";

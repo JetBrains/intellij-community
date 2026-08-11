@@ -4,8 +4,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
@@ -16,8 +16,8 @@ import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessi
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
-@Service(Service.Level.APP)
-internal class BackendTerminalHyperlinksSessionsManager(private val coroutineScope: CoroutineScope) {
+@Service(Service.Level.PROJECT)
+internal class BackendTerminalHyperlinksSessionsManager(private val project: Project, private val coroutineScope: CoroutineScope) {
   private val sessions = ConcurrentHashMap<TerminalHyperlinksSessionId, BackendTerminalHyperlinksSession>()
   private val sessionIdCounter = AtomicInteger(0)
 
@@ -32,12 +32,10 @@ internal class BackendTerminalHyperlinksSessionsManager(private val coroutineSco
   /**
    * @param eelDescriptor environment where the terminal process is running.
    */
-  fun createNewSession(project: Project, eelDescriptor: EelDescriptor): BackendTerminalHyperlinksSession {
+  suspend fun createNewSession(eelDescriptor: EelDescriptor): BackendTerminalHyperlinksSession {
     val newId = TerminalHyperlinksSessionId(sessionIdCounter.getAndIncrement())
 
     val sessionScope = coroutineScope.childScope("BackendTerminalHyperlinksSession#$newId")
-    @Suppress("IncorrectParentDisposable")  // Ensure that scope is canceled when project is closing
-    sessionScope.coroutineContext.job.cancelOnDispose(project)
     sessionScope.coroutineContext.job.invokeOnCompletion {
       sessions.remove(newId)
     }
@@ -47,7 +45,7 @@ internal class BackendTerminalHyperlinksSessionsManager(private val coroutineSco
     return session
   }
 
-  private fun startHyperlinksSession(
+  private suspend fun startHyperlinksSession(
     project: Project,
     eelDescriptor: EelDescriptor,
     id: TerminalHyperlinksSessionId,
@@ -57,6 +55,7 @@ internal class BackendTerminalHyperlinksSessionsManager(private val coroutineSco
       debugName = "Backend#${id.id}",
       project = project,
       eelDescriptor = eelDescriptor,
+      homeDirectory = eelDescriptor.toEelApi().userInfo.home,
       coroutineScope = scope.childScope("BackendTerminalHyperlinkFacade"),
     )
 
@@ -78,6 +77,6 @@ internal class BackendTerminalHyperlinksSessionsManager(private val coroutineSco
 
   companion object {
     @JvmStatic
-    fun getInstance(): BackendTerminalHyperlinksSessionsManager = service()
+    fun getInstance(project: Project): BackendTerminalHyperlinksSessionsManager = project.service()
   }
 }

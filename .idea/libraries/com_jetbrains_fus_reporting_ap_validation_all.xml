@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="com.jetbrains.fus.reporting.ap.validation.all" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.fus.reporting:ap-validation-all:1.0.229">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.fus.reporting:ap-validation-all:2.0.242">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/1.0.229/ap-validation-all-1.0.229.jar">
-          <sha256sum>b02d4c38b8fae8c828fe548216d43373738f4439912e62d50a576c9f83cdc325</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/2.0.242/ap-validation-all-2.0.242.jar">
+          <sha256sum>0460675b92724722986a81a5565c8972e628540cd17e2428bac28e80873e470e</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/1.0.229/ap-validation-all-1.0.229.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/2.0.242/ap-validation-all-2.0.242.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/1.0.229/ap-validation-all-1.0.229-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/2.0.242/ap-validation-all-2.0.242-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/1.0.229/ap-validation-all-1.0.229-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/2.0.242/ap-validation-all-2.0.242-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

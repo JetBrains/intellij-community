@@ -77,6 +77,7 @@ a:com.intellij.platform.workspace.storage.EntityType
 - pf:builder():com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - p:getEntityClass():java.lang.Class
 - p:getEntityImplBuilderClass():java.lang.Class
+- p:getEntityImplClass():java.lang.Class
 com.intellij.platform.workspace.storage.ExternalEntityMapping
 - a:forEach(kotlin.jvm.functions.Function2):V
 - a:getDataByEntity(com.intellij.platform.workspace.storage.WorkspaceEntity):java.lang.Object

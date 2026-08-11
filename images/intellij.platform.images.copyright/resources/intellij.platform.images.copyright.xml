@@ -1,7 +1,13 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.copyright"/>
+    <plugin id="com.intellij.platform.images"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.xml.psi.impl"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <copyright.updater filetype="SVG" implementationClass="org.intellij.images.copyright.SvgCopyrightUpdater"/>

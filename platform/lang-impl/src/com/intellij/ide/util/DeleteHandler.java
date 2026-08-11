@@ -9,7 +9,6 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.RevealFileAction;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -17,14 +16,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -71,6 +64,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.ide.util.DeleteUtil.generateDeleteWarningMessageWithModalProgress;
+import static com.intellij.ide.util.DeleteUtil.generateSafeDeleteWarningMessageWithModalProgress;
 
 @SuppressWarnings("SplitModeApiUsage")
 public final class DeleteHandler {
@@ -142,7 +138,8 @@ public final class DeleteHandler {
     if (safeDeleteApplicable && !dumb) {
       if (needConfirmation) {
         final Ref<Boolean> exit = Ref.create(false);
-        final SafeDeleteDialog dialog = new SafeDeleteDialog(project, elements, new SafeDeleteDialog.Callback() {
+        var warningMessage = generateSafeDeleteWarningMessageWithModalProgress(project, true, elements);
+        final SafeDeleteDialog dialog = new SafeDeleteDialog(project, elements, warningMessage, new SafeDeleteDialog.Callback() {
           @Override
           public void run(final SafeDeleteDialog dialog) {
             if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), true)) return;
@@ -167,32 +164,8 @@ public final class DeleteHandler {
       }
     }
     else {
-      String warningMessage = DeleteUtil.generateWarningMessage("prompt.delete.elements", elements);
-
-      boolean anyDirectories = false;
-      String directoryName = null;
-      for (PsiElement psiElement : elementsToDelete) {
-        if (psiElement instanceof PsiDirectory && !PsiUtilBase.isSymLink((PsiDirectory)psiElement)) {
-          anyDirectories = true;
-          directoryName = ((PsiDirectory)psiElement).getName();
-          break;
-        }
-      }
-      if (anyDirectories) {
-        if (elements.length == 1) {
-          warningMessage += IdeBundle.message("warning.delete.all.files.and.subdirectories", directoryName);
-        }
-        else {
-          warningMessage += IdeBundle.message("warning.delete.all.files.and.subdirectories.in.the.selected.directory");
-        }
-      }
-
-      if (safeDeleteApplicable) {
-        warningMessage +=
-          LangBundle.message("dialog.message.warning.safe.delete.not.available.while.updates.indices.no.usages.will.be.checked", ApplicationNamesInfo.getInstance().getFullProductName());
-      }
-
       if (needConfirmation) {
+        var warningMessage = generateDeleteWarningMessageWithModalProgress(project, elementsToDelete, elements, safeDeleteApplicable);
         int result = Messages.showOkCancelDialog(project, warningMessage, IdeBundle.message("title.delete"),
                                                  ApplicationBundle.message("button.delete"), CommonBundle.getCancelButtonText(),
                                                  Messages.getQuestionIcon());
@@ -315,22 +288,23 @@ public final class DeleteHandler {
       if (!clearFileReadOnlyFlags(project, file)) return;
     }
 
-    var task = new LocalFilesDeleteTask(project, fileElements);
-    ProgressManager.getInstance().run(task);
-    if (task.error != null) {
-      var file = task.error instanceof FileSystemException ? ((FileSystemException)task.error).getFile() : null;
+    var errorAndAborted = DeleteHandlerHelper.deleteLocalFiles(project, fileElements);
+    var error = errorAndAborted.getFirst();
+    if (error != null) {
+      var file = error instanceof FileSystemException fse ? fse.getFile() : null;
       if (file != null) {
-        String message = IoErrorText.message(task.error), yes = RevealFileAction.getActionName(), no = CommonBundle.getCloseButtonText();
+        String message = IoErrorText.message(error), yes = RevealFileAction.getActionName(), no = CommonBundle.getCloseButtonText();
         if (Messages.showYesNoDialog(project, message, CommonBundle.getErrorTitle(), yes, no, Messages.getErrorIcon()) == Messages.YES) {
           RevealFileAction.openFile(Path.of(file));
         }
       }
       else {
-        Messages.showMessageDialog(project, IoErrorText.message(task.error), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+        Messages.showMessageDialog(project, IoErrorText.message(error), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       }
     }
-    if (task.aborted != null) {
-      VfsUtil.markDirtyAndRefresh(true, true, false, task.aborted);
+    var aborted = errorAndAborted.getSecond();
+    if (aborted != null) {
+      VfsUtil.markDirtyAndRefresh(true, true, false, aborted);
     }
   }
 
@@ -392,61 +366,5 @@ public final class DeleteHandler {
   public static void overrideNeedsConfirmationInTests(boolean needsConfirmation, @NotNull Disposable disposable) {
     ourOverrideNeedsConfirmation = needsConfirmation;
     Disposer.register(disposable, () -> ourOverrideNeedsConfirmation = null);
-  }
-
-  private static final class LocalFilesDeleteTask extends Task.Modal {
-    private final PsiElement[] myFileElements;
-
-    private int counter = 0;
-    private VirtualFile aborted = null;
-    private Throwable error = null;
-
-    private LocalFilesDeleteTask(Project project, PsiElement[] fileElements) {
-      super(project, IdeBundle.message("progress.deleting"), true);
-      myFileElements = fileElements;
-    }
-
-    @Override
-    @SuppressWarnings("DuplicatedCode")
-    public void run(@NotNull ProgressIndicator indicator) {
-      indicator.setIndeterminate(true);
-      var toBin = TrashBin.isSupported() && GeneralSettings.getInstance().isDeletingToBin();
-
-      try {
-        for (var element : myFileElements) {
-          indicator.checkCanceled();
-          indicator.setText(IdeBundle.message("progress.already.deleted", counter));
-
-          var file = ((PsiFileSystemItem)element).getVirtualFile();
-          aborted = file;
-
-          if (toBin && TrashBin.canMoveToTrash(file)) {
-            LocalFileSystem.MOVE_TO_TRASH.set(file, Boolean.TRUE);
-            counter++;
-          }
-          else {
-            LocalFileSystem.DELETE_CALLBACK.set(file, p -> {
-              indicator.checkCanceled();
-              indicator.setText(IdeBundle.message("progress.already.deleted", counter));
-              counter++;
-            });
-          }
-
-          try {
-            WriteAction.run(() -> element.delete());
-          }
-          finally {
-            LocalFileSystem.MOVE_TO_TRASH.set(file, null);
-            LocalFileSystem.DELETE_CALLBACK.set(file, null);
-          }
-
-          aborted = null;
-        }
-      }
-      catch (IncorrectOperationException e) {
-        Logger.getInstance(getClass()).info(e);
-        error = e.getCause();
-      }
-    }
   }
 }

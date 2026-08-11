@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.pyproject.model.internal.platformBridge.startVenvExclusion
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.vfs.createDirectory
@@ -20,7 +20,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @TestApplication
 internal class PyExcludeVenvTest {
   private val tempDirFixture = tempPathFixture()
-  private val module by projectFixture().moduleFixture(tempDirFixture, addPathToSourceRoot = true)
+  private val module by projectFixture().pyModuleFixture(tempDirFixture, addPathToSourceRoot = true)
 
   @Test
   fun testExclude(): Unit = timeoutRunBlocking {

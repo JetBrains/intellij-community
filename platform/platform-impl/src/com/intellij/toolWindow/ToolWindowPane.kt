@@ -311,7 +311,8 @@ class ToolWindowPane private constructor(
 
   private val setAnchorWeightFutures = hashMapOf<ToolWindowAnchor, Future<*>>()
 
-  internal fun setWeight(anchor: ToolWindowAnchor, weight: Float) {
+  @Internal
+  fun setWeight(anchor: ToolWindowAnchor, weight: Float) {
     setAnchorWeightFutures.remove(anchor)?.cancel(false)
     // can be null in tests
     val rootPane = rootPane

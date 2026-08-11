@@ -36,5 +36,12 @@
     <extensionPoint name="virtualFileQualifiedNameProvider" interface="com.intellij.ide.actions.VirtualFileQualifiedNameProvider" dynamic="true"/>
 
     <extensionPoint name="testSourcesFilter" interface="com.intellij.openapi.roots.TestSourcesFilter" dynamic="true"/>
+    <extensionPoint name="refactoring.extractIncludeHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.RefactoringActionHandler"/>
+    </extensionPoint>
+    <extensionPoint name="refactoring.changeSignatureUsageProcessor" interface="com.intellij.refactoring.changeSignature.ChangeSignatureUsageProcessor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.changeSignature.usageProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.changeSignature.ChangeSignatureUsageProvider"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>

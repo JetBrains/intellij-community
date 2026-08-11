@@ -1,7 +1,8 @@
+import builtins
 from _typeshed import Unused
 from datetime import datetime as _datetime
-from typing import Final, NoReturn, TypeAlias, TypedDict, overload, type_check_only
-from typing_extensions import Self, deprecated, disjoint_base
+from typing import Final, TypeAlias, TypedDict, overload, type_check_only
+from typing_extensions import Never, Self, deprecated, disjoint_base
 
 _DateInitType: TypeAlias = (
     Date
@@ -65,7 +66,7 @@ sun_radius: Final[float]
 
 @disjoint_base
 class Angle(float):  # type: ignore[type-var]
-    def __new__(cls, *args: Unused, **kwargs: Unused) -> NoReturn: ...
+    def __new__(cls, *args: Unused, **kwargs: Unused) -> Never: ...
     @property
     def norm(self) -> Angle: ...
     @property
@@ -77,8 +78,8 @@ class Date(float):
     @overload
     def __new__(cls, date: _DateInitType, /) -> Date: ...
 
-    def triple(self) -> tuple[int, int, float]: ...
-    def tuple(self) -> tuple[int, int, int, int, int, float]: ...
+    def triple(self) -> builtins.tuple[int, int, float]: ...
+    def tuple(self) -> builtins.tuple[int, int, int, int, int, float]: ...
     def datetime(self) -> _datetime: ...
 
 @disjoint_base

@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.util.MathUtil
 import com.intellij.util.PlatformUtils
 
-object IdeStartupExperiment {
+internal object IdeStartupExperiment {
 
   private val LOG: Logger = logger<IdeStartupWizard>()
 

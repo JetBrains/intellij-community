@@ -1,4 +1,5 @@
 // "Change to 'var'" "true"
+// K2_ERROR: CAPTURED_VAL_INITIALIZATION
 fun exec(f: () -> Unit) = f()
 
 fun foo() {

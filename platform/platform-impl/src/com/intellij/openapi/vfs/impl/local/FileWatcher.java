@@ -23,8 +23,10 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -70,6 +72,10 @@ public final class FileWatcher implements AppLifecycleListener {
 
   private volatile boolean myShuttingDown = false;
   private volatile CanonicalPathMap myPathMap = CanonicalPathMap.empty();
+
+  /// Watch roots that can't be monitored by available [PluggableFileWatcher]s, and must be refreshed 'manually', i.e.,
+  /// mark the whole hierarchy under those roots as 'dirty' and rely on refresh (hence the name).
+  /// @see LocalFileSystemImpl#markSuspiciousFilesDirty(List)
   private volatile Map<Object, Set<String>> myManualWatchRoots = Collections.emptyMap();
 
   FileWatcher(@NotNull ManagingFS managingFS, @NotNull Runnable postInitCallback) {
@@ -128,7 +134,7 @@ public final class FileWatcher implements AppLifecycleListener {
   }
 
   @NotNull DirtyPaths getDirtyPaths() {
-    return myNotificationSink.getDirtyPaths();
+    return myNotificationSink.takeAndResetDirtyPaths();
   }
 
   public @NotNull Collection<@NotNull String> getManualWatchRoots() {
@@ -148,7 +154,7 @@ public final class FileWatcher implements AppLifecycleListener {
   }
 
   void setWatchRoots(@NotNull Supplier<CanonicalPathMap> pathMapSupplier) {
-    var prevTask = myLastTask.getAndSet(myFileWatcherExecutor.submit(() -> {
+    CompletableFuture<?> newTask = CompletableFuture.runAsync(() -> {
       try {
         var pathMap = myShuttingDown ? CanonicalPathMap.empty() : pathMapSupplier.get();
         if (pathMap == null) return;
@@ -165,7 +171,12 @@ public final class FileWatcher implements AppLifecycleListener {
       catch (RuntimeException | Error e) {
         LOG.error(e);
       }
-    }));
+    }, myFileWatcherExecutor);
+    var prevTask = myLastTask.getAndSet(newTask);
+    newTask.whenComplete((_, _) ->
+      // clearing the stored task on completion to avoid project leaks
+      myLastTask.compareAndSet(newTask, null)
+    );
     if (prevTask != null) {
       prevTask.cancel(false);
     }
@@ -200,7 +211,8 @@ public final class FileWatcher implements AppLifecycleListener {
     private final Object myLock = new Object();
     private DirtyPaths myDirtyPaths = new DirtyPaths();
 
-    private DirtyPaths getDirtyPaths() {
+    /// gets _and clears_ dirty paths currently accumulated
+    private DirtyPaths takeAndResetDirtyPaths() {
       var dirtyPaths = DirtyPaths.EMPTY;
 
       synchronized (myLock) {

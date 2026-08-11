@@ -1,80 +1,44 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex.bta
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.util.registry.Registry
-import kotlinx.coroutines.runBlocking
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.test.runTest
 import org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorageProvider
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenCompilerReferenceIndexApplicabilityTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenCompilerReferenceIndexApplicabilityTest(mavenVersion: String, modelVersion: String) :
+    AbstractMavenCompilerReferenceIndexTest(mavenVersion, modelVersion) {
 
     @Test
-    fun `test BTA CRI provider is not applicable when Maven CRI generation property is disabled`() {
-        withBtaCriRegistryEnabled {
-            runBlocking {
-                importProjectAsync(mavenProjectWithCriGenerationProperty("false"))
-            }
+    fun `test BTA CRI provider is not applicable when Maven CRI generation property is disabled`() = runTest {
+        maven.importProjectAsync(mavenProjectWithCriValue("false"))
 
-            assertFalse(isBtaCriProviderApplicable())
-        }
+        assertFalse(isBtaCriProviderApplicable())
     }
 
     @Test
-    fun `test BTA CRI provider is applicable when Maven CRI generation property is enabled`() {
-        withBtaCriRegistryEnabled {
-            runBlocking {
-                importProjectAsync(mavenProjectWithCriGenerationProperty("true"))
-            }
+    fun `test BTA CRI provider is applicable when Maven CRI generation property is enabled`() = runTest {
+        maven.importProjectAsync(mavenProjectWithCriValue("true"))
 
-            assertTrue(isBtaCriProviderApplicable())
-        }
+        assertTrue(isBtaCriProviderApplicable())
     }
 
     @Test
-    fun `test BTA CRI provider is not applicable when Maven CRI generation property is absent`() {
-        withBtaCriRegistryEnabled {
-            runBlocking {
-                importProjectAsync(mavenProjectWithoutCriGenerationProperty())
-            }
+    fun `test BTA CRI provider is not applicable when Maven CRI generation property is absent`() = runTest {
+        maven.importProjectAsync(mavenProjectWithoutCri())
 
-            assertFalse(isBtaCriProviderApplicable())
-        }
-    }
-
-    private fun withBtaCriRegistryEnabled(action: () -> Unit) {
-        val registryValue = Registry.get(BTA_CRI_REGISTRY_KEY)
-        val oldValue = registryValue.asBoolean()
-        registryValue.setValue(true, testRootDisposable)
-        try {
-            action()
-        } finally {
-            registryValue.setValue(oldValue)
-        }
+        assertFalse(isBtaCriProviderApplicable())
     }
 
     private fun isBtaCriProviderApplicable(): Boolean =
         KotlinCompilerReferenceIndexStorageProvider.getApplicableProvider(project).isBtaCriProvider()
-
-    private fun mavenProjectWithCriGenerationProperty(value: String): String =
-        """
-        <groupId>test</groupId>
-        <artifactId>project</artifactId>
-        <version>1.0.0</version>
-
-        <properties>
-            <kotlin.compiler.generateCompilerRefIndex>$value</kotlin.compiler.generateCompilerRefIndex>
-        </properties>
-        """.trimIndent()
-
-    private fun mavenProjectWithoutCriGenerationProperty(): String =
-        """
-        <groupId>test</groupId>
-        <artifactId>project</artifactId>
-        <version>1.0.0</version>
-        """.trimIndent()
-
-    private companion object {
-        private const val BTA_CRI_REGISTRY_KEY = "kotlin.cri.bta.support.enabled"
-    }
 }

@@ -7,6 +7,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.compositeScope
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
+import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
@@ -73,7 +77,8 @@ internal object SurroundWithNullCheckFixFactory {
         createQuickFixIfApplicableToUnsafeCall(diagnostic)
     }
 
-    private fun KaSession.createQuickFixIfApplicableToUnsafeCall(diagnostic: KaFirDiagnostic<*>): List<SurroundWithNullCheckFix> {
+    context(session: KaSession)
+    private fun createQuickFixIfApplicableToUnsafeCall(diagnostic: KaFirDiagnostic<*>): List<SurroundWithNullCheckFix> {
         val element = when (diagnostic) {
             is KaFirDiagnostic.UnsafeCall -> diagnostic.receiverExpression
             else -> diagnostic.psi

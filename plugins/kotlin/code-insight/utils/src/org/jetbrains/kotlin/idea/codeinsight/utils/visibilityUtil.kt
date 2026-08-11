@@ -1,12 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
-import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -15,6 +11,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertyAccessorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -43,14 +43,24 @@ import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.modalityModifierType
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 
-fun Visibility.toKeywordToken(): KtModifierKeywordToken = when (val normalized = normalize()) {
-    Visibilities.Public -> KtTokens.PUBLIC_KEYWORD
-    Visibilities.Protected -> KtTokens.PROTECTED_KEYWORD
-    Visibilities.Internal -> KtTokens.INTERNAL_KEYWORD
-    else -> if (Visibilities.isPrivate(normalized)) KtTokens.PRIVATE_KEYWORD else  error("Unexpected visibility '$normalized'")
+
+fun KaSymbolVisibility.toKeywordToken(): KtModifierKeywordToken = when (this) {
+    KaSymbolVisibility.PUBLIC -> KtTokens.PUBLIC_KEYWORD
+    KaSymbolVisibility.PROTECTED -> KtTokens.PROTECTED_KEYWORD
+    KaSymbolVisibility.PRIVATE -> KtTokens.PRIVATE_KEYWORD
+    KaSymbolVisibility.INTERNAL -> KtTokens.INTERNAL_KEYWORD
+    else -> error("Unexpected visibility '$this'")
 }
 
-fun KtModifierKeywordToken.toVisibility(): Visibility = when (this) {
+fun KtModifierKeywordToken.toVisibility(): KaSymbolVisibility = when (this) {
+    KtTokens.PUBLIC_KEYWORD -> KaSymbolVisibility.PUBLIC
+    KtTokens.PRIVATE_KEYWORD -> KaSymbolVisibility.PRIVATE
+    KtTokens.PROTECTED_KEYWORD -> KaSymbolVisibility.PROTECTED
+    KtTokens.INTERNAL_KEYWORD -> KaSymbolVisibility.INTERNAL
+    else -> throw IllegalArgumentException("Unknown visibility modifier '$this'")
+}
+
+fun KtModifierKeywordToken.toCompilerVisibility(): Visibility = when (this) {
     KtTokens.PUBLIC_KEYWORD -> Visibilities.Public
     KtTokens.PRIVATE_KEYWORD -> Visibilities.Private
     KtTokens.PROTECTED_KEYWORD -> Visibilities.Protected
@@ -68,7 +78,6 @@ fun KtModifierKeywordToken.toVisibility(): Visibility = when (this) {
  *
  * Do we need something like @PublicApiFile to disable (or invert) this inspection per-file?
  */
-@OptIn(KaContextParameterApi::class)
 context(_: KaSession)
 private fun explicitVisibilityRequired(symbol: KaDeclarationSymbol): Boolean {
     if ((symbol as? KaConstructorSymbol)?.isPrimary == true) return false // 1
@@ -94,7 +103,6 @@ fun KtModifierListOwner.setVisibility(visibilityModifier: KtModifierKeywordToken
     addModifier(visibilityModifier)
 }
 
-@OptIn(KaExperimentalApi::class)
 fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
     return when {
         this is KtPropertyAccessor && isSetter && property.hasModifier(KtTokens.OVERRIDE_KEYWORD) -> {
@@ -103,7 +111,7 @@ fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
                     .symbol
                     .allOverriddenSymbols
                     .forEach { overriddenSymbol ->
-                        val visibility = (overriddenSymbol as? KaPropertySymbol)?.setter?.compilerVisibility?.toKeywordToken()
+                        val visibility = (overriddenSymbol as? KaPropertySymbol)?.setter?.visibility?.toKeywordToken()
                         if (visibility != null) return visibility
                     }
             }
@@ -128,8 +136,7 @@ fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
             analyze(this) {
                 (symbol as KaCallableSymbol)
                     .allOverriddenSymbols
-                    .map { it.compilerVisibility }
-                    .maxWithOrNull { v1, v2 -> Visibilities.compare(v1, v2) ?: -1 }
+                    .minOfOrNull { it.visibility } // Find the most permissive visibility
                     ?.toKeywordToken()
             }
         }
@@ -157,16 +164,25 @@ fun KtModifierListOwner.canBePrivate(): Boolean {
 fun KtModifierListOwner.canBePublic(): Boolean = !isSealedClassConstructor()
 
 fun KtModifierListOwner.canBeProtected(): Boolean {
-    return when (val parent = if (this is KtPropertyAccessor) this.property.parent else this.parent) {
-        is KtClassBody -> {
-            val parentClass = parent.parent as? KtClass
-            parentClass != null && !parentClass.isInterface() && !this.isFinalClassConstructor()
-        }
-
+    val parent = if (this is KtPropertyAccessor) property.parent else parent
+    return when (parent) {
+        is KtClass -> !isAnnotationClassPrimaryConstructor() && !isFinalClassConstructor()
+        is KtClassBody -> canBeProtectedInClassBody(parent)
         is KtParameterList -> parent.parent is KtPrimaryConstructor
-        is KtClass -> !this.isAnnotationClassPrimaryConstructor() && !this.isFinalClassConstructor()
         else -> false
     }
+}
+
+private fun KtModifierListOwner.canBeProtectedInClassBody(parent: KtClassBody): Boolean {
+    val declaration = parent.parent
+    if (declaration is KtClass) {
+        return !declaration.isInterface() && !isFinalClassConstructor()
+    }
+    if (declaration is KtObjectDeclaration) {
+        val containingClass = declaration.containingClass()
+        return declaration.isCompanion() && containingClass?.isInheritable() != false && containingClass?.isInterface() == false
+    }
+    return false
 }
 
 fun KtModifierListOwner.canBeInternal(): Boolean {

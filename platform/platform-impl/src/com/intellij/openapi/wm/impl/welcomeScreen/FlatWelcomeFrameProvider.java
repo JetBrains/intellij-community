@@ -3,11 +3,13 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WelcomeFrameProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class FlatWelcomeFrameProvider implements WelcomeFrameProvider {
   @Override
   public @NotNull IdeFrame createFrame() {

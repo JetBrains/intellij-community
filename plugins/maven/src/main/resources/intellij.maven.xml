@@ -11,16 +11,65 @@
     <module name="intellij.java.execution"/>
     <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.impl"/>
-    <module name="intellij.java.xml.dom.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.java.ui"/>
+    <module name="intellij.java.xml.dom.impl"/>
+    <module name="intellij.libraries.asm"/>
+    <module name="intellij.libraries.commons.cli"/>
+    <module name="intellij.libraries.commons.lang3"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.http.client"/>
+    <module name="intellij.libraries.jgoodies.forms"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.libraries.stream"/>
+    <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.buildScripts.downloader"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.eel.impl"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.externalSystem.dependencyUpdater"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.macro"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.testRunner"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.vcs"/>
     <module name="intellij.properties.backend"/>
     <module name="intellij.properties.backend.psi"/>
     <module name="intellij.properties.psi"/>
     <module name="intellij.spellchecker"/>
+    <module name="intellij.xml.analysis"/>
+    <module name="intellij.xml.dom"/>
+    <module name="intellij.xml.dom.impl"/>
+    <module name="intellij.xml.impl"/>
+    <module name="intellij.xml.parser"/>
+    <module name="intellij.xml.psi"/>
   </dependencies>
   <!-- endregion -->
 
@@ -507,7 +556,6 @@
 
     <dependencyCollector kind="java" implementation="org.jetbrains.idea.maven.project.MavenDependencyCollector"/>
     <dependencyCollector kind="maven-packaging" implementation="org.jetbrains.idea.maven.project.MavenPackagingDependencyCollector"/>
-    <dependencyCollector kind="maven-version-support" implementation="org.jetbrains.idea.maven.maven2.Maven2VersionDependencyCollector"/>
 
     <newProjectWizard.java.buildSystem implementation="org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizard"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.idea.maven.MavenCommandLineInspectionProjectConfigurator"/>

@@ -109,7 +109,7 @@ internal suspend fun <U> withObservableMatches(
     else ->
       withReteDbSource {
         var handles: List<DisposableHandle>? = null
-        val def = async(context = ContextMatches(contextMatches.addAll(addedMatches)),
+        val def = async(context = ContextMatches(contextMatches.addingAll(addedMatches)),
                         start = CoroutineStart.UNDISPATCHED) {
           val self = this
           // setup invalidation handles before launching [body]

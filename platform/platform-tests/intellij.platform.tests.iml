@@ -27,7 +27,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jmock" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
@@ -42,6 +42,8 @@
     <orderEntry type="library" scope="TEST" name="jmock.legacy" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.minimap.core" />
+    <orderEntry type="module" module-name="intellij.minimap.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.plugins" />
@@ -69,7 +71,7 @@
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertj-swing" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.snakeyaml" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jna" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jna" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" scope="TEST" />
@@ -122,7 +124,7 @@
     <orderEntry type="module" module-name="intellij.webp" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.settings" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlin-test-assertions-core-jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTestAssertionsCoreJvm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ijent" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui.inspector" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.progress.tests" scope="TEST" />
@@ -143,6 +145,7 @@
     <orderEntry type="module" module-name="intellij.platform.eelHelper" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.jcef.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.mockito" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.mockk" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.mockk.jvm" scope="TEST" />
@@ -156,6 +159,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.updateChecker" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.fus-api" level="project" />
     <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.ap.validation.all" level="project" />
+    <orderEntry type="library" scope="TEST" name="jetbrains.fus.reporting.api.jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl.wsl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.syntax.psi.tests" scope="TEST" />
@@ -166,8 +170,8 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.highlighting" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
-    <orderEntry type="library" scope="TEST" name="jediterm-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetcheck" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jediterm.core" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jetbrains.kotlinx.lincheck.jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
@@ -176,5 +180,7 @@
     <orderEntry type="module" module-name="intellij.platform.serviceContainer.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage.testEntities" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.impl.base" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.webp.tests" scope="TEST" />
   </component>
 </module>

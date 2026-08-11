@@ -25,6 +25,7 @@ import git4idea.GitStandardLocalBranch
 import git4idea.GitTag
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JTree
 
@@ -34,9 +35,19 @@ internal fun showRemoteBranchSelectionPopup(
   commits: List<VcsFullCommitDetails>,
   onBranchSelected: (GitRemoteBranch) -> Unit,
 ) {
+  showRemoteBranchSelectionPopup(project, repository, commits.size, onBranchSelected)
+}
+
+@ApiStatus.Internal
+fun showRemoteBranchSelectionPopup(
+  project: Project,
+  repository: GitRepository,
+  commitCount: Int,
+  onBranchSelected: (GitRemoteBranch) -> Unit,
+) {
   val repositoryModel = GitRepositoriesHolder.getInstance(project).get(repository.repositoryId())
   if (repositoryModel == null) return
-  val step = GitRemoteBranchSelectionPopupStep(project, repositoryModel, commits.size, onBranchSelected)
+  val step = GitRemoteBranchSelectionPopupStep(project, repositoryModel, commitCount, onBranchSelected)
   val popup = GitRemoteBranchSelectionPopup(project, step)
   invokeLater {
     popup.showCenteredInCurrentWindow(project)

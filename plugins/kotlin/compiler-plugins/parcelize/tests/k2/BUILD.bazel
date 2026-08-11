@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.compilerPlugins.parcelize.tests` start
-
 jvm_library(
     name = "kotlin-compilerPlugins-parcelize-tests",
     srcs = glob(
@@ -11,6 +10,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.compilerPlugins.parcelize.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -26,20 +26,24 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.compilerPlugins.parcelize.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":kotlin-compilerPlugins-parcelize-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-compilerPlugins-parcelize-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-fir",
         "@lib//:kotlinc-kotlin-compiler-tests",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "@lib//:kotlinc-parcelize-compiler-plugin",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/code-insight/inspections-k2/tests",
         "//plugins/kotlin/code-insight/inspections-k2/tests:tests_test_lib",
         "//platform/testFramework",
@@ -60,9 +64,12 @@ jvm_library(
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
-        "@lib//:kotlinc-analysis-api-impl-base",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_test_lib",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.compilerPlugins.parcelize.tests` end
@@ -77,7 +84,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.compilerPlugins.parcelize.tests` end
 
 ### auto-generated section `test intellij.kotlin.compilerPlugins.parcelize.tests` start
-
 jps_test(
     name = "kotlin-compilerPlugins-parcelize-tests_test",
     runtime_deps = [":kotlin-compilerPlugins-parcelize-tests_test_lib"],

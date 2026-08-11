@@ -31,7 +31,7 @@ interface ResourceFileResolver {
     fun createDefault(moduleRepository: RuntimeModuleRepository): ResourceFileResolver {
       return object : ResourceFileResolver {
         override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
-          return moduleRepository.getModule(moduleId).readFile(relativePath)
+          return moduleRepository.findModuleHeader(moduleId)?.readFile(relativePath)
         }
 
         override fun toString(): String {

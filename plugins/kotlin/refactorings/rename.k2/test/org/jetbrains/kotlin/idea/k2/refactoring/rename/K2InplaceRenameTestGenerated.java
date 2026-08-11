@@ -163,6 +163,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/typeParameters/TypeParameterVsTypeAlias.kt");
     }
 
+    @TestMetadata("ContextParameterInHierarchy.kt")
+    public void testContextParameterInHierarchy() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/ContextParameterInHierarchy.kt");
+    }
+
     @TestMetadata("DisableInplaceRenameOnThis.kt")
     public void testDisableInplaceRenameOnThis() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/DisableInplaceRenameOnThis.kt");
@@ -191,6 +196,21 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("EraseCompanionName.kt")
     public void testEraseCompanionName() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/EraseCompanionName.kt");
+    }
+
+    @TestMetadata("ExplicitContextArgument.kt")
+    public void testExplicitContextArgument() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/ExplicitContextArgument.kt");
+    }
+
+    @TestMetadata("ExplicitContextArgument2.kt")
+    public void testExplicitContextArgument2() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/ExplicitContextArgument2.kt");
+    }
+
+    @TestMetadata("ExplicitContextArgument3.kt")
+    public void testExplicitContextArgument3() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/ExplicitContextArgument3.kt");
     }
 
     @TestMetadata("expressionsInRange.kt")
@@ -606,6 +626,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("NamedArguments.kt")
     public void testNamedArguments() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/NamedArguments.kt");
+    }
+
+    @TestMetadata("NamedDestructuring.kt")
+    public void testNamedDestructuring() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/NamedDestructuring.kt");
     }
 
     @TestMetadata("NoReformat.kt")

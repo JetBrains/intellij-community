@@ -38,6 +38,9 @@ class MainToolbarUI(data: ComponentData) : UiComponent(data) {
 
   fun vcsWidget(branchName: String = "Version"): AbstractToolbarComboUi =
     abstractToolbarCombo { and(byType("com.intellij.openapi.wm.impl.AbstractToolbarCombo"), contains(byVisibleText(branchName))) }
+
+  fun gitVcsWidget(): AbstractToolbarComboUi =
+    abstractToolbarCombo { byType("com.intellij.vcs.git.frontend.widget.GitBranchToolbarComboButton") }
 }
 
 val MainToolbarUI.rerunButton get() = x { contains(byAccessibleName("Rerun")) }

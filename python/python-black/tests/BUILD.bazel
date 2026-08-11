@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.black.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(
@@ -42,7 +41,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/kotlinx/coroutines/core",
@@ -91,8 +91,10 @@ jvm_library(
         "//python/python-pyproject:pyproject_test_lib",
         "//python/python-pytools:pytools",
         "//python/python-pytools:pytools_test_lib",
-        "//python/python-sdk:sdk",
-        "//python/python-sdk:sdk_test_lib",
+        "//python/python-pytools-ui:pytools-ui",
+        "//python/python-pytools-ui:pytools-ui_test_lib",
+        "//python/python-sdk/backend",
+        "//python/python-sdk/backend:backend_test_lib",
         "//python/python-test-env/junit5",
         "//python/python-test-env/junit5:junit5_test_lib",
     ],
@@ -109,7 +111,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.black.tests` end
 
 ### auto-generated section `test intellij.python.black.tests` start
-
 jps_test(
     name = "tests_test",
     runtime_deps = [":tests_test_lib"],

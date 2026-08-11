@@ -3,6 +3,7 @@ package org.jetbrains.idea.eclipse;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -11,9 +12,11 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.eclipse.importer.EclipseCodeStylePropertiesImporter;
 import org.jetbrains.idea.eclipse.importer.EclipseCodeStyleSchemeImporter;
+import org.jetbrains.idea.eclipse.importer.colors.EclipseColorSchemeImporter;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -536,5 +539,46 @@ public class EclipseSettingsImportTest extends LightPlatformTestCase {
     assertEquals(3, indentOptions.INDENT_SIZE);
     assertEquals(4, indentOptions.TAB_SIZE);
     assertEquals(6, indentOptions.CONTINUATION_INDENT_SIZE);
+  }
+
+  /**
+   * Builds a malicious XML document with a DOCTYPE that declares an entity expanding to {@code INJECTED}.
+   * Resolving such a custom entity requires the parser to process the DOCTYPE, which is the same capability an
+   * XXE attack relies on. A hardened reader has {@code disallow-doctype-decl} enabled and must reject the document
+   * outright (reported as a {@link SchemeImportException}) instead of expanding the entity.
+   */
+  private static @NotNull String maliciousXmlWithDoctypeEntity(@NotNull String rootBody) {
+    return "<?xml version=\"1.0\"?>\n" +
+           "<!DOCTYPE root [<!ENTITY xxe \"INJECTED\">]>\n" +
+           rootBody;
+  }
+
+  public void testXmlProfileReaderRejectsDoctype() {
+    String content = maliciousXmlWithDoctypeEntity(
+      "<profiles><profile kind=\"CodeFormatterProfile\" name=\"p\">" +
+      "<setting id=\"org.eclipse.jdt.core.formatter.lineSplit\" value=\"&xxe;\"/>" +
+      "</profile></profiles>");
+    VirtualFile input = new LightVirtualFile("malicious-profile.xml", content);
+    try {
+      Map<String, String> imported = EclipseCodeStyleSchemeImporter.readEclipseXmlProfileOptions(input, null);
+      fail("Expected a SchemeImportException because the DOCTYPE declaration must be rejected, but got: " + imported);
+    }
+    catch (SchemeImportException e) {
+      // expected: DOCTYPE declarations are disallowed, so the entity is never expanded
+    }
+  }
+
+  public void testColorThemeReaderRejectsDoctype() {
+    String content = maliciousXmlWithDoctypeEntity("<colorTheme name=\"&xxe;\"/>");
+    VirtualFile input = new LightVirtualFile("malicious-theme.xml", content);
+    try {
+      new EclipseColorSchemeImporter().importScheme(
+        getProject(), input, EditorColorsManager.getInstance().getGlobalScheme(),
+        name -> { throw new AssertionError("The scheme factory must not be called for name: " + name); });
+      fail("Expected a SchemeImportException because the DOCTYPE declaration must be rejected.");
+    }
+    catch (SchemeImportException e) {
+      // expected: DOCTYPE declarations are disallowed, so the entity is never expanded
+    }
   }
 }

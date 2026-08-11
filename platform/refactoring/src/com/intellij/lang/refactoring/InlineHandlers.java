@@ -4,6 +4,7 @@ package com.intellij.lang.refactoring;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ public final class InlineHandlers extends LanguageExtension<InlineHandler> {
     super("com.intellij.refactoring.inlineHandler");
   }
 
-  public static List<InlineHandler> getInlineHandlers(Language language) {
+  public static @Unmodifiable List<InlineHandler> getInlineHandlers(Language language) {
     return INSTANCE.allForLanguage(language);
   }
 }

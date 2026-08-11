@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
@@ -18,8 +19,9 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.ReflectionUtil
 import org.jetbrains.annotations.ApiStatus
 
+@WorkspaceEntityInternalApi
 public abstract class WorkspaceEntityBase(private var currentEntityData: WorkspaceEntityData<out WorkspaceEntity>? = null) : WorkspaceEntity {
-  public var id: EntityId = invalidEntityId
+  internal var id: EntityId = invalidEntityId
 
   public lateinit var snapshot: EntityStorage
   internal var onRead: ((ReadTrace) -> Unit)? = null
@@ -118,8 +120,9 @@ public data class EntityLink(
 internal val EntityLink.remote: EntityLink
   get() = EntityLink(!this.isThisFieldChild, connectionId)
 
+@WorkspaceEntityInternalApi
 public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: WorkspaceEntityData<T>>(protected var currentEntityData: E?) : WorkspaceEntity.Builder<T> {
-  public var id: EntityId = invalidEntityId
+  internal var id: EntityId = invalidEntityId
   public abstract fun connectionIdList(): List<ConnectionId>
   /**
    * In case any of two referred entities is not added to diff, the reference between entities will be stored in this field
@@ -453,9 +456,31 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
 
   public abstract fun getEntityClass(): Class<T>
 
-  public open fun applyToBuilder(builder: MutableEntityStorage) {
-    throw NotImplementedError()
+  public abstract fun checkInitialization(): Unit
+
+  internal fun applyToBuilder(builder: MutableEntityStorage) {
+    if (this.diff != null) {
+      if (existsInBuilder(builder)) {
+        this.diff = builder
+        return
+      }
+      else {
+        error("Entity ${getEntityClass().simpleName} is already created in a different builder")
+      }
+    }
+    this.diff = builder
+    addToBuilder()
+    this.id = getEntityData().createEntityId()
+    // After adding entity data to the builder, we need to unbind it and move the control over entity data to the builder.
+    // Builder may switch to snapshot at any moment and lock entity data to modification.
+    this.currentEntityData = null
+    index()
+    // Process linked entities that are connected without a builder
+    processLinkedEntities(builder)
+    checkInitialization()
   }
+
+  protected open fun index() {}
 
   public open fun afterModification() { }
 
@@ -600,11 +625,34 @@ public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
 
   public fun isEntitySourceInitialized(): Boolean = ::entitySource.isInitialized
 
-  public fun createEntityId(): EntityId = createEntityId(id, getEntityInterface().toClassId())
+  internal fun createEntityId(): EntityId = createEntityId(id, getEntityInterface().toClassId())
+  
+  public fun <T : WorkspaceEntityData<E>> createAndSetEntityId(modifiableEntity: ModifiableWorkspaceEntityBase<E, T>) {
+    val newId = createEntityId()
+    modifiableEntity.id = newId
+  }
 
-  public abstract fun createEntity(snapshot: EntityStorageInstrumentation): E
+  protected abstract fun newInstance(): E
+  
+  public fun createEntity(snapshot: EntityStorageInstrumentation): E {
+    val entityId = createEntityId()
+    return snapshot.initializeEntity(entityId) {
+      val entity = newInstance()
+      entity as WorkspaceEntityBase
+      entity.snapshot = snapshot
+      entity.id = entityId
+      entity
+    }
+  }
 
-  public abstract fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<E>
+  protected abstract fun newBuilderInstance():  ModifiableWorkspaceEntityBase<E, *>
+
+  internal fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<E> {
+    val modifiable = newBuilderInstance()
+    modifiable.diff = diff
+    modifiable.id = createEntityId()
+    return modifiable
+  }
 
   public abstract fun getEntityInterface(): Class<out WorkspaceEntity>
 

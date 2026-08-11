@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyBoolLiteralExpression;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyInstantTypeProvider;
+import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +18,10 @@ public class PyBoolLiteralExpressionImpl extends PyElementImpl implements PyBool
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    return PyBuiltinCache.getInstance(this).getBoolType();
+    if (!PyLiteralType.inferLiteralTypeForLiteralExpressions()) {
+      return PyBuiltinCache.getInstance(this).getBoolType();
+    }
+    return PyLiteralType.boolLiteral(this, getValue());
   }
 
   @Override

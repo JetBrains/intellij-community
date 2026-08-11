@@ -4,6 +4,7 @@ package com.intellij.platform.eel.provider.utils
 import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelReceiveChannelException
 import com.intellij.platform.eel.channels.EelSendApi
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.channels.EelSendChannelCustomSendWholeBuffer
@@ -15,7 +16,6 @@ import com.intellij.platform.eel.provider.utils.EelPipeImpl.State.ReadyToTransfe
 import com.intellij.platform.eel.provider.utils.EelPipeImpl.State.TransferState
 import com.intellij.platform.eel.provider.utils.EelPipeImpl.State.TransferringNow
 import kotlinx.coroutines.CompletableDeferred
-import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.contracts.ExperimentalContracts
@@ -111,7 +111,7 @@ internal class EelPipeImpl(
         when (state) {
           is Closed -> {
             if (state.error != null) {
-              state.throwError()
+              state.throwReceiveError()
             }
             else {
               return ReadResult.EOF
@@ -198,8 +198,8 @@ internal class EelPipeImpl(
   private suspend fun startSending(src: ByteBuffer) {
     maybeUpdate { state ->
       when (state) {
-        is Closed -> state.throwError()
-        is LastTransfer -> state.nextState.throwError()
+        is Closed -> state.throwSendError()
+        is LastTransfer -> state.nextState.throwSendError()
         is Idle -> ReadyToTransfer(src)
         is TransferState -> null
       }
@@ -208,17 +208,25 @@ internal class EelPipeImpl(
 
   private fun State.currentTransfer(): TransferState? =
     when (this) {
-      is Closed -> throw IOException("Channel is closed", error)
+      is Closed -> throwSendError()
       is Idle -> null
       is LastTransfer -> currentState
       is TransferState -> this
     }
 
 
-  private fun Closed.throwError(): Nothing {
+  private fun Closed.throwSendError(): Nothing {
     // It's important to always wrap `Closed.error` into another exception. Otherwise, the stacktrace of the caller wouldn't be printed.
-    throw EelSendChannelException(sink, error?.message?.let { "Pipe was broken with message: $it" } ?: "Channel is closed", error)
+    throw EelSendChannelException(sink, errorMessage(), error)
   }
+
+  private fun Closed.throwReceiveError(): Nothing {
+    // It's important to always wrap `Closed.error` into another exception. Otherwise, the stacktrace of the caller wouldn't be printed.
+    throw EelReceiveChannelException(source, errorMessage(), error)
+  }
+
+  private fun Closed.errorMessage(): String =
+    error?.message?.let { "Pipe was broken with message: $it" } ?: "Channel is closed"
 
   override suspend fun close(err: Throwable?) {
     maybeUpdate { oldState ->

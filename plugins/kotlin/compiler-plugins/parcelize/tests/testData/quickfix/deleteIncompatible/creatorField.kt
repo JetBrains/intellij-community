@@ -1,9 +1,9 @@
 // "Remove custom 'CREATOR' property" "true"
 // WITH_STDLIB
 // ERROR: Overriding 'writeToParcel' is not allowed. Use 'Parceler' companion object instead
-// K2_ERROR: 'CREATOR' definition is not allowed. Use 'Parceler' companion object instead.
-// K2_ERROR: Overriding 'writeToParcel' is not allowed. Use 'Parceler' companion object instead.
-// K2_AFTER_ERROR: Overriding 'writeToParcel' is not allowed. Use 'Parceler' companion object instead.
+// K2_ERROR: CREATOR_DEFINITION_IS_NOT_ALLOWED
+// K2_ERROR: OVERRIDING_WRITE_TO_PARCEL_IS_NOT_ALLOWED
+// K2_AFTER_ERROR: OVERRIDING_WRITE_TO_PARCEL_IS_NOT_ALLOWED
 
 package com.myapp.activity
 

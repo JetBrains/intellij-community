@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc
 
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter
+import com.intellij.lang.documentation.psi.psiDocumentationTargets
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.DocumentationTargetProvider
@@ -13,9 +14,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.renderKDoc
+import org.jetbrains.kotlin.idea.highlighting.kdoc.KDocRenderer.renderKDoc
+import org.jetbrains.kotlin.idea.references.KDocReference
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -46,7 +51,30 @@ class KotlinDocumentationTargetProvider : DocumentationTargetProvider {
         val element = file.findElementAt(offset) ?: return emptyList()
         return if (element.isModifier()) {
             arrayListOf(KotlinDocumentationTarget(element, element))
-        } else emptyList()
+        } else {
+            handleKDocLinkIfNeeded(element)
+        }
+    }
+
+    /**
+     * A KDoc link may be resolved to multiple declarations, e.g., to several overloads of the same function.
+     * In such cases [KDocReference.resolve] intentionally uses `multiResolve(incompleteCode).singleOrNull()` so that navigation can offer
+     * all the candidates in a drop-down menu.
+     * Even though quick doc popups support multiple resolved symbols, this breaks the documentation target search which always calls a regular `resolve`
+     * (in [com.intellij.codeInsight.TargetElementUtilBase.getReferencedElement] used by default [DocumentationTargetProvider]s).
+     *
+     * [handleKDocLinkIfNeeded] returns a list of targets resolved from [element] if it's a KDoc link, an empty list otherwise.
+     * As resolved elements may come from different languages, [psiDocumentationTargets] is used to properly wrap every resolved PSI
+     * into a documentation target wrapper.
+     */
+    private fun handleKDocLinkIfNeeded(element: PsiElement): List<DocumentationTarget> {
+        val kDocName = element.parentOfType<KDocName>(withSelf = true) ?: return emptyList()
+        val resolvedResults = kDocName.mainReference.multiResolve(incompleteCode = false)
+
+        return resolvedResults.mapNotNull { resolvedElement ->
+            val targetPsi = resolvedElement.element ?: return@mapNotNull null
+            psiDocumentationTargets(targetPsi, element)
+        }.flatten()
     }
 }
 

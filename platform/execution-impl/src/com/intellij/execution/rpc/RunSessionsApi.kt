@@ -3,8 +3,8 @@ package com.intellij.execution.rpc
 
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.Id
-import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.SendChannelSerializer
@@ -25,7 +25,8 @@ interface RunSessionsApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): RunSessionsApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<RunSessionsApi>())
+      // TODO: IJPL-252054
+      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<RunSessionsApi>())
     }
   }
 }

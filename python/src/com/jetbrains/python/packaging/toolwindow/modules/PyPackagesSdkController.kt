@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging.toolwindow.modules
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -79,11 +80,13 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
       .subscribe<FileEditorManagerListener>(FILE_EDITOR_MANAGER, fileEditorListener)
   }
 
+  @RequiresEdt
   fun refreshModuleListAndSelection() {
     refreshModuleList()
     restorePreviousSelection()
   }
 
+  @RequiresEdt
   private fun refreshModuleList() {
     (sdkList.model as DefaultListModel<Sdk>).apply {
       removeAllElements()
@@ -91,6 +94,7 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
     }
   }
 
+  @RequiresEdt
   private fun restorePreviousSelection() {
     val selectedModuleName = sdkList.selectedValue?.name
     sdkList.selectedIndex = allSdks.indexOfFirst { it.name == selectedModuleName }
@@ -103,6 +107,7 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
     }
   }
 
+  @RequiresEdt
   internal fun refreshAndSyncSelection(sdk: Sdk?) {
     sdkList.removeListSelectionListener(selectionListener)
     try {

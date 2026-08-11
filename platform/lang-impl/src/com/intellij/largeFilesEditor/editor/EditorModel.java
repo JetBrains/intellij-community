@@ -58,6 +58,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
+@ApiStatus.Internal
 public final class EditorModel {
   private static final Logger LOG = Logger.getInstance(EditorModel.class);
 

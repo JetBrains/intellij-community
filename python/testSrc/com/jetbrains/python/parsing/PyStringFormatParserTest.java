@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.parsing;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
@@ -23,6 +25,8 @@ import static com.jetbrains.python.PyStringFormatParser.parseNewStyleFormat;
 import static com.jetbrains.python.PyStringFormatParser.parsePercentFormat;
 
 
+@Subsystems.Parsing
+@Layers.Functional
 public class PyStringFormatParserTest extends TestCase {
   public void testSimple() {
     List<FormatStringChunk> chunks = parsePercentFormat("abc");

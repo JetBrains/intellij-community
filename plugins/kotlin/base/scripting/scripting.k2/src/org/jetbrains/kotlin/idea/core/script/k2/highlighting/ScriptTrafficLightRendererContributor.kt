@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.core.script.k2.highlighting
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
 import com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -16,7 +16,9 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContributor {
     @RequiresBackgroundThread
     override fun createRenderer(editor: Editor, file: PsiFile?): TrafficLightRenderer? {
-        val ktFile = (file as? KtFile)?.takeIf { runReadAction(it::isScript) } ?: return null
+        val ktFile = (file as? KtFile)?.takeIf { f ->
+            ReadAction.nonBlocking(fun(): Boolean { return f.isScript() }).executeSynchronously()
+        } ?: return null
         return ScriptTrafficLightRenderer(ktFile.project, editor, ktFile)
     }
 

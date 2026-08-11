@@ -7,12 +7,14 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.components.isNothingType
-import org.jetbrains.kotlin.analysis.api.components.isUnitType
-import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.approximateToDenotableSupertypeOrSelf
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtDeclarationWithReturnType
@@ -55,7 +57,7 @@ object ConvertToBlockBodyUtils {
         val body = declaration.bodyExpression ?: return null
 
         val bodyType = ((body as? KtReturnExpression)?.returnedExpression ?: body).expressionType ?: return null
-        val returnType = with(session) {
+        val returnType = context(session) {
             (if (declaration.hasDeclaredReturnType()) declaration.returnType else bodyType)
                 .approximateToDenotableSupertypeOrSelf(false)
         }
@@ -63,12 +65,14 @@ object ConvertToBlockBodyUtils {
             return null
         }
 
+        val returnTypeClassId = returnType.classId
+        val bodyTypeClassId = bodyType.classId
         return ConvertToBlockBodyContext(
-            returnTypeIsUnit = returnType.isUnitType,
-            returnTypeIsNothing = returnType.isNothingType && !returnType.isMarkedNullable,
+            returnTypeIsUnit = returnTypeClassId == KaStandardTypeClassIds.UNIT,
+            returnTypeIsNothing = returnTypeClassId == KaStandardTypeClassIds.NOTHING && !returnType.isMarkedNullable,
             returnTypeString = returnType.render(position = Variance.OUT_VARIANCE),
-            bodyTypeIsUnit = bodyType.isUnitType,
-            bodyTypeIsNothing = bodyType.isNothingType && !bodyType.isMarkedNullable,
+            bodyTypeIsUnit = bodyTypeClassId == KaStandardTypeClassIds.UNIT,
+            bodyTypeIsNothing = bodyTypeClassId == KaStandardTypeClassIds.NOTHING && !bodyType.isMarkedNullable,
             reformat = reformat
         )
     }

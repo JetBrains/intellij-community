@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit
 @NonNls
 internal class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesCollector() {
 
-  private val GROUP = EventLogGroup("vcs.log.index.application", 3)
+  private val GROUP = EventLogGroup("vcs.log.index.application", 4)
   private val INDEX_DISABLED_IN_REGISTRY = GROUP.registerEvent("index.disabled.in.registry", EventFields.Boolean("value"))
   private val INDEX_FORCED_IN_REGISTRY = GROUP.registerEvent("index.forced.in.registry", EventFields.Boolean("value"))
   private val BIG_REPOSITORIES = GROUP.registerEvent("big.repositories", EventFields.Count)
@@ -59,7 +59,7 @@ internal class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesColl
 }
 
 internal class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
-  private val GROUP = EventLogGroup("vcs.log.index.project", 5)
+  private val GROUP = EventLogGroup("vcs.log.index.project", 6)
   private val INDEXING_TIME = GROUP.registerEvent("indexing.time.minutes", EventFields.Count)
   private val IS_PAUSED = EventFields.Boolean("is_paused")
   private val INDEXING_TIME_BY_ROOT = GROUP.registerEvent("indexing.time.by.root",

@@ -16,7 +16,7 @@ _PrefetchedQuerySetsT = TypeVar(
 # This will be specialized to a `LiteralString` in the plugin for further processing and validation
 _ToAttrT = TypeVar("_ToAttrT", bound=str, covariant=True, default=str)
 
-class GenericPrefetch(Prefetch, Generic[_LookupT, _PrefetchedQuerySetsT, _ToAttrT]):
+class GenericPrefetch(Prefetch[Any, Any, Any], Generic[_LookupT, _PrefetchedQuerySetsT, _ToAttrT]):
     def __init__(self, lookup: _LookupT, querysets: _PrefetchedQuerySetsT, to_attr: _ToAttrT | None = None) -> None: ...
     @override
     def __getstate__(self) -> dict[str, Any]: ...

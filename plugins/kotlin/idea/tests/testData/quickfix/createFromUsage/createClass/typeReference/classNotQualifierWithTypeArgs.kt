@@ -1,7 +1,7 @@
 // "Create class 'A'" "true"
 // K2 TODO: improve generated class type arguments when "expected type" is fixed
-// K2_ERROR: Unresolved reference 'A'.
-// K2_AFTER_ERROR: No type arguments expected for 'class A : Any'.
+// K2_AFTER_ERROR: WRONG_NUMBER_OF_TYPE_ARGUMENTS
+// K2_ERROR: UNRESOLVED_REFERENCE
 package p
 
 fun foo(): <caret>A<Int, String> = throw Throwable("")

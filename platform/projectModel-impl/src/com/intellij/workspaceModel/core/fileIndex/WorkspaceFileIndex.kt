@@ -29,21 +29,18 @@ interface WorkspaceFileIndex {
    * This function is not equivalent to [com.intellij.openapi.roots.ProjectFileIndex.isInProject]:
    * files with [WorkspaceFileKind.CUSTOM] kind are considered in workspace but not in project
    */
-  @RequiresReadLock
   fun isInWorkspace(file: VirtualFile): Boolean
 
   /**
    * Returns `true` if [file] is included to the workspace with [content][WorkspaceFileKind.isContent] kind assigned to it.
    * Currently, this function is equivalent to [com.intellij.openapi.roots.ProjectFileIndex.isInContent].
    */
-  @RequiresReadLock
   fun isInContent(file: VirtualFile): Boolean
 
   /**
    * Returns `true` if [file] is included to the workspace and doesn't have [WorkspaceFileKind.CONTENT_NON_INDEXABLE] or
    * [WorkspaceFileKind.EXTERNAL_NON_INDEXABLE] kind.
    */
-  @RequiresReadLock
   fun isIndexable(file: VirtualFile): Boolean
 
   /**
@@ -55,7 +52,6 @@ interface WorkspaceFileIndex {
    * under a source root, it'll return that source root, and it may return a root of a custom file set. 
    * @param honorExclusion determines whether exclusions should be taken into account when searching for the file set.
    */
-  @RequiresReadLock
   fun getContentFileSetRoot(file: VirtualFile, honorExclusion: Boolean): VirtualFile?
 
   /**

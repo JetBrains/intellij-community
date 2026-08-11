@@ -3,11 +3,16 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.PluginUiModel
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
-import java.util.UUID
+import java.util.function.Consumer
 import javax.swing.JComponent
 
 // Class used for loading and installing plugin updates on the backend and frontend.
@@ -15,20 +20,39 @@ import javax.swing.JComponent
 // Eventually should be responsible for all plugin updates.
 @ApiStatus.Internal
 interface PluginUpdateHandler {
-  suspend fun loadAndStorePluginUpdates(buildNumber: String?, sessionId: String = UUID.randomUUID().toString(), indicator: ProgressIndicator? = null): PluginUpdatesModel
-  suspend fun installUpdates(sessionId: String, updates: List<PluginUiModel>, component: JComponent?, finishCallback: Runnable?)
+  suspend fun loadAndStorePluginUpdates(buildNumber: String?, indicator: ProgressIndicator? = null): PluginUpdatesModel
+  suspend fun installUpdates(updates: Collection<PluginUiModel>, component: JComponent?, finishCallback: Runnable?, customRestarter: Consumer<Boolean>? = null)
 
-  suspend fun ignorePluginUpdates(sessionId: String)
+  suspend fun ignorePluginUpdates()
 
   companion object {
+    @JvmStatic
     fun getInstance(): PluginUpdateHandler = PluginUpdateHandlerProvider.getInstance().getPluginUpdateHandler()
+
+    @JvmStatic
+    fun installUpdatesInBackground(
+      updates: Collection<PluginUiModel>,
+      component: JComponent?,
+      finishCallback: Runnable?,
+      customRestarter: Consumer<Boolean>? = null,
+    ) {
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.IO) {
+        getInstance().installUpdates(updates, component, finishCallback, customRestarter)
+      }
+    }
+
+    @JvmStatic
+    fun loadAndStorePluginUpdates(buildNumber: String?, indicator: ProgressIndicator? = null): PluginUpdatesModel {
+      return runBlockingMaybeCancellable {
+        getInstance().loadAndStorePluginUpdates(buildNumber, indicator)
+      }
+    }
   }
 }
 
 @ApiStatus.Internal
 @Serializable
 data class PluginUpdatesModel(
-  val sessionId: String,
   val pluginUpdates: List<PluginDto>,
   val disabledPluginUpdates: List<PluginDto> = emptyList(),
   val updatesFromCustomRepositories: List<PluginDto>,

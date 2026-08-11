@@ -3,10 +3,13 @@
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.platform.buildData.productInfo.CustomCommandLaunchData
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProductInProcess
 import org.jetbrains.intellij.build.dev.getIdeSystemProperties
+import org.jetbrains.intellij.build.dev.readCustomCommand
+import org.jetbrains.intellij.build.dev.resolveAdditionalJvmArguments
 import org.jetbrains.intellij.build.telemetry.withTracer
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
@@ -17,13 +20,18 @@ data class BuildDevInfo(
   @JvmField val systemProperties: Map<String, String>,
 )
 
+@Suppress("unused")
+fun buildDevMain(): java.util.AbstractMap.SimpleImmutableEntry<String, Collection<Path>> {
+  return buildDevMain(emptyArray())
+}
+
 /**
  * Returns the name of the main class and the classpath for the application classloader.
  * The function is called via reflection and uses a class from JDK to store a pair to avoid dealing with classes from additional libraries in the classloader of the calling site.
  */
 @Suppress("unused")
-fun buildDevMain(): java.util.AbstractMap.SimpleImmutableEntry<String, Collection<Path>> {
-  val info = buildDevImpl()
+fun buildDevMain(rawArgs: Array<String>): java.util.AbstractMap.SimpleImmutableEntry<String, Collection<Path>> {
+  val info = buildDevImpl(rawArgs)
 
   val systemProperties = System.getProperties()
   for ((name, value) in info.systemProperties) {
@@ -50,14 +58,13 @@ fun buildDevMain(): java.util.AbstractMap.SimpleImmutableEntry<String, Collectio
   return java.util.AbstractMap.SimpleImmutableEntry(info.mainClassName, info.classPath)
 }
 
-private fun buildDevImpl(): BuildDevInfo {
+private fun buildDevImpl(rawArgs: Array<String>): BuildDevInfo {
   @Suppress("TestOnlyProblems")
   val ideaProjectRoot = requireNotNull(PathManager.getHomeDirFor(PathManager::class.java)) { "Cannot find home directory" }
   System.setProperty("idea.dev.project.root", ideaProjectRoot.invariantSeparatorsPathString)
   val additionalClassPaths = System.getProperty("idea.dev.additional.classpath")?.splitToSequence(',')?.map { Path.of(it) }?.toList() ?: emptyList()
 
-  var buildDevInfo: BuildDevInfo? = null
-  withTracer(serviceName = "builder") {
+  return withTracer(serviceName = "builder") {
     val platformPrefix = System.getProperty("idea.platform.prefix", "idea")
     val isFrontendProcess = platformPrefix == "JetBrainsClient"
     val baseIdeForFrontendPropertyName = "dev.build.base.ide.platform.prefix.for.frontend"
@@ -67,6 +74,8 @@ private fun buildDevImpl(): BuildDevInfo {
       println("Warning: property '$baseIdeForFrontendPropertyName' must be specified in VM Options of the run configuration to select which variant of JetBrains Client should be started")
     }
 
+    lateinit var platformMainClassName: String
+    lateinit var platformClassPath: Set<Path>
     val request = BuildRequest(
       platformPrefix = platformPrefix,
       baseIdePlatformPrefixForFrontend = baseIdePlatformPrefixForFrontend,
@@ -74,23 +83,62 @@ private fun buildDevImpl(): BuildDevInfo {
       projectDir = ideaProjectRoot,
       keepHttpClient = false,
       platformClassPathConsumer = { actualMainClassName, classPath, runDir ->
-        val newClassPath = LinkedHashSet<Path>(classPath.size + additionalClassPaths.size).also {
-          it.addAll(classPath)
-          it.addAll(additionalClassPaths)
-        }
-        buildDevInfo = BuildDevInfo(
-          mainClassName = actualMainClassName,
-          classPath = newClassPath,
-          systemProperties = (getIdeSystemProperties(runDir) + VmProperties(mapOf(PathManager.PROPERTY_HOME_PATH to runDir.invariantSeparatorsPathString))).map
-        )
+        platformMainClassName = actualMainClassName
+        platformClassPath = classPath
       },
       // we should use a binary launcher for dev-mode
       isBootClassPathCorrect = System.getProperty("idea.dev.mode.in.process.build.boot.classpath.correct", "false").toBoolean(),
       generateRuntimeModuleRepository = System.getProperty("intellij.build.generate.runtime.module.repository").toBoolean(),
     )
-    buildProductInProcess(request)
+    val runDir = buildProductInProcess(request)
+
+
+    val newClassPath = LinkedHashSet<Path>(platformClassPath.size + additionalClassPaths.size).also {
+      it.addAll(platformClassPath)
+      it.addAll(additionalClassPaths)
+    }
+
+    // The home path must be pinned explicitly: `runDir` is not self-detectable as an IDE home, because its
+    // `product-info.json` lives in `bin/` and `PathManager.isIdeaHome` looks for it at the root - so the upwards walk
+    // in `PathManager.getHomeDirFor` would run past `runDir` all the way to the checkout root.
+    // Pinning it is what makes a dev build indistinguishable from an installation for `PathManager` and, in turn,
+    // makes `PluginManagerCore.isRunningFromSources` correctly answer `false` here (no `.idea` under `runDir`).
+    val systemProperties = getIdeSystemProperties(runDir) +
+                           VmProperties(mapOf(PathManager.PROPERTY_HOME_PATH to runDir.invariantSeparatorsPathString))
+
+    if (System.getProperty("idea.dev.mode.custom.command", "false").toBoolean()) {
+      val firstArg = rawArgs.first()
+      val command = readCustomCommand(runDir, firstArg) ?: error("No custom command found for $firstArg")
+      val commandSystemProperties = getCommandSystemProperties(runDir, command)
+
+      BuildDevInfo(
+        mainClassName = command.mainClass!!,
+        classPath = newClassPath,
+        systemProperties = (systemProperties + commandSystemProperties).map
+      )
+    }
+    else {
+      BuildDevInfo(
+        mainClassName = platformMainClassName,
+        classPath = newClassPath,
+        systemProperties = systemProperties.map
+      )
+    }
   }
-  return buildDevInfo!!
+}
+
+private fun getCommandSystemProperties(runDir: Path, command: CustomCommandLaunchData): VmProperties {
+  val result = command.resolveAdditionalJvmArguments(runDir).asSequence()
+    .filter { it.startsWith("-D") }
+    .map { it.removePrefix("-D") }
+    .associateBy(
+      { it.substringBefore('=') },
+      {
+        val result = it.substringAfter('=', "")
+        check('$' !in result) { "Unsubstituted macro in JVM argument: $it" }
+        result
+      })
+  return VmProperties(result)
 }
 
 private fun getAdditionalPluginMainModules(): List<String> {

@@ -1,0 +1,22 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm'
+}
+
+group = 'org.example'
+version = '1.0-SNAPSHOT'
+
+subprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+dependencies {
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+}
+repositories {
+    mavenCentral()
+}
+kotlin {
+    jvmToolchain(11)
+}

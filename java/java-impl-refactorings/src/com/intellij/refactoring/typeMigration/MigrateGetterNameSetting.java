@@ -11,6 +11,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.refactoring.typeMigration.usageInfo.OverriddenUsageInfo;
 import com.intellij.util.ui.UIUtil;
 
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -55,7 +56,7 @@ class MigrateGetterNameSetting {
 
   private static int showChooserDialog(@NlsContexts.DialogMessage String messageText) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return messageText.contains("dontMigrateName") ? 3 : 1;
+      return messageText.toLowerCase(Locale.ROOT).contains("dontmigratename") ? 3 : 1;
     }
     else {
       return Messages.showIdeaMessageDialog(null, messageText, JavaRefactoringBundle.message("type.migration.action.name"),

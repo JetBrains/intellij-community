@@ -16,10 +16,11 @@
     <orderEntry type="module" module-name="intellij.libraries.junit5.vintage" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.teamcity.service.messages" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.jupiter" scope="RUNTIME" />
-    <orderEntry type="library" name="opentest4j" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.opentest4j" />
     <orderEntry type="module" module-name="intellij.platform.core.nio.fs" />
     <orderEntry type="module" module-name="intellij.libraries.asm.tools" />
     <orderEntry type="module" module-name="intellij.platform.bazel.runfiles" />
     <orderEntry type="module" module-name="intellij.platform.util.base" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
   </component>
 </module>

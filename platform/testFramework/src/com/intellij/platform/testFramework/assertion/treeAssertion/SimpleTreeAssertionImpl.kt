@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.assertion.treeAssertion
 
+import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion.NodeMatcher
 import org.assertj.core.api.Assertions.assertThat
 
 internal class SimpleTreeAssertionImpl<T> private constructor() : SimpleTreeAssertion.Node<T> {
@@ -14,9 +15,11 @@ internal class SimpleTreeAssertionImpl<T> private constructor() : SimpleTreeAsse
 
   // @formatter:off
   override fun assertNode(name: String, flattenIf: Boolean, skipIf: Boolean, isUnordered: Boolean, assert: SimpleTreeAssertion.Node<T>.() -> Unit) =
-    assertNode(NodeAssertionOptions(NodeMatcher.Name(name), flattenIf, skipIf, isUnordered), assert)
+    assertNode(NodeAssertionOptions(NodeMatcher.name(name), flattenIf, skipIf, isUnordered), assert)
   override fun assertNode(regex: Regex, flattenIf: Boolean, skipIf: Boolean, isUnordered: Boolean, assert: SimpleTreeAssertion.Node<T>.() -> Unit) =
-    assertNode(NodeAssertionOptions(NodeMatcher.NameRegex(regex), flattenIf, skipIf, isUnordered), assert)
+    assertNode(NodeAssertionOptions(NodeMatcher.regex(regex), flattenIf, skipIf, isUnordered), assert)
+  override fun assertNode(matcher: NodeMatcher<T>, flattenIf: Boolean, skipIf: Boolean, isUnordered: Boolean, assert: SimpleTreeAssertion.Node<T>.() -> Unit) =
+    assertNode(NodeAssertionOptions(matcher, flattenIf, skipIf, isUnordered), assert)
   // @formatter:on
 
   private fun assertNode(options: NodeAssertionOptions<T>, assert: SimpleTreeAssertion.Node<T>.() -> Unit) {
@@ -44,33 +47,36 @@ internal class SimpleTreeAssertionImpl<T> private constructor() : SimpleTreeAsse
     var valueAssertions: List<(T) -> Unit> = ArrayList(),
   )
 
-  private sealed interface NodeMatcher<T> {
+  internal class Name(
+    private val name: String,
+  ) : NodeMatcher<Any?> {
 
-    val displayName: String
+    override val displayName: String = name
 
-    fun matches(node: SimpleTree.Node<T>): Boolean
+    override fun matches(node: SimpleTree.Node<Any?>): Boolean =
+      node.name == name
+  }
 
-    class Name<T>(
-      private val name: String
-    ) : NodeMatcher<T> {
+  internal class NameRegex(
+    private val regex: Regex,
+  ) : NodeMatcher<Any?> {
 
-      override val displayName: String = name
+    override val displayName: String = regex.toString()
 
-      override fun matches(node: SimpleTree.Node<T>): Boolean {
-        return node.name == name
-      }
-    }
+    override fun matches(node: SimpleTree.Node<Any?>): Boolean =
+      regex.matches(node.name)
+  }
 
-    class NameRegex<T>(
-      private val regex: Regex
-    ) : NodeMatcher<T> {
+  internal class Or<T>(
+    private val left: NodeMatcher<T>,
+    private val right: NodeMatcher<T>,
+  ) : NodeMatcher<T> {
 
-      override val displayName: String = regex.toString()
+    override val displayName: String =
+      left.displayName + "|" + right.displayName
 
-      override fun matches(node: SimpleTree.Node<T>): Boolean {
-        return regex.matches(node.name)
-      }
-    }
+    override fun matches(node: SimpleTree.Node<T>): Boolean =
+      left.matches(node) || right.matches(node)
   }
 
   companion object {
@@ -87,7 +93,7 @@ internal class SimpleTreeAssertionImpl<T> private constructor() : SimpleTreeAsse
       val actualMutableTree = actualTree.deepCopyTree()
       val expectedMutableTree = expectedTree.mapTreeValues { node ->
         NodeAssertionOptions<T>(
-          matcher = NodeMatcher.Name(node.name),
+          matcher = NodeMatcher.name(node.name),
           flattenIf = false,
           skipIf = false,
           isUnordered = false,

@@ -1,9 +1,0 @@
-fun main() {
-    val a = buildList {
-        addAll(listOf(1, 2))
-        addAll(listOf(3, 4))
-        add(5)
-        addAll(listOf(6, 7))
-        add(8)
-    }
-}

@@ -20,25 +20,16 @@ import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
 import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder
 import com.intellij.util.indexing.roots.origin.IndexingUrlSourceRootHolder
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object IndexableEntityProviderMethods {
-  fun createIterators(entity: ModuleEntity,
-                      roots: IndexingUrlRootHolder,
-                      storage: EntityStorage): Collection<IndexableFilesIterator> {
-    if (roots.isEmpty()) return emptyList()
-    val module = entity.findModule(storage) ?: return emptyList()
-    return createIterators(module, roots)
-  }
-
-  fun createIterators(module: Module, roots: IndexingUrlRootHolder): Collection<IndexableFilesIterator> {
-    return ModuleIndexableFilesIteratorImpl.createIterators(module, roots)
-  }
-
   fun createModuleContentIterators(module: Module): Collection<IndexableFilesIterator> {
     return ModuleIndexableFilesIteratorImpl.createIterators(module)
+  }
+
+  fun createModuleContentIterators(module: Module, root: VirtualFile, recursive: Boolean): Collection<IndexableFilesIterator> {
+    return listOf(ModuleFilesIteratorImpl(module, root, recursive, true))
   }
 
   fun createIterators(entity: ModuleEntity, entityStorage: EntityStorage, project: Project): Collection<IndexableFilesIterator> {

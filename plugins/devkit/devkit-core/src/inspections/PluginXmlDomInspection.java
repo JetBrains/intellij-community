@@ -1016,6 +1016,11 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       );
     }
 
+    var keepContent = group.getKeepContent();
+    if (keepContent.getValue() == Boolean.TRUE && !isOverridesSet(group)) {
+      holder.createProblem(keepContent, DevKitBundle.message("inspections.plugin.xml.keep.content.requires.overrides"));
+    }
+
     var useShortcutOfAttribute = group.getUseShortcutOf();
     if (!DomUtil.hasXml(useShortcutOfAttribute)) return;
 
@@ -1056,6 +1061,11 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     if (DomUtil.hasXml(iconAttribute)) {
       annotateResolveProblems(holder, iconAttribute);
     }
+  }
+
+  private static boolean isOverridesSet(Group group) {
+    var tag = group.getXmlTag();
+    return tag != null && Boolean.parseBoolean(tag.getAttributeValue("overrides"));
   }
 
   private static void annotateReference(Reference reference, DomElementAnnotationHolder holder) {

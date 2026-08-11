@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
@@ -17,7 +16,6 @@ import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.NameId
@@ -30,18 +28,11 @@ import com.intellij.platform.workspace.storage.testEntities.entities.WithSoftLin
 internal class WithSoftLinkEntityImpl(private val dataSource: WithSoftLinkEntityData) : WithSoftLinkEntity,
                                                                                         WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val link: NameId
     get() {
       readField("link")
       return dataSource.link
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -49,36 +40,14 @@ internal class WithSoftLinkEntityImpl(private val dataSource: WithSoftLinkEntity
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: WithSoftLinkEntityData?) :
     ModifiableWorkspaceEntityBase<WithSoftLinkEntity, WithSoftLinkEntityData>(result), WithSoftLinkEntityBuilder {
     internal constructor() : this(WithSoftLinkEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity WithSoftLinkEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -89,7 +58,7 @@ internal class WithSoftLinkEntityImpl(private val dataSource: WithSoftLinkEntity
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -100,14 +69,12 @@ internal class WithSoftLinkEntityImpl(private val dataSource: WithSoftLinkEntity
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var link: NameId
       get() = getEntityData().link
@@ -115,20 +82,16 @@ internal class WithSoftLinkEntityImpl(private val dataSource: WithSoftLinkEntity
         checkModificationAllowed()
         getEntityData(true).link = value
         changedProperty.add("link")
-
       }
 
     override fun getEntityClass(): Class<WithSoftLinkEntity> = WithSoftLinkEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(), SoftLinkable {
   lateinit var link: NameId
-
   internal fun isLinkInitialized(): Boolean = ::link.isInitialized
-
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
     result.add(link)
@@ -140,7 +103,6 @@ internal class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-// TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     val removedItem_link = mutablePreviousSet.remove(link)
     if (!removedItem_link) {
@@ -166,23 +128,8 @@ internal class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<WithSoftLinkEntity> {
-    val modifiable = WithSoftLinkEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): WithSoftLinkEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = WithSoftLinkEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): WithSoftLinkEntity = WithSoftLinkEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<WithSoftLinkEntity, *> = WithSoftLinkEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.WithSoftLinkEntity") as EntityMetadata
   }

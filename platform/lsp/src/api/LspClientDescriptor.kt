@@ -3,10 +3,12 @@ package com.intellij.platform.lsp.api
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.BaseProcessHandler
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
@@ -15,126 +17,57 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.lsp.api.customization.DeprecatedLspCustomization
-import com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
-import com.intellij.platform.lsp.api.customization.LspCommandsSupport
-import com.intellij.platform.lsp.api.customization.LspCompletionSupport
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.eel.environmentVariables
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.lsp.api.customization.LspCustomization
-import com.intellij.platform.lsp.api.customization.LspDiagnosticsSupport
-import com.intellij.platform.lsp.api.customization.LspDocumentColorSupport
-import com.intellij.platform.lsp.api.customization.LspDocumentLinkSupport
-import com.intellij.platform.lsp.api.customization.LspFindReferencesSupport
-import com.intellij.platform.lsp.api.customization.LspFormattingSupport
-import com.intellij.platform.lsp.api.customization.LspGoToDefinitionSupport
-import com.intellij.platform.lsp.api.customization.LspGoToTypeDefinitionSupport
-import com.intellij.platform.lsp.api.customization.LspHoverSupport
-import com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
-import com.intellij.platform.lsp.api.customization.defaultLspCustomization
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.io.BaseDataReader
 import com.intellij.util.io.BaseOutputReader
 import com.intellij.util.io.URLUtil
-import org.eclipse.lsp4j.CallHierarchyCapabilities
+import org.jetbrains.annotations.ApiStatus
 import org.eclipse.lsp4j.ClientCapabilities
 import org.eclipse.lsp4j.ClientInfo
-import org.eclipse.lsp4j.CodeActionCapabilities
-import org.eclipse.lsp4j.CodeActionKind
-import org.eclipse.lsp4j.CodeActionKindCapabilities
-import org.eclipse.lsp4j.CodeActionLiteralSupportCapabilities
-import org.eclipse.lsp4j.CodeActionResolveSupportCapabilities
-import org.eclipse.lsp4j.CodeLensCapabilities
-import org.eclipse.lsp4j.ColorProviderCapabilities
-import org.eclipse.lsp4j.CompletionCapabilities
-import org.eclipse.lsp4j.CompletionItemCapabilities
-import org.eclipse.lsp4j.CompletionItemKind
-import org.eclipse.lsp4j.CompletionItemKindCapabilities
-import org.eclipse.lsp4j.CompletionItemResolveSupportCapabilities
-import org.eclipse.lsp4j.CompletionItemTag
-import org.eclipse.lsp4j.CompletionItemTagSupportCapabilities
-import org.eclipse.lsp4j.CompletionListCapabilities
 import org.eclipse.lsp4j.ConfigurationItem
-import org.eclipse.lsp4j.DefinitionCapabilities
-import org.eclipse.lsp4j.DiagnosticCapabilities
-import org.eclipse.lsp4j.DiagnosticTag
-import org.eclipse.lsp4j.DiagnosticsTagSupport
-import org.eclipse.lsp4j.DidChangeWatchedFilesCapabilities
-import org.eclipse.lsp4j.DocumentHighlightCapabilities
-import org.eclipse.lsp4j.DocumentLinkCapabilities
-import org.eclipse.lsp4j.DocumentSymbolCapabilities
-import org.eclipse.lsp4j.ExecuteCommandCapabilities
-import org.eclipse.lsp4j.FailureHandlingKind
-import org.eclipse.lsp4j.FoldingRangeCapabilities
-import org.eclipse.lsp4j.FoldingRangeKind
-import org.eclipse.lsp4j.FoldingRangeKindSupportCapabilities
-import org.eclipse.lsp4j.FoldingRangeSupportCapabilities
-import org.eclipse.lsp4j.FormattingCapabilities
-import org.eclipse.lsp4j.GeneralClientCapabilities
-import org.eclipse.lsp4j.HoverCapabilities
 import org.eclipse.lsp4j.InitializeParams
-import org.eclipse.lsp4j.InlayHintCapabilities
-import org.eclipse.lsp4j.InlayHintWorkspaceCapabilities
-import org.eclipse.lsp4j.MarkupKind
-import org.eclipse.lsp4j.OnTypeFormattingCapabilities
-import org.eclipse.lsp4j.ParameterInformationCapabilities
-import org.eclipse.lsp4j.PublishDiagnosticsCapabilities
-import org.eclipse.lsp4j.RangeFormattingCapabilities
-import org.eclipse.lsp4j.ReferencesCapabilities
-import org.eclipse.lsp4j.RenameCapabilities
-import org.eclipse.lsp4j.ResourceOperationKind
-import org.eclipse.lsp4j.SelectionRangeCapabilities
-import org.eclipse.lsp4j.SemanticTokensCapabilities
-import org.eclipse.lsp4j.SemanticTokensClientCapabilitiesRequests
-import org.eclipse.lsp4j.SemanticTokensClientCapabilitiesRequestsFull
-import org.eclipse.lsp4j.SemanticTokensWorkspaceCapabilities
-import org.eclipse.lsp4j.ShowDocumentCapabilities
-import org.eclipse.lsp4j.SignatureHelpCapabilities
-import org.eclipse.lsp4j.SignatureInformationCapabilities
-import org.eclipse.lsp4j.StaleRequestCapabilities
-import org.eclipse.lsp4j.SymbolCapabilities
-import org.eclipse.lsp4j.SymbolKindCapabilities
-import org.eclipse.lsp4j.SymbolTag
-import org.eclipse.lsp4j.SymbolTagSupportCapabilities
-import org.eclipse.lsp4j.SynchronizationCapabilities
-import org.eclipse.lsp4j.TextDocumentClientCapabilities
-import org.eclipse.lsp4j.TokenFormat
-import org.eclipse.lsp4j.TypeDefinitionCapabilities
-import org.eclipse.lsp4j.TypeHierarchyCapabilities
-import org.eclipse.lsp4j.WindowClientCapabilities
-import org.eclipse.lsp4j.WindowShowMessageRequestCapabilities
-import org.eclipse.lsp4j.WorkspaceClientCapabilities
-import org.eclipse.lsp4j.WorkspaceEditCapabilities
 import org.eclipse.lsp4j.WorkspaceFolder
-import org.eclipse.lsp4j.jsonrpc.messages.Either
-import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.net.URI
 import java.net.URISyntaxException
+import java.nio.file.Path
 
 /**
- * Defines how to start the LSP server process ([startServerProcess], [createCommandLine], and [lspCommunicationChannel]),
- * and how to communicate with the running LSP server (all other functions and properties).
+ * Defines how the [LspClient] interacts with the running LSP server
+ * and how to start the LSP server process ([startServerProcess], [createCommandLine], and [lspCommunicationChannel]).
  *
- * See [LspServerSupportProvider] documentation for details about starting an LSP server.
+ * See [LspIntegrationProvider] documentation for details about starting a `LspClient`.
  *
- * Plugins that want to run a single LSP server for the whole project, regardless of the project structure, should extend
+ * Plugins that want to run a single LSP client (and server) for the whole project, regardless of the project structure, should extend
  * [ProjectWideLspClientDescriptor].
  *
  * Normally, `LspClientDescriptor` implementations don't store any modifiable state.
  *
  * As a rule, plugins don't keep references to the `LspClientDescriptor` implementations. To get an `LspClientDescriptor` that is used to
- * start a specific LSP server, use [LspServer.descriptor], where the [LspClient] itself could be found using
- * [LspServerManager.getServersForProvider].
+ * start a specific LSP server, use [LspClient.descriptor], where the [LspClient] itself could be found using
+ * [LspClientManager.getClients].
  *
  * To see all [window/logMessage](https://microsoft.github.io/language-server-protocol/specification/#window_logMessage)
  * and [$/logTrace](https://microsoft.github.io/language-server-protocol/specification/#traceValue) notifications from the server in the
  * `Notifications` tool window, select the `'Show in tool window'` check box for the `'LSP log: info, trace'` category
  * in Settings -> Appearance & Behavior -> Notifications.
  *
- * @param presentableName this string may appear in UI in some cases, for example:
+ * @param presentableName this string may appear in the UI in some cases, for example:
  * - `Language Services` status bar widget item
- * ([LspServerWidgetItem.getWidgetActionText][com.intellij.platform.lsp.api.lsWidget.LspServerWidgetItem.widgetActionText])
+ * ([LspClientWidgetItem.getWidgetActionText][com.intellij.platform.lsp.api.lsWidget.LspClientWidgetItem.widgetActionText])
  * - `Show Usages` popup header
- * - LSP server-related information in the `Notifications` tool window
+ * - LSP-related information in the `Notifications` tool window
  */
 abstract class LspClientDescriptor protected constructor(
   val project: Project,
@@ -181,22 +114,59 @@ abstract class LspClientDescriptor protected constructor(
   /**
    * Starts the LSP server process.
    * Usually, plugins don't need to override this function, but only implement the [createCommandLine] function.
+   *
+   * In WSL/Docker projects the process is launched via EEL so the server runs inside the project environment.
+   * In local projects the existing [GeneralCommandLine] / [OSProcessHandler] path is used unchanged.
    */
   @RequiresBackgroundThread
   @Throws(ExecutionException::class)
-  open fun startServerProcess(): OSProcessHandler {
+  open fun startServerProcess(): BaseProcessHandler<*> {
     // LSP spec says: "It defaults to utf-8, which is the only encoding supported right now"
     // see https://microsoft.github.io/language-server-protocol/specification/#contentPart
-    val startingCommandLine = createCommandLine().withCharset(Charsets.UTF_8)
-    LOG.info("$this: starting LSP server: $startingCommandLine")
-    return object : OSProcessHandler(startingCommandLine) {
-      override fun readerOptions(): BaseOutputReader.Options = object : BaseOutputReader.Options() {
-        override fun policy(): BaseDataReader.SleepingPolicy = forMostlySilentProcess().policy()
+    val commandLine = createCommandLine().withCharset(Charsets.UTF_8)
 
-        // Must not loose '\r' in "\r\n" line endings. They affect char count, which must match `Content-Length`
-        override fun splitToLines(): Boolean = false
+    val descriptor = project.getEelDescriptor()
+    if (descriptor !is LocalEelDescriptor) {
+      return startServerProcessViaEel(descriptor, commandLine)
+    }
+
+    LOG.info("$this: starting LSP server: $commandLine")
+    return object : OSProcessHandler(commandLine) {
+      override fun readerOptions(): BaseOutputReader.Options = lspReaderOptions()
+    }
+  }
+
+  private fun startServerProcessViaEel(descriptor: EelDescriptor, commandLine: GeneralCommandLine): BaseProcessHandler<*> {
+    val eelProcess = try {
+      @Suppress("checkedExceptions")
+      runBlockingMaybeCancellable {
+        val eelApi = descriptor.toEelApi()
+        val env = eelApi.exec.environmentVariables().eelIt().await() + commandLine.environment
+        val workingDir = commandLine.workDirectory?.toPath()?.let { nioPath ->
+          runCatching { nioPath.asEelPath() }.getOrNull()
+        }
+        eelApi.exec.spawnProcess(commandLine.exePath)
+          .args(commandLine.parametersList.list)
+          .env(env)
+          .let { if (workingDir != null) it.workingDirectory(workingDir) else it }
+          .eelIt()
       }
     }
+    catch (e: IOException) {
+      throw ExecutionException(e.message, e)
+    }
+
+    LOG.info("$this: starting LSP server via Eel: ${commandLine.exePath}")
+    return object : OSProcessHandler(eelProcess.convertToJavaProcess(), commandLine.commandLineString, Charsets.UTF_8) {
+      override fun readerOptions(): BaseOutputReader.Options = lspReaderOptions()
+    }
+  }
+
+  private fun lspReaderOptions(): BaseOutputReader.Options = object : BaseOutputReader.Options() {
+    override fun policy(): BaseDataReader.SleepingPolicy = forMostlySilentProcess().policy()
+
+    // Must not lose '\r' in "\r\n" line endings. They affect char count, which must match `Content-Length`
+    override fun splitToLines(): Boolean = false
   }
 
   /**
@@ -251,7 +221,18 @@ abstract class LspClientDescriptor protected constructor(
   /**
    * @see getFileUri
    */
-  protected open fun getFilePath(file: VirtualFile): String = file.path
+  // note: currently both overriders of this method JSNodeLspClientDescriptor and TailwindLspClientDescriptor are not EEL-compatible.
+  @ApiStatus.Internal
+  open fun getFilePath(file: VirtualFile): String {
+    val descriptor = project.getEelDescriptor()
+    if (descriptor !is LocalEelDescriptor) {
+      val path = runCatching { Path.of(file.path).asEelPath().toString() }.getOrNull()
+      if (path != null) {
+        return path
+      }
+    }
+    return file.path
+  }
 
   /**
    * Extracts a file path from [fileUri] and calls [findLocalFileByPath]. Respects only `file://...` URIs.
@@ -259,14 +240,8 @@ abstract class LspClientDescriptor protected constructor(
    *                server within some response or notification
    */
   open fun findFileByUri(fileUri: String): VirtualFile? {
-    val badWslUriStart = "file:///wsl$/"
-    val fixedFileUri = when {
-      fileUri.startsWith(badWslUriStart) -> "file:////wsl$/${fileUri.substring(badWslUriStart.length)}"
-      else -> fileUri
-    }
-
     return try {
-      val uri = URI(fixedFileUri)
+      val uri = URI(fileUri)
       if (URLUtil.FILE_PROTOCOL != uri.scheme) {
         LOG.warn("Unexpected URI scheme: $fileUri")
         return null
@@ -287,7 +262,18 @@ abstract class LspClientDescriptor protected constructor(
   /**
    * @see findFileByUri
    */
-  protected open fun findLocalFileByPath(path: String): VirtualFile? = LocalFileSystem.getInstance().findFileByPath(path)
+  protected open fun findLocalFileByPath(path: String): VirtualFile? {
+    val descriptor = project.getEelDescriptor()
+    if (descriptor !is LocalEelDescriptor) {
+      val file = runCatching {
+        LocalFileSystem.getInstance().findFileByPath(EelPath.parse(path, descriptor).asNioPath().toString())
+      }.getOrNull()
+      if (file != null) {
+        return file
+      }
+    }
+    return LocalFileSystem.getInstance().findFileByPath(path)
+  }
 
   /**
    * Returns a `languageId` field of the [TextDocumentItem](https://microsoft.github.io/language-server-protocol/specification#textDocumentItem) class,
@@ -328,177 +314,7 @@ abstract class LspClientDescriptor protected constructor(
    * Plugins may override this property and tune capabilities according to their needs.
    */
   open val clientCapabilities: ClientCapabilities
-    get() = ClientCapabilities().apply {
-      workspace = WorkspaceClientCapabilities().apply {
-        configuration = true
-        applyEdit = true
-        workspaceFolders = true
-        //configuration = true // keep false by default because [getWorkspaceConfiguration] returns null by default
-        workspaceEdit = WorkspaceEditCapabilities().apply {
-          documentChanges = true
-          resourceOperations = listOf(ResourceOperationKind.Create)
-          failureHandling = FailureHandlingKind.Abort
-          normalizesLineEndings = true
-        }
-        didChangeWatchedFiles = DidChangeWatchedFilesCapabilities(true).apply {
-          relativePatternSupport = true
-        }
-        executeCommand = ExecuteCommandCapabilities(false)
-        semanticTokens = SemanticTokensWorkspaceCapabilities().apply {
-          refreshSupport = true
-        }
-        inlayHint = InlayHintWorkspaceCapabilities().apply {
-          refreshSupport = true
-        }
-        symbol = SymbolCapabilities(true).apply {
-          symbolKind = SymbolKindCapabilities().apply {
-            valueSet = lspCustomization.symbolKindCustomizer.supportedKinds
-          }
-        }
-      }
-
-      textDocument = TextDocumentClientCapabilities().apply {
-        synchronization = SynchronizationCapabilities().apply {
-          // `dynamicRegistration = false` because the IDE doesn't check dynamically registered capabilities before sending
-          // `didOpen` / `didChange` / `didClose` notifications.
-          // It means that the IDE relies on static capability `LspClient.initializeResult.capabilities.textDocumentSync`
-          dynamicRegistration = false
-          willSave = false
-          willSaveWaitUntil = false
-          didSave = true
-        }
-        inlayHint = InlayHintCapabilities(true)
-        documentHighlight = DocumentHighlightCapabilities(true)
-        diagnostic = DiagnosticCapabilities(true)
-        definition = DefinitionCapabilities().apply {
-          linkSupport = true
-        }
-        typeDefinition = TypeDefinitionCapabilities().apply {
-          linkSupport = true
-        }
-        completion = CompletionCapabilities().apply {
-          completionItem = CompletionItemCapabilities().apply {
-            documentationFormat = listOf(MarkupKind.MARKDOWN, MarkupKind.PLAINTEXT)
-            deprecatedSupport = true
-            tagSupport = CompletionItemTagSupportCapabilities(listOf(CompletionItemTag.Deprecated))
-            insertReplaceSupport = true
-            labelDetailsSupport = true
-            snippetSupport = true
-            resolveSupport = CompletionItemResolveSupportCapabilities().apply {
-              properties = listOf("documentation")
-            }
-          }
-          completionItemKind = CompletionItemKindCapabilities().apply {
-            valueSet = CompletionItemKind.entries
-          }
-          completionList = CompletionListCapabilities().apply {
-            itemDefaults = listOf("commitCharacters", "editRange", "insertTextFormat", "insertTextMode", "data")
-          }
-        }
-        hover = HoverCapabilities().apply {
-          contentFormat = listOf(MarkupKind.MARKDOWN, MarkupKind.PLAINTEXT)
-        }
-        signatureHelp = SignatureHelpCapabilities(true).apply {
-          signatureInformation = SignatureInformationCapabilities().apply {
-            documentationFormat = listOf(MarkupKind.MARKDOWN, MarkupKind.PLAINTEXT)
-            parameterInformation = ParameterInformationCapabilities().apply {
-              labelOffsetSupport = true
-            }
-            activeParameterSupport = true
-          }
-        }
-        documentSymbol = DocumentSymbolCapabilities().apply {
-          dynamicRegistration = true
-          symbolKind = SymbolKindCapabilities().apply {
-            valueSet = lspCustomization.symbolKindCustomizer.supportedKinds
-          }
-          hierarchicalDocumentSymbolSupport = true
-          tagSupport = SymbolTagSupportCapabilities(listOf(SymbolTag.Deprecated))
-          labelSupport = false
-        }
-        foldingRange = FoldingRangeCapabilities().apply {
-          dynamicRegistration = true
-          rangeLimit = null
-          lineFoldingOnly = false
-          foldingRangeKind = FoldingRangeKindSupportCapabilities().apply {
-            valueSet = listOf(FoldingRangeKind.Imports, FoldingRangeKind.Region)
-          }
-          foldingRange = FoldingRangeSupportCapabilities().apply {
-            collapsedText = true
-          }
-        }
-
-        val semanticTokensSupport = lspCustomization.semanticTokensCustomizer
-        if (semanticTokensSupport is LspSemanticTokensSupport) {
-          semanticTokens = SemanticTokensCapabilities().apply {
-            requests = SemanticTokensClientCapabilitiesRequests().apply {
-              range = Either.forLeft(false)
-              full = Either.forRight(SemanticTokensClientCapabilitiesRequestsFull().apply {
-                delta = false
-              })
-              tokenTypes = semanticTokensSupport.tokenTypes
-              tokenModifiers = semanticTokensSupport.tokenModifiers
-              formats = listOf(TokenFormat.Relative)
-              overlappingTokenSupport = true
-              multilineTokenSupport = true
-              serverCancelSupport = false
-            }
-          }
-        }
-
-        publishDiagnostics = PublishDiagnosticsCapabilities().apply {
-          versionSupport = true
-          tagSupport = Either.forRight(DiagnosticsTagSupport(listOf(DiagnosticTag.Unnecessary, DiagnosticTag.Deprecated)))
-          dataSupport = true
-        }
-        codeAction = CodeActionCapabilities().apply {
-          codeActionLiteralSupport = CodeActionLiteralSupportCapabilities().apply {
-            codeActionKind = CodeActionKindCapabilities(listOf(
-              CodeActionKind.QuickFix,
-              CodeActionKind.Empty,
-              CodeActionKind.Source,
-              CodeActionKind.Refactor,
-            ))
-          }
-          disabledSupport = true
-          dataSupport = true
-          resolveSupport = CodeActionResolveSupportCapabilities().apply {
-            properties = listOf("edit")
-          }
-        }
-        formatting = FormattingCapabilities(true)
-        rangeFormatting = RangeFormattingCapabilities(true)
-        onTypeFormatting = OnTypeFormattingCapabilities(true)
-        references = ReferencesCapabilities(true)
-        colorProvider = ColorProviderCapabilities(true)
-        documentLink = DocumentLinkCapabilities(true).apply {
-          tooltipSupport = true
-        }
-        callHierarchy = CallHierarchyCapabilities(true)
-        typeHierarchy = TypeHierarchyCapabilities(true)
-        selectionRange = SelectionRangeCapabilities(true)
-        codeLens = CodeLensCapabilities(true)
-        rename = RenameCapabilities(true).apply {
-          prepareSupport = true
-        }
-      }
-
-      notebookDocument = null
-
-      window = WindowClientCapabilities().apply {
-        showMessage = WindowShowMessageRequestCapabilities()
-        showDocument = ShowDocumentCapabilities(true)
-        workDoneProgress = true
-      }
-
-      general = GeneralClientCapabilities().apply {
-        staleRequestSupport = StaleRequestCapabilities().apply {
-          isCancel = true
-        }
-      }
-
-      experimental = null
-    }
+    get() = createClientCapabilities(lspCustomization)
 
   /**
    * `initializationOptions` is an optional field in the
@@ -557,119 +373,7 @@ abstract class LspClientDescriptor protected constructor(
    * Plugins may override the [LspCustomization] class and its properties to customize how different LSP features
    * are handled in the IDE, or disable them completely.
    */
-  open val lspCustomization: LspCustomization = DeprecatedLspCustomization(this)
-
-  //<editor-fold desc="Deprecated stuff.">
-
-  /**
-   * @see LspCustomization.goToDefinitionCustomizer
-   */
-  @Deprecated("Use lspCustomization.goToDefinitionCustomizer instead",
-              ReplaceWith("lspCustomization.goToDefinitionCustomizer is LspGoToDefinitionSupport"))
-  @ApiStatus.ScheduledForRemoval
-  open val lspGoToDefinitionSupport: Boolean = defaultLspCustomization.goToDefinitionCustomizer is LspGoToDefinitionSupport
-    get() = if (lspCustomization !is DeprecatedLspCustomization) lspCustomization.goToDefinitionCustomizer is LspGoToDefinitionSupport else field
-
-  /**
-   * @see LspCustomization.goToTypeDefinitionCustomizer
-   */
-  @Deprecated("Use lspCustomization.goToTypeDefinitionCustomizer instead",
-              ReplaceWith("lspCustomization.goToTypeDefinitionCustomizer is LspGoToTypeDefinitionSupport"))
-  @ApiStatus.ScheduledForRemoval
-  open val lspGoToTypeDefinitionSupport: Boolean = defaultLspCustomization.goToTypeDefinitionCustomizer is LspGoToTypeDefinitionSupport
-    get() = if (lspCustomization !is DeprecatedLspCustomization) lspCustomization.goToTypeDefinitionCustomizer is LspGoToTypeDefinitionSupport else field
-
-  /**
-   * @see LspCustomization.hoverCustomizer
-   */
-  @Deprecated("Use lspCustomization.hoverCustomizer instead", ReplaceWith("lspCustomization.hoverCustomizer is LspHoverSupport"))
-  @ApiStatus.ScheduledForRemoval
-  open val lspHoverSupport: Boolean = defaultLspCustomization.hoverCustomizer is LspHoverSupport
-    get() = if (lspCustomization !is DeprecatedLspCustomization) lspCustomization.hoverCustomizer is LspHoverSupport else field
-
-  /**
-   * @see LspCustomization.completionCustomizer
-   */
-  @Deprecated("Use lspCustomization.completionCustomizer instead",
-              ReplaceWith("lspCustomization.completionCustomizer as? LspCompletionSupport"))
-  @ApiStatus.ScheduledForRemoval
-  open val lspCompletionSupport: LspCompletionSupport? = defaultLspCustomization.completionCustomizer as? LspCompletionSupport
-    get() = if (lspCustomization !is DeprecatedLspCustomization) lspCustomization.completionCustomizer as? LspCompletionSupport else field
-
-  /**
-   * @see LspCustomization.semanticTokensCustomizer
-   */
-  @Deprecated("Use lspCustomization.semanticTokensCustomizer instead",
-              ReplaceWith("lspCustomization.semanticTokensCustomizer as? LspSemanticTokensSupport"))
-  @ApiStatus.ScheduledForRemoval
-  open val lspSemanticTokensSupport: LspSemanticTokensSupport? =
-    defaultLspCustomization.semanticTokensCustomizer as? LspSemanticTokensSupport
-    get() = if (lspCustomization !is DeprecatedLspCustomization) lspCustomization.semanticTokensCustomizer as? LspSemanticTokensSupport else field
-
-  /**
-   * @see LspCustomization.diagnosticsCustomizer
-   */
-  @Deprecated("Use lspCustomization.diagnosticsCustomizer instead",
-              ReplaceWith("lspCustomization.diagnosticsCustomizer as? LspDiagnosticsSupport"))
-  @ApiStatus.ScheduledForRemoval
-  open val lspDiagnosticsSupport: LspDiagnosticsSupport? = defaultLspCustomization.diagnosticsCustomizer as? LspDiagnosticsSupport
-    get() = if (lspCustomization !is DeprecatedLspCustomization) lspCustomization.diagnosticsCustomizer as? LspDiagnosticsSupport else field
-
-  /**
-   * @see LspCustomization.codeActionsCustomizer
-   */
-  @Deprecated("Use lspCustomization.codeActionsCustomizer instead",
-              ReplaceWith("lspCustomization.codeActionsCustomizer as? LspCodeActionsSupport"))
-  @ApiStatus.ScheduledForRemoval
-  open val lspCodeActionsSupport: LspCodeActionsSupport? = defaultLspCustomization.codeActionsCustomizer as? LspCodeActionsSupport
-    get() = if (lspCustomization !is DeprecatedLspCustomization) lspCustomization.codeActionsCustomizer as? LspCodeActionsSupport else field
-
-  /**
-   * @see LspCustomization.commandsCustomizer
-   */
-  @Deprecated("Use lspCustomization.commandsCustomizer instead", ReplaceWith("lspCustomization.commandsCustomizer as? LspCommandsSupport"))
-  @ApiStatus.ScheduledForRemoval
-  open val lspCommandsSupport: LspCommandsSupport? = defaultLspCustomization.commandsCustomizer as? LspCommandsSupport
-    get() = if (lspCustomization !is DeprecatedLspCustomization) lspCustomization.commandsCustomizer as? LspCommandsSupport else field
-
-  /**
-   * @see LspCustomization.formattingCustomizer
-   */
-  @Deprecated("Use lspCustomization.formattingCustomizer instead",
-              ReplaceWith("lspCustomization.formattingCustomizer as? LspFormattingSupport"))
-  @ApiStatus.ScheduledForRemoval
-  open val lspFormattingSupport: LspFormattingSupport? = defaultLspCustomization.formattingCustomizer as? LspFormattingSupport
-    get() = if (lspCustomization !is DeprecatedLspCustomization) lspCustomization.formattingCustomizer as? LspFormattingSupport else field
-
-  /**
-   * @see LspCustomization.findReferencesCustomizer
-   */
-  @Deprecated("Use lspCustomization.findReferencesCustomizer instead",
-              ReplaceWith("lspCustomization.findReferencesCustomizer as? LspFindReferencesSupport"))
-  @ApiStatus.ScheduledForRemoval
-  open val lspFindReferencesSupport: LspFindReferencesSupport? =
-    defaultLspCustomization.findReferencesCustomizer as? LspFindReferencesSupport
-    get() = if (lspCustomization !is DeprecatedLspCustomization) lspCustomization.findReferencesCustomizer as? LspFindReferencesSupport else field
-
-  /**
-   * @see LspCustomization.documentColorCustomizer
-   */
-  @Deprecated("Use lspCustomization.documentColorCustomizer instead",
-              ReplaceWith("lspCustomization.documentColorCustomizer as? LspDocumentColorSupport"))
-  @ApiStatus.ScheduledForRemoval
-  open val lspDocumentColorSupport: LspDocumentColorSupport? = defaultLspCustomization.documentColorCustomizer as? LspDocumentColorSupport
-    get() = if (lspCustomization !is DeprecatedLspCustomization) lspCustomization.documentColorCustomizer as? LspDocumentColorSupport else field
-
-  /**
-   * @see LspCustomization.documentLinkCustomizer
-   */
-  @Deprecated("Use lspCustomization.documentLinkCustomizer instead",
-              ReplaceWith("lspCustomization.documentLinkCustomizer as? LspDocumentLinkSupport"))
-  @ApiStatus.ScheduledForRemoval
-  open val lspDocumentLinkSupport: LspDocumentLinkSupport? = defaultLspCustomization.documentLinkCustomizer as? LspDocumentLinkSupport
-    get() = if (lspCustomization !is DeprecatedLspCustomization) lspCustomization.documentLinkCustomizer as? LspDocumentLinkSupport else field
-
-  //</editor-fold>
+  open val lspCustomization: LspCustomization = LspCustomization()
 
   /**
    * Override this function to handle

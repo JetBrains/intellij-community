@@ -16,6 +16,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -436,8 +437,10 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     return node == null || !getNodeClass().isAssignableFrom(node.getClass()) ? null : (U)((T)node).getUserObject();
   }
 
+  @ApiStatus.Internal
   public enum Matching {NONE, PARTIAL, FULL}
 
+  @ApiStatus.Internal
   protected interface FilteringTreeUserObjectMatcher<U> {
     @NotNull Matching checkMatching(@NotNull U userObject, @Nullable Iterable<TextRange> matchingFragments);
   }

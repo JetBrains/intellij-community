@@ -1,9 +1,9 @@
 // "Import" "false"
 // IGNORE_IRRELEVANT_ACTIONS
-// K2_ERROR: Unresolved reference 'Bar'.
-// K2_ERROR: Unresolved reference 'SomeImpossibleName'.
-// K2_AFTER_ERROR: Unresolved reference 'Bar'.
-// K2_AFTER_ERROR: Unresolved reference 'SomeImpossibleName'.
+// K2_AFTER_ERROR: UNRESOLVED_IMPORT
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_IMPORT
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 // KT-3165 Weird stack overflow in IDE
 // ERROR: Unresolved reference: Bar

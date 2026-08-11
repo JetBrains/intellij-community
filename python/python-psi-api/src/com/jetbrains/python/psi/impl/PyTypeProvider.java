@@ -71,9 +71,20 @@ public interface PyTypeProvider {
   Map<PyType, PyType> getGenericSubstitutions(@NotNull PyClass cls, @NotNull TypeEvalContext context);
 
   /**
+   * @deprecated Use {@link #prepareCalleeTypeForCall(PyType, PyExpression, TypeEvalContext)} instead.
+   */
+  @Deprecated
+  default @Nullable Ref<@Nullable PyCallableType> prepareCalleeTypeForCall(@Nullable PyType type,
+                                                                           @NotNull PyCallExpression call,
+                                                                           @NotNull TypeEvalContext context) {
+    PyExpression callee = call.getCallee();
+    return callee == null ? null : prepareCalleeTypeForCall(type, callee, context);
+  }
+
+  /**
    * <p>
-   * If callee type is a class type, it is replaced in code insight for {@code call}
-   * with {@code __init__}/{@code __new__} or {@code __call__} depending on whether it is a definition or an instance.
+   * If callee type is a class type, it is replaced with class constructor or {@code __call__}
+   * depending on whether it is a definition or an instance.
    * </p>
    * <p>
    * If the {@code type} is provided, and it is desirable to stay with the provided {@code type}, please wrap it into {@link Ref}.
@@ -85,8 +96,8 @@ public interface PyTypeProvider {
    * Return {@code null} otherwise.
    * </p>
    */
-  @Nullable Ref<@Nullable PyCallableType> prepareCalleeTypeForCall(@Nullable PyType type,
-                                                                   @NotNull PyCallExpression call,
+  @Nullable Ref<@Nullable PyCallableType> prepareCalleeTypeForCall(@Nullable PyType calleeType,
+                                                                   @NotNull PyExpression callee,
                                                                    @NotNull TypeEvalContext context);
 
   @ApiStatus.Experimental

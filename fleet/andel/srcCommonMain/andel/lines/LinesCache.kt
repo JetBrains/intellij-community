@@ -107,7 +107,8 @@ class LinesCacheLinesLayout(val linesCache: LinesCache) : LinesLayout {
             interlineHeightAbove = LineBasedHeight(lines.interlineHeightAbove(indexInLeaf).toLong()),
             interlineHeightBelow = LineBasedHeight(lines.interlineHeightBelow(indexInLeaf).toLong()),
             lineIdx = (indexInLeaf + index).toLong(),
-            width = lines.width(indexInLeaf).toFloat())
+            width = lines.width(indexInLeaf).toFloat(),
+            ownHeight = LineBasedHeight(lines.ownHeight(indexInLeaf).toLong()))
           )
           offset = offset + len
           top = top + lineHeight
@@ -142,9 +143,10 @@ class LinesCacheLinesLayout(val linesCache: LinesCache) : LinesLayout {
           lineTop = LineBasedHeight(top.toLong()),
           totalHeight = LineBasedHeight(height.toLong()),
           interlineHeightAbove = LineBasedHeight(lines.interlineHeightAbove(indexInLeaf).toLong()),
-          interlineHeightBelow = LineBasedHeight(lines.interlineHeightAbove(indexInLeaf).toLong()),
+          interlineHeightBelow = LineBasedHeight(lines.interlineHeightBelow(indexInLeaf).toLong()),
           lineIdx = (index + indexInLeaf).toLong(),
           width = lines.width(indexInLeaf).toFloat(),
+          ownHeight = LineBasedHeight(lines.ownHeight(indexInLeaf).toLong()),
         )
       }
       x = x + size
@@ -186,6 +188,7 @@ fun layoutLines(
   foldsMeasurer: (Fold) -> Float = { 0F },
   softWrapBuilder: SoftWrapBuilder,
   cancellationToken: CancellationToken = CancellationToken,
+  lineScales: IntervalsQuery<*, LineScale> = Intervals.droppingCollapsed().empty(),
 ): LinesCache {
   val lines = buildLines(
     text = text.view().charSequence(),
@@ -195,7 +198,8 @@ fun layoutLines(
     interlines = interlines,
     foldsMeasurer = foldsMeasurer,
     softWrapBuilder = softWrapBuilder,
-    cancellationToken = cancellationToken
+    cancellationToken = cancellationToken,
+    lineScales = lineScales
   )
   return buildLinesCache(
     lines,

@@ -8,15 +8,17 @@ import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.KaNamedAnnotationValue
-import org.jetbrains.kotlin.analysis.api.components.annotationApplicableTargets
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.fir.utils.getActualAnnotationTargets
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.applicableAnnotationTargets
+import org.jetbrains.kotlin.analysis.api.symbols.defaultAnnotationTargets
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.OptInGeneralUtils.collectScriptCandidates
@@ -69,7 +71,7 @@ internal object OptInFixFactories {
         val annotationSymbol = OptInFixUtils.findAnnotation(annotationClassId) ?: return emptyList()
         if (!OptInFixUtils.annotationIsVisible(annotationSymbol, from = element)) return emptyList()
 
-        val applicableTargets = annotationSymbol.annotationApplicableTargets
+        val applicableTargets = annotationSymbol.applicableAnnotationTargets
         val result = mutableListOf<ModCommandAction>()
 
         val candidates = if (element.containingKtFile.isScript()) collectScriptCandidates(element) else OptInGeneralUtils.collectCandidates(element)
@@ -78,7 +80,7 @@ internal object OptInFixFactories {
             if (targetElement !is KtDeclaration) return null
             if (applicableTargets == null) return null
 
-            val actualTargetList = targetElement.symbol.getActualAnnotationTargets() ?: return null
+            val actualTargetList = targetElement.symbol.defaultAnnotationTargets ?: return null
             return OptInGeneralUtils.collectPropagateOptInAnnotationFix(
                 targetElement,
                 kind,

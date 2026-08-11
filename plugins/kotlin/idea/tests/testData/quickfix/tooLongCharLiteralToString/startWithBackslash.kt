@@ -1,7 +1,7 @@
 // "Convert too long character literal to string" "true"
 // ERROR: Illegal escape: '\ '
-// K2_ERROR: Unsupported escape sequence.
-// K2_AFTER_ERROR: Unsupported escape sequence.
+// K2_AFTER_ERROR: ILLEGAL_ESCAPE
+// K2_ERROR: ILLEGAL_ESCAPE
 
 fun foo() {
     '\ bar<caret>'

@@ -14,4 +14,4 @@ fun CoroutineScope.test() {
 
     launch(EmptyCoroutineContext.plus(Job())) {}
 }
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutineContextWithJobInspection

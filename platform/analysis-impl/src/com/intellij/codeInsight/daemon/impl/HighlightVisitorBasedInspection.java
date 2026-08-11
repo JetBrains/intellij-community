@@ -148,13 +148,13 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
     DaemonCodeAnalyzerEx.getInstanceEx(project).runInsideAdditionalHighlightingSession(psiFile, EditorColorsUtil.getGlobalOrDefaultColorScheme(), visibleRange, false, _-> {
       GeneralHighlightingPass ghp = new GeneralHighlightingPass(
         psiFile, document, startOffset, endOffset, true, visibleRange, null, runAnnotators, runVisitors, highlightErrorElements,
-        HighlightInfoUpdater.EMPTY
+        /*batchMode=*/ true, HighlightInfoUpdater.EMPTY
       );
       ghp.setContext(context);
 
       InjectedGeneralHighlightingPass ighp = new InjectedGeneralHighlightingPass(
         psiFile, document, null, startOffset, endOffset, true, visibleRange, null, runAnnotators, runVisitors,
-        highlightErrorElements, HighlightInfoUpdater.EMPTY
+        highlightErrorElements, /*batchMode=*/ true, HighlightInfoUpdater.EMPTY
       );
       ighp.setContext(context);
 

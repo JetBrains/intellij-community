@@ -143,7 +143,14 @@ public abstract class ScrollingSynchronizer {
      */
     public abstract fun acceptTextLayout(block: MarkdownBlock, textLayout: TextLayoutResult)
 
+    /** Companion object for [ScrollingSynchronizer]. */
     public companion object {
+        /**
+         * Creates a [ScrollingSynchronizer] for the given [scrollState], or `null` if the scroll state type is not
+         * supported.
+         *
+         * Currently, only [ScrollState] is supported. [LazyListState] is not yet supported.
+         */
         public fun create(scrollState: ScrollableState): ScrollingSynchronizer? =
             when (scrollState) {
                 is ScrollState -> PerLine(scrollState)

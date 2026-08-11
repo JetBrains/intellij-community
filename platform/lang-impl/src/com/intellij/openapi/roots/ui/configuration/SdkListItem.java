@@ -88,6 +88,7 @@ public abstract class SdkListItem {
     }
   }
 
+  @ApiStatus.Internal
   public static final class NoneSdkItem extends SdkListItem {
     @Override
     public int hashCode() {
@@ -141,8 +142,10 @@ public abstract class SdkListItem {
     }
   }
 
+  @ApiStatus.Internal
   public enum ActionRole {DOWNLOAD, ADD}
 
+  @ApiStatus.Internal
   public static final class ActionItem extends SdkListItem {
     public final @NotNull ActionRole role;
     public final @NotNull NewSdkAction action;
@@ -165,6 +168,7 @@ public abstract class SdkListItem {
     }
   }
 
+  @ApiStatus.Internal
   public static final class GroupItem extends SdkListItem {
     public final @NotNull Icon icon;
     public final @Nls @NotNull String caption;

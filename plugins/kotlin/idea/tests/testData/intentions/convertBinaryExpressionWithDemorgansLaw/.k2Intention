@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertBinaryExpressionWithDemorgansLawIntention
+org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertBinaryExpressionWithDemorgansLawIntention

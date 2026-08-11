@@ -1,8 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
@@ -18,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -116,8 +114,8 @@ public abstract class Decompressor {
 
     /** @deprecated use {@link #Zip(Path)} instead */
     @Deprecated
-    @SuppressWarnings("IO_FILE_USAGE")
-    public Zip(@NotNull File file) {
+    @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+    public Zip(@NotNull java.io.File file) {
       mySource = file.toPath();
     }
 
@@ -283,8 +281,8 @@ public abstract class Decompressor {
 
     /**
      * <p>Make absolute symbolic links relative from the extraction directory.</p>
-     * For example, when archive contains link to {@code /opt/foo} and archive is extracted to
-     * {@code /foo/bar} then the resulting link will be {@code /foo/bar/opt/foo}
+     * For example, when an archive contains a link to {@code /opt/foo} and archive is extracted to {@code /foo/bar},
+     * then the resulting link will be {@code /foo/bar/opt/foo}.
      */
     RELATIVIZE_ABSOLUTE
   }
@@ -294,7 +292,7 @@ public abstract class Decompressor {
   private boolean myIgnoreIOExceptions = false;
   private @Nullable List<String> myPathPrefix = null;
   private boolean myOverwrite = true;
-  private EscapingSymlinkPolicy myEscapingSymlinkPolicy = EscapingSymlinkPolicy.ALLOW;
+  private EscapingSymlinkPolicy myEscapingSymlinkPolicy = EscapingSymlinkPolicy.DISALLOW;
   private BiConsumer<? super Entry, ? super Path> myPostProcessor;
 
   public Decompressor filter(@Nullable Predicate<? super String> filter) {
@@ -349,13 +347,16 @@ public abstract class Decompressor {
 
   /** @deprecated use {@link #extract(Path)} instead */
   @Deprecated
-  @SuppressWarnings("IO_FILE_USAGE")
-  public final void extract(@NotNull File outputDir) throws IOException {
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public final void extract(@NotNull java.io.File outputDir) throws IOException {
     extract(outputDir.toPath());
   }
 
   public final void extract(@NotNull Path outputDir) throws IOException {
-    boolean isWindows = ArchiveBackend.Companion.isWindows$intellij_platform_util(outputDir);
+    boolean isWindows = ArchiveBackend.isOnWindows(outputDir);
+
+    Path realOutputDir = NioFiles.createDirectories(outputDir).toRealPath();
+
     openStream();
     try {
       Deque<Path> extractedPaths = new ArrayDeque<>();
@@ -372,15 +373,16 @@ public abstract class Decompressor {
 
         proceedToNext = true; // will be set to false if EH returns RETRY
         try {
-          Path processedEntry = processEntry(outputDir, entry, isWindows);
+          Path processedEntry = processEntry(outputDir, realOutputDir, entry, isWindows);
           if (processedEntry != null) {
             extractedPaths.push(processedEntry);
           }
         }
         catch (IOException ioException) {
           if (myIgnoreIOExceptions) {
-            LOG.debug("Skipped exception because "  + ErrorHandlerChoice.SKIP_ALL + " was selected earlier", ioException);
-          } else {
+            LOG.debug("Skipped exception because " + ErrorHandlerChoice.SKIP_ALL + " was selected earlier", ioException);
+          }
+          else {
             switch (myErrorHandler.apply(entry, ioException)) {
               case ABORT:
                 while (!extractedPaths.isEmpty()) {
@@ -408,22 +410,32 @@ public abstract class Decompressor {
     }
   }
 
-  /**
-   * @return Path to an extracted entity
-   */
-  private @Nullable Path processEntry(@NotNull Path outputDir, Entry entry, boolean isWindows) throws IOException {
+  // returns a path of the extracted entity
+  private @Nullable Path processEntry(Path outputDir, Path realOutputDir, Entry entry, boolean isWindows) throws IOException {
     if (myPathPrefix != null) {
       entry = mapPathPrefix(entry, myPathPrefix);
       if (entry == null) return null;
     }
 
     Path outputFile = entryFile(outputDir, entry.name);
+
+    if (myEscapingSymlinkPolicy != EscapingSymlinkPolicy.ALLOW) {
+      Path existingPath = outputFile;
+      while (!Files.exists(existingPath, LinkOption.NOFOLLOW_LINKS)) {
+        existingPath = existingPath.getParent();
+      }
+      if (!existingPath.toRealPath().startsWith(realOutputDir)) {
+        throw new IOException("Invalid entry (path points outside the output directory): " + entry.name);
+      }
+    }
+
     switch (entry.type) {
-      case DIR:
+      case DIR: {
         NioFiles.createDirectories(outputFile);
         break;
+      }
 
-      case FILE:
+      case FILE: {
         if (myOverwrite || !Files.exists(outputFile)) {
           InputStream inputStream = openEntryStream(entry);
           try {
@@ -440,39 +452,26 @@ public abstract class Decompressor {
           }
         }
         break;
+      }
 
-      case SYMLINK:
+      case SYMLINK: {
         if (entry.linkTarget == null || entry.linkTarget.isEmpty()) {
           throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
         }
 
-        String target = entry.linkTarget;
-
-        switch (myEscapingSymlinkPolicy) {
-          case DISALLOW: {
-            verifySymlinkTarget(entry.name, entry.linkTarget, outputDir, outputFile);
-            break;
-          }
-          case RELATIVIZE_ABSOLUTE: {
-            if (OSAgnosticPathUtil.isAbsolute(target)) {
-              target = FileUtil.join(outputDir.toString(), entry.linkTarget.substring(1));
-            }
-            break;
-          }
-        }
-
         if (myOverwrite || !Files.exists(outputFile, LinkOption.NOFOLLOW_LINKS)) {
           try {
-            Path outputTarget = Paths.get(target);
+            Path outputTarget = verifySymlinkTarget(entry.name, entry.linkTarget, outputDir, outputFile);
             NioFiles.createDirectories(outputFile.getParent());
             Files.deleteIfExists(outputFile);
             Files.createSymbolicLink(outputFile, outputTarget);
           }
           catch (InvalidPathException e) {
-            throw new IOException("Invalid symlink entry: " + entry.name + " -> " + target, e);
+            throw new IOException("Invalid symlink entry: " + entry.name + " -> " + entry.linkTarget, e);
           }
         }
         break;
+      }
     }
 
     if (myPostProcessor != null) {
@@ -482,20 +481,41 @@ public abstract class Decompressor {
     return outputFile;
   }
 
-  private static void verifySymlinkTarget(String entryName, String linkTarget, Path outputDir, Path outputFile) throws IOException {
-    try {
-      Path outputTarget = Paths.get(linkTarget);
-      if (outputTarget.isAbsolute()) {
-        throw new IOException("Invalid symlink (absolute path): " + entryName + " -> " + linkTarget);
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName", "DuplicateExpressions", "RedundantSuppression"})
+  private Path verifySymlinkTarget(String entryName, String linkTarget, Path outputDir, Path outputFile) throws IOException {
+    if (myEscapingSymlinkPolicy == EscapingSymlinkPolicy.ALLOW) {
+      return Paths.get(linkTarget);
+    }
+
+    if (myEscapingSymlinkPolicy == EscapingSymlinkPolicy.RELATIVIZE_ABSOLUTE) {
+      String relativeTarget = null;
+      if (linkTarget.startsWith("/")) {
+        relativeTarget = linkTarget.substring(1);
       }
-      Path linkTargetNormalized = outputFile.getParent().resolve(outputTarget).normalize();
-      if (!linkTargetNormalized.startsWith(outputDir.normalize())) {
-        throw new IOException("Invalid symlink (points outside of output directory): " + entryName + " -> " + linkTarget);
+      else if (OSAgnosticPathUtil.isAbsoluteDosPath(linkTarget)) {
+        relativeTarget = linkTarget.charAt(0) + linkTarget.substring(2).replace('\\', java.io.File.separatorChar);
+      }
+      else if (OSAgnosticPathUtil.isUncPath(linkTarget)) {
+        relativeTarget = linkTarget.substring(2).replace('\\', java.io.File.separatorChar);
+      }
+      if (relativeTarget != null) {
+        Path outputTarget = outputDir.resolve(relativeTarget);
+        if (!outputTarget.normalize().startsWith(outputDir.normalize())) {
+          throw new IOException("Invalid symlink (points outside the output directory): " + entryName + " -> " + linkTarget);
+        }
+        return outputTarget;
       }
     }
-    catch (InvalidPathException e) {
-      throw new IOException("Failed to verify symlink entry scope: " + entryName + " -> " + linkTarget, e);
+
+    Path outputTarget = Paths.get(linkTarget);
+    if (outputTarget.isAbsolute()) {
+      throw new IOException("Invalid symlink (absolute path): " + entryName + " -> " + linkTarget);
     }
+    Path linkTargetNormalized = outputFile.getParent().resolve(outputTarget).normalize();
+    if (!linkTargetNormalized.startsWith(outputDir.normalize())) {
+      throw new IOException("Invalid symlink (points outside the output directory): " + entryName + " -> " + linkTarget);
+    }
+    return outputTarget;
   }
 
   private static @Nullable Entry mapPathPrefix(Entry e, List<String> prefix) throws IOException {

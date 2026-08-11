@@ -15,9 +15,12 @@ import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
 import com.intellij.platform.lsp.common.problemFileHighlightFilterFixture
 import com.intellij.platform.lsp.common.spaceTokenizingLanguageFixture
 import com.intellij.platform.lsp.common.wolfFixture
+import com.intellij.platform.lsp.impl.features.highlighting.LspHighlightingApplier
+import com.intellij.platform.lsp.testFramework.awaitDiagnosticsFromLspServer
 import com.intellij.platform.lsp.testFramework.checkHighlightingRetrying
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.problems.ProblemListener
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntilAssertSucceeds
@@ -580,6 +583,83 @@ internal class LspDiagnosticsTest {
 
       val expectedClean = createExpectedDataFromText("hello world")
       (codeInsightFixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(expectedClean)
+    }
+  }
+
+  /**
+   * The reactive apply can run after the user typed but before the daemon reparsed the file.
+   * The live document already contains the freshly typed text, but the committed PsiFile — which
+   * `AnnotationBuilder.range` validates against — is still shorter. A diagnostic in the typed tail
+   * shouldn't throw "Range must be inside element being annotated".
+   */
+  @Nested
+  inner class UncommittedPsiReparse {
+    @Suppress("unused")
+    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture()
+
+    @Test
+    fun `diagnostic in not-yet-reparsed region is skipped without exception`(): Unit = timeoutRunBlocking {
+      val fixture = codeInsightFixture as CodeInsightTestFixtureImpl
+      fixture.canChangeDocumentDuringHighlighting(true)
+
+      val psiFile = fixture.configureByText("test.txt", "hello world")
+      val virtualFile = psiFile.virtualFile
+      val document = fixture.editor.document
+      val serverSession = configureServerSession(project, virtualFile)
+      val uri = serverSession.fileUri(virtualFile)
+
+      // Publish a diagnostic on "world" while the PSI is still consistent
+      val diagnosticsArrived = async(start = CoroutineStart.UNDISPATCHED) {
+        awaitDiagnosticsFromLspServer(project, virtualFile)
+      }
+      serverSession.sendNotification(serverSession.PUBLISH_DIAGNOSTICS) {
+        PublishDiagnosticsParams(uri, listOf(
+          Diagnostic(Range(Position(0, 6), Position(0, 11)), "moving error", DiagnosticSeverity.Error, "fake")
+        ))
+      }
+      diagnosticsArrived.await()
+      fixture.collectAndCheckHighlighting(createExpectedDataFromText("hello <error>world</error>"))
+
+      // Insert text before the diagnostic and collect highlights inside the same write action, so no reparse
+      // (which needs its own write action) can run in between. The cached range follows the edit into the
+      // not-yet-reparsed tail, past the committed PsiFile that AnnotationBuilder.range validates against.
+      // This is the reactive collection path from the crash stacktrace (collectHighlightInfos -> createAnnotation).
+      val psiDocumentManager = PsiDocumentManager.getInstance(project)
+      val uncommitedTextRange = psiFile.textRange
+      val highlights = writeCommandAction(project, "") {
+        document.insertString(0, "prefix line\n")
+        assertTrue(psiDocumentManager.isUncommited(document), "PSI must be uncommitted when highlights are collected")
+        assertTrue(document.textLength > uncommitedTextRange.endOffset, "document must outgrow committed PSI")
+        LspHighlightingApplier.getInstance(project).collectHighlightInfos(psiFile, virtualFile, document)
+      }
+      assertTrue(
+        highlights.none { it.endOffset > uncommitedTextRange.endOffset },
+        "no highlight may point past the committed PSI: $highlights",
+      )
+    }
+
+    @Test
+    fun `diagnostic in freshly typed region is shown after reparse`(): Unit = timeoutRunBlocking {
+      val fixture = codeInsightFixture as CodeInsightTestFixtureImpl
+      fixture.canChangeDocumentDuringHighlighting(true)
+
+      val virtualFile = fixture.configureByText("test.txt", "hello world").virtualFile
+      val serverSession = configureServerSession(project, virtualFile)
+      val uri = serverSession.fileUri(virtualFile)
+
+      writeCommandAction(project, "") {
+        fixture.editor.document.insertString(fixture.editor.document.textLength, "\nBOOM")
+      }
+
+      serverSession.sendNotification(serverSession.PUBLISH_DIAGNOSTICS) {
+        PublishDiagnosticsParams(uri, listOf(
+          Diagnostic(Range(Position(1, 0), Position(1, 4)), "boom error", DiagnosticSeverity.Error, "fake")
+        ))
+      }
+
+      val expected = createExpectedDataFromText("hello world\n<error descr=\"boom error\">BOOM</error>")
+      // checkHighlightingRetrying calls commitAllDocuments so this test doesn't really check the reactive path, but it triggers the pass
+      fixture.checkHighlightingRetrying(expected, initialCheck = true)
     }
   }
 

@@ -1,5 +1,6 @@
 // "Add remaining branches with * import" "true"
 // WITH_STDLIB
+// K2_ERROR: NO_ELSE_IN_WHEN
 import Foo.*
 
 enum class Foo {

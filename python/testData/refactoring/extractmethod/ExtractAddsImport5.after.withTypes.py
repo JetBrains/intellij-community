@@ -1,6 +1,5 @@
 import signal
 from signal import Handlers
-from typing import Literal
 
 
 def f(sign) :
@@ -8,6 +7,6 @@ def f(sign) :
         body(sign)
 
 
-def body(sign_new: Literal[Handlers.SIG_DFL]):
+def body(sign_new: Handlers):
     1
     sign_new

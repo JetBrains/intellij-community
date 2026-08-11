@@ -4,9 +4,9 @@
 // ACTION: Make 'foo' public
 // ACTION: Remove braces from all 'if' statements
 // ERROR: Public-API inline function cannot access non-public-API 'private final val foo: Boolean defined in C'
-// K2_ERROR: Public-API inline function cannot access non-public-API property.
-// K2_AFTER_ERROR: Public-API inline function cannot access non-public-API property.
 // WITH_STDLIB
+// K2_AFTER_ERROR: NON_PUBLIC_CALL_FROM_PUBLIC_INLINE
+// K2_ERROR: NON_PUBLIC_CALL_FROM_PUBLIC_INLINE
 class C {
     private val foo = true
 

@@ -15,15 +15,16 @@ import javax.swing.Icon;
  * <p>Describes a filetype.</p>
  *
  * <p>Must be registered via {@code com.intellij.fileType} extension point.
- * If file type depends on a given file, {@link com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile}
- * can be used for non-static mapping.</p>
  *
  * <p>Use {@link LanguageFileType} for files having {@link com.intellij.lang.Language} support.</p>
- *
+ * <p>
  * Each file type must be a singleton, which generally implies its constructor must be private
  * and the only instance is stored in the static final field.
+ *
+ * @see com.intellij.openapi.fileTypes.impl.FileTypeBean for documentation of <fileType .../> tags.
  * @see com.intellij.openapi.fileTypes.FileTypes
  * @see INativeFileType
+ * @see com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile
  */
 public interface FileType {
   FileType[] EMPTY_ARRAY = new FileType[0];
@@ -31,7 +32,8 @@ public interface FileType {
   /**
    * Returns the name of the file type. The name must be unique among all file types registered in the system.
    */
-  @NonNls @NotNull String getName();
+  @NonNls
+  @NotNull String getName();
 
   default @NotNull @Nls String getDisplayName() {
     return getName(); //NON-NLS
@@ -40,12 +42,14 @@ public interface FileType {
   /**
    * Returns the user-readable description of the file type.
    */
-  @Label @NotNull String getDescription();
+  @Label
+  @NotNull String getDescription();
 
   /**
    * Returns the default extension for files of the type, <em>not</em> including the leading '.'.
    */
-  @NlsSafe @NotNull String getDefaultExtension();
+  @NlsSafe
+  @NotNull String getDefaultExtension();
 
   /**
    * Returns the icon used for showing files of the type, or {@code null} if no icon should be shown.

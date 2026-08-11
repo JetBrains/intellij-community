@@ -4,6 +4,7 @@ package com.intellij.ide.dnd;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import static com.intellij.ide.dnd.FileCopyPasteUtil.createDataFlavor;
  *
  * @author Christian Ihle
  */
+@ApiStatus.Internal
 public final class LinuxDragAndDropSupport {
   public static final DataFlavor uriListFlavor = createDataFlavor("text/uri-list", String.class);
   public static final DataFlavor gnomeFileListFlavor = createDataFlavor("x-special/gnome-copied-files", null, true);

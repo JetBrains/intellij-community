@@ -43,6 +43,7 @@
   <action id="SaveAll">
     <keyboard-shortcut first-keystroke="meta shift S"/>
   </action>
+  <action id="SaveAs"/>
   <action id="CloseContent"/>
   <action id="CloseEditor">
     <keyboard-shortcut first-keystroke="meta F4"/>

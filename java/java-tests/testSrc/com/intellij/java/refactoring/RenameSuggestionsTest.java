@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -8,7 +8,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
+import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -40,7 +40,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
           }
       }""";
 
-    doTestSuggestionAvailable(text, "lambdaRename", "rename", "v");
+    doTestSuggestionAvailable(text, "lambdaRename", "rename");
   }
 
   public void testForeachScope() {
@@ -64,8 +64,8 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
          class TestImpl extends Test {
              void foo(int foo<caret>1) {}
          }""";
-
-    doTestSuggestionAvailable(text, "foo");
+    List<String> names = getNameSuggestions(text);
+    assertEquals(List.of("foo", "i"), names);
   }
 
   public void testByOptionalOfInitializer() {
@@ -77,7 +77,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
                                                       Optional<Foo> <caret>o = Optional.of(typeValue);
                                                     }}
                                                     """);
-    assertEquals(List.of("typeValue1", "value", "foo", "optionalFoo", "fooOptional", "optional", "o"), suggestions);
+    assertEquals(List.of("typeValue1", "value", "foo", "optionalFoo", "fooOptional", "optional"), suggestions);
   }
 
   public void testByOptionalOfNullableInitializer() {
@@ -88,7 +88,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
           Foo typeValue = this;
           Optional<Foo> <caret>o = Optional.ofNullable(typeValue);
         }}""");
-    assertEquals(List.of("typeValue1", "value", "foo", "optionalFoo", "fooOptional", "optional", "o"), suggestions);
+    assertEquals(List.of("typeValue1", "value", "foo", "optionalFoo", "fooOptional", "optional"), suggestions);
   }
 
   public void testByOptionalOfInitializerWithConstructor() {
@@ -97,7 +97,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
         class Foo {{
           Optional<Foo> <caret>o = Optional.ofNullable(new Foo());
         }}""");
-    assertEquals(List.of("foo", "optionalFoo", "fooOptional", "optional", "o"), suggestions);
+    assertEquals(List.of("foo", "optionalFoo", "fooOptional", "optional"), suggestions);
   }
 
   public void testByOptionalFlatMap() {
@@ -112,7 +112,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
         }
         class Car {}
         """);
-    assertEquals(List.of("car", "optionalCar", "carOptional", "optional", "o"), suggestions);
+    assertEquals(List.of("car", "optionalCar", "carOptional", "optional"), suggestions);
   }
 
   public void testLongQualifiedName() {
@@ -128,7 +128,57 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
                                                       }
                                                     }
                                                     """);
-    assertEquals(List.of("cat", "innerCat", "string", "s"), suggestions);
+    assertEquals(List.of("cat", "innerCat", "string"), suggestions);
+  }
+
+  public void testConstant() {
+    List<String> names = getNameSuggestions("""
+                                              class X {
+                                                public static final String fooBa<caret>rBaz = "";
+                                              }
+                                              """);
+    assertEquals(List.of("FOO_BAR_BAZ", "BAR_BAZ", "BAZ", "STRING"), names);
+  }
+
+  public void testNonConstant() {
+    List<String> names = getNameSuggestions("""
+                                              class X {
+                                                public static String FOO_BAR_<caret>BAZ = "";
+                                              }
+                                              """);
+    assertEquals(List.of("fooBarBaz", "barBaz", "baz", "string"), names);
+  }
+  
+  public void testSimpleField() {
+    List<String> names = getNameSuggestions("""
+                                              import java.util.ArrayList;
+                                              class X {
+                                                private List<String> typ<caret>eValue = new ArrayList<>();
+                                              }
+                                              """);
+    assertEquals(List.of("value", "objects", "objectArrayList", "arrayList", "list", "stringList"), names);
+  }
+
+  public void testSimpleClass() {
+    List<String> names = getNameSuggestions("""
+                                              class RecentlyChangedFilesState<caret> {
+                                              }
+                                              """);
+    assertEquals(List.of("ChangedFilesState", "FilesState", "State"), names);
+  }
+  
+  public void testAcronyms() {
+    List<String> names = getNameSuggestions("""
+                                              class APIClient {
+                                                String <caret>fileAPI;
+                                              }""");
+    assertEquals(List.of("fileApi", "api", "string"), names);
+
+    List<String> names2 = getNameSuggestions("""
+                                              class <caret>APIClient {
+                                                String fileAPI;
+                                              }""");
+    assertEquals(List.of("ApiClient", "Client"), names2);
   }
 
   private void doTestSuggestionAvailable(String text, String... expectedSuggestions) {
@@ -146,7 +196,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
       final PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.getInstance().getAllAccepted());
       assertNotNull(element);
 
-      VariableInplaceRenameHandler handler = new VariableInplaceRenameHandler();
+      MemberInplaceRenameHandler handler = new MemberInplaceRenameHandler();
       handler.doRename(element, getEditor(), null);
 
       LookupEx lookup = LookupManager.getActiveLookup(getEditor());

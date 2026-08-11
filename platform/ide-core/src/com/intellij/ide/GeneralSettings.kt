@@ -45,7 +45,11 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
       ReopenProjectsOnStartupMode.NEVER -> false
     }
     set(value) {
+      val changed = state.reopenLastProject != value
       state.reopenLastProject = value
+      if (changed) {
+        propertyChanged(PropertyNames.reopenLastProject)
+      }
     }
 
   var isDeletingToBin: Boolean
@@ -169,6 +173,7 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
     inactiveTimeout,
     autoSaveIfInactive,
     supportScreenReaders,
+    reopenLastProject,
   }
 
   var isSupportScreenReaders: Boolean

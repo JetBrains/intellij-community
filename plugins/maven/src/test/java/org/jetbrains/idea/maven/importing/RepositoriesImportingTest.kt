@@ -2,16 +2,35 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertContain
+import com.intellij.maven.testFramework.fixtures.assertDoNotContain
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenGeneralSettings
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.refreshFiles
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class RepositoriesImportingTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun testMirrorCentralImport() = runBlocking {
-    val oldSettingsFile = mavenGeneralSettings.userSettingsFile
+    val oldSettingsFile = maven.mavenGeneralSettings.userSettingsFile
     try {
-      val settingsXml = createProjectSubFile("settings.xml", """
+      val settingsXml = maven.createProjectSubFile("settings.xml", """
         <settings>
         <mirrors>
             <mirror>
@@ -23,10 +42,10 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
           </mirrors>
         </settings>
         """.trimIndent())
-      refreshFiles(listOf(settingsXml))
-      mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
+      maven.refreshFiles(listOf(settingsXml))
+      maven.mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
 
-      importProjectAsync("""
+      maven.importProjectAsync("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
                       <packaging>pom</packaging>
@@ -36,15 +55,15 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
       assertHaveRepositories("https://example.com/maven2")
     }
     finally {
-      mavenGeneralSettings.setUserSettingsFile(oldSettingsFile)
+      maven.mavenGeneralSettings.setUserSettingsFile(oldSettingsFile)
     }
   }
 
   @Test
   fun testMirrorAllImport() = runBlocking {
-    val oldSettingsFile = mavenGeneralSettings.userSettingsFile
+    val oldSettingsFile = maven.mavenGeneralSettings.userSettingsFile
     try {
-      val settingsXml = createProjectSubFile("settings.xml", """
+      val settingsXml = maven.createProjectSubFile("settings.xml", """
         <settings>
         <mirrors>
             <mirror>
@@ -56,10 +75,10 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
           </mirrors>
         </settings>
         """.trimIndent())
-      refreshFiles(listOf(settingsXml))
-      mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
+      maven.refreshFiles(listOf(settingsXml))
+      maven.mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
 
-      importProjectAsync("""
+      maven.importProjectAsync("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
                       <packaging>pom</packaging>
@@ -69,15 +88,15 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
       assertHaveRepositories("https://example.com/maven2")
     }
     finally {
-      mavenGeneralSettings.setUserSettingsFile(oldSettingsFile)
+      maven.mavenGeneralSettings.setUserSettingsFile(oldSettingsFile)
     }
   }
 
   @Test
   fun testMirrorAllExceptCentralImport() = runBlocking {
-    val oldSettingsFile = mavenGeneralSettings.userSettingsFile
+    val oldSettingsFile = maven.mavenGeneralSettings.userSettingsFile
     try {
-      val settingsXml = createProjectSubFile("settings.xml", """
+      val settingsXml = maven.createProjectSubFile("settings.xml", """
         <settings>
         <mirrors>
             <mirror>
@@ -89,10 +108,10 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
           </mirrors>
         </settings>
         """.trimIndent())
-      refreshFiles(listOf(settingsXml))
-      mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
+      maven.refreshFiles(listOf(settingsXml))
+      maven.mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
 
-      importProjectAsync("""
+      maven.importProjectAsync("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
                       <packaging>pom</packaging>
@@ -103,19 +122,19 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
       assertDoNotHaveRepositories("https://example.com/maven2<")
     }
     finally {
-      mavenGeneralSettings.setUserSettingsFile(oldSettingsFile)
+      maven.mavenGeneralSettings.setUserSettingsFile(oldSettingsFile)
     }
   }
 
   private fun assertDoNotHaveRepositories(vararg repos: String) {
-    val actual = RemoteRepositoriesConfiguration.getInstance(project).repositories.map { it.url }
+    val actual = RemoteRepositoriesConfiguration.getInstance(maven.project).repositories.map { it.url }
 
     assertDoNotContain(actual, *repos)
   }
 
 
   private fun assertHaveRepositories(vararg repos: String) {
-    val actual = RemoteRepositoriesConfiguration.getInstance(project).repositories.map { it.url }
+    val actual = RemoteRepositoriesConfiguration.getInstance(maven.project).repositories.map { it.url }
 
     assertContain(actual, *repos)
   }

@@ -18,11 +18,15 @@ package com.jetbrains.python.quickFixes;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
-import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedParameterInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 
 @TestDataPath("$CONTENT_ROOT/../testData//quickFixes/AddFieldQuickFixTest/")
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyAddFieldQuickFixTest extends PyQuickFixTestCase {
 
   public void testAddClassField() {
@@ -48,16 +52,16 @@ public class PyAddFieldQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testFromUnusedParameter() {  // PY-1398
-    doQuickFixTest(PyUnusedLocalInspection.class, "Add field 'foo' to class A");
+    doQuickFixTest(PyUnusedParameterInspection.class, "Add field 'foo' to class A");
   }
 
   // PY-14733
   public void testAddFieldInitializationInsideEmptyInit() {
-    doQuickFixTest(PyUnusedLocalInspection.class, "Add field 'foo' to class A");
+    doQuickFixTest(PyUnusedParameterInspection.class, "Add field 'foo' to class A");
   }
 
   public void testFromUnusedParameterKeyword() {  // PY-1602
-    doQuickFixTest(PyUnusedLocalInspection.class, "Add field 'foo' to class A");
+    doQuickFixTest(PyUnusedParameterInspection.class, "Add field 'foo' to class A");
   }
 
   // PY-21284

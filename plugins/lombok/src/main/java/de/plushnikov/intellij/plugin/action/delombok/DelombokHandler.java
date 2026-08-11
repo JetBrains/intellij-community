@@ -140,7 +140,7 @@ public class DelombokHandler {
       LombokProcessorManager.getLombokModifierProcessors().forEach(modifierProcessor -> {
         if (modifierProcessor.isSupported(modifierList)) {
           modifierProcessor.transformModifiers(modifierList, lombokModifiers);
-          lombokModifiers.forEach(modifier -> modifierList.setModifierProperty(modifier, true));
+          lombokModifiers.forEach((@PsiModifier.ModifierConstant String modifier) -> modifierList.setModifierProperty(modifier, true));
           lombokModifiers.clear();
         }
       });
@@ -358,7 +358,7 @@ public class DelombokHandler {
   }
 
   private static void copyModifiers(PsiModifierList fromModifierList, PsiModifierList resultModifierList) {
-    for (String modifier : PsiModifier.MODIFIERS) {
+    for (@PsiModifier.ModifierConstant String modifier : PsiModifier.MODIFIERS) {
       resultModifierList.setModifierProperty(modifier, fromModifierList.hasExplicitModifier(modifier));
     }
   }

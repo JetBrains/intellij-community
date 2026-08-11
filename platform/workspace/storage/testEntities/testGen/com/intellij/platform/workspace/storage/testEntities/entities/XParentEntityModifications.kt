@@ -20,7 +20,7 @@ interface XParentEntityBuilder : WorkspaceEntityBuilder<XParentEntity> {
 }
 
 internal object XParentEntityType : EntityType<XParentEntity, XParentEntityBuilder>() {
-  override val entityClass: Class<XParentEntity> get() = XParentEntity::class.java
+  override val entityImplClass: Class<*> get() = XParentEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = XParentEntityImpl.Builder::class.java
   operator fun invoke(
     parentProperty: String,

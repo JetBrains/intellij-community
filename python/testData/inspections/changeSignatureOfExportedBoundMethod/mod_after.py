@@ -1,5 +1,5 @@
 class C:
-    def method(self, a, b, i):
+    def method(self, a, b, l):
         pass
 
 _inst: C = C()

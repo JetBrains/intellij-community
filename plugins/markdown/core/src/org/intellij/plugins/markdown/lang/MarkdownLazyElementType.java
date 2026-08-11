@@ -13,12 +13,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import org.intellij.markdown.flavours.MarkdownFlavourDescriptor;
-import org.intellij.markdown.parser.MarkdownParser;
 import org.intellij.plugins.markdown.lang.lexer.MarkdownMergingLexer;
 import org.intellij.plugins.markdown.lang.parser.MarkdownFlavourUtil;
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserManager;
 import org.intellij.plugins.markdown.lang.parser.PsiBuilderFillingVisitor;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +48,7 @@ public class MarkdownLazyElementType extends ILazyParseableElementType {
     final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, lexer, getLanguage(), chars);
 
     var startTime = System.nanoTime();
-    final var parser = new MarkdownParser(flavour, true);
+    final var parser = MarkdownParserManager.createMarkdownParser(flavour, true);
     final var nodeType = MarkdownElementType.markdownType(chameleon.getElementType());
     final var node = parser.parseInline(nodeType, chars, 0, chars.length());
 
@@ -68,7 +68,8 @@ public class MarkdownLazyElementType extends ILazyParseableElementType {
     return actualElement;
   }
 
-  private static @NotNull MarkdownFlavourDescriptor obtainFlavour(@NotNull PsiFile file) {
+  @ApiStatus.Internal
+  public static @NotNull MarkdownFlavourDescriptor obtainFlavour(@NotNull PsiFile file) {
     if (file instanceof MarkdownFile markdownFile) {
       return markdownFile.getFlavour();
     }

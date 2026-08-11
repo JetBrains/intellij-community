@@ -10,6 +10,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import org.jetbrains.idea.devkit.build.PluginBuildConfiguration
+import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeImplicitModuleKindInspection
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeMixedDependenciesInspection
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeXmlApiUsageInspection
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
@@ -22,18 +23,22 @@ internal class SplitModeXmlApiUsageInspectionSuppressionTest : JavaCodeInsightFi
   override fun setUp() {
     super.setUp()
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
-    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.analysis.containing.plugins")
+    RegistryManager.getInstance().get("devkit.split.mode.analysis.containing.plugins")
       .setValue(true, testRootDisposable)
-    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin")
+    RegistryManager.getInstance().get("devkit.split.mode.inspections.enable.in.implicit.module.kind")
       .setValue(false, testRootDisposable)
 
-    val service = SplitModeApiRestrictionsService.getInstance()
+    val service = SplitModeApiRestrictionsService.getInstance(project)
     service.scheduleLoadRestrictions()
     timeoutRunBlocking {
       waitUntil("API restrictions failed to load", 2.seconds) { service.isLoaded() }
     }
 
-    myFixture.enableInspections(SplitModeXmlApiUsageInspection(), SplitModeMixedDependenciesInspection())
+    myFixture.enableInspections(
+      SplitModeXmlApiUsageInspection(),
+      SplitModeMixedDependenciesInspection(),
+      SplitModeImplicitModuleKindInspection(),
+    )
   }
 
   fun testPluginXmlWithIndirectFrontendOnlyDependenciesShowsSingleRootError() {
@@ -52,12 +57,12 @@ internal class SplitModeXmlApiUsageInspectionSuppressionTest : JavaCodeInsightFi
       moduleName = "unique.module.name.60",
       descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
       pluginXmlContent = """
-        <<error descr="This plugin effectively depends on frontend-only modules and will work only in frontend in Split Mode.
+        <<weak_warning descr="This plugin effectively depends on frontend-only modules and will work only in frontend in Split Mode. Consider adding a frontend dependency to explicitly indicate target IDE.
 
 Computed module kind reasoning:
 
 Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in module 'unique.module.name.60'
-via dependency 'unique.module.name.60.frontend.support' -> descriptor 'unique.module.name.60.frontend.support.xml' in module 'unique.module.name.60.frontend.support'.">idea-plugin</error>>
+via dependency 'unique.module.name.60.frontend.support' -> descriptor 'unique.module.name.60.frontend.support.xml' in module 'unique.module.name.60.frontend.support'.">idea-plugin</weak_warning>>
           <extensions defaultExtensionNs="com.intellij">
             <localInspection/>
           </extensions>
@@ -88,12 +93,12 @@ via dependency 'unique.module.name.60.frontend.support' -> descriptor 'unique.mo
       moduleName = "unique.module.name.61",
       descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
       pluginXmlContent = """
-        <<error descr="This plugin effectively depends on backend-only modules and will work only in backend in Split Mode.
+        <<weak_warning descr="This plugin effectively depends on backend-only modules and will work only in backend in Split Mode. Consider adding a backend dependency to explicitly indicate target IDE.
 
 Computed module kind reasoning:
 
 Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in module 'unique.module.name.61'
-via dependency 'unique.module.name.61.backend.support' -> descriptor 'unique.module.name.61.backend.support.xml' in module 'unique.module.name.61.backend.support'.">idea-plugin</error>>
+via dependency 'unique.module.name.61.backend.support' -> descriptor 'unique.module.name.61.backend.support.xml' in module 'unique.module.name.61.backend.support'.">idea-plugin</weak_warning>>
           <extensions defaultExtensionNs="com.intellij">
             <typedHandler/>
           </extensions>
@@ -190,7 +195,7 @@ Backend dependency 'intellij.platform.backend' from containing plugin descriptor
             <module name="intellij.platform.frontend"/>
           </dependencies>
           <extensions defaultExtensionNs="com.intellij">
-            <<warning descr="'com.intellij.localInspection' can only be used in 'backend' module type. Actual module type is 'frontend'.
+            <<warning descr="'com.intellij.localInspection' should be used in 'backend' module type. Actual module type is 'frontend'.
 
 Computed module kind reasoning:
 
@@ -214,7 +219,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
             <module name="intellij.platform.backend"/>
           </dependencies>
           <extensions defaultExtensionNs="com.intellij">
-            <<warning descr="'com.intellij.typedHandler' can only be used in 'shared' module type. Actual module type is 'backend'.
+            <<warning descr="'com.intellij.typedHandler' should be used in 'shared' module type. Actual module type is 'backend'.
 
 Computed module kind reasoning:
 
@@ -255,7 +260,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
       moduleName = "unique.module.name.33",
       descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
       pluginXmlContent = """
-        <<error descr="This plugin effectively depends on frontend-only and backend-only modules simultaneously. It may not get loaded in Split Mode.
+        <<error descr="This module effectively depends on frontend-only and backend-only modules simultaneously. It will not get loaded in Split Mode.
 
 Computed module kind reasoning:
 

@@ -10,6 +10,7 @@ import com.intellij.platform.icons.impl.rendering.DefaultRenderingContext
 import com.intellij.platform.icons.rendering.ImageModifiers
 import com.intellij.platform.icons.rendering.MutableIconUpdateFlow
 import com.intellij.platform.icons.rendering.RenderingContext
+import com.intellij.platform.icons.rendering.ThemeContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
@@ -18,9 +19,9 @@ import org.jetbrains.jewel.ui.icon.ComposeImageResourceProvider
 internal class StandaloneIconRendererManager : DefaultIconRendererManager() {
     private val imageProvider = ComposeImageResourceProvider()
 
-    override fun createUpdateFlow(scope: CoroutineScope?, updateCallback: (Int) -> Unit): MutableIconUpdateFlow {
+    override fun createUpdateFlow(scope: CoroutineScope?, onUpdate: (suspend (Int) -> Unit)?): MutableIconUpdateFlow {
         if (scope == null) return EmptyMutableIconUpdateFlow()
-        return CoroutineBasedMutableIconUpdateFlow(scope, updateCallback)
+        return CoroutineBasedMutableIconUpdateFlow(scope, onUpdate)
     }
 
     override fun createRenderingContext(
@@ -28,7 +29,7 @@ internal class StandaloneIconRendererManager : DefaultIconRendererManager() {
         defaultImageModifiers: ImageModifiers?,
     ): RenderingContext {
         val knownModifiers = defaultImageModifiers as? DefaultImageModifiers
-        return DefaultRenderingContext(updateFlow, knownModifiers, imageProvider)
+        return DefaultRenderingContext(updateFlow, knownModifiers, ThemeContext.None, imageProvider)
     }
 }
 

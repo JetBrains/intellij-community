@@ -3,9 +3,9 @@
 // INTENTION_TEXT: "Add 'x =' to argument"
 // AFTER-WARNING: Parameter 'x' is never used
 // AFTER-WARNING: Parameter 'a' is never used
+// K2_ERROR: ARGUMENT_PASSED_TWICE
+// K2_ERROR: NO_CONTEXT_ARGUMENT
 
-// K2_ERROR: Argument already passed for this parameter.
-// K2_ERROR: No context argument for 'x: Any' found.
 
 context(x: Any)
 fun foo(a: String): String = a

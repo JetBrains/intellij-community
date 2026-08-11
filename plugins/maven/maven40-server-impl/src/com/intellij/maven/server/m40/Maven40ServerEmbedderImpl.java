@@ -845,7 +845,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       }
       return results;
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       throw wrapToSerializableRuntimeException(e);
     }
   }

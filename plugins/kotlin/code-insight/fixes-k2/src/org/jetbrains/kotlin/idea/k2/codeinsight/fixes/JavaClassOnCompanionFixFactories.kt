@@ -21,7 +21,7 @@ internal object JavaClassOnCompanionFixFactories {
 
     val factory = KotlinQuickFixFactory { diagnostic: KaFirDiagnostic.JavaClassOnCompanion ->
         val element = diagnostic.psi as? KtDotQualifiedExpression ?: return@KotlinQuickFixFactory emptyList()
-        val elementContext = (element.receiverExpression.mainReference?.resolve() as? KtObjectDeclaration)?.name
+        val elementContext = (element.receiverExpression.mainReference?.resolve() as? KtObjectDeclaration)?.nameIdentifier?.text
             ?: SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT.identifier
 
         listOf(

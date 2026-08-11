@@ -2,13 +2,12 @@ package com.intellij.lang.properties;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.quickFix.ActionHint;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class AlignPropertiesInColumnsTest extends LightQuickFixParameterizedTestCase {
+public class AlignPropertiesInColumnsTest extends PropertiesLightQuickFixParameterizedTestCase {
 
   private PropertiesCodeStyleSettings myPropertiesSettings;
 

@@ -22,7 +22,7 @@ public interface LibraryMavenCoordinateEntityBuilder : WorkspaceEntityBuilder<Li
 }
 
 internal object LibraryMavenCoordinateEntityType : EntityType<LibraryMavenCoordinateEntity, LibraryMavenCoordinateEntityBuilder>() {
-  override val entityClass: Class<LibraryMavenCoordinateEntity> get() = LibraryMavenCoordinateEntity::class.java
+  override val entityImplClass: Class<*> get() = LibraryMavenCoordinateEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = LibraryMavenCoordinateEntityImpl.Builder::class.java
   operator fun invoke(
     coordinates: MavenCoordinates,
@@ -44,7 +44,6 @@ public fun MutableEntityStorage.modifyLibraryMavenCoordinateEntity(
 
 public var LibraryEntityBuilder.mavenCoordinates: LibraryMavenCoordinateEntityBuilder?
   by WorkspaceEntity.extensionBuilder(LibraryMavenCoordinateEntity::class.java)
-
 
 @JvmOverloads
 @JvmName("createLibraryMavenCoordinateEntity")

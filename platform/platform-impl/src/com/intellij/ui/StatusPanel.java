@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ui.AsyncProcessIcon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,7 @@ import java.awt.BorderLayout;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
+@ApiStatus.Internal
 public final class StatusPanel extends JBPanel {
   private final ReentrantLock myLock = new ReentrantLock();
   private @Nullable @Nls String myError;
@@ -153,6 +155,7 @@ public final class StatusPanel extends JBPanel {
     return myError;
   }
 
+  @ApiStatus.Internal
   public final class Action {
     /**
      * Guarded by {@link #myLock}.

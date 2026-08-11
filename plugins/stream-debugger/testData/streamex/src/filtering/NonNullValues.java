@@ -4,7 +4,7 @@ import one.util.streamex.EntryStream;
 
 public class NonNullValues {
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     final long count = EntryStream.of(1, 1, 2, null, 3, null).nonNullValues().count();
     System.out.println(count);
   }

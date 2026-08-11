@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds.BASE_COLLECTIONS_PACKAGE
 import org.jetbrains.kotlin.name.StandardClassIds.BASE_ENUMS_PACKAGE
+import org.jetbrains.kotlin.name.StandardClassIds.BASE_KOTLIN_PACKAGE
 import org.jetbrains.kotlin.name.StandardClassIds.BASE_SEQUENCES_PACKAGE
 
 @ApiStatus.Internal
@@ -110,6 +111,10 @@ object StandardKotlinNames {
         @JvmField val emitAll: CallableId = CallableId(BASE_FLOW_PACKAGE, Name.identifier("emitAll"))
     }
 
+    object For {
+        @JvmField val forEachName: Name = Name.identifier("forEach")
+    }
+
     object BuildScope {
         @JvmField val buildList: CallableId = CallableId(BASE_COLLECTIONS_PACKAGE, Name.identifier("buildList"))
         @JvmField val buildSet: CallableId = CallableId(BASE_COLLECTIONS_PACKAGE, Name.identifier("buildSet"))
@@ -151,6 +156,8 @@ object StandardKotlinNames {
     @JvmField val takeUnless: FqName = BUILT_INS_PACKAGE_FQ_NAME + "takeUnless"
 
     @JvmField val context: FqName = BUILT_INS_PACKAGE_FQ_NAME + "context"
+    @JvmField val WITH_CALLABLE_ID: CallableId = CallableId(BASE_KOTLIN_PACKAGE, Name.identifier("with"))
+    @JvmField val contextCallableId : CallableId = CallableId(BASE_KOTLIN_PACKAGE, Name.identifier("context"))
 
     private val collectionTransformationFunctionNames = listOf(
         "chunked",

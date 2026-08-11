@@ -20,7 +20,7 @@ class WithC() {
   val a : Int get() = 1
 
   init {
-    val z = <error descr="[UNRESOLVED_REFERENCE] Unresolved reference: b">b</error>
+    val z = <error descr="[UNRESOLVED_REFERENCE]">b</error>
     val zz = x
   }
 

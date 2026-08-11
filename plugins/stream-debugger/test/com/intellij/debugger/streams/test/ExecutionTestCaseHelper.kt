@@ -13,11 +13,11 @@ import com.intellij.xdebugger.XDebugSession
 
 open class ExecutionTestCaseHelper(
   val testCase: ExecutionTestCase,
-  private val mySession: XDebugSession,
+  debugSession: XDebugSession,
   myLibrarySupportProvider: LibrarySupportProvider,
   myDebuggerPositionResolver: DebuggerPositionResolver,
   logger: Logger,
-) : TraceExecutionTestHelper(mySession, myLibrarySupportProvider, myDebuggerPositionResolver, logger) {
+) : TraceExecutionTestHelper(debugSession, myLibrarySupportProvider, myDebuggerPositionResolver, logger) {
   override fun getTestName(): String {
     return UsefulTestCase.getTestName(testCase.name, false)
   }
@@ -31,6 +31,6 @@ open class ExecutionTestCaseHelper(
   }
 
   override fun resume() {
-    ApplicationManager.getApplication().invokeLater(Runnable { mySession.resume() })
+    ApplicationManager.getApplication().invokeLater(Runnable { session.resume() })
   }
 }

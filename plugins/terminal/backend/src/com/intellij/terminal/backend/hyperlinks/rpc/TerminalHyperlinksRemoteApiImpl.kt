@@ -1,6 +1,7 @@
 package com.intellij.terminal.backend.hyperlinks.rpc
 
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.terminal.backend.hyperlinks.BackendTerminalHyperlinksSessionsManager
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalCreateHyperlinksSessionRequest
@@ -14,10 +15,11 @@ internal class TerminalHyperlinksRemoteApiImpl : TerminalHyperlinksRemoteApi {
     // In this case we consider that the process is running in the environment of the backend project.
     val eelDescriptor = request.eelDescriptor ?: project.getEelDescriptor()
 
-    return BackendTerminalHyperlinksSessionsManager.getInstance().createNewSession(project, eelDescriptor).id
+    return BackendTerminalHyperlinksSessionsManager.getInstance(project).createNewSession(eelDescriptor).id
   }
 
-  override suspend fun closeSession(sessionId: TerminalHyperlinksSessionId) {
-    return BackendTerminalHyperlinksSessionsManager.getInstance().closeSession(sessionId)
+  override suspend fun closeSession(projectId: ProjectId, sessionId: TerminalHyperlinksSessionId) {
+    val project = projectId.findProject()
+    return BackendTerminalHyperlinksSessionsManager.getInstance(project).closeSession(sessionId)
   }
 }

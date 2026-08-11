@@ -35,6 +35,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jdom.JDOMException
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.model.serialization.PathMacroUtil
@@ -88,6 +89,7 @@ class ConversionContextImpl(private val projectIdentityFile: Path) : ConversionC
     }
   }
 
+  @ApiStatus.Internal
   companion object {
     @JvmStatic
     fun collapsePath(path: String, moduleSettings: ComponentManagerSettings): String {

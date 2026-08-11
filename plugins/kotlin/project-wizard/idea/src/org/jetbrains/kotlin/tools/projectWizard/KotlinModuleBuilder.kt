@@ -5,8 +5,6 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder
-import com.intellij.jarRepository.JarRepositoryManager
-import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentEntry
@@ -17,6 +15,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -28,6 +27,7 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.configuration.KotlinWithLibraryConfigurator.Companion.downloadAndConfigureKotlinStdlib
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
@@ -41,6 +41,7 @@ import java.io.File
  * Otherwise, a new library is created for the project and used for the new module.
  */
 internal class KotlinModuleBuilder(
+    private val coroutineScope: CoroutineScope,
     private val existingKotlinStdLib: LibraryOrderEntry?,
     private val isCreatingNewProject: Boolean,
     private val useCompactProjectStructure: Boolean
@@ -115,31 +116,28 @@ internal class KotlinModuleBuilder(
      * in case the library does not exist on disk already.
      */
     private fun createKotlinJavaRuntime(rootModel: ModifiableRootModel): LibraryOrderEntry? {
-        val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(rootModel.project)
-        val kotlinJavaRuntime = projectLibraryTable.createLibrary(JavaRuntimeLibraryDescription.LIBRARY_NAME) as? LibraryEx ?: return null
-        kotlinJavaRuntime.modifiableModel.apply {
-            kind = RepositoryLibraryType.REPOSITORY_LIBRARY_KIND
-            val repositoryProperties = RepositoryLibraryProperties(
-                /* groupId = */ KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID,
-                /* artifactId = */ PathUtil.KOTLIN_JAVA_STDLIB_NAME,
-                /* version = */ Versions.KOTLIN.text,
-                /* includeTransitiveDependencies = */ true,
-                /* excludedDependencies = */ emptyList()
-            )
-            properties = repositoryProperties
-            val dependencies = JarRepositoryManager.loadDependenciesModal(
-                /* project = */ rootModel.project,
-                /* libraryProps = */ repositoryProperties,
-                /* loadSources = */ true,
-                /* loadJavadoc = */ true,
-                /* copyTo = */ null,
-                /* repositories = */ null
-            )
+        val project = rootModel.project
+        val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+        val libraryName = JavaRuntimeLibraryDescription.LIBRARY_NAME
+        val kotlinJavaRuntime =
+            (projectLibraryTable.getLibraryByName(libraryName) ?: projectLibraryTable.createLibrary(libraryName)) as? LibraryEx
+                ?: error("unable to obtain libraryId for '$libraryName'")
 
-            dependencies.forEach {
-                addRoot(it.file, it.type)
-            }
-        }.commit()
+        val repositoryProperties = RepositoryLibraryProperties(
+            /* groupId = */ KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID,
+            /* artifactId = */ PathUtil.KOTLIN_JAVA_STDLIB_NAME,
+            /* version = */ Versions.KOTLIN.text,
+            /* includeTransitiveDependencies = */ true,
+            /* excludedDependencies = */ emptyList()
+        )
+
+        coroutineScope.downloadAndConfigureKotlinStdlib(
+            project,
+            kotlinJavaRuntime,
+            libraryName,
+            repositoryProperties
+        )
+
         return rootModel.addLibraryEntry(kotlinJavaRuntime)
     }
 

@@ -25,10 +25,10 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
 
   public JvmMethod(
     JVMFlags flags, String signature, String name, String descriptor,
-    @NotNull Iterable<ElementAnnotation> annotations, Iterable<ParamAnnotation> parameterAnnotations,
+    @NotNull Iterable<ElementAnnotation> annotations, Iterable<ParamAnnotation> parameterAnnotations, @NotNull Iterable<ElementAnnotation> typeAnnotations,
     Iterable<String> exceptions, Object defaultValue) {
 
-    super(flags, signature, name, TypeRepr.getType(Type.getReturnType(GraphElementInterner.intern(descriptor))), annotations, defaultValue);
+    super(flags, signature, name, TypeRepr.getType(Type.getReturnType(GraphElementInterner.intern(descriptor))), annotations, typeAnnotations, defaultValue);
     myParamAnnotations = parameterAnnotations;
     myExceptions = Iterators.collect(Iterators.map(exceptions, s -> new TypeRepr.ClassType(GraphElementInterner.intern(s))), new ArrayList<>());
     myArgTypes = TypeRepr.getTypes(Type.getArgumentTypes(GraphElementInterner.intern(descriptor)));

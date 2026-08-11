@@ -3,13 +3,15 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 
 internal class KotlinSystemOutPostfixTemplate : StringBasedPostfixTemplate {
     @Suppress("ConvertSecondaryConstructorToPrimary")
     constructor(provider: KotlinPostfixTemplateProvider) : super(
         /* name = */ "sout",
         /* example = */ "println(expr)",
-        /* selector = */ allExpressions(ValuedFilter, StatementFilter, ExpressionTypeFilter { !it.isUnitType }),
+        /* selector = */ allExpressions(ValuedFilter, StatementFilter, ExpressionTypeFilter { it.classId != KaStandardTypeClassIds.UNIT }),
         /* provider = */ provider
     )
 

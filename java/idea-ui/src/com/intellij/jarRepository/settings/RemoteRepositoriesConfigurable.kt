@@ -343,7 +343,10 @@ class RemoteRepositoriesConfigurable(private val project: Project) : SearchableC
 private fun mnemonicButton(@Nls text: String): JButton {
   val button = JButton()
   val parsed = TextWithMnemonic.parse(text)
-  button.text = parsed.text
+  // Use getText(true) so the mnemonic suffix (e.g. "追加 (D)" in locales where the mnemonic
+  // char is not part of the text) is included; otherwise mnemonicIndex may point outside the text
+  // length and setDisplayedMnemonicIndex throws IllegalArgumentException.
+  button.text = parsed.getText(/*withMnemonicSuffix=*/true)
   if (parsed.hasMnemonic()) {
     button.mnemonic = parsed.mnemonicCode
     button.displayedMnemonicIndex = parsed.mnemonicIndex

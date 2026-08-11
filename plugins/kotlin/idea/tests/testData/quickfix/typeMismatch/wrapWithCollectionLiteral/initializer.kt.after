@@ -1,6 +1,6 @@
 // "Wrap element with 'listOf()' call" "true"
 // WITH_STDLIB
-// K2_ERROR: Initializer type mismatch: expected 'List<String>', actual 'String'.
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
 
 fun foo(a: String) {
     val strings: List<String> = listOf(a)

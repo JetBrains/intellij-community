@@ -706,7 +706,8 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     outputDirectory.setComponent(outputDirectoryButton);
     outputDirectoryButton.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
       .withTitle(TestngBundle.message("testng.output.directory.button.title"))
-      .withDescription(TestngBundle.message("testng.select.output.directory")));
+      .withDescription(TestngBundle.message("testng.select.output.directory"))
+      .withEnvironmentRestricted(true));
     moduleClasspath.setEnabled(true);
 
     propertiesTableModel = new TestNGParametersTableModel();

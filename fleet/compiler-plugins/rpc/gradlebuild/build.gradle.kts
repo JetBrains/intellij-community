@@ -44,10 +44,10 @@ kotlin {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
     }
-    implementation(jps.org.jetbrains.annotations1504825916.get())
     compileOnly(jps.org.jetbrains.kotlin.kotlin.compiler.embeddable2043673965.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }
+    implementation(jps.org.jetbrains.annotations1504825916.get())
   }
   sourceSets.jvmMain.dependencies {
     compileOnly(jps.org.jetbrains.kotlin.kotlin.compiler.embeddable2043673965.get().let { "${it.group}:${it.name}:${it.version}" }) {

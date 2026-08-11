@@ -1,11 +1,17 @@
 package com.jetbrains.python.testing
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.configurations.RunConfiguration
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.run.PythonRunConfiguration
 import junit.framework.TestCase
 
+@Subsystems.TestRunner
+@Components.Pytest
+@Layers.Functional
 class PyTestConfigurationProducerRespectFilePatternTest : PyTestCase() {
   companion object {
     private const val TEST_DIR = "/pyTestConfigurationProducer/"

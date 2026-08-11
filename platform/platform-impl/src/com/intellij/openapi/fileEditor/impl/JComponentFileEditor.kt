@@ -6,6 +6,7 @@ import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
@@ -14,6 +15,7 @@ import javax.swing.JComponent
  * To open any JComponent in editor tab you can call
  * JComponentEditorProvider.openEditor(project, "Title", jComponent)
  */
+@ApiStatus.Internal
 class JComponentFileEditor(private val file: VirtualFile,
                            private val component: JComponent,
                            private val name: @Nls String) : UserDataHolderBase(), FileEditor {

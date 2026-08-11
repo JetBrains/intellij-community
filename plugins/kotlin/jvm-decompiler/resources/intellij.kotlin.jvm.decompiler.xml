@@ -1,12 +1,27 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.jvmDecompiler">
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="org.jetbrains.java.decompiler"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.highlighting"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="kotlin.fir.frontend-independent"/>
     <module name="kotlin.jvm.shared"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <attachSourcesProvider implementation="org.jetbrains.kotlin.idea.jvmDecompiler.DecompileKotlinToJavaActionProvider"/>

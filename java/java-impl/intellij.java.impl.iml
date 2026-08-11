@@ -55,7 +55,6 @@
     <orderEntry type="module" module-name="intellij.libraries.oro.matcher" />
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
@@ -71,6 +70,7 @@
     <orderEntry type="module" module-name="intellij.java.frontback.psi" />
     <orderEntry type="module" module-name="intellij.regexp" />
     <orderEntry type="module" module-name="intellij.java.indexing.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.java.indexing.serializers" exported="" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
     <orderEntry type="module" module-name="intellij.java.analysis.impl" exported="" />
@@ -86,24 +86,7 @@
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
-    <orderEntry type="module-library">
-      <library name="completion-ranking-java" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-java:0.9.3">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.9.3/completion-ranking-java-0.9.3.jar">
-              <sha256sum>e3dcfee71eb13467139a1385152bd28554c79c677738cb617a91a772ea6e9f87</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.9.3/completion-ranking-java-0.9.3.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.9.3/completion-ranking-java-0.9.3-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.java" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
@@ -138,6 +121,7 @@
     <orderEntry type="module" module-name="intellij.java.syntax" />
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.testIntegration.ui" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />

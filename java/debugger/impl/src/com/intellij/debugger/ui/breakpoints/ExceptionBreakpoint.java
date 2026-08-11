@@ -89,7 +89,11 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
   @Override
   public PsiClass getPsiClass() {
-    return ReadAction.compute(() -> {
+    // Use a cancellable non-blocking read action instead of ReadAction.compute():
+    // findClass() may block on stub index building, and a non-cancellable read action cannot yield to a pending
+    // write action, which leads to freezes (IDEA-389740). executeSynchronously() runs the computation in a read
+    // action that is interrupted and retried whenever a write action is about to occur.
+    return ReadAction.nonBlocking(() -> {
       if (myProject.isDisposed()) {
         return null;
       }
@@ -99,7 +103,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
         return null;
       }
       return DebuggerUtils.findClass(qualifiedName, myProject, GlobalSearchScope.allScope(myProject));
-    });
+    }).executeSynchronously();
   }
 
   @Override

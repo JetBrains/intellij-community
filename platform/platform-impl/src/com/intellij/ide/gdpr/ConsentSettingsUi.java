@@ -42,6 +42,7 @@ import java.util.function.Supplier;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
+@ApiStatus.Internal
 public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Consent>> {
   private final Collection<ConsentStateSupplier> consentMapping = new ArrayList<>();
   private final boolean myPreferencesMode;

@@ -18,7 +18,6 @@
     <module name="intellij.libraries.jackson.dataformat.yaml" loading="embedded"/>
     <module name="intellij.libraries.jackson.dataformat.toml"/>
     <module name="intellij.libraries.jackson.datatype.jdk8"/>
-    <module name="intellij.libraries.jackson.datatype.joda"/>
     <module name="intellij.libraries.jackson.datatype.jsr310"/>
     <module name="intellij.libraries.jackson.module.kotlin" loading="embedded"/>
     <!-- endregion -->
@@ -33,6 +32,7 @@
 
     <!-- region direct modules -->
     <module name="intellij.libraries.java.compatibility" loading="embedded"/>
+    <module name="intellij.libraries.jetbrains.annotations" loading="embedded"/>
     <module name="intellij.libraries.kotlin.reflect" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.io" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.serialization.cbor" loading="embedded"/>
@@ -78,6 +78,7 @@
     <module name="intellij.libraries.jaxen" loading="embedded"/>
     <module name="intellij.libraries.jbr" loading="embedded"/>
     <module name="intellij.libraries.jcip" loading="embedded"/>
+    <module name="intellij.libraries.jna" loading="embedded"/>
     <module name="intellij.libraries.jsoup" loading="embedded"/>
     <module name="intellij.libraries.jsonpath" loading="embedded"/>
     <module name="intellij.libraries.jsvg" loading="embedded"/>
@@ -90,6 +91,7 @@
     <module name="intellij.libraries.netty.buffer" loading="embedded"/>
     <module name="intellij.libraries.netty.codec.compression" loading="embedded"/>
     <module name="intellij.libraries.netty.codec.http" loading="embedded"/>
+    <module name="intellij.libraries.netty.codec.protobuf" loading="embedded"/>
     <module name="intellij.libraries.netty.handler.proxy" loading="embedded"/>
     <module name="intellij.libraries.oro.matcher" loading="embedded"/>
     <module name="intellij.libraries.protobuf" loading="embedded"/>
@@ -133,7 +135,9 @@
     <!-- endregion -->
 
     <!-- region direct modules -->
-    <module name="intellij.platform.rpc" loading="embedded"/>
+    <module name="intellij.platform.klogger" loading="embedded"/>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.rpc.lite" loading="embedded"/>
     <module name="intellij.platform.kernel" loading="embedded"/>
     <!-- endregion -->
     <!-- endregion -->
@@ -199,20 +203,27 @@
     <module name="intellij.platform.lvcs" loading="embedded"/>
     <module name="intellij.platform.configurationStore.impl" loading="embedded"/>
     <module name="intellij.platform.lang.core" loading="embedded"/>
+    <module name="intellij.platform.testIntegration" loading="embedded"/>
+    <module name="intellij.platform.testIntegration.ui" loading="embedded"/>
     <module name="intellij.platform.lang" loading="embedded"/>
     <module name="intellij.platform.lang.impl" loading="embedded"/>
+    <module name="intellij.platform.syntax.psi" loading="embedded"/>
     <module name="intellij.platform.statistics" loading="embedded"/>
     <module name="intellij.platform.statistics.config" loading="embedded"/>
     <module name="intellij.platform.statistics.uploader" loading="embedded"/>
     <module name="intellij.platform.experiment" loading="embedded"/>
+    <module name="intellij.platform.project" loading="embedded"/>
+    <module name="intellij.platform.ide.progress" loading="embedded"/>
     <module name="intellij.platform.ide.impl" loading="embedded"/>
+    <module name="intellij.platform.ide.pluginSignatureVerifier"/>
+    <module name="intellij.libraries.zip.signer"/>
     <module name="intellij.platform.rd.community" loading="embedded"/>
-    <module name="intellij.platform.ide.ui.inspector" loading="embedded"/>
     <module name="intellij.platform.remote.core" loading="embedded"/>
     <module name="intellij.platform.ide.remote" loading="embedded"/>
     <module name="intellij.platform.threadDumpParser" loading="embedded"/>
     <module name="intellij.platform.ide.favoritesTreeView" loading="embedded"/>
     <module name="intellij.platform.ide.designer" loading="embedded"/>
+    <module name="intellij.platform.ide.bootstrap" loading="embedded"/>
     <module name="intellij.platform.bootstrap" loading="embedded"/>
     <module name="intellij.platform.backend.workspace.impl"/>
     <module name="intellij.platform.ide.concurrency" loading="embedded"/>
@@ -258,6 +269,7 @@
     <module name="intellij.platform.project.backend"/>
     <module name="intellij.platform.progress.backend"/>
     <module name="intellij.platform.lang.impl.backend"/>
+    <module name="intellij.platform.indexing.impl.backend"/>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.monolith"/>
     <module name="intellij.platform.editor"/>
@@ -282,24 +294,23 @@
     <module name="intellij.platform.debugger.impl" loading="embedded"/>
     <!-- endregion -->
 
-    <!-- region nested: problemsView -->
-    <module name="intellij.platform.problemsView.frontend"/>
-    <module name="intellij.platform.problemsView.backend"/>
-    <module name="intellij.platform.problemsView.shared"/>
-    <!-- endregion -->
-
     <!-- region direct modules -->
-    <module name="intellij.platform.scopes" loading="embedded"/>
+    <module name="intellij.platform.scopes"/>
     <module name="intellij.platform.scopes.backend"/>
-    <module name="intellij.platform.find" loading="embedded"/>
+    <module name="intellij.platform.find"/>
     <module name="intellij.platform.find.backend"/>
     <module name="intellij.platform.editor.frontend"/>
     <module name="intellij.platform.managed.cache"/>
     <module name="intellij.platform.managed.cache.backend"/>
+    <module name="intellij.platform.ide.internal"/>
+    <module name="intellij.platform.ide.internal.backend"/>
     <module name="intellij.platform.feedback" loading="embedded"/>
+    <module name="intellij.platform.pluginManager.shared.base"/>
     <module name="intellij.platform.pluginManager.shared"/>
     <module name="intellij.platform.pluginManager.backend"/>
     <module name="intellij.platform.pluginManager.frontend"/>
+    <module name="intellij.platform.ide.updateChecker" loading="embedded"/>
+    <module name="intellij.platform.ide.updateChecker.backend"/>
     <module name="intellij.platform.execution.impl.frontend"/>
     <module name="intellij.platform.execution.impl.backend"/>
     <module name="intellij.platform.eel.tcp"/>

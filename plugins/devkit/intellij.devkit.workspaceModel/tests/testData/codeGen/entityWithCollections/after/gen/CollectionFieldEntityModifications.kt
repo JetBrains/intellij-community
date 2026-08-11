@@ -18,9 +18,8 @@ var versions: MutableSet<Int>
 var names: MutableList<String>
 var manifestAttributes: Map<String, String>
 }
-
 internal object CollectionFieldEntityType : EntityType<CollectionFieldEntity, CollectionFieldEntityBuilder>(){
-override val entityClass: Class<CollectionFieldEntity> get() = CollectionFieldEntity::class.java
+override val entityImplClass: Class<*> get() = CollectionFieldEntityImpl::class.java
 override val entityImplBuilderClass: Class<*> get() = CollectionFieldEntityImpl.Builder::class.java
 operator fun invoke(
 versions: Set<Int>,
@@ -38,12 +37,10 @@ init?.invoke(builder)
 return builder
 }
 }
-
 fun MutableEntityStorage.modifyCollectionFieldEntity(
 entity: CollectionFieldEntity,
 modification: CollectionFieldEntityBuilder.() -> Unit,
 ): CollectionFieldEntity = modifyEntity(CollectionFieldEntityBuilder::class.java, entity, modification)
-
 @JvmOverloads
 @JvmName("createCollectionFieldEntity")
 fun CollectionFieldEntity(

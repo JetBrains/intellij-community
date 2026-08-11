@@ -26,19 +26,21 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHCommitModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModelBase
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRCommitChangeListViewModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRCumulativeChangeListViewModelImpl
 import java.util.concurrent.CancellationException
 
 @ApiStatus.Experimental
-interface GHPRChangesViewModel : CodeReviewChangesViewModel<GHCommit> {
+interface GHPRChangesViewModel : CodeReviewChangesViewModel<GHCommitModel> {
   val changeListVm: StateFlow<ComputedResult<GHPRChangeListViewModel>>
   val changesLoadingErrorHandler: GHApiLoadingErrorHandler
 
@@ -62,10 +64,12 @@ internal class GHPRChangesViewModelImpl(
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override val reviewCommits: StateFlow<List<GHCommit>> =
+  override val reviewCommits: StateFlow<List<GHCommitModel>> =
     dataProvider.changesData.changesNeedReloadSignal.withInitial(Unit).transformLatest {
       try {
-        dataProvider.changesData.loadCommits()
+        dataProvider.changesData.loadCommits().map {
+          GHCommitModel(project, it)
+        }
       }
       catch (e: Exception) {
         emptyList()
@@ -92,7 +96,13 @@ internal class GHPRChangesViewModelImpl(
     }.stateInNow(cs, null)
 
   private val delegate = CodeReviewChangesViewModelDelegate.create(cs, changesContainer.filterNotNull()) { changes, changeList ->
-    GHPRChangeListViewModelImpl(this, project, dataContext, dataProvider, changes, changeList, openPullRequestDiff)
+    // a single-commit pull request has no separate cumulative diff, so its only change list is the cumulative one
+    if (changeList.commitSha == null || changes.commits.size == 1) {
+      GHPRCumulativeChangeListViewModelImpl(this, project, dataContext, dataProvider, changeList, openPullRequestDiff)
+    }
+    else {
+      GHPRCommitChangeListViewModelImpl(this, project, dataContext, dataProvider, changeList, openPullRequestDiff)
+    }
   }
 
   override val selectedCommitIndex: SharedFlow<Int> = reviewCommits.combine(delegate.selectedCommit) { commits, sha ->
@@ -100,11 +110,11 @@ internal class GHPRChangesViewModelImpl(
     else commits.indexOfFirst { it.oid.startsWith(sha) }
   }.modelFlow(cs, thisLogger())
 
-  override val selectedCommit: SharedFlow<GHCommit?> = reviewCommits.combine(selectedCommitIndex) { commits, index ->
-    index.takeIf { it >= 0 }?.let { commits[it] }
+  override val selectedCommit: SharedFlow<GHCommitModel?> = reviewCommits.combine(selectedCommitIndex) { commits, index ->
+    commits.getOrNull(index)
   }.modelFlow(cs, thisLogger())
 
-  override val changeListVm: StateFlow<ComputedResult<GHPRChangeListViewModelImpl>> = delegate.changeListVm
+  override val changeListVm: StateFlow<ComputedResult<GHPRChangeListViewModelBase>> = delegate.changeListVm
 
   override fun selectCommit(index: Int) {
     delegate.selectCommit(index)?.selectChange(null)
@@ -134,5 +144,5 @@ internal class GHPRChangesViewModelImpl(
     GHPRStatisticsCollector.logChangeSelected(project)
   }
 
-  override fun commitHash(commit: GHCommit): String = commit.abbreviatedOid
+  override fun commitHash(commit: GHCommitModel): String = commit.abbreviatedOid
 }

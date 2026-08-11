@@ -12,9 +12,9 @@ import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SePreviewInfo
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
-import com.intellij.platform.searchEverywhere.backend.providers.target.SeTargetsProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider
+import com.intellij.platform.searchEverywhere.providers.target.SeTargetsProviderDelegate
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 

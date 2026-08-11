@@ -9,6 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
+import org.jetbrains.intellij.build.productLayout.dependency.JpsProjectContext
+import org.jetbrains.intellij.build.productLayout.dependency.jpsProject
 import org.jetbrains.intellij.build.productLayout.dependency.pluginGraph
 import org.jetbrains.intellij.build.productLayout.dependency.runValidationRule
 import org.jetbrains.intellij.build.productLayout.dependency.testGenerationModel
@@ -16,6 +18,9 @@ import org.jetbrains.intellij.build.productLayout.model.error.PluginDependencyEr
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
+import java.nio.file.Path
 
 /**
  * Isolated unit tests for [PluginContentDependencyValidator].
@@ -331,4 +336,119 @@ class PluginContentDependencyValidatorTest {
       assertThat(errors).isEmpty()
     }
   }
+
+  /**
+   * A `private` content module is only reachable from the plugin that declares it. Before IJPL-252475 the model
+   * accepted any bundled plugin as a provider, so a production plugin packaging its own copy of a library wrapper
+   * silently satisfied every other plugin's dependency on it, and the missing declaration only surfaced when the IDE
+   * refused to load the module (IJPL-252452).
+   */
+  @Nested
+  inner class ContentModuleVisibilityTest {
+    @Test
+    fun `private module of another plugin does not satisfy a dependency`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
+      val jps = privateWrapperProject(tempDir)
+      val graph = pluginGraph {
+        product("IDEA") {
+          bundlesPlugin("owner.plugin")
+          bundlesPlugin("consumer.plugin")
+        }
+        plugin("owner.plugin") {
+          content(WRAPPER_MODULE, loading = ModuleLoadingRuleValue.EMBEDDED)
+        }
+        plugin("consumer.plugin") {
+          content("consumer.module", loading = ModuleLoadingRuleValue.REQUIRED)
+        }
+        linkContentModuleDeps("consumer.module", WRAPPER_MODULE)
+      }
+
+      val model = testGenerationModel(graph, outputProvider = jps.outputProvider)
+      val errors = runValidationRule(PluginContentDependencyValidator, model)
+
+      assertThat(errors).hasSize(1)
+      val error = errors[0] as PluginDependencyError
+      assertThat(error.missingDependencies.keys).contains(ContentModuleName(WRAPPER_MODULE))
+    }
+
+    @Test
+    fun `private module declared by the depending plugin satisfies the dependency`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
+      val jps = privateWrapperProject(tempDir)
+      val graph = pluginGraph {
+        product("IDEA") {
+          bundlesPlugin("owner.plugin")
+          bundlesPlugin("consumer.plugin")
+        }
+        plugin("owner.plugin") {
+          content(WRAPPER_MODULE, loading = ModuleLoadingRuleValue.EMBEDDED)
+        }
+        plugin("consumer.plugin") {
+          content("consumer.module", loading = ModuleLoadingRuleValue.REQUIRED)
+          content(WRAPPER_MODULE, loading = ModuleLoadingRuleValue.EMBEDDED)
+        }
+        linkContentModuleDeps("consumer.module", WRAPPER_MODULE)
+      }
+
+      val model = testGenerationModel(graph, outputProvider = jps.outputProvider)
+      val errors = runValidationRule(PluginContentDependencyValidator, model)
+
+      assertThat(errors).isEmpty()
+    }
+
+    @Test
+    fun `internal module of another plugin still satisfies a dependency`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
+      val jps = wrapperProject(tempDir, visibility = "internal")
+      val graph = pluginGraph {
+        product("IDEA") {
+          bundlesPlugin("owner.plugin")
+          bundlesPlugin("consumer.plugin")
+        }
+        plugin("owner.plugin") {
+          content(WRAPPER_MODULE, loading = ModuleLoadingRuleValue.EMBEDDED)
+        }
+        plugin("consumer.plugin") {
+          content("consumer.module", loading = ModuleLoadingRuleValue.REQUIRED)
+        }
+        linkContentModuleDeps("consumer.module", WRAPPER_MODULE)
+      }
+
+      val model = testGenerationModel(graph, outputProvider = jps.outputProvider)
+      val errors = runValidationRule(PluginContentDependencyValidator, model)
+
+      assertThat(errors).isEmpty()
+    }
+
+    private fun privateWrapperProject(tempDir: Path): JpsProjectContext = wrapperProject(tempDir, visibility = "private")
+
+    /**
+     * `consumer.module` declares the dependency in its own descriptor: only a declared dependency is resolved by the
+     * plugin system, and only a declared one is subject to the visibility check.
+     */
+    private fun wrapperProject(tempDir: Path, visibility: String): JpsProjectContext {
+      val jps = jpsProject(tempDir) {
+        module(WRAPPER_MODULE) {
+          resourceRoot()
+        }
+        module("consumer.module") {
+          resourceRoot()
+        }
+      }
+      Files.writeString(
+        tempDir.resolve(WRAPPER_MODULE.replace('.', '/')).resolve("resources/$WRAPPER_MODULE.xml"),
+        "<idea-plugin visibility=\"$visibility\">\n</idea-plugin>",
+      )
+      Files.writeString(
+        tempDir.resolve("consumer/module").resolve("resources/consumer.module.xml"),
+        """
+          |<idea-plugin>
+          |  <dependencies>
+          |    <module name="$WRAPPER_MODULE"/>
+          |  </dependencies>
+          |</idea-plugin>
+        """.trimMargin(),
+      )
+      return jps
+    }
+  }
 }
+
+private const val WRAPPER_MODULE = "intellij.libraries.wrapper"

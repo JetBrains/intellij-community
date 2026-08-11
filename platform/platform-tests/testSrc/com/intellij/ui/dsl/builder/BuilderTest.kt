@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.testFramework.TestApplicationManager
+import com.intellij.testFramework.assertErrorLogged
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.scale.JBUIScale
 import org.junit.Before
@@ -24,5 +25,18 @@ class BuilderTest {
     }
 
     assertTrue(panel.preferredSize.height > JBUIScale.scale(100), "Row customize is ignored")
+  }
+
+  @Test
+  fun testEmptyRow() {
+    assertErrorLogged<Throwable> {
+      panel {
+        row { }
+      }
+    }
+
+    panel {
+      row { }.label("Label")
+    }
   }
 }

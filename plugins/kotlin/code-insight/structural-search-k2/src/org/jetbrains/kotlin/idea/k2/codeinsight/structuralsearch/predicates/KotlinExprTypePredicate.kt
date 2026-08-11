@@ -7,10 +7,14 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.allSupertypes
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.allSupertypes
+import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch.renderNames
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtCallableDeclaration

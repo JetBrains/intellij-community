@@ -9,8 +9,8 @@
 // ACTION: Replace with safe (this?.) call
 // ACTION: Specify explicit lambda signature
 // ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type String?
-// K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'String?'.
-// K2_AFTER_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'String?'.
+// K2_AFTER_ERROR: UNSAFE_CALL
+// K2_ERROR: UNSAFE_CALL
 
 fun String?.foo(a: String?) {
     a.let { s ->

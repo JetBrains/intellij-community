@@ -11,7 +11,7 @@ import org.jetbrains.tools.model.updater.impl.MavenId
 private const val ktGroup = "org.jetbrains.kotlin"
 
 /** The version should be aligned with gradle.properties#defaultSnapshotVersion from the Kotlin repo */
-internal const val BOOTSTRAP_VERSION = "2.4.255-dev-255"
+internal const val BOOTSTRAP_VERSION = "2.5.255-dev-255"
 
 // see .idea/jarRepositories.xml
 // This is the new repository where artifacts SINCE `2.2.20-dev-2414` are published to.
@@ -20,29 +20,51 @@ private val INTELLIJ_DEPENDENCIES_REPOSITORY = JpsRemoteRepository(
     "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies",
 )
 
-private class ArtifactCoordinates(private val originalVersion: String, val mode: ArtifactMode) {
+private val INTELLIJ_EXPERIMENTAL_DEPENDENCIES_REPOSITORY = JpsRemoteRepository(
+    "kotlin-experimental",
+    "https://packages.jetbrains.team/maven/p/kt/experimental",
+)
+
+internal class ArtifactCoordinates(private val originalVersion: String, val mode: ArtifactMode, val repository: JpsRemoteRepository) {
     val version: String
         get() = when (mode) {
-            ArtifactMode.MAVEN -> originalVersion
+            ArtifactMode.MAVEN, ArtifactMode.MAVEN_EXPERIMENTAL -> originalVersion
             ArtifactMode.BOOTSTRAP -> BOOTSTRAP_VERSION
         }
 }
 
-private val GeneratorPreferences.kotlincArtifactCoordinates: ArtifactCoordinates
-    get() = ArtifactCoordinates(kotlincVersion, kotlincArtifactsMode)
+internal val GeneratorPreferences.kotlincArtifactCoordinates: ArtifactCoordinates
+    get() = ArtifactCoordinates(kotlincVersion, kotlincArtifactsMode, kotlincRepository ?: INTELLIJ_DEPENDENCIES_REPOSITORY)
 
-private val GeneratorPreferences.jpsArtifactCoordinates: ArtifactCoordinates
+private val GeneratorPreferences.kotlincRepository: JpsRemoteRepository?
+    get() = when (kotlincArtifactsMode) {
+        ArtifactMode.MAVEN_EXPERIMENTAL -> INTELLIJ_EXPERIMENTAL_DEPENDENCIES_REPOSITORY
+        ArtifactMode.MAVEN -> INTELLIJ_DEPENDENCIES_REPOSITORY
+        ArtifactMode.BOOTSTRAP -> null
+    }
+
+internal val GeneratorPreferences.jpsArtifactCoordinates: ArtifactCoordinates
     get() = if (jpsPluginVersion != "dev") {
-        ArtifactCoordinates(jpsPluginVersion, jpsPluginArtifactsMode)
+        ArtifactCoordinates(jpsPluginVersion, jpsPluginArtifactsMode, INTELLIJ_DEPENDENCIES_REPOSITORY)
     } else {
         kotlincArtifactCoordinates
     }
 
-internal val GeneratorPreferences.kotlincArtifactVersion: String
-    get() = kotlincArtifactCoordinates.version
+/**
+ * Returns KGP version, intended to be used in Kotlin Gradle import tests.
+ * By default, should roll together with the kotlinc version [GeneratorPreferences.kotlincArtifactCoordinates]
+ *
+ * Note: Should not be used in tests, included in quality gates because of rolling nature
+ */
+internal val GeneratorPreferences.kotlinGradlePluginArtifactVersion: String
+    get() = kotlinGradlePluginVersion ?: kotlincArtifactCoordinates.version
 
-internal val GeneratorPreferences.jpsArtifactVersion: String
-    get() = jpsArtifactCoordinates.version
+/**
+ * Returns KGP version, intended to be used in Kotlin plugin tests, which use Gradle import as part of setup.
+ * Unlike [kotlinGradlePluginArtifactVersion] should be fixed, because tests are included in quality gates
+ */
+internal val GeneratorPreferences.kotlinNativeArtifactVersion: String
+    get() = kotlinNativeVersion ?: kotlincArtifactCoordinates.version
 
 internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommunity: Boolean): List<JpsLibrary> {
     val kotlincCoordinates = preferences.kotlincArtifactCoordinates
@@ -50,24 +72,23 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
 
     return buildLibraryList(isCommunity) {
         kotlincForIdeWithStandardNaming("kotlinc.allopen-compiler-plugin", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-k2", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-fe10", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.analysis-api", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-impl-base", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-platform-interface", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.symbol-light-classes", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-k2", kotlincCoordinates, convertedToModuleLibrary = true)
+        kotlincForIdeWithStandardNaming("kotlinc.analysis-api", kotlincCoordinates, convertedToModuleLibrary = true)
+        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-impl-base", kotlincCoordinates, convertedToModuleLibrary = true)
+        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-platform-interface", kotlincCoordinates, convertedToModuleLibrary = true)
+        kotlincForIdeWithStandardNaming("kotlinc.symbol-light-classes", kotlincCoordinates, convertedToModuleLibrary = true)
         kotlincForIdeWithStandardNaming("kotlinc.incremental-compilation-impl-tests", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-build-common-tests", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-cli", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-tests", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-common", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-common", kotlincCoordinates, convertedToModuleLibrary = true)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-fe10", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-fir", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-ir", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-gradle-statistics", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlinx-serialization-compiler-plugin", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.lombok-compiler-plugin", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.low-level-api-fir", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.low-level-api-fir", kotlincCoordinates, convertedToModuleLibrary = true)
         kotlincForIdeWithStandardNaming("kotlinc.noarg-compiler-plugin", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.parcelize-compiler-plugin", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.sam-with-receiver-compiler-plugin", kotlincCoordinates)
@@ -91,9 +112,9 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincWithStandardNaming("kotlinc.kotlin-build-tools-impl", kotlincCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-build-tools-cri-impl", kotlincCoordinates)
 
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", jpsPluginCoordinates, repository = INTELLIJ_DEPENDENCIES_REPOSITORY)
-        kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginCoordinates, postfix = "-for-ide", repository = INTELLIJ_DEPENDENCIES_REPOSITORY)
-        kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginCoordinates, repository = INTELLIJ_DEPENDENCIES_REPOSITORY)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", jpsPluginCoordinates)
+        kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginCoordinates, postfix = "-for-ide")
+        kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginCoordinates)
 
         // bootstrap version of kotlin-jps-plugin-classpath required for testing
         kotlincWithStandardNaming(
@@ -121,9 +142,9 @@ private fun LibraryListBuilder.kotlincForIdeWithStandardNaming(
     name: String,
     coordinates: ArtifactCoordinates,
     includeSources: Boolean = true,
-    repository: JpsRemoteRepository = INTELLIJ_DEPENDENCIES_REPOSITORY,
+    convertedToModuleLibrary: Boolean = false,
 ) {
-    kotlincWithStandardNaming(name, coordinates, includeSources, "-for-ide", repository = repository)
+    kotlincWithStandardNaming(name, coordinates, includeSources, "-for-ide", convertedToModule = convertedToModuleLibrary)
 }
 
 private fun LibraryListBuilder.kotlincWithStandardNaming(
@@ -133,8 +154,8 @@ private fun LibraryListBuilder.kotlincWithStandardNaming(
     postfix: String = "",
     transitive: Boolean = false,
     excludes: List<MavenId> = emptyList(),
-    repository: JpsRemoteRepository = INTELLIJ_DEPENDENCIES_REPOSITORY,
     jpsLibraryName: String = name,
+    convertedToModule: Boolean = false,
 ) {
     require(name.startsWith("kotlinc."))
     val jpsLibrary = singleJarMavenLibrary(
@@ -143,9 +164,9 @@ private fun LibraryListBuilder.kotlincWithStandardNaming(
         transitive = transitive,
         includeSources = includeSources,
         excludes = excludes,
-        repository = repository
+        repository = coordinates.repository
     )
-    addLibrary(jpsLibrary.convertMavenUrlToCooperativeIfNeeded(coordinates.mode, isCommunity))
+    addLibrary(jpsLibrary.convertMavenUrlToCooperativeIfNeeded(coordinates.mode, isCommunity, convertedToModule))
 }
 
 private fun singleJarMavenLibrary(
@@ -165,19 +186,24 @@ private fun singleJarMavenLibrary(
     )
 }
 
-private fun JpsLibrary.convertMavenUrlToCooperativeIfNeeded(artifactsMode: ArtifactMode, isCommunity: Boolean): JpsLibrary {
+private fun JpsLibrary.convertMavenUrlToCooperativeIfNeeded(artifactsMode: ArtifactMode, isCommunity: Boolean, convertedToModule: Boolean): JpsLibrary {
     fun convertUrl(url: JpsUrl): JpsUrl {
         return when (url.path) {
             is JpsPath.ProjectDir -> url
+            is JpsPath.ModuleDir -> url
             is JpsPath.MavenRepository -> {
                 val snapshotDirectoryPath = KotlinTestsDependenciesUtil.kotlinCompilerSnapshotLocationInsideCommunity
-                JpsUrl.Jar(JpsPath.ProjectDir("$snapshotDirectoryPath/${url.path.relativePath}", isCommunity))
+                if (convertedToModule) {
+                    JpsUrl.Jar(JpsPath.ModuleDir("../../../$snapshotDirectoryPath/${url.path.relativePath}"))
+                } else {
+                    JpsUrl.Jar(JpsPath.ProjectDir("$snapshotDirectoryPath/${url.path.relativePath}", isCommunity))
+                }
             }
         }
     }
 
     return when (artifactsMode) {
-        ArtifactMode.MAVEN -> this
+        ArtifactMode.MAVEN, ArtifactMode.MAVEN_EXPERIMENTAL -> this
         ArtifactMode.BOOTSTRAP -> JpsLibrary(
             name = name,
             type = JpsLibrary.LibraryType.Plain,

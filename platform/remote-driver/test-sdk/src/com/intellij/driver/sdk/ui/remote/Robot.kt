@@ -4,7 +4,7 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.model.RemoteMouseButton
 import java.awt.Point
 
-@Remote("com.jetbrains.performancePlugin.remotedriver.robot.SmoothRobot", plugin = REMOTE_ROBOT_MODULE_ID)
+@Remote("com.jetbrains.performancePlugin.remotedriver.robot.IdeRobot", plugin = REMOTE_ROBOT_MODULE_ID)
 interface Robot {
   fun hasInputFocus(): Boolean
   fun moveMouse(component: Component)
@@ -20,6 +20,7 @@ interface Robot {
   fun click(component: Component, point: Point, button: RemoteMouseButton)
   fun click(component: Component, point: Point, button: RemoteMouseButton, times: Int)
   fun pressAndReleaseKey(keyCode: Int, vararg modifiers: Int)
+  fun dragAndDrop(from: Component, fromPoint: Point, to: Component, toPoint: Point)
   fun pressModifiers(modifierMask: Int)
   /**
    * Performs a strict click in the context of SmoothRobot by repeating the full

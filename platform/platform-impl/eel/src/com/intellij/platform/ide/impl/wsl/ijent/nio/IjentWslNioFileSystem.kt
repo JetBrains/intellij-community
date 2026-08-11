@@ -3,7 +3,7 @@ package com.intellij.platform.ide.impl.wsl.ijent.nio
 
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.EelDescriptorOwner
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.platform.eel.provider.utils.impl.ijentToLocal
 import java.nio.file.FileStore
 import java.nio.file.FileSystem
 import java.nio.file.Path
@@ -14,8 +14,7 @@ import java.nio.file.attribute.UserPrincipalLookupService
 /**
  * See [IjentWslNioFileSystemProvider].
  */
-@ApiStatus.Internal
-class IjentWslNioFileSystem internal constructor(
+internal class IjentWslNioFileSystem internal constructor(
   private val provider: IjentWslNioFileSystemProvider,
   internal val wslId: String,
   private val ijentFs: FileSystem,
@@ -60,7 +59,7 @@ class IjentWslNioFileSystem internal constructor(
     }
 
   override fun getPath(first: String, vararg more: String): Path =
-    IjentWslNioPath(this, originalFs.getPath(first, *more), null)
+    IjentWslNioPath(this, originalFs.getPath(ijentToLocal(first), *more.map { ijentToLocal(it) }.toTypedArray()), null)
 
   override fun getPathMatcher(syntaxAndPattern: String?): PathMatcher =
     originalFs.getPathMatcher(syntaxAndPattern)

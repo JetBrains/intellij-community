@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
 import com.intellij.execution.CommandLineUtil
@@ -132,9 +132,9 @@ sealed class GitExecutable {
     internal fun getModificationTime(pathVariable: String?, isMac: Boolean, toPath: (String) -> Path): Long {
       var filePath = exePath
 
-      if (!filePath.contains(File.separator)) {
-        val exeFile = PathEnvironmentVariableUtil.findInPath(filePath, pathVariable, null)
-        if (exeFile != null) filePath = exeFile.path
+      if (!filePath.contains(@Suppress("IO_FILE_USAGE", "RemoveRedundantQualifierName") java.io.File.separator)) {
+        val exeFile = PathEnvironmentVariableUtil.findFirst(filePath, pathVariable)
+        if (exeFile != null) filePath = exeFile.toString()
       }
 
       val executablePath = toPath(filePath)

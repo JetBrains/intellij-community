@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.impl.packaging;
 
 import com.intellij.openapi.project.Project;
@@ -32,10 +32,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class PyManagePackagesDialog extends DialogWrapper {
+final class PyManagePackagesDialog extends DialogWrapper {
   private final JPanel myMainPanel;
 
-  public PyManagePackagesDialog(final @NotNull Project project, @NotNull Sdk sdk) {
+  PyManagePackagesDialog(final @NotNull Project project, @NotNull Sdk sdk) {
     super(project, true);
     setTitle(PyBundle.message("manage.python.packages"));
 

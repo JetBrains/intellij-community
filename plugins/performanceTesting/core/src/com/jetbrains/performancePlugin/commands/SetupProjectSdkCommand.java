@@ -78,7 +78,7 @@ public class SetupProjectSdkCommand extends AbstractCommand {
     ProjectJdkTable jdkTable = ProjectJdkTable.getInstance(project);
     Sdk oldSdk = jdkTable.findJdk(mySdkName);
     if (oldSdk != null) {
-      if (Objects.equals(oldSdk.getSdkType().getName(), mySdkName) && FileUtil.pathsEqual(oldSdk.getHomePath(), mySdkHome)) {
+      if (Objects.equals(oldSdk.getSdkType().getName(), mySdkType) && FileUtil.pathsEqual(oldSdk.getHomePath(), mySdkHome)) {
         logMessage.accept("Existing SDK is already configured the expected way");
         return oldSdk;
       }

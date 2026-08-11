@@ -8,7 +8,9 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import javax.swing.JComponent
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object RuntimeChooserMessages {
   private val title get() = LangBundle.message("dialog.title.choose.ide.runtime")
 

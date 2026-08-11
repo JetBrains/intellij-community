@@ -30,6 +30,8 @@ public interface TestFrameworkRunningModel extends Disposable {
 
   void selectAndNotify(AbstractTestProxy testProxy);
 
+  default void scrollToRunningTest() { }
+
   private static @Nullable Integer getTextOffset(@NotNull AbstractTestProxy test, @NotNull TestConsoleProperties properties) {
     Location<?> location = test.getLocation(properties.getProject(), properties.getScope());
     if (location == null) return null;

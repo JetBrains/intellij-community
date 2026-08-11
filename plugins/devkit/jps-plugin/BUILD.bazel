@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.devkit.jps` start
-
 jvm_library(
     name = "jps",
     srcs = glob(
@@ -31,7 +30,7 @@ jvm_library(
         "@community//build:build-javac-rt",
         "//platform/util",
         "//platform/util/base",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -57,6 +56,7 @@ jvm_library(
         "@community//build:build-javac-rt_test_lib",
         "//platform/util:util_test_lib",
         "//platform/util/base:base_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.jps` end
@@ -71,7 +71,6 @@ exports_files(
 ### auto-generated section `iml intellij.devkit.jps` end
 
 ### auto-generated section `build intellij.devkit.jps.tests` start
-
 jvm_library(
     name = "jps-tests",
     srcs = glob(
@@ -127,6 +126,10 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//java/compiler/instrumentation-util",
         "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.jps.tests` end
@@ -141,7 +144,6 @@ exports_files(
 ### auto-generated section `iml intellij.devkit.jps.tests` end
 
 ### auto-generated section `test intellij.devkit.jps.tests` start
-
 jps_test(
     name = "jps-tests_test",
     runtime_deps = [":jps-tests_test_lib"],

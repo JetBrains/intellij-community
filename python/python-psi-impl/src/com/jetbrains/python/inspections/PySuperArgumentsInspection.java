@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
@@ -64,8 +65,8 @@ public final class PySuperArgumentsInspection extends PyInspection {
                 if (!secondClass.isSubclass(firstClass, myTypeEvalContext)) {
                   registerProblem(
                     node.getArgumentList(),
-                    PyPsiBundle.message("INSP.class.is.not.subtype.of.class",
-                                        secondClass.getName(), firstClass.getName())
+                    PyPsiBundle.problemMessage("INSP.class.is.not.subtype.of.class",
+                                               CodifiedParam.ofReference(secondClass), CodifiedParam.ofReference(firstClass))
                   );
                 }
               }

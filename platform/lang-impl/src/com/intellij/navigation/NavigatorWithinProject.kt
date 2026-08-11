@@ -124,11 +124,13 @@ private fun parseLocationInFile(range: String): LocationInFile? {
   }
 }
 
+@ApiStatus.Internal
 class NavigatorWithinProject(
   val project: Project,
   val parameters: Map<String, String>,
   private val locationToOffset: LocationToOffsetConverter
 ) {
+  @ApiStatus.Internal
   companion object {
     fun parseNavigationPath(pathText: String): Triple<String?, String?, String?> {
       val matcher = PATH_WITH_LOCATION.matcher(pathText)
@@ -137,6 +139,7 @@ class NavigatorWithinProject(
     }
   }
 
+  @ApiStatus.Internal
   enum class NavigationKeyPrefix(val prefix: String) {
     FQN("fqn"),
     PATH("path");

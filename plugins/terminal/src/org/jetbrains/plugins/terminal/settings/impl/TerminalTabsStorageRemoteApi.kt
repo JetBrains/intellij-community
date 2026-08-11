@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.terminal.settings.impl
 
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -27,7 +27,8 @@ interface TerminalTabsStorageRemoteApi : RemoteApi<Unit> {
 
   companion object {
     suspend fun getInstance(): TerminalTabsStorageRemoteApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<TerminalTabsStorageRemoteApi>())
+      // TODO: IJPL-252054
+      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<TerminalTabsStorageRemoteApi>())
     }
   }
 }

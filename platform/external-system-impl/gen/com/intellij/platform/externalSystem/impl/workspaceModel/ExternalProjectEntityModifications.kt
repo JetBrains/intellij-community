@@ -19,7 +19,7 @@ interface ExternalProjectEntityBuilder : WorkspaceEntityBuilder<ExternalProjectE
 }
 
 internal object ExternalProjectEntityType : EntityType<ExternalProjectEntity, ExternalProjectEntityBuilder>() {
-  override val entityClass: Class<ExternalProjectEntity> get() = ExternalProjectEntity::class.java
+  override val entityImplClass: Class<*> get() = ExternalProjectEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ExternalProjectEntityImpl.Builder::class.java
   operator fun invoke(
     externalProjectPath: String,

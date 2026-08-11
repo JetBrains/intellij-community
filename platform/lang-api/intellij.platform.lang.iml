@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.testIntegration" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.lvcs" />
@@ -20,7 +21,7 @@
     <orderEntry type="library" exported="" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" scope="TEST" name="jmock" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.hamcrest" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />

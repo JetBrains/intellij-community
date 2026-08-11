@@ -57,10 +57,6 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     myCoverageByTestEnabled = coverageByTestEnabled;
     myIncludeFilters = includeFilters;
     myExcludePatterns = excludePatterns;
-
-    if (coverageRunner instanceof JaCoCoCoverageRunner) {
-      setSkipUnloadedClassesAnalysis(true);
-    }
   }
 
   @Override
@@ -197,7 +193,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     myExcludePatterns = readFilters(element, EXCLUDED_FILTER);
 
     if (myRunner == null) {
-      myRunner = CoverageRunner.getInstance(IDEACoverageRunner.class); //default
+      myRunner = CoverageRunner.getInstance(JavaCoverageRunner.DEFAULT_RUNNER_CLASS);
     }
   }
 

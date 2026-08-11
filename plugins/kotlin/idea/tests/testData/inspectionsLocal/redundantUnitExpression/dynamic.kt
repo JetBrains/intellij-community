@@ -1,6 +1,6 @@
 // PROBLEM: none
-// K2_ERROR: Dynamic type is only supported in Kotlin JS.
 // ERROR: Unsupported [Dynamic types are not supported in this context]
+// K2_ERROR: UNSUPPORTED
 
 fun foo() {
     fun bar(f: () -> dynamic): Unit {}

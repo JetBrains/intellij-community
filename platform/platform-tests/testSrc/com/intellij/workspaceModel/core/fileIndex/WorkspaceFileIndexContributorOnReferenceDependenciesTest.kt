@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.core.fileIndex
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.SkipAddingToWatchedRoots
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -20,6 +19,7 @@ import com.intellij.util.indexing.testEntities.ReferredTestEntityBuilder
 import com.intellij.util.indexing.testEntities.ReferredTestEntityId
 import com.intellij.util.indexing.testEntities.WithReferenceTestEntity
 import com.intellij.util.indexing.testEntities.WithReferenceTestEntityBuilder
+import com.intellij.workspaceModel.core.fileIndex.impl.SkipAddingToWatchedRootsData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
@@ -319,8 +319,7 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
     numberOfCalls.set(0)
   }
 
-  // we need SkipAddingToWatchedRoots to pass filter WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors()
-  private class ReferredTestEntityContributor : WorkspaceFileIndexContributor<ReferredTestEntity>, SkipAddingToWatchedRoots {
+  private class ReferredTestEntityContributor : WorkspaceFileIndexContributor<ReferredTestEntity> {
     val numberOfCalls = AtomicInteger(0)
 
     override val entityClass: Class<ReferredTestEntity>
@@ -334,7 +333,7 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
     override fun registerFileSets(entity: ReferredTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
       numberOfCalls.incrementAndGet()
       if (storage.hasReferrers(entity.symbolicId)) {
-        registrar.registerFileSet(entity.file, WorkspaceFileKind.CUSTOM, entity, null)
+        registrar.registerFileSet(entity.file, WorkspaceFileKind.CUSTOM, entity, object: SkipAddingToWatchedRootsData {})
       }
     }
   }

@@ -8,6 +8,7 @@ plugins {
 dependencies {
     api(projects.markdown.core)
     api(projects.intUi.intUiStandalone)
+    compileOnly(projects.markdown.extensions.frontMatter)
     compileOnly(projects.markdown.extensions.gfmAlerts)
     compileOnly(projects.markdown.extensions.gfmTables)
 

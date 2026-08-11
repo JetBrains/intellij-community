@@ -354,6 +354,13 @@ public interface Git {
                                      @NotNull FilePath workingTreePath,
                                      @NotNull GitReference sourceRef,
                                      @Nullable String newBranchName);
+
   @NotNull
   GitCommandResult pruneWorktrees(@NotNull GitRepository repository);
+
+  @NotNull
+  GitCommandResult runHook(@NotNull GitRepository repository,
+                           @NotNull String hookName,
+                           @NotNull List<String> hookArgs,
+                           @NotNull List<String> stdinLines);
 }

@@ -17,7 +17,7 @@ interface SubsetSealedClassEntityBuilder : WorkspaceEntityBuilder<SubsetSealedCl
 }
 
 internal object SubsetSealedClassEntityType : EntityType<SubsetSealedClassEntity, SubsetSealedClassEntityBuilder>() {
-  override val entityClass: Class<SubsetSealedClassEntity> get() = SubsetSealedClassEntity::class.java
+  override val entityImplClass: Class<*> get() = SubsetSealedClassEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SubsetSealedClassEntityImpl.Builder::class.java
   operator fun invoke(
     someData: SubsetSealedClass,

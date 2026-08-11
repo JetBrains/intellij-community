@@ -79,6 +79,7 @@ fun <T> showFontSizePopup(
   return FontSizePopupData(slider)
 }
 
+@ApiStatus.Internal
 data class FontSizePopupData(val slider: JBSlider)
 
 // Basically an observable value

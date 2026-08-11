@@ -3,7 +3,7 @@ package com.intellij.internal.inspector.components;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.internal.InternalActionsBundle;
+import com.intellij.internal.inspector.IdeUiInspectorBundle;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorAction;
 import com.intellij.internal.inspector.UiInspectorCustomComponentChildProvider;
@@ -144,6 +144,13 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
 
   public void resetModel(Component c, boolean accessibleModel) {
     setModel(buildModel(c, accessibleModel));
+  }
+
+  /**
+   * Serializes the whole component hierarchy and the properties shown in the inspector table as JSON.
+   */
+  public @NotNull String exportTreeAsJson() {
+    return ComponentTreeJsonExporter.export(getModel().getRoot());
   }
 
   public void selectPath(@NotNull Component component) {
@@ -556,8 +563,8 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
             }
           }
           myToolTipText =
-            InternalActionsBundle.message("ui.inspector.accessibility.audit.tree.tooltip", count.getTotal(), count.getErrors(),
-                                                        count.getWarnings(), count.getRecommendations());
+            IdeUiInspectorBundle.message("ui.inspector.accessibility.audit.tree.tooltip", count.getTotal(), count.getErrors(),
+                                         count.getWarnings(), count.getRecommendations());
         }
       }
 

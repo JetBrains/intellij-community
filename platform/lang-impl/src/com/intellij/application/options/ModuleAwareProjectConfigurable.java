@@ -16,6 +16,7 @@ import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +61,17 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     return true;
   }
 
+  private @Nullable Splitter mySplitter;
+
+  /**
+   * Returns the splitter created by {@link #createComponent()}, or {@code null} if the component
+   * is not a splitter (e.g. single module, default project). Available after {@link #createComponent()}.
+   */
+  @ApiStatus.Internal
+  public final @Nullable Splitter getSplitter() {
+    return mySplitter;
+  }
+
   @Override
   public JComponent createComponent() {
     if (myProject.isDefault()) {
@@ -80,6 +92,7 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
       return onlyModuleConfigurableProvider.getValue().createComponent();
     }
     final Splitter splitter = new Splitter(false, 0.25f);
+    mySplitter = splitter;
     CollectionListModel<Module> listDataModel = new CollectionListModel<>(modules);
     final JBList<Module> moduleList = new JBList<>(listDataModel);
     ListSpeedSearch.installOn(moduleList, o -> o == null ? getProjectConfigurableItemName() : o.getName());

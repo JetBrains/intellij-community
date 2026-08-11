@@ -9,8 +9,10 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class LineEndWithSelectionAction extends TextComponentEditorAction {
   public LineEndWithSelectionAction() {
     super(new Handler());

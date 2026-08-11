@@ -1,6 +1,6 @@
 // "Change type of 'f' to '() -> Unit'" "true"
 // K2_ACTION: "Change type of enclosing property 'f' to '() -> Unit'" "true"
-// K2_ERROR: Return type mismatch: expected 'Int', actual 'Unit'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 fun foo() {
     val f: () -> Int = {
         var x = 1

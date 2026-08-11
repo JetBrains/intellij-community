@@ -11,6 +11,7 @@ import git4idea.commands.GitCompoundResult;
 import git4idea.commands.GitSimpleEventDetector;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
+import git4idea.util.GitFreezingProcess;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +35,10 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
 
   @Override
   protected void execute() {
+    new GitFreezingProcess(myProject, getOperationName(), this::doExecute).execute();
+  }
+
+  private void doExecute() {
     boolean fatalErrorHappened = false;
     notifyBranchWillChange();
     while (hasMoreRepositories() && !fatalErrorHappened) {

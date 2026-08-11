@@ -8,10 +8,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
@@ -22,7 +22,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.plugin.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.testFramework" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.tests" scope="TEST" />
@@ -62,10 +62,9 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.code-insight.inspections.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" scope="TEST" />
-    <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
-    <orderEntry type="library" name="kotlin-tooling-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.tooling.core" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
@@ -76,5 +75,8 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.syntax" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.inspections" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
   </component>
 </module>

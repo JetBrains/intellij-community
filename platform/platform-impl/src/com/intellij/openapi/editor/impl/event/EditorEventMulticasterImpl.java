@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.event;
 
 import com.intellij.openapi.Disposable;
@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeListener;
@@ -74,6 +75,26 @@ public final class EditorEventMulticasterImpl implements EditorEventMulticasterE
       @Override
       public void bulkUpdateFinished(@NotNull Document document) {
         DOCUMENT_EP.forEachExtensionSafe(it -> it.bulkUpdateFinished(document));
+      }
+
+      @Override
+      public void beforeElfDocumentChange(@NotNull DocumentEvent event, @Nullable DocumentEvent revertingEvent) {
+        DOCUMENT_EP.forEachExtensionSafe(it -> it.beforeElfDocumentChange(event, revertingEvent));
+      }
+
+      @Override
+      public void elfDocumentChanged(@NotNull DocumentEvent event, @Nullable DocumentEvent revertedEvent) {
+        DOCUMENT_EP.forEachExtensionSafe(it -> it.elfDocumentChanged(event, revertedEvent));
+      }
+
+      @Override
+      public void bulkElfUpdateStarting(@NotNull Document document) {
+        DOCUMENT_EP.forEachExtensionSafe(it -> it.bulkElfUpdateStarting(document));
+      }
+
+      @Override
+      public void bulkElfUpdateFinished(@NotNull Document document) {
+        DOCUMENT_EP.forEachExtensionSafe(it -> it.bulkElfUpdateFinished(document));
       }
     });
     document.addDocumentListener(myPrioritizedDocumentMulticaster.getMulticaster());

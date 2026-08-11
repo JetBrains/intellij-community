@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.completion.impl` start
-
 create_kotlinc_options(
     name = "custom_kotlin-completion-impl",
     opt_in = [
@@ -33,15 +32,17 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/jetbrains/annotations",
+        "//plugins/kotlin/references",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-compiler-fir",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-analysis-api-impl-base",
-        "@lib//:kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
         "//java/java-indexing-api:indexing",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
+        "//libraries/guava",
         "//platform/editor-ui-api:editor-ui",
         "//platform/indexing-api:indexing",
         "//plugins/kotlin/base/util",
@@ -55,10 +56,8 @@ jvm_library(
         "//plugins/kotlin/base/code-insight",
         "//plugins/kotlin/base/resources:kotlin-base-resources",
         "//plugins/kotlin/frontend-independent",
-        "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
         "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
         "//plugins/kotlin/completion/api",
-        "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared",
         "//platform/analysis-impl",
         "//platform/lang-api:lang",
         "//platform/lang-impl",
@@ -72,8 +71,8 @@ jvm_library(
         "//java/java-psi-impl:psi-impl",
         "//java/java-impl:impl",
         "//java/java-frontback-psi-api:frontback-psi",
-        "@lib//:kotlinc-analysis-api-platform-interface",
-        "//plugins/kotlin/jvm-debugger/evaluation",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
         "//plugins/kotlin/base/kotlin.base.serialization",
@@ -83,6 +82,8 @@ jvm_library(
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
         "//platform/projectModel-api:projectModel",
         "//plugins/kotlin/project-configuration",
+        "//platform/refactoring",
+        "//plugins/kotlin/base/indices",
     ],
 )
 
@@ -99,9 +100,16 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-completion-impl",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
         "//java/java-indexing-api:indexing_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
+        "//libraries/guava:guava_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/indexing-api:indexing_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",
@@ -115,10 +123,8 @@ jvm_library(
         "//plugins/kotlin/base/code-insight:code-insight_test_lib",
         "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
         "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
-        "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared_test_lib",
         "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement_test_lib",
         "//plugins/kotlin/completion/api:api_test_lib",
-        "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared_test_lib",
         "//platform/analysis-impl:analysis-impl_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
@@ -132,7 +138,8 @@ jvm_library(
         "//java/java-psi-impl:psi-impl_test_lib",
         "//java/java-impl:impl_test_lib",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
-        "//plugins/kotlin/jvm-debugger/evaluation:evaluation_test_lib",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//plugins/kotlin/base/kotlin.base.serialization:kotlin.base.serialization_test_lib",
@@ -142,6 +149,8 @@ jvm_library(
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//plugins/kotlin/project-configuration:project-configuration_test_lib",
+        "//platform/refactoring:refactoring_test_lib",
+        "//plugins/kotlin/base/indices:indices_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.completion.impl` end

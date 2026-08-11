@@ -22,8 +22,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import static com.intellij.ide.todo.TodoImplementationChooserKt.shouldUseSplitTodo;
-import static com.intellij.ide.todo.rpc.TodoHelperKt.fileMatchesFilter;
-import static com.intellij.ide.todo.rpc.TodoHelperKt.getTodoCount;
 
 @ApiStatus.Internal
 public abstract class TodoTreeStructure extends AbstractTreeStructureBase implements ToDoSettings {
@@ -109,7 +107,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
       if (virtualFile == null) {
         return 0;
       }
-      return getTodoCount(myProject, virtualFile, myTodoFilter);
+      return myBuilder.getRemoteTodoItemCount();
     }
 
     int count = 0;
@@ -134,14 +132,6 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
   }
 
   protected final boolean acceptTodoFilter(@NotNull PsiFile psiFile) {
-    if (shouldUseSplitTodo()) {
-      VirtualFile virtualFile = psiFile.getVirtualFile();
-      if (virtualFile == null) {
-        return false;
-      }
-      return fileMatchesFilter(myProject, virtualFile, myTodoFilter);
-    }
-
     PsiTodoSearchHelper searchHelper = getSearchHelper();
     return myTodoFilter != null && myTodoFilter.accept(searchHelper, psiFile) ||
            (myTodoFilter == null && searchHelper.getTodoItemsCount(psiFile) > 0);

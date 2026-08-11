@@ -523,11 +523,20 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     }
     var gradleJvm = ExternalSystemJdkUtil.resolveJdkName(resolverCtx.getProject(), gradleJvmReference);
     var gradleJvmVersion = ObjectUtils.doIfNotNull(gradleJvm, it -> it.getVersionString());
-    if (!ExternalSystemJdkUtil.matchJavaVersion(versionRequirement, gradleJvmVersion)) {
-      LOG.debug("Module SDK lookup: Gradle JVM '" + gradleJvmReference + "' (version " + gradleJvmVersion + ") does not satisfy requirement " + versionRequirement + "; proceeding with separate SDK search");
+    var gradleJvmPresentation = "Module SDK lookup: Gradle JVM '%s' (version %s)".formatted(gradleJvmReference, gradleJvmVersion);
+    if (gradleJvm == null) {
+      LOG.debug("%s is unresolved; proceeding with separate SDK search", gradleJvmPresentation);
       return null;
     }
-    LOG.debug("Module SDK lookup: Gradle JVM '" + gradleJvmReference + "' (version " + gradleJvmVersion + ") satisfies requirement " + versionRequirement + "; reusing it as module SDK");
+    if (!ExternalSystemJdkUtil.matchJavaVersion(versionRequirement, gradleJvmVersion)) {
+      LOG.debug("%s does not satisfy requirement %s; proceeding with separate SDK search", gradleJvmPresentation, versionRequirement);
+      return null;
+    }
+    if (!ExternalSystemJdkUtil.isSdkRegisteredInSdkTable(resolverCtx.getProject(), gradleJvm)) {
+      LOG.debug("%s is not registered in SDK table; proceeding with separate SDK search", gradleJvmPresentation);
+      return null;
+    }
+    LOG.debug("%s satisfies requirement %s; reusing it as module SDK", gradleJvmPresentation, versionRequirement);
     return gradleJvm;
   }
 

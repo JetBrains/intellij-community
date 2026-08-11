@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalView
-import com.intellij.terminal.frontend.view.TerminalView
+import com.intellij.terminal.frontend.toolwindow.impl.TerminalClipboard
 import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModel
 import com.jediterm.terminal.TerminalOutputStream
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
@@ -25,6 +25,7 @@ import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.termin
 
 internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
     val editor = e.terminalEditor as? EditorEx ?: return
     val terminalView = e.terminalView
     when {
@@ -40,7 +41,7 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
         }
       }
       terminalView != null -> {
-        pasteIntoTerminalView(terminalView)
+        TerminalClipboard.pasteClipboardContent(project, terminalView, preferSystemSelection = false)
 
         // Scroll to the cursor if the scrolling model is available in this editor.
         // It can be absent if it is the alternate buffer editor.
@@ -82,13 +83,6 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
     if (text.isNotEmpty()) {
       output.sendString(text, false)
     }
-  }
-
-  private fun pasteIntoTerminalView(view: TerminalView) {
-    val text = getClipboardText() ?: return
-    view.createSendTextBuilder()
-      .useBracketedPasteMode()
-      .send(text)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

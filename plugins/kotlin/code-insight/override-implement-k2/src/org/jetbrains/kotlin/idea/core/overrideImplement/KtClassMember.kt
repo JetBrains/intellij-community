@@ -19,14 +19,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiversOwner
-import org.jetbrains.kotlin.analysis.api.components.combinedDeclaredMemberScope
-import org.jetbrains.kotlin.analysis.api.components.containingSymbol
-import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
-import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
-import org.jetbrains.kotlin.analysis.api.components.getExpectsForActual
-import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
-import org.jetbrains.kotlin.analysis.api.components.isUnitType
-import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.scopes.combinedDeclaredMemberScope
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KaContextReceiversRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverLabelRenderer
@@ -39,7 +32,9 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.rendere
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererOtherModifiersProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesCallArgumentsRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -56,13 +51,18 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.fakeOverrideOriginal
 import org.jetbrains.kotlin.analysis.api.symbols.findClass
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaContextParameterOwnerSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.getExpectsForActual
+import org.jetbrains.kotlin.analysis.api.symbols.isSubClassOf
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
 import org.jetbrains.kotlin.idea.core.TemplateKind
@@ -93,7 +93,7 @@ import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.hasValueModifier
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
-import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addIfNotNull
 import javax.swing.Icon
@@ -476,7 +476,7 @@ fun KaDeclarationRenderer.Builder.withoutLabel() {
 }
 
 //todo rewrite after KT-66192 is implemented
-@OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
+@OptIn(KaExperimentalApi::class)
 object ContextParametersListRenderer: KaContextReceiverListRenderer {
     override fun renderContextReceivers(
         analysisSession: KaSession,
@@ -485,7 +485,7 @@ object ContextParametersListRenderer: KaContextReceiverListRenderer {
         typeRenderer: KaTypeRenderer,
         printer: PrettyPrinter
     ) {
-        if (owner is KaContextParameterOwnerSymbol && owner.contextParameters.any { it.psi is KtParameter }) {
+        if (owner is KaCallableSymbol && owner.contextParameters.isNotEmpty()) {
             printer {
                 append("context(")
                 printCollection(owner.contextParameters) { contextParameter ->
@@ -562,7 +562,7 @@ private fun generateFunction(
     bodyType: BodyType,
 ): KtCallableDeclaration {
     val returnType = symbol.returnType
-    val returnsUnit = returnType.isUnitType
+    val returnsUnit = returnType.classId == KaStandardTypeClassIds.UNIT
 
     val canHaveBody = symbol is KaNamedFunctionSymbol || symbol is KaConstructorSymbol && !symbol.isPrimary
     val isToKeepAbstract = isToKeepAbstract(mode, symbol)
@@ -617,7 +617,7 @@ private fun generateClass(
         val primaryConstructor = klass.primaryConstructor
         if (primaryConstructor != null) {
             constructorSymbol.valueParameters.forEachIndexed { index, symbol ->
-                if (symbol.generatedPrimaryConstructorProperty != null) {
+                if (symbol.primaryConstructorProperty != null) {
                     val mutabilityKeyword = if (symbol.isVal) factory.createValKeyword() else factory.createVarKeyword()
                     val parameter = primaryConstructor.valueParameters[index]
                     parameter.addBefore(mutabilityKeyword, parameter.nameIdentifier)
@@ -698,7 +698,7 @@ private fun generateProperty(
     bodyType: BodyType,
 ): KtCallableDeclaration {
     val returnType = symbol.returnType
-    val returnsNotUnit = !returnType.isUnitType
+    val returnsNotUnit = returnType.classId != KaStandardTypeClassIds.UNIT
 
     val isToKeepAbstract = isToKeepAbstract(mode, symbol)
     val body = if (bodyType != BodyType.NoBody && !isToKeepAbstract) {

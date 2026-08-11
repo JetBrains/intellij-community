@@ -7,4 +7,4 @@ fun <A, B, C> test(triple: Triple<A, B, C>) {
     // Multiple entries mapping to different original names - should work
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertNameBasedDestructuringShortFormToFullFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertNameBasedDestructuringShortFormToFullFix

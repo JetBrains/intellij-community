@@ -28,7 +28,11 @@ import java.util.function.BiFunction;
 import static com.intellij.ide.actions.newclass.TemplateListCellRendererKt.createTemplateListCellRenderer;
 
 public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPanel<CreateWithTemplatesDialogPanel.TemplatePresentation> {
-  public record TemplatePresentation(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName) {}
+  public record TemplatePresentation(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName, @Nullable String targetName) {
+    public TemplatePresentation(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName) {
+      this(kind, icon, templateName, null);
+    }
+  }
 
   private boolean templateExplicitlySelected = false;
 
@@ -57,6 +61,32 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
 
   public @NotNull String getSelectedTemplate() {
     return myTemplatesList.getSelectedValue().templateName();
+  }
+
+  public void setNameFieldToTemplateNameOnSelection() {
+    myTemplatesList.addListSelectionListener(e -> {
+      if (!e.getValueIsAdjusting() && isNameFieldEmptyOrTargetName()) {
+        TemplatePresentation selectedTemplate = myTemplatesList.getSelectedValue();
+        if (selectedTemplate != null) {
+          myTextField.setText(selectedTemplate.targetName() == null ? "" : selectedTemplate.targetName());
+        }
+      }
+    });
+  }
+
+  private boolean isNameFieldEmptyOrTargetName() {
+    String enteredName = getEnteredName();
+    if (enteredName.isEmpty()) {
+      return true;
+    }
+
+    ListModel<TemplatePresentation> model = myTemplatesList.getModel();
+    for (int i = 0; i < model.getSize(); i++) {
+      if (StringUtil.equals(enteredName, model.getElementAt(i).targetName())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void setTextFieldIcon(Icon icon) {

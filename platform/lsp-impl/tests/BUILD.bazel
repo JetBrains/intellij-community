@@ -1,8 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.platform.lsp.impl.tests` start
+jps_test(
+    name = "tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":tests_test_lib"],
+)
+### skip generation section `test intellij.platform.lsp.impl.tests`
 
+### auto-generated section `build intellij.platform.lsp.impl.tests` start
 jvm_library(
     name = "tests",
     srcs = glob(
@@ -14,6 +21,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//libraries/lsp4j",
+        "//libraries/lsp4j/jsonrpc",
         "//platform/testRunner",
         "//libraries/misc/plugin",
     ],
@@ -42,16 +51,22 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":tests",
+        "//libraries/lsp4j:lsp4j_test_lib",
+        "//libraries/lsp4j/jsonrpc:jsonrpc_test_lib",
         "//platform/testRunner:testRunner_test_lib",
         "//libraries/misc/plugin:plugin_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-impl/internal:internal_test_lib",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:eclipse-lsp4j",
-        "@lib//:eclipse-lsp4j-jsonrpc",
+        "//libraries/lsp4j",
+        "//libraries/lsp4j:lsp4j_test_lib",
+        "//libraries/lsp4j/jsonrpc",
+        "//libraries/lsp4j/jsonrpc:jsonrpc_test_lib",
         "//platform/lsp",
         "//platform/lsp:lsp_test_lib",
         "//platform/lsp/testFramework",
@@ -84,10 +99,22 @@ jvm_library(
         "//platform/code-style-impl:codeStyle-impl_test_lib",
         "//platform/editor-ui-api:editor-ui",
         "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/editor-ui-ex:editor-ex_test_lib",
+        "//platform/execution",
+        "//platform/execution:execution_test_lib",
+        "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl/internal",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
         "//xml/xml-psi-impl:psi-impl",
         "//xml/xml-psi-impl:psi-impl_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.lsp.impl.tests` end
@@ -100,11 +127,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.lsp.impl.tests` end
-
-### auto-generated section `test intellij.platform.lsp.impl.tests` start
-
-jps_test(
-    name = "tests_test",
-    runtime_deps = [":tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.lsp.impl.tests` end

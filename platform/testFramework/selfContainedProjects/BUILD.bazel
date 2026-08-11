@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "selfContainedProjects-tests_test",
+    timeout = "long",
+    tags = ["community-aggregator"],
+    runtime_deps = [":selfContainedProjects-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.testFramework.selfContainedProjects.tests`
+
 # Additional data files for tests (files at module root that tests need access to)
 filegroup(
     name = "selfContainedProjects_data",
@@ -19,7 +28,6 @@ jps_test(
 ### skip generation section `test intellij.platform.testFramework.selfContainedProjects`
 
 ### auto-generated section `build intellij.platform.testFramework.selfContainedProjects` start
-
 jvm_library(
     name = "selfContainedProjects",
     srcs = glob(
@@ -35,7 +43,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlinx-coroutines-core",
         "@lib//:slf4j-api",
         "//libraries/guava",
@@ -54,6 +62,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":selfContainedProjects",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/guava:guava_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
@@ -79,7 +88,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.testFramework.selfContainedProjects` end
 
 ### auto-generated section `build intellij.platform.testFramework.selfContainedProjects.tests` start
-
 jvm_library(
     name = "selfContainedProjects-tests",
     srcs = glob(
@@ -110,7 +118,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:kotlinx-coroutines-core",
         "@lib//:slf4j-api",
         "//libraries/guava",
@@ -125,6 +134,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//java/java-runtime:rt",
         "//java/java-runtime:rt_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.selfContainedProjects.tests` end
@@ -137,11 +148,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.testFramework.selfContainedProjects.tests` end
-
-### auto-generated section `test intellij.platform.testFramework.selfContainedProjects.tests` start
-
-jps_test(
-    name = "selfContainedProjects-tests_test",
-    runtime_deps = [":selfContainedProjects-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.testFramework.selfContainedProjects.tests` end

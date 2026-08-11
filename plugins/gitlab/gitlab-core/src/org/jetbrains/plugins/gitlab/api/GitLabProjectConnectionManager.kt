@@ -12,12 +12,14 @@ import git4idea.remote.hosting.SingleHostedGitRepositoryConnectionManagerImpl
 import git4idea.remote.hosting.ValidatingHostedGitRepositoryConnectionFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.request.findProject
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.api.request.getProject
 import org.jetbrains.plugins.gitlab.api.request.getProjectNamespace
+import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.data.GitLabProjectDetails
@@ -61,9 +63,9 @@ internal class GitLabProjectConnectionManager(private val project: Project, cs: 
     scope: CoroutineScope,
     glProjectMapping: GitLabProjectMapping,
     account: GitLabAccount,
-    tokenState: StateFlow<String>,
+    tokenState: StateFlow<GitLabCredentials>,
   ): GitLabProjectConnection {
-    val apiClient = service<GitLabApiManager>().getClient(account.server) { tokenState.value }
+    val apiClient = service<GitLabApiManager>().getClient(account.server) { tokenState.value.accessToken }
     val glMetadata = apiClient.getMetadataOrNull()
     val currentUser = apiClient.graphQL.getCurrentUser()
     val projectDetails = apiClient.loadProjectDetails(glMetadata, glProjectMapping.repository.projectPath)
@@ -75,7 +77,7 @@ internal class GitLabProjectConnectionManager(private val project: Project, cs: 
                                    currentUser,
                                    apiClient,
                                    glMetadata,
-                                   tokenState)
+                                   tokenState.map { it.accessToken })
   }
 
   private suspend fun GitLabApi.loadProjectDetails(

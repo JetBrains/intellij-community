@@ -15,10 +15,16 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.idea.TestFor;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
   // All previous unreachable tests, feel free to split them
   public void testUnreachable() {
@@ -739,6 +745,82 @@ async def nosupAssertFalse(b):
         else:
             y: list[str] = ['a', 'b']"""
     );
+  }
+
+  @TestFor(issues="PY-85200")
+  public void testTypeCheckingCompoundCondition() {
+    doTestByText(
+      """
+        from typing import TYPE_CHECKING
+
+        def use_extensions() -> bool: ...
+
+        if TYPE_CHECKING or not use_extensions():
+            x: int = 1
+        else:
+            x: str = "ab"
+
+        if not TYPE_CHECKING and use_extensions():
+            y: list[int] = [1, 2]
+        else:
+            y: list[str] = ['a', 'b']"""
+    );
+  }
+
+  // PY-90011
+  public void testIsInstanceIntWithIntEnumAnnotatedClassObject() {
+    doTestByText(
+      """
+        from enum import IntEnum, Enum
+
+
+        def test_enum(x: type[Enum]):
+            if isinstance(x, int):
+                print("first")
+            else:
+                print("second")
+
+
+        def test_int_enum(x: type[IntEnum]):
+            if isinstance(x, int):
+                print("first")
+            else:
+                print("second")"""
+    );
+  }
+
+  // PY-83726
+  public void testInspectionSuppressInElseBlock() {
+    doTestByText("""
+      import typing as _tp
+
+      def foo(v: _tp.Literal["foo", "bar"]):
+          if v == "foo":
+              raise Exception()
+          elif v == "bar":
+              raise Exception()
+          else:
+              # noinspection PyUnreachableCode
+              return False
+                   """);
+  }
+
+  // PY-83726
+  public void testInspectionSuppressInMatchCaseBlock() {
+    doTestByText("""
+      def foo(error: ArithmeticError):
+          match error:
+              case OverflowError():
+                  return "foo"
+
+              case ArithmeticError():
+                  return "bar"
+
+              case _:
+                  # noinspection PyUnreachableCode
+                  err: str = f"Expected ArithmeticError, got {type(error).__name__}: {error}"
+                  raise TypeError(err)
+                   """);
   }
 
   @NotNull

@@ -20,17 +20,7 @@ import javax.swing.JComponent
 @ApiStatus.Experimental
 @Suppress("DialogTitleCapitalization")
 abstract class DiffToolChooser(private val project: Project?) : DumbAwareAction(), CustomComponentAction {
-  private val segmentedButton = SegmentedButtonComponent { diffTool: DiffTool ->
-    val icon = when (diffTool) {
-      is FrameDiffTool -> diffTool.icon
-      is CombinedDiffTool -> diffTool.getIcon()
-      else -> null
-    }
-    if (icon != null)
-      SegmentedButton.createPresentation(icon = icon, toolTipText = diffTool.name)
-    else
-      SegmentedButton.createPresentation(text = diffTool.name)
-  }
+  private val segmentedButton = createComponent()
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -67,9 +57,28 @@ abstract class DiffToolChooser(private val project: Project?) : DumbAwareAction(
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     segmentedButton.items = getTools()
-    segmentedButton.spacing = IntelliJSpacingConfiguration()
     segmentedButton.selectedItem = getActiveTool()
     segmentedButton.whenItemSelected { if (project != null) onSelected(project, it) }
     return segmentedButton
+  }
+
+  companion object {
+    @JvmStatic
+    @ApiStatus.Internal
+    fun createComponent(): SegmentedButtonComponent<DiffTool> {
+      return SegmentedButtonComponent { diffTool: DiffTool ->
+        val icon = when (diffTool) {
+          is FrameDiffTool -> diffTool.icon
+          is CombinedDiffTool -> diffTool.getIcon()
+          else -> null
+        }
+        if (icon != null)
+          SegmentedButton.createPresentation(icon = icon, toolTipText = diffTool.name)
+        else
+          SegmentedButton.createPresentation(text = diffTool.name)
+      }.apply {
+        spacing = IntelliJSpacingConfiguration()
+      }
+    }
   }
 }

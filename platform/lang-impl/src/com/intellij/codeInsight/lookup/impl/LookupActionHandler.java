@@ -19,10 +19,12 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ScrollingUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@ApiStatus.Internal
 public abstract class LookupActionHandler extends EditorActionHandler {
   @Nullable
   protected final EditorActionHandler myOriginalHandler;
@@ -80,6 +82,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     lookup.refreshUi(false, true);
   }
 
+  @ApiStatus.Internal
   public static final class DownHandler extends LookupActionHandler {
 
     public DownHandler(EditorActionHandler originalHandler) {
@@ -92,24 +95,28 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
   }
 
+  @ApiStatus.Internal
   public static final class UpAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
     public UpAction() {
       super(new UpDownInEditorHandler(true));
     }
   }
 
+  @ApiStatus.Internal
   public static final class DownAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
     public DownAction() {
       super(new UpDownInEditorHandler(false));
     }
   }
 
+  @ApiStatus.Internal
   public static final class UpInLookupAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
     public UpInLookupAction() {
       super(new UpHandler(null));
     }
   }
 
+  @ApiStatus.Internal
   public static final class DownInLookupAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
     public DownInLookupAction() {
       super(new DownHandler(null));
@@ -144,6 +151,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
   }
 
+  @ApiStatus.Internal
   public static final class UpHandler extends LookupActionHandler {
     public UpHandler(EditorActionHandler originalHandler) {
       super(originalHandler);
@@ -161,6 +169,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
   }
 
+  @ApiStatus.Internal
   public static final class PageDownHandler extends LookupActionHandler {
     public PageDownHandler(final EditorActionHandler originalHandler) {
       super(originalHandler);
@@ -173,6 +182,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
   }
 
+  @ApiStatus.Internal
   public static final class PageUpHandler extends LookupActionHandler {
     public PageUpHandler(EditorActionHandler originalHandler) {
       super(originalHandler);
@@ -185,6 +195,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
   }
 
+  @ApiStatus.Internal
   public static class LeftHandler extends LookupActionHandler {
     public LeftHandler(@Nullable EditorActionHandler originalHandler) {
       super(originalHandler);
@@ -207,6 +218,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
   }
 
+  @ApiStatus.Internal
   public static class RightHandler extends LookupActionHandler {
     public RightHandler(@Nullable EditorActionHandler originalHandler) {
       super(originalHandler);

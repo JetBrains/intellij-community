@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.EelLowLevelObjectsPool
@@ -44,29 +44,49 @@ import kotlin.time.Duration.Companion.milliseconds
 
 
 @ApiStatus.Experimental
-fun ReadableByteChannel.consumeAsEelChannel(): EelReceiveChannel =
-  NioReadToEelAdapter(this) { 0 }
+fun ReadableByteChannel.consumeAsEelChannel(dispatcher: CoroutineContext = unlimitedDispatcher): EelReceiveChannel =
+  NioReadToEelAdapter(this, dispatcher) { 0 }
 
 @ApiStatus.Experimental
-fun WritableByteChannel.asEelChannel(): EelSendChannel =
-  NioWriteToEelAdapter(this, null)
+fun WritableByteChannel.asEelChannel(dispatcher: CoroutineContext = unlimitedDispatcher): EelSendChannel =
+  NioWriteToEelAdapter(this, dispatcher)
 
 // Flushes data after each writing.
 @ApiStatus.Experimental
-fun OutputStream.asEelChannel(): EelSendChannel =
-  NioWriteToEelAdapter(Channels.newChannel(this), this)
+fun OutputStream.asEelChannel(dispatcher: CoroutineContext? = null): EelSendChannel =
+  if (this is OutputStreamAdapterImpl) {
+    sendChannel
+  }
+  else {
+    NioWriteToEelAdapter(WritableByteChannelFromOutputStream(this), dispatcher ?: unlimitedDispatcher, this)
+  }
 
 @ApiStatus.Experimental
-fun InputStream.consumeAsEelChannel(): EelReceiveChannel =
-  NioReadToEelAdapter(Channels.newChannel(this), this::available)
+fun InputStream.consumeAsEelChannel(dispatcher: CoroutineContext? = null): EelReceiveChannel =
+  if (this is InputStreamAdapterImpl) {
+    receiveChannel
+  }
+  else {
+    NioReadToEelAdapter(ReadableByteChannelFromInputStream(this), dispatcher ?: unlimitedDispatcher, this::available)
+  }
 
 @ApiStatus.Experimental
 fun EelReceiveChannel.consumeAsInputStream(blockingContext: CoroutineContext = Dispatchers.IO): InputStream =
-  InputStreamAdapterImpl(this, blockingContext)
+  if (this is NioReadToEelAdapter && readableByteChannel is ReadableByteChannelFromInputStream) {
+    readableByteChannel.inputStream
+  }
+  else {
+    InputStreamAdapterImpl(this, blockingContext)
+  }
 
 @ApiStatus.Experimental
 fun EelSendChannel.asOutputStream(blockingContext: CoroutineContext = Dispatchers.IO): OutputStream =
-  OutputStreamAdapterImpl(this, blockingContext)
+  if (this is NioWriteToEelAdapter && writableByteChannel is WritableByteChannelFromOutputStream) {
+    writableByteChannel.outputStream
+  }
+  else {
+    OutputStreamAdapterImpl(this, blockingContext)
+  }
 
 /**
  * Reads data from [receiveChannel] and returns it from channel (until [receiveChannel] is closed)
@@ -79,9 +99,16 @@ fun CoroutineScope.consumeReceiveChannelAsKotlin(receiveChannel: EelReceiveChann
 
 /**
  * Collect data from channel line-by-line using [charset] to convert bytes to chars.
- * Much like [java.io.BufferedReader], we consider CR or CRLF as a new line chars.
- * This API might be slow (as it reads one byte per time) so you might prefer to [readAllBytes] first, then decode it and split by lines.
- * However, for interactive source you can't read till the end, so you use this api.
+ * A line ends at `\n`, and neither it nor a `\r` in front of it is part of the emitted line, much like
+ * [java.io.BufferedReader.readLine]. A lone `\r` does not end a line: command line tools use it to
+ * redraw a line in place, and splitting there would tear that output apart.
+ * The end of the stream ends the last line, and emits nothing when there is no unterminated line left.
+ *
+ * For a non-interactive source you might prefer to [readAllBytes] first, then decode it and split by lines.
+ *
+ * This reads ahead, so it fits a channel that is read to its end. To read only the first lines -- a
+ * handshake, a header -- and leave the rest readable, use [com.intellij.platform.eel.channels.readLine]
+ * of [com.intellij.platform.eel.channels.PeekableEelReceiveChannel], which puts the remainder back.
  *
  * As soon as channel gets closed -- flow finishes.
  * ```kotlin
@@ -99,7 +126,17 @@ fun CoroutineScope.consumeReceiveChannelAsKotlin(receiveChannel: EelReceiveChann
  */
 @ApiStatus.Internal
 fun EelReceiveChannel.lines(charset: Charset): Flow<String> =
-  linesImpl(charset)
+  linesImpl(charset, DEFAULT_BUFFER_SIZE)
+
+/**
+ * Please read the documentation for the other overload of [lines].
+ *
+ * [bufferSize] is how many bytes a single `receive` may take, so it bounds the read-ahead described
+ * there. It does not limit the length of an emitted line.
+ */
+@ApiStatus.Internal
+fun EelReceiveChannel.lines(charset: Charset, bufferSize: Int): Flow<String> =
+  linesImpl(charset, bufferSize)
 
 @ApiStatus.Internal
 fun EelReceiveChannel.lines(): Flow<String> = lines(Charset.defaultCharset())
@@ -153,7 +190,7 @@ suspend fun EelReceiveChannel.readAllBytes(bufferSize: Int = DEFAULT_BUFFER_SIZE
     // Redundant copy isn't optimal but ok for now
     val tmpBuffer = ByteArray(buffer.limit())
     buffer.get(tmpBuffer)
-    result.writeBytes(tmpBuffer)
+    result.write(tmpBuffer)
     buffer.clear()
   }
   return@withContext result.toByteArray()
@@ -256,6 +293,9 @@ suspend fun copy(
     pool.returnBack(buffer)
   }
 }
+
+private class ReadableByteChannelFromInputStream(val inputStream: InputStream) : ReadableByteChannel by Channels.newChannel(inputStream)
+private class WritableByteChannelFromOutputStream(val outputStream: OutputStream) : WritableByteChannel by Channels.newChannel(outputStream)
 
 // Slowly increase timeout
 private fun backoff(): Iterator<Duration> =

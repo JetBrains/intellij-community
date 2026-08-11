@@ -29,11 +29,6 @@ internal fun EntityId.notThis(): NotThisEntityId = NotThisEntityId(this)
 
 internal fun currentStackTrace(depth: Int): String = Throwable().stackTrace.take(depth).joinToString(separator = "\n") { it.toString() }
 
-internal fun loadClassByName(name: String, classLoader: ClassLoader): Class<*> {
-  if (name.startsWith("[")) return Class.forName(name)
-  return classLoader.loadClass(name)
-}
-
 /**
  * This function checks if we try to add an entity as a child to itself.
  * It can't verify a circular dependency, and it's performed via a third entity

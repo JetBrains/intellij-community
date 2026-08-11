@@ -69,7 +69,7 @@ class WebBrowserServiceImpl : WebBrowserService() {
       }
     }
 
-    val file = if (!request.file.viewProvider.isPhysical) null else request.virtualFile
+    val file = if (!request.file.viewProvider.correspondsToRealFile()) null else request.virtualFile
     return if (file is LightVirtualFile || file == null) emptyList() else listOf(Urls.newFromVirtualFile(file))
   }
 }

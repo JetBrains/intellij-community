@@ -1,5 +1,5 @@
 // "Wrap with []" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'String', but 'Array<String>' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 annotation class Foo(val value: Array<String>)
 

@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
-import org.intellij.plugins.markdown.lang.isMarkdownLanguage
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 
 /**
@@ -47,7 +47,7 @@ internal abstract class ColumnBasedTableAction: AnAction() {
         || editor == null
         || file == null
         || offset == null
-        || !file.language.isMarkdownLanguage()) {
+        || !file.supportsMarkdown(event.dataContext)) {
       event.presentation.isEnabledAndVisible = false
       return
     }
@@ -102,8 +102,8 @@ internal abstract class ColumnBasedTableAction: AnAction() {
         file,
         document,
         offset,
-        tableGetter = { file, document, offset -> TableUtils.findTable(file, offset) },
-        columnIndexGetter = { file, document, offset -> TableUtils.findCellIndex(file, offset) }
+        tableGetter = { file, _, offset -> TableUtils.findTable(file, offset) },
+        columnIndexGetter = { file, _, offset -> TableUtils.findCellIndex(file, offset) }
       )
     }
   }

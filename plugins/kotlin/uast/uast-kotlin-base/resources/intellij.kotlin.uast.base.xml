@@ -1,0 +1,22 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.java.uast"/>
+    <module name="intellij.libraries.asm"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.uast"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="org.jetbrains.uast">
+    <evaluation.uastEvaluatorExtension implementation="org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension"/>
+  </extensions>
+</idea-plugin>

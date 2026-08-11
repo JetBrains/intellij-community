@@ -1,6 +1,10 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.platform.langInjection.backend` start
+jvm_provided_library(
+    name = "libraries_jetbrains_annotations_provided",
+    lib = "//libraries/jetbrains/annotations",
+)
 
 jvm_provided_library(
     name = "platform_backend_provided",
@@ -75,11 +79,11 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations-provided",
         "//platform/ide-core",
         "@lib//:kotlin-stdlib",
         "//platform/core-impl",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        ":libraries_jetbrains_annotations_provided",
         ":platform_backend_provided",
         ":platform_core_provided",
         ":platform_util_provided",
@@ -106,7 +110,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":backend",
-        "@lib//:jetbrains-annotations-provided",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/backend",
         "//platform/backend:backend_test_lib",
         "//platform/core-api:core",

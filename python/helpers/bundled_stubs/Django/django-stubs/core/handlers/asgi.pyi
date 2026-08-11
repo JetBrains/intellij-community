@@ -2,6 +2,7 @@ from collections.abc import Awaitable, Callable, Iterator, Mapping, Sequence
 from logging import Logger
 from typing import IO, Any, TypeAlias
 
+from _typeshed import ExcInfo
 from django.core.files import uploadedfile
 from django.core.handlers import base
 from django.http.request import HttpRequest, _ImmutableQueryDict
@@ -35,7 +36,7 @@ class ASGIRequest(HttpRequest):
     POST: _ImmutableQueryDict
     @property
     @override
-    def FILES(self) -> MultiValueDict[str, uploadedfile.UploadedFile]: ...  # type: ignore[override]
+    def FILES(self) -> MultiValueDict[str, uploadedfile.UploadedFile[Any]]: ...  # type: ignore[override]
     @cached_property
     @override
     def COOKIES(self) -> dict[str, str]: ...  # type: ignore[override]
@@ -62,7 +63,7 @@ class ASGIHandler(base.BaseHandler):
         self, scope: Mapping[str, Any], body_file: IO[bytes]
     ) -> tuple[ASGIRequest, None] | tuple[None, HttpResponseBase]: ...
     def handle_uncaught_exception(
-        self, request: HttpRequest, resolver: URLResolver, exc_info: Any
+        self, request: HttpRequest, resolver: URLResolver, exc_info: ExcInfo
     ) -> HttpResponseBase: ...
     async def send_response(self, response: HttpResponseBase, send: _SendCallback) -> None: ...
     @classmethod

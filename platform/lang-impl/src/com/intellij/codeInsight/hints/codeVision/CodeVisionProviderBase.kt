@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SyntaxTraverser
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import org.jetbrains.annotations.Nls
 import java.awt.event.MouseEvent
 
@@ -67,6 +68,7 @@ abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
 
     val virtualFile = file.viewProvider.virtualFile
     if (ProjectFileIndex.getInstance(file.project).isInLibrarySource(virtualFile)) return emptyList()
+    if (!WorkspaceFileIndex.getInstance(file.project).isIndexable(virtualFile)) return emptyList()
 
     val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
     val traverser = SyntaxTraverser.psiTraverser(file)

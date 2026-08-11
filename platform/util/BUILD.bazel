@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "kt_javac_options", "resourcegroup")
 
 ### auto-generated section `build intellij.platform.util` start
-
 jvm_provided_library(
     name = "platform_util_troveCompileOnly_provided",
     lib = "//platform/util/troveCompileOnly",
@@ -27,7 +26,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util-rt",
         "//platform/util/base",
         "//platform/icons-api",
@@ -43,11 +42,11 @@ jvm_library(
         # do not sort,
         "//platform/util/jdom",
         "@lib//:log4_j",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util-rt",
         "//platform/bazel-runfiles",
         "//platform/util-class-loader:util-classLoader",
-        "@lib//:jna",
+        "//libraries/jna",
         "//libraries/oro-matcher",
         "//libraries/lz4",
         "//libraries/commons/compress",
@@ -82,7 +81,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util-rt",
         "//platform/util-rt:util-rt_test_lib",
         "//platform/util/base",
@@ -96,9 +96,11 @@ jvm_library(
         # do not sort,
         ":util",
         "//platform/util/jdom:jdom_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util-rt:util-rt_test_lib",
         "//platform/bazel-runfiles:bazel-runfiles_test_lib",
         "//platform/util-class-loader:util-classLoader_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//libraries/oro-matcher:oro-matcher_test_lib",
         "//libraries/lz4:lz4_test_lib",
         "//libraries/commons/compress:compress_test_lib",
@@ -135,7 +137,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.util` end
 
 ### auto-generated section `build intellij.platform.util.tests` start
-
 resourcegroup(
     name = "util-tests_test_resources",
     srcs = glob(
@@ -204,7 +205,8 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/assertj-core",
         "//libraries/assertj-core:assertj-core_test_lib",
-        "@lib//:jna",
+        "//libraries/jna",
+        "//libraries/jna:jna_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//platform/indexing-impl",
@@ -213,7 +215,8 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//platform/projectModel-impl",
         "//platform/projectModel-impl:projectModel-impl_test_lib",
-        "@lib//:jet_check",
+        "//libraries/jetcheck",
+        "//libraries/jetcheck:jetcheck_test_lib",
         "//libraries/commons/compress",
         "//libraries/commons/compress:compress_test_lib",
         "//libraries/guava",
@@ -269,6 +272,10 @@ jvm_library(
         "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests_test_lib",
         "//platform/editor-ui-api:editor-ui",
         "//platform/editor-ui-api:editor-ui_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.util.tests` end
@@ -283,7 +290,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.util.tests` end
 
 ### auto-generated section `test intellij.platform.util.tests` start
-
 jps_test(
     name = "util-tests_test",
     runtime_deps = [":util-tests_test_lib"],
@@ -291,7 +297,6 @@ jps_test(
 ### auto-generated section `test intellij.platform.util.tests` end
 
 ### auto-generated section `build intellij.platform.util.ui` start
-
 kt_javac_options(
     name = "custom-javac-options",
     add_exports = [
@@ -326,7 +331,7 @@ jvm_library(
         "@lib//:mac-provided",
         "//platform/util",
         "//libraries/imgscalr",
-        "@lib//:jna",
+        "//libraries/jna",
         "//libraries/java-compatibility",
         "@lib//:kotlin-stdlib",
         "//libraries/fastutil",
@@ -367,6 +372,7 @@ jvm_library(
         "@lib//:mac-provided",
         "//platform/util:util_test_lib",
         "//libraries/imgscalr:imgscalr_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//libraries/java-compatibility:java-compatibility_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
         "//platform/util-ex:util-ex_test_lib",

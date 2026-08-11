@@ -290,8 +290,9 @@ private class JBIconView(elem: Element, private val icon: Icon) : View(elem) {
   override fun getAlignment(axis: Int): Float {
     // 12 is a "standard" font height that has a user scale of 1
     val scaleFactor = container.asSafely<ExtendableHTMLViewFactory.ScaledHtmlJEditorPane>()?.contentsScaleFactor ?: 1f
-    val fontSize = container.font.size
-    return if (axis == Y_AXIS) JBUIScale.scale(fontSize) / (icon.iconHeight.toFloat() * scaleFactor) else super.getAlignment(axis)
+    val fontSize = container?.font?.size
+    return if (axis == Y_AXIS && fontSize != null) JBUIScale.scale(fontSize) / (icon.iconHeight.toFloat() * scaleFactor)
+    else super.getAlignment(axis)
   }
 
   override fun getToolTipText(x: Float, y: Float, allocation: Shape): String? {

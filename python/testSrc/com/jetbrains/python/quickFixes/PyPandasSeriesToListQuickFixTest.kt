@@ -3,8 +3,12 @@ package com.jetbrains.python.quickFixes
 
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyQuickFixTestCase
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.inspections.PyPandasSeriesToListInspection
 
+@Subsystems.QuickFixes
+@Layers.Functional
 class PyPandasSeriesToListQuickFixTest : PyQuickFixTestCase() {
   private val quickFixName = PyPsiBundle.message("QFIX.pandas.series.values.replace.with.tolist")
 

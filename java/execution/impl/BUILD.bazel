@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.execution.impl` start
-
 jvm_library(
     name = "impl",
     srcs = glob(
@@ -39,7 +38,6 @@ jvm_library(
         "//platform/lang-core",
         "//platform/projectModel-api:projectModel",
         "//platform/testRunner",
-        "//platform/vcs-api:vcs",
         "//platform/usageView",
         "//platform/ide-core-impl",
         "//platform/ide-core",
@@ -49,14 +47,12 @@ jvm_library(
         "//java/java-indexing-api:indexing",
         "//java/java-syntax:syntax",
         "//platform/smRunner",
-        "@lib//:intellij-test-discovery",
+        "//libraries/test-discovery",
         "//platform/external-system-api:externalSystem",
         "//platform/external-system-impl:externalSystem-impl",
         "//libraries/gson",
         "//libraries/jackson/jackson",
         "//libraries/miglayout-swing",
-        "//platform/vcs-impl",
-        "//platform/vcs-impl/lang",
         "//platform/util/nanoxml",
         "//libraries/jackson/databind",
         "//platform/xdebugger-impl:debugger-impl",
@@ -118,7 +114,6 @@ jvm_library(
         "//platform/lang-core:lang-core_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/testRunner:testRunner_test_lib",
-        "//platform/vcs-api:vcs_test_lib",
         "//platform/usageView:usageView_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
@@ -128,13 +123,12 @@ jvm_library(
         "//java/java-indexing-api:indexing_test_lib",
         "//java/java-syntax:syntax_test_lib",
         "//platform/smRunner:smRunner_test_lib",
+        "//libraries/test-discovery:test-discovery_test_lib",
         "//platform/external-system-api:externalSystem_test_lib",
         "//platform/external-system-impl:externalSystem-impl_test_lib",
         "//libraries/gson:gson_test_lib",
         "//libraries/jackson/jackson:jackson_test_lib",
         "//libraries/miglayout-swing:miglayout-swing_test_lib",
-        "//platform/vcs-impl:vcs-impl_test_lib",
-        "//platform/vcs-impl/lang:lang_test_lib",
         "//platform/util/nanoxml:nanoxml_test_lib",
         "//libraries/jackson/databind:databind_test_lib",
         "//platform/xdebugger-impl:debugger-impl_test_lib",

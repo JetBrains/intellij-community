@@ -44,6 +44,7 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseEvent;
 
 /**
  * @author Alexander Lobas
@@ -55,6 +56,11 @@ public class TabbedPaneHeaderComponent extends JPanel implements UiDataProvider 
   private final JBValue myGap = new JBValue.Float(10);
   private boolean myIsWelcomeScreen = false;
 
+  // True only while dispatching a real MOUSE_PRESSED on the tab area, or while running the
+  // keyboard next/previous-tab action below — i.e. only for genuine user gestures, never for
+  // programmatic selection changes (see setSelection/setSelectionWithEvents).
+  private boolean myUserInitiatedSelection = false;
+
   private final JBTabbedPane myTabbedPane = new JBTabbedPane() {
     @Override
     public void setUI(TabbedPaneUI ui) {
@@ -65,6 +71,22 @@ public class TabbedPaneHeaderComponent extends JPanel implements UiDataProvider 
       }
       finally {
         UIManager.getDefaults().put("TabbedPane.contentOpaque", Boolean.valueOf(value));
+      }
+    }
+
+    @Override
+    protected void processMouseEvent(MouseEvent e) {
+      if (e.getID() == MouseEvent.MOUSE_PRESSED) {
+        myUserInitiatedSelection = true;
+        try {
+          super.processMouseEvent(e);
+        }
+        finally {
+          myUserInitiatedSelection = false;
+        }
+      }
+      else {
+        super.processMouseEvent(e);
       }
     }
   };
@@ -185,7 +207,7 @@ public class TabbedPaneHeaderComponent extends JPanel implements UiDataProvider 
   }
 
   public void setListener() {
-    myTabbedPane.addChangeListener(e -> myListener.selectionChanged(myTabbedPane.getSelectedIndex()));
+    myTabbedPane.addChangeListener(e -> myListener.selectionChanged(myTabbedPane.getSelectedIndex(), myUserInitiatedSelection));
   }
 
   @Override
@@ -231,7 +253,15 @@ public class TabbedPaneHeaderComponent extends JPanel implements UiDataProvider 
   public void addNotify() {
     super.addNotify();
 
-    Runnable action = () -> setSelectionWithEvents(myTabbedPane.getSelectedIndex() == 0 ? 1 : 0);
+    Runnable action = () -> {
+      myUserInitiatedSelection = true;
+      try {
+        setSelectionWithEvents(myTabbedPane.getSelectedIndex() == 0 ? 1 : 0);
+      }
+      finally {
+        myUserInitiatedSelection = false;
+      }
+    };
 
     addTabSelectionAction(IdeActions.ACTION_NEXT_TAB, action);
     addTabSelectionAction(IdeActions.ACTION_PREVIOUS_TAB, action);

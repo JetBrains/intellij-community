@@ -5,13 +5,16 @@ package com.intellij.openapi.observable.operation.core
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.ConcurrencyUtil
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Subscribes listener on operation schedule event.
  *
  * @see com.intellij.openapi.observable.dispatcher.SingleEventDispatcher.whenEventHappened
  */
+@ApiStatus.Internal
 fun ObservableOperationTrace.whenOperationScheduled(listener: () -> Unit): Unit = whenOperationScheduled(null, listener)
+@ApiStatus.Internal
 fun ObservableOperationTrace.whenOperationScheduled(parentDisposable: Disposable?, listener: () -> Unit): Unit =
   scheduleObservable.whenEventHappened(parentDisposable, listener)
 
@@ -20,7 +23,9 @@ fun ObservableOperationTrace.whenOperationScheduled(parentDisposable: Disposable
  *
  * @see com.intellij.openapi.observable.dispatcher.SingleEventDispatcher.whenEventHappened
  */
+@ApiStatus.Internal
 fun ObservableOperationTrace.whenOperationScheduled(ttl: Int, listener: () -> Unit): Unit = whenOperationScheduled(ttl, null, listener)
+@ApiStatus.Internal
 fun ObservableOperationTrace.whenOperationScheduled(ttl: Int, parentDisposable: Disposable?, listener: () -> Unit): Unit =
   scheduleObservable.whenEventHappened(ttl, parentDisposable, listener)
 
@@ -29,7 +34,9 @@ fun ObservableOperationTrace.whenOperationScheduled(ttl: Int, parentDisposable: 
  *
  * @see com.intellij.openapi.observable.dispatcher.SingleEventDispatcher.onceWhenEventHappened
  */
+@ApiStatus.Internal
 fun ObservableOperationTrace.onceWhenOperationScheduled(listener: () -> Unit): Unit = onceWhenOperationScheduled(null, listener)
+@ApiStatus.Internal
 fun ObservableOperationTrace.onceWhenOperationScheduled(parentDisposable: Disposable?, listener: () -> Unit): Unit =
   scheduleObservable.onceWhenEventHappened(parentDisposable, listener)
 
@@ -38,7 +45,9 @@ fun ObservableOperationTrace.onceWhenOperationScheduled(parentDisposable: Dispos
  *
  * @see com.intellij.openapi.observable.dispatcher.SingleEventDispatcher.whenEventHappened
  */
+@ApiStatus.Internal
 fun ObservableOperationTrace.whenOperationStarted(listener: () -> Unit): Unit = whenOperationStarted(null, listener)
+@ApiStatus.Internal
 fun ObservableOperationTrace.whenOperationStarted(parentDisposable: Disposable?, listener: () -> Unit): Unit =
   startObservable.whenEventHappened(parentDisposable, listener)
 
@@ -47,7 +56,9 @@ fun ObservableOperationTrace.whenOperationStarted(parentDisposable: Disposable?,
  *
  * @see com.intellij.openapi.observable.dispatcher.SingleEventDispatcher.whenEventHappened
  */
+@ApiStatus.Internal
 fun ObservableOperationTrace.whenOperationStarted(ttl: Int, listener: () -> Unit): Unit = whenOperationStarted(ttl, null, listener)
+@ApiStatus.Internal
 fun ObservableOperationTrace.whenOperationStarted(ttl: Int, parentDisposable: Disposable?, listener: () -> Unit): Unit =
   startObservable.whenEventHappened(ttl, parentDisposable, listener)
 
@@ -56,7 +67,9 @@ fun ObservableOperationTrace.whenOperationStarted(ttl: Int, parentDisposable: Di
  *
  * @see com.intellij.openapi.observable.dispatcher.SingleEventDispatcher.onceWhenEventHappened
  */
+@ApiStatus.Internal
 fun ObservableOperationTrace.onceWhenOperationStarted(listener: () -> Unit): Unit = onceWhenOperationStarted(null, listener)
+@ApiStatus.Internal
 fun ObservableOperationTrace.onceWhenOperationStarted(parentDisposable: Disposable?, listener: () -> Unit): Unit =
   startObservable.onceWhenEventHappened(parentDisposable, listener)
 
@@ -65,7 +78,9 @@ fun ObservableOperationTrace.onceWhenOperationStarted(parentDisposable: Disposab
  *
  * @see com.intellij.openapi.observable.dispatcher.SingleEventDispatcher.whenEventHappened
  */
+@ApiStatus.Internal
 fun ObservableOperationTrace.whenOperationFinished(listener: () -> Unit): Unit = whenOperationFinished(null, listener)
+@ApiStatus.Internal
 fun ObservableOperationTrace.whenOperationFinished(parentDisposable: Disposable?, listener: () -> Unit): Unit =
   finishObservable.whenEventHappened(parentDisposable, listener)
 
@@ -74,7 +89,9 @@ fun ObservableOperationTrace.whenOperationFinished(parentDisposable: Disposable?
  *
  * @see com.intellij.openapi.observable.dispatcher.SingleEventDispatcher.whenEventHappened
  */
+@ApiStatus.Internal
 fun ObservableOperationTrace.whenOperationFinished(ttl: Int, listener: () -> Unit): Unit = whenOperationFinished(ttl, null, listener)
+@ApiStatus.Internal
 fun ObservableOperationTrace.whenOperationFinished(ttl: Int, parentDisposable: Disposable?, listener: () -> Unit): Unit =
   finishObservable.whenEventHappened(ttl, parentDisposable, listener)
 
@@ -83,12 +100,17 @@ fun ObservableOperationTrace.whenOperationFinished(ttl: Int, parentDisposable: D
  *
  * @see com.intellij.openapi.observable.dispatcher.SingleEventDispatcher.onceWhenEventHappened
  */
+@ApiStatus.Internal
 fun ObservableOperationTrace.onceWhenOperationFinished(listener: () -> Unit): Unit = onceWhenOperationFinished(null, listener)
+@ApiStatus.Internal
 fun ObservableOperationTrace.onceWhenOperationFinished(parentDisposable: Disposable?, listener: () -> Unit): Unit =
   finishObservable.onceWhenEventHappened(parentDisposable, listener)
 
+@ApiStatus.Internal
 fun ObservableOperationTrace.withScheduledOperation(action: () -> Unit): Unit = withScheduledOperation(null, action)
+@ApiStatus.Internal
 fun ObservableOperationTrace.withStartedOperation(action: () -> Unit): Unit = withStartedOperation(null, action)
+@ApiStatus.Internal
 fun ObservableOperationTrace.withCompletedOperation(listener: () -> Unit): Unit = withCompletedOperation(null, listener)
 
 /**
@@ -97,6 +119,7 @@ fun ObservableOperationTrace.withCompletedOperation(listener: () -> Unit): Unit 
  * @param listener is a listener function that will be called only once.
  * @param parentDisposable is used for early unsubscription when listener isn't called.
  */
+@ApiStatus.Internal
 fun ObservableOperationTrace.withScheduledOperation(parentDisposable: Disposable?, listener: () -> Unit) {
   val once = ConcurrencyUtil.once(listener)
   onceWhenOperationScheduled(parentDisposable) {
@@ -113,6 +136,7 @@ fun ObservableOperationTrace.withScheduledOperation(parentDisposable: Disposable
  * @param listener is a listener function that will be called only once.
  * @param parentDisposable is used for early unsubscription when listener isn't called.
  */
+@ApiStatus.Internal
 fun ObservableOperationTrace.withStartedOperation(parentDisposable: Disposable?, listener: () -> Unit) {
   val once = ConcurrencyUtil.once(listener)
   onceWhenOperationStarted(parentDisposable) {

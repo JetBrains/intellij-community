@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -56,7 +56,6 @@ import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.GutterMarkPreprocessor;
@@ -116,8 +115,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
-import com.intellij.platform.ide.core.permissions.Permission;
-import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.AnimatedIcon;
@@ -502,111 +499,109 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   @Override
   public void paintComponent(Graphics g_) {
-    EditorThreading.run(() -> {
-      Rectangle clip = g_.getClipBounds();
-      if (clip == null || clip.isEmpty()) {
-        return;
+    Rectangle clip = g_.getClipBounds();
+    if (clip == null || clip.isEmpty()) {
+      return;
+    }
+
+    Graphics2D g = (Graphics2D)getComponentGraphics(g_);
+
+    if (myEditor.isDisposed()) {
+      g.setColor(myEditor.getDisposedBackground());
+      g.fillRect(clip.x, clip.y, clip.width, clip.height);
+      return;
+    }
+
+    updateInterLineShiftState();
+
+    AffineTransform old = setMirrorTransformIfNeeded(g, 0, getWidth());
+    if (old != null) {
+      clip = g.getClipBounds();
+    }
+
+    EditorUIUtil.setupAntialiasing(g);
+    g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
+
+    Color backgroundColor = getBackground();
+
+    int startVisualLine;
+    int endVisualLine;
+
+    int firstVisibleOffset;
+    int lastVisibleOffset;
+
+    Segment focusModeRange = myEditor.getFocusModeRange();
+    if (focusModeRange == null) {
+      startVisualLine = myEditor.yToVisualLine(clip.y);
+      endVisualLine = myEditor.yToVisualLine(clip.y + clip.height - 1);
+
+      firstVisibleOffset = myEditor.visualLineStartOffset(startVisualLine);
+      lastVisibleOffset = myEditor.visualLineStartOffset(endVisualLine + 1);
+    }
+    else {
+      firstVisibleOffset = focusModeRange.getStartOffset();
+      lastVisibleOffset = focusModeRange.getEndOffset();
+
+      startVisualLine = myEditor.offsetToVisualLine(firstVisibleOffset);
+      endVisualLine = myEditor.offsetToVisualLine(lastVisibleOffset);
+    }
+
+    if (firstVisibleOffset > lastVisibleOffset) {
+      LOG.error("Unexpected painting range: (" + firstVisibleOffset + ":" + lastVisibleOffset
+                + "), visual line range: (" + startVisualLine + ":" + endVisualLine
+                + "), clip: " + clip + ", focus range: " + focusModeRange);
+    }
+
+    // paint all backgrounds
+    int gutterSeparatorX = getWhitespaceSeparatorOffset();
+    Color caretRowColor = getCaretRowColor();
+    paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor, caretRowColor);
+    paintBackground(g, clip, gutterSeparatorX, getWidth() - gutterSeparatorX, myEditor.getBackgroundColor(), caretRowColor);
+    paintEditorBackgrounds(g, firstVisibleOffset, lastVisibleOffset);
+
+    Object hint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+    if (!JreHiDpiUtil.isJreHiDPI(g)) g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+
+    try {
+      paintAnnotations(g, startVisualLine, endVisualLine);
+
+      if (focusModeRange != null) {
+        int startY = Math.max(myEditor.visualLineToY(startVisualLine), clip.y);
+        int endY = Math.min(myEditor.visualLineToY(endVisualLine), clip.y + clip.height);
+        //noinspection GraphicsSetClipInspection
+        g.setClip(clip.x, startY, clip.width, endY - startY);
       }
 
-      Graphics2D g = (Graphics2D)getComponentGraphics(g_);
-
-      if (myEditor.isDisposed()) {
-        g.setColor(myEditor.getDisposedBackground());
-        g.fillRect(clip.x, clip.y, clip.width, clip.height);
-        return;
-      }
-
-      updateInterLineShiftState();
-
-      AffineTransform old = setMirrorTransformIfNeeded(g, 0, getWidth());
-      if (old != null) {
-        clip = g.getClipBounds();
-      }
-
-      EditorUIUtil.setupAntialiasing(g);
-      g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
-
-      Color backgroundColor = getBackground();
-
-      int startVisualLine;
-      int endVisualLine;
-
-      int firstVisibleOffset;
-      int lastVisibleOffset;
-
-      Segment focusModeRange = myEditor.getFocusModeRange();
-      if (focusModeRange == null) {
-        startVisualLine = myEditor.yToVisualLine(clip.y);
-        endVisualLine = myEditor.yToVisualLine(clip.y + clip.height - 1);
-
-        firstVisibleOffset = myEditor.visualLineStartOffset(startVisualLine);
-        lastVisibleOffset = myEditor.visualLineStartOffset(endVisualLine + 1);
-      }
-      else {
-        firstVisibleOffset = focusModeRange.getStartOffset();
-        lastVisibleOffset = focusModeRange.getEndOffset();
-
-        startVisualLine = myEditor.offsetToVisualLine(firstVisibleOffset);
-        endVisualLine = myEditor.offsetToVisualLine(lastVisibleOffset);
-      }
-
-      if (firstVisibleOffset > lastVisibleOffset) {
-        LOG.error("Unexpected painting range: (" + firstVisibleOffset + ":" + lastVisibleOffset
-                  + "), visual line range: (" + startVisualLine + ":" + endVisualLine
-                  + "), clip: " + clip + ", focus range: " + focusModeRange);
-      }
-
-      // paint all backgrounds
-      int gutterSeparatorX = getWhitespaceSeparatorOffset();
-      Color caretRowColor = getCaretRowColor();
-      paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor, caretRowColor);
-      paintBackground(g, clip, gutterSeparatorX, getWidth() - gutterSeparatorX, myEditor.getBackgroundColor(), caretRowColor);
-      paintEditorBackgrounds(g, firstVisibleOffset, lastVisibleOffset);
-
-      Object hint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-      if (!JreHiDpiUtil.isJreHiDPI(g)) g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-
-      try {
-        paintAnnotations(g, startVisualLine, endVisualLine);
-
-        if (focusModeRange != null) {
-          int startY = Math.max(myEditor.visualLineToY(startVisualLine), clip.y);
-          int endY = Math.min(myEditor.visualLineToY(endVisualLine), clip.y + clip.height);
-          //noinspection GraphicsSetClipInspection
-          g.setClip(clip.x, startY, clip.width, endY - startY);
-        }
-
-        if (ExperimentalUI.isNewUI() && myPaintBackground && !DistractionFreeModeController.shouldMinimizeCustomHeader()) {
-          if (!myEditor.isStickyLinePainting()) { // suppress vertical line between gutter and editor on the sticky lines panel
-            g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
-            int separatorX = gutterSeparatorX;
-            if (JBUIScale.scale(1f) > 1) {
-              separatorX++;
-            }
-            LinePainter2D.paint(g, separatorX, clip.y, separatorX, clip.y + clip.height);
+      if (ExperimentalUI.isNewUI() && myPaintBackground && !DistractionFreeModeController.shouldMinimizeCustomHeader()) {
+        if (!myEditor.isStickyLinePainting()) { // suppress vertical line between gutter and editor on the sticky lines panel
+          g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
+          int separatorX = gutterSeparatorX;
+          if (JBUIScale.scale(1f) > 1) {
+            separatorX++;
           }
+          LinePainter2D.paint(g, separatorX, clip.y, separatorX, clip.y + clip.height);
         }
-
-        paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset, startVisualLine, endVisualLine);
-
-        if (focusModeRange != null) {
-          //noinspection GraphicsSetClipInspection
-          g.setClip(clip);
-        }
-
-        paintFoldingLines(g, clip);
-        paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
-        paintLineNumbers(g, startVisualLine, endVisualLine);
-        paintCurrentAccessibleLine(g);
-      }
-      finally {
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
       }
 
-      if (old != null) g.setTransform(old);
+      paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset, startVisualLine, endVisualLine);
 
-      debugGutterAreas(g);
-    });
+      if (focusModeRange != null) {
+        //noinspection GraphicsSetClipInspection
+        g.setClip(clip);
+      }
+
+      paintFoldingLines(g, clip);
+      paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
+      paintLineNumbers(g, startVisualLine, endVisualLine);
+      paintCurrentAccessibleLine(g);
+    }
+    finally {
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
+    }
+
+    if (old != null) g.setTransform(old);
+
+    debugGutterAreas(g);
   }
 
   private void debugGutterAreas(@NotNull Graphics2D g) {
@@ -731,7 +726,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
             }
 
             int visualLine = visLinesIterator.getVisualLine();
-            y += getInterLineShiftForVisualLine(visualLine);
 
             if (paintText || logicalLine == -1) {
               logicalLine = visLinesIterator.getDisplayedLogicalLine();
@@ -2717,8 +2711,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     updateSize();
   }
 
-  private final class CloseAnnotationsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.BackendOnly,
-                                                                                RequiresPermissions {
+  private final class CloseAnnotationsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.BackendOnly {
     CloseAnnotationsAction() {
       super(EditorBundle.messagePointer("close.editor.annotations.action.name"));
     }
@@ -2726,11 +2719,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       closeAllAnnotations();
-    }
-
-    @Override
-    public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
-      return List.of();
     }
   }
 

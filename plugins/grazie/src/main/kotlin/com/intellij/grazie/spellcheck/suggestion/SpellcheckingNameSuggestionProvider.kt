@@ -23,9 +23,16 @@ class SpellcheckingNameSuggestionProvider : NameSuggestionProvider {
     val manager = SpellCheckerManager.getInstance(element.project)
     if (!manager.hasProblem(name)) return null
 
-    val suggestions = manager.getSuggestions(name)
+    val sequence = manager.getSuggestions(name)
+      .asSequence()
       .filter { RenameUtil.isValidName(element.project, element, it) }
-      .toList()
+
+    val suggestions = if (element is PsiFile) {
+      val extension = element.name.substringAfterLast('.').takeIf { it.isNotBlank() }
+      if (extension != null) sequence.map { "$it.$extension" }.toList() else sequence.toList()
+    } else {
+      sequence.toList()
+    }
     if (suggestions.isEmpty()) return null
 
     result.addAll(suggestions)
@@ -33,7 +40,7 @@ class SpellcheckingNameSuggestionProvider : NameSuggestionProvider {
   }
 
   private fun getName(element: PsiElement): String? = when (element) {
-    is PsiFile -> element.name.substringBefore('.').takeIf { it.isNotBlank() }
+    is PsiFile -> element.name.substringBeforeLast('.').takeIf { it.isNotBlank() }
     is PsiNamedElement -> element.name
     else -> null
   }

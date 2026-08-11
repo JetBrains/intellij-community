@@ -5,6 +5,7 @@ The Maven server is the out-of-process JVM that holds the user's Maven runtime (
 ## Process-boundary rules
 
 The Maven server runs in a separate JVM with the user's Maven classloader. Crossing the boundary in the wrong direction is the single most common source of regressions.
+The Server's JVM can be different vendor and version, than the JVM, on which IDEA is running.
 
 - Code in `intellij.maven.server.*` and `intellij.maven.artifactResolver.*` modules MUST NOT import IDE platform classes (`com.intellij.openapi.*`, project/PSI/VFS, etc.). Only `intellij.maven.model` and the RMI API in `intellij.maven.server` may be shared.
 - Anything sent across RMI must be `Serializable` and stable — the server JVM may be running a different Maven version than the IDE expects.
@@ -40,8 +41,6 @@ The Maven server runs in a separate JVM with the user's Maven classloader. Cross
 - **Adding a JVM flag or system property for every Maven version** → `MavenServerCMDState.createJavaParameters()`. Gate behind a `Registry` key if it's risky.
 - **Adding a flag for one Maven version only** → override the relevant `MavenVersionAwareSupportExtension` method in `m3.impl` / `m36.impl` / `m40`. Do not branch on version in `MavenServerCMDState`.
 - **Adding a new RMI call** → declare it on the interface in `intellij.maven.server`, implement in every `maven*-server-impl/` (m3, m36, m40). Skipping a version silently breaks users on that Maven.
-- **Supporting a new Maven major** → new `maven<N>-server-impl/` module + new `MavenVersionAwareSupportExtension` registered via the `org.jetbrains.idea.maven.versionAwareMavenSupport` EP. Do not edit existing impls.
-- **Triggering a restart on a setting change** → call `shutdownMavenConnectors(project, predicate)` from the listener. Do not call `MavenServerConnector.stop` directly — that path skips embedder reset.
 
 ## What NOT to do
 

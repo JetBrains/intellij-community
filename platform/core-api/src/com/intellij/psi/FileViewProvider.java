@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -37,7 +38,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
    * @return the document corresponding to this file. Can be {@code null} for binary or files without events enabled.
    * @see FileType#isBinary()
    * @see PsiBinaryFile
-   * @see #isEventSystemEnabled()
+   * @see #supportsSendingPsiEvents()
    */
   Document getDocument();
 
@@ -96,20 +97,48 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
   List<@NotNull PsiFile> getAllFiles();
 
   /**
-   * @return whether PSI events are fired when changes occur inside PSI in this view provider. {@code true} for physical files and for some non-physical as well.
+   * @deprecated This method was used in {@link PsiElement#isPhysical()} which could be confused with {@link FileViewProvider#isPhysical()}.
+   * Use {@link FileViewProvider#supportsSendingPsiEvents()} instead.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  boolean isEventSystemEnabled();
+
+  /**
+   * @deprecated This method causes confusion with {@link PsiElement#isPhysical()}.
+   * Use {@link FileViewProvider#correspondsToRealFile()} instead.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  boolean isPhysical();
+
+  /**
+   * Indicates that PSI events are fired for changes occurring in PSI files associated with this view provider.
+   * <p>
+   * If {@link FileViewProvider#correspondsToRealFile} returns {@code true}, it implies that this method will also return {@code true}.
+   * <p>
+   * The value of {@link PsiElement#isPhysical()} delegates to this method.
+   *
    * @see PsiTreeChangeListener
    * @see PsiFileFactory#createFileFromText(String, FileType, CharSequence, long, boolean)
    * @see PsiFile#isPhysical()
    */
-  boolean isEventSystemEnabled();
+  default boolean supportsSendingPsiEvents() {
+    return isEventSystemEnabled();
+  }
 
   /**
-   * @return whether this file corresponds to a file on a disk. For such files, {@link PsiFile#getVirtualFile()} returns non-null.
-   * Not to be confused with {@link PsiFile#isPhysical()} which (for historical reasons) returns {@code getViewProvider().isEventSystemEnabled()}
-   * @see #isEventSystemEnabled()
-   * @see PsiFile#isPhysical()
+   * Indicates whether this {@link FileViewProvider} corresponds to a file on a disk. For such files, {@link PsiFile#getVirtualFile()} returns a non-null value.
+   * <p>
+   * If an underlying {@link FileViewProvider#getVirtualFile()} is {@link LightVirtualFile}, then this method will return {@code false}.
+   * <p>
+   * If this method returns {@code true}, it implies that {@link FileViewProvider#supportsSendingPsiEvents()} will also return {@code true}.
+   *
+   * @see #supportsSendingPsiEvents()
    */
-  boolean isPhysical();
+  default boolean correspondsToRealFile() {
+    return isPhysical();
+  }
 
   /**
    * @return a number to quickly check if contents of this view provider have diverged from the corresponding {@link VirtualFile} or {@link Document}.
@@ -149,8 +178,8 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
 
   /**
    * @return a copy of this view provider, built on a {@link LightVirtualFile}, not physical and with PSI events disabled.
-   * @see #isPhysical()
-   * @see #isEventSystemEnabled()
+   * @see #correspondsToRealFile()
+   * @see #supportsSendingPsiEvents()
    * @see #createCopy(VirtualFile)
    */
   FileViewProvider clone();
@@ -204,7 +233,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
    * The result provider is required to be NOT event-system-enabled.
    *
    * @see LightVirtualFile
-   * @see #isEventSystemEnabled()
+   * @see #supportsSendingPsiEvents()
    */
   @NotNull
   FileViewProvider createCopy(@NotNull VirtualFile copy);

@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.grpc.netty.shaded` start
-
 jvm_library(
     name = "grpc-netty-shaded",
     srcs = glob(
@@ -18,12 +17,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:grpc-netty-shaded"],
+    exports = ["@lib//:libraries-grpc-netty-shaded-grpc-netty-shaded"],
     deps = [
         # do not sort,
-        "@lib//:grpc-netty-shaded",
+        "@lib//:libraries-grpc-netty-shaded-grpc-netty-shaded",
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/grpc",
     ],
 )
@@ -37,10 +36,11 @@ jvm_library(
     ),
     module_name = "intellij.libraries.grpc.netty.shaded",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:grpc-netty-shaded"],
+    exports = ["@lib//:libraries-grpc-netty-shaded-grpc-netty-shaded"],
     runtime_deps = [
         # do not sort,
         ":grpc-netty-shaded",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/grpc:grpc_test_lib",
     ],
 )

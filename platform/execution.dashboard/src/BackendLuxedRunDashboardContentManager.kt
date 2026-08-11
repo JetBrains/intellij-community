@@ -5,6 +5,7 @@ import com.intellij.execution.Executor
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.dashboard.RunDashboardService
 import com.intellij.execution.dashboard.RunDashboardServiceId
+import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.rpc.ComponentDirectTransferId
 import com.intellij.ide.rpc.setupTransfer
@@ -110,11 +111,32 @@ class BackendLuxedRunDashboardContentManager(val project: Project, val scope: Co
 
   fun unregisterLuxedToolWindowContent(descriptor: RunContentDescriptor, executor: Executor) {
     if (isBackend && ToolWindowId.DEBUG == executor.getId()) {
-      val service = guessServiceSuitableForDescriptor(descriptor) ?: return
+      val service = findServiceReusedByDescriptor(descriptor)
+                    ?: guessServiceSuitableForDescriptor(descriptor)
+                    ?: return
       val disposedComponentOrNull = disposeLuxForComponent(service, descriptor)
       val disposedDescriptorId = disposedComponentOrNull?.descriptorId ?: return
       luxedContents.tryEmit(RunDashboardLuxedContentEvent(service.uuid, disposedDescriptorId, ToolWindowId.DEBUG, false))
     }
+  }
+
+  fun exchangeStaleDebugDescriptorIfNeeded(descriptor: RunContentDescriptor, executor: Executor) {
+    if (!isBackend || ToolWindowId.DEBUG == executor.getId()) return
+    val newDescriptorId = descriptor.id ?: return
+    val runDashboardManager = RunDashboardManagerImpl.getInstance(project)
+    val settings = runDashboardManager.findSettings(newDescriptorId) ?: return
+    val services = runDashboardManager.getServices(settings) ?: return
+    if (services.any { it.descriptorId == newDescriptorId }) return
+
+    // Only services holding terminated hidden descriptors are exchanged: live debug sessions must keep their own
+    // node, and non-hidden contents are exchanged by the content manager's own reuse machinery.
+    val staleDebugService = services.find { service ->
+      val serviceDescriptor = service.descriptor
+      serviceDescriptor != null && serviceDescriptor.isHiddenContent &&
+      (serviceDescriptor.processHandler?.isProcessTerminated ?: true)
+    } ?: return
+    val staleDescriptorId = staleDebugService.descriptorId ?: return
+    runDashboardManager.updateServiceRunContentDescriptor(staleDescriptorId, newDescriptorId)
   }
 
   @RequiresEdt
@@ -136,6 +158,14 @@ class BackendLuxedRunDashboardContentManager(val project: Project, val scope: Co
 
   fun getLuxedContents(): Flow<RunDashboardLuxedContentEvent> {
     return luxedContents.asSharedFlow()
+  }
+
+  private fun findServiceReusedByDescriptor(descriptor: RunContentDescriptor): RunDashboardService? {
+    val newDescriptorId = descriptor.id ?: return null
+    val environment = ExecutionManagerImpl.getInstance(project).getExecutionEnvironments(descriptor).firstOrNull() ?: return null
+    val reusedDescriptorId = environment.contentToReuse?.id ?: return null
+    if (reusedDescriptorId == newDescriptorId) return null
+    return RunDashboardManagerImpl.getInstance(project).findService(reusedDescriptorId)
   }
 
   private fun guessServiceSuitableForDescriptor(descriptor: RunContentDescriptor): RunDashboardService? {

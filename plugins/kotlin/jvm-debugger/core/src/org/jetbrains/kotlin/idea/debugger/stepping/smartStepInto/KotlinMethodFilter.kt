@@ -19,6 +19,8 @@ import com.sun.jdi.request.StepRequest
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
@@ -77,17 +79,18 @@ open class KotlinMethodFilter(
         val currentDeclaration = getCurrentDeclaration(process.positionManager, location) ?: return false
         // Stops at first location in dumb mode
         return runDumbAnalyze(currentDeclaration, fallback = true) {
-            declarationMatches(currentDeclaration)
+            innerDeclarationMatches(currentDeclaration)
         }
     }
 
     fun declarationMatches(declaration: KtDeclaration): Boolean {
         return runDumbAnalyze(declaration, fallback = true) {
-            declarationMatches(declaration)
+            innerDeclarationMatches(declaration)
         }
     }
 
-    private fun KaSession.declarationMatches(currentDeclaration: KtDeclaration): Boolean {
+    context(session: KaSession)
+    private fun innerDeclarationMatches(currentDeclaration: KtDeclaration): Boolean {
         val currentSymbol = currentDeclaration.symbol
         // callable or constructor
         if (currentSymbol !is KaCallableSymbol && currentSymbol !is KaClassSymbol) return false

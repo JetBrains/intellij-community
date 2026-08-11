@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build kotlin.fir.frontend-independent` start
-
 jvm_library(
     name = "frontend-independent",
     srcs = glob(
@@ -28,9 +27,12 @@ jvm_library(
         "//platform/ide-core-impl",
         "//platform/ide-core",
         "//libraries/kotlin/reflect",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin/references",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-jps-common",
-        "@lib//:kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//libraries/guava",
         "//platform/indexing-api:indexing",
         "//jps/model-api:model",
@@ -43,7 +45,6 @@ jvm_library(
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/psi",
         "//plugins/kotlin/base/analysis",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
         "//plugins/kotlin/base/code-insight",
         "//platform/lang-api:lang",
         "//platform/platform-impl:ide-impl",
@@ -66,7 +67,7 @@ jvm_library(
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/project-structure",
         "//plugins/kotlin/project-configuration",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
         "//plugins/kotlin/base/compiler-configuration",
     ],
 )
@@ -90,6 +91,11 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//libraries/kotlin/reflect:reflect_test_lib",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//libraries/guava:guava_test_lib",
         "//platform/indexing-api:indexing_test_lib",
         "//jps/model-api:model_test_lib",
@@ -102,7 +108,6 @@ jvm_library(
         "//plugins/kotlin/base/util:util_test_lib",
         "//plugins/kotlin/base/psi:psi_test_lib",
         "//plugins/kotlin/base/analysis:analysis_test_lib",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
         "//plugins/kotlin/base/code-insight:code-insight_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
@@ -125,7 +130,7 @@ jvm_library(
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//plugins/kotlin/base/project-structure:project-structure_test_lib",
         "//plugins/kotlin/project-configuration:project-configuration_test_lib",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
         "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
     ],
 )

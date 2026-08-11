@@ -225,8 +225,13 @@ public class BuildContextImpl implements BuildContext {
 
     String jvmTarget = CLFlags.JVM_TARGET.getOptionalScalarValue(flags);
     if (jvmTarget != null) {
+      String platformVersion = "8".equals(jvmTarget)? "1.8" : jvmTarget;
+      // generate compatible bytecode
       options.add("-jvm-target");
-      options.add("8".equals(jvmTarget)? "1.8" : jvmTarget);
+      options.add(platformVersion);
+      // limit the API of the JDK in the classpath to the specified Java version
+      options.add("-Xjdk-release");
+      options.add(platformVersion);
     }
 
     StringBuilder optIns = new StringBuilder();
@@ -254,8 +259,20 @@ public class BuildContextImpl implements BuildContext {
     if (CLFlags.X_STRICT_JAVA_NULLABILITY_ASSERTIONS.isFlagSet(flags)) {
       options.add("-Xstrict-java-nullability-assertions");
     }
+    // One comma-joined flag, not repeated: kotlinc parses with overrideArguments=true, where a repeated
+    // array arg overwrites (last wins); warningLevels' default ',' delimiter splits it back into an array.
+    Iterable<String> warningLevels = CLFlags.X_WARNING_LEVEL.getValue(flags);
+    if (warningLevels.iterator().hasNext()) {
+      options.add("-Xwarning-level=" + String.join(",", warningLevels));
+    }
     if (CLFlags.X_WASM_ATTACH_JS_EXCEPTION.isFlagSet(flags)) {
       options.add("-Xwasm-attach-js-exception");
+    }
+    if (CLFlags.X_WASM_GENERATE_CLOSED_WORLD_MULTIMODULE.isFlagSet(flags)) {
+      options.add("-Xwasm-generate-closed-world-multimodule");
+    }
+    if (CLFlags.X_WASM_KCLASS_FQN.isFlagSet(flags)) {
+      options.add("-Xwasm-kclass-fqn");
     }
     for (String flag : CLFlags.X_XLANGUAGE.getValue(flags)) {
       options.add("-XXLanguage:" + flag);
@@ -544,6 +561,9 @@ public class BuildContextImpl implements BuildContext {
       }
       if (msg.getKind() == Message.Kind.ERROR) {
         myMessageSink.append("Error: ");
+      }
+      else if (msg.getKind() == Message.Kind.WARNING) {
+        myMessageSink.append("Warning: ");
       }
       myMessageSink.append(msg.getText()).append("\n");
     }

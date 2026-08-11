@@ -71,8 +71,6 @@
     <database.datagrid.valueEditorTab implementation="com.intellij.database.run.ui.EditorValueEditorTab"/>
     <database.datagrid.valueEditorTab implementation="com.intellij.database.run.ui.RecordViewTab"/>
 
-    <database.datagrid.cellViewerFactory implementation="com.intellij.database.run.ui.ArrayGridCellViewerFactory"/>
-
     <colorSettingsPage implementation="com.intellij.database.editor.DataGridColorSettingsPage"/>
 
     <applicationConfigurable id="database.data.csv.formats" groupId="tools"
@@ -103,6 +101,7 @@
             use-shortcut-of="ResizeToolWindowRight"/>
     <action id="ResetColumnsWidth" class="com.intellij.database.actions.ResetColumnsWidth"
             use-shortcut-of="ResizeToolWindowUp"/>
+    <action id="FitColumnWidthToViewport" class="com.intellij.database.actions.FitColumnWidthToViewportAction"/>
     <action id="TableResult.GrowSelection" class="com.intellij.database.actions.GrowSelectionAction"
             use-shortcut-of="EditorSelectWord"/>
     <action id="TableResult.ShrinkSelection" class="com.intellij.database.actions.ShrinkSelectionAction"
@@ -204,6 +203,9 @@
       <action id="Console.TableResult.ShowAllColumns" class="com.intellij.database.run.actions.ShowAllColumnsAction"/>
       <action id="Console.TableResult.ColumnsList" class="com.intellij.database.run.actions.ColumnsListAction"
               use-shortcut-of="FileStructurePopup"/>
+      <separator/>
+      <reference ref="FitColumnWidthToViewport"/>
+      <reference ref="ResetColumnsWidth"/>
       <separator/>
       <reference ref="Console.TableResult.AddColumn"/>
       <reference ref="Console.TableResult.CloneColumn"/>

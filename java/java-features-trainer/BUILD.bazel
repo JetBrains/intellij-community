@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.featuresTrainer` start
-
 jvm_library(
     name = "featuresTrainer",
     srcs = glob(
@@ -113,7 +112,6 @@ exports_files(
 ### auto-generated section `iml intellij.java.featuresTrainer` end
 
 ### auto-generated section `build intellij.java.featuresTrainer.tests` start
-
 jvm_library(
     name = "featuresTrainer-tests",
     srcs = glob(
@@ -197,6 +195,8 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//plugins/ide-features-trainer:featuresTrainer-tests",
         "//plugins/ide-features-trainer:featuresTrainer-tests_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.featuresTrainer.tests` end
@@ -211,7 +211,6 @@ exports_files(
 ### auto-generated section `iml intellij.java.featuresTrainer.tests` end
 
 ### auto-generated section `test intellij.java.featuresTrainer.tests` start
-
 jps_test(
     name = "featuresTrainer-tests_test",
     runtime_deps = [":featuresTrainer-tests_test_lib"],

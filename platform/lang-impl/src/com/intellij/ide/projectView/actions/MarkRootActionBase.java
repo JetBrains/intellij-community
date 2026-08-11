@@ -2,6 +2,7 @@
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
+import com.intellij.ide.ui.VirtualFileAppearanceListener;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -54,6 +55,9 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
 
   protected void modifyRoots(@NotNull Module module, VirtualFile @NotNull [] files) {
     MarkRootsManager.modifyRoots(module, files, this::modifyRoots);
+    for (VirtualFile file : files) {
+      VirtualFileAppearanceListener.fireVirtualFileAppearanceChanged(file);
+    }
   }
 
   protected abstract void modifyRoots(VirtualFile file, ContentEntry entry);
@@ -75,12 +79,20 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   }
 
   protected void doUpdate(@NotNull AnActionEvent e, @Nullable Module module, @NotNull RootsSelection selection) {
-    boolean enabled = module != null && (!selection.mySelectedRoots.isEmpty() || !selection.mySelectedDirectories.isEmpty())
+    boolean hasDirsOrRoots = !selection.mySelectedRoots.isEmpty() || !selection.mySelectedDirectories.isEmpty();
+    boolean hasFiles = !selection.mySelectedFiles.isEmpty();
+    boolean hasNonEmptySelection = acceptsFiles() ? hasDirsOrRoots || hasFiles : hasDirsOrRoots && !hasFiles;
+    boolean enabled = module != null && hasNonEmptySelection
                       && selection.mySelectedExcludeRoots.isEmpty() && isEnabled(selection, module);
     e.getPresentation().setEnabledAndVisible(enabled);
   }
 
   protected abstract boolean isEnabled(@NotNull RootsSelection selection, @NotNull Module module);
+
+  /** Override to {@code true} if the action can apply to non-directory files in addition to directories. */
+  protected boolean acceptsFiles() {
+    return false;
+  }
 
   protected static RootsSelection getSelection(@NotNull AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
@@ -90,12 +102,13 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
     RootsSelection selection = new RootsSelection(module);
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
     for (VirtualFile file : files) {
-      if (!file.isDirectory()) {
-        return RootsSelection.EMPTY;
-      }
       ExcludeFolder excludeFolder = ProjectRootsUtil.findExcludeFolder(module, file);
       if (excludeFolder != null) {
         selection.mySelectedExcludeRoots.add(excludeFolder);
+        continue;
+      }
+      if (!file.isDirectory()) {
+        selection.mySelectedFiles.add(file);
         continue;
       }
       SourceFolder folder = ProjectRootsUtil.getModuleSourceRoot(file, module.getProject());
@@ -149,6 +162,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
     public List<SourceFolder> mySelectedRoots = new ArrayList<>();
     public List<ExcludeFolder> mySelectedExcludeRoots = new ArrayList<>();
     public List<VirtualFile> mySelectedDirectories = new ArrayList<>();
+    public List<VirtualFile> mySelectedFiles = new ArrayList<>();
     public boolean myHaveSelectedFilesUnderSourceRoots;
   }
 }

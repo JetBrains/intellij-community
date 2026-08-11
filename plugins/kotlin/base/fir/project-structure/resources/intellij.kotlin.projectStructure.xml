@@ -1,11 +1,25 @@
-<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.base.fir.projectStructure">
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.kotlin.analysis.platform"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
     <module name="intellij.kotlin.base.scripting"/>
-    <!-- endregion -->
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.impl.base"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.platform.interface"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService

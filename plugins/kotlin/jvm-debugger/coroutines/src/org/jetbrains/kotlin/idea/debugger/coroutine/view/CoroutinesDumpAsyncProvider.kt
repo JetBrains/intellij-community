@@ -15,6 +15,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.unscramble.DumpItem
 import com.intellij.unscramble.IconsCache
+import com.intellij.unscramble.IntelliJThreadDumpMetadata
 import com.intellij.unscramble.MergeableDumpItem
 import com.intellij.unscramble.MergeableToken
 import com.intellij.unscramble.serializeThreadDumpItem
@@ -143,7 +144,7 @@ class CoroutineDumpItem internal constructor(
             stackTraceBody = stackTraceBody,
             id = treeId,
             parentId = parentTreeId.takeUnless { it == CoroutineRootDumpItem.treeId },
-            type = COROUTINE_THREAD_DUMP_TYPE,
+            type = IntelliJThreadDumpMetadata.COROUTINE_TYPE,
             additionalMetadata = coroutineContextInfo?.toMetadata().orEmpty(),
         )
 
@@ -159,6 +160,7 @@ class CoroutineDumpItem internal constructor(
             if (stateDesc != otherItem.stateDesc) return false
             if (coroutineContextInfo?.dispatcher != otherItem.coroutineContextInfo?.dispatcher) return false
             if (this.comparableStackTrace != other.comparableStackTrace) return false
+            if (parentTreeId != otherItem.parentTreeId) return false
             return true
         }
 
@@ -166,7 +168,8 @@ class CoroutineDumpItem internal constructor(
             return Objects.hash(
                 stateDesc,
                 coroutineContextInfo?.dispatcher,
-                comparableStackTrace
+                comparableStackTrace,
+                parentTreeId
             )
         }
     }
@@ -233,6 +236,6 @@ internal object CoroutineRootDumpItem : MergeableDumpItem {
             stackTraceBody = "   Carrying virtual thread #0",
             id = null,
             parentId = null,
-            type = COROUTINE_ROOT_THREAD_DUMP_TYPE,
+            type = IntelliJThreadDumpMetadata.COROUTINE_ROOT_TYPE,
         )
 }

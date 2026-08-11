@@ -1,10 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixture.PythonCommonCodeInsightTestFixture;
 import com.jetbrains.python.fixtures.PythonPlatformCodeInsightTestFixture;
 import com.jetbrains.python.psi.LanguageLevel;
 
+@Subsystems.CodeCompletion
+@Layers.Functional
 public class PythonCompletionTest extends PythonCommonCompletionTest {
   private final PythonCommonCodeInsightTestFixture myBackingFixture = new PythonPlatformCodeInsightTestFixture(LanguageLevel.PYTHON27);
 

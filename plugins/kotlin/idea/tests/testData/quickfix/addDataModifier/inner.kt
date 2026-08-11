@@ -7,10 +7,10 @@
 // ACTION: Put arguments on separate lines
 // ERROR: Destructuring declaration initializer of type Test.Foo must have a 'component1()' function
 // ERROR: Destructuring declaration initializer of type Test.Foo must have a 'component2()' function
-// K2_ERROR: Destructuring of type 'Test.Foo' requires operator function 'component1()'.
-// K2_ERROR: Destructuring of type 'Test.Foo' requires operator function 'component2()'.
-// K2_AFTER_ERROR: Destructuring of type 'Test.Foo' requires operator function 'component1()'.
-// K2_AFTER_ERROR: Destructuring of type 'Test.Foo' requires operator function 'component2()'.
+// K2_AFTER_ERROR: COMPONENT_FUNCTION_MISSING
+// K2_AFTER_ERROR: COMPONENT_FUNCTION_MISSING
+// K2_ERROR: COMPONENT_FUNCTION_MISSING
+// K2_ERROR: COMPONENT_FUNCTION_MISSING
 class Test {
     inner class Foo(val bar: String, val baz: Int)
     fun test() {

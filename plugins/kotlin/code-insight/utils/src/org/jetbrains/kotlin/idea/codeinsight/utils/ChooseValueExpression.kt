@@ -46,10 +46,14 @@ abstract class ChooseValueExpression<in T : Any>(
 }
 
 class ChooseStringExpression(
-    suggestions: Collection<String>,
+    val suggestions: Collection<String>,
     default: String = suggestions.first(),
     @Nls advertisementText: String? = null
 ) : ChooseValueExpression<String>(suggestions, default, advertisementText) {
     override fun getLookupString(element: String) = element
     override fun getResult(element: String) = element
+
+    override fun getStaticLookupStrings(): List<String> {
+        return suggestions.toList()
+    }
 }

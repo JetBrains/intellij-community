@@ -123,7 +123,7 @@ class GotItTooltipService {
  * Identifier has the following format: `place.where.used` (lowercase words separated with dots).
  *
  * Got It tooltip usage statistics can be properly gathered if its identifier prefix is registered in
- * `plugin.xml` (`PlatformExtensions.xml`) with `com.intellij.statistics.gotItTooltipAllowlist` extension point.
+ * `plugin.xml` with `com.intellij.statistics.gotItTooltipAllowlist` extension point.
  * Prefix can cover a whole class of different Got It tooltips. If the prefix is shorter than the whole ID, then all different
  * tooltip usages will be reported in one category described by the prefix.
  *
@@ -626,6 +626,7 @@ class GotItTooltip @ApiStatus.Internal constructor(@NonNls val id: String,
     }
   }
 
+  @ApiStatus.Internal
   companion object {
     const val PROPERTY_PREFIX: String = "got.it.tooltip"
 

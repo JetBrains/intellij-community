@@ -1,6 +1,6 @@
 // "Convert expression to 'List' by inserting '.toList()'" "true"
 // WITH_STDLIB
-// K2_ERROR: Argument type mismatch: actual type is 'Array<String>', but 'List<String>' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 fun foo(a: Array<String>) {
     bar(a<caret>)

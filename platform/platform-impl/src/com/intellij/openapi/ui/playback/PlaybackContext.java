@@ -20,9 +20,11 @@ public abstract class PlaybackContext  {
   private final PlaybackCommand myCurrentCmd;
   private File myBaseDir;
   private final Set<Class<?>> myCallClasses;
+  @ApiStatus.Internal
   protected final PlaybackRunner myRunner;
   private final boolean myUseTypingTargets;
 
+  @ApiStatus.Internal
   public PlaybackContext(PlaybackRunner runner, PlaybackRunner.StatusCallback callback, int currentLine, Robot robot, boolean useDriectActionCall, boolean useTypingTargets, PlaybackCommand currentCmd, File baseDir, Set<Class<?>> callClasses) {
     myRunner = runner;
     myCallback = callback;
@@ -35,6 +37,7 @@ public abstract class PlaybackContext  {
     myCallClasses = callClasses;
   }
 
+  @ApiStatus.Internal
   public PlaybackRunner.StatusCallback getCallback() {
     return myCallback;
   }
@@ -99,12 +102,15 @@ public abstract class PlaybackContext  {
     getCallback().message(this, text, PlaybackRunner.StatusCallback.Type.code);
   }
 
+  @ApiStatus.Internal
   public abstract void pushStage(StageInfo info);
 
+  @ApiStatus.Internal
   public abstract StageInfo popStage();
 
   public abstract int getCurrentStageDepth();
 
+  @ApiStatus.Internal
   public abstract void addPassed(StageInfo stage);
 
   public abstract boolean isDisposed();

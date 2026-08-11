@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.envTest.ApacheContainer
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo
 import com.intellij.internal.statistic.eventLog.MachineId
+import com.intellij.internal.statistic.eventLog.connection.CachedConfigurationClient
 import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener
 import com.intellij.internal.statistic.eventLog.connection.EventLogSettingsClient
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService
@@ -34,20 +35,23 @@ internal class TestEventLogUploadSettingsClient(
   configCacheTimeoutMs: Long = TimeUnit.MINUTES.toMillis(10),
 ) : EventLogSettingsClient() {
   override val applicationInfo = TestEventLogApplicationInfo()
-  override val configurationClient = ConfigurationClientFactory.createTest(
-    productCode = applicationInfo.productCode,
-    productVersion = applicationInfo.productVersion,
-    httpClient = JvmHttpClient(
-      sslContextProvider = { applicationInfo.connectionSettings.provideSSLContext() },
-      proxyProvider = { configurationUrl ->
-        ProxyInfo(applicationInfo.connectionSettings.provideProxy(configurationUrl).proxy)
-      },
-      extraHeadersProvider = { applicationInfo.connectionSettings.provideExtraHeaders() },
-      userAgent = applicationInfo.connectionSettings.provideUserAgent(),
-      timeout = Duration.ofMillis(configCacheTimeoutMs)
+  override val configurationClient = CachedConfigurationClient(
+    delegate = ConfigurationClientFactory.createTest (
+      productCode = applicationInfo.productCode,
+      productVersion = applicationInfo.productVersion,
+      httpClient = JvmHttpClient(
+        sslContextProvider = { applicationInfo.connectionSettings.provideSSLContext() },
+        proxyProvider = { configurationUrl ->
+          ProxyInfo(applicationInfo.connectionSettings.provideProxy(configurationUrl).proxy)
+        },
+        extraHeadersProvider = { applicationInfo.connectionSettings.provideExtraHeaders() },
+        userAgent = applicationInfo.connectionSettings.provideUserAgent(),
+        timeout = Duration.ofMillis(configCacheTimeoutMs)
+      ),
+      configurationUrl = configUrl,
+      serializer = FusComponentProvider.FusJacksonSerializer()
     ),
-    configurationUrl = configUrl,
-    serializer = FusComponentProvider.FusJacksonSerializer()
+    configCacheTimeoutMs
   )
   override val recorderId: String = RECORDER_ID
 }

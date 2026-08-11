@@ -74,7 +74,7 @@ public final class PyAssignmentToLoopOrWithParameterInspection extends PyInspect
             continue;
           }
           registerProblem(declaredVar,
-                          PyPsiBundle.message("INSP.assignment.to.loop.or.with.parameter", declaredVar.getText()));
+                          PyPsiBundle.problemMessage("INSP.assignment.to.loop.or.with.parameter", declaredVar.getText()));
         }
       }
     }

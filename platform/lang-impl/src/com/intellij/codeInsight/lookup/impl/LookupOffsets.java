@@ -32,7 +32,7 @@ public final class LookupOffsets implements DocumentListener {
     int caret = LookupImplUtil.getPivotOffset(myEditor);
     myLookupOriginalStartMarker = createLeftGreedyMarker(caret);
     myLookupStartMarker = createLeftGreedyMarker(caret);
-    myEditor.getElfDocument().addDocumentListener(this);
+    myEditor.getDocument().addDocumentListener(this);
   }
 
   @Override
@@ -63,7 +63,7 @@ public final class LookupOffsets implements DocumentListener {
   }
 
   private @NotNull RangeMarker createLeftGreedyMarker(int start) {
-    RangeMarker marker = myEditor.getElfDocument().createRangeMarker(start, start);
+    RangeMarker marker = myEditor.getDocument().createRangeMarker(start, start);
     marker.setGreedyToLeft(true);
     return marker;
   }
@@ -160,7 +160,7 @@ public final class LookupOffsets implements DocumentListener {
   }
 
   void disposeMarkers() {
-    myEditor.getElfDocument().removeDocumentListener(this);
+    myEditor.getDocument().removeDocumentListener(this);
     myLookupStartMarker.dispose();
     myLookupOriginalStartMarker.dispose();
   }

@@ -63,6 +63,51 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/ClassInRootPackage/");
     }
 
+    @TestMetadata("CompanionBlockExtensionsFromIndex")
+    public void testCompanionBlockExtensionsFromIndex() throws Exception {
+        runTest("../../completion/testData/basic/multifile/CompanionBlockExtensionsFromIndex/");
+    }
+
+    @TestMetadata("CompanionBlockExtensionsFromIndexWithCompanionObject")
+    public void testCompanionBlockExtensionsFromIndexWithCompanionObject() throws Exception {
+        runTest("../../completion/testData/basic/multifile/CompanionBlockExtensionsFromIndexWithCompanionObject/");
+    }
+
+    @TestMetadata("CompanionBlockGenericExtensionsFromIndex")
+    public void testCompanionBlockGenericExtensionsFromIndex() throws Exception {
+        runTest("../../completion/testData/basic/multifile/CompanionBlockGenericExtensionsFromIndex/");
+    }
+
+    @TestMetadata("CompanionBlockGenericMembersFromIndex")
+    public void testCompanionBlockGenericMembersFromIndex() throws Exception {
+        runTest("../../completion/testData/basic/multifile/CompanionBlockGenericMembersFromIndex/");
+    }
+
+    @TestMetadata("CompanionBlockInstanceNotBrokenFromIndex")
+    public void testCompanionBlockInstanceNotBrokenFromIndex() throws Exception {
+        runTest("../../completion/testData/basic/multifile/CompanionBlockInstanceNotBrokenFromIndex/");
+    }
+
+    @TestMetadata("CompanionBlockInstanceNotBrokenFromIndexWithCompanionObject")
+    public void testCompanionBlockInstanceNotBrokenFromIndexWithCompanionObject() throws Exception {
+        runTest("../../completion/testData/basic/multifile/CompanionBlockInstanceNotBrokenFromIndexWithCompanionObject/");
+    }
+
+    @TestMetadata("CompanionBlockMembersFromIndex")
+    public void testCompanionBlockMembersFromIndex() throws Exception {
+        runTest("../../completion/testData/basic/multifile/CompanionBlockMembersFromIndex/");
+    }
+
+    @TestMetadata("CompanionBlockMembersFromIndexWithCompanionObject")
+    public void testCompanionBlockMembersFromIndexWithCompanionObject() throws Exception {
+        runTest("../../completion/testData/basic/multifile/CompanionBlockMembersFromIndexWithCompanionObject/");
+    }
+
+    @TestMetadata("CompanionBlockValueReceiverFromIndex")
+    public void testCompanionBlockValueReceiverFromIndex() throws Exception {
+        runTest("../../completion/testData/basic/multifile/CompanionBlockValueReceiverFromIndex/");
+    }
+
     @TestMetadata("CompleteFunctionWithNoSpecifiedType")
     public void testCompleteFunctionWithNoSpecifiedType() throws Exception {
         runTest("../../completion/testData/basic/multifile/CompleteFunctionWithNoSpecifiedType/");

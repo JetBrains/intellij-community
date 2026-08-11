@@ -61,7 +61,10 @@ internal class ApplicationInfoPropertiesImpl(
     get() = if (edition == null) fullProductName else "$fullProductName $edition"
 
   init {
-    val root = readXmlAsModel(findApplicationInfoInSources(project, productProperties))
+    val appInfoXml = Files.readString(findApplicationInfoInSources(project, productProperties))
+    val replacedAppInfoXml = productProperties.appInfoXmlReplacements
+      ?.let { BuildUtils.replaceAll(appInfoXml, it) } ?: appInfoXml
+    val root = readXmlAsModel(replacedAppInfoXml.encodeToByteArray())
     @Suppress("DEPRECATION")
     val applicationInfoOverrides = productProperties.applicationInfoOverride(project)
     val versionTag = root.getChild("version")!!
@@ -118,7 +121,7 @@ internal class ApplicationInfoPropertiesImpl(
       formatMajorReleaseDate(majorReleaseDateRaw = majorReleaseDate, buildDateInSeconds = buildOptions.buildDateInSeconds)
     }
     fullProductName = applicationInfoOverrides?.fullProductName ?: namesTag.getAttributeValue("fullname") ?: shortProductName
-    edition = applicationInfoOverrides?.editionName ?: namesTag.getAttributeValue("edition")
+    edition = (applicationInfoOverrides?.editionName ?: namesTag.getAttributeValue("edition"))?.takeIf { it.isNotEmpty() }
     motto = applicationInfoOverrides?.motto ?: namesTag.getAttributeValue("motto")
     launcherName = namesTag.getAttributeValue("script")!!
     val companyTag = root.getChild("company")!!
@@ -158,7 +161,10 @@ internal fun computeAppInfoXml(appInfo: ApplicationInfoProperties, context: Buil
       "BUILD_DATE" to buildDate.format(BUILD_DATE_PATTERN),
       "BUILD" to context.buildNumber,
       "BUILTIN_PLUGINS_URL" to builtinPluginsRepoUrl
-    ),
+    )
+      .let { base ->
+        context.productProperties.appInfoXmlReplacements?.let { it + base } ?: base
+      },
     marker = "__"
   )
 

@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.jvm.debugger.performance.test` start
-
 jvm_library(
     name = "kotlin-jvm-debugger-performance-test",
     srcs = glob(
@@ -30,9 +29,11 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
-        "@lib//:jb-jdi",
+        "//java/debugger/jb-jdi:java-debugger-libraries-jb-jdi",
+        "//java/debugger/jb-jdi:java-debugger-libraries-jb-jdi_test_lib",
         "//platform/core-ui",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/lang-core",
@@ -63,6 +64,8 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//plugins/kotlin/jvm-debugger/test/k2/testFramework",
         "//plugins/kotlin/jvm-debugger/test/k2/testFramework:testFramework_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.performance.test` end
@@ -77,7 +80,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.jvm.debugger.performance.test` end
 
 ### auto-generated section `test intellij.kotlin.jvm.debugger.performance.test` start
-
 jps_test(
     name = "kotlin-jvm-debugger-performance-test_test",
     runtime_deps = [

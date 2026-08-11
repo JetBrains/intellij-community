@@ -7,9 +7,13 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import com.jetbrains.python.refactoring.introduce.field.PyIntroduceFieldHandler;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 
 @TestDataPath("$CONTENT_ROOT/../testData/refactoring/introduceField/")
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyIntroduceFieldTest extends PyIntroduceTestCase {
   public void testMetaClass() {  // PY-1580
     doTest(new IntroduceOperationCustomizer(IntroduceHandler.InitPlace.SAME_METHOD, false));
@@ -24,7 +28,7 @@ public class PyIntroduceFieldTest extends PyIntroduceTestCase {
   }
 
   public void testUniqueName() {  // PY-4409
-    doTestSuggestions(PyExpression.class, "s1");
+    doTestSuggestions(PyExpression.class, "l1");
   }
 
   public void testPy4453() {

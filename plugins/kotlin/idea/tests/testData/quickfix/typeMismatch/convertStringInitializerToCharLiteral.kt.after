@@ -1,5 +1,5 @@
 // "Convert string to character literal" "true"
-// K2_ERROR: Initializer type mismatch: expected 'Char', actual 'String'.
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
 fun foo() {
     val c: Char = '.'
 }

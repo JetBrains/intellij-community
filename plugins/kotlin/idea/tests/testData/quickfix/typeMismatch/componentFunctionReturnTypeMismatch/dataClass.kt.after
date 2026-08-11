@@ -1,5 +1,5 @@
 // "Change type of accessed property 'A.x' to 'String'" "true"
-// K2_ERROR: Operator call 'component1()' returns 'Int', but 'String' is expected.
+// K2_ERROR: COMPONENT_FUNCTION_RETURN_TYPE_MISMATCH
 
 // See KT-15028 (CCE)
 data class A(val x: String, val y: String)

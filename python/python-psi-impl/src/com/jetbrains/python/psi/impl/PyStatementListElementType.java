@@ -20,6 +20,7 @@ import com.intellij.psi.tree.IReparseableElementType;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.lexer.PythonIndentingLexerForLazyElements;
+import com.jetbrains.python.lexer.PythonIndentingProcessor;
 import com.jetbrains.python.parsing.PyLazyParser;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
@@ -90,7 +91,9 @@ public class PyStatementListElementType extends IReparseableElementType implemen
     }
 
     boolean isAfterColonOnSameLine = isAfterColonOnSameLine((PyStatementListImpl)currentNode);
-    int baseIndent = isAfterColonOnSameLine ? 0 : PyIndentUtil.getElementIndent(currentNode.getPsi()).length();
+    int baseIndent = isAfterColonOnSameLine
+                     ? 0
+                     : PythonIndentingProcessor.getIndentWidth(PyIndentUtil.getElementIndent(currentNode.getPsi()));
 
     currentNode.putUserData(BASE_INDENT_KEY, baseIndent);
 

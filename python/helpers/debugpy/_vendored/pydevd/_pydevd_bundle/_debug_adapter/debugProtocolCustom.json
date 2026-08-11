@@ -50,6 +50,10 @@
 				"multiThreadsSingleNotification": {
 					"type": [ "boolean" ],
 					"description": "If false then a notification is generated for each thread event. If true a single event is gnenerated, and all threads follow that behavior."
+				},
+				"justMyCode": {
+					"type": [ "boolean" ],
+					"description": "If true, enables just my code stepping (library frames will be skipped). If false, all frames will be shown."
 				}
 			}
 		},

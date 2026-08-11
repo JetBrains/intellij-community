@@ -1,5 +1,5 @@
 // "Make test suspend" "true"
-// K2_ERROR: Suspend function 'suspend fun foo(): Unit' can only be called from a coroutine or another suspend function.
+// K2_ERROR: ILLEGAL_SUSPEND_FUNCTION_CALL
 suspend fun foo() {}
 
 inline fun bar(f: () -> Unit) {

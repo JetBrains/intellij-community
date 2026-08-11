@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
+import com.intellij.ide.plugins.marketplace.ResetPluginsStateResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -20,8 +21,10 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import fleet.rpc.client.RpcClientDisconnectedException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -42,7 +45,7 @@ class UiPluginManager {
   }
 
   fun closeSession(uuid: String) {
-    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
+    launchRpcTask {
       getController().closeSession(uuid)
     }
   }
@@ -63,10 +66,6 @@ class UiPluginManager {
     return getController().getInstalledPlugins()
   }
 
-  suspend fun getUpdateModels(): List<PluginUiModel> {
-    return getController().getUpdates()
-  }
-
   suspend fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
     return getController().loadPluginDetails(model)
   }
@@ -75,14 +74,19 @@ class UiPluginManager {
     return getController().loadPluginReviews(pluginId, page)
   }
 
-  fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null, callback: (Map<PluginId, Boolean>) -> Unit = {}) {
-    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
+  fun resetSession(
+    sessionId: String,
+    removeSession: Boolean,
+    parentComponent: JComponent? = null,
+    callback: (ResetPluginsStateResult) -> Unit = {},
+  ) {
+    launchRpcTask {
       callback(getController().resetSession(sessionId, removeSession, parentComponent))
     }
   }
 
   fun setPluginsAutoUpdateEnabled(enabled: Boolean) {
-    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
+    launchRpcTask {
       getController().setPluginsAutoUpdateEnabled(enabled)
     }
   }
@@ -229,14 +233,14 @@ class UiPluginManager {
   }
 
   fun updateDescriptorsForInstalledPlugins() {
-    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
+    launchRpcTask {
       getController().updateDescriptorsForInstalledPlugins()
     }
   }
 
   @RequiresBackgroundThread(generateAssertion = false)
   fun isNeedUpdate(pluginId: PluginId): Boolean {
-    return runBlockingMaybeCancellable { getController().isNeedUpdate(pluginId) }
+    return runBlockingMaybeCancellable { PluginUpdatesService.getInstance().awaitHasUpdate(pluginId) }
   }
 
   suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
@@ -250,8 +254,36 @@ class UiPluginManager {
     return DefaultUiPluginManagerController
   }
 
-  fun subscribeToUpdatesCount(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService {
-    return getController().connectToPluginUpdateService(sessionId, { updatedPlugins -> callback(updatedPlugins?.size ?: 0)})
+  fun subscribeToPluginUpdatesFiltered(sessionId: String, callback: (List<PluginUiModel>) -> Unit): PluginUpdateSubscription {
+    val session = PluginManagerSessionService.getInstance().createSession(sessionId)
+    return PluginUpdatesService.getInstance().subscribe { updatedPlugins -> callback(updatedPlugins.all.filter { session.isPluginEnabled(it.pluginId) }) }
+  }
+
+  private fun launchRpcTask(block: suspend () -> Unit) {
+    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
+      try {
+        block()
+      }
+      catch (_: RpcClientDisconnectedException) {
+        // Fire-and-forget UI requests can race with remote frontend/backend disconnect.
+      }
+    }
+  }
+
+  suspend fun getPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSourceId? {
+    return getController().getPluginUpdateSourceId(sessionId, pluginId)
+  }
+
+  suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
+    getController().setPendingPluginUpdateSourceInSession(sessionId, pluginId, pluginUpdateSource)
+  }
+
+  suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?){
+    getController().persistPluginUpdateSource(sessionId, pluginId, pluginUpdateSource)
+  }
+
+  suspend fun isPluginUpdateSourceVisibleInUI(): Boolean {
+    return getController().isPluginUpdateSourceVisibleInUI()
   }
 
   companion object {

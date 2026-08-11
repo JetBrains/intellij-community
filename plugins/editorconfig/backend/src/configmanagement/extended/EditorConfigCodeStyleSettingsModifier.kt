@@ -32,7 +32,6 @@ import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings
 import kotlinx.coroutines.TimeoutCancellationException
-import org.ec4j.core.ResourceProperties
 import org.editorconfig.EditorConfigNotifier
 import org.editorconfig.Utils
 import org.editorconfig.configmanagement.EditorConfigActionUtil
@@ -186,7 +185,7 @@ private fun processOptions(
     val intellijName = EditorConfigIntellijNameUtil.toIntellijName(optionKey)
     val accessor = findAccessor(mapper, intellijName, langPrefix)
     if (accessor != null) {
-      val `val` = preprocessValue(accessor = accessor,
+      val value = preprocessValue(accessor = accessor,
                                   properties = properties,
                                   settings = settings,
                                   fileType = fileType,
@@ -196,11 +195,11 @@ private fun processOptions(
         if (!processed.contains(dependency)) {
           val dependencyAccessor = findAccessor(mapper, dependency, null)
           if (dependencyAccessor != null) {
-            isModified = isModified or dependencyAccessor.setFromString(`val`)
+            isModified = isModified or dependencyAccessor.setFromString(value)
           }
         }
       }
-      isModified = isModified or accessor.setFromString(`val`)
+      isModified = isModified or accessor.setFromString(value)
       processed.add(intellijName)
     }
   }

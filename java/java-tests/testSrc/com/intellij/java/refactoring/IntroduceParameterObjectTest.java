@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -19,16 +18,15 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectProcessor;
 import com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterObjectClassDescriptor;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.util.Function;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.function.Function;
 
 public class IntroduceParameterObjectTest extends LightMultiFileTestCase {
-  @NotNull
   @Override
-  protected String getTestDataPath() {
+  protected @NotNull String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/refactoring/introduceParameterObject/";
   }
 
@@ -36,17 +34,15 @@ public class IntroduceParameterObjectTest extends LightMultiFileTestCase {
     doTest(false, false);
   }
 
-  private void doTest(final boolean delegate, final boolean createInner) {
+  private void doTest(boolean delegate, boolean createInner) {
     doTest(delegate, createInner, IntroduceParameterObjectTest::generateParams);
   }
 
-  private void doTest(final boolean delegate,
-                      final boolean createInner,
-                      final Function<PsiMethod, ParameterInfoImpl[]> function) {
+  private void doTest(boolean delegate, boolean createInner, Function<PsiMethod, ParameterInfoImpl[]> function) {
     doTest(() -> {
       PsiClass aClass = myFixture.findClass("Test");
       final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
-      final ParameterInfoImpl[] datas = function.fun(method);
+      final ParameterInfoImpl[] datas = function.apply(method);
 
       final JavaIntroduceParameterObjectClassDescriptor classDescriptor =
         new JavaIntroduceParameterObjectClassDescriptor("Param", "", null, false, createInner, null, datas, method, false);
@@ -60,7 +56,7 @@ public class IntroduceParameterObjectTest extends LightMultiFileTestCase {
     });
   }
 
-  private static ParameterInfoImpl[] generateParams(final PsiMethod method) {
+  private static ParameterInfoImpl[] generateParams(PsiMethod method) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
 
     final ParameterInfoImpl[] datas = new ParameterInfoImpl[parameters.length];
@@ -84,6 +80,10 @@ public class IntroduceParameterObjectTest extends LightMultiFileTestCase {
   }
 
   public void testUsedInnerClass() {
+    doTest(false, true);
+  }
+
+  public void testMultipleFieldsInnerClass() {
     doTest(false, true);
   }
 
@@ -178,21 +178,21 @@ public class IntroduceParameterObjectTest extends LightMultiFileTestCase {
     doTest(true, false);
   }
 
-  private void doTestExistingClass(@NotNull String existingClassName, final String existingClassPackage, final boolean generateAccessors) {
+  private void doTestExistingClass(@NotNull String existingClassName, String existingClassPackage, boolean generateAccessors) {
     doTestExistingClass(existingClassName, existingClassPackage, generateAccessors, null);
   }
 
-  private void doTestExistingClass(@NotNull String existingClassName, final String existingClassPackage, final boolean generateAccessors,
-                                   final String newVisibility) {
+  private void doTestExistingClass(@NotNull String existingClassName, String existingClassPackage, boolean generateAccessors,
+                                   String newVisibility) {
     doTestExistingClass(existingClassName, existingClassPackage, generateAccessors, newVisibility,
                         IntroduceParameterObjectTest::generateParams);
   }
 
   private void doTestExistingClass(@NotNull String existingClassName,
-                                   final String existingClassPackage,
-                                   final boolean generateAccessors,
-                                   final String newVisibility,
-                                   final Function<PsiMethod, ParameterInfoImpl[]> function) {
+                                   String existingClassPackage,
+                                   boolean generateAccessors,
+                                   String newVisibility,
+                                   Function<PsiMethod, ParameterInfoImpl[]> function) {
     doTest(() -> {
       PsiClass aClass = myFixture.getJavaFacade().findClass("Test", GlobalSearchScope.projectScope(getProject()));
       if (aClass == null) {
@@ -201,7 +201,7 @@ public class IntroduceParameterObjectTest extends LightMultiFileTestCase {
       assertNotNull("Class Test not found", aClass);
 
       final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
-      final ParameterInfoImpl[] mergedParams = function.fun(method);
+      final ParameterInfoImpl[] mergedParams = function.apply(method);
       final JavaIntroduceParameterObjectClassDescriptor classDescriptor =
         new JavaIntroduceParameterObjectClassDescriptor(existingClassName, existingClassPackage, null, true, false, newVisibility,
                                                         mergedParams, method, generateAccessors);
@@ -228,12 +228,11 @@ public class IntroduceParameterObjectTest extends LightMultiFileTestCase {
   private void checkExceptionThrown(@NotNull String existingClassName, String existingClassPackage, String exceptionMessage) {
     try {
       doTestExistingClass(existingClassName, existingClassPackage, false);
+      fail("Conflict was not found");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       assertEquals(exceptionMessage, e.getMessage());
-      return;
     }
-    fail("Conflict was not found");
   }
 
   public void testGenerateGetterSetterForExistingBean() {
@@ -252,6 +251,17 @@ public class IntroduceParameterObjectTest extends LightMultiFileTestCase {
     doTestExistingClass("Param", "", true);
   }
 
+  public void testExistingRecord() {
+    doTestExistingClass("FullName", "", false);
+  }
+
+  public void testExistingRecordWithCompactConstructor() {
+    doTestExistingClass("FullName", "", false);
+  }
+
+  public void testExistingClassDelegatingConstructor() {
+    doTestExistingClass("Person", "", true);
+  }
 
   public void testExistentBean() {
     doTestExistingClass("Param", "", false);

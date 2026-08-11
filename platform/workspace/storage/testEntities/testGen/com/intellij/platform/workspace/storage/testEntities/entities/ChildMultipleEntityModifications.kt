@@ -18,7 +18,7 @@ interface ChildMultipleEntityBuilder : WorkspaceEntityBuilder<ChildMultipleEntit
 }
 
 internal object ChildMultipleEntityType : EntityType<ChildMultipleEntity, ChildMultipleEntityBuilder>() {
-  override val entityClass: Class<ChildMultipleEntity> get() = ChildMultipleEntity::class.java
+  override val entityImplClass: Class<*> get() = ChildMultipleEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ChildMultipleEntityImpl.Builder::class.java
   operator fun invoke(
     childData: String,

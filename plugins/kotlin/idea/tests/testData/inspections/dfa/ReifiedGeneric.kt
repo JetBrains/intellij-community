@@ -23,7 +23,7 @@ class TreeWalker<T> {
     fun test() : Boolean {
         var current: TreeWalker<*>? = this
         while (<warning descr="Condition 'current != null' is always true">current != null</warning>) {
-            if (current.type is <error descr="[CANNOT_CHECK_FOR_ERASED] Cannot check for instance of erased type: T">T</error>)
+            if (current.type is <error descr="[CANNOT_CHECK_FOR_ERASED]">T</error>)
             return true
             current = current.parent()
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +22,10 @@ public abstract class NotificationsConfiguration implements Notifications {
   public abstract void setDisplayType(@NotNull String groupId, @NotNull NotificationDisplayType displayType);
 
   public abstract void changeSettings(@NotNull String groupId, @NotNull NotificationDisplayType displayType, boolean shouldLog, boolean shouldReadAloud);
+
+  public abstract @NotNull NotificationLocation getNotificationLocation();
+
+  public abstract void setNotificationLocation(@NotNull NotificationLocation location);
 
   public static NotificationsConfiguration getNotificationsConfiguration() {
     return ApplicationManager.getApplication().getService(NotificationsConfiguration.class);

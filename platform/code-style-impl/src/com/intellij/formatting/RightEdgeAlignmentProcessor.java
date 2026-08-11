@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -48,7 +48,7 @@ public final class RightEdgeAlignmentProcessor extends AbstractBlockAlignmentPro
 
     if (indentSpaces >= 0) {
       whiteSpace.setSpaces(spaces, indentSpaces);
-      if (spaces > 0) {
+      if (spaces > 0 && LanguageAlignmentWhitespacePolicy.useSpacesForAlignment(context.targetBlock())) {
         // Alignment spaces should not be converted into tabs
         whiteSpace.setForceSkipTabulationsUsage(true);
       }
@@ -82,7 +82,7 @@ public final class RightEdgeAlignmentProcessor extends AbstractBlockAlignmentPro
           }
         }
         whiteSpace.setSpaces(spaces, indentSpaces);
-        if (spaces > 0) {
+        if (spaces > 0 && LanguageAlignmentWhitespacePolicy.useSpacesForAlignment(context.targetBlock())) {
           // Alignment spaces should not be converted into tabs
           whiteSpace.setForceSkipTabulationsUsage(true);
         }

@@ -8,13 +8,21 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.naming.AutomaticRenamer
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.scopes.packageScope
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.findPackage
+import org.jetbrains.kotlin.analysis.api.symbols.getExpectsForActual
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -36,9 +44,9 @@ class AutomaticOverloadsRenamer(function: KtNamedFunction, newName: String) : Au
         suggestAllNames(function.name, newName)
     }
 
-    override fun getDialogTitle() = KotlinBundle.message("text.rename.overloads.title")
-    override fun getDialogDescription() = KotlinBundle.message("title.rename.overloads.to")
-    override fun entityName() = KotlinBundle.message("text.overload")
+    override fun getDialogTitle(): String = KotlinBundle.message("text.rename.overloads.title")
+    override fun getDialogDescription(): String = KotlinBundle.message("title.rename.overloads.to")
+    override fun entityName(): String = KotlinBundle.message("text.overload")
     override fun isSelectedByDefault(): Boolean = true
 }
 
@@ -72,14 +80,14 @@ class AutomaticOverloadsRenamerFactory : AutomaticRenamerFactory {
         return element.getOverloads().size > 1
     }
 
-    override fun getOptionName() = JavaRefactoringBundle.message("rename.overloads")
+    override fun getOptionName(): @Nls String = JavaRefactoringBundle.message("rename.overloads")
 
-    override fun isEnabled() = KotlinCommonRefactoringSettings.getInstance().renameOverloads
+    override fun isEnabled(): Boolean = KotlinCommonRefactoringSettings.getInstance().renameOverloads
 
     override fun setEnabled(enabled: Boolean) {
         KotlinCommonRefactoringSettings.getInstance().renameOverloads = enabled
     }
 
-    override fun createRenamer(element: PsiElement, newName: String, usages: Collection<UsageInfo>) =
+    override fun createRenamer(element: PsiElement, newName: String, usages: Collection<UsageInfo>): AutomaticOverloadsRenamer =
         AutomaticOverloadsRenamer(element as KtNamedFunction, newName)
 }

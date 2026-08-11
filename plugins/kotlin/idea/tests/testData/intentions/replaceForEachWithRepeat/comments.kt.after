@@ -1,0 +1,8 @@
+// WITH_STDLIB
+fun foo() {
+    // before
+    repeat(3) {
+        /* inside */
+        println(it)
+    }
+}

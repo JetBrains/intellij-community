@@ -50,11 +50,16 @@ object KotlinUsageCounterConfiguration: UsageCounterConfigurationBase<KtNamedDec
               // don't show sum if one was not actually calculated
               return 0
           }
+          if (count == Int.MAX_VALUE) {
+              return count
+          }
           sum += count
       }
      return sum
   }
 }
+
+internal const val MAX_VISIBLE_USAGES_COUNT: Int = 10
 
 @OptIn(KaAllowAnalysisOnEdt::class)
 private fun usageCount(
@@ -70,8 +75,7 @@ private fun usageCount(
     }
     val count = AtomicInteger(0)
     val processor = Processor<UsageInfo> {
-        count.incrementAndGet()
-        true
+        count.incrementAndGet() <= MAX_VISIBLE_USAGES_COUNT
     }
     val project = file.project
     when (namedDeclaration) {
@@ -102,5 +106,5 @@ private fun usageCount(
             return 0
         }
     }
-    return count.get()
+    return if (count.get() > MAX_VISIBLE_USAGES_COUNT) Int.MAX_VALUE else count.get()
 }

@@ -1,30 +1,52 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.utils.MavenHttpProxyServerFixture
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
 import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.UsefulTestCase.assertContainsElements
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
+import com.intellij.maven.testFramework.fixtures.MavenCustomRepositoryHelper
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenGeneralSettings
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.removeFromLocalRepository
 import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 
-class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
-  override fun skipPluginResolution() = false
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class ProxyImportingTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion,
+    skipPluginResolution = false,
+  )
+  
 
   lateinit var myRepositoryFixture: MavenHttpRepositoryServerFixture
   lateinit var myProxyFixture: MavenHttpProxyServerFixture
   lateinit var myHelper: MavenCustomRepositoryHelper
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myRepositoryFixture = MavenHttpRepositoryServerFixture()
     myRepositoryFixture.setUp()
     val port = URI(myRepositoryFixture.url()).port
@@ -33,11 +55,11 @@ class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun setupRepository(local: String, remote: String) {
-    myHelper = MavenCustomRepositoryHelper(dir, local, remote)
+    myHelper = MavenCustomRepositoryHelper(maven.dir, local, remote)
     val remoteRepoPath = myHelper.getTestData(remote)
     myRepositoryFixture.startRepositoryFor(remoteRepoPath.toString())
     val localRepoPath = myHelper.getTestData(local)
-    repositoryPath = localRepoPath
+    maven.repositoryPath = localRepoPath
   }
 
   private fun setupSettingsXml(localRepoPath: Path, withProxyAuth: Boolean) {
@@ -48,7 +70,7 @@ class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
       """
     }
     else ""
-    val settingsXml = createProjectSubFile(
+    val settingsXml = maven.createProjectSubFile(
       "settings.xml",
       """
             <settings>
@@ -110,26 +132,26 @@ class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
               
             </settings>
             """.trimIndent())
-    mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
+    maven.mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
   }
 
-  override fun tearDown() {
+  @AfterEach
+  fun tearDown() {
     RunAll(
       ThrowableRunnable {
         myProxyFixture.tearDown()
       },
       ThrowableRunnable {
         myRepositoryFixture.tearDown()
-      },
-      ThrowableRunnable { super.tearDown() }).run()
+      }).run()
   }
 
   @Test
   fun testDownloadDependencyUsingProxy() = runBlocking {
     setupRepository("local1", "remote")
-    setupSettingsXml(repositoryPath.toAbsolutePath(), false)
-    removeFromLocalRepository("org/mytest/myartifact/")
-    importProjectAsync("""
+    setupSettingsXml(maven.repositoryPath.toAbsolutePath(), false)
+    maven.removeFromLocalRepository("org/mytest/myartifact/")
+    maven.importProjectAsync("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -143,18 +165,18 @@ class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
                        """.trimIndent()
     )
     assertContainsElements(myProxyFixture.requestedFiles, "/org/mytest/myartifact/1.0/myartifact-1.0.jar", "/org/mytest/myartifact/1.0/myartifact-1.0.pom")
-    assertTrue("File should be downloaded", repositoryPath.resolve("org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
+    assertTrue(maven.repositoryPath.resolve("org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile(), "File should be downloaded")
   }
 
 
   @Test
   fun testDownloadDependencyUsingProxyWithAuthorization() = runBlocking {
     setupRepository("local1", "remote")
-    removeFromLocalRepository("org/mytest/myartifact/")
-    setupSettingsXml(repositoryPath.toAbsolutePath(), true)
+    maven.removeFromLocalRepository("org/mytest/myartifact/")
+    setupSettingsXml(maven.repositoryPath.toAbsolutePath(), true)
     myProxyFixture.requireAuthentication(proxyUsername, proxyPassword)
-    assertFalse("File should be deleted", myHelper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
-    importProjectAsync("""
+    assertFalse(myHelper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile(), "File should be deleted")
+    maven.importProjectAsync("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -168,17 +190,17 @@ class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
                        """.trimIndent()
     )
     assertContainsElements(myProxyFixture.requestedFiles, "/org/mytest/myartifact/1.0/myartifact-1.0.jar", "/org/mytest/myartifact/1.0/myartifact-1.0.pom")
-    assertTrue("File should be downloaded", myHelper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
+    assertTrue(myHelper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile(), "File should be downloaded")
   }
 
   @Test
   fun testResolveJavadocsAndSourcesUsingProxy() = runBlocking {
     setupRepository("local1", "remote")
-    removeFromLocalRepository("org/mytest/")
-    assertFalse("File should be deleted", myHelper.getTestData("local1/org/mytest/").exists())
-    setupSettingsXml(repositoryPath.toAbsolutePath(), true)
+    maven.removeFromLocalRepository("org/mytest/")
+    assertFalse(myHelper.getTestData("local1/org/mytest/").exists(), "File should be deleted")
+    setupSettingsXml(maven.repositoryPath.toAbsolutePath(), true)
     myProxyFixture.requireAuthentication(proxyUsername, proxyPassword)
-    importProjectAsync("""
+    maven.importProjectAsync("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -191,9 +213,9 @@ class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    projectsManager.downloadArtifacts(
+    maven.projectsManager.downloadArtifacts(
       MavenDownloadSourcesRequest.builder()
-        .forProjects(projectsManager.rootProjects)
+        .forProjects(maven.projectsManager.rootProjects)
         .forAllArtifacts()
         .withSources()
         .withDocs()
@@ -202,21 +224,21 @@ class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
 
     assertContainsElements(myProxyFixture.requestedFiles, "/org/mytest/myartifact/1.0/myartifact-1.0.jar", "/org/mytest/myartifact/1.0/myartifact-1.0.pom")
     assertContainsElements(myProxyFixture.requestedFiles, "/org/mytest/myartifact/1.0/myartifact-1.0-javadoc.jar", "/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar")
-    assertTrue("Source jar should be downloaded", myHelper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isRegularFile())
-    assertTrue("Javadoc jar should be downloaded", myHelper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-javadoc.jar").isRegularFile())
+    assertTrue(myHelper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isRegularFile(), "Source jar should be downloaded")
+    assertTrue(myHelper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-javadoc.jar").isRegularFile(), "Javadoc jar should be downloaded")
   }
 
   @Test
   fun testResolvePluginsUsingProxy() = runBlocking {
     setupRepository("local1", "plugins")
-    removeFromLocalRepository("intellij/test/")
-    setupSettingsXml(repositoryPath.toAbsolutePath(), true)
+    maven.removeFromLocalRepository("intellij/test/")
+    setupSettingsXml(maven.repositoryPath.toAbsolutePath(), true)
     myProxyFixture.requireAuthentication(proxyUsername, proxyPassword)
-    assertFalse("Jar file should be deleted", myHelper.getTestData("local1/intellij/test/maven-extension/1.0/maven-extension-1.0.jar").isRegularFile())
-    assertFalse("Pom file should be deleted", myHelper.getTestData("local1/intellij/test/maven-extension/1.0/maven-extension-1.0.pom").isRegularFile())
-    assertTrue("Jar file not found in plugin repo", myHelper.getTestData("plugins/intellij/test/maven-extension/1.0/maven-extension-1.0.jar").isRegularFile())
-    assertTrue("Pom file not found in plugin repo", myHelper.getTestData("plugins/intellij/test/maven-extension/1.0/maven-extension-1.0.pom").isRegularFile())
-    importProjectAsync("""
+    assertFalse(myHelper.getTestData("local1/intellij/test/maven-extension/1.0/maven-extension-1.0.jar").isRegularFile(), "Jar file should be deleted")
+    assertFalse(myHelper.getTestData("local1/intellij/test/maven-extension/1.0/maven-extension-1.0.pom").isRegularFile(), "Pom file should be deleted")
+    assertTrue(myHelper.getTestData("plugins/intellij/test/maven-extension/1.0/maven-extension-1.0.jar").isRegularFile(), "Jar file not found in plugin repo")
+    assertTrue(myHelper.getTestData("plugins/intellij/test/maven-extension/1.0/maven-extension-1.0.pom").isRegularFile(), "Pom file not found in plugin repo")
+    maven.importProjectAsync("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -230,8 +252,8 @@ class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
                            </plugins>
                        </build>
                        """.trimIndent())
-    assertTrue("Pom file should be downloaded", myHelper.getTestData("local1/intellij/test/maven-extension/1.0/maven-extension-1.0.pom").isRegularFile())
-    assertTrue("Jar file should be downloaded", myHelper.getTestData("local1/intellij/test/maven-extension/1.0/maven-extension-1.0.jar").isRegularFile())
+    assertTrue(myHelper.getTestData("local1/intellij/test/maven-extension/1.0/maven-extension-1.0.pom").isRegularFile(), "Pom file should be downloaded")
+    assertTrue(myHelper.getTestData("local1/intellij/test/maven-extension/1.0/maven-extension-1.0.jar").isRegularFile(), "Jar file should be downloaded")
     assertContainsElements(myProxyFixture.requestedFiles, "/intellij/test/maven-extension/1.0/maven-extension-1.0.jar", "/intellij/test/maven-extension/1.0/maven-extension-1.0.pom")
   }
 

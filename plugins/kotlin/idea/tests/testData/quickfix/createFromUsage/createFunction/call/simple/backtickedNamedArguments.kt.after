@@ -1,0 +1,12 @@
+// "Create function 'bar'" "true"
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+fun foo() {
+    bar(`when` = 42, `is True` = true)
+}
+
+fun bar(`when`: Int, `is True`: Boolean) {
+    TODO("Not yet implemented")
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction

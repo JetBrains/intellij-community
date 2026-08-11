@@ -45,6 +45,9 @@ internal class DataGridSearchSessionWorker(
   // unless you externally synchronize via being on EDT or somehow else
   fun hasInfo(): Boolean = searchInfo != null
 
+  /* Returns 0 when searchInfo is not yet available. */
+  fun matchesCount(): Int = searchInfo?.count { it != null } ?: 0
+
   private val requests: MutableSharedFlow<Boolean> =
     MutableSharedFlow(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -120,6 +123,23 @@ internal class DataGridSearchSessionWorker(
   fun submitStartSearchWithoutSelection() {
     searchInfo = null
     requests.tryEmit(false)
+  }
+
+  fun getOccurrences(): List<Pair<ModelIndex<GridRow>, ModelIndex<GridColumn>>> {
+    if (!hasInfo()) return emptyList()
+
+    val model = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS)
+    val result = mutableListOf<Pair<ModelIndex<GridRow>, ModelIndex<GridColumn>>>()
+
+    for (rowIdx in model.rowIndices.asList()) {
+      for (colIdx in model.columnIndices.asList()) {
+        if (isMatchedCell(rowIdx, colIdx)) {
+          result.add(rowIdx to colIdx)
+        }
+      }
+    }
+
+    return result
   }
 
   fun getOccurence(

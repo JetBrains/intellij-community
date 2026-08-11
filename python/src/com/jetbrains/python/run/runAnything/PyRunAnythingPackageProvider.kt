@@ -12,7 +12,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.cache.firstPageOrEmpty
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.pyRequirement
+import com.intellij.python.requirements.pyRequirement
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.repository.PythonRepositoryManagerBase
 import com.jetbrains.python.sdk.isTargetBased
@@ -46,7 +46,7 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
       if (isInstall) {
         val packageRepository = getPackageRepository(dataContext) ?: return emptySequence()
         val searchResult = packageRepository.search(commandLine.toComplete)
-        return searchResult.firstPageOrEmpty()
+        return searchResult.firstPageOrEmpty().getOr { return emptySequence() }.asSequence()
       }
       return packageManager.listInstalledPackagesSnapshot().map { it.name }.filter { it.startsWith(commandLine.toComplete) }.asSequence()
     }

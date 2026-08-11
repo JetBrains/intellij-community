@@ -18,7 +18,6 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -68,6 +67,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.Icon;
 import javax.swing.JComponent;
@@ -193,7 +193,7 @@ public final class ExplainRegExpIntention implements IntentionAction, Iconable, 
           for (Fragment fragment : nodeValue.pattern()) {
             append(fragment.text(), fragment.attributes());
           }
-          Name nameNode = nodeValue.name();
+          Feature nameNode = nodeValue.name();
           String name = nameNode.name();
           String explanation = nodeValue.explanation();
           if (!name.isEmpty() || !explanation.isEmpty()) append(" ");
@@ -287,8 +287,8 @@ public final class ExplainRegExpIntention implements IntentionAction, Iconable, 
 }
 record Value(
   @NotNull List<Fragment> pattern,
-  @NotNull Name name,
-  @NotNull @DetailedDescription String explanation,
+  @NotNull Feature name,
+  @NotNull @Nls String explanation,
   boolean expand
 ) {
   @Override
@@ -298,10 +298,26 @@ record Value(
     return !explanation.isEmpty() ? s + " – " + StringUtil.stripHtml(explanation, false) : s;
   }
 }
-record Name(@NotNull @NlsContexts.ColumnName String name, @NotNull @NonNls String url) {
+final class Feature {
+  private final @Nullable String nameKey;
+  private final @NotNull @NonNls String url;
+
+  Feature(@Nullable @PropertyKey(resourceBundle = RegExpBundle.BUNDLE) String nameKey, @NotNull @NonNls String url) {
+    this.nameKey = nameKey;
+    this.url = url;
+  }
+
+  public @NotNull @NlsContexts.ColumnName String name() {
+    return nameKey == null ? "" : RegExpBundle.message(nameKey);
+  }
+
+  public @NotNull @NonNls String url() {
+    return url;
+  }
+
   @Override
   public String toString() {
-    return !url.isEmpty() && Registry.is("explain.regexp.intention.enable.info.links") ? name + " (" + url + ')' : name;
+    return !url.isEmpty() && Registry.is("explain.regexp.intention.enable.info.links") ? name() + " (" + url + ')' : name();
   }
 }
 record Fragment(@NotNull @NlsSafe String text, @NotNull SimpleTextAttributes attributes) {
@@ -327,7 +343,53 @@ class RegExpTreeNode extends DefaultMutableTreeNode {
 }
 class ExplanationVisitor extends RegExpRecursiveElementVisitor {
 
-  private static final Name EMPTY_NAME = new Name("", "");
+  private static final @NonNls String HOST = "https://www.regular-expressions.info/";
+
+  private static final Feature ALTERNATION = new Feature("explain.feature.alternation", HOST + "alternation.html");
+  private static final Feature ANCHOR = new Feature("explain.feature.anchor", HOST + "anchors.html");
+  private static final Feature ATOMIC_GROUP = new Feature("explain.feature.atomic.group", HOST + "atomic.html");
+  private static final Feature BACK_REFERENCE = new Feature("explain.feature.back.reference", HOST + "backref.html");
+  private static final Feature BRANCH_RESET_GROUP = new Feature("explain.feature.branch.reset.group", HOST + "branchreset.html");
+  private static final Feature CAPTURING_GROUP = new Feature("explain.feature.capturing.group", HOST + "brackets.html");
+  private static final Feature CHAR_CLASS = new Feature("explain.feature.character.class", HOST + "charclass.html");
+  private static final Feature CHAR_CLASS_INTERSECTION = new Feature("explain.feature.character.class.intersection", HOST + "charclassintersect.html");
+  private static final Feature CHAR_RANGE = new Feature("explain.feature.range", HOST + "charclass.html");
+  private static final Feature COMMENT = new Feature("explain.feature.comment", HOST + "freespacing.html");
+  private static final Feature CONDITIONAL = new Feature("explain.feature.conditional", HOST + "conditional.html");
+  private static final Feature CONTROL_CHAR = new Feature("explain.feature.control.character.escape", HOST + "nonprint.html");
+  private static final Feature DOT = new Feature("explain.feature.dot", HOST + "dot.html");
+  private static final Feature EMPTY = new Feature(null, "");
+  private static final Feature ESCAPE_CHAR = new Feature("explain.feature.escape.character", HOST + "nonprint.html");
+  private static final Feature GRAPHEME_BOUNDARY = new Feature("explain.feature.unicode.grapheme.boundary", HOST + "unicodeboundaries.html#grapheme");
+  private static final Feature GRAPHEME_SHORT_CLASS = new Feature("explain.feature.short.class", HOST + "unicodechars.html#grapheme");
+  private static final Feature HEX_ESCAPE = new Feature("explain.feature.hexadecimal.escape", HOST + "nonprint.html");
+  private static final Feature INLINE_MODE_MODIFIER = new Feature("explain.feature.inline.mode.modifier", HOST + "modifiers.html");
+  private static final Feature INLINE_MODIFIER_GROUP = new Feature("explain.feature.inline.modifier.group", HOST + "modifiers.html");
+  private static final Feature MATCH_ANCHOR = new Feature("explain.feature.match.anchor", HOST + "continue.html");
+  private static final Feature MORE_SHORT_CLASS = new Feature("explain.feature.short.class", HOST + "shorthand.html#more");
+  private static final Feature NAMED_CAPTURING_GROUP = new Feature("explain.feature.named.capturing.group", HOST + "named.html");
+  private static final Feature NAMED_CHAR = new Feature("explain.feature.named.character", "");
+  private static final Feature NAMED_GROUP_REFERENCE = new Feature("explain.feature.named.group.reference", HOST + "named.html");
+  private static final Feature NEGATED_CHAR_CLASS = new Feature("explain.feature.negated.character.class", HOST + "charclass.html#negated");
+  private static final Feature NEGATED_SHORT_CLASS = new Feature("explain.feature.negated.short.class", HOST + "shorthand.html#negated");
+  private static final Feature NEGATED_UNICODE_PROPERTY = new Feature("explain.feature.negated.unicode.property", "");
+  private static final Feature NEGATED_XML_SHORT_CLASS = new Feature("explain.feature.negated.short.class", HOST + "shorthand.html#xml");
+  private static final Feature NEGATIVE_LOOKBEHIND = new Feature("explain.feature.negative.lookbehind.assertion", HOST + "lookaround.html");
+  private static final Feature NEGATIVE_LOOKAHEAD = new Feature("explain.feature.negative.lookahead.assertion", HOST + "lookaround.html");
+  private static final Feature NON_CAPTURING_GROUP = new Feature("explain.feature.non.capturing.group", HOST + "brackets.html#noncapture");
+  private static final Feature OCTAL_ESCAPE = new Feature("explain.feature.octal.escape", HOST + "nonprint.html#octal");
+  private static final Feature POSITIVE_LOOKAHEAD = new Feature("explain.feature.positive.lookahead.assertion", HOST + "lookaround.html");
+  private static final Feature POSITIVE_LOOKBEHIND = new Feature("explain.feature.positive.lookbehind.assertion", HOST + "lookaround.html");
+  private static final Feature POSIX_BRACKETS = new Feature("explain.feature.posix.bracket.expression", HOST + "posixbrackets.html");
+  private static final Feature QUANTIFIER = new Feature("explain.feature.quantifier", HOST + "repeat.html");
+  private static final Feature RESET_MATCH = new Feature("explain.feature.reset.match", HOST + "keep.html");
+  private static final Feature SHORT_CLASS = new Feature("explain.feature.short.class", HOST + "shorthand.html");
+  private static final Feature UNICODE_ESCAPE = new Feature("explain.feature.unicode.escape", HOST + "nonprint.html");
+  private static final Feature UNICODE_PROPERTY = new Feature("explain.feature.unicode.property", "");
+  private static final Feature WORD_BOUNDARY = new Feature("explain.feature.word.boundary", HOST + "wordboundaries.html");
+  private static final Feature WORD_NON_BOUNDARY = new Feature("explain.feature.word.non.boundary", HOST + "wordboundaries.html");
+  private static final Feature XML_SHORT_CLASS = new Feature("explain.feature.short.class", HOST + "shorthand.html#xml");
+
   private final SimpleTextAttributes HIGHLIGHT_ATTRIBUTES;
   private final SimpleTextAttributes CODE_ATTRIBUTES;
   private final RegExpTreeNode root = new RegExpTreeNode(null);
@@ -346,16 +408,16 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
     return root;
   }
 
-  private void leaf(@NotNull PsiElement element, @NotNull Name name, @NotNull @DetailedDescription String explanation) {
-    current.insert(new RegExpTreeNode(new Value(buildPatternFragments(element, true), name, explanation, false)), current.getChildCount());
+  private void leaf(@NotNull PsiElement element, @NotNull Feature feature, @NotNull @Nls String explanation) {
+    current.insert(new RegExpTreeNode(new Value(buildPatternFragments(element, true), feature, explanation, false)), current.getChildCount());
   }
 
-  private void branch(@NotNull PsiElement element, @NotNull Name name, @NotNull @DetailedDescription String explanation) {
-    branch(element, name, explanation, true);
+  private void branch(@NotNull PsiElement element, @NotNull Feature feature, @NotNull @Nls String explanation) {
+    branch(element, feature, explanation, true);
   }
 
-  private void branch(@NotNull PsiElement element, @NotNull Name name, @NotNull @DetailedDescription String explanation, boolean expand) {
-    branch(new Value(buildPatternFragments(element, true), name, explanation, expand));
+  private void branch(@NotNull PsiElement element, @NotNull Feature feature, @NotNull @Nls String explanation, boolean expand) {
+    branch(new Value(buildPatternFragments(element, true), feature, explanation, expand));
   }
 
   private void branch(Value value) {
@@ -371,7 +433,7 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
   private List<Fragment> buildPatternFragments(PsiElement element, boolean emphasize, List<Fragment> list) {
     PsiElement child = element.getFirstChild();
     if (child == null || child == element.getLastChild()) {
-      list.add(new Fragment(element instanceof RegExpElement e ? e.getUnescapedText() : element.getText(), 
+      list.add(new Fragment(element instanceof RegExpElement e ? e.getUnescapedText() : element.getText(),
                             emphasize ? HIGHLIGHT_ATTRIBUTES : CODE_ATTRIBUTES));
     }
     else {
@@ -384,8 +446,8 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
           boolean keepEmphasis = element instanceof RegExpCharRange
                                  || element instanceof RegExpBranch
                                  || element instanceof RegExpQuantifier
-                                 || element instanceof RegExpConditional && (child instanceof RegExpBackref
-                                                                             || child instanceof RegExpNamedGroupRef);
+                                 || element instanceof RegExpConditional
+                                    && (child instanceof RegExpBackref || child instanceof RegExpNamedGroupRef);
           buildPatternFragments(child, keepEmphasis && emphasize, list);
         }
         child = child.getNextSibling();
@@ -394,10 +456,10 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
     return list;
   }
 
-  private static String numText(RegExpNumber num, String whenNull) {
+  private static @NlsSafe String numText(RegExpNumber num, @NlsSafe String whenNull) {
     if (num == null) return whenNull;
     Number value = num.getValue();
-    return (value == null) ? "<unknown>" : String.valueOf(value.longValue());
+    return (value == null) ? RegExpBundle.message("explain.unknown") : String.valueOf(value.longValue());
   }
 
   private void parent() {
@@ -408,8 +470,7 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
   public void visitRegExpPattern(RegExpPattern pattern) {
     RegExpBranch[] branches = pattern.getBranches();
     if (branches.length != 1) {
-      Name name = new Name("Alternation", "https://www.regular-expressions.info/alternation.html");
-      branch(pattern, name, "matches 1 of " + branches.length + " alternatives");
+      branch(pattern, ALTERNATION, RegExpBundle.message("explain.alternation", branches.length));
       super.visitRegExpPattern(pattern);
       parent();
     }
@@ -433,7 +494,7 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
           }
         }
         if (!allSimpleChars) {
-          branch(new Value(buildPatternFragments(branch, false), EMPTY_NAME, "matches elements in order", true));
+          branch(new Value(buildPatternFragments(branch, false), EMPTY, RegExpBundle.message("explain.branch"), true));
           super.visitRegExpBranch(branch);
           parent();
           return;
@@ -447,8 +508,7 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
   public void visitRegExpQuantifier(RegExpQuantifier quantifier) {
     super.visitRegExpQuantifier(quantifier);
     if (Registry.is("explain.regexp.intention.nested.quantifiers")) return;
-    Name node = new Name("Quantifier", "https://www.regular-expressions.info/repeat.html");
-    leaf(quantifier, node, quantifierText(quantifier, "matches the previous element "));
+    leaf(quantifier, QUANTIFIER, RegExpBundle.message("explain.matches.the.previous.element.times", quantifierText(quantifier)));
   }
 
   @Override
@@ -457,60 +517,49 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
       super.visitRegExpClosure(closure);
     }
     else {
-      Name name = new Name("Quantifier", "https://www.regular-expressions.info/repeat.html");
-      branch(closure, name, quantifierText(closure.getQuantifier(), "matches "));
+      branch(closure, QUANTIFIER, RegExpBundle.message("explain.matches.times", quantifierText(closure.getQuantifier())));
       super.visitRegExpClosure(closure);
       parent();
     }
   }
 
-  private static @NotNull String quantifierText(RegExpQuantifier quantifier, String explanation) {
-    boolean addSuffix = true;
+  private static @NotNull @Nls String quantifierText(RegExpQuantifier quantifier) {
+    String min;
+    String max;
     if (quantifier.isCounted()) {
-      String min = numText(quantifier.getMin(), "0");
-      String max = numText(quantifier.getMax(), null);
-      if (max == null) {
-        explanation += min + " or more times";
-      }
-      else {
-        if (min.equals(max)) {
-          explanation += "exactly " + min + " times";
-          addSuffix = false;
-        }
-        else {
-          explanation += "between " + min + " and " + max + " times";
-        }
-      }
+      min = numText(quantifier.getMin(), "0");
+      max = numText(quantifier.getMax(), null);
     }
     else {
       ASTNode token = quantifier.getToken();
       assert token != null;
       String tokenText = token.getText();
       if (tokenText.equals("?")) {
-        explanation += "zero or one time";
+        min = "0";
+        max = "1";
       }
       else if (tokenText.equals("*")) {
-        explanation += "zero or more times";
+        min = "0";
+        max = null;
       }
       else if (tokenText.equals("+")) {
-        explanation += "one or more times";
+        min = "1";
+        max = null;
       }
       else {
-        assert false;
+        throw new AssertionError();
       }
     }
-    if (addSuffix) {
-      if (quantifier.isReluctant()) {
-        explanation += ", as few times as possible";
-      }
-      else {
-        explanation += ", as many times as possible";
-      }
+    if (!min.equals(max)) {
+      String backtracking = quantifier.isPossessive() ? RegExpBundle.message("explain.without.backtracking") : "";
+      String suffix = quantifier.isReluctant()
+                      ? RegExpBundle.message("explain.as.few.times.as.possible", backtracking)
+                      : RegExpBundle.message("explain.as.many.times.as.possible", backtracking);
+      return max == null
+             ? RegExpBundle.message("explain.n.or.more.times", min, suffix)
+             : RegExpBundle.message("explain.between.n.and.m.times", min, max, suffix);
     }
-    if (quantifier.isPossessive()) {
-      explanation += ", without backtracking";
-    }
-    return explanation;
+    return RegExpBundle.message("explain.exactly.n.times", min);
   }
 
   @Override
@@ -518,97 +567,40 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
     super.visitSimpleClass(simpleClass);
     RegExpSimpleClass.Kind kind = simpleClass.getKind();
     switch (kind) {
-      case ANY -> {
-        leaf(simpleClass, new Name("Dot", "https://www.regular-expressions.info/dot.html"),
-             "matches any character (excludes line breaks depending on the matching mode)");
-      }
-      case DIGIT -> {
-        leaf(simpleClass, new Name("Shorthand Character Class", "https://www.regular-expressions.info/shorthand.html"),
-             "matches a digit");
-      }
-      case NON_DIGIT -> {
-        leaf(simpleClass, new Name("Negated Shorthand Character Class", "https://www.regular-expressions.info/shorthand.html#negated"),
-             "matches a non-digit");
-      }
-      case WORD -> {
-        leaf(simpleClass, new Name("Shorthand Character Class", "https://www.regular-expressions.info/shorthand.html"),
-             "matches a word character (letter, digit or underscore)");
-      }
-      case NON_WORD -> {
-        leaf(simpleClass, new Name("Negated Shorthand Character Class", "https://www.regular-expressions.info/shorthand.html#negated"),
-             "matches a non-word character");
-      }
-      case SPACE -> {
-        leaf(simpleClass, new Name("Shorthand Character Class", "https://www.regular-expressions.info/shorthand.html"),
-             "matches a whitespace character");
-      }
-      case NON_SPACE -> {
-        leaf(simpleClass, new Name("Negated Shorthand Character Class", "https://www.regular-expressions.info/shorthand.html#negated"),
-             "matches a non-whitespace character");
-      }
-      case HORIZONTAL_SPACE -> {
-        leaf(simpleClass, new Name("Shorthand Character Class", "https://www.regular-expressions.info/shorthand.html#more"),
-             "matches a horizontal whitespace character: [ \\t\\u00A0\\u1680\\u180e\\u2000-\\u200a\\u202f\\u205f\\u3000]"
-        );
-      }
-      case NON_HORIZONTAL_SPACE -> {
-        leaf(simpleClass, new Name("Negated Shorthand Character Class", "https://www.regular-expressions.info/shorthand.html#negated"),
-             "matches a non-horizontal whitespace character: [^ \\t\\u00A0\\u1680\\u180e\\u2000-\\u200a\\u202f\\u205f\\u3000]");
-      }
-      case VERTICAL_SPACE -> {
-        leaf(simpleClass, new Name("Shorthand Character Class", "https://www.regular-expressions.info/shorthand.html#more"),
-             "matches a vertical whitespace character: [\\n\\x0B\\f\\r\\x85&#92;u2028&#92;u2029]");
-      }
-      case NON_VERTICAL_SPACE -> {
-        leaf(simpleClass, new Name("Negated Shorthand Character Class", "https://www.regular-expressions.info/shorthand.html#negated"),
-             "matches a non-vertical whitespace character: [^\\n\\x0B\\f\\r\\x85&#92;u2028&#92;u2029]");
-      }
-      case XML_NAME_START -> {
-        leaf(simpleClass, new Name("Shorthand Character Class", "https://www.regular-expressions.info/shorthand.html#xml"),
-             "matches a character that is allowed to be used as the first character of an XML name");
-      }
-      case NON_XML_NAME_START -> {
-        leaf(simpleClass, new Name("Negated Shorthand Character Class", "https://www.regular-expressions.info/shorthand.html#xml"),
-             "matches a character that is not allowed to be used as the first character of an XML name");
-      }
-      case XML_NAME_PART -> {
-        leaf(simpleClass, new Name("Shorthand Character Class", "https://www.regular-expressions.info/shorthand.html#xml"),
-             "matches a character that is allowed to be part of an XML name after the first character");
-      }
-      case NON_XML_NAME_PART -> {
-        leaf(simpleClass, new Name("Negated Shorthand Character Class", "https://www.regular-expressions.info/shorthand.html#xml"),
-             "matches a character that is not allowed to be part of an XML name after the first character");
-      }
-      case UNICODE_GRAPHEME -> {
-        leaf(simpleClass, new Name("Shorthand Character Class", "https://www.regular-expressions.info/unicodechars.html#grapheme"),
-             "matches any Unicode grapheme (can consist of multiple code points; includes line breaks)");
-      }
-      case UNICODE_LINEBREAK -> {
-        leaf(simpleClass, new Name("Shorthand Character Class", "https://www.regular-expressions.info/shorthand.html"),
-             "matches a Unicode line break");
-      }
+      case ANY -> leaf(simpleClass, DOT, RegExpBundle.message("explain.dot"));
+      case DIGIT -> leaf(simpleClass, SHORT_CLASS, RegExpBundle.message("explain.digit.short.class"));
+      case NON_DIGIT -> leaf(simpleClass, NEGATED_SHORT_CLASS, RegExpBundle.message("explain.non.digit.short.class"));
+      case WORD -> leaf(simpleClass, SHORT_CLASS, RegExpBundle.message("explain.word.short.class"));
+      case NON_WORD -> leaf(simpleClass, NEGATED_SHORT_CLASS, RegExpBundle.message("explain.non.word.short.class"));
+      case SPACE -> leaf(simpleClass, SHORT_CLASS, RegExpBundle.message("explain.space.short.class"));
+      case NON_SPACE -> leaf(simpleClass, NEGATED_SHORT_CLASS, RegExpBundle.message("explain.non.space.short.class"));
+      case HORIZONTAL_SPACE -> leaf(simpleClass, MORE_SHORT_CLASS, RegExpBundle.message("explain.horizontal.space.short.class"));
+      case NON_HORIZONTAL_SPACE -> leaf(simpleClass, NEGATED_SHORT_CLASS, RegExpBundle.message("explain.non.horizontal.space.short.class"));
+      case VERTICAL_SPACE -> leaf(simpleClass, MORE_SHORT_CLASS, RegExpBundle.message("explain.vertical.space.short.class"));
+      case NON_VERTICAL_SPACE -> leaf(simpleClass, NEGATED_SHORT_CLASS, RegExpBundle.message("explain.non.vertical.space.short.class"));
+      case XML_NAME_START -> leaf(simpleClass, XML_SHORT_CLASS, RegExpBundle.message("explain.xml.name.start.short.class"));
+      case NON_XML_NAME_START -> leaf(simpleClass, NEGATED_XML_SHORT_CLASS, RegExpBundle.message("explain.non.xml.name.start.short.class"));
+      case XML_NAME_PART -> leaf(simpleClass, XML_SHORT_CLASS, RegExpBundle.message("explain.xml.name.part.short.class"));
+      case NON_XML_NAME_PART -> leaf(simpleClass, NEGATED_XML_SHORT_CLASS, RegExpBundle.message("explain.non.xml.name.part.short.class"));
+      case UNICODE_GRAPHEME -> leaf(simpleClass, GRAPHEME_SHORT_CLASS, RegExpBundle.message("explain.unicode.grapheme.short.class"));
+      case UNICODE_LINEBREAK -> leaf(simpleClass, SHORT_CLASS, RegExpBundle.message("explain.unicode.line.break.short.class"));
     }
   }
 
   @Override
   public void visitRegExpClass(RegExpClass regExpClass) {
-    Name name = regExpClass.isNegated()
-                ? new Name("Negated Character Class", "https://www.regular-expressions.info/charclass.html#negated")
-                : new Name("Character Class", "https://www.regular-expressions.info/charclass.html");
+    Feature name = regExpClass.isNegated() ? NEGATED_CHAR_CLASS : CHAR_CLASS;
     RegExpClassElement[] elements = regExpClass.getElements();
     if (elements.length == 1 && elements[0] instanceof RegExpChar c) {
       // single character case
-      branch(regExpClass, name, regExpClass.isNegated()
-                                         ? "matches 1 character that is not the " + charText(c) + " character"
-                                         : "matches the " + charText(c) + " character", false);
+      var m = RegExpBundle.message(regExpClass.isNegated() ? "explain.negated.single.character" : "explain.single.character", charText(c));
+      branch(regExpClass, name, m, false);
     }
     else if (elements.length == 1 && elements[0] instanceof RegExpCharRange range) {
-      branch(regExpClass, name, regExpClass.isNegated() ? "matches 1 character not " + rangeText(range)
-                                                        : "matches 1 character " + rangeText(range), false);
+      branch(regExpClass, name, rangeText(range, regExpClass.isNegated()), false);
     }
     else {
-      branch(regExpClass, name, regExpClass.isNegated() ? "matches 1 character not " + "in the set"
-                                                        : "matches 1 character " + "in the set");
+      branch(regExpClass, name, RegExpBundle.message(regExpClass.isNegated() ? "explain.negated.class" : "explain.class"));
     }
     super.visitRegExpClass(regExpClass);
     parent();
@@ -616,21 +608,21 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
 
   @Override
   public void visitRegExpIntersection(RegExpIntersection intersection) {
-    branch(intersection, new Name("Character Class Intersection", "https://www.regular-expressions.info/charclassintersect.html"),
-           "matches 1 character that matches both the left- and the right-hand side");
+    branch(intersection, CHAR_CLASS_INTERSECTION, RegExpBundle.message("explain.matches.intersection"));
     super.visitRegExpIntersection(intersection);
     parent();
   }
 
   @Override
   public void visitRegExpCharRange(RegExpCharRange range) {
-    leaf(range, new Name("Range", "https://www.regular-expressions.info/charclass.html"), "matches 1 character " + rangeText(range));
+    leaf(range, CHAR_RANGE, rangeText(range, false));
   }
 
-  private static @Nls @NotNull String rangeText(RegExpCharRange range) {
+  private static @Nls @NotNull String rangeText(RegExpCharRange range, boolean negated) {
     RegExpChar from = range.getFrom();
     RegExpChar to = range.getTo();
-    return "from " + charText(from) + " to " + charText(to) + " (" + (to.getValue() - from.getValue() + 1) + " characters)";
+    String count = to == null ? RegExpBundle.message("explain.unknown") : String.valueOf(to.getValue() - from.getValue() + 1);
+    return RegExpBundle.message(negated ? "explain.negated.range" : "explain.range", charText(from), charText(to), count);
   }
 
   @Override
@@ -640,19 +632,19 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
       List<Fragment> pattern = createSimpleCharSequence(c);
       if (pattern != null) {
         charGroup = true;
-        branch(new Value(pattern, EMPTY_NAME, "matches characters in order", false));
+        branch(new Value(pattern, EMPTY, RegExpBundle.message("explain.multiple.characters"), false));
       }
     }
-    Name name = switch (c.getType()) {
-      case CHAR -> EMPTY_NAME;
-      case HEX -> new Name("Hexadecimal Escape", "https://www.regular-expressions.info/nonprint.html");
-      case OCT -> new Name("Octal Escape", "https://www.regular-expressions.info/nonprint.html#octal");
-      case UNICODE -> new Name("Unicode Escape", "https://www.regular-expressions.info/nonprint.html");
-      case NAMED -> new Name("Named Character", "");
-      case CONTROL -> new Name("Control Character Escape", "https://www.regular-expressions.info/nonprint.html");
-      case ESCAPE -> new Name("Escape Character", "https://www.regular-expressions.info/nonprint.html");
+    Feature name = switch (c.getType()) {
+      case CHAR -> EMPTY;
+      case HEX -> HEX_ESCAPE;
+      case OCT -> OCTAL_ESCAPE;
+      case UNICODE -> UNICODE_ESCAPE;
+      case NAMED -> NAMED_CHAR;
+      case CONTROL -> CONTROL_CHAR;
+      case ESCAPE -> ESCAPE_CHAR;
     };
-    leaf(c, name, "matches the " + charText(c) + " character");
+    leaf(c, name, RegExpBundle.message("explain.single.character", charText(c)));
     if (charGroup && !isSimpleChar(c.getNextSibling())) {
       charGroup = false;
       parent();
@@ -676,7 +668,8 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
     return result;
   }
 
-  private static @NotNull @Nls String charText(RegExpChar c) {
+  private static @NotNull @NlsSafe String charText(RegExpChar c) {
+    if (c == null) return RegExpBundle.message("explain.unknown");
     int value = c.getValue();
     return c.getType() == RegExpChar.Type.CHAR || !isVisibleCodePoint(value)
            ? Character.getName(value)
@@ -709,47 +702,17 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
   @Override
   public void visitRegExpGroup(RegExpGroup group) {
     switch (group.getType()) {
-      case POSITIVE_LOOKAHEAD -> {
-        branch(group, new Name(getLookaroundName(group), "https://www.regular-expressions.info/lookaround.html"),
-               "succeeds when the input matches, without becoming part of the result");
-      }
-      case NEGATIVE_LOOKAHEAD -> {
-        branch(group, new Name(getLookaroundName(group), "https://www.regular-expressions.info/lookaround.html"),
-               "succeeds when the input does not match, without becoming part of the result");
-      }
-      case POSITIVE_LOOKBEHIND -> {
-        branch(group, new Name(getLookaroundName(group), "https://www.regular-expressions.info/lookaround.html"),
-               "succeeds when the previous input matches without becoming part of the result");
-      }
-      case NEGATIVE_LOOKBEHIND -> {
-        branch(group, new Name(getLookaroundName(group), "https://www.regular-expressions.info/lookaround.html"),
-               "succeeds when the previous input does not match without becoming part of the result");
-      }
-      case QUOTED_NAMED_GROUP, PYTHON_NAMED_GROUP, NAMED_GROUP -> {
-        branch(group, new Name("Named Capturing Group", "https://www.regular-expressions.info/named.html"), 
-               "<b>" + group.getGroupName() + "</b> stores the text it matches for later reference");
-      }
-      case CAPTURING_GROUP -> {
-        branch(group, new Name("Capturing Group", "https://www.regular-expressions.info/brackets.html"),
-               "<b>#" + currentGroup + "</b> stores the text it matches for later reference");
-        currentGroup++;
-      }
-      case NON_CAPTURING -> {
-        branch(group, new Name("Non-Capturing Group", "https://www.regular-expressions.info/brackets.html#noncapture"), 
-               "used for optimization when capturing is not needed");
-      }
-      case ATOMIC -> {
-        branch(group, new Name("Atomic Group", "https://www.regular-expressions.info/atomic.html"), 
-               "does not backtrack after it matches");
-      }
-      case PCRE_BRANCH_RESET -> {
-        branch(group, new Name("Branch Reset Group", "https://www.regular-expressions.info/branchreset.html"),
-               "resets branch numbering between alternatives inside");
-      }
-      case OPTIONS -> {
-        branch(group, new Name("Inline Modifier Group", "https://www.regular-expressions.info/modifiers.html"),
-               "turns a regex mode on or off for the pattern inside");
-      }
+      case POSITIVE_LOOKAHEAD -> branch(group, POSITIVE_LOOKAHEAD, RegExpBundle.message("explain.positive.lookahead"));
+      case NEGATIVE_LOOKAHEAD -> branch(group, NEGATIVE_LOOKAHEAD, RegExpBundle.message("explain.negative.lookahead"));
+      case POSITIVE_LOOKBEHIND -> branch(group, POSITIVE_LOOKBEHIND, RegExpBundle.message("explain.positive.lookbehind"));
+      case NEGATIVE_LOOKBEHIND -> branch(group, NEGATIVE_LOOKBEHIND, RegExpBundle.message("explain.negtive.lookbehind"));
+      case QUOTED_NAMED_GROUP, PYTHON_NAMED_GROUP, NAMED_GROUP ->
+        branch(group, NAMED_CAPTURING_GROUP, RegExpBundle.message("explain.named.capturing.group", group.getGroupName()));
+      case CAPTURING_GROUP -> branch(group, CAPTURING_GROUP, RegExpBundle.message("explain.capturing.group", currentGroup++));
+      case NON_CAPTURING -> branch(group, NON_CAPTURING_GROUP, RegExpBundle.message("explain.non.capturing.group"));
+      case ATOMIC -> branch(group, ATOMIC_GROUP, RegExpBundle.message("explain.atomic.group"));
+      case PCRE_BRANCH_RESET -> branch(group, BRANCH_RESET_GROUP, RegExpBundle.message("explain.branch.reset.group"));
+      case OPTIONS -> branch(group, INLINE_MODIFIER_GROUP, RegExpBundle.message("explain.inline.modifier.group"));
     }
     super.visitRegExpGroup(group);
     parent();
@@ -760,27 +723,31 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
     RegExpAtom condition = conditional.getCondition();
     String explanation;
     if (condition instanceof RegExpGroup group) {
-      String name = getLookaroundName(group);
+      String name = switch (group.getType()) {
+        case POSITIVE_LOOKAHEAD -> RegExpBundle.message("explain.feature.positive.lookahead.assertion");
+        case NEGATIVE_LOOKAHEAD -> RegExpBundle.message("explain.feature.negative.lookahead.assertion");
+        case POSITIVE_LOOKBEHIND -> RegExpBundle.message("explain.feature.positive.lookbehind.assertion");
+        case NEGATIVE_LOOKBEHIND -> RegExpBundle.message("explain.feature.negative.lookbehind.assertion");
+        default -> throw new AssertionError();
+      };
       explanation = conditional.getElseBranch() == null
-                    ? "matches depending on whether " + name + " succeeds"
-                    : "matches one of two alternatives based on whether " + name + " succeeds";
+                    ? RegExpBundle.message("explain.conditional.with.lookaround", name)
+                    : RegExpBundle.message("explain.conditional.with.lookaround.and.else", name);
     }
     else if (condition instanceof RegExpNamedGroupRef ref) {
-      String name = "Named Capturing Group <b>" + ref.getGroupName() + "</b>";
       explanation = conditional.getElseBranch() == null
-                    ? "matches depending on whether " + name + " matches"
-                    : "matches one of two alternatives based on whether " + name + " matches";
+                    ? RegExpBundle.message("explain.conditional.with.named.capturing.group", ref.getGroupName())
+                    : RegExpBundle.message("explain.conditional.with.named.capturing.group.and.else", ref.getGroupName());
     }
     else if (condition instanceof RegExpBackref ref) {
-      String name = "Capturing Group <b>#" + ref.getIndex() + "</b>";
       explanation = conditional.getElseBranch() == null
-                    ? "matches depending on whether " + name + " matches"
-                    : "matches one of two alternatives based on whether " + name + " matches";
+                    ? RegExpBundle.message("explain.conditional.with.capturing.group", ref.getIndex())
+                    : RegExpBundle.message("explain.conditional.with.capturing.group.and.else", ref.getIndex());
     }
     else {
-      explanation = "incomplete expression";
+      explanation = RegExpBundle.message("explain.unknown");
     }
-    branch(conditional, new Name("Conditional", "https://www.regular-expressions.info/conditional.html"), explanation);
+    branch(conditional, CONDITIONAL, explanation);
     if (condition instanceof RegExpGroup) {
       super.visitRegExpConditional(conditional);
     }
@@ -797,19 +764,9 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
     parent();
   }
 
-  private static @NlsContexts.ColumnName String getLookaroundName(RegExpGroup group) {
-    return switch (group.getType()) {
-      case POSITIVE_LOOKAHEAD -> "Positive Lookahead Assertion";
-      case NEGATIVE_LOOKAHEAD -> "Negative Lookahead Assertion";
-      case POSITIVE_LOOKBEHIND -> "Positive Lookbehind Assertion";
-      case NEGATIVE_LOOKBEHIND -> "Negative Lookbehind Assertion";
-      default -> throw new AssertionError();
-    };
-  }
-
   @Override
   public void visitRegExpSetOptions(RegExpSetOptions options) {
-    branch(options, new Name("Inline Mode Modifier", "https://www.regular-expressions.info/modifiers.html"), "turns regex modes on or off");
+    branch(options, INLINE_MODE_MODIFIER, RegExpBundle.message("explain.set.options"));
     HashSet<Character> seen = new HashSet<>();
     addModeExplanation(options.getOffOptions(), true, seen);
     addModeExplanation(options.getOnOptions(), false, seen);
@@ -823,33 +780,31 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
     for (int i = text.length() - 1, limit = off ? 1 : 0; i >= limit; i--) {
       char c = text.charAt(i);
       if (!seen.add(c)) continue;
-      String mode = switch (c) {
-        case 'd' -> "Unix lines";
-        case 'i' -> "case-insensitive";
-        case 'm' -> "multiline";
-        case 's' -> "dotall";
-        case 'u' -> "Unicode-aware case folding";
-        case 'U' -> "Unicode character class";
-        case 'x' -> "comments";
-        default -> "<unknown>";
+      int type = switch (c) {
+        case 'd' -> 1;
+        case 'i' -> 2;
+        case 'm' -> 3;
+        case 's' -> 4;
+        case 'u' -> 5;
+        case 'U' -> 6;
+        case 'x' -> 7;
+        default -> 0;
       };
-      @NotNull Value value = new Value(List.of(new Fragment("" + c, HIGHLIGHT_ATTRIBUTES)), EMPTY_NAME,
-                                               "turns " + (off ? "off " : "on ") + mode + " mode", false);
+      String explanation = RegExpBundle.message(off ? "explain.mode.off.option" : "explain.mode.on.option", type);
+      @NotNull Value value = new Value(List.of(new Fragment("" + c, HIGHLIGHT_ATTRIBUTES)), EMPTY, explanation, false);
       current.insert(new RegExpTreeNode(value), 0);
     }
   }
 
   @Override
   public void visitRegExpBackref(RegExpBackref backref) {
-    leaf(backref, new Name("Back Reference", "https://www.regular-expressions.info/backref.html"), 
-         "matches the text matched by group <b>#" + backref.getIndex() + "</b> again");
+    leaf(backref, BACK_REFERENCE, RegExpBundle.message("explain.backref", backref.getIndex()));
     super.visitRegExpBackref(backref);
   }
 
   @Override
   public void visitRegExpNamedGroupRef(RegExpNamedGroupRef groupRef) {
-    leaf(groupRef, new Name("Named Group Reference", "https://www.regular-expressions.info/named.html"),
-         "matches the text matched by group <b>" + groupRef.getGroupName() + "</b> again");
+    leaf(groupRef, NAMED_GROUP_REFERENCE, RegExpBundle.message("explain.named.group.ref", groupRef.getGroupName()));
     super.visitRegExpNamedGroupRef(groupRef);
   }
 
@@ -858,13 +813,12 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
     ASTNode categoryNode = property.getCategoryNode();
     if (categoryNode != null) {
       String explanation = RegExpLanguageHosts.getInstance().getPropertyDescription(property, categoryNode.getText());
-      if (explanation != null) {
-        if (property.isNegated()) {
-          leaf(property, new Name("Negated Unicode Property", ""), "matches any non-" + explanation.toLowerCase(Locale.ROOT));
-        }
-        else {
-          leaf(property, new Name("Unicode Property", ""), "matches any " + explanation.toLowerCase(Locale.ROOT));
-        }
+      explanation = explanation == null ? RegExpBundle.message("explain.unknown") : explanation.toLowerCase(Locale.ROOT);
+      if (property.isNegated()) {
+        leaf(property, NEGATED_UNICODE_PROPERTY, RegExpBundle.message("explain.negated.unicode.property", explanation));
+      }
+      else {
+        leaf(property, UNICODE_PROPERTY, RegExpBundle.message("explain.unicode.property", explanation));
       }
     }
     super.visitRegExpProperty(property);
@@ -874,68 +828,49 @@ class ExplanationVisitor extends RegExpRecursiveElementVisitor {
   public void visitPosixBracketExpression(RegExpPosixBracketExpression posixBracketExpression) {
     super.visitPosixBracketExpression(posixBracketExpression);
     String name = posixBracketExpression.getClassName();
-    String explanation = switch (name) {
-      case "alnum" -> "alphanumeric character";
-      case "alpha" -> "alphabetic character";
-      case "ascii" -> "ASCII character";
-      case "blank" -> "space or tab character";
-      case "cntrl" -> "control character";
-      case "digit" -> "numeric digit";
-      case "graph" -> "visible (no whitespace or control) character";
-      case "lower" -> "lowercase alphabetic character";
-      case "print" -> "visible or whitespace (no control) character";
-      case "punct" -> "punctuation or symbol character";
-      case "space" -> "whitespace or linebreak character";
-      case "upper" -> "uppercase alphabetic character";
-      case "word" -> "word character (letter, digit or underscore)";
-      case "xdigit" -> "hexadecimal digit";
-      default -> "<unknown>";
+    int type = switch (name) {
+      case "alnum" -> 1;
+      case "alpha" -> 2;
+      case "ascii" -> 3;
+      case "blank" -> 4;
+      //noinspection SpellCheckingInspection
+      case "cntrl" -> 5;
+      case "digit" -> 6;
+      case "graph" -> 7;
+      case "lower" -> 8;
+      case "print" -> 9;
+      //noinspection SpellCheckingInspection
+      case "punct" -> 10;
+      case "space" -> 11;
+      case "upper" -> 12;
+      case "word"  -> 13;
+      //noinspection SpellCheckingInspection
+      case "xdigit" -> 14;
+      default -> 0;
     };
-    leaf(posixBracketExpression, new Name("POSIX Bracket Expression", "https://www.regular-expressions.info/posixbrackets.html"),
-           "matches any " + explanation);
+    leaf(posixBracketExpression, POSIX_BRACKETS, RegExpBundle.message("explain.posix.bracket.expression", type));
   }
 
   @Override
   public void visitRegExpBoundary(RegExpBoundary boundary) {
     switch (boundary.getType()) {
-      case LINE_START ->
-        leaf(boundary, new Name("Anchor", "https://www.regular-expressions.info/anchors.html"),
-             "matches before the start of the input (and after a line terminator in multi-line mode)");
-      case LINE_END ->
-        leaf(boundary, new Name("Anchor", "https://www.regular-expressions.info/anchors.html"),
-             "matches after the end of the input (and before a line terminator in multi-line mode)");
-      case WORD ->
-        leaf(boundary, new Name("Word Boundary", "https://www.regular-expressions.info/wordboundaries.html"),
-             "matches between a word character and a non-word character");
-      case UNICODE_EXTENDED_GRAPHEME -> 
-        leaf(boundary, new Name("Unicode Grapheme Boundary", "https://www.regular-expressions.info/unicodeboundaries.html#grapheme"),
-             "matches between two characters, where one character can consist of multiple code points");
-      case NON_WORD ->
-        leaf(boundary, new Name("Word non-boundary", "https://www.regular-expressions.info/wordboundaries.html"),
-             "matches between 2 word characters or 2 non-word characters");
-      case BEGIN ->
-        leaf(boundary, new Name("Anchor", "https://www.regular-expressions.info/anchors.html"),
-             "matches before the start of the input");
-      case END ->
-        leaf(boundary, new Name("Anchor", "https://www.regular-expressions.info/anchors.html"),
-             "matches after the end of the input");
-      case END_NO_LINE_TERM ->
-        leaf(boundary, new Name("Anchor", "https://www.regular-expressions.info/anchors.html"),
-             "matches after the end of the input, before a final line terminator if any");
-      case PREVIOUS_MATCH ->
-        leaf(boundary, new Name("Match Anchor", "https://www.regular-expressions.info/continue.html"),
-             "matches after the end of the previous match, or at the start of the input on the first attempt");
-      case RESET_MATCH -> {
-        leaf(boundary, new Name("Reset Match", "https://www.regular-expressions.info/keep.html"),
-             "keeps the text matched so far out of the match result");
-      }
+      case LINE_START -> leaf(boundary, ANCHOR, RegExpBundle.message("explain.line.start.anchor"));
+      case LINE_END -> leaf(boundary, ANCHOR, RegExpBundle.message("explain.line.end.anchor"));
+      case WORD -> leaf(boundary, WORD_BOUNDARY, RegExpBundle.message("explain.word.boundary"));
+      case UNICODE_EXTENDED_GRAPHEME -> leaf(boundary, GRAPHEME_BOUNDARY, RegExpBundle.message("explain.unicode.extended.grapheme"));
+      case NON_WORD -> leaf(boundary, WORD_NON_BOUNDARY, RegExpBundle.message("explain.word.non.boundary"));
+      case BEGIN -> leaf(boundary, ANCHOR, RegExpBundle.message("explain.begin.anchor"));
+      case END -> leaf(boundary, ANCHOR, RegExpBundle.message("explain.end.anchor"));
+      case END_NO_LINE_TERM -> leaf(boundary, ANCHOR, RegExpBundle.message("explain.end.no.line.term.anchor"));
+      case PREVIOUS_MATCH -> leaf(boundary, MATCH_ANCHOR, RegExpBundle.message("explain.previous.match.anchor"));
+      case RESET_MATCH -> leaf(boundary, RESET_MATCH, RegExpBundle.message("explain.reset.match"));
     }
     super.visitRegExpBoundary(boundary);
   }
 
   @Override
   public void visitComment(@NotNull PsiComment comment) {
-    leaf(comment, new Name("Comment", "https://www.regular-expressions.info/freespacing.html"), "");
+    leaf(comment, COMMENT, "");
     super.visitComment(comment);
   }
 }

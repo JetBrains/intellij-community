@@ -78,9 +78,14 @@ open class MavenServerConnectorImpl(project: Project,
         mySupport = factory.create(jdk, vmOptions, mavenDistribution, project, myDebugPort)
         mySupport!!.onTerminate(Consumer {
           MavenLog.LOG.debug("[connector] terminate " + this@MavenServerConnectorImpl)
-          val mavenServerManager = ApplicationManager.getApplication().getServiceIfCreated(
-            MavenServerManager::class.java)
-          mavenServerManager?.shutdownConnector(this@MavenServerConnectorImpl, false)
+          val application = ApplicationManager.getApplication()
+          if (application == null) {
+            MavenLog.LOG.warn("[connector] application is already disposed")
+          }
+          else {
+            val mavenServerManager = application.getServiceIfCreated(MavenServerManager::class.java)
+            mavenServerManager?.shutdownConnector(this@MavenServerConnectorImpl, false)
+          }
         })
         // the computation below spawns an immortal server that will not terminate
         // if someone is interested in the termination of the current computation, they do not need to wait for maven to terminate.

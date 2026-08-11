@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -178,6 +179,13 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
     if (lazyValue.isComputed()) {
       return lazyValue.getValue();
     }
-    return ReadAction.computeBlocking(() -> lazyValue.getValue());
+    var application = ApplicationManager.getApplication();
+    if (application.isDispatchThread() || application.isWriteAccessAllowed()) {
+      return ReadAction.computeBlocking(lazyValue::getValue);
+    }
+    if (application.isReadAccessAllowed()) {
+      return lazyValue.getValue();
+    }
+    return ReadAction.nonBlocking(lazyValue::getValue).executeSynchronously();
   }
 }

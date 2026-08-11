@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.documentation.doctest.PyDocstringFile;
+import com.jetbrains.python.documentation.doctest.PyDoctestFile;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyExpression;
@@ -40,7 +40,7 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
-    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDocstringFile) return false;
+    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDoctestFile) return false;
     updateText(false);
 
     if (findOnlySuitableParameter(editor, psiFile) != null) {

@@ -225,7 +225,7 @@ internal class DaemonTooltipWithActionRenderer(
     }
 
     val tooltipAction = if (tooltipAction is AsyncTooltipAction) {
-      tooltipAction.getLoaded()!!
+      tooltipAction.getLoaded() ?: return
     }
     else {
       tooltipAction!! // impossible to get NPE because if isTooltipActionNull() check

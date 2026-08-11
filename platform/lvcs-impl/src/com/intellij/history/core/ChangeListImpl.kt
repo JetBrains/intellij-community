@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.core
 
 import com.intellij.history.ActivityId
@@ -13,9 +13,11 @@ import com.intellij.openapi.util.NlsContexts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.days
 
 private const val DAYS_TO_KEEP_PROPERTY_KEY = "localHistory.daysToKeep"
+private const val DEFAULT_DAYS_TO_KEEP = 5
 
 internal class ChangeListImpl(private val storage: ChangeListStorage) : ChangeList {
   private val purged = AtomicBoolean(false)
@@ -23,7 +25,6 @@ internal class ChangeListImpl(private val storage: ChangeListStorage) : ChangeLi
   private var changeSetDepth = 0
   private var currentChangeSet: ChangeSet? = null
 
-  @Synchronized
   override fun nextId(): Long = storage.nextId()
 
   @Synchronized
@@ -83,27 +84,24 @@ internal class ChangeListImpl(private val storage: ChangeListStorage) : ChangeLi
   // todo synchronization issue: changeset may me modified while being iterated
   override fun iterChanges(): Iterable<ChangeSet> {
     return Iterable {
+      val currentSet = synchronized(this@ChangeListImpl) {
+        currentChangeSet
+      }
       object : Iterator<ChangeSet> {
-        private var starterCurrentSet = synchronized(this@ChangeListImpl) {
-          currentChangeSet
-        }
+        private val starterCurrentSet = AtomicReference(currentSet)
         private val storageIterator: Iterator<ChangeSet> by lazy {
           storage.iterate()
         }
 
-        override fun hasNext(): Boolean = synchronized(this@ChangeListImpl) {
-          starterCurrentSet != null || storageIterator.hasNext()
+        override fun hasNext(): Boolean {
+          return starterCurrentSet.get() != null || storageIterator.hasNext()
         }
 
-        override fun next(): ChangeSet = synchronized(this@ChangeListImpl) {
-          val current = starterCurrentSet
-          if (current != null) {
-            starterCurrentSet = null
-            current
-          }
-          else {
-            storageIterator.nextOrNull() ?: error("No more changesets available")
-          }
+        override fun next(): ChangeSet {
+          val current = starterCurrentSet.getAndSet(null)
+          return current
+                 ?: storageIterator.nextOrNull()
+                 ?: error("No more changesets available")
         }
       }
     }
@@ -114,9 +112,9 @@ internal class ChangeListImpl(private val storage: ChangeListStorage) : ChangeLi
   }
 
   suspend fun flush() {
-    val daysToKeep = AdvancedSettings.getInt(DAYS_TO_KEEP_PROPERTY_KEY)
     withContext(Dispatchers.IO) {
       if (purged.compareAndSet(false, true)) {
+        val daysToKeep = getDaysToKeep()
         val period = daysToKeep.days.inWholeMilliseconds
         LocalHistoryLog.LOG.debug("Purging local history...")
         purgeObsolete(period)
@@ -126,6 +124,17 @@ internal class ChangeListImpl(private val storage: ChangeListStorage) : ChangeLi
       storage.flush()
     }
   }
+
+  private fun getDaysToKeep(): Int =
+    try {
+      AdvancedSettings.getInt(DAYS_TO_KEEP_PROPERTY_KEY)
+    }
+    catch (e: IllegalArgumentException) {
+      // The advanced setting may not be registered (e.g. in test environments where the lvcs-impl extensions aren't loaded).
+      LocalHistoryLog.LOG.warn("Advanced setting '$DAYS_TO_KEEP_PROPERTY_KEY' is not registered, using default value $DEFAULT_DAYS_TO_KEEP",
+                               e)
+      DEFAULT_DAYS_TO_KEEP
+    }
 
   @Synchronized
   fun close(drop: Boolean) {

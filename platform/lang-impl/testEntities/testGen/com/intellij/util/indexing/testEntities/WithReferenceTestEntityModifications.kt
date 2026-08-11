@@ -19,7 +19,7 @@ interface WithReferenceTestEntityBuilder : WorkspaceEntityBuilder<WithReferenceT
 }
 
 internal object WithReferenceTestEntityType : EntityType<WithReferenceTestEntity, WithReferenceTestEntityBuilder>() {
-  override val entityClass: Class<WithReferenceTestEntity> get() = WithReferenceTestEntity::class.java
+  override val entityImplClass: Class<*> get() = WithReferenceTestEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = WithReferenceTestEntityImpl.Builder::class.java
   operator fun invoke(
     name: String,

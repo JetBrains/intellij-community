@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
@@ -18,6 +19,7 @@ import javax.swing.JPanel
 @ApiStatus.Internal
 class TargetCustomToolPanel(
   private val project: Project,
+  private val module: Module?,
   private val targetEnvironmentType: TargetEnvironmentType<*>,
   private val targetSupplier: Supplier<TargetEnvironmentConfiguration>,
   private val language: LanguageRuntimeConfiguration,
@@ -69,7 +71,9 @@ class TargetCustomToolPanel(
   }
 
   private fun createRuntimePanel(language: LanguageRuntimeConfiguration): LanguagePanel {
-    val configurable = language.getRuntimeType().createConfigurable(project, language, targetEnvironmentType, targetSupplier)
+    val configurable = module?.let {
+      language.getRuntimeType().createConfigurable(it, language, targetEnvironmentType, targetSupplier)
+    } ?: language.getRuntimeType().createConfigurable(project, language, targetEnvironmentType, targetSupplier)
     (configurable as? CustomToolLanguageConfigurable<*>)?.apply {
       introspectable?.let { setIntrospectable(it) }
       stateChangedCallback?.let { registerStateChangedCallback(it) }

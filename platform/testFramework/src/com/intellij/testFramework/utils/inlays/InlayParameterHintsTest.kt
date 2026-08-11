@@ -54,10 +54,10 @@ open class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
                                originalText: String): Unit =
     verifyInlaysAndCaretInfo(expectedInlaysAndCaret, originalText, inlayPresenter, inlayFilter)
 
-  private fun verifyInlaysAndCaretInfo(expectedInlaysAndCaret: CaretAndInlaysInfo,
-                                       originalText: String,
-                                       inlayPresenter: (Inlay<*>) -> String,
-                                       inlayFilter: (Inlay<*>) -> Boolean) {
+  fun verifyInlaysAndCaretInfo(expectedInlaysAndCaret: CaretAndInlaysInfo,
+                               originalText: String,
+                               inlayPresenter: (Inlay<*>) -> String,
+                               inlayFilter: (Inlay<*>) -> Boolean) {
     val file = myFixture.file!!
     val document = myFixture.getDocument(file)
     val actual: List<InlayInfo> = getActualInlays(inlayPresenter, inlayFilter)

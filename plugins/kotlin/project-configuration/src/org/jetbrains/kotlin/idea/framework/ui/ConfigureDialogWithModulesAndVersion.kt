@@ -207,7 +207,7 @@ class ConfigureDialogWithModulesAndVersion(
     companion object {
         private const val MODULES_TO_DISPLAY_SIZE = 2
 
-        internal const val DEFAULT_KOTLIN_VERSION = "2.4.0"
+        internal const val DEFAULT_KOTLIN_VERSION = "2.4.10"
 
         @JvmStatic
         val defaultKotlinVersion: IdeKotlinVersion

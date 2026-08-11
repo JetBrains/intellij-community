@@ -53,8 +53,8 @@ private const val EFFECTIVE_LL = "effectiveLL"
 
 /**
  * To add the support for new API in the most recent JDK execute:
- * - Generate apiXXX.txt by running [com.intellij.codeInspection.tests.JavaApiUsageGenerator#testCollectSinceApiUsages]
- * - Put the generated text file under community/java/java-analysis-api/src/com/intellij/openapi/module
+ * - Generate apiXX.txt by running [com.intellij.codeInspection.tests.JavaApiUsageGenerator#testCollectSinceApiUsages]
+ * - Put the generated text file under community/java/java-analysis-api/resources/com/intellij/openapi/module
  */
 class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
   override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.ERROR

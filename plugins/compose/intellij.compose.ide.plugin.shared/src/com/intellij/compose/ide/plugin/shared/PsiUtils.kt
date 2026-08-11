@@ -29,17 +29,23 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtAnnotated
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
@@ -105,7 +111,8 @@ internal fun KtAnnotationEntry.isPreviewParameterAnnotation(): Boolean = analyze
   classIdMatches(this@isPreviewParameterAnnotation, JETPACK_PREVIEW_PARAMETER_CLASS_ID)
 }
 
-internal fun KaSession.classIdMatches(element: KtAnnotationEntry, classId: ClassId): Boolean {
+context(session: KaSession)
+internal fun classIdMatches(element: KtAnnotationEntry, classId: ClassId): Boolean {
   val shortName = element.shortName ?: return false
   if (classId.shortClassName != shortName) return false
 
@@ -135,4 +142,11 @@ internal fun KtValueArgument.matchingParamTypeFqName(callee: KtNamedFunction): F
     val paramAtIndex = callee.valueParameters.getOrNull(argumentIndex) ?: return null
     paramAtIndex.returnTypeFqName()
   }
+}
+
+fun KtCallExpression.isCallTo(callableId: CallableId): Boolean = analyze(this) {
+  resolveToCall()
+    ?.singleFunctionCallOrNull()
+    ?.symbol
+    ?.callableId == callableId
 }

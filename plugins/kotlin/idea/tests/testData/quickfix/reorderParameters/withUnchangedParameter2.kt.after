@@ -1,5 +1,5 @@
 // "Reorder parameters" "true"
-// K2_ERROR: Parameter 'd' is uninitialized here.
+// K2_ERROR: UNINITIALIZED_PARAMETER
 fun foo(
     a: String,
     d: String,

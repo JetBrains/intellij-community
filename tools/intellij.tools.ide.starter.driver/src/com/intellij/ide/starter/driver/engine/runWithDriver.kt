@@ -9,19 +9,10 @@ import com.intellij.ide.starter.runner.IDECommandLine
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.tools.ide.performanceTesting.commands.CommandChain
 import com.intellij.tools.ide.performanceTesting.commands.MarshallableCommand
-import org.kodein.di.DI
-import org.kodein.di.bindProvider
 import org.kodein.di.direct
-import org.kodein.di.instance
+import org.kodein.di.instanceOrNull
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-
-private val remDevAwareDi
-  get() = DI {
-    extend(di)
-    bindProvider<DriverRunner> { if (ConfigurationStorage.splitMode()) RemDevDriverRunner() else LocalDriverRunner() }
-  }
-
 
 fun IDETestContext.runIdeWithDriver(commandLine: (IDERunContext) -> IDECommandLine = determineDefaultCommandLineArguments(),
                                     commands: Iterable<MarshallableCommand> = CommandChain(),
@@ -33,11 +24,22 @@ fun IDETestContext.runIdeWithDriver(commandLine: (IDERunContext) -> IDECommandLi
                                     collectNativeThreads: Boolean = false,
                                     pauseOnIndexing: Duration? = null,
                                     configure: IDERunContext.() -> Unit = {}): BackgroundRun {
-  val driverRunner = remDevAwareDi.direct.instance<DriverRunner>()
-  return driverRunner.runIdeWithDriver(this, commandLine, commands, runTimeout, useStartupScript, launchName, expectedKill, expectedExitCode, collectNativeThreads, pauseOnIndexing) {
+  return selectedDriverRunner().runIdeWithDriver(this, commandLine, commands, runTimeout, useStartupScript, launchName, expectedKill, expectedExitCode, collectNativeThreads, pauseOnIndexing) {
     if (System.getenv("SCREEN_RECORDING_ENABLED").toBoolean()) {
       withScreenRecording()
     }
     configure()
   }
 }
+
+/**
+ * The runner of the current test: a [DriverRunner] bound in Starter DI, or [defaultDriverRunner] when nothing is bound -
+ * which is the case for containers built on the base Starter one, since it can't even see this module.
+ *
+ * Every site that starts an IDE with a driver should go through this, or launch modes selected through the binding
+ * (IJ Light, for one) will silently not apply there.
+ */
+fun selectedDriverRunner(): DriverRunner = di.direct.instanceOrNull<DriverRunner>() ?: defaultDriverRunner()
+
+/** The mode-agnostic choice; a [DriverRunner] binding that doesn't handle the mode of the current test can delegate to it. */
+fun defaultDriverRunner(): DriverRunner = if (ConfigurationStorage.splitMode()) RemDevDriverRunner() else LocalDriverRunner()

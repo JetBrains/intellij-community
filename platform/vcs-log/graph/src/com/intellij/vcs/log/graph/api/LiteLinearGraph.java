@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.graph.api;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -13,6 +14,7 @@ public interface LiteLinearGraph {
   int nodesCount();
 
   @NotNull
+  @Unmodifiable
   List<Integer> getNodes(int nodeIndex, NodeFilter filter);
 
   enum NodeFilter {

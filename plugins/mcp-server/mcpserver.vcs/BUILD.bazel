@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.mcpserver.vcs` start
-
 jvm_library(
     name = "mcpserver.vcs",
     srcs = glob(
@@ -20,7 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//plugins/mcp-server:mcpserver",
         "//platform/core-api:core",
@@ -53,6 +52,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":mcpserver.vcs",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//plugins/mcp-server:mcpserver_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",

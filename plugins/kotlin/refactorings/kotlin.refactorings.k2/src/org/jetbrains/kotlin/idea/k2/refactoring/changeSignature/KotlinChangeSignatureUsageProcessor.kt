@@ -23,16 +23,17 @@ import com.intellij.refactoring.rename.ResolveSnapshotProvider.ResolveSnapshot
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
@@ -409,7 +410,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             val brokenSignature = allowAnalysisFromWriteAction {
                 allowAnalysisOnEdt {
                     analyze(element) {
-                        element.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                        element.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
                             .any { it.diagnosticClass == KaFirDiagnostic.InapplicableOperatorModifier::class }
                     }
                 }
@@ -427,10 +428,10 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
     private fun changeVisibility(changeInfo: KotlinChangeInfoBase, element: KtElement) {
         val newVisibilityToken = when (changeInfo.aNewVisibility) {
-            Visibilities.Private -> KtTokens.PRIVATE_KEYWORD
-            Visibilities.Public -> KtTokens.PUBLIC_KEYWORD
-            Visibilities.Protected -> KtTokens.PROTECTED_KEYWORD
-            Visibilities.Internal -> KtTokens.INTERNAL_KEYWORD
+            KaSymbolVisibility.PRIVATE -> KtTokens.PRIVATE_KEYWORD
+            KaSymbolVisibility.PUBLIC -> KtTokens.PUBLIC_KEYWORD
+            KaSymbolVisibility.PROTECTED -> KtTokens.PROTECTED_KEYWORD
+            KaSymbolVisibility.INTERNAL -> KtTokens.INTERNAL_KEYWORD
             else -> return
         }
         when (element) {

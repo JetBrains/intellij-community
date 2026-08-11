@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test
 class MavenQuickFixTests {
   companion object {
     private val tempDir = tempPathFixture()
-    private val project = projectFixture(tempDir, openAfterCreation = true)
+    private val project = projectFixture(tempDir, openAfterCreation = false)
   }
 
   @Test

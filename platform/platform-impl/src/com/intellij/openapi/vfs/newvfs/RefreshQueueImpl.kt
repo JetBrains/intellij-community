@@ -31,6 +31,7 @@ import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
@@ -174,6 +175,12 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
 
   private suspend fun collectEventsSuspending(session: RefreshSessionImpl, timeInQueue: Long): Collection<VFileEvent> {
     return withBackgroundProgress(ProjectManager.getInstance().defaultProject, IdeCoreBundle.message("file.synchronize.progress"), TaskCancellation.nonCancellable()) {
+      @OptIn(InternalCoroutinesApi::class)
+      coroutineContext.job.invokeOnCompletion(onCancelling = true) { cause ->
+        if (cause is CancellationException) {
+          session.cancel()
+        }
+      }
       runRefreshSession(session, timeInQueue)
     }
   }

@@ -1,6 +1,6 @@
 // "Make 'x' public explicitly" "true"
 // PRIORITY: HIGH
-// K2_ERROR: Cannot access 'fun x(): Unit': it is protected in 'First'.
+// K2_ERROR: INVISIBLE_REFERENCE
 
 open class Base {
     protected open fun x() {}

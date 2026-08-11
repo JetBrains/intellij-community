@@ -1,0 +1,21 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_kotlinc_options")
+
+# Step 3: two warning levels at once -- both DEPRECATION and UNCHECKED_CAST are downgraded,
+# so the same code now compiles under -Werror. Build goes green.
+kt_kotlinc_options(
+  name = "opts",
+  warn = "error",
+  x_warning_level = [
+    "DEPRECATION:warning",
+    "UNCHECKED_CAST:warning",
+  ],
+)
+
+jvm_library(
+    name = "a",
+    srcs = glob(["a/*.kt"], allow_empty = True),
+    kotlinc_opts = ":opts",
+    deps = [
+      "@rules_jvm//:kotlin-stdlib_import",
+    ],
+)

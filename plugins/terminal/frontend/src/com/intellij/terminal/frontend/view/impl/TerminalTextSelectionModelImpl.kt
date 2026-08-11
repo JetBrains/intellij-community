@@ -48,7 +48,7 @@ internal class TerminalTextSelectionModelImpl(
       val end = newSelection.endOffset - outputModel.startOffset
       editorSelectionModel.setSelection(start.toInt(), end.toInt())
     }
-    else editorSelectionModel.removeSelection()
+    else editorSelectionModel.removeSelection(true)
   }
 
   private fun getCurrentSelection(): TerminalTextSelection? {

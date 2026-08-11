@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class FileColorManagerImpl extends FileColorManager {
   private static final String FC_ENABLED = "FileColorsEnabled";
   private static final String FC_TABS_ENABLED = "FileColorsForTabsEnabled";

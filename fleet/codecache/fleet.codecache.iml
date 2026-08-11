@@ -35,11 +35,12 @@
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="fleet.bundles" />
-    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="fleet.util.logging.api" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
+    <orderEntry type="library" name="kotlinx-io-core" level="project" />
     <orderEntry type="module" module-name="fleet.ktor.client.core" />
     <orderEntry type="module" module-name="fleet.modules.api" />
   </component>

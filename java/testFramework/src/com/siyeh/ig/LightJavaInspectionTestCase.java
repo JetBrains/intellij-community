@@ -19,6 +19,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.InspectionTestUtil;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtilRt;
 import org.intellij.lang.annotations.Language;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
+@TestDataPath("$CONTENT_ROOT/testData/ig/")
 public abstract class LightJavaInspectionTestCase extends LightJavaCodeInsightFixtureTestCase {
 
   public static final String INSPECTION_GADGETS_TEST_DATA_PATH = "/java/java-tests/testData/ig/";

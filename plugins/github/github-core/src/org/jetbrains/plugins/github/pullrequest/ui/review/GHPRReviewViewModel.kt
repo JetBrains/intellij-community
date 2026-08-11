@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
@@ -49,7 +50,7 @@ internal class DelegatingGHPRReviewViewModel(private val helper: GHPRReviewViewM
   }
 }
 
-internal class GHPRReviewViewModelHelper(parentCs: CoroutineScope, private val dataProvider: GHPRDataProvider) {
+internal class GHPRReviewViewModelHelper(parentCs: CoroutineScope, private val project: Project, private val dataProvider: GHPRDataProvider) {
   private val cs = parentCs.childScope(this::class)
   private val reviewData = dataProvider.reviewData
 
@@ -67,7 +68,7 @@ internal class GHPRReviewViewModelHelper(parentCs: CoroutineScope, private val d
         LOG.info("Details loading failed", e)
         return@launch
       }
-      val vm = GHPRSubmitReviewViewModelImpl(this, reviewData, viewerIsAuthor, pendingReviewResult.getOrNull()) {
+      val vm = GHPRSubmitReviewViewModelImpl(this, project, reviewData, viewerIsAuthor, pendingReviewResult.getOrNull()) {
         dataProvider.detailsData.signalDetailsNeedReload()
         ctx.cancel()
       }

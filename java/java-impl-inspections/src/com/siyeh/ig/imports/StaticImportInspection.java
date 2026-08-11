@@ -50,6 +50,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.FileTypeUtils;
+import com.intellij.psi.util.ImportsUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
@@ -160,10 +161,12 @@ public final class StaticImportInspection extends BaseInspection {
           referenceTargetMap.put(reference, member);
         }
       }
-      new CommentTracker().deleteAndRestoreComments(importStatement);
-      for (Map.Entry<PsiJavaCodeReferenceElement, PsiMember> entry : referenceTargetMap.entrySet()) {
-        removeReference(entry.getKey(), entry.getValue());
-      }
+      ImportsUtil.protectTrailingComment(file, () -> {
+        new CommentTracker().deleteAndRestoreComments(importStatement);
+        for (Map.Entry<PsiJavaCodeReferenceElement, PsiMember> entry : referenceTargetMap.entrySet()) {
+          removeReference(entry.getKey(), entry.getValue());
+        }
+      });
     }
 
     private static void removeReference(PsiJavaCodeReferenceElement reference, PsiMember target) {

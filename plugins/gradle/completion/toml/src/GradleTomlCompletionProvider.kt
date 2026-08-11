@@ -58,6 +58,11 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
     val tomlKey = tomlLiteral.getTomlKey() ?: return
     val key = tomlKey.getLastSegmentName()
 
+    // Autocomplete the combined coordinate (module / direct GAV) only after 3 or more characters are typed
+    if (parameters.isAutoPopup && text.length < 3 && (key == moduleKey || tomlKey.isDirectlyInLibrariesTable())) {
+      return
+    }
+
     val completionService = service<DependencyCompletionService>()
 
     val resultSet = result.withPrefixMatcher(GradleDependencyCompletionFuzzyMatcher(text))

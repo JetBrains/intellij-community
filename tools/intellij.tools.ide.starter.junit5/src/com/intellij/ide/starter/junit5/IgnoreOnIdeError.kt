@@ -8,7 +8,10 @@ import org.junit.jupiter.api.extension.ExtendWith
  * (instead of FAILED) when a matching IDE-side error has been captured during the test run.
  *
  * The extension only acts when the test would otherwise fail. A passing test is left untouched
- * even if a matching IDE error was captured.
+ * even if a matching IDE error was captured. The failure is downgraded regardless of where it is
+ * thrown — from the test body or from a lifecycle method (`@BeforeAll`/`@BeforeEach`/`@AfterEach`/
+ * `@AfterAll`) — so a flaky IDE error during setup (e.g. project import / library resolution) is
+ * ignored just like a matching test-body failure.
  *
  * Can be applied on test class and test method level.
  *

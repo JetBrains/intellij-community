@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.lang.LanguageASTFactory
 import com.intellij.testFramework.ParsingTestCase
 import com.jetbrains.python.ast.PyAstTypeParameter
@@ -9,7 +12,7 @@ import com.jetbrains.python.codeInsight.typeRepresentation.PyTypeRepresentationP
 import com.jetbrains.python.codeInsight.typeRepresentation.PyTypeRepresentationTokenSetContributor
 import com.jetbrains.python.codeInsight.typeRepresentation.psi.PyFunctionTypeRepresentation
 import com.jetbrains.python.codeInsight.typeRepresentation.psi.PyTypeRepresentationFile
-import com.jetbrains.python.documentation.doctest.PyDocstringTokenSetContributor
+import com.jetbrains.python.documentation.doctest.PyDoctestTokenSetContributor
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyEllipsisLiteralExpression
 import com.jetbrains.python.psi.PyExpression
@@ -22,6 +25,8 @@ import junit.framework.TestCase
 import java.io.IOException
 import org.junit.jupiter.api.assertInstanceOf as assertInstanceOfJunit5
 
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyTypeRepresentationParsingTest : ParsingTestCase("typeRepresentation/parsing", "pythonTypeRepresentation",
                                                         PyTypeRepresentationParserDefinition(), PythonParserDefinition()) {
   @Throws(Exception::class)
@@ -31,7 +36,7 @@ class PyTypeRepresentationParsingTest : ParsingTestCase("typeRepresentation/pars
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME,
                            PythonDialectsTokenSetContributor::class.java)
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, PythonTokenSetContributor())
-    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, PyDocstringTokenSetContributor())
+    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, PyDoctestTokenSetContributor())
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, PyTypeRepresentationTokenSetContributor())
     addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), PythonASTFactory())
   }

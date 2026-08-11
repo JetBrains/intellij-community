@@ -836,12 +836,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   }
 
   private boolean willBeUsedInSubclass(PsiElement member, PsiClass superclass, PsiClass subclass) {
-    for (PsiReference ref : ReferencesSearch.search(member, new LocalSearchScope(subclass), false).asIterable()) {
-      PsiElement element = ref.getElement();
-      if (!RefactoringHierarchyUtil.willBeInTargetClass(element, myMembersToMove, superclass, false)) {
-        return true;
-      }
-    }
-    return false;
+    return ReferencesSearch.search(member, new LocalSearchScope(subclass), false)
+      .anyMatch(ref -> !RefactoringHierarchyUtil.willBeInTargetClass(ref.getElement(), myMembersToMove, superclass, false));
   }
 }

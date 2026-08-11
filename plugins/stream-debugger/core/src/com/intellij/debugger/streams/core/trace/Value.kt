@@ -9,6 +9,7 @@ interface Value {
 
 interface ArrayReference : Value {
   fun getValue(i: Int): Value?
+  fun getValues(): List<Value?>
   fun length(): Int
 }
 

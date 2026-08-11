@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.tools` start
-
 jvm_library(
     name = "tools",
     srcs = glob(
@@ -34,7 +33,7 @@ jvm_library(
         "//python/python-psi-api:psi",
         "//python:python-community-impl",
         "//libraries/guava",
-        "//python/python-sdk:sdk",
+        "//python/python-sdk/backend",
         "@lib//:kotlin-script-runtime",
         "@lib//ant/lib:ant-provided",
         "//python/testFramework",
@@ -61,7 +60,7 @@ jvm_library(
         "//python:python-community-impl_test_lib",
         "//libraries/guava:guava_test_lib",
         "//python:pycharm-community_test_lib",
-        "//python/python-sdk:sdk_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
         "@lib//ant/lib:ant-provided",
         "//python/pluginCore:community-plugin_test_lib",
         "//python/testFramework:testFramework_test_lib",

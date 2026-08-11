@@ -10,7 +10,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.ApiStatus
 
-class CodeVisionListData @ApiStatus.Internal constructor(
+@ApiStatus.Internal
+class CodeVisionListData constructor(
   val lifetime: Lifetime,
   @get:ApiStatus.Internal
   val projectModel: ProjectCodeVisionModel,

@@ -4,9 +4,22 @@
     <plugin id="org.intellij.groovy"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.ui"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.maven.completion"/>
-    <module name="intellij.repository.search.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.repository.search.completion"/>
+    <module name="intellij.xml.parser"/>
+    <module name="intellij.xml.psi"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>

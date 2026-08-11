@@ -1,10 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools
 
+import com.intellij.execution.filters.RegexpFilter
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.AlignX
@@ -27,6 +29,8 @@ internal class ToolEditorDialogPanel {
         .align(AlignX.FILL)
         .resizableColumn()
         .focused()
+        .validationOnInput(::validateNameField)
+        .validationOnApply(::validateNameField)
         .component
 
       groupCombo = comboBox(emptyList<String>())
@@ -92,6 +96,8 @@ internal class ToolEditorDialogPanel {
           .comment(ToolsBundle.message("label.each.line.is.a.regex.available.macros.file.path.line.and.column"),
                    maxLineLength = MAX_LINE_LENGTH_NO_WRAP)
           .align(AlignX.FILL)
+          .validationOnInput(::validateOutputFilterField)
+          .validationOnApply(::validateOutputFilterField)
           .component
       }
     }.apply {
@@ -116,4 +122,21 @@ internal class ToolEditorDialogPanel {
   lateinit var showConsoleOnStdErrCheckbox: JBCheckBox
   lateinit var outputFilterField: RawCommandLineEditor
 
+  private fun validateNameField(): ValidationInfo? {
+    return if (nameField.getText().trim().isEmpty())
+      ValidationInfo(ToolsBundle.message("dialog.message.specify.the.tool.name"), nameField)
+    else null
+  }
+
+  private fun validateOutputFilterField(): ValidationInfo? {
+    for (s in ToolEditorDialog.OUTPUT_FILTERS_SPLITTER.`fun`(outputFilterField.text)) {
+      if (!s.contains(RegexpFilter.FILE_PATH_MACROS)) {
+        return ValidationInfo(
+          ToolsBundle.message("dialog.message.each.output.filter.must.contain.0.macro", RegexpFilter.FILE_PATH_MACROS),
+          outputFilterField)
+      }
+    }
+
+    return null
+  }
 }

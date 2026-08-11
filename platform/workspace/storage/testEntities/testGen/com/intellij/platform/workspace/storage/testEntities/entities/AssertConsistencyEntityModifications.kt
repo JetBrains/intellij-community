@@ -17,7 +17,7 @@ interface AssertConsistencyEntityBuilder : WorkspaceEntityBuilder<AssertConsiste
 }
 
 internal object AssertConsistencyEntityType : EntityType<AssertConsistencyEntity, AssertConsistencyEntityBuilder>() {
-  override val entityClass: Class<AssertConsistencyEntity> get() = AssertConsistencyEntity::class.java
+  override val entityImplClass: Class<*> get() = AssertConsistencyEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = AssertConsistencyEntityImpl.Builder::class.java
   operator fun invoke(
     passCheck: Boolean,

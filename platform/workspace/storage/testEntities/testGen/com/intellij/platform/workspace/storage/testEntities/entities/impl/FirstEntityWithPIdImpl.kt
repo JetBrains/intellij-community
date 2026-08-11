@@ -7,14 +7,12 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.FirstEntityWithPId
@@ -26,13 +24,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.FirstPId
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class FirstEntityWithPIdImpl(private val dataSource: FirstEntityWithPIdData) : FirstEntityWithPId,
                                                                                         WorkspaceEntityBase(dataSource) {
-
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val symbolicId: FirstPId = super.symbolicId
 
   override val data: String
@@ -40,7 +31,6 @@ internal class FirstEntityWithPIdImpl(private val dataSource: FirstEntityWithPId
       readField("data")
       return dataSource.data
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -48,36 +38,14 @@ internal class FirstEntityWithPIdImpl(private val dataSource: FirstEntityWithPId
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: FirstEntityWithPIdData?) :
     ModifiableWorkspaceEntityBase<FirstEntityWithPId, FirstEntityWithPIdData>(result), FirstEntityWithPIdBuilder {
     internal constructor() : this(FirstEntityWithPIdData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity FirstEntityWithPId is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -88,7 +56,7 @@ internal class FirstEntityWithPIdImpl(private val dataSource: FirstEntityWithPId
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -99,14 +67,12 @@ internal class FirstEntityWithPIdImpl(private val dataSource: FirstEntityWithPId
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var data: String
       get() = getEntityData().data
@@ -118,32 +84,14 @@ internal class FirstEntityWithPIdImpl(private val dataSource: FirstEntityWithPId
 
     override fun getEntityClass(): Class<FirstEntityWithPId> = FirstEntityWithPId::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class FirstEntityWithPIdData : WorkspaceEntityData<FirstEntityWithPId>() {
   lateinit var data: String
-
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<FirstEntityWithPId> {
-    val modifiable = FirstEntityWithPIdImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): FirstEntityWithPId {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = FirstEntityWithPIdImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): FirstEntityWithPId = FirstEntityWithPIdImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<FirstEntityWithPId, *> = FirstEntityWithPIdImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.FirstEntityWithPId") as EntityMetadata
   }

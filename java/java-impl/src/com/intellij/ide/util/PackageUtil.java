@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.actions.CreateFileAction;
@@ -396,5 +396,18 @@ public final class PackageUtil {
 
   public static boolean isPackageInfoFile(@Nullable PsiElement element) {
     return element instanceof PsiJavaFile && PsiPackage.PACKAGE_INFO_FILE.equals(((PsiJavaFile)element).getName());
+  }
+
+  /**
+   * @return true if the given directory is located under the source root and corresponds to jvm package, false otherwise
+   */
+  public static boolean isDirectoryUnderPackage(@NotNull PsiDirectory directory) {
+    final VirtualFile virtualFile = directory.getVirtualFile();
+    final VirtualFile sourceRootForFile = ProjectRootManager.getInstance(directory.getProject()).getFileIndex()
+      .getSourceRootForFile(virtualFile);
+    if (sourceRootForFile == null) return false;
+    if (sourceRootForFile.equals(virtualFile)) return false;
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
+    return aPackage != null && !aPackage.getQualifiedName().isEmpty();
   }
 }

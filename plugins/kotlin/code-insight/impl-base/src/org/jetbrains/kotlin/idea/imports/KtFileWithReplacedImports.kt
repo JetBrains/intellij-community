@@ -5,8 +5,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.isDangling
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
@@ -62,7 +62,7 @@ class KtFileWithReplacedImports private constructor(
     /**
      * Allows one to analyze code in [ktFile].
      */
-    fun <T> analyze(action: KaSession.() -> T): T = analyze(ktFile, action)
+    fun <T> analyze(action: context(KaSession) () -> T): T = analyze(ktFile, action)
 
     companion object {
         fun createFrom(originalFile: KtFile): KtFileWithReplacedImports {

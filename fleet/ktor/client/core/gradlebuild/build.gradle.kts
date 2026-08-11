@@ -86,7 +86,6 @@ kotlin {
     api(jps.io.ktor.ktor.http.cio.jvm102837887.get().let { "${it.group}:ktor-http-cio:${it.version}" }) {
       isTransitive = false
     }
-    implementation(jps.org.jetbrains.annotations1504825916.get())
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
     }
@@ -99,10 +98,7 @@ kotlin {
     implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.core.jvm1739247612.get().let { "${it.group}:kotlinx-serialization-core:${it.version}" }) {
       isTransitive = false
     }
-    implementation(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      isTransitive = false
-      exclude(group = "org.slf4j", module = "slf4j-jdk14")
-    }
+    implementation(jps.org.jetbrains.annotations1504825916.get())
   }
   sourceSets.jvmMain.dependencies {
     api(jps.io.ktor.ktor.network.jvm1442946683.get().let { "${it.group}:${it.name}:${it.version}" }) {
@@ -110,6 +106,10 @@ kotlin {
     }
     implementation(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.slf4j1547890256.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
+    }
+    implementation(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      isTransitive = false
+      exclude(group = "org.slf4j", module = "slf4j-jdk14")
     }
   }
   // KOTLIN__MARKER_END

@@ -9,6 +9,8 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileTypeEvent
@@ -26,9 +28,7 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderEnumerationHandler
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.SkipAddingToWatchedRoots
 import com.intellij.openapi.roots.WatchedRootsProvider
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.io.FileUtilRt
@@ -42,23 +42,19 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
-import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.project.stateStore
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.EntityIndexingService
 import com.intellij.util.indexing.ProjectEntityIndexingService
-import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder
-import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
-import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
+import com.intellij.workspaceModel.core.fileIndex.impl.SkipAddingToWatchedRootsData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -241,7 +237,7 @@ open class ProjectRootManagerComponent(
             postCollect(newDisposable = newDisposable, oldDisposable = oldDisposable, watchRoots = watchRoots)
           }
           catch (e: Throwable) {
-            if (e is CancellationException) throw e
+            rethrowControlFlowException(e)
             LOG.warn("Failed to collect watch roots for $project", e)
           }
         }
@@ -348,7 +344,7 @@ open class ProjectRootManagerComponent(
     // module roots already fire validity change events, see usages of ProjectRootManagerComponent.getRootsValidityChangedListener
     collectModuleWatchRoots(recursivePaths, flatPaths, logAllowed = true)
 
-    collectCustomWorkspaceWatchRoots(recursivePaths)
+    collectCustomWorkspaceWatchRoots(recursivePaths, flatPaths)
 
     return recursivePaths to flatPaths
   }
@@ -388,36 +384,24 @@ open class ProjectRootManagerComponent(
     }
   }
 
-  private fun collectCustomWorkspaceWatchRoots(recursivePaths: MutableSet<String>) {
-    val settings = WorkspaceIndexingRootsBuilder.Companion.Settings()
-    settings.retainCondition = Condition<WorkspaceFileIndexContributor<out WorkspaceEntity>> {
-      it.storageKind == EntityStorageKind.MAIN && it !is PlatformInternalWorkspaceFileIndexContributor && it !is SkipAddingToWatchedRoots
-    }
-    val builder = WorkspaceIndexingRootsBuilder.registerEntitiesFromContributors(WorkspaceModel.getInstance(project).currentSnapshot, settings)
-    fun register(rootFiles: Collection<VirtualFile>, name: String) {
-      WATCH_ROOTS_LOG.trace { "  ${name} from workspace entities: ${rootFiles}" }
-      rootFiles.forEach { recursivePaths.add(it.path) }
-    }
+  private fun collectCustomWorkspaceWatchRoots(recursivePaths: MutableSet<String>, flatPaths: MutableSet<String>) {
+    if (project.isInitialized) {
+      WorkspaceFileIndexEx.getInstance(project).visitFileSets { set, _ ->
+        set as WorkspaceFileSetWithCustomData<*>
 
-    builder.forEachModuleContentEntitiesRoots { urlRoots ->
-      val roots = urlRoots.toRootHolder()
-      register(roots.roots, "module content roots")
-      register(roots.nonRecursiveRoots, "module non-recursive content roots")
-    }
-    builder.forEachContentEntitiesRoots { urlRoots ->
-      val roots = urlRoots.toRootHolder()
-      register(roots.roots, "content roots")
-      register(roots.nonRecursiveRoots, "non-recursive content roots")
-    }
-    builder.forEachExternalEntitiesRoots { urlRoots ->
-      val roots = urlRoots.toSourceRootHolder()
-      register(roots.roots, "external roots")
-      register(roots.sourceRoots, "external source roots")
-      register(roots.nonRecursiveRoots, "non-recursive external roots")
-      register(roots.nonRecursiveSourceRoots, "non-recursive external source roots")
-    }
-    builder.forEachNonIndexableRoots { roots ->
-      register(roots, "non-indexable roots")
+        if (set.kind == WorkspaceFileKind.CUSTOM) return@visitFileSets
+        if (set.data is SkipAddingToWatchedRootsData) return@visitFileSets
+
+        val paths = if (set.recursive) recursivePaths else flatPaths
+        val rootUrl = set.root.url
+
+        when (VirtualFileManager.extractProtocol(rootUrl)) {
+          null, StandardFileSystems.FILE_PROTOCOL, StandardFileSystems.JRT_PROTOCOL, StandardFileSystems.JAR_PROTOCOL -> {
+            WATCH_ROOTS_LOG.trace { "${set.root.path} from workspace file index (recursive=${set.recursive})" }
+            paths.add(extractLocalPath(rootUrl))
+          }
+        }
+      }
     }
   }
 

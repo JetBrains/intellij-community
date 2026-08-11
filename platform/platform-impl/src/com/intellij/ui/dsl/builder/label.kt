@@ -4,7 +4,7 @@ package com.intellij.ui.dsl.builder
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.util.NlsContexts.Label
-import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
+import com.intellij.ui.dsl.builder.impl.installValidationRequestor
 import javax.swing.JLabel
 
 fun <C : JLabel> Cell<C>.bindText(property: ObservableProperty<@Label String>): Cell<C> {

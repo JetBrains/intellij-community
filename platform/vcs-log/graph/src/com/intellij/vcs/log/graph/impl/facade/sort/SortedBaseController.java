@@ -11,6 +11,7 @@ import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -62,7 +63,7 @@ public final class SortedBaseController implements LinearGraphController {
     }
 
     @Override
-    public @NotNull List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
+    public @NotNull @Unmodifiable List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
       return map(myLinearGraph.getAdjacentEdges(mySortIndexMap.getUsualIndex(nodeIndex), filter),
                  edge -> new GraphEdge(getNodeIndex(edge.getUpNodeIndex()), getNodeIndex(edge.getDownNodeIndex()), edge.getTargetId(),
                                        edge.getType()));

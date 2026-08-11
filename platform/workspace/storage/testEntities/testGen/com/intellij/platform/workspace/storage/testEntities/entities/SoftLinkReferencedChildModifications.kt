@@ -17,7 +17,7 @@ interface SoftLinkReferencedChildBuilder : WorkspaceEntityBuilder<SoftLinkRefere
 }
 
 internal object SoftLinkReferencedChildType : EntityType<SoftLinkReferencedChild, SoftLinkReferencedChildBuilder>() {
-  override val entityClass: Class<SoftLinkReferencedChild> get() = SoftLinkReferencedChild::class.java
+  override val entityImplClass: Class<*> get() = SoftLinkReferencedChildImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SoftLinkReferencedChildImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,

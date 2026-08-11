@@ -3,4 +3,4 @@ class C(object):
 
 a = C()
 print(a.<warning descr="Unresolved attribute reference 'bar' for class 'C'">bar</warning>)
-a.foo = 1 #pass
+a.<warning descr="Unresolved attribute reference 'foo' for class 'C'">foo</warning> = 1

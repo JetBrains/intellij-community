@@ -1,5 +1,5 @@
 // "Change return type of enclosing function 'foo' to '() -> Any'" "true"
-// K2_ERROR: Return type mismatch: expected 'Int', actual 'Any'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 fun foo(x: Any): () -> Int {
     return {x<caret>}
 }

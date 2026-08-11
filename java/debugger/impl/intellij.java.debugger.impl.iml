@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 25" allPlatforms="JVM [25]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
+          <option name="additionalArguments" value="-Xjvm-default=all -Xcontext-parameters -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -79,7 +79,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="jb-jdi" level="project" />
+    <orderEntry type="module" module-name="intellij.java.debugger.libraries.jb.jdi" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
@@ -111,6 +111,7 @@
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.ui" />
     <orderEntry type="module" module-name="fleet.rpc" />
     <orderEntry type="module" module-name="intellij.platform.rpc" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.bazel.runfiles" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.rpc.topics" />

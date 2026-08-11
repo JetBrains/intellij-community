@@ -29,11 +29,10 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.rt.debugger.JvmThreadHelper
 import com.intellij.threadDumpParser.ThreadDumpParser
 import com.intellij.threadDumpParser.ThreadState
+import com.intellij.unscramble.DumpItem
 import com.intellij.unscramble.InfoDumpItem
 import com.intellij.unscramble.JavaThreadContainerDesc
-import com.intellij.unscramble.MergeableDumpItem
 import com.intellij.unscramble.toDumpItems
-import com.intellij.util.lang.JavaVersion
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.jetbrains.jdi.ThreadReferenceImpl
 import com.sun.jdi.ArrayReference
@@ -77,7 +76,7 @@ class ThreadDumpAction {
     }
 
     @ApiStatus.Internal
-    suspend fun buildThreadDump(context: DebuggerContextImpl, onlyPlatformThreads: Boolean, dumpItemsChannel: SendChannel<List<MergeableDumpItem>>) {
+    suspend fun buildThreadDump(context: DebuggerContextImpl, onlyPlatformThreads: Boolean, dumpItemsChannel: SendChannel<List<DumpItem>>) {
       suspend fun sendJavaPlatformThreads() {
         val platformThreads = toDumpItems(buildJavaPlatformThreadDump())
         dumpItemsChannel.send(platformThreads)
@@ -488,7 +487,7 @@ internal class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
     private val enabled =
       Registry.`is`("debugger.thread.dump.include.virtual.threads") &&
       // Virtual threads first appeared in Java 19 as part of Project Loom.
-      JavaVersion.parse(vm.version()).feature >= 19 &&
+      vm.javaVersion().feature >= 19 &&
       // Check if VirtualThread class is at least loaded.
       vm.classesByName("java.lang.VirtualThread").isNotEmpty()
 
@@ -497,7 +496,7 @@ internal class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
 
     override val requiresEvaluation get() = enabled
 
-    override fun getItems(suspendContext: SuspendContextImpl?): List<MergeableDumpItem> {
+    override fun getItems(suspendContext: SuspendContextImpl?): List<DumpItem> {
       return (
         if (!enabled) emptyList()
         else {
@@ -506,7 +505,7 @@ internal class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
         .also { DebuggerStatistics.logVirtualThreadsDump(context.project, it.size) }
     }
 
-    private fun evaluateAndGetAllVirtualThreadsDumpItems(suspendContext: SuspendContextImpl): List<MergeableDumpItem> {
+    private fun evaluateAndGetAllVirtualThreadsDumpItems(suspendContext: SuspendContextImpl): List<DumpItem> {
       val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
 
       val lookupImpl = getMethodHandlesImplLookup(evaluationContext)

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -11,7 +11,7 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
 import org.jetbrains.jps.model.java.JdkVersionDetector
 
 internal object JdkComboBoxCollector: CounterUsagesCollector() {
-  private val GROUP: EventLogGroup = EventLogGroup("npw.jdk.combo", 5)
+  private val GROUP: EventLogGroup = EventLogGroup("npw.jdk.combo", 6)
 
   private val JDK_REGISTERED: EventId2<String, Int> = GROUP.registerEvent("jdk.registered",
                                                                           EventFields.String("vendor", JdkVersionDetector.VENDORS),

@@ -37,7 +37,7 @@ public final class CommandLineSyntaxHighlighter implements SyntaxHighlighter {
   }
 
   @Override
-  public TextAttributesKey @NotNull [] getTokenHighlights(final IElementType tokenType) {
+  public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(final @NotNull IElementType tokenType) {
     final TextAttributesKey attributesKey = ATTRIBUTES.get(tokenType);
     return attributesKey == null ? TextAttributesKey.EMPTY_ARRAY : new TextAttributesKey[]{attributesKey};
   }

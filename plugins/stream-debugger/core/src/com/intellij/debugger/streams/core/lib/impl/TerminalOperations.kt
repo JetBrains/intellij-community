@@ -9,6 +9,6 @@ import com.intellij.debugger.streams.core.trace.impl.interpret.CollectIdentityTr
  * @author Vitaliy.Bibaev
  */
 
-class ToCollectionOperation(name: String)
+open class ToCollectionOperation(name: String)
   : TerminalOperationBase(name, { call, _, dsl -> ToCollectionHandler(call, dsl) },
                           CollectIdentityTraceInterpreter(), IdentityResolver())

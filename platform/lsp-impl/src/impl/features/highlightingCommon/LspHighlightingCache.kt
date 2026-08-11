@@ -131,6 +131,25 @@ internal abstract class LspHighlightingCache<T>(protected val project: Project) 
 
   protected open fun clearAdditionalCache() {}
 
+  /**
+   * Marks the cached results for [file] stale so the next [getHighlightings] re-requests them from the server, while
+   * keeping the current results in place until the fresh ones arrive.
+   *
+   * Used for server-forced refreshes (e.g. `workspace/inlayHint/refresh`), where results change without a document edit
+   * and the
+   * [psiModCount][CachedHighlightingsSnapshot.psiModCount] staleness check would otherwise consider the cache fresh.
+   * Unlike [clearCache], reactive consumers keep showing the previous results (no flicker); the refreshed results flow
+   * in through the usual [onResponseReceived] path.
+   */
+  internal fun invalidate(file: VirtualFile) {
+    synchronized(this) {
+      val snapshot = fileToCachedHighlightingsSnapshot[file] ?: return
+      // STALE_PSI_MOD_COUNT never equals a real PsiModificationTracker count, so getHighlightings always re-requests.
+      fileToCachedHighlightingsSnapshot[file] = CachedHighlightingsSnapshot(STALE_PSI_MOD_COUNT, snapshot.cachedHighlightings)
+      fileToPsiModCountWhenRequestSent.remove(file) // drop the dedup guard so the forced request is actually sent
+    }
+  }
+
 
   private class CachedHighlightingsSnapshot<T>(
     /**
@@ -139,4 +158,8 @@ internal abstract class LspHighlightingCache<T>(protected val project: Project) 
     val psiModCount: Long,
     val cachedHighlightings: List<LspCachedHighlighting<T>>,
   )
+
+  private companion object {
+    private const val STALE_PSI_MOD_COUNT: Long = -1L
+  }
 }

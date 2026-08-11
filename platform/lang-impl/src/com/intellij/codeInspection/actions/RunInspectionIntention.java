@@ -65,11 +65,11 @@ public final class RunInspectionIntention implements IntentionAction, HighPriori
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
-    final Module module = psiFile != null ? ModuleUtilCore.findModuleForPsiElement(psiFile) : null;
+    Module module = psiFile != null ? ModuleUtilCore.findModuleForPsiElement(psiFile) : null;
     AnalysisScope analysisScope = new AnalysisScope(project);
     if (psiFile != null) {
       PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(psiFile);
-      final VirtualFile virtualFile = topLevelFile.getVirtualFile();
+      VirtualFile virtualFile = topLevelFile.getVirtualFile();
       if (psiFile.isPhysical() && virtualFile != null && virtualFile.isInLocalFileSystem()) {
         analysisScope = new AnalysisScope(topLevelFile);
       }
@@ -84,7 +84,7 @@ public final class RunInspectionIntention implements IntentionAction, HighPriori
                                                  @Nullable PsiElement context,
                                                  @NotNull Project project) {
     List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(project, customScope, module, context);
-    final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(
+    BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(
       CodeInsightBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
       CodeInsightBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")), project,
       items, AnalysisUIOptions.getInstance(project), true);
@@ -108,8 +108,8 @@ public final class RunInspectionIntention implements IntentionAction, HighPriori
   public static @NotNull GlobalInspectionContextImpl createContext(@NotNull InspectionToolWrapper toolWrapper,
                                                                    @NotNull InspectionManagerEx managerEx,
                                                                    @Nullable PsiElement psiElement) {
-    final InspectionProfileImpl model = createProfile(toolWrapper, managerEx, psiElement);
-    final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext();
+    InspectionProfileImpl model = createProfile(toolWrapper, managerEx, psiElement);
+    GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext();
     inspectionContext.setExternalProfile(model);
     return inspectionContext;
   }
@@ -117,7 +117,7 @@ public final class RunInspectionIntention implements IntentionAction, HighPriori
   public static @NotNull InspectionProfileImpl createProfile(@NotNull InspectionToolWrapper toolWrapper,
                                                              @NotNull InspectionManagerEx managerEx,
                                                              @Nullable PsiElement psiElement) {
-    final Project project = managerEx.getProject();
+    Project project = managerEx.getProject();
     InspectionProfileImpl rootProfile = InspectionProfileManager.getInstance(project).getCurrentProfile();
     LinkedHashSet<InspectionToolWrapper<?, ?>> allWrappers = new LinkedHashSet<>();
     allWrappers.add(toolWrapper);

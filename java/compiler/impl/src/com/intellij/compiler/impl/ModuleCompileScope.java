@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -98,7 +99,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
   }
 
   @Override
-  public Collection<ModuleSourceSet> getAffectedSourceSets() {
+  public @Unmodifiable Collection<ModuleSourceSet> getAffectedSourceSets() {
     return ContainerUtil.filter(super.getAffectedSourceSets(), set -> !set.getType().isTest() || myTestSourcesModules.contains(set.getModule()));
   }
 

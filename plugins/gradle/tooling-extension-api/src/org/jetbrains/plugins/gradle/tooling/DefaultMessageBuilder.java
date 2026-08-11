@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.util.ExceptionUtilRt.findCause;
 
@@ -21,7 +23,6 @@ public final class DefaultMessageBuilder implements MessageBuilder {
   private @Nullable String myGroup = null;
   private @Nullable Exception myException = null;
   private @Nullable Message.Kind myKind = null;
-  private @Nullable Message.FilePosition myFilePosition = null;
   private @Nullable Project myProject = null;
 
   private boolean myInternal = false;
@@ -57,17 +58,6 @@ public final class DefaultMessageBuilder implements MessageBuilder {
   }
 
   @Override
-  public @NotNull MessageBuilder withLocation(Message.FilePosition filePosition) {
-    myFilePosition = filePosition;
-    return this;
-  }
-
-  @Override
-  public @NotNull MessageBuilder withLocation(String filePath, int line, int column) {
-    return withLocation(new Message.FilePosition(filePath, line, column));
-  }
-
-  @Override
   public @NotNull MessageBuilder withProject(Project project) {
     myProject = project;
     return this;
@@ -85,8 +75,9 @@ public final class DefaultMessageBuilder implements MessageBuilder {
     String text = buildText();
     String group = buildGroup();
     Message.Kind kind = buildKind();
-    Message.FilePosition filePosition = buildFilePosition();
-    return new Message(title, text, group, kind, filePosition, myInternal);
+    String targetPath = buildTargetPath();
+    Message.Failure failure = buildFailure();
+    return new Message(title, text, group, kind, targetPath, failure, myInternal);
   }
 
   private @NotNull String buildTitle() {
@@ -141,13 +132,21 @@ public final class DefaultMessageBuilder implements MessageBuilder {
     return kind;
   }
 
-  private @Nullable Message.FilePosition buildFilePosition() {
-    Message.FilePosition filePosition = myFilePosition;
-    if (filePosition == null && myProject != null) {
-      String buildScriptPath = myProject.getBuildFile().getPath();
-      filePosition = new Message.FilePosition(buildScriptPath, 0, 0);
+  private @Nullable String buildTargetPath() {
+    return myProject == null ? null : myProject.getProjectDir().getAbsolutePath();
+  }
+
+  private @Nullable Message.Failure buildFailure() {
+    if (myException == null) {
+      return null;
     }
-    return filePosition;
+    return buildFailure(myException);
+  }
+
+  private static @NotNull Message.Failure buildFailure(@NotNull Throwable exception) {
+    Throwable cause = exception.getCause();
+    List<Message.Failure> causes = cause == null || cause == exception ? Collections.emptyList() : Collections.singletonList(buildFailure(cause));
+    return new Message.Failure(getExceptionMessage(exception), buildExceptionStacktrace(exception), causes);
   }
 
   private static @NotNull String buildExceptionStacktrace(@NotNull Throwable exception) {
@@ -178,6 +177,14 @@ public final class DefaultMessageBuilder implements MessageBuilder {
     return sw.toString();
   }
 
+  private static @NotNull String getExceptionMessage(@NotNull Throwable exception) {
+    String message = exception.getMessage();
+    if (message == null) {
+      message = exception.getClass().getName();
+    }
+    return message;
+  }
+
   private static @NotNull String getRootCauseExceptionMessage(@NotNull Throwable exception) {
     Throwable rootCauseException = exception;
     while (rootCauseException.getCause() != null) {
@@ -185,10 +192,7 @@ public final class DefaultMessageBuilder implements MessageBuilder {
     }
     String message = rootCauseException.getMessage();
     if (message == null) {
-      message = exception.getMessage();
-    }
-    if (message == null) {
-      message = exception.getClass().getName();
+      message = getExceptionMessage(exception);
     }
     return message;
   }

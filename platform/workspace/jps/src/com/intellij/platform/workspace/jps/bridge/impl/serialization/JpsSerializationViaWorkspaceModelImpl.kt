@@ -26,7 +26,7 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -59,7 +59,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorkspaceModel {
   override fun loadModel(projectPath: Path, workspaceStorageCachePath: Path?, externalConfigurationDirectory: Path?, optionsPath: Path?, 
                          globalWorkspaceStoragePath: Path?, loadUnloadedModules: Boolean): JpsModel {
-    val virtualFileUrlManager = VirtualFileUrlManagerImpl()
+    val virtualFileUrlManager = ConcurrentVirtualFileUrlManager()
     val errorReporter = createErrorReporter()
     val pathVariables = optionsPath?.let { JpsGlobalSettingsLoading.computeAllPathVariables(it) } ?: emptyMap()
     val globalMacroExpander = JpsMacroExpander(pathVariables)
@@ -172,7 +172,7 @@ internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorksp
 
   private fun loadGlobalStorage(
     optionsPath: Path?,
-    virtualFileUrlManager: VirtualFileUrlManagerImpl,
+    virtualFileUrlManager: VirtualFileUrlManager,
     errorReporter: ErrorReporter,
     macroExpander: JpsMacroExpander,
   ): EntityStorage {
@@ -191,7 +191,7 @@ internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorksp
   }
 
   override fun loadProject(projectPath: Path, externalConfigurationDirectory: Path?, pathVariables: Map<String, String>, loadUnloadedModules: Boolean): JpsProject {
-    val model = loadProject(projectPath, null, externalConfigurationDirectory, VirtualFileUrlManagerImpl(), pathVariables, createErrorReporter(), 
+    val model = loadProject(projectPath, null, externalConfigurationDirectory, ConcurrentVirtualFileUrlManager(), pathVariables, createErrorReporter(),
                             MutableEntityStorage.create(), loadUnloadedModules)
     return model.project
   }

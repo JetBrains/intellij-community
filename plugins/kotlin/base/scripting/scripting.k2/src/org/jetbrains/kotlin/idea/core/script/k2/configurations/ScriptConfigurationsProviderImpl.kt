@@ -16,19 +16,20 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.core.script.k2.asCompilationConfiguration
+import org.jetbrains.kotlin.idea.core.script.k2.getVirtualFile
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
-import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.scripting.definitions.K1SpecificScriptingServiceAccessor
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
+import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
-import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import kotlin.script.experimental.api.ResultWithDiagnostics
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.SourceCode
 
 private class AllScriptsDependencies(
     val classes: Set<VirtualFile>,
@@ -48,7 +49,7 @@ private data class ScriptDependencies(
 }
 
 class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: CoroutineScope) : ScriptConfigurationsProvider(project),
-                                                                                               ScriptDependencyAware {
+    ScriptDependencyAware {
 
     private val allScriptsDependencies
         get() = ScriptDependenciesSingletonCache.getOrCompute(project) {
@@ -108,21 +109,32 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
             accClasses to accSources
         }
 
-    @OptIn(K1SpecificScriptingServiceAccessor::class)
-    @Deprecated("Use getScriptCompilationConfiguration(KtFileScriptSource(ktFile)) instead")
-    override fun getScriptConfigurationResult(file: KtFile): ScriptCompilationConfigurationResult? {
-        val virtualFile = file.alwaysVirtualFile
-        val entity = KotlinScriptEntityProvider.provide(project, virtualFile) ?: return null
-        val snapshot = project.workspaceModel.currentSnapshot
-        val diagnostics = entity.reports.map { report -> report.map() }
-        val configuration =
-            entity.configurationId?.let { snapshot.resolve(it) }?.data?.asCompilationConfiguration() ?: return null
+    override fun getScriptCompilationConfiguration(
+        scriptSource: SourceCode,
+        providedConfiguration: ScriptCompilationConfiguration?,
+    ): ScriptCompilationConfigurationResult? {
+        val virtualFile = getVirtualFile(scriptSource) ?: return null
 
-        return ResultWithDiagnostics.Success(
-            ScriptCompilationConfigurationWrapper(VirtualFileScriptSource(virtualFile), configuration),
-            diagnostics
-        )
+        val entity = KotlinScriptEntityProvider.provide(project, virtualFile)
+        if (entity != null) {
+            val snapshot = project.workspaceModel.currentSnapshot
+            val configuration = entity.configurationId?.let { snapshot.resolve(it) }?.data?.asCompilationConfiguration()
+            if (configuration != null) {
+                return ResultWithDiagnostics.Success(
+                    ScriptCompilationConfigurationWrapper(scriptSource, configuration),
+                    entity.reports.map { report -> report.map() },
+                )
+            }
+        }
+
+        return providedConfiguration?.let {
+            ResultWithDiagnostics.Success(ScriptCompilationConfigurationWrapper(scriptSource, it))
+        }
     }
+
+    @Deprecated("Use getScriptCompilationConfiguration(KtFileScriptSource(ktFile)) instead")
+    override fun getScriptConfigurationResult(file: KtFile): ScriptCompilationConfigurationResult? =
+        getScriptCompilationConfiguration(KtFileScriptSource(file), null)
 
     companion object {
         private val classesTypeId = SdkRootTypeId.CLASSES

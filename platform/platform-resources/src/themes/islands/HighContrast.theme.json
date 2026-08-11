@@ -47,8 +47,13 @@
       "lineSeparatorColor": "#6A6173"
     },
 
-    "Island.arc": 0,
-    "Island.arc.compact": 0,
+    "Island": {
+      "arc": 0,
+      "arc.compact": 0,
+      "ToolWindow.insets": "1,0,0,0",
+      "Editor.insets": "0,0,0,0"
+    },
+    "Islands.emptyGap": 0,
 
     "ActionButton": {
       "hoverBackground": "#000000",
@@ -623,7 +628,9 @@
 
     "TitlePane.Button.hoverBackground": "#3333FF",
 
-    "Window.border" : "1,1,1,1,E6E6E6",
+    "Dialog.border": {
+      "os.linux": "1,1,1,1,E6E6E6"
+    },
 
     "textInactiveText" : "#E0861F",
 
@@ -765,15 +772,13 @@
       "Objects.YellowDark": "#FFD333FF",
       "Objects.GreenAndroid": "#00E61FFF",
 
-      "Checkbox.Background.Default.Dark": "#000000",
-      "Checkbox.Border.Default.Dark": "#FFFFFF",
-      "Checkbox.Foreground.Selected.Dark": "#FFFFFF",
-      "Checkbox.Focus.Wide.Dark": "#1AEBFF",
-      "Checkbox.Focus.Thin.Default.Dark": "#1AEBFF",
-      "Checkbox.Focus.Thin.Selected.Dark": "#1AEBFF",
-      "Checkbox.Background.Disabled.Dark": "#000000",
-      "Checkbox.Border.Disabled.Dark": "#AA6E28",
-      "Checkbox.Foreground.Disabled.Dark": "#AA6E28",
+      "Checkbox.Background.Default": "#000000",
+      "Checkbox.Border.Default": "#FFFFFF",
+      "Checkbox.Foreground.Selected": "#FFFFFF",
+      "Checkbox.Focus.Wide": "#1AEBFF",
+      "Checkbox.Background.Disabled": "#000000",
+      "Checkbox.Border.Disabled": "#AA6E28",
+      "Checkbox.Foreground.Disabled": "#AA6E28",
 
       "#CED0D6": "#FFFFFF"
 

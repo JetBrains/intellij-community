@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
 import com.intellij.openapi.application.EDT
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
 interface AsyncFileEditorProvider : FileEditorProvider, DumbAware {
   /**
-   * This method is intended to be called from background thread. It should perform all time-consuming tasks required to build an editor,
+   * This method is intended to be called from a background thread. It should perform all time-consuming tasks required to build an editor
    * and return a builder instance that will be called in EDT to create UI for the editor.
    */
   @RequiresReadLock

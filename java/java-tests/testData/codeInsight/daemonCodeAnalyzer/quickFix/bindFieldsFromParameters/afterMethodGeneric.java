@@ -1,7 +1,6 @@
 // "Bind method parameters to fields" "true-preview"
 
 class Bar {
-
     private Class<?> myA;
     private int myB;
 

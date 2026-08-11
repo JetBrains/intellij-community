@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log
 
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
@@ -18,7 +19,9 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.asSafely
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import git4idea.findProtectedRemoteBranch
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitSingleCommitEditingAction
@@ -27,7 +30,6 @@ import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
-
 internal class GitNewCommitMessageActionDialog(
   private val project: Project,
   private val originMessage: String,
@@ -35,6 +37,8 @@ internal class GitNewCommitMessageActionDialog(
   private val validateCommitEditable: () -> ValidationInfo?,
   @Nls title: String,
   @Nls private val dialogLabel: String,
+  private val commitIds: List<VcsLogCommitStorageIndex>,
+  private val logData: VcsLogData,
 ) : DialogWrapper(project, true) {
   private val commitEditor = createCommitEditor()
   private var onOk: (String) -> Unit = {}
@@ -58,7 +62,9 @@ internal class GitNewCommitMessageActionDialog(
              )
            },
            title,
-           dialogLabel)
+           dialogLabel,
+           commitIds = commitEditingData.selection.ids,
+           logData = commitEditingData.logData)
 
   init {
     Disposer.register(disposable, commitEditor)
@@ -90,8 +96,12 @@ internal class GitNewCommitMessageActionDialog(
   }
 
   override fun createCenterPanel(): JComponent {
-    return panel {
+    val panel = panel {
       commitMessageWithLabelAndToolbar(commitEditor, dialogLabel)
+    }
+    return UiDataProvider.wrapComponent(panel) { sink ->
+      sink[VcsLogInternalDataKeys.VCS_LOG_COMMIT_STORAGE_INDICES] = commitIds
+      sink[VcsLogInternalDataKeys.LOG_DATA] = logData
     }
   }
 

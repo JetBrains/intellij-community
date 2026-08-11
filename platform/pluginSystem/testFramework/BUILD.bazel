@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.pluginSystem.testFramework` start
-
 jvm_library(
     name = "testFramework",
     srcs = glob(
@@ -17,7 +16,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util",
         "//platform/core-api:core",
         "//platform/core-impl",
@@ -47,6 +46,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":testFramework",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util:util_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",

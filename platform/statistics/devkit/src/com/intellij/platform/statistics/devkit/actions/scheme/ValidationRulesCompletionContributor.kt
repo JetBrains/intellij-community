@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull
 
 private val utilsRules = hashSetOf("class_name", "lang", "plugin_type", "plugin", "plugin_version", "current_file", "place",
                                    "hash", "shortcut", "file_type", "action", "toolwindow")
-internal val PREFIXES = listOf("{util#}", "{util:}", "{enum#}", "{enum:}", "{regexp#}", "{regexp:}")
+internal val PREFIXES = listOf("{util#}", "{util:}", "{enum#}", "{enum:}", "{regexp#}", "{regexp:}", "{default_value:}", "{required:}")
 
 internal class ValidationRulesCompletionContributor : CompletionContributor() {
 

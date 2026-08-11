@@ -31,6 +31,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -199,6 +200,7 @@ public class InstalledPackagesPanel extends JPanel {
     return AnAction.EMPTY_ARRAY;
   }
 
+  @ApiStatus.Internal
   protected @NotNull ManagePackagesDialog createManagePackagesDialog() {
     return new ManagePackagesDialog(myProject,
                                     myPackageManagementService,

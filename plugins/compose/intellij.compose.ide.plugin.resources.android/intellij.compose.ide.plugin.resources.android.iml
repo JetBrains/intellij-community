@@ -12,5 +12,8 @@
     <orderEntry type="module" module-name="intellij.compose.ide.plugin.resources" />
     <orderEntry type="library" scope="PROVIDED" name="studio-platform" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.android.newProjectWizard" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
   </component>
 </module>

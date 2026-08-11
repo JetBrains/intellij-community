@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -365,7 +366,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
   @Override
   public void setIgnored(@NotNull DataNode<?> dataNode, boolean isIgnored) {
     ExternalProjectsDataStorage.getInstance(myProject).setIgnored(dataNode, isIgnored);
-    ExternalSystemKeymapExtension.updateActions(myProject, ExternalSystemApiUtil.findAllRecursively(dataNode, TASK));
+    ExternalSystemKeymapExtension.updateActions(ActionManager.getInstance(), myProject, ExternalSystemApiUtil.findAllRecursively(dataNode, TASK));
   }
 
   @ApiStatus.Internal

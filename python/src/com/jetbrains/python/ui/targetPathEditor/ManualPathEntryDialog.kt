@@ -25,7 +25,7 @@ import javax.swing.JComponent
  *
  * It must be used for remote FS only. No local FS supported.
  */
-class ManualPathEntryDialog(private val project: Project?,
+internal class ManualPathEntryDialog(private val project: Project?,
                             targetConfig: TargetEnvironmentConfiguration? = null)
   : DialogWrapper(project) {
 

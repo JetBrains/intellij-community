@@ -6,8 +6,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public abstract class CheckBoxSearchEverywhereToggleAction extends CheckboxAction implements DumbAware, SearchEverywhereToggleAction {
   public CheckBoxSearchEverywhereToggleAction(@NotNull @NlsContexts.Checkbox String text) {
     super(text);

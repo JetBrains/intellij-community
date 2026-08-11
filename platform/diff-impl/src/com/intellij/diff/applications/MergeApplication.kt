@@ -12,6 +12,7 @@ import com.intellij.ide.CliResult
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ApplicationStarterBase
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -79,7 +80,9 @@ internal class MergeApplication : ApplicationStarterBase(3, 4) {
         val contents = DiffApplicationBase.replaceNullsWithEmptyFile(contents)
         DiffRequestFactory.getInstance().createMergeRequestFromFiles(project, outputFile, contents) { result ->
           try {
-            saveIfNeeded(outputFile)
+            WriteIntentReadAction.run {
+              saveIfNeeded(outputFile)
+            }
           }
           finally {
             resultRef.set(CliResult(if (result == MergeResult.CANCEL) 1 else 0, null))

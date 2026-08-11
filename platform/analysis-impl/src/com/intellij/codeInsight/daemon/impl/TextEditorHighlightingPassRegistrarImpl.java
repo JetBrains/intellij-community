@@ -13,6 +13,7 @@ import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ClientEditorManager;
@@ -52,7 +53,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 @ApiStatus.Internal
-public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx {
+public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx implements Disposable {
   public static final ExtensionPointName<TextEditorHighlightingPassFactoryRegistrar> EP_NAME = new ExtensionPointName<>("com.intellij.highlightingPassFactory");
 
   private static final @NotNull Logger LOG = Logger.getInstance(TextEditorHighlightingPassRegistrarImpl.class);
@@ -62,7 +63,6 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   private final List<DirtyScopeTrackingHighlightingPassFactory> myDirtyScopeTrackingFactories = ContainerUtil.createConcurrentList();
   private final AtomicInteger nextAvailableId = new AtomicInteger();
   private final Project myProject;
-  private boolean serializeCodeInsightPasses;
 
   public TextEditorHighlightingPassRegistrarImpl(@NotNull Project project) {
     myProject = project;
@@ -81,7 +81,11 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
                                    @NotNull PluginDescriptor pluginDescriptor) {
         reRegisterFactories();
       }
-    }, project);
+    }, this);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @VisibleForTesting
@@ -91,8 +95,22 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
       myFrozenPassConfigs = null;
       nextAvailableId.set(Pass.LAST_PASS + 1);
       myDirtyScopeTrackingFactories.clear();
+      allKnownIds = null;
     }
     EP_NAME.forEachExtensionSafe(registrar -> registrar.registerHighlightingPassFactory(this, myProject));
+  }
+
+  private int[] allKnownIds;
+  int @NotNull [] getAllPassIds() {
+    int[] ids = allKnownIds;
+    if (ids == null) {
+      IntArrayList r = IntArrayList.of(Pass.UPDATE_ALL, Pass.EXTERNAL_TOOLS, Pass.LOCAL_INSPECTIONS, Pass.LINE_MARKERS, Pass.SLOW_LINE_MARKERS, Pass.INJECTED_GENERAL);
+      for (DirtyScopeTrackingHighlightingPassFactory factory : getDirtyScopeTrackingFactories()) {
+        r.add(factory.getPassId());
+      }
+      allKnownIds = ids = r.toIntArray();
+    }
+    return ids;
   }
 
   private synchronized PassConfig @NotNull [] freezeRegisteredPassFactories() {
@@ -108,31 +126,6 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
       myFrozenPassConfigs = configs;
     }
     return configs;
-  }
-
-  /**
-   * This API is made {@code Internal} intentionally as it could lead to unpredictable highlighting performance behavior.
-   *
-   * @param flag if {@code true}: enables code insight passes serialization:
-   *             Injected fragments {@link InjectedGeneralHighlightingPass} highlighting and Inspections run after
-   *             completion of Syntax analysis {@link GeneralHighlightingPass}.
-   *             if {@code false} (default behavior) code insight passes are running in parallel
-   * @deprecated do not use, because it could slow down highlighting
-   */
-  @ApiStatus.Internal
-  @Deprecated
-  public void serializeCodeInsightPasses(boolean flag) {
-    serializeCodeInsightPasses = flag;
-    reRegisterFactories();
-  }
-
-  /**
-   * @deprecated do not use, because it could slow down highlighting
-   */
-  @ApiStatus.Internal
-  @Deprecated
-  public boolean isSerializeCodeInsightPasses() {
-    return serializeCodeInsightPasses;
   }
 
   private record PassConfig(@NotNull TextEditorHighlightingPassFactory passFactory,

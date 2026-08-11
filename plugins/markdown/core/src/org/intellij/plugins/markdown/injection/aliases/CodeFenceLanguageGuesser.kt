@@ -81,7 +81,6 @@ object CodeFenceLanguageGuesser {
         return Pair(lang, provider.getExtensionByInfoString(value))
       }
     }
-    val name = value.lowercase()
-    return findLanguage(name)?.let { Pair(it, null) }
+    return null
   }
 }

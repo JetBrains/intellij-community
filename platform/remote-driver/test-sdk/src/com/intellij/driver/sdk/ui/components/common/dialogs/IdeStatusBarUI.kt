@@ -63,6 +63,7 @@ class IdeStatusBarUI(data: ComponentData) : UiComponent(data) {
         val lineSeparator = widgetByTooltipContains("Line Separator")
         val fileEncoding = widgetByTooltipContains("File Encoding")
         val editorConfig = WidgetFinder("Editor Config") { it.text.contains("spaces") }
+        val clangTidy = WidgetFinder("Clang-Tidy") { it.text.contains(".clang-tidy") }
         val readOnly = widgetByTooltipContains("Make file read-only")
         val writeable = widgetByTooltipContains("Make file writable")
         val gitBranch = widgetByTooltipContains("Git Branch")

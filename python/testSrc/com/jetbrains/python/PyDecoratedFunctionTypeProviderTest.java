@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.util.RecursionManager;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -10,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
 
   @Override
@@ -233,7 +238,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   }
 
   public void testInStackOfDecoratorsChangingFunctionSignatureOnlyAnnotatedAreConsideredClassMethod() {
-    doTest("tuple[str, tuple[bool, None]]", "(str, bool) -> tuple[str, tuple[bool, None]]",
+    doTest("tuple[A, tuple[bool, None]]", "(bool) -> tuple[A, tuple[bool, None]]",
            """
              from typing import Callable, Concatenate, ParamSpec, TypeVar
              
@@ -241,7 +246,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
              T = TypeVar('T')
              
              
-             def prepend_str(fn: Callable[P, T]) -> Callable[Concatenate[str, P], tuple[str, T]]:
+             def prepend_A(fn: Callable[P, T]) -> Callable[Concatenate[A, P], tuple[A, T]]:
                  def wrapper(p: str, *args, **kwargs):
                      return p, fn(*args, **kwargs)
                  return wrapper
@@ -257,13 +262,13 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
                  return wrapper
              
              class A:
-               @prepend_str
+               @prepend_A
                @prepend_int
                @prepend_bool
                def f():
                    pass
              a = A()
-             value = a.f('foo', 42, True)
+             value = a.f(True)
              dec_func = a.f
              """);
   }
@@ -317,7 +322,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
 
   public void testImportDecoratedWithGenericArgFunctionType() {
     initMultiFileTest();
-    checkMultiFileTest("str", "(Any) -> str", Context.ANALYSIS);
+    checkMultiFileTest("str", "(Unknown) -> str", Context.ANALYSIS);
     checkMultiFileTest("str", "(int) -> str", Context.USER_INITIATED);
   }
 

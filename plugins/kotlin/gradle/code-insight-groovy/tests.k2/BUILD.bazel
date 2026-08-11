@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.groovy.tests` start
-
 jvm_library(
     name = "kotlin-gradle-codeInsight-groovy-tests",
     srcs = glob(
@@ -14,7 +13,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin:kotlin-plugin-community-main",
     ],
 )
 
@@ -31,7 +31,11 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.gradle.codeInsight.groovy.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":kotlin-gradle-codeInsight-groovy-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-gradle-codeInsight-groovy-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -39,9 +43,8 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui",
         "//platform/editor-ui-api:editor-ui_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//plugins/kotlin/test-framework",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//plugins/kotlin/tests-common:common-tests",
@@ -55,6 +58,8 @@ jvm_library(
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy",
         "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.groovy.tests` end
@@ -69,7 +74,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.gradle.codeInsight.groovy.tests` end
 
 ### auto-generated section `test intellij.kotlin.gradle.codeInsight.groovy.tests` start
-
 jps_test(
     name = "kotlin-gradle-codeInsight-groovy-tests_test",
     runtime_deps = [":kotlin-gradle-codeInsight-groovy-tests_test_lib"],

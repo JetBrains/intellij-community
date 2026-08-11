@@ -76,7 +76,7 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
     val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
     ModuleRootModificationUtil.addDependency(mod1, mod2, DependencyScope.COMPILE, false)
-    val lib = IntelliJProjectConfiguration.getProjectLibrary("JUnit4")
+    val lib = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4")
     ModuleRootModificationUtil.addModuleLibrary(mod1, "JUnit4", lib.classesUrls, lib.sourcesUrls, emptyList(), DependencyScope.COMPILE, false)
     ModuleRootModificationUtil.addModuleLibrary(mod2, "JUnit4", lib.classesUrls, lib.sourcesUrls, emptyList(), DependencyScope.COMPILE, true)
     myFixture.addFileToProject("mod1/MyTest1.java", "public class MyTest1 {@org.junit.Test public void test() {}}")
@@ -86,7 +86,7 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
 
   fun testExportedLibraryThroughModuleDependency() {
     val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
-    val lib = IntelliJProjectConfiguration.getProjectLibrary("JUnit4")
+    val lib = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4")
     ModuleRootModificationUtil.addModuleLibrary(module, "JUnit4", lib.classesUrls, lib.sourcesUrls, emptyList(), DependencyScope.COMPILE, true)
     ModuleRootModificationUtil.addDependency(mod1, module)
 
@@ -97,7 +97,7 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
   fun testDeepExportedLibraryThroughModuleDependency() {
     val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
     val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
-    val lib = IntelliJProjectConfiguration.getProjectLibrary("JUnit4")
+    val lib = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4")
     ModuleRootModificationUtil.addModuleLibrary(module, "JUnit4", lib.classesUrls, lib.sourcesUrls, emptyList(), DependencyScope.COMPILE, true)
     ModuleRootModificationUtil.addDependency(mod1, module, DependencyScope.COMPILE, true)
     ModuleRootModificationUtil.addDependency(mod2, mod1)

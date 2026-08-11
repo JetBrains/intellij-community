@@ -25,6 +25,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.debugger" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.devkit.debugger" />
 </module>

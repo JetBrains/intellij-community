@@ -1,14 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase;
 import org.jetbrains.plugins.groovy.intentions.declaration.GrIntroduceLocalVariableIntention;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -33,6 +35,35 @@ public class IntroduceLocalVariableTest extends GrIntentionTestCase {
   public void testClosure1() { doTest(); }
 
   public void testClosure2() { doTest(); }
+
+  public void testVar() {
+    doTest("<caret>1", "var x = 1", "var", false);
+  }
+
+  public void testFinalVar() {
+    doTest("<caret>1", "final var x = 1", "var", true);
+  }
+
+  public void testVal() {
+    doTest("<caret>true", "val x = true", "val", true);
+  }
+
+  public void testFinal() {
+    doTest("<caret>0.0", "final x = 0.0", "final", true);
+  }
+
+  public void testDef() {
+    doTest("<caret>0", "final def x = 0", "def", true);
+  }
+
+  private void doTest(String before, String after, String typeString, boolean makeFinal) {
+    myFixture.configureByText(getTestName(true) + ".groovy", before);
+    PsiClassType type = GroovyPsiManager.getInstance(myFixture.getProject())
+      .createTypeByFQClassName(typeString, myFixture.getFile().getResolveScope());
+    MockSettings settings = new MockSettings(makeFinal, "x", type, false);
+    new MockGrIntroduceVariableHandler(settings).invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), null);
+    myFixture.checkResult(after);
+  }
 
   protected void doTest() {
     myFixture.configureByFile(getTestName(false) + ".groovy");

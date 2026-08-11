@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jsp.jar
+  modules:
+  - name: intellij.libraries.jsp
+    libraries:
+      JSP:
+      - name: $MAVEN_REPOSITORY$/javax/servlet/jsp/javax.servlet.jsp-api/2/javax.servlet.jsp-api-2.jar

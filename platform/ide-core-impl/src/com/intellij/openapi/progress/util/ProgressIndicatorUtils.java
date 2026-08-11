@@ -51,8 +51,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @author gregsh
  */
 public final class ProgressIndicatorUtils {
-  private static final Logger LOG = Logger.getInstance(ProgressIndicatorUtils.class);
-
 
   /**
    * @deprecated It does not make much sense to cancel a BG task,
@@ -94,7 +92,7 @@ public final class ProgressIndicatorUtils {
    * Same as {@link #runInReadActionWithWriteActionPriority(Runnable)}, optionally allowing to pass a {@link ProgressIndicator}
    * instance, which can be used to cancel action externally.
    * @return true if action executed successfully, false if it was canceled by write action before or during execution
-   * @deprecated use {@link ReadAction#computeCancellable}
+   * @deprecated use {@link ReadAction#computeCancellableUnsafe}
    */
   @Deprecated
   public static boolean runInReadActionWithWriteActionPriority(@NotNull Runnable action, @Nullable ProgressIndicator progressIndicator) {
@@ -118,7 +116,7 @@ public final class ProgressIndicatorUtils {
    * </ul>
    * If a caller needs to retry the invocation of this method in a loop, it should consider pausing between attempts, to avoid potential
    * 100% CPU usage. There is also alternative that implements the re-trying logic {@link com.intellij.openapi.application.NonBlockingReadAction}
-   * @deprecated use {@link ReadAction#computeCancellable}
+   * @deprecated use {@link ReadAction#computeCancellableUnsafe}
    */
   @Deprecated
   public static boolean runInReadActionWithWriteActionPriority(@NotNull Runnable action) {
@@ -134,7 +132,7 @@ public final class ProgressIndicatorUtils {
    */
   @Deprecated
   public static boolean runWithWriteActionPriority(@NotNull Runnable action, @NotNull ProgressIndicator progressIndicator) {
-    ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
+    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     application.assertIsNonDispatchThread();
     Runnable cancellation = indicatorCancellation(progressIndicator);
     if (isWriteActionRunningOrPending(application)) {

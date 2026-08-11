@@ -11,6 +11,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +41,7 @@ public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder<
 
     String name = getClass().getName() + "." + getName();
     TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name);
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
+    myFixture = createMyFixture(projectBuilder.getFixture());
     T moduleFixtureBuilder = projectBuilder.addModule(getModuleBuilderClass());
     moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
     tuneFixture(moduleFixtureBuilder);
@@ -68,6 +69,11 @@ public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder<
       myFixture = null;
       super.tearDown();
     }
+  }
+
+  @ApiStatus.Internal
+  protected CodeInsightTestFixture createMyFixture(@NotNull IdeaProjectTestFixture projectFixture) {
+    return IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectFixture);
   }
 
   protected void tuneFixture(T moduleBuilder) { }

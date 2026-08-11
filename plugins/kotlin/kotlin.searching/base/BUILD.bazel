@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.searching.base` start
-
 create_kotlinc_options(
     name = "custom_base",
     opt_in = [
@@ -23,6 +22,10 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_base",
     module_name = "intellij.kotlin.searching.base",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -42,7 +45,8 @@ jvm_library(
         "//platform/core-ui",
         "//platform/ide-core",
         "//plugins/kotlin/base/analysis",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin/references",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//plugins/kotlin/base/util",
         "//java/java-analysis-api:analysis",
         "//platform/platform-impl:ide-impl",
@@ -50,7 +54,8 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//java/java-frontback-psi-api:frontback-psi",
         "//plugins/kotlin/base/psi",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//plugins/kotlin/base/project-structure",
         "//plugins/kotlin/base/indices",
         "//plugins/kotlin/base/facet",
@@ -88,6 +93,8 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//plugins/kotlin/base/analysis:analysis_test_lib",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",
         "//java/java-analysis-api:analysis_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
@@ -95,6 +102,8 @@ jvm_library(
         "//java/java-psi-api:psi_test_lib",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
         "//plugins/kotlin/base/psi:psi_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//plugins/kotlin/base/project-structure:project-structure_test_lib",
         "//plugins/kotlin/base/indices:indices_test_lib",
         "//plugins/kotlin/base/facet:facet_test_lib",

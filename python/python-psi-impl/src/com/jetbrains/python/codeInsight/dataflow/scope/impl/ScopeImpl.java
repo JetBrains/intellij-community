@@ -170,6 +170,14 @@ public class ScopeImpl implements Scope {
   }
 
   @Override
+  public boolean declaresName(@NotNull String name) {
+    if (myNamedElements == null) {
+      collectDeclarations();
+    }
+    return myNamedElements.containsKey(name);
+  }
+
+  @Override
   public @NotNull List<PyImportedNameDefiner> getImportedNameDefiners() {
     if (myImportedNameDefiners == null) {
       collectDeclarations();

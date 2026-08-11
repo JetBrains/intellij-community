@@ -1,6 +1,6 @@
 // "Change type to MutableList" "true"
 // WITH_STDLIB
-// K2_ERROR: No 'set' operator method providing array access.
+// K2_ERROR: NO_SET_METHOD
 fun main() {
     val list = foo().toMutableList()<caret>
     list[1] = 10

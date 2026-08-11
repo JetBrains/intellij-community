@@ -1,0 +1,17 @@
+// "Replace 'with' with 'context'" "true"
+// WITH_RUNTIME
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// LANGUAGE_VERSION: 2.4
+// K2_ERROR: CALLABLE_REFERENCE_TO_CONTEXTUAL_DECLARATION
+// K2_AFTER_ERROR: CALLABLE_REFERENCE_TO_CONTEXTUAL_DECLARATION
+
+context(x: String)
+fun shout(): String {
+    return x.uppercase() + "!"
+}
+
+fun main() {
+    context("hi") {
+        println(::shout)
+    }
+}

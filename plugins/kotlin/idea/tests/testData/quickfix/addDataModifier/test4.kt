@@ -1,7 +1,7 @@
 // "Make 'Foo' data class" "true"
 // WITH_STDLIB
-// K2_ERROR: Destructuring of type 'Foo' requires operator function 'component1()'.
-// K2_ERROR: Destructuring of type 'Foo' requires operator function 'component2()'.
+// K2_ERROR: COMPONENT_FUNCTION_MISSING
+// K2_ERROR: COMPONENT_FUNCTION_MISSING
 class Foo(val bar: String, var baz: Int)
 
 fun test() {

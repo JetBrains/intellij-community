@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.onboarding.gradle` start
-
 jvm_library(
     name = "onboarding-gradle",
     srcs = glob(
@@ -22,7 +21,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
         "//platform/projectModel-api:projectModel",
@@ -59,6 +58,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":onboarding-gradle",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
@@ -105,7 +105,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.onboarding.gradle` end
 
 ### auto-generated section `build intellij.kotlin.onboarding.gradle.tests` start
-
 jvm_library(
     name = "onboarding-gradle-tests",
     srcs = glob(
@@ -140,7 +139,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui",
@@ -187,6 +187,8 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
         "//plugins/kotlin/gradle/gradle-tooling/impl",
         "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.onboarding.gradle.tests` end
@@ -201,7 +203,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.onboarding.gradle.tests` end
 
 ### auto-generated section `test intellij.kotlin.onboarding.gradle.tests` start
-
 jps_test(
     name = "onboarding-gradle-tests_test",
     runtime_deps = [":onboarding-gradle-tests_test_lib"],

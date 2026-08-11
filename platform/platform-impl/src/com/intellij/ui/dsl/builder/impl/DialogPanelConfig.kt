@@ -7,7 +7,6 @@ import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-@ApiStatus.Internal
 internal class DialogPanelConfig {
 
   val context: Context = Context()

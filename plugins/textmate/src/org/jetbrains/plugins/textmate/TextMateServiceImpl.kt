@@ -12,11 +12,16 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
-import com.intellij.util.progress.lockMaybeCancellable
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.textmate.TextMateService.LOG
@@ -67,6 +72,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
   @Volatile
   private var isInitialized = false
   private val registrationLock = ReentrantLock()
+  private val initializationJob = AtomicReference<Job?>(null)
 
   private val globalCachingSelectorWeigher = TextMateSelectorWeigherImpl().caching()
 
@@ -253,21 +259,45 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
     return null
   }
 
-  private fun ensureInitialized() {
+  override fun startInitialization() {
     if (!isInitialized) {
-      registrationLock.lockMaybeCancellable()
-      try {
-        if (isInitialized) return
-        registerBundles(fireEvents = false)
-        isInitialized = true
+      startInitializationJob()
+    }
+  }
+
+  override fun ensureInitialized() {
+    if (!isInitialized) {
+      val job = startInitializationJob()
+      ProgressIndicatorUtils.awaitWithCheckCanceled(job.asCompletableFuture())
+    }
+  }
+
+  private fun startInitializationJob(): Job {
+    while (true) {
+      initializationJob.get()?.let { return it }
+      val job = myScope.launch(Dispatchers.IO, start = CoroutineStart.LAZY) {
+        registrationLock.lock()
+        try {
+          if (!isInitialized) {
+            registerBundles(fireEvents = false)
+            isInitialized = true
+          }
+        }
+        finally {
+          registrationLock.unlock()
+        }
       }
-      catch (e: Throwable) {
-        LOG.debug("Initialization of textmate bundles was cancelled", e)
-        throw e
+      if (initializationJob.compareAndSet(null, job)) {
+        job.invokeOnCompletion { cause ->
+          if (cause != null && !isInitialized) {
+            LOG.debug("Initialization of textmate bundles was cancelled", cause)
+            initializationJob.compareAndSet(job, null)
+          }
+        }
+        job.start()
+        return job
       }
-      finally {
-        registrationLock.unlock()
-      }
+      job.cancel()
     }
   }
 

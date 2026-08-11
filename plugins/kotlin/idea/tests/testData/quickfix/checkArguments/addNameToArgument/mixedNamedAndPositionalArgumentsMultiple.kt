@@ -1,5 +1,5 @@
 // "Add name to argument: 'b = "FOO"'" "true"
-// K2_ERROR: Mixing named and positional arguments is not allowed unless the order of the arguments matches the order of the parameters.
+// K2_ERROR: MIXING_NAMED_AND_POSITIONAL_ARGUMENTS
 
 fun f(a: Int, b: String = "b", c: String = "c") {}
 

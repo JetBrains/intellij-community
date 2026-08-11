@@ -9,11 +9,13 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 
+@ApiStatus.Internal
 public class RefElementNode extends SuppressableInspectionTreeNode {
   private final Icon myIcon;
   private final @Nullable RefEntity myRefEntity;
@@ -44,7 +46,7 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Override
   protected String calculatePresentableName() {
-    final RefEntity element = getElement();
+    RefEntity element = getElement();
     if (element == null) {
       return AnalysisBundle.message("inspection.reference.invalid");
     }
@@ -53,7 +55,7 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Override
   protected boolean calculateIsValid() {
-    final RefEntity refEntity = getElement();
+    RefEntity refEntity = getElement();
     return refEntity != null && refEntity.isValid();
   }
 
@@ -86,7 +88,7 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Override
   public RefEntity getContainingFileLocalEntity() {
-    final RefEntity element = getElement();
+    RefEntity element = getElement();
     return element instanceof RefElement && !(element instanceof RefDirectory)
            ? element
            : super.getContainingFileLocalEntity();
@@ -102,7 +104,7 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
     if (getPresentation().isDummy()) {
       return "";
     }
-    final String customizedText = super.getTailText();
+    String customizedText = super.getTailText();
     if (customizedText != null) {
       return customizedText;
     }

@@ -191,7 +191,7 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
   }
 
   public @Nullable PsiMethod createWitherMethod(@NotNull PsiField psiField,
-                                                @NotNull String methodModifier,
+                                                @PsiModifier.ModifierConstant @NotNull String methodModifier,
                                                 @NotNull AccessorsInfo accessorsInfo) {
     LombokLightMethodBuilder methodBuilder = null;
     final PsiClass psiFieldContainingClass = psiField.getContainingClass();

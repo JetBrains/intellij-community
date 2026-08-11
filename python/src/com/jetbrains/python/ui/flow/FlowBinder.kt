@@ -20,7 +20,7 @@ import javax.swing.text.JTextComponent
  * ```
  */
 @ApiStatus.Experimental
-fun Cell<JTextComponent>.bindText(flow: Flow<String>) = apply {
+internal fun Cell<JTextComponent>.bindText(flow: Flow<String>) = apply {
   bindImpl(flow, { text(it) })
 }
 
@@ -32,7 +32,7 @@ fun Cell<JTextComponent>.bindText(flow: Flow<String>) = apply {
  * ```
  */
 @ApiStatus.Experimental
-fun Cell<JTextComponent>.bindText(flow: MutableStateFlow<String>) = apply {
+internal fun Cell<JTextComponent>.bindText(flow: MutableStateFlow<String>) = apply {
   bindImpl(flow, { text(it) }, Pair({ component.text }, flow))
 }
 
@@ -44,7 +44,7 @@ fun Cell<JTextComponent>.bindText(flow: MutableStateFlow<String>) = apply {
  * ```
  */
 @ApiStatus.Experimental
-fun Cell<JToggleButton>.bindSelected(flow: Flow<Boolean>) = apply {
+internal fun Cell<JToggleButton>.bindSelected(flow: Flow<Boolean>) = apply {
   bindImpl(flow, { selected(it) })
 }
 
@@ -56,7 +56,7 @@ fun Cell<JToggleButton>.bindSelected(flow: Flow<Boolean>) = apply {
  * ```
  */
 @ApiStatus.Experimental
-fun Cell<JToggleButton>.bindSelected(flow: MutableStateFlow<Boolean>) = apply {
+internal fun Cell<JToggleButton>.bindSelected(flow: MutableStateFlow<Boolean>) = apply {
   bindImpl(flow, { selected(it) }, Pair({ component.isSelected }, flow))
 }
 

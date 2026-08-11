@@ -146,7 +146,7 @@ class PluginDependencyGraphTest {
       linkPluginMainTarget("plugin.b")
     }
 
-    val graphDeps = collectPluginGraphDeps(graph = graph, allRealProductNames = emptySet())
+    val graphDeps = collectPluginGraphDeps(graph = graph)
       .single { it.pluginContentModuleName == ContentModuleName("plugin.a") }
 
     assertThat(graphDeps.jpsPluginDependencies).containsExactly(PluginId("com.b"))
@@ -170,7 +170,7 @@ class PluginDependencyGraphTest {
       linkPluginMainTarget("plugin.b")
     }
 
-    val graphDeps = collectPluginGraphDeps(graph = graph, allRealProductNames = emptySet())
+    val graphDeps = collectPluginGraphDeps(graph = graph)
       .single { it.pluginContentModuleName == ContentModuleName("plugin.a") }
 
     val filtered = filterPluginDependencies(
@@ -317,7 +317,7 @@ class PluginDependencyGraphTest {
   }
 
   @Test
-  fun `module set wrapper flag survives extraction merge`() {
+  fun `seeded plugin node survives extraction merge`() {
     runBlocking(Dispatchers.Default) {
       val pluginModule = TargetName("intellij.platform.recentFiles.plugin")
       val info = pluginInfo(
@@ -335,7 +335,6 @@ class PluginDependencyGraphTest {
         name = pluginModule,
         isTest = false,
         pluginId = PluginId("intellij.recentFiles.plugin"),
-        isModuleSetWrapper = true,
       )
       builder.addPluginWithContent(pluginModule, info, emptySet())
 
@@ -343,12 +342,25 @@ class PluginDependencyGraphTest {
 
       graph.query {
         val plugin = requireNotNull(plugin(pluginModule.value))
+        assertThat(plugin.pluginId).isEqualTo(PluginId("intellij.recentFiles.plugin"))
         assertThat(plugin.isModuleSetWrapper).isTrue()
 
         val contentNames = mutableListOf<String>()
         plugin.containsContent { module, _ -> contentNames.add(module.name().value) }
         assertThat(contentNames).containsExactly("intellij.platform.recentFiles.frontend")
       }
+    }
+  }
+
+  @Test
+  fun `tasks and test runner are build-declared module set wrappers`() {
+    val builder = PluginGraphBuilder()
+    builder.addPlugin(TargetName("intellij.platform.tasks.plugin"), isTest = false)
+    builder.addPlugin(TargetName("intellij.platform.testRunner.plugin"), isTest = false)
+
+    builder.build().query {
+      assertThat(requireNotNull(plugin("intellij.platform.tasks.plugin")).isModuleSetWrapper).isTrue()
+      assertThat(requireNotNull(plugin("intellij.platform.testRunner.plugin")).isModuleSetWrapper).isTrue()
     }
   }
 

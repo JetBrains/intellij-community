@@ -3,17 +3,17 @@ package toplevelObjectDeclarations
     open fun foo() : Int = 1
   }
 
-  <error descr="[NO_VALUE_FOR_PARAMETER] No value passed for parameter 'y'">class T : <error descr="[SUPERTYPE_NOT_INITIALIZED] This type has a constructor, and thus must be initialized here">Foo</error> {}</error>
+  <error descr="[NO_VALUE_FOR_PARAMETER]">class T : <error descr="[SUPERTYPE_NOT_INITIALIZED]">Foo</error> {}</error>
 
-  object A : <error descr="[SUPERTYPE_NOT_INITIALIZED] This type has a constructor, and thus must be initialized here">Foo</error> {
+  object A : <error descr="[SUPERTYPE_NOT_INITIALIZED]">Foo</error> {
     val x : Int = 2
 
     fun test() : Int {
-      return x + foo(<error descr="[NO_VALUE_FOR_PARAMETER] No value passed for parameter 'y'">)</error>
+      return x + foo(<error descr="[NO_VALUE_FOR_PARAMETER]">)</error>
     }
   }
 
-  object B : <error descr="[SINGLETON_IN_SUPERTYPE] Cannot inherit from a singleton">A</error> {}
+  object B : <error descr="[SINGLETON_IN_SUPERTYPE]">A</error> {}
 
   val x = A.foo()
 

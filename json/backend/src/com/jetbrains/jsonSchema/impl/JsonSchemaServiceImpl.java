@@ -5,6 +5,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.trustedProjects.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjectsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -12,10 +14,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
@@ -45,10 +49,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.IOException;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -91,8 +99,26 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       myRefs.clear();
       myAnyChangeCount.incrementAndGet();
     });
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(TrustedProjectsListener.TOPIC, new TrustedProjectsListener() {
+        @Override
+        public void onProjectTrusted(@NotNull Project project) {
+          resetAfterTrustChange(project);
+        }
+
+        @Override
+        public void onProjectUntrusted(@NotNull Project project) {
+          resetAfterTrustChange(project);
+        }
+      });
     JsonSchemaVfsListener.startListening(project);
     myCatalogManager.startUpdates(this);
+  }
+
+  private void resetAfterTrustChange(@NotNull Project project) {
+    if (myProject == project) {
+      reset();
+    }
   }
 
   @Override
@@ -132,7 +158,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     for (Runnable action : myResetActions) {
       action.run();
     }
-    DaemonCodeAnalyzer.getInstance(myProject).restart(this);
+
+    if (!myProject.isDisposed()) {
+      DaemonCodeAnalyzer daemonCodeAnalyzer = myProject.getServiceIfCreated(DaemonCodeAnalyzer.class);
+      if (daemonCodeAnalyzer != null) {
+        daemonCodeAnalyzer.restart(this);
+      }
+    }
   }
 
   @Override
@@ -141,14 +173,83 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   }
 
   @Override
-  public @Nullable VirtualFile findSchemaFileByReference(@NotNull String reference, @Nullable VirtualFile referent) {
-    final VirtualFile file = findBuiltInSchemaByReference(reference);
+  public @Nullable VirtualFile findSchemaFileByReference(@NotNull String reference, @NotNull VirtualFile referent) {
+    boolean restrictReference = shouldRestrictSchemaReferences(referent);
+    final VirtualFile file = restrictReference
+                             ? findAllowedRegisteredSchemaByReference(reference)
+                             : findBuiltInSchemaByReference(reference);
     if (file != null) return file;
     if (reference.startsWith("#")) return referent;
-    return JsonFileResolver.resolveSchemaByReference(referent, JsonPointerUtil.normalizeId(reference));
+    String normalizedReference = JsonPointerUtil.normalizeId(reference);
+    VirtualFile resolved;
+    if (restrictReference) {
+      String resolvedUrl = JsonFileResolver.resolveSchemaUrlByReference(referent, normalizedReference);
+      if (resolvedUrl == null || isForbiddenBeforeResolution(resolvedUrl)) return null;
+      resolved = JsonFileResolver.urlToFile(resolvedUrl);
+    }
+    else {
+      resolved = JsonFileResolver.resolveSchemaByReference(referent, normalizedReference);
+    }
+
+    if (restrictReference && resolved != null && isForbiddenAfterResolution(resolved)) {
+      return null;
+    }
+    return resolved;
   }
 
-  private @Nullable VirtualFile findBuiltInSchemaByReference(@NotNull String reference) {
+  /**
+   * Restricts {@code $schema}/{@code $ref} references originating in a project before the user has granted trust
+   * (IJPL-249802, CWE-22 / CWE-862 / CWE-918).
+   */
+  @Override
+  public boolean shouldRestrictSchemaReferences(@NotNull VirtualFile referent) {
+    if (TrustedProjects.isProjectTrusted(myProject)) return false;
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
+    return fileIndex.isInContent(referent) || isPathInsideProject(toPath(referent.getPath(), false));
+  }
+
+  private boolean isForbiddenBeforeResolution(@NotNull String resolvedUrl) {
+    if (TrustedProjects.isProjectTrusted(myProject)) return false;
+    if (!LocalFileSystem.PROTOCOL.equals(VirtualFileManager.extractProtocol(resolvedUrl))) return true;
+    return !isPathInsideProject(toPath(VirtualFileManager.extractPath(resolvedUrl), false));
+  }
+
+  private boolean isForbiddenAfterResolution(@NotNull VirtualFile resolved) {
+    if (TrustedProjects.isProjectTrusted(myProject)) return false;
+    if (!resolved.isInLocalFileSystem()) return true;
+    try {
+      return !isPathInsideProject(resolved.toNioPath().toRealPath());
+    }
+    catch (IOException | UnsupportedOperationException e) {
+      return true;
+    }
+  }
+
+  private boolean isPathInsideProject(@Nullable Path path) {
+    if (path == null) return false;
+    String basePath = myProject.getBasePath();
+    return basePath != null && startsWithProjectRoot(path, basePath);
+  }
+
+  private static boolean startsWithProjectRoot(@NotNull Path path, @NotNull String rootPath) {
+    Path normalizedRoot = toPath(rootPath, false);
+    if (normalizedRoot != null && path.startsWith(normalizedRoot)) return true;
+    Path realRoot = toPath(rootPath, true);
+    return realRoot != null && path.startsWith(realRoot);
+  }
+
+  private static @Nullable Path toPath(@NotNull String path, boolean realPath) {
+    try {
+      Path nioPath = Path.of(path);
+      return realPath ? nioPath.toRealPath() : nioPath.toAbsolutePath().normalize();
+    }
+    catch (IOException | InvalidPathException e) {
+      return null;
+    }
+  }
+
+  @Override
+  public @Nullable VirtualFile findBuiltInSchemaByReference(@NotNull String reference) {
     String id = JsonPointerUtil.normalizeId(reference);
     if (!myBuiltInSchemaIds.getValue().contains(id)) return null;
     for (VirtualFile file : myState.getFiles()) {
@@ -157,6 +258,32 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       }
     }
     return null;
+  }
+
+  private @Nullable VirtualFile findAllowedRegisteredSchemaByReference(@NotNull String reference) {
+    String id = JsonPointerUtil.normalizeId(reference);
+    for (JsonSchemaFileProvider provider : myFactories.getProviders()) {
+      VirtualFile file;
+      try {
+        file = provider.getSchemaFile();
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+        continue;
+      }
+      if (file == null || (!isBundledSchemaProvider(provider) && isForbiddenAfterResolution(file))) continue;
+      if (id.equals(JsonCachedValues.getSchemaId(file, myProject))) {
+        return file;
+      }
+    }
+    return null;
+  }
+
+  private static boolean isBundledSchemaProvider(@NotNull JsonSchemaFileProvider provider) {
+    return provider.getSchemaType() == SchemaType.schema || provider.getSchemaType() == SchemaType.embeddedSchema;
   }
 
   @Override
@@ -173,12 +300,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       .orElse(null);
   }
 
-  private static boolean shouldIgnoreFile(@NotNull VirtualFile file, @NotNull Project project) {
-    return JsonSchemaMappingsProjectConfiguration.getInstance(project).isIgnoredFile(file);
-  }
-
   public @NotNull Collection<VirtualFile> getSchemasForFile(@NotNull VirtualFile file, boolean single, boolean onlyUserSchemas) {
-    if (shouldIgnoreFile(file, myProject)) return Collections.emptyList();
+    if (JsonSchemaMappingsProjectConfiguration.getInstance(myProject).isIgnoredFile(file)) return Collections.emptyList();
     String schemaUrl = null;
     if (!onlyUserSchemas) {
       // prefer schema-schema if it is specified in "$schema" property
@@ -210,7 +333,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     if (!single) {
       List<VirtualFile> files = new ArrayList<>();
       for (JsonSchemaFileProvider provider : providers) {
-        VirtualFile schemaFile = getSchemaForProvider(myProject, provider);
+        VirtualFile schemaFile = getAllowedSchemaForProvider(file, provider);
         if (schemaFile != null) {
           files.add(schemaFile);
         }
@@ -221,17 +344,15 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     }
     else if (!providers.isEmpty()) {
       final JsonSchemaFileProvider selected;
-      if (providers.size() > 2) return ContainerUtil.emptyList();
       if (providers.size() > 1) {
         final Optional<JsonSchemaFileProvider> userSchema =
           providers.stream().filter(provider -> SchemaType.userSchema.equals(provider.getSchemaType())).findFirst();
-        if (userSchema.isEmpty()) return ContainerUtil.emptyList();
-        selected = userSchema.get();
+        selected = userSchema.orElse(providers.getFirst());
       }
       else {
-        selected = providers.get(0);
+        selected = providers.getFirst();
       }
-      VirtualFile schemaFile = getSchemaForProvider(myProject, selected);
+      VirtualFile schemaFile = getAllowedSchemaForProvider(file, selected);
       return ContainerUtil.createMaybeSingletonList(schemaFile);
     }
 
@@ -337,7 +458,14 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     if (schemas.isEmpty()) return null;
     assert schemas.size() == 1;
     VirtualFile schemaFile = schemas.iterator().next();
-    return JsonCachedValues.getSchemaObject(replaceHttpFileWithBuiltinIfNeeded(schemaFile), myProject);
+    VirtualFile resolvedSchemaFile = replaceHttpFileWithBuiltinIfNeeded(schemaFile);
+    JsonSchemaObject result = JsonCachedValues.getSchemaObject(resolvedSchemaFile, myProject);
+    if (result == null) {
+      LOG.warn("JSON Schema mapped to '" + file.getName() + "' could not be loaded from '" + schemaFile.getUrl() +
+               "' (resolved: " + resolvedSchemaFile.getUrl() + ", valid=" + resolvedSchemaFile.isValid() +
+               ", length=" + resolvedSchemaFile.getLength() + ")");
+    }
+    return result;
   }
 
 
@@ -563,7 +691,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
                                                                                                  @NotNull Project project) {
       // if there are different providers with the same schema files,
       // stream API does not allow to collect same keys with Collectors.toMap(): throws duplicate key
-      Map<VirtualFile, List<JsonSchemaFileProvider>> map = new HashMap<>();
+      Map<VirtualFile, List<JsonSchemaFileProvider>> map = new LinkedHashMap<>();
       for (JsonSchemaFileProvider provider : list) {
         VirtualFile schemaFile;
         try {
@@ -593,6 +721,14 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       }
     }
     return provider.getSchemaFile();
+  }
+
+  private @Nullable VirtualFile getAllowedSchemaForProvider(@NotNull VirtualFile referent,
+                                                             @NotNull JsonSchemaFileProvider provider) {
+    boolean restrictReference = shouldRestrictSchemaReferences(referent);
+    VirtualFile schemaFile = restrictReference ? provider.getSchemaFile() : getSchemaForProvider(myProject, provider);
+    if (schemaFile == null || !restrictReference || isBundledSchemaProvider(provider)) return schemaFile;
+    return isForbiddenAfterResolution(schemaFile) ? null : schemaFile;
   }
 
   @Override

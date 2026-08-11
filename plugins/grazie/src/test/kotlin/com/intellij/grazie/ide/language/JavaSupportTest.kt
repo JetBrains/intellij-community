@@ -8,6 +8,9 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
+import com.intellij.grazie.text.TextContent
+import com.intellij.grazie.text.TextContentTest
+import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -21,6 +24,7 @@ import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import org.junit.Assert.assertArrayEquals
 import org.junit.jupiter.api.assertDoesNotThrow
 import java.util.function.Consumer
 
@@ -200,6 +204,32 @@ class JavaSupportTest : GrazieTestBase() {
     runHighlightTestForFile("ide/language/java/MarkdownCode.java")
   }
 
+  fun `test text extraction from markdown doc reference link`() {
+    val text = """
+      class A {
+        /// Please do not use directly; use [EventFields#Class(String)] instead.
+        void foo() {}
+      }
+    """.trimIndent()
+    val file = myFixture.configureByText("a.java", text)
+    val content = TextExtractor.findTextAt(file, text.indexOf("Please"), TextContent.TextDomain.ALL)
+    assertEquals("Please do not use directly; use | instead.", TextContentTest.unknownOffsets(content))
+    assertEmpty(content!!.markupOffsets().toList())
+  }
+
+  fun `test text extraction from markdown doc inline link preserves label`() {
+    val text = """
+      class A {
+        /// Please read [the manual](https://example.com/manual) before use.
+        void foo() {}
+      }
+    """.trimIndent()
+    val file = myFixture.configureByText("a.java", text)
+    val content = TextExtractor.findTextAt(file, text.indexOf("Please"), TextContent.TextDomain.ALL)
+    assertEquals("Please read the manual before use.", TextContentTest.unknownOffsets(content))
+    assertArrayEquals(intArrayOf("Please read ".length, "Please read the manual".length), content!!.markupOffsets())
+  }
+
   fun `test java keeps trailing spaces properly`() {
     runHighlightTestForFile("ide/language/java/Trailing.java")
   }
@@ -268,6 +298,7 @@ class JavaSupportTest : GrazieTestBase() {
       // It is a SCORN with no grade. It is a SCORM with no grade.
       // It is an ECO summit. It is an ECS summit.
       // It is an ISS mission. It is an ISSA mission.
+      // Sending an Sms. Sending an sms. Sending an SMS.
       """.trimIndent()
     )
     myFixture.checkHighlighting()
@@ -340,6 +371,16 @@ class JavaSupportTest : GrazieTestBase() {
 
     enableProofreadingFor(setOf(Lang.JAPANESE))
     runHighlightTestForFile("ide/language/java/Mixed.java")
+  }
+
+  fun `test spellchecking does not produce NoSuchMethodError`() {
+    myFixture.configureByText("a.java", """
+     // A little bit more text to sound like English. 
+     // It's a <GRAMMAR_ERROR descr="Grazie.RuleEngine.En.Spelling.MISPLACED_SPACE">grea tbig</GRAMMAR_ERROR> adventure.
+    """.trimIndent())
+    assertDoesNotThrow {
+      myFixture.checkHighlighting()
+    }
   }
 
 

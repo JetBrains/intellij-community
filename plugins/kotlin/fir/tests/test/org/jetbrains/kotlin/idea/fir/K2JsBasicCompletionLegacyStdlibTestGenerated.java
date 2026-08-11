@@ -670,6 +670,109 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../completion/testData/basic/common/companionBlock")
+        public static class CompanionBlock extends AbstractK2JsBasicCompletionLegacyStdlibTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("BlockMembers.kt")
+            public void testBlockMembers() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/BlockMembers.kt");
+            }
+
+            @TestMetadata("BlockMembersWithCompanionObject.kt")
+            public void testBlockMembersWithCompanionObject() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/BlockMembersWithCompanionObject.kt");
+            }
+
+            @TestMetadata("Extensions.kt")
+            public void testExtensions() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/Extensions.kt");
+            }
+
+            @TestMetadata("ExtensionsWithCompanionObject.kt")
+            public void testExtensionsWithCompanionObject() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/ExtensionsWithCompanionObject.kt");
+            }
+
+            @TestMetadata("GenericClassExtensions.kt")
+            public void testGenericClassExtensions() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/GenericClassExtensions.kt");
+            }
+
+            @TestMetadata("GenericClassExtensionsWithCompanionObject.kt")
+            public void testGenericClassExtensionsWithCompanionObject() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/GenericClassExtensionsWithCompanionObject.kt");
+            }
+
+            @TestMetadata("GenericClassMembers.kt")
+            public void testGenericClassMembers() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/GenericClassMembers.kt");
+            }
+
+            @TestMetadata("GenericClassMembersWithCompanionObject.kt")
+            public void testGenericClassMembersWithCompanionObject() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/GenericClassMembersWithCompanionObject.kt");
+            }
+
+            @TestMetadata("InstanceNotBroken.kt")
+            public void testInstanceNotBroken() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/InstanceNotBroken.kt");
+            }
+
+            @TestMetadata("InstanceNotBrokenWithCompanionObject.kt")
+            public void testInstanceNotBrokenWithCompanionObject() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/InstanceNotBrokenWithCompanionObject.kt");
+            }
+
+            @TestMetadata("NestedClassExtensions.kt")
+            public void testNestedClassExtensions() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/NestedClassExtensions.kt");
+            }
+
+            @TestMetadata("NestedClassExtensionsWithCompanionObject.kt")
+            public void testNestedClassExtensionsWithCompanionObject() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/NestedClassExtensionsWithCompanionObject.kt");
+            }
+
+            @TestMetadata("NestedClassMembers.kt")
+            public void testNestedClassMembers() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/NestedClassMembers.kt");
+            }
+
+            @TestMetadata("NestedClassMembersWithCompanionObject.kt")
+            public void testNestedClassMembersWithCompanionObject() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/NestedClassMembersWithCompanionObject.kt");
+            }
+
+            @TestMetadata("ObjectReceiverDoesNotBreak.kt")
+            public void testObjectReceiverDoesNotBreak() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/ObjectReceiverDoesNotBreak.kt");
+            }
+
+            @TestMetadata("Sorting.kt")
+            public void testSorting() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/Sorting.kt");
+            }
+
+            @TestMetadata("ThisReceiverDoesNotBreak.kt")
+            public void testThisReceiverDoesNotBreak() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/ThisReceiverDoesNotBreak.kt");
+            }
+
+            @TestMetadata("ValueReceiverDoesNotBreak.kt")
+            public void testValueReceiverDoesNotBreak() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/ValueReceiverDoesNotBreak.kt");
+            }
+
+            @TestMetadata("ValueReceiverWithCompanionObjectDoesNotBreak.kt")
+            public void testValueReceiverWithCompanionObjectDoesNotBreak() throws Exception {
+                runTest("../../completion/testData/basic/common/companionBlock/ValueReceiverWithCompanionObjectDoesNotBreak.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/companionObject")
         public static class CompanionObject extends AbstractK2JsBasicCompletionLegacyStdlibTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -872,6 +975,26 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
             @TestMetadata("PrivateConstructor.kt")
             public void testPrivateConstructor() throws Exception {
                 runTest("../../completion/testData/basic/common/constructor/PrivateConstructor.kt");
+            }
+
+            @TestMetadata("PrivateConstructorForNested.kt")
+            public void testPrivateConstructorForNested() throws Exception {
+                runTest("../../completion/testData/basic/common/constructor/PrivateConstructorForNested.kt");
+            }
+
+            @TestMetadata("PrivateConstructorForNested2.kt")
+            public void testPrivateConstructorForNested2() throws Exception {
+                runTest("../../completion/testData/basic/common/constructor/PrivateConstructorForNested2.kt");
+            }
+
+            @TestMetadata("PrivateConstructorForNested3.kt")
+            public void testPrivateConstructorForNested3() throws Exception {
+                runTest("../../completion/testData/basic/common/constructor/PrivateConstructorForNested3.kt");
+            }
+
+            @TestMetadata("PrivateConstructorForNested4.kt")
+            public void testPrivateConstructorForNested4() throws Exception {
+                runTest("../../completion/testData/basic/common/constructor/PrivateConstructorForNested4.kt");
             }
 
             @TestMetadata("SingleConstructor.kt")
@@ -2035,6 +2158,16 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
                 runTest("../../completion/testData/basic/common/namedArguments/ParamsFromSingleUnapplicableOverload.kt");
             }
 
+            @TestMetadata("PrefillExplicitContextArgument.kt")
+            public void testPrefillExplicitContextArgument() throws Exception {
+                runTest("../../completion/testData/basic/common/namedArguments/PrefillExplicitContextArgument.kt");
+            }
+
+            @TestMetadata("PrefillPreferParameterOverContextArgument.kt")
+            public void testPrefillPreferParameterOverContextArgument() throws Exception {
+                runTest("../../completion/testData/basic/common/namedArguments/PrefillPreferParameterOverContextArgument.kt");
+            }
+
             @TestMetadata("PrefillSameNameParameter.kt")
             public void testPrefillSameNameParameter() throws Exception {
                 runTest("../../completion/testData/basic/common/namedArguments/PrefillSameNameParameter.kt");
@@ -2050,6 +2183,11 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
                 runTest("../../completion/testData/basic/common/namedArguments/PrefillSameNameVariableAlreadyPassed.kt");
             }
 
+            @TestMetadata("PrefillSameNameVariableFromClass.kt")
+            public void testPrefillSameNameVariableFromClass() throws Exception {
+                runTest("../../completion/testData/basic/common/namedArguments/PrefillSameNameVariableFromClass.kt");
+            }
+
             @TestMetadata("PrefillSameNameVariableSmart.kt")
             public void testPrefillSameNameVariableSmart() throws Exception {
                 runTest("../../completion/testData/basic/common/namedArguments/PrefillSameNameVariableSmart.kt");
@@ -2063,6 +2201,11 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
             @TestMetadata("PrefillTopLevelValue.kt")
             public void testPrefillTopLevelValue() throws Exception {
                 runTest("../../completion/testData/basic/common/namedArguments/PrefillTopLevelValue.kt");
+            }
+
+            @TestMetadata("PrefillWrongOrder.kt")
+            public void testPrefillWrongOrder() throws Exception {
+                runTest("../../completion/testData/basic/common/namedArguments/PrefillWrongOrder.kt");
             }
 
             @TestMetadata("PrivateFunction.kt")

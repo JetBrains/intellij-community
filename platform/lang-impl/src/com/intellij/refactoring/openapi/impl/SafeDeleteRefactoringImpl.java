@@ -9,7 +9,9 @@ import com.intellij.refactoring.SafeDeleteRefactoring;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 
 import java.util.List;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class SafeDeleteRefactoringImpl extends RefactoringImpl<SafeDeleteProcessor> implements SafeDeleteRefactoring {
   public SafeDeleteRefactoringImpl(Project project, PsiElement[] elements) {
     super(SafeDeleteProcessor.createInstance(project, EmptyRunnable.INSTANCE, elements, true, true));

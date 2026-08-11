@@ -39,9 +39,9 @@ class WithGetattr:
 
 WithGetattr.whatever = 1
 
-# Instance assignment — not affected by this check
+# Instance assignment — handled by strictInstanceAttributes (PY-87799)
 a = A()
-a.new_attr = 1
+a.<warning descr="Unresolved attribute reference 'new_attr' for class 'A'">new_attr</warning> = 1
 
 
 @dataclass

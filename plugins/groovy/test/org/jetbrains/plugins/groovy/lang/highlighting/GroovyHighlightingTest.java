@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import junit.framework.TestCase;
@@ -787,7 +787,7 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          
                            <error descr="Interface members are not allowed to be private">private</error> def privateMethod() <error descr="Interface abstract methods must not have body">{}</error>
                          
-                           <error descr="Interface must have no static method">static</error> def staticMethod() <error descr="Interface abstract methods must not have body">{}</error>
+                           <error descr="Interface members are not allowed to be static">static</error> def staticMethod() <error descr="Interface abstract methods must not have body">{}</error>
                          
                            <error descr="Modifier 'default' is available in Groovy 3.0 or later">default</error> def defaultMethod() {}
                          }

@@ -126,6 +126,7 @@ fun runRefactoringTest(
         assert(!conflictFile.exists()) { "Conflict file $conflictFile should not exist" }
     } catch (e: BaseRefactoringProcessor.ConflictsInTestsException) {
         KotlinTestUtils.assertEqualsToFile(conflictFile, e.messages.sorted().joinToString("\n"))
+        PsiDocumentManager.getInstance(project).commitDocument(document)
 
         BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts<Throwable> {
             // Run refactoring again with ConflictsInTestsException suppressed

@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_fileFacadeBecomesMultifile-a.kotlin_module
+  UtilKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/fileFacadeBecomesMultifile/a/util.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_fileFacadeBecomesMultifile-a.kotlin_module
+  UseKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/fileFacadeBecomesMultifile/a/use.kt
+End of files
+------------------------------------------
+Exit code: OK

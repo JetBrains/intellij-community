@@ -10,4 +10,4 @@ import kotlinx.coroutines.launch
 fun CoroutineScope.test(context: CoroutineContext) {
     launch(context) {}
 }
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutineContextWithJobInspection

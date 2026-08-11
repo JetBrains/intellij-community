@@ -1,5 +1,7 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mcpserver.impl.util
 
+import com.intellij.mcpserver.mcpFail
 import com.intellij.openapi.diagnostic.thisLogger
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -47,7 +49,7 @@ class CallableBridge(private val callable: KCallable<*>, private val thisRef: An
       }
       val argElement = args[parameter.name]
       if (argElement == null && parameter.isOptional) continue
-      if (argElement == null) error("No argument is passed for required parameter '${parameter.name}'")
+      if (argElement == null) mcpFail("No argument is passed for required parameter '${parameter.name}'")
       val serializer = serializerOrNull(parameter.type) ?: error("Parameter '${parameter.name}' is not serializable and is not provided explicitly")
       val decodedArg = json.decodeFromJsonElement(serializer, argElement)
       argMap[parameter] = decodedArg

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.execution.Platform;
@@ -185,6 +185,14 @@ final class SettingsHelper {
       args = ArrayUtil.mergeArrays(args, "--disable-gpu-process-crash-limit");
       if (doTrackGPUCrashes != null)
         doTrackGPUCrashes.set(true);
+    }
+
+    if (settings.windowless_rendering_enabled && RegistryManager.getInstance().is("ide.browser.jcef.osr.siteIsolation.disable")) {
+      // In OSR mode wheel events routed to an unscrollable cross-origin iframe are not bubbled back to the parent page,
+      // so page scrolling gets stuck while the pointer is over such an iframe, e.g. a YouTube embed on the What's New page.
+      // Disabling site isolation keeps cross-origin iframes in the parent's renderer where Blink handles scroll chaining itself.
+      // See https://github.com/chromiumembedded/cef/issues/3325
+      args = ArrayUtil.mergeArrays(args, "--disable-site-isolation-trials");
     }
 
     // Sometimes it's useful to be able to pass any additional keys (see IDEA-248140)

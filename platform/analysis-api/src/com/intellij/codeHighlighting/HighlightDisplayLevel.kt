@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.ui.IconManager
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.openapi.editor.colors.CachedVersionedColorScheme
 import com.intellij.util.ui.ColorIcon
 import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -266,6 +267,17 @@ open class HighlightDisplayLevel(severity: HighlightSeverity) {
 sealed interface HighlightDisplayLevelColoredIcon : Icon {
   fun getColor(): Color
   fun getIcon(): Icon
+
+  @Internal
+  companion object {
+    /**
+     * Returns a colorized version of [baseIcon].
+     * The color is based on the text attributes represented by given [key]
+     * and, simply put, repeats the color that highlights the relevant text range.
+     */
+    fun colorizeFromAttributes(baseIcon: Icon, key: TextAttributesKey): HighlightDisplayLevelColoredIcon =
+      HighlightDisplayLevelColorizedIcon(key, baseIcon)
+  }
 }
 
 private class HighlightDisplayLevelColorIcon(size: Int, color: Color) : ColorIcon(size, color), HighlightDisplayLevelColoredIcon {
@@ -278,21 +290,16 @@ private class HighlightDisplayLevelColorizedIcon(
   private val key: TextAttributesKey,
   baseIcon: Icon,
 ) : Icon, HighlightDisplayLevelColoredIcon {
+  private val cachedColor: CachedVersionedColorScheme<Color> = CachedVersionedColorScheme { getColorFromAttributes() ?: JBColor.GRAY }
+
   private val baseIcon = IconManager.getInstance().colorizedIcon(baseIcon = baseIcon, colorProvider = ::getColor)
 
-  private var lastEditorColorManagerModCounter = -1L
-  private var lastColor: Color? = null
-
-  override fun getColor(): Color = getColorFromAttributes(key) ?: JBColor.GRAY
+  override fun getColor(): Color = cachedColor.get()
   override fun getIcon(): Icon  = baseIcon
 
-  private fun getColorFromAttributes(key: TextAttributesKey): Color? {
+  private fun getColorFromAttributes(): Color? {
     val editorColorManager = EditorColorsManager.getInstance()
                              ?: return key.getDefaultAttributes().errorStripeColor
-    lastColor?.takeIf { editorColorManager.schemeModificationCounter == lastEditorColorManagerModCounter}?.let {
-      return it
-    }
-
     val attributes = editorColorManager.getGlobalScheme().getAttributes(key)
     val stripe = attributes?.errorStripeColor
     val result = when {
@@ -300,9 +307,6 @@ private class HighlightDisplayLevelColorizedIcon(
       attributes == null -> null
       else -> attributes.effectColor ?: attributes.foregroundColor ?: attributes.backgroundColor
     }
-
-    lastEditorColorManagerModCounter = editorColorManager.schemeModificationCounter
-    lastColor = result
     return result
   }
 

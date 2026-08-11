@@ -1,0 +1,4 @@
+MarkdownFile
+  MarkdownParagraph(Markdown:PARAGRAPH)
+    MarkdownAtPath(Markdown:Markdown:AT_PATH)
+      PsiElement(Markdown:Markdown:AT_PATH_TOKEN)('@README.md')

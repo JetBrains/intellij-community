@@ -254,6 +254,10 @@ public class PyElementVisitor extends PsiElementVisitor {
     visitPyExpression(node);
   }
 
+  public void visitPyStarArgument(@NotNull PyStarArgument node) {
+    visitPyExpression(node);
+  }
+
   public void visitPySubscriptionExpression(@NotNull PySubscriptionExpression node) {
     visitPyExpression(node);
   }

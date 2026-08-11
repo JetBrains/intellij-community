@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net
 
 import com.intellij.openapi.diagnostic.debug
@@ -12,7 +12,6 @@ import java.net.ProxySelector
 import java.net.SocketAddress
 import java.net.URI
 import java.net.URL
-import java.util.Collections
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
@@ -44,17 +43,17 @@ class IdeProxySelector(
       configurationProvider.getProxyConfiguration()
     }
     catch (_: CancellationException) {
-      LOG.debug { "$uri: no proxy, cancelled" }
+      LOG.debug { "$uri: no proxy: canceled" }
       return NO_PROXY_LIST
     }
     catch (e: Exception) {
-      LOG.error("$uri: no proxy, failed to get proxy configuration", e)
+      LOG.error("$uri: no proxy: failed to get proxy configuration", e)
       return NO_PROXY_LIST
     }
 
     when (conf) {
       is ProxyConfiguration.DirectProxy -> {
-        LOG.debug { "$uri: no proxy, DIRECT configuration" }
+        LOG.debug { "$uri: no proxy: DIRECT configuration" }
         return NO_PROXY_LIST
       }
       is ProxyConfiguration.AutoDetectProxy, is ProxyConfiguration.ProxyAutoConfiguration -> {
@@ -62,12 +61,13 @@ class IdeProxySelector(
       }
       is ProxyConfiguration.StaticProxyConfiguration -> {
         if (getExceptionsMatcher(conf.exceptions).test(uri.host ?: "")) {
-          LOG.debug { "$uri: no proxy, uri is in exception list" }
+          LOG.debug { "$uri: no proxy; the URI is in the exception list" }
           return NO_PROXY_LIST
         }
         val proxy = conf.asJavaProxy()
         LOG.debug { "$uri: proxy $proxy" }
-        return Collections.singletonList(proxy)
+        @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+        return java.util.List.of(proxy)
       }
     }
   }
@@ -120,15 +120,15 @@ class IdeProxySelector(
         NetUtils.getProxySelector(pacUrl?.toString())
       }
       catch (e: Exception) {
-        LOG.warn("proxy auto-configuration has failed ${pacUrl?.let { "(url=$it)" }}", e)
+        LOG.warn("proxy autoconfiguration has failed ${pacUrl?.let { "(url=$it)" }}", e)
         null
       }
       val resultSelector = detectedSelector ?: DirectSelector.also {
         if (pacUrl != null) {
-          LOG.warn("failed to configure proxy by pacUrl=$pacUrl, using NO_PROXY")
+          LOG.warn("failed to configure a proxy by pacUrl=$pacUrl, using NO_PROXY")
         }
         else {
-          LOG.info("unable to autodetect proxy settings, using NO_PROXY")
+          LOG.info("unable to autodetect proxy settings; using NO_PROXY")
         }
       }
       if (pacUrl == null) {
@@ -165,6 +165,6 @@ class IdeProxySelector(
 }
 
 private object DirectSelector : ProxySelector() {
-  override fun select(uri: URI?): List<Proxy?>? = NO_PROXY_LIST
+  override fun select(uri: URI?): List<Proxy?> = NO_PROXY_LIST
   override fun connectFailed(uri: URI?, sa: SocketAddress?, ioe: IOException?) = Unit
 }

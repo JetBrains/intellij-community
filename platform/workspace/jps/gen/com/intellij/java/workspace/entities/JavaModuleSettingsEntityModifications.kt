@@ -26,7 +26,7 @@ interface JavaModuleSettingsEntityBuilder : WorkspaceEntityBuilder<JavaModuleSet
 }
 
 internal object JavaModuleSettingsEntityType : EntityType<JavaModuleSettingsEntity, JavaModuleSettingsEntityBuilder>() {
-  override val entityClass: Class<JavaModuleSettingsEntity> get() = JavaModuleSettingsEntity::class.java
+  override val entityImplClass: Class<*> get() = JavaModuleSettingsEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = JavaModuleSettingsEntityImpl.Builder::class.java
   operator fun invoke(
     inheritedCompilerOutput: Boolean,

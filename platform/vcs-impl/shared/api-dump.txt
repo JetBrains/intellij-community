@@ -398,6 +398,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesListView
 - sf:MODIFIED_WITHOUT_EDITING_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:UNVERSIONED_FILE_PATHS_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>(com.intellij.openapi.project.Project,Z):V
+- s:canExpandSafe(javax.swing.tree.DefaultMutableTreeNode):Z
 - dropSelectionButUnderPoint(java.awt.Point):V
 - expandSafe(javax.swing.tree.DefaultMutableTreeNode):V
 - findNodeInTree(java.lang.Object):com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
@@ -498,6 +499,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesTree
 - setInclusionListener(java.lang.Runnable):V
 - setInclusionModel(com.intellij.openapi.vcs.changes.InclusionModel):V
 - setKeepTreeState(Z):V
+- setModel(javax.swing.tree.TreeModel):V
 - setScrollToSelection(Z):V
 - setSelectedChanges(java.util.Collection):V
 - setSelectionMode(I):V

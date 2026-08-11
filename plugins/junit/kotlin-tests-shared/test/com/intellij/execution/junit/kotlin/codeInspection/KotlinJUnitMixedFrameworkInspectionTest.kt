@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
 import com.intellij.junit.testFramework.JUnitMixedFrameworkInspectionTestBase
@@ -183,6 +183,25 @@ abstract class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInsp
       public class MyTest : JUnit4TestCase() {
         @org.junit.jupiter.api.Test
         public fun <warning descr="Method 'testFoo()' annotated with '@Test' inside class extending JUnit 4 TestCase">testFoo</warning>() { }
+      }
+    """.trimIndent(), fileName = "MyTest")
+  }
+
+  fun `test highlighting junit 5 test case with misplaced junit 4 ignore on multiple methods`() {
+    myFixture.testHighlighting(
+      JvmLanguage.KOTLIN, """
+      public class MyTest {
+        @org.junit.jupiter.api.Disabled
+        @org.junit.jupiter.api.Test
+        public fun foo() { }
+
+        @org.junit.Ignore
+        @org.junit.jupiter.params.ParameterizedTest
+        public fun <warning descr="Method 'bar()' annotated with '@Ignore' inside class extending JUnit 5 TestCase">bar</warning>(value: Int) { }
+
+        @org.junit.Ignore
+        @org.junit.jupiter.params.ParameterizedTest
+        public fun <warning descr="Method 'bar2()' annotated with '@Ignore' inside class extending JUnit 5 TestCase">bar2</warning>(value: Int) { }
       }
     """.trimIndent(), fileName = "MyTest")
   }

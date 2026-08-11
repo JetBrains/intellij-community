@@ -745,6 +745,14 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
         fun simpleIterable(x: Int, y: Int) { System.out.println("${'$'}x, ${'$'}y") }
 
         @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("sequence")
+        fun simpleSequence(x: Int, y: Int) { System.out.println("${'$'}x, ${'$'}y") }
+
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("customIterator")
+        fun simpleCustomIterator(x: Int, y: Int) { println("${'$'}x, ${'$'}y") }
+
+        @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource(value = ["stream", "iterator", "iterable"])
         fun parametersArray(x: Int, y: Int) { System.out.println("${'$'}x, ${'$'}y") }
 
@@ -782,6 +790,13 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
           
           @JvmStatic
           fun iterable(): Iterable<org.junit.jupiter.params.provider.Arguments>? { return null }
+
+          @JvmStatic
+          fun sequence(): Sequence<org.junit.jupiter.params.provider.Arguments>? { return null }
+
+          @JvmStatic
+          fun customIterator(): CustomIterator<org.junit.jupiter.params.provider.Arguments> =
+            CustomIterator(listOf(org.junit.jupiter.params.provider.Arguments.of(1, 2)))
           
           @JvmStatic
           fun argumentsArrayProvider(): Array<org.junit.jupiter.params.provider.Arguments> { 
@@ -797,6 +812,10 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
           @JvmStatic
           fun intStreamProvider(): java.util.stream.IntStream? { return null }
         }
+      }
+
+      class CustomIterator<T>(private val values: Iterable<T>) {
+        fun iterator(): Iterator<T> = values.iterator()
       }
       
       class MultiSourceTest: MyMethodSourceInterface {

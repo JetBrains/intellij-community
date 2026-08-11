@@ -65,14 +65,14 @@ final class SmartExtensionPoint<T> {
 
   public void addExplicitExtension(@NotNull T extension) {
     synchronized (lock) {
-      explicitExtensions = explicitExtensions.add(extension);
+      explicitExtensions = explicitExtensions.adding(extension);
       cache = null;
     }
   }
 
   public void removeExplicitExtension(@NotNull T extension) {
     synchronized (lock) {
-      explicitExtensions = explicitExtensions.remove(extension);
+      explicitExtensions = explicitExtensions.removing(extension);
       cache = null;
     }
   }
@@ -99,7 +99,7 @@ final class SmartExtensionPoint<T> {
 
       // EP will not add duplicated listener, so, it is safe to not care about is already added
       extensionPoint.addExtensionPointListener(extensionPointAndAreaListener, false, null);
-      result = explicitExtensions.isEmpty() ? extensions : explicitExtensions.addAll(extensions);
+      result = explicitExtensions.isEmpty() ? extensions : explicitExtensions.addingAll(extensions);
       cache = result;
       return result;
     }

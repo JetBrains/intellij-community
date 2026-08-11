@@ -1,5 +1,5 @@
-"""An helper file for the pydev debugger (REPL) console
-"""
+"""An helper file for the pydev debugger (REPL) console"""
+
 import sys
 import traceback
 from _pydevd_bundle.pydevconsole_code import InteractiveConsole, _EvalAwaitInNewEventLoop

@@ -236,7 +236,7 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
       if (mousePressType == MousePressType.Popup || !selectedActionEnabled()) {
         showActionGroupPopup(myActionGroup, event);
       }
-      else {
+      else if (mousePressType == MousePressType.Action) {
         selectedAction.actionPerformed(event);
       }
     }

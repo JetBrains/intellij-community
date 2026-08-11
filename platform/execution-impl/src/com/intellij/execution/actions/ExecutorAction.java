@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
-import com.intellij.execution.ExecutionActionSuppressor;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorActionStatus;
@@ -43,8 +42,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.ide.core.permissions.Permission;
-import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -59,6 +56,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.Icon;
@@ -67,15 +65,14 @@ import javax.swing.JList;
 import java.awt.Component;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.execution.PermissionsKt.getFullRunAccess;
 import static java.util.Collections.emptyList;
 
 @ApiStatus.Internal
-public class ExecutorAction extends AnAction implements DumbAware, RequiresPermissions, ActionIdProvider {
+public class ExecutorAction extends AnAction implements DumbAware, ActionIdProvider {
 
   public static final Key<Boolean> WOULD_BE_ENABLED_BUT_STARTING = Key.create("WOULD_BE_ENABLED_BUT_STARTING");
 
@@ -128,12 +125,10 @@ public class ExecutorAction extends AnAction implements DumbAware, RequiresPermi
       presentation.setIcon(getInformativeIcon(project, selectedSettings, e));
       RunConfiguration configuration = selectedSettings.getConfiguration();
       Ref<Boolean> isStartingTracker = Ref.create(false);
-      if (!isSuppressed(project)) {
-        enabled = ExecutorRegistryImpl.RunnerHelper.canRun(project, myExecutor, configuration, isStartingTracker);
-        if (enabled && isStartingTracker.get() == Boolean.TRUE) {
-          enabled = false;
-          presentation.putClientProperty(WOULD_BE_ENABLED_BUT_STARTING, true);
-        }
+      enabled = ExecutorRegistryImpl.RunnerHelper.canRun(project, myExecutor, configuration, isStartingTracker);
+      if (enabled && isStartingTracker.get() == Boolean.TRUE) {
+        enabled = false;
+        presentation.putClientProperty(WOULD_BE_ENABLED_BUT_STARTING, true);
       }
       if (!(configuration instanceof CompoundRunConfiguration)) {
         runConfigAsksToHideDisabledExecutorButtons = configuration.hideDisabledExecutorButtons();
@@ -232,9 +227,10 @@ public class ExecutorAction extends AnAction implements DumbAware, RequiresPermi
     Project project = Objects.requireNonNull(e.getProject());
 
     VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
-    if (files.length == 1) {
+    VirtualFile[] validFiles = Arrays.stream(files).filter(f -> f.isValid()).toArray(VirtualFile[]::new);
+    if (validFiles.length == 1) {
       // There's only one visible editor, let's use the file from this editor, even if the editor is not in focus.
-      PsiFile psiFile = PsiManager.getInstance(project).findFile(files[0]);
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(validFiles[0]);
       if (psiFile == null) {
         String tooltip = ExecutionBundle.message("run.button.on.toolbar.tooltip.current.file.not.runnable");
         return RunCurrentFileActionStatus.createDisabled(tooltip, myExecutor.getIcon());
@@ -347,15 +343,8 @@ public class ExecutorAction extends AnAction implements DumbAware, RequiresPermi
     return cache.myRunConfigs;
   }
 
-  private @NotNull List<RunnerAndConfigurationSettings> filterConfigsThatHaveRunner(@NotNull List<? extends RunnerAndConfigurationSettings> runConfigs) {
+  private @NotNull @Unmodifiable List<RunnerAndConfigurationSettings> filterConfigsThatHaveRunner(@NotNull List<? extends RunnerAndConfigurationSettings> runConfigs) {
     return ContainerUtil.filter(runConfigs, config -> ProgramRunner.getRunner(myExecutor.getId(), config.getConfiguration()) != null);
-  }
-
-  private static boolean isSuppressed(Project project) {
-    for (ExecutionActionSuppressor suppressor : ExecutionActionSuppressor.EP_NAME.getExtensionList()) {
-      if (suppressor.isSuppressed(project)) return true;
-    }
-    return false;
   }
 
   protected Icon getInformativeIcon(@NotNull Project project, @NotNull RunnerAndConfigurationSettings selectedConfiguration,
@@ -481,11 +470,6 @@ public class ExecutorAction extends AnAction implements DumbAware, RequiresPermi
                                   @NotNull RunnerAndConfigurationSettings runConfig,
                                   @NotNull DataContext dataContext) {
     ExecutionUtil.doRunConfiguration(runConfig, myExecutor, null, null, dataContext, env -> env.setRunningCurrentFile(true));
-  }
-
-  @Override
-  public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
-    return List.of(getFullRunAccess());
   }
 
   private record RunCurrentFileInfo(

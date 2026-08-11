@@ -15,7 +15,6 @@ import com.intellij.ide.actions.ToolwindowFusEventFields
 import com.intellij.ide.actions.speedSearch.SpeedSearchAction
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.Disposable
@@ -60,12 +59,13 @@ import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabDockContainer
+import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabSupportUtil
 import com.intellij.toolWindow.FocusTask
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.toolWindow.ToolWindowProperty
 import com.intellij.ui.ClientProperty
-import com.intellij.ui.ComponentTreeWatcher
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.LayeredIcon
@@ -80,7 +80,6 @@ import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.content.tabs.TabbedContentAction
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ArrayUtil
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.cancelOnDispose
@@ -290,6 +289,9 @@ private val LOG = logger<ToolWindowManagerImpl>()
 
     val decorator = InternalDecoratorImpl(this, contentUi!!, decoratorChild)
     this.decorator = decorator
+    if (ToolWindowEditorTabSupportUtil.hasSupport(id)) {
+      ToolWindowEditorTabDockContainer.install(toolWindowManager.project, id, decorator)
+    }
 
     decorator.applyWindowInfo(windowInfo)
     decorator.addComponentListener(object : ComponentAdapter() {
@@ -300,15 +302,6 @@ private val LOG = logger<ToolWindowManagerImpl>()
         onMovedOrResized()
       }
     })
-    object : ComponentTreeWatcher(ArrayUtil.EMPTY_CLASS_ARRAY) {
-      override fun processComponent(component: Component) {
-        if (component !is ActionToolbar) return
-        ToggleToolbarAction.updateToolbarVisibility(
-          this@ToolWindowImpl, component, PropertiesComponent.getInstance(project))
-      }
-
-      override fun unprocessComponent(component: Component) = Unit
-    }.register(decorator)
     if (ExperimentalUI.isNewUI()) {
       scrollPaneTracker = ScrollPaneTracker(container = decorator, filter = { true }) {
         updateScrolledState()
@@ -645,7 +638,7 @@ private val LOG = logger<ToolWindowManagerImpl>()
       contentManager.value.addContentManagerListener(listener)
     }
     else {
-      pendingContentManagerListeners = pendingContentManagerListeners.add(listener)
+      pendingContentManagerListeners = pendingContentManagerListeners.adding(listener)
     }
   }
 
@@ -869,7 +862,6 @@ private val LOG = logger<ToolWindowManagerImpl>()
         }
         group.addSeparator()
       }
-      group.addAction(ActionManager.getInstance().getAction("MoveToolWindowTabToEditorAction"))
       group.add(ActionManager.getInstance().getAction(SpeedSearchAction.ID))
       group.addSeparator()
       contentManager.valueIfInitialized?.let {

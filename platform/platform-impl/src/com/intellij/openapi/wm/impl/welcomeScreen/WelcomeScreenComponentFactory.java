@@ -84,6 +84,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
+@ApiStatus.Internal
 public final class WelcomeScreenComponentFactory {
   static @NotNull JComponent createSmallLogo() {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();

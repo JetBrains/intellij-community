@@ -5,9 +5,10 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.isBooleanType
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -21,16 +22,13 @@ import org.jetbrains.kotlin.psi.buildExpression
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.util.match
-import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object DemorgansLawUtils {
     data class Context(val pointers: List<SmartPsiElementPointer<KtExpression>>)
 
-    @OptIn(UnsafeCastFunction::class)
     fun prepareContext(operands: List<KtExpression>): Context {
         val pointers = operands.asReversed().map { operand ->
-            operand.safeAs<KtQualifiedExpression>()?.invertSelectorFunction()
+            (operand as? KtQualifiedExpression)?.invertSelectorFunction()
                 ?: operand.negate(reformat = false) { analyze(it) { it.isBoolean } }
         }.map { it.createSmartPointer() }
         return Context(pointers)
@@ -40,6 +38,7 @@ object DemorgansLawUtils {
         val operatorText = when (expression.operationToken) {
             KtTokens.ANDAND -> KtTokens.OROR.value
             KtTokens.OROR -> KtTokens.ANDAND.value
+            KtTokens.ELVIS -> return
             else -> throw IllegalArgumentException()
         }
         val newExpression = KtPsiFactory(expression.project).buildExpression {
@@ -89,7 +88,7 @@ object DemorgansLawUtils {
     @OptIn(KaContextParameterApi::class)
     context(_: KaSession)
     private val KtExpression?.isBoolean: Boolean
-        get() = this != null && this.expressionType?.isBooleanType == true
+        get() = this != null && this.expressionType?.classId == KaStandardTypeClassIds.BOOLEAN
 
     fun KtBinaryExpression.topmostBinaryExpression(): KtBinaryExpression =
         parentsWithSelf.takeWhile { it is KtBinaryExpression }.last() as KtBinaryExpression

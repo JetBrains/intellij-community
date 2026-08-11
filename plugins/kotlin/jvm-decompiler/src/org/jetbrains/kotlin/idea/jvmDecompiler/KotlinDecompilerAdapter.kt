@@ -12,7 +12,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.highlighter.isKotlinDecompiledFile
+import org.jetbrains.kotlin.idea.highlighting.isKotlinDecompiledFile
 import org.jetbrains.kotlin.idea.jvm.shared.internal.DecompileFailedException
 import org.jetbrains.kotlin.psi.KtFile
 

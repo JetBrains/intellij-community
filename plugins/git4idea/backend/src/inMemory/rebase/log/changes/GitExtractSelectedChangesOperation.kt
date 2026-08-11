@@ -59,10 +59,20 @@ internal class GitExtractSelectedChangesOperation(
     val secondCommit = objectRepo.commitTreeWithOverrides(targetCommit,
                                                           parentsOids = listOf(firstCommit),
                                                           message = newMessage.toByteArray())
-    val newHead = objectRepo.chainCommits(secondCommit, baseToHeadCommitsRange.drop(1))
+
+    val (newHead, rewrittenList) = objectRepo.chainCommits(secondCommit, baseToHeadCommitsRange.drop(1))
+
     LOG.info("Finish computing new head for extract operation")
 
-    return CommitEditingResult(newHead, requiresWorkingTreeUpdate = false, commitToFocus = secondCommit, commitToFocusOnUndo = targetCommit.oid)
+    // The original commit is rewritten as `firstCommit` (it keeps the original message);
+    // `secondCommit` holds the extracted changes and is a brand-new commit, so it is not part of the rewritten mapping.
+    val finalRewrittenList = listOf(targetCommit.oid to firstCommit) + rewrittenList
+
+    return CommitEditingResult(newHead,
+                               requiresWorkingTreeUpdate = false,
+                               commitToFocus = secondCommit,
+                               commitToFocusOnUndo = targetCommit.oid,
+                               rewrittenList = finalRewrittenList)
   }
 
   private fun splitTreeByPaths(

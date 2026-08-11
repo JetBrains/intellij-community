@@ -5,6 +5,7 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.xdebugger.hotswap.HotSwapSource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +19,18 @@ public abstract class HotSwapUI {
   public abstract void reloadChangedClasses(@NotNull DebuggerSession session, boolean compileBeforeHotswap,
                                             @Nullable HotSwapStatusListener callback);
 
+  public void reloadChangedClasses(@NotNull DebuggerSession session,
+                                   boolean compileBeforeHotswap,
+                                   @Nullable HotSwapStatusListener callback,
+                                   @Nullable HotSwapSource source) {
+    reloadChangedClasses(session, compileBeforeHotswap, callback);
+  }
+
   public abstract void compileAndReload(@NotNull DebuggerSession session, VirtualFile @NotNull ... files);
+
+  public void compileAndReload(@NotNull DebuggerSession session, @Nullable HotSwapSource source, VirtualFile @NotNull ... files) {
+    compileAndReload(session, files);
+  }
 
   public abstract void addListener(HotSwapVetoableListener listener);
 

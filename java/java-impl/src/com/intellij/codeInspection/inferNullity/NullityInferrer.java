@@ -69,7 +69,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings("DuplicatedCode") // there is a partial copy in org.jetbrains.kotlin.nj2k.J2KNullityInferrer
+@SuppressWarnings("DuplicatedCode") // there is a partial copy in org.jetbrains.kotlin.j2k.J2KNullityInferrer
 public class NullityInferrer {
   private static final int MAX_PASSES = 10;
   private int numAnnotationsAdded;
@@ -119,23 +119,11 @@ public class NullityInferrer {
     }
 
     final Query<PsiReference> references = ReferencesSearch.search(variable);
-    for (final PsiReference reference : references.asIterable()) {
-      final PsiElement element = reference.getElement();
-      if (!(element instanceof PsiReferenceExpression)) {
-        continue;
-      }
-      final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiAssignmentExpression assignment)) {
-        continue;
-      }
-
-      if (assignment.getLExpression().equals(element) &&
-          !expressionIsNeverNull(assignment.getRExpression())) {
-        return false;
-      }
-    }
-
-    return true;
+    return !references.anyMatch(reference ->
+      reference.getElement() instanceof PsiReferenceExpression element &&
+      element.getParent() instanceof PsiAssignmentExpression assignment &&
+      assignment.getLExpression().equals(element) &&
+      !expressionIsNeverNull(assignment.getRExpression()));
   }
 
   private boolean variableSometimesAssignedNull(@NotNull PsiVariable variable) {
@@ -145,22 +133,11 @@ public class NullityInferrer {
     }
 
     final Query<PsiReference> references = ReferencesSearch.search(variable);
-    for (final PsiReference reference : references.asIterable()) {
-      final PsiElement element = reference.getElement();
-      if (!(element instanceof PsiReferenceExpression)) {
-        continue;
-      }
-      final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiAssignmentExpression assignment)) {
-        continue;
-      }
-
-      if (assignment.getLExpression().equals(element) && expressionIsSometimesNull(assignment.getRExpression())) {
-        return true;
-      }
-    }
-
-    return false;
+    return references.anyMatch(reference ->
+      reference.getElement() instanceof PsiReferenceExpression element &&
+      element.getParent() instanceof PsiAssignmentExpression assignment &&
+      assignment.getLExpression().equals(element) &&
+      expressionIsSometimesNull(assignment.getRExpression()));
   }
 
   public void collect(@NotNull PsiFile file) {

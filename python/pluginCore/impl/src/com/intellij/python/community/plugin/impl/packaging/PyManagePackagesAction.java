@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.impl.packaging;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -11,7 +11,7 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 
-class PyManagePackagesAction extends AnAction {
+final class PyManagePackagesAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Module module = e.getData(PlatformCoreDataKeys.MODULE);

@@ -10,10 +10,8 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.ParentProviderElementType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.psi.impl.source.tree.ElementType.DOC_COMMENT;
@@ -21,26 +19,19 @@ import static com.intellij.psi.impl.source.tree.ElementType.KEYWORD_BIT_SET;
 import static com.intellij.psi.impl.source.tree.ElementType.LITERAL_BIT_SET;
 import static com.intellij.psi.impl.source.tree.ElementType.OPERATION_BIT_SET;
 
-//suppress to be clear, what type is used
-@SuppressWarnings("UnnecessarilyQualifiedStaticUsage")
 public abstract class AbstractBasicJavaFileHighlighter extends SyntaxHighlighterBase {
-  private final Map<IElementType, TextAttributesKey> ourMap1;
-  private final Map<IElementType, TextAttributesKey> ourMap2;
-
   protected final LanguageLevel myLanguageLevel;
 
   public AbstractBasicJavaFileHighlighter(@NotNull LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
-    ourMap1 = new HashMap<>();
-    ourMap2 = new HashMap<>();
+  }
 
+  protected static void fillStandardMaps(@NotNull Map<? super @NotNull IElementType, ? super @NotNull TextAttributesKey> ourMap1,
+                                         @NotNull Map<? super @NotNull IElementType, ? super @NotNull TextAttributesKey> ourMap2) {
     fillMap(ourMap1, KEYWORD_BIT_SET, JavaHighlightingColors.KEYWORD);
     fillMap(ourMap1, LITERAL_BIT_SET, JavaHighlightingColors.KEYWORD);
     fillMap(ourMap1, OPERATION_BIT_SET, JavaHighlightingColors.OPERATION_SIGN);
-
-    for (IElementType type : JavaDocTokenType.ALL_JAVADOC_TOKENS.getTypes()) {
-      ourMap1.put(type, JavaHighlightingColors.DOC_COMMENT);
-    }
+    fillMap(ourMap1, JavaDocTokenType.ALL_JAVADOC_TOKENS, JavaHighlightingColors.DOC_COMMENT);
 
     ourMap1.put(JavaTokenType.INTEGER_LITERAL, JavaHighlightingColors.NUMBER);
     ourMap1.put(JavaTokenType.LONG_LITERAL, JavaHighlightingColors.NUMBER);
@@ -80,20 +71,5 @@ public abstract class AbstractBasicJavaFileHighlighter extends SyntaxHighlighter
 
     ourMap1.put(JavaDocTokenType.DOC_TAG_NAME, JavaHighlightingColors.DOC_COMMENT);
     ourMap2.put(JavaDocTokenType.DOC_TAG_NAME, JavaHighlightingColors.DOC_COMMENT_TAG);
-    //noinspection AbstractMethodCallInConstructor
-    initAdditional(ourMap1, ourMap2);
-  }
-
-  protected abstract void initAdditional(@NotNull Map<IElementType, TextAttributesKey> map1,
-                                         @NotNull Map<IElementType, TextAttributesKey> map2);
-
-  @Override
-  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
-    while (tokenType instanceof ParentProviderElementType parentProviderElementType) {
-      if (parentProviderElementType.getParents().size() == 1) {
-        tokenType = parentProviderElementType.getParents().iterator().next();
-      }
-    }
-    return pack(ourMap1.get(tokenType), ourMap2.get(tokenType));
   }
 }

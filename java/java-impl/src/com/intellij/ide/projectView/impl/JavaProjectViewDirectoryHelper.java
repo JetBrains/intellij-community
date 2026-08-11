@@ -31,13 +31,13 @@ public final class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHe
   }
 
   @Override
-  public @Nullable String getLocationString(@NotNull PsiDirectory directory, boolean includeUrl, boolean includeRootType) {
+  public @Nullable String getLocationString(@NotNull PsiDirectory directory, boolean includeUrl, boolean includeRootType, boolean includeModuleAdditionalInfo) {
     String result = null;
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
-    if (aPackage != null && ProjectRootsUtil.isSourceRoot(directory) && !isInsideInternalModule(directory)) {   //package prefix
+    if (includeModuleAdditionalInfo && aPackage != null && ProjectRootsUtil.isSourceRoot(directory) && !isInsideInternalModule(directory)) {   //package prefix
       result = StringUtil.nullize(aPackage.getQualifiedName(), true);
     }
-    String baseString = super.getLocationString(directory, includeUrl, includeRootType);
+    String baseString = super.getLocationString(directory, includeUrl, includeRootType, includeModuleAdditionalInfo);
     if (result == null) return baseString;
     if (baseString == null) return result;
     return result  + "," + FontUtil.spaceAndThinSpace() + baseString;

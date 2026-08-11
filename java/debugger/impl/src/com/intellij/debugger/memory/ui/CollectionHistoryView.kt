@@ -13,12 +13,9 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl.getValueMarkers
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.memory.utils.InstanceJavaValue
 import com.intellij.debugger.memory.utils.InstanceValueDescriptor
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl
-import com.intellij.debugger.ui.impl.watch.MessageDescriptor
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorProvider
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl
 import com.intellij.debugger.ui.tree.FieldDescriptor
-import com.intellij.debugger.ui.tree.NodeDescriptor
 import com.intellij.debugger.ui.tree.ValueDescriptor
 import com.intellij.debugger.ui.tree.render.ChildrenBuilder
 import com.intellij.debugger.ui.tree.render.ClassRenderer
@@ -26,7 +23,6 @@ import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.debugger.ui.tree.render.NodeRenderer
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
@@ -60,7 +56,7 @@ class CollectionHistoryView(private val myClsName: String,
   private val mySuspendContext = myDebugProcess.suspendManager.pausedContext
   private val myStackFrameList = StackFrameList(myDebugProcess.project)
   private val mySplitter = JBSplitter(false, DEFAULT_SPLITTER_PROPORTION)
-  private val myNodeManager = MyNodeManager(myDebugSession.project)
+  private val myNodeManager = NodeManagerImpl(myDebugSession.project)
   private val myHistoryInstancesTree: InstancesTree = InstancesTree(myDebugProcess.project, myDebugSession.debugProcess.editorsProvider,
                                                                     getValueMarkers(myDebugProcess)) { }
   private val myHistoryTree: InstancesTree = InstancesTree(myDebugProcess.project, myDebugSession.debugProcess.editorsProvider,
@@ -222,20 +218,6 @@ class CollectionHistoryView(private val myClsName: String,
 
   fun getComponent(): JComponent {
     return myMainComponent
-  }
-
-  private class MyNodeManager(project: Project?) : NodeManagerImpl(project, null) {
-    override fun createNode(descriptor: NodeDescriptor, evaluationContext: EvaluationContext): DebuggerTreeNodeImpl {
-      return DebuggerTreeNodeImpl(null, descriptor)
-    }
-
-    override fun createMessageNode(descriptor: MessageDescriptor): DebuggerTreeNodeImpl {
-      return DebuggerTreeNodeImpl(null, descriptor)
-    }
-
-    override fun createMessageNode(message: String): DebuggerTreeNodeImpl {
-      return DebuggerTreeNodeImpl(null, MessageDescriptor(message))
-    }
   }
 
   private inner class CollectionHistoryRenderer : ClassRenderer() {

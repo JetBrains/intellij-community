@@ -4,7 +4,9 @@ package com.intellij.openapi.module;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class OrderEntryNavigatable implements Navigatable {
   private final Module myModule;
   private final OrderEntry myOrderEntry;

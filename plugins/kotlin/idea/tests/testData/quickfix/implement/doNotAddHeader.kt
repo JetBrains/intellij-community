@@ -1,7 +1,7 @@
 // "Implement members" "true"
 // ENABLE_MULTIPLATFORM
 // ERROR: Expected interface 'InterfaceWithFuns' has no actual declaration in module light_idea_test_case for JVM
-// K2_ERROR: Class 'ChildOfInterface' is not abstract and does not implement abstract member:<br>expect fun funInInterface(): Unit
+// K2_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
 
 fun TODO(s: String): Nothing = null!!
 

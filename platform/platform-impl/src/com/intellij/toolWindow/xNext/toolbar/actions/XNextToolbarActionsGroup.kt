@@ -7,21 +7,12 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionWrapper
-import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.project.DumbAware
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal class XNextToolbarActionsGroup : ActionGroup(), DumbAware {
   private val actionList = arrayListOf<AnAction>()
 
   init {
-    ActionManager.getInstance().getAction("MiniAiChat.Toggle")?.let {
-      actionList.add(AnActionWrapper(it) )
-    }
-
-    actionList.add(Separator.create())
-
     ActionManager.getInstance().getAction("HideAllWindows")?.let {
       actionList.add(object : AnActionWrapper(it) {
         init {

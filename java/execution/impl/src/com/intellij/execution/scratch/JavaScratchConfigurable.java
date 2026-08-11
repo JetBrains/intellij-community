@@ -78,7 +78,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
           toSelect = LocalFileSystem.getInstance().findFileByPath(scratchesRoot);
         }
         final VirtualFile file =
-          FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(), myScratchPathField.getComponent(), project, toSelect);
+          FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withEnvironmentRestricted(true), myScratchPathField.getComponent(), project, toSelect);
         if (file != null) {
           setVFileToEditor(file);
         }

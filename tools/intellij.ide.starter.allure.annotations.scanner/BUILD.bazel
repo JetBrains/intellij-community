@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.ide.starter.allure.annotations.scanner` start
-
 jvm_library(
     name = "ide-starter-allure-annotations-scanner",
     srcs = glob(
@@ -16,7 +15,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/gson",
     ],
@@ -34,6 +33,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":ide-starter-allure-annotations-scanner",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/gson:gson_test_lib",
     ],
 )

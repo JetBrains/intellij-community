@@ -1,6 +1,6 @@
 // "Create class 'XImpl'" "true"
-// K2_ERROR: Unresolved reference 'XImpl'.
-// K2_AFTER_ERROR: Return type of 'fun f(): XImpl' is not a subtype of the return type of the overridden member 'fun f(): X' defined in 'A'.
+// K2_AFTER_ERROR: RETURN_TYPE_MISMATCH_ON_OVERRIDE
+// K2_ERROR: UNRESOLVED_REFERENCE
 interface X
 interface A {
     fun f(): X

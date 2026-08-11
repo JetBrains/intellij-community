@@ -1,5 +1,5 @@
 // "Initialize with constructor parameter" "true"
-// K2_ERROR: Property must be initialized.
+// K2_ERROR: MUST_BE_INITIALIZED
 open class A(n: Int, n1: Int) {
     var n: Int = n1
         get() = 1

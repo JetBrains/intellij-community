@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.codeInsight.overrideImplement` start
-
 create_kotlinc_options(
     name = "custom_kotlin-codeInsight-overrideImplement",
     opt_in = [
@@ -25,13 +24,17 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_kotlin-codeInsight-overrideImplement",
     module_name = "intellij.kotlin.codeInsight.overrideImplement",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
         "//platform/analysis-api:analysis",
         "//platform/code-style-api:codeStyle",
         "//platform/core-api:core",
@@ -41,7 +44,6 @@ jvm_library(
         "//plugins/kotlin/base/resources:kotlin-base-resources",
         "//plugins/kotlin/frontend-independent",
         "//plugins/kotlin/code-insight/api",
-        "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
         "//platform/core-impl",
         "//platform/lang-impl",
         "//platform/lang-api:lang",
@@ -51,7 +53,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
         "//plugins/kotlin/base/analysis",
-        "@lib//:kotlinc-analysis-api-impl-base",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
         "//plugins/kotlin/base/code-insight",
     ],
 )
@@ -69,6 +71,9 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-codeInsight-overrideImplement",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/core-api:core_test_lib",
@@ -78,7 +83,6 @@ jvm_library(
         "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
         "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
         "//plugins/kotlin/code-insight/api:api_test_lib",
-        "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/lang-api:lang_test_lib",
@@ -88,6 +92,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
         "//plugins/kotlin/base/analysis:analysis_test_lib",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_test_lib",
         "//plugins/kotlin/base/code-insight:code-insight_test_lib",
     ],
 )

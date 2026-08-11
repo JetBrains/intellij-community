@@ -20,5 +20,6 @@
   "imlTargets": [
     "@community//wintools:intellij.community.wintools.tests.iml"
   ],
-  "projectLibraries": {}
+  "projectLibraries": {},
+  "pluginDistributionTargets": {}
 }

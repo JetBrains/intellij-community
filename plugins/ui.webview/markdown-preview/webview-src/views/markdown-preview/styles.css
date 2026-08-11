@@ -1,0 +1,1032 @@
+/* Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */
+@import "katex/dist/katex.css";
+
+:root {
+  --markdown-preview-font-size: var(--ij-font-size, 13px);
+}
+
+html,
+body,
+.markdownPreview {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: auto;
+  color: var(--ij-text-primary);
+  background: var(--ij-bg-window);
+  font-family: var(--ij-font), sans-serif;
+}
+
+.markdownPreview {
+  --markdown-code-builtin: #A9B7C6;
+  --markdown-code-function: #FFC66D;
+  --markdown-code-keyword: #CC7832;
+  --markdown-code-line-height: 1.4em;
+  --markdown-code-meta: #BBB529;
+  --markdown-code-number: #6897BB;
+  --markdown-code-regexp: #287BDE;
+  --markdown-code-string: #6AAB73;
+  --markdown-code-symbol: #BBB529;
+  --markdown-code-tag: #E8BF6A;
+  --markdown-code-type: #A9B7C6;
+  --markdown-error: #C75450;
+  --markdown-mark-bg: #5B4A1C;
+  --markdown-source-selection-bg: var(--ij-bg-selected, rgba(53, 132, 228, 0.24));
+  --markdown-source-selection-border: var(--ij-accent, #3574F0);
+  --markdown-vcs-added-bg: var(--ij-success-soft, rgba(72, 169, 105, 0.16));
+  --markdown-vcs-added-border: var(--ij-success-border, var(--ij-success, #6DB083));
+  --markdown-vcs-modified-bg: var(--ij-accent-soft, rgba(53, 132, 228, 0.16));
+  --markdown-vcs-modified-border: var(--ij-accent-soft-border, var(--ij-accent, #3574F0));
+  --markdown-vcs-removed-bg: var(--ij-danger-soft, rgba(199, 84, 80, 0.16));
+  --markdown-vcs-removed-border: var(--ij-danger-border, var(--markdown-error));
+  box-sizing: border-box;
+  max-width: 980px;
+  padding: 20px 28px 48px;
+  font-size: var(--markdown-preview-font-size, var(--ij-font-size, 13px));
+  line-height: 1.6;
+  overflow-wrap: break-word;
+}
+
+.markdownPreviewContent {
+  display: contents;
+}
+
+html[data-theme="light"] .markdownPreview {
+  --markdown-code-builtin: #174AD4;
+  --markdown-code-function: #7A3E9D;
+  --markdown-code-keyword: #000080;
+  --markdown-code-meta: #808000;
+  --markdown-code-number: #1750EB;
+  --markdown-code-regexp: #067D17;
+  --markdown-code-string: #067D17;
+  --markdown-code-symbol: #871094;
+  --markdown-code-tag: #0033B3;
+  --markdown-code-type: #174AD4;
+  --markdown-error: #C75450;
+  --markdown-mark-bg: #FFF3B1;
+}
+
+.markdownPreview > :first-child {
+  margin-top: 0;
+}
+
+.markdownPreview > :last-child {
+  margin-bottom: 0;
+}
+
+.markdownPreview .is-source-selected,
+.markdownPreview .is-vcs-added,
+.markdownPreview .is-vcs-modified {
+  border-radius: 4px;
+}
+
+.markdownPreview .is-source-selected {
+  --markdown-current-decoration-bg: var(--markdown-source-selection-bg);
+  background: var(--markdown-source-selection-bg);
+  box-shadow: inset 3px 0 0 var(--markdown-source-selection-border);
+}
+
+.markdownPreview .is-vcs-added {
+  --markdown-current-decoration-bg: var(--markdown-vcs-added-bg);
+  background: var(--markdown-vcs-added-bg);
+  box-shadow: inset 3px 0 0 var(--markdown-vcs-added-border);
+}
+
+.markdownPreview .is-vcs-modified {
+  --markdown-current-decoration-bg: var(--markdown-vcs-modified-bg);
+  background: var(--markdown-vcs-modified-bg);
+  box-shadow: inset 3px 0 0 var(--markdown-vcs-modified-border);
+}
+
+.markdownPreview .is-source-selected code,
+.markdownPreview .is-source-selected kbd,
+.markdownPreview .is-source-selected pre,
+.markdownPreview .is-source-selected details,
+.markdownPreview .is-source-selected .frontmatterBlock,
+.markdownPreview .is-source-selected .markdownImageBlock,
+.markdownPreview .is-source-selected .mermaidBlock,
+.markdownPreview .is-source-selected th,
+.markdownPreview .is-vcs-added code,
+.markdownPreview .is-vcs-added kbd,
+.markdownPreview .is-vcs-added pre,
+.markdownPreview .is-vcs-added details,
+.markdownPreview .is-vcs-added .frontmatterBlock,
+.markdownPreview .is-vcs-added .markdownImageBlock,
+.markdownPreview .is-vcs-added .mermaidBlock,
+.markdownPreview .is-vcs-added th,
+.markdownPreview .is-vcs-modified code,
+.markdownPreview .is-vcs-modified kbd,
+.markdownPreview .is-vcs-modified pre,
+.markdownPreview .is-vcs-modified details,
+.markdownPreview .is-vcs-modified .frontmatterBlock,
+.markdownPreview .is-vcs-modified .markdownImageBlock,
+.markdownPreview .is-vcs-modified .mermaidBlock,
+.markdownPreview .is-vcs-modified th {
+  background: var(--markdown-current-decoration-bg);
+}
+
+.markdownPreview .is-source-selected.is-vcs-added,
+.markdownPreview .is-source-selected.is-vcs-modified {
+  outline: 1px solid var(--markdown-source-selection-border);
+  outline-offset: 1px;
+}
+
+.markdownPreview .markdownRemovedBlockPlaceholder {
+  width: 100%;
+  height: 8px;
+  margin: 0 0 12px;
+  border-left: 3px solid var(--markdown-vcs-removed-border);
+  border-radius: 4px;
+  background: var(--markdown-vcs-removed-bg);
+}
+
+.markdownPreview .markdownFloatingRail,
+.markdownPreview .markdownFloatingPanel {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 20;
+  background: var(--ij-bg-panel);
+  box-shadow: var(--ij-popup-shadow);
+  opacity: 0.35;
+  transition: opacity 120ms ease-in-out;
+}
+
+.markdownPreview .markdownFloatingRail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.markdownPreview .markdownFloatingRailButton,
+.markdownPreview .markdownFloatingPanelCloseButton,
+.markdownPreview .markdownFontSizeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.markdownPreview .markdownFloatingRailButton {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--ij-border-strong);
+  border-radius: 4px;
+  color: var(--ij-text-secondary);
+  background: var(--ij-bg-panel);
+  box-shadow: var(--ij-popup-shadow);
+}
+
+.markdownPreview .markdownFloatingRailButton:hover,
+.markdownPreview .markdownFloatingRailButton:focus-visible,
+.markdownPreview .markdownFloatingRailButton.is-active,
+.markdownPreview .markdownFloatingPanelCloseButton:hover,
+.markdownPreview .markdownFontSizeButton:hover:not(:disabled),
+.markdownPreview .markdownTocLink:hover {
+  color: var(--ij-text-primary);
+  background: var(--ij-bg-hover);
+}
+
+.markdownPreview .markdownFloatingRail:hover,
+.markdownPreview .markdownFloatingRail:focus-within,
+.markdownPreview .markdownFloatingPanel:hover,
+.markdownPreview .markdownFloatingPanel:focus-within {
+  opacity: 1;
+}
+
+.markdownPreview .markdownFloatingRailButton:focus-visible,
+.markdownPreview .markdownFloatingPanelCloseButton:focus-visible,
+.markdownPreview .markdownFontSizeButton:focus-visible,
+.markdownPreview .markdownFontSizeSlider:focus-visible,
+.markdownPreview .markdownTocLink:focus-visible {
+  outline: none;
+  box-shadow: var(--ij-focus-ring);
+}
+
+.markdownPreview .markdownFloatingRailIcon {
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
+.markdownPreview .markdownTocRailIcon {
+  position: relative;
+}
+
+.markdownPreview .markdownTocRailIcon,
+.markdownPreview .markdownTocRailIcon::before,
+.markdownPreview .markdownTocRailIcon::after {
+  display: block;
+  width: 14px;
+  height: 1px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+.markdownPreview .markdownTocRailIcon::before,
+.markdownPreview .markdownTocRailIcon::after {
+  content: "";
+  position: absolute;
+  left: 0;
+}
+
+.markdownPreview .markdownTocRailIcon::before {
+  top: -5px;
+}
+
+.markdownPreview .markdownTocRailIcon::after {
+  top: 5px;
+}
+
+.markdownPreview .markdownFloatingPanel {
+  display: flex;
+  flex-direction: column;
+  right: 48px;
+  width: min(320px, calc(100vw - 24px));
+  max-height: min(480px, calc(100vh - 88px));
+  overflow: hidden;
+  border: 1px solid var(--ij-border-strong);
+  border-radius: 6px;
+  color: var(--ij-text-primary);
+}
+
+.markdownPreview .markdownFloatingPanelHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 4px 6px 4px 10px;
+  border-bottom: 1px solid var(--ij-border);
+}
+
+.markdownPreview .markdownFloatingPanelTitle {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: var(--ij-text-secondary);
+  font-size: var(--ij-font-size-medium);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.markdownPreview .markdownFloatingPanelCloseButton {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 4px;
+  color: var(--ij-text-secondary);
+  background: transparent;
+}
+
+.markdownPreview .markdownFloatingPanelCloseIcon {
+  width: 8px;
+  height: 8px;
+  border-top: 1px solid currentColor;
+  border-right: 1px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.markdownPreview .markdownFontSettingsPanel {
+  width: min(260px, calc(100vw - 24px));
+}
+
+.markdownPreview .markdownFontSettingsBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 10px;
+}
+
+.markdownPreview .markdownFontSetting {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.markdownPreview .markdownFontSizeHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.markdownPreview .markdownFontSizeSliderLabel {
+  min-width: 0;
+  flex: 1;
+  color: var(--ij-text-secondary);
+  font-size: var(--ij-font-size-medium);
+}
+
+.markdownPreview .markdownFontSizeValue {
+  flex: 0 0 auto;
+  color: var(--ij-text-primary);
+  font-size: var(--ij-font-size);
+  font-weight: 600;
+}
+
+.markdownPreview .markdownFontSizeSlider {
+  width: 100%;
+  accent-color: var(--ij-accent);
+}
+
+.markdownPreview .markdownFontSizeButtons {
+  display: flex;
+  gap: 4px;
+}
+
+.markdownPreview .markdownFontSizeButton {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 4px;
+  color: var(--ij-text-primary);
+  background: transparent;
+}
+
+.markdownPreview .markdownFontSizeButton:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.markdownPreview .markdownFontSizeButton img {
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
+.markdownPreview .markdownTocList {
+  margin: 0;
+  padding: 4px;
+  overflow: auto;
+  list-style: none;
+}
+
+.markdownPreview .markdownTocItem {
+  margin: 0;
+}
+
+.markdownPreview .markdownTocLink {
+  display: block;
+  width: 100%;
+  min-height: 24px;
+  padding: 4px 8px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.markdownPreview .markdownTocLink {
+  color: var(--ij-text-secondary);
+  background: transparent;
+  font: inherit;
+  font-size: var(--ij-font-size-medium);
+  line-height: var(--ij-line-height-compact);
+  text-align: left;
+}
+
+.markdownPreview .markdownTocLink.is-active {
+  color: var(--ij-text-primary);
+  background: var(--ij-bg-selected-muted);
+  box-shadow: inset 2px 0 0 var(--ij-accent);
+}
+
+.markdownPreview .markdownTocText {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .markdownPreview .markdownFloatingRail {
+    top: 8px;
+    right: 8px;
+  }
+
+  .markdownPreview .markdownFloatingPanel {
+    top: 8px;
+    right: 44px;
+    width: calc(100vw - 52px);
+    max-height: min(360px, calc(100vh - 72px));
+  }
+}
+
+.markdownPreview h1,
+.markdownPreview h2,
+.markdownPreview h3,
+.markdownPreview h4,
+.markdownPreview h5,
+.markdownPreview h6 {
+  margin: 1em 0 16px;
+  color: var(--ij-text-primary);
+  font-weight: bold;
+  line-height: 1.4;
+}
+
+.markdownPreview h1 {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ij-border);
+  font-size: 2em;
+}
+
+.markdownPreview h2 {
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--ij-border);
+  font-size: 1.8em;
+}
+
+.markdownPreview h3 {
+  font-size: 1.3em;
+}
+
+.markdownPreview h4,
+.markdownPreview h5,
+.markdownPreview h6 {
+  font-size: 1em;
+}
+
+.markdownPreview p,
+.markdownPreview ul,
+.markdownPreview ol,
+.markdownPreview blockquote,
+.markdownPreview details,
+.markdownPreview dl,
+.markdownPreview pre,
+.markdownPreview table,
+.markdownPreview .frontmatterBlock,
+.markdownPreview .markdownImageBlock,
+.markdownPreview .mermaidBlock,
+.markdownPreview .footnotes {
+  margin: 16px 0;
+}
+
+.markdownPreview ul,
+.markdownPreview ol {
+  padding-left: 26px;
+}
+
+.markdownPreview li + li {
+  margin-top: 4px;
+}
+
+.markdownPreview dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 12px;
+}
+
+.markdownPreview dt {
+  color: var(--ij-text-primary);
+  font-weight: 600;
+}
+
+.markdownPreview dd {
+  margin: 0;
+  color: var(--ij-text-secondary);
+}
+
+.markdownPreview .contains-task-list {
+  padding-left: 0;
+  list-style: none;
+}
+
+.markdownPreview .task-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+}
+
+.markdownPreview .task-list-item input[type="checkbox"] {
+  flex: none;
+  margin: 3px 0 0;
+}
+
+.markdownPreview a {
+  color: var(--ij-accent);
+  text-decoration: none;
+}
+
+.markdownPreview a:hover {
+  text-decoration: underline;
+}
+
+.markdownPreview .markdownPathLink {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--ij-accent);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: inherit;
+  animation: markdownPathLinkReveal 220ms ease-out;
+}
+
+.markdownPreview .markdownPathLink:hover,
+.markdownPreview .markdownPathLink:focus-visible {
+  text-decoration: underline;
+}
+
+.markdownPreview .markdownPathLink:focus-visible {
+  outline: none;
+  box-shadow: var(--ij-focus-ring);
+}
+
+.markdownPreview strong {
+  font-weight: bold;
+}
+
+.markdownPreview kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--ij-border-strong);
+  border-bottom-color: var(--ij-border);
+  border-radius: 4px;
+  color: var(--ij-text-primary);
+  background: var(--ij-bg-panel);
+  font: 0.85em/1.4 var(--ij-font), sans-serif;
+  box-shadow: inset 0 -1px 0 var(--ij-border);
+}
+
+.markdownPreview mark {
+  padding: 0 2px;
+  border-radius: 3px;
+  color: var(--ij-text-primary);
+  background: var(--markdown-mark-bg);
+}
+
+.markdownPreview summary {
+  cursor: pointer;
+  color: var(--ij-text-primary);
+  font-weight: 600;
+}
+
+.markdownPreview details {
+  padding: 8px 10px;
+  border: 1px solid var(--ij-border);
+  border-radius: 6px;
+  background: var(--ij-bg-panel);
+}
+
+.markdownPreview details > :last-child {
+  margin-bottom: 0;
+}
+
+.markdownPreview code {
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: var(--ij-text-primary);
+  background: var(--ij-bg-panel);
+  font-family: var(--ij-editor-font), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.92em;
+  font-variant-ligatures: var(--ij-editor-font-variant-ligatures);
+  font-feature-settings: var(--ij-editor-font-feature-settings);
+}
+
+.markdownPreview pre {
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid var(--ij-border);
+  border-radius: 6px;
+  background: var(--ij-bg-panel);
+}
+
+.markdownPreview pre code {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: var(--ij-editor-font-size);
+}
+
+.markdownPreview pre code.hljs {
+  display: block;
+  color: var(--ij-text-primary);
+  animation: markdownHighlightReveal 180ms ease-out;
+}
+
+.markdownPreview .codeFenceWithCommands {
+  position: relative;
+  margin: 0 0 12px;
+}
+
+.markdownPreview .codeFenceWithCommands pre {
+  margin: 0;
+  padding-left: 34px;
+}
+
+.markdownPreview .codeFenceWithCommands pre code {
+  line-height: var(--markdown-code-line-height);
+}
+
+.markdownPreview .codeFenceRunGutter {
+  position: absolute;
+  top: 12px;
+  left: 8px;
+  width: 18px;
+  min-height: var(--markdown-code-line-height);
+}
+
+.markdownPreview .markdownRunButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  opacity: 0.72;
+  cursor: pointer;
+  animation: markdownRunButtonReveal 160ms ease-out;
+}
+
+.markdownPreview .markdownRunButton:hover,
+.markdownPreview .markdownRunButton:focus-visible {
+  opacity: 1;
+}
+
+.markdownPreview .markdownRunIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.markdownPreview .markdownRunButton.is-block,
+.markdownPreview .markdownRunButton.is-line {
+  position: absolute;
+  left: 0;
+}
+
+.markdownPreview .markdownRunButton.is-block {
+  top: 0;
+}
+
+.markdownPreview .markdownRunButton.is-inline {
+  width: 1em;
+  height: 1em;
+  margin: 0 3px 0 0;
+  vertical-align: -0.12em;
+}
+
+.markdownPreview .markdownRunButton.is-inline img {
+  width: 1em;
+  height: 1em;
+}
+
+.markdownPreview .frontmatterBlock {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ij-border);
+}
+
+.markdownPreview .frontmatterMetadata {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.markdownPreview .frontmatterMetadata summary {
+  color: var(--ij-text-secondary);
+  font-size: var(--ij-font-size-medium);
+}
+
+.markdownPreview .frontmatterMetadata dl {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  margin: 8px 0 0;
+}
+
+.markdownPreview .frontmatterMetadataEntry {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 10px;
+}
+
+.markdownPreview .frontmatterMetadataEntry dt,
+.markdownPreview .frontmatterMetadataEntry dd {
+  overflow-wrap: anywhere;
+}
+
+.markdownPreview .hljs-comment,
+.markdownPreview .hljs-quote {
+  color: var(--ij-text-muted, var(--ij-text-secondary));
+  font-style: italic;
+}
+
+.markdownPreview .hljs-keyword,
+.markdownPreview .hljs-selector-tag,
+.markdownPreview .hljs-subst {
+  color: var(--markdown-code-keyword);
+}
+
+.markdownPreview .hljs-number,
+.markdownPreview .hljs-literal,
+.markdownPreview .hljs-variable,
+.markdownPreview .hljs-template-variable,
+.markdownPreview .hljs-tag .hljs-attr {
+  color: var(--markdown-code-number);
+}
+
+.markdownPreview .hljs-string,
+.markdownPreview .hljs-doctag {
+  color: var(--markdown-code-string);
+}
+
+.markdownPreview .hljs-title,
+.markdownPreview .hljs-section,
+.markdownPreview .hljs-selector-id {
+  color: var(--markdown-code-function);
+  font-weight: 600;
+}
+
+.markdownPreview .hljs-type,
+.markdownPreview .hljs-class .hljs-title {
+  color: var(--markdown-code-type);
+}
+
+.markdownPreview .hljs-tag,
+.markdownPreview .hljs-name,
+.markdownPreview .hljs-attribute {
+  color: var(--markdown-code-tag);
+}
+
+.markdownPreview .hljs-regexp,
+.markdownPreview .hljs-link {
+  color: var(--markdown-code-regexp);
+}
+
+.markdownPreview .hljs-symbol,
+.markdownPreview .hljs-bullet {
+  color: var(--markdown-code-symbol);
+}
+
+.markdownPreview .hljs-built_in,
+.markdownPreview .hljs-builtin-name {
+  color: var(--markdown-code-builtin);
+}
+
+.markdownPreview .hljs-meta {
+  color: var(--markdown-code-meta);
+}
+
+.markdownPreview .hljs-deletion {
+  color: var(--markdown-error);
+}
+
+.markdownPreview .hljs-addition {
+  color: var(--ij-success, #6DB083);
+}
+
+.markdownPreview .hljs-emphasis {
+  font-style: italic;
+}
+
+.markdownPreview .hljs-strong {
+  font-weight: bold;
+}
+
+.markdownPreview blockquote {
+  padding: 0 0 0 12px;
+  border-left: 3px solid var(--ij-border-strong);
+  color: var(--ij-text-secondary);
+}
+
+.markdownPreview table {
+  display: block;
+  max-width: 100%;
+  overflow: auto;
+  border-collapse: collapse;
+}
+
+.markdownPreview th,
+.markdownPreview td {
+  padding: 6px 10px;
+  border: 1px solid var(--ij-border);
+}
+
+.markdownPreview th {
+  background: var(--ij-bg-panel);
+  font-weight: bold;
+}
+
+.markdownPreview img {
+  max-width: 100%;
+  height: auto;
+}
+
+.markdownPreview .footnotes {
+  padding-top: 12px;
+  border-top: 1px solid var(--ij-border);
+  color: var(--ij-text-secondary);
+  font-size: var(--ij-font-size-medium);
+}
+
+.markdownPreview .footnotes h2,
+.markdownPreview .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.markdownImageBlock,
+.mermaidBlock {
+  min-height: 120px;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid var(--ij-border);
+  border-radius: 6px;
+  color: var(--ij-text-secondary);
+  background: var(--ij-bg-panel);
+}
+
+.markdownImageBlock.isInteractive,
+.mermaidBlock.isInteractive {
+  position: relative;
+  min-height: 160px;
+  padding: 0;
+  overflow: hidden;
+  resize: vertical;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.markdownImageBlock.isInteractive {
+  width: 100%;
+  aspect-ratio: var(--markdown-image-aspect-ratio, 16 / 9);
+}
+
+.mermaidBlock.isInteractive {
+  height: clamp(200px, 34vw, 420px);
+  max-height: min(80vh, 720px);
+}
+
+.markdownImageViewport,
+.mermaidViewport {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: move;
+  touch-action: none;
+}
+
+.markdownImageViewport:active,
+.mermaidViewport:active {
+  cursor: grabbing;
+}
+
+.markdownImageViewport img.markdownImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
+  pointer-events: none;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.mermaidViewport svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.markdownZoomToolbar {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--ij-border);
+  border-radius: 5px;
+  background: var(--ij-bg-panel);
+  box-shadow: 0 2px 6px color-mix(in srgb, black 18%, transparent);
+  cursor: default;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.markdownZoomToolbarButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  color: var(--ij-text-primary);
+  background: transparent;
+  cursor: default;
+}
+
+.markdownZoomToolbarButton:hover,
+.markdownZoomToolbarButton:focus-visible {
+  background: var(--ij-bg-hover, #00000012);
+}
+
+.markdownZoomToolbarButton:focus-visible {
+  outline: none;
+  box-shadow: var(--ij-focus-ring);
+}
+
+.markdownZoomToolbarButton:active {
+  background: var(--ij-bg-pressed, #0000001f);
+}
+
+.markdownZoomToolbarButton img {
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
+.mermaidBlock.isRendering {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mermaidBlock.hasError {
+  border-color: var(--markdown-error);
+}
+
+.mermaidBlock.hasError pre {
+  margin-bottom: 0;
+}
+
+.mermaidError {
+  margin-bottom: 8px;
+  color: var(--markdown-error);
+}
+
+.markdownPreview .katex {
+  animation: markdownLatexReveal 180ms ease-out;
+}
+
+@keyframes markdownPathLinkReveal {
+  from {
+    color: var(--ij-text-primary);
+    background-color: color-mix(in srgb, var(--ij-accent) 14%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--ij-accent) 10%, transparent);
+  }
+
+  to {
+    color: var(--ij-accent);
+    background-color: transparent;
+    box-shadow: none;
+  }
+}
+
+@keyframes markdownRunButtonReveal {
+  from {
+    opacity: 0;
+    transform: translateX(-3px);
+  }
+
+  to {
+    opacity: 0.72;
+    transform: translateX(0);
+  }
+}
+
+@keyframes markdownHighlightReveal {
+  from {
+    filter: saturate(0.65);
+  }
+
+  to {
+    filter: none;
+  }
+}
+
+@keyframes markdownLatexReveal {
+  from {
+    opacity: 0.72;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markdownPreview .markdownPathLink,
+  .markdownPreview .markdownRunButton,
+  .markdownPreview pre code.hljs,
+  .markdownPreview .katex {
+    animation: none;
+  }
+}

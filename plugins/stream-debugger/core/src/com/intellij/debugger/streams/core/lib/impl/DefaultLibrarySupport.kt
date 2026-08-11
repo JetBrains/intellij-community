@@ -1,9 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.core.lib.impl
 
+import com.intellij.debugger.streams.core.lib.EvaluateExpressionBasedLibrarySupport
 import com.intellij.debugger.streams.core.lib.HandlerFactory
 import com.intellij.debugger.streams.core.lib.InterpreterFactory
-import com.intellij.debugger.streams.core.lib.LibrarySupport
 import com.intellij.debugger.streams.core.lib.ResolverFactory
 import com.intellij.debugger.streams.core.resolve.EmptyResolver
 import com.intellij.debugger.streams.core.resolve.ValuesOrderResolver
@@ -18,7 +18,7 @@ import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.core.wrapper.StreamCallType
 import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
 
-class DefaultLibrarySupport : LibrarySupport {
+class DefaultLibrarySupport : EvaluateExpressionBasedLibrarySupport {
   override fun createHandlerFactory(dsl: Dsl): HandlerFactory = object : HandlerFactory {
     override fun getForIntermediate(number: Int, call: IntermediateStreamCall): IntermediateCallHandler {
       return PeekTraceHandler(number, call.name, call.typeBefore, call.typeAfter, dsl)

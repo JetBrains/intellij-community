@@ -4,11 +4,13 @@ package com.intellij.slicer;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class SliceTreeStructure extends AbstractTreeStructureBase {
   private final SliceRootNode myRoot;
 

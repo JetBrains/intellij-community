@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.helpers
 
-import com.intellij.openapi.util.ThrowableNotNullFunction
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.util.ThrowableConsumer
 import io.opentelemetry.api.trace.Span
@@ -12,7 +12,6 @@ import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.concurrent.CancellationException
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -53,45 +52,10 @@ suspend inline fun <T> SpanBuilder.useWithScope(
 ): T {
   return startSpan().useWithoutActiveScope { span ->
     // inner withContext to ensure that we report the end of the span only when all child tasks are completed
-    withContext(context + Context.current().with(span).asContextElement()) {
+    withContext(context + span.asContextElement()) {
       operation(span)
     }
   }
-}
-
-/**
- * Use this method if telemetry is optional and turned on/off based on registry keys or options
- * Usage example:
- * telemetryTracer?.spanBuilder(...).useOrRun {
- *   // some code that must be executed in any case, telemetry or not
- * }
- *
- * Executes the given operation with a span builder, if it's not null, and returns the result.
- * If the span builder is null, the operation is executed with a null span.
- *
- * @param operation The operation to execute with the span builder.
- * @return The result of the operation.
- */
-@Internal
-suspend inline fun <T> SpanBuilder?.useOrRun(
-  crossinline operation: suspend (Span?) -> T,
-): T {
-  if (this == null) return operation(null)
-
-  return startSpan().useWithoutActiveScope { span ->
-    // inner withContext to ensure that we report the end of the span only when all child tasks are completed
-    withContext(Context.current().with(span).asContextElement()) {
-      operation(span)
-    }
-  }
-}
-
-@Internal
-internal fun <T> computeWithSpanIgnoreThrows(
-  spanBuilder: SpanBuilder,
-  operation: ThrowableNotNullFunction<Span, T, out Throwable>,
-): T {
-  return spanBuilder.use(operation::`fun`)
 }
 
 @Internal
@@ -114,10 +78,8 @@ inline fun <T> Span.useWithoutActiveScope(operation: (Span) -> T): T {
   try {
     return operation(this)
   }
-  catch (e: CancellationException) {
-    throw e
-  }
   catch (e: Throwable) {
+    rethrowControlFlowException(e)
     setStatus(StatusCode.ERROR)
     throw e
   }
@@ -127,8 +89,24 @@ inline fun <T> Span.useWithoutActiveScope(operation: (Span) -> T): T {
 }
 
 /**
- * Workaround issue with [operation] lifetime being longer than [io.opentelemetry.sdk.trace.SpanProcessor]s, making the span existence never logged.
- * [Span] is not passed to the [operation] as argument to avoid registering the similarly ignored events.
+ * Runs [operation] inside a span named [spanName], and records the operation's start immediately as a
+ * separate zero-duration `"<name>: started"` span.
+ *
+ * A span reaches the exporters only when it ends, so a span that outlives the
+ * [io.opentelemetry.sdk.trace.SpanProcessor] — a loop that ends only at shutdown, for example — is dropped,
+ * and its start is never logged. The extra span records that start. No [Span] is passed to [operation];
+ * events on the real span would be dropped too.
+ *
+ * **Not the canonical form — prefer a metric.**
+ *
+ * OpenTelemetry has no export-at-start hook (`onStart` only enriches a span synchronously), so a span cannot
+ * report an operation that never ends in time. The canonical signal is a metric — a counter of starts, or an
+ * up-down counter of active operations. The span stays only because nothing consumes this marker as a span
+ * today.
+ *
+ * References:
+ * - [Trace SDK: spans export on end, not on start](https://opentelemetry.io/docs/specs/otel/trace/sdk/#span-processor)
+ * - [Metrics API: Counter and UpDownCounter](https://opentelemetry.io/docs/specs/otel/metrics/api/#updowncounter)
  */
 @Internal
 inline fun <T> IJTracer.spanWithExplicitStart(spanName: String, operation: () -> T): T {

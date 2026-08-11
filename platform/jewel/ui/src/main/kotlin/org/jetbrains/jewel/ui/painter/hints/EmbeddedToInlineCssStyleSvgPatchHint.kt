@@ -126,6 +126,7 @@ public object EmbeddedToInlineCssStyleSvgPatchHint : PainterSvgPatchHint {
      * ```
      *
      * @param cache Pre-built cache containing CSS class-to-rule mappings
+     * @param parser The [CssParser] used to parse inline style values during merging.
      */
     private fun Element.inlineStyleDeclarations(cache: CssClassAttributesCache, parser: CssParser) {
         val classAttributeName = "class"

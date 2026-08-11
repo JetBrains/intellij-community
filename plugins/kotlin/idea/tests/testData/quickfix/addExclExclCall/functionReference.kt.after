@@ -1,5 +1,5 @@
 // "Add non-null asserted (foo!!) call" "true"
-// K2_ERROR: Bound callable reference cannot be created on nullable receiver of type 'Foo?'.
+// K2_ERROR: UNSAFE_CALLABLE_REFERENCE
 class Foo {
     fun f() = 1
 }

@@ -64,9 +64,9 @@ public final class ReadAction {
    * Can be called from any thread.
    * <p>
    * When called as the outermost (top-level) read action, it is not canceled if a write action is pending and is executed at most once.
-   * When called inside an already-active cancellable read action (e.g., inside {@link #computeCancellable} or a {@link NonBlockingReadAction}),
-   * the supplied computation runs directly in that outer context: it may be canceled when a write action is pending,
-   * and it may run more than once if the outer action is retried.
+   * When called inside an already-active cancellable read action (e.g., inside {@link #computeCancellableUnsafe}
+   * or a {@link NonBlockingReadAction}), the supplied computation runs directly in that outer context:
+   * it may be canceled when a write action is pending, and it may run more than once if the outer action is retried.
    * Only the outermost read action boundary controls cancellation and retry behavior.
    * <p>
    * Avoid usage in background threads as it will likely cause UI freezes. Use it only under modal progress or from EDT.
@@ -93,9 +93,9 @@ public final class ReadAction {
    * Can be called from any thread.
    * <p>
    * When called as the outermost (top-level) read action, it is not canceled if a write action is pending and is executed at most once.
-   * When called inside an already-active cancellable read action (e.g., inside {@link #computeCancellable} or a {@link NonBlockingReadAction}),
-   * the supplied computation runs directly in that outer context: it may be canceled when a write action is pending,
-   * and it may run more than once if the outer action is retried.
+   * When called inside an already-active cancellable read action (e.g., inside {@link #computeCancellableUnsafe}
+   * or a {@link NonBlockingReadAction}), the supplied computation runs directly in that outer context:
+   * it may be canceled when a write action is pending, and it may run more than once if the outer action is retried.
    * Only the outermost read action boundary controls cancellation and retry behavior.
    * <p>
    * Avoid usage in background threads as it will likely cause UI freezes.
@@ -156,25 +156,47 @@ public final class ReadAction {
   }
 
   /**
-   * Runs the specified computation in a cancellable read action with a single attempt.
+   * Runs the specified computation in a single read action attempt that is canceled when it would otherwise block
+   * a write action.
    * <p>
-   * <h3>Semantics:</h3>
+   * This is a lower-level method for callers that are prepared for the read action attempt to fail with {@link CannotReadException}
+   * because a write action took priority.
+   * Prefer higher-level read action APIs unless custom retry, drop, or fallback logic is really needed.
+   * <p>
+   * <h3>Semantics</h3>
    * <ul>
-   *   <li>If this function is invoked while the read or write access is allowed (see {@link ThreadingAssertions#assertReadAccess()}),
-   *    then it calls {@code computable} directly.</li>
-   *    <li>Otherwise, if there is a pending or running write action, this function throws {@link CannotReadException}.</li>
-   *    <li>Otherwise, this function starts. It can throw {@link CannotReadException} on the next {@link ProgressManager#checkCanceled()}
-   *    if there is a pending write action.
+   *   <li>If this method is invoked while the read or write access is allowed (see {@link ThreadingAssertions#assertReadAccess()}),
+   *   then it calls {@code computable} directly.</li>
+   *   <li>Otherwise, if there is a pending or running write action, this method throws {@link CannotReadException}.</li>
+   *   <li>Otherwise, this method starts a read action attempt.
+   *   It can throw {@link CannotReadException} on the next {@link ProgressManager#checkCanceled()} if there is a pending write action.</li>
    * </ul>
    *
    * @throws CannotReadException if the read action cannot be started,
    *                             or if it was canceled by a requested write action during its execution
+   * @throws ProcessCanceledException if {@code computable} or the current progress is canceled for another reason
+   *
+   * @see #computeBlocking(ThrowableComputable)
+   * @see #nonBlocking(Callable)
+   * @see CoroutinesKt#readAction
    */
+  @RequiresBackgroundThread
+  public static <T, E extends Throwable> T computeCancellableUnsafe(
+    @RequiresReadLock ThrowableComputable<T, E> computable
+  ) throws E, CannotReadException {
+    return ApplicationManager.getApplication().getService(ReadWriteActionSupport.class).computeCancellableUnsafe(computable);
+  }
+
+  /**
+   * @deprecated Consider using {@link #nonBlocking(Callable)} or {@link #computeBlocking(ThrowableComputable)}.
+   *             If custom retry logic is really needed, use {@link #computeCancellableUnsafe(ThrowableComputable)}.
+   */
+  @Deprecated
   @RequiresBackgroundThread
   public static <T, E extends Throwable> T computeCancellable(
     @RequiresReadLock ThrowableComputable<T, E> computable
   ) throws E, CannotReadException {
-    return ApplicationManager.getApplication().getService(ReadWriteActionSupport.class).computeCancellable(computable);
+    return computeCancellableUnsafe(computable);
   }
 
   public static final class CannotReadException extends ProcessCanceledException {

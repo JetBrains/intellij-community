@@ -11,7 +11,7 @@ fun withSuspendLambda(l: suspend () -> Any) { }
 @Suppress("UNUSED_ANONYMOUS_PARAMETER")
 fun test(map: Map<String, String>) {
   withSuspendLambda {
-    map.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">for<caret>Each</warning> { k, v ->
+    map.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCanceled' should be the first statement in a loop body">for<caret>Each</warning> { k, v ->
         // comments
         doSomething()
     }

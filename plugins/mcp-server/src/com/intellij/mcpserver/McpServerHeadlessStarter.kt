@@ -48,7 +48,10 @@ private data object WildcardAllowedTools : AllowedToolsSpec
 private data class ExplicitAllowedTools(val names: Set<String>) : AllowedToolsSpec
 
 private val DEFAULT_ALLOWED_TOOLS: Set<String> = setOf(
-  "skill_search",
+  "search_file",
+  "search_text",
+  "search_regex",
+  "search_symbol",
 )
 
 private const val PROJECT_INIT_TIMEOUT_SECONDS_PROPERTY = "idea.mcp.server.project.init.timeout.seconds"
@@ -67,7 +70,7 @@ internal class McpServerHeadlessStarter : ModernApplicationStarter() {
 
     val port = parsePort(actualArgs)
     if (port != null) {
-      McpServerSettings.getInstance().state.mcpServerPort = port
+      McpServerSettings.getInstance().mcpServerPort = port
     }
 
     val projectInitTimeout = timeoutFromProperty(PROJECT_INIT_TIMEOUT_SECONDS_PROPERTY, 10.minutes)
@@ -133,6 +136,12 @@ internal class McpServerHeadlessStarter : ModernApplicationStarter() {
             }
           }
         }
+      """.trimIndent())
+
+      println("For Codex: copy-pastable to ~/.codex/config.toml:")
+      println("""
+        [mcp_servers.ide-headless-mcp]
+        url="$sseUrl"
       """.trimIndent())
 
       awaitCancellation()

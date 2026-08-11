@@ -18,7 +18,7 @@ interface ChildTestEntityBuilder : WorkspaceEntityBuilder<ChildTestEntity> {
 }
 
 internal object ChildTestEntityType : EntityType<ChildTestEntity, ChildTestEntityBuilder>() {
-  override val entityClass: Class<ChildTestEntity> get() = ChildTestEntity::class.java
+  override val entityImplClass: Class<*> get() = ChildTestEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ChildTestEntityImpl.Builder::class.java
   operator fun invoke(
     customChildProperty: String,

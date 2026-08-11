@@ -1,5 +1,5 @@
 from _typeshed import Incomplete
-from typing import TypeAlias
+from typing import Literal, TypeAlias, overload
 
 import _win32typing
 from win32.lib.pywintypes import com_error
@@ -8,8 +8,17 @@ error: TypeAlias = com_error  # noqa: Y042
 
 def AssocCreate() -> _win32typing.PyIQueryAssociations: ...
 def AssocCreateForClasses() -> _win32typing.PyIUnknown: ...
-def DragQueryFile(hglobal: int, index, /) -> str: ...
-def DragQueryFileW(hglobal: int, index, /) -> str: ...
+
+@overload
+def DragQueryFile(hglobal: int | _win32typing.PyHANDLE | None, index: Literal[-1] = -1, /) -> int: ...  # type: ignore[overload-overlap]
+@overload
+def DragQueryFile(hglobal: int | _win32typing.PyHANDLE | None, index: int, /) -> str: ...
+
+@overload
+def DragQueryFileW(hglobal: int | _win32typing.PyHANDLE | None, index: Literal[-1] = -1, /) -> int: ...  # type: ignore[overload-overlap]
+@overload
+def DragQueryFileW(hglobal: int | _win32typing.PyHANDLE | None, index: int, /) -> str: ...
+
 def DragQueryPoint(hglobal: int, /) -> tuple[Incomplete, Incomplete, Incomplete]: ...
 def IsUserAnAdmin() -> bool: ...
 def SHCreateDataObject(

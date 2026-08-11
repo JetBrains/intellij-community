@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.codeInsight.intentions.shared.ChopParameterListIntention
+org.jetbrains.kotlin.idea.codeinsight.intentions.ChopParameterListIntention

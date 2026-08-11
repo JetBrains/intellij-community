@@ -13,13 +13,13 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 @Suppress("DEPRECATION")
 @Deprecated(
-  "Renamed to LspClientProvider",
-  ReplaceWith("LspClientProvider", "com.intellij.platform.lsp.api.LspClientProvider"),
+  "Renamed to LspIntegrationProvider",
+  ReplaceWith("LspIntegrationProvider", "com.intellij.platform.lsp.api.LspIntegrationProvider"),
 )
-interface LspServerSupportProvider : LspClientProvider {
+interface LspServerSupportProvider : LspIntegrationProvider {
   @Deprecated(
-    "Renamed to LspClientProvider.LspClientStarter",
-    ReplaceWith("LspClientProvider.LspClientStarter", "com.intellij.platform.lsp.api.LspClientProvider"),
+    "Renamed to LspIntegrationProvider.LspClientStarter",
+    ReplaceWith("LspIntegrationProvider.LspClientStarter", "com.intellij.platform.lsp.api.LspIntegrationProvider"),
   )
   interface LspServerStarter {
     fun ensureServerStarted(descriptor: LspServerDescriptor)
@@ -30,7 +30,7 @@ interface LspServerSupportProvider : LspClientProvider {
   fun fileOpened(project: Project, file: VirtualFile, serverStarter: LspServerStarter)
 
   /**
-   * Defers to [LspClientProvider]'s enumeration via `super` (so the [createWidgetItems] override below isn't re-entered).
+   * Defers to [LspIntegrationProvider]'s enumeration via `super` (so the [createWidgetItems] override below isn't re-entered).
    * That enumeration maps each client through [createWidgetItem], so overriding the new [createWidgetItem] *or* the
    * deprecated [createLspServerWidgetItem] both take effect.
    */
@@ -40,7 +40,7 @@ interface LspServerSupportProvider : LspClientProvider {
   fun createLspServerWidgetItem(lspServer: LspServer, currentFile: VirtualFile?): LspServerWidgetItem? =
     LspServerWidgetItem(lspServer, currentFile)
 
-  override fun fileOpened(project: Project, file: VirtualFile, clientStarter: LspClientProvider.LspClientStarter): Unit =
+  override fun fileOpened(project: Project, file: VirtualFile, clientStarter: LspIntegrationProvider.LspClientStarter): Unit =
     fileOpened(project, file, clientStarter as LspServerStarter)
 
   override fun createWidgetItems(project: Project, currentFile: VirtualFile?): List<LanguageServiceWidgetItem> =
@@ -51,8 +51,8 @@ interface LspServerSupportProvider : LspClientProvider {
 
   companion object {
     @Deprecated(
-      "Use LspClientProvider.EP_NAME",
-      ReplaceWith("LspClientProvider.EP_NAME", "com.intellij.platform.lsp.api.LspClientProvider"),
+      "Use LspIntegrationProvider.EP_NAME",
+      ReplaceWith("LspIntegrationProvider.EP_NAME", "com.intellij.platform.lsp.api.LspIntegrationProvider"),
     )
     val EP_NAME: ExtensionPointName<LspServerSupportProvider> = create("com.intellij.platform.lsp.serverSupportProvider")
   }

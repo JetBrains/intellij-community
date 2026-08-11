@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableCharacterWidthUtils
+import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
@@ -18,7 +19,7 @@ internal abstract class InsertRowAction(private val insertAbove: Boolean): RowBa
   override fun performAction(editor: Editor, table: MarkdownTable, rowElement: PsiElement) {
     runWriteAction {
       val widths = obtainCellWidths(rowElement)
-      val newRow = MarkdownPsiElementFactory.createTableEmptyRow(table.project, widths)
+      val newRow = MarkdownPsiElementFactory.createTableEmptyRow(table.project, widths, getTableStyle(table.containingFile))
       require(rowElement.parent == table)
       executeCommand(rowElement.project) {
         when {

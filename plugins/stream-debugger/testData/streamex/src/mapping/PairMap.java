@@ -4,7 +4,7 @@ import one.util.streamex.IntStreamEx;
 
 public class PairMap {
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     final int sum = IntStreamEx.of(1, 3, 4).pairMap((l, r) -> l + r).sum();
     System.out.println(sum);
   }

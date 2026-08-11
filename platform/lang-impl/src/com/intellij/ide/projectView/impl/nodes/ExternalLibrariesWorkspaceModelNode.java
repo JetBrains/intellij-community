@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public class ExternalLibrariesWorkspaceModelNode extends ProjectViewNode<Unit> {
   private final @NotNull Collection<VirtualFile> myRoots;
   private final @NotNull Collection<VirtualFile> myExcludedRoots;

@@ -30,6 +30,7 @@ import com.intellij.platform.icons.rendering.LayerPaintingContext
 import com.intellij.platform.icons.rendering.MutableIconUpdateFlow
 import com.intellij.platform.icons.rendering.RenderingContext
 import com.intellij.platform.icons.rendering.ScalingContext
+import com.intellij.platform.icons.rendering.ThemeContext
 import com.intellij.platform.icons.scale.IconScale
 import com.intellij.platform.icons.scale.factor
 import org.junit.Assert
@@ -72,14 +73,14 @@ class IconTestRun(
 
 class TestIconManager: DefaultIconManager() {
   override val resolverService: DeferredIconResolverService
-    get() = TODO("not implemented")
+    get() = throw NotImplementedError()
 
   override suspend fun sendDeferredNotifications(id: IconIdentifier, result: Icon) {
-    TODO("not implemented")
+    throw NotImplementedError()
   }
 
   override fun markDeferredIconUnused(id: IconIdentifier) {
-    TODO("not implemented")
+    throw NotImplementedError()
   }
 
   override fun icon(designer: IconDesigner.() -> Unit): Icon {
@@ -93,7 +94,7 @@ class TestIconManager: DefaultIconManager() {
 class TestIconRendererManager: DefaultIconRendererManager() {
   override fun createUpdateFlow(
     scope: CoroutineScope?,
-    updateCallback: (Int) -> Unit,
+    onUpdate: (suspend (Int) -> Unit)?,
   ): MutableIconUpdateFlow {
     return EmptyMutableIconUpdateFlow
   }
@@ -102,7 +103,7 @@ class TestIconRendererManager: DefaultIconRendererManager() {
     updateFlow: MutableIconUpdateFlow,
     defaultImageModifiers: ImageModifiers?,
   ): RenderingContext {
-    return DefaultRenderingContext(updateFlow, defaultImageModifiers as? DefaultImageModifiers, TestImageResourceProvider)
+    return DefaultRenderingContext(updateFlow, defaultImageModifiers as? DefaultImageModifiers, ThemeContext.None, TestImageResourceProvider)
   }
 }
 
@@ -175,6 +176,7 @@ class TestPaintingContext(
   override val offsetY: Int = 0,
   override val slotWidth: Int? = null,
   override val slotHeight: Int? = null,
+  override val alpha: Float = 1f
 ) : LayerPaintingContext {
   override fun drawImage(
     image: ImageResource,
@@ -200,7 +202,7 @@ class TestPaintingContext(
     alpha: Float,
     mode: DrawMode,
   ) {
-    TODO("not implemented")
+    throw NotImplementedError()
   }
 
   override fun drawRect(
@@ -212,7 +214,7 @@ class TestPaintingContext(
     alpha: Float,
     mode: DrawMode,
   ) {
-    TODO("not implemented")
+    throw NotImplementedError()
   }
 
   override fun createNestedLayer(
@@ -221,6 +223,7 @@ class TestPaintingContext(
     slotWidth: Int?,
     slotHeight: Int?,
     scale: Float,
+    alpha: Float,
     overrideColorFilter: ColorFilter?,
   ): LayerPaintingContext {
     return TestPaintingContext(
@@ -229,7 +232,8 @@ class TestPaintingContext(
       x ?: offsetX,
       y ?: offsetY,
       slotWidth,
-      slotHeight
+      slotHeight,
+      alpha
     )
   }
 

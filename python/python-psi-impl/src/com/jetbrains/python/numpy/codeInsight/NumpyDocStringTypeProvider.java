@@ -47,6 +47,7 @@ import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +63,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 /**
  * Provides type information extracted from NumPy docstring format.
@@ -251,7 +254,27 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     if (matcher.matches()) {
       typeString = matcher.group(1);
     }
-    return Arrays.asList(typeString.split(" *, *"));
+    return splitTopLevelByComma(typeString);
+  }
+
+  private static @NotNull List<String> splitTopLevelByComma(@NotNull String typeString) {
+    final List<String> result = new ArrayList<>();
+    int depth = 0;
+    int start = 0;
+    for (int i = 0; i < typeString.length(); i++) {
+      switch (typeString.charAt(i)) {
+        case '[', '(', '{' -> depth++;
+        case ']', ')', '}' -> depth = Math.max(0, depth - 1);
+        case ',' -> {
+          if (depth == 0) {
+            result.add(typeString.substring(start, i).trim());
+            start = i + 1;
+          }
+        }
+      }
+    }
+    result.add(typeString.substring(start).trim());
+    return result;
   }
 
   @Override
@@ -259,6 +282,9 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
                                            @NotNull PyCallSiteExpression callSite,
                                            @NotNull TypeEvalContext context) {
     if (isApplicable(function)) {
+      if (PyTypingTypeProvider.getReturnTypeAnnotation(function, context) != null) {
+        return null;
+      }
       final PyExpression callee = callSite instanceof PyCallExpression ? ((PyCallExpression)callSite).getCallee() : null;
       final NumpyDocString docString = forFunction(function, callee);
       if (docString != null) {
@@ -361,13 +387,25 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   private static @Nullable PyType parseSingleNumpyDocType(@NotNull PsiElement anchor, @NotNull String typeString) {
     final PyPsiFacade facade = getPsiFacade(anchor);
     final String realTypeName = getNumpyRealTypeName(typeString);
-    PyType type = facade.parseTypeAnnotation(realTypeName, anchor);
-    if (type != null) {
-      return type;
+
+    if (!realTypeName.equals(typeString) || typeString.contains(" or ")) {
+      PyType type = facade.parseTypeAnnotation(realTypeName, anchor);
+      if (!isUnknown(type)) {
+        return type;
+      }
     }
 
-    type = facade.parseTypeAnnotation(typeString, anchor);
-    if (type != null) {
+    final PyExpression expression = PyUtil.createExpressionFromFragment(typeString, anchor);
+    if (expression != null) {
+      PyType type = PyTypeUtil.derefOrUnknown(
+        PyTypingTypeProvider.getType(expression, TypeEvalContext.codeInsightFallback(anchor.getProject())));
+      if (!isUnknown(type)) {
+        return type;
+      }
+    }
+
+    PyType type = facade.parseTypeAnnotation(typeString, anchor);
+    if (!isUnknown(type)) {
       return type;
     }
     return getNominalType(anchor, typeString);

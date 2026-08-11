@@ -19,11 +19,14 @@ internal class ValidityEvaluatorImpl(
   private val newFileViewProviderFactory: NewFileViewProviderFactory,
 ) : ValidityEvaluator {
 
-  override fun isRecreatedViewProviderIsIdentical(
+  override fun getRecreationFailureReason(
     virtualFile: VirtualFile,
     provider: AbstractFileViewProvider,
     context: CodeInsightContext,
-  ): Boolean {
+  ): String? {
+    if (!virtualFile.isValid) {
+      return "View provider resurrection failed: virtual file is invalid: $virtualFile"
+    }
     if (tempProviders.contains(virtualFile)) {
       LOG.error(StackOverflowPreventedException("isValid leads to endless recursion in ${provider.javaClass}: ${provider.languages.toList()}"))
     }
@@ -34,8 +37,15 @@ internal class ValidityEvaluatorImpl(
       val recreated = newFileViewProviderFactory.createNewFileViewProviderForValidityCheck(virtualFile, context)
       tempProviders.put(virtualFile, recreated)
 
-      return FileManagerImpl.areViewProvidersEquivalent(provider, recreated) &&
-             provider.cachedPsiFiles.all { isValidOriginal(it) }
+      val diff = FileManagerImpl.areViewProvidersEquivalent(provider, recreated)
+      if (diff != null) {
+        return "View provider resurrection failed: $diff"
+      }
+
+      val invalidPsiFile = provider.cachedPsiFiles.firstOrNull { !isValidOriginal(it) }
+      return invalidPsiFile?.let {
+        "View provider resurrection failed: cached PSI file has an invalid original: $it, original=${it.originalFile}"
+      }
     }
     finally {
       val temp = tempProviders.remove(virtualFile)
@@ -75,21 +85,32 @@ internal class ValidityEvaluatorImpl(
     return original == file || original.isValid
   }
 
+  override fun canViewProviderBeResurrected(viewProvider: AbstractFileViewProvider): Boolean {
+    if (!isCached(viewProvider)) {
+      return false
+    }
+
+    val vFile = viewProvider.virtualFile
+    val context = defaultContext()
+    return getRecreationFailureReason(vFile, viewProvider, context) == null
+  }
+
+  private fun isCached(viewProvider: AbstractFileViewProvider): Boolean {
+    return cache.getRaw(viewProvider.virtualFile, viewProvider.codeInsightContext) === viewProvider
+  }
+
   override fun evaluateValidity(viewProvider: AbstractFileViewProvider): Boolean {
-    if (cache.getRaw(viewProvider.virtualFile, viewProvider.codeInsightContext) !== viewProvider) {
+    if (!isCached(viewProvider)) {
       return false
     }
 
     if (!viewProvider.isPossiblyInvalidated()) return true
 
-    val vFile = viewProvider.virtualFile
-    val context = defaultContext()
-    if (vFile.isValid && isRecreatedViewProviderIsIdentical(vFile, viewProvider, context)) {
-      resurrect(vFile, viewProvider, context)
+    if (canViewProviderBeResurrected(viewProvider)) {
+      resurrect(viewProvider.virtualFile, viewProvider, defaultContext())
       return true
-    }
-    else {
-      bury(vFile, viewProvider, context)
+    } else {
+      bury(viewProvider.virtualFile, viewProvider, defaultContext())
       return false
     }
   }

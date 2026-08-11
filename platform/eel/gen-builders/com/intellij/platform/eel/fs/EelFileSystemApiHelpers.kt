@@ -58,10 +58,10 @@ fun EelFileSystemApi.createTemporaryFile(): EelFileSystemApiHelpers.CreateTempor
 
 /**
  * Returns names of files in a directory and the attributes of the corresponding files.
- * If [path] is a symlink, it will be resolved regardless of [symlinkPolicy].
+ * If `path` is a symlink, it will be resolved regardless of `symlinkPolicy`.
  *  TODO Is it an expected behaviour?
  * 
- * [symlinkPolicy] controls resolution of symlinks among children.
+ * `symlinkPolicy` controls resolution of symlinks among children.
  *  TODO The behaviour is different from resolveSymlinks in [stat]. To be fixed.
  */
 @GeneratedBuilder.Result
@@ -120,7 +120,7 @@ fun EelFileSystemApi.readFile(
   )
 
 /**
- * Similar to stat(2) and lstat(2). [symlinkPolicy] has an impact only on [EelFileInfo.type] if [path] points on a symlink.
+ * Similar to stat(2) and lstat(2). `symlinkPolicy` has an impact only on [EelFileInfo.type] if `path` points on a symlink.
  */
 @GeneratedBuilder.Result
 @ApiStatus.Internal

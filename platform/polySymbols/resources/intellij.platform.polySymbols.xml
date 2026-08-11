@@ -79,9 +79,6 @@
     <extensionPoint qualifiedName="com.intellij.polySymbols.contextSourceProximityProvider"
                     interface="com.intellij.polySymbols.context.PolyContextSourceProximityProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.polySymbols.highlightingCustomizer"
-                    interface="com.intellij.polySymbols.highlighting.PolySymbolHighlightingCustomizer"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.polySymbols.matchCustomizerFactory"
                     interface="com.intellij.polySymbols.query.PolySymbolMatchCustomizerFactory"
                     dynamic="true"/>

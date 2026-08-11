@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +50,7 @@ public final class GithubTagInfo {
     return myRecentTag;
   }
 
+  @ApiStatus.Internal
   public @NotNull Version getVersion() {
     if (myVersion == null) {
       myVersion = createVersionComponents();
@@ -125,6 +127,7 @@ public final class GithubTagInfo {
     return result;
   }
 
+  @ApiStatus.Internal
   public static final class Version implements Comparable<Version> {
     private final IntList myIntComponents;
     private final String myLabel;

@@ -46,6 +46,7 @@ class EclipseCompilerConfigurableUi(project: Project) {
         val descriptor = FileChooserDescriptor(true, false, true, true, false, false)
           .withTitle(JavaCompilerBundle.message("path.to.ecj.compiler.tool"))
           .withExtensionFilter("jar")
+          .withEnvironmentRestricted(true)
         pathToEcjField = textFieldWithBrowseButton(descriptor, project)
           .align(AlignX.FILL)
           .label(JavaCompilerBundle.message("eclipse.compiler.path.label"), LabelPosition.TOP)

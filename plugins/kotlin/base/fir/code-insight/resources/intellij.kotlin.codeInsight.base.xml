@@ -1,7 +1,21 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.base.fir.codeInsight" visibility="internal">
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.indexing"/>
   </dependencies>
   <!-- endregion -->
 

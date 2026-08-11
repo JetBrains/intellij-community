@@ -1,41 +1,80 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/*
+ * There are four physical stack locations:
+ * 1. globalStack stores project-wide groups.
+ * 2. documentStacks strongly keeps local-file stacks by DocumentReference, so undo can survive local file removal.
+ * 3. documentsWithStacks stores file-less Document stacks in Document user data to avoid retaining every created document.
+ * 4. nonlocalVirtualFilesWithStacks stores non-local VirtualFile stacks in VirtualFile user data for the same weak-tracking reason.
+ */
+final class UndoRedoStacksHolder {
+  private static final Logger LOG = Logger.getInstance(UndoRedoStacksHolder.class);
 
-final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup> {
-  private final SharedAdjustableUndoableActionsHolder undoableActionsHolder;
+  private final Map<DocumentReference, UndoRedoList<UndoableGroup>> documentStacks;
+  private final UserDataBackedStacks<Document> documentWithoutFileStacks;
+  private final UserDataBackedStacks<VirtualFile> nonlocalVirtualFileStacks;
   private final UndoRedoList<UndoableGroup> globalStack;
+  private final boolean isUndo;
 
-  UndoRedoStacksHolder(@NotNull SharedAdjustableUndoableActionsHolder undoableActionsHolder, boolean isUndo) {
-    super(isUndo);
-    this.undoableActionsHolder = undoableActionsHolder;
+  UndoRedoStacksHolder(boolean isUndo) {
+    this.documentStacks = CollectionFactory.createSmallMemoryFootprintMap();
+    this.documentWithoutFileStacks = new UserDataBackedStacks<>();
+    this.nonlocalVirtualFileStacks = new UserDataBackedStacks<>();
     this.globalStack = new UndoRedoList<>();
+    this.isUndo = isUndo;
   }
 
-  @Override
+  @NotNull
+  UndoRedoList<UndoableGroup> getStack(@NotNull DocumentReference ref) {
+    VirtualFile file = ref.getFile();
+    if (file != null) {
+      if (file.isInLocalFileSystem()) {
+        // strongly reference local files for which we can undo file removal
+        return documentStacks.computeIfAbsent(ref, _ -> new UndoRedoList<>());
+      }
+      return nonlocalVirtualFileStacks.computeIfAbsentWeaklyTrackedStack(file);
+    }
+    // If document is not associated with file, we have to store its stack in document
+    // itself to avoid memory leaks caused by holding stacks of all documents, ever created, here.
+    // And to know, what documents do exist now, we have to maintain weak reference list of them.
+    Document document = Objects.requireNonNull(ref.getDocument(), "DocumentReference must contain file or document " + ref);
+    return documentWithoutFileStacks.computeIfAbsentWeaklyTrackedStack(document);
+  }
+
+  // remove all references to document to avoid memory leaks
   void clearDocumentReferences(@NotNull Document document) {
-    super.clearDocumentReferences(document);
+    // DocumentReference created from file is not equal to ref created from document from that file,
+    // so have to check for leaking both
     DocumentReference referenceFile = DocumentReferenceManager.getInstance().create(document);
     DocumentReference referenceDoc = new DocumentReferenceByDocument(document);
-    // remove UndoAction only if it doesn't contain anything but `document`, to avoid messing up with (very rare) complex undo actions containing several documents
+
+    documentWithoutFileStacks.removeHolder(document);
+    documentStacks.remove(referenceFile);
+    documentStacks.remove(referenceDoc);
+
+    // remove UndoAction only if it doesn't contain anything but `document`,
+    // to avoid messing up with (very rare) complex undo actions containing several documents
     globalStack.removeIf(
       group -> ContainerUtil.and(
         group.getAffectedDocuments(),
@@ -76,7 +115,7 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
       int timestamp = lastAction.getCommandTimestamp();
       if (mostRecentAction == null ||
           lastAction.isTemporary() && !mostRecentAction.isTemporary() ||
-          lastAction.isTemporary() == mostRecentAction.isTemporary() && (isUndo() ? timestamp > mostRecentDocTimestamp : timestamp < mostRecentDocTimestamp)) {
+          lastAction.isTemporary() == mostRecentAction.isTemporary() && (isUndo ? timestamp > mostRecentDocTimestamp : timestamp < mostRecentDocTimestamp)) {
         mostRecentAction = lastAction;
         mostRecentDocTimestamp = timestamp;
       }
@@ -108,7 +147,7 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
       LOG.debug("Adding to " + getStacksDescription() + ": " + group.dumpState());
     }
     for (UndoRedoList<UndoableGroup> stack : getAffectedStacks(group)) {
-      if (isUndo() && !group.isTemporary()) {
+      if (isUndo && !group.isTemporary()) {
         convertTemporaryActionsToPermanent(stack);
       }
       int undoLimit = stack == globalStack ? UndoManagerImpl.getGlobalUndoLimit() : UndoManagerImpl.getDocumentUndoLimit();
@@ -154,7 +193,14 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     for (UndoableGroup undoableGroup : globalStack) {
       result.addAll(undoableGroup.getAffectedDocuments());
     }
-    collectLocalAffectedDocuments(result);
+    result.addAll(documentStacks.keySet());
+    DocumentReferenceManager documentReferenceManager = DocumentReferenceManager.getInstance();
+    for (Document document : documentWithoutFileStacks.getHolders()) {
+      result.add(documentReferenceManager.create(document));
+    }
+    for (VirtualFile file : nonlocalVirtualFileStacks.getHolders()) {
+      result.add(documentReferenceManager.create(file));
+    }
   }
 
   int getLastCommandTimestamp(@NotNull DocumentReference r) {
@@ -199,7 +245,6 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
   }
 
   @NotNull String dump(@Nullable DocumentReference docRef) {
-    String stackName = isUndo() ? "UndoStack" : "RedoStack";
     UndoRedoList<UndoableGroup> stack = docRef == null ? globalStack : getStack(docRef);
     var affected = stack.stream()
       .flatMap(group -> group.getAffectedDocuments().stream())
@@ -208,16 +253,25 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
       .collect(Collectors.joining(", ", "[", "]"));
     return """
       %s affected %s
-      %s""".formatted(stackName, affected, dumpStack(stack));
+      %s""".formatted(getStacksDescription(), affected, dumpStack(stack));
   }
 
-  @TestOnly
-  void clearAllStacksInTests() {
-    clearStacks(getAffectedDocuments(), true);
+  void clearAllStacks() {
     globalStack.clear();
-    myDocumentStacks.clear();
-    myDocumentsWithStacks.clear();
-    myNonlocalVirtualFilesWithStacks.clear();
+    clearDocumentStacks();
+  }
+
+  private void clearDocumentStacks() {
+    documentStacks.clear();
+    documentWithoutFileStacks.clearStacks();
+    nonlocalVirtualFileStacks.clearStacks();
+  }
+
+  private void removeEmptyStacks() {
+    documentStacks.entrySet().removeIf(each -> each.getValue().isEmpty());
+    CollectionFactory.trimMap(documentStacks); // make sure the following entrySet iteration will not go over empty buckets
+    documentWithoutFileStacks.removeEmptyStacks();
+    nonlocalVirtualFileStacks.removeEmptyStacks();
   }
 
   private void doAddToStack(@NotNull UndoRedoList<UndoableGroup> stack, @NotNull UndoableGroup group, int limit) {
@@ -246,7 +300,6 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
       }
       stack.removeFirstSlow();
     }
-    from.invalidateChangeRanges(undoableActionsHolder);
   }
 
   private @NotNull List<UndoRedoList<UndoableGroup>> getAffectedStacks(@NotNull UndoableGroup group) {
@@ -264,22 +317,14 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     return result;
   }
 
-  private void collectLocalAffectedDocuments(@NotNull Collection<DocumentReference> result) {
-    result.addAll(myDocumentStacks.keySet());
-    DocumentReferenceManager documentReferenceManager = DocumentReferenceManager.getInstance();
-
-    for (Document document : myDocumentsWithStacks) {
-      result.add(documentReferenceManager.create(document));
-    }
-    for (VirtualFile file : myNonlocalVirtualFilesWithStacks) {
-      result.add(documentReferenceManager.create(file));
-    }
-  }
-
   private @NotNull Set<DocumentReference> getAffectedDocuments() {
     Set<DocumentReference> result = new HashSet<>();
     collectAllAffectedDocuments(result);
     return result;
+  }
+
+  private @NotNull String getStacksDescription() {
+    return isUndo ? "undo_stacks" : "redo_stacks";
   }
 
   private static void convertTemporaryActionsToPermanent(@NotNull UndoRedoList<UndoableGroup> stack) {

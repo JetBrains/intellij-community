@@ -41,7 +41,7 @@ class CommandCompletionConfigurableProvider : ConfigurableProvider() {
                           { r -> settings.state.setEnabled(r) })
             .contextHelp(CodeInsightBundle.message("options.command.completion.display.comment"))
         }
-        if (GroupedCompletionContributor.isGroupEnabledInApp()) {
+        if (GroupedCompletionContributor.isGroupEnabled(null)) {
           indent {
             row {
               checkBox(CodeInsightBundle.message("options.command.completion.show.group"))

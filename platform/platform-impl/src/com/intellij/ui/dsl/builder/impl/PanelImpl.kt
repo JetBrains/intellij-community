@@ -5,7 +5,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
@@ -22,12 +21,10 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-@ApiStatus.Internal
 internal class PanelImpl(
   private val dialogPanelConfig: DialogPanelConfig,
   var spacingConfiguration: SpacingConfiguration,
@@ -75,13 +72,13 @@ internal class PanelImpl(
       labelCell(label, result.cells[1])
     }
 
+    result.initCreationStackTrace()
+
     return result
   }
 
   override fun twoColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)?): Row {
-    if (column1 == null && column2 == null) {
-      throw UiDslException("Both columns cannot be null")
-    }
+    check(column1 != null || column2 != null) { "At least one column must be non-null" }
 
     return row {
       panel {
@@ -108,9 +105,7 @@ internal class PanelImpl(
   }
 
   override fun threeColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)?, column3: (Row.() -> Unit)?): Row {
-    if (column1 == null && column2 == null && column3 == null) {
-      throw UiDslException("All columns cannot be null")
-    }
+    check(column1 != null || column2 != null || column3 != null) { "At least one column must be non-null" }
 
     return row {
       panel {

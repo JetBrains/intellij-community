@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.debugger.ui.test.util` start
-
 jvm_library(
     name = "debugger.ui.test.util",
     srcs = glob(

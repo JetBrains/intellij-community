@@ -3,11 +3,9 @@ package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -15,31 +13,17 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBRadioButton;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.getDefaultShelfPath;
-import static com.intellij.openapi.vcs.configurable.ShelfProjectConfigurable.getDefaultShelfPresentationPath;
-import static com.intellij.util.ObjectUtils.chooseNotNull;
-import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
-import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
-import static com.intellij.util.ui.UIUtil.isUnderWin10LookAndFeel;
 
 @ApiStatus.Internal
 public class ShelfStorageConfigurationDialog extends DialogWrapper {
@@ -47,10 +31,7 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
 
   private final @NotNull Project myProject;
   private final @NotNull VcsConfiguration myVcsConfiguration;
-  private final @NotNull JBRadioButton myUseCustomShelfDirectory;
-  private final @NotNull JBRadioButton myUseDefaultShelfDirectory;
-  private final @NotNull TextFieldWithBrowseButton myShelfDirectoryPath;
-  private final @NotNull JBCheckBox myMoveShelvesCheckBox;
+  private final @NotNull ShelfStorageConfigurationUi ui;
 
 
   protected ShelfStorageConfigurationDialog(@NotNull Project project) {
@@ -58,18 +39,8 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     setTitle(VcsBundle.message("change.shelves.location.dialog.title"));
     myProject = project;
     myVcsConfiguration = VcsConfiguration.getInstance(project);
-    myUseCustomShelfDirectory = new JBRadioButton(VcsBundle.message("change.shelves.location.dialog.custom.label"));
-    if (isUnderWin10LookAndFeel()) {
-      myUseCustomShelfDirectory.setBorder(JBUI.Borders.emptyRight(DEFAULT_HGAP));
-    }
-    myUseDefaultShelfDirectory = new JBRadioButton(VcsBundle.message("change.shelves.location.dialog.default.label"), true);
-    myShelfDirectoryPath = new TextFieldWithBrowseButton();
-    myShelfDirectoryPath.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
-      .withTitle(VcsBundle.message("shelf.tab"))
-      .withDescription(VcsBundle.message("change.shelves.location.dialog.location.browser.title")));
-    myMoveShelvesCheckBox = new JBCheckBox(VcsBundle.message("vcs.shelf.move.text"));
+    ui = new ShelfStorageConfigurationUi(myProject, myVcsConfiguration);
     setOKButtonText(VcsBundle.message("change.shelves.location.dialog.action.button"));
-    initComponents();
     updateOkAction();
     getOKAction().putValue(DEFAULT_ACTION, null);
     getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
@@ -82,60 +53,14 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     return false;
   }
 
-  private void initComponents() {
-    ButtonGroup bg = new ButtonGroup();
-    bg.add(myUseCustomShelfDirectory);
-    bg.add(myUseDefaultShelfDirectory);
-    myUseCustomShelfDirectory.setSelected(myVcsConfiguration.USE_CUSTOM_SHELF_PATH);
-    myMoveShelvesCheckBox.setSelected(myVcsConfiguration.MOVE_SHELVES);
-    myShelfDirectoryPath
-      .setText(
-        FileUtil.toSystemDependentName(chooseNotNull(myVcsConfiguration.CUSTOM_SHELF_PATH, getDefaultShelfPresentationPath(myProject))));
-    setEnabledCustomShelfDirectoryComponents(myUseCustomShelfDirectory.isSelected());
-    myUseCustomShelfDirectory.addChangeListener(e -> setEnabledCustomShelfDirectoryComponents(myUseCustomShelfDirectory.isSelected()));
-  }
-
-  private void setEnabledCustomShelfDirectoryComponents(boolean enabled) {
-    myShelfDirectoryPath.setEnabled(enabled);
-    myShelfDirectoryPath.setEditable(enabled);
-  }
-
   @Override
   protected @Nullable JComponent createNorthPanel() {
-    JPanel contentPanel = new JPanel(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
-    JBLabel label = new JBLabel(VcsBundle.message("change.shelves.location.dialog.group.title"));
-    contentPanel.add(label, BorderLayout.NORTH);
-    JPanel buttonPanel = new JPanel(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
-    buttonPanel.setBorder(JBUI.Borders.emptyLeft(20));
-    buttonPanel.add(createCustomShelveLocationPanel(), BorderLayout.NORTH);
-    buttonPanel.add(createDefaultLocationPanel(), BorderLayout.SOUTH);
-    contentPanel.add(buttonPanel, BorderLayout.CENTER);
-    myMoveShelvesCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
-    myMoveShelvesCheckBox.setBorder(null);
-    contentPanel.add(myMoveShelvesCheckBox, BorderLayout.SOUTH);
-    return contentPanel;
+    return ui.panel;
   }
 
   @Override
   protected @Nullable JComponent createCenterPanel() {
     return null;
-  }
-
-  private @NotNull JPanel createCustomShelveLocationPanel() {
-    JPanel customPanel = new JPanel(new BorderLayout());
-    customPanel.add(myUseCustomShelfDirectory, BorderLayout.WEST);
-    customPanel.add(myShelfDirectoryPath, BorderLayout.CENTER);
-    return customPanel;
-  }
-
-  private @NotNull JPanel createDefaultLocationPanel() {
-    JPanel defaultPanel = new JPanel(new BorderLayout());
-    defaultPanel.add(myUseDefaultShelfDirectory, BorderLayout.WEST);
-    JLabel infoLabel = new JLabel(getDefaultShelfPresentationPath(myProject));
-    infoLabel.setBorder(null);
-    infoLabel.setForeground(JBColor.GRAY);
-    defaultPanel.add(infoLabel, BorderLayout.CENTER);
-    return defaultPanel;
   }
 
   @Override
@@ -147,17 +72,18 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
   protected void doOKAction() {
     boolean wasCustom = myVcsConfiguration.USE_CUSTOM_SHELF_PATH;
     String prevPath = myVcsConfiguration.CUSTOM_SHELF_PATH;
-    String customPath = FileUtil.toSystemIndependentName(myShelfDirectoryPath.getText());
-    boolean nowCustom = myUseCustomShelfDirectory.isSelected();
+    String customPath = FileUtil.toSystemIndependentName(ui.shelfDirectoryPath.getText());
+    boolean nowCustom = ui.useCustomShelfDirectory.isSelected();
     if (nowCustom && !checkAndIgnoreIfCreated(customPath)) {
       PopupUtil
-        .showBalloonForComponent(myShelfDirectoryPath,
-                                 VcsBundle.message("configurable.shelf.storage.cant.find.or.create.new.shelf.directory"), MessageType.WARNING, false, myProject);
+        .showBalloonForComponent(ui.shelfDirectoryPath,
+                                 VcsBundle.message("configurable.shelf.storage.cant.find.or.create.new.shelf.directory"),
+                                 MessageType.WARNING, false, myProject);
       return;
     }
     myVcsConfiguration.USE_CUSTOM_SHELF_PATH = nowCustom;
     myVcsConfiguration.CUSTOM_SHELF_PATH = customPath;
-    myVcsConfiguration.MOVE_SHELVES = myMoveShelvesCheckBox.isSelected();
+    myVcsConfiguration.MOVE_SHELVES = ui.moveShelvesCheckBox.isSelected();
     Path fromFile = wasCustom ? Paths.get(prevPath) : getDefaultShelfPath(myProject);
     Path toFile = nowCustom ? Paths.get(customPath) : getDefaultShelfPath(myProject);
 
@@ -168,32 +94,37 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
       if (wasCustom) {
         ApplicationManager.getApplication().saveSettings();
       }
-      ShelveChangesManager.getInstance(myProject).checkAndMigrateUnderProgress(fromFile.toFile(), toFile.toFile(), wasCustom);
+      ShelveChangesManager.getInstance(myProject).checkAndMigrateUnderProgress(fromFile, toFile, wasCustom);
     }
     super.doOKAction();
   }
 
   private static boolean checkAndIgnoreIfCreated(@NotNull String newPath) {
-    File newDir = new File(newPath);
-    if (newDir.exists()) return true;
-    if (!newDir.mkdirs()) return false;
-    return true;
+    Path newDir = Paths.get(newPath);
+    if (Files.exists(newDir)) return true;
+    try {
+      Files.createDirectories(newDir);
+      return true;
+    }
+    catch (IOException e) {
+      return false;
+    }
   }
 
   @Override
   protected @Nullable ValidationInfo doValidate() {
     updateOkAction();
-    if (myUseCustomShelfDirectory.isSelected()) {
-      File toFile = new File(myShelfDirectoryPath.getText());
-      if (!toFile.exists()) return null;   // check that file can be created after OK button pressed;
+    if (ui.useCustomShelfDirectory.isSelected()) {
+      Path toFile = Paths.get(ui.shelfDirectoryPath.getText());
+      if (!Files.exists(toFile)) return null;   // check that file can be created after OK button pressed;
       String validationError = null;
-      if (!toFile.canRead()) {
+      if (!Files.isReadable(toFile)) {
         validationError = VcsBundle.message("configurable.shelf.storage.destination.shelf.directory.should.have.read.access");
       }
-      if (!toFile.canWrite()) {
+      if (!Files.isWritable(toFile)) {
         validationError = VcsBundle.message("configurable.shelf.storage.destination.shelf.directory.should.have.write.access");
       }
-      if (validationError != null) return new ValidationInfo(validationError, myShelfDirectoryPath);
+      if (validationError != null) return new ValidationInfo(validationError, ui.shelfDirectoryPath);
     }
     return super.doValidate();
   }
@@ -203,8 +134,8 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
   }
 
   private boolean isModified() {
-    if (myVcsConfiguration.USE_CUSTOM_SHELF_PATH != myUseCustomShelfDirectory.isSelected()) return true;
-    return myUseCustomShelfDirectory.isSelected() &&
-           !StringUtil.equals(myVcsConfiguration.CUSTOM_SHELF_PATH, myShelfDirectoryPath.getText());
+    if (myVcsConfiguration.USE_CUSTOM_SHELF_PATH != ui.useCustomShelfDirectory.isSelected()) return true;
+    return ui.useCustomShelfDirectory.isSelected() &&
+           !StringUtil.equals(myVcsConfiguration.CUSTOM_SHELF_PATH, ui.shelfDirectoryPath.getText());
   }
 }

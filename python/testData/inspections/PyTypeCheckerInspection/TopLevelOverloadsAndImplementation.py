@@ -20,4 +20,4 @@ def foo(value):
 foo(None)
 foo(5)
 foo("5")
-foo(<warning descr="Unexpected type(s):(object)Possible type(s):(None)(int)(str)">object()</warning>)
+foo(<warning descr="No overload of 'foo' matches the arguments. Argument types: (object). Expected one of: (value: None), (value: int), (value: str)">object()</warning>)

@@ -7,8 +7,25 @@
   ]]></description>
 
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.updateChecker"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.vcs.impl"/>
+    <!-- endregion -->
   </dependencies>
+  <content namespace="jetbrains"/>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.smartUpdateStep" interface="com.intellij.smartUpdate.SmartUpdateStep" dynamic="true"/>

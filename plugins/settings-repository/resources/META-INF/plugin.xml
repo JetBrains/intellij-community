@@ -22,10 +22,39 @@
   <dependencies>
     <!-- otherwise plugin will be not loaded in tests -->
     <plugin id="com.intellij.modules.xml"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.jzlib"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.configurationStore.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.credentialStore"/>
+    <module name="intellij.platform.credentialStore.impl"/>
+    <module name="intellij.platform.credentialStore.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.vcs.impl"/>
-    <module name="intellij.libraries.sshd.osgi"/>
+    <!-- endregion -->
   </dependencies>
+  <content namespace="jetbrains"/>
+  <content>
+    <module name="intellij.libraries.sshd.osgi" loading="embedded"/>
+    <module name="intellij.libraries.jgit.ssh" loading="embedded"/>
+  </content>
 
   <extensions defaultExtensionNs="com.intellij">
     <ApplicationLoadListener implementation="org.jetbrains.settingsRepository.IcsApplicationLoadListener"/>

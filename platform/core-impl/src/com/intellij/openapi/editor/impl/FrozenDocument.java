@@ -1,57 +1,53 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.DocumentSnapshot;
+import com.intellij.openapi.editor.ex.DocumentTextPatch;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Processor;
-import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.SoftReference;
-
-import static com.intellij.reference.SoftReference.dereference;
-
 @ApiStatus.Internal
 public class FrozenDocument implements DocumentEx {
-  private final ImmutableCharSequence myText;
-  private volatile @Nullable SoftReference<LineSet> myLineSet;
-  private final long myStamp;
-  private volatile SoftReference<String> myTextString;
+  private final DocumentSnapshot mySnapshot;
 
-  FrozenDocument(@NotNull ImmutableCharSequence text, @Nullable LineSet lineSet, long stamp, @Nullable String textString) {
-    myText = text;
-    myLineSet = lineSet == null ? null : new SoftReference<>(lineSet);
-    myStamp = stamp;
-    myTextString = textString == null ? null : new SoftReference<>(textString);
-  }
-
-  private @NotNull LineSet getLineSet() {
-    LineSet lineSet = dereference(myLineSet);
-    if (lineSet == null) {
-      myLineSet = new SoftReference<>(lineSet = LineSet.createLineSet(myText));
-    }
-    return lineSet;
+  FrozenDocument(@NotNull DocumentSnapshot snapshot) {
+    mySnapshot = snapshot;
   }
 
   public @NotNull FrozenDocument applyEvent(@NotNull DocumentEvent event, int newStamp) {
-    int offset = event.getOffset();
-    int oldEnd = offset + event.getOldLength();
-    ImmutableCharSequence newText = myText.replace(offset, oldEnd, event.getNewFragment());
-    LineSet newLineSet = getLineSet().update(myText, offset, oldEnd, event.getNewFragment(), event.isWholeTextReplaced());
-    return new FrozenDocument(newText, newLineSet, newStamp, null);
+    int originStartOffset = event instanceof DocumentEventImpl ? ((DocumentEventImpl)event).getInitialStartOffset() : event.getOffset();
+    int originOldLength = event instanceof DocumentEventImpl ? ((DocumentEventImpl)event).getInitialOldLength() : event.getOldLength();
+    DocumentSnapshot newSnapshot = mySnapshot.withPatch(DocumentTextPatch.complex(
+      event.getOffset(),
+      event.getOffset() + event.getOldLength(),
+      event.getNewFragment(),
+      newStamp,
+      event.isWholeTextReplaced(),
+      originStartOffset,
+      originStartOffset + originOldLength,
+      event.getMoveOffset()
+    ));
+    return new FrozenDocument(newSnapshot);
+  }
+
+  @NotNull DocumentSnapshot getSnapshot() {
+    return mySnapshot;
   }
 
   @Override
   public @NotNull LineIterator createLineIterator() {
-    return getLineSet().createIterator();
+    return mySnapshot.text().lineIterator();
   }
 
   @Override
@@ -96,50 +92,42 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public @NotNull String getText() {
-    String s = dereference(myTextString);
-    if (s == null) {
-      myTextString = new SoftReference<>(s = myText.toString());
-    }
-    return s;
+    return mySnapshot.text().string();
   }
 
   @Override
   public @NotNull String getText(@NotNull TextRange range) {
-    return myText.subSequence(range.getStartOffset(), range.getEndOffset()).toString();
+    return mySnapshot.text().string(range);
   }
 
   @Override
   public @NotNull CharSequence getCharsSequence() {
-    return myText;
+    return getImmutableCharSequence();
   }
 
   @Override
   public @NotNull CharSequence getImmutableCharSequence() {
-    return myText;
+    return mySnapshot.text().chars();
   }
 
   @Override
   public int getLineCount() {
-    return getLineSet().getLineCount();
+    return mySnapshot.text().lineCount();
   }
 
   @Override
   public int getLineNumber(int offset) {
-    return getLineSet().findLineIndex(offset);
+    return mySnapshot.text().lineNumber(offset);
   }
 
   @Override
   public int getLineStartOffset(int line) {
-    if (line == 0) return 0; // otherwise it crashed for zero-length document
-    return getLineSet().getLineStart(line);
+    return mySnapshot.text().lineStartOffset(line);
   }
 
   @Override
   public int getLineEndOffset(int line) {
-    if (getTextLength() == 0 && line == 0) return 0;
-    int result = getLineSet().getLineEnd(line) - getLineSeparatorLength(line);
-    assert result >= 0;
-    return result;
+    return mySnapshot.text().lineEndOffset(line);
   }
 
   @Override
@@ -164,7 +152,7 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public long getModificationStamp() {
-    return myStamp;
+    return mySnapshot.text().modStamp();
   }
 
   @Override
@@ -214,7 +202,7 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public int getLineSeparatorLength(int line) {
-    return getLineSet().getSeparatorLength(line);
+    return mySnapshot.text().lineSeparatorLength(line);
   }
 
   @Override

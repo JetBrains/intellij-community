@@ -53,7 +53,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Na
   }
 
   @Override
-  public PsiElement getFirstChild() {
+  public final PsiElement getFirstChild() {
     ASTNode node = getFirstChildNode();
     return node != null ? node.getPsi() : null;
   }

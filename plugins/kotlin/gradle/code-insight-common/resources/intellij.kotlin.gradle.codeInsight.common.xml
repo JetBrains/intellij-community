@@ -1,14 +1,40 @@
-<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.gradleCodeInsightCommon">
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.kotlin.gradle.tooling"/>
     <module name="intellij.kotlin.projectWizard.idea"/>
     <module name="intellij.gradle.java"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.statistics"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.gradle.gradle"/>
+    <module name="intellij.kotlin.plugin.updater"/>
+    <module name="intellij.kotlin.projectConfiguration"/>
+    <module name="intellij.kotlin.projectWizard.core"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.smRunner"/>
     <module name="intellij.platform.testRunner"/>
-    <module name="kotlin.code-insight.inspections.shared"/>
+    <module name="intellij.platform.vcs.core"/>
   </dependencies>
   <!-- endregion -->
 

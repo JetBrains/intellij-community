@@ -9,6 +9,7 @@ import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiSnippetDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
@@ -24,12 +25,15 @@ public final class SnippetDocTagManipulator extends AbstractElementManipulator<P
                                                   String newContent) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
 
+    boolean isMarkdown = PsiUtil.isInMarkdownDocComment(element);
     final JavaFileCodeStyleFacade codeStyleFacade = JavaFileCodeStyleFacade.forContext(element.getContainingFile());
-    final String newSnippetTagContent = codeStyleFacade.isJavaDocLeadingAsterisksEnabled()
+    final String newSnippetTagContent = (codeStyleFacade.isJavaDocLeadingAsterisksEnabled() && !isMarkdown) 
                                         ? prependAbsentAsterisks(newContent)
                                         : newContent;
 
-    final PsiDocComment text = factory.createDocCommentFromText("/**\n" + newSnippetTagContent + "\n*/");
+    final PsiDocComment text = factory.createDocCommentFromText(isMarkdown
+                                                                ? "/// " + newSnippetTagContent + "\n"
+                                                                : "/**\n" + newSnippetTagContent + "\n*/");
     final PsiSnippetDocTag snippet = PsiTreeUtil.findChildOfType(text, PsiSnippetDocTag.class);
     if (snippet == null) {
       return element;

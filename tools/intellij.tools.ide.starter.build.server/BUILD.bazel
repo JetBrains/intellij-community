@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.tools.ide.starter.build.server` start
-
 create_kotlinc_options(
     name = "custom_ide-starter-build-server",
     opt_in = ["kotlin.time.ExperimentalTime"],
@@ -29,6 +28,7 @@ jvm_library(
         # do not sort,
         "//libraries/kotlinx/coroutines/core",
         "@lib//:kotlin-stdlib",
+        "//platform/buildData",
         "//platform/build-scripts",
         "@lib//:kodein-di-jvm",
         "//tools/intellij.tools.ide.starter:ide-starter",
@@ -54,6 +54,7 @@ jvm_library(
         # do not sort,
         ":ide-starter-build-server",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/buildData:buildData_test_lib",
         "//platform/build-scripts:build-scripts_test_lib",
         "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
         "//platform/util:util_test_lib",

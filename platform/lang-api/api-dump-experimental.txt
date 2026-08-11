@@ -14,6 +14,8 @@
 - getLanguage():com.intellij.lang.Language
 - getLanguageDomainId():java.lang.String
 - getPropertyDescription(java.lang.String):java.lang.String
+*:com.intellij.build.BuildProgressObservable
+- a:addListener(com.intellij.build.BuildProgressListener,com.intellij.openapi.Disposable):V
 *:com.intellij.build.BuildViewSettingsProvider
 - a:isExecutionViewHidden():Z
 *:com.intellij.build.BuildWorkspaceConfiguration
@@ -21,6 +23,7 @@
 - a:isShowFirstErrorInEditor():Z
 *:com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:build():com.intellij.build.events.BuildIssueEvent
+- a:withFilePosition(com.intellij.build.FilePosition):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:withHint(java.lang.String):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:withId(java.lang.Object):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.BuildIssueEventBuilder
@@ -48,6 +51,7 @@ com.intellij.build.eventBuilders.StartBuildEventBuilder
 - a:createDefaultResult():com.intellij.build.events.EventResult
 - a:createFailureResult():com.intellij.build.events.FailureResult
 *:com.intellij.build.events.DuplicateMessageAware
+- com.intellij.build.events.MessageEvent
 *:com.intellij.build.events.PresentableBuildEvent
 - com.intellij.build.events.BuildEvent
 - s:builder(java.lang.String,com.intellij.build.events.BuildEventPresentationData):com.intellij.build.eventBuilders.PresentableBuildEventBuilder
@@ -588,7 +592,6 @@ com.intellij.ide.bookmark.BookmarksManager
 - f:setFrameworkVersion(java.lang.String):V
 com.intellij.openapi.roots.ModifiableModelsProvider
 - *a:getGlobalLibraryTableModifiableModel(com.intellij.openapi.project.Project):com.intellij.openapi.roots.libraries.LibraryTable$ModifiableModel
-*:com.intellij.openapi.roots.SkipAddingToWatchedRoots
 c:com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 - *:canOpenLibrarySettings(com.intellij.platform.workspace.jps.entities.LibraryEntity):Z
 *a:com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItem
@@ -654,5 +657,3 @@ a:com.intellij.task.ProjectTaskRunner
 - isAborted():Z
 - s:valueOf(java.lang.String):com.intellij.task.TaskRunnerResults
 - s:values():com.intellij.task.TaskRunnerResults[]
-com.intellij.testIntegration.TestFinder
-- *:navigateToTestImmediately(com.intellij.psi.PsiElement):Z

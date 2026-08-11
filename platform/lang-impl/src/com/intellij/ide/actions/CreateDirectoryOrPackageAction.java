@@ -57,6 +57,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.BorderFactory;
@@ -80,6 +81,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public class CreateDirectoryOrPackageAction extends AnAction implements DumbAware {
   public static final ExtensionPointName<CreateDirectoryCompletionContributor> EP = new ExtensionPointName<>("com.intellij.createDirectoryCompletionContributor");
 
@@ -302,7 +304,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
   @TestOnly
   @ApiStatus.Internal
-  public @NotNull List<String> collectSuggestedDirectoriesTestAccessor(@NotNull PsiDirectory directory) {
+  public @NotNull @Unmodifiable List<String> collectSuggestedDirectoriesTestAccessor(@NotNull PsiDirectory directory) {
     return ContainerUtil.map(collectSuggestedDirectories(directory), item -> item.relativePath);
   }
   
@@ -362,6 +364,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     return createdDirectories;
   }
 
+  @ApiStatus.Internal
   protected static final class CompletionItem {
     final @NotNull CreateDirectoryCompletionContributor contributor;
 

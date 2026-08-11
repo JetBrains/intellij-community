@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.webp` start
-
 jvm_library(
     name = "webp",
     srcs = glob(
@@ -20,7 +19,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
         "//platform/lang-api:lang",
         "//platform/platform-impl:ide-impl",

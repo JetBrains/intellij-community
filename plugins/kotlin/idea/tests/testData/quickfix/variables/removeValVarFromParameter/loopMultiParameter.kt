@@ -1,5 +1,5 @@
 // "Remove 'val' from parameter" "true"
-// K2_ERROR: 'val' on loop parameter is prohibited.
+// K2_ERROR: VAL_OR_VAR_ON_LOOP_PARAMETER
 class Pair<A, B>
 {
     operator fun component1(): A = null!!

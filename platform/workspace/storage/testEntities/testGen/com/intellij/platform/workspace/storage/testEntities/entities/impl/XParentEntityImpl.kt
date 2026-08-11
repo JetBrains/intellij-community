@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -15,7 +14,6 @@ import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
@@ -33,7 +31,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.XParentEnti
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XParentEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId =
       ConnectionId.create(XParentEntity::class.java, XChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
@@ -44,7 +41,6 @@ internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XP
     internal val CHILDCHILD_CONNECTION_ID: ConnectionId =
       ConnectionId.create(XParentEntity::class.java, XChildChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     private val connections = listOf<ConnectionId>(CHILDREN_CONNECTION_ID, OPTIONALCHILDREN_CONNECTION_ID, CHILDCHILD_CONNECTION_ID)
-
   }
 
   override val parentProperty: String
@@ -53,16 +49,18 @@ internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XP
       return dataSource.parentProperty
     }
   override val children: List<XChildEntity>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(CHILDREN_CONNECTION_ID, this) as? Sequence<XChildEntity>)?.toList()
-            ?: error("Children children not found for XParentEntity")
+            ?: error("Children list children not found for XParentEntity")
   override val optionalChildren: List<XChildWithOptionalParentEntity>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(OPTIONALCHILDREN_CONNECTION_ID,
                                                       this) as? Sequence<XChildWithOptionalParentEntity>)?.toList()
-            ?: error("Children optionalChildren not found for XParentEntity")
+            ?: error("Children list optionalChildren not found for XParentEntity")
   override val childChild: List<XChildChildEntity>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(CHILDCHILD_CONNECTION_ID, this) as? Sequence<XChildChildEntity>)?.toList()
-            ?: error("Children childChild not found for XParentEntity")
-
+            ?: error("Children list childChild not found for XParentEntity")
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -73,33 +71,11 @@ internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XP
     return connections
   }
 
-
   internal class Builder(result: XParentEntityData?) : ModifiableWorkspaceEntityBase<XParentEntity, XParentEntityData>(result),
                                                        XParentEntityBuilder {
     internal constructor() : this(XParentEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity XParentEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -154,14 +130,12 @@ internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XP
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var parentProperty: String
       get() = getEntityData().parentProperty
@@ -172,18 +146,19 @@ internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XP
       }
 
     // List of non-abstract referenced types
-    var _children: List<XChildEntity>? = emptyList()
     override var children: List<XChildEntityBuilder>
       get() {
 // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
+          @Suppress("UNCHECKED_CAST")
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)
             .toList() as List<XChildEntityBuilder>) + (this.entityLinks[EntityLink(true,
                                                                                    CHILDREN_CONNECTION_ID)] as? List<XChildEntityBuilder>
                                                        ?: emptyList())
         }
         else {
+          @Suppress("UNCHECKED_CAST")
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<XChildEntityBuilder> ?: emptyList()
         }
       }
@@ -195,10 +170,8 @@ internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XP
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
 // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
+              item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              @Suppress("UNCHECKED_CAST")
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -209,7 +182,6 @@ internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XP
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
             }
-// else you're attaching a new entity to an existing entity that is not modifiable
           }
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
         }
@@ -217,18 +189,19 @@ internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XP
       }
 
     // List of non-abstract referenced types
-    var _optionalChildren: List<XChildWithOptionalParentEntity>? = emptyList()
     override var optionalChildren: List<XChildWithOptionalParentEntityBuilder>
       get() {
 // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(OPTIONALCHILDREN_CONNECTION_ID, this)!!
+          @Suppress("UNCHECKED_CAST")
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(OPTIONALCHILDREN_CONNECTION_ID, this)
             .toList() as List<XChildWithOptionalParentEntityBuilder>) + (this.entityLinks[EntityLink(true,
                                                                                                      OPTIONALCHILDREN_CONNECTION_ID)] as? List<XChildWithOptionalParentEntityBuilder>
                                                                          ?: emptyList())
         }
         else {
+          @Suppress("UNCHECKED_CAST")
           this.entityLinks[EntityLink(true, OPTIONALCHILDREN_CONNECTION_ID)] as? List<XChildWithOptionalParentEntityBuilder> ?: emptyList()
         }
       }
@@ -240,10 +213,8 @@ internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XP
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
 // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, OPTIONALCHILDREN_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
+              item_value.entityLinks[EntityLink(false, OPTIONALCHILDREN_CONNECTION_ID)] = this
+              @Suppress("UNCHECKED_CAST")
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -254,7 +225,6 @@ internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XP
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, OPTIONALCHILDREN_CONNECTION_ID)] = this
             }
-// else you're attaching a new entity to an existing entity that is not modifiable
           }
           this.entityLinks[EntityLink(true, OPTIONALCHILDREN_CONNECTION_ID)] = value
         }
@@ -262,18 +232,19 @@ internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XP
       }
 
     // List of non-abstract referenced types
-    var _childChild: List<XChildChildEntity>? = emptyList()
     override var childChild: List<XChildChildEntityBuilder>
       get() {
 // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDCHILD_CONNECTION_ID, this)!!
+          @Suppress("UNCHECKED_CAST")
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDCHILD_CONNECTION_ID, this)
             .toList() as List<XChildChildEntityBuilder>) + (this.entityLinks[EntityLink(true,
                                                                                         CHILDCHILD_CONNECTION_ID)] as? List<XChildChildEntityBuilder>
                                                             ?: emptyList())
         }
         else {
+          @Suppress("UNCHECKED_CAST")
           this.entityLinks[EntityLink(true, CHILDCHILD_CONNECTION_ID)] as? List<XChildChildEntityBuilder> ?: emptyList()
         }
       }
@@ -285,10 +256,8 @@ internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XP
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
 // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, CHILDCHILD_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
+              item_value.entityLinks[EntityLink(false, CHILDCHILD_CONNECTION_ID)] = this
+              @Suppress("UNCHECKED_CAST")
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -299,7 +268,6 @@ internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XP
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDCHILD_CONNECTION_ID)] = this
             }
-// else you're attaching a new entity to an existing entity that is not modifiable
           }
           this.entityLinks[EntityLink(true, CHILDCHILD_CONNECTION_ID)] = value
         }
@@ -308,32 +276,14 @@ internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XP
 
     override fun getEntityClass(): Class<XParentEntity> = XParentEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class XParentEntityData : WorkspaceEntityData<XParentEntity>() {
   lateinit var parentProperty: String
-
   internal fun isParentPropertyInitialized(): Boolean = ::parentProperty.isInitialized
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<XParentEntity> {
-    val modifiable = XParentEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): XParentEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = XParentEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): XParentEntity = XParentEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<XParentEntity, *> = XParentEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.XParentEntity") as EntityMetadata
   }

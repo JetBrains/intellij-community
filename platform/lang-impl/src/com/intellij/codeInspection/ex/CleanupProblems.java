@@ -5,12 +5,13 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
 
 @ApiStatus.Internal
-public record CleanupProblems(@NotNull Collection<? extends PsiFile> files,
-                              @NotNull List<? extends ProblemDescriptor> problemDescriptors,
+public record CleanupProblems(@NotNull @Unmodifiable Collection<? extends PsiFile> files,
+                              @NotNull @Unmodifiable List<? extends ProblemDescriptor> problemDescriptors,
                               boolean isGlobalScope) {
 }

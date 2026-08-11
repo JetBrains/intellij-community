@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.workspace.jps.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(
@@ -110,10 +109,17 @@ jvm_library(
         "//platform/eel-provider:eel-provider_test_lib",
         "//platform/testFramework/junit5/eel",
         "//platform/testFramework/junit5/eel:eel_test_lib",
-        "@lib//:jet_check",
+        "//libraries/jetcheck",
+        "//libraries/jetcheck:jetcheck_test_lib",
         "//platform/testFramework/junit5/projectStructure",
         "//platform/testFramework/junit5/projectStructure:projectStructure_test_lib",
         "//platform/ide-core",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.workspace.jps.tests` end
@@ -128,7 +134,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.workspace.jps.tests` end
 
 ### auto-generated section `test intellij.platform.workspace.jps.tests` start
-
 jps_test(
     name = "tests_test",
     runtime_deps = [":tests_test_lib"],

@@ -1,3 +1,3 @@
-- name: dist.all/lib/intellij.platform.problemsView.shared.jar
+- name: dist.all/lib/intellij.platform.problemView.shared.jar
   modules:
-  - name: intellij.platform.problemsView.shared
+  - name: intellij.platform.problemView.shared

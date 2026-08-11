@@ -19,6 +19,7 @@ public interface PlatformCursorController {
     public fun hideCursor()
 }
 
+/** CompositionLocal that provides the current [PlatformCursorController]. */
 public val LocalPlatformCursorController: ProvidableCompositionLocal<PlatformCursorController> =
     staticCompositionLocalOf {
         error("No LocalPlatformCursorController provided. Have you forgotten the theme?")

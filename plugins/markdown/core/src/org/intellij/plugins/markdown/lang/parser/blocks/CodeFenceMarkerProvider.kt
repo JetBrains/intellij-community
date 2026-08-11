@@ -34,6 +34,6 @@ open class CodeFenceMarkerProvider: CodeFenceProvider() {
   }
 
   companion object {
-    private val openingRegex = Regex("^ {0,3}(~~~+|```+|:::+)([^`]*)\$")
+    private val openingRegex = Regex("^ {0,3}(~~~++|```++|:::++)([^`]*+)$")
   }
 }

@@ -15,44 +15,64 @@
  */
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.arrayOfNotNull
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
+import com.intellij.maven.testFramework.fixtures.withModel410Only
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
+import org.jetbrains.idea.maven.fixtures.checkHighlighting
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenPackagingCompletionTest : MavenDomTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenPackagingCompletionTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun testVariants() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging><caret></packaging>
                        """.trimIndent())
 
-    assertCompletionVariants(projectPom, *arrayOfNotNull("jar", "pom", "war", "ejb", "ejb-client", "ear", "bundle", "maven-plugin", withModel410Only("bom")))
+    val expected: Array<String> = arrayOfNotNull("jar", "pom", "war", "ejb", "ejb-client", "ear", "bundle", "maven-plugin", maven.withModel410Only("bom"))
+    maven.assertCompletionVariants(maven.projectPom, *expected)
   }
 
   @Test
   fun testDoNotHighlightUnknownPackagingTypes() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>xxx</packaging>
                        """.trimIndent())
 
-    checkHighlighting()
+    maven.checkHighlighting()
   }
 }

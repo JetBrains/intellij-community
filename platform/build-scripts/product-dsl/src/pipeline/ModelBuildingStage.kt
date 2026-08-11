@@ -23,7 +23,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
-import org.jetbrains.intellij.build.findFileInModuleDependenciesRecursive
 import org.jetbrains.intellij.build.findFileInModuleLibraryDependencies
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.productLayout.ContentModule
@@ -54,10 +53,12 @@ import org.jetbrains.intellij.build.productLayout.traversal.collectProductModule
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
 import org.jetbrains.intellij.build.productLayout.util.GeneratedArtifactWritePolicy
+import org.jetbrains.intellij.build.productLayout.util.resolveXIncludeBytes
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -141,12 +142,17 @@ internal object ModelBuildingStage {
     )
     // Build lookup for DSL-defined test plugins keyed by PluginId (semantically correct)
     // Note: PluginId is the XML plugin identifier, distinct from ModuleName (JPS module)
-    val dslTestPluginsByProduct = discovery.products
-      .mapNotNull { product ->
-        val testPlugins = product.spec?.testPlugins?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
-        product.name to testPlugins
+    // Includes both real products and test-only product specs (e.g. lambda-test fixtures).
+    val dslTestPluginsByProduct = buildMap<String, List<TestPluginSpec>> {
+      for (product in discovery.products) {
+        val plugins = product.spec?.testPlugins?.takeIf { it.isNotEmpty() } ?: continue
+        put(product.name, plugins)
       }
-      .toMap()
+      for ((name, spec) in discovery.testProductSpecs) {
+        val plugins = spec.testPlugins.takeIf { it.isNotEmpty() } ?: continue
+        put(name, plugins)
+      }
+    }
     val dslTestPluginIdOwners = LinkedHashMap<PluginId, MutableList<String>>()
     for ((productName, testPlugins) in dslTestPluginsByProduct) {
       for (spec in testPlugins) {
@@ -178,7 +184,14 @@ internal object ModelBuildingStage {
     val pluginInfos = LinkedHashMap<TargetName, PluginContentInfo>()
 
     val extraPluginDescriptors = if (config.includeTestPluginDescriptorsFromSources) {
-      discoverPluginDescriptorsFromSources(outputProvider)
+      val dslOwnedPluginXmlPaths = dslTestPluginsByProduct.values.asSequence()
+        .flatten()
+        .mapTo(HashSet()) { config.projectRoot.resolve(it.pluginXmlPath).normalize() }
+      discoverPluginDescriptorsFromSources(
+        outputProvider = outputProvider,
+        testFrameworkContentModules = config.testFrameworkContentModules,
+        dslOwnedPluginXmlPaths = dslOwnedPluginXmlPaths,
+      )
     }
     else {
       DiscoveredPluginDescriptors(emptySet(), emptySet())
@@ -247,9 +260,11 @@ internal object ModelBuildingStage {
 
     val pluginGraph = builder.buildFrozen()
 
-    // Build per-product allowedMissingDependencies map
-    val productAllowedMissing = discovery.products
-      .mapNotNull { d -> d.spec?.allowedMissingDependencies?.let { d.name to it } }
+    // Build per-product allowedMissingDependencies map — includes both real products and test product specs
+    val productAllowedMissing = (
+      discovery.products.mapNotNull { d -> d.spec?.allowedMissingDependencies?.let { d.name to it } } +
+      discovery.testProductSpecs.mapNotNull { (name, spec) -> spec.allowedMissingDependencies.takeIf { it.isNotEmpty() }?.let { name to it } }
+    )
       .toMap()
 
     return GenerationModel(
@@ -827,6 +842,62 @@ internal object ModelBuildingStage {
       }
     }
 
+    // Also expand test plugins from testProductSpecs (e.g. lambda-test fixtures).
+    // For test product specs, keep wrapper specs small but disable content auto-add by marking all
+    // graph modules as "resolvable". The dependency planner still generates <dependencies>.
+    // Content auto-add would otherwise pull in the transitive closure of every declared module,
+    // including non-bundled test-infrastructure modules (like intellij.tools.ide.starter) that own
+    // native libraries (pty4j) conflicting with what the core IDE already extracted at runtime.
+    val allGraphContentModules: Set<ContentModuleName> by lazy {
+      val result = LinkedHashSet<ContentModuleName>()
+      graphView.query { contentModules { result.add(it.contentName()) } }
+      result
+    }
+
+    for ((specName, _) in discovery.testProductSpecs) {
+      val dslSpecs = dslTestPluginsByProduct[specName].orEmpty()
+      if (dslSpecs.isEmpty()) continue
+
+      // Register as a product node so validators can apply per-product allowed-missing rules.
+      builder.addProduct(specName)
+
+      val expandedSpecs = ArrayList<TestPluginSpec>(dslSpecs.size)
+      for (dslSpec in dslSpecs) {
+        val pluginModule = TargetName(dslSpec.pluginId.value)
+        val declaredModules = collectDeclaredContentModules(dslSpec.spec)
+        val resolvableModules = LinkedHashSet<ContentModuleName>(allGraphContentModules)
+        resolvableModules.addAll(declaredModules)
+
+        val dependencyChains = LinkedHashMap<ContentModuleName, List<ContentModuleName>>()
+        val content = computePluginContentFromDslSpec(
+          testPluginSpec = dslSpec,
+          projectRoot = projectRoot,
+          resolvableModules = resolvableModules,
+          productName = specName,
+          pluginGraph = graphView,
+          errorSink = errorSink,
+          suppressionConfig = suppressionConfig,
+          updateSuppressions = updateSuppressions,
+          suppressionUsageSink = dslTestPluginSuppressionUsages,
+          descriptorCache = descriptorCache,
+          autoAddedModulesLoadingMode = config.dslTestPluginAutoAddLoadingMode,
+          dependencyChainsSink = dependencyChains,
+        )
+        pluginContentCache.addDslTestPlugin(pluginModule, content)
+        builder.addPluginWithContent(pluginModule, content, config.testFrameworkContentModules)
+        // Link to the test product so the validator's per-product allowed-missing check applies.
+        builder.linkProductBundlesPlugin(specName, pluginModule, isTest = true)
+        expandedSpecs.add(expandTestPluginSpec(dslSpec, content, declaredModules, config.dslTestPluginAutoAddLoadingMode))
+        if (dependencyChains.isNotEmpty()) {
+          dslTestPluginDependencyChains.put(dslSpec.pluginId, dependencyChains)
+        }
+      }
+
+      if (expandedSpecs.isNotEmpty()) {
+        expandedDslTestPluginsByProduct[specName] = expandedSpecs
+      }
+    }
+
     return DslTestPluginExpansionResult(
       pluginsByProduct = expandedDslTestPluginsByProduct,
       suppressionUsages = dslTestPluginSuppressionUsages,
@@ -940,9 +1011,9 @@ internal object ModelBuildingStage {
   ) {
     // Compare by string value since TargetName (JPS module) and PluginId are different semantic types.
     val dslTestPluginIdStrings = dslTestPluginIds.mapTo(HashSet()) { it.value }
-    fun addPlugin(target: TargetName, pluginId: PluginId? = null, isModuleSetWrapper: Boolean = false) {
+    fun addPlugin(target: TargetName, pluginId: PluginId? = null) {
       if (target.value in dslTestPluginIdStrings) return
-      builder.addPlugin(name = target, isTest = false, pluginId = pluginId, isModuleSetWrapper = isModuleSetWrapper)
+      builder.addPlugin(name = target, isTest = false, pluginId = pluginId)
     }
 
     for (product in discovery.products) {
@@ -971,7 +1042,11 @@ internal object ModelBuildingStage {
     val pluginModules: Set<TargetName>,
   )
 
-  internal fun discoverPluginDescriptorsFromSources(outputProvider: ModuleOutputProvider): DiscoveredPluginDescriptors {
+  internal fun discoverPluginDescriptorsFromSources(
+    outputProvider: ModuleOutputProvider,
+    testFrameworkContentModules: Set<ContentModuleName> = emptySet(),
+    dslOwnedPluginXmlPaths: Set<Path> = emptySet(),
+  ): DiscoveredPluginDescriptors {
     val modules = outputProvider.getAllModules()
     if (modules.isEmpty()) {
       return DiscoveredPluginDescriptors(emptySet(), emptySet())
@@ -987,7 +1062,18 @@ internal object ModelBuildingStage {
       else {
         null
       }
+      if (prodPluginXml != null && prodPluginXml in dslOwnedPluginXmlPaths) {
+        // A DSL `testPlugin {}` already owns this descriptor under its own plugin id; seeding the JPS module as well
+        // would put the same plugin.xml in the graph twice, under two different plugin nodes.
+        continue
+      }
       if (testPluginXml != null) {
+        testPluginModules.add(TargetName(module.name))
+      }
+      else if (prodPluginXml != null && declaresTestFrameworkContent(prodPluginXml, testFrameworkContentModules)) {
+        // Test plugins that keep plugin.xml in production resources (the rdct and ReSharper ones, for instance) are
+        // invisible to every list the generator is configured with, so without this they get neither auto-add nor
+        // validation and a content module conversion breaks them silently (IJPL-252475).
         testPluginModules.add(TargetName(module.name))
       }
       if (hasPluginContentYaml(module)) {
@@ -996,6 +1082,24 @@ internal object ModelBuildingStage {
     }
 
     return DiscoveredPluginDescriptors(testPluginModules, pluginModules)
+  }
+
+  /**
+   * Cheap text probe: a descriptor declaring one of the test-framework marker modules as content is a test plugin,
+   * the same criterion [org.jetbrains.intellij.build.productLayout.validator.rule.isTestPlugin] applies once the plugin
+   * is in the graph. Parsing every plugin.xml in the project just to seed extraction would be far more expensive.
+   */
+  private fun declaresTestFrameworkContent(pluginXml: Path, testFrameworkContentModules: Set<ContentModuleName>): Boolean {
+    if (testFrameworkContentModules.isEmpty()) {
+      return false
+    }
+    val content = try {
+      Files.readString(pluginXml)
+    }
+    catch (_: IOException) {
+      return false
+    }
+    return testFrameworkContentModules.any { content.contains("\"${it.value}\"") }
   }
 
   private fun hasPluginContentYaml(module: JpsModule): Boolean {
@@ -1178,31 +1282,5 @@ internal object ModelBuildingStage {
     }
 
     return allAliases
-  }
-
-  private suspend fun resolveXIncludeBytes(
-    path: String,
-    module: JpsModule,
-    outputProvider: ModuleOutputProvider,
-    prefix: String?,
-  ): ByteArray? {
-    findFileInModuleSources(module, path)?.let { return Files.readAllBytes(it) }
-    findFileInModuleLibraryDependencies(module, path, outputProvider)?.let { return it }
-    outputProvider.readFileContentFromModuleOutput(module, path)?.let { return it }
-
-    val processedModules = HashSet<String>()
-    processedModules.add(module.name)
-
-    findFileInModuleDependenciesRecursive(
-      module = module,
-      relativePath = path,
-      provider = outputProvider,
-      processedModules = processedModules,
-      moduleNamePrefix = prefix,
-    )?.let { return it }
-
-    outputProvider.findFileInAnyModuleOutput(path, prefix, processedModules)?.let { return it }
-
-    return null
   }
 }

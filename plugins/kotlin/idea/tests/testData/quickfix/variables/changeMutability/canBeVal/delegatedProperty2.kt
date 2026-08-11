@@ -3,8 +3,8 @@
 // ACTION: Create member function 'Delegate.getValue'
 // ACTION: Introduce import alias
 // ERROR: Type 'Delegate' has no method 'getValue(Nothing?, KProperty<*>)' and thus it cannot serve as a delegate
-// K2_ERROR: Type 'Delegate' has no method 'getValue(Nothing?, KMutableProperty0<*>)', so it cannot serve as a delegate.
-// K2_AFTER_ERROR: Type 'Delegate' has no method 'getValue(Nothing?, KMutableProperty0<*>)', so it cannot serve as a delegate.
+// K2_AFTER_ERROR: DELEGATE_SPECIAL_FUNCTION_MISSING
+// K2_ERROR: DELEGATE_SPECIAL_FUNCTION_MISSING
 import kotlin.reflect.KProperty
 
 fun test() {

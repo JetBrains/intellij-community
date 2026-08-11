@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.gradle.scripting.shared">
+<idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.gradle"/>
@@ -6,7 +6,29 @@
     <module name="intellij.java.frontback.psi.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.ui"/>
+    <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.scripting.shared"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.gradle.tooling.impl"/>
+    <module name="intellij.kotlin.preferences"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlin.tooling.core"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
@@ -19,15 +41,9 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <internalFileTemplate name="Kotlin Script Gradle"/>
-    <projectSettings service="org.jetbrains.kotlin.gradle.scripting.shared.settings.StandaloneScriptsStorage"/>
   </extensions>
 
   <actions resource-bundle="messages.KotlinGradleScriptingBundle">
     <action id="Kotlin.Gradle.ShowDslLogs" class="org.jetbrains.kotlin.gradle.scripting.shared.actions.ShowKotlinGradleDslLogs"/>
-    <action id="LoadKtGradleConfiguration"
-            class="org.jetbrains.kotlin.gradle.scripting.shared.LoadKtGradleConfigurationAction"
-            icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
-      <add-to-group group-id="ExternalSystem.ProjectRefreshActionGroup" anchor="first"/>
-    </action>
   </actions>
 </idea-plugin>

@@ -32,6 +32,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,6 +101,7 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
     }
   }
 
+  @ApiStatus.Internal
   @RequiresWriteLock
   public static @Nullable CreateFilePathFix.CreatedFile createFileForFix(@NotNull Project project,
                                                                          @NotNull PsiDirectory currentDirectory,
@@ -145,6 +147,7 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
     return new CreatedFile(directory, newFile, text);
   }
 
+  @ApiStatus.Internal
   public record CreatedFile(
     PsiDirectory directory,
     PsiFile newFile,

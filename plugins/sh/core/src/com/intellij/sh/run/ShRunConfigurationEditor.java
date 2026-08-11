@@ -207,13 +207,17 @@ public class ShRunConfigurationEditor extends SettingsEditor<ShRunConfiguration>
                                               GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
     }
     myScriptSelector.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileDescriptor()
-      .withTitle(ShBundle.message("sh.label.choose.shell.script")));
+      .withTitle(ShBundle.message("sh.label.choose.shell.script"))
+      .withEnvironmentRestricted(true));
     myScriptFileWorkingDirectory.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
-      .withTitle(ShBundle.message("sh.label.choose.script.working.directory")));
+      .withTitle(ShBundle.message("sh.label.choose.script.working.directory"))
+      .withEnvironmentRestricted(true));
     myScriptWorkingDirectory.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
-      .withTitle(ShBundle.message("sh.label.choose.script.working.directory")));
+      .withTitle(ShBundle.message("sh.label.choose.script.working.directory"))
+      .withEnvironmentRestricted(true));
     myInterpreterSelector.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileDescriptor()
-      .withTitle(ShBundle.message("sh.label.choose.interpreter")));
+      .withTitle(ShBundle.message("sh.label.choose.interpreter"))
+      .withEnvironmentRestricted(true));
 
     myScriptGroup = new ButtonGroup();
     myScriptGroup.add(myScriptTextRadioButton);

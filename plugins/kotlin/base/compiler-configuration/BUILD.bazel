@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.base.compilerConfiguration` start
-
 jvm_library(
     name = "compiler-configuration",
     srcs = glob(
@@ -13,11 +12,15 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.kotlin.base.compilerConfiguration",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-jps-common",
         "//platform/projectModel-api:projectModel",
         "//platform/util",
@@ -39,6 +42,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":compiler-configuration",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/util:util_test_lib",
         "//platform/util/jdom:jdom_test_lib",

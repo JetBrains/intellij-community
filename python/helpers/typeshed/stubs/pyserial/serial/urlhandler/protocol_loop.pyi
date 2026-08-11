@@ -1,5 +1,5 @@
 import logging
-import queue
+import queue as _queue
 from _typeshed import ReadableBuffer
 
 from serial.serialutil import SerialBase
@@ -8,7 +8,7 @@ LOGGER_LEVELS: dict[str, int]
 
 class Serial(SerialBase):
     buffer_size: int
-    queue: queue.Queue[bytes | None] | None
+    queue: _queue.Queue[bytes | None] | None
     logger: logging.Logger | None
     def open(self) -> None: ...
     def from_url(self, url: str) -> None: ...

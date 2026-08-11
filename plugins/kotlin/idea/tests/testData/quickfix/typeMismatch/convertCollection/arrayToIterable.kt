@@ -1,6 +1,6 @@
 // "Convert expression to 'Iterable' by inserting '.toList()'" "true"
 // WITH_STDLIB
-// K2_ERROR: Argument type mismatch: actual type is 'Array<String>', but 'Iterable<String>' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 fun foo(a: Array<String>) {
     bar(a<caret>)

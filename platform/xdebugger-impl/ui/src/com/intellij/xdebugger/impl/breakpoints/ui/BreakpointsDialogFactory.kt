@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui
 
 
@@ -7,8 +7,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
@@ -17,7 +17,6 @@ import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.platform.rpc.topics.sendToClient
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.impl.breakpoints.SHOW_BREAKPOINT_DIALOG_REMOTE_TOPIC
 import com.intellij.xdebugger.impl.breakpoints.ShowBreakpointDialogRequest
@@ -85,7 +84,7 @@ class BreakpointsDialogFactory(private val project: Project, private val scope: 
   }
 
   fun showDialog(initialBreakpointId: XBreakpointId?) {
-    if (SplitDebuggerMode.isSplitDebugger() && AppMode.isRemoteDevHost()) {
+    if (AppMode.isRemoteDevHost()) {
       hideBalloon()
       SHOW_BREAKPOINT_DIALOG_REMOTE_TOPIC.sendToClient(project, ShowBreakpointDialogRequest(initialBreakpointId))
       return

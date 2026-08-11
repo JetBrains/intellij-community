@@ -12,13 +12,17 @@ import com.intellij.openapi.application.WriteActionListener
 import com.intellij.openapi.application.WriteIntentReadActionListener
 import com.intellij.openapi.application.WriteLockReacquisitionListener
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.ThreadContextElement
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Supplier
@@ -32,6 +36,8 @@ object InternalPsiVersioning {
   private const val NESTED_LOCKS_THREADING_SUPPORT_CLASS_NAME = "com.intellij.platform.locking.impl.NestedLocksThreadingSupport"
   private const val SUSPENDING_WRITE_ACTION_METHOD_NAME = "executeSuspendingWriteAction"
 
+  private const val LOCK_PROHIBITION_FREEZE_PSI_VERSION_ADVICE = "Lock usage is forbidden by `PsiVersioningService#freezePsiVersion`. It is not allowed to use locks while PSI snapshot is frozen"
+
   // a reading operation with the available psi version
   fun <T> freezePsiVersion(action: () -> T): T {
     if (ApplicationManager.getApplication().isReadAccessAllowed) {
@@ -39,8 +45,12 @@ object InternalPsiVersioning {
     }
     val registry = PsiVersionRegistry.instance
     val latestVersion = registry.latestPublishedVersion
-    return initFreezePsiVersionSection(false, latestVersion).use {
-      action()
+    return ApplicationManagerEx.getApplicationEx().withLocksProhibited(LOCK_PROHIBITION_FREEZE_PSI_VERSION_ADVICE) {
+      registry.rememberFrozenVersion(latestVersion) {
+        initFreezePsiVersionSection(false, latestVersion).use {
+          action()
+        }
+      }
     }
   }
 
@@ -62,6 +72,34 @@ object InternalPsiVersioning {
       return writeVersion.version
     }
     return currentThreadContext()[PsiVersionFreezeMarker.Key]?.version
+  }
+
+  /**
+   * Helper function to check invariants of versioned PSI. Should not be used for business logic.
+   */
+  @JvmStatic
+  fun isInsideVersioningButNotLocks(): Boolean {
+    return getCurrentPsiVersionInsideFrozenPsi() != null
+  }
+
+  /**
+   * An analogue of [ThreadingAssertions.assertReadAccess] but permits running in a versioned environment.
+   *
+   * ```kotlin
+   * runReadAction {
+   *   assertReadAccessOrVersionedEnvironment() // does not throw
+   * }
+   * freezePsiVersion {
+   *   assertReadAccessOrVersionedEnvironment() // does not throw
+   * }
+   * ```
+   */
+  @JvmStatic
+  fun assertReadAccessOrVersionedEnvironment() {
+    if (isInsideVersioningButNotLocks()) {
+      return
+    }
+    ThreadingAssertions.softAssertReadAccess()
   }
 
   @JvmStatic
@@ -176,20 +214,61 @@ object InternalPsiVersioning {
       val instance: PsiVersionRegistry by lazy { PsiVersionRegistry() }
     }
 
+    private val garbageCollector = ApplicationManager.getApplication().serviceOrNull<PsiVersioningGarbageCollector>()
+
     private val version = AtomicLong(0)
 
     val latestPublishedVersion: Long
       get() = version.get()
 
+
+    /**
+     * FileViewProvider subsystem is notoriously famous for dropping its data at random points of time
+     * When some computation captured a version, we must keep the data alive and available until the computation is finished.
+     */
+    val frozenPsiVersionsRegistry: ConcurrentMap<Long, Int> = ConcurrentHashMap<Long, Int>().apply { put(0, 1) }
+
+    fun <T> rememberFrozenVersion(version: Long, action: () -> T): T {
+      frozenPsiVersionsRegistry.compute(version) { _, v -> if (v == null) 1 else v + 1 }
+      try {
+        return action()
+      } finally {
+        decrementFrozenVersion(version)
+      }
+    }
+
+    internal fun registerCleanable(cleanable: PsiVersionCleanable) {
+      // service can be null in tests
+      garbageCollector?.registerCleanable(cleanable)
+    }
+
+
     fun incrementVersion(expected: Long) {
+      // the published version is always frozen, we have no right to remove it until it ends
+      frozenPsiVersionsRegistry[expected + 1] = 1
       val versionAdvanced = version.compareAndSet(expected, expected + 1)
       assert(versionAdvanced) {
         "Version modification failed: could not increment the version with $expected, because global version version is ${version.get()}"
       }
+      decrementFrozenVersion(expected)
+    }
+
+
+    private fun decrementFrozenVersion(version: Long) {
+      val newValue = frozenPsiVersionsRegistry.compute(version) { _, v ->
+        when (v) {
+          null -> error("Unpublished version $version is unexpected")
+          1 -> null
+          else -> v - 1
+        }
+      }
+      if (newValue == null) {
+        garbageCollector?.liveVersionsChanged(getFrozenKeys())
+      }
     }
 
     fun getFrozenKeys(): Set<Long> {
-      return setOf(latestPublishedVersion)
+      return frozenPsiVersionsRegistry.keys
     }
   }
 
@@ -405,6 +484,15 @@ object InternalPsiVersioning {
       stackTraceElement.className == NESTED_LOCKS_THREADING_SUPPORT_CLASS_NAME &&
       stackTraceElement.methodName == SUSPENDING_WRITE_ACTION_METHOD_NAME
     }
+  }
+
+  override fun toString(): String {
+    val explanation = if (getCurrentPsiVersion() > PsiVersionRegistry.instance.latestPublishedVersion) {
+      " (Thread-local version is ahead of the published version -- the changes happening in a write action and they will be published)"
+    } else {
+      ""
+    }
+    return "Psi Versioning Ecosystem State: latestVersion=${PsiVersionRegistry.instance.latestPublishedVersion}, in frozen PSI=${isInsideVersioningButNotLocks()}, version for this thread=${getCurrentPsiVersion()}${explanation}"
   }
 
   fun cleanupVersioningSection() {

@@ -5,6 +5,7 @@
 // ERROR: Unresolved reference: it
 // K2_AFTER_ERROR: Argument type mismatch: actual type is 'Function1<T (of fun <T> test), T (of fun <T> test)>', but 'Function1<T (of fun <T> test), T (of fun <T> test)>' was expected.
 // K2_AFTER_ERROR: Type argument is not within its bounds: must be subtype of 'Comparable<T (of fun <T> test)>'.
+// K2_ERROR: UNRESOLVED_REFERENCE_WRONG_RECEIVER
 fun <T> test(list: List<String>) {
     list.<caret>maxByOrNull<T, T> { it }
 }

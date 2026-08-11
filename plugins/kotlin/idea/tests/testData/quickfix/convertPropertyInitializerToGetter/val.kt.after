@@ -1,5 +1,5 @@
 // "Convert property initializer to getter" "true"
-// K2_ERROR: Property initializers in interfaces are prohibited.
+// K2_ERROR: PROPERTY_INITIALIZER_IN_INTERFACE
 
 fun String.foo() = "bar"
 

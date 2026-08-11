@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
@@ -37,7 +38,7 @@ internal class GitLabCloneLoginViewModelImpl(
         loginState.collectLatest { loginState ->
           if (loginState is LoginModel.LoginState.Connected) {
             val storedAccount = selectedAccount ?: GitLabAccount(name = loginState.username, server = getServerPath())
-            updateAccount(storedAccount, token)
+            updateAccount(storedAccount, GitLabCredentials.Token(token))
           }
         }
       }
@@ -53,7 +54,7 @@ internal class GitLabCloneLoginViewModelImpl(
     }
   }
 
-  private suspend fun updateAccount(account: GitLabAccount, credentials: String) {
+  private suspend fun updateAccount(account: GitLabAccount, credentials: GitLabCredentials) {
     accountManager.updateAccount(account, credentials)
   }
 }

@@ -5,6 +5,8 @@ import git4idea.config.GitConfigUtil
 import git4idea.inMemory.rebase.log.GitInMemoryOperationTest
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.test.assertLastMessage
+import git4idea.test.commit
+import git4idea.test.getHash
 import git4idea.test.lastMessage
 import git4idea.test.message
 import org.junit.jupiter.api.Assertions.assertNotEquals
@@ -88,6 +90,55 @@ internal class GitInMemoryRewordOperationTest : GitInMemoryOperationTest() {
     GitInMemoryRewordOperation(objectRepo, commit.id, newMessage).run() as GitCommitEditingOperationResult.Complete
 
     assertLastMessage(newMessage)
+  }
+
+  fun `test reword fires post-rewrite mapping for target and descendants`() {
+    file("a").create("content a").addCommit("Add a")
+    val targetCommit = file("b").create("content b").addCommit("Add b").details()
+    val bOldHash = targetCommit.id.asString()
+    file("c").create("content c").add()
+    val cOldHash = commit("Add c")
+
+    refresh()
+    updateChangeListManager()
+
+    val postRewrites = capturePostRewrites()
+
+    GitInMemoryRewordOperation(objectRepo, targetCommit.id, "Reworded Add b").run() as GitCommitEditingOperationResult.Complete
+
+    val bNewHash = getHash(1)
+    val cNewHash = getHash(0)
+
+    assertEquals(
+      listOf(
+        RewrittenCommit(bOldHash, bNewHash),
+        RewrittenCommit(cOldHash, cNewHash)
+      ),
+      postRewrites.single().mappings
+    )
+  }
+
+  fun `test reword copies notes for rewritten commit and descendants`() {
+    file("a").create("content a").addCommit("Add a")
+    val targetCommit = file("b").create("content b").addCommit("Add b").details()
+    val bOldHash = targetCommit.id.asString()
+    file("c").create("content c").add()
+    val cOldHash = commit("Add c")
+
+    GitConfigUtil.setValue(project, repo.root, "notes.rewriteRef", "refs/notes/commits")
+    git("notes add -m note-b $bOldHash")
+    git("notes add -m note-c $cOldHash")
+
+    refresh()
+    updateChangeListManager()
+
+    GitInMemoryRewordOperation(objectRepo, targetCommit.id, "Reworded Add b").run() as GitCommitEditingOperationResult.Complete
+
+    val bNewHash = getHash(1)
+    val cNewHash = getHash(0)
+
+    assertEquals("note-b", git("notes show $bNewHash"))
+    assertEquals("note-c", git("notes show $cNewHash"))
   }
 
   fun `test compare messages should add newline at the end`() {

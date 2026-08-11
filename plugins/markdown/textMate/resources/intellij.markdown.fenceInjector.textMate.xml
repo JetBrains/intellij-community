@@ -1,14 +1,22 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.markdown"/>
     <module name="intellij.markdown"/>
     <module name="intellij.markdown.fenceInjection"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.langInjection"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.textmate"/>
   </dependencies>
   <!-- endregion -->
 
   <extensions defaultExtensionNs="org.intellij.markdown">
-    <fenceLanguageProvider implementation="com.intellij.markdown.fenceInjector.textMate.TextMateFallbackLanguageProvider" order="last"/>
+    <fenceLanguageProvider id="textmate" implementation="com.intellij.markdown.fenceInjector.textMate.TextMateFallbackLanguageProvider"
+                           order="last, after default"/>
   </extensions>
 </idea-plugin>

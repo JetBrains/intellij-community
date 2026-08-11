@@ -1,0 +1,19 @@
+// FILE: buildSrc/src/main/kotlin/MyTask.kt
+// "UNEXPECTED-SUGGESTION": "hiddenTopLevelMember"
+@file:Generated
+
+package org.gradle.api
+
+// The annotation is declared here rather than taken from the Gradle API so that the test exercises
+// the filter's fully qualified name check without depending on the imported Gradle classpath.
+@Target(AnnotationTarget.FILE, AnnotationTarget.CLASS)
+annotation class Generated
+
+fun String.hiddenTopLevelMember(): String = "declared in a Gradle-generated file, must not be suggested"
+
+class GradleGeneratedFileProbe {
+  fun probe() {
+    val receiver = "receiver"
+    receiver.<caret>
+  }
+}

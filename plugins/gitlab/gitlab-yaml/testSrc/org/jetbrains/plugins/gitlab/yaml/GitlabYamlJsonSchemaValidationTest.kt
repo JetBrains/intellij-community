@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.yaml
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase
 import org.jetbrains.yaml.schema.YamlJsonSchemaHighlightingInspection
@@ -52,6 +53,7 @@ internal class GitlabYamlJsonSchemaValidationTest : BasePlatformTestCase() {
   }
 
   fun `test unknown tag produces warning`() {
+    Registry.get("json.schema.use.networknt.validation").setValue(false, testRootDisposable)
     myFixture.configureByText(".gitlab-ci.yml", """
       script:
         - <warning descr="Schema validation: Incompatible types.

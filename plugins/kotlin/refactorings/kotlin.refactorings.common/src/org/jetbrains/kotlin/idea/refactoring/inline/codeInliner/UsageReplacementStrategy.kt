@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.refactoring.inline.codeInliner
 
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -146,7 +146,7 @@ private fun UsageReplacementStrategy.processUsages(
             val element = createReplacer(usage)?.invoke()
             element?.parent?.reformatted(true)
         } catch (e: Throwable) {
-            if (e is ControlFlowException) throw e
+            rethrowControlFlowException(e)
             LOG.error(e)
         }
     }

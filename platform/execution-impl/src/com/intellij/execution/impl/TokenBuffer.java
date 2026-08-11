@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -157,7 +158,7 @@ public final class TokenBuffer {
   // the first token may be CR_TOKEN meaning that instead of appending it we should delete the last line of the document
   // all the remaining text is guaranteed not to contain CR_TOKEN - they can be appended safely to the document end
   @NotNull
-  public List<TokenInfo> drain() {
+  public @Unmodifiable List<TokenInfo> drain() {
     if (hasTrailingCR()) {
       removeLastLine();
     }
@@ -169,7 +170,7 @@ public final class TokenBuffer {
     }
   }
 
-  private @NotNull List<TokenInfo> getInfos() {
+  private @NotNull @Unmodifiable List<TokenInfo> getInfos() {
     List<TokenInfo> list = tokens.isEmpty() ? Collections.emptyList() : new ArrayList<>(tokens);
     if (startIndex != 0) {
       // slice the first token

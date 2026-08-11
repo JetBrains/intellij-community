@@ -46,7 +46,6 @@ import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Inter
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalIdeaSourceDirectory;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalInstalledJdk;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalProjectIdentifier;
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
 import org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil;
 import org.jetbrains.plugins.gradle.tooling.util.GradleVersionComparator;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap;
@@ -62,6 +61,7 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.Comparing.compare;
 import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.OBJECT_ID_FIELD;
@@ -158,21 +158,15 @@ public final class IdeaProjectSerializationService implements SerializationServi
     writer.stepIn(IonType.STRUCT);
     writeString(writer, "name", ideaModule.getName());
     writeString(writer, "description", ideaModule.getDescription());
-    writeString(writer, "jdkName", nullizeUnsupported(new Supplier<String>() {
-      @Override
-      public String get() {
-        return ideaModule.getJdkName();
-      }
-    }));
+    writeString(writer, "jdkName", nullizeUnsupported((Supplier<String>)() -> ideaModule.getJdkName()));
     writeGradleProject(writer, "gradleProject", context, ideaModule.getGradleProject());
     writeCompilerOutput(writer, context, ideaModule.getCompilerOutput());
     writeContentRoots(writer, ideaModule.getContentRoots());
-    writeJavaLanguageSettings(writer, context, nullizeUnsupported(new Supplier<IdeaJavaLanguageSettings>() {
-      @Override
-      public IdeaJavaLanguageSettings get() {
-        return ideaModule.getJavaLanguageSettings();
-      }
-    }));
+    writeJavaLanguageSettings(
+      writer,
+      context,
+      nullizeUnsupported((Supplier<IdeaJavaLanguageSettings>)() -> ideaModule.getJavaLanguageSettings())
+    );
     writeDependencies(writer, context, ideaModule.getDependencies());
     writer.stepOut();
   }

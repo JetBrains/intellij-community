@@ -1,11 +1,25 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.k2.refactoring.rename" visibility="internal">
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.refactorings"/>
+    <module name="intellij.kotlin.refactorings.base"/>
+    <module name="intellij.kotlin.references"/>
     <module name="intellij.kotlin.searching"/>
-    <!-- endregion -->
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang.impl"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.rename.K2RenameRefactoringSupport"
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport"/>

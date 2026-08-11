@@ -10,7 +10,7 @@ import com.intellij.platform.workspace.jps.entities.modifyContentRootEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.assertConsistency
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -24,7 +24,7 @@ class ContentRootEqualityTest {
 
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManagerImpl()
+    virtualFileManager = ConcurrentVirtualFileUrlManager()
   }
 
   @Test

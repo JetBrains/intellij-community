@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.terminal.shared` start
-
 jvm_library(
     name = "shared",
     srcs = glob(
@@ -25,7 +24,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util",
         "//platform/platform-impl:ide-impl",
     ],
@@ -48,6 +47,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util:util_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
     ],

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalStdlibApi::class)
 
+@file:ApiStatus.Internal
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.CommonBundle
@@ -1038,7 +1039,6 @@ object Utils {
 
   private fun <R> runWithPotemkinOverlayProgress(actions: List<AnAction>, contextComponent: Component?, block: suspend CoroutineScope.() -> R): R? {
     if (shallAbortActionUpdateDueToProhibitingWriteAction(actions)) {
-      LOG.error("Actions cannot be updated when write-action is running or pending on EDT")
       return null
     }
     if (ourInUpdateSessionForInputEventEDTLoop) {

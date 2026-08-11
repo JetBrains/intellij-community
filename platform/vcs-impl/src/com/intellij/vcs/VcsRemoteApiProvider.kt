@@ -53,9 +53,5 @@ internal class VcsRemoteApiProvider : RemoteApiProvider {
     remoteApi(remoteApiDescriptor<ChangesViewInclusionModelApi>()) {
       ChangesViewInclusionModelApiImpl()
     }
-
-    remoteApi(remoteApiDescriptor<ChangesViewDiffApi>()) {
-      ChangesViewDiffApiImpl()
-    }
   }
 }

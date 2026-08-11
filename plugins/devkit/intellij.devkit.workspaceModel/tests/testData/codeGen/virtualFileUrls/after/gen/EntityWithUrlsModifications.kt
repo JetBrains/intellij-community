@@ -19,9 +19,8 @@ var nullableUrl: VirtualFileUrl?
 var listOfUrls: MutableList<VirtualFileUrl>
 var dataClassWithUrl: DataClassWithUrl
 }
-
 internal object EntityWithUrlsType : EntityType<EntityWithUrls, EntityWithUrlsBuilder>(){
-override val entityClass: Class<EntityWithUrls> get() = EntityWithUrls::class.java
+override val entityImplClass: Class<*> get() = EntityWithUrlsImpl::class.java
 override val entityImplBuilderClass: Class<*> get() = EntityWithUrlsImpl.Builder::class.java
 operator fun invoke(
 simpleUrl: VirtualFileUrl,
@@ -39,12 +38,10 @@ init?.invoke(builder)
 return builder
 }
 }
-
 fun MutableEntityStorage.modifyEntityWithUrls(
 entity: EntityWithUrls,
 modification: EntityWithUrlsBuilder.() -> Unit,
 ): EntityWithUrls = modifyEntity(EntityWithUrlsBuilder::class.java, entity, modification)
-
 @JvmOverloads
 @JvmName("createEntityWithUrls")
 fun EntityWithUrls(

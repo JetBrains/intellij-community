@@ -20,12 +20,16 @@ fun foo(f: ForDsl.() -> Unit) {}
 fun ForDsl.bar(f: () -> Unit) {
 }
 
+fun ForDsl.baz() {}
+
 
 fun test() {
     foo {
-
+        bar {}
+        baz()
     }
     merge {}
+    ForDsl().baz()
     ForDsl().bar {}
     DslBuilder().apply {
 

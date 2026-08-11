@@ -27,14 +27,11 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.UsageSearchContext
-import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
-import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.xml.DomElement
-import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.annotations.ApiStatus
@@ -42,11 +39,11 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
-import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter
+import org.jetbrains.idea.devkit.dom.processing.collectClassesRegisteredInExtension
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 
 internal class ComponentModuleRegistrationChecker(
-  private val moduleToModuleSet: SynchronizedClearableLazy<MutableMap<String, PluginXmlRegistrationCheckInspection.PluginModuleSet>>,
+  private val isResolvableSamePluginRegistration: (element: DomElement, psiClass: PsiClass, definingModule: Module, elementModule: Module) -> Boolean,
   private val ignoredClasses: MutableList<String>,
   private val annotationHolder: DomElementAnnotationHolder,
 ) {
@@ -90,41 +87,8 @@ internal class ComponentModuleRegistrationChecker(
   }
 
   fun checkProperXmlFileForExtension(element: Extension) {
-    if (!element.xmlTag.getAttributeValue("language").isNullOrEmpty()) {
-      val beanClass = element.extensionPoint?.beanClass?.value
-      if (beanClass != null && InheritanceUtil.isInheritor(beanClass, "com.intellij.lang.LanguageExtensionPoint")) {
-        return
-      }
-    }
-
-    if (!element.xmlTag.getAttributeValue("filetype").isNullOrEmpty()) {
-      val beanClass = element.extensionPoint?.beanClass?.value
-      if (beanClass != null && InheritanceUtil.isInheritor(beanClass, "com.intellij.openapi.fileTypes.FileTypeExtensionPoint")) {
-        return
-      }
-    }
-
-    for (attributeDescription in element.genericInfo.attributeChildrenDescriptions) {
-      val attributeName = attributeDescription.name
-      if (attributeName == "forClass") continue
-
-      if (attributeName == "serviceInterface") continue
-
-      val attributeValue = attributeDescription.getDomAttributeValue(element)
-      if (attributeValue == null || !DomUtil.hasXml(attributeValue)) continue
-
-      if (attributeValue.converter is PluginPsiClassConverter) {
-        val psiClass = attributeValue.value as PsiClass? ?: continue
-        if (checkProperXmlFileForClass(element, psiClass)) return
-      }
-    }
-
-    for (childDescription in element.genericInfo.fixedChildrenDescriptions) {
-      val domElement = childDescription.getValues(element).firstOrNull() ?: continue
-      val tag = domElement.xmlTag ?: continue
-      val project = tag.project
-      val psiClass = JavaPsiFacade.getInstance(project).findClass(tag.value.text, GlobalSearchScope.projectScope(project))
-      if (psiClass != null && checkProperXmlFileForClass(element, psiClass)) return
+    collectClassesRegisteredInExtension(element).forEach {
+      if (checkProperXmlFileForClass(element, it)) return@forEach
     }
   }
 
@@ -187,9 +151,7 @@ internal class ComponentModuleRegistrationChecker(
     val isCoveredByDependencies = declaredDependencies.contains(definingModule.name)
     if (isCoveredByDependencies) return
 
-    val definingPlugin = moduleToModuleSet.value[definingModule.name]
-    val elementPlugin = moduleToModuleSet.value[elementModule.name]
-    if (definingPlugin != null && definingPlugin === elementPlugin) return
+    if (isResolvableSamePluginRegistration(element, psiClass, definingModule, elementModule)) return
 
     annotationHolder.createProblem(element, ProblemHighlightType.ERROR,
                                    DevKitBundle.message("inspections.plugin.xml.ComponentModuleRegistrationChecker.element.registered.wrong.module",
@@ -208,9 +170,7 @@ internal class ComponentModuleRegistrationChecker(
     val elementModule = element.module
     if (elementModule == null || definingModule == elementModule) return false
 
-    val definingPlugin = moduleToModuleSet.value[definingModule.name]
-    val elementPlugin = moduleToModuleSet.value[elementModule.name]
-    if (definingPlugin != null && definingPlugin === elementPlugin) return false
+    if (isResolvableSamePluginRegistration(element, psiClass, definingModule, elementModule)) return false
 
     var pluginXmlModule = definingModule
     var modulePluginXmlFile = findModulePluginXmlFile(pluginXmlModule)

@@ -1,3 +1,10 @@
+f:com.intellij.platform.ide.nonModalWelcomeScreen.DefaultFileDragAndDropHandler
+- com.intellij.platform.ide.nonModalWelcomeScreen.FileDragAndDropHandler
+- sf:$stable:I
+- sf:INSTANCE:com.intellij.platform.ide.nonModalWelcomeScreen.DefaultFileDragAndDropHandler
+- openFiles(com.intellij.openapi.project.Project,java.util.List):Z
+com.intellij.platform.ide.nonModalWelcomeScreen.FileDragAndDropHandler
+- a:openFiles(com.intellij.openapi.project.Project,java.util.List):Z
 com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.TemplateName
 f:com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.TemplateName$SelectedOption
 - com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog.TemplateName

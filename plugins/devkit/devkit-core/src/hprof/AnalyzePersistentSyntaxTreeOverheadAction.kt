@@ -3,17 +3,23 @@ package org.jetbrains.idea.devkit.hprof
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtil
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.devkit.DevKitBundle
 import java.nio.file.Path
 import java.time.ZonedDateTime
@@ -30,7 +36,6 @@ internal class AnalyzePersistentSyntaxTreeOverheadAction : DumbAwareAction() {
     e.presentation.isEnabled = e.project != null
   }
 
-  @Suppress("UsagesOfObsoleteApi")
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val hprofFile = FileChooser.chooseFile(
@@ -51,32 +56,31 @@ internal class AnalyzePersistentSyntaxTreeOverheadAction : DumbAwareAction() {
       return
     }
 
-    object : Task.Backgroundable(project, DevKitBundle.message("persistent.syntax.tree.hprof.action.progress.title"), true) {
-      private var reportText: String? = null
-      private var reportFileName: String? = null
-
-      override fun run(indicator: ProgressIndicator) {
-        indicator.isIndeterminate = true
-        indicator.text = DevKitBundle.message("persistent.syntax.tree.hprof.action.progress.text")
-        val analysis = PersistentSyntaxTreeHprofProcessor.analyzePersistentSyntaxTreeOverhead(hprofPath, indicator)
-        reportText = formatReport(hprofPath, analysis)
-        reportFileName = reportFileName(hprofPath)
+    e.coroutineScope.launch(Dispatchers.IO) {
+      try {
+        val analysis = PersistentSyntaxTreeHprofProcessor.analyzePersistentSyntaxTreeOverheadWithProgress(project, hprofPath)
+        val reportText = formatReport(hprofPath, analysis)
+        val reportFileName = reportFileName(hprofPath)
+        withContext(Dispatchers.EDT) {
+          FileEditorManager.getInstance(project).openFile(LightVirtualFile(reportFileName, PlainTextFileType.INSTANCE, reportText), true)
+        }
       }
-
-      override fun onSuccess() {
-        val text = reportText ?: return
-        val name = reportFileName ?: return
-        FileEditorManager.getInstance(project).openFile(LightVirtualFile(name, PlainTextFileType.INSTANCE, text), true)
+      catch (e: CancellationException) {
+        throw e
       }
-
-      override fun onThrowable(error: Throwable) {
-        Messages.showErrorDialog(
-          project,
-          DevKitBundle.message("persistent.syntax.tree.hprof.action.error.analysis.failed", error.message ?: error.javaClass.name),
-          DevKitBundle.message("persistent.syntax.tree.hprof.action.error.title"),
-        )
+      catch (e: ProcessCanceledException) {
+        throw e
       }
-    }.queue()
+      catch (error: Throwable) {
+        withContext(Dispatchers.EDT) {
+          Messages.showErrorDialog(
+            project,
+            DevKitBundle.message("persistent.syntax.tree.hprof.action.error.analysis.failed", error.message ?: error.javaClass.name),
+            DevKitBundle.message("persistent.syntax.tree.hprof.action.error.title"),
+          )
+        }
+      }
+    }
   }
 
   private fun formatReport(hprofPath: Path, analysis: PersistentSyntaxTreeOverheadAnalysis): String {
@@ -86,6 +90,7 @@ internal class AnalyzePersistentSyntaxTreeOverheadAction : DumbAwareAction() {
       appendLine()
       appendLine("Heap dump: $hprofPath")
       appendLine("VersionedPayloadMap instances: ${extraction.allInstances.size}")
+      appendLine("  VersionedPayloadMap1: ${extraction.map1Instances.size}")
       appendLine("  VersionedPayloadMap2: ${extraction.map2Instances.size}")
       appendLine("  ArrayVersionedPayloadMap: ${extraction.arrayMapInstances.size}")
       appendLine()
@@ -147,3 +152,6 @@ internal class AnalyzePersistentSyntaxTreeOverheadAction : DumbAwareAction() {
     const val MAX_REPORTED_OBJECT_IDS: Int = 100
   }
 }
+
+@Service(Service.Level.PROJECT)
+private class AnalyzePersistentSyntaxTreeOverheadCoroutineScopeProvider(val coroutineScope: CoroutineScope)

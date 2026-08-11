@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ModNavigator;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -107,7 +108,12 @@ public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument(), context);
     if (psiFile == null) return null;
 
-    ensureValid(psiFile);
+    // PsiUtilCore.ensureValid: throws because PsiFileImpl.isValid returns false
+    // from InternalPsiVersioning.isInsideVersioningButNotLocks() section
+    boolean isEnsureValidSupported = !Elf.getElf().isUnsupportedOperationGuardActive();
+    if (isEnsureValidSupported) {
+      ensureValid(psiFile);
+    }
 
     if (psiFile instanceof PsiFileWithOneLanguage) {
       return psiFile;
@@ -154,6 +160,13 @@ public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
 
   public static PsiFile getPsiFileAtOffset(@NotNull PsiFile file, final int offset) {
     if (file instanceof PsiFileWithOneLanguage) {
+      return file;
+    }
+
+    if (Elf.getElf().isUnsupportedOperationGuardActive()) {
+      // 1) PsiUtilCore.ensureValid: throws because PsiFileImpl.isValid returns false
+      //    from InternalPsiVersioning.isInsideVersioningButNotLocks() section
+      // 2) element.getContainingFile: throws from LeafPsiElement.invalid
       return file;
     }
 

@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/Outer.class
+End of files
+Compiling files:
+  java/common/nestedCarrierCapturesInSubclass/a/ppp/Outer.java
+End of files
+Cleaning output files:
+  qqq/Sub$Worker.class
+  qqq/Sub.class
+End of files
+Compiling files:
+  java/common/nestedCarrierCapturesInSubclass/a/qqq/Sub.java
+End of files
+------------------------------------------
+Exit code: ERROR

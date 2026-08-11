@@ -2,7 +2,6 @@
 package com.intellij.compose.ide.plugin.resources.highlighting
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.compose.ide.plugin.resources.ANDROID_MAIN
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesTestCase
 import com.intellij.compose.ide.plugin.resources.TARGET_GRADLE_VERSION
 import com.intellij.openapi.application.EDT
@@ -13,7 +12,6 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 import kotlin.test.assertNotNull as kAssertNotNull
 
@@ -23,7 +21,6 @@ class ComposeResourcesXmlAnnotatorTest : ComposeResourcesTestCase() {
   @Test
   @TestMetadata("ComposeResources")
   fun `test highlighting in strings xml`() {
-    assumeTrue("temporarily disable for androidMain since it's not recognised as source root", sourceSetName != ANDROID_MAIN)
     val files = importProjectFromTestData()
     val stringsFile = files.findStringsFile("commonMain")
 
@@ -60,7 +57,6 @@ class ComposeResourcesXmlAnnotatorTest : ComposeResourcesTestCase() {
   @Test
   @TestMetadata("ComposeResources")
   fun `test no highlighting in other xml files`() {
-    assumeTrue("temporarily disable for androidMain since it's not recognised as source root", sourceSetName != ANDROID_MAIN)
     val files = importProjectFromTestData()
     val otherFile = files.findOtherXmlFile("commonMain")
 

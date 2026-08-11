@@ -2,9 +2,11 @@
 package com.intellij.openapi.project;
 
 import com.intellij.util.indexing.FileBasedIndex;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class DumbUtilImpl implements DumbUtil {
   private final Project myProject;
 

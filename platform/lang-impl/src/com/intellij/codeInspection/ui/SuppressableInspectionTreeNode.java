@@ -126,13 +126,13 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
 
   private @NotNull Set<SuppressIntentionAction> calculateAvailableSuppressActions(@NotNull Project project) {
     if (myPresentation.isDummy()) return Collections.emptySet();
-    final Pair<PsiElement, CommonProblemDescriptor> suppressContent = getSuppressContent();
+    Pair<PsiElement, CommonProblemDescriptor> suppressContent = getSuppressContent();
     PsiElement element = suppressContent.getFirst();
     if (element == null) return Collections.emptySet();
     InspectionResultsView view = myPresentation.getContext().getView();
     if (view == null) return Collections.emptySet();
     InspectionViewSuppressActionHolder suppressActionHolder = view.getSuppressActionHolder();
-    final SuppressIntentionAction[] actions = suppressActionHolder.getSuppressActions(myPresentation.getToolWrapper(), element);
+    SuppressIntentionAction[] actions = suppressActionHolder.getSuppressActions(myPresentation.getToolWrapper(), element);
     if (actions.length == 0) return Collections.emptySet();
     return suppressActionHolder.internSuppressActions(Arrays.stream(actions)
       .filter(action -> action.isAvailable(project, null, element))

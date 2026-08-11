@@ -6,6 +6,8 @@ import com.intellij.database.datagrid.DataGrid
 import com.intellij.database.datagrid.GridPagingModel
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -15,7 +17,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 
-class ChangePageSizeActionNew(private val myPageSize: Int, isDefault: Boolean = false) : ToggleAction() {
+class ChangePageSizeAction(private val myPageSize: Int, isDefault: Boolean = false) : ToggleAction() {
   private val myText by lazy {
     formatPageSize(myPageSize, isDefault, DataGridBundle.message("action.ChangePageSize.text.all"))
   }
@@ -24,11 +26,17 @@ class ChangePageSizeActionNew(private val myPageSize: Int, isDefault: Boolean = 
     return ActionUpdateThread.BGT
   }
 
+  override fun createTemplatePresentation(): Presentation {
+    return super.createTemplatePresentation().also {
+      it.setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested)
+    }
+  }
+
   override fun update(e: AnActionEvent) {
+    super.update(e)
     e.presentation.text = myText
     val grid = e.getData(DatabaseDataKeys.DATA_GRID_KEY)
     e.presentation.setEnabledAndVisible(grid != null)
-    super.update(e)
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
@@ -46,21 +54,21 @@ class ChangePageSizeActionNew(private val myPageSize: Int, isDefault: Boolean = 
   private fun getCurrentPageSize(grid: DataGrid?): Int {
     return grid?.dataHookup?.pageModel?.pageSize ?: GridPagingModel.UNLIMITED_PAGE_SIZE
   }
-}
 
-@RequiresBackgroundThread
-private fun formatPageSize(pageSize: Int, isDefault: Boolean, defaultText: @Nls String): @Nls String {
-  // This method might be quite heavy to run on EDT
-  ThreadingAssertions.assertBackgroundThread()
-  val formattedPageSize = format(pageSize.toLong())
-  val pageSizeText = if (pageSize == GridPagingModel.UNLIMITED_PAGE_SIZE) defaultText else formattedPageSize
-  val builder = HtmlBuilder().append(pageSizeText).append(" ")
-  if (isDefault) {
-    builder.append(
-      HtmlChunk.text(DataGridBundle.message("action.ChangePageSize.text.default"))
-        .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground())))
-    )
+  @RequiresBackgroundThread
+  private fun formatPageSize(pageSize: Int, isDefault: Boolean, defaultText: @Nls String): @Nls String {
+    // This method might be quite heavy to run on EDT
+    ThreadingAssertions.assertBackgroundThread()
+    val formattedPageSize = format(pageSize.toLong())
+    val pageSizeText = if (pageSize == GridPagingModel.UNLIMITED_PAGE_SIZE) defaultText else formattedPageSize
+    val builder = HtmlBuilder().append(pageSizeText).append(" ")
+    if (isDefault) {
+      builder.append(
+        HtmlChunk.text(DataGridBundle.message("action.ChangePageSize.text.default"))
+          .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground())))
+      )
+    }
+
+    return builder.wrapWith(HtmlChunk.html()).toString()
   }
-
-  return builder.wrapWith(HtmlChunk.html()).toString()
 }

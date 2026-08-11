@@ -1,0 +1,125 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.terminal.emulator` start
+jvm_library(
+    name = "emulator",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.terminal.emulator",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/platform-impl:ide-impl",
+        "//platform/util",
+        "//platform/build-scripts/downloader",
+    ],
+)
+
+jvm_library(
+    name = "emulator_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.terminal.emulator",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":emulator",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/build-scripts/downloader:downloader_test_lib",
+    ],
+)
+### auto-generated section `build intellij.terminal.emulator` end
+
+### auto-generated section `iml intellij.terminal.emulator` start
+exports_files(
+    [
+        "intellij.terminal.emulator.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.terminal.emulator` end
+
+### auto-generated section `build intellij.terminal.emulator.tests` start
+jvm_library(
+    name = "emulator-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.terminal.emulator.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "emulator-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//plugins/terminal/emulator",
+        "//plugins/terminal/emulator:emulator_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [":emulator-tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
+        "//libraries/jediterm-core",
+        "//libraries/jediterm-core:jediterm-core_test_lib",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+    ],
+)
+### auto-generated section `build intellij.terminal.emulator.tests` end
+
+### auto-generated section `iml intellij.terminal.emulator.tests` start
+exports_files(
+    [
+        "intellij.terminal.emulator.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.terminal.emulator.tests` end
+
+### auto-generated section `test intellij.terminal.emulator.tests` start
+jps_test(
+    name = "emulator-tests_test",
+    runtime_deps = [":emulator-tests_test_lib"],
+)
+### auto-generated section `test intellij.terminal.emulator.tests` end

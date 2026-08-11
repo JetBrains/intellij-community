@@ -140,6 +140,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return ADD_NONJAVA_TO_ENTRIES;
   }
 
+  /// @return `true` if usages from tests should be taken into account, `false` if usages from tests should be ignored
   public boolean isTestEntryPoints() {
     return TEST_ENTRY_POINTS;
   }

@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build fleet.build.fs` start
-
 create_kotlinc_options(
     name = "custom_fs",
     opt_in = [
@@ -91,7 +90,6 @@ exports_files(
 ### auto-generated section `iml fleet.build.fs` end
 
 ### auto-generated section `test fleet.build.fs` start
-
 jps_test(
     name = "fs_test",
     runtime_deps = [":fs_test_lib"],

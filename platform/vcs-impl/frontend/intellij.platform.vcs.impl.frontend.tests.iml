@@ -57,6 +57,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.frontend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared.tests" scope="TEST" />
     <orderEntry type="module" module-name="fleet.rhizomedb" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.vcs.impl.frontend" />
 </module>

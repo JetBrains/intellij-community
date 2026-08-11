@@ -23,7 +23,9 @@ import com.intellij.psi.util.QualifiedName
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
+import com.jetbrains.python.codeInsight.typing.hasNamespaceSubPackage
 import com.jetbrains.python.codeInsight.typing.isInInlinePackage
+import com.jetbrains.python.codeInsight.typing.isInPartialStubPackage
 import com.jetbrains.python.codeInsight.typing.isInStubPackage
 import com.jetbrains.python.facet.PythonPathContributingFacet
 import com.jetbrains.python.module.PyModuleService
@@ -113,7 +115,7 @@ private fun resolveModuleFromRoots(name: QualifiedName, context: PyQualifiedName
   val head = name.removeTail(name.componentCount - 1)
   val nameNoHead = name.removeHead(1)
   return nameNoHead.components.fold(resultsFromRoots(head, context).distinct()) { results, component ->
-    filterTopPriorityResults(results, context.module)
+    filterTopPriorityResults(results, context.module, component)
       .asSequence()
       .filterIsInstance<PsiFileSystemItem>()
       .flatMap { resolveModuleAt(QualifiedName.fromComponents(component), it, context).asSequence() }
@@ -408,7 +410,7 @@ private fun filterTopPriorityResultsWithFallback(
  * Filters resolved elements according to their import priority in sys.path and
  * [PEP 561](https://www.python.org/dev/peps/pep-0561/#type-checker-module-resolution-order) rules.
  */
-private fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?): List<PsiElement> {
+private fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?, nextComponent: String? = null): List<PsiElement> {
   if (resolved.isEmpty()) return emptyList()
 
   val groupedResults = resolved.groupByTo(sortedMapOf<Priority, MutableList<PsiElement>>()) { resolvedElementPriority(it, module) }
@@ -417,12 +419,12 @@ private fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?
   if (groupedResults.topResultIs(Priority.NAMESPACE_PACKAGE)) return groupedResults[Priority.NAMESPACE_PACKAGE]!! + skeletons
   groupedResults.remove(Priority.NAMESPACE_PACKAGE)
 
+  val topPriority = groupedResults.keys.firstOrNull()
+  val topResult = topPriority?.let { groupedResults[it]?.firstOrNull() }
   val priorityResults = when {
     groupedResults.isEmpty() -> emptyList()
-    // stub packages can be partial
-    groupedResults.topResultIs(Priority.STUB_PACKAGE) -> firstResultWithFallback(groupedResults, Priority.STUB_PACKAGE)
-    // third party sdk should not overwrite packages from the same vendor
-    groupedResults.topResultIs(Priority.THIRD_PARTY_SDK) -> firstResultWithFallback(groupedResults, Priority.THIRD_PARTY_SDK)
+    topPriority != null && topResult != null && shouldFallbackToNextPriority(topPriority, topResult, module, nextComponent) ->
+      firstResultWithFallback(groupedResults, topPriority)
     else -> listOf(groupedResults.values.first().first())
   }
   return priorityResults + skeletons
@@ -437,6 +439,25 @@ private fun firstResultWithFallback(results: SortedMap<Priority, MutableList<Psi
   val nextByPriority = results.tailMap(priority).values.asSequence().drop(1).take(1).flatten().firstOrNull()
 
   return listOfNotNull(first, nextByPriority)
+}
+
+private fun shouldFallbackToNextPriority(priority: Priority, element: PsiElement, module: Module?, nextComponent: String?): Boolean {
+  return when (priority) {
+    Priority.USER_STUB -> isUserFile(element, module) && isInPartialStub(element, nextComponent)
+    Priority.STUB_PACKAGE -> isInPartialStub(element, nextComponent)
+    Priority.TYPESHED -> PyTypeShed.isInPartialThirdPartyStubPackage(element)
+    Priority.THIRD_PARTY_SDK -> true
+    else -> false
+  }
+}
+
+/**
+ * A stub package result must keep the runtime package as a fallback when the stub does not authoritatively cover the
+ * path being resolved: either the enclosing stub package is marked partial, or the next component to resolve is a
+ * namespace package inside the stub (namespace packages are inherently incomplete, see PEP 561).
+ */
+private fun isInPartialStub(element: PsiElement, nextComponent: String?): Boolean {
+  return isInPartialStubPackage(element) || (nextComponent != null && hasNamespaceSubPackage(element, nextComponent))
 }
 
 /**
@@ -491,5 +512,3 @@ private enum class Priority {
   NAMESPACE_PACKAGE, // namespace package but may contain several entries in resolve result
   SKELETON // generated skeletons have lowest priority but are always included in the resolve result as a fallback
 }
-
-

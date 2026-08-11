@@ -1,11 +1,16 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.scripting.gradleJava">
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.kotlin.gradle.tooling"/>
     <module name="intellij.kotlin.gradle.gradle"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="kotlin.gradle.gradle-java"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.compilerPlugin.scripting.gradleJava.ScriptingGradleProjectImportHandler"/>

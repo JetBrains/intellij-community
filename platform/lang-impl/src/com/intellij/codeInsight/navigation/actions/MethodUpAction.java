@@ -13,8 +13,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class MethodUpAction extends BaseCodeInsightAction implements DumbAware {
   public MethodUpAction() {
     setEnabledInModalContext(true);

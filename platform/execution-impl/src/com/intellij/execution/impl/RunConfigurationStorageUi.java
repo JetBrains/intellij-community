@@ -501,7 +501,7 @@ public final class RunConfigurationStorageUi {
                  !file.getPath().contains("/.idea/") &&
                  ReadAction.computeBlocking(() -> ProjectFileIndex.getInstance(project).isInContent(file));
         }
-      };
+      }.withEnvironmentRestricted(true);
 
       var selectFolderAction = new BrowseFolderRunnable<>(project, descriptor, comboBox, TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT);
       comboBox.initBrowsableEditor(selectFolderAction, uiDisposable);

@@ -34,17 +34,6 @@ abstract class DataSerializer<T, D>(private val dataSerializer: KSerializer<D>) 
   }
 }
 
-abstract class StringSerializer<T>(val toString: (T) -> String,
-                                   val fromString: (String) -> T) : DataSerializer<T, String>(String.serializer()) {
-  override fun fromData(data: String): T {
-    return fromString(data)
-  }
-
-  override fun toData(value: T): String {
-    return toString(value)
-  }
-}
-
 val SerializationCallbackThreadLocal: ThreadLocal<((Any) -> Unit)?> = ThreadLocal()
 
 fun <T> withSerializationCallback(callback: (Any) -> Unit, body: () -> T): T {

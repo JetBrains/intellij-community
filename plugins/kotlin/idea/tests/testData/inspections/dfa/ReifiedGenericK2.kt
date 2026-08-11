@@ -13,7 +13,7 @@ inline fun <reified T: Number> number(t: T) {
     // Cannot say anything
     if (x is T) {}
     x = "hello"
-    if (<warning descr="[IMPOSSIBLE_IS_CHECK_WARNING] Check for instance is always 'false'. This will become an error in language version 2.4. See https://youtrack.jetbrains.com/issue/KTLC-365.">x is T</warning>) {}
+    if (<warning descr="[IMPOSSIBLE_IS_CHECK_WARNING]">x is T</warning>) {}
 }
 
 // Non-reified
@@ -26,7 +26,7 @@ class TreeWalker<T> {
         // K2 reports it (which looks correct), and this causes the warning suppression
         while (current != null) {
             // Difference from K1: error messages is spelled differently
-            if (current.type is <error descr="[CANNOT_CHECK_FOR_ERASED] Cannot check for instance of erased type 'T (of class TreeWalker<T>)'.">T</error>)
+            if (current.type is <error descr="[CANNOT_CHECK_FOR_ERASED]">T</error>)
             return true
             current = current.parent()
         }

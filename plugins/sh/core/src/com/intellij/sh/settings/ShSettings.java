@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.sh.settings;
 
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.sh.ShBundle;
@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
-import static com.intellij.execution.configurations.PathEnvironmentVariableUtil.findInPath;
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
 
 public final class ShSettings {
@@ -41,14 +40,15 @@ public final class ShSettings {
       }
     }
 
-    final var defaultExecutable = findInPath(SystemInfo.isWindows ? SHELLCHECK_WIN_EXECUTABLE : SHELLCHECK_UNIX_EXECUTABLE);
-    final var defaultExecutablePath = defaultExecutable != null ? defaultExecutable.getAbsolutePath() : "";
+    final var defaultExecutable = PathEnvironmentVariableUtil.findFirst("shellcheck");
+    final var defaultExecutablePath = defaultExecutable != null ? defaultExecutable.toString() : "";
 
-    return PropertiesComponent.getInstance(project).getValue(SHELLCHECK_PATH, defaultExecutablePath);
+    final var storedPath = ShToolsLocalSettings.getInstance(project).getShellcheckPath();
+    return storedPath.isBlank() ? defaultExecutablePath : storedPath;
   }
 
   public static void setShellcheckPath(@NotNull Project project, @Nullable String path) {
-    if (StringUtil.isNotEmpty(path)) PropertiesComponent.getInstance(project).setValue(SHELLCHECK_PATH, path);
+    if (StringUtil.isNotEmpty(path)) ShToolsLocalSettings.getInstance(project).setShellcheckPath(path);
   }
 
   public static @NotNull String getShfmtPath(@NotNull Project project) {
@@ -65,14 +65,15 @@ public final class ShSettings {
       }
     }
 
-    final var defaultExecutable = findInPath(SystemInfo.isWindows ? SHFMT_WIN_EXECUTABLE : SHFMT_UNIX_EXECUTABLE);
-    final var defaultExecutablePath = defaultExecutable != null ? defaultExecutable.getAbsolutePath() : "";
+    final var defaultExecutable = PathEnvironmentVariableUtil.findFirst("shfmt");
+    final var defaultExecutablePath = defaultExecutable != null ? defaultExecutable.toString() : "";
 
-    return PropertiesComponent.getInstance(project).getValue(SHFMT_PATH, defaultExecutablePath);
+    final var storedPath = ShToolsLocalSettings.getInstance(project).getShfmtPath();
+    return storedPath.isBlank() ? defaultExecutablePath : storedPath;
   }
 
   public static void setShfmtPath(@NotNull Project project, @Nullable String path) {
-    if (StringUtil.isNotEmpty(path)) PropertiesComponent.getInstance(project).setValue(SHFMT_PATH, path);
+    if (StringUtil.isNotEmpty(path)) ShToolsLocalSettings.getInstance(project).setShfmtPath(path);
   }
 
   public static @NotNull String getSkippedShellcheckVersion() {

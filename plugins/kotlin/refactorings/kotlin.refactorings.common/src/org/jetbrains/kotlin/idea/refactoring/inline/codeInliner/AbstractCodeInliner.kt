@@ -1,11 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.inline.codeInliner
 
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.N
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.PARAMETER_VALUE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.RECEIVER_VALUE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.USER_CODE_KEY
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
@@ -32,6 +34,7 @@ import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtIntersectionType
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
@@ -46,6 +49,7 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtUnaryExpression
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.buildExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
@@ -71,6 +75,7 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
         val sideEffectOnly = usageCount == 0
 
         return when (this) {
+            is KtCallExpression -> !isPureFunction()
             is KtSimpleNameExpression -> false
             is KtQualifiedExpression -> receiverExpression.shouldKeepValue(usageCount) || selectorExpression.shouldKeepValue(usageCount)
             is KtUnaryExpression -> operationToken in setOf(KtTokens.PLUSPLUS, KtTokens.MINUSMINUS) ||
@@ -103,6 +108,14 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
             null -> false
             else -> true
         }
+    }
+
+    private fun KtCallExpression.isPureFunction(): Boolean = isContextOfCall()
+
+    private fun KtCallExpression.isContextOfCall(): Boolean {
+        if (valueArguments.isNotEmpty() || lambdaArguments.isNotEmpty() || calleeExpression?.text != "contextOf") return false
+        val resolved = calleeExpression?.mainReference?.resolve() as? KtNamedFunction ?: return false
+        return resolved.fqName?.asString() == "kotlin.contextOf"
     }
 
     protected fun MutableCodeToInline.convertToCallableReferenceIfNeeded(elementToBeReplaced: KtElement) {
@@ -235,8 +248,29 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
             }
         }
 
+        codeToInline.collectDescendantsOfType<KtSimpleNameExpression>().forEach {  expr ->
+            val contextParameterUsage = expr.getCopyableUserData(CodeToInline.CONTEXT_PARAMETER_USAGE_KEY)
+            val oldExpression = expr.parent
+            if (contextParameterUsage != null && oldExpression is KtCallExpression) {
+                val calleeExpression = oldExpression.calleeExpression ?: return@forEach
+                val args = contextParameterUsage.mapNotNull { (calleeName, containerName) ->
+                    getContextParameterExplicitArgument(containerName)?.let {
+                       "${calleeName.asString()} = $it"
+                    }
+                }.joinToString()
+                if (args.isEmpty()) return@forEach
+                val firstArgs =
+                    (oldExpression.valueArgumentList?.copy() as? KtValueArgumentList)?.arguments?.joinToString { it.text }
+                val argsList = if (firstArgs != null) "$firstArgs, $args" else args
+                val replacement = KtPsiFactory.contextual(expr).createExpression(calleeExpression.text + "($argsList)" + oldExpression.lambdaArguments.joinToString { it.text })
+                codeToInline.replaceExpression(oldExpression, replacement)
+            }
+        }
+
         return introduceValuesForParameters
     }
+
+    protected abstract fun getContextParameterExplicitArgument(cp: Name): String?
 
     protected fun <TypeParameter> processTypeParameterUsages(
         callElement: KtCallElement?,

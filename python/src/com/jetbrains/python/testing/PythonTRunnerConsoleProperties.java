@@ -3,22 +3,36 @@ package com.jetbrains.python.testing;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunConfiguration;
+import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.sm.SMCustomMessagesParsing;
 import com.intellij.execution.testframework.sm.runner.GeneralIdBasedToSMTRunnerEventsConvertor;
+import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.events.TestDurationStrategy;
+import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
 import com.jetbrains.python.PyBundle;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.text.ParseException;
 
 /**
  * @author Roman.Chernyatchik
  */
-public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
+public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties implements SMCustomMessagesParsing {
   public static final String FRAMEWORK_NAME = "PythonUnitTestRunner";
+  private static final String TEST_LOG_SERVICE_MESSAGE = "testLog";
+  private static final String NAME_ATTRIBUTE = "name";
+  private static final String NODE_ID_ATTRIBUTE = "nodeId";
+  private static final String OUT_ATTRIBUTE = "out";
+  private static final String PYTEST_FRAMEWORK_NAME = "PythonPyTestRunner";
 
   private final boolean myIsEditable;
   private final SMTestLocator myLocator;
@@ -30,7 +44,7 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
                                         @NotNull Executor executor,
                                         boolean editable,
                                         @Nullable SMTestLocator locator) {
-    super(config, FRAMEWORK_NAME, executor);
+    super(config, config instanceof PyTestConfiguration ? PYTEST_FRAMEWORK_NAME : FRAMEWORK_NAME, executor);
     myIsEditable = editable;
     myLocator = locator;
   }
@@ -43,6 +57,13 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
   @Override
   public @Nullable SMTestLocator getTestLocator() {
     return myLocator;
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public final OutputToGeneralTestEventsConverter createTestEventsConverter(@NotNull String testFrameworkName,
+                                                                      @NotNull TestConsoleProperties consoleProperties) {
+    return new PythonOutputToGeneralTestEventsConverter(testFrameworkName, consoleProperties);
   }
 
   /**
@@ -77,6 +98,29 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
 
     private static String getEmptySuite() {
       return PyBundle.message("runcfg.tests.empty_suite");
+    }
+  }
+
+  private static final class PythonOutputToGeneralTestEventsConverter extends OutputToGeneralTestEventsConverter {
+    private PythonOutputToGeneralTestEventsConverter(@NotNull String testFrameworkName,
+                                                     @NotNull TestConsoleProperties consoleProperties) {
+      super(testFrameworkName, consoleProperties);
+    }
+
+    @Override
+    protected void processServiceMessage(@NotNull ServiceMessage message,
+                                         @NotNull ServiceMessageVisitor visitor) throws ParseException {
+      if (TEST_LOG_SERVICE_MESSAGE.equals(message.getMessageName())) {
+        String testName = message.getAttributes().get(NAME_ATTRIBUTE);
+        String nodeId = message.getAttributes().get(NODE_ID_ATTRIBUTE);
+        String output = message.getAttributes().get(OUT_ATTRIBUTE);
+        var processor = getProcessor();
+        if (testName != null && output != null && processor != null) {
+          processor.onTestOutput(new TestOutputEvent(testName, nodeId, output, true));
+        }
+        return;
+      }
+      super.processServiceMessage(message, visitor);
     }
   }
 }

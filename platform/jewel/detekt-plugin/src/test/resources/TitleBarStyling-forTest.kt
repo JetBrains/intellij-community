@@ -58,14 +58,14 @@ public class TitleBarStyle(
 
     override fun toString(): String {
         return "TitleBarStyle(" +
-               "colors=$colors, " +
-               "metrics=$metrics, " +
-               "icons=$icons, " +
-               "dropdownStyle=$dropdownStyle, " +
-               "iconButtonStyle=$iconButtonStyle, " +
-               "paneButtonStyle=$paneButtonStyle, " +
-               "paneCloseButtonStyle=$paneCloseButtonStyle" +
-               ")"
+            "colors=$colors, " +
+            "metrics=$metrics, " +
+            "icons=$icons, " +
+            "dropdownStyle=$dropdownStyle, " +
+            "iconButtonStyle=$iconButtonStyle, " +
+            "paneButtonStyle=$paneButtonStyle, " +
+            "paneCloseButtonStyle=$paneCloseButtonStyle" +
+            ")"
     }
 
     public companion object
@@ -145,20 +145,20 @@ public class TitleBarColors(
 
     override fun toString(): String {
         return "TitleBarColors(" +
-               "background=$background, " +
-               "inactiveBackground=$inactiveBackground, " +
-               "content=$content, " +
-               "border=$border, " +
-               "fullscreenControlButtonsBackground=$fullscreenControlButtonsBackground, " +
-               "titlePaneButtonHoveredBackground=$titlePaneButtonHoveredBackground, " +
-               "titlePaneButtonPressedBackground=$titlePaneButtonPressedBackground, " +
-               "titlePaneCloseButtonHoveredBackground=$titlePaneCloseButtonHoveredBackground, " +
-               "titlePaneCloseButtonPressedBackground=$titlePaneCloseButtonPressedBackground, " +
-               "iconButtonHoveredBackground=$iconButtonHoveredBackground, " +
-               "iconButtonPressedBackground=$iconButtonPressedBackground, " +
-               "dropdownPressedBackground=$dropdownPressedBackground, " +
-               "dropdownHoveredBackground=$dropdownHoveredBackground" +
-               ")"
+            "background=$background, " +
+            "inactiveBackground=$inactiveBackground, " +
+            "content=$content, " +
+            "border=$border, " +
+            "fullscreenControlButtonsBackground=$fullscreenControlButtonsBackground, " +
+            "titlePaneButtonHoveredBackground=$titlePaneButtonHoveredBackground, " +
+            "titlePaneButtonPressedBackground=$titlePaneButtonPressedBackground, " +
+            "titlePaneCloseButtonHoveredBackground=$titlePaneCloseButtonHoveredBackground, " +
+            "titlePaneCloseButtonPressedBackground=$titlePaneCloseButtonPressedBackground, " +
+            "iconButtonHoveredBackground=$iconButtonHoveredBackground, " +
+            "iconButtonPressedBackground=$iconButtonPressedBackground, " +
+            "dropdownPressedBackground=$dropdownPressedBackground, " +
+            "dropdownHoveredBackground=$dropdownHoveredBackground" +
+            ")"
     }
 
     public companion object
@@ -196,11 +196,11 @@ public class TitleBarMetrics(
 
     override fun toString(): String {
         return "TitleBarMetrics(" +
-               "height=$height, " +
-               "gradientStartX=$gradientStartX, " +
-               "gradientEndX=$gradientEndX, " +
-               "titlePaneButtonSize=$titlePaneButtonSize" +
-               ")"
+            "height=$height, " +
+            "gradientStartX=$gradientStartX, " +
+            "gradientEndX=$gradientEndX, " +
+            "titlePaneButtonSize=$titlePaneButtonSize" +
+            ")"
     }
 
     public companion object
@@ -238,11 +238,11 @@ public class TitleBarIcons(
 
     override fun toString(): String {
         return "TitleBarIcons(" +
-               "minimizeButton=$minimizeButton, " +
-               "maximizeButton=$maximizeButton, " +
-               "restoreButton=$restoreButton, " +
-               "closeButton=$closeButton" +
-               ")"
+            "minimizeButton=$minimizeButton, " +
+            "maximizeButton=$maximizeButton, " +
+            "restoreButton=$restoreButton, " +
+            "closeButton=$closeButton" +
+            ")"
     }
 
     public companion object

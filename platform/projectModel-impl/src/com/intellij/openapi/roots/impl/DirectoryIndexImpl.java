@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -15,14 +16,20 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.projectModel.ModuleDependenciesGraphService;
 import com.intellij.util.Query;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridges;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -119,7 +126,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   }
 
   @Override
-  public @NotNull List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir) {
+  public @NotNull @Unmodifiable List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir) {
     checkAvailability();
     if (myProject.isDefault()) return Collections.emptyList();
     WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(fileOrDir, true, true, true, true, true, true, false);
@@ -129,9 +136,18 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   }
 
   @Override
-  public @NotNull Set<String> getDependentUnloadedModules(@NotNull Module module) {
+  public @NotNull @Unmodifiable Set<String> getDependentUnloadedModules(@NotNull Module module) {
     checkAvailability();
-    return getRootIndex().getDependentUnloadedModules(module);
+    if (Registry.is("use.wsm.for.dependent.unloaded.modules", true)) {
+      ModuleEntity moduleEntity = ModuleBridges.findModuleEntity(module, WorkspaceModel.getInstance(myProject).getCurrentSnapshot());
+      if (moduleEntity == null) return Collections.emptySet();
+      return ContainerUtil.map2Set(
+        ModuleDependenciesGraphService.getInstance(myProject).getModuleDependenciesGraph().getModuleUnloadedDependents(moduleEntity),
+        m -> m.getName()
+      );
+    } else {
+      return getRootIndex().getDependentUnloadedModules(module);
+    }
   }
 
   private void checkAvailability() {

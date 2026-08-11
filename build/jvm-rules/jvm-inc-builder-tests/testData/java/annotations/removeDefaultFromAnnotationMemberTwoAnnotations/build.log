@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  Ann.class
+End of files
+Compiling files:
+  java/annotations/removeDefaultFromAnnotationMemberTwoAnnotations/a/Ann.java
+End of files
+Cleaning output files:
+  UseAnn.class
+  UseBoth.class
+End of files
+Compiling files:
+  java/annotations/removeDefaultFromAnnotationMemberTwoAnnotations/a/UseAnn.java
+  java/annotations/removeDefaultFromAnnotationMemberTwoAnnotations/a/UseBoth.java
+End of files
+------------------------------------------
+Exit code: ERROR

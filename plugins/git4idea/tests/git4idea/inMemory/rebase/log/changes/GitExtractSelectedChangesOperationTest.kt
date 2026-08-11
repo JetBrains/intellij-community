@@ -8,6 +8,7 @@ import git4idea.test.assertCommitted
 import git4idea.test.assertLastMessage
 import git4idea.test.commit
 import git4idea.test.filterChangesByFileName
+import git4idea.test.getHash
 
 internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest() {
   fun `test extract single file from middle commit`() {
@@ -38,6 +39,38 @@ internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest
       assertCommitted(3) { added("c") }
       assertCommitted(4) { added("a") }
     }
+  }
+
+  fun `test extract fires post-rewrite mapping target to remainder and descendants`() {
+    file("a").create().addCommit("Add a")
+
+    file("b").create().add()
+    file("c").create().add()
+    val targetCommit = commitDetails(commit("Add b, c"))
+    val targetOldHash = targetCommit.id.asString()
+
+    file("d").create().add()
+    val dOldHash = commit("Add d")
+
+    refresh()
+    updateChangeListManager()
+
+    val postRewrites = capturePostRewrites()
+
+    val changesToExtract = filterChangesByFileName(targetCommit, listOf("b"))
+    GitExtractSelectedChangesOperation(objectRepo, targetCommit.id, "Extract b", changesToExtract).run()
+      as GitCommitEditingOperationResult.Complete
+
+    val remainderNewHash = getHash(2)
+    val dNewHash = getHash(0)
+
+    assertEquals(
+      listOf(
+        RewrittenCommit(targetOldHash, remainderNewHash),
+        RewrittenCommit(dOldHash, dNewHash)
+      ),
+      postRewrites.single().mappings
+    )
   }
 
   fun `test extract nested directory structure`() {

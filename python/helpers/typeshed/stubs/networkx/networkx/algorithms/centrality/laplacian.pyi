@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from collections.abc import Collection
 
 from networkx.classes.graph import Graph, _Node
@@ -13,4 +14,4 @@ def laplacian_centrality(
     weight: str | None = "weight",
     walk_type: str | None = None,
     alpha: float = 0.95,
-): ...
+) -> dict[Incomplete, Incomplete]: ...

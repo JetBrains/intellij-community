@@ -4,6 +4,7 @@ package com.intellij.tests.bazel;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -23,9 +24,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
 class BazelJUnitOutputListenerTest {
+  //Disable test-purpose classes to prevent them from being executed as actual tests.
+  private static final String SCENARIO_DISABLED_REASON = "Executed explicitly by BazelJUnitOutputListenerTest";
+
   @Test
   void reportsClassConfigurationFailureWhenBeforeAllFails(@TempDir Path tempDir) throws Exception {
     Document xml = executeAndReadXml(BeforeAllFailureScenario.class, tempDir.resolve("beforeAllFailure.xml"));
@@ -81,6 +87,18 @@ class BazelJUnitOutputListenerTest {
     assertThat(getOnlyTestCase(xml, "successfulTest").getElementsByTagName("skipped").getLength()).isEqualTo(0);
   }
 
+  @Test
+  void includesComparisonDiffForEachNestedFailureInAssertAll(@TempDir Path tempDir) throws Exception {
+    Document xml = executeAndReadXml(MultipleComparisonFailuresScenario.class, tempDir.resolve("assertAll.xml"));
+
+    Element testCase = getOnlyTestCase(xml, "assertAllWithTwoComparisonFailures");
+    NodeList failures = testCase.getElementsByTagName("failure");
+    assertThat(failures.getLength()).isEqualTo(1);
+
+    String failureText = failures.item(0).getTextContent();
+    assertThat(failureText).contains("expected-1", "actual-1", "expected-2", "actual-2");
+  }
+
   private static Document executeAndReadXml(Class<?> scenarioRootClass, Path xmlOutputFile) throws Exception {
     // Keep this helper isolated from globally auto-registered launcher session listeners:
     // they enable IDE-wide test extensions and first/last-in-suite leak checks that are not
@@ -90,6 +108,7 @@ class BazelJUnitOutputListenerTest {
                                          .build());
     var request = LauncherDiscoveryRequestBuilder.request()
       .selectors(selectClass(scenarioRootClass))
+      .configurationParameter("junit.jupiter.conditions.deactivate", "org.junit.*DisabledCondition")
       .build();
 
     try (var listener = new BazelJUnitOutputListener(xmlOutputFile)) {
@@ -141,6 +160,7 @@ class BazelJUnitOutputListenerTest {
     return count;
   }
 
+  @Disabled(SCENARIO_DISABLED_REASON)
   static class BeforeAllFailureScenario {
     @Nested
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -160,6 +180,7 @@ class BazelJUnitOutputListenerTest {
     }
   }
 
+  @Disabled(SCENARIO_DISABLED_REASON)
   static class AfterAllFailureScenario {
     @Nested
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -175,6 +196,7 @@ class BazelJUnitOutputListenerTest {
     }
   }
 
+  @Disabled(SCENARIO_DISABLED_REASON)
   static class ParameterizedScenario {
     @ParameterizedTest(name = "{0}")
     @EnumSource(ParameterizedValue.class)
@@ -187,6 +209,7 @@ class BazelJUnitOutputListenerTest {
     }
   }
 
+  @Disabled(SCENARIO_DISABLED_REASON)
   static class AbortedScenario {
     @Test
     void abortedTest() {
@@ -195,6 +218,17 @@ class BazelJUnitOutputListenerTest {
 
     @Test
     void successfulTest() {
+    }
+  }
+
+  @Disabled(SCENARIO_DISABLED_REASON)
+  static class MultipleComparisonFailuresScenario {
+    @Test
+    void assertAllWithTwoComparisonFailures() {
+      assertAll(
+        () -> assertEquals("expected-1", "actual-1"),
+        () -> assertEquals("expected-2", "actual-2")
+      );
     }
   }
 

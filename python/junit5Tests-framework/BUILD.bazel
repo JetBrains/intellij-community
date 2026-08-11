@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.community.junit5Tests.framework` start
-
 jvm_library(
     name = "community-junit5Tests-framework",
     srcs = glob(
@@ -11,7 +10,11 @@ jvm_library(
     ),
     module_name = "intellij.python.community.junit5Tests.framework",
     visibility = ["//visibility:public"],
-    exports = ["//libraries/system-stubs-jupiter"],
+    exports = [
+        # do not sort,
+        "@lib//:io-qameta-allure-java-commons",
+        "//libraries/system-stubs-jupiter",
+    ],
     runtime_deps = ["//python/pluginCore:community-plugin"],
 )
 
@@ -34,6 +37,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
+        "@lib//:io-qameta-allure-java-commons",
         "//libraries/system-stubs-jupiter",
         "//libraries/system-stubs-jupiter:system-stubs-jupiter_test_lib",
     ],
@@ -46,9 +50,11 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
+        "@lib//:io-qameta-allure-java-commons",
         "//libraries/junit5-jupiter",
         "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
         "//libraries/junit5-params",
@@ -61,7 +67,8 @@ jvm_library(
         "//libraries/hamcrest:hamcrest_test_lib",
         "//libraries/mockk/jvm",
         "//libraries/mockk/jvm:jvm_test_lib",
-        "@lib//:jna",
+        "//libraries/jna",
+        "//libraries/jna:jna_test_lib",
         "@lib//:kotlin-stdlib",
         "//wintools",
         "//wintools:wintools_test_lib",
@@ -101,8 +108,8 @@ jvm_library(
         "//python/openapi:community_test_lib",
         "//python/pipenv",
         "//python/pipenv:pipenv_test_lib",
-        "//python/python-sdk:sdk",
-        "//python/python-sdk:sdk_test_lib",
+        "//python/python-sdk/backend",
+        "//python/python-sdk/backend:backend_test_lib",
         "//python/python-poetry/common",
         "//python/python-poetry/common:common_test_lib",
         "//python/python-psi-impl:psi-impl",
@@ -127,7 +134,6 @@ exports_files(
 ### auto-generated section `iml intellij.python.community.junit5Tests.framework` end
 
 ### auto-generated section `test intellij.python.community.junit5Tests.framework` start
-
 jps_test(
     name = "community-junit5Tests-framework_test",
     runtime_deps = [":community-junit5Tests-framework_test_lib"],

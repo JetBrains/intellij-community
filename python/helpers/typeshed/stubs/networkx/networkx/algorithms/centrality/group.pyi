@@ -1,5 +1,5 @@
 from _typeshed import Incomplete
-from collections.abc import Iterable
+from collections.abc import Collection, Iterable
 
 from networkx.classes.graph import Graph, _Node
 from networkx.utils.backends import _dispatchable
@@ -15,8 +15,12 @@ __all__ = [
 
 @_dispatchable
 def group_betweenness_centrality(
-    G: Graph[_Node], C, normalized: bool | None = True, weight: str | None = None, endpoints: bool | None = False
-): ...
+    G: Graph[_Node],
+    C: Collection[Incomplete],
+    normalized: bool | None = True,
+    weight: str | None = None,
+    endpoints: bool | None = False,
+) -> list[float] | float: ...
 @_dispatchable
 def prominent_group(
     G: Graph[_Node],

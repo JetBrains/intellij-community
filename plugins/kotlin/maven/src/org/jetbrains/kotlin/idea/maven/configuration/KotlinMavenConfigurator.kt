@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.WritingAccessProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.xml.XmlFile
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
@@ -50,7 +51,6 @@ import org.jetbrains.kotlin.idea.maven.PomFile
 import org.jetbrains.kotlin.idea.maven.changeFeatureConfiguration
 import org.jetbrains.kotlin.idea.maven.changeLanguageVersion
 import org.jetbrains.kotlin.idea.maven.excludeMavenChildrenModules
-import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
 import org.jetbrains.kotlin.idea.statistics.KotlinProjectConfigurationError
 import org.jetbrains.kotlin.idea.statistics.KotlinProjectConfigurationError.BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE
 import org.jetbrains.kotlin.idea.statistics.KotlinProjectConfigurationError.CONFIGURING_OF_MODULE_BUILD_SCRIPT_FAILED
@@ -287,6 +287,10 @@ abstract class KotlinMavenConfigurator protected constructor(
         configurePlugin(pom, plugin, module, version)
 
         CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement<PsiFile>(file)
+        val codeStyleManager = CodeStyleManager.getInstance(project)
+        file.rootTag?.let {
+            codeStyleManager.reformat(it, true)
+        }
 
         return true
     }
@@ -363,7 +367,7 @@ abstract class KotlinMavenConfigurator protected constructor(
     ) {
         val sinceVersion = feature.sinceApiVersion
 
-        val messageTitle = AbstractChangeFeatureSupportLevelFix.getFixText(state, feature.presentableName)
+        val messageTitle = getFixText(state, feature.presentableName)
         if (state != LanguageFeature.State.DISABLED && getRuntimeLibraryVersionOrDefault(module).apiVersion < sinceVersion) {
             Messages.showErrorDialog(
                 module.project,
@@ -417,6 +421,9 @@ abstract class KotlinMavenConfigurator protected constructor(
 
         val kotlinPluginId: MavenId
             get() = kotlinPluginId(version = null)
+
+        val javacMavenId: MavenId
+            get() = MavenId("org.apache.maven.plugins", "maven-compiler-plugin", null)
 
         fun kotlinPluginId(version: String? = null): MavenId =
             MavenId(GROUP_ID, MAVEN_PLUGIN_ID, version)

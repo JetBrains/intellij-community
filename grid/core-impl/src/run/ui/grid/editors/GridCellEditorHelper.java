@@ -133,6 +133,8 @@ public interface GridCellEditorHelper {
 
   int guessJdbcTypeForEditing(@NotNull GridCellRequest<GridRow, GridColumn> request);
 
+  int guessJdbcTypeForColumn(@NotNull GridCellRequest<GridRow, GridColumn> request);
+
   boolean areValuesEqual(Object v1, Object v2, @Nullable CoreGrid<GridRow, GridColumn> grid);
 
   @Nullable

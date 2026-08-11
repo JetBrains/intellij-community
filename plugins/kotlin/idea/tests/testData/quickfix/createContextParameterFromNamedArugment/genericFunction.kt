@@ -1,0 +1,12 @@
+// "Add context parameter to function" "true"
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
+// K2_ERROR: NAMED_PARAMETER_NOT_FOUND
+class Ctx
+
+fun <T> f1() {}
+
+fun fdemo() {
+    f1<String>(ctx<caret> = Ctx())
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterFix$ForCalledFunction

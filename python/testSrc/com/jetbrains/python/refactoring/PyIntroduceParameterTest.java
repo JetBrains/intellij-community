@@ -7,8 +7,12 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.parameter.PyIntroduceParameterHandler;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 @TestDataPath("$CONTENT_ROOT/../testData/refactoring/introduceParameter/")
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyIntroduceParameterTest extends PyIntroduceTestCase {
   public void testSimple() {
     doTest();

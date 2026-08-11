@@ -50,7 +50,6 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -752,9 +751,6 @@ public class ShelvedChangesViewManager implements Disposable {
   }
 
   private static final class ShelfToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
-    private static final @NotNull RegistryValue isOpenEditorDiffPreviewWithSingleClick =
-      Registry.get("show.diff.preview.as.editor.tab.with.single.click");
-
     private final Project myProject;
     private final ShelveChangesManager myShelveChangesManager;
     private final VcsConfiguration myVcsConfiguration;
@@ -871,17 +867,6 @@ public class ShelvedChangesViewManager implements Disposable {
                ? VcsBundle.message("shelve.editor.diff.preview.title", wrapper.getPresentableName())
                : VcsBundle.message("shelved.version.name");
       }
-
-      @Override
-      protected boolean isOpenPreviewWithSingleClickEnabled() {
-        return isOpenEditorDiffPreviewWithSingleClick.asBoolean();
-      }
-
-      @Override
-      protected boolean isOpenPreviewWithSingleClick() {
-        if (mySplitterDiffPreview != null && myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN) return false;
-        return super.isOpenPreviewWithSingleClick();
-      }
     }
 
     private class ShelveSplitterDiffPreview implements DiffPreview, Disposable {
@@ -984,7 +969,7 @@ public class ShelvedChangesViewManager implements Disposable {
       @Override
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
-        e.getPresentation().setEnabledAndVisible(mySplitterDiffPreview != null || isOpenEditorDiffPreviewWithSingleClick.asBoolean());
+        e.getPresentation().setEnabledAndVisible(mySplitterDiffPreview != null);
       }
 
       @Override

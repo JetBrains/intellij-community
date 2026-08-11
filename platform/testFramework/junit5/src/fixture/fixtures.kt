@@ -18,6 +18,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -51,9 +52,13 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.common.EditorCaretTestUtil
+import com.intellij.testFramework.common.checkEditorsReleased
 import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.common.runAllSuspend
+import com.intellij.testFramework.common.testWorkspaceModelLeak
 import com.intellij.testFramework.replaceService
 import com.intellij.ui.docking.DockManager
+import com.intellij.util.application
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import kotlinx.coroutines.Dispatchers
@@ -211,7 +216,11 @@ fun projectFixture(
   // Wait until components fully loaded. Otherwise, we might start loading then when a project is already disposed when a test is too fast.
   RunManager.getInstanceAsync(project)
   initialized(project) {
-    ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = false)
+    runAllSuspend(
+      { testWorkspaceModelLeak(project) },
+      { ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = false) },
+      { application.checkEditorsReleased() },
+    )
   }
 }
 
@@ -376,7 +385,9 @@ fun TestFixture<PsiDirectory>.virtualFileFixture(
   }
   initialized(file) {
     edtWriteAction {
-      file.delete(dirFixture)
+      if (file.isValid) {
+        file.delete(dirFixture)
+      }
     }
   }
 }
@@ -491,10 +502,14 @@ fun TestFixture<Project>.fileEditorManagerFixture(initDockableContentFactory: Bo
 }
 
 @TestOnly
-fun <T : Any> extensionPointFixture(epName: ExtensionPointName<in T>, createExtension: suspend () -> T): TestFixture<T> = testFixture {
+fun <T : Any> extensionPointFixture(
+  epName: ExtensionPointName<in T>,
+  loadingOrder: LoadingOrder = LoadingOrder.ANY,
+  createExtension: suspend () -> T,
+): TestFixture<T> = testFixture {
   val extension = createExtension()
   val disposable = Disposer.newDisposable()
-  epName.point.registerExtension(extension, disposable)
+  epName.point.registerExtension(extension, loadingOrder, disposable)
   initialized(extension) {
     Disposer.dispose(disposable)
   }

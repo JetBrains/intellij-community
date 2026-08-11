@@ -1,26 +1,48 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import kotlinx.coroutines.runBlocking
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.importProjectsAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.projectsTree
+import com.intellij.maven.testFramework.fixtures.updateSettingsXml
 import org.jetbrains.idea.maven.project.MavenProject
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.api.BeforeEach
+import com.intellij.testFramework.UsefulTestCase.assertSameElements
 
-class RepositoriesImportingMavenCentralTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class RepositoriesImportingMavenCentralTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   private val mavenProject: MavenProject
-    get() = projectsTree.rootProjects[0]
+    get() = maven.projectsTree.rootProjects[0]
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     runBlocking {
-      updateSettingsXml("")
+      maven.updateSettingsXml("")
     }
 
   }
 
   @Test
   fun importSimpleProject() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
                       <packaging>pom</packaging>
@@ -33,7 +55,7 @@ class RepositoriesImportingMavenCentralTest : MavenMultiVersionImportingTestCase
 
   @Test
   fun testOverridingCentralRepository() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -53,7 +75,7 @@ class RepositoriesImportingMavenCentralTest : MavenMultiVersionImportingTestCase
 
   @Test
   fun testCollectingRepositories() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -78,7 +100,7 @@ class RepositoriesImportingMavenCentralTest : MavenMultiVersionImportingTestCase
 
   @Test
   fun testCollectingRepositoriesFromParent() = runBlocking {
-    val m1 = createModulePom("p1",
+    val m1 = maven.createModulePom("p1",
                              """
                                        <groupId>test</groupId>
                                        <artifactId>p1</artifactId>
@@ -96,7 +118,7 @@ class RepositoriesImportingMavenCentralTest : MavenMultiVersionImportingTestCase
                                        </repositories>
                                        """.trimIndent())
 
-    val m2 = createModulePom("p2",
+    val m2 = maven.createModulePom("p2",
                              """
                                        <groupId>test</groupId>
                                        <artifactId>p2</artifactId>
@@ -108,15 +130,15 @@ class RepositoriesImportingMavenCentralTest : MavenMultiVersionImportingTestCase
                                        </parent>
                                        """.trimIndent())
 
-    importProjectsAsync(m1, m2)
+    maven.importProjectsAsync(m1, m2)
 
-    var result = projectsTree.rootProjects[0].remoteRepositories
+    var result = maven.projectsTree.rootProjects[0].remoteRepositories
     assertEquals(3, result.size)
     assertEquals("one", result[0].id)
     assertEquals("two", result[1].id)
     assertEquals("central", result[2].id)
 
-    result = projectsTree.rootProjects[1].remoteRepositories
+    result = maven.projectsTree.rootProjects[1].remoteRepositories
     assertEquals(3, result.size)
     assertEquals("one", result[0].id)
     assertEquals("two", result[1].id)

@@ -5,11 +5,11 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.ModuleDependencies
 import com.intellij.ide.plugins.PageContainer
+import com.intellij.ide.plugins.PluginCompatibilityUtils.getUnfulfilledCpuArchRequirement
+import com.intellij.ide.plugins.PluginCompatibilityUtils.getUnfulfilledOsRequirement
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledCpuArchRequirement
-import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.api.ReviewsPageContainer
@@ -161,10 +161,10 @@ class PluginUiModelAdapter(
     set(value) {
       if (pluginDescriptor is PluginNode) {
         if (value == null) {
-          pluginDescriptor.setReviewComments(PageContainer(0, 0))
+          pluginDescriptor.setReviewComments(PageContainer(0, true))
           return
         }
-        val container = PageContainer(value.myPageSize, value.myCurrentPage, value.items)
+        val container = PageContainer(value.currentPage, value.hasNextPage, value.items)
         pluginDescriptor.setReviewComments(container)
       }
     }

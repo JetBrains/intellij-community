@@ -10,10 +10,12 @@ import com.intellij.psi.PsiDirectory;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.pyi.PyiFileType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class CreatePythonFileAction extends CreateFileFromTemplateAction implements DumbAware, NewFileActionWithCategory {
-  public CreatePythonFileAction() {
+@ApiStatus.Internal
+final class CreatePythonFileAction extends CreateFileFromTemplateAction implements DumbAware, NewFileActionWithCategory {
+  CreatePythonFileAction() {
     super(PyBundle.messagePointer("action.create.python.file.title"), PyBundle.messagePointer("action.create.python.file.description"), PythonFileType.INSTANCE.getIcon());
   }
 

@@ -27,9 +27,12 @@ internal class GitInMemoryRewordOperation(
 
     LOG.info("Start computing new head for reword operation of $targetCommit")
     val rewordedTargetCommit = objectRepo.commitTreeWithOverrides(baseToHeadCommitsRange.first(), message = newMessage.toByteArray())
-    val newHead = objectRepo.chainCommits(rewordedTargetCommit, baseToHeadCommitsRange.drop(1))
+    val (newHead, rewrittenList) = objectRepo.chainCommits(rewordedTargetCommit, baseToHeadCommitsRange.drop(1))
 
     LOG.info("Finish computing new head for reword operation")
-    return CommitEditingResult(newHead, requiresWorkingTreeUpdate = false, commitToFocus = rewordedTargetCommit)
+    return CommitEditingResult(newHead,
+                               requiresWorkingTreeUpdate = false,
+                               commitToFocus = rewordedTargetCommit,
+                               rewrittenList = listOf(targetCommit.oid to rewordedTargetCommit) + rewrittenList)
   }
 }

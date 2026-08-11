@@ -21,11 +21,13 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class DescriptorComposer extends HTMLComposerImpl {
   private static final Logger LOG = Logger.getInstance(DescriptorComposer.class);
   private final InspectionToolPresentation myTool;
@@ -96,7 +98,7 @@ public final class DescriptorComposer extends HTMLComposerImpl {
 
     if (refElement instanceof RefElement && !refElement.isValid()) return;
 
-    final QuickFix[] fixes = descriptor.getFixes();
+    QuickFix[] fixes = descriptor.getFixes();
     if (fixes != null && fixes.length > 0) {
       buf.append("<br><br>");
       appendHeading(buf, AnalysisBundle.message("inspection.problem.resolution"));

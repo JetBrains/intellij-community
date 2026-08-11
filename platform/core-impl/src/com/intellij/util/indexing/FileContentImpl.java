@@ -29,6 +29,7 @@ import java.nio.charset.Charset;
 
 public final class FileContentImpl extends IndexedFileImpl implements PsiDependentFileContent {
   private final @NotNull NotNullComputable<byte[]> myContentComputable;
+  private final @Nullable NotNullComputable<CharSequence> myTextComputable;
   private Charset myCharset;
   private byte[] myCachedContentBytes;
   private CharSequence myContentAsText;
@@ -44,6 +45,20 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     super(file, fileType, null);
     myContentAsText = contentAsText;
     myContentComputable = contentComputable;
+    myTextComputable = null;
+    myTransientContent = transientContent;
+  }
+
+  private FileContentImpl(@NotNull VirtualFile file,
+                          @NotNull FileType fileType,
+                          @Nullable CharSequence contentAsText,
+                          @NotNull NotNullComputable<byte[]> contentComputable,
+                          @NotNull NotNullComputable<CharSequence> textComputable,
+                          boolean transientContent) {
+    super(file, fileType, null);
+    myContentAsText = contentAsText;
+    myContentComputable = contentComputable;
+    myTextComputable = textComputable;
     myTransientContent = transientContent;
   }
 
@@ -116,6 +131,18 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     return fileContent;
   }
 
+  public static @NotNull FileContent createByContent(@NotNull VirtualFile file,
+                                                     @NotNull NotNullComputable<byte[]> contentComputable,
+                                                     @NotNull NotNullComputable<CharSequence> textComputable,
+                                                     @Nullable Project project) {
+    FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file);
+    FileContentImpl fileContent = new FileContentImpl(file, fileType, null, contentComputable, textComputable, false);
+    if (project != null) {
+      fileContent.setProject(project);
+    }
+    return fileContent;
+  }
+
   public static @NotNull FileContent createByFile(@NotNull VirtualFile file) throws IOException {
     return createByFile(file, null);
   }
@@ -182,7 +209,9 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
       return content;
     }
     if (myContentAsText == null) {
-      myContentAsText = LoadTextUtil.getTextByBinaryPresentation(computeOriginalContent(), myFile, false, false);
+      myContentAsText = myTextComputable != null
+                        ? myTextComputable.compute()
+                        : LoadTextUtil.getTextByBinaryPresentation(computeOriginalContent(), myFile, false, false);
     }
     return myContentAsText;
   }

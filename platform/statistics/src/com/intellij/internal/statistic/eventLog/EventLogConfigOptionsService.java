@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -17,6 +18,7 @@ import static com.intellij.internal.statistic.config.EventLogOptions.GROUP_THRES
 import static com.intellij.internal.statistic.config.EventLogOptions.tryParseInt;
 
 @Service
+@ApiStatus.Internal
 public final class EventLogConfigOptionsService {
 
   @Topic.AppLevel

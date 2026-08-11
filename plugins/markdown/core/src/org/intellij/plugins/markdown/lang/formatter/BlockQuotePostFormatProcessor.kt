@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.lang.formatter
 
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -29,6 +30,7 @@ internal class BlockQuotePostFormatProcessor: PostFormatProcessor {
     if (shouldProcess(source.containingFile, settings) && source is MarkdownBlockQuote) {
       commit(source)
       processBlockQuote(source)
+      doPostponedFormatting(source)
     }
     return source
   }
@@ -45,6 +47,7 @@ internal class BlockQuotePostFormatProcessor: PostFormatProcessor {
         processBlockQuote(quote)
       }
     }
+    doPostponedFormatting(source)
     return rangeToReformat
   }
 
@@ -124,11 +127,16 @@ internal class BlockQuotePostFormatProcessor: PostFormatProcessor {
   }
 
   private fun commit(element: PsiElement) {
-    val viewProvider = when (element) {
-      is PsiFile -> element.viewProvider
-      else -> element.containingFile?.viewProvider
-    }
-    val document = viewProvider?.document ?: return
+    val document = obtainDocument(element) ?: return
     PsiDocumentManager.getInstance(element.project).commitDocument(document)
+  }
+
+  private fun doPostponedFormatting(element: PsiElement) {
+    val document = obtainDocument(element) ?: return
+    PsiDocumentManager.getInstance(element.project).doPostponedOperationsAndUnblockDocument(document)
+  }
+
+  private fun obtainDocument(element: PsiElement): Document? {
+    return element.containingFile?.viewProvider?.document
   }
 }

@@ -21,14 +21,17 @@ import com.pty4j.unix.UnixPtyProcess
 import com.pty4j.windows.conpty.WinConPtyProcess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.util.ShellEelProcess
 import org.jetbrains.plugins.terminal.util.terminalApplicationScope
 import java.io.IOException
 import java.nio.charset.Charset
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -49,6 +52,8 @@ class LocalTerminalTtyConnector internal constructor(
       ptyProcess = ptyProcess
     )
 
+  private val closingActivitiesStarted = AtomicBoolean(false)
+
   /**
    * Closes `TtyConnector` asynchronously in the application-level scope.
    *
@@ -56,22 +61,39 @@ class LocalTerminalTtyConnector internal constructor(
    */
   override fun close() {
     terminalApplicationScope().launch(Dispatchers.IO) {
-      closeSafely()
+      try {
+        closeSafely()
+      }
+      catch (e: LocalTtyConnectorClosingException) {
+        LOG.warn(e.message, e.cause)
+      }
     }
   }
 
   /**
-   * Terminates the underlying [ptyProcess] and awaits its completion for some meaningful time.
-   * It is expected that process should exit before this function returns in most cases.
+   * Terminates the underlying [ptyProcess].
+   * It executes the closing activities depending on the process type and usually performs it in several steps:
+   * 1. Try to terminate the process gracefully
+   * 2. Wait for the process to exit some meaningful time
+   * 3. Destroys the process forcefully if it is still alive
+   *
+   * Note that there is no guarantee that the process will be terminated after this function returns.
    *
    * Uses [NonCancellable] to avoid being canceled in the middle in case of IDE closing.
+   *
+   * @throws LocalTtyConnectorClosingException if failed to perform the closing activities.
    */
+  @Throws(LocalTtyConnectorClosingException::class)
   suspend fun closeSafely(): Unit = withContext(Dispatchers.IO + NonCancellable) {
+    if (!closingActivitiesStarted.compareAndSet(false, true)) {
+      return@withContext
+    }
+
     if (!ptyProcess.isAlive) return@withContext
 
     when {
       ptyProcess is UnixPtyProcess -> {
-        terminateLocalPosixProcess(ptyProcess)
+        terminateLocalPosixProcess(shellEelProcess, ptyProcess)
       }
       ptyProcess is IjentChildPtyProcessAdapter && shellProcessHolder.isPosix -> {
         terminateRemotePosixProcess(shellEelProcess)
@@ -83,21 +105,19 @@ class LocalTerminalTtyConnector internal constructor(
         ptyProcess.destroy()
       }
     }
-
-    val exitCode = ptyProcess.awaitExit(2.seconds)
-    if (exitCode != null) {
-      LOG.info("${processInfo(shellEelProcess)} has been terminated with exit code $exitCode")
-    }
-    else {
-      LOG.warn("${processInfo(shellEelProcess)} has not been terminated!")
-    }
   }
 
-  private suspend fun terminateLocalPosixProcess(process: UnixPtyProcess) {
-    process.hangup()
-    if (process.awaitExit(1.seconds) == null) {
-      LOG.info("Terminal hasn't been terminated by SIGHUP, performing default termination")
-      process.destroy()
+  private suspend fun terminateLocalPosixProcess(process: ShellEelProcess, ptyProcess: UnixPtyProcess) {
+    LOG.debug { "Sending SIGHUP to ${processInfo(process)}" }
+
+    ptyProcess.hangup()
+    if (ptyProcess.awaitExit(1.seconds) == null) {
+      LOG.info("${processInfo(process)} hasn't been terminated by SIGHUP, performing default termination (SIGTERM)")
+      ptyProcess.destroy()
+      if (ptyProcess.awaitExit(1.seconds) == null) {
+        LOG.warn("${processInfo(process)} hasn't been terminated by SIGTERM, performing forceful termination (SIGKILL!!!)")
+        ptyProcess.destroyForcibly()
+      }
     }
   }
 
@@ -108,11 +128,15 @@ class LocalTerminalTtyConnector internal constructor(
     val shellPid = process.eelProcess.pid.value
     LOG.debug { "Sending SIGHUP to ${processInfo(process)}" }
     val killProcess = try {
-      process.eelApi.exec.spawnProcess("kill").args("-HUP", shellPid.toString()).eelIt()
+      withTimeout(2.seconds) {
+        process.eelApi.exec.spawnProcess("kill").args("-HUP", shellPid.toString()).eelIt()
+      }
     }
     catch (e: ExecuteProcessException) {
-      LOG.warn("Unable to send SIGHUP to ${processInfo(process)}", e)
-      return
+      throw LocalTtyConnectorClosingException("Failed to send SIGHUP to ${processInfo(process)}", e)
+    }
+    catch (_: TimeoutCancellationException) {
+      throw LocalTtyConnectorClosingException("Failed to send SIGHUP to ${processInfo(process)}: timeout exceeded")
     }
 
     if (ptyProcess.awaitExit(5.seconds) == null) {
@@ -120,7 +144,7 @@ class LocalTerminalTtyConnector internal constructor(
         killProcess.awaitProcessResult()
       }
       if (ptyProcess.isAlive) {
-        LOG.info("${processInfo(process)} hasn't been terminated by SIGHUP, performing forceful termination. " +
+        LOG.warn("${processInfo(process)} hasn't been terminated by SIGHUP, performing forceful termination (SIGKILL!!!)\n" +
                  "\"kill -HUP $shellPid\" => ${killProcessResult?.stringify()}")
         ptyProcess.destroyForcibly()
       }
@@ -145,7 +169,7 @@ class LocalTerminalTtyConnector internal constructor(
         outputStream.flush()
       }
       catch (e: IOException) {
-        LOG.info("Failed to send Ctrl+C to ${ptyProcess.javaClass.getSimpleName()}, alive:${ptyProcess.isAlive}", e)
+        LOG.warn("Failed to send Ctrl+C to ${ptyProcess.javaClass.getSimpleName()}, alive:${ptyProcess.isAlive}", e)
       }
     }
   }
@@ -176,3 +200,9 @@ class LocalTerminalTtyConnector internal constructor(
     private val LOG = Logger.getInstance(LocalTerminalTtyConnector::class.java)
   }
 }
+
+@ApiStatus.Internal
+class LocalTtyConnectorClosingException(
+  message: String,
+  cause: Throwable? = null,
+) : IllegalStateException(message, cause)

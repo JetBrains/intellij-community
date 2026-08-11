@@ -35,6 +35,9 @@ object InlineDataKeys {
     @JvmStatic
     val NON_LOCAL_JUMP_KEY = Key<NonLocalJumpToken>("NON_LOCAL_JUMP")
 
+    @JvmStatic
+    val GENERATED_LABEL_KEY = Key<Unit>("GENERATED_LABEL")
+
     fun clearUserData(it: KtElement) {
         it.putCopyableUserData(CommentHolder.COMMENTS_TO_RESTORE_KEY, null)
         it.putCopyableUserData(USER_CODE_KEY, null)

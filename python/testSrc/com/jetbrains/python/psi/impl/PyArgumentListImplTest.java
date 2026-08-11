@@ -1,5 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -17,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Ilya.Kazakevich
  */
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyArgumentListImplTest extends PyClassRefactoringTest {
   private PyElementGeneratorImpl myGenerator;
 

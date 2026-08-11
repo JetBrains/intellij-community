@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="kotlinc.analysis-api-impl-base" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-impl-base-for-ide:2.5.0-dev-3229">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.5.0-dev-3229/analysis-api-impl-base-for-ide-2.5.0-dev-3229.jar">
+              <sha256sum>f8bada5b34a7b979ede3205343e20e2f0caf86ea9a3a4d27eb99c0ce213f28d9</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.5.0-dev-3229/analysis-api-impl-base-for-ide-2.5.0-dev-3229.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.5.0-dev-3229/analysis-api-impl-base-for-ide-2.5.0-dev-3229-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

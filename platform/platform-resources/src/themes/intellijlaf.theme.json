@@ -1023,6 +1023,13 @@
       "warningBackground": "#F5F0E6",
       "warningBorderColor": "#E0CEA8"
     },
+    "Diff": {
+      "ContentTitle.gap": 2,
+      "ContentTitle.insets": "0,4,2,4",
+      "HeaderToolbarPanel": {
+        "UI": "com.intellij.diff.impl.ui.DiffToolbarPlainPanelUI"
+      }
+    },
 
     "VersionControl": {
       "FileHistory.Commit.selectedBranchBackground": "#fffee4",

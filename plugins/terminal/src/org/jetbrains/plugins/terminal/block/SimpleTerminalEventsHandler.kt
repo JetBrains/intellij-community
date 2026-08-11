@@ -84,7 +84,7 @@ internal open class SimpleTerminalEventsHandler(
         sendUserInput(byteArrayOf(Ascii.NUL))
         return true
       }
-      val code = session.controller.getCodeForKey(keyCode, e.modifiers)
+      val code = session.controller.getCodeForKey(keyCode, e.modifiersEx)
       if (code != null) {
         sendUserInput(code)
         // TODO
@@ -255,7 +255,7 @@ internal open class SimpleTerminalEventsHandler(
     if (event.isShiftDown) {
       code = code or MouseButtonModifierFlags.MOUSE_BUTTON_SHIFT_FLAG
     }
-    if (event.modifiersEx and InputEvent.META_MASK != 0) {
+    if (event.modifiersEx and InputEvent.META_DOWN_MASK != 0) {
       code = code or MouseButtonModifierFlags.MOUSE_BUTTON_META_FLAG
     }
     return code

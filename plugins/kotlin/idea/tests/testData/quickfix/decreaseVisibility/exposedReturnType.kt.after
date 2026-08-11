@@ -8,7 +8,7 @@
 // ACTION: Make 'bar' private
 // ACTION: Move to companion object
 // ACTION: Specify return type explicitly
-// K2_ERROR: 'internal' function exposes its 'private-in-file' return type 'Data'.
+// K2_ERROR: EXPOSED_FUNCTION_RETURN_TYPE
 
 private data class Data(val x: Int)
 

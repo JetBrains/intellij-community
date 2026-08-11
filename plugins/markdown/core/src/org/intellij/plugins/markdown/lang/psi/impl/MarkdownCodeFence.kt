@@ -123,12 +123,12 @@ class MarkdownCodeFence(elementType: IElementType): MarkdownCodeFenceImpl(elemen
           element.replace(textElement) as MarkdownCodeFence
         } else null
       }
-      val relevantRange = obtainRelevantTextRange(element)
+      val contentRange = obtainContentTextRange(element)
       val indent = MarkdownCodeFenceUtils.getIndent(element) ?: ""
       val text = collectText(element)
       val updatedText = when {
-        text.isNullOrEmpty() || range.startOffset < relevantRange.startOffset -> appendIndent(content, indent)
-        else -> replaceWithIndent(text, content, range = createShiftedChangeRange(range, relevantRange, text.length), indent)
+        text.isNullOrEmpty() || range.startOffset < contentRange.startOffset -> appendIndent(content, indent)
+        else -> replaceWithIndent(text, content, range = createShiftedChangeRange(range, contentRange, text.length), indent)
       }
       val fenceElement = MarkdownPsiElementFactory.createCodeFence(element.project, element.fenceLanguage, updatedText, indent)
       return element.replace(fenceElement) as MarkdownCodeFence
@@ -189,11 +189,21 @@ class MarkdownCodeFence(elementType: IElementType): MarkdownCodeFenceImpl(elemen
   }
 
   companion object {
-    private fun obtainRelevantTextRange(element: MarkdownCodeFence): TextRange {
+    private fun obtainContentTextRange(element: MarkdownCodeFence): TextRange {
       val elements = obtainFenceContent(element, withWhitespaces = true) ?: return MarkdownCodeFenceUtils.getEmptyRange(element)
       val first = elements.first()
       val last = elements.last()
       return TextRange.create(first.startOffsetInParent, last.startOffsetInParent + last.textLength)
+    }
+
+    private fun obtainRelevantTextRange(element: MarkdownCodeFence): TextRange {
+      val contentRange = obtainContentTextRange(element)
+      val startOffset = contentRange.startOffset
+      val rangeStartOffset = if (startOffset > 0 && StringUtil.isLineBreak(element.text[startOffset - 1])) {
+        startOffset - 1
+      }
+      else startOffset
+      return TextRange.create(rangeStartOffset, contentRange.endOffset)
     }
 
     @ApiStatus.Experimental

@@ -3,8 +3,8 @@ package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
+import com.intellij.util.ui.JdkConstants.FontStyle;
 import it.unimi.dsi.fastutil.ints.Int2FloatOpenHashMap;
-import com.intellij.util.ui.JdkConstants;
 
 /**
  * Cache of char widths for different font styles
@@ -20,11 +20,7 @@ final class CharWidthCache {
     myView = view;
   }
 
-  void clear() {
-    myCache.clear();
-  }
-
-  float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle) {
+  float getCodePointWidth(int codePoint, @FontStyle int fontStyle) {
     int key = createKey(codePoint, fontStyle);
     float width = getCachedValue(key);
     if (width < 0) {
@@ -34,7 +30,11 @@ final class CharWidthCache {
     return width;
   }
 
-  private float calcValue(int codePoint, int fontStyle) {
+  void clear() {
+    myCache.clear();
+  }
+
+  private float calcValue(int codePoint, @FontStyle int fontStyle) {
     Editor editor = myView.getEditor();
     if (editor.getSettings().isShowingSpecialChars()) {
       // This is a simplification - we don't account for special characters not rendered in certain circumstances(based on surrounding
@@ -45,8 +45,12 @@ final class CharWidthCache {
         return specialCharacterFragment.visualColumnToX(0, 1);
       }
     }
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(codePoint, fontStyle, editor.getColorsScheme().getFontPreferences(),
-                                                           myView.getFontRenderContext()).charWidth2D(codePoint);
+    return ComplementaryFontsRegistry.getFontAbleToDisplay(
+      codePoint,
+      fontStyle,
+      editor.getColorsScheme().getFontPreferences(),
+      myView.getFontRenderContext()
+    ).charWidth2D(codePoint);
   }
 
   /**
@@ -66,7 +70,7 @@ final class CharWidthCache {
     myCache.put(key, value + SHIFT);
   }
 
-  private static int createKey(int codePoint, @JdkConstants.FontStyle int fontStyle) {
+  private static int createKey(int codePoint, @FontStyle int fontStyle) {
     return (fontStyle << 21) | codePoint;
   }
 }

@@ -110,7 +110,9 @@ internal object DevKitPatcherHelper {
 
       vmParameters.addAll(getMultiRoutingFileSystemVmOptions_Reflective(project))
 
-      val outputRoot = getOutputByModule(project, IJENT_BOOT_CLASSPATH_MODULE, "ijent boot classpath addition")
+      val outputRoot = ReadAction.nonBlocking<Path?> {
+        getOutputByModule(project, IJENT_BOOT_CLASSPATH_MODULE, "ijent boot classpath addition")
+      }.executeSynchronously()
       if (outputRoot != null) {
         vmParameters.add("-Xbootclasspath/a:$outputRoot")
       }

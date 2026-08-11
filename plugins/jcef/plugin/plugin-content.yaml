@@ -12,7 +12,7 @@
   - name: intellij.libraries.jcef
     libraries:
       jcef:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/144/jcef-144.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/150/jcef-150.jar
 - name: lib/modules/intellij.platform.ide.impl.jcef.jar
   contentModules:
   - name: intellij.platform.ide.impl.jcef

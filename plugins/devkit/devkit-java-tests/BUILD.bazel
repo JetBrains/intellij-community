@@ -1,8 +1,23 @@
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.devkit.java.tests` start
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
+jps_test(
+    name = "java-tests_test",
+    timeout = "long",
+    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
+    ],
+    tags = ["community-aggregator"],
+    runtime_deps = [":java-tests_test_lib"],
+)
+### skip generation section `test intellij.devkit.java.tests`
+
+### auto-generated section `build intellij.devkit.java.tests` start
 jvm_library(
     name = "java-tests",
     srcs = glob(
@@ -14,7 +29,7 @@ jvm_library(
     exports = ["//java/java-backend:backend"],
     runtime_deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/ide-core-impl",
         "//plugins/devkit",
         "//xml/dom-impl",
@@ -63,7 +78,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core",
@@ -130,6 +146,8 @@ jvm_library(
         "//java/compiler:compiler-tests_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
+        "//plugins/junit",
+        "//plugins/junit:junit_test_lib",
         "//xml/dom-tests",
         "//xml/dom-tests:dom-tests_test_lib",
         "//plugins/properties:properties-backend",
@@ -155,6 +173,8 @@ jvm_library(
         "//plugins/kotlin/base/testFramework:testFramework_test_lib",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//plugins/devkit/intellij.devkit.mcp.inspections:mcp-inspections",
+        "//plugins/devkit/intellij.devkit.mcp.inspections:mcp-inspections_test_lib",
         "//java/codeserver/highlighting",
         "//java/codeserver/highlighting:highlighting_test_lib",
         "//java/java-frontback-psi-api:frontback-psi",
@@ -169,6 +189,12 @@ jvm_library(
         "//platform/util/concurrency:concurrency_test_lib",
         "//plugins/devkit/intellij.devkit.themes:themes-tests",
         "//plugins/devkit/intellij.devkit.themes:themes-tests_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.java.tests` end
@@ -181,11 +207,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.devkit.java.tests` end
-
-### auto-generated section `test intellij.devkit.java.tests` start
-
-jps_test(
-    name = "java-tests_test",
-    runtime_deps = [":java-tests_test_lib"],
-)
-### auto-generated section `test intellij.devkit.java.tests` end

@@ -6,10 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 interface PythonPackageManagerProvider {
 
   /**
@@ -20,13 +20,12 @@ interface PythonPackageManagerProvider {
   fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager?
 
   companion object {
-    val EP_NAME = ExtensionPointName.create<PythonPackageManagerProvider>("Pythonid.pythonPackageManagerProvider")
+    val EP_NAME: ExtensionPointName<PythonPackageManagerProvider> =
+      ExtensionPointName.create("Pythonid.pythonPackageManagerProvider")
   }
 }
 
-@ApiStatus.Internal
-@ApiStatus.Experimental
-interface PythonPackageManagerService {
+internal interface PythonPackageManagerService {
   @Throws(AlreadyDisposedException::class)
   fun forSdk(project: Project, sdk: Sdk): PythonPackageManager
 
@@ -38,5 +37,4 @@ interface PythonPackageManagerService {
    */
   fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge
 
-  fun getServiceScope(): CoroutineScope
 }

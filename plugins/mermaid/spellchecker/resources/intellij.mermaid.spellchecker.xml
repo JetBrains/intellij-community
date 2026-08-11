@@ -1,0 +1,14 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="com.intellij.mermaid"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.spellchecker"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <spellchecker.support language="Mermaid" implementationClass="com.intellij.mermaid.spellchecker.MermaidSpellcheckingStrategy"/>
+  </extensions>
+</idea-plugin>

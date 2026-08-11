@@ -3,14 +3,14 @@ package com.intellij.psi.impl.file.impl
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.anyContext
+import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.AbstractFileViewProvider
 import com.intellij.psi.FileViewProvider
+import com.intellij.psi.impl.source.tree.mvcc.ConcurrentWeakVersionedValueHashMap
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.AtomicMapCache
-import com.intellij.util.containers.CollectionFactory
-import java.util.concurrent.ConcurrentMap
 import java.util.function.Consumer
 
 /**
@@ -23,7 +23,7 @@ internal class ClassicFileViewProviderCache(
 ) : FileViewProviderCache {
 
   private val cache = AtomicMapCache<VirtualFile, FileViewProvider> {
-    CollectionFactory.createConcurrentWeakValueMap()
+    ConcurrentWeakVersionedValueHashMap()
   }
 
   private val myTempProviderStorage = createTemporaryProviderStorage()
@@ -123,10 +123,17 @@ internal class ClassicFileViewProviderCache(
     return cacheOrGet(vFile, context, viewProvider)
   }
 
+  override fun canViewProviderBeResurrected(viewProvider: AbstractFileViewProvider): Boolean {
+    return evaluator.canViewProviderBeResurrected(viewProvider)
+  }
+
+  override fun getRecreationFailureReason(viewProvider: AbstractFileViewProvider): String? {
+    return evaluator.getRecreationFailureReason(viewProvider.virtualFile, viewProvider, viewProvider.codeInsightContext)
+  }
+
   override fun evaluateValidity(viewProvider: AbstractFileViewProvider): Boolean {
     return evaluator.evaluateValidity(viewProvider)
   }
 }
 
 private val NULL: VirtualFile = LightVirtualFile()
-

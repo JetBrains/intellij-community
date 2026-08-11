@@ -7,6 +7,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.MethodSource;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherFactory;
@@ -19,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,9 +28,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
 class JUnit5BazelRunnerTest {
+  private static final String IGNORE_INHERITED_RUNNER_FILTERS_PROPERTY = "intellij.build.test.runner.ignore.inherited.filters";
+
   @Test
   void discoversJupiterAndVintageTestsByDefault() {
-    assertThat(discoverTestClasses(null)).containsExactlyInAnyOrder(
+    assertThat(discoverTestClassesWithoutInheritedRunnerFilters(null)).containsExactlyInAnyOrder(
       VintageSampleTest.class.getName(),
       JupiterSampleTest.class.getName()
     );
@@ -49,7 +53,7 @@ class JUnit5BazelRunnerTest {
     properties.put("test.group.roots", null);
     try (URLClassLoader resourceClassLoader = new URLClassLoader(new URL[]{resourceRoot.toUri().toURL()}, getContextClassLoader())) {
       withSystemProperties(properties, () -> withContextClassLoader(resourceClassLoader, () -> {
-        assertThat(discoverTestClasses(null)).containsExactly(JupiterSampleTest.class.getName());
+        assertThat(discoverTestClassesWithRunnerRequest()).containsExactly(JupiterSampleTest.class.getName());
         assertThat(System.getProperty("test.group.roots")).contains(testGroupsFile.toAbsolutePath().toString());
       }));
     }
@@ -57,23 +61,57 @@ class JUnit5BazelRunnerTest {
 
   @Test
   void excludesVintageTestsWhenVintageEngineIsDisabled() {
-    assertThat(discoverTestClasses("false")).containsExactly(JupiterSampleTest.class.getName());
+    assertThat(discoverTestClassesWithoutInheritedRunnerFilters("false")).containsExactly(JupiterSampleTest.class.getName());
   }
 
   @Test
   void discoversOnlyVintageTestsWhenRequested() {
-    assertThat(discoverTestClasses("only")).containsExactly(VintageSampleTest.class.getName());
+    assertThat(discoverTestClassesWithoutInheritedRunnerFilters("only")).containsExactly(VintageSampleTest.class.getName());
   }
 
   @Test
   void rejectsUnsupportedVintageMode() {
-    assertThatThrownBy(() -> JUnit5BazelRunner.createDiscoveryRequest(selectors(), "unsupportedEngine"))
+    assertThatThrownBy(() -> runWithInheritedRunnerFiltersDisabled(
+      () -> JUnit5BazelRunner.createDiscoveryRequest(selectors(), "unsupportedEngine")))
       .isInstanceOf(RuntimeException.class)
       .hasMessageContaining("unsupportedEngine");
   }
 
-  private static Set<String> discoverTestClasses(String engineVintage) {
-    var request = JUnit5BazelRunner.createDiscoveryRequest(selectors(), engineVintage);
+  private static Set<String> discoverTestClassesWithRunnerRequest() {
+    return discoverTestClasses(JUnit5BazelRunner.createDiscoveryRequest(selectors(), null));
+  }
+
+  private static Set<String> discoverTestClassesWithoutInheritedRunnerFilters(String engineVintage) {
+    return computeWithInheritedRunnerFiltersDisabled(
+      () -> discoverTestClasses(JUnit5BazelRunner.createDiscoveryRequest(selectors(), engineVintage)));
+  }
+
+  private static void runWithInheritedRunnerFiltersDisabled(Runnable action) {
+    computeWithInheritedRunnerFiltersDisabled(() -> {
+      action.run();
+      return null;
+    });
+  }
+
+  private static <T> T computeWithInheritedRunnerFiltersDisabled(Supplier<T> action) {
+    // The nested discovery request must still be created by JUnit5BazelRunner, but not inherit TeamCity/Bazel sharding
+    // or TESTBRIDGE_TEST_ONLY from the outer run; otherwise these sample classes can be filtered out before assertions.
+    String previousValue = System.getProperty(IGNORE_INHERITED_RUNNER_FILTERS_PROPERTY);
+    try {
+      System.setProperty(IGNORE_INHERITED_RUNNER_FILTERS_PROPERTY, "true");
+      return action.get();
+    }
+    finally {
+      if (previousValue == null) {
+        System.clearProperty(IGNORE_INHERITED_RUNNER_FILTERS_PROPERTY);
+      }
+      else {
+        System.setProperty(IGNORE_INHERITED_RUNNER_FILTERS_PROPERTY, previousValue);
+      }
+    }
+  }
+
+  private static Set<String> discoverTestClasses(LauncherDiscoveryRequest request) {
     var launcher = LauncherFactory.create(LauncherConfig.builder()
                                          .enableLauncherSessionListenerAutoRegistration(false)
                                          .build());

@@ -39,6 +39,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.build.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.hash4j" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.jps" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.gradle.jps" />
 </module>

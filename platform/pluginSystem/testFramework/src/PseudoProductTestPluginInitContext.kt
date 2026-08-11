@@ -8,9 +8,9 @@ import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.ProductPluginInitContext.Companion.configureProductModeModules
+import com.intellij.ide.plugins.ProductPluginInitContext.Companion.defaultProductCompatibilityDependenciesForRemainingCandidatesProvider
 import com.intellij.ide.plugins.ProductPluginInitContext.Companion.defaultProductCompatibilityDependenciesProvider
 import com.intellij.ide.plugins.ProductPluginInitContext.Companion.defaultProductRulesImposedExclusions
-import com.intellij.ide.plugins.ProductPluginInitContext.Companion.defaultRuntimeModuleGroupAffiliation
 import com.intellij.ide.plugins.ProductPluginInitContext.Companion.defaultShouldIncludeContentModulesForDependsEdgeTarget
 import com.intellij.ide.plugins.ProductRulesImposedExclusion
 import com.intellij.ide.plugins.UnambiguousPluginSet
@@ -36,11 +36,11 @@ abstract class PseudoProductTestPluginInitContext : EmptyTestPluginInitContext()
   ): Sequence<DependencyRef> =
     defaultProductCompatibilityDependenciesProvider(descriptor, pluginSet)
 
-  override fun provideCustomRuntimeModuleGroupAffiliation(
-    module: PluginModuleDescriptor,
-    pluginSet: UnambiguousPluginSet,
-  ): PluginModuleDescriptor? =
-    defaultRuntimeModuleGroupAffiliation(module, pluginSet)
+  override fun provideCompatibilityDependenciesForRemainingCandidates(
+    descriptor: IdeaPluginDescriptorImpl,
+    remainingCandidates: PluginInitializationContext.RemainingCandidatesView
+  ): Sequence<DependencyRef> =
+    defaultProductCompatibilityDependenciesForRemainingCandidatesProvider(descriptor, remainingCandidates)
 
   override fun shouldIncludeContentModulesForDependsEdgeTarget(resolvedTarget: PluginMainDescriptor): Boolean =
     defaultShouldIncludeContentModulesForDependsEdgeTarget(resolvedTarget)

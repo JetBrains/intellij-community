@@ -23,14 +23,16 @@ abstract class GitLabApiManager {
     getClient(server) { token }
 
   /**
-   * Gets a client that fetches tokens using the given supplier. The created client
+   * Gets a client that fetches tokens using the given suspending supplier. The created client
    * can make authenticated requests to a GitLab server of choice. Because a token
    * supplier is passed when constructing the API client, the client is usually
    * intended to only be used for a single intended server. New tokens could be
    * supplied by the token supplier, however.
    */
-  fun getClient(server: GitLabServerPath,
-                tokenSupplier: () -> String): GitLabApi =
+  fun getClient(
+    server: GitLabServerPath,
+    tokenSupplier: suspend () -> String,
+  ): GitLabApi =
     GitLabApiImpl(serversManager, server, tokenSupplier)
 
   /**

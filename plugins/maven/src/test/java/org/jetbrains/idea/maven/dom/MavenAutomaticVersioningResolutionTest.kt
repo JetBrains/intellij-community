@@ -2,16 +2,44 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture.Highlight
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertModuleModuleDeps
+import com.intellij.maven.testFramework.fixtures.assumeMaven3
+import com.intellij.maven.testFramework.fixtures.assumeMaven4
+import com.intellij.maven.testFramework.fixtures.assumeVersionAtLeast
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.findPsiFile
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
+import com.intellij.maven.testFramework.fixtures.moveCaretTo
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.assertResolved
+import org.jetbrains.idea.maven.fixtures.checkHighlighting
+import org.jetbrains.idea.maven.fixtures.getIntentionAtCaret
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenAutomaticVersioningResolutionTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun testAutomaticParentVersionResolutionForMaven4() = runBlocking {
-    assumeMaven4()
-    createProjectPom("""
+    maven.assumeMaven4()
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1.1</version>
@@ -21,7 +49,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val m = createModulePom("m",
+    val m = maven.createModulePom("m",
                             """
                                       <parent>
                                         <groupId>test</groupId>
@@ -29,10 +57,10 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                       </parent>
                                        <artifactId>m</artifactId>
                                       """.trimIndent())
-    importProjectAsync()
-    assertEquals("1.1", projectsManager.findProject(m)!!.mavenId.version)
+    maven.importProjectAsync()
+    assertEquals("1.1", maven.projectsManager.findProject(m)!!.mavenId.version)
 
-    createModulePom("m",
+    maven.createModulePom("m",
                     """
                       <parent>
                         <groupId>test</groupId>
@@ -40,15 +68,15 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                       </parent>
                        <artifactId>m</artifactId>
                       """.trimIndent())
-    assertResolved(m, findPsiFile(projectPom))
-    fixture.enableInspections(listOf<Class<out LocalInspectionTool?>>(MavenParentMissedVersionInspection::class.java))
-    checkHighlighting(m)
+    maven.assertResolved(m, maven.findPsiFile(maven.projectPom))
+    maven.fixture.enableInspections(listOf<Class<out LocalInspectionTool?>>(MavenParentMissedVersionInspection::class.java))
+    maven.checkHighlighting(m)
   }
 
   @Test
   fun testAutomaticParentVersionResolutionIsNotEnabledForMaven3() = runBlocking {
-    assumeMaven3()
-    createProjectPom("""
+    maven.assumeMaven3()
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1.1</version>
@@ -58,7 +86,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val m = createModulePom("m",
+    val m = maven.createModulePom("m",
                             """
                                       <parent>
                                         <groupId>test</groupId>
@@ -66,22 +94,22 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                       </parent>
                                        <artifactId>m</artifactId>
                                       """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
 
-    fixture.enableInspections(listOf<Class<out LocalInspectionTool?>>(MavenParentMissedVersionInspection::class.java))
+    maven.fixture.enableInspections(listOf<Class<out LocalInspectionTool?>>(MavenParentMissedVersionInspection::class.java))
 
-    moveCaretTo(m, "<parent<caret>>")
-    checkHighlighting(m, Highlight(text = "parent", description = "'version' child tag should be defined"))
-    val action = getIntentionAtCaret(m, "Insert required child tag version")
-    assertNotNull("Quick Fix for adding <version> child tag must be available", action)
-    fixture.launchAction(action!!)
-    checkHighlighting(m)
+    maven.moveCaretTo(m, "<parent<caret>>")
+    maven.checkHighlighting(m, Highlight(text = "parent", description = "'version' child tag should be defined"))
+    val action = maven.getIntentionAtCaret(m, "Insert required child tag version")
+    assertNotNull(action, "Quick Fix for adding <version> child tag must be available")
+    maven.fixture.launchAction(action!!)
+    maven.checkHighlighting(m)
   }
 
   @Test
   fun testAutomaticDependencyVersionResolutionForMaven4() = runBlocking {
-    assumeVersionAtLeast("4.0.0-alpha-2")
-    createProjectPom("""
+    maven.assumeVersionAtLeast("4.0.0-alpha-2")
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1.1</version>
@@ -92,7 +120,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val m1 = createModulePom("m1",
+    val m1 = maven.createModulePom("m1",
                              """
                                        <parent>
                                          <groupId>test</groupId>
@@ -100,7 +128,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                        </parent>
                                         <artifactId>m1</artifactId>
                                        """.trimIndent())
-    val m2 = createModulePom("m2",
+    val m2 = maven.createModulePom("m2",
                              """
                                        <parent>
                                          <groupId>test</groupId>
@@ -115,12 +143,12 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                           </dependency>
                                         </dependencies>
                                        """.trimIndent())
-    importProjectAsync()
-    assertEquals("1.1", projectsManager.findProject(m1)!!.mavenId.version)
-    assertEquals("1.1", projectsManager.findProject(m2)!!.mavenId.version)
-    assertModuleModuleDeps("m2", "m1")
+    maven.importProjectAsync()
+    assertEquals("1.1", maven.projectsManager.findProject(m1)!!.mavenId.version)
+    assertEquals("1.1", maven.projectsManager.findProject(m2)!!.mavenId.version)
+    maven.assertModuleModuleDeps("m2", "m1")
 
-    createModulePom("m2",
+    maven.createModulePom("m2",
                     """
                       <parent>
                         <groupId>test</groupId>
@@ -134,14 +162,14 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                          </dependency>
                        </dependencies>
                       """.trimIndent())
-    assertResolved(m2, findPsiFile(m1))
-    checkHighlighting(m2)
+    maven.assertResolved(m2, maven.findPsiFile(m1))
+    maven.checkHighlighting(m2)
   }
 
   @Test
   fun testAutomaticDependencyVersionResolutionForMaven4AndRelativePath() = runBlocking {
-    assumeVersionAtLeast("4.0.0-alpha-2")
-    createProjectPom("""
+    maven.assumeVersionAtLeast("4.0.0-alpha-2")
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1.1</version>
@@ -151,7 +179,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val m1 = createModulePom("m/m1",
+    val m1 = maven.createModulePom("m/m1",
                              """
                                        <parent>
                                          <groupId>test</groupId>
@@ -160,10 +188,10 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                        </parent>
                                         <artifactId>m1</artifactId>
                                        """.trimIndent())
-    importProjectAsync()
-    assertEquals("1.1", projectsManager.findProject(m1)!!.mavenId.version)
+    maven.importProjectAsync()
+    assertEquals("1.1", maven.projectsManager.findProject(m1)!!.mavenId.version)
 
-    createModulePom("m/m1",
+    maven.createModulePom("m/m1",
                     """
                                        <parent>
                                          <groupId>test</groupId>
@@ -172,6 +200,6 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                        </parent>
                                         <artifactId>m1</artifactId>
                                        """.trimIndent())
-    assertResolved(m1, findPsiFile(projectPom))
+    maven.assertResolved(m1, maven.findPsiFile(maven.projectPom))
   }
 }

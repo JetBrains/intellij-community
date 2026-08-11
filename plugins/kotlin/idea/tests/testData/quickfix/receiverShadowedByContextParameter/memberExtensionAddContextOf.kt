@@ -2,7 +2,7 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 // WITH_STDLIB
 // API_VERSION: 2.2
-// K2_ERROR: Call to 'fun String.bar(): Unit' defined in 'Foo' uses an implicit receiver shadowed by a context parameter. Disambiguate the receiver by wrapping the call in 'with(this) { ... }' or 'with(contextOf<Foo>()) { ... }'.
+// K2_ERROR: RECEIVER_SHADOWED_BY_CONTEXT_PARAMETER
 
 class Foo {
     fun String.bar() {

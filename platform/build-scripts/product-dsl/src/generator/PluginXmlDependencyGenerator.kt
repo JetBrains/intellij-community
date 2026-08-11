@@ -62,12 +62,11 @@ internal object PluginDependencyPlanner : PipelineNode {
       val pluginContentCache = model.pluginContentCache
       val suppressionConfig = model.suppressionConfig
       val updateSuppressions = model.updateSuppressions
-      val allRealProductNames = embeddedCheckProductNames(model.discovery.products.map { it.name })
 
       // Process all real plugins in the graph (main target present).
       // DSL-defined plugins are generated from Kotlin specs and skipped here.
       val tasks = ArrayList<Deferred<PluginDependencyPlan?>>()
-      val pluginGraphDeps = collectPluginGraphDeps(graph = graph, allRealProductNames = allRealProductNames)
+      val pluginGraphDeps = collectPluginGraphDeps(graph = graph)
       val actionGroupProviderModules = buildActionGroupProviderModules(graph = graph, descriptorCache = model.descriptorCache)
       for (graphDeps in pluginGraphDeps) {
         if (graphDeps.isDslDefined) continue
@@ -103,10 +102,7 @@ internal data class PluginGraphDeps(
   @JvmField val duplicateDeclarationPluginIds: Set<PluginId>,
 )
 
-internal fun collectPluginGraphDeps(
-  graph: PluginGraph,
-  allRealProductNames: Set<String>,
-): List<PluginGraphDeps> {
+internal fun collectPluginGraphDeps(graph: PluginGraph): List<PluginGraphDeps> {
   val results = ArrayList<PluginGraphDeps>()
   graph.query {
     plugins { plugin ->
@@ -121,7 +117,6 @@ internal fun collectPluginGraphDeps(
       val legacyConfigFilePluginDeps = LinkedHashSet<PluginId>()
       val filteredModuleDeps = LinkedHashSet<ContentModuleName>()
       val duplicateDeclarations = LinkedHashSet<PluginId>()
-      val embeddedCheckProductNames = embeddedCheckProductsForPlugin(plugin.id, allRealProductNames)
 
       plugin.mainTarget { target ->
         hasMainTarget = true
@@ -130,11 +125,6 @@ internal fun collectPluginGraphDeps(
           when (val classification = classifyTarget(dep.targetId)) {
             is DependencyClassification.ModuleDep -> {
               if (classification.moduleName in contentModules) {
-                filteredModuleDeps.add(classification.moduleName)
-                return@dependsOn
-              }
-              val depModuleId = contentModule(classification.moduleName)
-              if (depModuleId != null && shouldSkipEmbeddedPluginDependency(depModuleId, embeddedCheckProductNames)) {
                 filteredModuleDeps.add(classification.moduleName)
                 return@dependsOn
               }

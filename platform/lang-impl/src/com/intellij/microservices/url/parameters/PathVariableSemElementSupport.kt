@@ -1,3 +1,5 @@
+@file:ApiStatus.Internal
+
 package com.intellij.microservices.url.parameters
 
 import com.intellij.openapi.project.Project
@@ -6,6 +8,7 @@ import com.intellij.pom.PomTargetPsiElement
 import com.intellij.psi.PsiElement
 import com.intellij.semantic.SemElement
 import com.intellij.semantic.SemKey
+import org.jetbrains.annotations.ApiStatus
 
 internal object PathVariableSemElementSupport : RenameableSemElementSupport<PathVariableSem> {
   override val SEM_KEY: SemKey<PathVariableSem>
@@ -32,6 +35,7 @@ interface PathVariableSem : RenameableSemElement {
    * The path variable that this [PathVariableSem] resolves to.
    * `null` means that this element is not a PathVariable usage
    */
+  @get:ApiStatus.Internal
   val pathVariablePsiElement: PathVariablePsiElement?
 
   /**

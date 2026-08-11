@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.CommonBundle
@@ -22,6 +22,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.ResolvableCollisionUsageInfo
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo
 import com.intellij.refactoring.util.MoveRenameUsageInfo
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewTypeLocation
 import org.jetbrains.annotations.ApiStatus
@@ -47,7 +48,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
  */
 val KtParameter.useScopeForRename: SearchScope
     get() {
-        val owner = ownerFunction as? KtFunction
+        val owner = ownerDeclaration as? KtFunction
         return owner?.useScope ?: useScope
     }
 
@@ -172,6 +173,7 @@ fun checkSuperMethodsWithPopup(
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
+        .setRenderer(textListCellRenderer { item -> item })
         .setItemChosenCallback { value: String? ->
             if (value == null) return@setItemChosenCallback
             val chosenElements = if (value == renameBase) deepestSuperMethods + declaration else listOf(declaration)

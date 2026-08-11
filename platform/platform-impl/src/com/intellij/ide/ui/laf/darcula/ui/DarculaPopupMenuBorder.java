@@ -2,7 +2,6 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -28,8 +27,8 @@ public class DarculaPopupMenuBorder extends AbstractBorder implements UIResource
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    if (IdeaPopupMenuUI.isUnderPopup(c) && (!SystemInfoRt.isWindows || IdeaPopupMenuUI.isRoundBorder())) {
-      return;
+    if (IdeaPopupMenuUI.isRoundBorder()) {
+      return; // the border is painted by the JBR or OS, there's no reliable way to paint a rounded border in the platform
     }
 
     Graphics2D g2 = (Graphics2D)g.create();

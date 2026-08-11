@@ -88,7 +88,14 @@ def _get_library_dir():
                 break
 
     if library_dir is None or not os_path_exists(library_dir):
-        library_dir = os.path.dirname(os.__file__)
+        if hasattr(os, "__file__"):
+            # "os" is a frozen import an thus "os.__file__" is not always set.
+            # See https://github.com/python/cpython/pull/28656
+            library_dir = os.path.dirname(os.__file__)
+        else:
+            # "threading" is not a frozen import an thus "threading.__file__" is always set.
+            import threading
+            library_dir = os.path.dirname(threading.__file__)
 
     return library_dir
 
@@ -644,6 +651,11 @@ map_file_to_server = _original_map_file_to_server
 
 
 def _fix_path(path, sep, add_end_sep=False):
+    if path.startswith("."):
+        # We need the full path if this relative because all other comparisons
+        # check if the path is substring of another
+        path = os.path.abspath(path)
+
     if add_end_sep:
         if not path.endswith("/") and not path.endswith("\\"):
             path += "/"
@@ -959,17 +971,14 @@ def get_abs_path_real_path_and_base_from_frame(frame, NORM_PATHS_AND_BASE_CONTAI
 
 
 def get_fullname(mod_name):
-    import pkgutil
-
     try:
-        loader = pkgutil.get_loader(mod_name)
-    except:
-        return None
-    if loader is not None:
-        for attr in ("get_filename", "_get_filename"):
-            meth = getattr(loader, attr, None)
-            if meth is not None:
-                return meth(mod_name)
+        import importlib.util
+
+        spec = importlib.util.find_spec(mod_name)
+        if spec is not None and spec.origin is not None and spec.has_location:
+            return spec.origin
+    except (ImportError, ModuleNotFoundError, ValueError):
+        pass
     return None
 
 

@@ -690,10 +690,15 @@ companion object {
     myJdk1_5Enabled = isJdk1_5Enabled
   }
 
-  /** Should be called right after a reset */
-  public fun setMarkdownMode(isEnabled: Boolean) {
-    myMarkdownMode = isEnabled
-    if (!myMarkdownMode) commentDataWithSpaces = false
+  /** Should be called right after the usual jflex reset function */
+  public fun _reset(isMarkdownModeEnabled: Boolean) {
+    myMarkdownMode = isMarkdownModeEnabled
+    // Reset the internal states of the lexer.
+    // Such behavior relies on the lexer only lexing the entire comment at once
+    mySnippetBracesLevel = 0
+    commentDataWithSpaces = false
+    inValueTag = false
+    genericNestingLevel = 0
   }
 
   public fun checkAhead(c: Char): Boolean {
@@ -811,25 +816,12 @@ companion object {
       if (high.isHighSurrogate() && index + 1 < length) {
           val low = this[index + 1]
           if (low.isLowSurrogate()) {
-              val codePoint: String = "$high$low"
-              return codePoint.codePointAt(0)
-          }
-      }
-      return high.code
-  }
-
-  /** Returns the character (Unicode code point) at the specified index. */
-  private fun String.codePointAt(index: Int): Int {
-      val high = this[index]
-      if (high.isHighSurrogate() && index + 1 < this.length) {
-          val low = this[index + 1]
-          if (low.isLowSurrogate()) {
               return toCodePoint(high, low)
           }
       }
       return high.code
   }
-  
+
   private fun CharSequence.offsetByCodePoints(index: Int, codePointOffset: Int): Int {
     val length = this.length
     if (index < 0 || index > length) throw IndexOutOfBoundsException()
@@ -866,16 +858,15 @@ companion object {
 
   private fun charCount(codePoint: Int): Int = if (codePoint < 0x10000) 1 else 2
 
-  private fun codePointBefore(seq: CharSequence, index: Int): Int {
-    var i = index - 1
-    val c2 = seq[i];
-    if (c2.isLowSurrogate() && index > 0) {
-      val c1 = seq[i - 1];
-      if (c1.isHighSurrogate()) {
-        return toCodePoint(c1, c2);
+  private fun CharSequence.codePointBefore(index: Int): Int {
+    val low = this[index - 1]
+    if (low.isLowSurrogate() && index - 2 >= 0) {
+      val high = this[index - 2]
+      if (high.isHighSurrogate()) {
+        return toCodePoint(high, low)
       }
     }
-    return c2.code
+    return low.code
   }
 
   /**

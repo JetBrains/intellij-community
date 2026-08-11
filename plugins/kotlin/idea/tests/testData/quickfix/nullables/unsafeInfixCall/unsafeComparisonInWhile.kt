@@ -4,8 +4,8 @@
 // ACTION: Flip '>='
 // ACTION: Replace overloaded operator with function call
 // ERROR: Operator call corresponds to a dot-qualified call 'w?.x.compareTo(42)' which is not allowed on a nullable receiver 'w?.x'.
-// K2_ERROR: Operator call is prohibited on a nullable receiver of type 'Int?'. Use '?.'-qualified call instead.
-// K2_AFTER_ERROR: Operator call is prohibited on a nullable receiver of type 'Int?'. Use '?.'-qualified call instead.
+// K2_AFTER_ERROR: UNSAFE_OPERATOR_CALL
+// K2_ERROR: UNSAFE_OPERATOR_CALL
 
 class Wrapper(val x: Int)
 

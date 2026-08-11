@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.ListEventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtilRt
@@ -17,6 +18,7 @@ import com.intellij.util.text.trimMiddle
 import org.jetbrains.kotlin.statistics.fileloggers.MetricsContainer
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 import org.jetbrains.kotlin.statistics.metrics.NumericalMetrics
+import org.jetbrains.kotlin.statistics.metrics.StringListMetrics
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 import java.util.Locale
 import java.util.TreeMap
@@ -26,6 +28,7 @@ interface ICustomMetric
 typealias NumericalMetricConsumer = (MetricsContainer /*current*/, MetricsContainer? /*previous*/) -> Long?
 typealias BooleanMetricConsumer = (MetricsContainer /*current*/, MetricsContainer? /*previous*/) -> Boolean?
 typealias StringMetricConsumer = (MetricsContainer /*current*/, MetricsContainer? /*previous*/) -> String?
+typealias StringListMetricConsumer = (MetricsContainer /*current*/, MetricsContainer? /*previous*/) -> List<String>?
 
 enum class CustomNumericalMetrics(val eventGroup: GradleStatisticsEventGroups, val consumer: NumericalMetricConsumer) : ICustomMetric {
     TIME_BETWEEN_BUILDS(GradleStatisticsEventGroups.UseScenarios, { current, previous ->
@@ -43,6 +46,8 @@ class KotlinGradleEvent(group: EventLogGroup, val eventName: GradleStatisticsEve
     private val numericalMetricConsumers = HashMap<String, NumericalMetricConsumer>()
     private val stringEventFields = TreeMap<String, EventField<String?>>()
     private val stringMetricConsumers = HashMap<String, StringMetricConsumer>()
+    private val stringListEventFields = TreeMap<String, ListEventField<String>>()
+    private val stringListMetricConsumers = HashMap<String, StringListMetricConsumer>()
 
     private fun allEventFieldsValues() = booleanEventFields.values.union(numericalEventFields.values).union(stringEventFields.values)
 
@@ -63,6 +68,12 @@ class KotlinGradleEvent(group: EventLogGroup, val eventName: GradleStatisticsEve
                     stringEventFields[it.name] = EventFields.StringValidatedByInlineRegexp(it.name.lowercase(), it.anonymization.validationRegexp())
                     stringMetricConsumers[it.name] = { current, _ ->
                         current.getMetric(it)?.getValue()?.anonymizeIdeString(it)
+                    }
+                }
+                is StringListMetrics -> {
+                    stringListEventFields[it.name] = EventFields.StringListValidatedByInlineRegexp(it.name.lowercase(), it.anonymization.validationRegexp())
+                    stringListMetricConsumers[it.name] = { current, _ ->
+                        current.getMetric(it)?.getValue()
                     }
                 }
                 else -> throw IllegalArgumentException("$it is of unknown metric type.")
@@ -102,7 +113,14 @@ class KotlinGradleEvent(group: EventLogGroup, val eventName: GradleStatisticsEve
             else
                 null
         }
-        return booleanEventPairs.union(numericalEventPairs).union(stringEventPairs).toTypedArray()
+        val stringListEventPairs = stringListEventFields.entries.mapNotNull {
+            val value = stringListMetricConsumers[it.key]?.invoke(currentMetrics, previousMetrics)
+            if (value != null)
+                EventPair(it.value, value)
+            else
+                null
+        }
+        return booleanEventPairs.union(numericalEventPairs).union(stringEventPairs).union(stringListEventPairs).toTypedArray()
     }
 
     companion object {

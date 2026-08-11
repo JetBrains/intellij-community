@@ -1,15 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use std::{env, fs, thread, time};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::fs::{File, OpenOptions};
-use std::io::{Write};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Stdio};
 use std::sync::LazyLock;
+use std::{env, fs, thread, time};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use log::debug;
 use serde::{Deserialize, Serialize};
 use tempfile::{Builder, TempDir};

@@ -1,8 +1,8 @@
 // "Create property 'foo'" "true"
 // TEST_PREVIEW: val foo: kotlin.Boolean
 // ERROR: Unresolved reference: foo
-// K2_ERROR: Unresolved reference 'foo' on receiver of type 'B'.
-// K2_AFTER_ERROR: Property must be initialized or be abstract.
+// K2_AFTER_ERROR: MUST_BE_INITIALIZED_OR_BE_ABSTRACT
+// K2_ERROR: UNRESOLVED_REFERENCE
 abstract class A {
     fun bar(b: Boolean) {}
 

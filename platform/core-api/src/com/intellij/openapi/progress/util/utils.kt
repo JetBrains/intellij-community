@@ -1,5 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProgressIndicatorUtilsCore")
+
 package com.intellij.openapi.progress.util
 
 import com.intellij.openapi.diagnostic.Logger
@@ -64,6 +65,7 @@ fun <T> Future<T>.awaitWithCheckCanceled(indicator: ProgressIndicator?): T {
       if (cause is ProcessCanceledException) {
         throw cause
       }
+      @Suppress("RethrowControlFlowExceptionWithUtil")
       if (cause is CancellationException) {
         throw ProcessCanceledException(cause)
       }

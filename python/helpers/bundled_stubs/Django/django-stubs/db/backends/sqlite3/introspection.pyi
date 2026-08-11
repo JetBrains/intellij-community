@@ -1,7 +1,10 @@
+from re import Pattern
 from typing import Any, NamedTuple
 
 from django.db.backends.base.introspection import BaseDatabaseIntrospection
 from django.db.backends.sqlite3.base import DatabaseWrapper
+from django.db.backends.utils import CursorWrapper
+from typing_extensions import override
 
 class FieldInfo(NamedTuple):
     name: str
@@ -16,7 +19,7 @@ class FieldInfo(NamedTuple):
     pk: bool
     has_json_constraint: bool
 
-field_size_re: Any
+field_size_re: Pattern[str]
 
 def get_field_size(name: str) -> int | None: ...
 
@@ -26,3 +29,6 @@ class FlexibleFieldLookupDict:
 
 class DatabaseIntrospection(BaseDatabaseIntrospection):
     connection: DatabaseWrapper
+
+    @override
+    def get_table_description(self, cursor: CursorWrapper, table_name: str) -> list[FieldInfo]: ...

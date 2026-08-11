@@ -32,10 +32,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.visibility.createUseSiteVisibilityChecker
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
@@ -80,7 +84,8 @@ internal class K2ComposeModifierCompletionContributor : ComposeModifierCompletio
   }
 
   @Suppress("UnstableApiUsage")
-  private fun KaSession.fillModifierCompletionVariants(
+  context(session: KaSession)
+  private fun fillModifierCompletionVariants(
     parameters: CompletionParameters,
     nameExpression: KtSimpleNameExpression,
     isMethodCalledOnImportedModifier: Boolean,
@@ -155,7 +160,9 @@ internal class K2ComposeModifierCompletionContributor : ComposeModifierCompletio
     return prefixMatcher.prefixMatches(name.asString())
   }
 
-  private fun KaSession.getExtensionFunctionsForModifier(
+  @OptIn(KaExperimentalApi::class)
+  context(session: KaSession)
+  private fun getExtensionFunctionsForModifier(
     nameExpression: KtSimpleNameExpression,
     originalPosition: PsiElement,
     prefixMatcher: PrefixMatcher,
@@ -168,20 +175,21 @@ internal class K2ComposeModifierCompletionContributor : ComposeModifierCompletio
     val file = nameExpression.containingFile as KtFile
     val fileSymbol = file.symbol
 
+    val useSiteVisibilityChecker = createUseSiteVisibilityChecker(fileSymbol, receiverExpression, originalPosition)
     return KtSymbolFromIndexProvider(file)
       .getExtensionCallableSymbolsByNameFilter(
         { name -> isModifierPrefixMatch(prefixMatcher, name) },
         listOf(receiverType),
       )
       .filter {
-        @OptIn(KaExperimentalApi::class)
-        isVisible(it as KaDeclarationSymbol, fileSymbol, receiverExpression, originalPosition)
+        useSiteVisibilityChecker.isVisible(it as KaDeclarationSymbol)
       }
       .toList()
   }
 
   @Suppress("UnstableApiUsage")
-  private fun KaSession.toLookupElement(
+  context(session: KaSession)
+  private fun toLookupElement(
     symbol: KaCallableSymbol,
     importStrategyDetector: ImportStrategyDetector,
     weight: Double,

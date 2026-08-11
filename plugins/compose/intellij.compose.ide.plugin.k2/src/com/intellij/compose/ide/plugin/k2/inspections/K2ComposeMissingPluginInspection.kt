@@ -3,10 +3,12 @@ package com.intellij.compose.ide.plugin.k2.inspections
 
 import com.intellij.compose.ide.plugin.k2.checkRequiresComposePlugin
 import com.intellij.compose.ide.plugin.shared.inspections.ComposeMissingPluginInspection
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
-internal class K2ComposeMissingPluginInspection : ComposeMissingPluginInspection() {
+@VisibleForTesting
+class K2ComposeMissingPluginInspection : ComposeMissingPluginInspection() {
 
   override fun requiresComposePlugin(expression: KtCallExpression): Boolean = checkRequiresComposePlugin(expression)
 

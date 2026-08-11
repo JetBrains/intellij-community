@@ -27,7 +27,7 @@ public final class PyConfigurationInjector extends PyInjectorBase {
   public @Nullable Language getInjectedLanguage(@NotNull PsiElement context) {
     for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
       if (support instanceof PyLanguageInjectionSupport) {
-        final Configuration configuration = Configuration.getInstance();
+        final Configuration configuration = Configuration.getProjectInstance(context.getProject());
         for (BaseInjection injection : configuration.getInjections(support.getId())) {
           if (injection.acceptsPsiElement(context)) {
             return InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());

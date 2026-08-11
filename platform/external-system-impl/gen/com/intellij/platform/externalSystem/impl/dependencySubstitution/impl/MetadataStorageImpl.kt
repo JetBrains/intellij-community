@@ -17,9 +17,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
   override fun initializeMetadata() {
     val primitiveTypeIntNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Int")
     val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
-
     var typeMetadata: StorageTypeMetadata
-
     typeMetadata =
       FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.platform.externalSystem.impl.dependencySubstitution.DependencySubstitutionEntitySource",
                                         properties = listOf(OwnPropertyMetadata(isComputable = false,
@@ -31,9 +29,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                   typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
                                                                                 withDefault = false)),
                                         supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
-
     addMetadata(typeMetadata)
-
     typeMetadata =
       FinalClassMetadata.ClassMetadata(fqName = "com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId",
                                        properties = listOf(OwnPropertyMetadata(isComputable = false,
@@ -55,9 +51,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                valueType = primitiveTypeStringNotNullable,
                                                                                withDefault = false)),
                                        supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.platform.externalSystem.impl.dependencySubstitution.DependencySubstitutionEntity",
                                   entityDataFqName = "com.intellij.platform.externalSystem.impl.dependencySubstitution.impl.DependencySubstitutionEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -242,9 +236,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                            isNullable = false),
                                                                              withDefault = false)),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntity",
                                   entityDataFqName = "com.intellij.platform.externalSystem.impl.workspaceModel.impl.ExternalProjectEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
@@ -297,14 +289,12 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
   }
 
   override fun initializeMetadataHash() {
     addMetadataHash(typeFqn = "com.intellij.platform.externalSystem.impl.dependencySubstitution.DependencySubstitutionEntity",
                     metadataHash = -225585124)
-    addMetadataHash(typeFqn = "com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntity", metadataHash = -365334502)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryId", metadataHash = 1783065412)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryTableId", metadataHash = 1939585583)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryTableId\$GlobalLibraryTableId", metadataHash = 105250347)
@@ -314,6 +304,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryTableId\$ProjectLibraryTableId",
                     metadataHash = 824092854)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.DependencyScope", metadataHash = 1399286845)
+    addMetadataHash(typeFqn = "com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntity", metadataHash = -365334502)
     addMetadataHash(typeFqn = "com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId",
                     metadataHash = -1650256201)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -849218479)

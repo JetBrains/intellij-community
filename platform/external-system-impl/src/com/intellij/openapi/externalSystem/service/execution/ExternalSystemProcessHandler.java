@@ -13,6 +13,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,7 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
   private static final Logger LOG = Logger.getInstance(ExternalSystemProcessHandler.class);
   static final Key<Boolean> SOFT_PROCESS_KILL_ENABLED_KEY = Key.create("SOFT_PROCESS_KILL_ENABLED_KEY");
 
-  private final @NotNull String myExecutionName;
+  private final @NotNull @Nls String myExecutionName;
   private @Nullable ExternalSystemTask myTask;
   private @Nullable UserDataHolder myDataHolder;
   private @Nullable OutputStream myProcessInputWriter;
@@ -41,13 +42,13 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
   private final @NotNull AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
   private boolean escapeAnsiText = true;
 
-  public ExternalSystemProcessHandler(@NotNull ExternalSystemTask task, @NotNull String executionName) {
+  public ExternalSystemProcessHandler(@NotNull ExternalSystemTask task, @NotNull @Nls String executionName) {
     this(task, executionName, ObjectUtils.tryCast(task, UserDataHolder.class));
   }
 
   private ExternalSystemProcessHandler(
     @NotNull ExternalSystemTask task,
-    @NotNull String executionName,
+    @NotNull @Nls String executionName,
     @Nullable UserDataHolder dataHolder
   ) {
     myTask = task;
@@ -68,7 +69,7 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
   }
 
   @Override
-  public @NotNull String getExecutionName() {
+  public @NotNull @Nls String getExecutionName() {
     return myExecutionName;
   }
 

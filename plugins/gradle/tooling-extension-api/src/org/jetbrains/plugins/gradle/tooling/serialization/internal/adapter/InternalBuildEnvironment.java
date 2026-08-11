@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class InternalBuildEnvironment implements BuildEnvironment, Serializable {

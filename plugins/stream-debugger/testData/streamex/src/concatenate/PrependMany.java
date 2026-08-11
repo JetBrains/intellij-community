@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 
 public class PrependMany {
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     StreamEx.of(1, 2).prepend(Stream.of(3, 4, 5)).forEach(x -> {});
   }
 }

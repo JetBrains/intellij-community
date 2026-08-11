@@ -12,7 +12,7 @@ private const val KOTLIN_STDLIB_FILTER = "kotlin.*"
 private const val KOTLINX_FILTER = "kotlinx.*"
 private const val COMPOSE_RUNTIME_FILTER = "androidx.compose.runtime.*"
 
-private class JvmDebuggerAddFilterStartupActivity : ProjectActivity {
+internal class JvmDebuggerAddFilterStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
         val settings = serviceAsync<DebuggerSettings>()
         addSteppingFilterIfNeeded(settings, KOTLIN_STDLIB_FILTER)

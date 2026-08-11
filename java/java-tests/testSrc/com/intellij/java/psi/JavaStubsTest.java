@@ -180,12 +180,18 @@ public class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void test_deprecated_enum_constant() {
-    PsiClass cls = myFixture.addClass("enum Foo { c1, @Deprecated c2, /** @deprecated */ c3 }");
+    PsiClass cls = myFixture.addClass("""
+      enum Foo {
+        c1, @Deprecated c2, /** @deprecated */ c3,
+        /// @deprecated no real deprecation
+        c4
+      }""");
     assertFalse(((PsiFileImpl)cls.getContainingFile()).isContentsLoaded());
 
     assertFalse(cls.getFields()[0].isDeprecated());
     assertTrue(cls.getFields()[1].isDeprecated());
     assertTrue(cls.getFields()[2].isDeprecated());
+    assertFalse(cls.getFields()[3].isDeprecated());
 
     assertFalse(((PsiFileImpl)cls.getContainingFile()).isContentsLoaded());
   }

@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal">
+<idea-plugin visibility="private">
   <dependencies>
     <module name="intellij.libraries.hamcrest"/>
   </dependencies>

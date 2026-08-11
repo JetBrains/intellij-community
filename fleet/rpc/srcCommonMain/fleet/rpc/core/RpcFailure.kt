@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.rpc.core
 
 import kotlinx.coroutines.CancellationException
@@ -48,7 +48,11 @@ fun FailureInfo.message(): String {
 }
 
 internal fun rpcCallFailureMessage(request: RpcMessage.CallRequest, message: String): String {
-  return "Remote call <${request.classMethodDisplayName()}> has failed: $message"
+  return rpcCallFailureMessage(request.classMethodDisplayName(), message)
+}
+
+internal fun rpcCallFailureMessage(callDisplayName: String, message: String): String {
+  return "Remote call <$callDisplayName> has failed: $message"
 }
 
 internal fun rpcStreamFailureMessage(displayName: String, message: String): String {

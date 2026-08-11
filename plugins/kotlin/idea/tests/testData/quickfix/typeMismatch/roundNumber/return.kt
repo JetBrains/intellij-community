@@ -1,7 +1,7 @@
 // "Round using roundToInt()" "true"
 // PRIORITY: LOW
 // WITH_STDLIB
-// K2_ERROR: Return type mismatch: expected 'Int', actual 'Double'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 fun test(d: Double): Int {
     return d<caret>
 }

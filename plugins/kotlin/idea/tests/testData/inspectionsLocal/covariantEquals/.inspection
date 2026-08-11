@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.KotlinCovariantEqualsInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.KotlinCovariantEqualsInspection

@@ -7,7 +7,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.Enumeration;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class PackageTreeExpansionMonitor {
   private PackageTreeExpansionMonitor() {
   }

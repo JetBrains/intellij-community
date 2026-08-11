@@ -2,22 +2,21 @@
 package org.intellij.plugins.markdown.editor.tables.handlers
 
 import com.intellij.openapi.command.executeCommand
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableCharacterWidthUtils
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.reformatColumnOnChange
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.modifyColumn
+import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.updateSeparatorAfterCharacterDeletion
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnCells
+import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
-import org.intellij.plugins.markdown.lang.isMarkdownType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 
 internal fun reformatTableColumnAfterCharDeletion(char: Char, file: PsiFile, editor: Editor): Boolean {
-  if (!TableUtils.isFormattingOnTypeEnabledForTables(file) || !file.fileType.isMarkdownType()) {
+  if (!TableUtils.isFormattingOnTypeEnabledForTables(file)) {
     return false
   }
   val caretOffset = editor.caretModel.currentCaret.offset
@@ -27,6 +26,7 @@ internal fun reformatTableColumnAfterCharDeletion(char: Char, file: PsiFile, edi
   }
   PsiDocumentManager.getInstance(file.project).commitDocument(document)
   val table = TableUtils.findTable(file, caretOffset) ?: return false
+  val tableStyle = getTableStyle(file)
   val cellIndex = TableUtils.findCellIndex(file, caretOffset) ?: return false
   val alignment = table.separatorRow?.getCellAlignment(cellIndex) ?: return false
 
@@ -39,7 +39,8 @@ internal fun reformatTableColumnAfterCharDeletion(char: Char, file: PsiFile, edi
         document,
         editor.caretModel.allCarets,
         cellIndex,
-        trimToMaxContent = true
+        trimToMaxContent = true,
+        tableStyle = tableStyle,
       )
     }
     return true
@@ -51,7 +52,8 @@ internal fun reformatTableColumnAfterCharDeletion(char: Char, file: PsiFile, edi
     table.modifyColumn(
       document,
       cellIndex,
-      transformSeparator = { updateSeparator(document, it, width.coerceAtLeast(1)) },
+      tableStyle = tableStyle,
+      transformSeparator = { table.updateSeparatorAfterCharacterDeletion(document, cellIndex, width, tableStyle) },
       transformCell = { cell ->
         val range = cell.textRange
         if (range.length > width && text[range.endOffset - 1] == ' ' && text[range.endOffset - 2] == ' ') {
@@ -69,22 +71,10 @@ internal fun reformatTableColumnAfterCharDeletion(char: Char, file: PsiFile, edi
         editor.caretModel.allCarets,
         cellIndex,
         trimToMaxContent = false,
-        preventExpand = shouldPreventExpand
+        tableStyle = tableStyle,
+        preventExpand = shouldPreventExpand,
       )
     }
   }
   return true
-}
-
-private fun updateSeparator(document: Document, separatorRange: TextRange, width: Int) {
-  val text = document.charsSequence
-  if (separatorRange.length > width) {
-    val endOffset = separatorRange.endOffset
-    val offset = when {
-      text[endOffset - 1] == '-' -> separatorRange.endOffset - 1
-      text[endOffset - 2] == '-' -> separatorRange.endOffset - 2
-      else -> return
-    }
-    document.deleteString(offset, offset + 1)
-  }
 }

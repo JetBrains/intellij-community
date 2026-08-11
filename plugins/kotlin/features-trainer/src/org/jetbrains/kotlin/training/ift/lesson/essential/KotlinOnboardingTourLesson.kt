@@ -2,11 +2,11 @@
 package org.jetbrains.kotlin.training.ift.lesson.essential
 
 
+import com.intellij.codeInspection.CommonQuickFixBundle
 import com.intellij.java.ift.lesson.essential.OnboardingTourLessonBase
 import com.intellij.java.ift.lesson.essential.ideaOnboardingLessonId
 import com.intellij.openapi.ui.popup.Balloon
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.training.ift.KotlinLessonsBundle
 import training.dsl.LearningBalloonConfig
@@ -42,7 +42,7 @@ class KotlinOnboardingTourLesson : OnboardingTourLessonBase(ideaOnboardingLesson
     override val completionStepExpectedCompletion: String = "size"
 
     override fun LessonContext.contextActions() {
-        val quickFixMessage = KotlinBaseHighlightingBundle.message("safe.delete.text.0", "size")
+        val quickFixMessage = KotlinLessonsBundle.message("safe.delete.text.0", "size")
         caret(sample.getPosition(3))
 
         task {

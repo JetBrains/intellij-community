@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -14,12 +15,12 @@ import java.util.Set;
 final class LightEditDirectoryIndex extends DirectoryIndex {
 
   @Override
-  public @NotNull List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir) {
+  public @NotNull @Unmodifiable List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir) {
     return Collections.emptyList();
   }
 
   @Override
-  public @NotNull Set<String> getDependentUnloadedModules(@NotNull Module module) {
+  public @NotNull @Unmodifiable Set<String> getDependentUnloadedModules(@NotNull Module module) {
     return Collections.emptySet();
   }
 }

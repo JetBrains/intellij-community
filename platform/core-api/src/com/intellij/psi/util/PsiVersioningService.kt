@@ -50,6 +50,9 @@ interface PsiVersioningService {
      * It is possible to work with PSI elements (the [PsiElement] hierarchy),
      * as long as the use-cases concern only the syntax, and not semantics (i.e., references and resolve).
      *
+     * If this function is invoked with [read access allowed][com.intellij.openapi.application.Application.isReadAccessAllowed],
+     * then [action] runs directly with a read action.
+     *
      * The PSI tree inside [action] will be _consistent_, but not up to date.
      * In other words, parallel write actions can modify the PSI structure, but these modifications will not be visible to [action].
      * Notably, there might be no read access inside [action], so access to resolve and workspace model may fail.
@@ -69,4 +72,21 @@ interface PsiVersioningService {
 
   @ApiStatus.Internal
   fun <T> runAndFreezePsiVersion(action: () -> T): T = action()
+
+  @ApiStatus.Internal
+  fun getCurrentVersion(): Long = -1
+
+  @ApiStatus.Internal
+  fun getNextSibling(element: PsiElement, version: Long): PsiElement? = element.nextSibling
+
+  @ApiStatus.Internal
+  fun getPrevSibling(element: PsiElement, version: Long): PsiElement? = element.prevSibling
+
+  @ApiStatus.Internal
+  fun getParent(element: PsiElement, version: Long): PsiElement? = element.parent
+
+  @ApiStatus.Internal
+  fun getFirstChild(element: PsiElement, version: Long): PsiElement? = element.firstChild
+
+
 }

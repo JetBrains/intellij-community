@@ -8,13 +8,13 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.psi.search.PredefinedSearchScopeProvider;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -53,7 +53,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private @Nullable AsyncPromise<?> initPromise = null;
   private @Nullable Object selection;
 
-  private @Nullable SearchScope preselectedScope;
+  private @Nullable PreselectedScopeLazy preselectedScopeLazy = null;
 
   public ScopeChooserCombo() {
     super(new ComboBox<>());
@@ -118,20 +118,12 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     combo.setSwingPopup(false);
 
     if (selection != null) {
-      var provider = PredefinedSearchScopeProvider.getInstance();
-      var scopes = provider.getPredefinedScopes(project,
-                                                null,
-                                                suggestSearchInLibs,
-                                                prevSearchWholeFiles,
-                                                false,
-                                                false,
-                                                false);
-      for (SearchScope s : scopes) {
-        if (selection.equals(s.getDisplayName())) {
-          preselectedScope = s;
-          break;
-        }
-      }
+      preselectedScopeLazy = new PreselectedScopeLazy(
+        project,
+        suggestSearchInLibs,
+        prevSearchWholeFiles,
+        selection
+      );
     }
 
     initPromise = new AsyncPromise<>();
@@ -234,30 +226,24 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
   public @Nullable SearchScope getSelectedScope() {
     ScopeDescriptor item = (ScopeDescriptor)getComboBox().getSelectedItem();
-    return item == null ? preselectedScope : item.getScope();
+    return item == null ? getPreselectedScope() : item.getScope();
   }
 
   public @Nullable @Nls String getSelectedScopeName() {
     ScopeDescriptor item = (ScopeDescriptor)getComboBox().getSelectedItem();
     if (item == null) {
+      SearchScope preselectedScope = getPreselectedScope();
       return preselectedScope == null ? null : preselectedScope.getDisplayName();
     }
     return item.getDisplayName();
   }
 
+  private @Nullable SearchScope getPreselectedScope() {
+    return ObjectUtils.doIfNotNull(preselectedScopeLazy, PreselectedScopeLazy::get);
+  }
+
   public @Nullable @NonNls String getSelectedScopeId() {
-    ScopeDescriptor item = (ScopeDescriptor)getComboBox().getSelectedItem();
-    String scopeName;
-    if (item != null) {
-      scopeName = item.getDisplayName();
-    }
-    else {
-      if (preselectedScope != null) {
-        scopeName = preselectedScope.getDisplayName();
-      } else {
-        scopeName = null;
-      }
-    }
+    String scopeName = getSelectedScopeName();
     return scopeName != null ? ScopeIdMapper.getInstance().getScopeSerializationId(scopeName) : null;
   }
 
@@ -284,7 +270,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
         updateModel(model, scopes.getScopeDescriptors());
         getComboBox().setModel(model);
         selectItem(selection);
-        preselectedScope = null;
+        preselectedScopeLazy = null;
         var promise = initPromise;
         if (promise != null) {
           LOG.debug("Scope chooser combo initialized");

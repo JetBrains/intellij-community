@@ -78,7 +78,7 @@ internal class HistoryEntry(
   fun getState(provider: FileEditorProvider): FileEditorState? = providerToState.get(provider)
 
   fun putState(provider: FileEditorProvider, state: FileEditorState) {
-    providerToState = providerToState.toPersistentMap().put(provider, state)
+    providerToState = providerToState.toPersistentMap().putting(provider, state)
   }
 
   fun destroy() {
@@ -120,7 +120,7 @@ internal class HistoryEntry(
     if (selectedProvider === provider) {
       selectedProvider = null
     }
-    providerToState = providerToState.toPersistentMap().remove(provider)
+    providerToState = providerToState.toPersistentMap().removing(provider)
   }
 }
 
@@ -141,11 +141,10 @@ private fun parseEntry(
     throw IllegalArgumentException("unexpected tag: $element")
   }
 
-  val url = element.getAttributeValue(HistoryEntry.FILE_ATTRIBUTE)
+  val urlString = element.getAttributeValue(HistoryEntry.FILE_ATTRIBUTE)
   var providerStates = persistentListOf<Pair<FileEditorProvider, FileEditorState>>()
   var selectedProvider: FileEditorProvider? = null
 
-  val file = VirtualFileManager.getInstance().findFileByUrl(url)
   for (providerElement in element.getChildren(PROVIDER_ELEMENT)) {
     val typeId = providerElement.getAttributeValue(EDITOR_TYPE_ID_ATTRIBUTE)
     val provider = fileEditorProviderManager.getProvider(typeId) ?: continue
@@ -153,15 +152,14 @@ private fun parseEntry(
       selectedProvider = provider
     }
 
-    if (file != null) {
-      val stateElement = providerElement.getChild(STATE_ELEMENT)
-      val state = provider.readState(stateElement ?: EMPTY_ELEMENT, project, file)
-      providerStates = providerStates.add(provider to state)
-    }
+    val stateElement = providerElement.getChild(STATE_ELEMENT)
+    val state = provider.readState(stateElement ?: EMPTY_ELEMENT, project,
+                                   lazy { VirtualFileManager.getInstance().findFileByUrl(urlString) })
+    providerStates = providerStates.adding(provider to state)
   }
 
   return EntryData(
-    url = url,
+    url = urlString,
     providerStates = providerStates,
     selectedProvider = selectedProvider,
     preview = element.getAttributeBooleanValue(PREVIEW_ATTRIBUTE),

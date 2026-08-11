@@ -1,5 +1,6 @@
 package com.intellij.terminal.frontend.toolwindow
 
+import com.intellij.openapi.util.Key
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.ui.content.Content
 import org.jetbrains.annotations.ApiStatus
@@ -8,11 +9,7 @@ import org.jetbrains.annotations.ApiStatus
  * Represents the Reworked Terminal tab in the Terminal Tool Window.
  *
  * The lifetime of this object is bound to the lifetime of the [content].
- * Once the [content] is disposed, the tab is removed from the Terminal Tool Window.
- * But the [view] can have a longer lifetime, because it can be detached from the tab ([TerminalToolWindowTabsManager.detachTab]).
- *
- * Do not dispose the [content] and do not cancel the [view] coroutine scope manually.
- * Use [TerminalToolWindowTabsManager.closeTab] instead.
+ * Once the [content] is disposed, the underlying [TerminalView] is disposed and started terminal process is terminated.
  */
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
@@ -33,4 +30,13 @@ interface TerminalToolWindowTab {
    * Whether to close the tool window tab when the process terminates on its own.
    */
   val closeOnProcessTermination: Boolean
+
+  /**
+   * Terminal process startup options that were specified in the [TerminalToolWindowTabBuilder].
+   */
+  val processOptions: TerminalRequestedProcessOptions
+
+  companion object {
+    val KEY: Key<TerminalToolWindowTab> = Key.create("TerminalToolWindowTab")
+  }
 }

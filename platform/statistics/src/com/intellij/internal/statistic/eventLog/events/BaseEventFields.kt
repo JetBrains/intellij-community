@@ -100,6 +100,29 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
       get() = listOf("{util#${CustomValidationRule.getRuleId(customValidationRule)}}")
   }
 
+  /**
+   * String event field validated by a custom validation rule,
+   * with optional support for required and default value validation rules.
+   *
+   * @param name name of the field
+   * @param customValidationRule the custom validation rule class
+   * @param description optional description of the field
+   * @param required whether the field is required
+   * @param defaultValue optional default value applied when the field is missing or invalid
+   */
+  data class ValidatedByCustomValidationRuleExtended @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                                                     @NonNls val customValidationRule: Class<out CustomValidationRule>,
+                                                     @NonNls override val description: String? = null,
+                                                     override val required: Boolean? = null,
+                                                     @NonNls override val defaultValue: String? = null) : StringEventField(name) {
+    override val validationRule: List<String>
+      get() = buildList {
+        add("{util#${CustomValidationRule.getRuleId(customValidationRule)}}")
+        required?.let { value -> add("{required:$value}") }
+        defaultValue?.let { value -> add("{default_value:$value}") }
+      }
+  }
+
   data class ValidatedByRegexp @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
                                @NonNls val regexpRef: String,
                                @NonNls override val description: String? = null) : StringEventField(name) {
@@ -471,6 +494,29 @@ abstract class StringListEventField(@NonNls @EventFieldName override val name: S
       get() = listOf("{enum:${allowedValues.joinToString("|")}}")
   }
 
+  /**
+   * String list event field validated against a predefined list of allowed values,
+   * with optional support for required and default value validation rules.
+   *
+   * @param name name of the field
+   * @param allowedValues list of allowed values for the field
+   * @param description optional description of the field
+   * @param required whether the field is required
+   * @param defaultValue optional default value applied when the field is missing or invalid
+   */
+  data class ValidatedByAllowedValuesExtended @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                                              val allowedValues: List<String>,
+                                              @NonNls override val description: String? = null,
+                                              override val required: Boolean? = null,
+                                              @NonNls override val defaultValue: String? = null) : StringListEventField(name) {
+    override val validationRule: List<String>
+      get() = buildList {
+        add("{enum:${allowedValues.joinToString("|")}}")
+        required?.let { value -> add("{required:$value}") }
+        defaultValue?.let { value -> add("{default_value:$value}") }
+      }
+  }
+
   data class ValidatedByEnum @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
                              @NonNls val enumRef: String,
                              @NonNls override val description: String? = null) : StringListEventField(name) {
@@ -485,6 +531,29 @@ abstract class StringListEventField(@NonNls @EventFieldName override val name: S
   ) : StringListEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{util#${CustomValidationRule.getRuleId(customValidationRule)}}")
+  }
+
+  /**
+   * String list event field validated by a custom validation rule,
+   * with optional support for required and default value validation rules.
+   *
+   * @param name name of the field
+   * @param customValidationRule the custom validation rule class
+   * @param description optional description of the field
+   * @param required whether the field is required
+   * @param defaultValue optional default value applied when the field is missing or invalid
+   */
+  data class ValidatedByCustomValidationRuleExtended @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                                                     @NonNls val customValidationRule: Class<out CustomValidationRule>,
+                                                     @NonNls override val description: String? = null,
+                                                     override val required: Boolean? = null,
+                                                     @NonNls override val defaultValue: String? = null) : StringListEventField(name) {
+    override val validationRule: List<String>
+      get() = buildList {
+        add("{util#${CustomValidationRule.getRuleId(customValidationRule)}}")
+        required?.let { value -> add("{required:$value}") }
+        defaultValue?.let { value -> add("{default_value:$value}") }
+      }
   }
 
   data class ValidatedByRegexp @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
@@ -676,5 +745,23 @@ class ObjectListEventField @JvmOverloads constructor(@NonNls @EventFieldName ove
 
   override fun addData(fuData: FeatureUsageData, value: List<ObjectEventData>) {
     fuData.addListObjectData(name, value.map { it.buildObjectData(fuData.recorderId, fields) })
+  }
+}
+
+/**
+ * Field carrying a [JcpData] payload that is delivered to the JCP listener only.
+ *
+ * It is intentionally **not** a [PrimitiveEventField] or [ListEventField]: it has no validation rule, is excluded
+ * from the generated events scheme and must never be validated or sent to the FUS server. Use [EventFields.Jcp].
+ */
+class JcpDataEventField : EventField<JcpData>() {
+  override val name: String
+    get() = FeatureUsageData.JCP_DATA_KEY
+
+  override val description: String?
+    get() = null
+
+  override fun addData(fuData: FeatureUsageData, value: JcpData) {
+    fuData.addJcpData(value)
   }
 }

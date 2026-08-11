@@ -1,6 +1,6 @@
 // "Change to '1u'" "true"
 // WITH_STDLIB
-// K2_ERROR: Argument type mismatch: actual type is 'Int', but 'UInt' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 fun foo(param: UInt) {}
 
 fun test() {

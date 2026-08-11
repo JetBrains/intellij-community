@@ -1,0 +1,6 @@
+[project]
+dependencies = [
+  "django==1.3.1",
+  "flask==1.0",
+  "requests==1.22.0",
+]

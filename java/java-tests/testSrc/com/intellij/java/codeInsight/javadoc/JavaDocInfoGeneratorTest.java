@@ -268,6 +268,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
  public void testWrongfulInnerClassReferences() { doTestClass(); }
  public void testImplicitConstructor() { doTestClass(); }
  public void testCommatHtmlEntity() { doTestClass(); }
+ public void testDeprecatedTagNoAnnotationMarkdown() { doTestClass(); }
 
   public void testRepeatableAnnotations() {
     useJava8();

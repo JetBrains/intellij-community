@@ -17,6 +17,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -24,6 +25,10 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere ({@code com.intellij.platform.searchEverywhere}).
+ */
+@Deprecated
 public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
   public RecentFilesSEContributor(@NotNull AnActionEvent event) {
@@ -99,6 +104,7 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
     return false;
   }
 
+  @ApiStatus.Internal
   public static final class Factory implements SearchEverywhereContributorFactory<Object> {
     @Override
     public @NotNull SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {

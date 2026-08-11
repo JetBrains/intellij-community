@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.platform.pluginManager.shared">
+<idea-plugin package="com.intellij.platform.pluginManager.shared" visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.rhizomedb"/>
@@ -6,7 +6,11 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.updateChecker"/>
     <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.pluginManager.shared.base"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.rpc"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

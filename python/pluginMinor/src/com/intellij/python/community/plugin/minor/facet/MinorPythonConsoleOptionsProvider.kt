@@ -22,8 +22,7 @@ import org.jetbrains.annotations.ApiStatus
  * [com.intellij.python.pro.sdk.FrameworkAwarePythonConsoleRunnerFactory] can
  * resolve the correct SDK without falling through to an unrelated global SDK.
  */
-@ApiStatus.Internal
-class MinorPythonConsoleOptionsProvider : PyConsoleOptionsProvider {
+internal class MinorPythonConsoleOptionsProvider : PyConsoleOptionsProvider {
 
   /**
    * Returns false — the base Python console settings tab already covers this

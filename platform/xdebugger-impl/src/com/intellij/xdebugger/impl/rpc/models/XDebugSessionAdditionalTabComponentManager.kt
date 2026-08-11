@@ -1,4 +1,4 @@
-﻿// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+﻿// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.rpc.models
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent
@@ -18,7 +18,6 @@ import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.ui.content.Content
 import com.intellij.util.asDisposable
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.impl.util.createEdtDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -40,7 +39,7 @@ class XDebugSessionAdditionalTabComponentManager(private val debugTabScope: Coro
   val tabComponentEvents: Flow<XDebuggerSessionAdditionalTabEvent> = _tabComponentEvents.asSharedFlow()
 
   override fun addAdditionalTabComponent(tabComponent: AdditionalTabComponent, id: String, icon: Icon?, closeable: Boolean): Content? {
-    if (tabComponent is LogConsoleBase && SplitDebuggerMode.isSplitDebugger()) {
+    if (tabComponent is LogConsoleBase) {
       // This call is required to initialize the component
       // see com.intellij.diagnostic.logging.LogConsoleBase.getComponent
       tabComponent.component

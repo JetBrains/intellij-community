@@ -32,7 +32,6 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.repository.search" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.dependencyUpdater" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.tests" scope="TEST" />
@@ -75,10 +74,15 @@
     <orderEntry type="module" module-name="intellij.xml.psi.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.ui.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.repository.search.common" />
+    <orderEntry type="module" module-name="intellij.repository.search.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.repository.search.completion" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.completion" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.jps.ide" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.analysis.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.codeInsight" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
   </component>
 </module>

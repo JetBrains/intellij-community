@@ -10,7 +10,7 @@
 #   eg: Completing a magic when user typed it without the leading % causes the % to be inserted
 #       to the left of what should be the first colon.
 """Interface to TerminalInteractiveShell for PyDev Interactive Console frontend
-   for IPython 0.11 to 1.0+.
+for IPython 0.11 to 1.0+.
 """
 
 from __future__ import print_function
@@ -96,9 +96,20 @@ class PyDevIPCompleter6(IPCompleter):
     def matchers(self):
         """All active matcher routines for completion"""
         # To remove python_matches we now have to override it as it's now a property in the superclass.
+
+        # Newer versions of IPython have file_matcher and magic_matcher.
+        try:
+            file_matches = self.file_matches
+        except AttributeError:
+            file_matches = self.file_matcher
+
+        try:
+            magic_matches = self.magic_matches
+        except AttributeError:
+            magic_matches = self.magic_matcher
         return [
-            self.file_matches,
-            self.magic_matches,
+            file_matches,
+            magic_matches,
             self.python_func_kw_matches,
             self.dict_key_matches,
         ]
@@ -137,6 +148,7 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
     # Since IPython 5 the terminal interface is not compatible with Emacs `inferior-shell` and
     # the `simple_prompt` flag is needed
     simple_prompt = CBool(True)
+    use_jedy = CBool(False)
 
     # In the PyDev Console, GUI control is done via hookable XML-RPC server
     @staticmethod
@@ -366,12 +378,17 @@ class _PyDevFrontEnd:
     def complete(self, string):
         try:
             if string:
-                return self.ipython.complete(None, line=string, cursor_pos=string.__len__())
+                ret = self.ipython.complete(None, line=string, cursor_pos=string.__len__())
             else:
-                return self.ipython.complete(string, string, 0)
+                ret = self.ipython.complete(string, string, 0)
+
+            return ret
         except:
+            import traceback
+
+            traceback.print_exc()
             # Silence completer exceptions
-            pass
+            return None, []
 
     def is_complete(self, string):
         # Based on IPython 0.10.1
@@ -435,8 +452,6 @@ class _PyDevFrontEnd:
                     append((ipython_completion, pydev_doc, "", pydev_type))
             return ret
         except:
-            import traceback
-
             traceback.print_exc()
             return []
 

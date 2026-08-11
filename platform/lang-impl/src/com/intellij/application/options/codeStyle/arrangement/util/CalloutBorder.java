@@ -3,6 +3,7 @@ package com.intellij.application.options.codeStyle.arrangement.util;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.border.Border;
@@ -13,6 +14,7 @@ import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.RenderingHints;
 
+@ApiStatus.Internal
 public final class CalloutBorder implements Border {
 
   private static final @NotNull Insets INSETS = new Insets(

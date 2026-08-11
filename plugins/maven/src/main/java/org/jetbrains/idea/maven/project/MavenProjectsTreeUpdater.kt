@@ -8,8 +8,11 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.util.progress.RawProgressReporter
-import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectChangesBuilder.Companion.merged
@@ -19,7 +22,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
-@ApiStatus.Internal
 internal class MavenProjectsTreeUpdater(
   private val tree: MavenProjectsTree,
   private val updateContext: MavenProjectsTreeUpdateContext,
@@ -72,7 +74,7 @@ internal class MavenProjectsTreeUpdater(
       val readerResult = tracer.spanBuilder("readPom").useWithScope {
         reader.readProjectAsync(mavenProject.file)
       }
-      val readChanges = mavenProject.updateFromReaderResult(readerResult, MavenSettingsCache.getInstance(tree.project).getEffectiveUserLocalRepo(), true)
+      val readChanges = mavenProject.updateFromReaderResult(readerResult, MavenSettingsCache.getInstance(tree.project).getEffectiveUserLocalRepo(), true, explicitProfiles)
 
       tree.putVirtualFileToProjectMapping(mavenProject, oldProjectId)
 
@@ -264,7 +266,6 @@ internal class MavenProjectsTreeUpdater(
     return getFileTimestamp(if (file == null) null else LocalFileSystem.getInstance().findFileByNioFile(file))
   }
 
-  @ApiStatus.Internal
   @JvmRecord
   internal data class UpdateSpec(val mavenProjectFile: VirtualFile, val forceRead: Boolean)
 }

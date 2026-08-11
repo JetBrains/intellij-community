@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -10,6 +13,8 @@ import com.jetbrains.python.PyNames.isSunder
 import com.jetbrains.python.PyNames.isDunder
 
 
+@Subsystems.IDE
+@Layers.Functional
 class PyNamesTest {
   @Test
   fun testIsProtected() {

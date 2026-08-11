@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.QueueProcessor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -75,6 +76,7 @@ public class BackgroundTaskQueue {
   }
 
   @FunctionalInterface
+  @ApiStatus.Internal
   protected interface TaskData extends Consumer<Runnable> {
   }
 

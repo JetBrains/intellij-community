@@ -1,5 +1,5 @@
 // "Import extension function 'Foo.baz'" "true"
-// K2_ERROR: Unresolved reference 'baz'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 package p
 
 import p.BObject.baz

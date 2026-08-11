@@ -11,7 +11,7 @@ import com.intellij.formatting.service.AsyncDocumentFormattingService;
 import com.intellij.formatting.service.AsyncFormattingRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
-import com.intellij.platform.eel.provider.utils.EelPathTransfer.FileTransferAttributesStrategy;
+import com.intellij.platform.eel.provider.utils.EelFileTransferAttributesStrategy;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.sh.ShFileType;
@@ -111,8 +111,8 @@ public final class ShExternalFormatter extends AsyncDocumentFormattingService {
     final var eelDescriptor = getEelDescriptor(project);
 
     try {
-      FileTransferAttributesStrategy forceExecutePermission =
-        FileTransferAttributesStrategy.copyWithRequiredPosixPermissions(PosixFilePermission.OWNER_EXECUTE);
+      EelFileTransferAttributesStrategy forceExecutePermission =
+        EelFileTransferAttributesStrategy.copyWithRequiredPosixPermissions(PosixFilePermission.OWNER_EXECUTE);
       GeneralCommandLine commandLine = new GeneralCommandLine()
         .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
         .withExePath(asEelPath(

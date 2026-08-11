@@ -6,6 +6,7 @@ import com.intellij.diagnostic.hprof.parser.InstanceFieldEntry
 import com.intellij.diagnostic.hprof.parser.StaticFieldEntry
 import com.intellij.diagnostic.hprof.parser.Type
 import com.intellij.diagnostic.hprof.util.HprofWriter
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
@@ -23,7 +24,15 @@ class PersistentSyntaxTreeHprofProcessorTest {
 
     val extraction = PersistentSyntaxTreeHprofProcessor.extractVersionedPayloadMaps(hprofPath)
 
-    assertEquals(2, extraction.allInstances.size)
+    assertEquals(3, extraction.allInstances.size)
+
+    val map1 = extraction.map1Instances.single()
+    assertEquals(MAP1_OBJECT_ID, map1.objectId)
+    assertEquals(VersionedPayloadMapLayout.MAP1, map1.layout)
+    assertEquals(PersistentSyntaxTreeHprofProcessor.VERSIONED_PAYLOAD_MAP1_CLASS_NAME, map1.className)
+    assertEquals(listOf(7L), map1.entries.map { it.version })
+    assertEquals(PAYLOAD_B_ID, map1.entries.single().payloadObjectId)
+    assertEquals(PAYLOAD_CLASS_NAME, map1.entries.single().payloadClassName)
 
     val map2 = extraction.map2Instances.single()
     assertEquals(MAP2_OBJECT_ID, map2.objectId)
@@ -49,7 +58,7 @@ class PersistentSyntaxTreeHprofProcessorTest {
     val hprofPath = tempDir.resolve("persistent-syntax-tree-overhead.hprof")
     writeOverheadHprof(hprofPath)
 
-    val analysis = PersistentSyntaxTreeHprofProcessor.analyzePersistentSyntaxTreeOverhead(hprofPath)
+    val analysis = runBlocking { PersistentSyntaxTreeHprofProcessor.analyzePersistentSyntaxTreeOverhead(hprofPath) }
 
     assertEquals(3, analysis.extraction.allInstances.size)
     assertEquals(setOf(STALE_ONLY_ARRAY_MAP_OBJECT_ID), analysis.staleOnlyMapObjectIds)
@@ -69,14 +78,39 @@ class PersistentSyntaxTreeHprofProcessorTest {
       analysis.retainedObjectIds,
     )
     assertEquals(8, analysis.retainedObjectCount)
-    assertEquals(216, analysis.retainedOverheadBytes)
+    assertEquals(224, analysis.retainedOverheadBytes)
 
     assertEquals(
       listOf(
         PersistentSyntaxTreeOverheadClassStats(PAYLOAD_WITH_REFERENCES_CLASS_NAME, 4, 128),
-        PersistentSyntaxTreeOverheadClassStats("[J", 1, 28),
-        PersistentSyntaxTreeOverheadClassStats("[Ljava.lang.Object;", 1, 28),
+        PersistentSyntaxTreeOverheadClassStats("[J", 1, 32),
+        PersistentSyntaxTreeOverheadClassStats("[Ljava.lang.Object;", 1, 32),
         PersistentSyntaxTreeOverheadClassStats(PersistentSyntaxTreeHprofProcessor.ARRAY_VERSIONED_PAYLOAD_MAP_CLASS_NAME, 1, 24),
+        PersistentSyntaxTreeOverheadClassStats(LEAF_CLASS_NAME, 1, 8),
+      ),
+      analysis.retainedObjectsByClass,
+    )
+  }
+
+  @Test
+  fun `calculates retained overhead with custom object layout`(@TempDir tempDir: Path) {
+    val hprofPath = tempDir.resolve("persistent-syntax-tree-overhead.hprof")
+    writeOverheadHprof(hprofPath)
+
+    val analysis = runBlocking {
+      PersistentSyntaxTreeHprofProcessor.analyzePersistentSyntaxTreeOverhead(
+        hprofPath,
+        objectSizeLayout = HprofObjectSizeLayout(referenceSize = 4),
+      )
+    }
+
+    assertEquals(176, analysis.retainedOverheadBytes)
+    assertEquals(
+      listOf(
+        PersistentSyntaxTreeOverheadClassStats(PAYLOAD_WITH_REFERENCES_CLASS_NAME, 4, 96),
+        PersistentSyntaxTreeOverheadClassStats("[J", 1, 32),
+        PersistentSyntaxTreeOverheadClassStats("[Ljava.lang.Object;", 1, 24),
+        PersistentSyntaxTreeOverheadClassStats(PersistentSyntaxTreeHprofProcessor.ARRAY_VERSIONED_PAYLOAD_MAP_CLASS_NAME, 1, 16),
         PersistentSyntaxTreeOverheadClassStats(LEAF_CLASS_NAME, 1, 8),
       ),
       analysis.retainedObjectsByClass,
@@ -93,6 +127,15 @@ class PersistentSyntaxTreeHprofProcessorTest {
       fixture.defineClass(LONG_ARRAY_CLASS_ID, "[J", superClassObjectId = OBJECT_CLASS_ID)
       fixture.defineClass(OBJECT_ARRAY_CLASS_ID, "[Ljava/lang/Object;", superClassObjectId = OBJECT_CLASS_ID)
       fixture.defineClass(PAYLOAD_CLASS_ID, PAYLOAD_CLASS_NAME.replace('.', '/'), superClassObjectId = OBJECT_CLASS_ID)
+      fixture.defineClass(
+        MAP1_CLASS_ID,
+        PersistentSyntaxTreeHprofProcessor.VERSIONED_PAYLOAD_MAP1_CLASS_NAME.replace('.', '/'),
+        superClassObjectId = OBJECT_CLASS_ID,
+        fields = listOf(
+          fixture.field("version", Type.LONG),
+          fixture.field("payload", Type.OBJECT),
+        ),
+      )
       fixture.defineClass(
         MAP2_CLASS_ID,
         PersistentSyntaxTreeHprofProcessor.VERSIONED_PAYLOAD_MAP2_CLASS_NAME.replace('.', '/'),
@@ -116,6 +159,15 @@ class PersistentSyntaxTreeHprofProcessorTest {
 
       writer.writeInstanceDump(PAYLOAD_A_ID, 0, PAYLOAD_CLASS_ID, ByteArray(0))
       writer.writeInstanceDump(PAYLOAD_B_ID, 0, PAYLOAD_CLASS_ID, ByteArray(0))
+      writer.writeInstanceDump(
+        MAP1_OBJECT_ID,
+        0,
+        MAP1_CLASS_ID,
+        bytes {
+          writeLong(7L)
+          writeLong(PAYLOAD_B_ID)
+        },
+      )
       writer.writeInstanceDump(
         MAP2_OBJECT_ID,
         0,
@@ -299,6 +351,7 @@ class PersistentSyntaxTreeHprofProcessorTest {
     const val ARRAY_MAP_CLASS_ID: Long = 7
     const val PAYLOAD_WITH_REFERENCES_CLASS_ID: Long = 8
     const val LEAF_CLASS_ID: Long = 9
+    const val MAP1_CLASS_ID: Long = 10
 
     const val PAYLOAD_A_ID: Long = 101
     const val PAYLOAD_B_ID: Long = 102
@@ -306,6 +359,7 @@ class PersistentSyntaxTreeHprofProcessorTest {
     const val VERSIONS_ARRAY_ID: Long = 104
     const val PAYLOADS_ARRAY_ID: Long = 105
     const val ARRAY_MAP_OBJECT_ID: Long = 106
+    const val MAP1_OBJECT_ID: Long = 107
 
     const val ROOT_MAP_OBJECT_ID: Long = 201
     const val ROOT_STALE_PAYLOAD_ID: Long = 202

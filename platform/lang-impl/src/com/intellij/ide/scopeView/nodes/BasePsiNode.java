@@ -10,11 +10,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import java.awt.Color;
 
+@ApiStatus.Internal
 public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
   private final SmartPsiElementPointer myPsiElementPointer;
   private Icon myIcon;

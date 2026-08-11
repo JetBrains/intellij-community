@@ -17,7 +17,7 @@ interface SecondEntityWithPIdBuilder : WorkspaceEntityBuilder<SecondEntityWithPI
 }
 
 internal object SecondEntityWithPIdType : EntityType<SecondEntityWithPId, SecondEntityWithPIdBuilder>() {
-  override val entityClass: Class<SecondEntityWithPId> get() = SecondEntityWithPId::class.java
+  override val entityImplClass: Class<*> get() = SecondEntityWithPIdImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SecondEntityWithPIdImpl.Builder::class.java
   operator fun invoke(
     data: String,

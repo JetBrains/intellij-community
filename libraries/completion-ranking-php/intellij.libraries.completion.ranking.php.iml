@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="completion-ranking-php" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-php:0.2.5">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-php/0.2.5/completion-ranking-php-0.2.5.jar">
+              <sha256sum>72c71485e780ef015e2d0f77d011b6efaf8a7fab9612000590fc369e70dc322d</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-php/0.2.5/completion-ranking-php-0.2.5.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-php/0.2.5/completion-ranking-php-0.2.5-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

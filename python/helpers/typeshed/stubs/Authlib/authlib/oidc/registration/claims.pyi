@@ -1,10 +1,10 @@
 from _typeshed import Incomplete
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 
 from authlib.jose import BaseClaims
 
 class ClientMetadataClaims(BaseClaims):
-    def validate(self) -> None: ...
+    def validate(self, now: int | Callable[[], int] | None = None, leeway: int = 0) -> None: ...
     # The "cls" argument is called "self" in the actual implementation,
     # but stubtest will not allow that.
     @classmethod

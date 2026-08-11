@@ -24,6 +24,29 @@ sealed class UvCommand(private val command: Array<String>, protected val runtime
   }
 }
 
+/**
+ * Mutually exclusive project layout/kind selectors for `uv init`; at most one may be passed.
+ *
+ * @see <a href="https://docs.astral.sh/uv/reference/cli/#uv-init">uv init</a>
+ */
+@Suppress("unused")
+enum class UvInitKind(@NlsSafe val flag: String) {
+  /** `--package`: set up the project to be built as a Python package (a `src/` layout). */
+  PACKAGE("--package"),
+
+  /** `--no-package`: set up the project to not be built as a Python package. */
+  NO_PACKAGE("--no-package"),
+
+  /** `--app`: create a project for an application (uv's default). */
+  APP("--app"),
+
+  /** `--lib`: create a project for a library. */
+  LIB("--lib"),
+
+  /** `--script`: create a script. */
+  SCRIPT("--script"),
+}
+
 @Suppress("unused")
 class UvCli(private val runtime: PyToolRuntime) {
   /**
@@ -41,9 +64,17 @@ class UvCli(private val runtime: PyToolRuntime) {
    *
    * @param name Name or path of the new project. When a relative path is passed, uv creates the
    *   project in a subdirectory with that name under the working directory.
+   * @param bare Passes `--bare`: only create a `pyproject.toml`, skipping the sample file, README,
+   *   `.python-version`, VCS init, etc.
+   * @param kind The project layout/kind. These uv flags are mutually exclusive, so at most one is
+   *   passed. See [UvInitKind].
    */
-  suspend fun init(name: String? = null): PyResult<String> {
-    val arguments = if (name == null) emptyArray() else arrayOf(name)
+  suspend fun init(name: String? = null, bare: Boolean = false, kind: UvInitKind? = null): PyResult<String> {
+    val arguments = buildList {
+      if (bare) add("--bare")
+      kind?.let { add(it.flag) }
+      if (name != null) add(name)
+    }.toTypedArray()
     return runtime.executeAndHandleErrors("init", *arguments, transformer = ZeroCodeStdoutTransformer)
   }
 

@@ -15,6 +15,7 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.Url;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.RequestBuilder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
@@ -22,6 +23,7 @@ import org.jetbrains.ide.BuiltInServerManager;
 import java.io.File;
 import java.io.IOException;
 
+@ApiStatus.Internal
 public class DefaultRemoteContentProvider extends RemoteContentProvider {
   private static final Logger LOG = Logger.getInstance(DefaultRemoteContentProvider.class);
   private static final int DEFAULT_CONNECT_TIMEOUT = 60 * 1000;

@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.idea.base.compilerPreferences.configuration;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.ModuleManager;
@@ -82,6 +84,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Consumer;
@@ -289,6 +292,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
   }
 
   private void fillJvmVersionList() {
+    Set<@NlsSafe String> addedDescriptions = new HashSet<>();
     for (TargetPlatform jvm : JvmIdePlatformKind.INSTANCE.getPlatforms()) {
       JvmTarget jvmTarget = PlatformUtilKt.subplatformsOfType(jvm, JdkPlatform.class).get(0).getTargetVersion();
       @NlsSafe String description = jvmTarget.getDescription();
@@ -296,16 +300,21 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         description += " " + KotlinBaseCompilerConfigurationUiBundle.message("deprecated.jvm.version");
       }
 
-      ui.jvmVersionComboBox.addItem(description);
+      if (addedDescriptions.add(description)) {
+        ui.jvmVersionComboBox.addItem(description);
+      }
     }
   }
 
-  private void fetchAvailableJpsCompilersAsync(Consumer<? super @NlsSafe @Nullable Collection<IdeKotlinVersion>> onFinish) {
+  private void fetchAvailableJpsCompilersAsync(@NotNull ModalityState modality,
+                                               Consumer<? super @NlsSafe @Nullable Collection<IdeKotlinVersion>> onFinish) {
+    Consumer<? super @NlsSafe @Nullable Collection<IdeKotlinVersion>> onEdt =
+      result -> ApplicationManager.getApplication().invokeLater(() -> onFinish.accept(result), modality);
     JarRepositoryManager.getAvailableVersions(project, RepositoryLibraryDescription.findDescription(
         KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID, KotlinArtifactConstants.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID))
       .onProcessed(distVersions -> {
         if (distVersions == null) {
-          onFinish.accept(null);
+          onEdt.accept(null);
           return;
         }
         JarRepositoryManager.getAvailableVersions(project, RepositoryLibraryDescription.findDescription(
@@ -313,7 +322,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
             KotlinArtifactConstants.KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID))
           .onProcessed(jpsClassPathVersions -> {
             if (jpsClassPathVersions == null) {
-              onFinish.accept(null);
+              onEdt.accept(null);
               return;
             }
 
@@ -332,7 +341,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
               }
             }
 
-            onFinish.accept(ideKotlinVersions);
+            onEdt.accept(ideKotlinVersions);
           });
       });
   }
@@ -366,7 +375,9 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         @Override
         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
           ui.kotlinJpsPluginVersionComboBox.removePopupMenuListener(this);
+          ModalityState modality = ModalityState.stateForComponent(ui.kotlinJpsPluginVersionComboBox);
           fetchAvailableJpsCompilersAsync(
+            modality,
             availableVersions -> {
               ui.kotlinJpsPluginVersionComboBox.removeItem(loadingItem);
               if (availableVersions == null) {

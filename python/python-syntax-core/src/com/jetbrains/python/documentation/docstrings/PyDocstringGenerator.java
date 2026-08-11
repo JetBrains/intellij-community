@@ -499,6 +499,7 @@ public final class PyDocstringGenerator {
         else {
           document.replaceString(range.getStartOffset(), range.getEndOffset(), replacementWithLineBreaks);
         }
+        return null;
       });
     }
     return myDocStringOwner;

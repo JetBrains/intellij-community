@@ -41,4 +41,37 @@ class BazelManifestTest {
     assertEquals("/execroot/_main/bazel-out/jvm-fastbuild/bin/external/community+",
                  manifest.get("community+"))
   }
+
+  /**
+   * Verify cases with escaped runfiles paths.
+   *
+   * If rootRelativePath contains spaces, then each backslash is replaced with '\b', each space
+   * is replaced with '\s' and the line is prefixed with a space.
+   * https://github.com/bazelbuild/bazel/blob/5b6147736c14d1804df8ab1b2ff544e060465dd3/src/main/java/com/google/devtools/build/lib/analysis/SourceManifestAction.java#L363
+   *
+   */
+  @Test
+  fun `escaped runfiles paths`() {
+    val relativePath = "language-server/lsp.test/testData/hover/kotlin/kdocLinksWithSpacesInPath/folder with spaces/main.kt.hover"
+    val virtualPath = "_main/$relativePath"
+    val escapedVirtualPath = virtualPath.replace(" ", "\\s")
+    val realPath = "Z:/buildagent/work/89e70edcf4afcfd6/$relativePath"
+    val manifestFile = Files.createTempFile("manifest", "bazel")
+    manifestFile.writeText(" $escapedVirtualPath $realPath")
+    val manifest = BazelRunfilesManifest(manifestFile.absolutePathString())
+
+    assertEquals(realPath, manifest.entries[virtualPath])
+    assertEquals(realPath, manifest.get(virtualPath))
+  }
+
+  @Test
+  fun `plain runfiles paths keep existing parsing`() {
+    val virtualPath = "_main/folder_without_spaces/main.kt.hover"
+    val realPath = "Z:/buildagent/work/89e70edcf4afcfd6/folder_without_spaces/main.kt.hover"
+    val manifestFile = Files.createTempFile("manifest", "bazel")
+    manifestFile.writeText("$virtualPath $realPath")
+    val manifest = BazelRunfilesManifest(manifestFile.absolutePathString())
+
+    assertEquals(realPath, manifest.entries[virtualPath])
+  }
 }

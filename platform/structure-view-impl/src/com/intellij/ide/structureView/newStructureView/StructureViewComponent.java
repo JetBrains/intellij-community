@@ -1058,6 +1058,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private final class MyTree extends DnDAwareTree implements PlaceProvider {
 
     volatile TreePath lastHoveredPath = null;
+    private boolean paintHover = Registry.is("logical.structure.actions.enabled", false);
 
     MyTree(javax.swing.tree.TreeModel model) {
       super(model);
@@ -1114,7 +1115,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     @Override
     public @Nullable Color getFileColorForPath(@NotNull TreePath path) {
-      if (isHovered && lastHoveredPath != null && lastHoveredPath.equals(path)) {
+      if (paintHover && isHovered && lastHoveredPath != null && lastHoveredPath.equals(path)) {
         return UIUtil.getTreeSelectionBackground(myTree.getSelectionPath() == path && RenderingUtil.isFocused(myTree));
       }
       return super.getFileColorForPath(path);

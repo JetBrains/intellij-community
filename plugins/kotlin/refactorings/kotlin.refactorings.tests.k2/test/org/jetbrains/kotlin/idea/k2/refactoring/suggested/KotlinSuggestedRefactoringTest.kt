@@ -122,14 +122,14 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 context(p1: Int, p2: Any)
                 fun foo() {
                     with(1) {
-                        with(default0) {
+                        context(default0) {
                             foo()
                         }
                     }
                 }
                 context(p1: Int)
                 fun bar() {
-                    with(default0) {
+                    context(default0) {
                         foo()
                     }
                 }
@@ -178,6 +178,37 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
             "usages",
         ) {
             deleteTextBeforeCaret(", p2: Any")
+        }
+    }
+
+    fun testRenameContextParameter() {
+        withCustomCompilerOptions("// COMPILER_ARGUMENTS: -Xcontext-parameters", this.project, this.module) {
+            doTestRename(
+                initialText = """
+                                abstract class Foo {
+                                    context(b<caret>: String)
+                                    abstract fun foo(a: String)
+                                }
+                
+                                class Bar : Foo() {
+                                    context(b: String) override fun foo(a: String) {}
+                                }
+                            """.trimIndent(),
+                textAfterRefactoring = """
+                                abstract class Foo {
+                                    context(bc: String)
+                                    abstract fun foo(a: String)
+                                }
+                                
+                                class Bar : Foo() {
+                                    context(bc: String) override fun foo(a: String) {}
+                                }
+                            """.trimIndent(),
+                oldName = "b",
+                newName = "bc"
+            ) {
+                type("c")
+            }
         }
     }
 

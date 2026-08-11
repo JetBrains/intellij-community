@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.base.resources` start
-
 create_kotlinc_options(
     name = "custom_kotlin-base-resources",
     opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"],
@@ -38,7 +37,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/core-api:core",
         "//platform/util",
         "//platform/util-ex",
@@ -61,6 +60,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-base-resources",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/util:util_test_lib",
         "//platform/util-ex:util-ex_test_lib",

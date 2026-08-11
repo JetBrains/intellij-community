@@ -1,6 +1,6 @@
 // "Create member function 'A.plus'" "true"
-// K2_ERROR: 'operator' modifier is required on 'fun plus(i: Int, s: String): A<Int>' defined in 'A'.
-// K2_ERROR: No value passed for parameter 's'.
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: OPERATOR_MODIFIER_REQUIRED
 
 class A<T>(val n: T) {
     fun plus(i: Int, s: String): A<T> = throw Exception()

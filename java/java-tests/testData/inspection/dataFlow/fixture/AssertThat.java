@@ -169,4 +169,19 @@ class Contracts {
     r.run();
     Assertions.assertThat(b).isTrue();
   }
+
+  public void testIsInstanceOf() {
+    Object foo = foo();
+    Assertions.assertThat(foo).isInstanceOf(String.class);
+    if (<warning descr="Condition 'foo == null' is always 'false'">foo == null</warning>) {
+      System.out.println("foo is null");
+    }
+    if (<warning descr="Condition 'foo instanceof String' is always 'true'">foo instanceof String</warning>) {
+      System.out.println("foo is String");
+    }
+  }
+
+  public @Nullable Object foo() {
+    return Math.random() > 0.5 ? "foo" : null;
+  }
 }

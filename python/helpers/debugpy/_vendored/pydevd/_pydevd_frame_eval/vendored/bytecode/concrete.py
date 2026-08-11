@@ -137,7 +137,7 @@ class ConcreteBytecode(_bytecode._BaseBytecodeList):
     def _check_instr(self, instr):
         if not isinstance(instr, (ConcreteInstr, SetLineno)):
             raise ValueError(
-                "ConcreteBytecode must only contain " "ConcreteInstr and SetLineno objects, " "but %s was found" % type(instr).__name__
+                "ConcreteBytecode must only contain ConcreteInstr and SetLineno objects, but %s was found" % type(instr).__name__
             )
 
     def _copy_attr_from(self, bytecode):
@@ -249,7 +249,7 @@ class ConcreteBytecode(_bytecode._BaseBytecodeList):
                 continue
             # FIXME: be kind, force monotonic line numbers? add an option?
             if dlineno < 0 and sys.version_info < (3, 6):
-                raise ValueError("negative line number delta is not supported " "on Python < 3.6")
+                raise ValueError("negative line number delta is not supported on Python < 3.6")
             old_lineno = lineno
 
             doff = offset - old_offset
@@ -646,7 +646,7 @@ class _ConvertBytecodeToConcrete:
             if not modified:
                 break
         else:
-            raise RuntimeError("compute_jumps() failed to converge after" " %d passes" % (pas + 1))
+            raise RuntimeError("compute_jumps() failed to converge after %d passes" % (pas + 1))
 
         concrete = ConcreteBytecode(
             self.instructions,

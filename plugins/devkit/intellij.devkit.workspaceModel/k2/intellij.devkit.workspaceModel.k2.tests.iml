@@ -22,6 +22,7 @@
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" packagePrefix="com.intellij.devkit.workspaceModel.k2" />
     </content>
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.devkit.workspaceModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
@@ -31,8 +32,8 @@
     <orderEntry type="module" module-name="intellij.java.indexing" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.analysis-api" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
     <orderEntry type="library" scope="TEST" name="workspace-model-codegen" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />
@@ -41,12 +42,13 @@
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.plugin.k2" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.workspaceModel.k2" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.devkit.workspaceModel.k2" />
 </module>

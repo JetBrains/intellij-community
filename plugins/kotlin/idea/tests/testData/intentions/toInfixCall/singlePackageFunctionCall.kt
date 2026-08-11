@@ -1,7 +1,7 @@
 // WITH_STDLIB
 // IS_APPLICABLE: false
 // ERROR: 'infix' modifier is inapplicable on this function: must be a member or an extension function
-// K2_ERROR: 'infix' modifier is inapplicable to this function.
+// K2_ERROR: INAPPLICABLE_INFIX_MODIFIER
 
 package demo
 

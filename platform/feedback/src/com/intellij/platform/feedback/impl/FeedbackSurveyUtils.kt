@@ -15,10 +15,9 @@ import com.intellij.platform.feedback.NotificationBasedFeedbackSurveyConfig
 import com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService
 import com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
+import kotlinx.datetime.toJavaLocalDate
+import java.time.LocalDate as JavaLocalDate
 
 internal const val MAX_FEEDBACK_SURVEY_NUMBER_SHOWS: Int = 2
 
@@ -27,7 +26,7 @@ private fun NotificationBasedFeedbackSurveyConfig.checkIsFeedbackCollectionDeadl
 }
 
 internal fun checkIsFeedbackCollectionDeadlineNotPast(lastDayOfFeedbackCollection: LocalDate): Boolean {
-  return Clock.System.todayIn(TimeZone.currentSystemDefault()) < lastDayOfFeedbackCollection
+  return JavaLocalDate.now().isBefore(lastDayOfFeedbackCollection.toJavaLocalDate())
 }
 
 private fun NotificationBasedFeedbackSurveyConfig.checkIsIdeEAPIfRequired(): Boolean {
@@ -126,4 +125,3 @@ private fun checkNumberShowsNotExceeded(feedbackSurveyConfig: NotificationBasedF
 
   return CommonFeedbackSurveyService.getNumberShowsOfFeedbackSurvey(feedbackSurveyConfig.surveyId) < MAX_FEEDBACK_SURVEY_NUMBER_SHOWS
 }
-

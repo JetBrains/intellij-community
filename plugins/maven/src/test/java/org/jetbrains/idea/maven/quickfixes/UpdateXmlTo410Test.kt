@@ -5,21 +5,20 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.psi.xml.XmlFile
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.buildtool.quickfix.UpdateXmlsTo410
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_4_XMLNS
 import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_4_XSD
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.mockito.internal.progress.ThreadSafeMockingProgress
 
-class UpdateXmlsTo410Test : LightJavaCodeInsightFixtureTestCase() {
-  override fun runInDispatchThread(): Boolean {
-    return false
-  }
-
+class UpdateXmlsTo410Test : LightJavaCodeInsightFixtureTestCase5() {
+  @Test
   fun testUpdateMavenXmlTo410() = runBlocking {
     val xmlContent = """
       <?xml version="1.0" encoding="UTF-8"?>
@@ -28,15 +27,15 @@ class UpdateXmlsTo410Test : LightJavaCodeInsightFixtureTestCase() {
       </project>
     """.trimIndent()
 
-    val xmlFile = myFixture.configureByText("pom.xml", xmlContent) as XmlFile
+    val xmlFile = fixture.configureByText("pom.xml", xmlContent) as XmlFile
     val projectTag = readAction { xmlFile.document?.rootTag }
 
     val descriptor = mock(ProblemDescriptor::class.java)
     `when`(descriptor.psiElement).thenReturn(projectTag)
     val quickFix = UpdateXmlsTo410()
 
-    writeCommandAction(project, quickFix.name) {
-      quickFix.applyFix(project, descriptor)
+    writeCommandAction(fixture.project, quickFix.name) {
+      quickFix.applyFix(fixture.project, descriptor)
       ThreadSafeMockingProgress.mockingProgress().resetOngoingStubbing()
     }
 
@@ -48,6 +47,5 @@ class UpdateXmlsTo410Test : LightJavaCodeInsightFixtureTestCase() {
       assertEquals(MavenConstants.MODEL_VERSION_4_1_0,
                    updatedProjectTag?.findFirstSubTag("modelVersion")?.value?.text)
     }
-
   }
 }

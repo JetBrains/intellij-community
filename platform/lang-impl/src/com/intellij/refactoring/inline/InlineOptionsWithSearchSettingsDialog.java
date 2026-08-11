@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JCheckBox;
@@ -16,6 +17,7 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+@ApiStatus.Internal
 public abstract class InlineOptionsWithSearchSettingsDialog extends InlineOptionsDialog {
   protected JCheckBox myCbSearchInComments;
   protected JCheckBox myCbSearchTextOccurences;

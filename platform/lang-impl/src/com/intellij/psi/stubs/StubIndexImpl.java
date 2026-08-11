@@ -37,11 +37,13 @@ import com.intellij.util.indexing.UpdatableIndex;
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
+import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProviderKt;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage;
 import com.intellij.util.indexing.memory.InMemoryIndexStorage;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -358,6 +360,7 @@ public final class StubIndexImpl extends StubIndexEx {
       }
 
       Path storageFile = IndexInfrastructure.getStorageFile(myIndexKey);
+      StorageLockContext storageLockContext = DefaultIndexStorageLayoutProviderKt.newStorageLockContext();
       try {
         return new VfsAwareMapIndexStorage<>(
           storageFile,
@@ -366,7 +369,8 @@ public final class StubIndexImpl extends StubIndexEx {
           myWrappedExtension.getCacheSize(),
           myWrappedExtension.keyIsUniqueForIndexedFile(),
           myWrappedExtension.traceKeyHashToVirtualFileMapping(),
-          myWrappedExtension.enableWal()
+          myWrappedExtension.enableWal(),
+          storageLockContext
         );
       }
       catch (IOException e) {

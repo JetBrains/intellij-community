@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.coverage.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(
@@ -13,9 +12,10 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:junit4",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/junit4",
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/frontend-independent",
         "//plugins/kotlin/jvm/shared",
@@ -45,17 +45,18 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//plugins/kotlin/gradle/gradle:gradle_test_lib",
         "//platform/indexing-api:indexing_test_lib",
     ],
     deps = [
         # do not sort,
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//platform/core-ui",
@@ -100,7 +101,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.coverage.tests` end
 
 ### auto-generated section `test intellij.kotlin.coverage.tests` start
-
 jps_test(
     name = "tests_test",
     runtime_deps = [":tests_test_lib"],

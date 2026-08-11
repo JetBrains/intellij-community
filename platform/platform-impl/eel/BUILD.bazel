@@ -1,6 +1,12 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.ide.impl.wsl` start
+create_kotlinc_options(
+    name = "custom_ide-impl-wsl",
+    opt_in = ["com.intellij.platform.eel.channels.EelDelicateApi"],
+    warn = "error",
+)
 
 jvm_library(
     name = "ide-impl-wsl",
@@ -12,6 +18,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_ide-impl-wsl",
     module_name = "intellij.platform.ide.impl.wsl",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -20,7 +27,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/pty4j",
         "//platform/core-api:core",
@@ -39,6 +46,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/ide-core",
         "//platform/eel-nioFs-impl",
+        "//platform/util:util-ui",
     ],
 )
 
@@ -49,11 +57,13 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_ide-impl-wsl",
     module_name = "intellij.platform.ide.impl.wsl",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
         ":ide-impl-wsl",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/pty4j:pty4j_test_lib",
         "//platform/core-api:core_test_lib",
         "//libraries/caffeine:caffeine_test_lib",
@@ -71,6 +81,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/eel-nioFs-impl:eel-nioFs-impl_test_lib",
+        "//platform/util:util-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.impl.wsl` end

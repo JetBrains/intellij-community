@@ -1,2 +1,2 @@
-version = "2.3.*"
+version = "2.3.2"
 upstream-repository = "https://github.com/dpkp/kafka-python"

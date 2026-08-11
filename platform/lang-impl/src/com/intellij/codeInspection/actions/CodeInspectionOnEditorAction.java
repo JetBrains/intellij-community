@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 public final class CodeInspectionOnEditorAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
+    DataContext dataContext = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null){
       return;
@@ -35,9 +35,9 @@ public final class CodeInspectionOnEditorAction extends AnAction {
 
   private static void analyze(Project project, PsiFile psiFile) {
     FileDocumentManager.getInstance().saveAllDocuments();
-    final InspectionManagerEx inspectionManagerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
-    final AnalysisScope scope = new AnalysisScope(psiFile);
-    final GlobalInspectionContextImpl inspectionContext = inspectionManagerEx.createNewGlobalContext();
+    InspectionManagerEx inspectionManagerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
+    AnalysisScope scope = new AnalysisScope(psiFile);
+    GlobalInspectionContextImpl inspectionContext = inspectionManagerEx.createNewGlobalContext();
     inspectionContext.setCurrentScope(scope);
     inspectionContext.setExternalProfile(InspectionProjectProfileManager.getInstance(project).getCurrentProfile());
     inspectionContext.doInspections(scope);
@@ -50,9 +50,9 @@ public final class CodeInspectionOnEditorAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
+    DataContext dataContext = e.getDataContext();
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     e.getPresentation().setEnabled(project != null && psiFile != null  && DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(psiFile));
   }
 }

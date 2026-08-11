@@ -6,6 +6,7 @@ import org.eclipse.aether.impl.ArtifactResolver;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
+import org.eclipse.sisu.Priority;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.server.ParallelRunnerForServer;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Priority(Integer.MAX_VALUE)
 public class CustomMaven36ArtifactResolver implements ArtifactResolver, Resetable {
   private final ArtifactResolver myWrapee;
   private final Map<ArtifactRequestData, ArtifactResultData> artifactCache = new ConcurrentHashMap<>();

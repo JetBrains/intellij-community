@@ -1,5 +1,5 @@
 // "Add constructor parameter 'x'" "true"
-// K2_ERROR: No value passed for parameter 'x'.
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
 abstract class Foo<T>(x: T)
 class Boo(x: String) : Foo<String>(x)
 

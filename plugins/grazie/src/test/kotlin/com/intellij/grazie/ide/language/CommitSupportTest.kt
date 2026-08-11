@@ -2,11 +2,16 @@
 
 package com.intellij.grazie.ide.language
 
+import com.intellij.codeInspection.ex.InspectionProfileWrapper
+import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.spellcheck.GrazieCheckers
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.vcs.commit.message.CommitMessageInspectionProfile
 
 class CommitSupportTest : GrazieTestBase() {
   fun `test commit message has highlighting with all quick fixes`() {
@@ -46,6 +51,20 @@ class CommitSupportTest : GrazieTestBase() {
     assertNull(myFixture.getAvailableIntention("Accept all writing suggestions…"))
   }
 
+  fun `test typos are highlighted under the real commit editor inspection profile`() {
+    checkRealCommitHighlighting(myFixture, "<TYPO descr=\"Typo: In word 'typopo'\">typopo</TYPO> [grazie]: june is here")
+  }
+
+  fun `test spell checking is skipped when commit message checking is disabled`() {
+    GrazieConfig.update { state ->
+      state.copy(checkingContext = state.checkingContext.copy(isCheckInCommitMessagesEnabled = false))
+    }
+    service<GrazieCheckers>().awaitConfiguration()
+
+    // No <TYPO> markup: with the "Commit messages" toggle off, CommitAnnotator must not report typos.
+    checkRealCommitHighlighting(myFixture, "typopo [grazie]: june is here")
+  }
+
   private fun checkCommitMessage(text: String) {
     configureCommit(myFixture, text)
     myFixture.checkHighlighting()
@@ -57,4 +76,12 @@ internal fun configureCommit(fixture: CodeInsightTestFixture, text: String) {
   val commitMessage = CommitMessage(fixture.project)
   Disposer.register(fixture.testRootDisposable, commitMessage)
   fixture.editor.document.putUserData(CommitMessage.DATA_KEY, commitMessage)
+}
+
+internal fun checkRealCommitHighlighting(fixture: CodeInsightTestFixture, text: String) {
+  configureCommit(fixture, text)
+  InspectionProfileWrapper.runWithCustomInspectionWrapper(fixture.file,
+    { InspectionProfileWrapper(CommitMessageInspectionProfile.getInstance(fixture.project)) }) {
+    fixture.checkHighlighting()
+  }
 }

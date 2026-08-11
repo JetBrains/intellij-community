@@ -216,6 +216,8 @@ abstract class GitLabApiTestCase {
         $foundEnvironmentVariables
       """.trimIndent())
 
+      assumeEnvironmentConfigured()
+
       _token = System.getenv(IDEA_TEST_GITLAB_API_TOKEN)
       _version = GitLabVersion.fromString(System.getenv(IDEA_TEST_GITLAB_API_VERSION) ?: throwExplanation())
       _edition = when (System.getenv(IDEA_TEST_GITLAB_API_EDITION)) {
@@ -237,6 +239,23 @@ abstract class GitLabApiTestCase {
     fun tearDownServer() {
       container?.stop()
       classRootDisposable?.let(Disposer::dispose)
+    }
+
+    private fun assumeEnvironmentConfigured() {
+      val requiredVariablesAreSet = listOf(
+        IDEA_TEST_GITLAB_API_TOKEN,
+        IDEA_TEST_GITLAB_API_VERSION,
+        IDEA_TEST_GITLAB_API_EDITION
+      ).all { !System.getenv(it).isNullOrBlank() }
+      val serverIsConfigured = !System.getenv(IDEA_TEST_GITLAB_URI).isNullOrBlank() ||
+                               !System.getenv(IDEA_TEST_GITLAB_API_DATA_PATH).isNullOrBlank()
+
+      Assumptions.assumeTrue(requiredVariablesAreSet && serverIsConfigured, """
+        GitLab API test environment is not configured.
+
+        Found:
+        $foundEnvironmentVariables
+      """.trimIndent())
     }
 
     /**

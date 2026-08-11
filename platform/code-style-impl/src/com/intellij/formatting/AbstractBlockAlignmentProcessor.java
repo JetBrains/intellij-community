@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -70,8 +70,11 @@ public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentP
 
     WhiteSpace previousWhiteSpace = offsetResponsibleBlock.getWhiteSpace();
     previousWhiteSpace.setSpaces(previousWhiteSpace.getSpaces() - diff, previousWhiteSpace.getIndentOffset());
-    // Backward shift introduces alignment spaces. Keep those exempt from tab conversion.
-    previousWhiteSpace.setForceSkipTabulationsUsage(true);
+    if (!previousWhiteSpace.containsLineFeeds() ||
+        LanguageAlignmentWhitespacePolicy.useSpacesForAlignment(offsetResponsibleBlock)) {
+      // Avoid tabulations usage for aligning blocks that are not the first blocks on a line.
+      previousWhiteSpace.setForceSkipTabulationsUsage(true);
+    }
 
     return Result.BACKWARD_BLOCK_ALIGNED;
   }

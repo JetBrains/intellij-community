@@ -95,11 +95,10 @@ class BackgroundLambdaDefaultCallbacks : BeforeAllCallback, BeforeEachCallback, 
 
           suspend fun IdeWithLambda.dumpProcess(runContext: IDERunContext) {
             collectJavaThreadDumpSuspendable(runContext.testContext.ide.resolveAndDownloadTheSameJDKOrFallback(),
-                                             runContext.logsDir,
+                                             runContext.lastIdeReportingData.logsDir,
                                              backgroundRun.process.id.toLong(),
-                                             runContext.logsDir.resolve(getArtifactsFileName(callbackName,
-                                                                                             "ThreadDumps-$contextName",
-                                                                                             "log")))
+                                             runContext.lastIdeReportingData.logsDir.resolve(
+                                               getArtifactsFileName(callbackName, "ThreadDumps-$contextName", "log")))
           }
           ide.dumpProcess(IdeInstance.runContext.frontendContext)
           ide.backendIdeWithLambda?.let { backendIde ->
@@ -119,7 +118,6 @@ class BackgroundLambdaDefaultCallbacks : BeforeAllCallback, BeforeEachCallback, 
       }
 
       IdeInstance.stopIde()
-      IdeInstance.publishArtifacts()
       throw e
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs
 
 import com.intellij.openapi.application.edtWriteAction
@@ -190,6 +190,42 @@ class VirtualFileUtilTest : VirtualFileUtilTestCase() {
       assertVirtualFile { nioRoot.resolve("file.txt").refreshAndFindVirtualFile() }
         .doesNotExist()
       assertVirtualFile { nioRoot.resolve("directory").refreshAndFindVirtualDirectory() }
+        .doesNotExist()
+    }
+  }
+
+  @Test
+  fun `test find virtual file or directory`() {
+    runBlocking {
+      edtWriteAction { root.createFile("file.txt") }
+      edtWriteAction { root.createDirectory("directory") }
+
+      assertVirtualFile { nioRoot.resolve("file.txt").findVirtualFileOrDirectory() }
+        .isExistedFile()
+      assertVirtualFile { nioRoot.resolve("directory").findVirtualFileOrDirectory() }
+        .isExistedDirectory()
+
+      assertVirtualFile { nioRoot.resolve("dir/../file.txt").findVirtualFileOrDirectory() }
+        .isExistedFile()
+      assertVirtualFile { nioRoot.resolve("dir/../directory").findVirtualFileOrDirectory() }
+        .isExistedDirectory()
+
+      assertVirtualFile { nioRoot.findVirtualFileOrDirectory() }
+        .isExistedDirectory()
+    }
+  }
+
+  @Test
+  fun `test find virtual file or directory (non-existent)`() {
+    runBlocking {
+      assertNioPath { nioRoot.resolve("file.txt") }
+        .doesNotExist()
+      assertNioPath { nioRoot.resolve("directory") }
+        .doesNotExist()
+
+      assertVirtualFile { nioRoot.resolve("file.txt").findVirtualFileOrDirectory() }
+        .doesNotExist()
+      assertVirtualFile { nioRoot.resolve("directory").findVirtualFileOrDirectory() }
         .doesNotExist()
     }
   }

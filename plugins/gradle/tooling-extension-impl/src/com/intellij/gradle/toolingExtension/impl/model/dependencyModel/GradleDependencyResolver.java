@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.dependencyModel;
 
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache;
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.AuxiliaryArtifactProvider;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.AuxiliaryArtifactResolver;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.AuxiliaryArtifactResolverImpl;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.AuxiliaryConfigurationArtifacts;
@@ -58,6 +59,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -186,6 +188,7 @@ public final class GradleDependencyResolver {
     // Here we collect java doc and source files for a given dependencies
     AuxiliaryConfigurationArtifacts auxiliaryArtifacts = getAuxiliaryArtifactResolver(resolvedArtifacts, allowedDependencyGroups)
       .resolve(configuration);
+    auxiliaryArtifacts = resolveSupplementaryArtifacts(configuration, auxiliaryArtifacts);
     Set<String> resolvedFiles = new HashSet<>();
     Collection<ExternalDependency> artifactDependencies = resolveArtifactDependencies(
       resolvedFiles, resolvedArtifacts, auxiliaryArtifacts, transformedProjectDependenciesResultMap
@@ -507,6 +510,27 @@ public final class GradleDependencyResolver {
       this.group = group;
       this.version = version;
     }
+  }
+
+  private @NotNull AuxiliaryConfigurationArtifacts resolveSupplementaryArtifacts(
+    @NotNull Configuration configuration,
+    @NotNull AuxiliaryConfigurationArtifacts primaryArtifacts
+  ) {
+    if (!myDownloadPolicy.isDownloadSources() && !myDownloadPolicy.isDownloadJavadoc()) {
+      return primaryArtifacts;
+    }
+    ServiceLoader<AuxiliaryArtifactProvider> providers = ServiceLoader.load(
+      AuxiliaryArtifactProvider.class, AuxiliaryArtifactProvider.class.getClassLoader());
+    for (AuxiliaryArtifactProvider provider : providers) {
+      try {
+        AuxiliaryConfigurationArtifacts additional = provider.resolve(myProject, configuration, myDownloadPolicy);
+        primaryArtifacts = primaryArtifacts.mergeWith(additional);
+      }
+      catch (Exception ignore) {
+        // supplementary providers should not break the main resolution
+      }
+    }
+    return primaryArtifacts;
   }
 
   private static boolean isIvyRepositoryUsed(@NotNull Project project) {

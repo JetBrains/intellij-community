@@ -27,6 +27,14 @@ fun serializeIntelliJThreadDump(dumpItems: List<DumpItem>, additionalComments: L
 }
 
 /**
+ * Serializes dump items into a plain-text thread dump body without any additional comments.
+ */
+@ApiStatus.Internal
+fun serializeRawIntelliJThreadDump(dumpItems: List<DumpItem>): String {
+  return serializeThreadDumpBody(dumpItems)
+}
+
+/**
  * Serialize [dumpItems] by concatenating their serialized exported representation.
  */
 private fun serializeThreadDumpBody(dumpItems: List<DumpItem>): String {

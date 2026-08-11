@@ -3,7 +3,9 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public interface LineStatusTrackerSettingListener {
 
   @Topic.AppLevel

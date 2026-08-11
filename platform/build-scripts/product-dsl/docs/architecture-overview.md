@@ -136,7 +136,7 @@ The generation uses a **5-stage pipeline architecture** with pluggable generator
 │  UltimateModuleSets                              │
 │  ├─ ideUltimate() - Ultimate IDE base           │
 │  ├─ commercialIdeBase() - Commercial products   │
-│  └─ ssh() - SSH support                         │
+│  └─ identifiersUltimate() - Identifier support  │
 └─────────────────────────────────────────────────┘
 ```
 

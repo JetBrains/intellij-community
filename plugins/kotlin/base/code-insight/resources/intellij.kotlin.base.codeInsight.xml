@@ -1,0 +1,67 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java"/>
+    <module name="intellij.java.analysis"/>
+    <module name="intellij.java.backend"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.kotlin.base.codeInsight.minimal"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.projectModel"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.formatter"/>
+    <module name="intellij.kotlin.references"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+<extensions defaultExtensionNs="com.intellij">
+    <codeInsight.linkHandler
+            prefix="#kotlinClass/"
+            handlerClass="org.jetbrains.kotlin.idea.highlighter.markers.KotlinClassTooltipLinkHandler"/>
+    <qualifiedNameProvider implementation="org.jetbrains.kotlin.idea.KotlinQualifiedNameProvider"/>
+    <runLineMarkerContributor
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor"/>
+    <java.class.action.suppressor implementation="org.jetbrains.kotlin.idea.core.KotlinJavaClassActionSuppressor"/>
+    <lang.inspectionSuppressor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.inspections.suppress.KotlinInspectionSuppressor"/>
+    <multipleRunLocationsProvider implementation="org.jetbrains.kotlin.idea.run.multiplatform.KotlinMultiplatformRunLocationsProvider"/>
+  </extensions>
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.classImportFilter"
+            interface="org.jetbrains.kotlin.idea.util.ClassImportFilter"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idePlatformKindTooling"
+            interface="org.jetbrains.kotlin.idea.base.codeInsight.tooling.IdePlatformKindTooling"/>
+  </extensionPoints>
+</idea-plugin>

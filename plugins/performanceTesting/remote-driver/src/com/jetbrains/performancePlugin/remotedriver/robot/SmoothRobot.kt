@@ -2,44 +2,36 @@
 
 package com.jetbrains.performancePlugin.remotedriver.robot
 
-import com.intellij.driver.model.RemoteMouseButton
-import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.jetbrains.performancePlugin.remotedriver.waitFor
 import org.assertj.swing.awt.AWT.translate
 import org.assertj.swing.awt.AWT.visibleCenterOf
-import org.assertj.swing.core.BasicRobot
 import org.assertj.swing.core.MouseButton
 import org.assertj.swing.core.Robot
 import org.assertj.swing.core.Scrolling.scrollToVisible
-import org.assertj.swing.edt.GuiActionRunner.execute
-import org.assertj.swing.edt.GuiQuery
 import org.assertj.swing.timing.Pause.pause
-import org.assertj.swing.util.Modifiers
-import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.AWTEvent
+import java.awt.Component
+import java.awt.MouseInfo
+import java.awt.Point
+import java.awt.Toolkit
 import java.awt.event.AWTEventListener
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.io.ByteArrayOutputStream
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import javax.imageio.ImageIO
 import javax.swing.JComponent
-import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 import kotlin.math.ln
-import kotlin.text.toBoolean
 
-@ApiStatus.Internal
-class SmoothRobot @JvmOverloads constructor(
-  private val basicRobot: Robot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock(),
-  private val awtRobot: java.awt.Robot = Robot(),
-) : Robot by basicRobot {
+internal class SmoothRobot(
+  basicRobot: Robot,
+  awtRobot: java.awt.Robot,
+) : AbstractIdeRobot(basicRobot, awtRobot) {
 
   init {
     settings().apply {
@@ -50,22 +42,19 @@ class SmoothRobot @JvmOverloads constructor(
     Toolkit.getDefaultToolkit().addAWTEventListener(KeyLoggerAWTEventListener, AWTEvent.KEY_EVENT_MASK)
   }
 
-  @Suppress("TestOnlyProblems")
-  fun hasInputFocus(): Boolean {
-    val eventQueue = IdeEventQueue.getInstance()
-    val keyEventsPostedBefore = eventQueue.keyboardEventPosted.get()
-    pressAndReleaseKey(KeyEvent.VK_F13) // let's hope there is no action assigned to F13
-    return keyEventsPostedBefore < eventQueue.keyboardEventPosted.get()
+  override fun doubleKey(keyCode: Int) {
+    awtRobot.keyPress(keyCode)
+    awtRobot.keyRelease(keyCode)
+    Thread.sleep(10)
+    awtRobot.keyPress(keyCode)
+    awtRobot.keyRelease(keyCode)
   }
 
-  fun getColor(component: Component, point: Point? = null): Color {
-    var where = point
-    if (where == null) {
-      where = visibleCenterOf(component)
-    }
-    val translatedPoint = performOnEdt { translate(component, where!!.x, where!!.y) }
-    checkNotNull(translatedPoint) { "Translated point should be not null" }
-    return awtRobot.getPixelColor(translatedPoint.x, translatedPoint.y)
+  override fun doublePressKeyAndHold(key: Int) {
+    awtRobot.keyPress(key)
+    awtRobot.keyRelease(key)
+    Thread.sleep(10)
+    awtRobot.keyPress(key)
   }
 
   override fun moveMouse(component: Component) {
@@ -95,73 +84,8 @@ class SmoothRobot @JvmOverloads constructor(
     smoothMoveMouse(x, y)
   }
 
-  override fun click(component: Component) {
-    click(component, MouseButton.LEFT_BUTTON)
-  }
-
-  fun click(component: Component, mouseButton: RemoteMouseButton) {
-    click(component, mouseButton.toAssertJ())
-  }
-
-  override fun click(component: Component, mouseButton: MouseButton) {
-    click(component, mouseButton, 1)
-  }
-
-  override fun click(component: Component, point: Point) {
-    click(component, point, MouseButton.LEFT_BUTTON, 1)
-  }
-
-  fun click(component: Component, mouseButton: RemoteMouseButton, counts: Int) {
-    click(component, mouseButton.toAssertJ(), counts)
-  }
-
-  override fun click(component: Component, mouseButton: MouseButton, counts: Int) {
-    doClick(component, null, mouseButton, counts)
-  }
-
-  fun click(c: Component, where: Point, button: RemoteMouseButton, times: Int) {
-    click(c, where, button.toAssertJ(), times)
-  }
-
-  fun click(c: Component, where: Point, button: RemoteMouseButton) {
-    click(c, where, button.toAssertJ(), 1)
-  }
-
-  fun click(where: Point, button: RemoteMouseButton) {
-    click(where, button.toAssertJ(), 1)
-  }
-
-  fun click(where: Point, button: RemoteMouseButton, times: Int) {
-    click(where, button.toAssertJ(), times)
-  }
-
-  //we are replacing BasicRobot click with our click because the original one cannot handle double click rightly (BasicRobot creates unnecessary move event between click event which breaks clickCount from 2 to 1)
-  override fun click(c: Component, where: Point, button: MouseButton, times: Int) {
-    doClick(c, where, button, times)
-  }
-
   override fun click(where: Point, button: MouseButton, times: Int) {
     moveMouseAndClick(where, button, times)
-  }
-
-  override fun doubleClick(c: Component) {
-    click(c, MouseButton.LEFT_BUTTON, 2)
-  }
-
-  fun tripleClick(c: Component) {
-    click(c, MouseButton.LEFT_BUTTON, 3)
-  }
-
-  fun pressMouse(mouseButton: RemoteMouseButton) {
-    pressMouse(mouseButton.toAssertJ())
-  }
-
-  fun pressMouse(component: Component, point: Point, mouseButton: RemoteMouseButton) {
-    pressMouse(component, point, mouseButton.toAssertJ())
-  }
-
-  fun pressMouse(point: Point, mouseButton: RemoteMouseButton) {
-    pressMouse(point, mouseButton.toAssertJ())
   }
 
   override fun pressMouse(component: Component, point: Point) {
@@ -179,60 +103,21 @@ class SmoothRobot @JvmOverloads constructor(
     basicRobot.pressMouse(point, mouseButton)
   }
 
-  fun releaseMouse(mouseButton: RemoteMouseButton) {
-    releaseMouse(mouseButton.toAssertJ())
-  }
-
-  fun doubleKey(keyCode: Int) {
-    awtRobot.keyPress(keyCode)
-    awtRobot.keyRelease(keyCode)
-    Thread.sleep(10)
-    awtRobot.keyPress(keyCode)
-    awtRobot.keyRelease(keyCode)
-  }
-
-  fun doublePressKeyAndHold(key: Int) {
-    awtRobot.keyPress(key)
-    awtRobot.keyRelease(key)
-    Thread.sleep(10)
-    awtRobot.keyPress(key)
-  }
-
-  override fun rightClick(component: Component) {
-    if (useInputEvents()) {
-      postClickEvent(component, button = MouseButton.RIGHT_BUTTON)
-    }
-    else {
-      moveMouse(component)
-      basicRobot.rightClick(component)
-    }
-  }
-
-  fun shortcut(keyStoke: KeyStroke) {
-    fastPressAndReleaseKey(keyStoke.keyCode, keyStoke.modifiers)
-  }
-
-  fun selectAndDrag(component: Component, from: Point, to: Point, delayMs: Int) {
-    moveMouse(component, from)
-
+  override fun dragAndDrop(fromComponent: Component, fromPoint: Point, toComponent: Component, toPoint: Point) {
+    moveMouse(fromComponent, fromPoint)
     try {
-      click(component, from)
-      pressMouse(RemoteMouseButton.LEFT)
-
-      Thread.sleep(delayMs.toLong())
-      moveMouse(component, to)
-
-      Thread.sleep(delayMs.toLong())
-      moveMouse(component, to)
-    } finally {
-      releaseMouse(RemoteMouseButton.LEFT)
+      pause(300)
+      basicRobot.pressMouse(fromComponent, fromPoint, MouseButton.LEFT_BUTTON)
+      pause(500)
+      moveMouse(toComponent, toPoint)
+      pause(500)
+    }
+    finally {
+      basicRobot.releaseMouse(MouseButton.LEFT_BUTTON)
     }
   }
-
-  fun makeScreenshot(): ByteArray = makeScreenshot(Rectangle(Toolkit.getDefaultToolkit().screenSize))
 
   override fun cleanUp() {
-    basicRobot.cleanUp()
     Toolkit.getDefaultToolkit().removeAWTEventListener(KeyLoggerAWTEventListener)
   }
 
@@ -252,12 +137,7 @@ class SmoothRobot @JvmOverloads constructor(
     basicRobot.moveMouse(x, y)
   }
 
-  private fun doClick(component: Component, where: Point?, mouseButton: MouseButton, clickCount: Int) {
-    if (useInputEvents()) {
-      postClickEvent(component, mouseButton, clickCount)
-      return
-    }
-
+  override fun doClick(component: Component, where: Point?, mouseButton: MouseButton, clickCount: Int) {
     val clickLatch = CountDownLatch(1)
 
     val listener = MouseClickAWTEventListener(component, clickCount, mouseButton) { clickLatch.countDown() }
@@ -267,7 +147,7 @@ class SmoothRobot @JvmOverloads constructor(
       moveMouseAndClick(component, where, mouseButton, clickCount)
 
       val clicked = clickLatch.await(3, TimeUnit.SECONDS) || listener.mousePressedEventReceived().also { // there are cases when a mouse event is handled by a custom dispatcher of IdeEventQueue, and we do not receive the MOUSE_RELEASED event
-          logger.info("The MOUSE_RELEASED event was missing, or MOUSE_PRESSED or MOUSE_RELEASED events were received on a different component, but were expected on $component")
+        logger.info("The MOUSE_RELEASED event was missing, or MOUSE_PRESSED or MOUSE_RELEASED events were received on a different component, but were expected on $component")
       }
       if (!clicked) {
         logger.warn("Click was unsuccessful on $component")
@@ -289,15 +169,11 @@ class SmoothRobot @JvmOverloads constructor(
    * !!! Don't use strictClick if the component should disappear after mouse release.
    */
 
-  fun strictClick(component: Component, point: Point? = null) {
+  override fun strictClick(component: Component, point: Point?) {
     strictClickWithRetry(component, point)
   }
 
   private fun strictClickWithRetry(component: Component, where: Point?) {
-    if (useInputEvents()) {
-      postClickEvent(component, MouseButton.LEFT_BUTTON, 1)
-      return
-    }
     //we don't want to register mouse listener to component that doesn't have mouse listeners
     //this will break event propagation to a parent component
     if (component.mouseListeners.isEmpty()) {
@@ -329,23 +205,8 @@ class SmoothRobot @JvmOverloads constructor(
     }
   }
 
-  private fun fastPressAndReleaseKey(keyCode: Int, vararg modifiers: Int) {
-    val unifiedModifiers = unify(*modifiers)
-    val updatedModifiers = Modifiers.updateModifierWithKeyCode(keyCode, unifiedModifiers)
-    val modifiersKeys = Modifiers.keysFor(updatedModifiers)
-    modifiersKeys.forEach { awtRobot.keyPress(it) }
-    if (updatedModifiers == unifiedModifiers) {
-      awtRobot.keyPress(keyCode)
-      awtRobot.keyRelease(keyCode)
-    }
-    modifiersKeys.reversed().forEach { awtRobot.keyRelease(it) }
-  }
-
-  private fun makeScreenshot(screenshotArea: Rectangle): ByteArray {
-    return ByteArrayOutputStream().use { b ->
-      ImageIO.write(awtRobot.createScreenCapture(screenshotArea), "png", b)
-      b.toByteArray()
-    }
+  override fun doPressAndReleaseKey(keyCode: Int, modifiers: Int) {
+    basicRobot.pressAndReleaseKey(keyCode, modifiers)
   }
 
   private fun moveMouseAndClick(where: Point, button: MouseButton, times: Int) {
@@ -366,17 +227,6 @@ class SmoothRobot @JvmOverloads constructor(
     }
   }
 
-  fun moveMouseAndPress(component: Component, where: Point?) {
-    if (where != null) {
-      moveMouse(component, where)
-    }
-    else {
-      moveMouse(component)
-    }
-    ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
-    basicRobot.pressMouse(MouseButton.LEFT_BUTTON)
-  }
-
   private fun moveMouseWithAttempts(c: Component, x: Int, y: Int, attempts: Int = 3) {
     waitFor(Duration.ofSeconds(5), Duration.ofSeconds(1)) { performOnEdt { c.isShowing }!! }
 
@@ -387,26 +237,6 @@ class SmoothRobot @JvmOverloads constructor(
     val mouseLocation = MouseInfo.getPointerInfo().location
     if (mouseLocation.x != componentLocationAfterMove.x || mouseLocation.y != componentLocationAfterMove.y)
       moveMouseWithAttempts(c, x, y, attempts - 1)
-  }
-
-  private fun postClickEvent(component: Component, button: MouseButton = MouseButton.LEFT_BUTTON, clickCount: Int = 1, where: Point? = null) {
-    val awtMouseButton = when (button) {
-      MouseButton.LEFT_BUTTON -> MouseEvent.BUTTON1
-      MouseButton.RIGHT_BUTTON -> MouseEvent.BUTTON3
-      MouseButton.MIDDLE_BUTTON -> MouseEvent.BUTTON2
-    }
-    val eventQueue = IdeEventQueue.getInstance()
-
-    val window = SwingUtilities.getWindowAncestor(component)
-    val clickPoint = SwingUtilities.convertPoint(component, where ?: visibleCenterOf(component), window)
-    repeat(clickCount) {
-      val mousePressedEvent = MouseEvent(window, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), 0,
-                                         clickPoint.x, clickPoint.y, 1, awtMouseButton == MouseEvent.BUTTON3, awtMouseButton)
-      eventQueue.postEvent(mousePressedEvent)
-      val mouseReleasedEvent = MouseEvent(window, MouseEvent.MOUSE_RELEASED, System.currentTimeMillis(), 0,
-                                          clickPoint.x, clickPoint.y, 1, false, awtMouseButton)
-      eventQueue.postEvent(mouseReleasedEvent)
-    }
   }
 
   private class MouseClickAWTEventListener(
@@ -423,7 +253,7 @@ class SmoothRobot @JvmOverloads constructor(
         pressedAtComponent = event.component
       }
       else if (event.id == MouseEvent.MOUSE_RELEASED || event.id == MouseEvent.MOUSE_CLICKED) { // in some cases we don't receive the MOUSE_CLICKED event (for example, if the component disappears after the MOUSE_RELEASED event)
-        if (event.clickCount == clickCount && event.button == mouseButton.button && event.component === pressedAtComponent
+        if (event.clickCount == clickCount && event.button == mouseButton.awtButton && event.component === pressedAtComponent
             && isAncestorOrDescendant(pressedAtComponent, componentToBeClicked)) { // in some cases a click is handled by a child or parent component
           onMouseClicked()
         }
@@ -452,26 +282,5 @@ class SmoothRobot @JvmOverloads constructor(
 
   companion object {
     private val logger = logger<SmoothRobot>()
-
-    private fun useInputEvents(): Boolean = System.getProperty("driver.robot.use.input.events").toBoolean()
-
-    private fun RemoteMouseButton.toAssertJ() = when (this) {
-      RemoteMouseButton.LEFT -> MouseButton.LEFT_BUTTON
-      RemoteMouseButton.MIDDLE -> MouseButton.MIDDLE_BUTTON
-      RemoteMouseButton.RIGHT -> MouseButton.RIGHT_BUTTON
-    }
-
-    private fun unify(vararg modifiers: Int): Int = modifiers.reduceOrNull { acc, i -> acc or i } ?: 0
-
-    private fun <T> performOnEdt(body: () -> T): T? =
-      execute(object : GuiQuery<T>() {
-        override fun executeInEDT() = body.invoke()
-      })
-
-    private val MouseButton.button get() = when (this) {
-      MouseButton.LEFT_BUTTON -> MouseEvent.BUTTON1
-      MouseButton.MIDDLE_BUTTON ->  MouseEvent.BUTTON2
-      MouseButton.RIGHT_BUTTON -> MouseEvent.BUTTON3
-    }
   }
 }

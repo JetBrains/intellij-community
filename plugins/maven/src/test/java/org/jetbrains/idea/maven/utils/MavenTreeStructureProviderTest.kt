@@ -1,45 +1,47 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.projectView.TestProjectTreeStructure
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ui.tree.TreeUtil
-import junit.framework.TestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.junit.Test
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import javax.swing.JTree
 
-class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
-  private lateinit var myStructure: TestProjectTreeStructure
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenTreeStructureProviderTest(mavenVersion: String, modelVersion: String) {
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion,
+  )
 
-  override fun setUp() {
-    super.setUp()
-    myStructure = TestProjectTreeStructure(project, testRootDisposable)
-  }
-
-  override fun tearDown() = runBlocking {
-    try {
-      withContext(Dispatchers.EDT) {
-        Disposer.dispose(myStructure)
-      }
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+  @BeforeEach
+  fun setUp() = runBlocking {
+    edtWriteAction { ProjectRootManager.getInstance(maven.project).projectSdk = null }
   }
 
   @Test
   fun testShouldCreateSpecialNode() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1</version>
@@ -48,7 +50,7 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
         <module>m1</module>
       </modules>""".trimIndent())
 
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -58,24 +60,26 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
         <version>1</version>
       </parent>""".trimIndent())
 
-    importProjectAsync()
+    maven.importProjectAsync()
 
-    val actual = withContext(Dispatchers.EDT) {
-      val projectTree = myStructure.createPane().tree
+    val actual = withTestStructure { structure ->
+      val projectTree = structure.createPane().tree
       expand(projectTree)
       PlatformTestUtil.print(projectTree)
     }
-    TestCase.assertEquals("""
+    assertEquals("""
       -Project
        -PsiDirectory: project
         -PsiDirectory: m1
          -MavenPomFileNode:pom.xml
         -MavenPomFileNode:pom.xml
+        settings.xml
        External Libraries""".trimIndent(), actual)
   }
 
-  @Test fun testShouldMarkNodeAsIgnored() = runBlocking {
-    createProjectPom("""
+  @Test
+  fun testShouldMarkNodeAsIgnored() = runBlocking {
+    maven.createProjectPom("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1</version>
@@ -84,7 +88,7 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
         <module>m1</module>
       </modules>""".trimIndent())
 
-    val modulePom = createModulePom("m1", """
+    val modulePom = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -94,20 +98,21 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
         <version>1</version>
       </parent>""".trimIndent())
 
-    importProjectAsync()
+    maven.importProjectAsync()
 
-    projectsManager.setIgnoredState(listOf(projectsManager.findProject(modulePom)), true)
-    val actual = withContext(Dispatchers.EDT) {
-      val projectTree = myStructure.createPane().tree
+    maven.projectsManager.setIgnoredState(listOf(maven.projectsManager.findProject(modulePom)), true)
+    val actual = withTestStructure { structure ->
+      val projectTree = structure.createPane().tree
       expand(projectTree)
       PlatformTestUtil.print(projectTree)
     }
-    TestCase.assertEquals("""
+    assertEquals("""
       -Project
        -PsiDirectory: project
         -PsiDirectory: m1
          -MavenPomFileNode:pom.xml (ignored)
         -MavenPomFileNode:pom.xml
+        settings.xml
        External Libraries""".trimIndent(), actual)
   }
 
@@ -116,5 +121,21 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
     PlatformTestUtil.waitForPromise(TreeUtil.promiseExpand(tree) {
       TreeVisitor.Action.CONTINUE
     })
+  }
+
+  /**
+   * Creates a [TestProjectTreeStructure] on the EDT, runs [block] on it, then disposes it on the EDT.
+   * The structure registers an [com.intellij.ui.tree.AsyncTreeModel] whose `dispose` asserts EDT, so its lifecycle
+   * must not piggy-back on the background-thread fixture tear-down.
+   */
+  private suspend fun withTestStructure(block: (TestProjectTreeStructure) -> String): String = withContext(Dispatchers.EDT) {
+    val parent = Disposer.newDisposable("MavenTreeStructureProviderTest")
+    val structure = TestProjectTreeStructure(maven.project, parent)
+    try {
+      block(structure)
+    }
+    finally {
+      Disposer.dispose(parent)
+    }
   }
 }

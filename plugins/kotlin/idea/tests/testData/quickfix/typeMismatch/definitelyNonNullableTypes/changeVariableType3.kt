@@ -1,5 +1,7 @@
 // "Change type of 'z' to 'T & Any'" "true"
 // LANGUAGE_VERSION: 1.8
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
 package a
 
 fun <T1> foo(x: T1 & Any) {}

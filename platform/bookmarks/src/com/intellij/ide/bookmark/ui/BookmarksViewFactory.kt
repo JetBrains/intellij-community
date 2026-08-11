@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui
 
-import com.intellij.ide.actions.ToggleToolbarAction.isToolbarVisible
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -19,7 +18,7 @@ internal class BookmarksViewFactory : DumbAware, ToolWindowFactory, ToolWindowMa
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val manager = toolWindow.contentManager
-    val panel = BookmarksView(project, isToolbarVisible(toolWindow, project)).also { it.orientation = orientation.get() }
+    val panel = BookmarksView(project, isPopup = false).also { it.orientation = orientation.get() }
     manager.addContent(manager.factory.createContent(panel, null, false).apply { isCloseable = false })
     project.messageBus.connect(manager).subscribe(ToolWindowManagerListener.TOPIC, this)
     toolWindow.helpId = "bookmarks.tool.window.help"

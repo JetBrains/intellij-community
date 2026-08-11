@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.analysis.api.k2.jar
+  modules:
+  - name: intellij.libraries.kotlinc.analysis.api.k2
+    libraries:
+      kotlinc.analysis-api-k2:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-for-ide/2/analysis-api-k2-for-ide-2.jar

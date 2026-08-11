@@ -1,6 +1,6 @@
 // "Remove 'inner' modifier" "true"
 // WITH_STDLIB
-// K2_ERROR: 'Parcelable' cannot be an inner class.
+// K2_ERROR: PARCELABLE_CANT_BE_INNER_CLASS
 
 package com.myapp.activity
 

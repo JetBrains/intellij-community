@@ -96,6 +96,12 @@ internal class MavenCoordinateCompletionPlaceChecker(private val myTagId: String
       return this
     }
 
+    // Do not complete coordinates inside ${...} property references – let property completion handle those
+    if (isInsidePropertyReference(myParameters.originalFile.text, myParameters.offset)) {
+      badPlace = true
+      return this
+    }
+
     val tagElement = xmlText.getParent()
 
     if (tagElement !is XmlTag) {
@@ -144,5 +150,16 @@ internal class MavenCoordinateCompletionPlaceChecker(private val myTagId: String
     else {
       badPlace = true
     }
+  }
+
+  private fun isInsidePropertyReference(text: String, offset: Int): Boolean {
+    var i = offset - 1
+    while (i > 0) {
+      val c = text[i]
+      if (c == '{' && text[i - 1] == '$') return true
+      if (!c.isLetterOrDigit() && c != '.') return false
+      i--
+    }
+    return false
   }
 }

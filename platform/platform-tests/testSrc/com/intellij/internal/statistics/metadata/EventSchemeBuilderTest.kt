@@ -43,6 +43,33 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     doFieldTest(EventFields.StringValidatedByCustomRule("class", TestCustomValidationRule::class.java), hashSetOf("{util#custom_rule_factory}"))
   }
 
+  fun `test generate string field validated by custom rule with required true`() {
+    val customValidationRule = TestCustomValidationRule("custom_rule")
+    CustomValidationRule.EP_NAME.point.registerExtension(customValidationRule, testRootDisposable)
+    doFieldTest(
+      EventFields.StringValidatedByCustomRule("class", TestCustomValidationRule::class.java, required = true),
+      hashSetOf("{util#custom_rule}", "{required:true}")
+    )
+  }
+
+  fun `test generate string field validated by custom rule with default value`() {
+    val customValidationRule = TestCustomValidationRule("custom_rule")
+    CustomValidationRule.EP_NAME.point.registerExtension(customValidationRule, testRootDisposable)
+    doFieldTest(
+      EventFields.StringValidatedByCustomRule("class", TestCustomValidationRule::class.java, defaultValue = "fallback"),
+      hashSetOf("{util#custom_rule}", "{default_value:fallback}")
+    )
+  }
+
+  fun `test generate string field validated by custom rule with required and default value`() {
+    val customValidationRule = TestCustomValidationRule("custom_rule")
+    CustomValidationRule.EP_NAME.point.registerExtension(customValidationRule, testRootDisposable)
+    doFieldTest(
+      EventFields.StringValidatedByCustomRule("class", TestCustomValidationRule::class.java, required = true, defaultValue = "fallback"),
+      hashSetOf("{util#custom_rule}", "{required:true}", "{default_value:fallback}")
+    )
+  }
+
   fun `test generate string field validated by list of possible values`() {
     doFieldTest(EventFields.String("class", listOf("foo", "bar")), hashSetOf("{enum:foo|bar}"))
   }
@@ -113,6 +140,33 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     doFieldTest(EventFields.StringListValidatedByCustomRule("fields", TestCustomValidationRule::class.java), hashSetOf("{util#index_id}"))
   }
 
+  fun `test generate string list validated by custom rule with required true`() {
+    val customValidationRule = TestCustomValidationRule("index_id")
+    CustomValidationRule.EP_NAME.point.registerExtension(customValidationRule, testRootDisposable)
+    doFieldTest(
+      EventFields.StringListValidatedByCustomRule("fields", TestCustomValidationRule::class.java, required = true),
+      hashSetOf("{util#index_id}", "{required:true}")
+    )
+  }
+
+  fun `test generate string list validated by custom rule with default value`() {
+    val customValidationRule = TestCustomValidationRule("index_id")
+    CustomValidationRule.EP_NAME.point.registerExtension(customValidationRule, testRootDisposable)
+    doFieldTest(
+      EventFields.StringListValidatedByCustomRule("fields", TestCustomValidationRule::class.java, defaultValue = "fallback"),
+      hashSetOf("{util#index_id}", "{default_value:fallback}")
+    )
+  }
+
+  fun `test generate string list validated by custom rule with required and default value`() {
+    val customValidationRule = TestCustomValidationRule("index_id")
+    CustomValidationRule.EP_NAME.point.registerExtension(customValidationRule, testRootDisposable)
+    doFieldTest(
+      EventFields.StringListValidatedByCustomRule("fields", TestCustomValidationRule::class.java, required = true, defaultValue = "fallback"),
+      hashSetOf("{util#index_id}", "{required:true}", "{default_value:fallback}")
+    )
+  }
+
   fun `test generate string list validated by regexp`() {
     doFieldTest(EventFields.StringListValidatedByRegexp("fields", "index_id"), hashSetOf("{regexp#index_id}"))
   }
@@ -123,6 +177,27 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
 
   fun `test generate string list validated by list of possible values`() {
     doFieldTest(EventFields.StringList("fields", listOf("foo", "bar")), hashSetOf("{enum:foo|bar}"))
+  }
+
+  fun `test generate string list field with required true`() {
+    doFieldTest(
+      EventFields.StringList("fields", listOf("foo", "bar"), required = true),
+      hashSetOf("{enum:foo|bar}", "{required:true}")
+    )
+  }
+
+  fun `test generate string list field with default value`() {
+    doFieldTest(
+      EventFields.StringList("fields", listOf("foo", "bar"), defaultValue = "foo"),
+      hashSetOf("{enum:foo|bar}", "{default_value:foo}")
+    )
+  }
+
+  fun `test generate string list field with required and default value`() {
+    doFieldTest(
+      EventFields.StringList("fields", listOf("foo", "bar"), required = true, defaultValue = "foo"),
+      hashSetOf("{enum:foo|bar}", "{required:true}", "{default_value:foo}")
+    )
   }
 
   fun `test generate string validated by inline regexp`() {
@@ -224,6 +299,22 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     val group = buildGroupDescription(eventField)
     val event = group.schema.first()
     assertSameElements(event.fields.first().value, expectedValues)
+  }
+
+  fun `test jcp field is excluded from scheme`() {
+    val group = buildGroupDescription(EventFields.Jcp)
+    val event = group.schema.first()
+    assertEmpty("JCP payload field must not appear in the generated events scheme", event.fields)
+  }
+
+  fun `test jcp field is excluded but other fields remain`() {
+    val eventLogGroup = EventLogGroup("test.group.id", 1, "FUS")
+    eventLogGroup.registerEvent("test_event", EventFields.Int("count"), EventFields.Jcp)
+    val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup), PluginSchemeDescriptor("testPlugin"))
+    val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(collector), "FUS")
+
+    val event = groups.first().schema.first()
+    assertSameElements(event.fields.map { it.path }, listOf("count"))
   }
 
   private fun doCompositeFieldTest(eventField: EventField<*>, expectedValues: Set<FieldDescriptor>) {

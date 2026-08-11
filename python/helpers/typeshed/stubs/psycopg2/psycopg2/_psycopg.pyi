@@ -2,8 +2,8 @@ import datetime as dt
 from _typeshed import ConvertibleToInt, Incomplete, SupportsRead, SupportsReadline, SupportsWrite, Unused
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from types import TracebackType
-from typing import Any, Literal, NoReturn, Protocol, TextIO, TypeAlias, TypeVar, overload, type_check_only
-from typing_extensions import Self, disjoint_base
+from typing import Any, Literal, Protocol, TextIO, TypeAlias, TypeVar, overload, type_check_only
+from typing_extensions import Never, Self, disjoint_base
 
 from psycopg2.extras import ReplicationCursor as extras_ReplicationCursor
 from psycopg2.sql import Composable
@@ -153,7 +153,7 @@ class cursor:
     def fetchmany(self, size: int | None = None) -> list[tuple[Any, ...]]: ...
     def fetchone(self) -> tuple[Any, ...] | None: ...
     def mogrify(self, query: str | bytes | Composable, vars: _Vars | None = None) -> bytes: ...
-    def nextset(self) -> NoReturn: ...  # not supported
+    def nextset(self) -> Never: ...  # not supported
     def scroll(self, value: int, mode: Literal["absolute", "relative"] = "relative") -> None: ...
     def setinputsizes(self, sizes: Unused) -> None: ...
     def setoutputsize(self, size: int, column: int = ..., /) -> None: ...
@@ -424,6 +424,7 @@ class Xid:
     def __len__(self) -> int: ...
 
 _T_cur = TypeVar("_T_cur", bound=cursor)
+_Lobject: TypeAlias = lobject
 
 @disjoint_base
 class connection:
@@ -444,7 +445,7 @@ class connection:
     def binary_types(self) -> dict[Incomplete, Incomplete]: ...
     @property
     def closed(self) -> int: ...
-    cursor_factory: Callable[[connection, str | bytes | None], cursor]
+    cursor_factory: Callable[[connection, str | bytes | None], _Cursor]
     @property
     def dsn(self) -> str: ...
     @property
@@ -490,7 +491,7 @@ class connection:
     @overload
     def cursor(
         self, name: str | bytes | None = None, cursor_factory: None = None, withhold: bool = False, scrollable: bool | None = None
-    ) -> cursor: ...
+    ) -> _Cursor: ...
     @overload
     def cursor(
         self,
@@ -522,8 +523,8 @@ class connection:
         mode: str | None = ...,
         new_oid: int = ...,
         new_file: str | None = ...,
-        lobject_factory: type[lobject] = ...,
-    ) -> lobject: ...
+        lobject_factory: type[_Lobject] = ...,
+    ) -> _Lobject: ...
     def poll(self) -> int: ...
     def reset(self) -> None: ...
     def rollback(self) -> None: ...

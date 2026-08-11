@@ -35,6 +35,7 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.LineRange
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -104,7 +105,8 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
                 }
                 val activeRangesTracker = CodeReviewActiveRangesTracker()
                 editor.showCodeReview(model) { inlayModel ->
-                  createRenderer(inlayModel,
+                  createRenderer(editor,
+                                 inlayModel,
                                  changeVm.avatarIconsProvider,
                                  changeVm.imageLoader,
                                  activeRangesTracker).also { inlayRenderer ->
@@ -121,6 +123,7 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
     }
 
     private fun CoroutineScope.createRenderer(
+      editor: Editor,
       model: GitLabMergeRequestEditorMappedComponentModel,
       avatarIconsProvider: IconsProvider<GitLabUserDTO>,
       imageLoader: GitLabImageLoader,
@@ -128,13 +131,13 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
     ): CodeReviewComponentInlayRenderer =
       when (model) {
         is GitLabMergeRequestEditorMappedComponentModel.Discussion<*> ->
-          GitLabMergeRequestDiscussionInlayRenderer(this, project, model, avatarIconsProvider, imageLoader, activeRangesTracker,
+          GitLabMergeRequestDiscussionInlayRenderer(this, project, editor, model, avatarIconsProvider, imageLoader, activeRangesTracker,
                                                     GitLabStatistics.MergeRequestNoteActionPlace.DIFF)
         is GitLabMergeRequestEditorMappedComponentModel.DraftNote<*> ->
-          GitLabMergeRequestDraftNoteInlayRenderer(this, project, model, avatarIconsProvider, imageLoader, activeRangesTracker,
+          GitLabMergeRequestDraftNoteInlayRenderer(this, project, editor, model, avatarIconsProvider, imageLoader, activeRangesTracker,
                                                    GitLabStatistics.MergeRequestNoteActionPlace.DIFF)
         is GitLabMergeRequestEditorMappedComponentModel.NewDiscussion<*> ->
-          GitLabMergeRequestNewDiscussionInlayRenderer(this, project, model, avatarIconsProvider, activeRangesTracker,
+          GitLabMergeRequestNewDiscussionInlayRenderer(this, project, editor, model, avatarIconsProvider, activeRangesTracker,
                                                        GitLabStatistics.MergeRequestNoteActionPlace.DIFF, model::cancel)
       }
   }
@@ -296,7 +299,8 @@ private class DiffEditorModel(
 }
 
 private fun GitLabNoteLocation.toLineRange(locationToLine: (DiffLineLocation) -> Int?): LineRange? {
-  val start = locationToLine(startSide to startLineIdx) ?: return null
-  val end = locationToLine(side to lineIdx) ?: return null
-  return LineRange(start, end)
+  val endLine = locationToLine(side to lineIdx) ?: return null
+  // if the start line is not available or incorrect, let's return end one-line range to not lose the comment
+  val startLine = locationToLine(startSide to startLineIdx)?.coerceAtMost(endLine) ?: endLine
+  return LineRange(startLine, endLine)
 }

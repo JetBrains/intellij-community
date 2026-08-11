@@ -66,10 +66,6 @@ kotlin {
     implementation(jps.org.jetbrains.kotlinx.kotlinx.io.core.jvm479158162.get().let { "${it.group}:kotlinx-io-core:${it.version}" }) {
       exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
-    implementation(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      isTransitive = false
-      exclude(group = "org.slf4j", module = "slf4j-jdk14")
-    }
     implementation(jps.ch.qos.logback.logback.classic410158546.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.slf4j", module = "slf4j-api")
       exclude(group = "com.sun.mail", module = "javax.mail")
@@ -99,6 +95,12 @@ kotlin {
       exclude(group = "com.github.ajalt.mordant", module = "mordant-jvm-ffm")
       exclude(group = "com.github.ajalt.mordant", module = "mordant-jvm-graal-ffi-jvm")
       exclude(group = "com.github.ajalt.mordant", module = "mordant-jvm-graal-ffi")
+    }
+  }
+  sourceSets.jvmMain.dependencies {
+    implementation(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      isTransitive = false
+      exclude(group = "org.slf4j", module = "slf4j-jdk14")
     }
   }
   // KOTLIN__MARKER_END

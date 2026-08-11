@@ -37,6 +37,7 @@ import java.lang.ref.WeakReference
  */
 open class ActivateToolWindowAction protected constructor(val toolWindowId: String)
   : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+  @ApiStatus.Internal
   companion object {
     @Suppress("DeprecatedCallableAddReplaceWith")
     @JvmStatic

@@ -1,12 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
-import com.intellij.codeHighlighting.Pass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
-import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings
@@ -29,6 +27,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar, DumbAware {
   @Suppress("CompanionObjectInExtension") // used in third party
   companion object {
+    @Internal
     @RequiresReadLock
     fun createPassForPreview(
       file: PsiFile,
@@ -75,6 +74,7 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
     }
   }
 
+  @Internal
   override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): DeclarativeInlayHintsPass? {
     if (!Registry.`is`("inlays.declarative.hints")) return null
     if (editor.isOneLineMode || DiffUtil.isDiffEditor(editor)) return null
@@ -112,7 +112,6 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
   }
 
   override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {
-    val ghl = intArrayOf(Pass.UPDATE_ALL).takeIf { (registrar as TextEditorHighlightingPassRegistrarImpl).isSerializeCodeInsightPasses }
-    registrar.registerTextEditorHighlightingPass(this, ghl, null, false, -1)
+    registrar.registerTextEditorHighlightingPass(this, null, null, false, -1)
   }
 }

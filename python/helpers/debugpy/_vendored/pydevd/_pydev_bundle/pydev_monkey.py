@@ -1,7 +1,11 @@
 # License: EPL
+from __future__ import annotations
+
+from _thread import _local
 import os
 import re
 import sys
+from typing import Generator
 from _pydev_bundle._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_constants import (
     get_global_debugger,
@@ -25,13 +29,13 @@ from pathlib import Path
 # Things that are dependent on having the pydevd debugger
 # ===============================================================================
 
-pydev_src_dir = os.path.dirname(os.path.dirname(__file__))
+pydev_src_dir: str = os.path.dirname(os.path.dirname(__file__))
 
-_arg_patch = threading.local()
+_arg_patch: _local = threading.local()
 
 
 @contextmanager
-def skip_subprocess_arg_patch():
+def skip_subprocess_arg_patch() -> Generator[None, Any, None]:
     _arg_patch.apply_arg_patching = False
     try:
         yield
@@ -39,7 +43,7 @@ def skip_subprocess_arg_patch():
         _arg_patch.apply_arg_patching = True
 
 
-def _get_apply_arg_patching():
+def _get_apply_arg_patching() -> os.Any | bool:
     return getattr(_arg_patch, "apply_arg_patching", True)
 
 
@@ -58,7 +62,7 @@ def _get_setup_updated_with_protocol_and_ppid(setup, is_exec=False):
         # If it's an exec, keep it what it was.
         setup[pydevd_constants.ARGUMENT_PPID] = os.getpid()
 
-    protocol = pydevd_constants.get_protocol()
+    protocol: str = pydevd_constants.get_protocol()
     if protocol == pydevd_constants.HTTP_JSON_PROTOCOL:
         setup[pydevd_constants.ARGUMENT_HTTP_JSON_PROTOCOL] = True
 
@@ -74,11 +78,11 @@ def _get_setup_updated_with_protocol_and_ppid(setup, is_exec=False):
     else:
         pydev_log.debug("Unexpected protocol: %s", protocol)
 
-    mode = pydevd_defaults.PydevdCustomization.DEBUG_MODE
+    mode: str = pydevd_defaults.PydevdCustomization.DEBUG_MODE
     if mode:
         setup["debug-mode"] = mode
 
-    preimport = pydevd_defaults.PydevdCustomization.PREIMPORT
+    preimport: str = pydevd_defaults.PydevdCustomization.PREIMPORT
     if preimport:
         setup["preimport"] = preimport
 
@@ -92,12 +96,12 @@ def _get_setup_updated_with_protocol_and_ppid(setup, is_exec=False):
 
 
 class _LastFutureImportFinder(ast.NodeVisitor):
-    def __init__(self):
+    def __init__(self) -> None:
         self.last_future_import_found = None
 
-    def visit_ImportFrom(self, node):
+    def visit_ImportFrom(self, node) -> None:
         if node.module == "__future__":
-            self.last_future_import_found = node
+            self.last_future_import_found: ast.ImportFrom = node
 
 
 def _get_offset_from_line_col(code, line, col):
@@ -133,7 +137,7 @@ def _separate_future_imports(code):
         if visitor.last_future_import_found is None:
             return "", code
 
-        node = visitor.last_future_import_found
+        node: ast.ImportFrom = visitor.last_future_import_found
         offset = -1
         if hasattr(node, "end_lineno") and hasattr(node, "end_col_offset"):
             # Python 3.8 onwards has these (so, use when possible).
@@ -144,9 +148,9 @@ def _separate_future_imports(code):
             # end line/col not available, let's just find the offset and then search
             # for the alias from there.
             line, col = node.lineno, node.col_offset
-            offset = _get_offset_from_line_col(code, line - 1, col)  # ast lines are 1-based, make it 0-based.
+            offset: int = _get_offset_from_line_col(code, line - 1, col)  # ast lines are 1-based, make it 0-based.
             if offset >= 0 and node.names:
-                from_future_import_name = node.names[-1].name
+                from_future_import_name: str = node.names[-1].name
                 i = code.find(from_future_import_name, offset)
                 if i < 0:
                     offset = -1
@@ -183,19 +187,25 @@ def _separate_future_imports(code):
         return "", code
 
 
-def _get_python_c_args(host, port, code, args, setup):
+def _get_python_c_args(host, port, code, args, setup) -> bytes | str:
     setup = _get_setup_updated_with_protocol_and_ppid(setup)
 
     # i.e.: We want to make the repr sorted so that it works in tests.
     setup_repr = setup if setup is None else (sorted_dict_repr(setup))
 
-    future_imports = ""
+    # Normalize code to str for processing if it's bytes (can happen on Linux/WSL
+    # with loky/joblib subprocesses). We'll convert back to the original type at the end.
+    code_is_bytes: bool = isinstance(code, bytes)
+    if code_is_bytes:
+        code: str = code.decode("utf-8")
+
+    future_imports: str = ""
     if "__future__" in code:
         # If the code has a __future__ import, we need to be able to strip the __future__
         # imports from the code and add them to the start of our code snippet.
         future_imports, code = _separate_future_imports(code)
 
-    return (
+    result: str = (
         "%simport sys; sys.path.insert(0, r'%s'); import pydevd; pydevd.config(%r, %r); "
         "pydevd.settrace(host=%r, port=%s, suspend=False, trace_only_current_thread=False, patch_multiprocessing=True, access_token=%r, client_access_token=%r, __setup_holder__=%s); "
         "%s"
@@ -212,6 +222,12 @@ def _get_python_c_args(host, port, code, args, setup):
         code,
     )
 
+    # Convert back to the original type if it was bytes
+    if code_is_bytes:
+        result: bytes = result.encode("utf-8")
+
+    return result
+
 
 def _get_host_port():
     import pydevd
@@ -220,14 +236,14 @@ def _get_host_port():
     return host, port
 
 
-def _is_managed_arg(arg):
+def _is_managed_arg(arg) -> bool:
     pydevd_py = _get_str_type_compatible(arg, "pydevd.py")
     if arg.endswith(pydevd_py):
         return True
     return False
 
 
-def _on_forked_process(setup_tracing=True):
+def _on_forked_process(setup_tracing=True) -> None:
     pydevd_constants.after_fork()
     pydev_log.initialize_debug_stream(reinitialize=True)
 
@@ -240,7 +256,7 @@ def _on_forked_process(setup_tracing=True):
     pydevd.settrace_forked(setup_tracing=setup_tracing)
 
 
-def _on_set_trace_for_new_thread(global_debugger):
+def _on_set_trace_for_new_thread(global_debugger) -> None:
     if global_debugger is not None:
         if not PYDEVD_USE_SYS_MONITORING:
             global_debugger.enable_tracing()
@@ -274,7 +290,7 @@ def _get_str_type_compatible(s, args):
 # ===============================================================================
 # Things related to monkey-patching
 # ===============================================================================
-def is_python(path):
+def is_python(path) -> bool:
     single_quote, double_quote = _get_str_type_compatible(path, ["'", '"'])
 
     if path.endswith(single_quote) or path.endswith(double_quote):
@@ -314,7 +330,7 @@ def remove_quotes_from_args(args):
         new_args = []
         for x in args:
             if isinstance(x, Path):
-                x = x.as_posix()
+                x: str = x.as_posix()
             else:
                 if not isinstance(x, (bytes, str)):
                     raise InvalidTypeInArgsException(str(type(x)))
@@ -422,17 +438,17 @@ def patch_args(args, is_exec=False):
         #
         # python -O -Q old -v -c "import sys;print(sys)"
 
-        params_with_combinable_arg = set(("W", "X", "Q", "c", "m"))
+        params_with_combinable_arg: set[Literal['W', 'X', 'Q', 'c', 'm']] = set(("W", "X", "Q", "c", "m"))
 
         module_name = None
-        before_module_flag = ""
+        before_module_flag: str = ""
         module_name_i_start = -1
         module_name_i_end = -1
 
         code = None
         code_i = -1
         code_i_end = -1
-        code_flag = ""
+        code_flag: str = ""
 
         filename = None
         filename_i = -1
@@ -471,15 +487,15 @@ def patch_args(args, is_exec=False):
                             # python -qmtest
                             before_module_flag = arg_as_str[:j]  # before_module_flag would then be "-q"
                             if before_module_flag == "-":
-                                before_module_flag = ""
-                            module_name_i_start = i
+                                before_module_flag: str = ""
+                            module_name_i_start: int = i
                             if not remainder:
                                 module_name = unquoted_args[i + 1]
-                                module_name_i_end = i + 1
+                                module_name_i_end: int = i + 1
                             else:
                                 # i.e.: python -qmtest should provide 'test' as the module_name
                                 module_name = unquoted_args[i][j + 1 :]
-                                module_name_i_end = module_name_i_start
+                                module_name_i_end: int = module_name_i_start
                             break_out = True
                             break
 
@@ -493,12 +509,12 @@ def patch_args(args, is_exec=False):
                             if not remainder:
                                 # arg_as_str is something as "-qc", "import sys"
                                 code = unquoted_args[i + 1]
-                                code_i_end = i + 2
+                                code_i_end: int = i + 2
                             else:
                                 # if arg_as_str is something as "-qcimport sys"
                                 code = remainder  # code would be "import sys"
-                                code_i_end = i + 1
-                            code_i = i
+                                code_i_end: int = i + 1
+                            code_i: int = i
                             break_out = True
                             break
 
@@ -519,7 +535,7 @@ def patch_args(args, is_exec=False):
                 # So, we should support whatever runpy.run_path
                 # supports in this case.
 
-                filename_i = i
+                filename_i: int = i
 
                 if _is_managed_arg(filename):  # no need to add pydevd twice
                     pydev_log.debug("Skipped monkey-patching as pydevd.py is in args already.")
@@ -543,7 +559,7 @@ def patch_args(args, is_exec=False):
 
                 return quote_args(new_args)
 
-        first_non_vm_index = max(filename_i, module_name_i_start)
+        first_non_vm_index: int = max(filename_i, module_name_i_start)
         if first_non_vm_index == -1:
             pydev_log.debug("Unable to fix arguments to attach debugger on subprocess (could not resolve filename nor module name).")
             return original_args
@@ -558,7 +574,7 @@ def patch_args(args, is_exec=False):
         if before_module_flag:
             new_args.append(before_module_flag)
 
-        add_module_at = len(new_args) + 1
+        add_module_at: int = len(new_args) + 1
 
         new_args.extend(
             setup_to_argv(
@@ -601,11 +617,11 @@ def str_to_args_windows(args):
     ARG = 1
     IN_DOUBLE_QUOTE = 2
 
-    state = DEFAULT
+    state: int = DEFAULT
     backslashes = 0
-    buf = ""
+    buf: str = ""
 
-    args_len = len(args)
+    args_len: int = len(args)
     for i in range(args_len):
         ch = args[i]
         if ch == "\\":
@@ -618,7 +634,7 @@ def str_to_args_windows(args):
                     buf += "\\"
                 if backslashes == 1:
                     if state == DEFAULT:
-                        state = ARG
+                        state: int = ARG
 
                     buf += '"'
                     backslashes = 0
@@ -627,7 +643,7 @@ def str_to_args_windows(args):
             else:
                 # false alarm, treat passed backslashes literally...
                 if state == DEFAULT:
-                    state = ARG
+                    state: int = ARG
 
                 while backslashes > 0:
                     backslashes -= 1
@@ -638,16 +654,16 @@ def str_to_args_windows(args):
                 # skip
                 continue
             elif state == ARG:
-                state = DEFAULT
+                state: int = DEFAULT
                 result.append(buf)
-                buf = ""
+                buf: str = ""
                 continue
 
         if state in (DEFAULT, ARG):
             if ch == '"':
-                state = IN_DOUBLE_QUOTE
+                state: int = IN_DOUBLE_QUOTE
             else:
-                state = ARG
+                state: int = ARG
                 buf += ch
 
         elif state == IN_DOUBLE_QUOTE:
@@ -659,7 +675,7 @@ def str_to_args_windows(args):
                     buf += '"'
                     i += 1
                 else:
-                    state = ARG
+                    state: int = ARG
             else:
                 buf += ch
 
@@ -677,12 +693,12 @@ def patch_arg_str_win(arg_str):
     # Fix https://youtrack.jetbrains.com/issue/PY-9767 (args may be empty)
     if not args or not is_python(args[0]):
         return arg_str
-    arg_str = " ".join(patch_args(args))
+    arg_str: str = " ".join(patch_args(args))
     pydev_log.debug("New args: %s", arg_str)
     return arg_str
 
 
-def monkey_patch_module(module, funcname, create_func):
+def monkey_patch_module(module, funcname, create_func) -> None:
     if hasattr(module, funcname):
         original_name = "original_" + funcname
         if not hasattr(module, original_name):
@@ -690,11 +706,11 @@ def monkey_patch_module(module, funcname, create_func):
             setattr(module, funcname, create_func(original_name))
 
 
-def monkey_patch_os(funcname, create_func):
+def monkey_patch_os(funcname, create_func) -> None:
     monkey_patch_module(os, funcname, create_func)
 
 
-def warn_multiproc():
+def warn_multiproc() -> None:
     pass  # TODO: Provide logging as messages to the IDE.
     # pydev_log.error_once(
     #     "pydev debugger: New process is launching (breakpoints won't work in the new process).\n"
@@ -847,7 +863,7 @@ def create_warn_fork_exec(original_name):
     _posixsubprocess.fork_exec(args, executable_list, close_fds, ... (13 more))
     """
 
-    def new_warn_fork_exec(*args):
+    def new_warn_fork_exec(*args) -> os.Any | None:
         try:
             import _posixsubprocess
 
@@ -881,7 +897,7 @@ def create_subprocess_warn_fork_exec(original_name):
     subprocess._fork_exec(args, executable_list, close_fds, ... (13 more))
     """
 
-    def new_warn_fork_exec(*args):
+    def new_warn_fork_exec(*args) -> os.Any | None:
         try:
             import subprocess
 
@@ -929,13 +945,13 @@ def create_CreateProcessWarnMultiproc(original_name):
     return new_CreateProcess
 
 
-def create_fork(original_name):
+def create_fork(original_name) -> Callable[[], Any]:
     def new_fork():
         # A simple fork will result in a new python process
         is_new_python_process = True
-        frame = sys._getframe()
+        frame: sys.FrameType = sys._getframe()
 
-        apply_arg_patch = _get_apply_arg_patching()
+        apply_arg_patch: os.Any | bool = _get_apply_arg_patching()
 
         is_subprocess_fork = False
         while frame is not None:
@@ -944,18 +960,18 @@ def create_fork(original_name):
                 # If we're actually in subprocess.Popen creating a child, it may
                 # result in something which is not a Python process, (so, we
                 # don't want to connect with it in the forked version).
-                executable = frame.f_locals.get("executable")
+                executable: os.Any | None = frame.f_locals.get("executable")
                 if executable is not None:
                     is_new_python_process = False
                     if is_python(executable):
                         is_new_python_process = True
                 break
 
-            frame = frame.f_back
+            frame: sys.FrameType | None = frame.f_back
         frame = None  # Just make sure we don't hold on to it.
 
-        protocol = pydevd_constants.get_protocol()
-        debug_mode = PydevdCustomization.DEBUG_MODE
+        protocol: str = pydevd_constants.get_protocol()
+        debug_mode: str = PydevdCustomization.DEBUG_MODE
 
         child_process = getattr(os, original_name)()  # fork
         if not child_process:
@@ -973,19 +989,19 @@ def create_fork(original_name):
     return new_fork
 
 
-def send_process_created_message():
-    py_db = get_global_debugger()
+def send_process_created_message() -> None:
+    py_db: None = get_global_debugger()
     if py_db is not None:
         py_db.send_process_created_message()
 
 
-def send_process_about_to_be_replaced():
-    py_db = get_global_debugger()
+def send_process_about_to_be_replaced() -> None:
+    py_db: None = get_global_debugger()
     if py_db is not None:
         py_db.send_process_about_to_be_replaced()
 
 
-def patch_new_process_functions():
+def patch_new_process_functions() -> None:
     # os.execl(path, arg0, arg1, ...)
     # os.execle(path, arg0, arg1, ..., env)
     # os.execlp(file, arg0, arg1, ...)
@@ -1050,7 +1066,7 @@ def patch_new_process_functions():
             monkey_patch_module(_subprocess, "CreateProcess", create_CreateProcess)
 
 
-def patch_new_process_functions_with_warning():
+def patch_new_process_functions_with_warning() -> None:
     monkey_patch_os("execl", create_warn_multiproc)
     monkey_patch_os("execle", create_warn_multiproc)
     monkey_patch_os("execlp", create_warn_multiproc)
@@ -1096,15 +1112,15 @@ def patch_new_process_functions_with_warning():
 
 
 class _NewThreadStartupWithTrace:
-    def __init__(self, original_func, args, kwargs):
-        self.original_func = original_func
-        self.args = args
-        self.kwargs = kwargs
+    def __init__(self, original_func, args, kwargs) -> None:
+        self.original_func: Any = original_func
+        self.args: Any = args
+        self.kwargs: Any = kwargs
 
     def __call__(self):
         # We monkey-patch the thread creation so that this function is called in the new thread. At this point
         # we notify of its creation and start tracing it.
-        py_db = get_global_debugger()
+        py_db: None = get_global_debugger()
 
         thread_id = None
         if py_db is not None:
@@ -1112,11 +1128,11 @@ class _NewThreadStartupWithTrace:
             # the start_new_thread internal machinery and thread._bootstrap has not finished), so, the code below needs
             # to make sure that we use the current thread bound to the original function and not use
             # threading.current_thread() unless we're sure it's a dummy thread.
-            t = getattr(self.original_func, "__self__", getattr(self.original_func, "im_self", None))
+            t: os.Any | None = getattr(self.original_func, "__self__", getattr(self.original_func, "im_self", None))
             if not isinstance(t, threading.Thread):
                 # This is not a threading.Thread but a Dummy thread (so, get it as a dummy thread using
                 # currentThread).
-                t = threading.current_thread()
+                t: threading.Thread = threading.current_thread()
 
             if not getattr(t, "is_pydev_daemon_thread", False):
                 thread_id = get_current_thread_id(t)
@@ -1144,10 +1160,10 @@ class _NewThreadStartupWithTrace:
 
 
 class _NewThreadStartupWithoutTrace:
-    def __init__(self, original_func, args, kwargs):
-        self.original_func = original_func
-        self.args = args
-        self.kwargs = kwargs
+    def __init__(self, original_func, args, kwargs) -> None:
+        self.original_func: Any = original_func
+        self.args: Any = args
+        self.kwargs: Any = kwargs
 
     def __call__(self):
         return self.original_func(*self.args, **self.kwargs)
@@ -1172,12 +1188,12 @@ def _get_threading_modules_to_patch():
 threading_modules_to_patch = _get_threading_modules_to_patch()
 
 
-def patch_thread_module(thread_module):
+def patch_thread_module(thread_module) -> None:
     # Note: this is needed not just for the tracing, but to have an early way to
     # notify that a thread was created (i.e.: tests_python.test_debugger_json.test_case_started_exited_threads_protocol)
-    start_thread_attrs = ["_start_new_thread", "start_new_thread", "start_new"]
-    start_joinable_attrs = ["start_joinable_thread", "_start_joinable_thread"]
-    check = start_thread_attrs + start_joinable_attrs
+    start_thread_attrs: list[str] = ["_start_new_thread", "start_new_thread", "start_new"]
+    start_joinable_attrs: list[str] = ["start_joinable_thread", "_start_joinable_thread"]
+    check: list[str] = start_thread_attrs + start_joinable_attrs
 
     replace_attrs = []
     for attr in check:
@@ -1240,12 +1256,12 @@ def patch_thread_module(thread_module):
             setattr(thread_module, attr, pydev_start_new_thread)
 
 
-def patch_thread_modules():
+def patch_thread_modules() -> None:
     for t in threading_modules_to_patch:
         patch_thread_module(t)
 
 
-def undo_patch_thread_modules():
+def undo_patch_thread_modules() -> None:
     for t in threading_modules_to_patch:
         try:
             t.start_new_thread = t._original_start_new_thread
@@ -1273,7 +1289,7 @@ def undo_patch_thread_modules():
             pass
 
 
-def disable_trace_thread_modules():
+def disable_trace_thread_modules() -> None:
     """
     Can be used to temporarily stop tracing threads created with thread.start_new_thread.
     """
@@ -1281,7 +1297,7 @@ def disable_trace_thread_modules():
     _UseNewThreadStartup = _NewThreadStartupWithoutTrace
 
 
-def enable_trace_thread_modules():
+def enable_trace_thread_modules() -> None:
     """
     Can be used to start tracing threads created with thread.start_new_thread again.
     """

@@ -1,0 +1,330 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.editor.impl
+
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.elf.Elf
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.ex.DocumentSettings
+import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentTextPatch
+import com.intellij.openapi.editor.impl.event.DocumentEventImpl
+import com.intellij.util.DocumentEventUtil
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.text.ImmutableCharSequence
+import java.util.function.UnaryOperator
+import kotlin.concurrent.Volatile
+
+/**
+ * Mutator for the elf document view.
+ *
+ * Direct text writes are allowed only inside an elf scope. They update only the
+ * elf snapshot, fire elf listener callbacks, and append an [ElfTextChange] for a
+ * later sync pass. Those writes do not take the application write lock.
+ *
+ * Reverting elf changes and applying real changes to elf are synchronization
+ * operations. They run on EDT with write access and are entered outside an elf
+ * scope; each operation performs its elf-view mutations inside an elf scope of
+ * its own to keep the UI-side view consistent with the real document after
+ * conflict handling or real-document edits.
+ */
+internal abstract class DocumentElfMutator(
+  private val settingsElf: DocumentSettings,
+  private val dispatcher: DocumentMagicEventDispatcher,
+  guardedBlocks: GuardedBlocks,
+) : DocumentMutatorImpl(settingsElf, dispatcher, guardedBlocks) {
+  @Volatile private var textChangeInProgress = false
+  @Volatile private var isApplyingRealChangesToElf = false
+  @Volatile private var revertingChangeEvent: DocumentEvent? = null
+
+  protected abstract fun getSnapshotSnapshot(): SnapshotSnapshot
+  protected abstract fun compareAndSet(expect: SnapshotSnapshot, update: SnapshotSnapshot): Boolean
+  protected abstract fun appendElfChange(change: ElfTextChange)
+
+  fun revertElfChanges(changes: List<ElfTextChange>) {
+    ThreadingAssertions.assertEventDispatchThread()
+    ThreadingAssertions.assertWriteAccess()
+    assertOutsideElfScope()
+    check(changes.isNotEmpty()) { "no elf changes to revert" }
+    val initialBulkModeStatus = dispatcher.elf().isInBulkUpdate()
+    val hostDocument = changes.first().changeEvent.document
+    Elf.getElf().withElfScope {
+      try {
+        for (change in changes.asReversed()) {
+          dispatcher.setBulkElfUpdateStatus(hostDocument, change.isInBulkUpdate)
+          revertChange(change)
+        }
+      } finally {
+        dispatcher.setBulkElfUpdateStatus(hostDocument, initialBulkModeStatus)
+      }
+    }
+  }
+
+  fun applyRealChanges(changes: List<RealTextChange>) {
+    ThreadingAssertions.assertEventDispatchThread()
+    ThreadingAssertions.assertWriteAccess()
+    assertOutsideElfScope()
+    check(changes.isNotEmpty()) { "no real changes to apply" }
+    val initialBulkModeStatus = dispatcher.elf().isInBulkUpdate()
+    val hostDocument = changes.first().changeEvent.document
+    isApplyingRealChangesToElf = true
+    Elf.getElf().withElfScope {
+      try {
+        for (change in changes) {
+          dispatcher.setBulkElfUpdateStatus(hostDocument, change.isInBulkUpdate)
+          val snapshotBefore = getSnapshot()
+          changeText(
+            snapshotBefore,
+            change.changeEvent,
+            syncPatch(
+              change.changeEvent,
+              snapshotBefore,
+              change.snapshotAfter.text().chars(),
+              DocumentModStamp.next(),
+              false, // TODO: why false?
+            ),
+          )
+        }
+      } finally {
+        isApplyingRealChangesToElf = false
+        dispatcher.setBulkElfUpdateStatus(hostDocument, initialBulkModeStatus)
+      }
+    }
+  }
+
+  final override fun setModStamp(newModStamp: Long, incrementModSequence: Boolean) {
+    assertIsInElfScope()
+    throw UnsupportedOperationException("ElfDocument does not support setModStamp yet")
+  }
+
+  final override fun clearLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray) {
+    assertIsInElfScope()
+    throw UnsupportedOperationException("ElfDocument does not support clearLineFlags yet")
+  }
+
+  final override fun updateSnapshotAndGet(updateFunc: UnaryOperator<DocumentSnapshot>): DocumentSnapshot {
+    assertIsInElfScope()
+    throw UnsupportedOperationException("ElfDocument does not support updateSnapshotAndGet yet")
+  }
+
+  final override fun insertString(
+    hostDocument: Document,
+    insertOffset: Int,
+    insertString: CharSequence,
+  ) {
+    assertIsInElfScope()
+    super.insertString(hostDocument, insertOffset, insertString)
+  }
+
+  final override fun deleteString(hostDocument: Document, startOffset: Int, endOffset: Int) {
+    assertIsInElfScope()
+    super.deleteString(hostDocument, startOffset, endOffset)
+  }
+
+  final override fun replaceText(
+    hostDocument: Document,
+    newWholeText: CharSequence,
+    newModStamp: Long,
+  ) {
+    assertIsInElfScope()
+    super.replaceText(hostDocument, newWholeText, newModStamp)
+  }
+
+  final override fun setText(hostDocument: Document, newWholeText: CharSequence) {
+    assertIsInElfScope()
+    super.setText(hostDocument, newWholeText)
+  }
+
+  final override fun moveText(
+    hostDocument: Document,
+    srcStartOffset: Int,
+    srcEndOffset: Int,
+    dstOffset: Int,
+  ) {
+    assertIsInElfScope()
+    super.moveText(hostDocument, srcStartOffset, srcEndOffset, dstOffset)
+  }
+
+  final override fun replaceString(
+    hostDocument: Document,
+    startOffset: Int,
+    endOffset: Int,
+    moveOffset: Int,
+    replaceString: CharSequence,
+    newModStamp: Long,
+    wholeTextReplaced: Boolean,
+  ) {
+    assertIsInElfScope()
+    super.replaceString(
+      hostDocument,
+      startOffset,
+      endOffset,
+      moveOffset,
+      replaceString,
+      newModStamp,
+      wholeTextReplaced,
+    )
+  }
+
+  final override fun updateAndGet(update: UnaryOperator<DocumentSnapshot>): DocumentSnapshot {
+    while (true) {
+      val expect = getSnapshotSnapshot()
+      val newElf = update.apply(expect.elf)
+      val updated = SnapshotSnapshot.newDirty(newElf, expect.real) // any elf change makes snapshot dirty
+      if (compareAndSet(expect, updated)) {
+        // if metadata change is supported, then should schedule elfToRealChange
+        return newElf
+      }
+    }
+  }
+
+  final override fun changeText(
+    snapshotBefore: DocumentSnapshot,
+    changeEvent: DocumentEvent,
+    patch: DocumentTextPatch,
+  ): DocumentSnapshot {
+    assertNotNestedModification()
+    val snapshotAfter: DocumentSnapshot
+    textChangeInProgress = true
+    try {
+      snapshotAfter = dispatcher.withFiringElfTextUpdate(revertingChangeEvent, changeEvent) {
+        updateText(snapshotBefore, patch)
+      }
+    } finally {
+      textChangeInProgress = false
+    }
+    if (revertingChangeEvent == null && !isApplyingRealChangesToElf) {
+      settingsElf.assertInsideCommand() // currently no difference, but real settings would be more accurate
+      appendElfChange(
+        ElfTextChange(
+          snapshotBefore,
+          changeEvent,
+          patch,
+          dispatcher.elf().isInBulkUpdate(),
+          CommandProcessor.getInstance().currentCommandProject,
+          CommandProcessor.getInstance().currentCommandName,
+          CommandProcessor.getInstance().currentCommandGroupId,
+          CommandProcessor.getInstance().isUndoTransparentActionInProgress,
+        )
+      )
+    }
+    return snapshotAfter
+  }
+
+  private fun updateText(
+    snapshotBefore: DocumentSnapshot,
+    patch: DocumentTextPatch,
+  ): DocumentSnapshot {
+    return updateAndGet { latest -> mergeAndPatch(snapshotBefore, latest, patch) }
+  }
+
+  private fun revertChange(change: ElfTextChange) {
+    val eventToRevert = change.changeEvent
+    // Safe to read despite running inside the operation's elf scope: nothing runs between this read and changeText,
+    // whose nested-modification guard rejects elf text changes from listeners, and elf metadata cannot change either —
+    // setModStamp/clearLineFlags are unsupported for elf, and updateText merges the latest metadata at CAS time anyway.
+    val currentSnapshot = getSnapshot()
+    val currentText = currentSnapshot.text()
+    val initialStartOffset = if (eventToRevert is DocumentEventImpl) eventToRevert.initialStartOffset else eventToRevert.offset
+    val changeEvent = DocumentEventImpl(
+      eventToRevert.document,
+      eventToRevert.offset,
+      eventToRevert.newFragment,
+      eventToRevert.oldFragment,
+      currentText.modStamp(),
+      eventToRevert.isWholeTextReplaced,
+      initialStartOffset,
+      eventToRevert.newLength,
+      getRevertMoveOffset(eventToRevert),
+      currentText.length(),
+    )
+    revertingChangeEvent = eventToRevert
+    try {
+      changeText(
+        currentSnapshot,
+        changeEvent,
+        syncPatch(
+          changeEvent,
+          currentSnapshot,
+          change.snapshotBefore.text().chars(),
+          DocumentModStamp.next(),
+          change.patch.clearLineFlags(),
+        ),
+      )
+    } finally {
+      revertingChangeEvent = null
+    }
+  }
+
+  /**
+   * Patch applying [changeEvent] on top of [snapshotBefore] during synchronization.
+   * A whole-text replacement takes [wholeText] as the resulting text, reusing the instance
+   * (restoring the original text for a revert, sharing the real snapshot's text for a replay).
+   */
+  private fun syncPatch(
+    changeEvent: DocumentEvent,
+    snapshotBefore: DocumentSnapshot,
+    wholeText: ImmutableCharSequence,
+    newModStamp: Long,
+    clearLineFlags: Boolean,
+  ): DocumentTextPatch {
+    val originStartOffset = if (changeEvent is DocumentEventImpl) {
+      changeEvent.initialStartOffset
+    } else {
+      changeEvent.offset
+    }
+    val originEndOffset = originStartOffset + (if (changeEvent is DocumentEventImpl) {
+      changeEvent.initialOldLength
+    } else {
+      changeEvent.oldLength
+    })
+    if (changeEvent.isWholeTextReplaced) {
+      return DocumentTextPatch.complex(
+        startOffset = 0,
+        endOffset = snapshotBefore.text().length(),
+        newFragment = wholeText,
+        newModStamp = newModStamp,
+        clearLineFlags = true,
+        originStartOffset = originStartOffset,
+        originEndOffset = originEndOffset,
+        moveOffset = changeEvent.moveOffset,
+      )
+    }
+    return DocumentTextPatch.complex(
+      startOffset = changeEvent.offset,
+      endOffset = changeEvent.offset + changeEvent.oldLength,
+      newFragment = changeEvent.newFragment,
+      newModStamp = newModStamp,
+      clearLineFlags = clearLineFlags,
+      originStartOffset = originStartOffset,
+      originEndOffset = originEndOffset,
+      moveOffset = changeEvent.moveOffset,
+    )
+  }
+
+  private fun getRevertMoveOffset(changeEvent: DocumentEvent): Int {
+    return if (DocumentEventUtil.isMoveDeletion(changeEvent)) {
+      DocumentEventUtil.getMoveOffsetAfterDeletion(changeEvent)
+    } else {
+      changeEvent.moveOffset
+    }
+  }
+
+  private fun assertNotNestedModification() {
+    if (textChangeInProgress) {
+      throw IllegalStateException("Detected document modification from DocumentListener")
+    }
+  }
+
+  private fun assertIsInElfScope() {
+    if (!Elf.getElf().isInElfScope()) {
+      throw IllegalStateException("ElfDocument is mutable only within elf scope")
+    }
+  }
+
+  private fun assertOutsideElfScope() {
+    if (Elf.getElf().isInElfScope()) {
+      throw IllegalStateException("operation is forbidden inside elfScope")
+    }
+  }
+}

@@ -19,12 +19,16 @@ public abstract class PyTypeVisitorExt<T> extends PyTypeVisitor<T> {
     return visitPyTypeParameterType(paramSpecType);
   }
 
-  public T visitPyGenericType(@NotNull PyCollectionType genericType) {
+  /**
+   * @deprecated use visitPyClassType instead
+   */
+  @Deprecated
+  public T visitPyGenericType(@NotNull PyClassType genericType) {
     return visitPyClassType(genericType);
   }
 
   public T visitPyTupleType(@NotNull PyTupleType tupleType) {
-    return visitPyGenericType(tupleType);
+    return visitPyClassType(tupleType);
   }
 
   public T visitPyNamedTupleType(@NotNull PyNamedTupleType namedTupleType) {
@@ -61,6 +65,10 @@ public abstract class PyTypeVisitorExt<T> extends PyTypeVisitor<T> {
 
   public T visitPyNarrowedType(@NotNull PyNarrowedType narrowedType) {
     return visitPyType(narrowedType);
+  }
+
+  public T visitPyTypeFormType(@NotNull PyTypeFormType typeFormType) {
+    return visitPyClassType(typeFormType);
   }
 
   public T visitPyConcatenateType(@NotNull PyConcatenateType concatenateType) {

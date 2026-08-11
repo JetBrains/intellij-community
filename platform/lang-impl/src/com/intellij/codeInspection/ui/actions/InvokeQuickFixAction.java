@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public final class InvokeQuickFixAction extends AnAction {
   private final InspectionResultsView myView;
 
-  public InvokeQuickFixAction(final InspectionResultsView view) {
+  public InvokeQuickFixAction(InspectionResultsView view) {
     super(InspectionsBundle.message(ExperimentalUI.isNewUI() ? "inspection.action.apply.quickfix.new" : "inspection.action.apply.quickfix"),
           InspectionsBundle.message("inspection.action.apply.quickfix.description"), AllIcons.Actions.IntentionBulb);
     myView = view;
@@ -46,14 +46,14 @@ public final class InvokeQuickFixAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final ActionGroup fixes = (ActionGroup)ActionManager.getInstance().getAction("QuickFixes");
+    ActionGroup fixes = (ActionGroup)ActionManager.getInstance().getAction("QuickFixes");
     if (fixes.getChildren(e).length == 0) {
       Messages.showInfoMessage(myView, InspectionsBundle.message("there.are.no.applicable.quick.fixes.message"),
                                InspectionsBundle.message("nothing.found.to.fix.title"));
       return;
     }
     DataContext dataContext = e.getDataContext();
-    final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(InspectionsBundle.message("inspection.tree.popup.title"),
+    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(InspectionsBundle.message("inspection.tree.popup.title"),
                               fixes,
                               dataContext,
                               JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,

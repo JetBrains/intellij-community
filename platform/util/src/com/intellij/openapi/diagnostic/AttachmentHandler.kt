@@ -1,10 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic
 
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.sanitizeFileName
 import kotlinx.coroutines.FlowPreview
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.PrintWriter
 import java.nio.file.Files
@@ -19,10 +20,11 @@ import kotlin.io.path.name
 /**
  * Handler for logging attachments of [ExceptionWithAttachments] to log folder.
  */
-internal class AttachmentHandler(logPath: Path) : Handler() {
+@ApiStatus.Internal
+class AttachmentHandler(logPath: Path) : Handler() {
   private val baseDir = logPath.parent.resolve("attachments")
 
-  private val pruner = OldAttachmentPruner(baseDir)
+  private val pruner = OldAttachmentPruner()
 
   override fun publish(record: LogRecord) {
     if (!isLoggable(record)) return
@@ -42,7 +44,7 @@ internal class AttachmentHandler(logPath: Path) : Handler() {
     }
   }
 
-  private fun writeEwas(ewas: MutableList<ExceptionWithAttachments>, t: Throwable): Path? {
+  private fun writeEwas(ewas: List<ExceptionWithAttachments>, t: Throwable): Path? {
     val attachmentsDir = prepareDir(t) ?: return null
 
     // store all EWAs directly in the main folder, prefixing files with the EWA index
@@ -108,7 +110,7 @@ internal class AttachmentHandler(logPath: Path) : Handler() {
       Files.createDirectories(baseDir)
 
       // Prune oldest groups to keep room for a new one
-      pruner.pruneOldAttachmentGroups()
+      pruner.pruneOldAttachmentGroups(baseDir)
 
       // Create new group directory
       Files.createDirectories(attachmentsDir)
@@ -215,17 +217,15 @@ internal class AttachmentHandler(logPath: Path) : Handler() {
 }
 
 /**
- * Keep at most [MAX_ATTACHMENT_GROUPS] attachment groups under [baseDir].
+ * Keep at most [MAX_ATTACHMENT_GROUPS] attachment groups under baseDir.
  * If the number of existing groups is >= [MAX_ATTACHMENT_GROUPS], delete the oldest ones to make room for a new group.
  * Debounes execution by 1 minute.
  */
 @OptIn(FlowPreview::class)
-private class OldAttachmentPruner(
-  private val baseDir: Path
-) {
+private class OldAttachmentPruner {
   private val counter = AtomicInteger(0)
 
-  fun pruneOldAttachmentGroups() {
+  fun pruneOldAttachmentGroups(baseDir: Path) {
     val recentlyReported = counter.incrementAndGet()
     if (recentlyReported * 2 < MAX_ATTACHMENT_GROUPS) {
       return
@@ -236,13 +236,12 @@ private class OldAttachmentPruner(
         return
       }
 
-      val entries = collectAttachmentGroups()
+      val entries = collectAttachmentGroups(baseDir)
 
       val toDeleteCount = entries.size - MAX_ATTACHMENT_GROUPS
-      if (toDeleteCount <= 0) return
-
-      // Sort by directory name which begins with timestamp in yy-MM-dd-HH-mm-ss format -> lexicographical order matches time order
-      entries.sortBy { it.fileName.toString() }
+      if (toDeleteCount <= 0) {
+        return
+      }
 
       try {
         repeat(toDeleteCount) { i ->
@@ -255,20 +254,21 @@ private class OldAttachmentPruner(
       counter.set(0)
     }
   }
+}
 
-  private fun collectAttachmentGroups(): MutableList<Path> {
-    return try {
-      val directoryStream = Files.newDirectoryStream(baseDir) { path ->
-        Files.isDirectory(path) && path.name.startsWith("attachments-")
-      }
+private fun collectAttachmentGroups(baseDir: Path): List<Path> {
+  try {
+    val directoryStream = Files.newDirectoryStream(baseDir) { path ->
+      Files.isDirectory(path) && path.name.startsWith("attachments-")
+    }
 
-      directoryStream.use { ds ->
-        ds.toMutableList()
-      }
+    return directoryStream.use { ds ->
+      // sort by directory name which begins with timestamp in yy-MM-dd-HH-mm-ss format -> lexicographical order matches time order
+      ds.sortedBy { it.fileName.toString() }
     }
-    catch (_: IOException) {
-      mutableListOf()
-    }
+  }
+  catch (_: IOException) {
+    return listOf()
   }
 }
 

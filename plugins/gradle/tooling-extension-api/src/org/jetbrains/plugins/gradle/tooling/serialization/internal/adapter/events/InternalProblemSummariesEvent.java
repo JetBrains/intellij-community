@@ -25,6 +25,14 @@ public class InternalProblemSummariesEvent extends InternalProgressEvent impleme
     this.problemSummaries = problemSummaries;
   }
 
+  public InternalProblemSummariesEvent(
+    @NotNull ProblemSummariesEvent event,
+    @Nullable OperationDescriptor descriptor
+  ) {
+    super(event.getEventTime(), event.getDisplayName(), descriptor);
+    this.problemSummaries = event.getProblemSummaries();
+  }
+
   @Override
   public @NotNull List<ProblemSummary> getProblemSummaries() {
     return problemSummaries;

@@ -2,6 +2,7 @@
 package com.intellij.python.pytools.lsp
 
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import com.intellij.util.xmlb.XmlSerializerUtil
 import java.nio.file.Path
@@ -63,11 +64,27 @@ abstract class PyLspToolConfiguration<State : PyLspToolConfiguration<State>> : P
   @Deprecated("replaced with PyToolState")
   override var sdkName: String = DEFAULT_ENVIRONMENT
 
-  fun isAnyFeatureEnabled(): Boolean = inspections || completions == true || inlayHints == true || documentation == true
-
   @Suppress("UNCHECKED_CAST")
   final override fun getState(): State = this as State
 
   @Suppress("UNCHECKED_CAST")
   override fun loadState(state: State): Unit = XmlSerializerUtil.copyBean(state, this as State)
+
+  /**
+   * Reads the pre-[PyToolsState] enable / discovery-mode / custom-path settings into a [PyToolsState.ToolEntry]
+   * and clears them from this configuration, so [PyToolsState]'s one-time migration is one-way: re-running it
+   * can never resurrect the old values. Feature flags (inspections, completions, ...) are left untouched.
+   */
+  @Suppress("DEPRECATION")
+  fun migrateToPyToolState(): PyToolsState.ToolEntry {
+    val entry = PyToolsState.ToolEntry(
+      enabled = enabled,
+      discoveryMode = executableDiscoveryMode,
+      customToolBinaryPath = executablePath,
+    )
+    enabled = false
+    executableDiscoveryMode = ExecutableDiscoveryMode.INTERPRETER
+    pathToExecutable = ""
+    return entry
+  }
 }

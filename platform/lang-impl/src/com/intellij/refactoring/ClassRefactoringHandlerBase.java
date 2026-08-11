@@ -13,11 +13,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.PsiNavigateUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dennis.Ushakov
  */
+@ApiStatus.Internal
 public abstract class ClassRefactoringHandlerBase implements RefactoringActionHandler, ElementsHandler {
   @Override
   public boolean isEnabledOnElements(PsiElement[] elements) {

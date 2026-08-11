@@ -1,0 +1,41 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.completion.ranking.sh` start
+jvm_library(
+    name = "completion-ranking-sh",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.completion.ranking.sh",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-completion-ranking-sh-completion-ranking-sh"],
+    runtime_deps = ["@lib//:libraries-completion-ranking-sh-completion-ranking-sh"],
+)
+
+jvm_library(
+    name = "completion-ranking-sh_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.completion.ranking.sh",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-completion-ranking-sh-completion-ranking-sh"],
+    runtime_deps = [":completion-ranking-sh"],
+)
+### auto-generated section `build intellij.libraries.completion.ranking.sh` end
+
+### auto-generated section `iml intellij.libraries.completion.ranking.sh` start
+exports_files(
+    [
+        "intellij.libraries.completion.ranking.sh.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.completion.ranking.sh` end

@@ -4,15 +4,9 @@ package org.jetbrains.kotlin.idea.internal
 import com.intellij.openapi.application.readAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.cli.create
-import org.jetbrains.kotlin.cli.extensionsStorage
-import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
-import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
-import org.jetbrains.kotlin.config.CommonConfigurationKeys
-import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.languageVersionSettings
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.jvm.shared.bytecode.BytecodeGenerationResult
 import org.jetbrains.kotlin.idea.jvm.shared.bytecode.KotlinBytecodeToolWindow
@@ -38,17 +32,14 @@ abstract class AbstractBytecodeToolWindowTest : KotlinLightCodeInsightFixtureTes
 
         val file = myFixture.file as KtFile
 
-        val configuration = CompilerConfiguration.create().apply {
-            if (InTextDirectivesUtils.getPrefixedBoolean(mainFileText, "// INLINE:") == false) {
-                put(CommonConfigurationKeys.DISABLE_INLINE, true)
-            }
-
-            languageVersionSettings = file.languageVersionSettings
-        }
-
         val bytecode = runBlocking(Dispatchers.Default) {
             readAction {
-                KotlinBytecodeToolWindow.getBytecodeForFile(file, configuration, false)
+                @OptIn(KaExperimentalApi::class, KaIdeApi::class)
+                KotlinBytecodeToolWindow.getBytecodeForFile(file, showOffsets = false) {
+                    if (InTextDirectivesUtils.getPrefixedBoolean(mainFileText, "// INLINE:") == false) {
+                        disableInline(true)
+                    }
+                }
             }
         }
 

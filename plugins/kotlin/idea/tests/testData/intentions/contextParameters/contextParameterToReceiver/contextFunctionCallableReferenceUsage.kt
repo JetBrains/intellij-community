@@ -1,6 +1,6 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
-// K2_AFTER_ERROR: Unresolved reference 'fn'.
-// K2_ERROR: No context argument for '_: Context' found.
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: NO_CONTEXT_ARGUMENT
 
 interface Context
 

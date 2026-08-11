@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   private static final Logger LOG = Logger.getInstance(LayeredLexerEditorHighlighter.class);
@@ -395,8 +396,8 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     private final DocumentImpl doc;
     private final LazyLexerEditorHighlighter highlighter;
     private final String mySeparator;
-    private final Map<IElementType, TextAttributes> myAttributesMap = new HashMap<>();
-    private final Map<IElementType, TextAttributesKey[]> myKeysMap = new HashMap<>();
+    private final Map<IElementType, TextAttributes> myAttributesMap = new ConcurrentHashMap<>();
+    private final Map<IElementType, TextAttributesKey[]> myKeysMap = new ConcurrentHashMap<>();
     private final @NotNull SyntaxHighlighter mySyntaxHighlighter;
     private final TextAttributesKey myBackground;
 
@@ -413,17 +414,29 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
 
     @NotNull TextAttributes getAttributes(IElementType tokenType) {
-      TextAttributes attrs = myAttributesMap.get(tokenType);
+      IElementType notNulled = notNullize(tokenType);
+      TextAttributes attrs = myAttributesMap.get(notNulled);
       if (attrs == null) {
         TextAttributesKey[] keys = getAttributesKeys(tokenType);
         attrs = convertAttributes(keys);
-        myAttributesMap.put(tokenType, attrs);
+        myAttributesMap.put(notNulled, attrs);
       }
       return attrs;
     }
 
-    private TextAttributesKey @NotNull [] getAttributesKeys(IElementType tokenType) {
-      return myKeysMap.computeIfAbsent(tokenType, type -> SyntaxHighlighterBase.pack(myBackground, mySyntaxHighlighter.getTokenHighlights(type)));
+    // to avoid NPE in ConcurrentHashMap
+    private static @NotNull IElementType notNullize(@Nullable IElementType type) {
+      return type == null ? IElementType.NULL_ELEMENT_TYPE : type;
+    }
+    private @NotNull TextAttributesKey @NotNull [] getAttributesKeys(IElementType tokenType) {
+      IElementType notNulled = notNullize(tokenType);
+      TextAttributesKey[] keys = myKeysMap.get(notNulled);
+      if (keys != null) {
+        return keys;
+      }
+      // some SyntaxHighlighters implemented in so convoluted way that their getTokenHighlights() changed myKeysMap, so we can't call it inside computeIfAbsent to avoid CME
+      TextAttributesKey[] syntaxTokens = tokenType == null ? TextAttributesKey.EMPTY_ARRAY : mySyntaxHighlighter.getTokenHighlights(tokenType);
+      return myKeysMap.computeIfAbsent(notNulled, _ -> SyntaxHighlighterBase.pack(myBackground, syntaxTokens));
     }
 
     @NotNull HighlighterIterator createIterator(@NotNull MappedRange mapper, int shift) {

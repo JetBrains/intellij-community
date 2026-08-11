@@ -12,7 +12,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,11 +28,7 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
 
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-    boolean serialized = Registry.is("editor.injected.highlighting.serialization.allowed") &&
-      ((TextEditorHighlightingPassRegistrarImpl)registrar).isSerializeCodeInsightPasses();
-    int[] runAfterCompletionOf = serialized ? new int[]{Pass.UPDATE_ALL} : null;
-    int[] runAfterStartingOf = serialized ? null : new int[]{Pass.UPDATE_ALL};
-    registrar.registerTextEditorHighlightingPass(this, runAfterCompletionOf, runAfterStartingOf, false, Pass.INJECTED_GENERAL);
+    registrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL}, false, Pass.INJECTED_GENERAL);
   }
 
   @Override
@@ -51,7 +46,7 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
                                                (adjustedRanges != null && adjustedRanges.size() == 1) ? null : adjustedRanges,
                                                restrictRange.getStartOffset(), restrictRange.getEndOffset(),
                                                updateAll, visibleRange, editor,
-                                               true, true, true, HighlightInfoUpdater.getInstance(project));
+                                               true, true, true, false, HighlightInfoUpdater.getInstance(project));
   }
 
   private static boolean isUpdatingWholeFile(@NotNull TextRange fileRange, @Nullable List<? extends @NotNull TextRange> ranges) {
@@ -98,6 +93,6 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
                                                                @NotNull Document document,
                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     return new InjectedGeneralHighlightingPass(psiFile, document, null, 0, document.getTextLength(), true, new ProperTextRange(0, document.getTextLength()), null,
-                                               true, true, true, HighlightInfoUpdater.EMPTY);
+                                               true, true, true, false, HighlightInfoUpdater.EMPTY);
   }
 }

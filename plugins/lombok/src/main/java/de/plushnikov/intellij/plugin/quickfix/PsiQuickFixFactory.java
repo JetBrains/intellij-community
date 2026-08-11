@@ -10,6 +10,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiType;
@@ -47,7 +48,7 @@ public final class PsiQuickFixFactory {
   }
 
   public static LocalQuickFix createModifierListFix(@NotNull PsiModifierListOwner owner,
-                                                    @NotNull String modifier,
+                                                    @PsiModifier.ModifierConstant @NotNull String modifier,
                                                     boolean shouldHave,
                                                     final boolean showContainingClass) {
     return LocalQuickFix.from(new ModifierFix(owner, modifier, shouldHave, showContainingClass));

@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.pyi;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PythonDialectsTokenSetContributor;
@@ -24,6 +26,8 @@ import com.jetbrains.python.PythonTokenSetContributor;
 import com.jetbrains.python.psi.LanguageLevel;
 
 @TestDataPath("$CONTENT_ROOT/../testData/pyi/parsing")
+@Subsystems.Parsing
+@Layers.Functional
 public class PyiParsingTest extends ParsingTestCase {
   public PyiParsingTest() {
     super("pyi/parsing", "pyi", new PyiParserDefinition(), new PythonParserDefinition());

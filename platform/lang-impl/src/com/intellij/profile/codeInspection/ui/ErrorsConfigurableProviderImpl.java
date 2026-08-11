@@ -3,7 +3,9 @@ package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class ErrorsConfigurableProviderImpl extends ErrorsConfigurableProvider {
   private final Project project;
 

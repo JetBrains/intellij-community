@@ -14,7 +14,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.vfs.createFile
-import com.jetbrains.python.PyNames
+import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
@@ -27,7 +27,7 @@ internal class PyProjectTomlModuleTest {
   @Test
   fun pyProjectModuleTest(): Unit = timeoutRunBlocking {
     var module = edtWriteAction {
-      ModuleManager.getInstance(projectFixture.get()).newNonPersistentModule("myModule", PyNames.PYTHON_MODULE_ID)
+      ModuleManager.getInstance(projectFixture.get()).newNonPersistentModule("myModule", PYTHON_MODULE_ID)
     }
     val externalSystemAware = PyExternalSystemProjectAware.create(projectFixture.get())
     val dir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(tempDirFixture.get())!!
@@ -39,7 +39,10 @@ internal class PyProjectTomlModuleTest {
       val m = ModuleRootManager.getInstance(module).modifiableModel
       m.addContentEntry(dir)
       m.commit()
-      dir.createFile(PY_PROJECT_TOML).writeText("[]")
+      dir.createFile(PY_PROJECT_TOML).writeText("""
+        [project]
+        name="D"
+      """.trimIndent())
     }
     externalSystemAware.reloadProjectImpl()
     module = projectFixture.get().modules[0]

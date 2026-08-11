@@ -3,8 +3,10 @@ package com.intellij.framework.detection.impl;
 
 import com.intellij.framework.detection.FrameworkDetectionContext;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class FrameworkDetectionContextBase implements FrameworkDetectionContext {
   @Override
   public @Nullable Project getProject() {

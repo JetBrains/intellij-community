@@ -1,16 +1,14 @@
-// "Surround call with 'context'" "true"
-// COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
-
-// DISABLE_K2_ERRORS
-// QuickFix produces red code with caret position to fill missing argument
+// "Surround call with 'context(i)'" "true"
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// K2_ERROR: NO_CONTEXT_ARGUMENT
 context(i: Int) fun bar() {}
 
 abstract class Base {
-    abstract fun foo()
+    abstract fun foo(i: Int)
 }
 
 class Derived : Base() {
-    override fun foo() {
+    override fun foo(i: Int) {
         <caret>bar()
     }
 }

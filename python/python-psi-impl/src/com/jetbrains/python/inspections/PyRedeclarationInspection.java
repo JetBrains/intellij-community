@@ -177,9 +177,8 @@ public final class PyRedeclarationInspection extends PyInspection {
           }
           final PsiElement identifier = element.getNameIdentifier();
           registerProblem(identifier != null ? identifier : element,
-                          PyPsiBundle.message("INSP.redeclared.name", name),
+                          PyPsiBundle.problemMessage("INSP.redeclared.name", name),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                          null,
                           quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
       }

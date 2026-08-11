@@ -339,6 +339,66 @@ class XmlDependencyUpdaterTest {
   }
 
   @Test
+  fun `expands self closing root element when inserting dependencies`(@TempDir tempDir: Path) {
+    val updater = DeferredFileUpdater(tempDir)
+    val path = tempDir.resolve("resources/intellij.sample.xml")
+    updateXmlDependencies(
+      path = path,
+      content = "<idea-plugin visibility=\"public\"/>\n",
+      moduleDependencies = listOf("intellij.platform.core"),
+      allowInsideSectionRegion = false,
+      strategy = updater,
+    )
+
+    val xml = updater.getDiffs().single().expectedContent
+    assertThat(xml).isEqualTo(
+      """
+      <idea-plugin visibility="public">
+        <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+        <dependencies>
+          <module name="intellij.platform.core"/>
+        </dependencies>
+        <!-- endregion -->
+      </idea-plugin>
+      """.trimIndent() + "\n"
+    )
+  }
+
+  @Test
+  fun `stray endregion inside wrapped section does not orphan closing tag`(@TempDir tempDir: Path) {
+    val content = """
+      <idea-plugin package="org.example">
+        <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+        <dependencies>
+          <module name="intellij.platform.uast"/>
+          <!-- endregion -->
+        </dependencies>
+        <!-- endregion -->
+
+        <extensions defaultExtensionNs="com.intellij"/>
+      </idea-plugin>
+    """.trimIndent()
+
+    val updater = DeferredFileUpdater(tempDir)
+    val path = tempDir.resolve("resources/intellij.sample.xml")
+    updateXmlDependencies(
+      path = path,
+      content = content,
+      moduleDependencies = listOf("intellij.platform.core", "intellij.platform.uast"),
+      allowInsideSectionRegion = false,
+      strategy = updater,
+    )
+
+    val xml = updater.getDiffs().single().expectedContent
+    assertThat(xml).containsOnlyOnce("<dependencies>")
+    assertThat(xml).containsOnlyOnce("</dependencies>")
+    assertThat(xml).containsOnlyOnce("<!-- endregion -->")
+    assertThat(xml).contains("<module name=\"intellij.platform.core\"/>")
+    assertThat(xml).contains("<module name=\"intellij.platform.uast\"/>")
+    assertThat(xml).contains("<!-- endregion -->\n\n  <extensions")
+  }
+
+  @Test
   fun `removes duplicate legacy depends for modern plugin deps`() {
     val content = """
       <idea-plugin>

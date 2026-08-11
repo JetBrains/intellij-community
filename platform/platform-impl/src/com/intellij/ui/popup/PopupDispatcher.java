@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.IdePopupEventDispatcher;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.SwingUtilities;
@@ -21,6 +22,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.stream.Stream;
 
+@ApiStatus.Internal
 public final class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, IdePopupEventDispatcher {
 
   private static WizardPopup ourActiveWizardRoot;

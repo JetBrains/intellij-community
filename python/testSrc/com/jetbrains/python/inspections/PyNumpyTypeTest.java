@@ -15,10 +15,16 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.idea.TestFor;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyNumpyTypeTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "inspections/PyNumpyType/";
 
@@ -40,7 +46,7 @@ public class PyNumpyTypeTest extends PyTestCase {
         settings.setFormat(DocStringFormat.NUMPY);
       }
       myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
-      myFixture.enableInspections(PyTypeCheckerInspection.class);
+      myFixture.enableInspections(PyTypeCheckerInspection.class, PyAssertTypeInspection.class);
       myFixture.checkHighlighting(true, false, true);
     }
     finally {
@@ -80,10 +86,12 @@ public class PyNumpyTypeTest extends PyTestCase {
     doTest();
   }
 
+  @TestFor(issues = "PY-88579")
   public void testDefaultNone() {
     doTest();
   }
 
+  @TestFor(issues = "PY-88579")
   public void testDefaultValueVariants() {
     doTest();
   }
@@ -96,7 +104,23 @@ public class PyNumpyTypeTest extends PyTestCase {
     doTest();
   }
 
+  @TestFor(issues = "PY-88579")
   public void testTypeHintHasPriority() {
+    doTest();
+  }
+
+  @TestFor(issues = "PY-32793")
+  public void testReturnTypeHintHasPriority() {
+    doTest();
+  }
+
+  @TestFor(issues = {"PY-32793", "PY-89314"})
+  public void testReturnTypeWithBrackets() {
+    doTest();
+  }
+
+  @TestFor(issues = {"PY-32793", "PY-89314"})
+  public void testReturnTypeUnion() {
     doTest();
   }
 
@@ -110,19 +134,19 @@ public class PyNumpyTypeTest extends PyTestCase {
 
   public void testReturnOptional() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
-    myFixture.enableInspections(PyTupleAssignmentBalanceInspection.class);
+    myFixture.enableInspections(PyTypeCheckerInspection.class);
     myFixture.checkHighlighting(true, false, true);
   }
 
   public void testReturnTuple() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
-    myFixture.enableInspections(PyTupleAssignmentBalanceInspection.class);
+    myFixture.enableInspections(PyTypeCheckerInspection.class);
     myFixture.checkHighlighting(true, false, true);
   }
 
   public void testSlogdet() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
-    myFixture.enableInspections(PyTupleAssignmentBalanceInspection.class);
+    myFixture.enableInspections(PyTypeCheckerInspection.class);
     myFixture.checkHighlighting(true, false, true);
   }
 }

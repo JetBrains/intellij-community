@@ -6,15 +6,28 @@ import git4idea.commands.GitObjectType
 import git4idea.config.GitConfigUtil
 import git4idea.inMemory.objects.GitObject
 import git4idea.inMemory.objects.Oid
+import git4idea.repo.GitObjectFormat
+import git4idea.repo.GitRepository
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.assertMessage
+import git4idea.test.createRepository
 import git4idea.test.gitAsBytes
 import git4idea.test.tac
 import kotlin.test.assertContentEquals
 
-class GitObjectRepositoryTest : GitSingleRepoTest() {
+class GitObjectRepositoryTest : GitObjectRepositoryTestBase(GitObjectFormat.SHA1)
+
+class GitObjectRepositorySha256Test : GitObjectRepositoryTestBase(GitObjectFormat.SHA256)
+
+abstract class GitObjectRepositoryTestBase(
+  private val objectFormat: GitObjectFormat,
+) : GitSingleRepoTest() {
   private val SAMPLE_AUTHOR = GitObject.Commit.Author("John Doe <john.doe@example.com>", 1234567890, "+0000")
   private val SAMPLE_CONTENT = "Hello, World!"
+
+  override fun createRepository(): GitRepository {
+    return createRepository(project, projectNioRoot, makeInitialCommit(), objectFormat)
+  }
 
   fun `test object caching works correctly`() {
     val repository = GitObjectRepository(repo)
@@ -206,6 +219,36 @@ class GitObjectRepositoryTest : GitSingleRepoTest() {
     val commit = repository.findCommit(commitOid)
 
     assertMessage(commit.message.toString(Charsets.UTF_8), "", "Commit should have empty message")
+  }
+
+  fun `test object ids use repository object format length`() {
+    val commitHash = tac("test.txt", SAMPLE_CONTENT)
+
+    val repository = GitObjectRepository(repo)
+    val commit = repository.findCommit(Oid.fromHex(commitHash))
+    val tree = repository.findTree(commit.treeOid)
+    val blob = repository.findBlob(tree.entries[GitObject.Tree.FileName("test.txt")]!!.oid)
+
+    assertEquals(objectFormat.hexSize, commit.oid.hex().length)
+    assertEquals(objectFormat.hexSize, tree.oid.hex().length)
+    assertEquals(objectFormat.hexSize, blob.oid.hex().length)
+
+    val newBlob = repository.createBlob("new content".toByteArray())
+    val newTree = repository.createTree(
+      mapOf(GitObject.Tree.FileName("file.txt") to GitObject.Tree.Entry(GitObject.Tree.FileMode.REGULAR, newBlob.oid))
+    )
+    repository.persistObject(newTree)
+
+    assertEquals(objectFormat.hexSize, newBlob.oid.hex().length)
+    assertEquals(objectFormat.hexSize, newTree.oid.hex().length)
+
+    val newCommitOid = repository.commitTree(newTree.oid,
+                                             listOf(commit.oid),
+                                             "new commit".toByteArray(),
+                                             SAMPLE_AUTHOR)
+    val newCommit = repository.findCommit(newCommitOid)
+
+    assertEquals(objectFormat.hexSize, newCommit.oid.hex().length)
   }
 
   private fun createTreeEntries(blob: GitObject.Blob): Map<GitObject.Tree.FileName, GitObject.Tree.Entry> {

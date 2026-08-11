@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.collections.RedundantAsSequenceInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.expressions.RedundantAsSequenceInspection

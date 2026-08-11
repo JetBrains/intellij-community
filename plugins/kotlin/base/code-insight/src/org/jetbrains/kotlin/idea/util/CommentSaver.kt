@@ -313,6 +313,47 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
         isFinished = true
     }
 
+    fun restoreKeepingIndent(resultElements: PsiChildRange, preserveTrailingComments: Boolean = false) {
+        assert(!isFinished)
+        assert(!resultElements.isEmpty)
+
+        if (commentsToRestore.isNotEmpty() || lineBreaksToRestore.isNotEmpty()) {
+            // remove comments that present inside resultElements from commentsToRestore
+            resultElements.forEach { deleteCommentsInside(it) }
+
+            if (commentsToRestore.isNotEmpty() || lineBreaksToRestore.isNotEmpty()) {
+                toNewPsiElementMap = HashMap()
+                for (element in resultElements) {
+                    element.accept(object : PsiRecursiveElementVisitor() {
+                        override fun visitElement(element: PsiElement) {
+                            val treeElement = element.savedTreeElement
+                            if (treeElement != null) {
+                                putNewElementIntoMap(element, treeElement)
+                            }
+                            super.visitElement(element)
+                        }
+                    })
+                }
+
+                restoreComments(resultElements, false, false, preserveTrailingComments)
+
+                restoreLineBreaks()
+
+                // clear user data
+                resultElements.forEach {
+                    it.accept(object : PsiRecursiveElementVisitor() {
+                        override fun visitElement(element: PsiElement) {
+                            element.savedTreeElement = null
+                            super.visitElement(element)
+                        }
+                    })
+                }
+            }
+        }
+
+        isFinished = true
+    }
+
     private fun restoreComments(
         resultElements: PsiChildRange,
         isCommentBeneathSingleLine: Boolean = false,
@@ -378,6 +419,28 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
                     //move comment out of argument, similar to parser
                     restored = (if (parent is KtValueArgument) parent.parent.addBefore(comment, parent)
                     else parent.addBefore(comment, putAbandonedCommentsAfter)) as PsiComment
+
+                    val indentedNewLine = (commentTreeElement.spaceBefore.takeIf { it.contains('\n') }
+                        ?: commentTreeElement.spaceAfter.takeIf { it.contains('\n') })
+                        ?.let { "\n" + it.substringAfterLast('\n') }
+                        ?: "\n"
+
+                    // Also separate from a class/function body's opening brace (but not e.g. a
+                    // parameter list's opening paren, where comments are meant to stay glued to it).
+                    if (restored.prevSibling is PsiComment || restored.prevSibling?.elementType == KtTokens.LBRACE) {
+                        restored.parent.addBefore(psiFactory.createWhiteSpace(indentedNewLine), restored)
+                    }
+
+                    // make sure that there is a line break after EOL_COMMENT
+                    if (restored.tokenType == KtTokens.EOL_COMMENT) {
+                        val whiteSpace = restored.nextLeaf(skipEmptyElements = true) as? PsiWhiteSpace
+                        if (whiteSpace == null) {
+                            restored.parent.addAfter(psiFactory.createWhiteSpace(indentedNewLine), restored)
+                        } else if (!whiteSpace.textContains('\n')) {
+                            val newWhiteSpace = psiFactory.createWhiteSpace("\n" + whiteSpace.text)
+                            whiteSpace.replace(newWhiteSpace)
+                        }
+                    }
 
                     if (isCommentInside) {
                         val element = resultElements.first

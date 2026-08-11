@@ -94,7 +94,7 @@ public final class ImmediatePainter {
   }
 
   boolean paint(final Graphics g, final EditorActionPlan plan) {
-    if (ENABLED.asBoolean() && canPaintImmediately(myEditor) && myEditor.myAdView == null) {
+    if (ENABLED.asBoolean() && canPaintImmediately(myEditor)) {
       if (plan.getCaretShift() != 1) return false;
 
       final List<EditorActionPlan.Replacement> replacements = plan.getReplacements();

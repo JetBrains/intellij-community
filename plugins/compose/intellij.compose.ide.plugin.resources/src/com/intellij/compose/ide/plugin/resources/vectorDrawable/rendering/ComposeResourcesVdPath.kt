@@ -18,6 +18,7 @@
 package com.intellij.compose.ide.plugin.resources.vectorDrawable.rendering
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import org.w3c.dom.NamedNodeMap
 import org.w3c.dom.Node as DomNode
@@ -80,16 +81,13 @@ internal class ComposeResourcesVdPath : ComposeResourcesVdElement() {
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
     if (fillColor != 0 && fillGradient == null) {
-      val finalFillColor = applyAlpha(fillColor, fillAlpha)
-      g.color = JBColor(finalFillColor, finalFillColor)
+      g.color = argbColor(fillColor, fillAlpha)
       g.fill(path2d)
     }
 
     if (strokeColor != 0 && strokeWidth != 0.0f && strokeGradient == null) {
       g.stroke = BasicStroke(strokeWidth, strokeLineCap, strokeLineJoin, strokeMiterLimit)
-
-      val finalStrokeColor = applyAlpha(strokeColor, strokeAlpha)
-      g.color = JBColor(finalStrokeColor, finalStrokeColor)
+      g.color = argbColor(strokeColor, strokeAlpha)
       g.draw(path2d)
     }
 
@@ -196,9 +194,15 @@ internal class ComposeResourcesVdPath : ComposeResourcesVdElement() {
   companion object {
     private val LOG = logger<ComposeResourcesVdPath>()
 
-    private fun applyAlpha(color: Int, alpha: Float): Int {
+    fun applyAlpha(color: Int, alpha: Float): Int {
       val alphaBytes = color shr 24 and 0xFF
       return (color and 0x00FFFFFF) or ((alphaBytes * alpha).toInt() shl 24)
+    }
+
+    private fun argbColor(argb: Int, alphaMultiplier: Float = 1f): java.awt.Color {
+      val alpha = ((argb shr 24) and 0xFF) * alphaMultiplier
+      val rgb = argb or 0xFF000000.toInt()
+      return ColorUtil.withAlpha(JBColor(rgb, rgb), alpha / 255.0)
     }
   }
 

@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.runInDumbMode
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.testFramework.DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.application
 import com.intellij.util.ui.EDT
@@ -19,6 +18,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import java.util.concurrent.ConcurrentHashMap
@@ -27,7 +27,8 @@ import java.util.concurrent.CopyOnWriteArraySet
 object DumbModeTestUtils {
   private val projectsWithEternalDumbTask = ConcurrentHashMap<Project, MutableSet<EternalTaskShutdownToken>>()
 
-  internal fun isEternalDumbTaskRunning(project: Project): Boolean {
+  @ApiStatus.Internal
+  fun isEternalDumbTaskRunning(project: Project): Boolean {
     return synchronized(projectsWithEternalDumbTask) {
       !projectsWithEternalDumbTask[project].isNullOrEmpty()
     }

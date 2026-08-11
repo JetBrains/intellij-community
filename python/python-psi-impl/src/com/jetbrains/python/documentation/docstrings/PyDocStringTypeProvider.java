@@ -14,7 +14,7 @@ import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.psi.types.PyCloningTypeVisitor;
-import com.jetbrains.python.psi.types.PyCollectionType;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.PyTypeParser;
@@ -106,7 +106,7 @@ public final class PyDocStringTypeProvider extends PyTypeProviderBase {
     PyFunction init = cls.findInitOrNew(true, context);
     if (init != null) {
       PyType returnType = Ref.deref(getReturnType(init, context));
-      if (returnType instanceof PyCollectionType) {
+      if (returnType instanceof PyClassType pyClassType && pyClassType.isParameterized()) {
         return returnType;
       }
     }

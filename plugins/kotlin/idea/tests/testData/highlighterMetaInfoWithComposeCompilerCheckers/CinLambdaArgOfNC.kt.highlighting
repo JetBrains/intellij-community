@@ -7,6 +7,6 @@ import androidx.compose.runtime.*
 fun NC(lambda: () -> Unit) { lambda() }
 @Composable fun C3() {
     NC {
-        <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_INVOCATION] @Composable invocations can only happen from the context of a @Composable function'")!>C<!>()
+        <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_INVOCATION]'")!>C<!>()
     }
 }

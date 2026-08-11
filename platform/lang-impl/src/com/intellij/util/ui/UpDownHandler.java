@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.ui.EditorTextField;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComboBox;
@@ -20,6 +21,7 @@ import javax.swing.JList;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class UpDownHandler {
   private static final CustomShortcutSet UP_KEY = CustomShortcutSet.fromString("UP");
   private static final CustomShortcutSet DOWN_KEY = CustomShortcutSet.fromString("DOWN");

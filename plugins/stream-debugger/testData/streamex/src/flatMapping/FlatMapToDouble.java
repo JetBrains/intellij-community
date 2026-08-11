@@ -5,7 +5,7 @@ import one.util.streamex.IntStreamEx;
 
 public class FlatMapToDouble {
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     final long count = IntStreamEx.of(1, 2, 3).flatMapToDouble(x -> DoubleStreamEx.of(x, x, x)).count();
     System.out.println(count);
   }

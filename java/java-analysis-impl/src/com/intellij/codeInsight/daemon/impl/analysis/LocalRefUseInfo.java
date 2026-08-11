@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.GlobalUsageHelper;
@@ -141,6 +141,11 @@ public final class LocalRefUseInfo {
         @Override
         public boolean shouldCheckUsages(@NotNull PsiMember member) {
           return !myEntryPointCache.get(member);
+        }
+
+        @Override
+        public boolean ignoreTestUsages() {
+          return !deadCodeInspection.isTestEntryPoints();
         }
       };
     }
@@ -561,6 +566,11 @@ public final class LocalRefUseInfo {
     @Override
     public boolean isLocallyUsed(@NotNull PsiNamedElement member) {
       return isReferenced(member);
+    }
+
+    @Override
+    public boolean ignoreTestUsages() {
+      return false;
     }
   }
 }

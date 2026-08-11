@@ -6,7 +6,11 @@ import com.intellij.openapi.project.Project;
 import kotlin.time.Duration;
 import org.jetbrains.annotations.ApiStatus;
 
+/**
+ * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere ({@code com.intellij.platform.searchEverywhere}).
+ */
 @ApiStatus.Internal
+@Deprecated
 public interface PreviewListener {
   @ApiStatus.Internal
   void onPreviewEditorCreated(SearchEverywhereUI searchEverywhereUI, Editor editor);

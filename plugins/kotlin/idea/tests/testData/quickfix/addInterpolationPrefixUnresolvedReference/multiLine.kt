@@ -1,6 +1,6 @@
 // "Add interpolation prefix" "true"
 // COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
-// K2_ERROR: Unresolved reference 'unresolved'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 fun test() {
     """

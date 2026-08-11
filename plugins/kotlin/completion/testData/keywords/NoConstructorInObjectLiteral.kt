@@ -2,7 +2,7 @@
 // FIR_COMPARISON
 class C {
     val o = object {
-        con<caret>
+        cons<caret>
     }
 }
 

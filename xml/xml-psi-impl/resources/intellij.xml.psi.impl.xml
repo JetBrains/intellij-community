@@ -19,6 +19,7 @@
     <module name="intellij.platform.polySymbols"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.syntax.psi"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.regexp"/>
     <module name="intellij.xml.parser"/>

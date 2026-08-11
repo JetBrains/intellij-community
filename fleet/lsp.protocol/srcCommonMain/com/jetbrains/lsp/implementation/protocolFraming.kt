@@ -3,6 +3,7 @@ package com.jetbrains.lsp.implementation
 import com.jetbrains.lsp.protocol.LSP
 import fleet.util.decodeToStringUtf8
 import fleet.util.encodeToByteArrayUtf8
+import fleet.util.logging.KLoggers
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -14,6 +15,21 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.io.IOException
 import kotlinx.serialization.json.JsonElement
+
+private val LOG = KLoggers.logger("com.jetbrains.lsp.implementation.protocolFraming")
+
+/**
+ * A valid base-protocol header field-name (RFC 7230 `token`). The base protocol used by LSP and DAP
+ * only ever sends `Content-Length` and `Content-Type`, so any line whose name is not a valid token is
+ * not one of our frames.
+ *
+ * This is what keeps HTTP requests out: an HTTP request always starts with a request line such as
+ * `POST /path HTTP/1.1`, whose "name" part (everything before the first `:`) either lacks a colon or
+ * contains a space, so it fails this check and the connection is dropped before any body is read. That
+ * closes the cross-protocol attack where a malicious web page uses `fetch`/form-POST against the
+ * loopback port the server listens on.
+ */
+private val HEADER_NAME_REGEX = Regex("""[!#$%&'*+\-.^_`|~0-9A-Za-z]+""")
 
 suspend fun withBaseProtocolFraming(
   connection: LspConnection,
@@ -69,18 +85,27 @@ private suspend fun ByteReader.readFrame(): JsonElement? {
       val line = readUTF8Line()
       if (line.isNullOrEmpty()) break
       readSomething = true
-      try {
-        val (key, value) = line.split(':').map { it.trim() }
-        if (key == "Content-Length") {
-          contentLength = value.toInt()
-        }
+      val colon = line.indexOf(':')
+      val name = if (colon >= 0) line.substring(0, colon) else line
+      if (colon < 0 || !HEADER_NAME_REGEX.matches(name)) {
+        // Not a base-protocol header (e.g. an HTTP request line or an HTTP header such as `Host`).
+        // Drop the connection instead of trying to interpret it as a frame.
+        LOG.warn { "Rejecting connection: not a valid base-protocol header: ${line.take(80)}" }
+        return null
       }
-      catch (x: Throwable) {
-        throw IllegalStateException("could not read header: $line", x)
+      if (name == "Content-Length") {
+        val value = line.substring(colon + 1).trim()
+        contentLength = value.toIntOrNull() ?: run {
+          LOG.warn { "Rejecting connection: invalid Content-Length: $value" }
+          return null
+        }
       }
     }
     if (!readSomething) return null
-    if (contentLength == -1) throw IllegalStateException("Content-Length header not found")
+    if (contentLength == -1) {
+      LOG.warn { "Rejecting connection: Content-Length header not found" }
+      return null
+    }
     readByteArray(contentLength)
   }
   catch (_: IOException) {

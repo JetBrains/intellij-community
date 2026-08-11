@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.java.codeInspection;
 
@@ -13,6 +13,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -455,6 +457,12 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
+
+  public void testJSpecifyUnboundedWildcardReturnOverride() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
   
   public void testNullableParameterOverride() {
     doTest();
@@ -547,6 +555,56 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
 
+  public void testNewExpressionBoundExtends() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testNewExpressionBoundContainment() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testNewExpressionBoundTransitive() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+  public void testReferenceBoundPositions() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testNewExpressionBoundSuperVsExtends() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testReturnDerivedWithNullableBound() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testNewExpressionOuterBoundSuperVsExtends() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
   public void testArrayUnderContainerAnnotation() {
     myInspection.REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE = true;
     addJSpecifyNullMarked(myFixture);
@@ -581,6 +639,111 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
+  }
+
+  public void testJSpecifySameInstanceGenericSimple() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifySameInstanceGenericUnspecified() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+  public void testJSpecifySameInstanceGenericShadow() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+  public void testJSpecifySameInstanceGenericInheritedBound() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyUnspecifiedBoundTypeArgument() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+  public void testJSpecifyUnspecifiedParameterOverridesNullable() {
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+  public void testJSpecifyNullableParameterOverridesNotNull() {
+    myInspection.REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL = true;
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+  public void testJSpecifyNullableParameterOverridesNotNullOptionOff() {
+    myInspection.REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL = false;
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyTypeParameterBoundOverridesNullable() {
+    //without it, conflicts in the overridden return type (NOT_NULL_TO_NULL) are not reported at all
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+  public void testJSpecifyNullableBoundInstantiatedWithNotNull() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    PsiClass superClass = myFixture.addClass("""
+                                               import org.jspecify.annotations.NullMarked;
+                                               import org.jspecify.annotations.Nullable;
+
+                                               @NullMarked
+                                               public class SupWithNullableBound<T extends @Nullable Object> {
+                                                 public void test(T arg) {}
+                                               }""");
+    doTest();
+    // The bound has to be read from the stub, where the extends-list reference is rebuilt in a DummyHolder and the
+    // @Nullable annotation reports no owner. .
+    assertFalse(((PsiFileImpl)superClass.getContainingFile()).isContentsLoaded());
+  }
+
+  public void testJSpecifyUnspecifiedTypeArgumentInstantiatedWithNullable() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+  public void testJSpecifyUnboundedWildcardFromUnmarkedScope() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyCyclicTypeParameterBounds() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  private void addNullnessUnspecified() {
+    myFixture.addClass("""
+                         package org.jspecify.annotations;
+                         import java.lang.annotation.*;
+                         
+                         @Target(ElementType.TYPE_USE) public @interface NullnessUnspecified { }""");
   }
   
   public void testNoOverrideWarningOnParameterization() {

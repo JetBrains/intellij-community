@@ -28,6 +28,8 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 object TerminalCompletionUtil {
+  const val CURSOR_MARKER: String = "{cursor}"
+
   fun getNextSuggestionsString(suggestion: ShellCompletionSuggestion): String {
     var separator: String? = null
     val result = when (suggestion) {

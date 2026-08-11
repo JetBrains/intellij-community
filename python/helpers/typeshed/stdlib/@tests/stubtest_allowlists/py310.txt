@@ -29,11 +29,6 @@ typing_extensions.NewType.__mro_entries__
 importlib.metadata._meta.SimplePath.__truediv__  # Runtime definition of protocol is incorrect
 
 
-# ===================================
-# Pre-existing errors from Python 3.9
-# ===================================
-
-
 # =======
 # <= 3.10
 # =======
@@ -56,9 +51,10 @@ tkinter.Tk.split  # Exists at runtime, but missing from stubs
 typing._SpecialForm.__mro_entries__  # Exists at runtime, but missing from stubs
 
 typing_extensions.LiteralString
+
 # Will always raise. Not included to avoid type checkers inferring that
 # Sentinel instances are callable.
-typing_extensions.Sentinel.__call__
+typing_extensions.sentinel.__call__
 
 
 # =======
@@ -140,6 +136,11 @@ typing_extensions.TypeAliasType.__call__
 tkinter.simpledialog.[A-Z_]+
 tkinter.simpledialog.TclVersion
 tkinter.simpledialog.TkVersion
+
+# The runtime does some hacks to deprecate passing various parameters
+# positionally or by keyword. We just present a signature in the stub
+# that describes the way users are supposed to call the constructor.
+typing_extensions.sentinel.__init__
 
 
 # =============================================================

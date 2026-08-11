@@ -1,5 +1,324 @@
 # Jewel Release Notes
 
+## v0.40 (2026-08-11)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2026.2.2                   | 1.11.0                        |
+
+### ⚠️ Important Changes
+
+* **[JEWEL-1323](https://youtrack.jetbrains.com/issue/JEWEL-1323)** Removed a batch of APIs that had been deprecated for
+  more than six months ([#3517](https://github.com/JetBrains/intellij-community/pull/3517)). See the migration guide
+  below if you still use any of them.
+
+### New features
+
+* **[JEWEL-1275](https://youtrack.jetbrains.com/issue/JEWEL-1275)** Scrollable containers and scrollbars now accept an
+  optional `ScrollbarAdapter`, allowing custom scrollbar thumb sizing and positioning for scrollable content
+  ([#3561](https://github.com/JetBrains/intellij-community/pull/3561))
+* **[JEWEL-1317](https://youtrack.jetbrains.com/issue/JEWEL-1317)** Added portable typography APIs through
+  `JewelTheme.typography`, providing default, editor, and console text styles derived with a requested size, weight, or
+  style ([#3567](https://github.com/JetBrains/intellij-community/pull/3567))
+
+### Bug fixes
+
+* **[JEWEL-1319](https://youtrack.jetbrains.com/issue/JEWEL-1319)** Improved `CircularProgressIndicator` performance by
+  drawing the spinner directly on a `Canvas` instead of generating and decoding SVG frames
+  ([#3563](https://github.com/JetBrains/intellij-community/pull/3563))
+* **[JEWEL-1355](https://youtrack.jetbrains.com/issue/JEWEL-1355)** Fixed `SpeedSearchableLazyColumn` selection when
+  filtering removes the previously selected item. Selection now starts with the topmost visible match; if no match is
+  visible, it scans forward below the viewport and then wraps to the first match from the top
+  ([#3564](https://github.com/JetBrains/intellij-community/pull/3564))
+* **[JEWEL-1359](https://youtrack.jetbrains.com/issue/JEWEL-1359)** Fixed intermittent Compose paste-action update
+  errors in the IDE ([#3570](https://github.com/JetBrains/intellij-community/pull/3570))
+
+### Deprecated API
+
+* **[JEWEL-1275](https://youtrack.jetbrains.com/issue/JEWEL-1275)** Deprecated the `VerticallyScrollableContainer`,
+  `HorizontallyScrollableContainer`, `VerticalScrollbar`, and `HorizontalScrollbar` overloads without an `adapter`
+  parameter ([#3561](https://github.com/JetBrains/intellij-community/pull/3561))
+
+### Migration guide for removed APIs
+
+* `foundation`:
+  * The `TextColors` secondary constructor was removed; use the primary constructor, supplying `disabledSelected` and
+    `warning`.
+  * The `ThemeDefinition` secondary constructor was removed; use the primary constructor, supplying
+    `DisabledAppearanceValues`.
+* `ide-laf-bridge`:
+  * The `TextColors` and `ThemeDefinition` secondary constructors were removed as in `foundation`.
+  * Both `bridgePainterProvider` functions were removed; use an `IconKey` with the `Icon` composable instead.
+  * The `compose`, `JewelComposePanel`, `composeWithoutTheme`, `JewelComposeNoThemePanel`, and
+    `ToolWindow.addComposeTab` overloads without `focusOnClickInside` were removed; use the overloads that provide it.
+  * `LocalComponent` was removed; use `foundation`'s `LocalComponent` instead.
+  * `Typography.regular`, `Typography.medium`, and `Typography.small` were removed; use the corresponding properties
+    from `JewelTheme.typography`.
+* `ide-laf-bridge-styling`:
+  * The `ProvideMarkdownStyling` overload taking `themeName` was removed; use the overload without it.
+  * `InlinesStyling.create` no longer takes `renderInlineHtml`; use the overload without it.
+* `int-ui-standalone`:
+  * `WhenScrolling.default` was replaced with the no-argument function `WhenScrolling.default()`.
+  * `standalonePainterProvider` was removed; use an `IconKey` with the `Icon` composable instead.
+* `markdown`:
+  * The `Markdown` and `LazyMarkdown` overloads taking `onTextClick` were removed; use the overloads without it.
+  * The deprecated lower-case Markdown block-rendering APIs were removed. Migrate `MarkdownBlockRenderer.render(...)`
+    and `renderThematicBreak(...)` to the matching `Render*` composables; migrate
+    `MarkdownBlockRendererExtension.render(...)` to `RenderCustomBlock(...)`. The replacement APIs do not take
+    `onTextClick`, because that callback was ignored.
+  * The `InlinesStyling` secondary constructor was removed; use the constructor without `renderInlineHtml`.
+* `ui`:
+  * `ColorFilter.disabled()` was removed; apply `Modifier.disabledAppearance()` to the component modifier instead.
+  * `InformationDefaultBanner`, `SuccessDefaultBanner`, `WarningDefaultBanner`, and `ErrorDefaultBanner` were renamed to
+    `DefaultInformationBanner`, `DefaultSuccessBanner`, `DefaultWarningBanner`, and `DefaultErrorBanner`.
+  * `InformationInlineBanner`, `SuccessInlineBanner`, `WarningInlineBanner`, and `ErrorInlineBanner` overloads without
+    link and icon actions were removed; use `InlineInformationBanner`, `InlineSuccessBanner`, `InlineWarningBanner`, and
+    `InlineErrorBanner` with `linkActions` and `iconActions`.
+  * `painterResource(resourcePath)` was removed; use an `IconKey` with `Icon` or `Image` instead.
+  * The `Tooltip` overload taking `AutoHideBehavior`, and `AutoHideBehavior` itself, were removed; configure
+    `TooltipAutoHideBehavior` through `TooltipStyle.autoHideBehavior`.
+  * The legacy `SimpleListItem` overloads were removed. Use `ListItemState` or the current `selected`/`active`
+    overloads, with `colorFilter` and `painterHints` as needed.
+  * `MenuManager` and `LocalMenuManager` were removed; obtain the `MenuController` through `LocalMenuController.current`.
+  * `MenuSeparator`, `MenuItemState`, `MenuItemState.of()`, `MenuSubmenuItem`, and `MenuItemColors.*For` are now
+    internal.
+  * All `TextStyle.copyWithSize()` functions were removed. To derive resized default, editor, or console typography, use
+    `JewelTheme.typography.rememberDefaultTextStyle`, `rememberEditorTextStyle`, or `rememberConsoleTextStyle`; apply
+    unrelated custom `TextStyle` properties separately as needed.
+  * The `ChipMetrics` secondary constructor without `minSize` was removed; use the constructor that supplies it.
+  * The `TooltipMetrics` secondary constructor and `defaults` function were removed; use the versions that supply
+    `regularDisappearDelay` and `fullDisappearDelay`.
+  * The no-argument `AwtColor.toRgbaHexString()` and `Color.toRgbaHexString()` overloads were removed; use
+    `toRgbaHexString(omitAlphaWhenFullyOpaque = true)` to retain their former behaviour.
+  * `Color.fromRGBAHexStringOrNull(rgba)` was removed; use `Color.fromRgbaHexStringOrNull(rgba)`.
+  * The `org.jetbrains.jewel.ui.component.Typography` object was removed. Use the `Typography` API exposed through
+    `JewelTheme.typography`.
+
+## v0.39.1 (2026-07-24)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2026.2                     | 1.11.0                        |
+
+### Bug fixes
+
+* **[JEWEL-1374](https://youtrack.jetbrains.com/issue/JEWEL-1374)** The published Jewel Standalone POMs now declare the
+  Icons API modules (`icons-api`, `icons-api-rendering`, `icons-impl`) as transitive dependencies. A plain
+  `implementation("org.jetbrains.jewel:jewel-int-ui-standalone:…")` now boots `IntUiTheme` without extra wiring —
+  previously it failed at startup with `NoClassDefFoundError: com/intellij/platform/icons/IconManager`
+
+## v0.39 (2026-07-14)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2026.2                     | 1.11.0                        |
+
+### ⚠️ Important Changes
+
+* **[JEWEL-993](https://youtrack.jetbrains.com/issue/JEWEL-993)** By default, scrollbars in scrollable containers and tabs
+  on macOS now respect the visibility option chosen in the user's macOS settings. To change the behaviour, provide a fixed
+  style, either `ScrollbarVisibility.WhenScrolling` or `ScrollbarVisibility.AlwaysVisible`
+  ([#3407](https://github.com/JetBrains/intellij-community/pull/3407))
+* **[JEWEL-1257](https://youtrack.jetbrains.com/issue/JEWEL-1257)** `ThemeColorPalette` now supports the Islands
+  palette format, which changes how palette colours are indexed ([#3523](https://github.com/JetBrains/intellij-community/pull/3523))
+* **[JEWEL-1290](https://youtrack.jetbrains.com/issue/JEWEL-1290)** `*DefaultBanner` no longer fills the available
+  width by default; it now wraps its content instead. If you want banners to span the full width, be sure to add
+  `modifier = Modifier.fillMaxWidth()` ([#3466](https://github.com/JetBrains/intellij-community/pull/3466))
+
+### New features
+
+* **[JEWEL-1257](https://youtrack.jetbrains.com/issue/JEWEL-1257)** Added support for the Islands colour palette format
+  in `ThemeColorPalette` ([#3523](https://github.com/JetBrains/intellij-community/pull/3523))
+  * `ThemeColorPalette` now includes a new `isIslands` parameter to distinguish between Islands and non-Islands theme
+    palettes, and its colour accessors support both classic and Islands indexing schemes
+  * `BridgeThemeColorPalette` now parses Islands palette keys, too, when applicable
+  * When using colour accessors, use the native index scheme for the palette: classic themes use `1, 2, 3, …`, while
+    Islands themes use `10, 20, 30, …`. For example, the Islands equivalent of `blueOrNull(1)` is `blueOrNull(10)`, and
+    `redOrNull(3)` becomes `redOrNull(30)`
+  * Note that at the time of writing the official Islands themes also contain the non-Islands palette entries, but that
+    is not guaranteed to be the case for third-party themes or in the future
+  * Contrary to non-Islands palettes, the Islands palette is identical in both light and dark themes, and semantic tokens
+    are layered on top of it; semantic tokens are not officially supported yet in Jewel, but you can read them from LaF
+* **[JEWEL-1267](https://youtrack.jetbrains.com/issue/JEWEL-1267)** Added support for sized images in Markdown
+  rendering — HTML `<img>` tags with `width` and `height` attributes, and GitLab flavoured Markdown image attribute blocks
+  (`{width=100 height=5px}`) are now parsed and rendered at the specified dimensions, with proportional scaling when
+  only one dimension is provided. ([#3527](https://github.com/JetBrains/intellij-community/pull/3527))
+  * For now, only pixel/unitless dimensions are supported. Percent sizing is ignored
+* **[JEWEL-1285](https://youtrack.jetbrains.com/issue/JEWEL-1285)** A new variation of `Popup` is available that takes
+  a `windowShape` factory, letting you apply a custom shape to the window that holds the popup
+  ([#3449](https://github.com/JetBrains/intellij-community/pull/3449))
+  * This is only useful when the `jewel.customPopupRender` system property flag is enabled, your project runs as a
+    standalone app (IJP plugins are unaffected), and `compose.interop.blending` is not enabled
+  * Keep in mind that clipping the window to a shape has limitations: Swing's `WindowTranslucency` can't render concave
+    corners properly, so depending on your shape you may see jagged edges. For this reason, it's highly encouraged to
+    also enable `compose.interop.blending` in your system properties
+
+### Bug fixes
+
+* **[JEWEL-1075](https://youtrack.jetbrains.com/issue/JEWEL-1075)** `VerticallyScrollableContainer` and
+  `HorizontallyScrollableContainer` no longer crash with `IllegalArgumentException` when placed inside a layout that
+  queries intrinsic measurements ([#3471](https://github.com/JetBrains/intellij-community/pull/3471))
+* **[JEWEL-1138](https://youtrack.jetbrains.com/issue/JEWEL-1138)** Markdown images now scale to fit the available
+  width and adjust their vertical space accordingly ([#3525](https://github.com/JetBrains/intellij-community/pull/3525))
+* **[JEWEL-1205](https://youtrack.jetbrains.com/issue/JEWEL-1205)** Menu items now have the correct size when rendered in
+  Presentation Mode ([#3419](https://github.com/JetBrains/intellij-community/pull/3419))
+* **[JEWEL-1287](https://youtrack.jetbrains.com/issue/JEWEL-1287)** Fixed `LazyTree` multi-selection highlights so
+  adjacent selected rows merge into a continuous selection block ([#3452](https://github.com/JetBrains/intellij-community/pull/3452))
+* **[JEWEL-1290](https://youtrack.jetbrains.com/issue/JEWEL-1290)** The paddings for `*DefaultBanner` components are now
+  customizable ([#3466](https://github.com/JetBrains/intellij-community/pull/3466))
+* **[JEWEL-1327](https://youtrack.jetbrains.com/issue/JEWEL-1327)** Markdown ordered lists no longer crash when the list
+  starts with `0`. For number formats such as roman and alphabetical, an item with index `0` renders as `0` and then
+  continues in the expected format (i.e., `i` for roman, `a` for alphabetical)
+  ([#3552](https://github.com/JetBrains/intellij-community/pull/3552))
+* **[IJPL-176416](https://youtrack.jetbrains.com/issue/IJPL-176416)** Improved standalone icon rendering with fading
+  animated icons and better interop with the old animated icons
+
+### Deprecated API
+
+* **[JEWEL-1257](https://youtrack.jetbrains.com/issue/JEWEL-1257)** The `ThemeColorPalette` constructor without the
+  `isIslands` parameter was removed from the visible API; specify `isIslands` when constructing palettes
+  ([#3523](https://github.com/JetBrains/intellij-community/pull/3523))
+  * The API is retained for binary compatibility for the time being, but please migrate as soon as possible
+* **[JEWEL-1285](https://youtrack.jetbrains.com/issue/JEWEL-1285)** `Popup` components without the `windowShape`
+  parameter are now deprecated ([#3449](https://github.com/JetBrains/intellij-community/pull/3449))
+
+## v0.38.1 (2026-07-24)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2026.2 beta 1              | 1.11.0                        |
+
+### Bug fixes
+
+* **[JEWEL-1374](https://youtrack.jetbrains.com/issue/JEWEL-1374)** The published Jewel Standalone POMs now declare the
+  Icons API modules (`icons-api`, `icons-api-rendering`, `icons-impl`) as transitive dependencies. A plain
+  `implementation("org.jetbrains.jewel:jewel-int-ui-standalone:…")` now boots `IntUiTheme` without extra wiring —
+  previously it failed at startup with `NoClassDefFoundError: com/intellij/platform/icons/IconManager`
+
+## v0.38 (2026-06-30)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2026.2 beta 1              | 1.11.0                        |
+
+### ⚠️ Important Changes
+
+* **[JEWEL-1225](https://youtrack.jetbrains.com/issue/JEWEL-1225)** Jewel now targets CMP `1.11.0`, which comes with
+  its [own set of breaking changes](https://github.com/JetBrains/compose-multiplatform/releases/tag/v1.11.0). This
+  means that from Jewel `0.38+`, it'll be transitively binary-incompatible with artifacts compiled against CMP `1.10.x`
+  and lower ([#3496](https://github.com/JetBrains/intellij-community/pull/3496))
+* **[JEWEL-1332](https://youtrack.jetbrains.com/issue/JEWEL-1332)** Jewel now targets IntelliJ Platform `2026.1.2`,
+  Kotlin `2.3.20`, and JDK `25`
+
+### Bug fixes
+
+* **[JEWEL-1225](https://youtrack.jetbrains.com/issue/JEWEL-1225)** Updated several components for CMP `1.11.0`
+  behaviour changes ([#3496](https://github.com/JetBrains/intellij-community/pull/3496))
+  * `SelectableLazyColumn` and `ListComboBox` now use `Key.MoveHome` in line with the updated CMP API
+  * `EditableComboBox` focus handling now matches CMP `1.11.0`'s default focus clearing behaviour
+  * Text context menu actions now respect the actual `enabled` state exposed by CMP
+* **[IJPL-176416](https://youtrack.jetbrains.com/issue/IJPL-176416)** Fixed standalone icon rendering so icons react
+  correctly to theme, scaling, and update events after the new Icons API changes
+  ([`f5b0e05a`](https://github.com/JetBrains/intellij-community/commit/f5b0e05a9faab6566a7dfa2773db574171b66c35))
+
+## v0.37 (2026-06-02)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2026.1.3                   | 1.10.0                        |
+
+### ⚠️ Important Changes
+
+* **[JEWEL-1212](https://youtrack.jetbrains.com/issue/JEWEL-1212)** introduces a behavioural breaking change for list-based combo boxes:
+  * The default sizing behaviour for `ListComboBox`, `EditableListComboBox`, and `SpeedSearchableComboBox` popup has changed from
+    pixel-based to row-count-based. Popups now default to displaying 10 rows.
+  * You can adjust this global default via `ComboBoxMetrics.maxPopupRowCount` or override it per component.
+  * Note that `ComboBoxMetrics.maxPopupHeight` is no longer used as a fallback for these list-based wrappers when their internal
+    `maxPopupHeight` is unspecified. It now only applies to standard `ComboBox` components using custom `popupContent`.
+  * If your implementation requires a fixed pixel height rather than dynamic row-based sizing, you must continue passing a value to the
+    `maxPopupHeight` parameter at the component level.
+* **[JEWEL-1228](https://youtrack.jetbrains.com/issue/JEWEL-1228)** `InlineBanner` no longer fills the available width by default; it now
+  wraps its content instead. If you want banners to span the full width, be sure to add
+  `modifier = Modifier.fillMaxWidth()` ([#3390](https://github.com/JetBrains/intellij-community/pull/3390))
+
+### New features
+*
+* **[JEWEL-368](https://youtrack.jetbrains.com/issue/JEWEL-368)** Added `Modifier.clientRegion` to simplify creating a custom title
+  bar ([#3362](https://github.com/JetBrains/intellij-community/pull/3362))
+* **[JEWEL-921](https://youtrack.jetbrains.com/issue/JEWEL-921)** Made several modifiers more performant, migrating them from the old
+  `composed()` to the newer `Modifier.Node` API ([#3423](https://github.com/JetBrains/intellij-community/pull/3423))
+  * `trackWindowActivation`
+  * `trackComponentActivation`
+  * `trackActivation`
+  * `onActivated`
+  * `border`
+* **[JEWEL-938](https://youtrack.jetbrains.com/issue/JEWEL-938)** Added `SingleSelectionLazyColumn` and `MultiSelectionLazyColumn` with
+  dedicated typed state and remember APIs ([#3450](https://github.com/JetBrains/intellij-community/pull/3450))
+  * These model explicitly the selection mode (single vs multiple) and replace the plain `SelectableLazyColumn` + selection type parameter
+  * We also added initial selection support (`initialSelectedKey`/
+    `initialSelectedKeys`) ([#3450](https://github.com/JetBrains/intellij-community/pull/3450))
+* **[JEWEL-1024](https://youtrack.jetbrains.com/issue/JEWEL-1024)** Added `dismissOnLoseFocus` property to `SpeedSearchArea`, allowing users
+  to choose if they want to keep the input visible on focus loss ([#3361](https://github.com/JetBrains/intellij-community/pull/3361))
+  * This is important for when you want to use `SpeedSearch` as a filter
+  * You can filter collections using `SpeedSearchMatcher` ([#3361](https://github.com/JetBrains/intellij-community/pull/3361))
+  * Check the `.filter()` extension functions available in the `org.jetbrains.jewel.foundation.search` package
+* **[JEWEL-1131](https://youtrack.jetbrains.com/issue/JEWEL-1131)** Added the new `Badge` component, which is designed to highlight
+  promotions, stability level, and new features ([#3365](https://github.com/JetBrains/intellij-community/pull/3365))
+* **[JEWEL-1184](https://youtrack.jetbrains.com/issue/JEWEL-1184)** Added a variant of both `DefaultSplitButton` and `OutlinedSplitButton`
+  components that let you handle the secondary click however you need to, instead of forcing you to use a predefined
+  `Popup` ([#3408](https://github.com/JetBrains/intellij-community/pull/3408))
+* **[JEWEL-1228](https://youtrack.jetbrains.com/issue/JEWEL-1228)** Now it's possible to customize the corner size and the padding of the
+  `InlineBanner` components ([#3390](https://github.com/JetBrains/intellij-community/pull/3390))
+
+### Bug fixes
+*
+* **[JEWEL-368](https://youtrack.jetbrains.com/issue/JEWEL-368)** Fixed decorated window's custom title bar mouse dragging not moving the
+  window sometimes ([#3362](https://github.com/JetBrains/intellij-community/pull/3362))
+* **[JEWEL-938](https://youtrack.jetbrains.com/issue/JEWEL-938)** Fixed `SelectableLazyColumn` multi-selection edge-case behaviour for
+  non-contiguous selection extension with keyboard ([#3450](https://github.com/JetBrains/intellij-community/pull/3450))
+* **[JEWEL-1024](https://youtrack.jetbrains.com/issue/JEWEL-1024)** Fixed an issue in `SelectableLazyColumn`s where it was not triggering
+  the `onSelectedIndexesChange` lambda when the selection is changed by
+  `SpeedSearch` ([#3361](https://github.com/JetBrains/intellij-community/pull/3361))
+* **[JEWEL-1148](https://youtrack.jetbrains.com/issue/JEWEL-1148)** Fixed a memory leak in
+  `LazyTree` ([#3468](https://github.com/JetBrains/intellij-community/pull/3468))
+  * It used to retain references to each and every single entry in the list
+  * This greatly improves memory usage and CPU usage for the component
+* **[JEWEL-1256](https://youtrack.jetbrains.com/issue/JEWEL-1256)** Fix incremental parsing for Markdown tables when the user is typing them
+  in editor mode ([#3428](https://github.com/JetBrains/intellij-community/pull/3428))
+* **[JEWEL-1258](https://youtrack.jetbrains.com/issue/JEWEL-1258)** Fixed missing `remember` keys in `DefaultMarkdownBlockRenderer` and
+  `GitHubTableBlockRenderer` that caused stale values for `onUrlClick` callbacks and `enabled` state when they
+  changed ([#3432](https://github.com/JetBrains/intellij-community/pull/3432))
+* **[JEWEL-1276](https://youtrack.jetbrains.com/issue/JEWEL-1276)** Fixed focusable popups stealing key-window status on macOS, which caused
+  the parent window title bar to appear inactive when a popup was shown via
+  `JDialogRenderer` ([#3476](https://github.com/JetBrains/intellij-community/pull/3476))
+  * This only affects standalone mode with Jewel native popups enabled (see `JewelFlags`)
+* **[JEWEL-1286](https://youtrack.jetbrains.com/issue/JEWEL-1286)** Fixed two Markdown rendering issues
+  * `MarkdownStyling.dark` now uses the correct colours for `BlockQuote` and
+    `HtmlBlock` ([#3501](https://github.com/JetBrains/intellij-community/pull/3501))
+  * `MarkdownStyling.dark` now derives its own `inlinesStyling` from the correct
+    `baseTextStyle` ([#3501](https://github.com/JetBrains/intellij-community/pull/3501))
+* **[JEWEL-1293](https://youtrack.jetbrains.com/issue/JEWEL-1293)** Fixed `SimpleListItem` colours in dark mode to use the dark IntelliJ UI
+  palette ([#3500](https://github.com/JetBrains/intellij-community/pull/3500))
+* **[JEWEL-1303](https://youtrack.jetbrains.com/issue/JEWEL-1303)** Fixed two potential sources of infinite recompositions:
+  * `TextStyle` instances in `IntUiTypography` were being re-allocated on every recomposition instead of being
+    cached ([#3486](https://github.com/JetBrains/intellij-community/pull/3486))
+  * `StandalonePainterHintsProvider` and `BridgePainterHintsProvider`/`BridgeMessageResourceResolver` were being re-allocated on every
+    recomposition of `IntUiTheme` and `SwingBridgeTheme` ([#3486](https://github.com/JetBrains/intellij-community/pull/3486))
+
+### Deprecated API
+
+* **[JEWEL-938](https://youtrack.jetbrains.com/issue/JEWEL-938)** Deprecated legacy  `SelectableLazyColumn` entry points in favor of explicit
+  single/multi selection lazy column APIs ([#3450](https://github.com/JetBrains/intellij-community/pull/3450))
+* **[JEWEL-938](https://youtrack.jetbrains.com/issue/JEWEL-938)** Deprecated legacy 2-arg
+  `rememberSelectableLazyListState(...)` ([#3450](https://github.com/JetBrains/intellij-community/pull/3450))
+  * Use `rememberSingleSelectionLazyListState` and `rememberMultiSelectionLazyListState`
+    APIs instead
+* **[JEWEL-1228](https://youtrack.jetbrains.com/issue/JEWEL-1228)** `BannerMetrics` constructor has been deprecated in favor of the new
+  constructor that takes `borderWidth`, `cornerSize` and
+  `paddingValues` ([#3390](https://github.com/JetBrains/intellij-community/pull/3390))
+  * `BannerMetrics.Companion.default(borderWidth: Dp)` has been deprecated in favor of
+    `BannerMetrics.Companion.default(borderWidth: Dp, cornerSize: CornerSize, paddingValues: PaddingValues)`
+
 ## v0.36 (2026-04-27)
 
 | Min supported IJP versions | Compose Multiplatform version |

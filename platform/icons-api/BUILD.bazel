@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.icons.api` start
-
 jvm_library(
     name = "icons-api",
     srcs = glob(
@@ -19,7 +18,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -37,6 +36,7 @@ jvm_library(
         # do not sort,
         ":icons-api",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.icons.api` end

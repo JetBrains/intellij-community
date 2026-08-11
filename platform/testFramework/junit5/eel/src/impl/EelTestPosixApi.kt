@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.junit5.eel.impl
 
 import com.intellij.platform.eel.EelArchiveApi
@@ -7,10 +7,12 @@ import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecPosixApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelPosixApi
+import com.intellij.platform.eel.EelProcessManagementPosixApi
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelTunnelsPosixApi
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.impl.local.LocalEelArchiveApiImpl
 import com.intellij.platform.eel.impl.local.PosixNioBasedEelFileSystemApi
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
@@ -28,8 +30,7 @@ internal class EelTestPosixApi(override val descriptor: EelTestDescriptor, fileS
 
   override val fs: PosixNioBasedEelFileSystemApi = EelTestFileSystemPosixApi(descriptor, fileSystem)
 
-  override val archive: EelArchiveApi
-    get() = TODO()
+  override val archive: EelArchiveApi = LocalEelArchiveApiImpl
   override val tunnels: EelTunnelsPosixApi
     get() = TODO()
   override val exec: EelExecPosixApi
@@ -39,7 +40,9 @@ internal class EelTestPosixApi(override val descriptor: EelTestDescriptor, fileS
       override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = emptyMap()
       override fun environmentVariables(opts: EelExecApi.EnvironmentVariablesOptions): EelExecApi.EnvironmentVariablesDeferred =
         EelExecApi.EnvironmentVariablesDeferred(CompletableDeferred(emptyMap()))
+      override suspend fun getUserLoginShell() = EelPath.parse("/bin/sh", descriptor)
       override suspend fun findExeFilesInPath(binaryName: String) = TODO()
+      override val processManagement: EelProcessManagementPosixApi get() = TODO()
       override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): EelExecApi.ExternalCliEntrypoint = TODO()
     }
 

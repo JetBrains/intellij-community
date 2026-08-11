@@ -1,27 +1,36 @@
-### auto-generated section `build module` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build module` start
 jvm_library(
-  name = "module",
-  module_name = "module",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = ["@lib//snapshots:dokka-core-1-4-10-2-dev-52-snapshot"]
+    name = "module",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "module",
+    visibility = ["//visibility:public"],
+    runtime_deps = ["@lib//snapshots:dokka-core-1-4-10-2-dev-52-snapshot"],
 )
 
 jvm_library(
-  name = "module_test_lib",
-  testonly = True,
-  module_name = "module",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k21",
-  runtime_deps = [":module"]
+    name = "module_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k21",
+    module_name = "module",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":module"],
 )
 ### auto-generated section `build module` end
 
 ### auto-generated section `iml module` start
-exports_files([
-  "module.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "module.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml module` end

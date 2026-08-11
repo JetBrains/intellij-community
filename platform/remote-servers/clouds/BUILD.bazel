@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.clouds` start
-
 jvm_library(
     name = "clouds",
     srcs = glob(
@@ -21,7 +20,7 @@ jvm_library(
     runtime_deps = ["//platform/execution.dashboard"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/core-api:core",
         "//platform/core-ui",
         "//platform/util:util-ui",
@@ -45,6 +44,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":clouds",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/util:util-ui_test_lib",

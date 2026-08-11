@@ -18,16 +18,12 @@ open class TraceStreamAction : AnAction(), SplitDebuggerAction {
       presentation.setEnabledAndVisible(false)
       return
     }
-    val chainStatus = StreamDebuggerManager.getInstance(project).getChainStatus(sessionProxy.id)
-    when (chainStatus) {
-      null -> presentation.setEnabledAndVisible(false)
-      ChainStatus.LANGUAGE_NOT_SUPPORTED -> presentation.setEnabledAndVisible(false)
-      ChainStatus.COMPUTING -> {
-        presentation.setVisible(true)
-        presentation.setEnabled(false)
-      }
-      ChainStatus.FOUND -> presentation.setEnabledAndVisible(true)
-      ChainStatus.NOT_FOUND -> {
+    val chainState = StreamDebuggerManager.getInstance(project).chainStateFlow(sessionProxy).value
+    when (chainState) {
+      null, ChainStateDto.LanguageNotSupported -> presentation.setEnabledAndVisible(false)
+      is ChainStateDto.Found -> presentation.setEnabledAndVisible(true)
+      ChainStateDto.Computing,
+      ChainStateDto.NotFound -> {
         presentation.setVisible(true)
         presentation.setEnabled(false)
       }
@@ -41,7 +37,7 @@ open class TraceStreamAction : AnAction(), SplitDebuggerAction {
   override fun actionPerformed(e: AnActionEvent) {
     val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return
     sessionProxy.coroutineScope.launch {
-      StreamDebuggerApi.getInstance().showTraceDebuggerDialog(sessionProxy.id)
+      StreamDebuggerApi.getInstance().showTraceDebuggerDialog(sessionProxy.id, TraceEntryPoint.TOOLBAR_ACTION)
     }
   }
 }

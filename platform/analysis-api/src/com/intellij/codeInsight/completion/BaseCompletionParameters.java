@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,4 +61,11 @@ public interface BaseCompletionParameters {
    * @return the completion process associated with current parameters
    */
   @NotNull CompletionProcess getProcess();
+
+  /**
+   * @throws UnsupportedOperationException if the completion process has no available {@link CompletionParameters}.
+   * @return the {@link CompletionParameters} object. Provided for compatibility.
+   */
+  @Internal
+  @NotNull CompletionParameters asCompletionParameters();
 }

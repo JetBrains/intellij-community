@@ -1,13 +1,24 @@
 <!--suppress PluginXmlValidity -->
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.java.execution.impl.shared"/>
     <module name="intellij.java.frontback.impl"/>
     <module name="intellij.platform.frontend"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.java.execution.impl.shared"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.project"/>
     <module name="intellij.platform.testRunner"/>
-    <!-- endregion -->
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <editorFloatingToolbarProvider implementation="com.intellij.java.execution.impl.frontend.JavaAutoRunFloatingToolbarProvider"/>

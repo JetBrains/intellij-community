@@ -256,7 +256,9 @@ public final class BaselinePanel extends NonOpaquePanel {
   }
 
   public void setProgressComponent(@Nullable ListPluginComponent pluginComponent, @NotNull JComponent progressComponent) {
-    assert myProgressComponent == null;
+    if (myProgressComponent != null) {
+      remove(myProgressComponent);
+    }
     myProgressComponent = progressComponent;
     add(progressComponent, null);
 

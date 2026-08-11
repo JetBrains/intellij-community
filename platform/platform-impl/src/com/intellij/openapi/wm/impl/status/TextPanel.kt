@@ -18,6 +18,7 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.awt.Color
@@ -194,6 +195,7 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
   }
 
   open class WithIconAndArrows : TextPanel {
+    @ApiStatus.Internal
     companion object {
       private val GAP = JBUIScale.scale(2)
     }

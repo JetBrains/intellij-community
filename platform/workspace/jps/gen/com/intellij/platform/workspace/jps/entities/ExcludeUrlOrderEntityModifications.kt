@@ -22,7 +22,7 @@ interface ExcludeUrlOrderEntityBuilder : WorkspaceEntityBuilder<ExcludeUrlOrderE
 }
 
 internal object ExcludeUrlOrderEntityType : EntityType<ExcludeUrlOrderEntity, ExcludeUrlOrderEntityBuilder>() {
-  override val entityClass: Class<ExcludeUrlOrderEntity> get() = ExcludeUrlOrderEntity::class.java
+  override val entityImplClass: Class<*> get() = ExcludeUrlOrderEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ExcludeUrlOrderEntityImpl.Builder::class.java
   operator fun invoke(
     order: List<VirtualFileUrl>,

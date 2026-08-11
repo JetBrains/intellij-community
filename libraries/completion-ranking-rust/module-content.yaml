@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.completion.ranking.rust.jar
+  modules:
+  - name: intellij.libraries.completion.ranking.rust
+    libraries:
+      completion-ranking-rust:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-rust/0/completion-ranking-rust-0.jar

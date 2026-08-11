@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.ui
 
 import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
@@ -44,7 +44,6 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
@@ -549,30 +548,6 @@ internal inline fun <reified T> Document.executeInBulk(crossinline block: () -> 
   return result!!
 }
 
-private val TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY = Key.create<Unit>("TERMINAL_EDITOR_SIZE_CHANGING_ACTION")
-
-/**
- * Indicates that action that may modify scroll offset or editor size is in progress.
- * It should be used only to indicate internal programmatic actions that are not explicitly caused by the user interaction.
- * For example, terminal output text update, or adding inlays to create insets between command blocks.
- */
-@get:ApiStatus.Internal
-@set:ApiStatus.Internal
-var Editor.isTerminalOutputScrollChangingActionInProgress: Boolean
-  get() = getUserData(TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY) != null
-  set(value) = putUserData(TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY, if (value) Unit else null)
-
-@ApiStatus.Internal
-inline fun <T> Editor.doTerminalOutputScrollChangingAction(action: () -> T): T {
-  isTerminalOutputScrollChangingActionInProgress = true
-  try {
-    return action()
-  }
-  finally {
-    isTerminalOutputScrollChangingActionInProgress = false
-  }
-}
-
 /**
  * Scroll to bottom if we were at the bottom before executing the [action]
  */
@@ -674,8 +649,8 @@ fun JBLayeredPane.addToLayer(component: JComponent, layer: Int) {
 }
 
 @ApiStatus.Internal
-fun getClipboardText(useSystemSelectionClipboardIfAvailable: Boolean = false): String? {
-  if (useSystemSelectionClipboardIfAvailable) {
+fun getClipboardText(preferSystemSelection: Boolean = false): String? {
+  if (preferSystemSelection) {
     val text = getTextContent(CopyPasteManager.getInstance().systemSelectionContents)
     if (text != null) {
       return text

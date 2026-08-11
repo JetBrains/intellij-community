@@ -17,7 +17,7 @@ interface SimpleObjectsEntityBuilder : WorkspaceEntityBuilder<SimpleObjectsEntit
 }
 
 internal object SimpleObjectsEntityType : EntityType<SimpleObjectsEntity, SimpleObjectsEntityBuilder>() {
-  override val entityClass: Class<SimpleObjectsEntity> get() = SimpleObjectsEntity::class.java
+  override val entityImplClass: Class<*> get() = SimpleObjectsEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SimpleObjectsEntityImpl.Builder::class.java
   operator fun invoke(
     someData: SimpleObjectsSealedClass,

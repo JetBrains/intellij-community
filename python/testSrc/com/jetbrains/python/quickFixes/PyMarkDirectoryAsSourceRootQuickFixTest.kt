@@ -9,12 +9,19 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
+import com.intellij.testFramework.runInEdtAndWait
 import com.jetbrains.python.PyQuickFixTestCase
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.module.PySourceRootDetectionService
 
 @TestDataPath("\$CONTENT_ROOT/../testData/quickFixes/PyMarkDirectoryAsSourceRootQuickFixTest")
+@Subsystems.QuickFixes
+@Layers.Functional
 class PyMarkDirectoryAsSourceRootQuickFixTest: PyQuickFixTestCase() {
+  override fun runInDispatchThread() = false
+
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
@@ -145,7 +152,9 @@ class PyMarkDirectoryAsSourceRootQuickFixTest: PyQuickFixTestCase() {
     myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
     myFixture.configureByFile(pyFilePath)
     myFixture.doHighlighting()
-    executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myFixture.project)
+    runInEdtAndWait {
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myFixture.project)
+    }
     IndexingTestUtil.waitUntilIndexesAreReady(myFixture.project)
     myFixture.checkHighlighting(true, false, false)
   }

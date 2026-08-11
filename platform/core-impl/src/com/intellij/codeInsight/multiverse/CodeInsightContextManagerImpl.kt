@@ -3,9 +3,10 @@ package com.intellij.codeInsight.multiverse
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EditorLockFreeTyping
 import com.intellij.openapi.application.backgroundWriteAction
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -18,6 +19,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.AtomicMapCache
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.ThreadingAssertions.assertWriteAccess
@@ -31,7 +34,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
@@ -80,21 +82,22 @@ class CodeInsightContextManagerImpl(
     allContexts.invalidate()
     project.messageBus.syncPublisher(CodeInsightContextManager.topic).contextsChanged()
     _changeFlow.tryEmit(Unit)
+    log.debug { "[ctx-diag] all contexts invalidated" }
     log.trace { "all contexts are invalidated" }
   }
 
   @RequiresReadLock
   @RequiresBackgroundThread
   override fun getCodeInsightContexts(file: VirtualFile): List<CodeInsightContext> {
-    // FIXME: the assert had never worked due to IJPL-221633, but when it is enabled some tests fail
-    // ThreadingAssertions.softAssertBackgroundThread()
-    ThreadingAssertions.softAssertReadAccess()
-
     if (!isSharedSourceSupportEnabled(project)) return listOf(defaultContext())
+
+    ensureReadAccess(file)
 
     return allContexts.getOrPut(file) {
       log.trace { "requested all contexts of file ${file.path}" }
-      getContextSequence(file).toContextOrArray()
+      getContextSequence(file).toContextOrArray().also {
+        log.debug { "[ctx-diag] computed contexts of ${file.path}: ${it.wrapToList()}" }
+      }
     }.wrapToList()
   }
 
@@ -113,11 +116,7 @@ class CodeInsightContextManagerImpl(
   override fun getPreferredContext(file: VirtualFile): CodeInsightContext {
     if (!isSharedSourceSupportEnabled(project)) return defaultContext()
 
-    // FIXME: the assert had never worked due to IJPL-221633, but when it is enabled some tests fail
-    // ThreadingAssertions.softAssertBackgroundThread()
-    if (EditorLockFreeTyping.isReadAccessNeeded(file)) {
-      ThreadingAssertions.softAssertReadAccess()
-    }
+    ensureReadAccess(file)
 
     log.trace { "requested preferred context of file ${file.path}" }
 
@@ -135,9 +134,7 @@ class CodeInsightContextManagerImpl(
 
     log.trace { "requested context of FileViewProvider ${fileViewProvider.virtualFile.path}" }
 
-    // FIXME: the assert had never worked due to IJPL-221633, but when it is enabled some tests fail
-    // ThreadingAssertions.softAssertBackgroundThread()
-    ThreadingAssertions.softAssertReadAccess()
+    ensureReadAccess(fileViewProvider.virtualFile)
 
     val context = getCodeInsightContextRaw(fileViewProvider)
 
@@ -157,7 +154,7 @@ class CodeInsightContextManagerImpl(
       return block()
     }
     catch (e: Throwable) {
-      if (e is CancellationException) throw e
+      rethrowControlFlowException(e)
       log.error(e)
       return null
     }
@@ -169,6 +166,11 @@ class CodeInsightContextManagerImpl(
     val preferredContext = getPreferredContext(fileViewProvider.virtualFile)
 
     val setContext = trySetContext(fileViewProvider, preferredContext)
+
+    if (setContext != anyContext()) {
+      // at the moment, we do not allow context assignment in versioned environment
+      InternalPsiVersioning.assertNotInFreezePsiVersion()
+    }
 
     log.trace { "context of FileViewProvider ${fileViewProvider.virtualFile.path} is set to $setContext" }
 
@@ -289,4 +291,12 @@ private fun Sequence<CodeInsightContext>.toContextOrArray(): ContextOrArray {
     arrayList.add(iterator.next())
   }
   return arrayList.toTypedArray()
+}
+
+private fun ensureReadAccess(file: VirtualFile) {
+  if (file !is LightVirtualFile) {
+    // FIXME: the assert had never worked due to IJPL-221633, but when it is enabled some tests fail
+    // ThreadingAssertions.softAssertBackgroundThread()
+    ThreadingAssertions.softAssertReadAccess()
+  }
 }

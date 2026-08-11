@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages
 
 import com.intellij.ide.util.scopeChooser.ScopeIdMapper
@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
-import com.intellij.usages.impl.ScopeRuleValidator
+import com.jetbrains.fus.reporting.api.ValidationResultType
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -16,22 +16,19 @@ object FindUsagesStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   @JvmField
-  val GROUP: EventLogGroup = EventLogGroup("find.usages", 3)
+  val GROUP: EventLogGroup = EventLogGroup("find.usages", 4)
 
   const val OPTIONS_EVENT_ID: String = "options"
 
-  private val SEARCHABLE_SCOPE_EVENT_FIELD = EventFields.StringValidatedByCustomRule("searchScope", ScopeRuleValidator::class.java)
+  private val SEARCHABLE_SCOPE_EVENT_FIELD = EventFields.String("searchScope", ScopeIdMapper.standardNames.toList(), defaultValue = ValidationResultType.THIRD_PARTY.description)
   private val SEARCH_FOR_TEXT_OCCURRENCES_FIELD = EventFields.Boolean("isSearchForTextOccurrences")
   private val IS_USAGES_FIELD = EventFields.Boolean("isUsages")
   private val ADDITIONAL = EventFields.createAdditionalDataField(GROUP.id, OPTIONS_EVENT_ID)
   private val OPEN_IN_NEW_TAB = EventFields.Boolean("openInNewTab")
 
-  private val FIND_USAGES_OPTIONS = GROUP.registerVarargEvent(OPTIONS_EVENT_ID,
-                                                              SEARCH_FOR_TEXT_OCCURRENCES_FIELD,
-                                                              IS_USAGES_FIELD,
-                                                              OPEN_IN_NEW_TAB,
-                                                              SEARCHABLE_SCOPE_EVENT_FIELD,
-                                                              ADDITIONAL)
+  private val FIND_USAGES_OPTIONS = GROUP.registerVarargEvent(
+    OPTIONS_EVENT_ID, SEARCH_FOR_TEXT_OCCURRENCES_FIELD, IS_USAGES_FIELD, OPEN_IN_NEW_TAB, SEARCHABLE_SCOPE_EVENT_FIELD, ADDITIONAL
+  )
 
   @JvmStatic
   fun logOptions(project: Project, options: FindUsagesOptions, openInNewTab: Boolean) {

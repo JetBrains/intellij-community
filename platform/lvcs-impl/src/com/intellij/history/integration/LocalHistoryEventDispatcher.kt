@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileManagerListener
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
@@ -22,6 +23,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.openapi.vfs.newvfs.impl.VfsThreadingUtil
 import com.intellij.util.containers.DisposableWrapperList
 
 internal class LocalHistoryEventDispatcher(private val facade: LocalHistoryFacade, private val gateway: IdeaGateway) {
@@ -151,8 +153,10 @@ internal class LocalHistoryEventDispatcher(private val facade: LocalHistoryFacad
       for (event in events) {
         handleBeforeEvent(event)
       }
-      for (listener in vfsEventListeners) {
-        listener.before(events)
+      VfsThreadingUtil.runActionOnEdtRegardlessOfCurrentThread {
+        for (listener in vfsEventListeners) {
+          listener.before(events)
+        }
       }
     }
   }
@@ -162,8 +166,10 @@ internal class LocalHistoryEventDispatcher(private val facade: LocalHistoryFacad
       for (event in events) {
         handleAfterEvent(event)
       }
-      for (listener in vfsEventListeners) {
-        listener.after(events)
+      VfsThreadingUtil.runActionOnEdtRegardlessOfCurrentThread {
+        for (listener in vfsEventListeners) {
+          listener.after(events)
+        }
       }
     }
   }
@@ -201,7 +207,7 @@ internal class LocalHistoryEventDispatcher(private val facade: LocalHistoryFacad
     }
   }
 
-  internal class LocalHistoryBulkFileListener : BulkFileListener {
+  internal class LocalHistoryBulkFileListener : BulkFileListenerBackgroundable {
     override fun before(events: List<VFileEvent>) {
       getInstanceImpl().getEventDispatcher()?.handleBeforeEvents(events)
     }

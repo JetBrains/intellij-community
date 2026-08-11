@@ -5,7 +5,6 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.ui.UINumericRange
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -30,7 +29,7 @@ enum class DslComponentProperty {
   /**
    * Custom visual paddings, which are used instead of [JComponent.getInsets]
    *
-   * Value: [UnscaledGaps] or [Gaps]
+   * Value: [UnscaledGaps]
    */
   VISUAL_PADDINGS,
 

@@ -1,5 +1,5 @@
 // "Create local variable 'foo'" "true"
-// K2_ERROR: Unresolved reference 'foo'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 fun test(): Any? {
     val foo = <selection>null<caret></selection>

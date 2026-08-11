@@ -1,8 +1,3 @@
-- name: lib/github.oshi.core.jar
-  library: github.oshi.core
-  files:
-  - name: $MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6/oshi-core-6.jar
-  reason: <- intellij.performanceTesting
 - name: lib/intellij.driver.client.jar
   contentModules:
   - name: intellij.driver.client
@@ -21,6 +16,9 @@
 - name: lib/intellij.tools.ide.starter.bus.jar
   contentModules:
   - name: intellij.tools.ide.starter.bus
+- name: lib/modules/intellij.driver.backend.split.jar
+  contentModules:
+  - name: intellij.driver.backend.split
 - name: lib/modules/intellij.driver.frontend.split.jar
   contentModules:
   - name: intellij.driver.frontend.split
@@ -30,18 +28,26 @@
 - name: lib/modules/intellij.performanceTesting.backend.jar
   contentModules:
   - name: intellij.performanceTesting.backend
+- name: lib/modules/intellij.performanceTesting.backend.split.jar
+  contentModules:
+  - name: intellij.performanceTesting.backend.split
 - name: lib/modules/intellij.performanceTesting.freezes.jar
   contentModules:
   - name: intellij.performanceTesting.freezes
-    libraries:
-      com.hankcs:aho-corasick-double-array-trie:
-      - name: $MAVEN_REPOSITORY$/com/hankcs/aho-corasick-double-array-trie/1/aho-corasick-double-array-trie-1.jar
+  library: diogen-analysis
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/diogen/diogen-analysis/0/diogen-analysis-0.jar
+  - name: $MAVEN_REPOSITORY$/com/hankcs/aho-corasick-double-array-trie/1/aho-corasick-double-array-trie-1.jar
+  reason: <- intellij.performanceTesting.freezes
 - name: lib/modules/intellij.performanceTesting.frontend.jar
   contentModules:
   - name: intellij.performanceTesting.frontend
 - name: lib/modules/intellij.performanceTesting.frontend.split.jar
   contentModules:
   - name: intellij.performanceTesting.frontend.split
+- name: lib/modules/intellij.performanceTesting.problemsView.jar
+  contentModules:
+  - name: intellij.performanceTesting.problemsView
 - name: lib/modules/intellij.performanceTesting.remoteDriver.compose.jar
   contentModules:
   - name: intellij.performanceTesting.remoteDriver.compose
@@ -55,6 +61,9 @@
 - name: lib/modules/intellij.performanceTesting.remoteDriver.jcef.jar
   contentModules:
   - name: intellij.performanceTesting.remoteDriver.jcef
+- name: lib/modules/intellij.performanceTesting.structureView.jar
+  contentModules:
+  - name: intellij.performanceTesting.structureView
 - name: lib/modules/intellij.performanceTesting.vcs.jar
   contentModules:
   - name: intellij.performanceTesting.vcs

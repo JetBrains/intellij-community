@@ -320,7 +320,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     }
 
     var root = ManagingFS.getInstance().findRoot(rootPath, fileSystem);
-    if (root == null || !root.exists()) {
+    if (root == null || !root.isValid()) {
       return null;
     }
 

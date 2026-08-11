@@ -1,5 +1,5 @@
 // "Add non-null asserted (t!!) call" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'T (of fun <T : Some?> test)', but 'Any' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 interface Some
 
 fun <T: Some?> test(t: T) {

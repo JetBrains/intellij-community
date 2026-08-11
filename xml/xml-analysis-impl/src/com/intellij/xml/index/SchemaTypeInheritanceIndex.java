@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -16,7 +17,9 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -38,18 +41,19 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
   private static final ID<String, Set<SchemaTypeInfo>> NAME = ID.create("SchemaTypeInheritance");
   private static final Logger LOG = Logger.getInstance(SchemaTypeInheritanceIndex.class);
 
-  private static List<Set<SchemaTypeInfo>> getDirectChildrenOfType(final Project project,
-                                                                  final String ns,
-                                                                  final String name) {
+  private static @NotNull @Unmodifiable List<Set<SchemaTypeInfo>> getDirectChildrenOfType(final Project project,
+                                                                                          final String ns,
+                                                                                          final String name) {
     GlobalSearchScope filter = createFilter(project);
     return FileBasedIndex.getInstance().getValues(NAME, NsPlusTag.INSTANCE.encode(Pair.create(ns, name)), filter);
   }
 
-  public static BiFunction<String, String, List<Set<SchemaTypeInfo>>> getWorker(final Project project, final VirtualFile currentFile) {
+  @Contract("_, _ -> new")
+  public static @NotNull BiFunction<String, String, @Unmodifiable List<Set<SchemaTypeInfo>>> getWorker(final Project project, final VirtualFile currentFile) {
     return new MyWorker(currentFile, project);
   }
 
-  private static final class MyWorker implements BiFunction<String, String, List<Set<SchemaTypeInfo>>> {
+  private static final class MyWorker implements BiFunction<String, String, @Unmodifiable List<Set<SchemaTypeInfo>>> {
     private final Project myProject;
     private final VirtualFile myCurrentFile;
     private final boolean myShouldParseCurrent;
@@ -64,13 +68,13 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
     }
 
     @Override
-    public List<Set<SchemaTypeInfo>> apply(String ns, String name) {
+    public @NotNull @Unmodifiable List<Set<SchemaTypeInfo>> apply(String ns, String name) {
       List<Set<SchemaTypeInfo>> type = getDirectChildrenOfType(myProject, ns, name);
       if (myShouldParseCurrent) {
         if (myMap == null) {
           try {
             myMap = XsdComplexTypeInfoBuilder.parse(CharArrayUtil.readerFromCharSequence(VfsUtilCore.loadText(myCurrentFile)));
-            type.add(new HashSet<>(myMap.get(new SchemaTypeInfo(name, true, ns))));
+            type = ContainerUtil.append(type, new HashSet<>(myMap.get(new SchemaTypeInfo(name, true, ns))));
           }
           catch (IOException e) {
             LOG.info(e);

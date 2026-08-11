@@ -43,8 +43,7 @@ public class PsiSwitchExpressionImpl extends PsiSwitchBlockImpl implements PsiSw
     }
 
     if (PsiUtil.isLanguageLevel8OrHigher(this) &&
-        PsiPolyExpressionUtil.isPolyExpression(this) &&
-        !MethodCandidateInfo.isOverloadCheck(PsiUtil.skipParenthesizedExprUp(getParent()))) {
+        PsiPolyExpressionUtil.isPolyExpression(this)) {
       PsiType targetType = InferenceSession.getTargetType(this);
       if (MethodCandidateInfo.isOverloadCheck() && targetType != null &&
           ContainerUtil.exists(resultTypes, t -> !targetType.isAssignableFrom(t))) {

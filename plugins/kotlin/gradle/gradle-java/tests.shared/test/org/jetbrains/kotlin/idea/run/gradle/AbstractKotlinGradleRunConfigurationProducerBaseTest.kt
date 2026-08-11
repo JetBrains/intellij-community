@@ -9,10 +9,11 @@ import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.actions.ConfigurationFromContextImpl
 import com.intellij.testFramework.assertInstanceOf
 import com.intellij.testFramework.runInEdtAndWait
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.gradle.AbstractKotlinGradleCodeInsightBaseTest
 import org.jetbrains.kotlin.idea.gradleJava.run.findTaskNameAround
 import org.jetbrains.kotlin.idea.gradleJava.run.isInGradleKotlinScript

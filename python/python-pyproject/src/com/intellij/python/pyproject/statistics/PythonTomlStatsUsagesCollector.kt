@@ -11,13 +11,13 @@ import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.ProjectScope
-import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PY_PROJECT_TOML_BUILD_SYSTEM
 import com.intellij.python.pyproject.PY_PROJECT_TOML_DEPENDENCY_GROUPS
 import com.intellij.python.pyproject.PY_PROJECT_TOML_TOOL_PREFIX
 import com.jetbrains.python.packaging.PyPackageName
-import com.jetbrains.python.packaging.PyRequirementParser
+import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import org.jetbrains.annotations.ApiStatus
 import org.toml.lang.psi.TomlArray

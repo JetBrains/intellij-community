@@ -1,0 +1,7 @@
+// PROBLEM: 'protected' visibility is effectively 'private' in a final class
+// FIX: Make private
+// NO_FIX: Make class open
+enum class C {
+    X, Y, Z;
+    <caret>protected fun foo() {}
+}

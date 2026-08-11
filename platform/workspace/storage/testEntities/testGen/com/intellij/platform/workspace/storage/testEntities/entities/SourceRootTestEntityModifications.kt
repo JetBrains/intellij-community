@@ -18,7 +18,7 @@ interface SourceRootTestEntityBuilder : WorkspaceEntityBuilder<SourceRootTestEnt
 }
 
 internal object SourceRootTestEntityType : EntityType<SourceRootTestEntity, SourceRootTestEntityBuilder>() {
-  override val entityClass: Class<SourceRootTestEntity> get() = SourceRootTestEntity::class.java
+  override val entityImplClass: Class<*> get() = SourceRootTestEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SourceRootTestEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,

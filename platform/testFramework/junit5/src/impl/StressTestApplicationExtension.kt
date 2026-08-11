@@ -3,13 +3,8 @@ package com.intellij.testFramework.junit5.impl
 
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import org.jetbrains.annotations.TestOnly
-import org.junit.jupiter.api.DynamicContainer
-import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
-import org.junit.jupiter.api.extension.ReflectiveInvocationContext
-import java.lang.reflect.Method
-import kotlin.jvm.optionals.getOrNull
 
 /**
  * A JUnit5 extension which runs tests inside this class with the [ApplicationManagerEx.isInStressTest]`=true` flag,
@@ -22,44 +17,23 @@ import kotlin.jvm.optionals.getOrNull
  * ```
  * See [com.intellij.testFramework.junit5.StressTestApplication] annotation.
  *
- * For JUnit4, use [com.intellij.testFramework.StressTestRule] extension instead.
+ * Every invocation JUnit5 routes through [InvocationInterceptor] is wrapped, because [AbstractInvocationInterceptor] funnels all of its
+ * hooks into a single [intercept]: the test class constructor, `@BeforeAll`/`@BeforeEach`/`@AfterEach`/`@AfterAll`, plain `@Test`s,
+ * `@TestTemplate`-based ones (`@ParameterizedTest`, `@RepeatedTest`), `@TestFactory` methods and each dynamic test they produce.
+ * Setup and teardown of a stress test must observe the same [ApplicationManagerEx.isInStressTest]`=true` state as the test body,
+ * otherwise fixtures behave differently from the code under test (e.g. the test framework's permanent debug log level is only lifted
+ * while in stress mode). [ApplicationManagerEx.runInStressTest] saves and restores the flag, unlike the leaky `setInStressTest`.
+ *
+ * For JUnit4, use the `com.intellij.testFramework.StressTestRule` rule instead.
  */
 @TestOnly
-class StressTestApplicationExtension : InvocationInterceptor {
-  override fun interceptTestMethod(
-    invocation: InvocationInterceptor.Invocation<Void>,
-    invocationContext: ReflectiveInvocationContext<Method>,
-    extensionContext: ExtensionContext?,
-  ) {
-    ApplicationManagerEx.runInStressTest<RuntimeException>(true) {
-      super.interceptTestMethod(invocation, invocationContext, extensionContext)
+internal class StressTestApplicationExtension : AbstractInvocationInterceptor() {
+  override fun <T> intercept(invocation: InvocationInterceptor.Invocation<T>, context: ExtensionContext): T {
+    var result: Any? = null
+    ApplicationManagerEx.runInStressTest<Throwable>(true) {
+      result = invocation.proceed()
     }
+    @Suppress("UNCHECKED_CAST")
+    return result as T
   }
-
-  /**
-   * intercept creation of a factory method, and wrap its evaluation return value with [ApplicationManagerEx.runInStressTest] so that
-   * all returned [DynamicTest]s are run in a stress mode too.
-   * */
-  override fun <T> interceptTestFactoryMethod(
-    invocation: InvocationInterceptor.Invocation<T?>,
-    invocationContext: ReflectiveInvocationContext<Method>,
-    extensionContext: ExtensionContext?,
-  ): T? {
-    var r: T? = null
-    ApplicationManagerEx.runInStressTest<RuntimeException>(true) {
-      r = super.interceptTestFactoryMethod(invocation, invocationContext, extensionContext)
-    }
-    return wrapTest(r)
-  }
-
-  private fun <T> wrapTest(t: T?): T? = when (t) {
-    is Iterable<*> -> t.map { wrapTest(it) }
-    is DynamicContainer -> DynamicContainer.dynamicContainer(t.displayName, t.children.map { wrapTest(it)})
-    is DynamicTest -> DynamicTest.dynamicTest(t.displayName, t.testSourceUri.getOrNull()) {
-      ApplicationManagerEx.runInStressTest<RuntimeException>(true) {
-        t.executable.execute()
-      }
-    }
-    else -> t
-  } as T?
 }

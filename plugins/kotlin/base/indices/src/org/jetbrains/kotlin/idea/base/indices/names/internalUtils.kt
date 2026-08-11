@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.indices.names
 
-import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.jrt.JrtFileSystem
 import com.intellij.util.indexing.FileContent
@@ -65,7 +65,7 @@ internal fun FileContent.toKotlinJvmBinaryClass(): KotlinJvmBinaryClass? {
     val result = try {
         KotlinBinaryClassCache.getKotlinBinaryClassOrClassFileContent(file, MetadataVersion.INSTANCE, content) ?: return null
     } catch (e: Exception) {
-        if (e is ControlFlowException) throw e
+        rethrowControlFlowException(e)
 
         // If the class file cannot be read, e.g. when it is broken, we don't need to index it.
         return null

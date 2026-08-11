@@ -30,7 +30,8 @@ class ServiceHandler(grpc.ServiceRpcHandler):
 
 
 h = ServiceHandler()
+hcd = cast(grpc.HandlerCallDetails, None)
 ctx = cast(grpc.ServicerContext, None)
-svc = h.service(grpc.HandlerCallDetails())
+svc = h.service(hcd)
 if svc is not None and svc.unary_unary is not None:
     svc.unary_unary(Request(), ctx)

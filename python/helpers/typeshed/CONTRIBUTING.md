@@ -169,6 +169,10 @@ supported:
   be listed here, for security reasons. See
   [this issue](https://github.com/typeshed-internal/stub_uploader/issues/90)
   for more information about what external dependencies are allowed.
+* `optional-dependencies` (optional): A list of other stub packages or packages
+  with type information that are imported by some stubs in this package. This
+  is often used for packages that provide optional features that require extra
+  dependencies. The same limitations apply to this field as to `dependencies`.
 * `extra-description` (optional): Can be used to add a custom description to
   the package's long description. It should be a multi-line string in
   Markdown format.
@@ -176,10 +180,10 @@ supported:
   This defaults to `types-<distribution>` and should only be set in special
   cases.
 * `upstream-repository` (recommended): The URL of the upstream repository.
-* `obsolete-since` (optional): This field is part of our process for
+* `obsolete-since` (optional): This table is part of our process for
   [removing obsolete third-party libraries](#third-party-library-removal-policy).
   It contains the first version of the corresponding library that ships
-  its own `py.typed` file.
+  its own `py.typed` file, and the date when that version was released.
 * `no-longer-updated` (optional): This field is set to `true` before removing
   stubs for other reasons than the upstream library shipping with type
   information.
@@ -187,8 +191,8 @@ supported:
   uploads to PyPI. This should only be used in special cases, e.g. when the stubs
   break the upload.
 * `partial-stub` (optional): This field marks the type stub package as
-  [partial](https://peps.python.org/pep-0561/#partial-stub-packages). This is for
-  3rd-party stubs that don't cover the entirety of the package's public API.
+  [partial](https://typing.python.org/en/latest/spec/distributing.html#partial-stub-packages).
+  This is for 3rd-party stubs that don't cover the entirety of the package's public API.
 * `requires-python` (optional): The minimum version of Python required to install
   the type stub package. It must be in the form `>=3.*`. If omitted, the oldest
   Python version supported by typeshed is used.
@@ -204,7 +208,8 @@ This has the following keys:
   this field should be identical to `partial-stub`.
 * `stubtest-dependencies` (default: `[]`): A list of Python packages that need
   to be installed for stubtest to run successfully. These packages are installed
-  in addition to the dependencies in the `dependencies` field.
+  in addition to the dependencies in the `dependencies` and
+  `optional-dependencies` fields.
 * `apt-dependencies` (default: `[]`): A list of Ubuntu APT packages
   that need to be installed for stubtest to run successfully.
 * `brew-dependencies` (default: `[]`): A list of MacOS Homebrew packages
@@ -314,6 +319,25 @@ augment the project's concrete implementation, not the project's
 documentation.  Whenever you find them disagreeing, model the type
 information after the actual implementation and file an issue on the
 project's tracker to fix their documentation.
+
+### Deprecations (using the `@deprecated` decorator)
+
+Generally deprecactions using the `@deprecated` decorator are added more
+liberally in typeshed than runtime deprecation warnings. Here are some
+guidelines that can be deviated from in special cases.
+
+Use `@deprecated` if and only if
+
+- a feature is deprecated at runtime (either using `@deprecated` or with a
+  runtime warning); or
+- a feature is documented to be deprecated (e.g. in API documention,
+  docstrings, or comments).
+
+For standard library features that are not deprecated in all Python versions
+currently supported by typeshed use `@deprecated` for
+
+- all versions starting with the "Deprecated since" version, plus
+- all versions for which an alternative is available.
 
 ### Docstrings
 
@@ -441,7 +465,7 @@ these steps:
 
 1. Open an issue explaining why the stubs should be removed.
 2. A maintainer will add the
-   ["stubs: removal" label](https://github.com/python/typeshed/labels/%22stubs%3A%20removal%22).
+   ["stubs: removal" label](https://github.com/python/typeshed/labels/stubs%3A%20removal).
 3. Open a PR that sets the `no-longer-updated` field in the `METADATA.toml`
    file to `true`.
 4. When a new version of the package was automatically uploaded to PyPI (which
@@ -452,7 +476,7 @@ for any stub obsoletions or removals.
 
 ### Marking PRs as "deferred"
 
-We sometimes use the ["status: deferred" label](https://github.com/python/typeshed/labels/%22status%3A%20deferred%22)
+We sometimes use the ["status: deferred" label](https://github.com/python/typeshed/labels/status%3A%20deferred)
 to mark PRs and issues that we'd like to accept, but that are blocked by some
 external factor. Blockers can include:
 

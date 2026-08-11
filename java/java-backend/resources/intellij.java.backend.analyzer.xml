@@ -1,0 +1,7 @@
+<idea-plugin visibility="internal">
+  <extensions defaultExtensionNs="com.intellij">
+    <defaultLiveTemplates file="liveTemplates/Java"/>
+    <defaultLiveTemplates file="liveTemplates/JavaImplicitClass"/>
+    <defaultLiveTemplates file="liveTemplates/JavaNormalClassesWithInstanceMain"/>
+  </extensions>
+</idea-plugin>

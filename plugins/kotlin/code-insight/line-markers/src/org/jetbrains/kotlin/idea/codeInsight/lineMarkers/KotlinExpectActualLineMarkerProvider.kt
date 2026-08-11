@@ -4,11 +4,9 @@ package org.jetbrains.kotlin.idea.codeInsight.lineMarkers
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
 import com.intellij.codeInsight.daemon.LineMarkerInfo
-import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
 import com.intellij.codeInsight.daemon.NavigateAction
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -17,16 +15,6 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.NavigationPopupDescriptor
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.TestableLineMarkerNavigator
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.allNavigatableActualDeclarations
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.allNavigatableExpectedDeclarations
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.areMarkersForbidden
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.buildNavigateToActualDeclarationsPopup
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.buildNavigateToExpectedDeclarationsPopup
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.expectOrActualAnchor
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.hasExpectForActual
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.markerDeclaration
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -36,20 +24,16 @@ import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import java.awt.event.MouseEvent
 
-class KotlinExpectActualLineMarkerProvider : LineMarkerProviderDescriptor() {
-    override fun getName() = KotlinBundle.message("highlighter.name.expect.actual.line.markers")
+private val expectActualOptions = arrayOf(KotlinLineMarkerOptions.expectOption, KotlinLineMarkerOptions.actualOption)
 
-    override fun getOptions(): Array<Option> = arrayOf(KotlinLineMarkerOptions.expectOption, KotlinLineMarkerOptions.actualOption)
+class KotlinExpectActualLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
+    override fun getName(): String = KotlinBundle.message("highlighter.name.expect.actual.line.markers")
 
-    override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
-    override fun collectSlowLineMarkers(elements: MutableList<out PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
-        if (elements.isEmpty()) return
+    override fun getOptions(): Array<Option> = expectActualOptions
+
+    override fun doCollectSlowLineMarkers(elements: List<PsiElement>, result: LineMarkerInfos) {
         val expectEnabled = KotlinLineMarkerOptions.expectOption.isEnabled
         val actualEnabled = KotlinLineMarkerOptions.actualOption.isEnabled
-        if (!expectEnabled && !actualEnabled) return
-
-        val first = elements.first()
-        if (DumbService.getInstance(first.project).isDumb) return
 
         for (element in elements) {
             val declaration = element as? KtNamedDeclaration ?: continue

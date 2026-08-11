@@ -65,7 +65,10 @@ val kotlinBuildToolsFusEvenList = listOf(
             KotlinBuildToolFusMetricName.JS_COMPILER_MODE,
             KotlinBuildToolFusMetricName.KOTLIN_CROSS_COMPILATION_DISABLED,
             KotlinBuildToolFusMetricName.KOTLIN_CROSS_COMPILATION_NOT_SUPPORTED,
-            KotlinBuildToolFusMetricName.KOTLIN_NATIVE_CACHE_DISABLED
+            KotlinBuildToolFusMetricName.KOTLIN_NATIVE_CACHE_DISABLED,
+            KotlinBuildToolFusMetricName.WASM_COMPILER_MODE,
+            KotlinBuildToolFusMetricName.KMP_JVM_CLASSPATH_METADATA_ENABLED,
+            KotlinBuildToolFusMetricName.KMP_JVM_UNSAFE_OPTIMIZATIONS_ENABLED
         )
     ),
 
@@ -145,6 +148,13 @@ val kotlinBuildToolsFusEvenList = listOf(
             KotlinBuildToolFusMetricName.FILE_BUILD_REPORT,
             KotlinBuildToolFusMetricName.HTTP_BUILD_REPORT,
             KotlinBuildToolFusMetricName.BUILD_SCAN_BUILD_REPORT
+        )
+    ),
+
+    FusFlowSendingStep(
+        GradleStatisticsEventGroups.JsTestBrowser, listOf(
+            KotlinBuildToolFusMetricName.JS_TEST_BROWSER_TYPE,
+            KotlinBuildToolFusMetricName.JS_TEST_BROWSER_CHANGED_OPTION,
         )
     )
 )

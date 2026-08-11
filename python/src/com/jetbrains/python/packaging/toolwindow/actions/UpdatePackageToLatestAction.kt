@@ -5,8 +5,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
-import com.jetbrains.python.packaging.pyRequirement
-import com.jetbrains.python.packaging.pyRequirementVersionSpec
+import com.intellij.python.requirements.pyRequirement
+import com.intellij.python.requirements.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackages
@@ -23,13 +23,19 @@ internal class UpdatePackageToLatestAction : ModifyPackagesActionBase() {
     }
 
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
-      val pyPackages = packages.mapNotNull { pkg ->
-        val versionString = pkg.nextVersion?.presentableText
-        val requirement = pyRequirement(pkg.name, versionString?.let { pyRequirementVersionSpec(it) })
-        pkg.repository?.findPackageSpecification(requirement)
+      val service = project.service<PyPackagingToolWindowService>()
+      val packagesByKey = packages.groupBy { Pair(it.workspaceMember, it.dependencyGroup) }
+      for ((key, group) in packagesByKey) {
+        val (workspaceMember, dependencyGroup) = key
+        val specs = group.mapNotNull { pkg ->
+          val versionString = pkg.nextVersion?.presentableText
+          val requirement = pyRequirement(pkg.name, versionString?.let { pyRequirementVersionSpec(it) })
+          pkg.repository?.findPackageSpecification(requirement)
+        }
+        if (specs.isEmpty()) continue
+        val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specs)
+        service.installPackage(installRequest, workspaceMember = workspaceMember, dependencyGroup = dependencyGroup)
       }
-      val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(pyPackages)
-      project.service<PyPackagingToolWindowService>().installPackage(installRequest)
     }
   }
 

@@ -1,5 +1,5 @@
 // "Rename to _" "false"
-// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.UnusedVariableInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.diagnosticBased.UnusedVariableInspection
 // ACTION: Remove variable 'x'
 // ACTION: Specify type explicitly
 // ACTION: Split property declaration

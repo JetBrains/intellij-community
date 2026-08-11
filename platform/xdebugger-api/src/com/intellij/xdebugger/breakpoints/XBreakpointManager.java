@@ -21,26 +21,9 @@ public interface XBreakpointManager {
   <T extends XBreakpointProperties> XBreakpoint<T> addBreakpoint(XBreakpointType<XBreakpoint<T>, T> type, @Nullable T properties);
 
   /**
-   * Adds a line breakpoint with the specified line placement.
-   * <p>
-   * Use this overload only for placement-aware flows that need to create either
-   * {@link XLineBreakpointVerticalPlacement#ON_LINE} or {@link XLineBreakpointVerticalPlacement#INTER_LINE}
-   * entities on the same source line.
-   * Ordinary callers should use placement-unaware overloads, which default to
-   * {@link XLineBreakpointVerticalPlacement#ON_LINE}.
-   * <p>
-   * {@link XLineBreakpointVerticalPlacement#INTER_LINE} should be used only for types that return
-   * {@code true} from {@link XLineBreakpointType#supportsInterLinePlacement()}.
+   * @deprecated Use {@link #addLineBreakpoint(XLineBreakpointType, String, int, XBreakpointProperties, XLineBreakpointAdditionalInfo)}
    */
-  @ApiStatus.Internal
-  @NotNull
-  <T extends XBreakpointProperties> XLineBreakpoint<T> addLineBreakpoint(XLineBreakpointType<T> type,
-                                                                         @NotNull String fileUrl,
-                                                                         int line,
-                                                                         @Nullable T properties,
-                                                                         boolean temporary,
-                                                                         @NotNull XLineBreakpointVerticalPlacement placement);
-
+  @Deprecated(forRemoval = true)
   @NotNull
   <T extends XBreakpointProperties> XLineBreakpoint<T> addLineBreakpoint(XLineBreakpointType<T> type,
                                                                          @NotNull String fileUrl,
@@ -53,6 +36,13 @@ public interface XBreakpointManager {
                                                                          @NotNull String fileUrl,
                                                                          int line,
                                                                          @Nullable T properties);
+
+  @NotNull
+  <T extends XBreakpointProperties> XLineBreakpoint<T> addLineBreakpoint(XLineBreakpointType<T> type,
+                                                                         @NotNull String fileUrl,
+                                                                         int line,
+                                                                         @Nullable T properties,
+                                                                         @NotNull XLineBreakpointAdditionalInfo additionalInfo);
 
   void removeBreakpoint(@NotNull XBreakpoint<?> breakpoint);
 

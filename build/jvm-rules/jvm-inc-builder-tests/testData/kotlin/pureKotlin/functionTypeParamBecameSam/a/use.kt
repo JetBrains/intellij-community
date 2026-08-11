@@ -1,0 +1,1 @@
+fun u(): Int = exec { 42 }

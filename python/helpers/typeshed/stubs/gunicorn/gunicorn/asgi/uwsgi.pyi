@@ -6,6 +6,7 @@ from gunicorn.config import Config
 from gunicorn.uwsgi.message import UWSGIRequest
 
 from .._types import _AddressType
+from .parser import _ProxyProtocolInfo, _ProxyProtocolInfoUnknown
 
 class AsyncUWSGIRequest(UWSGIRequest):
     cfg: Config
@@ -26,7 +27,7 @@ class AsyncUWSGIRequest(UWSGIRequest):
     uwsgi_vars: dict[str, str]
     modifier1: int
     modifier2: int
-    proxy_protocol_info: dict[str, str | int | None] | None  # TODO: Use TypedDict
+    proxy_protocol_info: _ProxyProtocolInfo | _ProxyProtocolInfoUnknown | None
     content_length: int
     chunked: bool
 

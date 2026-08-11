@@ -9,7 +9,6 @@ filegroup(
 )
 
 ### auto-generated section `build kotlin.idea.tests` start
-
 create_kotlinc_options(
     name = "custom_tests",
     opt_in = [

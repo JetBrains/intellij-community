@@ -4,15 +4,22 @@ import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.InstalledIde
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.utils.FileSystem
+import com.intellij.ide.starter.utils.FileSystem.getDiskUsageDiagnostics
+import com.intellij.ide.starter.utils.FileSystem.unpackTarGz
+import com.intellij.ide.starter.utils.FileSystem.unpackZip
 import com.intellij.ide.starter.utils.HttpClient
+import com.intellij.ide.starter.utils.getDiskInfo
 import com.intellij.tools.ide.util.common.logOutput
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.jar.JarFile
 import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyTo
 import kotlin.io.path.copyToRecursively
 import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteRecursively
+import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.name
@@ -61,7 +68,28 @@ open class PluginConfigurator(val testContext: IDETestContext) {
       throw PluginNotFoundException("Plugin $urlToPluginZipFile is not accessible: ${t.message}", t)
     }
 
-    FileSystem.unpack(pluginZip, testContext.paths.pluginsDir)
+    logOutput("Extracting $pluginZip to ${testContext.paths.pluginsDir}")
+    Files.createDirectories(testContext.paths.pluginsDir)
+
+    try {
+      val ext = if (pluginZip.name.endsWith(".tar.gz")) "tar.gz" else pluginZip.extension
+      when (ext) {
+        "zip", "ijx" -> unpackZip(zipFile = pluginZip, testContext.paths.pluginsDir)
+        "jar" -> pluginZip.copyTo(testContext.paths.pluginsDir / pluginZip.name)
+        "tar.gz" -> unpackTarGz(tarFile = pluginZip, testContext.paths.pluginsDir)
+        else -> error("Archive ${pluginZip.name} is not supported")
+      }
+    }
+    catch (e: IOException) {
+      if (e.message?.contains(other = "No space left on device") == true) {
+        throw IOException(buildString {
+          appendLine(value = "No space left while extracting $pluginZip to ${testContext.paths.pluginsDir}")
+          appendLine(Files.getFileStore(testContext.paths.pluginsDir).getDiskInfo())
+          appendLine(value = getDiskUsageDiagnostics())
+        })
+      }
+      throw e
+    }
   }
 
   fun installPluginFromPluginManager(

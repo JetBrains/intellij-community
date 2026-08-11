@@ -3,11 +3,15 @@ package com.jetbrains.python.quickFixes
 
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyQuickFixTestCase
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.testing.PythonTestConfigurationType
 import com.jetbrains.python.testing.TestRunnerService
 import com.jetbrains.python.testing.pyTestFixtures.PyTestUnpassedFixtureInspection
 
+@Subsystems.QuickFixes
+@Layers.Functional
 class PyTestAddFixtureToFuncParameterQuickFixTest : PyQuickFixTestCase() {
 
   private fun doTest() {

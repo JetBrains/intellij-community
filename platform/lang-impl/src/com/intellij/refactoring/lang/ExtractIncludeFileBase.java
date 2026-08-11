@@ -39,6 +39,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +48,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class ExtractIncludeFileBase<T extends PsiElement> implements RefactoringActionHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance(ExtractIncludeFileBase.class);
   protected PsiFile myIncludingFile;

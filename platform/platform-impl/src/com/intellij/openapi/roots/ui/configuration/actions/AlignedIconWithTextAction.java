@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import java.awt.Insets;
 
+@ApiStatus.Internal
 public abstract class AlignedIconWithTextAction extends IconWithTextAction {
   private static final int SIDE_BORDER_WIDTH = 4;
 
@@ -32,6 +34,7 @@ public abstract class AlignedIconWithTextAction extends IconWithTextAction {
     return c;
   }
 
+  @ApiStatus.Internal
   public abstract static class Group extends ActionGroup implements CustomComponentAction {
 
     public Group() {

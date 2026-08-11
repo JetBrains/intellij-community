@@ -26,7 +26,7 @@ internal object CodeFenceLanguageAliases {
     Entry("JavaScript", "javascript", setOf("js", "node")),
     Entry("Markdown", "markdown", setOf("md")),
     Entry("PowerShell", "powershell", setOf("posh", "pwsh")),
-    Entry("Python", "python", setOf("python2", "python3", "py")),
+    Entry("Python", "python", setOf("jupyter", "python2", "python3", "py")),
     Entry("R", "r", setOf("rlang", "rscript")),
     Entry("RegExp", "regexp", setOf("regex")),
     Entry("Ruby", "ruby", setOf("ruby", "rb")),

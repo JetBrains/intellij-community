@@ -14,13 +14,13 @@
     <orderEntry type="module" module-name="intellij.python.parser" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.services.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.hamcrest" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.sdk.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.junit5Tests.framework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.execService.python" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.services.internal.impl" scope="TEST" />

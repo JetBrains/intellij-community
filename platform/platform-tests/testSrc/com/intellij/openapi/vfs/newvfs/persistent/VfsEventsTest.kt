@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.openapi.Disposable
@@ -31,6 +31,7 @@ import org.junit.runners.model.Statement
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.FileTime
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.moveTo
@@ -257,11 +258,14 @@ class VfsEventsTest : BareTestFixtureTestCase() {
 
   private fun modifyJar(jarPath: Path) {
     assertTrue { Files.exists(jarPath) }
+    val timestamp = Files.getLastModifiedTime(jarPath).toMillis()
     JBZipFile(jarPath, false).use {
-      // modify
-      it.getOrCreateEntry("awesome.txt").setData("Hello_modified!".toByteArray(Charsets.UTF_8), 666L)
-      // add
-      it.getOrCreateEntry("readme_2.txt").setData("Read it!".toByteArray(Charsets.UTF_8), 777L)
+      it.getOrCreateEntry("awesome.txt").setData("Hello_modified!".toByteArray(Charsets.UTF_8), 666L)  // modify
+      it.getOrCreateEntry("readme_2.txt").setData("Read it!".toByteArray(Charsets.UTF_8), 777L)  // add
+    }
+    // ensure the archive's modification timestamp actually changes
+    if (Files.getLastModifiedTime(jarPath).toMillis() == timestamp) {
+      Files.setLastModifiedTime(jarPath, FileTime.fromMillis(timestamp + 1))
     }
   }
 

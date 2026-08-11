@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.file.impl.FileManagerEx
+import com.intellij.psi.impl.file.impl.signalBulkInvalidationNeeded
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.TreeNodeProcessingResult
@@ -48,6 +49,7 @@ import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.FileBasedIndexProjectHandler
 import com.intellij.util.indexing.FilePropertyPusherEx
 import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.indexing.IndexingStamp
 import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushedDiagnostic.addEvent
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushingStatistics
@@ -217,6 +219,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
   }
 
   private fun queueTasks(actions: List<TaskFactory>, reason: @NonNls String) {
+    signalBulkInvalidationNeeded()
     actions.forEach { myTasks.offer(it) }
     val task: DumbModeTask = MyDumbModeTask(reason, this)
     myProject.messageBus.connect(task).subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
@@ -276,6 +279,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
   }
 
   private fun scheduleDumbModeReindexingIfNeeded() {
+    signalBulkInvalidationNeeded()
     FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(myProject)
   }
 
@@ -355,9 +359,17 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
   @Deprecated("Deprecated in Java")
   override fun filePropertiesChanged(file: VirtualFile) {
     ApplicationManager.getApplication().assertReadAccessAllowed()
-    val fileBasedIndex = FileBasedIndex.getInstance()
-    if (fileBasedIndex is FileBasedIndexImpl) {
-      fileBasedIndex.requestReindex(file, false)
+    // A file with no recorded indexed state yet (never indexed by anything) will already be
+    // scheduled for indexing by the normal "unindexed file" check, regardless of this pusher's
+    // value - requesting reindex here would be redundant. It's only needed for a file that was
+    // already indexed before, since a pushed property change alone doesn't affect any content
+    // stamp that the normal check would notice.
+    val fileId = FileBasedIndex.getFileId(file)
+    if (fileId > 0 && IndexingStamp.getNontrivialFileIndexedStates(fileId).isNotEmpty()) {
+      val fileBasedIndex = FileBasedIndex.getInstance()
+      if (fileBasedIndex is FileBasedIndexImpl) {
+        fileBasedIndex.requestReindex(file, false)
+      }
     }
     for (project in ProjectManager.getInstance().openProjects) {
       reloadPsi(file, project)

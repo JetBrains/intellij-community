@@ -5,6 +5,7 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
@@ -21,6 +22,7 @@ import javax.swing.Icon
  */
 interface GeneratorNewProjectWizard {
 
+  @ApiStatus.Internal
   companion object {
     @JvmField
     val EP_NAME = ExtensionPointName<GeneratorNewProjectWizard>("com.intellij.newProjectWizard.generator")

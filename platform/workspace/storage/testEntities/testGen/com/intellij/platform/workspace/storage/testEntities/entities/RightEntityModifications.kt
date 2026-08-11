@@ -19,7 +19,7 @@ interface RightEntityBuilder : WorkspaceEntityBuilder<RightEntity>, CompositeBas
 }
 
 internal object RightEntityType : EntityType<RightEntity, RightEntityBuilder>() {
-  override val entityClass: Class<RightEntity> get() = RightEntity::class.java
+  override val entityImplClass: Class<*> get() = RightEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = RightEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,

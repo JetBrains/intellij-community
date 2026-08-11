@@ -1,5 +1,7 @@
 <idea-plugin>
-
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <inspectionElementsMerger implementation="com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionMerger"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionMerger"/>
@@ -19,11 +21,6 @@
                      groupKey="group.names.modularization.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.jps.ClassOverriddenAtRuntimeInspection"
                      key="class.overridden.at.runtime.display.name" bundle="messages.JavaAnalysisBundle"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="FrequentlyUsedInheritorInspection"
-                     groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.inheritance.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.intellij.compiler.inspection.FrequentlyUsedInheritorInspection"
-                     key="inspection.frequently.used.inheritor.inspection.display.name" bundle="messages.JavaBundle"/>
     <localInspection language="JAVA" shortName="MoveFieldAssignmentToInitializer" enabledByDefault="true" level="INFORMATION"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      implementationClass="com.intellij.codeInspection.MoveFieldAssignmentToInitializerInspection"

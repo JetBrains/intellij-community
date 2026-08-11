@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JTree;
@@ -15,6 +16,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class SliceRootNode extends SliceNode {
   private final SliceUsage myRootUsage;
 

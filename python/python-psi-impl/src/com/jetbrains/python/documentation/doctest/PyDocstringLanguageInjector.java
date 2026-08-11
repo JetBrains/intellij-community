@@ -23,13 +23,17 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.InjectedLanguagePlaces;
 import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -60,12 +64,17 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
       final List<String> strings = StringUtil.split(text, "\n", false);
       final int maxPosition = text.length();
 
-      injectDoctestBlocks(strings, maxPosition, closingQuote, injectionPlacesRegistrar);
-      injectCodeBlocks(strings, maxPosition, closingQuote, injectionPlacesRegistrar);
+      final List<TextRange> codeBlockRanges = collectCodeBlockRanges(strings, maxPosition, closingQuote);
+      codeBlockRanges.addAll(collectMarkdownCodeBlockRanges(text, quotes));
+      injectDoctestBlocks(strings, maxPosition, closingQuote, codeBlockRanges, injectionPlacesRegistrar);
+      injectCodeBlocks(codeBlockRanges, injectionPlacesRegistrar);
     }
   }
 
-  private static void injectDoctestBlocks(@NotNull List<String> strings, int maxPosition, @NotNull String closingQuote,
+  private static void injectDoctestBlocks(@NotNull List<String> strings,
+                                          int maxPosition,
+                                          @NotNull String closingQuote,
+                                          @NotNull List<TextRange> codeBlockRanges,
                                           @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
     boolean gotExample = false;
     int start = 0;
@@ -78,15 +87,22 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
       if (!trimmedString.startsWith(">>>") && !trimmedString.startsWith("...") && gotExample && start < end) {
         gotExample = false;
         if (!endsWithSlash) {
-          injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
+          injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
         }
       }
 
       if (endsWithSlash && !trimmedString.endsWith("\\")) {
         endsWithSlash = false;
-        injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(),
+        injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(),
                                           TextRange.create(start, getEndOffset(currentPosition, string, maxPosition, closingQuote)), null,
                                           null);
+      }
+
+      int finalCurrentPosition = currentPosition;
+      final boolean insideCodeBlock = ContainerUtil.exists(codeBlockRanges, r -> r.containsOffset(finalCurrentPosition));
+      if (insideCodeBlock) {
+        currentPosition += string.length();
+        continue;
       }
 
       if (trimmedString.startsWith(">>>")) {
@@ -111,12 +127,20 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
       currentPosition += string.length();
     }
     if (gotExample && start < end) {
-      injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
+      injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
     }
   }
 
-  private static void injectCodeBlocks(@NotNull List<String> strings, int maxPosition, @NotNull String closingQuote,
+  private static void injectCodeBlocks(@NotNull List<TextRange> codeBlockRanges,
                                        @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
+    for (TextRange range : codeBlockRanges) {
+      injectionPlacesRegistrar.addPlace(PythonLanguage.getInstance(), range, null, null);
+    }
+  }
+
+  @NotNull
+  private static List<TextRange> collectCodeBlockRanges(@NotNull List<String> strings, int maxPosition, @NotNull String closingQuote) {
+    List<TextRange> ranges = new ArrayList<>();
     int currentPosition = 0;
 
     for (int i = 0; i < strings.size(); i++) {
@@ -126,19 +150,38 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
       if (matcher.matches()) {
         String language = matcher.group(2);
         if (language == null) {
-          return;
+          return ranges;
         }
-        String languageLowerCase = language.toLowerCase();
-
-        if (SPHINX_PYTHON_ALIASES.contains(languageLowerCase)) {
+        if (SPHINX_PYTHON_ALIASES.contains(language.toLowerCase())) {
           TextRange codeBlockRange = extractCodeBlockRange(strings, i, currentPosition, maxPosition, closingQuote);
           if (codeBlockRange != null) {
-            injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), codeBlockRange, null, null);
+            ranges.add(codeBlockRange);
           }
         }
       }
       currentPosition += line.length();
     }
+    return ranges;
+  }
+
+  /**
+   * Collects the content ranges of Markdown fenced code blocks (e.g. {@code ```py ... ```}) whose info string
+   * denotes Python, using the platform Markdown parser, so the fenced code can be injected and highlighted as
+   * Python (PY-84818). Ranges are relative to the host {@code text}.
+   */
+  private static @NotNull List<@NotNull TextRange> collectMarkdownCodeBlockRanges(@NotNull String text, @Nullable Pair<@NotNull String, @NotNull String> quotes) {
+    final int contentStart = quotes != null ? quotes.first.length() : 0;
+    final int contentEnd = quotes != null ? text.length() - quotes.second.length() : text.length();
+    if (contentStart >= contentEnd) {
+      return new ArrayList<>();
+    }
+    final String content = text.substring(contentStart, contentEnd);
+
+    final List<TextRange> ranges = new ArrayList<>();
+    for (TextRange range : PyDocstringMarkdownFences.pythonFenceContentRanges(content, SPHINX_PYTHON_ALIASES)) {
+      ranges.add(range.shiftRight(contentStart));
+    }
+    return ranges;
   }
 
   private static TextRange extractCodeBlockRange(@NotNull List<String> lines, int directiveLineIndex, int directivePosition,

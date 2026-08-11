@@ -3,26 +3,30 @@ package com.intellij.python.terminal
 
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.toNioPathOrNull
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.python.terminal.shared.PyTerminalBundle
 import com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.Activatable
-import com.jetbrains.python.sdk.PySdkUtil
+import com.jetbrains.python.sdk.activationEnvironment
 import com.jetbrains.python.sdk.PythonEnvironment
-import com.jetbrains.python.sdk.pyRichSdk
+import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
+import com.jetbrains.python.sdk.pythonInterpreter
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.terminal.Shell
 import org.jetbrains.annotations.ApiStatus
@@ -49,8 +53,12 @@ private data class Jediterm(val source: String, val sourceArgs: List<String>? = 
 
   fun buildEnvironmentVariables(): Map<String, String> = buildMap {
     put(JEDITERM_SOURCE, source)
-    put(JEDITERM_SOURCE_ARGS, sourceArgs?.joinToString(" ") ?: "")
+    // Only emit the args vars when there actually are arguments. An empty JEDITERM_SOURCE_ARGS is
+    // meaningless, and since these vars are now force-set via `_INTELLIJ_FORCE_SET_*`, an empty
+    // `_INTELLIJ_FORCE_SET_JEDITERM_SOURCE_ARGS` breaks the PowerShell integration on Windows:
+    // Get-ChildItem lists the empty-valued var, but Remove-Item reports it as non-existent (PY-90240).
     sourceArgs?.takeIf { it.isNotEmpty() }?.let {
+      put(JEDITERM_SOURCE_ARGS, it.joinToString(" "))
       put(JEDITERM_SOURCE_SINGLE_ARG, "1")
     }
   }
@@ -94,7 +102,7 @@ class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
 
   private fun activateUnknownShell(sdk: Sdk, envs: MutableMap<String, String>): Jediterm? {
     //for other shells we read envs from activate script by the default shell and pass them to the process
-    val envVars = PySdkUtil.activateVirtualEnv(sdk)
+    val envVars = runBlockingMaybeCancellable { sdk.activationEnvironment() }.successOrNull ?: emptyMap()
     if (envVars.isEmpty()) {
       logger.warn("No vars found to activate in ${sdk.homePath}")
     }
@@ -133,11 +141,6 @@ class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
     for ((name, value) in activationEnvs) {
       shellExecOptions.setEnvironmentVariable(name, value)
     }
-  }
-
-  override fun getDefaultStartWorkingDirectory(project: Project): Path? {
-    val file = FileEditorManager.getInstance(project).selectedFiles.firstOrNull() ?: return null
-    return pyTerminalDefaultWorkingDirectory(project, file)
   }
 
   @Deprecated(
@@ -203,7 +206,7 @@ class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
       return
     }
 
-    val pythonEnvironment = sdk.pyRichSdk().environmentResult?.orLogException(logger) ?: run  {
+    val pythonEnvironment = sdk.pythonInterpreter().environmentResult?.orLogException(logger) ?: run {
       logger.warn("Cannot detect Python environment for SDK ${sdk.homePath}, skipping activation")
       return
     }
@@ -234,20 +237,33 @@ class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
 }
 
 /**
- * Content root of the module that owns [file], or `null` (to fall back to the platform default,
- * the project root) when [file] does not belong to any module content root.
+ * Content root of the **Python** module that owns [file], or `null` (to fall back to the platform default,
+ * the project root) when [file] does not belong to the content root of a Python module.
  *
  * This makes a new terminal start in the module of the currently opened file, so that
  * [PyVirtualEnvTerminalCustomizer] activates that module's virtual environment instead of always
- * activating the root environment (PY-90039). The working directory follows the module regardless
- * of whether it has a Python SDK; activation itself is gated on the SDK in
- * [PyVirtualEnvTerminalCustomizer.customizeEnvironment].
+ * activating the root environment (PY-90039). Non-Python modules are skipped, so their content roots
+ * never override the default terminal working directory.
+ *
+ * The module structure is read from the immutable [WorkspaceModel] snapshot, which is safe to access from
+ * any thread without a read action. This matters because the function is called synchronously while run
+ * configurations are loaded on startup, where blocking to acquire the read lock could deadlock (IDEA-390402).
  */
 @ApiStatus.Internal
 fun pyTerminalDefaultWorkingDirectory(project: Project, file: VirtualFile?): Path? {
-  if (file == null) return null
-  return runReadActionBlocking {
-    if (project.isDisposed) return@runReadActionBlocking null
-    ProjectFileIndex.getInstance(project).getContentRootForFile(file)?.toNioPathOrNull()
-  }
+  if (file == null || project.isDisposed) return null
+
+  // Map every module content root to its owning module, read from the lock-free workspace-model snapshot.
+  val contentRootToModule = WorkspaceModel.getInstance(project).currentSnapshot
+    .entities<ModuleEntity>()
+    .flatMap { module -> module.contentRoots.mapNotNull { it.url.virtualFile?.to(module) } }
+    .toMap()
+
+  // The innermost content root that contains the file, together with its owning module.
+  val (contentRoot, module) = generateSequence(file) { it.parent }.firstNotNullOfOrNull { dir ->
+    contentRootToModule[dir]?.let { dir to it }
+  } ?: return null
+
+  // Follow the module only if it's a Python module; otherwise keep the platform default.
+  return if (module.type?.name == PYTHON_MODULE_ID) contentRoot.toNioPathOrNull() else null
 }

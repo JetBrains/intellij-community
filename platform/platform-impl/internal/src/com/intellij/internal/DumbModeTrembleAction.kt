@@ -40,9 +40,9 @@ internal class DumbModeTrembleAction : DumbAwareAction() {
 
     val isTrembleDumb = isTrembleDumb(project)
     e.presentation.text = if (isTrembleDumb)
-      InternalActionsBundle.message("disable.tremble.dumb.mode")
+      PlatformInternalBundle.message("disable.tremble.dumb.mode")
     else
-      InternalActionsBundle.message("enable.tremble.dumb.mode")
+      PlatformInternalBundle.message("enable.tremble.dumb.mode")
   }
 }
 

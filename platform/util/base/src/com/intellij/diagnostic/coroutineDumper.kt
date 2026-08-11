@@ -4,12 +4,18 @@
 
 package com.intellij.diagnostic
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.AbstractCoroutine
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DEBUG
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.JobSupport
 import kotlinx.coroutines.debug.CoroutineInfo
 import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.debug.internal.DebugCoroutineInfo
 import kotlinx.coroutines.debug.internal.DebugProbesImpl
-import kotlinx.coroutines.debug.internal.SUSPENDED
 import kotlinx.coroutines.internal.ScopeCoroutine
 import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
@@ -21,7 +27,8 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 @Internal
 const val COROUTINE_DUMP_HEADER: @NonNls String = "---------- Coroutine dump ----------"
-internal const val COROUTINE_DUMP_HEADER_STRIPPED: @NonNls String = "---------- Coroutine dump (stripped) ----------"
+@Internal
+const val COROUTINE_DUMP_HEADER_STRIPPED: @NonNls String = "---------- Coroutine dump (stripped) ----------"
 
 @Internal
 fun isCoroutineDumpHeader(line: String): Boolean {
@@ -344,7 +351,7 @@ private fun JobRepresentation.withoutJobAddress(): JobRepresentation {
 
 private fun traceToDump(info: DebugCoroutineInfo, stripTrace: Boolean): List<StackTraceElement> {
   val trace = info.lastObservedStackTrace
-  if (stripTrace && info.state == SUSPENDED) {
+  if (stripTrace && info.state == kotlinx.coroutines.debug.internal.SUSPENDED) {
     return stripCoroutineTrace(trace)
   }
   return DebugProbesImpl.enhanceStackTraceWithThreadDump(info, trace)
@@ -352,11 +359,23 @@ private fun traceToDump(info: DebugCoroutineInfo, stripTrace: Boolean): List<Sta
 
 private fun CoroutineContext.joinElementsToString(): String =
   this.fold(StringBuilder()) { acc, element ->
-    if (acc.isNotEmpty()) {
-      acc.append(", ")
+    val elementClassName = element::class.java.name
+    if (noisyElements.any { elementClassName.startsWith(it) }) {
+      acc
+    } else {
+      if (acc.isNotEmpty()) {
+        acc.append(", ")
+      }
+      acc.append(element.toStringSmart())
     }
-    acc.append(element.toStringSmart())
   }.toString()
+
+private val noisyElements = setOf(
+  "fleet.kernel.Transactor",
+  "fleet.kernel.DbSource",
+  "fleet.kernel.rete.Rete",
+  "com.intellij.codeWithMe.ClientIdContextElementPrecursor"
+)
 
 /**
  * Default implementation of [Object.toString] includes hex representation of the object's hash code

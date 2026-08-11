@@ -60,6 +60,25 @@ _thread_local_info = threading.local()
 _get_ident = threading.get_ident
 _thread_active = threading._active  # noqa
 
+
+# IFDEF CYTHON
+# cython_inline_constant: CMD_THREAD_SUSPEND = 105
+# cython_inline_constant: CMD_STEP_INTO = 107
+# cython_inline_constant: CMD_STEP_OVER = 108
+# cython_inline_constant: CMD_STEP_INTO_MY_CODE = 144
+# cython_inline_constant: CMD_STEP_INTO_COROUTINE = 206
+# cython_inline_constant: CMD_SMART_STEP_INTO = 128
+# cython_inline_constant: can_skip: bool = True
+# cython_inline_constant: CMD_STEP_RETURN = 109
+# cython_inline_constant: CMD_STEP_OVER_MY_CODE = 159
+# cython_inline_constant: CMD_STEP_RETURN_MY_CODE = 160
+# cython_inline_constant: CMD_SET_BREAK = 111
+# cython_inline_constant: CMD_SET_FUNCTION_BREAK = 208
+# cython_inline_constant: STATE_RUN = 1
+# cython_inline_constant: STATE_SUSPEND = 2
+# ELSE
+# Note: those are now inlined on cython.
+CMD_THREAD_SUSPEND: int = 105
 CMD_STEP_INTO: int = 107
 CMD_STEP_OVER: int = 108
 CMD_STEP_INTO_MY_CODE: int = 144
@@ -73,6 +92,8 @@ CMD_SET_BREAK: int = 111
 CMD_SET_FUNCTION_BREAK: int = 208
 STATE_RUN: int = 1
 STATE_SUSPEND: int = 2
+# ENDIF
+
 
 IGNORE_EXCEPTION_TAG = re.compile("[^#]*#.*@IgnoreException")
 DEBUG_START = ("pydevd.py", "run")
@@ -169,6 +190,13 @@ def _get_bootstrap_frame(depth: int) -> Tuple[Optional[FrameType], bool]:
         return f_bootstrap, is_bootstrap_frame_internal
 
 
+class UnhandledExceptionTag:
+    """
+    Tag that is attached to exceptions so we can compare the instance without a strong reference
+    See issue https://github.com/microsoft/debugpy/issues/1999
+    """
+
+
 # fmt: off
 # IFDEF CYTHON
 # cdef _get_unhandled_exception_frame(exc, int depth):
@@ -177,12 +205,16 @@ def _get_unhandled_exception_frame(exc, depth: int) -> Optional[FrameType]:
 # ENDIF
 # fmt: on
     try:
-        # Unhandled frame has to be from the same exception.
-        if _thread_local_info.f_unhandled_exc is exc:
+        tag = exc.__dict__.setdefault('__pydevd_tag__', UnhandledExceptionTag())
+    except:
+        tag = exc
+
+    try:
+        if _thread_local_info.f_unhandled_exc_tag is tag:
             return _thread_local_info.f_unhandled_frame
         else:
             del _thread_local_info.f_unhandled_frame
-            del _thread_local_info.f_unhandled_exc
+            del _thread_local_info.f_unhandled_exc_tag
             raise AttributeError('Not the same exception')
     except:
         f_unhandled = _getframe(depth)
@@ -222,7 +254,7 @@ def _get_unhandled_exception_frame(exc, depth: int) -> Optional[FrameType]:
 
         if f_unhandled is not None:
             _thread_local_info.f_unhandled_frame = f_unhandled
-            _thread_local_info.f_unhandled_exc = exc
+            _thread_local_info.f_unhandled_exc_tag = tag
             return _thread_local_info.f_unhandled_frame
 
         return f_unhandled
@@ -236,12 +268,15 @@ def _get_unhandled_exception_frame(exc, depth: int) -> Optional[FrameType]:
 #     thread: threading.Thread
 #     trace: bool
 #     _use_is_stopped: bool
+#     _use_on_thread_handle: bool
 # ELSE
 class ThreadInfo:
     additional_info: PyDBAdditionalThreadInfo
     thread_ident: int
     thread: threading.Thread
     trace: bool
+    _use_is_stopped: bool
+    _use_on_thread_handle: bool
 # ENDIF
 # fmt: on
 
@@ -257,6 +292,7 @@ class ThreadInfo:
         self.additional_info = additional_info
         self.trace = trace
         self._use_is_stopped = hasattr(thread, '_is_stopped')
+        self._use_on_thread_handle = hasattr(thread, '_os_thread_handle')
         
     # fmt: off
     # IFDEF CYTHON
@@ -265,7 +301,9 @@ class ThreadInfo:
     def is_thread_alive(self):
     # ENDIF
     # fmt: on
-        if self._use_is_stopped:
+        if self._use_on_thread_handle:
+            return not self.thread._os_thread_handle.is_done()
+        elif self._use_is_stopped:
             return not self.thread._is_stopped
         else:
             return pydevd_is_thread_alive(self.thread)
@@ -819,7 +857,7 @@ def _enable_code_tracing(py_db, additional_info, func_code_info: FuncCodeInfo, c
 def _enable_step_tracing(py_db, code, step_cmd, info, frame):
 # ENDIF
 # fmt: on
-    if step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE, CMD_SMART_STEP_INTO):
+    if step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE, CMD_SMART_STEP_INTO, CMD_THREAD_SUSPEND):
         # Stepping (must have line/return tracing enabled).
         _enable_line_tracing(code)
         _enable_return_tracing(code)
@@ -1103,7 +1141,7 @@ def _return_event(code, instruction, retval):
     
     # Python line stepping
     stop_frame = info.pydev_step_stop
-    if step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE):
+    if step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE, CMD_THREAD_SUSPEND):
         force_check_project_scope = step_cmd == CMD_STEP_INTO_MY_CODE
         if frame.f_back is not None and not info.pydev_use_scoped_step_frame:
             back_func_code_info = _get_func_code_info(frame.f_back.f_code, frame.f_back)
@@ -1418,6 +1456,15 @@ def _jump_event(code, from_offset, to_offset):
     # We know the frame depth.
     frame = _getframe(1)
 
+    info = thread_info.additional_info
+    if info.pydev_step_cmd == -1:
+        # Not stepping — don't re-evaluate breakpoints for same-line backward jumps
+        # (e.g., comprehension loop iterations on Python < 3.13).
+        # The LINE event already handled the initial breakpoint when the line was first reached.
+        if info.pydev_state == STATE_SUSPEND:
+            _do_wait_suspend(py_db, thread_info, frame, "line", None)
+        return
+
     # Disable the next line event as we're jumping to a line. The line event will be redundant.
     _thread_local_info.f_disable_next_line_if_match = (func_code_info.co_filename, frame.f_lineno)
     # pydev_log.debug('_jump_event', code.co_name, 'from line', from_line, 'to line', frame.f_lineno)
@@ -1595,6 +1642,11 @@ def _internal_line_event(func_code_info, frame, line):
             py_db.set_suspend(thread_info.thread, step_cmd, original_step_cmd=info.pydev_original_step_cmd)
             _do_wait_suspend(py_db, thread_info, frame, "line", None)
             return
+
+    elif step_cmd == CMD_THREAD_SUSPEND:
+        py_db.set_suspend(thread_info.thread, step_cmd, original_step_cmd=info.pydev_original_step_cmd)
+        _do_wait_suspend(py_db, thread_info, frame, "line", None)
+        return
 
     elif step_cmd == CMD_SMART_STEP_INTO:
         stop = False

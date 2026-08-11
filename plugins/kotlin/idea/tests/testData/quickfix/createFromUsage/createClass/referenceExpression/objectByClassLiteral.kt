@@ -1,7 +1,7 @@
 // "Create object 'Foo'" "true"
-// K2_ERROR: Cannot infer type for type parameter 'T'. Specify it explicitly.
-// K2_ERROR: Unresolved reference 'Foo'.
-// K2_ERROR: Candidate 'val <T> KClass<T>.java: Class<T>' is inapplicable because of a receiver type mismatch.
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE_WRONG_RECEIVER
 class Test{
     fun doSth(){
         <caret>Foo::class.java

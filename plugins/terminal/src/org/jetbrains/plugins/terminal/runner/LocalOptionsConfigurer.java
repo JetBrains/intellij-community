@@ -7,14 +7,13 @@ import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.EelPlatformKt;
+import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.RemoteProjectPathProviderKt;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.EnvironmentRestorer;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.system.OS;
 import kotlin.Unit;
@@ -83,6 +82,7 @@ public final class LocalOptionsConfigurer {
     if (configuredStartingDirectory != null) {
       return configuredStartingDirectory;
     }
+
     Path defaultStartingDirectory = toExistentNioDirectory(
       TerminalProjectOptionsProvider.getInstance(project).getDefaultStartingDirectory(),
       "Default starting directory"
@@ -90,16 +90,14 @@ public final class LocalOptionsConfigurer {
     if (defaultStartingDirectory != null) {
       return defaultStartingDirectory;
     }
-    VirtualFile projectDir = ProjectUtil.guessProjectDir(project);
-    if (projectDir != null) {
-      try {
-        return projectDir.toNioPath();
-      }
-      catch (UnsupportedOperationException e) {
-        LOG.warn("Cannot convert " + projectDir, e);
-      }
+
+    Path projectPath = RemoteProjectPathProviderKt.getRemoteProjectBaseNioPath(project);
+    if (projectPath != null) {
+      return projectPath;
     }
-    return Path.of(SystemProperties.getUserHome());
+
+    EelDescriptor projectDescriptor = EelProviderUtil.getEelDescriptor(project);
+    return TerminalStartupKt.getUserHomePathBlocking(projectDescriptor);
   }
 
   /**

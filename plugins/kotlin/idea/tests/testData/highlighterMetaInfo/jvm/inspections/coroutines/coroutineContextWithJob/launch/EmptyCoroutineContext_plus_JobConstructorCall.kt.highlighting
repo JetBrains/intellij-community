@@ -14,4 +14,4 @@ fun CoroutineScope.test() {
 
     launch(EmptyCoroutineContext.plus(<!HIGHLIGHTING("severity='WARNING'; descr='Passing 'CoroutineContext' with a 'Job' to 'launch' builder can lead to structured concurrency violations'")!>Job()<!>)) {}
 }
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutineContextWithJobInspection

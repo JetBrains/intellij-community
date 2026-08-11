@@ -22,6 +22,8 @@ class InjectedFilesAnalysisPromoter : KotlinIdeInjectedFilesAnalysisPromoter {
  * For analysis to be performed, [InjectedFilesAnalysisPromoter] should be registered.
  */
 abstract class AbstractK2IntentionInInjectionTest : AbstractK2IntentionTest() {
+    override fun intentionFileName(): String = ".intention"
+
     private fun <T : KotlinIdeInjectedFilesAnalysisPromoter> registerExtensionPoint(
         provider: T,
         testRootDisposable: Disposable

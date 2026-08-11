@@ -36,7 +36,6 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeProviderBase
 import com.jetbrains.python.psi.types.PyUnionType
@@ -132,22 +131,21 @@ class PyTextFixtureTypeProvider : PyTypeProviderBase() {
     coroutineOrGeneratorElementType(returnType)?.let { return it }
 
     // generator as Iterator or Iterable
-    if (fixtureFunc.isGenerator && returnType is PyCollectionType) return Ref(returnType.iteratedItemType)
+    if (fixtureFunc.isGenerator && returnType is PyClassType && returnType.isParameterized) return Ref(returnType.iteratedItemType)
 
     return Ref(returnType)
   }
 
   private fun coroutineOrGeneratorElementType(coroutineOrGeneratorType: PyType?): Ref<PyType>? {
     val type = if (coroutineOrGeneratorType is PyUnionType) coroutineOrGeneratorType.excludeNull() else coroutineOrGeneratorType
-    val genericType = PyUtil.`as`(type, PyCollectionType::class.java)
     val classType = PyUtil.`as`(type, PyClassType::class.java)
-    if (genericType != null && classType != null) {
+    if (classType != null && classType.isParameterized) {
       val qName = classType.getClassQName()
       if (ArrayUtil.contains(qName, "typing.Awaitable", PyTypingTypeProvider.GENERATOR)) {
-        return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(), 0, null))
+        return Ref.create(ContainerUtil.getOrElse(classType.getTypeArguments(), 0, null))
       }
       if (PyTypingTypeProvider.COROUTINE == qName || PyNames.TYPES_COROUTINE_TYPE == qName) {
-        return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(), 2, null))
+        return Ref.create(ContainerUtil.getOrElse(classType.getTypeArguments(), 2, null))
       }
     }
     return null

@@ -1,9 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.util.containers
 
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SmartList
@@ -196,6 +198,7 @@ inline fun <T> Collection<T>.forEachLoggingErrors(logger: Logger, operation: (T)
       operation(it)
     }
     catch (e: Throwable) {
+      rethrowControlFlowException(e)
       logger.error(e)
     }
   }
@@ -208,6 +211,7 @@ inline fun <T, R : Any> Collection<T>.mapNotNullLoggingErrors(logger: Logger, op
       operation(it)
     }
     catch (e: Throwable) {
+      rethrowControlFlowException(e)
       logger.error(e)
       null
     }
@@ -416,17 +420,4 @@ fun <K, V> Iterable<Pair<K, V>>.toMultiMap(multiMap: MultiMap<K, V>): MultiMap<K
     multiMap.putValue(it.first, it.second)
   }
   return multiMap
-}
-
-inline fun <K, V, R> MultiMap<out K, V>.mapValues(transform: (Pair<K, V>) -> R): MultiMap<K, R> {
-  return mapValuesTo(MultiMap.createLinked<K,R>(), transform)
-}
-
-inline fun <K, V, R, M : MultiMap<in K, in R>> MultiMap<out K, V>.mapValuesTo(destination: M, transform: (Pair<K, V>) -> R): M {
-  for (entry in entrySet()) {
-    for (value in entry.value) {
-      destination.putValue(entry.key, transform(entry.key to value))
-    }
-  }
-  return destination
 }

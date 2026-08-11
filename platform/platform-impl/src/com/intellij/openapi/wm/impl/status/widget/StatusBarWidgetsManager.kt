@@ -292,6 +292,9 @@ internal class WidgetPresentationWrapper(
   private val dataContext: WidgetPresentationDataContext,
   private val scope: CoroutineScope,
 ) : StatusBarWidget, CustomStatusBarWidget, ChildStatusBarWidget {
+  internal val factoryClass: Class<out WidgetPresentationFactory>
+    get() = factory.javaClass
+
   override fun ID(): String = id
 
   override fun install(statusBar: StatusBar) {}

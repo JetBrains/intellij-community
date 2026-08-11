@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -63,7 +64,7 @@ internal class UpdateableGHPRTimelineReviewViewModel internal constructor(
   initialData: GHPullRequestReview
 ) : GHPRTimelineReviewViewModel,
     GHPRTimelineItem.Review {
-  private val cs = parentCs.childScope("GitHub Pull Request Timeline Review View Model")
+  private val cs = parentCs.childScope("GitHub Pull Request Timeline Review View Model", Dispatchers.Default)
   private val reviewData = dataProvider.reviewData
   private val taskLauncher = SingleCoroutineLauncher(cs)
 

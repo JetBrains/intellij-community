@@ -1,13 +1,15 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.junit5.framework.showcase
 
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.PythonMockSdk
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.junit5.framework.pyMockSdkFixture
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.psi.LanguageLevel
@@ -22,12 +24,14 @@ import org.junit.jupiter.api.Test
  */
 @TestApplication
 @TestDataPath($$"$PROJECT_ROOT/community/python/testData/junit5/showcase/PyTypeCheckerInspection")
+@Subsystems.CodeInsight
+@Layers.Functional
 class PlatformWayJUnit5CodeInsightTest {
   companion object {
     private val tempDir = tempPathFixture()
     private val project = projectFixture(tempDir, openAfterCreation = true)
     @Suppress("unused")
-    private val module = project.moduleFixture(tempDir, addPathToSourceRoot = true)
+    private val module = project.pyModuleFixture(tempDir, addPathToSourceRoot = true)
     @Suppress("unused")
     private val mockSdk = project.pyMockSdkFixture(module) {
       PythonMockSdk.create(LanguageLevel.getLatest())
@@ -43,7 +47,7 @@ class PlatformWayJUnit5CodeInsightTest {
   @Test
   fun testAssignIntToStr() {
     codeInsightFixture.configureByText("test.py",
-                       "x: str = <warning descr=\"Expected type 'str', got 'int' instead\">3</warning>")
+                       "x: str = <warning descr=\"Expected type 'str', got 'Literal[3]' instead\">3</warning>")
     codeInsightFixture.checkHighlighting()
   }
 

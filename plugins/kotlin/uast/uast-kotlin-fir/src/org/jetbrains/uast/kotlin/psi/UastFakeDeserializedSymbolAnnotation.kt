@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.renderAsSourceCode
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
 import org.jetbrains.kotlin.asJava.classes.cannotModify
 import org.jetbrains.kotlin.asJava.elements.KtLightAbstractAnnotation
 import org.jetbrains.kotlin.asJava.elements.KtLightElementBase

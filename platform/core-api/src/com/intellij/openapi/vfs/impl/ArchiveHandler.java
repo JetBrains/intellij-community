@@ -13,11 +13,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -192,6 +194,12 @@ public abstract class ArchiveHandler {
           else {
             try {
               map = createEntriesMap();
+            }
+            catch (NoSuchFileException | FileNotFoundException e) {
+              // a missing archive (e.g., an undownloaded sources jar) is an expected state, not a corruption
+              myCorrupted = true;
+              Logger.getInstance(getClass()).warn(e.getClass().getSimpleName() + ": " + getPath());
+              map = Collections.emptyMap();
             }
             catch (Exception e) {
               myCorrupted = true;

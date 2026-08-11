@@ -1,6 +1,6 @@
 // "Import function 'typeOf'" "true"
 // WITH_STDLIB
-// K2_ERROR: Unresolved reference 'typeOf'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 fun test() {
     <caret>typeOf<Int>()

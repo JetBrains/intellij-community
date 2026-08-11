@@ -35,14 +35,14 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.endOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.containingSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -54,7 +54,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.contextParameters
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_COMPILED_PARAMETERS
@@ -125,7 +125,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         sink.whenOptionEnabled(SHOW_EXCLUDED_PARAMETERS.name) {
             if (excludeListed) {
                 val valueParametersWithNames =
-                    session.calculateValueParametersWithNames(functionSymbol, callElement, valueParameters) ?: return@whenOptionEnabled
+                    calculateValueParametersWithNames(functionSymbol, callElement, valueParameters) ?: return@whenOptionEnabled
 
                 collectFromParameters(callElement, functionCall, valueParametersWithNames, contextMenuPayloads, sink)
             }
@@ -133,7 +133,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
 
         if (excludeListed) return
 
-        val valueParametersWithNames = session.calculateValueParametersWithNames(functionSymbol, callElement, valueParameters) ?: return
+        val valueParametersWithNames = calculateValueParametersWithNames(functionSymbol, callElement, valueParameters) ?: return
 
         val compiledSource = valueParametersWithNames.any { pair ->
             val psi = pair.first.takeIf { it.origin == KaSymbolOrigin.JAVA_LIBRARY }?.psi ?: return@any false
@@ -151,7 +151,8 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.calculateValueParametersWithNames(
+    context(session: KaSession)
+    private fun calculateValueParametersWithNames(
         functionSymbol: KaFunctionSymbol,
         callElement: KtCallElement,
         valueParameters: List<KaValueParameterSymbol>
@@ -180,7 +181,6 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         return valueParametersWithNames
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun collectFromParameters(
         callElement: KtCallElement,
@@ -264,7 +264,6 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun collectContextParameters(
         callElement: KtCallElement,
@@ -323,7 +322,6 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         if (valueParametersWithNames.isNotEmpty()) text(", ")
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun CollapsiblePresentationTreeBuilder.addContextParameter(
         originalCallElement: KtCallElement,

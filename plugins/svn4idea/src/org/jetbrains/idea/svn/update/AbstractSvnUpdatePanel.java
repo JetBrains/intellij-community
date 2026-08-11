@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -10,7 +10,6 @@ import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
-import org.jetbrains.idea.svn.info.Info;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -96,8 +95,7 @@ public abstract class AbstractSvnUpdatePanel {
   }
 
   private @Nullable Url getUrlFor(final @NotNull FilePath root) {
-    final Info info = myVCS.getInfo(root.getIOFile());
-    return info != null ? info.getUrl() : null;
+    return myVCS.getSvnFileUrlMapping().getUrlForFile(root.getIOFile());
   }
 
   protected abstract JComponent getPanel();

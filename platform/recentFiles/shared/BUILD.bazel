@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.recentFiles` start
-
 jvm_library(
     name = "recentFiles",
     srcs = glob(
@@ -20,6 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//platform/kernel/rpc",
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
         "//platform/project/shared:project",
@@ -27,7 +27,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
         "//platform/kernel/shared:kernel",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/kotlinx/coroutines/core",
         "//platform/platform-impl/rpc",
         "//platform/platform-api:ide",
@@ -52,12 +52,14 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":recentFiles",
+        "//platform/kernel/rpc:rpc_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/project/shared:project_test_lib",
         "//platform/object-serializer:object-serializer_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
         "//platform/platform-api:ide_test_lib",

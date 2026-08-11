@@ -9,5 +9,5 @@ object A {
 fun <T> test(a: T) {
     val c = (a as A)
     // TODO: report "nested class accessed via instance reference"
-    c.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: B">B</error>()
+    c.<error descr="[UNRESOLVED_REFERENCE]">B</error>()
 }

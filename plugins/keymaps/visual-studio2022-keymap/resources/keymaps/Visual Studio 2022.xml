@@ -20,6 +20,7 @@
   </action>
   <action id="RecentFiles"/>
   <action id="SearchEverywhere">
+    <keyboard-gesture-shortcut keystroke="shift SHIFT" modifier="dblClick"/>
     <keyboard-shortcut first-keystroke="control T"/>
     <keyboard-shortcut first-keystroke="control COMMA"/><!--Edit.GoToAll-->
   </action>

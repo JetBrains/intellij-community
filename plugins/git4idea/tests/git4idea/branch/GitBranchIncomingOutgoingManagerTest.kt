@@ -12,6 +12,7 @@ import git4idea.test.createRepository
 import git4idea.test.git
 import git4idea.test.tac
 import java.nio.file.Path
+import java.util.Collections.synchronizedList
 
 internal class GitBranchIncomingOutgoingManagerTest : GitPlatformTest() {
   private lateinit var repo: GitRepository
@@ -118,7 +119,7 @@ internal class GitBranchIncomingOutgoingManagerTest : GitPlatformTest() {
     GitVcsSettings.getInstance(myProject).setIncomingCommitsCheckStrategy(GitIncomingRemoteCheckStrategy.LS_REMOTE)
     GitVcsApplicationSettings.getInstance().isUseCredentialHelper = true
 
-    val capturedHandlers = mutableListOf<GitLineHandler>()
+    val capturedHandlers = synchronizedList(mutableListOf<GitLineHandler>())
     git.runCommandListener = { capturedHandlers.add(it) }
 
     updateIncomingOutgoing()

@@ -15,13 +15,13 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.restructuredtext.RestBundle;
 import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.util.system.OS;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -207,11 +207,9 @@ public class SphinxBaseCommand {
 
     GeneralCommandLine cmd = new GeneralCommandLine();
     if (sdkHomePath != null) {
-      final String runnerName = "sphinx-quickstart" + (SystemInfo.isWindows ? ".exe" : "");
-      var executablePathNio = PythonSdkUtil.getExecutablePath(Path.of(sdkHomePath), runnerName);
-      String executablePath = executablePathNio != null ? executablePathNio.toString() : null;
+      var executablePath = PythonSdkUtil.getExecutablePath(Path.of(sdkHomePath), OS.CURRENT.getBinaryName("sphinx-quickstart"));
       if (executablePath != null) {
-        cmd.setExePath(executablePath);
+        cmd.withExePath(executablePath.toString());
       }
       else {
         cmd = PythonHelper.LOAD_ENTRY_POINT.newCommandLine(sdkHomePath, new ArrayList<>());

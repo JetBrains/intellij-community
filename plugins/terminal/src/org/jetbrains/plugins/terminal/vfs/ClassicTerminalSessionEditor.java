@@ -14,6 +14,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.ui.TerminalWidgetKt;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.jediterm.terminal.ui.TerminalWidgetListener;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
@@ -23,6 +24,7 @@ import org.jetbrains.plugins.terminal.util.TerminalCoroutineKt;
 
 import javax.swing.JComponent;
 import java.beans.PropertyChangeListener;
+import java.util.concurrent.TimeUnit;
 
 @ApiStatus.Internal
 public final class ClassicTerminalSessionEditor extends UserDataHolderBase implements FileEditor {
@@ -103,7 +105,7 @@ public final class ClassicTerminalSessionEditor extends UserDataHolderBase imple
       termWidget.removeListener(myListener);
     }
     if (Boolean.TRUE.equals(myFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) {
-      ApplicationManager.getApplication().invokeLater(() -> {
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
         boolean disposedBefore = Disposer.isDisposed(myFile.getTerminalWidget());
         Disposer.dispose(myWidgetParentDisposable);
         boolean disposedAfter = Disposer.isDisposed(myFile.getTerminalWidget());
@@ -111,7 +113,7 @@ public final class ClassicTerminalSessionEditor extends UserDataHolderBase imple
           LOG.error(JBTerminalWidget.class.getSimpleName() + " parent disposable hasn't been changed " +
                     "(disposed before: " + disposedBefore + ", disposed after: " + disposedAfter + ")");
         }
-      });
+      }, 1000, TimeUnit.MILLISECONDS);
     }
     else {
       Disposer.dispose(myWidgetParentDisposable);

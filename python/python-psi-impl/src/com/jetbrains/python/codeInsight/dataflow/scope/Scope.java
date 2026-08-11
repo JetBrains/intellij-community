@@ -52,6 +52,9 @@ public interface Scope {
 
   boolean containsDeclaration(String name);
 
+  /** Cheap O(1) check whether this scope itself declares a (non-import) named element {@code name}. */
+  boolean declaresName(@NotNull String name);
+
   @NotNull
   List<PyImportedNameDefiner> getImportedNameDefiners();
 

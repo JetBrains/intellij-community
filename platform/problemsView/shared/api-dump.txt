@@ -1,0 +1,34 @@
+com.intellij.analysis.problemsView.FileProblem
+- com.intellij.analysis.problemsView.Problem
+- getColumn():I
+- a:getFile():com.intellij.openapi.vfs.VirtualFile
+- getLine():I
+com.intellij.analysis.problemsView.Problem
+- getDescription():java.lang.String
+- getGroup():java.lang.String
+- getIcon():javax.swing.Icon
+- a:getProvider():com.intellij.analysis.problemsView.ProblemsProvider
+- a:getText():java.lang.String
+com.intellij.analysis.problemsView.ProblemsCollector
+- com.intellij.analysis.problemsView.ProblemsListener
+- sf:Companion:com.intellij.analysis.problemsView.ProblemsCollector$Companion
+- a:getFileProblemCount(com.intellij.openapi.vfs.VirtualFile):I
+- a:getFileProblems(com.intellij.openapi.vfs.VirtualFile):java.util.Collection
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.analysis.problemsView.ProblemsCollector
+- a:getOtherProblemCount():I
+- a:getOtherProblems():java.util.Collection
+- a:getProblemCount():I
+- a:getProblemFiles():java.util.Collection
+f:com.intellij.analysis.problemsView.ProblemsCollector$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.analysis.problemsView.ProblemsCollector
+com.intellij.analysis.problemsView.ProblemsListener
+- sf:Companion:com.intellij.analysis.problemsView.ProblemsListener$Companion
+- sf:TOPIC:com.intellij.util.messages.Topic
+- a:problemAppeared(com.intellij.analysis.problemsView.Problem):V
+- a:problemDisappeared(com.intellij.analysis.problemsView.Problem):V
+- a:problemUpdated(com.intellij.analysis.problemsView.Problem):V
+f:com.intellij.analysis.problemsView.ProblemsListener$Companion
+com.intellij.analysis.problemsView.ProblemsProvider
+- com.intellij.openapi.Disposable
+- dispose():V
+- a:getProject():com.intellij.openapi.project.Project

@@ -193,7 +193,7 @@ fun extractDeclaredDependencies(trees: List<PackageTreeNode>): List<PythonPackag
 }
 
 @ApiStatus.Internal
-internal interface DependencyTreeProvider {
+interface DependencyTreeProvider {
   suspend fun getDependencyTrees(): List<PackageTreeNode>
   fun invalidateCache()
 }

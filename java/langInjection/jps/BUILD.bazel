@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.langInjection.jps` start
-
 jvm_library(
     name = "jps",
     srcs = glob(
@@ -30,7 +29,7 @@ jvm_library(
         "//libraries/asm",
         "//platform/util/jdom",
         "//platform/util/base",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -56,6 +55,7 @@ jvm_library(
         "//libraries/asm:asm_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//platform/util/base:base_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.langInjection.jps` end

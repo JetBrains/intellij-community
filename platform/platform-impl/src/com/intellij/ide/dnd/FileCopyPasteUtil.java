@@ -23,8 +23,9 @@ import java.util.Set;
 
 public final class FileCopyPasteUtil {
   private static final Logger LOG = Logger.getInstance(FileCopyPasteUtil.class);
-  private static final DataFlavor[] FLAVORS =
-    {DataFlavor.javaFileListFlavor, LinuxDragAndDropSupport.uriListFlavor, LinuxDragAndDropSupport.gnomeFileListFlavor};
+  private static final DataFlavor[] FLAVORS = ContainerUtil.filter(new DataFlavor[]{
+    DataFlavor.javaFileListFlavor, LinuxDragAndDropSupport.uriListFlavor, LinuxDragAndDropSupport.gnomeFileListFlavor
+  }, flavor -> flavor != null).toArray(new DataFlavor[0]);
 
   private FileCopyPasteUtil() { }
 

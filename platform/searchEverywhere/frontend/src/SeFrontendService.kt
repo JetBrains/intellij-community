@@ -5,6 +5,7 @@ import com.intellij.ide.actions.SearchEverywhereManagerFactory
 import com.intellij.ide.actions.searcheverywhere.PreviewExperiment.isExperimentEnabled
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFeature
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywherePopupInstance
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.SearchHistoryList
@@ -21,7 +22,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.project.projectId
-import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.asRef
@@ -109,6 +109,11 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
 
     val showPopupStartTime = System.currentTimeMillis()
 
+    // Mirror the old Search Everywhere (SearchEverywhereManagerImpl): an action that prefills the
+    // search field may request via IS_SELECT_SEARCH_TEXT that the prefilled text is not selected.
+    @Suppress("DEPRECATION")
+    val selectSearchText = initEvent.getData(SearchEverywhereManagerImpl.IS_SELECT_SEARCH_TEXT) != false
+
     val tabFactories = SeTabFactory.EP_NAME.extensionList
     val tabCustomizer = SeTabsCustomizer.getInstance()
     val initialTabs = visibleTabsState?.map { tab ->
@@ -124,7 +129,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     val popupClosedCompletable = CompletableDeferred<Unit>()
     val searchStatePublisher = SeSearchStatePublisher()
     val popupScope = coroutineScope.childScope("SearchEverywhereFrontendService popup scope")
-    val (popup, popupContentPane) = createAndShowIdlePopup(popupScope, initialTabs, tabId, searchText, searchStatePublisher) {
+    val (popup, popupContentPane) = createAndShowIdlePopup(popupScope, initialTabs, tabId, searchText, selectSearchText, searchStatePublisher) {
       popupInstance?.saveSearchText()
       visibleTabsState = it.visibleTabsInfo
       popupClosedCompletable.complete(Unit)
@@ -154,11 +159,13 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
             val initEvent = initEvent.withDataContext(dataContextWithRpcId)
             val providersHolder = SeProvidersHolder.initialize(initEvent, project, session, "Frontend", false)
             localProvidersHolder = providersHolder
+            project?.let { Disposer.tryRegister(it, providersHolder) }
             initializeVmAndSetToPopup(popupFuture,
                                       popup,
                                       popupContentPane,
                                       searchStatePublisher,
                                       tabFactories,
+                                      initialTabs,
                                       tabId,
                                       searchText,
                                       initEvent,
@@ -206,6 +213,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     popupContentPane: SePopupContentPane,
     searchStatePublisher: SeSearchStatePublisher,
     tabFactories: List<SeTabFactory>,
+    initialDummyTabVms: List<SeDummyTabVm>,
     tabId: String,
     searchText: String?,
     initEvent: AnActionEvent,
@@ -246,6 +254,11 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       }
     }.awaitAll()
 
+    if (!orderedTabFactoryIds.contains(tabId)) {
+      SeLog.log(LIFE_CYCLE) { "Tab to open $tabId is in the adapted tabs. Waiting for it's initialization." }
+      adaptedTabs.getValue()
+    }
+
     val tabs = tabsOrDeferredTabs.filterIsInstance<SeTab>().sortedWith { tab1, tab2 ->
       val order1 = orderedTabFactoryIds.indexOf(tab1.id).let { if (it == -1) orderedTabFactoryIds.size + 1 else it }
       val order2 = orderedTabFactoryIds.indexOf(tab2.id).let { if (it == -1) orderedTabFactoryIds.size + 1 else it }
@@ -259,6 +272,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       session,
       project,
       tabs,
+      initialDummyTabVms,
       deferredTabs,
       adaptedTabs,
       searchText,
@@ -299,8 +313,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       val dataContextId = readAction { initEvent.dataContext.rpcId() }
       val availableRemoteProviders = when {
         project == null -> null
-        !service<RemoteApiProviderService>().isServiceOperational() -> null
-        else -> SeRemoteApi.getInstance().getAvailableProviderIds(project.projectId(), session, dataContextId)
+        else -> SeRemoteApi.tryGetInstance()?.getAvailableProviderIds(project.projectId(), session, dataContextId)
       }
       if (availableRemoteProviders == null) return@initAsync null
 
@@ -341,6 +354,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     initialTabs: List<SeDummyTabVm>,
     selectedTabId: String,
     searchText: String?,
+    selectSearchText: Boolean,
     searchStatePublisher: SeSearchStatePublisher,
     onCancel: (SePopupContentPane) -> Unit
   ): Pair<JBPopup, SePopupContentPane> {
@@ -358,6 +372,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
                                          initialTabs,
                                          selectedTabId,
                                          searchText,
+                                         selectSearchText,
                                          getStateService().getSize(POPUP_LOCATION_SETTINGS_KEY),
                                          selectionState)
 

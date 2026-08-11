@@ -1,5 +1,5 @@
 // "Change return type to 'Boolean'" "true"
-// K2_ERROR: Return type of 'fun foo(): Boolean?' is not a subtype of the return type of the overridden member 'fun foo(): Boolean' defined in 'A'.
+// K2_ERROR: RETURN_TYPE_MISMATCH_ON_OVERRIDE
 
 interface A {
     fun foo(): Boolean

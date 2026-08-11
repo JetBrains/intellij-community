@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtilRt
 import org.jetbrains.annotations.ApiStatus
@@ -46,7 +47,7 @@ internal class GradleScriptDependencyCompletionUsageDescriptor : LookupUsageDesc
   override fun getExtensionKey(): String = DESCRIPTOR_NAME
 
   override fun getAdditionalUsageData(lookupResultDescriptor: LookupResultDescriptor): List<EventPair<*>> {
-    val fileName = lookupResultDescriptor.lookup.psiFile?.name ?: return emptyList()
+    val fileName = runReadActionBlocking { lookupResultDescriptor.lookup.psiFile?.name } ?: return emptyList()
     if (!FileUtilRt.extensionEquals(fileName, "gradle.kts")) return emptyList()
 
     val item = lookupResultDescriptor.selectedItem

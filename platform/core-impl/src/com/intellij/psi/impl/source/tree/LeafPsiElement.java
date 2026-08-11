@@ -63,7 +63,7 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
   }
 
   @Override
-  public PsiElement getNextSibling() {
+  public final PsiElement getNextSibling() {
     return SharedImplUtil.getNextSibling(this);
   }
 

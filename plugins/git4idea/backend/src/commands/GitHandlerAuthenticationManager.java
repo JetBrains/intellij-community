@@ -34,6 +34,7 @@ import git4idea.http.GitAskPassAppHandler;
 import git4idea.repo.GitProjectConfigurationCache;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.UUID;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -58,6 +60,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
 
   private @Nullable UUID myHttpHandler;
   private volatile boolean myHttpAuthFailed;
+  private @Nullable GitHttpAuthenticator myHttpAuthenticator;
 
   private @Nullable UUID myNativeSshHandler;
 
@@ -98,6 +101,20 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
     Disposer.dispose(myDisposable);
   }
 
+  /**
+   * Returns a presentable error message for an authentication failure.
+   *
+   * @param errorOutput raw error output of the Git operation
+   * @return an authentication failure message provided by the current {@link GitHttpAuthenticator},
+   * or {@code null} if authentication did not fail or no authenticator is available
+   */
+  @Nls
+  @Nullable String getPresentableAuthFailureMessage(@NotNull List<String> errorOutput) {
+    GitHttpAuthenticator authenticator = myHttpAuthenticator;
+    if (authenticator == null || !myHttpAuthFailed) return null;
+    return authenticator.getPresentableErrorMessage(errorOutput);
+  }
+
   private void prepareHttpAuth() throws IOException {
     GitHttpAuthService service = ApplicationManager.getApplication().getService(GitHttpAuthService.class);
     addHandlerPathToEnvironment(GitCommand.GIT_ASK_PASS_ENV, service);
@@ -107,6 +124,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
                                                                          myHandler.getWorkingDirectory(),
                                                                          authenticationGate,
                                                                          myHandler.getIgnoreAuthenticationMode());
+    myHttpAuthenticator = httpAuthenticator;
     myHttpHandler = service.registerHandler(httpAuthenticator, myDisposable);
     myHandler.addCustomEnvironmentVariable(GitAskPassAppHandler.IJ_ASK_PASS_HANDLER_ENV, myHttpHandler.toString());
     int port = service.getIdePort();

@@ -102,6 +102,7 @@ public class DependencyGraphTest {
       fields, // fields
       List.of(), // methods
       List.of(), // annotations
+      List.of(), // type annotations
       List.of(), // annotation targets
       null, // retention policy
       List.of(), // usages
@@ -110,7 +111,7 @@ public class DependencyGraphTest {
   }
 
   private static JvmField createField(String name, String descriptor) {
-    return new JvmField(new JVMFlags(Opcodes.ACC_PUBLIC), "", name, descriptor, List.of(), null);
+    return new JvmField(new JVMFlags(Opcodes.ACC_PUBLIC), "", name, descriptor, List.of(), List.of(), null);
   }
 
   private static NodeSource createSource(String path) {

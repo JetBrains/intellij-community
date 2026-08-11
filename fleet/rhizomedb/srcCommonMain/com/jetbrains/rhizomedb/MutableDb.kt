@@ -10,6 +10,7 @@ import fleet.openmap.MutableOpenMap
 class MutableDb internal constructor(
   override val dbBefore: DB,
   override val defaultPart: Part,
+  override val registerEntityTypeOnEntityCreation: Boolean,
   internal var index: Index,
   var queryCache: QueryCache
 ) : Mut {

@@ -41,9 +41,10 @@ internal class CopyOnSelectionHandler private constructor(private val settings: 
   private inner class MySelectionListener : SelectionListener {
     override fun selectionChanged(e: SelectionEvent) {
       // Only perform copying if the editor is focused.
-      // In most cases it is, but if the selection was updated through the API it may not be the case.
+      // In most cases it is, but if the selection was updated through the API, it may not be the case.
       if (!settings.copyOnSelect() || e.editor?.contentComponent?.isFocusOwner != true) return
-      val text = e.editor.selectionModel.selectedText ?: return
+      // Take only if not empty. `getSelectedText(allCarets=true)` returns an empty string if there is no selection.
+      val text = e.editor.selectionModel.getSelectedText(true)?.takeIf { it.isNotEmpty() } ?: return
       copy(text)
     }
   }

@@ -64,4 +64,8 @@ internal class DispatchedRunnable(job: Job, runnable: Runnable) : ContextAwareRu
       )
     }
   }
+
+  override fun toString(): String {
+    return "DispatchedRunnable[$_runnable]"
+  }
 }

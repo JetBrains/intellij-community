@@ -14,5 +14,11 @@ class DefaultIconAnimationDesigner(val rootDesigner: DefaultIconDesigner) : Icon
         frames.add(IconAnimationFrame(designer.buildLayers(), duration))
     }
 
+    override fun frame(fadeIn: Long, stay: Long, fadeOut: Long, builder: IconDesigner.() -> Unit) {
+      val designer = rootDesigner.createNestedDesigner()
+      designer.builder()
+      frames.add(IconAnimationFrame(designer.buildLayers(), stay, fadeIn, fadeOut))
+    }
+
     fun build(): List<IconAnimationFrame> = frames
 }

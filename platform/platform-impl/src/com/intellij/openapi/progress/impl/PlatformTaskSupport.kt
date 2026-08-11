@@ -39,7 +39,7 @@ import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isHeadlessEnv
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.NlsContexts.ModalProgressTitle
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
@@ -91,8 +91,8 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
-internal val isRhizomeProgressModelEnabled
-  get() = Registry.`is`("rhizome.progress.model")
+internal suspend fun isRhizomeProgressModelEnabled(): Boolean =
+  RegistryManager.getInstanceAsync().`is`("rhizome.progress.model")
 
 private val LOG = logger<PlatformTaskSupport>()
 
@@ -424,14 +424,14 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
  */
 @Suppress("INVISIBLE_REFERENCE")
 private inline fun <T> resetThreadLocalEventLoop(action: () -> T): T {//
-  val existingEventLoop = ThreadLocalEventLoop.currentOrNull()
-  ThreadLocalEventLoop.resetEventLoop()
+  val existingEventLoop = kotlinx.coroutines.ThreadLocalEventLoop.currentOrNull()
+  kotlinx.coroutines.ThreadLocalEventLoop.resetEventLoop()
   try {
     return action()
   }
   finally {
     if (existingEventLoop != null) {
-      ThreadLocalEventLoop.setEventLoop(existingEventLoop)
+      kotlinx.coroutines.ThreadLocalEventLoop.setEventLoop(existingEventLoop)
     }
   }
 }

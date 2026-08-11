@@ -76,17 +76,21 @@ object CodeReviewDetailsBranchComponentFactory {
         }
         val actions = buildList {
           add(ReviewAction.Checkout)
+          if (branchesVm.canCheckoutInNewWorktree) {
+            add(ReviewAction.CheckoutInNewWorktree)
+          }
           if (branchesVm.canShowInLog) {
             add(ReviewAction.ShowInLog)
           }
           add(ReviewAction.CopyBranchName)
         }
         JBPopupFactory.getInstance().createPopupChooserBuilder(actions)
-          .setRenderer(popupActionsRenderer(source, hasRemoteBranch))
+          .setRenderer(popupActionsRenderer(hasRemoteBranch))
           .setAdvertiser(advertiser)
           .setItemChosenCallback { action ->
             return@setItemChosenCallback when (action) {
               is ReviewAction.Checkout -> branchesVm.fetchAndCheckoutRemoteBranch()
+              is ReviewAction.CheckoutInNewWorktree -> branchesVm.checkoutInNewWorktree()
               is ReviewAction.ShowInLog -> branchesVm.fetchAndShowInLog()
               is ReviewAction.CopyBranchName -> {
                 CopyPasteManager.getInstance().setContents(StringSelection(source))
@@ -102,15 +106,18 @@ object CodeReviewDetailsBranchComponentFactory {
   }
 }
 
-private fun popupActionsRenderer(sourceBranch: String, hasRemoteBranch: Boolean): ListCellRenderer<ReviewAction> {
+private fun popupActionsRenderer(hasRemoteBranch: Boolean): ListCellRenderer<ReviewAction> {
   return SimplePopupItemRenderer.create { item ->
     when (item) {
       is ReviewAction.Checkout -> PopupItemPresentation.Simple(
-        if (hasRemoteBranch) CollaborationToolsBundle.message("review.details.branch.checkout.remote", sourceBranch)
-        else CollaborationToolsBundle.message("review.details.branch.checkout.remote.as.detached.head", sourceBranch)
+        if (hasRemoteBranch) CollaborationToolsBundle.message("review.details.branch.checkout.remote")
+        else CollaborationToolsBundle.message("review.details.branch.checkout.remote.as.detached.head")
+      )
+      is ReviewAction.CheckoutInNewWorktree -> PopupItemPresentation.Simple(
+        CollaborationToolsBundle.message("review.details.branch.checkout.in.new.worktree")
       )
       is ReviewAction.ShowInLog -> PopupItemPresentation.Simple(
-        CollaborationToolsBundle.message("review.details.branch.show.remote.in.git.log", sourceBranch)
+        CollaborationToolsBundle.message("review.details.branch.show.remote.in.git.log")
       )
       is ReviewAction.CopyBranchName -> PopupItemPresentation.Simple(CollaborationToolsBundle.message("review.details.branch.copy.name"))
     }
@@ -119,6 +126,7 @@ private fun popupActionsRenderer(sourceBranch: String, hasRemoteBranch: Boolean)
 
 private sealed interface ReviewAction {
   data object Checkout : ReviewAction
+  data object CheckoutInNewWorktree : ReviewAction
   data object ShowInLog : ReviewAction
   data object CopyBranchName : ReviewAction
 }

@@ -1,0 +1,9 @@
+// "Remove redundant renaming" "true"
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
+
+data class Foo(val bar: String)
+
+fun test() {
+    (val bar = <caret>bar) = Foo("")
+}
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.declarations.RemoveRedundantDestructuringRenameFix

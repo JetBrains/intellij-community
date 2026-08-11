@@ -14,7 +14,6 @@ import com.intellij.terminal.pty.PtyProcessTtyConnector
 import com.intellij.terminal.tests.block.testApps.LINE_SEPARATOR
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.util.EnvironmentUtil
 import com.intellij.util.asSafely
 import com.intellij.util.execution.ParametersListUtil
 import com.jediterm.core.util.TermSize
@@ -44,9 +43,9 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.isRegularFile
 
 internal object TerminalSessionTestUtil {
-
   fun startBlockTerminalSession(
     project: Project,
     shellPath: String,
@@ -60,7 +59,7 @@ internal object TerminalSessionTestUtil {
     val runner = LocalBlockTerminalRunner(project)
     val baseOptions = ShellStartupOptions.Builder().shellCommand(listOf(shellPath)).initialTermSize(initialTermSize)
       .envVariables(listOfNotNull(
-        EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE to "true",
+        "DISABLE_AUTO_UPDATE" to "true",
         ("HISTFILE" to "/dev/null").takeIf { disableSavingHistory }
       ).toMap())
       .build()
@@ -264,7 +263,11 @@ internal object TerminalSessionTestUtil {
       "pwsh.exe",
     ).mapNotNull {
       val path = Path.of(it)
-      if (Files.isRegularFile(path)) path else PathEnvironmentVariableUtil.findInPath(it)?.toPath()
+      when {
+        Files.isRegularFile(path) -> path
+        '/' !in it -> PathEnvironmentVariableUtil.findFirst(it)
+        else -> null
+      }
     }
   }
 }

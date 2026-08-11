@@ -5,7 +5,6 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.OnOffButton
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.LcrRow
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics2D
 import java.awt.Insets
 import java.awt.RenderingHints
@@ -14,7 +13,6 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JList
 
-@ApiStatus.Internal
 internal sealed class LcrCellBaseImpl<T : LcrInitParams>(val initParams: T, val baselineAlign: Boolean, val beforeGap: LcrRow.Gap) {
 
   enum class Type(private val instanceFactory: () -> JComponent) {

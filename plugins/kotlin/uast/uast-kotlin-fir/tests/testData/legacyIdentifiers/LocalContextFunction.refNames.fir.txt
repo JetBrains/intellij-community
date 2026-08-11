@@ -1,0 +1,3 @@
+C1 -> USimpleNameReferenceExpression (identifier = C1) from KtNameReferenceExpression
+C2 -> USimpleNameReferenceExpression (identifier = C2) from KtNameReferenceExpression
+C3 -> USimpleNameReferenceExpression (identifier = C3) from KtNameReferenceExpression

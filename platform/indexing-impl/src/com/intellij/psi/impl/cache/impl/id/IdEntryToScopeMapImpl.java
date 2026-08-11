@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.id;
 
-import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -74,7 +73,10 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
   @Override
   public Integer get(Object key) {
     if (key instanceof IdIndexEntry entry) {
-      return idHashToScopeMask.get(entry.getWordHashCode());
+      int mask = idHashToScopeMask.get(entry.getWordHashCode());
+      //mask==0 is default value for idHashToScopeMask, but it shouldn't be a valid value to put into IdEntryToScopeMap
+      // Still, it is hard to ensure 0 is never put into the IdEntryToScopeMap -- easier to convert [0->null] here:
+      return mask == 0 ? null : mask;
     }
     return null;
   }
@@ -146,8 +148,10 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
 
   @Override
   public void forEach(@NotNull BiConsumer<? super IdIndexEntry, ? super Integer> consumer) {
-    forEach((hash, value) -> {
-      consumer.accept(new IdIndexEntry(hash), value);
+    forEach((hash, scopeMask) -> {
+      if (scopeMask != 0) {
+        consumer.accept(new IdIndexEntry(hash), scopeMask);
+      }
       return true;
     });
   }
@@ -159,6 +163,9 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
       Int2IntMap.Entry entry = iterator.next();
       int idHash = entry.getIntKey();
       int scopeMask = entry.getIntValue();
+      if (scopeMask == 0) {
+        continue;
+      }
       if (!consumer.consume(idHash, scopeMask)) {
         return;
       }
@@ -167,6 +174,9 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
 
   public void updateMask(int hash,
                          int occurrenceMask) {
+    if (occurrenceMask == 0) {
+      return;// skip mergeInt() altogether since it could create an entry (key,0) -- which we don't want
+    }
     idHashToScopeMask.mergeInt(hash, occurrenceMask, (prev, cur) -> prev | cur);
 
     if (serializedData != null) {
@@ -212,8 +222,6 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
       serializedData.getLength()
     );
   }
-
-  private static final ThreadLocalCachedIntArray intsArrayPool = new ThreadLocalCachedIntArray();
 
   private static void writeTo(@NotNull IdEntryToScopeMap idToScopeMap,
                               @NotNull DataOutput out) throws IOException {

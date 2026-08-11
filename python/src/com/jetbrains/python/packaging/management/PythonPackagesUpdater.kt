@@ -9,8 +9,9 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
-import com.jetbrains.python.Result
-import com.jetbrains.python.packaging.pip.PyPiPackageCache
+import com.jetbrains.python.onFailure
+import com.jetbrains.python.packaging.management.ui.notify
+import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -23,14 +24,14 @@ internal class PythonPackagesUpdater : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     withContext(Dispatchers.IO) {
-      thisLogger().debug("Updating PyPI cache and ranking")
-      when (val r = serviceAsync<PyPiPackageCache>().reloadCache()) {
-        is Result.Success -> Unit
-        is Result.Failure -> {
-          // TODO: Implement background UI notification
-          fileLogger().warn("Failed to update packages in background, check your Internet connection", r.error)
+      thisLogger().debug("Updating Python package cache and ranking")
+      project
+        .serviceAsync<PipRepositoryManager>()
+        .refreshCaches()
+        .onFailure {
+          fileLogger().warn("Failed to update Python package cache: ${it.message}")
+          it.notify(project)
         }
-      }
     }
   }
 }

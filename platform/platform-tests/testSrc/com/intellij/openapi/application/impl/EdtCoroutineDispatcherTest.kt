@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.EdtImmediate
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ThreadingSupport
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.UiImmediate
@@ -359,7 +360,7 @@ class EdtCoroutineDispatcherTest {
   }
 
   @Test
-  fun `ui dispatcher does not perform dispatch when locks are forbidden`(): Unit = timeoutRunBlocking {
+  fun `ui dispatcher does not perform dispatch when locks are reported`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.UI) {
       assertThat(application.isReadAccessAllowed).isFalse
       val currentTrace = getCurrentTrace()
@@ -370,7 +371,7 @@ class EdtCoroutineDispatcherTest {
   }
 
   @Test
-  fun `immediate relaxed ui dispatcher performs dispatch when locks are forbidden`(): Unit = timeoutRunBlocking {
+  fun `immediate relaxed ui dispatcher performs dispatch when locks are reported`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.UI) {
       assertThat(application.isReadAccessAllowed).isFalse
       val currentTrace = getCurrentTrace()
@@ -453,28 +454,30 @@ class EdtCoroutineDispatcherTest {
 
   @Suppress("ForbiddenInSuspectContextMethod")
   @Test
-  fun `ui dispatcher cannot start locking actions`(): Unit = timeoutRunBlocking {
+  fun `ui dispatcher reports and starts locking actions`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.UI) {
-      assertThrows<java.lang.IllegalStateException> {
+      val counter = AtomicInteger()
+      assertLockAccessReported("write lock") {
         application.runWriteAction {
-          fail()
+          counter.incrementAndGet()
         }
       }
-      assertThrows<java.lang.IllegalStateException> {
+      assertLockAccessReported("read lock") {
         application.runReadAction {
-          fail()
+          counter.incrementAndGet()
         }
       }
-      assertThrows<java.lang.IllegalStateException> {
-        ApplicationManagerEx.getApplicationEx().tryRunReadAction {
-          fail()
-        }
+      assertLockAccessReported("fail-fast read lock") {
+        assertTrue(ApplicationManagerEx.getApplicationEx().tryRunReadAction {
+          counter.incrementAndGet()
+        })
       }
-      assertThrows<java.lang.IllegalStateException> {
+      assertLockAccessReported("write-intent lock") {
         application.runWriteIntentReadAction<Unit, Exception> {
-          fail()
+          counter.incrementAndGet()
         }
       }
+      assertThat(counter.get()).isEqualTo(4)
     }
   }
 
@@ -519,9 +522,9 @@ class EdtCoroutineDispatcherTest {
     assertThat(application.isReadAccessAllowed).isTrue
     withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
       assertThat(application.isReadAccessAllowed).isFalse
-      assertThrows<java.lang.IllegalStateException> {
+      assertLockAccessReported("read lock") {
         application.runReadAction {
-          fail()
+          assertThat(application.isReadAccessAllowed).isTrue
         }
       }
     }
@@ -557,6 +560,11 @@ class EdtCoroutineDispatcherTest {
     assertTrue { uiExecuted.get() }
   }
 
+}
+
+private fun assertLockAccessReported(culprit: String, action: () -> Unit) {
+  val error = assertErrorLogged<ThreadingSupport.LockAccessDisallowed>(action)
+  assertThat(error.message).contains("Attempt to take $culprit was reported")
 }
 
 @RequiresEdt

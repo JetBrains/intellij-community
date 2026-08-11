@@ -1,6 +1,6 @@
 // "Change return type to 'S'" "true"
-// K2_ERROR: Return type of 'fun foo(): Int' is not a subtype of the return type of the overridden member 'fun foo(): S' defined in 'A'.
-// K2_AFTER_ERROR: Return type of 'fun foo(): S' is not a subtype of the return type of the overridden member 'fun foo(): T' defined in 'X'.
+// K2_AFTER_ERROR: RETURN_TYPE_MISMATCH_ON_OVERRIDE
+// K2_ERROR: RETURN_TYPE_MISMATCH_ON_OVERRIDE
 open class S {}
 open class T : S() {}
 

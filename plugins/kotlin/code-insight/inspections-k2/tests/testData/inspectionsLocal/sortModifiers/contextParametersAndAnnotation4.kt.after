@@ -1,0 +1,10 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
+// PROBLEM: Modifiers should be placed directly before the relevant element
+annotation class Ann
+
+class B {
+    @Ann
+    @Deprecated("alas")
+    context(x: Int)
+    private inline fun test() { }
+}

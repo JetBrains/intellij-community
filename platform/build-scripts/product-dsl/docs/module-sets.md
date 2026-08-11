@@ -129,6 +129,8 @@ The Product DSL no longer creates module-set wrapper plugins. Existing wrappers 
 `community/module-set-plugins/generated/` and `module-set-plugins/generated/` are checked-in plugin modules and stay in place until they are migrated to hand-written wrappers.
 
 For new wrapper plugins, create a normal plugin module with `plugin.xml` and `plugin-content.yaml`, then add the plugin module to the product layout.
+No runtime descriptor marker is needed. Add a hand-written wrapper's JPS module name to `HAND_WRITTEN_MODULE_SET_PLUGIN_MODULES` in `ModuleSetPlugins.kt`.
+Generation intersects that build-time registry with each product's `ProductModulesLayout.bundledPluginModules`, so wrappers reach the graph without requiring duplicate Product DSL registration.
 
 ## Parameters Reference
 
@@ -312,7 +314,7 @@ To find available module sets and understand their contents:
 
 Create a new module set when:
 - **Multiple products** need the same group of modules
-- The modules form a **cohesive functional unit** (e.g., VCS support, XML support, SSH support)
+- The modules form a **cohesive functional unit** (e.g., VCS support, XML support, coverage support)
 - You want to **enforce consistency** across products using these modules
 - The group is likely to be **reused or evolved** over time
 

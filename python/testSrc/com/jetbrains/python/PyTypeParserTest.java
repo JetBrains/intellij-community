@@ -1,14 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyCollectionType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParser;
@@ -23,6 +26,8 @@ import java.util.List;
 import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyTypeParserTest extends PyTestCase {
   public void testClassType() {
     myFixture.configureByFile("typeParser/typeParser.py");
@@ -45,7 +50,7 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testListType() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyCollectionType type = (PyCollectionType) PyTypeParser.getTypeByName(myFixture.getFile(), "list of MyObject");
+    final PyClassType type = (PyClassType) PyTypeParser.getTypeByName(myFixture.getFile(), "list of MyObject");
     assertNotNull(type);
     assertClassType(type, "list");
     assertClassType(type.getIteratedItemType(), "MyObject");
@@ -53,10 +58,10 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testDictType() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyCollectionType type = (PyCollectionType) PyTypeParser.getTypeByName(myFixture.getFile(), "dict from str to MyObject");
+    final PyClassType type = (PyClassType) PyTypeParser.getTypeByName(myFixture.getFile(), "dict from str to MyObject");
     assertNotNull(type);
     assertClassType(type, "dict");
-    final List<PyType> elementTypes = type.getElementTypes();
+    final List<PyType> elementTypes = type.getTypeArguments();
     assertClassType(elementTypes.get(0), "str");
     assertClassType(elementTypes.get(1), "MyObject");
   }
@@ -151,7 +156,7 @@ public class PyTypeParserTest extends PyTestCase {
     assertInstanceOf(type, PyUnionType.class);
     final List<PyType> members = new ArrayList<>(((PyUnionType)type).getMembers());
     assertEquals(2, members.size());
-    assertNull(members.get(0));
+    assertEquals(PyAnyType.getUnknown(), members.get(0));
     assertClassType(members.get(1), "int");
   }
 
@@ -166,11 +171,11 @@ public class PyTypeParserTest extends PyTestCase {
   public void testParenthesesPriority() {
     myFixture.configureByFile("typeParser/typeParser.py");
     final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "list of (str or int)");
-    assertInstanceOf(type, PyCollectionType.class);
-    final PyCollectionType collectionType = (PyCollectionType)type;
-    assertNotNull(collectionType);
-    assertEquals("list", collectionType.getName());
-    assertInstanceOf(collectionType.getIteratedItemType(), PyUnionType.class);
+    assertInstanceOf(type, PyClassType.class);
+    final PyClassType pyClassType = (PyClassType)type;
+    assertNotNull(pyClassType);
+    assertEquals("list", pyClassType.getName());
+    assertInstanceOf(pyClassType.getIteratedItemType(), PyUnionType.class);
   }
 
   public void testBoundedGeneric() {
@@ -188,21 +193,21 @@ public class PyTypeParserTest extends PyTestCase {
   public void testBracketSingleParam() {
     myFixture.configureByFile("typeParser/typeParser.py");
     final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "list[int]");
-    assertInstanceOf(type, PyCollectionType.class);
-    final PyCollectionType collectionType = (PyCollectionType)type;
-    assertNotNull(collectionType);
-    assertEquals("list", collectionType.getName());
-    assertEquals("int", collectionType.getIteratedItemType().getName());
+    assertInstanceOf(type, PyClassType.class);
+    final PyClassType pyClassType = (PyClassType)type;
+    assertNotNull(pyClassType);
+    assertEquals("list", pyClassType.getName());
+    assertEquals("int", pyClassType.getIteratedItemType().getName());
   }
 
   public void testBracketMultipleParams() {
     myFixture.configureByFile("typeParser/typeParser.py");
     final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "dict[str, int]");
-    assertInstanceOf(type, PyCollectionType.class);
-    final PyCollectionType collectionType = (PyCollectionType)type;
-    assertNotNull(collectionType);
-    assertEquals("dict", collectionType.getName());
-    final List<PyType> elementTypes = collectionType.getElementTypes();
+    assertInstanceOf(type, PyClassType.class);
+    final PyClassType pyClassType = (PyClassType)type;
+    assertNotNull(pyClassType);
+    assertEquals("dict", pyClassType.getName());
+    final List<PyType> elementTypes = pyClassType.getTypeArguments();
     assertEquals(2, elementTypes.size());
     final PyType first = elementTypes.get(0);
     assertNotNull(first);

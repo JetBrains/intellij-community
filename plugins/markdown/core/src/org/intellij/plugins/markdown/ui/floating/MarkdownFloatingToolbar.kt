@@ -10,7 +10,7 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parents
 import kotlinx.coroutines.CoroutineScope
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 
 internal class MarkdownFloatingToolbar(
   editor: Editor,
@@ -25,7 +25,7 @@ internal class MarkdownFloatingToolbar(
   )
 
   override fun hasIgnoredParent(element: PsiElement): Boolean {
-    if (element.containingFile !is MarkdownFile) {
+    if (!element.supportsMarkdown()) {
       return true
     }
     return element.parents(withSelf = true).any { it.elementType in elementsToIgnore }

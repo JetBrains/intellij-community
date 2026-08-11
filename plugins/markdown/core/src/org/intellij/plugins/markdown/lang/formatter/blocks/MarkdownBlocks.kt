@@ -6,6 +6,7 @@ import com.intellij.formatting.SpacingBuilder
 import com.intellij.formatting.Wrap
 import com.intellij.formatting.WrapType
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.tree.TokenSet
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
@@ -44,7 +45,11 @@ internal object MarkdownBlocks {
       in MarkdownTokenTypeSets.LIST_MARKERS, in MarkdownTokenTypeSets.WHITE_SPACES, MarkdownTokenTypes.BLOCK_QUOTE -> {
         MarkdownRangedFormattingBlock.trimmed(node, settings, spacing, align(node), wrap)
       }
-      MarkdownElementTypes.CODE_SPAN -> MarkdownFormattingBlock(node, settings, spacing, align(node), wrap ?: Wrap.createWrap(WrapType.NORMAL, false))
+      MarkdownTokenTypes.TABLE_SEPARATOR -> TableSeparatorFormattingBlock(node, settings, spacing, align(node), wrap)
+      MarkdownElementTypes.CODE_SPAN -> MarkdownFormattingBlock(
+        node, settings, spacing, align(node),
+        wrap ?: Wrap.createWrap(if (shouldWrapCodeSpan(settings)) WrapType.NORMAL else WrapType.NONE, false)
+      )
       in emphasisLikeElements -> EmphasisFormattingBlock(settings, spacing, node, align(node), wrap)
       MarkdownElementTypes.PARAGRAPH -> when {
         isInsideBlockquote(node) && !shouldWrapInsideBlockquote(settings) -> MarkdownFormattingBlock(node, settings, spacing, align(node), wrap)
@@ -63,11 +68,15 @@ internal object MarkdownBlocks {
     return customSettings.WRAP_TEXT_IF_LONG && customSettings.WRAP_TEXT_INSIDE_BLOCKQUOTES
   }
 
+  private fun shouldWrapCodeSpan(settings: CodeStyleSettings): Boolean {
+    return settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).WRAP_TEXT_IF_LONG
+  }
+
   /** Filter out real whitespace blocks from sequence */
   fun filterFromWhitespaces(sequence: Sequence<ASTNode>) = sequence.filter {
     it.elementType !in MarkdownTokenTypeSets.WHITE_SPACES
     // Dirty hack cause for some reason Markdown parser thinks that `>`, `:` are whitespaces
-    || (it.elementType in MarkdownTokenTypeSets.WHITE_SPACES && it.text.isNotBlank())
+    || (it.elementType in MarkdownTokenTypeSets.WHITE_SPACES && it.text.any { char -> !StringUtil.isWhiteSpace(char) })
   }
 
   private val emphasisLikeElements = TokenSet.create(

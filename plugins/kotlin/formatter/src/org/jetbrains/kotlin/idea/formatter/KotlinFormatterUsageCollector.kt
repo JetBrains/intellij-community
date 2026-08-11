@@ -30,11 +30,9 @@ import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinF
 import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.PROJECT_WITH_BROKEN_OFFICIAL_KOTLIN
 
 class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
-    override fun requiresReadAccess() = true
-
     override fun getGroup(): EventLogGroup = GROUP
 
-    override fun getMetrics(project: Project): Set<MetricEvent> {
+    override suspend fun collect(project: Project): Set<MetricEvent> {
         if (KotlinPlatformUtils.isAndroidStudio || project.runReadActionInSmartMode { !project.containsNonScriptKotlinFile() }) {
             return emptySet()
         }

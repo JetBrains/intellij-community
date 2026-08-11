@@ -46,10 +46,10 @@ internal class KotlinDeclarationGroupingRule(val level: Int = 0) : SingleParentU
     }
 }
 
-private class KotlinDeclarationGroupRuleProvider : FileStructureGroupRuleProvider {
+internal class KotlinDeclarationGroupRuleProvider : FileStructureGroupRuleProvider {
     override fun getUsageGroupingRule(project: Project): UsageGroupingRule = KotlinDeclarationGroupingRule(0)
 }
 
-private class KotlinDeclarationSecondLevelGroupRuleProvider : FileStructureGroupRuleProvider {
+internal class KotlinDeclarationSecondLevelGroupRuleProvider : FileStructureGroupRuleProvider {
     override fun getUsageGroupingRule(project: Project): UsageGroupingRule = KotlinDeclarationGroupingRule(1)
 }

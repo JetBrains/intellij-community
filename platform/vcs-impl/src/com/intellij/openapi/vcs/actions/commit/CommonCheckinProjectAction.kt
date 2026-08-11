@@ -108,8 +108,16 @@ private fun performCheckinProjectAction(e: AnActionEvent) {
 
   val initialChangelist = CheckinActionUtil.getInitiallySelectedChangeList(project, e)
 
-  CheckinActionUtil.performCommonCommitAction(e, project, initialChangelist, roots, ActionsBundle.message("action.CheckinProject.text"),
-                                              null, false)
+  CheckinActionUtil.performCommonCommitAction(
+    e = e,
+    project = project,
+    initialChangeList = initialChangelist,
+    pathsToCommit = roots,
+    actionName = ActionsBundle.message("action.CheckinProject.text"),
+    executor = null,
+    forceUpdateCommitStateFromContext = false,
+    saveCommentOnCancel = true,
+  )
 }
 
 @ApiStatus.Internal

@@ -1,13 +1,9 @@
 plugins {
-    kotlin("js")
+    kotlin("multiplatform")
 }
 
 repositories {
     { { kts_kotlin_plugin_repositories } }
-}
-
-dependencies {
-    implementation(kotlin("stdlib"))
 }
 
 kotlin {

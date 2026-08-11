@@ -37,11 +37,13 @@ kotlin {
   configureAtMostOneJvmTargetOrThrow { compilations.named("test") { withJavaSourceSet { javaSourceSet -> javaSourceSet.java.srcDir(layout.projectDirectory.dir("../srcJvmTest")) } } }
   sourceSets.jvmTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesJvmTest")) }
   sourceSets.commonMain.dependencies {
-    implementation(jps.org.jetbrains.annotations1504825916.get())
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
     }
     implementation(jps.tools.jackson.core.jackson.core235935781.get())
+    implementation(jps.org.jetbrains.annotations1504825916.get())
+  }
+  sourceSets.jvmMain.dependencies {
     implementation(jps.com.fasterxml.jackson.core.jackson.annotations21522943.get())
   }
   // KOTLIN__MARKER_END

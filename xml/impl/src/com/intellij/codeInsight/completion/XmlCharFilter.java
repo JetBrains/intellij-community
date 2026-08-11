@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -25,6 +26,10 @@ public class XmlCharFilter extends CharFilter {
     PsiElement psiElement = lookup.getPsiElement();
     PsiFile file = lookup.getPsiFile();
     if (!(file instanceof XmlFile) && psiElement != null) {
+      if (Elf.getElf().isUnsupportedOperationGuardActive()) {
+        // element.getContainingFile: throws from LeafPsiElement.invalid
+        return false;
+      }
       file = psiElement.getContainingFile();
     }
 

@@ -1,0 +1,24 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run 'Generate Product Layouts' or directly UltimateGenerator.main() -->
+<!-- Source: platform/buildScripts/src/productLayout/UltimateModuleSets.kt: UltimateModuleSets.getTestProductSpecs()["lambdaTestFixtures"], testPlugin(pluginId = "com.intellij.lambda.sampleTestsWithFixtures.plugin") -->
+<idea-plugin>
+  <id>com.intellij.lambda.sampleTestsWithFixtures.plugin</id>
+  <name>Lambda Sample Tests With Fixtures</name>
+  <vendor>JetBrains</vendor>
+
+  <dependencies>
+    <module name="intellij.lambda.testFramework"/>
+    <module name="intellij.libraries.byte.buddy"/>
+  </dependencies>
+
+  <!-- region additional -->
+  <content namespace="jetbrains">
+    <!-- chain: direct -->
+    <module name="intellij.lambda.sampleTestsWithFixtures._test"/>
+  </content>
+  <content>
+    <!-- chain: direct -->
+    <module name="intellij.libraries.assertj.core"/>
+  </content>
+  <!-- endregion -->
+</idea-plugin>

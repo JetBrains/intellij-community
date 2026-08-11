@@ -1,7 +1,7 @@
 // "Suppress 'DIVISION_BY_ZERO' for fun foo" "true"
 // ERROR: The integer literal does not conform to the expected type String
-// K2_ERROR: Argument type mismatch: actual type is 'Int', but 'String' was expected.
-// K2_AFTER_ERROR: Argument type mismatch: actual type is 'Int', but 'String' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_AFTER_ERROR: ARGUMENT_TYPE_MISMATCH
 
 @Suppress(1, "DIVISION_BY_ZERO")
 fun foo() = 2 / <caret>0

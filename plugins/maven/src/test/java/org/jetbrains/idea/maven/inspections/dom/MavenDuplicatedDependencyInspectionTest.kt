@@ -2,18 +2,18 @@
 package org.jetbrains.idea.maven.inspections.dom
 
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture
+import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture.Highlight
+import com.intellij.maven.testFramework.fixtures.MavenDomTestFixtureIndices
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspection
-import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture
-import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture.Highlight
-import org.jetbrains.idea.maven.fixtures.MavenDomTestFixtureIndices
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.checkHighlighting
-import org.jetbrains.idea.maven.fixtures.createModulePom
-import org.jetbrains.idea.maven.fixtures.createProjectPom
-import org.jetbrains.idea.maven.fixtures.importProjectAsync
-import org.jetbrains.idea.maven.fixtures.mavenDomFixture
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource

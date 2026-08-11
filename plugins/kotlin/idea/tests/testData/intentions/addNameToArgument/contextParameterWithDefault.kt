@@ -1,10 +1,10 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters -XXLanguage:+ExplicitContextArguments
 // PRIORITY: LOW
 // INTENTION_TEXT: "Add 'a =' to argument"
-// K2_ERROR: No context argument for 'x: String' found.
 // ERROR: Context parameters are not supported in K1 mode. Consider using a more recent language version and switching to K2 mode.
 // ERROR: Unresolved reference: x
-// K2_AFTER_ERROR: No context argument for 'x: String' found.
+// K2_AFTER_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: NO_CONTEXT_ARGUMENT
 
 context(x: String)
 fun foo(a: String = "default"): String = x + a

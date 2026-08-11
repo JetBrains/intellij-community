@@ -8,6 +8,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @State(
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
   storages = @Storage("plugin_ui.xml"),
   category = SettingsCategory.UI
 )
+@ApiStatus.Internal
 public final class PluginManagerUISettings implements PersistentStateComponent<PluginManagerUISettings>, PerformInBackgroundOption {
   public boolean UPDATE_IN_BACKGROUND;
 

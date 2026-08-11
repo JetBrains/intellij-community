@@ -17,7 +17,7 @@ interface ComposedLinkEntityBuilder : WorkspaceEntityBuilder<ComposedLinkEntity>
 }
 
 internal object ComposedLinkEntityType : EntityType<ComposedLinkEntity, ComposedLinkEntityBuilder>() {
-  override val entityClass: Class<ComposedLinkEntity> get() = ComposedLinkEntity::class.java
+  override val entityImplClass: Class<*> get() = ComposedLinkEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ComposedLinkEntityImpl.Builder::class.java
   operator fun invoke(
     link: ComposedId,

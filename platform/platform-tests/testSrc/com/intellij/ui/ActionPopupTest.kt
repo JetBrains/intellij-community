@@ -82,6 +82,25 @@ class ActionPopupTest {
     }
   }
 
+  @Test
+  fun testActionSearchIndex() {
+    val action = DumbAction(TextWithMnemonic.fromPlainText("Markdown File"))
+    action.addSynonym { "md" }
+
+    val group = DefaultActionGroup()
+    group.add(action)
+
+    val step = ActionPopupStep.createActionsStep(
+      null, group, SimpleDataContext.EMPTY_CONTEXT, ActionPlaces.PROJECT_WIDGET_POPUP,
+      PresentationFactory(), Supplier { SimpleDataContext.EMPTY_CONTEXT },
+      createOptions(false, false, false)
+    ) as ActionPopupStep
+
+    val indexedString = step.getIndexedString(step.values.single())
+    assertEquals("Markdown File md", indexedString)
+    assertNotNull(SpeedSearchComparator(false).matchingFragments("md", indexedString))
+  }
+
   private fun testActionPresentation(textWithMnemonic: TextWithMnemonic, expectedText: String, options: ActionPopupOptions) {
     val group = DefaultActionGroup()
     group.add(DumbAction(textWithMnemonic))
@@ -124,4 +143,3 @@ private class HeadlessRootPaneContainer : Component(), RootPaneContainer {
   override fun setGlassPane(glassPane: Component?) = Unit
   override fun getGlassPane(): Component? = rootPane.glassPane
 }
-

@@ -121,6 +121,13 @@ object JBRResolver {
     }
   }
 
+  /**
+   * The archive file name [downloadAndUnpackJbrIfNeeded] hands to [JBRDownloader]. Public so tests
+   * that pre-provision the build-dependencies download cache can pin the same name.
+   */
+  fun jbrArchiveFileName(majorVersion: String, buildNumber: String, os: String, arch: String): String =
+    "jbrsdk_jcef-$majorVersion-$os-$arch-b$buildNumber.tar.gz"
+
   @OptIn(LowLevelLocalMachineAccess::class)
   suspend fun downloadAndUnpackJbrIfNeeded(jbrVersion: JBRVersion): Path = computeWithSpan("download and unpack JBR") {
     val (majorVersion, buildNumber) = listOf(jbrVersion.majorVersion, jbrVersion.buildNumber)
@@ -141,7 +148,7 @@ object JBRResolver {
       false -> "x64"
     }
 
-    val jbrFileName = "jbrsdk_jcef-$majorVersion-$os-$arch-b$buildNumber.tar.gz"
+    val jbrFileName = jbrArchiveFileName(majorVersion, buildNumber, os, arch)
     val appHome = withContext(Dispatchers.IO) {
       di.direct.instance<JBRDownloader>().downloadJbr(jbrFileName)
     }

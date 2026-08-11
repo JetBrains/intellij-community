@@ -5,12 +5,14 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JList;
 import java.awt.Component;
 
+@ApiStatus.Internal
 public class DefaultSearchEverywhereClassifier implements SearchEverywhereClassifier {
   @Override
   public boolean isClass(@Nullable Object o) {

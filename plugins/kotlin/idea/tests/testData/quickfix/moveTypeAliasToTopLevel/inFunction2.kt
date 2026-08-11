@@ -1,4 +1,5 @@
 // "Move typealias to top level" "true"
+// K2_ERROR: UNSUPPORTED_FEATURE
 fun bar() {
     class C {
         <caret>typealias Foo = String

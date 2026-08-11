@@ -4,6 +4,10 @@ package org.jetbrains.plugins.github.pullrequest.ui.review
 import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.ui.codereview.review.CodeReviewSubmitViewModel
 import com.intellij.collaboration.util.SingleCoroutineLauncher
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +30,22 @@ interface GHPRSubmitReviewViewModel : CodeReviewSubmitViewModel {
   val hasPendingReview: Boolean
 
   /**
+   * Whether the review is being done in a dedicated Git worktree that can be removed after submitting
+   * (controls visibility of the "delete worktree after submit" option).
+   */
+  val canDeleteWorktree: Boolean
+
+  /**
+   * Whether the review worktree should be removed after a successful submit. Meaningful only when [canDeleteWorktree].
+   */
+  val deleteWorktreeAfterSubmit: StateFlow<Boolean>
+
+  /**
+   * Update [deleteWorktreeAfterSubmit].
+   */
+  fun setDeleteWorktreeAfterSubmit(value: Boolean)
+
+  /**
    * Discard the current pending review
    */
   fun discard()
@@ -37,6 +57,7 @@ interface GHPRSubmitReviewViewModel : CodeReviewSubmitViewModel {
 }
 
 internal class GHPRSubmitReviewViewModelImpl(parentCs: CoroutineScope,
+                                             private val project: Project,
                                              private val dataProvider: GHPRReviewDataProvider,
                                              override val viewerIsAuthor: Boolean,
                                              private val pendingReview: GHPullRequestPendingReview?,
@@ -47,6 +68,19 @@ internal class GHPRSubmitReviewViewModelImpl(parentCs: CoroutineScope,
   private val taskLauncher = SingleCoroutineLauncher(cs)
 
   override val hasPendingReview: Boolean = pendingReview != null
+
+  private val worktreeSessionState = project.service<GHPRReviewWorktreeSessionState>()
+
+  override val canDeleteWorktree: Boolean = GitWorkingTreesService.getInstance(project).isCurrentProjectLinkedWorktree()
+
+  // Defaults to unchecked on first use, but remembers the last choice for the rest of the IDE session.
+  private val _deleteWorktreeAfterSubmit = MutableStateFlow(worktreeSessionState.deleteWorktreeAfterSubmit)
+  override val deleteWorktreeAfterSubmit: StateFlow<Boolean> = _deleteWorktreeAfterSubmit.asStateFlow()
+
+  override fun setDeleteWorktreeAfterSubmit(value: Boolean) {
+    _deleteWorktreeAfterSubmit.value = value
+    worktreeSessionState.deleteWorktreeAfterSubmit = value
+  }
 
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy
   private val _error = MutableStateFlow<Throwable?>(null)
@@ -77,6 +111,10 @@ internal class GHPRSubmitReviewViewModelImpl(parentCs: CoroutineScope,
       }
       _error.value = null
       text.value = ""
+      if (canDeleteWorktree && deleteWorktreeAfterSubmit.value) {
+        // Runs on the worktree service scope, so it survives onDone() closing this project.
+        GitWorkingTreesService.getInstance(project).deleteCurrentProjectWorktree()
+      }
       onDone()
     }
   }
@@ -95,4 +133,10 @@ internal class GHPRSubmitReviewViewModelImpl(parentCs: CoroutineScope,
       onDone()
     }
   }
+}
+
+@Service(Service.Level.PROJECT)
+internal class GHPRReviewWorktreeSessionState {
+  @Volatile
+  var deleteWorktreeAfterSubmit: Boolean = false
 }

@@ -298,11 +298,17 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       catch (IndexNotReadyException ignore) { }
     }
 
-    return CachedValuesManager.getCachedValue(this, () -> {
+    VirtualFile navigationFile = CachedValuesManager.getCachedValue(this, () -> {
       PsiElement target = JavaPsiImplementationHelper.getInstance(getProject()).getClsFileNavigationElement(this);
+      VirtualFile targetFile = target.getContainingFile().getVirtualFile();
       ModificationTracker tracker = FileIndexFacade.getInstance(getProject()).getRootModificationTracker();
-      return CachedValueProvider.Result.create(target, this, target.getContainingFile(), tracker);
+      return CachedValueProvider.Result.create(targetFile, this, targetFile, tracker);
     });
+    if (navigationFile == null) return this;
+    if (navigationFile.equals(getVirtualFile())) return this;
+
+    PsiFile navigationPsi = PsiManager.getInstance(getProject()).findFile(navigationFile);
+    return navigationPsi != null ? navigationPsi : this;
   }
 
   @Override
@@ -333,6 +339,9 @@ public class ClsFileImpl extends PsiBinaryFileImpl
           }
 
           mirrorTreeElement = SourceTreeToPsiMap.psiToTreeNotNull(mirror);
+          // force to parse;
+          // the non-cancelable section below must only wire mirrors, never parse
+          mirrorTreeElement.getFirstChildNode();
           try {
             TreeElement _mirrorTreeElement = mirrorTreeElement;
             ProgressManager.getInstance().executeNonCancelableSection(() -> {

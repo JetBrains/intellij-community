@@ -1,4 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -29,6 +30,7 @@ import javax.swing.JProgressBar
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import org.jetbrains.annotations.ApiStatus
 
 fun restartOrNotify(
   project: Project,

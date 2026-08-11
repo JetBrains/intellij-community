@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
@@ -8,6 +8,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import kotlinx.coroutines.Dispatchers
@@ -18,14 +20,15 @@ import kotlin.io.path.Path
 /**
  * Binary that isn't python. To be used to test validation.
  */
-val randomBinary: PythonBinary = Path(
-  if (SystemInfoRt.isWindows) {
-    // ftp.exe is faster than cmd.exe and powershell.exe
-    PathEnvironmentVariableUtil.findInPath("ftp.exe")?.path ?: error("No ftp on Windows?")
+@OptIn(LowLevelLocalMachineAccess::class)
+val randomBinary: PythonBinary
+  get() = when (OS.CURRENT) {
+    OS.Windows -> {
+      // ftp.exe is faster than cmd.exe and powershell.exe
+      PathEnvironmentVariableUtil.findFirst("ftp.exe") ?: error("No ftp on Windows?")
+    }
+    else -> Path("/bin/sh")
   }
-  else {
-    "/bin/sh"
-  })
 
 /**
  * Fails if [this] is not [Result.Failure]

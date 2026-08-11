@@ -6,8 +6,10 @@ import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Comparator;
+import org.jetbrains.annotations.ApiStatus;
 
 @SuppressWarnings("rawtypes")
+@ApiStatus.Internal
 public final class FileComparator implements Comparator<NodeDescriptor<?>> {
   private static final FileComparator INSTANCE = new FileComparator();
 

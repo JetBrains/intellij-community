@@ -4,6 +4,7 @@ package com.intellij.diff.impl
 import com.intellij.diff.DiffEditorTitleCustomizer
 import com.intellij.diff.impl.ui.DiffFilePathLabelWrapper
 import com.intellij.diff.impl.ui.FilePathDiffTitleCustomizer
+import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.NlsContexts
@@ -76,7 +77,12 @@ class DiffEditorTitleDetails(val pathLabel: DetailsLabelProvider?, val revisionL
     private val text: @NlsContexts.Label String,
     private val copiable: Boolean,
   ) : DetailsLabelProvider {
-    override fun createComponent(): JComponent = JBLabel(XmlStringUtil.escapeString(text)).setCopyable(copiable)
+    override fun createComponent(): JComponent =
+      JBLabel(XmlStringUtil.escapeString(text))
+        .setCopyable(copiable)
+        .apply {
+          foreground = DiffUtil.getDiffContentForeground()
+        }
   }
 }
 

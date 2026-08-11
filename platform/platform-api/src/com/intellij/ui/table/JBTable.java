@@ -65,6 +65,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
+import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.MouseInputListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -1486,6 +1487,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       if (r >= 0 && c < 0) c = 0;
       if (r < 0 && c >= 0) r = 0;
       return super.getAccessibleAt(r, c);
+    }
+
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+      if (!e.getValueIsAdjusting()) {
+        super.valueChanged(e);
+      }
     }
 
     @Override

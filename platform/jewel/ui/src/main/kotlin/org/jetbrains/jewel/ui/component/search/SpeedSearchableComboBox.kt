@@ -176,6 +176,7 @@ public fun SpeedSearchScope.SpeedSearchableComboBox(
  * }
  * ```
  *
+ * @param T the type of items in the list.
  * @param items The list of items to display in the combo box popup.
  * @param selectedIndex The index of the currently selected item.
  * @param onSelectedItemChange Called with the new index when the user selects a different item.

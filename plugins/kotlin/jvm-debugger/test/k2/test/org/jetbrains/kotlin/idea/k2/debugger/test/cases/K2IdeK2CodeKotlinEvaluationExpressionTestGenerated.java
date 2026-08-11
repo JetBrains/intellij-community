@@ -28,6 +28,11 @@ public class K2IdeK2CodeKotlinEvaluationExpressionTestGenerated extends Abstract
         runTest("../testData/evaluationExpression/castToInnerClass.kt");
     }
 
+    @TestMetadata("redundantCastOnCollectionElement.kt")
+    public void testRedundantCastOnCollectionElement() throws Exception {
+        runTest("../testData/evaluationExpression/redundantCastOnCollectionElement.kt");
+    }
+
     @TestMetadata("redundantCastOnLocal.kt")
     public void testRedundantCastOnLocal() throws Exception {
         runTest("../testData/evaluationExpression/redundantCastOnLocal.kt");

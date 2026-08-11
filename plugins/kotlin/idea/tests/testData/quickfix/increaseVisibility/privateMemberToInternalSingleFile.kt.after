@@ -1,5 +1,5 @@
 // "Make 'x' internal" "true"
-// K2_ERROR: Cannot access 'val x: Int': it is private in 'First'.
+// K2_ERROR: INVISIBLE_REFERENCE
 class First(internal val x: Int)
 
 class Second(f: First) {

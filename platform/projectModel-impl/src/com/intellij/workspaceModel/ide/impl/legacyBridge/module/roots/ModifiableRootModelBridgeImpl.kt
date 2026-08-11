@@ -730,11 +730,16 @@ internal class ModifiableRootModelBridgeImpl(
   }
 
   override fun getSdk(): Sdk? = (orderEntriesArray.find { it is JdkOrderEntry } as JdkOrderEntry?)?.jdk
+
   override fun getSourceRoots(): Array<VirtualFile> = currentModel.sourceRoots
+
   override fun getSourceRoots(includingTests: Boolean): Array<VirtualFile> = currentModel.getSourceRoots(includingTests)
-  override fun getSourceRoots(rootType: JpsModuleSourceRootType<*>): MutableList<VirtualFile> = currentModel.getSourceRoots(rootType)
-  override fun getSourceRoots(rootTypes: MutableSet<out JpsModuleSourceRootType<*>>): MutableList<VirtualFile> = currentModel.getSourceRoots(
-    rootTypes)
+
+  override fun getSourceRoots(rootType: JpsModuleSourceRootType<*>): List<VirtualFile> = currentModel.getSourceRoots(rootType)
+
+  override fun getSourceRoots(rootTypes: MutableSet<out JpsModuleSourceRootType<*>>): List<VirtualFile> {
+    return currentModel.getSourceRoots(rootTypes)
+  }
 
   override fun getContentRoots(): Array<VirtualFile> = currentModel.contentRoots
   override fun getContentRootUrls(): Array<String> = currentModel.contentRootUrls

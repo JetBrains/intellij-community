@@ -96,7 +96,7 @@ class TextEditorCellViewComponent(private val cell: EditorCell) : EditorCellView
       HighlighterTargetArea.LINES_IN_RANGE
     )
 
-    highlighter.gutterIconRenderer = ActionToGutterRendererAdapter(gutterAction)
+    highlighter.gutterIconRenderer = ActionToGutterRendererAdapter(gutterAction, editor)
     this.highlighter = highlighter
   }
 

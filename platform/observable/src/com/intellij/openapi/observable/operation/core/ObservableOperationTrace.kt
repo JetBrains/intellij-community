@@ -14,11 +14,15 @@ interface ObservableOperationTrace {
 
   val name: String
 
+  @get:ApiStatus.Internal
   val status: ObservableOperationStatus
 
+  @get:ApiStatus.Internal
   val scheduleObservable: SingleEventDispatcher0
 
+  @get:ApiStatus.Internal
   val startObservable: SingleEventDispatcher0
 
+  @get:ApiStatus.Internal
   val finishObservable: SingleEventDispatcher0
 }

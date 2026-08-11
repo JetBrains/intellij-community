@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
@@ -15,8 +16,8 @@ import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.pyRequirement
-import com.jetbrains.python.packaging.pyRequirementVersionSpec
+import com.intellij.python.requirements.pyRequirement
+import com.intellij.python.requirements.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
@@ -25,14 +26,14 @@ import org.jetbrains.annotations.ApiStatus
 
 
 @ApiStatus.Internal
-fun PythonPackageManager.waitInitBlocking() {
+internal fun PythonPackageManager.waitInitBlocking() {
   runBlockingMaybeCancellable {
     waitForInit()
   }
 }
 
 @ApiStatus.Internal
-fun PythonPackageManager.reloadPackagesBlocking() {
+internal fun PythonPackageManager.reloadPackagesBlocking() {
   runBlockingMaybeCancellable {
     withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT + ModalityState.any().asContextElement()) {
       reloadPackages().orLogException(thisLogger())
@@ -68,12 +69,13 @@ fun PythonPackageManager.hasInstalledPackageSnapshot(packageName: String, versio
 
 
 @ApiStatus.Internal
+@RequiresBackgroundThread
 fun PythonPackageManager.isNotInstalledAndCanBeInstalled(packageName: String, version: String? = null): Boolean =
   !hasInstalledPackageSnapshot(packageName, version) && repositoryManager.hasPackageSnapshot(packageName)
 
 
 @ApiStatus.Internal
-suspend fun PythonPackageManager.findPackageSpecification(
+internal suspend fun PythonPackageManager.findPackageSpecification(
   packageName: String,
   versionSpec: PyRequirementVersionSpec? = null,
 ): PythonRepositoryPackageSpecification? {
@@ -81,7 +83,7 @@ suspend fun PythonPackageManager.findPackageSpecification(
 }
 
 @ApiStatus.Internal
-suspend fun PythonPackageManager.findPackageSpecification(
+internal suspend fun PythonPackageManager.findPackageSpecification(
   requirement: PyRequirement,
   repository: PyPackageRepository? = null,
 ): PythonRepositoryPackageSpecification? {
@@ -90,7 +92,7 @@ suspend fun PythonPackageManager.findPackageSpecification(
 
 
 @ApiStatus.Internal
-suspend fun PythonPackageManager.findPackageSpecification(
+internal suspend fun PythonPackageManager.findPackageSpecification(
   packageName: String,
   version: String? = null,
   relation: PyRequirementRelation = PyRequirementRelation.EQ,

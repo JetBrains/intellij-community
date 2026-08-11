@@ -31,7 +31,10 @@ internal class EmphasisFormattingBlock(
             val markerWrap = if (node.isFirst()) wrap ?: contentWrap else noneWrap
             add(MarkdownWrappingFormattingBlock(settings, spacing, node, alignment, markerWrap))
           }
-          else -> add(MarkdownBlocks.create(node, settings, spacing) { alignment })
+          else -> {
+            val childWrap = if (node.isFirstContentElement()) noneWrap else null
+            add(MarkdownBlocks.create(node, settings, spacing, childWrap) { alignment })
+          }
         }
       }
     }

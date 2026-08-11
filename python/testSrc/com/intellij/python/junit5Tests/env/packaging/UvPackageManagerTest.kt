@@ -7,7 +7,7 @@ import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.test.env.junit5.pyUvVenvFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.getOrThrow
@@ -23,7 +23,7 @@ import kotlin.time.Duration.Companion.minutes
 class UvPackageManagerTest {
   private val tempPathFixture = tempPathFixture()
   private val projectFixture = projectFixture()
-  private val moduleFixture = projectFixture.moduleFixture(tempPathFixture, addPathToSourceRoot = true)
+  private val moduleFixture = projectFixture.pyModuleFixture(tempPathFixture, addPathToSourceRoot = true)
   private val sdkFixture = pySdkFixture().pyUvVenvFixture(addToSdkTable = true, moduleFixture = moduleFixture)
 
   @Test

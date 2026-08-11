@@ -1,8 +1,0 @@
-fun MutableList<Int>.bbb() {
-    fun List<String>.aaa() {
-        buildList {
-            addAll(listOf(this@aaa.get(0)))
-            add(this@bbb.add(1).toString())
-        }
-    }
-}

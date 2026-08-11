@@ -22,21 +22,29 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.documentation.PyDocumentationLink.toPossibleClass
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.highlighting.PyHighlighter
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyPsiFacade
+import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyTypeAliasStatement
 import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyTypeParser
+import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isNoneType
 import org.jetbrains.annotations.Nls
 
 object PyDocumentationLink {
+
+  /** Prefix understood by `com.intellij.codeInsight.hint.ElementLinkHandler` for navigable tooltip links. */
+  private const val TOOLTIP_ELEMENT_LINK_PREFIX = "#element/"
 
   private const val LINK_TYPE_CLASS = "#class#"
   private const val LINK_TYPE_PARAM = "#param#"
@@ -51,9 +59,9 @@ object PyDocumentationLink {
 
   @JvmStatic
   fun toPossibleClass(typeName: @Nls String, anchor: PsiElement, context: TypeEvalContext): HtmlChunk {
-    val type = PyTypeParser.getTypeByName(anchor, typeName, context)
+    val type = resolveNamedClassType(typeName, anchor, context)
     return when {
-      type is PyClassType -> {
+      type != null -> {
         val text = toClass(type.pyClass, typeName)
         if (type.isNoneType)
           styledSpan(text, PyHighlighter.PY_KEYWORD)
@@ -64,14 +72,100 @@ object PyDocumentationLink {
     }
   }
 
+  /**
+   * Resolves [typeName] to a single [PyClassType]. When the numeric tower is enabled, parsing a name such as
+   * `float` yields a `float | int` union rather than a bare class type (see `PyNumericTowerUtil`); in that case
+   * the union member whose name matches [typeName] is returned, so the rendered name still links to its own class
+   * instead of falling back to plain, unhighlighted text.
+   */
+  private fun resolveNamedClassType(typeName: String, anchor: PsiElement, context: TypeEvalContext): PyClassType? {
+    return when (val type = PyTypeParser.getTypeByName(anchor, typeName, context)) {
+      is PyClassType -> type
+      is PyUnionType -> type.members.filterIsInstance<PyClassType>().firstOrNull { it.name == typeName }
+      else -> null
+    }
+  }
+
+  /**
+   * Like [toPossibleClass], but produces a link in the {@code #element/<fqn>} format understood by the editor
+   * tooltip link handler (see {@code com.intellij.codeInsight.hint.ElementLinkHandler}) rather than the
+   * {@code psi_element://} protocol used by Quick Documentation. Use this to render clickable, highlighted
+   * type names inside inspection tooltips.
+   *
+   * The same highlighting as [toPossibleClass] is applied, so builtins keep their builtin color. When the
+   * resolved class has no qualified name (e.g. a local class) the name is rendered as highlighted text
+   * without a link, so it can still be navigated to visually even if it cannot be resolved from the tooltip.
+   */
+  @JvmStatic
+  fun toPossibleClassTooltipLink(typeName: @Nls String, anchor: PsiElement, context: TypeEvalContext): HtmlChunk {
+    val type = resolveNamedClassType(typeName, anchor, context)
+    return when {
+      type != null -> {
+        val qualifiedName = type.pyClass.qualifiedName
+        val text = if (!qualifiedName.isNullOrEmpty())
+          HtmlChunk.link("$TOOLTIP_ELEMENT_LINK_PREFIX$qualifiedName", typeName)
+        else
+          HtmlChunk.text(typeName)
+        if (type.isNoneType)
+          styledSpan(text, PyHighlighter.PY_KEYWORD)
+        else
+          styledReference(text, type.pyClass)
+      }
+      else -> HtmlChunk.text(typeName)
+    }
+  }
+
+  /**
+   * Like [toPossibleClassTooltipLink] but builds the link from [type]'s own class identity instead of
+   * re-resolving the displayed [typeName] from [anchor]'s scope. This makes class names that are not imported
+   * into the anchor file — most notably the `collections.abc` ABCs — navigable in tooltips, where name-based
+   * resolution would have failed and rendered them as plain text. Falls back to the name-based
+   * [toPossibleClassTooltipLink] for `None` (so it keeps its keyword styling) and for class-like types without
+   * a usable [PyClass].
+   */
+  @JvmStatic
+  fun toPossibleClassTooltipLink(type: PyClassLikeType, typeName: @Nls String, anchor: PsiElement, context: TypeEvalContext): HtmlChunk {
+    val pyClass = type.asLinkableClass()
+    return if (pyClass != null) styledReference(toQualifiedNameTooltipLink(pyClass.qualifiedName!!, typeName), pyClass)
+    else toPossibleClassTooltipLink(typeName, anchor, context)
+  }
+
+  /**
+   * The [PyClass] to link to directly: the class of a non-`None` class type that carries a qualified name.
+   * `None` is excluded so it keeps its keyword styling via the name-resolution path.
+   */
+  private fun PyClassLikeType.asLinkableClass(): PyClass? {
+    if (this.isNoneType) return null
+    return (this as? PyClassType)?.pyClass?.takeIf { !it.qualifiedName.isNullOrEmpty() }
+  }
+
+  /** Renders [linkText] as a tooltip-navigable link (`#element/<fqn>`). */
+  @JvmStatic
+  fun toQualifiedNameTooltipLink(@NlsSafe qualifiedName: String, linkText: @Nls String): HtmlChunk =
+    HtmlChunk.link("$TOOLTIP_ELEMENT_LINK_PREFIX$qualifiedName", linkText)
+
   @JvmStatic
   fun toClass(pyClass: PyClass, linkText: @Nls String): HtmlChunk {
     return toClass(pyClass.qualifiedName.orEmpty(), linkText)
   }
 
+  /**
+   * Renders [linkText] as a tooltip-navigable link (`#element/<fqn>`, see
+   * [com.intellij.codeInsight.hint.ElementLinkHandler]) pointing at [target], for use in inspection tooltips.
+   * Falls back to plain text when [target] has no qualified name (e.g. a local class), so it still renders but
+   * is simply not clickable.
+   */
+  @JvmStatic
+  fun toElementTooltipLink(target: PyQualifiedNameOwner, linkText: @Nls String): HtmlChunk {
+    val qualifiedName = target.qualifiedName
+    return if (qualifiedName.isNullOrEmpty()) HtmlChunk.text(linkText)
+    else HtmlChunk.link("$TOOLTIP_ELEMENT_LINK_PREFIX$qualifiedName", linkText)
+  }
+
   @JvmStatic
   fun toClass(qualifiedName: String, linkText: @Nls String): HtmlChunk {
-    return HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_TYPENAME$qualifiedName", linkText)
+    val linkTarget = PyNames.FQN.unqualifyBuiltinName(qualifiedName)!!
+    return HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_TYPENAME$linkTarget", linkText)
   }
 
   @JvmStatic
@@ -162,9 +256,6 @@ object PyDocumentationLink {
 
   @JvmStatic
   private fun possibleClass(type: String, anchor: PsiElement, context: TypeEvalContext): PyClass? {
-    return when (val pyType = PyTypeParser.getTypeByName(anchor, type, context)) {
-      is PyClassType -> pyType.pyClass
-      else -> null
-    }
+    return resolveNamedClassType(type, anchor, context)?.pyClass
   }
 }

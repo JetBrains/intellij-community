@@ -37,23 +37,16 @@ public abstract class PsiUpdateCompletionItem<T> implements ModCompletionItem {
 
   @Override
   public ModCommand perform(ActionContext actionContext, InsertionContext insertionContext) {
-    String lookupString = mainLookupString();
-    int completionStart = actionContext.selection().getStartOffset();
-    int prefixEnd = actionContext.selection().getEndOffset();
-    int updatedCaretPos = completionStart + lookupString.length();
-    ActionContext finalActionContext = actionContext
-      .withSelection(TextRange.create(updatedCaretPos, updatedCaretPos))
-      .withOffset(updatedCaretPos);
-    return ModCommand.psiUpdate(finalActionContext, doc -> {
-      doc.deleteString(completionStart, prefixEnd);
-    }, updater -> {
+    return ModCommand.psiUpdate(actionContext, true, updater -> {
       Document document = updater.getDocument();
-      document.replaceString(completionStart,
+      String lookupString = mainLookupString();
+      TextRange range = TextRange.create(updater.getCaretOffset(), updater.getCaretOffset() + lookupString.length());
+      document.replaceString(range.getStartOffset(),
                              insertionContext.mode() == InsertionMode.OVERWRITE ?
-                             calculateEndOffsetForOverwrite(document, completionStart) : completionStart, lookupString);
-      updater.moveCaretTo(updatedCaretPos);
-      update(actionContext.withOffset(updatedCaretPos)
-               .withSelection(TextRange.create(completionStart, updatedCaretPos)), insertionContext, updater);
+                             calculateEndOffsetForOverwrite(document, range.getStartOffset()) : range.getStartOffset(), lookupString);
+      updater.moveCaretTo(range.getEndOffset());
+      update(actionContext.withOffset(range.getEndOffset())
+               .withSelection(range), insertionContext, updater);
       addCompletionChar(updater, insertionContext);
     });
   }

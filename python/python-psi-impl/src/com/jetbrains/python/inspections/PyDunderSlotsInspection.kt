@@ -87,7 +87,7 @@ class PyDunderSlotsInspection : PyInspection() {
 
       val classAttribute = pyClass.findClassAttribute(name, false, myTypeEvalContext)
       if (classAttribute != null && classAttribute.hasAssignedValue()) {
-        val message = PyPsiBundle.message("INSP.dunder.slots.name.in.slots.conflicts.with.class.variable", name)
+        val message = PyPsiBundle.problemMessage("INSP.dunder.slots.name.in.slots.conflicts.with.class.variable", name)
         registerProblem(slot, message)
       }
     }
@@ -102,7 +102,7 @@ class PyDunderSlotsInspection : PyInspection() {
 
       val qualifierType = myTypeEvalContext.getType(qualifier)
       if (qualifierType is PyClassLikeType && !qualifierType.isAttributeWritable(targetName, myTypeEvalContext)) {
-        val message = PyPsiBundle.message("INSP.dunder.slots.class.object.missing.attribute", qualifierType.name, targetName)
+        val message = PyPsiBundle.problemMessage("INSP.dunder.slots.class.object.missing.attribute", qualifierType.name, targetName)
         registerProblem(target, message)
       }
     }

@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
@@ -21,24 +20,17 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
-import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
-import com.intellij.platform.eel.provider.utils.awaitProcessResult
-import com.intellij.platform.eel.provider.utils.stderrString
-import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.EnvironmentUtil
-import com.intellij.util.io.awaitExit
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import com.pty4j.PtyProcess
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.plugins.terminal.startup.ShellExecCommand
 import org.jetbrains.plugins.terminal.startup.ShellExecCommandImpl
 import org.jetbrains.plugins.terminal.startup.WslShellExecCommand
@@ -46,7 +38,6 @@ import org.jetbrains.plugins.terminal.util.ShellNameUtil
 import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
-import kotlin.time.Duration.Companion.seconds
 
 internal class TerminalStartupMoment {
 
@@ -91,7 +82,7 @@ internal fun startProcess(
 internal fun buildStartupEelContext(workingDir: Path, shellCommand: List<String>): TerminalStartupEelContext {
   if (!shouldUseEelApi()) {
     return TerminalStartupEelContext(
-      workingDirectory = workingDir.asEelPath(LocalEelDescriptor),
+      workingDirectory = workingDir.asEelPath(),
       shellCommand = ShellExecCommandImpl(shellCommand),
       platform = localEel.platform,
     )
@@ -103,7 +94,7 @@ internal fun buildStartupEelContext(workingDir: Path, shellCommand: List<String>
     catch (e: Exception) {
       log.warn("Cannot find EelDescriptor", e)
       TerminalStartupEelContext(
-        workingDirectory = workingDir.asEelPath(LocalEelDescriptor),
+        workingDirectory = workingDir.asEelPath(),
         shellCommand = ShellExecCommandImpl(shellCommand),
         platform = localEel.platform,
       )
@@ -244,6 +235,13 @@ internal fun fetchDefaultEnvironmentVariablesBlocking(eelDescriptor: EelDescript
   }
   return runBlockingMaybeCancellable {
     eelDescriptor.toEelApi().fetchDefaultEnvironmentVariables()
+  }
+}
+
+internal fun getUserHomePathBlocking(eelDescriptor: EelDescriptor): Path {
+  return runBlockingMaybeCancellable {
+    val eelApi = eelDescriptor.toEelApi()
+    eelApi.userInfo.home.asNioPath()
   }
 }
 

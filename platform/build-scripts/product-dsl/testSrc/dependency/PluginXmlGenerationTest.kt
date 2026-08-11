@@ -258,6 +258,64 @@ class PluginXmlGenerationTest {
   }
 
   @Test
+  fun `plugin action group reference generates module dependency when group is declared in xi-included file`(@TempDir tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+      val setup = pluginTestSetup(tempDir) {
+        contentModule("intellij.platform.debugger.impl.ui") {
+          descriptor = """
+            |<idea-plugin package="com.intellij.xdebugger.impl.ui" xmlns:xi="http://www.w3.org/2001/XInclude">
+            |  <xi:include href="intellij.platform.debugger.impl.ui.actions.xml"/>
+            |</idea-plugin>
+          """.trimMargin()
+          resourceFile("intellij.platform.debugger.impl.ui.actions.xml", """
+            |<idea-plugin>
+            |  <actions>
+            |    <group id="XDebugger.Settings"/>
+            |  </actions>
+            |</idea-plugin>
+          """.trimMargin())
+        }
+        contentModule("intellij.kotlin.jvm.debugger.core") {
+          descriptor = """<idea-plugin package="org.jetbrains.kotlin.idea.debugger.core"/>"""
+        }
+        plugin("kotlin.plugin") {
+          pluginId = "org.jetbrains.kotlin"
+          content("intellij.kotlin.jvm.debugger.core")
+        }
+        product("IDEA") {
+          bundlesPlugin("kotlin.plugin")
+          moduleSet("debugger") {
+            module(
+              "intellij.platform.debugger.impl.ui",
+              com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED,
+            )
+          }
+        }
+      }
+
+      val kotlinInfo = setup.pluginContentInfos.getValue("kotlin.plugin").withReferencedActionGroup("XDebugger.Settings")
+      val pluginContentCache = StubPluginContentCache(setup.pluginContentInfos + ("kotlin.plugin" to kotlinInfo))
+
+      val result = generatePluginDependencies(
+        plugins = listOf("kotlin.plugin"),
+        pluginContentCache = pluginContentCache,
+        testSetup = setup,
+        graph = setup.pluginGraph,
+        descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider),
+        suppressionConfig = SuppressionConfig(),
+        strategy = setup.strategy,
+        testFrameworkContentModules = emptySet(),
+      )
+
+      assertThat(result.errors).isEmpty()
+      val pluginXmlDiff = setup.strategy.getDiffs().single { it.path.toString().contains("kotlin/plugin") }
+      assertThat(pluginXmlDiff.expectedContent)
+        .describedAs("Kotlin plugin.xml should depend on the module whose xi:included file declares the referenced action group")
+        .contains("<module name=\"intellij.platform.debugger.impl.ui\"/>")
+    }
+  }
+
+  @Test
   fun `manual alias plugin dependency is preserved in plugin xml`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
       val setup = pluginTestSetup(tempDir) {

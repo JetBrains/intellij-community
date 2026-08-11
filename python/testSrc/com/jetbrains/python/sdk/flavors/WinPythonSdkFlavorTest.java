@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.python.sdk.WinRegistryService;
 import org.easymock.EasyMock;
@@ -21,6 +24,8 @@ import java.util.List;
 /**
  * @author Ilya.Kazakevich
  */
+@Subsystems.Interpreters
+@Layers.Functional
 public final class WinPythonSdkFlavorTest {
   private IMocksControl myControl;
   private WinRegistryService myMock;

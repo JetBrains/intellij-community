@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
 import com.intellij.lang.ASTNode;
@@ -21,6 +21,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -72,7 +73,8 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.DEFAULT, GrModifierFlags.DEFAULT_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.SEALED, GrModifierFlags.SEALED_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.NON_SEALED, GrModifierFlags.NON_SEALED_MASK);
-
+    NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.VAR, GrModifierFlags.VAR_MASK);
+    NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.VAL, GrModifierFlags.VAL_MASK);
 
     PRIORITY.put(GrModifier.PUBLIC,           0);
     PRIORITY.put(GrModifier.PROTECTED,        0);
@@ -90,6 +92,8 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
     PRIORITY.put(GrModifier.TRANSIENT,        3);
     PRIORITY.put(GrModifier.VOLATILE,         3);
     PRIORITY.put(GrModifier.DEF,              4);
+    PRIORITY.put(GrModifier.VAR,              4);
+    PRIORITY.put(GrModifier.VAL,              4);
 
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.PUBLIC, GroovyTokenTypes.kPUBLIC);
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.ABSTRACT, GroovyTokenTypes.kABSTRACT);
@@ -106,6 +110,8 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.VOLATILE, GroovyTokenTypes.kVOLATILE);
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.SEALED, GroovyTokenTypes.kSEALED);
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.NON_SEALED, GroovyTokenTypes.kNON_SEALED);
+    NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.VAR, GroovyTokenTypes.kVAR);
+    NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.VAL, GroovyTokenTypes.kVAL);
   }
 
   public GrModifierListImpl(@NotNull ASTNode node) {
@@ -133,12 +139,7 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
   @Override
   public int getModifierFlags() {
     final GrModifierListStub stub = getGreenStub();
-    if (stub != null) {
-      return stub.getModifiersFlags();
-    }
-    else {
-      return getCachedValueStubBuildOptimized(this, GET_MODIFIER_FLAGS_PROVIDER_NEW);
-    }
+    return stub != null ? stub.getModifiersFlags() : getCachedValueStubBuildOptimized(this, GET_MODIFIER_FLAGS_PROVIDER_NEW);
   }
 
   private static final StubBuildCachedValueProvider<Integer, GrModifierListImpl>
@@ -176,17 +177,17 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
   }
 
   @Override
-  public boolean hasModifierProperty(@NotNull String name) {
+  public boolean hasModifierProperty(@NotNull @GrModifierConstant String name) {
     return GrModifierListUtil.hasModifierProperty(this, name);
   }
 
   @Override
-  public boolean hasExplicitModifier(@NotNull String name) {
+  public boolean hasExplicitModifier(@NotNull @GrModifierConstant String name) {
     return GrModifierListUtil.hasExplicitModifier(this, name);
   }
 
   @Override
-  public void setModifierProperty(@NotNull @NonNls String name, boolean doSet) throws IncorrectOperationException {
+  public void setModifierProperty(@NotNull @NonNls @GrModifierConstant String name, boolean doSet) throws IncorrectOperationException {
     if (hasModifierProperty(name) == doSet) return;
 
     if (doSet) {
@@ -198,10 +199,26 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
         setModifierPropertyInternal(GrModifier.PROTECTED, false);
         setModifierPropertyInternal(GrModifier.PRIVATE, false);
       }
+      else if (GrModifier.VAL.equals(name) || GrModifier.VAR.equals(name) || GrModifier.DEF.equals(name)) {
+        setModifierPropertyInternal(GrModifier.VAL, false);
+        setModifierPropertyInternal(GrModifier.VAR, false);
+        setModifierPropertyInternal(GrModifier.DEF, false);
+      }
+      else if (GrModifier.FINAL.equals(name) && hasModifierProperty(GrModifier.VAR) && GroovyConfigUtils.isAtLeastGroovy60(this)) {
+        setModifierProperty(GrModifier.VAL, true);
+        setModifierProperty(GrModifier.VAR, false);
+        return;
+      }
+    }
+    else {
+      if (GrModifier.FINAL.equals(name) && hasModifierProperty(GrModifier.VAL)) {
+        setModifierProperty(GrModifier.VAR, true);
+        setModifierProperty(GrModifier.VAL, false);
+      }
     }
     if (GrModifier.PACKAGE_LOCAL.equals(name) /*|| GrModifier.PUBLIC.equals(name)*/) {
       PsiElement parent = getParent();
-      if (getModifiers().length == 0 && !(parent instanceof GrMethod && ((GrMethod)parent).isConstructor())) {
+      if (getModifiers().length == 0 && !(parent instanceof GrMethod method && method.isConstructor())) {
         setModifierProperty(GrModifier.DEF, true);
       }
     }

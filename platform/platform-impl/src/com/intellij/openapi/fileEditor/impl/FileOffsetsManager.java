@@ -8,6 +8,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -29,6 +30,7 @@ import java.util.Map;
  * the IDE model.
  */
 @Service
+@ApiStatus.Internal
 public final class FileOffsetsManager {
   public static @NotNull FileOffsetsManager getInstance() {
     return ApplicationManager.getApplication().getService(FileOffsetsManager.class);
@@ -36,6 +38,7 @@ public final class FileOffsetsManager {
 
   private final Map<VirtualFile, LineOffsets> myLineOffsetsMap = Collections.synchronizedMap(new HashMap<>());
 
+  @ApiStatus.Internal
   public static final class LineOffsets {
     public final long myFileModificationStamp;
     public final int[] myOriginalLineOffsets;

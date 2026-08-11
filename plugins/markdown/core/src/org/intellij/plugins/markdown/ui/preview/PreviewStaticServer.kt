@@ -80,7 +80,7 @@ class PreviewStaticServer : HttpRequestHandler() {
       get() = EP_NAME.findExtension(PreviewStaticServer::class.java) ?: error("Could not get server instance!")
 
     @JvmStatic
-    internal fun createCSP(scripts: List<String>, styles: List<String>): String = """
+    fun createCSP(scripts: List<String>, styles: List<String>): String = """
       default-src 'none';
       script-src ${scripts.joinToString(" ")};
       style-src https: ${styles.joinToString(" ")} 'unsafe-inline';

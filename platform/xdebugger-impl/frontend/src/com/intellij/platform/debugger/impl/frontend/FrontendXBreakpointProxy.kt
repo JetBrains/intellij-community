@@ -2,10 +2,10 @@
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.ide.ui.icons.icon
-import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.debugger.impl.frontend.breakpoints.BreakpointGutterIconRenderer
 import com.intellij.platform.debugger.impl.frontend.util.SequentialRpcRequestsExecutor
 import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.platform.debugger.impl.rpc.XBreakpointCustomPresentationDto
@@ -25,7 +25,6 @@ import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
-import com.intellij.xdebugger.impl.breakpoints.BreakpointGutterIconRenderer
 import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUIUtil
 import com.intellij.xdebugger.impl.rpc.sourcePosition
@@ -44,9 +43,10 @@ internal fun createXBreakpointProxy(
   dto: XBreakpointDto,
   type: XBreakpointTypeProxy,
   manager: FrontendXBreakpointManager,
+  creationTrigger: XBreakpointCreationTrigger,
 ): FrontendXBreakpointProxy {
   return if (type is XLineBreakpointTypeProxy) {
-    FrontendXLineBreakpointProxy(project, parentCs, dto, type, manager)
+    FrontendXLineBreakpointProxy(project, parentCs, dto, type, manager, creationTrigger)
   }
   else {
     FrontendXBreakpointProxy(project, parentCs, dto, type, manager.breakpointRequestCounter)
@@ -176,6 +176,10 @@ internal open class FrontendXBreakpointProxy(
 
   private fun onBreakpointChange() {
     listener?.invoke()
+  }
+
+  internal fun dependencyChanged() {
+    onBreakpointChange()
   }
 
   override fun getDisplayText(): String = currentState.displayText
@@ -359,12 +363,8 @@ internal open class FrontendXBreakpointProxy(
     return !cs.isActive
   }
 
-  override fun createGutterIconRenderer(): GutterIconRenderer? {
+  override fun getGutterIconRenderer(): GutterIconRenderer {
     return BreakpointGutterIconRenderer(this)
-  }
-
-  override fun getGutterIconRenderer(): GutterIconRenderer? {
-    return null
   }
 
   private fun XBreakpointCustomPresentationDto.toPresentation(): CustomizedBreakpointPresentation {
@@ -376,16 +376,12 @@ internal open class FrontendXBreakpointProxy(
     }
   }
 
-  override fun dispose() {
+  fun dispose() {
     breakpointRequestCounter.remove(id)
     cs.cancel()
     listener = null
     _customPresentation.value = null
     _currentSessionCustomPresentation.value = null
-  }
-
-  override fun createBreakpointDraggableObject(): GutterDraggableObject? {
-    return null
   }
 
   override fun compareTo(other: XBreakpointProxy): Int {

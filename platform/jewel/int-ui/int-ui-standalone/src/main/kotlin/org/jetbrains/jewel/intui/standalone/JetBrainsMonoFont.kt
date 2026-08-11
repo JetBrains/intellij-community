@@ -63,5 +63,6 @@ private val JetBrainsMonoFontFamily =
         ),
     )
 
+/** The JetBrains Mono font family, bundled with Jewel. */
 public val FontFamily.Companion.JetBrainsMono: FontFamily
     get() = JetBrainsMonoFontFamily

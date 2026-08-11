@@ -15,4 +15,4 @@ def f():
     pass
 
 
-f().foo(<warning descr="Parameter(s) unfilledPossible callees:C1.foo(self: Self@C1, x)C2.foo(self: Self@C2, x, y)">)</warning>
+f().foo(<warning descr="No overload of 'foo' matches the arguments. Argument types: (). Expected one of: (x), (x, y)">)</warning>

@@ -22,6 +22,10 @@ public interface PsiJavaParserFacade {
 
   /**
    * Creates a JavaDoc comment from the specified text.
+   * <p>
+   * You likely need to use this method alongside 
+   * {@link com.intellij.util.CommentUtil#convertToDocComment} or {@link com.intellij.util.CommentUtil#preferDocumentationLineComment}
+   * to respect user preferences regarding documentation kind.
    *
    * @param text the text of the JavaDoc comment.
    * @return the created comment.
@@ -32,6 +36,10 @@ public interface PsiJavaParserFacade {
 
   /**
    * Creates a JavaDoc comment from the specified text.
+   * <p>
+   * You likely need to use this method alongside 
+   * {@link com.intellij.util.CommentUtil#convertToDocComment} or {@link com.intellij.util.CommentUtil#preferDocumentationLineComment}
+   * to respect user preferences regarding documentation kind.
    *
    * @param text the text of the JavaDoc comment.
    * @param context the PSI element used as context for resolving references inside this javadoc

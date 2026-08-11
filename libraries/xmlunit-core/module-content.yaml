@@ -1,0 +1,8 @@
+- name: dist.all/lib/intellij.libraries.xmlunit.core.jar
+  modules:
+  - name: intellij.libraries.xmlunit.core
+    libraries:
+      XMLUnit Core:
+      - name: $MAVEN_REPOSITORY$/org/xmlunit/xmlunit-core/2/xmlunit-core-2.jar
+      - name: $MAVEN_REPOSITORY$/jakarta/xml/bind/jakarta.xml.bind-api/2/jakarta.xml.bind-api-2.jar
+      - name: $MAVEN_REPOSITORY$/jakarta/activation/jakarta.activation-api/1/jakarta.activation-api-1.jar

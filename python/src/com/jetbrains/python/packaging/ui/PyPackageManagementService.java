@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.python.requirements.PyPackageVersionComparator;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -25,7 +26,7 @@ import com.jetbrains.python.packaging.PyPIPackageUtil.PackageDetails;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManagerUI;
 import com.jetbrains.python.packaging.PyPackageService;
-import com.jetbrains.python.packaging.PyPackageVersionComparator;
+import com.intellij.python.requirements.PyPackageVersionComparator;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.impl.PySdkBundle;
@@ -329,21 +330,6 @@ public abstract class PyPackageManagementService extends PackageManagementServic
   @Override
   public boolean shouldFetchLatestVersionsForOnlyInstalledPackages() {
     return true;
-  }
-
-  @Override
-  public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<? super String, ? super Exception> consumer) {
-    myExecutorService.execute(() -> {
-      if (myProject.isDisposed()) return;
-      try {
-        PyPIPackageUtil.INSTANCE.loadPackages();
-        final String version = PyPIPackageUtil.INSTANCE.fetchLatestPackageVersion(myProject, pkg.getName());
-        consumer.consume(StringUtil.notNullize(version));
-      }
-      catch (IOException e) {
-        consumer.consume(e);
-      }
-    });
   }
 
   @Override

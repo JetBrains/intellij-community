@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 ### skip generation section `test intellij.kotlin.jvm.debugger.test.testFramework`
 
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test.testFramework` start
-
 jvm_library(
     name = "testFramework",
     srcs = glob(
@@ -30,7 +29,8 @@ jvm_library(
     runtime_deps = [":testFramework"],
     deps = [
         # do not sort,
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
         "//plugins/kotlin/base/plugin",
@@ -51,7 +51,10 @@ jvm_library(
         "//plugins/kotlin/base/testFramework:testFramework_test_lib",
         "//plugins/kotlin/jvm-debugger/testFramework",
         "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test.testFramework` end

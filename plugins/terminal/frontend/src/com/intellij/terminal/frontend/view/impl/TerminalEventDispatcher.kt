@@ -11,27 +11,29 @@ import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.action.SendShortcutToTerminalAction
 import com.intellij.terminal.frontend.view.TerminalAllowedActionsProvider
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalEscapeBehaviorChangeNotification
-import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import java.awt.AWTEvent
+import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelListener
 import javax.swing.KeyStroke
 
@@ -239,6 +241,7 @@ private class TerminalEventDispatcher(
       "Terminal.SwitchFocusToEditor",
       "Terminal.CopySelectedText",
       "Terminal.Paste",
+      "Terminal.PasteFromHistory",
       "Terminal.LineUp",
       "Terminal.LineDown",
       "Terminal.PageUp",
@@ -282,7 +285,9 @@ private class TerminalKeyListener(
   }
 }
 
-internal fun setupKeyEventsHandling(
+@ApiStatus.Internal
+@VisibleForTesting
+fun setupKeyEventsHandling(
   editor: EditorEx,
   settings: JBTerminalSystemSettingsProviderBase,
   eventsHandler: TerminalKeyEventsHandler,
@@ -308,57 +313,63 @@ internal fun setupKeyEventsHandling(
   editor.contentComponent.addKeyListener(TerminalKeyListener(settings, eventsHandler))
 }
 
-internal fun setupMouseEventsHandling(
+@ApiStatus.Internal
+@VisibleForTesting
+fun setupMouseEventsHandling(
   editor: EditorEx,
-  sessionModel: TerminalSessionModel,
-  settings: JBTerminalSystemSettingsProviderBase,
   eventsHandler: TerminalMouseEventsHandler,
   disposable: Disposable,
 ) {
-  fun isRemoteMouseAction(e: MouseEvent): Boolean {
-    return sessionModel.terminalState.value.mouseMode != MouseMode.MOUSE_REPORTING_NONE && !e.isShiftDown
-  }
-
   // TODO: I suspect that Y positions should be screen-start based (without history).
   //  But it is not clear how to track the screen start. Need to investigate.
   editor.addEditorMouseListener(object : EditorMouseListener {
     override fun mousePressed(event: EditorMouseEvent) {
-      if (settings.enableMouseReporting() && isRemoteMouseAction(event.mouseEvent)) {
-        val p = event.visualPosition
-        eventsHandler.mousePressed(p.column, p.line, event.mouseEvent)
-      }
+      // Editor moves the caret to the position of the mouse press on its own,
+      // but we need to do it additionally to support the case when the user holds Shift.
+      // To make text selection start from the mouse position even if Shift is held.
+      editor.caretModel.removeSecondaryCarets()
+      editor.caretModel.moveToOffset(event.offset)
+
+      val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
+      eventsHandler.onMouseEvent(cell.column, cell.line, event.mouseEvent)
     }
 
     override fun mouseReleased(event: EditorMouseEvent) {
-      if (settings.enableMouseReporting() && isRemoteMouseAction(event.mouseEvent)) {
-        val p = event.visualPosition
-        eventsHandler.mouseReleased(p.column, p.line, event.mouseEvent)
-      }
+      val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
+      eventsHandler.onMouseEvent(cell.column, cell.line, event.mouseEvent)
     }
   }, disposable)
 
   editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
     override fun mouseMoved(event: EditorMouseEvent) {
-      if (settings.enableMouseReporting() && isRemoteMouseAction(event.mouseEvent)) {
-        val p = event.visualPosition
-        eventsHandler.mouseMoved(p.column, p.line, event.mouseEvent)
-      }
+      val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
+      eventsHandler.onMouseEvent(cell.column, cell.line, event.mouseEvent)
     }
 
     override fun mouseDragged(event: EditorMouseEvent) {
-      if (settings.enableMouseReporting() && isRemoteMouseAction(event.mouseEvent)) {
-        val p = event.visualPosition
-        eventsHandler.mouseDragged(p.column, p.line, event.mouseEvent)
-      }
+      val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
+      eventsHandler.onMouseEvent(cell.column, cell.line, event.mouseEvent)
     }
   }, disposable)
 
   val mouseWheelListener = MouseWheelListener { event ->
-    val p = editor.xyToVisualPosition(event.point)
-    eventsHandler.mouseWheelMoved(p.column, p.line, event)
+    val cell = editor.mousePointToGridCell(event.point, editor.xyToVisualPosition(event.point).line)
+    eventsHandler.onMouseEvent(cell.column, cell.line, event)
   }
   editor.scrollPane.addMouseWheelListener(mouseWheelListener)
   Disposer.register(disposable, Disposable {
     editor.scrollPane.removeMouseWheelListener(mouseWheelListener)
   })
+}
+
+/**
+ * Maps a mouse point to the terminal grid cell physically under the pointer (floor by the fixed cell width),
+ * so a double-width (CJK) character correctly spans two cells. Unlike [Editor.xyToVisualPosition], which rounds
+ * to the nearest character boundary and counts such a character as a single column.
+ */
+private fun EditorEx.mousePointToGridCell(point: Point, line: Int): VisualPosition {
+  val grid = checkNotNull((this as? EditorImpl)?.characterGrid) { "The editor is not in the character grid mode" }
+  val lineStartX = visualPositionToXY(VisualPosition(line, 0)).x
+  val column = ((point.x - lineStartX) / grid.charWidth).toInt().coerceIn(0, (grid.columns - 1).coerceAtLeast(0))
+  return VisualPosition(line, column)
 }

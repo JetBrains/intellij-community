@@ -6,6 +6,7 @@ package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelTunnelsApi.Connection
 import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -93,6 +94,7 @@ object eelProxyKtHelpers {
      */
     @Suppress("PropertyName")
     @ApiStatus.Internal
+    @VisibleToClasses("com.intellij.platform.ijent.functional.tunnels.EelProxyTest")
     fun _acceptorInfo(arg: Pair<EelTunnelsApi, Any?>?): EelProxy = apply {
       this._acceptorInfo = arg
     }
@@ -102,6 +104,7 @@ object eelProxyKtHelpers {
      */
     @Suppress("PropertyName")
     @ApiStatus.Internal
+    @VisibleToClasses("com.intellij.platform.ijent.functional.tunnels.EelProxyTest")
     fun _connectorInfo(arg: Pair<EelTunnelsApi, Any?>?): EelProxy = apply {
       this._connectorInfo = arg
     }
@@ -111,6 +114,7 @@ object eelProxyKtHelpers {
      */
     @Suppress("PropertyName")
     @ApiStatus.Internal
+    @VisibleToClasses("com.intellij.platform.ijent.functional.tunnels.EelProxyTest")
     fun _fakeProxyPossible(arg: Boolean): EelProxy = apply {
       this._fakeProxyPossible = arg
     }

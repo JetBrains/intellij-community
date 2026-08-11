@@ -4,6 +4,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
+import com.intellij.lang.CodeDocumentationAwareCommenterEx;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
@@ -164,13 +165,17 @@ public final class CodeDocumentationUtil {
            (CodeDocumentationProvider)langDocumentationProvider : null;
   }
 
-  /// @return The prefered line prefix type (for the given comment), or `null` if the language commenter is not code aware
+  /// @return The prefered line prefix type (for the given comment), or `null` if the language commenter is not code-aware
   @ApiStatus.Internal
   public static @Nullable CharSequence preferredDocumentationLinePrefix(@NotNull PsiFile file, @Nullable PsiDocCommentBase comment) {
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(file.getLanguage());
     if (commenter instanceof CodeDocumentationAwareCommenter docCommenter) {
       if (comment == null) {
-        return CodeStyle.getLanguageSettings(file).DOCUMENTATION_LINE_COMMENT_PREFERRED
+        boolean shouldUseLineComments = CodeStyle.getLanguageSettings(file).DOCUMENTATION_LINE_COMMENT_PREFERRED;
+        if (docCommenter instanceof CodeDocumentationAwareCommenterEx docCommenterEx) {
+          shouldUseLineComments = docCommenterEx.shouldUseDocumentationLineComments(file, shouldUseLineComments);
+        }
+        return shouldUseLineComments
                ? docCommenter.getDocumentationLineCommentPrefix()
                : docCommenter.getDocumentationCommentLinePrefix();
       }

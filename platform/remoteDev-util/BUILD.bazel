@@ -1,8 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.remoteDev.util` start
+jps_test(
+    name = "remoteDev-util-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":remoteDev-util-tests_test_lib"],
+)
+### skip generation section `test intellij.remoteDev.util.tests`
 
+### auto-generated section `build intellij.remoteDev.util` start
 jvm_library(
     name = "remoteDev-util",
     srcs = glob(
@@ -35,7 +42,7 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io",
         "//platform/util/concurrency",
         "//platform/analysis-api:analysis",
-        "@lib//:jna",
+        "//libraries/jna",
         "//libraries/download-pgp-verifier",
         "//libraries/bouncy-castle-pgp",
         "//platform/platform-impl:ide-impl",
@@ -95,6 +102,7 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/analysis-api:analysis_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//libraries/download-pgp-verifier:download-pgp-verifier_test_lib",
         "//libraries/bouncy-castle-pgp:bouncy-castle-pgp_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
@@ -147,7 +155,6 @@ exports_files(
 ### auto-generated section `iml intellij.remoteDev.util` end
 
 ### auto-generated section `build intellij.remoteDev.util.tests` start
-
 jvm_library(
     name = "remoteDev-util-tests",
     srcs = glob(
@@ -204,7 +211,8 @@ jvm_library(
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
-        "@lib//:jna",
+        "//libraries/jna",
+        "//libraries/jna:jna_test_lib",
         "//libraries/download-pgp-verifier",
         "//libraries/download-pgp-verifier:download-pgp-verifier_test_lib",
         "//libraries/bouncy-castle-pgp",
@@ -281,11 +289,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.remoteDev.util.tests` end
-
-### auto-generated section `test intellij.remoteDev.util.tests` start
-
-jps_test(
-    name = "remoteDev-util-tests_test",
-    runtime_deps = [":remoteDev-util-tests_test_lib"],
-)
-### auto-generated section `test intellij.remoteDev.util.tests` end

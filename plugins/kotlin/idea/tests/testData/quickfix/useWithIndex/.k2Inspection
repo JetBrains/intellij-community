@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UseWithIndexInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.UseWithIndexInspection

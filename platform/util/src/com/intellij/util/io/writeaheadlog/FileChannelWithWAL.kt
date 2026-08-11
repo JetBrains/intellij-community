@@ -40,7 +40,6 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
   writeAheadLog: WriteAheadLog,
   channelsAccessor: ChannelsAccessor,
   private val readOnly: Boolean = channelsAccessor.isReadOnly,
-  private val closeUnderlyingChannelOnClose: Boolean = true,
   private val applyUnfinishedOnRead: Boolean = APPLY_UNFINISHED_ON_READ,
   /** `false`: create an underlying file lazily, maybe async -- when some IO op touches it; `true`: force creation on init */
   createFileImmediately: Boolean = false,
@@ -226,9 +225,7 @@ class FileChannelWithWAL @Throws(IOException::class) constructor(
   protected override fun implCloseChannel() {
     val entriesFlushed = perFileWriter.flush()
     entriesFlushedOnClose.add(entriesFlushed)
-    if (closeUnderlyingChannelOnClose) {
-      channelOpExecutor.close()
-    }
+    channelOpExecutor.close()
   }
 
   override fun <T> executeOperation(operation: FileChannelIdempotentOperation<T>): T {

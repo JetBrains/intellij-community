@@ -30,13 +30,13 @@ import org.intellij.plugins.markdown.settings.pandoc.PandocSettings
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
-import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewBrowserActions
 import java.io.File
 
 /**
  * Utilities used mainly for import/export from markdown.
  */
-internal object MarkdownImportExportUtils {
+object MarkdownImportExportUtils {
   /**
    * Returns the preview of markdown file or null if the preview editor or project is null.
    */
@@ -165,7 +165,7 @@ internal object MarkdownImportExportUtils {
    * Checks whether the JCEF panel, which is needed for exporting to HTML and PDF, is open in the markdown editor.
    */
   fun isJCEFPanelOpen(editor: MarkdownPreviewFileEditor): Boolean {
-    return editor.lastPanelProviderInfo?.className == JCEFHtmlPanelProvider::class.java.name
+    return editor.getUserData(MarkdownPreviewFileEditor.PREVIEW_BROWSER)?.get() is MarkdownPreviewBrowserActions
   }
 
   /**
@@ -188,4 +188,3 @@ internal object MarkdownImportExportUtils {
     refreshProjectDirectory(project, dirToExport.path)
   }
 }
-

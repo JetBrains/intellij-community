@@ -1,10 +1,19 @@
 <idea-plugin visibility="internal">
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
-    <module name="intellij.searchEverywhereMl.ranking.ext"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.log.impl"/>
     <module name="intellij.searchEverywhereMl.ranking.core"/>
+    <module name="intellij.searchEverywhereMl.ranking.ext"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij.searchEverywhereMl">
     <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.vcs.SearchEverywhereVcsElementKeyProvider"/>

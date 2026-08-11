@@ -20,7 +20,7 @@ interface ProjectRootEntityBuilder : WorkspaceEntityBuilder<ProjectRootEntity> {
 }
 
 internal object ProjectRootEntityType : EntityType<ProjectRootEntity, ProjectRootEntityBuilder>() {
-  override val entityClass: Class<ProjectRootEntity> get() = ProjectRootEntity::class.java
+  override val entityImplClass: Class<*> get() = ProjectRootEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ProjectRootEntityImpl.Builder::class.java
   operator fun invoke(
     root: VirtualFileUrl,

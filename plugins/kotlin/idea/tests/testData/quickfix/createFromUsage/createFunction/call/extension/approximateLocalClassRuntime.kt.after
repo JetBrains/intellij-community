@@ -13,6 +13,6 @@ fun main(args: Array<String>) {
     list.foo { Local() }
 }
 
-private fun <E> List<E>.foo(function: () -> A) {
+private fun List<Int>.foo(function: () -> Local) {
     TODO("Not yet implemented")
 }

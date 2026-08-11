@@ -26,9 +26,9 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentSpaces
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAt
 import org.intellij.plugins.markdown.editor.lists.ListUtils.list
 import org.intellij.plugins.markdown.editor.lists.ListUtils.normalizedMarker
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListNumber
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
@@ -55,7 +55,7 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
       return false
     }
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
-    return file is MarkdownFile
+    return file?.supportsMarkdown(dataContext) == true
   }
 
   override fun preprocessEnter(
@@ -70,7 +70,7 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
     if (!codeInsightSettings.smartEnterAndBackspace) {
       return EnterHandlerDelegate.Result.Continue
     }
-    if (file !is MarkdownFile || isInCodeFence(caretOffset.get(), file)) {
+    if (!file.supportsMarkdown(dataContext) || isInCodeFence(caretOffset.get(), file)) {
       return EnterHandlerDelegate.Result.Continue
     }
 
@@ -180,7 +180,10 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
     val document = editor.document
     EditorModificationUtil.insertStringAtCaret(editor, emptyItem)
     PsiDocumentManager.getInstance(file.project).commitDocument(document)
-    val item = (file as MarkdownFile).getListItemAt(editor.caretModel.offset, document)!!
+    val item = file.getListItemAt(editor.caretModel.offset, document) ?: run {
+      this.emptyItem = null
+      return EnterHandlerDelegate.Result.Continue
+    }
     val listNumberingType = codeInsightSettings.listNumberingType
     if (codeInsightSettings.renumberListsOnType && listNumberingType != MarkdownCodeInsightSettings.ListNumberingType.PREVIOUS_NUMBER) {
       // Will fix numbering in a whole list

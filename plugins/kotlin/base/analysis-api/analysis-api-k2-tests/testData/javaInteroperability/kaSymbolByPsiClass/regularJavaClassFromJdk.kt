@@ -1,1 +1,0 @@
-// CLASS_FQ_NAME: java.lang.Runnable

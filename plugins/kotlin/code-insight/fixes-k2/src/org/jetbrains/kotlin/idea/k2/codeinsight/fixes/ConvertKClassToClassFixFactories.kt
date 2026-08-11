@@ -4,9 +4,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.restore
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.ConvertKClassToClassFix
 import org.jetbrains.kotlin.psi.KtExpression
@@ -39,7 +42,8 @@ internal object ConvertKClassToClassFixFactories {
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun KaSession.createFixIfAvailable(
+    context(session: KaSession)
+    private fun createFixIfAvailable(
         element: PsiElement?,
         expectedType: KaType,
         actualType: KaType,

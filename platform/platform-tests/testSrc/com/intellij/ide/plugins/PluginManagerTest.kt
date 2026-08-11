@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate
+import com.intellij.ide.plugins.ProductPluginInitContext.Companion.configureProductModeModules
 import com.intellij.idea.AppMode
 import com.intellij.idea.WellKnownCommand
 import com.intellij.openapi.extensions.PluginId
@@ -205,6 +206,78 @@ class PluginManagerTest {
     }
   }
 
+  @Test
+  fun `product mode modules match the gold data`() {
+    val modes = listOf(
+      ProductMode.MONOLITH to listOf(
+        "+ intellij.platform.backend",
+        "+ intellij.platform.backend.split",
+        "+ intellij.platform.frontend",
+        "- intellij.platform.frontend.split",
+        "- intellij.platform.frontend.split.base",
+        "+ intellij.platform.jps.build.dependencyGraph",
+      ),
+      ProductMode.BACKEND to listOf(
+        "+ intellij.platform.backend",
+        "+ intellij.platform.backend.split",
+        "- intellij.platform.frontend",
+        "- intellij.platform.frontend.split",
+        "- intellij.platform.frontend.split.base",
+        "+ intellij.platform.jps.build.dependencyGraph",
+      ),
+      ProductMode.FRONTEND to listOf(
+        "- intellij.platform.backend",
+        "- intellij.platform.backend.split",
+        "+ intellij.platform.frontend",
+        "+ intellij.platform.frontend.split",
+        "+ intellij.platform.frontend.split.base",
+        "- intellij.platform.jps.build.dependencyGraph",
+      ),
+      ProductMode.LIGHT to listOf(
+        "- intellij.cwm.plugin.common",
+        "- intellij.platform.backend",
+        "- intellij.platform.backend.split",
+        "+ intellij.platform.frontend",
+        "- intellij.platform.frontend.split",
+        "+ intellij.platform.frontend.split.base",
+        "- intellij.platform.jps.build.dependencyGraph",
+        "- intellij.platform.rpc",
+        "- intellij.platform.split",
+        "- intellij.platform.split.connection",
+        "- intellij.rd.client",
+      ),
+      ProductMode.LIGHT_WITH_RD_CONNECTION to listOf(
+        "- intellij.cwm.plugin.common",
+        "- intellij.platform.backend",
+        "- intellij.platform.backend.split",
+        "+ intellij.platform.frontend",
+        "- intellij.platform.frontend.split",
+        "+ intellij.platform.frontend.split.base",
+        "- intellij.platform.jps.build.dependencyGraph",
+        "- intellij.platform.rpc",
+        "- intellij.platform.split",
+        "+ intellij.platform.split.connection",
+        "- intellij.rd.client",
+      ),
+      ProductMode.LANGUAGE_SERVER to listOf(
+        "+ intellij.platform.backend",
+        "- intellij.platform.backend.split",
+        "- intellij.platform.frontend",
+        "- intellij.platform.frontend.split",
+        "- intellij.platform.frontend.split.base",
+      ),
+    )
+    for ((currentMode, expectedValues) in modes) {
+      val map = buildMap {
+        configureProductModeModules(currentMode.id)
+      }
+      val actual = map.map { it.key.name to it.value.isAvailable }.sortedBy { it.first }
+        .joinToString("\n") { (if (it.second) "+ " else "- ") + it.first }
+      val expected = expectedValues.joinToString("\n")
+      assertEquals("Product modules for '${currentMode.id}' do not match gold data", expected, actual)
+    }
+  }
+
   // TODO probably should be moved elsewhere
   @Test
   fun `unfulfilled os requirement triggers only on required dependencies`() {
@@ -216,9 +289,59 @@ class PluginManagerTest {
       val optional = object : TestIdeaPluginDescriptor() {
         override fun getDependencies(): List<IdeaPluginDependency> = listOf(PluginDependency(module.moduleId, true))
       }
-      assertThat(PluginManagerCore.getUnfulfilledOsRequirement(required)).isEqualTo(module.takeIf { !module.isHostOs() })
-      assertThat(PluginManagerCore.getUnfulfilledOsRequirement(optional)).isEqualTo(null)
+      assertThat(PluginCompatibilityUtils.getUnfulfilledOsRequirement(required)).isEqualTo(module.takeIf { !module.isHostOs() })
+      assertThat(PluginCompatibilityUtils.getUnfulfilledOsRequirement(optional)).isEqualTo(null)
     }
+  }
+
+  @Test
+  fun `unfulfilled os requirement is inferred from version when dependencies are empty`() {
+    fun descriptor(version: String?) = object : TestIdeaPluginDescriptor() {
+      override fun getDependencies(): List<IdeaPluginDependency> = emptyList()
+      override fun getVersion(): String? = version
+      override fun getPluginId(): PluginId = PluginId.getId("test.plugin")
+    }
+    fun assertInferred(version: String?, expected: IdeaPluginOsRequirement?) {
+      assertThat(PluginCompatibilityUtils.getUnfulfilledOsRequirement(descriptor(version)))
+        .isEqualTo(expected?.takeIf { !it.isHostOs() })
+    }
+
+    assertInferred("1.0.0-windows-amd64", IdeaPluginOsRequirement.Windows)
+    assertInferred("1.0.0-mac-arm64", IdeaPluginOsRequirement.Mac)
+    assertInferred("1.0.0-linux-amd64", IdeaPluginOsRequirement.Linux)
+    assertInferred("1.0.0-freebsd-amd64", IdeaPluginOsRequirement.FreeBSD)
+    // unrecognized OS tag maps to OS.Other and is filtered out
+    assertInferred("1.0.0-solaris-amd64", null)
+    // versions that do not match the <version>-<os>-<arch> pattern infer nothing
+    assertInferred("1.0.0", null)
+    assertInferred("241.SNAPSHOT", null)
+    // a missing version must not throw and infers nothing
+    assertInferred(null, null)
+  }
+
+  @Test
+  fun `unfulfilled cpu arch requirement is inferred from version when dependencies are empty`() {
+    fun descriptor(version: String?) = object : TestIdeaPluginDescriptor() {
+      override fun getDependencies(): List<IdeaPluginDependency> = emptyList()
+      override fun getVersion(): String? = version
+      override fun getPluginId(): PluginId = PluginId.getId("test.plugin")
+    }
+    fun assertInferred(version: String?, expected: PluginCpuArchRequirement?) {
+      assertThat(PluginCompatibilityUtils.getUnfulfilledCpuArchRequirement(descriptor(version)))
+        .isEqualTo(expected?.takeIf { !it.isHostArch() })
+    }
+
+    assertInferred("1.0.0-windows-amd64", PluginCpuArchRequirement.X86_64)
+    assertInferred("1.0.0-windows-x86_64", PluginCpuArchRequirement.X86_64)
+    assertInferred("1.0.0-windows-x86", PluginCpuArchRequirement.X86)
+    assertInferred("1.0.0-windows-arm64", PluginCpuArchRequirement.ARM64)
+    assertInferred("1.0.0-windows-aarch64", PluginCpuArchRequirement.ARM64)
+    // unrecognized arch tag maps to CpuArch.OTHER/UNKNOWN and is filtered out
+    assertInferred("1.0.0-windows-sparc", null)
+    // versions that do not match the <version>-<os>-<arch> pattern infer nothing
+    assertInferred("1.0.0", null)
+    // a missing version must not throw and infers nothing
+    assertInferred(null, null)
   }
 
   companion object {
@@ -252,7 +375,7 @@ class PluginManagerTest {
       Assert.assertNotNull(checkCompatibility(ideVersion, sinceBuild, untilBuild))
     }
 
-    private fun checkCompatibility(ideVersion: String?, sinceBuild: String?, untilBuild: String?): PluginNonLoadReason? {
+    private fun checkCompatibility(ideVersion: String?, sinceBuild: String?, untilBuild: String?): PluginIncompatibilityReason? {
       val desc = object : TestIdeaPluginDescriptor() {
         override fun getPluginId(): PluginId = PluginId.getId("test")
         override fun getName(): @NlsSafe String? = pluginId.idString
@@ -261,7 +384,7 @@ class PluginManagerTest {
         override fun getVersion(): @NlsSafe String? = null
         override fun getDependencies(): List<IdeaPluginDependency> = listOf()
       }
-      return PluginManagerCore.checkBuildNumberCompatibility(desc, BuildNumber.fromString(ideVersion)!!)
+      return PluginCompatibilityUtils.checkBuildNumberCompatibility(desc, BuildNumber.fromString(ideVersion)!!)
     }
 
     private fun checkCompatibility(platformId: String): Boolean {
@@ -278,7 +401,7 @@ class PluginManagerTest {
           }
         )
       }
-      return PluginManagerCore.checkBuildNumberCompatibility(desc, BuildNumber.fromString("145")!!) == null
+      return PluginCompatibilityUtils.checkBuildNumberCompatibility(desc, BuildNumber.fromString("145")!!) == null
     }
 
     private fun assertCompatible(ideVersion: String?, sinceBuild: String?, untilBuild: String?) {
@@ -342,10 +465,12 @@ class PluginManagerTest {
       }
       loadingContext.close()
       val discoveredPlugins = PluginsDiscoveryResult.build(
-        listOf(DiscoveredPluginsList(plugins, if (isBundled) PluginsSourceContext.Bundled else PluginsSourceContext.Custom))
+        discoveredPluginLists = listOf(
+          DiscoveredPluginsList(plugins, if (isBundled) PluginsSourceContext.Bundled else PluginsSourceContext.Custom)
+        ),
+        descriptorLoadingErrors = loadingContext.copyDescriptorLoadingErrors(),
       )
       return PluginManagerCore.initializePlugins(
-        descriptorLoadingErrors = loadingContext.copyDescriptorLoadingErrors(),
         initContext = initContext,
         discoveredPlugins = discoveredPlugins,
         coreLoader = PluginManagerTest::class.java.getClassLoader(),

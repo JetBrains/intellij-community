@@ -11,11 +11,15 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
+/** Combines [SpeedSearchColors], [SpeedSearchMetrics], and [SpeedSearchIcons] to style the SpeedSearch component. */
 @Immutable
 @GenerateDataFunctions
 public class SpeedSearchStyle(
+    /** The color tokens for the SpeedSearch component. */
     public val colors: SpeedSearchColors,
+    /** The size and spacing metrics for the SpeedSearch component. */
     public val metrics: SpeedSearchMetrics,
+    /** The icon keys for the SpeedSearch component. */
     public val icons: SpeedSearchIcons,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -40,15 +44,21 @@ public class SpeedSearchStyle(
 
     override fun toString(): String = "SpeedSearchStyle(colors=$colors, metrics=$metrics, icons=$icons)"
 
+    /** Companion object for [SpeedSearchStyle]. */
     public companion object
 }
 
+/** Holds color tokens for the SpeedSearch component in its various states. */
 @Immutable
 @GenerateDataFunctions
 public class SpeedSearchColors(
+    /** The background color. */
     public val background: Color,
+    /** The border color. */
     public val border: Color,
+    /** The foreground (text) color. */
     public val foreground: Color,
+    /** The color used to indicate an error state. */
     public val error: Color,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -76,12 +86,17 @@ public class SpeedSearchColors(
     override fun toString(): String =
         "SpeedSearchColors(background=$background, border=$border, foreground=$foreground, error=$error)"
 
+    /** Companion object for [SpeedSearchColors]. */
     public companion object
 }
 
+/** Holds size and spacing metrics for the SpeedSearch component. */
 @Immutable
 @GenerateDataFunctions
-public class SpeedSearchMetrics(public val contentPadding: PaddingValues) {
+public class SpeedSearchMetrics(
+    /** The padding around the content inside the SpeedSearch popup. */
+    public val contentPadding: PaddingValues
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -95,12 +110,17 @@ public class SpeedSearchMetrics(public val contentPadding: PaddingValues) {
 
     override fun toString(): String = "SpeedSearchMetrics(contentPadding=$contentPadding)"
 
+    /** Companion object for [SpeedSearchMetrics]. */
     public companion object
 }
 
+/** Holds icon keys for the SpeedSearch component. */
 @Immutable
 @GenerateDataFunctions
-public class SpeedSearchIcons(public val magnifyingGlass: IconKey) {
+public class SpeedSearchIcons(
+    /** The icon key for the magnifying glass search icon. */
+    public val magnifyingGlass: IconKey
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -114,9 +134,11 @@ public class SpeedSearchIcons(public val magnifyingGlass: IconKey) {
 
     override fun toString(): String = "SpeedSearchIcons(magnifyingGlass=$magnifyingGlass)"
 
+    /** Companion object for [SpeedSearchIcons]. */
     public companion object
 }
 
+/** Composition local that provides the current [SpeedSearchStyle] to the SpeedSearch component. */
 public val LocalSpeedSearchStyle: ProvidableCompositionLocal<SpeedSearchStyle> = staticCompositionLocalOf {
     error("No default SpeedSearchStyle provided. Have you forgotten the theme?")
 }

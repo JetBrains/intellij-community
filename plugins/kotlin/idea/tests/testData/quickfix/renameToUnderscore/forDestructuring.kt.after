@@ -1,5 +1,5 @@
 // "Rename to _" "true"
-// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.UnusedVariableInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.diagnosticBased.UnusedVariableInspection
 data class A(val x: String, val y: Int)
 
 fun bar(z: List<A>) {

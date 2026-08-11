@@ -11,15 +11,14 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Dimension
 import java.util.Vector
 import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants
 import javax.swing.table.DefaultTableModel
 
-@Suppress("HardCodedStringLiteral")
-@Internal
+// todo move to DevKit Runtime plugin
+@Suppress("HardCodedStringLiteral", "unused")
 internal class ShowBundleMessagesDialogAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent): Unit = BundleMessagesDialog(e.project).show()
 

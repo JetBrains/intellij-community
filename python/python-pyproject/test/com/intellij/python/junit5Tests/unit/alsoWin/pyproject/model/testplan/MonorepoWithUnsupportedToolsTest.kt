@@ -6,7 +6,7 @@ import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.PYTHON
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
-import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.SEP
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -28,17 +28,17 @@ internal class MonorepoWithUnsupportedToolsTest {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
-      ExpectedModule("flit1_name", contentRoot = "flit${SEP}flit1"),
-      ExpectedModule("name2", contentRoot = "flit${SEP}flit2"),
-      ExpectedModule("hatch1", contentRoot = "hatch${SEP}hatch1", sourceRoots = listOf("hatch${SEP}hatch1${SEP}src")),
-      ExpectedModule("hatch2", contentRoot = "hatch${SEP}hatch2", sourceRoots = listOf("hatch${SEP}hatch2${SEP}src")),
-      ExpectedModule("pdm1", contentRoot = "pdm${SEP}pdm1${SEP}pdm1", sourceRoots = listOf("pdm${SEP}pdm1${SEP}pdm1${SEP}src")),
-      ExpectedModule("pdm2", contentRoot = "pdm${SEP}pdm2${SEP}pdm2"),
-      ExpectedModule("poetry1", contentRoot = "poetry${SEP}poetry1", sourceRoots = listOf("poetry${SEP}poetry1${SEP}src")),
-      ExpectedModule("poetry2", contentRoot = "poetry${SEP}poetry2", sourceRoots = listOf("poetry${SEP}poetry2${SEP}src")),
+      ExpectedModule("flit1_name", contentRoot = "flit" / "flit1"),
+      ExpectedModule("name2", contentRoot = "flit" / "flit2"),
+      ExpectedModule("hatch1", contentRoot = "hatch" / "hatch1", sourceRoots = listOf("hatch" / "hatch1" / "src")),
+      ExpectedModule("hatch2", contentRoot = "hatch" / "hatch2", sourceRoots = listOf("hatch" / "hatch2" / "src")),
+      ExpectedModule("pdm1", contentRoot = "pdm" / "pdm1" / "pdm1", sourceRoots = listOf("pdm" / "pdm1" / "pdm1" / "src")),
+      ExpectedModule("pdm2", contentRoot = "pdm" / "pdm2" / "pdm2"),
+      ExpectedModule("poetry1", contentRoot = "poetry" / "poetry1", sourceRoots = listOf("poetry" / "poetry1" / "src")),
+      ExpectedModule("poetry2", contentRoot = "poetry" / "poetry2", sourceRoots = listOf("poetry" / "poetry2" / "src")),
       ExpectedModule("uv", contentRoot = "uv"),
-      ExpectedModule("subuv1", contentRoot = "uv${SEP}subuv1"),
-      ExpectedModule("subuv2", contentRoot = "uv${SEP}subuv2"),
+      ExpectedModule("subuv1", contentRoot = "uv" / "subuv1"),
+      ExpectedModule("subuv2", contentRoot = "uv" / "subuv2"),
     )
   }
 }

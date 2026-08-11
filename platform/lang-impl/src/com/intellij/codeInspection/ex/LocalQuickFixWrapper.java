@@ -68,20 +68,20 @@ public final class LocalQuickFixWrapper extends QuickFixAction {
   }
 
   @Override
-  protected @NotNull BatchExecutionResult applyFix(final @NotNull Project project,
-                                                   final @NotNull GlobalInspectionContextImpl context,
-                                                   final CommonProblemDescriptor @NotNull [] descriptors,
-                                                   final @NotNull Set<? super PsiElement> ignoredElements) {
+  protected @NotNull BatchExecutionResult applyFix(@NotNull Project project,
+                                                   @NotNull GlobalInspectionContextImpl context,
+                                                   CommonProblemDescriptor @NotNull [] descriptors,
+                                                   @NotNull Set<? super PsiElement> ignoredElements) {
     if (myFix instanceof BatchQuickFix) {
-      final List<PsiElement> collectedElementsToIgnore = new ArrayList<>();
-      final Runnable refreshViews = () -> {
+      List<PsiElement> collectedElementsToIgnore = new ArrayList<>();
+      Runnable refreshViews = () -> {
         DaemonCodeAnalyzerEx.getInstanceEx(project).restart("LocalQuickFixWrapper.applyFix.refreshViews");
         for (CommonProblemDescriptor descriptor : descriptors) {
           ignore(ignoredElements, descriptor, getWorkingQuickFix(descriptor.getFixes()) != null, context);
         }
 
-        final RefManager refManager = context.getRefManager();
-        final RefElement[] refElements = new RefElement[collectedElementsToIgnore.size()];
+        RefManager refManager = context.getRefManager();
+        RefElement[] refElements = new RefElement[collectedElementsToIgnore.size()];
         for (int i = 0, collectedElementsToIgnoreSize = collectedElementsToIgnore.size(); i < collectedElementsToIgnoreSize; i++) {
           refElements[i] = refManager.getReference(collectedElementsToIgnore.get(i));
         }
@@ -104,9 +104,9 @@ public final class LocalQuickFixWrapper extends QuickFixAction {
     BatchExecutionResult result = ModCommandExecutor.Result.NOTHING;
     for (CommonProblemDescriptor descriptor : descriptors) {
       if (descriptor == null) continue;
-      final QuickFix<?>[] fixes = descriptor.getFixes();
+      QuickFix<?>[] fixes = descriptor.getFixes();
       if (fixes != null) {
-        final QuickFix fix = getWorkingQuickFix(fixes);
+        QuickFix fix = getWorkingQuickFix(fixes);
         if (fix != null) {
           if (fix instanceof ModCommandQuickFix modCommandQuickFix) {
             ProblemDescriptor problemDescriptor = (ProblemDescriptor)descriptor;

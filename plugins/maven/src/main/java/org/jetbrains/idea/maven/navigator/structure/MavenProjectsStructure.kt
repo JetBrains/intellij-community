@@ -150,7 +150,7 @@ class MavenProjectsStructure(
     myRoot.updateProfiles()
   }
 
-  fun updateIgnored(projects: MutableList<MavenProject?>) {
+  fun updateIgnored(projects: List<MavenProject?>) {
     for (each in projects) {
       val node = findNodeFor(each)
       if (node == null) continue

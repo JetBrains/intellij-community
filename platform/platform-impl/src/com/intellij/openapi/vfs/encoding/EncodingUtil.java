@@ -39,6 +39,8 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 
 public final class EncodingUtil {
+  private EncodingUtil() { }
+
   @ApiStatus.Internal
   public enum FailReason {
     IS_DIRECTORY,
@@ -203,6 +205,7 @@ public final class EncodingUtil {
     }
   }
 
+  @ApiStatus.Internal
   public static boolean canReload(@NotNull VirtualFile virtualFile) {
     return checkCanReload(virtualFile, null) == null;
   }
@@ -261,6 +264,7 @@ public final class EncodingUtil {
     return checkCanReload(selectedFile, null);
   }
 
+  @ApiStatus.Internal
   public static @Nullable Pair<Charset, String> getCharsetAndTheReasonTooltip(@NotNull VirtualFile file) {
     FailReason r1 = checkCanConvert(file);
     if (r1 == null) return null;

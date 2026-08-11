@@ -91,12 +91,12 @@ syntax tree payload history, not a full JVM retained-size or dominator analysis.
 
 Object sizes are shallow sizes estimated from HPROF record data using `HprofObjectSizeLayout`:
 
-- instance size: `objectPreambleSize + HPROF instance data size`
-- object array size: `arrayPreambleSize + elementCount * hprofIdSize`
-- primitive array size: `arrayPreambleSize + elementCount * primitiveElementSize`
+- instance size: `objectPreambleSize + estimated JVM instance data size`, aligned to `objectAlignment`
+- object array size: `arrayPreambleSize + elementCount * referenceSize`, aligned to `objectAlignment`
+- primitive array size: `arrayPreambleSize + elementCount * primitiveElementSize`, aligned to `objectAlignment`
 
-The default layout uses `objectPreambleSize = 8` and `arrayPreambleSize = 12`, matching the existing community HPROF histogram
-convention. The model does not apply additional object alignment.
+The default layout uses `objectPreambleSize = 8`, `arrayPreambleSize = 12`, `referenceSize = 8`, and `objectAlignment = 8`,
+matching the existing community HPROF histogram convention while making compressed-reference layouts configurable.
 
 ## Result
 
@@ -118,7 +118,7 @@ convention. The model does not apply additional object alignment.
 The action:
 
 1. asks the user to select an `.hprof` heap dump;
-2. runs the overhead analysis in a cancellable background task;
+2. runs the overhead analysis with cancellable background progress;
 3. opens a generated plain-text report in the editor.
 
 The report includes extraction counts, retained overhead totals, reachability counts, stale-only nested map ids, and a space-aligned

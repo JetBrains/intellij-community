@@ -3,14 +3,12 @@ package com.intellij.gradle.toolingExtension.impl.modelAction;
 
 import com.intellij.gradle.toolingExtension.impl.modelSerialization.ToolingSerializerConverter;
 import com.intellij.gradle.toolingExtension.impl.util.GradleExecutorServiceUtil;
-import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.DefaultBuildController;
 import org.jetbrains.plugins.gradle.model.DefaultGradleLightBuild;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer;
 
@@ -54,10 +52,10 @@ public class GradleDaemonModelHolder {
 
   private final @NotNull ToolingSerializerConverter mySerializer;
 
-  private final @NotNull GradleBuild myRootGradleBuild;
-  private final @NotNull Collection<? extends GradleBuild> myNestedGradleBuilds;
-
   private final @NotNull GradleVersion myGradleVersion;
+
+  private final @NotNull GradleBuild myRootGradleBuild;
+  private final @NotNull Collection<? extends GradleBuild> myGradleBuilds;
 
   private final @NotNull BlockingQueue<Future<List<DefaultGradleLightBuild>>> myConvertedBuilds = new LinkedBlockingQueue<>();
   private final @NotNull BlockingQueue<Future<ConvertedModel>> myConvertedModelQueue = new LinkedBlockingQueue<>();
@@ -70,27 +68,26 @@ public class GradleDaemonModelHolder {
     @NotNull GradleVersion gradleVersion
   ) {
     mySerializer = serializer;
-    myRootGradleBuild = rootGradleBuild;
-    myNestedGradleBuilds = nestedGradleBuilds;
     myGradleVersion = gradleVersion;
 
-    GradleExecutorServiceUtil.submitTask(converterExecutor, myConvertedBuilds, () -> {
-      List<GradleBuild> gradleBuilds = new ArrayList<>();
-      gradleBuilds.add(myRootGradleBuild);
-      gradleBuilds.addAll(myNestedGradleBuilds);
-      return convertGradleBuilds(gradleBuilds, myGradleVersion);
-    });
+    myRootGradleBuild = rootGradleBuild;
+
+    List<GradleBuild> gradleBuilds = new ArrayList<>();
+    gradleBuilds.add(rootGradleBuild);
+    gradleBuilds.addAll(nestedGradleBuilds);
+    myGradleBuilds = gradleBuilds;
+
+    GradleExecutorServiceUtil.submitTask(converterExecutor, myConvertedBuilds, () ->
+      convertGradleBuilds(myGradleBuilds, myGradleVersion)
+    );
+  }
+
+  public @NotNull GradleBuild getRootGradleBuild() {
+    return myRootGradleBuild;
   }
 
   public @NotNull Collection<? extends GradleBuild> getGradleBuilds() {
-    List<GradleBuild> gradleBuilds = new ArrayList<>();
-    gradleBuilds.add(myRootGradleBuild);
-    gradleBuilds.addAll(myNestedGradleBuilds);
-    return gradleBuilds;
-  }
-
-  public @NotNull BuildController createBuildController(@NotNull BuildController parentController) {
-    return new DefaultBuildController(parentController, myRootGradleBuild, myGradleVersion);
+    return myGradleBuilds;
   }
 
   public @NotNull GradleModelConsumer createModelConsumer(@NotNull ExecutorService converterExecutor) {

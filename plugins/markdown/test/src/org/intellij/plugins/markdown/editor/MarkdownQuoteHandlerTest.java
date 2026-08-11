@@ -34,6 +34,14 @@ public class MarkdownQuoteHandlerTest extends BasePlatformTestCase {
     doTest("Hello <caret> world", '`', "Hello `<caret>` world");
   }
 
+  public void testBacktickAfterOpeningParenthesis() {
+    doTest("Test (<caret>", '`', "Test (`<caret>`");
+  }
+
+  public void testBacktickInsideParenthesis() {
+    doTest("Test (<caret>)", '`', "Test (`<caret>`)");
+  }
+
   public void testEmphAsterisk() {
     doTest("Hello <caret> world", '*', "Hello *<caret> world");
   }

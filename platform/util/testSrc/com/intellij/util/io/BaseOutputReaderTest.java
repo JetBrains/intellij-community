@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -102,7 +102,7 @@ public class BaseOutputReaderTest {
   private static List<String> readLines(BaseDataReader.SleepingPolicy policy, boolean split, boolean incomplete, boolean separators) throws Exception {
     Process process = launchTest("data");
     TestOutputReader reader = new TestOutputReader(process.getInputStream(), new BaseOutputReader.Options() {
-      @Override public BaseDataReader.SleepingPolicy policy() { return policy; }
+      @Override public BaseDataReader.@NotNull SleepingPolicy policy() { return policy; }
       @Override public boolean splitToLines() { return split; }
       @Override public boolean sendIncompleteLines() { return incomplete; }
       @Override public boolean withSeparators() { return separators; }

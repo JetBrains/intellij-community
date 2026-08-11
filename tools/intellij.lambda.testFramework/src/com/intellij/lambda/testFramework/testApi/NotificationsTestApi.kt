@@ -5,6 +5,7 @@ import com.intellij.notification.ActionCenter
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.remoteDev.tests.LambdaIdeContext
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.remoteDev.tests.impl.utils.waitSuspendingNotNull
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -27,7 +28,7 @@ suspend fun LambdaIdeContext.waitForNotification(content: String, timeout: Durat
   }
 
 suspend fun waitTillNotificationIsExpired(notification: Notification, timeout: Duration) =
-  waitSuspendingNotNull("Notification is expired", timeout) { notification.isExpired }
+  waitSuspending("Notification is expired", timeout) { notification.isExpired }
 
 fun getNotificationDisplayType(notification: Notification) =
   NotificationGroupManager.getInstance().getNotificationGroup(notification.groupId).displayType

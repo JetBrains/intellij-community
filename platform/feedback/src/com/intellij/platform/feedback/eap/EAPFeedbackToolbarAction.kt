@@ -11,9 +11,10 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.util.ui.JBUI
+import javax.swing.Icon
 import javax.swing.JComponent
 
-class EAPFeedbackToolbarAction : AnAction(), CustomComponentAction {
+open class EAPFeedbackToolbarAction : AnAction(), CustomComponentAction {
 
   override fun actionPerformed(e: AnActionEvent) {
     setEAPFeedbackShown()
@@ -27,11 +28,13 @@ class EAPFeedbackToolbarAction : AnAction(), CustomComponentAction {
     val isVisible = isEAPEnv() && isEAPFeedbackAvailable()
     presentation.isEnabledAndVisible = isVisible
     if (isVisible) {
-      presentation.icon = AllIcons.Ide.FeedbackRatingOn
+      presentation.icon = getActionIcon()
       presentation.text = ActionsBundle.message("action.EAPFeedbackToolbarAction.text")
       presentation.description = ActionsBundle.message("action.EAPFeedbackToolbarAction.description")
     }
   }
+
+  protected open fun getActionIcon(): Icon = AllIcons.Ide.FeedbackRatingOn
 
   override fun displayTextInToolbar(): Boolean = true
 

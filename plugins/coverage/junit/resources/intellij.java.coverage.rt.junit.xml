@@ -1,0 +1,10 @@
+<!-- @skip-dependency-generation - the JUnit plugin dependency cannot be represented by a JDK 8-compatible JPS dependency -->
+<idea-plugin visibility="private">
+  <dependencies>
+    <plugin id="JUnit"/>
+    <module name="intellij.java.coverage.rt"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <junitListener implementation="com.intellij.java.coverage.rt.junit.IDEAJUnitCoverageListener"/>
+  </extensions>
+</idea-plugin>

@@ -1,5 +1,5 @@
 // "Add non-null asserted (p as String?!!) call" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'String?', but 'String' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 fun callMe(p: String) {}
 

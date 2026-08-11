@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
-import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames.BACKING_FIELD_VARIABLE
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames.EXTENSION_PROPERTY
@@ -31,6 +30,7 @@ import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticName
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames.PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames.PARAMETER
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames.SYNTHETIC_EXTENSION_PROPERTY
+import org.jetbrains.kotlin.idea.highlighting.K2HighlightingBundle
 import org.jetbrains.kotlin.idea.highlighting.analyzers.KotlinFunctionCallSemanticAnalyzer.Companion.getHighlightInfoTypeForCallFromExtension
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -91,7 +91,7 @@ internal class KotlinVariableReferenceSemanticAnalyzer(holder: HighlightInfoHold
                 highlightName(
                     expression,
                     FUNCTION_LITERAL_DEFAULT_PARAMETER,
-                    KotlinBaseHighlightingBundle.message("automatically.declared.based.on.the.expected.type")
+                    K2HighlightingBundle.message("automatically.declared.based.on.the.expected.type")
                 )
             }
 

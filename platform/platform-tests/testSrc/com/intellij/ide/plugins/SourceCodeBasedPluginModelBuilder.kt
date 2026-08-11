@@ -15,7 +15,11 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.nameWithoutExtension
 
 data class SourceCodeBasedPluginModelBuilderOptions(
-  val prefixesOfPathsIncludedFromLibrariesViaXiInclude: List<String> = emptyList(),
+  /**
+   * Relative paths to XML files which are located in libraries and included in plugin descriptors via `<xi:include>`.
+   * A trailing `*` means prefix match; otherwise the target must match exactly.
+   */
+  val xiIncludeTargetsResidingInLibraries: List<String> = emptyList(),
 
   /**
    * By default, files included via xi:include patterns are searched in 'META-INF', 'idea' and the root directory.
@@ -99,7 +103,7 @@ class SourceCodeBasedPluginModelBuilder(
   private val errors = mutableListOf<SourceCodeBasedPluginModelBuilderError>()
 
   private val xIncludeLoader = LoadFromSourceXIncludeLoader(
-    prefixesOfPathsIncludedFromLibrariesViaXiInclude = builderOptions.prefixesOfPathsIncludedFromLibrariesViaXiInclude,
+    xiIncludeTargetsResidingInLibraries = builderOptions.xiIncludeTargetsResidingInLibraries,
     project = project,
     parentDirectoriesPatterns = listOf("META-INF", "idea", "") + builderOptions.additionalPatternsOfDirectoriesContainingIncludedXmlFiles,
   )

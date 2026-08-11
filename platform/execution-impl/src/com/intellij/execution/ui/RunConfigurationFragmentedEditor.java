@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
+import com.intellij.diagnostic.logging.LogsGroupFragment;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configuration.RunConfigurationExtensionBase;
@@ -25,6 +26,7 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -160,6 +162,10 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
    */
   protected abstract List<SettingsEditorFragment<Settings, ?>> createRunFragments();
 
+  protected final LogsGroupFragment<Settings> createLogGroupFragment() {
+    return new LogsGroupFragment<>(mySettings.getProject());
+  }
+
   @Override
   public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
     myDefaultSettings = s.isTemplate();
@@ -175,7 +181,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
     }
   }
 
-  private @NotNull List<@NotNull RunConfigurationEditorFragment<?,?>> getRunFragments() {
+  private @NotNull @Unmodifiable List<@NotNull RunConfigurationEditorFragment<?,?>> getRunFragments() {
     return ContainerUtil.mapNotNull(getFragments(),
                                     fragment -> fragment instanceof RunConfigurationEditorFragment
                                                 ? (RunConfigurationEditorFragment<?,?>)fragment

@@ -5,8 +5,8 @@
 // ACTION: Convert to with
 // ACTION: Rename reference
 // ERROR: Unresolved reference: ext
-// K2_ERROR: Unresolved reference 'ext' on receiver of type 'Boolean'.
-// K2_AFTER_ERROR: Unresolved reference 'ext' on receiver of type 'Boolean'.
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 package p
 

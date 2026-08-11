@@ -16,7 +16,7 @@ interface IconRendererManager {
      */
     fun createRenderer(icon: Icon, context: RenderingContext): IconRenderer
 
-    fun createUpdateFlow(scope: CoroutineScope?, updateCallback: (Int) -> Unit): MutableIconUpdateFlow
+    fun createUpdateFlow(scope: CoroutineScope?, onUpdate: (suspend (Int) -> Unit)? = null): MutableIconUpdateFlow
 
     fun createRenderingContext(
         updateFlow: MutableIconUpdateFlow,
@@ -32,15 +32,15 @@ interface IconRendererManager {
             ServiceLoader.load(IconRendererManager::class.java).firstOrNull()
                 ?: error("IconRendererManager instance is not set and there is no SPI service on classpath.")
 
-        fun createUpdateFlow(scope: CoroutineScope?, updateCallback: (Int) -> Unit): MutableIconUpdateFlow =
-            getInstance().createUpdateFlow(scope, updateCallback)
+        fun createUpdateFlow(scope: CoroutineScope?, onUpdate: (suspend (Int) -> Unit)? = null): MutableIconUpdateFlow =
+            getInstance().createUpdateFlow(scope, onUpdate)
 
         fun activate(manager: IconRendererManager) {
             instance = manager
         }
 
         fun createRenderingContext(
-            updateFlow: MutableIconUpdateFlow,
+            updateFlow: MutableIconUpdateFlow = createUpdateFlow(null),
             defaultImageModifiers: ImageModifiers? = null,
         ): RenderingContext = getInstance().createRenderingContext(updateFlow, defaultImageModifiers)
     }

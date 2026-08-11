@@ -54,7 +54,7 @@ internal interface PathCellHost {
 /**
  * Status provider used by the Lookup-column renderers to decorate each chain step (SDK, PATH,
  * uvx) with a ✓ / ✗ / ◐ glyph. Implemented by the configurable since the renderers don't have
- * direct access to the [UvController] or the project SDK list.
+ * direct access to the [PyToolManagementController] or the project SDK list.
  */
 internal interface ModeCellHost {
   fun modeStatusFor(toolRow: ToolRow, mode: ExecutableDiscoveryMode): ChainStepStatus
@@ -66,7 +66,6 @@ internal interface ModeCellHost {
  * string when the cell value isn't a [ExecutableDiscoveryMode]. Shared between the combobox
  * and read-only renderers so both go through the same null-handling path.
  */
-@Suppress("HardCodedStringLiteral")
 private fun renderChainText(host: ModeCellHost?, table: JTable, value: Any?, row: Int): String {
   val mode = value as? ExecutableDiscoveryMode ?: return ""
   val toolRow = (table.model as? ListTableModel<*>)?.getRowValue(row) as? ToolRow
@@ -74,13 +73,27 @@ private fun renderChainText(host: ModeCellHost?, table: JTable, value: Any?, row
   return modeChainLabel(mode) { host.modeStatusFor(toolRow, it) }
 }
 
-/** Renders the enabled state as an [OnOffButton] toggle switch. */
-internal class OnOffCellRenderer : TableCellRenderer {
+/**
+ * Renders the enabled state as an [OnOffButton] toggle switch — except for a tool that is the
+ * project's selected type engine, where it renders a non-interactive dash. The dash signals that
+ * the tool's enabled state is governed by the Type Engine settings (you can't toggle it as a
+ * standalone tool while it acts as the engine); the matching tooltip explains why.
+ */
+internal class OnOffCellRenderer(private val project: Project) : TableCellRenderer {
   private val button = OnOffButton().apply { isOpaque = true }
+  private val lockedLabel = JBLabel("—", SwingConstants.CENTER).apply {
+    isOpaque = true
+    foreground = UIUtil.getInactiveTextColor()
+  }
 
   override fun getTableCellRendererComponent(
     table: JTable, value: Any?, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int,
   ): Component {
+    val toolRow = (table.model as? ListTableModel<*>)?.getRowValue(row) as? ToolRow
+    if (toolRow != null && toolRow.tool.isSelectedAsTypeEngine(project)) {
+      lockedLabel.background = table.background
+      return lockedLabel
+    }
     button.isSelected = value == true
     button.background = table.background
     return button
@@ -176,7 +189,7 @@ internal class ToolCellRenderer(private val host: ToolCellHost) : JPanel(null), 
     // handler exits early, and the cursor stays default. Same rule mirrored in
     // hover hit-testing and the table mouseClicked listener.
     paintGear = (row == host.hoveredRow) && (toolRow?.staged?.enabled == true)
-    gearEnabled = toolRow?.tool?.detailConfigurable != null
+    gearEnabled = toolRow?.detailConfigurableProvider != null
     return this
   }
 

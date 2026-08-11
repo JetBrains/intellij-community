@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from collections.abc import Hashable
 from typing import TypeVar
 
@@ -9,6 +10,6 @@ _G = TypeVar("_G", bound=Graph[Hashable])
 __all__ = ["complement", "reverse"]
 
 @_dispatchable
-def complement(G: Graph[_Node]): ...
+def complement(G: Graph[_Node]) -> Graph[Incomplete]: ...
 @_dispatchable
 def reverse(G: _G, copy: bool = True) -> _G: ...

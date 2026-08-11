@@ -44,6 +44,8 @@ import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.PyYieldExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyAnyType;
+import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyNoneTypeKt;
 import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.PyTupleType;
@@ -62,6 +64,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 public final class PyCodeFragmentUtil {
   private PyCodeFragmentUtil() {
@@ -99,7 +103,7 @@ public final class PyCodeFragmentUtil {
         continue;
       }
       Pair<String, PyType> variable = getVariable(globalWrites, nonlocalWrites, element, inputNames, context);
-      if (variable != null && variable.second != null) {
+      if (variable != null && !isUnknown(variable.second)) {
         String typeName = PythonDocumentationProvider.getTypeHint(variable.second, context);
         inputTypes.put(variable.first, Pair.create(typeName, variable.second));
       }
@@ -150,12 +154,12 @@ public final class PyCodeFragmentUtil {
 
   private static @Nullable PyType getType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
     if (element instanceof PyTypedElement typedElement) {
-      PyType type = context.getType(typedElement);
-      if (type != null && !(type instanceof PyStructuralType) && !PyNoneTypeKt.isNoneType(type)) {
+      PyType type = PyLiteralType.upcastLiteralToClass(context.getType(typedElement));
+      if (!isUnknown(type) && !(type instanceof PyStructuralType) && !PyNoneTypeKt.isNoneType(type)) {
         return type;
       }
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   private static @Nullable String getOutputTypeName(@NotNull PsiElement startInScope,

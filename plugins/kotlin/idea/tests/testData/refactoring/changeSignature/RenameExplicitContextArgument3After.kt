@@ -1,0 +1,12 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
+class ContextParameters {
+
+    context(text: String, str: String)
+    fun foo() {
+        print(text + str)
+    }
+
+    fun test() {
+        val foo = foo( text = "", str = "")
+    }
+}

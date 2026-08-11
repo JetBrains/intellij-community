@@ -3,6 +3,8 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ThreadingSupport
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runReadActionBlocking
@@ -23,7 +25,6 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.ILazyParseableElementType
 import com.intellij.psi.util.PsiVersioningService
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -37,6 +38,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
@@ -874,6 +876,22 @@ internal class PersistentTreeElementSnapshotTest {
     assertEquals(1, parseProbe.parseCount.get())
   }
 
+  @Test
+  fun `freezePsiVersion does not permit locks`() {
+    PsiVersioningService.freezePsiVersion {
+      assertFailsWith<ThreadingSupport.LockAccessDisallowed> {
+        runReadActionBlocking {
+        }
+      }
+      assertFailsWith<ThreadingSupport.LockAccessDisallowed> {
+        runWriteAction {}
+      }
+      assertFailsWith<ThreadingSupport.LockAccessDisallowed> {
+        WriteIntentReadAction.run {}
+      }
+    }
+  }
+
   private fun installVersioningListeners(disposable: Disposable) {
     val listener = PsiVersioningLockingListener()
     ApplicationManagerEx.getApplicationEx().addWriteActionListener(listener, disposable)
@@ -1317,6 +1335,25 @@ internal class PersistentTreeElementSnapshotTest {
   fun <T> runSyncVersionedWriteAction(action: () -> T): T {
     return runWriteAction {
       InternalPsiVersioning.inVersionedEnvironment(true, action)
+    }
+  }
+
+
+
+  @Test
+  @Suppress("KotlinMisorderedAssertEqualsArguments")
+  fun `psi version is consistent for complex locking actions`(@TestDisposable disposable: Disposable) {
+    installVersioningListeners(disposable)
+    WriteIntentReadAction.run {
+      val existingVersion = InternalPsiVersioning.getCurrentPsiVersion()
+      runWriteAction {
+        assertEquals(existingVersion + 1, InternalPsiVersioning.getCurrentPsiVersion())
+      }
+      assertEquals(existingVersion + 1, InternalPsiVersioning.getCurrentPsiVersion())
+      runWriteAction {
+        assertEquals(existingVersion + 2, InternalPsiVersioning.getCurrentPsiVersion())
+      }
+      assertEquals(existingVersion + 2, InternalPsiVersioning.getCurrentPsiVersion())
     }
   }
 }

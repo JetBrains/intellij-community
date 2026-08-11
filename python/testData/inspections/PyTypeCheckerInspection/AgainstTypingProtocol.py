@@ -25,4 +25,4 @@ close(r)
 # To fix this in PyTypeChecker.match(PyCallableType, PyCallableType, MatchContext) should be added checking named, optional and star params, not only positional ones.
 # close(Resource)
 
-close(<warning descr="Expected type 'SupportsClose', got 'int' instead">1</warning>)
+close(<warning descr="Expected type 'SupportsClose', got 'Literal[1]' instead">1</warning>)

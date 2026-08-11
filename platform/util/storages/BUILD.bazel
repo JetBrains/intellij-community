@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.util.io.storages` start
-
 jvm_library(
     name = "storages",
     srcs = glob(
@@ -16,7 +15,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util-rt",
         "//platform/util-class-loader:util-classLoader",
         "//platform/util/base",
@@ -42,6 +41,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":storages",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util-rt:util-rt_test_lib",
         "//platform/util-class-loader:util-classLoader_test_lib",
         "//platform/util/base:base_test_lib",
@@ -49,7 +49,8 @@ jvm_library(
         "//platform/util/multiplatform:multiplatform_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/opentelemetry:opentelemetry_test_lib",

@@ -95,7 +95,6 @@ f:git4idea.GitPushUtil$BranchNameInputDialogMessages
 c:git4idea.GitRevisionNumber
 - com.intellij.openapi.vcs.history.ShortVcsRevisionNumber
 - sf:HEAD:git4idea.GitRevisionNumber
-- sf:NOT_COMMITTED_HASH:java.lang.String
 - <init>(java.lang.String,java.util.Date):V
 - asString():java.lang.String
 - compareTo(com.intellij.openapi.vcs.history.VcsRevisionNumber):I
@@ -154,8 +153,6 @@ f:git4idea.GitUtil
 - s:gitTime(java.util.Date):java.lang.String
 - s:hasLocalChanges(Z,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
 - s:isCaseOnlyChange(java.lang.String,java.lang.String):Z
-- s:isHashString(java.lang.String):Z
-- s:isHashString(java.lang.String,Z):Z
 - s:joinToHtml(java.util.Collection):java.lang.String
 - s:mention(java.util.Collection):java.lang.String
 - s:parseRemoteBranch(java.lang.String,java.util.Collection):git4idea.GitRemoteBranch
@@ -822,7 +819,6 @@ f:git4idea.branch.GitRebaseParams$RebaseUpstream$Commit
 - f:getCommit():com.intellij.vcs.log.Hash
 f:git4idea.branch.GitRebaseParams$RebaseUpstream$Companion
 - f:fromNullableString(java.lang.String):git4idea.branch.GitRebaseParams$RebaseUpstream
-- f:fromRefString(java.lang.String):git4idea.branch.GitRebaseParams$RebaseUpstream$Reference
 c:git4idea.branch.GitRebaseParams$RebaseUpstream$Reference
 - git4idea.branch.GitRebaseParams$RebaseUpstream
 - <init>(java.lang.String):V
@@ -2475,7 +2471,6 @@ f:git4idea.index.GitIndexStatusUtilKt
 f:git4idea.index.GitIndexUtil
 - sf:DEFAULT_MODE:java.lang.String
 - sf:EXECUTABLE_MODE:java.lang.String
-- sf:NULL_HASH:com.intellij.vcs.log.Hash
 - sf:SUBMODULE_MODE:java.lang.String
 - <init>():V
 - s:listStaged(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.Collection):java.util.List
@@ -3952,7 +3947,6 @@ a:git4idea.remote.GitRepositoryHostingService
 git4idea.remote.InteractiveGitHttpAuthDataProvider
 - a:getAuthData(java.awt.Component):com.intellij.util.AuthData
 f:git4idea.remote.hosting.GitAsyncExtensionsKt
-- sf:currentRemoteBranchFlow(git4idea.repo.GitRepository):kotlinx.coroutines.flow.Flow
 - sf:discoverServers(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.flow.Flow,I,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
 - bs:discoverServers$default(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.flow.Flow,I,kotlin.jvm.functions.Function2,I,java.lang.Object):kotlinx.coroutines.flow.Flow
 - sf:gitRemotesStateIn(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.SharingStarted):kotlinx.coroutines.flow.StateFlow
@@ -4282,6 +4276,7 @@ f:git4idea.repo.GitRepositoryFiles
 - getShallowFile():java.io.File
 - getSquashMessageFile():java.io.File
 - getStashReflogFile():java.io.File
+- getWorktreeGitDir():com.intellij.openapi.vfs.VirtualFile
 - getWorktreesDirFile():java.io.File
 - isBranchFile(java.lang.String):Z
 - isBranchFile(java.lang.String,java.lang.String):Z
@@ -4599,8 +4594,6 @@ git4idea.stash.GitStashTrackerListener
 - a:stashesUpdated():V
 f:git4idea.stash.GitStashUtils
 - sf:createStashHandler(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.Collection,java.lang.String[]):git4idea.commands.GitLineHandler
-- sf:createStashHandler(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z,java.lang.String):git4idea.commands.GitLineHandler
-- bs:createStashHandler$default(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z,java.lang.String,I,java.lang.Object):git4idea.commands.GitLineHandler
 - sf:loadStashStack(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.List
 - sf:refreshStash(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
 f:git4idea.stash.ui.GitApplyStashAction
@@ -5082,7 +5075,6 @@ a:git4idea.update.GitUpdater
 - p:<init>(com.intellij.openapi.project.Project,git4idea.commands.Git,git4idea.repo.GitRepository,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.vcs.update.UpdatedFiles):V
 - pa:doUpdate():git4idea.update.GitUpdateResult
 - s:getUpdater(com.intellij.openapi.project.Project,git4idea.commands.Git,git4idea.branch.GitBranchPair,git4idea.repo.GitRepository,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.vcs.update.UpdatedFiles,git4idea.config.UpdateMethod):git4idea.update.GitUpdater
-- p:hasRemoteChanges(java.lang.String):Z
 - a:isSaveNeeded():Z
 - isUpdateNeeded(git4idea.branch.GitBranchPair):Z
 - p:markEnd(git4idea.repo.GitRepository):V

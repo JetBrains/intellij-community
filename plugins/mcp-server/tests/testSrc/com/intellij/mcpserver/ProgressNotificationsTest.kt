@@ -1,6 +1,7 @@
 package com.intellij.mcpserver
 
 import com.intellij.mcpserver.annotations.McpTool
+import com.intellij.mcpserver.testFramework.ObservedProgress
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.progress.reportProgressScope

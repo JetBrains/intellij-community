@@ -47,31 +47,31 @@ public final class EditInspectionToolsSettingsAction implements IntentionAction,
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
-    final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(psiFile.getProject());
+    InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(psiFile.getProject());
     InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
     editToolSettings(project,
                      inspectionProfile,
                      myShortName);
   }
 
-  public boolean editToolSettings(final Project project,
-                                  final InspectionProfileImpl inspectionProfile) {
+  public boolean editToolSettings(Project project,
+                                  InspectionProfileImpl inspectionProfile) {
     return editToolSettings(project,
                             inspectionProfile,
                             myShortName);
   }
 
-  public static boolean editToolSettings(final Project project,
-                                         final InspectionProfileImpl inspectionProfile,
-                                         final String selectedToolShortName) {
+  public static boolean editToolSettings(Project project,
+                                         InspectionProfileImpl inspectionProfile,
+                                         String selectedToolShortName) {
     return editSettings(project, inspectionProfile, c -> c.selectInspectionTool(selectedToolShortName));
   }
 
-  public static boolean editSettings(final Project project,
-                                     final InspectionProfileImpl inspectionProfile,
-                                     final Consumer<? super ErrorsConfigurable> configurableAction) {
-    final ShowSettingsUtil settingsUtil = ShowSettingsUtil.getInstance();
-    final ErrorsConfigurable errorsConfigurable = (ErrorsConfigurable) ConfigurableExtensionPointUtil.createProjectConfigurableForProvider(project, ErrorsConfigurableProvider.class);
+  public static boolean editSettings(Project project,
+                                     InspectionProfileImpl inspectionProfile,
+                                     Consumer<? super ErrorsConfigurable> configurableAction) {
+    ShowSettingsUtil settingsUtil = ShowSettingsUtil.getInstance();
+    ErrorsConfigurable errorsConfigurable = (ErrorsConfigurable) ConfigurableExtensionPointUtil.createProjectConfigurableForProvider(project, ErrorsConfigurableProvider.class);
     return settingsUtil.editConfigurable(project, errorsConfigurable, () -> {
       errorsConfigurable.selectProfile(inspectionProfile); // profile can be selected only after the UI has been initialized
       configurableAction.accept(errorsConfigurable);

@@ -1,8 +1,9 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.java.frontback.tests` start
+### skip generation section `test intellij.java.frontback.tests`
 
+### auto-generated section `build intellij.java.frontback.tests` start
 jvm_library(
     name = "frontback-tests",
     srcs = glob(
@@ -111,13 +112,16 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//java/java-psi-api:psi",
         "//java/java-psi-api:psi_test_lib",
-        "@lib//:jet_check",
+        "//libraries/jetcheck",
+        "//libraries/jetcheck:jetcheck_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/util/concurrency",
         "//platform/util/concurrency:concurrency_test_lib",
         "//jps/model-api:model",
         "//jps/model-api:model_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.frontback.tests` end
@@ -130,11 +134,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.frontback.tests` end
-
-### auto-generated section `test intellij.java.frontback.tests` start
-
-jps_test(
-    name = "frontback-tests_test",
-    runtime_deps = [":frontback-tests_test_lib"],
-)
-### auto-generated section `test intellij.java.frontback.tests` end

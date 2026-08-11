@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.lang.lsWidget.LanguageServiceItemRunningState
 import com.intellij.platform.lang.lsWidget.LanguageServicePopupSection
 import com.intellij.platform.lang.lsWidget.LanguageServicePopupSection.ForCurrentFile
 import com.intellij.platform.lang.lsWidget.LanguageServicePopupSection.Other
@@ -22,6 +23,7 @@ import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.util.containers.addIfNotNull
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 /**
@@ -42,6 +44,13 @@ open class LspClientWidgetItem(
     get() = lspClient.descriptor.presentableName + versionPostfix
 
   override val isError: Boolean = lspClient.state == LspServerState.ShutdownUnexpectedly
+
+  @ApiStatus.Internal
+  override val runningState: LanguageServiceItemRunningState = when (lspClient.state) {
+    LspServerState.Running -> LanguageServiceItemRunningState.Running
+    LspServerState.Initializing -> LanguageServiceItemRunningState.Initializing
+    else -> LanguageServiceItemRunningState.NotRunning
+  }
 
   override val widgetActionLocation: LanguageServicePopupSection by lazy {
     if (currentFile != null &&
@@ -77,7 +86,7 @@ open class LspClientWidgetItem(
   protected open val rootPostfix: @NlsSafe String
     get() {
       val roots = lspClient.descriptor.roots
-      val lspClients = LspClientManager.getInstance(lspClient.project).getClientsForProvider(lspClient.providerClass)
+      val lspClients = LspClientManager.getInstance(lspClient.project).getClients(lspClient.providerClass)
       return if (lspClients.size >= 2 && roots.size == 1) " …/${roots[0].name}" else ""
     }
 
@@ -88,7 +97,7 @@ open class LspClientWidgetItem(
     ?: object : AnAction(widgetActionText, null, icon) {
       override fun actionPerformed(e: AnActionEvent) {
         // There's no single reasonable action that would work for each LSP API-based plugin.
-        // The plugins are strongly recommended to override `LspClientProvider.createWidgetItem()`.
+        // The plugins are strongly recommended to override `LspIntegrationProvider.createWidgetItem()`.
         // Typical implementation:
         //     override fun createWidgetItem(...) = LspClientWidgetItem(lspClient, currentFile, fooIcon, FooConfigurable::class.java)
       }

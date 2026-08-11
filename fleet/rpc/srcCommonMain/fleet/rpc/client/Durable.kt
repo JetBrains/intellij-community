@@ -18,6 +18,11 @@ import kotlin.math.min
  * so there is no need in additional delays
  *
  * be aware that there is no at-most-once guarantee, your calls should be idempotent
+ *
+ * only failures thrown _within_ [body] are retried. an rpc call that returns a cold [kotlinx.coroutines.flow.Flow]
+ * does no work until it is collected, so `durable { rpcApi.subscribe() }.collect { ... }` retries nothing — the
+ * subscription and every failure happen on the collector side, outside [body]. collect inside [body] instead:
+ * `durable { rpcApi.subscribe().collect { ... } }`
  */
 suspend fun <T> durable(verbose: Boolean = false, body: suspend CoroutineScope.() -> T): T {
   fun logRetry(t: Throwable? = null, msg: () -> Any?) {
@@ -79,5 +84,5 @@ private const val INITIAL_RETRY_DELAY = 100L
 private const val MAX_RETRY_DELAY = 10000L // 10 seconds
 
 private object DurableLogger {
-  val logger = logger<DurableLogger>()
+  val logger by lazy { logger<DurableLogger>() }
 }

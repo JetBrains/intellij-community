@@ -3,9 +3,12 @@ package org.intellij.plugins.markdown.editor.tables.inspections
 
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.idea.TestFor
+import com.intellij.markdown.backend.inspections.MarkdownIncorrectTableFormattingInspection
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.tables.withTableStyle
+import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -18,6 +21,21 @@ import org.junit.runners.JUnit4
 class MarkdownIncorrectTableFormattingInspectionQuickFixTest: LightPlatformCodeInsightFixture4TestCase() {
   private val reformatIntentionFixText
     get() = MarkdownBundle.message("markdown.reformat.table.intention.text")
+
+  private val fixCellAlignmentIntentionText
+    get() = MarkdownBundle.message("markdown.fix.cell.alignment.intention.text")
+
+  @Test
+  fun `reformat intention is available without inspection`() {
+    myFixture.configureByText("some.md", "| first | second |\n|---|---|")
+    assertNotNull(myFixture.availableIntentions.find { it.text == reformatIntentionFixText })
+  }
+
+  @Test
+  fun `fix cell alignment intention is available without inspection`() {
+    myFixture.configureByText("some.md", "| first |\n|------:|\n| some  <caret>|")
+    assertNotNull(myFixture.availableIntentions.find { it.text == fixCellAlignmentIntentionText })
+  }
 
   @Test
   fun `works with incorrectly formatted cell`() {
@@ -98,7 +116,7 @@ class MarkdownIncorrectTableFormattingInspectionQuickFixTest: LightPlatformCodeI
     myFixture.configureByText("some.md", before)
     val inspection = InspectionTestUtil.instantiateTool(MarkdownIncorrectTableFormattingInspection::class.java)
     myFixture.enableInspections(inspection)
-    val targetText = InspectionsBundle.message("fix.all.inspection.problems.in.file", inspection.displayName);
+    val targetText = InspectionsBundle.message("fix.all.inspection.problems.in.file", inspection.displayName)
     val intentions = myFixture.availableIntentions
     val intention = intentions.find { it.text == targetText }
     checkNotNull(intention) { "Failed to find fix with text '$targetText'" }
@@ -139,6 +157,42 @@ class MarkdownIncorrectTableFormattingInspectionQuickFixTest: LightPlatformCodeI
     doTest(before, after)
   }
 
+  @Test
+  fun `reformats to compact style`() {
+    withTableStyle(project, TableStyle.COMPACT) {
+      doTest(
+        """
+        | a |longer|
+        |---|---|
+        | 1 |2|
+        """.trimIndent(),
+        """
+        | a | longer |
+        | --- | --- |
+        | 1 | 2 |
+        """.trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun `reformats to tight style`() {
+    withTableStyle(project, TableStyle.TIGHT) {
+      doTest(
+        """
+        | a | longer |
+        | --- | --- |
+        | 1 | 2 |
+        """.trimIndent(),
+        """
+        |a|longer|
+        |---|---|
+        |1|2|
+        """.trimIndent()
+      )
+    }
+  }
+
   private fun doTest(content: String, after: String) {
     myFixture.configureByText("some.md", content)
     myFixture.enableInspections(MarkdownIncorrectTableFormattingInspection())
@@ -147,4 +201,5 @@ class MarkdownIncorrectTableFormattingInspectionQuickFixTest: LightPlatformCodeI
     myFixture.launchAction(fix!!)
     myFixture.checkResult(after)
   }
+
 }

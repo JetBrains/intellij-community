@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -337,14 +338,7 @@ public final class JavaSdkImpl extends JavaSdk {
       addSources(jdkHome, sdkModificator);
       addDocs(jdkHome, sdkModificator, sdk);
       attachJdkAnnotations(sdkModificator);
-      if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-        sdkModificator.commitChanges();
-      }
-      else {
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          ApplicationManager.getApplication().runWriteAction(() -> sdkModificator.commitChanges());
-        });
-      }
+      WriteAction.run(() -> sdkModificator.commitChanges());
     };
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {

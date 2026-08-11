@@ -4,15 +4,29 @@ import java.io.File
 import java.nio.file.Path
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
+/**
+ * Builds a [Tree] using a [TreeBuilder] DSL, then constructs and returns the resulting tree.
+ *
+ * @param T The type of data held by each tree element.
+ * @param builder A lambda with receiver [TreeBuilder] where root entries are declared.
+ */
 public fun <T> buildTree(builder: TreeBuilder<T>.() -> Unit): Tree<T> = TreeBuilder<T>().apply(builder).build()
 
+/** A DSL builder for constructing a [Tree], used via [buildTree]. */
 public class TreeBuilder<T> : TreeGeneratorScope<T> {
+    /** A sealed class representing either a [Leaf] or [Node] entry added to a [TreeBuilder]. */
     @Suppress("AbstractClassCanBeInterface") // Binary compatibility: sealed class cannot be changed to interface
     public sealed class Element<T> {
+        /** The stable identifier for this element, or null if none was provided. */
         public abstract val id: Any?
 
+        /** A leaf entry in a [TreeBuilder], holding [data] with no children. */
         @GenerateDataFunctions
-        public class Leaf<T>(public val data: T, override val id: Any?) : Element<T>() {
+        public class Leaf<T>(
+            /** The data held by this leaf. */
+            public val data: T,
+            override val id: Any?,
+        ) : Element<T>() {
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
                 if (javaClass != other?.javaClass) return false
@@ -34,10 +48,13 @@ public class TreeBuilder<T> : TreeGeneratorScope<T> {
             override fun toString(): String = "Leaf(data=$data, id=$id)"
         }
 
+        /** A node entry in a [TreeBuilder], holding [data] and a lambda that generates its children. */
         @GenerateDataFunctions
         public class Node<T>(
+            /** The data held by this node. */
             public val data: T,
             override val id: Any?,
+            /** The lambda invoked to populate this node's children when the node is expanded. */
             public val childrenGenerator: ChildrenGeneratorScope<T>.() -> Unit,
         ) : Element<T>() {
             override fun equals(other: Any?): Boolean {
@@ -78,6 +95,7 @@ public class TreeBuilder<T> : TreeGeneratorScope<T> {
         heads.add(element)
     }
 
+    /** Constructs and returns the [Tree] from all root entries added to this builder. */
     public fun build(): Tree<T> {
         val elements = mutableListOf<Tree.Element<T>>()
         for (index in heads.indices) {
@@ -167,17 +185,30 @@ private fun <T> evaluatePrevious(element: Tree.Element<T>): Tree.Element<T> =
             }
     }
 
+/** A DSL scope for adding [TreeBuilder.Element.Leaf] and [TreeBuilder.Element.Node] entries to a tree or subtree. */
 public interface TreeGeneratorScope<T> {
+    /** Adds a node with [data], an optional stable [id], and a [childrenGenerator] that populates its subtree. */
     public fun addNode(data: T, id: Any? = null, childrenGenerator: ChildrenGeneratorScope<T>.() -> Unit = {})
 
+    /** Adds a leaf entry with [data] and an optional stable [id]. */
     public fun addLeaf(data: T, id: Any? = null)
 
+    /** Adds a pre-built [element] (either a [TreeBuilder.Element.Leaf] or [TreeBuilder.Element.Node]) directly. */
     public fun add(element: TreeBuilder.Element<T>)
 }
 
+/** A [TreeGeneratorScope] used inside a node's children generator lambda, providing access to [parent] info. */
 public class ChildrenGeneratorScope<T>(private val parentElement: Tree.Element.Node<T>) : TreeGeneratorScope<T> {
+    /** Holds identifying information about a node's parent: its data, depth in the tree, and child index. */
     @GenerateDataFunctions
-    public class ParentInfo<T>(public val data: T, public val depth: Int, public val index: Int) {
+    public class ParentInfo<T>(
+        /** The data held by the parent node. */
+        public val data: T,
+        /** The depth of the parent node in the tree (0 = root level). */
+        public val depth: Int,
+        /** The child index of the parent node within its own parent's children. */
+        public val index: Int,
+    ) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (javaClass != other?.javaClass) return false
@@ -201,6 +232,7 @@ public class ChildrenGeneratorScope<T>(private val parentElement: Tree.Element.N
         override fun toString(): String = "ParentInfo(data=$data, depth=$depth, index=$index)"
     }
 
+    /** Information about the parent node of the current scope. */
     public val parent: ParentInfo<T> by lazy {
         ParentInfo(parentElement.data, parentElement.depth, parentElement.childIndex)
     }
@@ -220,8 +252,22 @@ public class ChildrenGeneratorScope<T>(private val parentElement: Tree.Element.N
     }
 }
 
+/**
+ * Converts this [Path] into a [Tree] of [File] nodes, recursively expanding directories.
+ *
+ * @param isOpen A predicate whose boolean result is used as the id of the root file/directory node. Note: it does not
+ *   control the node's initial expansion state; nodes are always created collapsed and expanded lazily via
+ *   [Tree.Element.Node.open].
+ */
 public fun Path.asTree(isOpen: (File) -> Boolean = { false }): Tree<File> = toFile().asTree(isOpen)
 
+/**
+ * Converts this [File] into a [Tree] of [File] nodes, recursively expanding directories.
+ *
+ * @param isOpen A predicate whose boolean result is used as the id of the root file/directory node. Note: it does not
+ *   control the node's initial expansion state; nodes are always created collapsed and expanded lazily via
+ *   [Tree.Element.Node.open].
+ */
 public fun File.asTree(isOpen: (File) -> Boolean = { false }): Tree<File> = buildTree {
     addNode(this@asTree, isOpen(this@asTree)) { generateFileNodes(isOpen) }
 }

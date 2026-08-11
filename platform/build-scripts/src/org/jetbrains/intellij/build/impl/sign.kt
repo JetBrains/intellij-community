@@ -186,7 +186,7 @@ internal suspend fun signMacBinaries(
   val span = spanBuilder("sign binaries for macOS distribution")
   span.setAttribute("contentType", "application/x-mac-app-bin")
   span.setAttribute(AttributeKey.stringArrayKey("files"), files.map { it.name })
-  val options = macSigningOptions(contentType = "application/x-mac-app-bin", context).putAll(additionalOptions)
+  val options = macSigningOptions(contentType = "application/x-mac-app-bin", context).puttingAll(additionalOptions)
   span.use {
     context.proprietaryBuildTools.signTool.signFiles(files, context, options)
     if (!permissions.isEmpty()) {

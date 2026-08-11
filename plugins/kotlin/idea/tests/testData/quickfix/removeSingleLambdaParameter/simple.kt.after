@@ -1,5 +1,5 @@
 // "Remove parameter 'x'" "true"
-// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedSymbolInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.UnusedSymbolInspection
 // WITH_STDLIB
 
 fun main() {

@@ -1,19 +1,22 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project
 
-import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.openapi.command.impl.DummyProject
+import com.intellij.testFramework.UsefulTestCase.assertContainsElements
+import com.intellij.testFramework.UsefulTestCase.assertDoesntContain
+import com.intellij.testFramework.junit5.RunInEdt
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.TextFieldWithHistory
 import com.intellij.util.ReflectionUtil
-import junit.framework.TestCase
 import org.jetbrains.idea.maven.project.BundledMaven3.title
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 
-@RunWith(JUnit4::class)
-class MavenEnvironmentFormTest : MavenTestCase() {
+@TestApplication
+@RunInEdt
+class MavenEnvironmentFormTest {
   @Test
   fun shouldNotShowDuplicatedBundledMavenHome() {
     val panel = MavenGeneralPanel()
@@ -40,7 +43,7 @@ class MavenEnvironmentFormTest : MavenTestCase() {
     settings.mavenHomeType = BundledMaven3
     panel.initializeFormData(settings, DummyProject.getInstance())
     assertThat(panel) { t: TextFieldWithHistory? ->
-      TestCase.assertEquals("Absolute path to bundled maven should resolve to bundle", title, t!!.text)
+      assertEquals(title, t!!.text, "Absolute path to bundled maven should resolve to bundle")
     }
   }
 
@@ -50,7 +53,7 @@ class MavenEnvironmentFormTest : MavenTestCase() {
     val panel = MavenGeneralPanel()
     settings.mavenHomeType = MavenInSpecificPath("/path/to/maven/home")
     panel.initializeFormData(settings, DummyProject.getInstance())
-    assertThat(panel) { t: TextFieldWithHistory? -> TestCase.assertEquals("/path/to/maven/home", t!!.text) }
+    assertThat(panel) { t: TextFieldWithHistory? -> assertEquals("/path/to/maven/home", t!!.text) }
   }
 
   private fun assertThat(
@@ -62,14 +65,13 @@ class MavenEnvironmentFormTest : MavenTestCase() {
     checker(mavenHomeField)
   }
 
-  protected fun <T> getValue(fieldClass: Class<T>, o: Any?, name: String): T? {
-    try {
+  private fun <T> getValue(fieldClass: Class<T>, o: Any?, name: String): T? {
+    return try {
       val field = ReflectionUtil.findAssignableField(o!!.javaClass, fieldClass, name)
-      return ReflectionUtil.getFieldValue<T>(field, o)
+      ReflectionUtil.getFieldValue<T>(field, o)
     }
     catch (_: NoSuchFieldException) {
       fail("No such field $name in $o")
-      return null
     }
   }
 }

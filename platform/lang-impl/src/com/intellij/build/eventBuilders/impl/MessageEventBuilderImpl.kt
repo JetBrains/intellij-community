@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.eventBuilders.impl
 
+import com.intellij.build.FilePosition
 import com.intellij.build.eventBuilders.MessageEventBuilder
 import com.intellij.build.events.BuildEventsNls.Description
 import com.intellij.build.events.BuildEventsNls.Hint
 import com.intellij.build.events.BuildEventsNls.Message
 import com.intellij.build.events.BuildEventsNls.Title
 import com.intellij.build.events.MessageEvent
+import com.intellij.build.events.impl.FileMessageEventImpl
 import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.pom.Navigatable
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -25,6 +27,8 @@ class MessageEventBuilderImpl(
 
   private var group: @Title String? = null
   private var navigatable: Navigatable? = null
+
+  private var filePosition: FilePosition? = null
 
   override fun withId(id: Any?): MessageEventBuilderImpl =
     apply { this.id = id }
@@ -47,6 +51,12 @@ class MessageEventBuilderImpl(
   override fun withNavigatable(navigatable: Navigatable?): MessageEventBuilderImpl =
     apply { this.navigatable = navigatable }
 
+  override fun withFilePosition(filePosition: FilePosition?): MessageEventBuilderImpl =
+    apply { this.filePosition = filePosition }
+
   override fun build(): MessageEventImpl =
-    MessageEventImpl(id, parentId, time, message, hint, description, kind, group, navigatable)
+    when (val filePosition = filePosition) {
+      null -> MessageEventImpl(id, parentId, time, message, hint, description, kind, group, navigatable)
+      else -> FileMessageEventImpl(id, parentId, time, message, hint, description, kind, group, navigatable, filePosition)
+    }
 }

@@ -1,11 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.notification.NotificationAnnouncingMode
 import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationLocation
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.notification.impl.isNotificationAnnouncerFeatureAvailable
 import com.intellij.openapi.Disposable
@@ -25,13 +27,15 @@ import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selected
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nullable
 import javax.accessibility.AccessibleContext
+import javax.swing.Icon
 import javax.swing.JCheckBox
 import javax.swing.ListSelectionModel
-
 
 /**
  * @author Konstantin Bulenkov
@@ -81,6 +85,21 @@ internal class NotificationsConfigurableUi(settings: NotificationsConfigurationI
           .bindSelected(settings::SYSTEM_NOTIFICATIONS)
           .component
       }
+      row(IdeBundle.message("notifications.configurable.location.title")) {
+        val options = listOf(NotificationLocation.TOP_RIGHT,
+                             NotificationLocation.BOTTOM_RIGHT,
+                             NotificationLocation.TOP_LEFT,
+                             NotificationLocation.BOTTOM_LEFT)
+        comboBox(options, listCellRenderer("") {
+          icon(notificationLocationIcon(value))
+          text(notificationLocationText(value))
+          if (value == NotificationLocation.getDefaultLocation()) {
+            text(IdeBundle.message("notifications.configurable.location.default")) {
+              foreground = greyForeground
+            }
+          }
+        }).bindItem(settings::getNotificationLocation) { settings.notificationLocation = it ?: NotificationLocation.getDefaultLocation() }
+      }
       if (isNotificationAnnouncerFeatureAvailable) {
         row(IdeBundle.message("notifications.configurable.announcing.title")) {
           val options = listOf(NotificationAnnouncingMode.NONE,
@@ -113,6 +132,22 @@ internal class NotificationsConfigurableUi(settings: NotificationsConfigurationI
       screenReaderEnabledProperty.set(GeneralSettings.getInstance().isSupportScreenReaders)
     })
   }
+
+  private fun notificationLocationIcon(location: NotificationLocation): Icon =
+    when(location) {
+      NotificationLocation.TOP_RIGHT    -> AllIcons.Actions.NotificationsTopRight
+      NotificationLocation.BOTTOM_RIGHT -> AllIcons.Actions.NotificationsBottomRight
+      NotificationLocation.TOP_LEFT     -> AllIcons.Actions.NotificationsTopLeft
+      NotificationLocation.BOTTOM_LEFT  -> AllIcons.Actions.NotificationsBottomLeft
+    }
+
+  private fun notificationLocationText(location: NotificationLocation): @Nls String =
+    IdeBundle.message(when (location) {
+                        NotificationLocation.TOP_RIGHT -> "notifications.configurable.location.value.top.right"
+                        NotificationLocation.BOTTOM_RIGHT -> "notifications.configurable.location.value.bottom.right"
+                        NotificationLocation.TOP_LEFT -> "notifications.configurable.location.value.top.left"
+                        NotificationLocation.BOTTOM_LEFT -> "notifications.configurable.location.value.bottom.left"
+                      })
 
   private fun createNotificationList(): JBList<NotificationSettingsWrapper> {
     return JBList(*NotificationsConfigurablePanel.NotificationsTreeTableModel().allSettings

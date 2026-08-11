@@ -23,6 +23,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.ConcatenationQuery;
 import com.intellij.util.Query;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -191,6 +192,7 @@ public class ImplementationSearcher {
     }
   }
 
+  @ApiStatus.Internal
   public abstract static class BackgroundableImplementationSearcher extends ImplementationSearcher {
     @Override
     protected PsiElement[] searchDefinitions(PsiElement element, Editor editor) {

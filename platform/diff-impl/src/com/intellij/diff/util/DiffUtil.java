@@ -56,6 +56,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -79,6 +80,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
@@ -146,6 +148,7 @@ import com.intellij.testFramework.LightVirtualFileBase;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLabel;
@@ -161,6 +164,7 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.SingleComponentCenteringLayout;
@@ -193,6 +197,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Image;
+import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -221,7 +226,8 @@ public final class DiffUtil {
 
   public static final Key<Boolean> TEMP_FILE_KEY = Key.create("Diff.TempFile");
   public static final @NotNull @NonNls String DIFF_CONFIG = "diff.xml";
-  public static final JBValue TITLE_GAP = new JBValue.Float(2);
+  @ApiStatus.Internal
+  public static final JBValue CONTENT_TITLE_GAP = new JBValue.UIInteger("Diff.ContentTitle.gap", 2);
 
   public static final NotNullLazyValue<@Unmodifiable List<Image>> DIFF_FRAME_ICONS = NotNullLazyValue.createValue(() -> {
     return ContainerUtil.skipNulls(
@@ -616,6 +622,22 @@ public final class DiffUtil {
     return panel;
   }
 
+  @ApiStatus.Internal
+  public static @NotNull Color getDiffContentBackground() {
+    return JBColor.lazy(() -> {
+      if (IslandsState.Companion.isEnabled()) {
+        return EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
+      }
+      return UIUtil.getPanelBackground();
+    });
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Color getDiffContentForeground() {
+    return JBColor.lazy(() -> EditorColorsUtil.getColorSchemeForBackground(
+      getDiffContentBackground()).getDefaultForeground());
+  }
+
   public static void addActionBlock(@NotNull DefaultActionGroup group, AnAction... actions) {
     addActionBlock(group, Arrays.asList(actions));
   }
@@ -803,7 +825,7 @@ public final class DiffUtil {
     }
 
     if (components.isEmpty()) return null;
-    return createStackedComponents(components, TITLE_GAP);
+    return createStackedTitleComponents(components);
   }
 
   private static @Nullable JComponent createTitle(@NotNull DiffViewer viewer,
@@ -848,10 +870,20 @@ public final class DiffUtil {
                                                  boolean readOnly,
                                                  @Nullable DiffEditorTitleCustomizer titleCustomizer) {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(JBUI.Borders.empty(0, 4));
-    BorderLayoutPanel labelWithIcon = new BorderLayoutPanel();
-    JComponent titleLabel = titleCustomizer != null ? titleCustomizer.getLabel()
-                                                    : new JBLabel(StringUtil.notNullize(title)).setCopyable(true);
+    panel.setName("Diff Editor Title Panel");
+    panel.setOpaque(false);
+    BorderLayoutPanel labelWithIcon = new BorderLayoutPanel().andTransparent();
+    labelWithIcon.setName("Diff Editor Title Label Panel");
+    JComponent titleLabel;
+    if (titleCustomizer != null) {
+      titleLabel = titleCustomizer.getLabel();
+    }
+    else {
+      JBLabel label = new JBLabel(StringUtil.notNullize(title));
+      label.setCopyable(true);
+      label.setForeground(getDiffContentForeground());
+      titleLabel = label;
+    }
     if (titleCustomizer != null && titleLabel instanceof Disposable disposableTitleLabel) {
       if (viewer != null) {
         Disposer.register(viewer, disposableTitleLabel);
@@ -868,6 +900,8 @@ public final class DiffUtil {
     panel.add(labelWithIcon, BorderLayout.CENTER);
     if (charset != null || separator != null) {
       JPanel panel2 = new JPanel();
+      panel2.setName("Diff Editor Title Status Panel");
+      panel2.setOpaque(false);
       panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
       if (charset != null) {
         panel2.add(Box.createRigidArea(JBUI.size(4, 0)));
@@ -880,6 +914,17 @@ public final class DiffUtil {
       panel.add(panel2, BorderLayout.EAST);
     }
     return panel;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Insets getContentTitleBorderInsets() {
+    return JBInsets.create("Diff.ContentTitle.insets", new Insets(2, 4, 0, 4));
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Color getContentTitleSeparatorColor() {
+    Color lineColor = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.TEARLINE_COLOR);
+    return lineColor != null ? lineColor : JBColor.border();
   }
 
   private static @NotNull JComponent createCharsetPanel(@NotNull Charset charset, @Nullable Boolean bom) {
@@ -897,7 +942,7 @@ public final class DiffUtil {
       label.setForeground(JBColor.RED);
     }
     else {
-      label.setForeground(JBColor.BLACK);
+      label.setForeground(getDiffContentForeground());
     }
     return label;
   }
@@ -915,7 +960,7 @@ public final class DiffUtil {
       color = JBColor.MAGENTA;
     }
     else {
-      color = JBColor.BLACK;
+      color = getDiffContentForeground();
     }
     label.setForeground(color);
     return label;
@@ -925,8 +970,11 @@ public final class DiffUtil {
     return SyncHeightComponent.createSyncHeightComponents(components);
   }
 
-  public static @NotNull JComponent createStackedComponents(@NotNull List<? extends JComponent> components, @NotNull JBValue vGap) {
-    JPanel panel = new JBPanel<>(new VerticalLayout(vGap, VerticalLayout.FILL));
+  @ApiStatus.Internal
+  public static @NotNull JComponent createStackedTitleComponents(@NotNull List<? extends JComponent> components) {
+    JPanel panel = new JBPanel<>(new VerticalLayout(CONTENT_TITLE_GAP, VerticalLayout.FILL));
+    panel.setName("Diff Editor Titles Stack");
+    panel.setOpaque(false);
     for (JComponent component : components) {
       panel.add(component);
     }
@@ -1656,6 +1704,7 @@ public final class DiffUtil {
    * We expect the file itself still being usable after.
    */
   @ApiStatus.Internal
+  @RequiresEdt
   public static void cleanCachesAfterUse(@Nullable Project project, VirtualFile @NotNull ... files) {
     if (project == null) return;
 
@@ -1663,7 +1712,10 @@ public final class DiffUtil {
       if (file instanceof LightVirtualFileBase) {
         PsiManager psiManager = project.getServiceIfCreated(PsiManager.class);
         if (psiManager instanceof PsiManagerEx psiManagerEx) {
-          psiManagerEx.getFileManager().setViewProvider(file, null);
+          // Dropping the view provider invalidates the file's PSI. Once a light file has been exposed to an editor it must
+          // obey the write-lock contract like a physical file (IJPL-249128); resetting it off the write lock can invalidate
+          // PSI concurrently with a background read action still reading it, breaking FileViewProvider#getPsi (IJPL-245339).
+          WriteAction.run(() -> psiManagerEx.getFileManager().setViewProvider(file, null));
         }
       }
     }

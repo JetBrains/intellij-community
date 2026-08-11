@@ -11,9 +11,8 @@ import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditorInfo
 import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.idea.AppMode
-import com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
+import com.intellij.internal.performanceTests.ProjectInitializationDiagnostic
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -27,8 +26,10 @@ import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter.Companion.logStats
 import com.intellij.platform.eel.provider.EelInitialization
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -116,6 +117,12 @@ private fun runOnProjectInit(project: Project) {
     LOG.info("Option ide.performance.screenshot is initialized, screenshots will be captured")
   }
 
+  if (System.getProperty("ide.performance.run.on.welcome.screen.project") == null
+     && WelcomeScreenProjectProvider.isWelcomeScreenProject(project)) {
+    LOG.info("Option ide.performance.run.on.welcome.screen.project is not initialized, script will not be executed on welcome screen")
+    return
+  }
+
   if (ProjectLoaded.TEST_SCRIPT_FILE_PATH == null || ProjectLoadedService.scriptStarted) {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       LOG.info(PerformanceTestingBundle.message("startup.silent"))
@@ -177,7 +184,7 @@ private fun runScriptWhenInitializedAndIndexed(project: Project, alarm: Alarm) {
           val statusBar = WindowManager.getInstance().getIdeFrame(project)?.statusBar as? StatusBarEx
           val hasUserVisibleIndicators = statusBar != null && statusBar.backgroundProcessModels.isNotEmpty()
           if (isDumb(project) || hasUserVisibleIndicators ||
-              !ProjectInitializationDiagnosticService.getInstance(project).isProjectInitializationAndIndexingFinished) {
+              !ProjectInitializationDiagnostic.isProjectInitializationAndIndexingFinished(project)) {
             runScriptWhenInitializedAndIndexed(project, alarm)
           }
           else {
@@ -219,7 +226,7 @@ class ProjectLoaded : ApplicationInitializedListener {
     if (SystemProperties.getBooleanProperty("STARTER_TESTS_SUPPORT_TARGETS", false)
         || System.getenv("STARTER_TESTS_SUPPORT_TARGETS").toBoolean()) {
       IntegrationTestApplicationLoadListener.data?.let {
-        EelInitialization.runEelInitialization(it.projectPath)
+        EelInitialization.runEelInitialization(Path.of(it.projectPath).getEelDescriptor())
         // Re-evaluate AppMode flags: the first setFlags call in Main.kt runs before EPs are loaded,
         // so MultiRoutingFileSystemBackend (Docker/WSL) isn't registered yet and mayHappenToBeAFile
         // can't resolve remote paths, incorrectly setting isLightEdit=true.
@@ -350,7 +357,7 @@ private fun registerOnFinishRunnables(future: CompletableFuture<*>, mustExitOnFa
  */
 private fun storeFailureToFile(errorMessage: Throwable) {
   try {
-    val failureCauseFile = Path.of(PathManager.getLogPath()).resolve("failure_cause.txt")
+    val failureCauseFile = LogDirHandler.currentLogDir().resolve("failure_cause.txt")
     Files.writeString(failureCauseFile, errorMessage.message + "\n" + errorMessage.stackTraceToString())
   }
   catch (e: Exception) {

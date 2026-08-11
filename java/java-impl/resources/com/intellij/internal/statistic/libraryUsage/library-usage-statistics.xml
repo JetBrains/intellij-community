@@ -13,6 +13,7 @@
   <technology name="allure2" root="io.qameta.allure"/>
   <technology name="androidx-compose" root="androidx.compose"/>
   <technology name="android" root="android"/>
+  <technology name="anthropic-java" root="com.anthropic"/>
   <technology name="apache-bval" root="org.apache.bval"/>
   <technology name="apache-camel" root="org.apache.camel"/>
   <technology name="apache-cayenne" root="org.apache.cayenne"/>
@@ -40,6 +41,7 @@
   <technology name="armeria" root="com.linecorp.armeria"/>
   <technology name="arquillian" root="org.jboss.arquillian"/>
   <technology name="arrowkt" root="arrow"/>
+  <technology name="arthas" root="com.taobao.arthas"/>
   <technology name="asm" root="org.objectweb.asm"/>
   <technology name="aspectj" root="org.aspectj.lang"/>
   <technology name="assertj" root="org.assertj"/>
@@ -57,6 +59,7 @@
   <technology name="bytebuddy" root="net.bytebuddy"/>
   <technology name="caliban" root="caliban"/>
   <technology name="camunda" root="org.camunda.bpm"/>
+  <technology name="canal" root="com.alibaba.otter.canal"/>
   <technology name="cassandra" root="com.datastax.driver.core"/>
   <technology name="cats" root="cats"/>
   <technology name="cats-effect" root="cats.effect"/>
@@ -74,6 +77,7 @@
   <technology name="coroutineworker" root="com.autodesk.coroutineworker"/>
   <technology name="crashkios" root="co.touchlab.crashkios"/>
   <technology name="cucumber" root="io.cucumber"/>
+  <technology name="ctrip-apollo" root="com.ctrip.framework.apollo"/>
   <technology name="dagger" root="dagger"/>
   <technology name="datanucleus-jpa" root="org.datanucleus.api"/>
   <technology name="datasphere-studio" root="com.webank.wedatasphere.dss"/>
@@ -90,6 +94,8 @@
   <technology name="dozer" root="com.github.dozermapper"/>
   <technology name="drools" root="org.drools"/>
   <technology name="dropwizard" root="io.dropwizard"/>
+  <technology name="druid" root="com.alibaba.druid"/>
+  <technology name="easyexcel" root="com.alibaba.excel"/>
   <technology name="easymock" root="org.easymock"/>
   <technology name="ebean" root="io.ebean"/>
   <technology name="eclipse-collections" root="org.eclipse.collections"/>
@@ -100,6 +106,7 @@
   <technology name="elastic4s" root="elastic4s"/>
   <technology name="elasticjob" root="org.apache.shardingsphere.elasticjob"/>
   <technology name="elasticmq" root="elasticmq"/>
+  <technology name="embabel" root="com.embabel"/>
   <technology name="errorprone" root="com.google.errorprone.annotations"/>
   <technology name="eureka" root="com.netflix.discovery"/>
   <technology name="exposed" root="org.jetbrains.exposed"/>
@@ -146,6 +153,7 @@
   <technology name="htmlelements" root="ru.yandex.qatools.htmlelements"/>
   <technology name="http4k" root="org.http4k"/>
   <technology name="http4s" root="org.http4s"/>
+  <technology name="hutool" root="cn.hutool"/>
   <technology name="hystrix" root="com.netflix.hystrix"/>
   <technology name="infinispan" root="org.infinispan"/>
   <technology name="intellij-api" root="com.intellij.openapi"/>
@@ -284,6 +292,8 @@
   <technology name="munit" root="munit"/>
   <technology name="mvikotlin" root="com.arkivanov.mvikotlin"/>
   <technology name="mybatis" root="org.apache.ibatis"/>
+  <technology name="mybatis-plus" root="com.baomidou.mybatisplus"/>
+  <technology name="nacos" root="com.alibaba.nacos"/>
   <technology name="napier" root="io.github.aakira.napier"/>
   <technology name="netty" root="io.netty"/>
   <technology name="npm-publish" root="dev.petuska.npm.publish"/>
@@ -321,6 +331,7 @@
   <technology name="robotframework" root="org.robotframework"/>
   <technology name="rsocket-java" root="io.rsocket"/>
   <technology name="rsocket-kotlin" root="io.rsocket.kotlin"/>
+  <technology name="sa-token" root="cn.dev33.satoken"/>
   <technology name="ruoyi" root="com.ruoyi"/>
   <technology name="ruoyi-vue-pro" root="cn.iocoder.yudao"/>
   <technology name="stylefeng-guns" root="cn.stylefeng.guns"/>
@@ -343,15 +354,19 @@
   <technology name="scalatra" root="org.scalatra"/>
   <technology name="scalaz" root="scalaz"/>
   <technology name="scio" root="scio"/>
+  <technology name="seata" root="io.seata"/>
   <technology name="selenide" root="com.codeborne.selenide"/>
   <technology name="selenium" root="org.openqa.selenium"/>
   <technology name="serenity" root="net.thucydides.core"/>
+  <technology name="shardingsphere" root="org.apache.shardingsphere"/>
   <technology name="shapeless" root="shapeless"/>
   <technology name="skunk" root="skunk"/>
+  <technology name="skywalking" root="org.apache.skywalking"/>
   <technology name="slf4j" root="org.slf4j"/>
   <technology name="slick" root="slick.sql"/>
   <technology name="smallrye-mutiny" root="io.smallrye.mutiny"/>
   <technology name="sofa-boot" root="com.alipay.sofa"/>
+  <technology name="solon" root="org.noear.solon"/>
   <technology name="spark" root="spark"/>
   <technology name="specs2" root="org.specs2"/>
   <technology name="spek" root="org.jetbrains.spek"/>
@@ -359,12 +374,14 @@
   <technology name="spock" root="spock"/>
   <technology name="spotbugs" root="edu.umd.cs.findbugs.annotations"/>
   <technology name="spring-ai" root="org.springframework.ai"/>
+  <technology name="spring-ai-alibaba" root="com.alibaba.cloud.ai"/>
   <technology name="spring-amqp" root="org.springframework.amqp"/>
   <technology name="spring-batch" root="org.springframework.batch"/>
   <technology name="spring-boot" root="org.springframework.boot"/>
   <technology name="spring-boot-testjars" root="org.springframework.experimental.boot.test.context"/>
   <technology name="spring-boot-testjars-exec" root="org.springframework.experimental.boot.server.exec"/>
   <technology name="spring-cloud" root="org.springframework.cloud"/>
+  <technology name="spring-cloud-alibaba" root="com.alibaba.cloud"/>
   <technology name="spring-cloud-gateway" root="org.springframework.cloud.gateway"/>
   <technology name="spring-cloud-kubernetes" root="org.springframework.cloud.kubernetes"/>
   <technology name="spring-cloud-openfeign" root="org.springframework.cloud.openfeign"/>
@@ -429,6 +446,7 @@
   <technology name="wiremock" root="com.github.tomakehurst.wiremock"/>
   <technology name="xef-ai" root="com.xebia.functional.xef"/>
   <technology name="xmlgraphics" root="org.apache.xmlgraphics"/>
+  <technology name="xxl-job" root="com.xxl.job"/>
   <technology name="zio" root="zio"/>
   <technology name="zio-test" root="zio.test"/>
   <technology name="zipkin2" root="zipkin2"/>

@@ -2,6 +2,7 @@
 package com.intellij.ui.wizard;
 
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,6 +83,7 @@ public abstract class WizardStep<T extends WizardModel> {
     return myHelpId;
   }
 
+  @ApiStatus.Internal
   public static final class Empty extends WizardStep {
     @Override
     public JComponent prepare(WizardNavigationState state) {

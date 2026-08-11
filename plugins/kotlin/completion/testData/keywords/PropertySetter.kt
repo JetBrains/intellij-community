@@ -47,5 +47,7 @@ class Some {
 // EXIST:  typealias
 // EXIST:  expect
 // EXIST:  actual
-// EXIST: data object
+// EXIST:  data object
+// EXIST:  context
+// EXIST:  field
 // NOTHING_ELSE

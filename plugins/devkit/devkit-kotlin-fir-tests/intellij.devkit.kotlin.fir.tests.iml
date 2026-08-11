@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight" />
     <orderEntry type="module" module-name="intellij.devkit" />
     <orderEntry type="module" module-name="intellij.devkit.core" />
+    <orderEntry type="module" module-name="intellij.devkit.mcp.inspections" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.testFramework" />
     <orderEntry type="module" module-name="intellij.java.syntax" scope="TEST" />
@@ -31,7 +32,7 @@
     <orderEntry type="module" module-name="intellij.xml.dom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.testFramework" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.kotlin.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.devkit.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
@@ -52,6 +53,8 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.themes.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.devkit" />
 </module>

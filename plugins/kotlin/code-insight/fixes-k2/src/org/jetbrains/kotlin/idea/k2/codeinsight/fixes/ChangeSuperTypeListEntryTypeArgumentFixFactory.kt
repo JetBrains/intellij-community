@@ -12,7 +12,8 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.Propert
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.ReturnTypeMismatchOnOverride
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.fakeOverrideOriginal
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences

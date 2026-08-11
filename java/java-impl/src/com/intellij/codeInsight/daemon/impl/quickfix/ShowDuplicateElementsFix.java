@@ -18,6 +18,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Objects;
@@ -79,7 +80,7 @@ public class ShowDuplicateElementsFix extends PsiBasedModCommandAction<Navigatab
     return new IntentionPreviewInfo.Html(builder.toFragment());
   }
 
-  private List<NavigatablePsiElement> getDuplicatePsiElements() {
+  private @Unmodifiable List<NavigatablePsiElement> getDuplicatePsiElements() {
     return ContainerUtil.mapNotNull(myNavigatablePsiElements, SmartPsiElementPointer::getElement);
   }
 

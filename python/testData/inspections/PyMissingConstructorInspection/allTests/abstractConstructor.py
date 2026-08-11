@@ -32,12 +32,12 @@ class C2(A1, A2):
 
 
 class C3(A1, B1):
-    def <warning descr="Call to __init__ of super class is missed">__init__</warning>(self):
+    def <warning descr="Call to '__init__' of super class is missing">__init__</warning>(self):
         pass
 
 
 class C4(B1, A1):
-    def <warning descr="Call to __init__ of super class is missed">__init__</warning>(self):
+    def <warning descr="Call to '__init__' of super class is missing">__init__</warning>(self):
         pass
 
 

@@ -108,6 +108,11 @@ tkinter.simpledialog.[A-Z_]+
 tkinter.simpledialog.TclVersion
 tkinter.simpledialog.TkVersion
 
+# The runtime does some hacks to deprecate passing various parameters
+# positionally or by keyword. We just present a signature in the stub
+# that describes the way users are supposed to call the constructor.
+typing_extensions.sentinel.__init__
+
 
 # =============================================================
 # Allowlist entries that cannot or should not be fixed; <3.15

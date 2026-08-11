@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.openapi.editor.Editor;
@@ -36,9 +36,8 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
     doTest(introducer -> introducer.setReplaceAllOccurrences(true));
   }
 
-  @Nullable
   @Override
-  protected PsiExpression getExpressionFromEditor() {
+  protected @Nullable PsiExpression getExpressionFromEditor() {
     final PsiExpression expression = super.getExpressionFromEditor();
     if (expression != null) {
       return expression;
@@ -116,15 +115,15 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testCorrectFinalPosition() {
-    doTest(introducer -> type("SEC"));
+    doTest(_ -> type("SEC"));
   }
 
   public void testCorrectConstantPosition() {
-    doTest(introducer -> type("R"));
+    doTest(_ -> type("R"));
   }
 
   public void testConstantBeforeUsage() {
-    doTest(introducer -> type("R"));
+    doTest(_ -> type("R"));
   }
 
   public void testEscapePosition() {
@@ -132,6 +131,10 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testEscapePositionOnLocal() {
+    doTestEscape();
+  }
+
+  public void testCleanUpImport() {
     doTestEscape();
   }
 

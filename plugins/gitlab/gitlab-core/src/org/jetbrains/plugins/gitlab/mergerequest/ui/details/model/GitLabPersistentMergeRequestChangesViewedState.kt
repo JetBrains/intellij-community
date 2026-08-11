@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
 import com.intellij.openapi.components.SerializablePersistentStateComponent
@@ -40,9 +40,9 @@ internal class GitLabPersistentMergeRequestChangesViewedState
 
   @Serializable
   data class MRId(
-    val serverPath: GitLabServerPath,
-    val projectId: String,
-    val iid: String
+    val serverPath: GitLabServerPath = GitLabServerPath(),
+    val projectId: String = "",
+    val iid: String = "",
   )
 
   /**

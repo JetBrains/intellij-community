@@ -53,21 +53,18 @@ public final class SLRUIntObjectMap<V> {
   }
 
   public @Nullable V get(int key) {
-    //MAYBE RC: instead of moving `value` between probation and protected maps, it may be better to move Entry<V> -- both
-    //          maps contain an Entry-es internally, so it may be more optimal to just move a whole Entry, and cut off on
-    //          allocation?
     V value = protectedQueue.get(key);
     if (value != null) {
       protectedHits++;
       return value;
     }
 
-    value = probationalQueue.remove(key);
-    if (value != null) {
+    LinkedCustomIntObjectHashMap.Entry<V> entry = probationalQueue.removeEntry(key);
+    if (entry != null) {
       probationalHits++;
 
-      protectedQueue.put(key, value);
-      return value;
+      protectedQueue.putNonExistingEntry(entry);
+      return entry.getValue();
     }
 
     misses++;

@@ -10,13 +10,146 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
-    <orderEntry type="library" name="lucene-codecs" level="project" />
-    <orderEntry type="library" name="lucene-memory" level="project" />
-    <orderEntry type="library" name="lucene-queries" level="project" />
-    <orderEntry type="library" name="lucene-sandbox" level="project" />
-    <orderEntry type="library" name="lucene-highlighter" level="project" />
-    <orderEntry type="library" name="lucene-queryparser" level="project" />
-    <orderEntry type="library" name="lucene-suggest" level="project" />
+    <orderEntry type="module-library">
+      <library name="lucene-codecs" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-codecs:10.5.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-codecs/10.5.0/lucene-codecs-10.5.0.jar">
+              <sha256sum>9ecc0c7cbe4e8adb9ad29efdf082cf331afa91582badcc6fcc7bbbdf814621ce</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-codecs/10.5.0/lucene-codecs-10.5.0.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-codecs/10.5.0/lucene-codecs-10.5.0-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-codecs/10.5.0/lucene-codecs-10.5.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="lucene-memory" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-memory:10.5.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/10.5.0/lucene-memory-10.5.0.jar">
+              <sha256sum>e8c7a566b1f21e859272831cc5cfc738f59287ee1457f600754690cb24855807</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/10.5.0/lucene-memory-10.5.0.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/10.5.0/lucene-memory-10.5.0-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/10.5.0/lucene-memory-10.5.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="lucene-queries" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-queries:10.5.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/10.5.0/lucene-queries-10.5.0.jar">
+              <sha256sum>8775e15d84923ae1bcfef6ff7000a695bacd7b6c1c3b2674aad66bf1d37404f6</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/10.5.0/lucene-queries-10.5.0.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/10.5.0/lucene-queries-10.5.0-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/10.5.0/lucene-queries-10.5.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="lucene-sandbox" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-sandbox:10.5.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/10.5.0/lucene-sandbox-10.5.0.jar">
+              <sha256sum>5bd7ae7477f19274a5c720f5f1fa0830ff9d9a00290c65b823d0d9605409c324</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/10.5.0/lucene-sandbox-10.5.0.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/10.5.0/lucene-sandbox-10.5.0-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/10.5.0/lucene-sandbox-10.5.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="lucene-highlighter" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-highlighter:10.5.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/10.5.0/lucene-highlighter-10.5.0.jar">
+              <sha256sum>40b1edc9b66beff2b840ae14b0abcccd3e517cb7bc3c00c617982cfc85232294</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/10.5.0/lucene-highlighter-10.5.0.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/10.5.0/lucene-highlighter-10.5.0-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/10.5.0/lucene-highlighter-10.5.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="lucene-queryparser" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-queryparser:10.5.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queryparser/10.5.0/lucene-queryparser-10.5.0.jar">
+              <sha256sum>2bdfae278b36d6874377ae00a7d47e69909702db0e602a5a1884783a64595e97</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queryparser/10.5.0/lucene-queryparser-10.5.0.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queryparser/10.5.0/lucene-queryparser-10.5.0-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queryparser/10.5.0/lucene-queryparser-10.5.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="lucene-suggest" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-suggest:10.5.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/10.5.0/lucene-suggest-10.5.0.jar">
+              <sha256sum>e96044cc2df062d9f3ed6141562dbecbf6314312423dd5fd14501094d83ff634</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/10.5.0/lucene-suggest-10.5.0.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/10.5.0/lucene-suggest-10.5.0-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/10.5.0/lucene-suggest-10.5.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.libraries.jsoup" />
     <orderEntry type="library" name="jaxb-api" level="project" />

@@ -4,14 +4,14 @@
 // AFTER-WARNING: Parameter 'x' is never used
 // AFTER-WARNING: Parameter 'y' is never used
 // AFTER-WARNING: Parameter 'a' is never used
+// K2_AFTER_ERROR: MIXING_NAMED_AND_POSITIONAL_ARGUMENTS
+// K2_AFTER_ERROR: MIXING_NAMED_AND_POSITIONAL_ARGUMENTS
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: TOO_MANY_ARGUMENTS
 
-// K2_ERROR: Argument type mismatch: actual type is 'String', but 'Boolean' was expected.
-// K2_ERROR: No context argument for 'x: String' found.
-// K2_ERROR: Too many arguments for 'context(x: String) fun foo(a: Boolean, b: String): String'.
-// K2_AFTER_ERROR: Mixing named and positional arguments is not allowed unless the order of the arguments matches the order of the parameters.
-// K2_AFTER_ERROR: Mixing named and positional arguments is not allowed unless the order of the arguments matches the order of the parameters.
-// K2_AFTER_ERROR: No value passed for parameter 'a'.
-// K2_AFTER_ERROR: No value passed for parameter 'b'.
 
 context(x: String)
 fun foo(a: Boolean, b: String): String = ""

@@ -1,6 +1,6 @@
 // "Replace with safe (?.) call" "true"
 // WITH_STDLIB
-// K2_ERROR: Reference has a nullable type '(() -> Int)?'. Use explicit '?.invoke' to make a function-like call instead.
+// K2_ERROR: UNSAFE_IMPLICIT_INVOKE_CALL
 
 fun bar() {
     val fff: (() -> Int)? = { 1 }

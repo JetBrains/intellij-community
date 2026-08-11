@@ -1,6 +1,6 @@
 // IS_APPLICABLE: false
 // ERROR: Unresolved reference: s
-// K2_ERROR: Unresolved reference 's'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 fun foo() {
     val x = bar<<caret>Any>(s) // s not definded, can't be inferred
 }

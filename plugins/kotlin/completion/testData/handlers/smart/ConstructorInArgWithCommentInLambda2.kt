@@ -1,0 +1,9 @@
+class Apple(x: Int)
+fun makeJuice(a: Apple) {}
+
+val tree: () -> Apple = {
+        <caret> // comment
+}
+
+// ELEMENT: Apple
+// TAIL_TEXT: (x: Int) (<root>)

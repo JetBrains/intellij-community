@@ -13,7 +13,9 @@ import com.intellij.execution.multilaunch.execution.messaging.ExecutionNotifier
 import com.intellij.execution.multilaunch.state.ConditionSnapshot
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.rd.util.launchBackground
+import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.VerticalComponentGap
 import com.intellij.ui.dsl.builder.bindIntText
 import com.jetbrains.rd.util.lifetime.Lifetime
 import kotlinx.coroutines.delay
@@ -29,11 +31,16 @@ class AfterPortOpenedConditionTemplate : ConditionTemplate {
     private val DEFAULT_PORT = 80
 
     private var port: Int = DEFAULT_PORT
-    override val text get() = ExecutionBundle.message("run.configurations.multilaunch.condition.after.port.opened", port)
+    // Passed as a String so MessageFormat inserts it verbatim instead of applying locale number grouping ("8,080").
+    override val text get() = ExecutionBundle.message("run.configurations.multilaunch.condition.after.port.opened", port.toString())
+    override val optionLabel = ExecutionBundle.message("run.configurations.multilaunch.condition.after.port.opened.label")
 
     override fun provideEditor(row: Row) = row
       .intTextField(IntRange(0, 65536))
       .bindIntText({ port }, { port = it })
+      // The field is taller than a plain radio button; without this, the DSL's default
+      // top/bottom padding around it makes this row noticeably taller than its siblings.
+      .applyToComponent { putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.NONE) }
 
     override fun validate(configuration: MultiLaunchConfiguration, row: ExecutableRow) {}
 

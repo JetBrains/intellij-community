@@ -319,6 +319,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     return displayUrlRelativeToProject(f, presentablePath, project, true, true);
   }
 
+  @ApiStatus.Internal
   protected static final class TargetDirectoryListItem {
     private final TargetDirectory myTargetDirectory;
     private final Icon myIcon;

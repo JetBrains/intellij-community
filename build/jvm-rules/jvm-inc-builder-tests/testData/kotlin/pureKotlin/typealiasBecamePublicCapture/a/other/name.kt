@@ -1,0 +1,3 @@
+package other
+
+class Name

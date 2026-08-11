@@ -26,10 +26,21 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.util.SortedSet
 
-@Suppress("RemoveRedundantQualifierName")
-private val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = java.util.Map.of(
-  "jetbrains-annotations", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
+// These project libraries must be converted to content modules and removed from the allowlist.
+private val IMPLICIT_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.Set.of(
+  "Log4J",
+  "kotlin-stdlib",
+  "studio-platform",
 )
+
+internal fun checkImplicitProjectLibraryViolations(violations: Map<String, Set<String>>) {
+  check(violations.isEmpty()) {
+    "Project libraries used by implicit platform modules must be converted to content modules:\n" +
+    violations.entries.sortedBy { it.key }.joinToString(separator = "\n") { (libraryName, moduleNames) ->
+      "  '$libraryName' used by " + moduleNames.sorted().joinToString { "'$it'" }
+    }
+  }
+}
 
 private fun addModule(relativeJarPath: String, moduleNames: Sequence<String>, productLayout: ProductModulesLayout, layout: PlatformLayout) {
   layout.withModules(
@@ -96,6 +107,9 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "slf4j-jdk14",
   ), UTIL_8_JAR)
 
+  // the library is put to a separate JAR due to IJPL-248572; todo: include it only for Linux: IJPL-249098
+  layout.withProjectLibraries(sequenceOf("jetbrains.intellij.deps.java.atk.wrapper.linux"))
+
   // https://jetbrains.team/p/ij/reviews/67104/timeline
   // https://youtrack.jetbrains.com/issue/IDEA-179784
   // https://youtrack.jetbrains.com/issue/IDEA-205600
@@ -106,18 +120,8 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "jaxb-api",
   ))
 
-  // TODO(Shumaf.Lovpache): IJPL-1014 convert lsp4j to product modules after merge into master
-  if (context.project.libraryCollection.findLibrary("eclipse.lsp4j") != null) {
-    layout.withProjectLibraries(
-      sequenceOf(
-        "eclipse.lsp4j",
-        "eclipse.lsp4j.jsonrpc",
-      ) + sequenceOf(
-        "eclipse.lsp4j.debug",
-        "eclipse.lsp4j.jsonrpc.debug",
-      ).filter { context.project.libraryCollection.findLibrary(it) != null }
-    )
-  }
+  // the library is put to a separate JAR due to IJPL-248591; it would be better to get rid of it completely, see IJPL-749
+  layout.withModuleLibrary(libraryName = "swingx", moduleName = "intellij.libraries.swingx")
 
   // platform-loader.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
   addModule(PLATFORM_LOADER_JAR, sequenceOf(
@@ -259,13 +263,14 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   }
 
   // as a separate step, not a part of computing implicitModules, as we should collect libraries from such implicitly included modules
+  val implicitProjectLibraryViolations = HashMap<String, MutableSet<String>>()
   layout.collectProjectLibrariesFromIncludedModules(outputProvider) { libName, module ->
-    // this module is used only when running IDE from sources, no need to include its dependencies, see IJPL-125
-    if (module.name == "intellij.platform.buildScripts.downloader" && libName == "zstd-jni") {
+    if (libAsProductModule.contains(libName)) {
       return@collectProjectLibrariesFromIncludedModules
     }
 
-    if (libAsProductModule.contains(libName)) {
+    if (!IMPLICIT_PROJECT_LIBRARY_ALLOWLIST.contains(libName)) {
+      implicitProjectLibraryViolations.computeIfAbsent(libName) { HashSet() }.add(module.name)
       return@collectProjectLibrariesFromIncludedModules
     }
 
@@ -273,13 +278,14 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
       .addOrGet(
         ProjectLibraryData(
           libraryName = libName,
-          packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(libName, LibraryPackMode.MERGED),
+          packMode = LibraryPackMode.MERGED,
           reason = "<- ${module.name}",
           owner = null,
         )
       )
       .dependentModules.computeIfAbsent("core") { mutableListOf() }.add(module.name)
   }
+  checkImplicitProjectLibraryViolations(implicitProjectLibraryViolations)
 
   val platformMainModule = "intellij.platform.starter"
   if (context.isEmbeddedFrontendEnabled && layout.includedModules.none { it.moduleName == platformMainModule }) {
@@ -380,9 +386,8 @@ internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, 
           continue
         }
 
-        val packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(libName, LibraryPackMode.MERGED)
         // TODO: owner is null in this case? Since it is loaded by platform
-        result.addOrGet(ProjectLibraryData(libraryName = libName, packMode = packMode, reason = "<- $moduleName", owner = null))
+        result.addOrGet(ProjectLibraryData(libraryName = libName, packMode = LibraryPackMode.MERGED, reason = "<- $moduleName", owner = null))
           .dependentModules
           .computeIfAbsent(plugin.directoryName) { mutableListOf() }
           .add(moduleName)

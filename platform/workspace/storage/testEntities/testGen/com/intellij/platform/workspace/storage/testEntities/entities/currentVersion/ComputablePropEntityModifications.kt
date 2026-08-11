@@ -20,7 +20,7 @@ interface ComputablePropEntityBuilder : WorkspaceEntityBuilder<ComputablePropEnt
 }
 
 internal object ComputablePropEntityType : EntityType<ComputablePropEntity, ComputablePropEntityBuilder>() {
-  override val entityClass: Class<ComputablePropEntity> get() = ComputablePropEntity::class.java
+  override val entityImplClass: Class<*> get() = ComputablePropEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ComputablePropEntityImpl.Builder::class.java
   operator fun invoke(
     list: List<Map<List<Int?>, String>>,

@@ -27,7 +27,7 @@ private fun PyTargetAwareAdditionalData.getBinaryToExec(): BinaryToExec {
 }
 
 @ApiStatus.Internal
-suspend fun PyTargetAwareAdditionalData.getInterpreterVersion(): PyResult<LanguageLevel> =
+internal suspend fun PyTargetAwareAdditionalData.getInterpreterVersion(): PyResult<LanguageLevel> =
   getBinaryToExec().validatePythonAndGetInfo().mapSuccess { it.languageLevel }
 
 

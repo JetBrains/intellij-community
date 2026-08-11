@@ -25,7 +25,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiRecordComponent;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
@@ -210,14 +209,10 @@ class InlineMethodHelper {
   }
 
   private boolean isStrictlyFinal(PsiParameter parameter) {
-    for (PsiReference reference : ReferencesSearch.search(parameter, GlobalSearchScope.projectScope(myProject), false).asIterable()) {
-      final PsiElement refElement = reference.getElement();
-      final PsiElement anonymousClass = PsiTreeUtil.getParentOfType(refElement, PsiAnonymousClass.class);
-      if (anonymousClass != null && PsiTreeUtil.isAncestor(myMethod, anonymousClass, true)) {
-        return true;
-      }
-    }
-    return false;
+    return ReferencesSearch.search(parameter, GlobalSearchScope.projectScope(myProject), false).anyMatch(reference -> {
+      final PsiElement anonymousClass = PsiTreeUtil.getParentOfType(reference.getElement(), PsiAnonymousClass.class);
+      return anonymousClass != null && PsiTreeUtil.isAncestor(myMethod, anonymousClass, true);
+    });
   }
 
   public void substituteTypes(PsiLocalVariable[] vars) {

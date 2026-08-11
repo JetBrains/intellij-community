@@ -14,10 +14,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.Lsp4jServer
 import com.intellij.platform.lsp.api.LspClientDescriptor
 import com.intellij.platform.lsp.api.LspClientManagerListener
-import com.intellij.platform.lsp.api.LspClientProvider
+import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.LspCommunicationChannel
 import com.intellij.platform.lsp.api.LspCommunicationChannel.StdIO
-import com.intellij.platform.lsp.api.LspServerNotificationsHandler
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.impl.connector.Lsp4jServerConnector
 import com.intellij.platform.lsp.impl.connector.Lsp4jServerConnectorSocket
@@ -28,10 +27,12 @@ import com.intellij.platform.lsp.impl.features.LspFeaturesRefreshing
 import com.intellij.platform.lsp.impl.features.highlighting.DiagnosticAndQuickFixes
 import com.intellij.platform.lsp.impl.features.highlighting.LspDocumentLink
 import com.intellij.platform.lsp.impl.features.highlighting.LspHighlightingApplier
+import com.intellij.platform.lsp.impl.features.inlayCommon.LspInlayApplier
 import com.intellij.platform.lsp.impl.features.highlighting.LspSemanticToken
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspCachedHighlighting
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCacheRegistry
 import com.intellij.platform.lsp.impl.fileEvents.LspWatchedFiles
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.text.nullize
@@ -48,6 +49,7 @@ import org.eclipse.lsp4j.TextDocumentRegistrationOptions
 import org.eclipse.lsp4j.TextDocumentSyncKind
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.Collections
 import java.util.concurrent.CompletableFuture
 import kotlin.time.DurationUnit
@@ -58,7 +60,7 @@ private val logger = logger<LspClientImpl>()
 
 @ApiStatus.Internal
 class LspClientImpl internal constructor(
-  override val providerClass: Class<out LspClientProvider>,
+  override val providerClass: Class<out LspIntegrationProvider>,
   override val descriptor: LspClientDescriptor,
   private val eventBroadcaster: LspClientManagerListener,
 ) : @Suppress("TYPEALIAS_EXPANSION_DEPRECATION") LspClientRenameCompat {
@@ -85,7 +87,7 @@ class LspClientImpl internal constructor(
   val requestExecutor: LspRequestExecutor = LspRequestExecutor(this, documentMapping)
   internal val globMatcher: LspGlobMatcher = LspGlobMatcher()
   internal val dynamicCapabilities: LspDynamicCapabilities = LspDynamicCapabilities()
-  internal val serverNotificationsHandler: LspServerNotificationsHandler = LspServerNotificationsHandlerImpl(this)
+  internal val serverNotificationsHandler: LspServerNotificationsHandlerImpl = LspServerNotificationsHandlerImpl(this)
 
   internal val documentSyncManager = LspDocumentSyncManager(this)
   internal val watchedFiles = LspWatchedFiles(this)
@@ -106,8 +108,7 @@ class LspClientImpl internal constructor(
     get() = if (state == LspServerState.Running) initializeResult?.capabilities else null
 
   internal val textDocumentSyncKind: TextDocumentSyncKind?
-    @Suppress("RemoveExplicitTypeArguments")
-    get() = serverCapabilities?.textDocumentSync?.map<TextDocumentSyncKind?>({ it }, { it.change })
+    get() = serverCapabilities?.textDocumentSync?.map({ it }, { it.change })
 
   internal fun isFileOpened(file: VirtualFile): Boolean = documentSyncManager.isFileOpened(file)
 
@@ -163,12 +164,25 @@ class LspClientImpl internal constructor(
     }
   }
 
+  /**
+   * Handles a server-forced `workspace/inlayHint/refresh`: re-requests inlay hints for every opened file even without
+   * a document edit, then re-applies out-of-band. Invalidating the cache keeps the current hints on screen (no
+   * flicker); [LspInlayApplier.scheduleRefresh] kicks the re-request and diffs in the fresh hints once they land.
+   */
+  internal fun refreshInlayHints() {
+    forEachOpenedFile { file ->
+      highlightingCacheRegistry.inlayHintsCache.invalidate(file)
+      LspInlayApplier.getInstance(project).scheduleRefresh(file)
+    }
+  }
+
   @RequiresBackgroundThread
   @RequiresReadLock
   internal fun getSemanticTokens(file: VirtualFile): List<LspCachedHighlighting<LspSemanticToken>> =
     highlightingCacheRegistry.semanticTokensCache.getHighlightings(file)
 
   @RequiresBackgroundThread
+  @VisibleForTesting
   fun getDiagnosticsAndQuickFixes(file: VirtualFile): List<DiagnosticAndQuickFixes> =
     highlightingCacheRegistry.getDiagnosticsAndQuickFixes(file)
 
@@ -238,19 +252,24 @@ class LspClientImpl internal constructor(
         }
         documentSyncManager.openForOpenedOrUnsavedFiles()
         LspFeaturesRefreshing.refreshBreadcrumbs()
-        LspFeaturesRefreshing.refreshInlayHints(project)
+        forEachOpenedFile { LspInlayApplier.getInstance(project).scheduleRefresh(it) }
         LspFeaturesRefreshing.refreshCodeLenses(project)
       }
       catch (e: Exception) {
         // stack trace of the LspInitializationException is always the same, so not interesting; let's log its cause
         val exToLog = (e as? LspInitializationException)?.cause ?: e
+        if (e is AlreadyDisposedException) {
+          // The project is disposed
+          ensureServerStopped(false) {}
+          return@executeOnPooledThread
+        }
         logWarn("Failed to start LSP server", exToLog)
 
-        val lspServerManager = ReadAction.computeBlocking<LspClientManagerImpl?, Throwable> {
+        val manager = ReadAction.computeBlocking<LspClientManagerImpl?, Throwable> {
           if (!project.isDisposed) LspClientManagerImpl.getInstanceImpl(project) else null
         }
         val text = (if (e is LspInitializationException) "$e\nCaused by:\n" else "") + exToLog.stackTraceToString()
-        lspServerManager?.handleMaybeUnexpectedServerStop(this, text)
+        manager?.handleMaybeUnexpectedServerStop(this, text)
       }
     }
   }
@@ -269,25 +288,32 @@ class LspClientImpl internal constructor(
       logInfo("Stopping LSP server ${if (explicitStop) "normally" else "unexpectedly"}")
       state = if (explicitStop) LspServerState.ShutdownNormally else LspServerState.ShutdownUnexpectedly
 
-      forEachOpenedFile { file ->
-        LspHighlightingApplier.getInstance(project).scheduleHighlightingRefresh(file)
+      if (!project.isDisposed) {
+        forEachOpenedFile { file ->
+          LspHighlightingApplier.getInstance(project).scheduleHighlightingRefresh(file)
+          LspInlayApplier.getInstance(project).scheduleRefresh(file)
+        }
       }
-      documentSyncManager.clearOpenedFiles()
+      documentSyncManager.shutdown()
       requestExecutor.shutdownNow()
+      serverNotificationsHandler.cancelAllProgress()
 
       highlightingCacheRegistry.clearCache()
 
-      LspFeaturesRefreshing.refreshInlayHints(project)
-      LspFeaturesRefreshing.refreshCodeLenses(project)
+      if (!project.isDisposed) {
+        LspFeaturesRefreshing.refreshCodeLenses(project)
+      }
     }
 
-    shutdownAndExit()
+    // A graceful `shutdown`/`exit` handshake only makes sense for an explicit stop of a still-responsive server.
+    // On an unexpected stop the server-to-IDE channel is already dead, so skip the handshake and just disconnect.
+    shutdownAndExit(graceful = explicitStop)
   }
 
-  private fun shutdownAndExit() {
+  private fun shutdownAndExit(graceful: Boolean) {
     val shutdownAndExit = Runnable {
       synchronized(connectorLock) {
-        if (::lsp4jServerConnector.isInitialized) lsp4jServerConnector.shutdownExitDisconnect()
+        if (::lsp4jServerConnector.isInitialized) lsp4jServerConnector.shutdownExitDisconnect(graceful)
       }
     }
 

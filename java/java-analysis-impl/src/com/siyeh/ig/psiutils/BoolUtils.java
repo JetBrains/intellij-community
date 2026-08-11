@@ -366,27 +366,23 @@ public final class BoolUtils {
   }
 
   /**
-   * Evaluates a given {@link PsiExpression} to determine if it references a constant field
-   * within the {@code java.lang.Boolean} class, specifically {@link Boolean#TRUE} or {@link Boolean#FALSE}.
+   * Evaluates a given {@link PsiExpression} to determine if it references {@link Boolean#TRUE} or {@link Boolean#FALSE}.
    *
    * @param expression the {@code PsiExpression} to be evaluated.
    * @return {@code Boolean.TRUE} if {@code expression} references the {@code Boolean.TRUE} constant,
    * {@code Boolean.FALSE} if it references the {@code Boolean.FALSE} constant,
    * or {@code null} if it does not reference a recognized {@code java.lang.Boolean} constant field.
    */
-  public static @Nullable Boolean fromBoxedConstantReference(@NotNull PsiExpression expression) {
-    PsiExpression unparenthesizedExpression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (!(unparenthesizedExpression instanceof PsiReferenceExpression referenceExpression)) return null;
-    if (!(referenceExpression.resolve() instanceof PsiField field)) return null;
+  public static @Nullable Boolean fromBoxedConstantReference(@Nullable PsiExpression expression) {
+    if (!(PsiUtil.skipParenthesizedExprDown(expression) instanceof PsiReferenceExpression ref)) return null;
+    Boolean result = switch (ref.getReferenceName()) {
+      case "TRUE" -> Boolean.TRUE;
+      case "FALSE" -> Boolean.FALSE;
+      case null, default -> null;
+    };
+    if (result == null || !(ref.resolve() instanceof PsiField field)) return null;
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass == null) return null;
-    if (CommonClassNames.JAVA_LANG_BOOLEAN.equals(field.getContainingClass().getQualifiedName())) {
-      return switch (field.getName()) {
-        case "TRUE" -> true;
-        case "FALSE" -> false;
-        default -> null;
-      };
-    }
-    return null;
+    return CommonClassNames.JAVA_LANG_BOOLEAN.equals(field.getContainingClass().getQualifiedName()) ? result : null;
   }
 }

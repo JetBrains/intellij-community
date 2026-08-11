@@ -1,7 +1,7 @@
 package qualified_expressions
 
 fun test(s: IntRange?) {
-   val a: Int = <error descr="[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected kotlin/Int, actual kotlin/Int?">s?.start</error>
+   val a: Int = <error descr="[INITIALIZER_TYPE_MISMATCH]">s?.start</error>
    val b: Int? = s?.start
    val c: Int = s?.start ?: -11
    val d: Int = s?.start ?: "empty"

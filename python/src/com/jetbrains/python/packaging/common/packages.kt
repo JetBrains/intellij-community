@@ -6,13 +6,12 @@ import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.management.findPackageSpecification
-import com.jetbrains.python.packaging.pyRequirement
-import com.jetbrains.python.packaging.pyRequirementVersionSpec
+import com.intellij.python.requirements.pyRequirement
+import com.intellij.python.requirements.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
-import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.Icon
+import java.net.URI
 import kotlin.collections.emptyList
 
 @ApiStatus.Experimental
@@ -21,6 +20,8 @@ value class PyDependencyGroupName(val name: String)
 
 @ApiStatus.Experimental
 open class PythonPackage @JvmOverloads constructor(name: String, val version: String, val isEditableMode: Boolean, val dependencyGroup: PyDependencyGroupName? = null) {
+  @ApiStatus.Internal
+  var editableLocation: URI? = null
   companion object {
     private const val HASH_MULTIPLIER = 31
   }
@@ -30,9 +31,6 @@ open class PythonPackage @JvmOverloads constructor(name: String, val version: St
 
   val name: String = normalizedName.name
   val presentableName: String = name
-
-  @ApiStatus.Internal
-  open val sourceRepoIcon: Icon? = null
 
   override fun toString(): String {
     return "PythonPackage(name='${this@PythonPackage.name}', version='$version')"
@@ -158,7 +156,7 @@ data class PythonSimplePackageDetails(
  * 2) [PyPackageRepository.findPackageSpecification]
  *    Use this method if you already have a specific repository instance and want to look up within it only.
  *    The following well-known public repositories are also available for direct access:
- *   - PyPI (https://pypi.org):  [com.jetbrains.python.packaging.repository.PyPIPackageRepository.findPackageSpecification]
+ *   - PyPI (https://pypi.org):  [com.jetbrains.python.packaging.repository.PyPiPackageRepository.findPackageSpecification]
  *   - Conda: [com.jetbrains.python.packaging.conda.CondaPackageRepository.findPackageSpecification]
  */
 @ApiStatus.Internal
@@ -167,17 +165,13 @@ data class PythonRepositoryPackageSpecification(
   val requirement: PyRequirement,
 ) {
   val name: String = requirement.name
-  val versionSpec: PyRequirementVersionSpec? = requirement.versionSpecs.firstOrNull()
 
-  val nameWithVersionSpec: String
-    get() = "$name${versionSpec?.presentableText ?: ""}"
-
-  val nameWithVersionsSpec: String
-    get() {
-      val versionSpecsString = requirement.versionSpecs.joinToString(",") { it.presentableText }
-      return "$name${versionSpecsString}"
-    }
-
+  /**
+   * The package name followed by its full PEP-440 specifier set, e.g. `pytest>=7.0,<8.0`.
+   * Every version spec is rendered: rendering only the first one silently drops the upper bound (PY-91457).
+   */
+  val nameWithVersionSpecs: String
+    get() = "$name${requirement.versionSpecs.joinToString(",") { it.presentableText }}"
 
   constructor(
     repository: PyPackageRepository,
@@ -189,16 +183,3 @@ data class PythonRepositoryPackageSpecification(
   )
 }
 
-@Deprecated(
-  "Use RepositoryPythonPackageSpecification instead",
-  replaceWith = ReplaceWith("RepositoryPythonPackageSpecification"),
-  level = DeprecationLevel.ERROR
-)
-interface PythonPackageSpecification
-
-@Deprecated(
-  "Use RepositoryPythonPackageSpecification instead",
-  replaceWith = ReplaceWith("RepositoryPythonPackageSpecification"),
-  level = DeprecationLevel.ERROR
-)
-interface PythonSimplePackageSpecification

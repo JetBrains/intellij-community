@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog.validator.storage
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.intellij.internal.statistic.StatisticsServiceScope
 import com.intellij.internal.statistic.eventLog.EventLogBuild
 import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsListener
 import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService
@@ -51,11 +52,11 @@ import com.jetbrains.fus.reporting.defaults.DefaultRemoteConfig
 import com.jetbrains.fus.reporting.defaults.MetadataUpdateDelay
 import com.jetbrains.fus.reporting.defaults.NoOpLoggerFactory
 import com.intellij.internal.statistic.eventLog.connection.metadata.createJvmHttpClient
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.jetbrains.fus.reporting.jvm.InMemoryJvmFileStorage
 import com.jetbrains.fus.reporting.jvm.JvmFileStorage
 import com.jetbrains.fus.reporting.model.serialization.SerializationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus
 import tools.jackson.core.JsonGenerator
 import tools.jackson.core.StreamReadFeature
@@ -68,6 +69,7 @@ import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.kotlinModule
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.reflect.KClass
 
 @ApiStatus.Internal
 object FusComponentProvider {
@@ -183,9 +185,9 @@ object FusComponentProvider {
       }
     }
     override fun getSkipAnonymizationIds(): Set<String> = emptySet()
-    override fun reload() = Unit
-    override fun update(): Boolean = false
-    override suspend fun update(scope: CoroutineScope): Job = throw UnsupportedOperationException("Not supported")
+    override suspend fun reload() = Unit
+    override suspend fun scheduleUpdate() = Unit
+    override suspend fun update(): Boolean = false
     override fun getClientDataRulesRevisions(): RecorderDataValidationRule = throw UnsupportedOperationException("Not supported")
     override fun getFieldsToAnonymize(groupId: String, eventId: String): Set<String> = emptySet()
   }
@@ -193,49 +195,59 @@ object FusComponentProvider {
   private class BlindRemoteConfig : RemoteConfig {
     override fun getSendUrl(): String = ""
     override fun provideOptions(): Map<String, String> = emptyMap()
+    override suspend fun update(): Boolean = true
+    override suspend fun scheduleUpdate() = Unit
+    override fun isUnreachable(): Boolean = false
     override fun getMetadataUrl(): String = ""
     override fun getDictionaryUrl(): String = ""
   }
 
   @JvmStatic
   fun createBlindFusComponents(recorderId: String): FusComponents {
+    val coroutineScope = StatisticsServiceScope.getScope()
     return FusComponents(
       metadataStorage = CompositeValidationRulesStorage(
         metadataStorage = BlindMetadataStorage(),
         testRulesStorage = ValidationTestRulesPersistedStorage(recorderId)
       ),
-      messageBus = MessageBus(),
+      messageBus = MessageBus(coroutineScope),
       remoteConfig = BlindRemoteConfig()
     )
   }
 
   @JvmStatic
   fun createFusComponents(recorderId: String): FusComponents {
+    val coroutineScope = StatisticsServiceScope.getScope()
     val applicationInfo = EventLogInternalApplicationInfo(
       StatisticsUploadAssistant.isUseTestStatisticsConfig(),
       StatisticsUploadAssistant.isUseTestStatisticsSendEndpoint()
     )
+    val eventLogProvider = getEventLogProvider(recorderId)
 
-    val messageBus = MessageBus()
+    val messageBus = MessageBus(coroutineScope)
 
     val config = FusClientConfig(
-      applicationInfo.productCode,
-      applicationInfo.productCode,
-      recorderId,
-      if (applicationInfo.regionalCode == EventLogUploadSettingsClient.chinaRegion) RegionCode.CN else RegionCode.ALL,
-      applicationInfo.productVersion,
-      applicationInfo.baselineVersion,
-      null, // IntelliJ doesn't use anonymization from reporting SDK
-      applicationInfo.isTestConfig,
-      System.getProperty("fus.internal.reduce.initial.delay").toBoolean()
+      productName = ApplicationNamesInfo.getInstance().fullProductName,
+      productCode = applicationInfo.productCode,
+      recorderCode = recorderId,
+      recorderVersion = eventLogProvider.version.toString(),
+      regionCode = if (applicationInfo.regionalCode == EventLogUploadSettingsClient.chinaRegion) RegionCode.CN else RegionCode.ALL,
+      productVersion = applicationInfo.productVersion,
+      baselineVersion = applicationInfo.baselineVersion,
+      anonymizationSalt = null, // IntelliJ doesn't use anonymization from reporting SDK
+      isTest = applicationInfo.isTestConfig,
+      reduceInitialMetadataUpdateDelay = System.getProperty("fus.internal.reduce.initial.delay").toBoolean()
     )
 
     val jsonSerializer = FusJacksonSerializer()
 
     val httpClient = applicationInfo.connectionSettings.createJvmHttpClient()
+    val loggerFactory = NoOpLoggerFactory()
 
     val remoteConfig = DefaultRemoteConfig(
       config,
+      messageBus,
+      loggerFactory,
       jsonSerializer,
       httpClient
     )
@@ -249,7 +261,7 @@ object FusComponentProvider {
     val metadataStorage = DefaultMetadataStorage(
       config,
       messageBus,
-      NoOpLoggerFactory(),
+      loggerFactory,
       remoteConfig,
       httpClient,
       jsonSerializer,
@@ -287,9 +299,14 @@ object FusComponentProvider {
 
     // getResource returns `null` if resource is not found
     override fun exists(path: String): Boolean = this.javaClass.classLoader.getResource(bundledResourcePath(path)) != null
+    override fun list(path: String): List<String> = emptyList()
+    override fun delete(path: String): Unit = Unit
 
     // bundled file storage does not support random file access
     override fun openFileHandle(path: String, mode: FileStorageMode): FileHandle = object : FileHandle {
+      override val name: String
+        get() = path
+
       override fun exists(): Boolean = false
       override fun length(): Long = 0
       override fun read(index: Int): Byte = 0
@@ -329,17 +346,21 @@ object FusComponentProvider {
         .build()
     }
 
-    override fun toJson(data: Any): String = try {
-      SERIALIZATION_MAPPER
-        .writerWithDefaultPrettyPrinter()
-        .writeValueAsString(data)
+    override fun toJson(data: Any, prettyPrint: Boolean): String = try {
+      val serializer = if (prettyPrint) {
+        SERIALIZATION_MAPPER
+          .writerWithDefaultPrettyPrinter()
+      } else {
+        SERIALIZATION_MAPPER.writer()
+      }
+      serializer.writeValueAsString(data)
     } catch (e: Exception) {
       throw SerializationException(e)
     }
 
-    override fun <T> fromJson(json: String, clazz: Class<T>): T = try {
+    override fun <T : Any> fromJson(json: String, clazz: KClass<T>): T = try {
       DESERIALIZATION_MAPPER
-        .readValue(json, clazz)
+        .readValue(json, clazz.java)
     } catch (e: Exception) {
       throw SerializationException(e)
     }

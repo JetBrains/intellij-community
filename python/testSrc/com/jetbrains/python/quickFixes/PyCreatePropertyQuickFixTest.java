@@ -18,9 +18,13 @@ package com.jetbrains.python.quickFixes;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.inspections.PyPropertyAccessInspection;
 
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyCreatePropertyQuickFixTest")
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyCreatePropertyQuickFixTest extends PyQuickFixTestCase {
   public void testSetter() {
     doQuickFixTest(PyPropertyAccessInspection.class, PyPsiBundle.message("QFIX.create.property"));

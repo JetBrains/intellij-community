@@ -3,10 +3,17 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.idea.TestFor;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
+@Subsystems.Inspections
+@Layers.Functional
 public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   // PY-27398
@@ -454,24 +461,6 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
-  @TestFor(issues="PY-89180")
-  public void testMutatingFrozenFieldPydantic() {
-    myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
-    doTestByText(
-      """
-        from pydantic import BaseModel, Field
-
-        class A(BaseModel):
-            a: int = Field(frozen=True)
-            b: int
-        
-        a = A()
-        <error descr="'A' object attribute 'a' is read-only">a.a</error> = 2
-        del <error descr="'A' object attribute 'a' is read-only">a.a</error>
-        a.b = 2
-        """);
-  }
-
   @Override
   protected void doTest() {
     myFixture.copyDirectoryToProject("packages/attr", "attr");
@@ -484,5 +473,13 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
     return PyDataclassInspection.class;
+  }
+
+  @NotNull
+  @Override
+  protected List<Class<? extends LocalInspectionTool>> getAdditionalInspectionClasses() {
+    return List.of(PyStdlibDataclassInspection.class,
+                   PyAttrsDataclassInspection.class,
+                   PyDataclassTransformInspection.class);
   }
 }

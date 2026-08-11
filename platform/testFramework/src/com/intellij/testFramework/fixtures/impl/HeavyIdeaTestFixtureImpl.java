@@ -269,28 +269,30 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   private final class MyDataProvider implements DataProvider {
     @Override
     public @Nullable Object getData(@NotNull @NonNls String dataId) {
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return myProject;
-      }
-      else if (CommonDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
-        Project project = myProject;
-        return project == null || project.isDisposed() ? null : FileEditorManager.getInstance(project).getSelectedTextEditor();
-      }
-      if (LangDataKeys.IDE_VIEW.is(dataId)) {
-        Project project = myProject;
-        VirtualFile[] contentRoots = project == null ? VirtualFile.EMPTY_ARRAY : ProjectRootManager.getInstance(myProject).getContentRoots();
-        if (contentRoots.length > 0 && project != null) {
-          return new IdeView() {
-            @Override
-            public PsiDirectory @NotNull [] getDirectories() {
-              return new PsiDirectory[]{PsiManager.getInstance(project).findDirectory(contentRoots[0])};
-            }
+      switch (dataId) {
+        case CommonDataKeys.Names.PROJECT_KEY_NAME -> {
+          return myProject;
+        }
+        case CommonDataKeys.Names.EDITOR_KEY_NAME, OpenFileDescriptor.NAVIGATE_IN_EDITOR_KEY_NAME -> {
+          Project project = myProject;
+          return project == null || project.isDisposed() ? null : FileEditorManager.getInstance(project).getSelectedTextEditor();
+        }
+        case LangDataKeys.Names.IDE_VIEW_KEY_NAME -> {
+          Project project = myProject;
+          VirtualFile[] contentRoots = project == null ? VirtualFile.EMPTY_ARRAY : ProjectRootManager.getInstance(myProject).getContentRoots();
+          if (contentRoots.length > 0 && project != null) {
+            return new IdeView() {
+              @Override
+              public PsiDirectory @NotNull [] getDirectories() {
+                return new PsiDirectory[]{PsiManager.getInstance(project).findDirectory(contentRoots[0])};
+              }
 
-            @Override
-            public PsiDirectory getOrChooseDirectory() {
-              return PsiManager.getInstance(project).findDirectory(contentRoots[0]);
-            }
-          };
+              @Override
+              public PsiDirectory getOrChooseDirectory() {
+                return PsiManager.getInstance(project).findDirectory(contentRoots[0]);
+              }
+            };
+          }
         }
       }
       return null;

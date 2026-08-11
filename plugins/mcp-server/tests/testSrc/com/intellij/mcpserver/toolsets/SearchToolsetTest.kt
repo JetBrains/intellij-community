@@ -5,11 +5,13 @@ package com.intellij.mcpserver.toolsets
 import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.SearchToolset
 import com.intellij.mcpserver.util.awaitExternalChangesAndIndexing
+import com.intellij.mcpserver.util.INDEXING_PARTIAL_RESULT_REASON
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.junit5.fixture.pathInProjectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.junit5.fixture.virtualFileFixture
@@ -91,6 +93,7 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
   private data class SearchResult(
     val items: List<SearchItem> = emptyList(),
     val more: Boolean = false,
+    val partialResultReason: String? = null,
   )
 
   private val excludedDirName = "se_excluded_dir_51a2"
@@ -421,6 +424,31 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
       assertThat(item?.startColumn).isNotNull
       assertThat(item?.endLine).isNotNull
       assertThat(item?.endColumn).isNotNull
+      assertThat(result.partialResultReason).isNull()
+    }
+  }
+
+  @Test
+  fun search_symbol_reports_partial_result_during_indexing() = runBlocking(Dispatchers.Default) {
+    DumbService.getInstance(project).waitForSmartMode()
+    // Touch the symbol fixture so its file exists in the project before flipping dumb mode on.
+    symbolFileInSubdir1.name
+    val query = "${symbolPrefix}Alpha"
+    val token = DumbModeTestUtils.startEternalDumbModeTask(project)
+    try {
+      testMcpTool(
+        SearchToolset::search_symbol.name,
+        buildJsonObject {
+          put("q", JsonPrimitive(query))
+        },
+      ) { actualResult ->
+        assertThat(actualResult.isError).isFalse()
+        val result = parseResult(actualResult.textContent.text)
+        assertThat(result.partialResultReason).isEqualTo(INDEXING_PARTIAL_RESULT_REASON)
+      }
+    }
+    finally {
+      DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode(project, token)
     }
   }
 

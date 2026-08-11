@@ -1,0 +1,10 @@
+// "Replace with safe (?.) call" "true"
+// WITH_STDLIB
+// K2_ERROR: UNSAFE_CALL
+
+fun foo(list: List<String>?) {
+    println(list<caret>[0])
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceInfixOrOperatorCallFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceInfixOrOperatorCallFix

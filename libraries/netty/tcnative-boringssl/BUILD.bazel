@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.netty.tcnative.boringssl` start
-
 jvm_library(
     name = "libraries-netty-tcnative-boringssl",
     srcs = glob(

@@ -9,7 +9,7 @@
 // ACTION: Opt in for 'MyExperimentalAPI' on statement
 // ACTION: Propagate 'MyExperimentalAPI' opt-in requirement to 'bar'
 // RUNTIME_WITH_SCRIPT_RUNTIME
-// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@a.b.MyExperimentalAPI' or '@OptIn(a.b.MyExperimentalAPI::class)'
+// K2_ERROR: OPT_IN_USAGE_ERROR
 
 package a.b
 

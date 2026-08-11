@@ -19,7 +19,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.Locale
 import java.util.concurrent.Executor
@@ -27,8 +26,7 @@ import kotlin.io.path.name
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
 
-@ApiStatus.Internal
-class PyCondaEnvProvider(
+internal class PyCondaEnvProvider(
   refreshInterval: Duration,
   ttlAfterWrite: Duration,
   executor: Executor = Dispatchers.Default.asExecutor(),

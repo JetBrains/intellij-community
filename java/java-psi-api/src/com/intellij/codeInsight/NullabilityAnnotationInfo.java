@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.psi.PsiAnnotation;
@@ -17,19 +17,22 @@ public class NullabilityAnnotationInfo {
   private final @NotNull Nullability myNullability;
   private final @Nullable PsiModifierListOwner myInheritedFrom;
   private final boolean myContainer;
+  private final boolean myExtendedBounds;
 
   public NullabilityAnnotationInfo(@NotNull PsiAnnotation annotation, @NotNull Nullability nullability, boolean container) {
-    this(annotation, nullability, null, container);
+    this(annotation, nullability, null, container, false);
   }
 
   NullabilityAnnotationInfo(@NotNull PsiAnnotation annotation,
                             @NotNull Nullability nullability,
                             @Nullable PsiModifierListOwner inheritedFrom,
-                            boolean container) {
+                            boolean container,
+                            boolean extendedBounds) {
     myAnnotation = annotation;
     myNullability = nullability;
     myInheritedFrom = inheritedFrom;
     myContainer = container;
+    myExtendedBounds = extendedBounds;
   }
 
   /**
@@ -54,6 +57,13 @@ public class NullabilityAnnotationInfo {
   }
 
   /**
+   * @return true if it is from extended bounds, false otherwise
+   */
+  public boolean isExtendedBounds() {
+    return myExtendedBounds;
+  }
+
+  /**
    * @return true if this annotation is an external annotation
    */
   public boolean isExternal() {
@@ -75,7 +85,11 @@ public class NullabilityAnnotationInfo {
   }
 
   @NotNull NullabilityAnnotationInfo withInheritedFrom(@Nullable PsiModifierListOwner owner) {
-    return new NullabilityAnnotationInfo(myAnnotation, myNullability, owner, myContainer);
+    return new NullabilityAnnotationInfo(myAnnotation, myNullability, owner, myContainer, myExtendedBounds);
+  }
+
+  @NotNull NullabilityAnnotationInfo setExtendedBounds() {
+    return new NullabilityAnnotationInfo(myAnnotation, myNullability, myInheritedFrom, myContainer, true);
   }
 
   /**
@@ -88,6 +102,9 @@ public class NullabilityAnnotationInfo {
       source = new NullabilitySource.ContainerAnnotation(myAnnotation);
     } else {
       source = new NullabilitySource.ExplicitAnnotation(myAnnotation);
+    }
+    if (myExtendedBounds) {
+      source = new NullabilitySource.ExtendsBound(source);
     }
     return new TypeNullability(myNullability, source);
   }

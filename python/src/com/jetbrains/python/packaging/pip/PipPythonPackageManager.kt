@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pip
 
 import com.intellij.openapi.application.EDT
@@ -13,16 +13,20 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator.Companion.findPathInHelpers
+import com.intellij.python.venv.MINIMUM_SUPPORTED_VENV_PYTHON_VERSION
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.PyRequirement
-import com.jetbrains.python.packaging.PyRequirementParser
+import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.toPythonPackage
 import com.jetbrains.python.packaging.management.DependenciesExporter
+import com.intellij.python.pyproject.PyDependencyGroup
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
+import com.jetbrains.python.packaging.management.PythonManagerCliSpec
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
@@ -42,8 +46,12 @@ import java.nio.file.Path
  * This class will be internal soon, please do not use it outside of this module, even in monorepo
  */
 @ApiStatus.Internal
+@PyInternalExecApi
 open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
+  override val cliSpecs: List<PythonManagerCliSpec> = listOf(
+    PythonManagerCliSpec("pip", { sdk.homePath?.let { Path.of(it) } }, runAsModule = true)
+  )
   private val engine = PipPackageManagerEngine(project, sdk)
 
   override val dependenciesExporter: DependenciesExporter?
@@ -60,6 +68,7 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
     installRequest: PythonPackageInstallRequest,
     options: List<String>,
     module: Module?,
+    dependencyGroup: PyDependencyGroup?,
   ): PyResult<Unit> = engine.installPackageCommand(installRequest, options)
 
   override suspend fun syncLockedCommand(): PyResult<Unit> {
@@ -83,7 +92,7 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
     vararg specifications: PythonRepositoryPackageSpecification,
   ): PyResult<Unit> = engine.updatePackageCommand(*specifications)
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?): PyResult<Unit> = engine.uninstallPackageCommand(*pythonPackages, workspaceMember = workspaceMember)
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> = engine.uninstallPackageCommand(*pythonPackages, workspaceMember = workspaceMember, dependencyGroup = dependencyGroup)
 
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> = engine.loadPackagesCommand()
 
@@ -117,6 +126,10 @@ class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPa
    */
   internal suspend fun installManagementIfNeeded(): PyResult<Unit> {
     if (PythonSdkUtil.isRemote(sdk)) return PyResult.success(Unit)
+    // The bundled pip and setuptools wheels require MINIMUM_SUPPORTED_VENV_PYTHON_VERSION+. For older
+    // interpreters we never attempt to install them (the install would fail anyway) and rely on the
+    // management tools already present.
+    if (languageLevel < MINIMUM_SUPPORTED_VENV_PYTHON_VERSION) return PyResult.success(Unit)
     if (hasManagement()) return PyResult.success(Unit)
     return installManagement()
   }
@@ -145,9 +158,24 @@ class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPa
     manager.hasInstalledPackage(PyPackageUtil.SETUPTOOLS) ||
     manager.hasInstalledPackage(PyPackageUtil.DISTRIBUTE)
 
+  /**
+   * pip and setuptools wheels bundled under `community/python/helpers`, used to bootstrap package
+   * management into interpreters that lack it (see [installManagement]).
+   *
+   * Both are pinned to the **last release that still supports [MINIMUM_SUPPORTED_VENV_PYTHON_VERSION]**
+   * (see the guard in [installManagementIfNeeded] and venv creation in `venv.kt`). Do not bump past these
+   * without first raising that floor:
+   *  - setuptools 75.3.4: 76.0.0 requires Python >= 3.9. (Must also stay >= 65.5.1, which fixed
+   *    CVE-2022-40897.)
+   *  - pip 25.0.1: 25.1 requires Python >= 3.9. (Note: pip < 25.3 is subject to CVE-2025-8869, whose
+   *    fix is only in pip 25.3 / Python >= 3.9.)
+   *
+   * Update source: these are the exact wheels embedded in the bundled `virtualenv-py3.pyz`
+   * (`virtualenv/seed/wheels/embed/`), i.e. the versions virtualenv itself seeds for Python 3.8.
+   */
   private object WheelFiles {
-    const val SETUPTOOLS_WHEEL_NAME = "setuptools-44.1.1-py2.py3-none-any.whl"
-    const val PIP_WHEEL_NAME = "pip-24.3.1-py2.py3-none-any.whl"
+    const val SETUPTOOLS_WHEEL_NAME = "setuptools-75.3.4-py3-none-any.whl"
+    const val PIP_WHEEL_NAME = "pip-25.0.1-py3-none-any.whl"
   }
 
 }

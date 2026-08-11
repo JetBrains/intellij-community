@@ -1,6 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.imports;
 
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.ig.LightJavaInspectionTestCase;
@@ -37,4 +40,24 @@ public class StaticImportInspectionTest extends LightJavaCodeInsightFixtureTestC
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
+  public void testReplaceNonStaticImportPreservesTrailingComment() {
+    myFixture.enableInspections(new StaticImportInspection());
+    myFixture.configureByText("package-info.java",
+                              """
+                                @Internal
+                                package com.example;
+
+                                import static org.jetbrains.annotations.ApiStatus.<caret>*;
+
+                                //trailing comment
+                                """);
+    myFixture.launchAction(myFixture.findSingleIntention("Replace with non-static import"));
+    PsiComment comment = PsiTreeUtil.findChildrenOfType(myFixture.getFile(), PsiComment.class).stream()
+      .filter(c -> c.getText().contains("trailing comment"))
+      .findFirst()
+      .orElse(null);
+    assertNotNull("Trailing comment should still exist as a comment, but file is now:\n" + myFixture.getFile().getText(), comment);
+    assertNull("Trailing comment got absorbed into the import list, file is now:\n" + myFixture.getFile().getText(),
+               PsiTreeUtil.getParentOfType(comment, PsiImportList.class));
+  }
 }

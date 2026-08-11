@@ -18,7 +18,7 @@ interface NonIndexableTestEntityBuilder : WorkspaceEntityBuilder<NonIndexableTes
 }
 
 internal object NonIndexableTestEntityType : EntityType<NonIndexableTestEntity, NonIndexableTestEntityBuilder>() {
-  override val entityClass: Class<NonIndexableTestEntity> get() = NonIndexableTestEntity::class.java
+  override val entityImplClass: Class<*> get() = NonIndexableTestEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = NonIndexableTestEntityImpl.Builder::class.java
   operator fun invoke(
     root: VirtualFileUrl,

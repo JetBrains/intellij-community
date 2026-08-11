@@ -19,7 +19,7 @@ object McpToolsMarkdownExporter {
       appendLine("# Tools")
       appendLine()
       for ((category, categoryTools) in toolsByCategory) {
-        appendLine("## ${category.shortName}")
+        appendLine("## ${category.presentableName}")
         appendLine()
         for (tool in categoryTools) {
           appendToolSection(tool, headingLevel = 3, omitFirstDescriptionLine = false)
@@ -60,7 +60,7 @@ object McpToolsMarkdownExporter {
       appendLine(TREE_INDEX_LEGEND)
       appendLine()
       for ((category, categoryTools) in byCategory) {
-        appendLine("## ${category.shortName}")
+        appendLine("## ${category.presentableName}")
         appendLine()
         for (tool in categoryTools) {
           val firstLine = tool.descriptor.description.trim().lineSequence()
@@ -156,8 +156,8 @@ object McpToolsMarkdownExporter {
   /**
    * Generates markdown documentation for all currently available MCP tools.
    */
-  fun generateMarkdownForAllTools(): String {
-    return generateMarkdown(McpServerService.getInstance().getMcpTools())
+  suspend fun generateMarkdownForAllTools(): String {
+    return generateMarkdown(McpServerService.getInstance().getMcpToolsAsync())
   }
 
   private data class SchemaTableRow(

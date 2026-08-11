@@ -58,6 +58,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,6 +107,7 @@ import static com.intellij.codeInsight.template.impl.TemplateContext.getDifferen
 import static com.intellij.codeInsight.template.impl.TemplateContext.getDifferenceType;
 import static com.intellij.codeInsight.template.impl.TemplateGroup.PATH_SEPARATOR;
 
+@ApiStatus.Internal
 public class TemplateListPanel extends JPanel implements Disposable {
   private static final String NO_SELECTION = "NoSelection";
   private static final String TEMPLATE_SETTINGS = "TemplateSettings";

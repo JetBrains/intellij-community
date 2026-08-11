@@ -1,0 +1,55 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.projectModel"/>
+    <module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.base.platforms.targetPlatformDetector"
+            interface="org.jetbrains.kotlin.idea.base.facet.platform.TargetPlatformDetector"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.facetConfigurationExtension"
+            interface="org.jetbrains.kotlin.idea.facet.KotlinFacetConfigurationExtension"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.versionInfoProvider"
+            interface="org.jetbrains.kotlin.idea.facet.KotlinVersionInfoProvider"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <workspaceModel.facetContributor implementation="org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetContributor"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.config.KotlinFacetSettingsProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.facet.KotlinFacetSettingsProviderImpl"/>
+    <facetType implementation="org.jetbrains.kotlin.idea.facet.KotlinFacetTypeImpl"/>
+    <library.type implementation="org.jetbrains.kotlin.idea.framework.CommonLibraryType"/>
+    <workspaceModel.customFacetRelatedEntitySerializer
+            implementation="org.jetbrains.kotlin.idea.workspaceModel.KotlinModuleSettingsSerializer" />
+    <sdkType implementation="org.jetbrains.kotlin.idea.framework.KotlinSdkType"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.framework.CreateKotlinSdkActivity"/>
+    <registryKey key="workspace.model.kotlin.facet.bridge" defaultValue="true" restartRequired="true"
+                 description="Enable Kotlin facet work via own entities at workspace model"/>
+  </extensions>
+</idea-plugin>

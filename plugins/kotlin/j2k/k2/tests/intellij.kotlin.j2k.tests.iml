@@ -25,26 +25,28 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fir" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.plugin.k2" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.base" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.j2k.shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.shared.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.j2k" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
 </module>

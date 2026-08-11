@@ -2,6 +2,7 @@
 package com.intellij.editorconfig.frontend.highlighting
 
 import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.highlighting.EditorConfigSyntaxHighlighter
 import com.intellij.editorconfig.common.syntax.psi.EditorConfigAsteriskPattern
 import com.intellij.editorconfig.common.syntax.psi.EditorConfigCharClassExclamation
 import com.intellij.editorconfig.common.syntax.psi.EditorConfigCharClassLetter
@@ -139,8 +140,10 @@ internal class EditorConfigAnnotatorVisitor(private val holder: AnnotationHolder
 
   override fun visitCharClassLetter(letter: EditorConfigCharClassLetter): Unit = when {
     !letter.isEscape -> holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(letter).textAttributes(EditorConfigSyntaxHighlighter.PATTERN).create()
-    letter.isValidEscape -> holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(letter).textAttributes(EditorConfigSyntaxHighlighter.VALID_CHAR_ESCAPE).create()
-    else -> holder.newAnnotation(HighlightSeverity.INFORMATION, EditorConfigBundle["annotator.error.illegal.char.escape"]).range(letter).textAttributes(EditorConfigSyntaxHighlighter.INVALID_CHAR_ESCAPE).create()
+    letter.isValidEscape -> holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(letter).textAttributes(
+      EditorConfigSyntaxHighlighter.VALID_CHAR_ESCAPE).create()
+    else -> holder.newAnnotation(HighlightSeverity.INFORMATION, EditorConfigBundle["annotator.error.illegal.char.escape"]).range(letter).textAttributes(
+      EditorConfigSyntaxHighlighter.INVALID_CHAR_ESCAPE).create()
   }
 
   override fun visitRootDeclarationKey(key: EditorConfigRootDeclarationKey) {

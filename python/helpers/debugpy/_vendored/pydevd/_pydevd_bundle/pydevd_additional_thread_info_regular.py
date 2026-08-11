@@ -140,7 +140,7 @@ class PyDBAdditionalThreadInfo(object):
             return None
 
         if thread._ident is None:  # Can this happen?
-            pydev_log.critical("thread._ident is None in _get_related_thread!")
+            pydev_log.critical("thread._ident is None in _get_related_thread! - thread: %s", thread)
             return None
 
         if threading._active.get(thread._ident) is not thread:

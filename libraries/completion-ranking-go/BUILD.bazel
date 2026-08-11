@@ -1,0 +1,41 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.completion.ranking.go` start
+jvm_library(
+    name = "completion-ranking-go",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.completion.ranking.go",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-completion-ranking-go-completion-ranking-go"],
+    runtime_deps = ["@lib//:libraries-completion-ranking-go-completion-ranking-go"],
+)
+
+jvm_library(
+    name = "completion-ranking-go_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.completion.ranking.go",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-completion-ranking-go-completion-ranking-go"],
+    runtime_deps = [":completion-ranking-go"],
+)
+### auto-generated section `build intellij.libraries.completion.ranking.go` end
+
+### auto-generated section `iml intellij.libraries.completion.ranking.go` start
+exports_files(
+    [
+        "intellij.libraries.completion.ranking.go.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.completion.ranking.go` end

@@ -14,9 +14,10 @@ import com.jetbrains.python.testing.PyAbstractTestConfiguration
 import com.jetbrains.python.testing.PyAbstractTestConfigurationFragmentedEditor
 import com.jetbrains.python.testing.PyAbstractTestSettingsEditor
 import com.jetbrains.python.testing.PyTestSharedForm
+import com.jetbrains.python.testing.PyTestFactory
 import org.jetbrains.annotations.ApiStatus
 
-class PyAutoDetectTestConfiguration(project: Project, factory: PyAutoDetectionConfigurationFactory)
+class PyAutoDetectTestConfiguration(project: Project, private val factory: PyAutoDetectionConfigurationFactory)
   : PyAbstractTestConfiguration(project, factory) {
 
   // "Autodetect" name is useless
@@ -66,6 +67,9 @@ class PyAutoDetectTestConfiguration(project: Project, factory: PyAutoDetectionCo
       object : PyAbstractTestSettingsEditor(PyTestSharedForm.create(this)) {}
     }
   }
+
+  override val isTargetRequired: Boolean
+    get() = sdk?.let { factory.getFactory(it, project) !is PyTestFactory } ?: true
 
   override fun isNewUiSupported(): Boolean = true
 }

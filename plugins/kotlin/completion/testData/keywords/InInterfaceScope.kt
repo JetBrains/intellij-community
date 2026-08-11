@@ -1,6 +1,6 @@
 // FIR_IDENTICAL
 // FIR_COMPARISON
-// COMPILER_ARGUMENTS: -XXLanguage:+SealedInterfaces -XXLanguage:+MultiPlatformProjects -XXLanguage:+CompanionBlocksAndExtensions
+// COMPILER_ARGUMENTS: -XXLanguage:+SealedInterfaces -XXLanguage:+MultiPlatformProjects -XXLanguage:+CompanionBlocks
 
 interface Test {
     <caret>
@@ -21,7 +21,7 @@ interface Test {
 // EXIST:  constructor
 // EXIST:  init
 // EXIST:  companion object
-// EXIST: companion
+// EXIST:  companion
 // EXIST:  operator
 // EXIST:  infix
 // EXIST:  sealed class
@@ -37,5 +37,6 @@ interface Test {
 // EXIST:  typealias
 // EXIST:  expect
 // EXIST:  actual
-// EXIST: data object
+// EXIST:  data object
+// EXIST:  context
 // NOTHING_ELSE

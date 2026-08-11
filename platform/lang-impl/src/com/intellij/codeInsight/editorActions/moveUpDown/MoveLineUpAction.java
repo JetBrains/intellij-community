@@ -2,10 +2,12 @@
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Dennis.Ushakov
  */
+@ApiStatus.Internal
 public final class MoveLineUpAction extends EditorAction {
   public MoveLineUpAction() {
     super(new MoveLineHandler(false));

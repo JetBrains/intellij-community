@@ -1,6 +1,6 @@
 // "Add else branch" "true"
 // ERROR: Unresolved reference: TODO
-// K2_ERROR: 'if' must have both main and 'else' branches when used as an expression.
+// K2_ERROR: INVALID_IF_AS_EXPRESSION
 fun foo(x: String?) {
     val a = i<caret>f (x == null) 4
 }

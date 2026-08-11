@@ -19,7 +19,6 @@ class CoverageSettingsTest : CoverageIntegrationBaseTest() {
         myBranchCoverage = !defaultSettings.myBranchCoverage
         myTestTracking = !defaultSettings.myTestTracking
         myTestModulesCoverage = !defaultSettings.myTestModulesCoverage
-        myIgnoreImplicitConstructors = !defaultSettings.myIgnoreImplicitConstructors
       }
       settings.loadState(otherSettings)
       assertSettings(otherSettings)
@@ -36,6 +35,5 @@ class CoverageSettingsTest : CoverageIntegrationBaseTest() {
     assertEquals(expected.myBranchCoverage, settings.branchCoverage)
     assertEquals(expected.myTestTracking, settings.testTracking)
     assertEquals(expected.myTestModulesCoverage, settings.testModulesCoverage)
-    assertEquals(expected.myIgnoreImplicitConstructors, settings.ignoreImplicitConstructors)
   }
 }

@@ -5,34 +5,38 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.common.tools.ToolId
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.withProject
+import com.jetbrains.python.impl.getSdkAssociatedModule
 import com.jetbrains.python.onSuccess
+import com.jetbrains.python.sdk.PythonEnvironment
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
 import com.jetbrains.python.sdk.configuration.findEnvOrNull
-import com.jetbrains.python.sdk.configuration.getSdkAssociatedModule
-import com.jetbrains.python.sdk.PythonEnvironment
 import com.jetbrains.python.sdk.detectPythonEnvironment
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.sdk.uv.impl.getUvExecutableLocal
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
-import com.jetbrains.python.util.ShowingMessageErrorSync
 import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
-import kotlin.collections.contains
 
 private val logger = fileLogger()
 
 internal suspend fun checkManageableUvEnvBase(
+  module: Module,
+  toolId: ToolId,
   venvsInModule: List<PythonBinary>,
 ): EnvCheckerResult {
   getUvExecutableLocal() ?: return EnvCheckerResult.CannotConfigure
+  val sdkAssociatedModule = module.getSdkAssociatedModule(toolId)
+  tryResolvePath(sdkAssociatedModule.baseDir?.path) ?: return EnvCheckerResult.CannotConfigure
   val intentionName = PyBundle.message("sdk.set.up.uv.environment")
   val envFound = getUvEnv(venvsInModule)?.findEnvOrNull(intentionName)
   return envFound ?: EnvCheckerResult.EnvNotFound(intentionName)
@@ -46,7 +50,7 @@ internal suspend fun createUvSdk(module: Module, toolId: ToolId, venvsInModule: 
     throw IllegalStateException("Can't determine working dir for the module")
   }
 
-  val errorSink = ShowingMessageErrorSync.withProject(sdkAssociatedModule.project)
+  val errorSink = ErrorSink().withProject(sdkAssociatedModule.project)
   val sdkSetupResult = if (envExists) {
     getUvEnv(venvsInModule)?.let {
       setupExistingEnvAndSdk(it, uv, workingDir, false)

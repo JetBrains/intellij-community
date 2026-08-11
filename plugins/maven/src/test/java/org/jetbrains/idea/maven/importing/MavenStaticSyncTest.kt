@@ -1,20 +1,69 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertContentRootSources
+import com.intellij.maven.testFramework.fixtures.assertModuleLibDep
+import com.intellij.maven.testFramework.fixtures.assertModuleLibDepScope
+import com.intellij.maven.testFramework.fixtures.assertModuleModuleDeps
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.assertProjectLibraryCoordinates
+import com.intellij.maven.testFramework.fixtures.assertSources
+import com.intellij.maven.testFramework.fixtures.assertTestSources
+import com.intellij.maven.testFramework.fixtures.assumeModel_4_0_0
+import com.intellij.maven.testFramework.fixtures.assumeModel_4_1_0
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createPomFile
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.createProjectSubDir
+import com.intellij.maven.testFramework.fixtures.getModule
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.projectRoot
+import com.intellij.maven.testFramework.fixtures.repositoryPathCanonical
+import com.intellij.maven.testFramework.utils.RealMavenPreventionFixture
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.importProjectStaticSync
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenStaticSyncTest(mavenVersion: String, modelVersion: String) {
 
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
+
+
+  private lateinit var noRealMaven: RealMavenPreventionFixture
+
+  @BeforeEach
+  fun setUp() {
+    noRealMaven = RealMavenPreventionFixture(maven.project)
+    noRealMaven.setUp()
+  }
+
+  @AfterEach
+  fun tearDown() {
+    noRealMaven.tearDown()
+  }
 
   @Test
   fun testImportLibraryDependency() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -27,17 +76,17 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                     </dependencies>
                     """.trimIndent())
 
-    assertModules("project")
-    assertModuleLibDep("project", "Maven: somedep:somedep:4.0",
-                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0.jar!/",
-                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
-                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
-    assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
+    maven.assertModules("project")
+    maven.assertModuleLibDep("project", "Maven: somedep:somedep:4.0",
+                       "jar://" + maven.repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
+    maven.assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
   }
 
   @Test
   fun testImportLibraryDependencyWithPropertyPlaceholder() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -53,17 +102,17 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                     </dependencies>
                     """.trimIndent())
 
-    assertModules("project")
-    assertModuleLibDep("project", "Maven: somedep:somedep:4.0",
-                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0.jar!/",
-                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
-                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
-    assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
+    maven.assertModules("project")
+    maven.assertModuleLibDep("project", "Maven: somedep:somedep:4.0",
+                       "jar://" + maven.repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
+    maven.assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
   }
 
   @Test
   fun testImportLibraryDependencyWithRecursicePropertyPlaceholder() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -80,18 +129,18 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                     </dependencies>
                     """.trimIndent())
 
-    assertModules("project")
-    assertModuleLibDep("project", "Maven: somedep:somedep:4.0",
-                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0.jar!/",
-                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
-                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
-    assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
+    maven.assertModules("project")
+    maven.assertModuleLibDep("project", "Maven: somedep:somedep:4.0",
+                       "jar://" + maven.repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
+    maven.assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
   }
 
 
   @Test
   fun testImportLibraryDependencyWithPlaceholderInParent() = runBlocking {
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -107,7 +156,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         </dependencies>
         """)
 
-    createProjectPom("""
+    maven.createProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -119,19 +168,19 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                         <module>m1</module>
                     </modules>
 """)
-    importProjectAsync()
+    maven.importProjectStaticSync()
 
-    assertModules("project", "m1")
-    assertModuleLibDep("m1", "Maven: somedep:somedep:4.0",
-                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0.jar!/",
-                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
-                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
-    assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
+    maven.assertModules("project", "m1")
+    maven.assertModuleLibDep("m1", "Maven: somedep:somedep:4.0",
+                       "jar://" + maven.repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
+    maven.assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
   }
 
   @Test
   fun testImportProjectWithTargetVersion() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -143,14 +192,14 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
 
     readAction {
-      val module = getModule("project")
+      val module = maven.getModule("project")
       assertEquals(LanguageLevel.JDK_14, LanguageLevelUtil.getEffectiveLanguageLevel(module))
     }
   }
 
   @Test
   fun testImportProjectWithCompilerConfig() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -171,14 +220,14 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
 
     readAction {
-      val module = getModule("project")
+      val module = maven.getModule("project")
       assertEquals(LanguageLevel.JDK_14, LanguageLevelUtil.getEffectiveLanguageLevel(module))
     }
   }
 
   @Test
   fun testImportProjectWithCompilerConfigSetByProperties() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -202,14 +251,14 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
 
     readAction {
-      val module = getModule("project")
+      val module = maven.getModule("project")
       assertEquals(LanguageLevel.JDK_14, LanguageLevelUtil.getEffectiveLanguageLevel(module))
     }
   }
 
   @Test
   fun testImportProjectWithCompilerConfigWithoutGroupId() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -229,7 +278,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
 
     readAction {
-      val module = getModule("project")
+      val module = maven.getModule("project")
       assertEquals(LanguageLevel.JDK_14, LanguageLevelUtil.getEffectiveLanguageLevel(module))
     }
   }
@@ -237,7 +286,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
   @Test
   fun testImportProjectWithCompilerConfigOfParent() = runBlocking {
 
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -246,7 +295,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         <artifactId>m1</artifactId>
         """)
 
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -273,7 +322,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
 
     readAction {
-      val module = getModule("m1")
+      val module = maven.getModule("m1")
       assertEquals(LanguageLevel.JDK_14, LanguageLevelUtil.getEffectiveLanguageLevel(module))
     }
   }
@@ -281,7 +330,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
   @Test
   fun testImportProjectWithCompilerConfigOfParentSetByProperties() = runBlocking {
 
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -290,7 +339,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         <artifactId>m1</artifactId>
         """)
 
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -320,7 +369,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
 
     readAction {
-      val module = getModule("m1")
+      val module = maven.getModule("m1")
       assertEquals(LanguageLevel.JDK_14, LanguageLevelUtil.getEffectiveLanguageLevel(module))
     }
   }
@@ -328,7 +377,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
   @Test
   fun testImportProjectWithTargetVersionOfParent() = runBlocking {
 
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -337,7 +386,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         <artifactId>m1</artifactId>
         """)
 
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -356,7 +405,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
 
     readAction {
-      val module = getModule("m1")
+      val module = maven.getModule("m1")
       assertEquals(LanguageLevel.JDK_14, LanguageLevelUtil.getEffectiveLanguageLevel(module))
     }
   }
@@ -364,7 +413,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
   @Test
   fun testImportProjectWithKotlinConfig() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -384,13 +433,13 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
 
     readAction {
-      assertSources("project", "src/main/java", "src/main/kotlin")
+      maven.assertSources("project", "src/main/java", "src/main/kotlin")
     }
   }
 
   @Test
   fun testImportProjectWithBuildHelperPlugin() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -434,15 +483,15 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
 
     readAction {
-      assertSources("project", "src/main/java", "src/main/anothersrc")
-      assertTestSources("project", "src/test/java", "src/main/sometestdir")
+      maven.assertSources("project", "src/main/java", "src/main/anothersrc")
+      maven.assertTestSources("project", "src/test/java", "src/main/sometestdir")
     }
   }
 
   @Test
   fun testImportProjectWithKotlinConfigInParent() = runBlocking {
 
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -451,7 +500,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         <artifactId>m1</artifactId>
         """)
 
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -477,14 +526,14 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
 
     readAction {
-      assertSources("m1", "src/main/java", "src/main/kotlin")
+      maven.assertSources("m1", "src/main/java", "src/main/kotlin")
     }
   }
 
   @Test
   fun testImportSourceDirectory() = runBlocking {
 
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -497,14 +546,14 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
 
     readAction {
-      assertSources("project", "src/main/somedir")
+      maven.assertSources("project", "src/main/somedir")
     }
   }
 
   @Test
   fun testImportSourceDirectoryWithBasedirProp() = runBlocking {
 
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -517,14 +566,14 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
 
     readAction {
-      assertSources("project", "src/main/somedir")
+      maven.assertSources("project", "src/main/somedir")
     }
   }
 
   @Test
   fun testImportSourceDirectoryWithDefinedProp() = runBlocking {
 
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -539,7 +588,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
 
     readAction {
-      assertSources("project", "src/main/somedir")
+      maven.assertSources("project", "src/main/somedir")
     }
   }
 
@@ -547,7 +596,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
   @Test
   fun testImportSourceDirectoryWithUndefinedPropShouldNotToAddRootPathAsASource() = runBlocking {
 
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -559,13 +608,13 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
 
     readAction {
-      assertSources("project")
+      maven.assertSources("project")
     }
   }
 
   @Test
   fun testImportSourceDirectoryWithSystemVariable() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -575,16 +624,15 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                     </build>
                     """.trimIndent())
 
-    val mount = System.getenv("EEL_FIXTURE_MOUNT") ?: ""
     readAction {
-      val expectedValue = "$mount${System.getProperty("user.home")}/some/path"
-      assertContentRootSources("project", expectedValue, "")
+      val expectedValue = "${System.getProperty("user.home")}/some/path"
+      maven.assertContentRootSources("project", expectedValue, "")
     }
   }
 
   @Test
   fun `test cyclic dependency`() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                 <groupId>group</groupId>
                 <artifactId>parent</artifactId>
                 <version>1</version>
@@ -596,13 +644,13 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                 </parent>
                 """.trimIndent())
 
-    val projects = projectsManager.projects.map { it.mavenId.displayString }
+    val projects = maven.projectsManager.projects.map { it.mavenId.displayString }
     UsefulTestCase.assertSameElements(projects, "group:parent:1")
   }
 
   @Test
   fun `test import project if module path set to file`(): Unit = runBlocking {
-    createPomFile(createProjectSubDir("m1"), "dev-pom.xml", """
+    maven.createPomFile(maven.createProjectSubDir("m1"), "dev-pom.xml", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -611,7 +659,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         <artifactId>m1-dev</artifactId>
         """)
 
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -620,7 +668,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         <artifactId>m1</artifactId>
         """)
 
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -631,20 +679,20 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                     """)
 
 
-    assertModules("project", "m1-dev")
+    maven.assertModules("project", "m1-dev")
 
   }
 
 
   @Test
   fun `test import project if module in the same dir but different_pom_name and importing dev_pom as project`(): Unit = runBlocking {
-    createPomFile(projectRoot, "pom.xml", """
+    maven.createPomFile(maven.projectRoot, "pom.xml", """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
         <version>1</version>
         """)
 
-    projectPom = createPomFile(projectRoot, "dev_pom.xml", """
+    maven.projectPom = maven.createPomFile(maven.projectRoot, "dev_pom.xml", """
       <groupId>test</groupId>
       <artifactId>project-dev</artifactId>
       <version>1</version>
@@ -654,16 +702,16 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
       </modules>
 """)
 
-    importProjectAsync(projectPom)
+    maven.importProjectStaticSync(maven.projectPom)
 
 
-    assertModules("project-dev", "project")
+    maven.assertModules("project-dev", "project")
 
   }
 
   @Test
   fun `test import cyclic dependencies in modules`() = runBlocking {
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -679,7 +727,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         </dependencies>
         """)
 
-    createModulePom("m2", """
+    maven.createModulePom("m2", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -695,7 +743,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         </dependencies>
         """)
 
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -706,15 +754,15 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                     </modules>
                     """)
 
-    assertModules("project", "m1", "m2")
-    assertModuleModuleDeps("m1", "m2")
-    assertModuleModuleDeps("m2", "m1")
+    maven.assertModules("project", "m1", "m2")
+    maven.assertModuleModuleDeps("m1", "m2")
+    maven.assertModuleModuleDeps("m2", "m1")
 
   }
 
   @Test
   fun testImportTestScopeDependency() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -728,20 +776,20 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                     </dependencies>
                     """.trimIndent())
 
-    assertModules("project")
-    assertModuleLibDep("project", "Maven: somedep:somedep:4.0",
-                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0.jar!/",
-                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
-                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
+    maven.assertModules("project")
+    maven.assertModuleLibDep("project", "Maven: somedep:somedep:4.0",
+                       "jar://" + maven.repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
 
-    assertModuleLibDepScope("project", "Maven: somedep:somedep:4.0", DependencyScope.TEST)
+    maven.assertModuleLibDepScope("project", "Maven: somedep:somedep:4.0", DependencyScope.TEST)
 
-    assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
+    maven.assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
   }
 
   @Test
   fun testImportLibrariesDeclaredInParent() = runBlocking {
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -750,7 +798,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         <artifactId>m1</artifactId>
         """)
 
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -767,17 +815,17 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                     </dependencies>
                     """.trimIndent())
 
-    assertModules("project", "m1")
+    maven.assertModules("project", "m1")
 
-    assertModuleLibDep("m1", "Maven: somedep:somedep:4.0",
-                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0.jar!/",
-                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
-                       "jar://" + repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
+    maven.assertModuleLibDep("m1", "Maven: somedep:somedep:4.0",
+                       "jar://" + maven.repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
+                       "jar://" + maven.repositoryPathCanonical + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
   }
 
   @Test
   fun testReimportProjectsIfModulesDeclaredInDefaultProfile() = runBlocking {
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -785,7 +833,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         </parent>
         <artifactId>m1</artifactId>
         """)
-    createModulePom("m2", """
+    maven.createModulePom("m2", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -793,7 +841,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         </parent>
         <artifactId>m2</artifactId>
         """)
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -803,9 +851,9 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                         <module>m2</module>
                     </modules>
                     """.trimIndent())
-    assertModules("project", "m1", "m2")
+    maven.assertModules("project", "m1", "m2")
 
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -827,12 +875,12 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                       </profile>
                   </profiles>
                     """.trimIndent())
-    assertModules("project", "m1", "m2")
+    maven.assertModules("project", "m1", "m2")
   }
 
   @Test
   fun testImportProjectWithEmptyModulesShouldFinish() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -840,12 +888,12 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                         <module></module>
                     </modules>
                     """.trimIndent())
-    assertModules("project")
+    maven.assertModules("project")
   }
 
   @Test
   fun testImportProjectWithModules() = runBlocking {
-    createModulePom("m2", """
+    maven.createModulePom("m2", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -853,7 +901,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         </parent>
         <artifactId>m2</artifactId>
         """)
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -861,13 +909,13 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                         <module>m2</module>
                     </modules>
                     """.trimIndent())
-    assertModules("project", "m2")
+    maven.assertModules("project", "m2")
   }
 
   @Test
   fun testImportProjectWithSubprojects() = runBlocking {
-    assumeModel_4_1_0("for 4.1.0")
-    createModulePom("m2", """
+    maven.assumeModel_4_1_0("for 4.1.0")
+    maven.createModulePom("m2", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -875,7 +923,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         </parent>
         <artifactId>m2</artifactId>
         """)
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -883,13 +931,13 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                         <subproject>m2</subproject>
                     </subprojects>
                     """.trimIndent())
-    assertModules("project", "m2")
+    maven.assertModules("project", "m2")
   }
 
   @Test
   fun testImportProjectScanSubdirectories() = runBlocking {
-    assumeModel_4_1_0("for 4.1.0")
-    createModulePom("m2", """
+    maven.assumeModel_4_1_0("for 4.1.0")
+    maven.createModulePom("m2", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -897,7 +945,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         </parent>
         <artifactId>m2</artifactId>
         """)
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -905,19 +953,19 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         </parent>
         <artifactId>m1</artifactId>
         """)
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     <packaging>pom</packaging>
                     """.trimIndent())
-    assertModules("project", "m1", "m2")
+    maven.assertModules("project", "m1", "m2")
   }
 
   @Test
   fun testImportProjectDoesNotScanSubdirectoriesIfModel400() = runBlocking {
-    assumeModel_4_0_0("for 4.0.0")
-    createModulePom("m2", """
+    maven.assumeModel_4_0_0("for 4.0.0")
+    maven.createModulePom("m2", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -925,7 +973,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         </parent>
         <artifactId>m2</artifactId>
         """)
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -933,19 +981,19 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         </parent>
         <artifactId>m1</artifactId>
         """)
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     <packaging>pom</packaging>
                     """.trimIndent())
-    assertModules("project")
+    maven.assertModules("project")
   }
 
   @Test
   fun testImportProjectDoesNotScanSubdirectoriesIfEmptyTag() = runBlocking {
-    assumeModel_4_1_0("for 4.1.0")
-    createModulePom("m2", """
+    maven.assumeModel_4_1_0("for 4.1.0")
+    maven.createModulePom("m2", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -953,7 +1001,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         </parent>
         <artifactId>m2</artifactId>
         """)
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -961,19 +1009,19 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
         </parent>
         <artifactId>m1</artifactId>
         """)
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     <packaging>pom</packaging>
                     <subprojects/>
                     """.trimIndent())
-    assertModules("project")
+    maven.assertModules("project")
   }
 
   @Test
   fun testImportProjectWithCyclicAggregatorsModulesShouldFinish() = runBlocking {
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -984,7 +1032,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
             <module>../m2</module>
         </modules>            
         """)
-    createModulePom("m2", """
+    maven.createModulePom("m2", """
          <parent>
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -995,7 +1043,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
             <module>../m1</module>
         </modules>
         """)
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1005,7 +1053,7 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                         <module>m2</module>
                     </modules>
                     """.trimIndent())
-    assertModules("project", "m1", "m2")
+    maven.assertModules("project", "m1", "m2")
   }
 
 }

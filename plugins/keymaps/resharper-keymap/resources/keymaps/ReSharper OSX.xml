@@ -22,6 +22,7 @@
     <keyboard-shortcut first-keystroke="meta F12"/>
   </action>
   <action id="SearchEverywhere">
+    <keyboard-gesture-shortcut keystroke="shift SHIFT" modifier="dblClick"/>
     <keyboard-shortcut first-keystroke="meta N"/>
   </action>
   <action id="GotoChangedFile"/>

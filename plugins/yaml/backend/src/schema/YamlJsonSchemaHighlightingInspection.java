@@ -40,7 +40,9 @@ public class YamlJsonSchemaHighlightingInspection extends YamlJsonSchemaInspecti
       public void visitElement(@NotNull PsiElement element) {
         if (!roots.contains(element)) return;
         final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(element, object);
-        if (walker == null) return;
+        if (walker == null) {
+          return;
+        }
         String prefix = YAMLBundle.message("inspections.schema.validation.prefix") + " ";
         new JsonSchemaComplianceChecker(object, holder, walker, session, options,prefix).annotate(element);
       }

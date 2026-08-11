@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.Property;
 import com.jetbrains.python.psi.PyCallable;
@@ -22,10 +25,14 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.types.PyAnyType;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyClassicPropertyTest extends PyTestCase {
   protected PyClass myClass;
 
@@ -37,7 +44,7 @@ public class PyClassicPropertyTest extends PyTestCase {
 
   protected void prepareFile() {
     final PyFile file = (PyFile)myFixture.configureByFile("property/Classic.py");
-    myClass = file.getTopLevelClasses().get(0);
+    myClass = file.getTopLevelClasses().getFirst();
   }
 
   public void testV1() {
@@ -100,8 +107,10 @@ public class PyClassicPropertyTest extends PyTestCase {
     accessor = p.getGetter();
     assertFalse(accessor.isDefined());
 
-    final PyType codeInsightType = p.getType(null, TypeEvalContext.codeInsightFallback(myClass.getProject()));
-    assertNull(codeInsightType);
+    TypeEvalContext context = TypeEvalContext.codeInsightFallback(myClass.getProject());
+    PyClassType classType = (PyClassType)context.getType(myClass);
+    final PyType codeInsightType = p.getType(classType, context);
+    assertEquals(PyAnyType.getAny(), codeInsightType);
 
     accessor = p.getSetter();
     assertTrue(accessor.isDefined());

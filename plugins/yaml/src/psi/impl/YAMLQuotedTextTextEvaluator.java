@@ -5,7 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.yaml.lexer.YAMLGrammarCharUtil;
+import org.jetbrains.yaml.YamlGrammarCharUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,7 +40,8 @@ class YAMLQuotedTextTextEvaluator extends YamlScalarTextEvaluator<YAMLQuotedText
         lineStart++;
       }
       else {
-        while (lineStart < line.length() && YAMLGrammarCharUtil.isSpaceLike(line.charAt(lineStart))) {
+        while (lineStart < line.length()) {
+          if (!YamlGrammarCharUtil.isSpaceLike(line.charAt(lineStart))) break;
           lineStart++;
         }
       }
@@ -49,7 +50,8 @@ class YAMLQuotedTextTextEvaluator extends YamlScalarTextEvaluator<YAMLQuotedText
         lineEnd--;
       }
       else {
-        while (lineEnd > lineStart && YAMLGrammarCharUtil.isSpaceLike(line.charAt(lineEnd - 1))) {
+        while (lineEnd > lineStart) {
+          if (!YamlGrammarCharUtil.isSpaceLike(line.charAt(lineEnd - 1))) break;
           lineEnd--;
         }
       }

@@ -54,7 +54,7 @@ fun detectFormattingChanges(file: PsiFile): FormattingChanges? {
   val psiCopy = PsiFileFactory.getInstance(file.project).createFileFromText(
     file.name,
     file.language,
-    fileDoc.text,
+    fileDoc.immutableCharSequence,
     false,
     true,
     false,
@@ -83,8 +83,8 @@ fun detectFormattingChanges(file: PsiFile): FormattingChanges? {
     //CodeStyleManager.getInstance(file.project).reformat(psiCopy, true)
     reformat(psiCopy, copyDoc)
 
-    val preFormat = fileDoc.text
-    val postFormat = copyDoc.text
+    val preFormat = fileDoc.immutableCharSequence
+    val postFormat = copyDoc.immutableCharSequence
     val changes = diffWhitespace(preFormat,
                                  postFormat,
                                  WhiteSpaceFormattingStrategyFactory.getStrategy(baseLanguage))

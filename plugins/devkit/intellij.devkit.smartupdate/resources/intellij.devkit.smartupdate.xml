@@ -1,10 +1,16 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.smartUpdate"/>
     <module name="intellij.devkit.core"/>
-    <!-- endregion -->
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <smartUpdateStep implementation="org.jetbrains.idea.devkit.smartupdate.UpdateFromSourcesStep"/>

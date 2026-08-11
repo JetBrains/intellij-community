@@ -17,6 +17,8 @@ import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.util.Collection;
 
@@ -26,6 +28,8 @@ import java.util.Collection;
  *
  * @author Ilya.Kazakevich
  */
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPullUpViewInitializationInfo, PyPullUpView> {
 
 

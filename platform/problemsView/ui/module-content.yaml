@@ -1,0 +1,3 @@
+- name: lib/modules/intellij.platform.problemView.ui.jar
+  contentModules:
+  - name: intellij.platform.problemView.ui

@@ -13,18 +13,18 @@ public final class PyTypeVarTupleTypeImpl implements PyTypeVarTupleType {
   private final @Nullable PyQualifiedNameOwner myScopeOwner;
   private final @Nullable PyType myBound;
   private final @Nullable Ref<PyPositionalVariadicType> myDefaultType;
-  private final @NotNull PyTypeVarType.Variance myVariance;
+  private final @NotNull PyVariance myVariance;
   private final @Nullable PyQualifiedNameOwner myDeclarationElement;
 
   public PyTypeVarTupleTypeImpl(@NotNull String name) {
-    this(name, null, null, null, Variance.INVARIANT, null);
+    this(name, null, null, null, PyVariance.INVARIANT, null);
   }
 
   private PyTypeVarTupleTypeImpl(@NotNull String name,
                                  @Nullable PyQualifiedNameOwner declarationElement,
                                  @Nullable PyType bound,
                                  @Nullable Ref<PyPositionalVariadicType> defaultType,
-                                 @NotNull PyTypeVarType.Variance variance,
+                                 @NotNull PyVariance variance,
                                  @Nullable PyQualifiedNameOwner scopeOwner) {
     myName = name;
     myDeclarationElement = declarationElement;
@@ -50,7 +50,7 @@ public final class PyTypeVarTupleTypeImpl implements PyTypeVarTupleType {
     return new PyTypeVarTupleTypeImpl(myName, myDeclarationElement, myBound, defaultType, myVariance, myScopeOwner);
   }
 
-  public @NotNull PyTypeVarTupleTypeImpl withVariance(@NotNull PyTypeVarType.Variance variance) {
+  public @NotNull PyTypeVarTupleTypeImpl withVariance(@NotNull PyVariance variance) {
     return new PyTypeVarTupleTypeImpl(myName, myDeclarationElement, myBound, myDefaultType, variance, myScopeOwner);
   }
 
@@ -75,7 +75,7 @@ public final class PyTypeVarTupleTypeImpl implements PyTypeVarTupleType {
   }
 
   @Override
-  public @NotNull PyTypeVarType.Variance getVariance() {
+  public @NotNull PyVariance getVariance() {
     return myVariance;
   }
 

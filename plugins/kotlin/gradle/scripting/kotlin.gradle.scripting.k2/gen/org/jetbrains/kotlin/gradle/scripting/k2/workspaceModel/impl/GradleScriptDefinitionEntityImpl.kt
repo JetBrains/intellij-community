@@ -7,14 +7,12 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleScriptDefinitionEntity
@@ -29,13 +27,6 @@ import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptingHostConfigurati
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class GradleScriptDefinitionEntityImpl(private val dataSource: GradleScriptDefinitionEntityData) : GradleScriptDefinitionEntity,
     WorkspaceEntityBase(dataSource) {
-
-    private companion object {
-
-        private val connections = listOf<ConnectionId>()
-
-    }
-
     override val symbolicId: GradleScriptDefinitionEntityId = super.symbolicId
 
     override val definitionId: String
@@ -58,7 +49,6 @@ internal class GradleScriptDefinitionEntityImpl(private val dataSource: GradleSc
             readField("evaluationConfiguration")
             return dataSource.evaluationConfiguration
         }
-
     override val entitySource: EntitySource
         get() {
             readField("entitySource")
@@ -66,36 +56,15 @@ internal class GradleScriptDefinitionEntityImpl(private val dataSource: GradleSc
         }
 
     override fun connectionIdList(): List<ConnectionId> {
-        return connections
+        return emptyList()
     }
-
 
     internal class Builder(result: GradleScriptDefinitionEntityData?) :
         ModifiableWorkspaceEntityBase<GradleScriptDefinitionEntity, GradleScriptDefinitionEntityData>(result),
         GradleScriptDefinitionEntityBuilder {
         internal constructor() : this(GradleScriptDefinitionEntityData())
 
-        override fun applyToBuilder(builder: MutableEntityStorage) {
-            if (this.diff != null) {
-                if (existsInBuilder(builder)) {
-                    this.diff = builder
-                    return
-                } else {
-                    error("Entity GradleScriptDefinitionEntity is already created in a different builder")
-                }
-            }
-            this.diff = builder
-            addToBuilder()
-            this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-            this.currentEntityData = null
-// Process linked entities that are connected without a builder
-            processLinkedEntities(builder)
-            checkInitialization() // TODO uncomment and check failed tests
-        }
-
-        private fun checkInitialization() {
+        override fun checkInitialization() {
             val _diff = diff
             if (!getEntityData().isEntitySourceInitialized()) {
                 error("Field WorkspaceEntity#entitySource should be initialized")
@@ -112,7 +81,7 @@ internal class GradleScriptDefinitionEntityImpl(private val dataSource: GradleSc
         }
 
         override fun connectionIdList(): List<ConnectionId> {
-            return connections
+            return emptyList()
         }
 
         // Relabeling code, move information from dataSource to this builder
@@ -128,14 +97,12 @@ internal class GradleScriptDefinitionEntityImpl(private val dataSource: GradleSc
             updateChildToParentReferences(parents)
         }
 
-
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
             set(value) {
                 checkModificationAllowed()
                 getEntityData(true).entitySource = value
                 changedProperty.add("entitySource")
-
             }
         override var definitionId: String
             get() = getEntityData().definitionId
@@ -150,7 +117,6 @@ internal class GradleScriptDefinitionEntityImpl(private val dataSource: GradleSc
                 checkModificationAllowed()
                 getEntityData(true).compilationConfigurationData = value
                 changedProperty.add("compilationConfigurationData")
-
             }
         override var hostConfiguration: ScriptingHostConfigurationEntity
             get() = getEntityData().hostConfiguration
@@ -158,7 +124,6 @@ internal class GradleScriptDefinitionEntityImpl(private val dataSource: GradleSc
                 checkModificationAllowed()
                 getEntityData(true).hostConfiguration = value
                 changedProperty.add("hostConfiguration")
-
             }
         override var evaluationConfiguration: ScriptEvaluationConfigurationEntity?
             get() = getEntityData().evaluationConfiguration
@@ -166,12 +131,10 @@ internal class GradleScriptDefinitionEntityImpl(private val dataSource: GradleSc
                 checkModificationAllowed()
                 getEntityData(true).evaluationConfiguration = value
                 changedProperty.add("evaluationConfiguration")
-
             }
 
         override fun getEntityClass(): Class<GradleScriptDefinitionEntity> = GradleScriptDefinitionEntity::class.java
     }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -180,27 +143,12 @@ internal class GradleScriptDefinitionEntityData : WorkspaceEntityData<GradleScri
     lateinit var compilationConfigurationData: ScriptCompilationConfigurationData
     lateinit var hostConfiguration: ScriptingHostConfigurationEntity
     var evaluationConfiguration: ScriptEvaluationConfigurationEntity? = null
-
     internal fun isDefinitionIdInitialized(): Boolean = ::definitionId.isInitialized
     internal fun isCompilationConfigurationDataInitialized(): Boolean = ::compilationConfigurationData.isInitialized
     internal fun isHostConfigurationInitialized(): Boolean = ::hostConfiguration.isInitialized
-
-    override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<GradleScriptDefinitionEntity> {
-        val modifiable = GradleScriptDefinitionEntityImpl.Builder(null)
-        modifiable.diff = diff
-        modifiable.id = createEntityId()
-        return modifiable
-    }
-
-    override fun createEntity(snapshot: EntityStorageInstrumentation): GradleScriptDefinitionEntity {
-        val entityId = createEntityId()
-        return snapshot.initializeEntity(entityId) {
-            val entity = GradleScriptDefinitionEntityImpl(this)
-            entity.snapshot = snapshot
-            entity.id = entityId
-            entity
-        }
-    }
+    override fun newInstance(): GradleScriptDefinitionEntity = GradleScriptDefinitionEntityImpl(this)
+    override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<GradleScriptDefinitionEntity, *> =
+        GradleScriptDefinitionEntityImpl.Builder(null)
 
     override fun getMetadata(): EntityMetadata {
         return MetadataStorageImpl.getMetadataByTypeFqn("org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleScriptDefinitionEntity") as EntityMetadata

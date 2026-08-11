@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -41,7 +42,6 @@ import java.util.stream.Stream;
 public class IElementType {
   public static final IElementType[] EMPTY_ARRAY = new IElementType[0];
   public static final ArrayFactory<IElementType> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new IElementType[count];
-
   /**
    * Default enumeration predicate which matches all token types.
    *
@@ -54,7 +54,8 @@ public class IElementType {
 
   private static short size; // guarded by lock
   private static volatile IElementType @NotNull [] ourRegistry = EMPTY_ARRAY; // writes are guarded by lock
-  private static final @NonNls Object lock = new String("registry lock");
+  private static final @NonNls Object lock = ObjectUtils.sentinel("registry lock");
+  public static final IElementType NULL_ELEMENT_TYPE = new IElementType("NULL_ELEMENT_TYPE", Language.ANY, false);
 
   static {
     IElementType[] init = new IElementType[137];
@@ -253,7 +254,7 @@ public class IElementType {
    * @param p the predicate which should be matched by the element types.
    * @return the array of matching element types.
    */
-  public static IElementType @NotNull [] enumerate(@NotNull Predicate p) {
+  public static @NotNull IElementType @NotNull [] enumerate(@NotNull Predicate p) {
     List<IElementType> matches = new ArrayList<>();
     for (IElementType value : ourRegistry) {
       if (value != null && p.matches(value)) {

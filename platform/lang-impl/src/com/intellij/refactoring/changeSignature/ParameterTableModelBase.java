@@ -19,6 +19,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -231,6 +232,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
     }
   }
 
+  @ApiStatus.Internal
   protected static class AnyVarColumn<P extends ParameterInfo, TableItem extends ParameterTableModelItemBase<P>> extends ColumnInfoBase<P, TableItem, Boolean> {
 
     public AnyVarColumn() {

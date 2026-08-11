@@ -41,7 +41,7 @@ class ContentModulePluginDependencyValidatorTest {
     val plan = contentModulePlan(
       moduleName = "owner.content",
       writtenPluginDependencies = emptyList(),
-      allJpsPluginDependencies = setOf(PluginId("dep.plugin")),
+      requiredPluginDependencies = setOf(PluginId("dep.plugin")),
     )
 
     val model = testGenerationModel(graph)
@@ -71,7 +71,7 @@ class ContentModulePluginDependencyValidatorTest {
     val plan = contentModulePlan(
       moduleName = contentModuleName,
       writtenPluginDependencies = emptyList(),
-      allJpsPluginDependencies = setOf(PluginId("owner.plugin")),
+      requiredPluginDependencies = setOf(PluginId("owner.plugin")),
     )
 
     val model = testGenerationModel(graph)
@@ -99,7 +99,7 @@ class ContentModulePluginDependencyValidatorTest {
     val plan = contentModulePlan(
       moduleName = "owner.content",
       writtenPluginDependencies = emptyList(),
-      allJpsPluginDependencies = setOf(PluginId("dep.plugin")),
+      requiredPluginDependencies = setOf(PluginId("dep.plugin")),
     )
 
     val suppressionConfig = SuppressionConfig(
@@ -132,7 +132,7 @@ class ContentModulePluginDependencyValidatorTest {
     val plan = contentModulePlan(
       moduleName = "owner.content",
       writtenPluginDependencies = emptyList(),
-      allJpsPluginDependencies = setOf(PluginId("dep.plugin")),
+      requiredPluginDependencies = setOf(PluginId("dep.plugin")),
       suppressedPlugins = setOf(PluginId("dep.plugin")),
     )
 
@@ -176,7 +176,7 @@ class ContentModulePluginDependencyValidatorTest {
     val plan = contentModulePlan(
       moduleName = "owner.content",
       writtenPluginDependencies = emptyList(),
-      allJpsPluginDependencies = setOf(PluginId("dep.plugin")),
+      requiredPluginDependencies = setOf(PluginId("dep.plugin")),
     )
 
     val spec = TestPluginSpec(
@@ -218,7 +218,7 @@ class ContentModulePluginDependencyValidatorTest {
     val plan = contentModulePlan(
       moduleName = "shared.content",
       writtenPluginDependencies = emptyList(),
-      allJpsPluginDependencies = setOf(PluginId("dep.plugin")),
+      requiredPluginDependencies = setOf(PluginId("dep.plugin")),
     )
 
     val spec = TestPluginSpec(
@@ -256,7 +256,7 @@ class ContentModulePluginDependencyValidatorTest {
     val plan = contentModulePlan(
       moduleName = "intellij.platform.testFramework",
       writtenPluginDependencies = emptyList(),
-      allJpsPluginDependencies = setOf(PluginId("dep.plugin")),
+      requiredPluginDependencies = setOf(PluginId("dep.plugin")),
     )
 
     val sharedSet = moduleSet("testFrameworks") {
@@ -330,7 +330,7 @@ class ContentModulePluginDependencyValidatorTest {
     val plan = contentModulePlan(
       moduleName = "owner.content",
       writtenPluginDependencies = emptyList(),
-      allJpsPluginDependencies = setOf(PluginId("dep.plugin")),
+      requiredPluginDependencies = setOf(PluginId("dep.plugin")),
       suppressedPlugins = setOf(PluginId("dep.plugin")),
     )
 
@@ -351,7 +351,7 @@ class ContentModulePluginDependencyValidatorTest {
   private fun contentModulePlan(
     moduleName: String,
     writtenPluginDependencies: List<PluginId>,
-    allJpsPluginDependencies: Set<PluginId>,
+    requiredPluginDependencies: Set<PluginId>,
     suppressedPlugins: Set<PluginId> = emptySet(),
   ): ContentModuleDependencyPlan {
     return ContentModuleDependencyPlan(
@@ -365,7 +365,7 @@ class ContentModulePluginDependencyValidatorTest {
       existingXmlPluginDependencies = emptySet(),
       preserveExistingPluginDependencies = writtenPluginDependencies.toSet(),
       writtenPluginDependencies = writtenPluginDependencies,
-      allJpsPluginDependencies = allJpsPluginDependencies,
+      requiredPluginDependencies = requiredPluginDependencies,
       suppressedModules = emptySet(),
       suppressedPlugins = suppressedPlugins,
       suppressionUsages = emptyList(),

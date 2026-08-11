@@ -28,7 +28,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 private object ConnectionLoop {
-  val logger = logger<ConnectionLoop>()
+  val logger by lazy { logger<ConnectionLoop>() }
 }
 
 @ApiStatus.Internal

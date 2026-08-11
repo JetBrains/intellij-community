@@ -9,6 +9,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -33,7 +34,7 @@ public final class JavaAnnotationIndex extends StringStubIndexExtension<PsiAnnot
     return getAnnotations(s, project, scope);
   }
 
-  public Collection<PsiAnnotation> getAnnotations(
+  public @Unmodifiable Collection<PsiAnnotation> getAnnotations(
     @NotNull String shortName,
     @NotNull Project project,
     @NotNull GlobalSearchScope scope

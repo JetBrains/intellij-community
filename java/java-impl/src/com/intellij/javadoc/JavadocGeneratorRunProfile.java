@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javadoc;
 
 import com.intellij.analysis.AnalysisScope;
@@ -65,6 +65,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -130,8 +132,8 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {
           if (myConfiguration.OPEN_IN_BROWSER && event.getExitCode() == 0) {
-            File index = new File(myConfiguration.OUTPUT_DIRECTORY, INDEX_HTML);
-            if (index.exists()) {
+            var index = Path.of(myConfiguration.OUTPUT_DIRECTORY, INDEX_HTML);
+            if (Files.exists(index)) {
               BrowserUtil.browse(index);
             }
           }
@@ -280,7 +282,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
           }
         }
       }
-      
+
       File argsFile = createTempArgsFile();
       List<VirtualFile> sourceRoots = findSourceRoots(modules);
       List<VirtualFile> classRoots = findClassRoots(modules, jdk);

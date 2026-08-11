@@ -54,7 +54,6 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.JvmStat
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.MissingConstructorKeyword
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.ModifierFormForNonBuiltInSuspend
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.ModifierFormForNonBuiltInSuspendFunError
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.MultiFieldValueClassPrimaryConstructorDefaultParameter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.NoConstructor
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.NonConstValUsedInConstantExpression
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.NonModifierFormForBuiltInSuspend
@@ -111,7 +110,6 @@ val ignoreIncompleteModeDiagnostics: Set<KClass<out KaFirDiagnostic<out PsiEleme
     InlineClassConstructorWrongParametersSize::class,
     ValueClassEmptyConstructor::class,
     ValueClassConstructorNotFinalReadOnlyParameter::class,
-    MultiFieldValueClassPrimaryConstructorDefaultParameter::class,
     SecondaryConstructorWithBodyInsideValueClass::class,
     CallableReferenceToAnnotationConstructor::class,
     ExpectedClassConstructorDelegationCall::class,

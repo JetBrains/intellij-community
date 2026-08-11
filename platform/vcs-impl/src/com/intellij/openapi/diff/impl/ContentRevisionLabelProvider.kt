@@ -2,6 +2,7 @@
 package com.intellij.openapi.diff.impl
 
 import com.intellij.diff.impl.DiffEditorTitleDetails
+import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
@@ -33,7 +34,9 @@ internal class ContentRevisionLabel(
     text = title ?: ChangeDiffRequestProducer.getRevisionTitleOrEmpty(contentRevision)
     isEditable = false
     background = null
+    isOpaque = false
     border = null
+    foreground = DiffUtil.getDiffContentForeground()
     if (title != null) {
       caret = null
       highlighter = null

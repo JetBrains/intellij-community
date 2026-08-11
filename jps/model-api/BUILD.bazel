@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.jps.model` start
-
 jvm_library(
     name = "model",
     srcs = glob(
@@ -21,7 +20,7 @@ jvm_library(
         "//platform/util/multiplatform",
         "//platform/util/base/multiplatform",
         "//platform/util/base",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -42,6 +41,7 @@ jvm_library(
         "//platform/util/multiplatform:multiplatform_test_lib",
         "//platform/util/base/multiplatform:multiplatform_test_lib",
         "//platform/util/base:base_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.jps.model` end

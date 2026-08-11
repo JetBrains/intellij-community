@@ -25,9 +25,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
-    <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.symbol.light.classes" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.core" />
@@ -36,9 +37,9 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
-    <orderEntry type="library" name="kotlin-tooling-core" level="project" />
-    <orderEntry type="library" name="kotlin-gradle-plugin-idea-proto" level="project" />
-    <orderEntry type="library" name="kotlin-gradle-plugin-idea" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.tooling.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea.proto" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="library" name="Gradle" level="project" />
@@ -86,7 +87,7 @@
     <orderEntry type="module" module-name="intellij.gradle.java" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />
     <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.core" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" />

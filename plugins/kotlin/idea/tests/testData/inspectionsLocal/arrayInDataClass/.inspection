@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.ArrayInDataClassInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.declarations.ArrayInDataClassInspection

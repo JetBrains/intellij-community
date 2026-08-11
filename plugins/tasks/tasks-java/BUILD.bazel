@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.tasks.java` start
-
 jvm_library(
     name = "java",
     srcs = glob(
@@ -13,6 +12,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.tasks.java",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,

@@ -15,15 +15,15 @@ class EditorState : ObservableState() {
   @Suppress("ConstPropertyName")
   companion object {
     // for compatibility with Java
-    const val isInsertModePropertyName = "isInsertMode"
-    const val isColumnModePropertyName = "isColumnMode"
-    const val isOneLineModePropertyName = "isOneLineMode"
-    const val isEmbeddedIntoDialogWrapperPropertyName = "isEmbeddedIntoDialogWrapper"
-    const val verticalScrollBarOrientationPropertyName = "verticalScrollBarOrientation"
-    const val isStickySelectionPropertyName = "isStickySelection"
-    const val myForcedBackgroundPropertyName = "myForcedBackground"
-    const val myBorderPropertyName = "myBorder"
-    const val disableDefaultSoftWrapsCalculationPropertyName = "disableDefaultSoftWrapsCalculation"
+    const val isInsertModePropertyName: String = "isInsertMode"
+    const val isColumnModePropertyName: String = "isColumnMode"
+    const val isOneLineModePropertyName: String = "isOneLineMode"
+    const val isEmbeddedIntoDialogWrapperPropertyName: String = "isEmbeddedIntoDialogWrapper"
+    const val verticalScrollBarOrientationPropertyName: String = "verticalScrollBarOrientation"
+    const val isStickySelectionPropertyName: String = "isStickySelection"
+    const val myForcedBackgroundPropertyName: String = "myForcedBackground"
+    const val myBorderPropertyName: String = "myBorder"
+    const val disableDefaultSoftWrapsCalculationPropertyName: String = "disableDefaultSoftWrapsCalculation"
   }
 
 

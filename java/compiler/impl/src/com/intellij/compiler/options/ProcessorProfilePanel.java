@@ -104,7 +104,7 @@ public class ProcessorProfilePanel extends JPanel {
     myProcessorPathField = new TextFieldWithBrowseButton(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor();
+        final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor().withEnvironmentRestricted(true);
         final VirtualFile[] files = FileChooser.chooseFiles(descriptor, myProcessorPathField, myProject, null);
         if (files.length > 0) {
           myProcessorPathField.setText(getPathString(files));

@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  A$B.class
+  A.class
+End of files
+Compiling files:
+  java/common/topLevelDollarClassBecomesNested/a/A.java
+End of files
+Cleaning output files:
+  A$B.class
+  A.class
+  Client.class
+End of files
+Compiling files:
+  java/common/topLevelDollarClassBecomesNested/a/A.java
+  java/common/topLevelDollarClassBecomesNested/a/Client.java
+End of files
+------------------------------------------
+Exit code: ERROR

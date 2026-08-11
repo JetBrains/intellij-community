@@ -5,7 +5,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.listCellRenderer.LcrSeparator
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal class LcrSeparatorImpl: LcrSeparator {
 
   override var text: @NlsContexts.Separator String? = null

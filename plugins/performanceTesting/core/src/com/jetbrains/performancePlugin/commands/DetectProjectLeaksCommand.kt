@@ -18,10 +18,9 @@ import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.util.MemoryDumpHelper
-import com.intellij.util.SystemProperties
+import com.jetbrains.performancePlugin.LogDirHandler
 import org.jetbrains.annotations.NonNls
 import java.nio.channels.FileChannel
-import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -64,10 +63,10 @@ class DetectProjectLeaksCommand(text: String, line: Int) : PlaybackCommandCorout
   private fun analyzeSnapshot(openProjectsNames: List<String>) {
     val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
     val snapshotFileName = "close-project-$snapshotDate.hprof"
-    val snapshotPath = System.getProperty("memory.snapshots.path", SystemProperties.getUserHome()) + "/" + snapshotFileName
+    val snapshotPath = LogDirHandler.currentLogDir().resolve(snapshotFileName)
 
-    MemoryDumpHelper.captureMemoryDump(snapshotPath)
-    FileChannel.open(Paths.get(snapshotPath), StandardOpenOption.READ).use { channel ->
+    MemoryDumpHelper.captureMemoryDump(snapshotPath.toString())
+    FileChannel.open(snapshotPath, StandardOpenOption.READ).use { channel ->
       val analysis = HProfAnalysis(channel, SystemTempFilenameSupplier()) { analysisContext, listProvider, progressIndicator ->
         AnalyzeProjectGraph(analysisContext, listProvider, openProjectsNames).analyze(progressIndicator).mainReport.toString()
       }

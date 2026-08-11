@@ -10,7 +10,7 @@ import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.nullize
 import com.intellij.util.execution.ParametersListUtil
-import com.jediterm.core.input.InputEvent.CTRL_MASK
+import com.jediterm.core.input.InputEvent.CTRL_DOWN_MASK
 import com.jediterm.core.input.KeyEvent
 import com.jediterm.core.input.KeyEvent.VK_HOME
 import com.jediterm.terminal.Terminal
@@ -336,7 +336,7 @@ internal class ShellCommandExecutionManagerImpl(
           else -> {
             // Simulate pressing Ctrl+Home to delete all the characters from
             // the cursor's position to the beginning of a line.
-            terminal.getCodeForKey(VK_HOME, CTRL_MASK)!!.toString(Charsets.UTF_8)
+            terminal.getCodeForKey(VK_HOME, CTRL_DOWN_MASK)!!.toString(Charsets.UTF_8)
           }
         }
       }

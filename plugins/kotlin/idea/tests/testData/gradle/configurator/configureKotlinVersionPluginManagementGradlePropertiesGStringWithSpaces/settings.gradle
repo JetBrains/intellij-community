@@ -1,0 +1,7 @@
+pluginManagement {
+    plugins {
+        // Leading and trailing spaces in a Groovy GString are preserved,
+        // so the plugin version becomes " 2.3.10 " and plugin resolution FAILS.
+        id "org.jetbrains.kotlin.jvm" version " $kotlinPluginVersion "
+    }
+}

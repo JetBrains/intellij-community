@@ -39,7 +39,7 @@ abstract class GitBranchesTreeModel(
   protected var nameMatcher: MinusculeMatcher? = null
     private set
 
-  var isPrefixGrouping: Boolean by observable(GitVcsSettings.getInstance(project).branchSettings.isGroupingEnabled(GROUPING_BY_DIRECTORY)) { _, oldValue, newValue ->
+  var isDirectoryGrouping: Boolean by observable(GitVcsSettings.getInstance(project).branchSettings.isGroupingEnabled(GROUPING_BY_DIRECTORY)) { _, oldValue, newValue ->
     if (oldValue != newValue) {
       applyFilterAndRebuild(null)
     }
@@ -63,13 +63,18 @@ abstract class GitBranchesTreeModel(
     val recentBranches = getRecentBranches()
     actionsTree = LazyActionsHolder(project, actions, matcher)
     localBranchesTree = LazyRefsSubtreeHolder(
-      localBranches,
-      matcher,
-      ::isPrefixGrouping,
-      { recentBranches?.contains(it) ?: false },
-      refComparatorGetter = ::getRefComparator
+      unsortedRefs = localBranches,
+      matcher = matcher,
+      isDirectoryGrouping = ::isDirectoryGrouping,
+      exceptRefFilter = { recentBranches?.contains(it) ?: false },
+      refComparatorGetter = ::getRefComparator,
     )
-    remoteBranchesTree = LazyRefsSubtreeHolder(remoteBranches, matcher, ::isPrefixGrouping, refComparatorGetter = ::getRefComparator)
+    remoteBranchesTree = LazyRefsSubtreeHolder(
+      unsortedRefs = remoteBranches,
+      matcher = matcher,
+      isDirectoryGrouping = ::isDirectoryGrouping,
+      refComparatorGetter = ::getRefComparator,
+    )
     rebuildTags(matcher)
   }
 
@@ -119,9 +124,17 @@ abstract class GitBranchesTreeModel(
 
   private fun rebuildTags(matcher: MinusculeMatcher?) {
     tagsTree =
-      if (GitVcsSettings.getInstance(project).showTags())
-        LazyRefsSubtreeHolder(getTags(), matcher, ::isPrefixGrouping, refComparatorGetter = ::getRefComparator)
-      else LazyRefsSubtreeHolder.emptyHolder()
+      if (GitVcsSettings.getInstance(project).showTags()) {
+        LazyRefsSubtreeHolder(
+          unsortedRefs = getTags(),
+          matcher = matcher,
+          isDirectoryGrouping = ::isDirectoryGrouping,
+          refComparatorGetter = ::getRefComparator,
+        )
+      }
+      else {
+        LazyRefsSubtreeHolder.emptyHolder()
+      }
   }
 
   protected fun getRefComparator(affectedRepositories: List<GitRepositoryModel> = repositories): Comparator<GitReference> {
@@ -130,7 +143,7 @@ abstract class GitBranchesTreeModel(
     } then compareBy {
       !it.isFavoriteInAll(affectedRepositories)
     } then compareBy {
-      !(isPrefixGrouping && it.name.contains('/'))
+      !(isDirectoryGrouping && it.name.contains('/'))
     } then compareBy(GitReference.REFS_NAMES_COMPARATOR) { it.name }
   }
 

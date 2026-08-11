@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.ide.gdpr.Consent;
+import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -9,20 +11,20 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.util.system.OS;
-import org.jetbrains.annotations.ApiStatus;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
-@ApiStatus.Internal
-public class DefaultUpdateRequestParametersProvider implements UpdateRequestParametersProvider {
+final class DefaultUpdateRequestParametersProvider {
   private static final NullableLazyValue<String> ourMachineId =
     lazyNullable(() -> MachineIdManager.INSTANCE.getAnonymizedMachineId("JetBrainsUpdates"));
 
-  @Override
-  public void amendUpdateRequest(@NotNull Map<String, String> parameters) {
+  static void amendUpdateRequest(@NotNull Map<String, String> parameters) {
     parameters.put("build", ApplicationInfo.getInstance().getBuild().asString());
 
     var os = OS.CURRENT;
@@ -61,5 +63,19 @@ public class DefaultUpdateRequestParametersProvider implements UpdateRequestPara
         parameters.put("userBucket", userBucket);
       }
     }
+
+    int consent = consentBit(ConsentOptions.condUsageStatsConsent())
+                  | consentBit(ConsentOptions.condAiDataCollectionConsent()) << 1
+                  | consentBit(ConsentOptions.condEAAutoReportConsent()) << 2
+                  | consentBit(ConsentOptions.condEAPFeedbackConsent()) << 3;
+    parameters.put("consent", String.valueOf(consent));
+  }
+
+  private static int consentBit(@NotNull Predicate<Consent> predicate) {
+    Pair<List<Consent>, Boolean> result = ConsentOptions.getInstance().getConsents(predicate);
+    List<Consent> consents = result.getFirst();
+    boolean needsReconfirm = Boolean.TRUE.equals(result.getSecond());
+    Consent consent = consents.isEmpty() ? null : consents.getFirst();
+    return consent != null && consent.isAccepted() && !needsReconfirm ? 1 : 0;
   }
 }

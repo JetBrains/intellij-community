@@ -7,6 +7,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
+import com.intellij.psi.impl.java.stubs.PsiTypeParameterStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterStubImpl;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.stubs.LightStubElementFactory;
@@ -14,7 +15,7 @@ import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaTypeParameterStubFactory implements LightStubElementFactory<PsiTypeParameterStubImpl, PsiTypeParameter> {
+public class JavaTypeParameterStubFactory implements LightStubElementFactory<PsiTypeParameterStub, PsiTypeParameter> {
   @Override
   public @NotNull PsiTypeParameterStubImpl createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     final LighterASTNode id = LightTreeUtil.requiredChildOfType(tree, node, JavaTokenType.IDENTIFIER);
@@ -23,7 +24,7 @@ public class JavaTypeParameterStubFactory implements LightStubElementFactory<Psi
   }
 
   @Override
-  public PsiTypeParameter createPsi(@NotNull PsiTypeParameterStubImpl stub) {
+  public PsiTypeParameter createPsi(@NotNull PsiTypeParameterStub stub) {
     return JavaStubElementType.getFileStub(stub).getPsiFactory().createTypeParameter(stub);
   }
   

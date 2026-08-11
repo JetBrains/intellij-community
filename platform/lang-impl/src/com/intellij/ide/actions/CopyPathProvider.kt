@@ -117,6 +117,7 @@ class CopyAbsolutePathProvider : DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): @NlsSafe String? = virtualFile?.presentableUrl
 }
 
+@ApiStatus.Internal
 class CopyContentRootPathProvider : DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project,
                                 virtualFile: VirtualFile?,
@@ -138,6 +139,7 @@ class CopyFileWithLineNumberPathProvider : DumbAwareCopyPathProvider() {
   }
 }
 
+@ApiStatus.Internal
 class CopySourceRootPathProvider : DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): @NlsSafe String? =
     virtualFile?.let {

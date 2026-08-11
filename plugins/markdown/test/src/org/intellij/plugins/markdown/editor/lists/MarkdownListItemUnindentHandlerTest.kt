@@ -23,6 +23,25 @@ class MarkdownListItemUnindentHandlerTest: LightPlatformCodeInsightTestCase() {
   @Test
   fun testSubItemWithChildrenInBlockQuote() = doTest()
 
+  @Test
+  fun testChecklistSubItemWithSubItems() = doTest()
+
+  @Test
+  fun testChecklistSubItemWithSubItemsLargerIndent() = doTest()
+
+  @Test
+  fun testUnindentMovesOnlySelectedItems() = doTest()
+
+  @Test
+  fun testUnselectedItemKeepsNestingOnUnindent() = doTest()
+
+  @Test
+  fun testSubItemsOfUnselectedItemStayAligned() = doTest()
+
+  // a whole-line selection made with the mouse ends at the start of the next line
+  @Test
+  fun testItemAfterSelectionEndNotMoved() = doTest()
+
   private fun doTest() {
     val testName = getTestName(true)
     configureByFile("$testName.md")

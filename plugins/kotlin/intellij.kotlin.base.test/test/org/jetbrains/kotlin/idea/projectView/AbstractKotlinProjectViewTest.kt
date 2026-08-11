@@ -5,8 +5,10 @@ import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService.NestingRule
 import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.projectView.TestProjectTreeStructure
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.FilenameIndex
@@ -79,8 +81,7 @@ abstract class AbstractKotlinProjectViewTest : KotlinMultiFileHeavyProjectTestCa
         val navigationItem = psiBasedNode?.navigationItem
         val actualTree = PlatformTestUtil.print(/* tree = */ tree, /* withSelection = */ true)
 
-        assertEqualsToFile(
-            description = "The tree is different",
+        assertEqualsToFileWithSkippedLines(
             expected = File(testDataPath.substringBeforeLast('.') + ".txt"),
             actual = sanitizeTree(
                 "Node: $node\n" +
@@ -91,6 +92,91 @@ abstract class AbstractKotlinProjectViewTest : KotlinMultiFileHeavyProjectTestCa
                         actualTree
             )
         )
+    }
+
+    private fun assertEqualsToFileWithSkippedLines(expected: File, actual: String) {
+        if (!expected.exists()) {
+            assertEqualsToFile(Holder.TREE_IS_DIFFERENT, expected, actual)
+            return
+        }
+
+        val expectedText = expected.readText().normalizeForComparison()
+        val expectedLines = expectedText.linesForComparison()
+        if (expectedLines.none { it.isSkippedLinesMarker() }) {
+            assertEqualsToFile(Holder.TREE_IS_DIFFERENT, expected, actual)
+            return
+        }
+
+        val actualText = actual.normalizeForComparison()
+        if (!matchesWithSkippedLines(expectedLines, actualText.linesForComparison())) {
+            throw FileComparisonFailedError(
+                "${Holder.TREE_IS_DIFFERENT}\nExpected data line `${Holder.SKIPPED_LINES_MARKER}` matches zero or more actual lines.",
+                expectedText,
+                actualText,
+                expected.absolutePath
+            )
+        }
+    }
+
+    private fun String.normalizeForComparison(): String {
+        return Strings.convertLineSeparators(trim())
+            .splitToSequence('\n')
+            .joinToString(separator = "\n", transform = String::trimEnd)
+            .let { result -> if (result.endsWith('\n')) result else "$result\n" }
+    }
+
+    private fun String.linesForComparison(): List<String> = removeSuffix("\n").split('\n')
+
+    private fun String.isSkippedLinesMarker(): Boolean = trim() == Holder.SKIPPED_LINES_MARKER
+
+    private fun matchesWithSkippedLines(expectedLines: List<String>, actualLines: List<String>): Boolean {
+        val startsWithSkippedLines = expectedLines.firstOrNull()?.isSkippedLinesMarker() == true
+        val endsWithSkippedLines = expectedLines.lastOrNull()?.isSkippedLinesMarker() == true
+        val expectedSegments = buildList {
+            val currentSegment = mutableListOf<String>()
+            for (line in expectedLines) {
+                if (line.isSkippedLinesMarker()) {
+                    if (currentSegment.isNotEmpty()) {
+                        add(currentSegment.toList())
+                        currentSegment.clear()
+                    }
+                } else {
+                    currentSegment.add(line)
+                }
+            }
+            if (currentSegment.isNotEmpty()) {
+                add(currentSegment)
+            }
+        }
+        if (expectedSegments.isEmpty()) return true
+
+        val failedMatches = mutableSetOf<Pair<Int, Int>>()
+
+        fun matchSegment(segmentIndex: Int, actualStart: Int): Boolean {
+            if (!failedMatches.add(segmentIndex to actualStart)) return false
+            if (segmentIndex == expectedSegments.size) {
+                return endsWithSkippedLines || actualStart == actualLines.size
+            }
+
+            val expectedSegment = expectedSegments[segmentIndex]
+            if (segmentIndex == 0 && !startsWithSkippedLines) {
+                return actualLines.matchesAt(0, expectedSegment) && matchSegment(1, expectedSegment.size)
+            }
+
+            val maxStart = actualLines.size - expectedSegment.size
+            for (start in actualStart..maxStart) {
+                if (actualLines.matchesAt(start, expectedSegment) && matchSegment(segmentIndex + 1, start + expectedSegment.size)) {
+                    return true
+                }
+            }
+            return false
+        }
+
+        return matchSegment(0, 0)
+    }
+
+    private fun List<String>.matchesAt(start: Int, expectedSegment: List<String>): Boolean {
+        return start + expectedSegment.size <= size && expectedSegment.indices.all { index -> this[start + index] == expectedSegment[index] }
     }
 
     private fun filePath(element: Any?): String? {
@@ -136,6 +222,8 @@ abstract class AbstractKotlinProjectViewTest : KotlinMultiFileHeavyProjectTestCa
     }
 
     private object Holder {
+        const val TREE_IS_DIFFERENT: String = "The tree is different"
+        const val SKIPPED_LINES_MARKER: String = "..."
         val STDLIB_REGEX: Regex = Regex("(kotlin-stdlib.*?)(-\\d.*)([.]jar)")
     }
 }

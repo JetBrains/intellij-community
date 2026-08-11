@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -56,10 +56,7 @@ public final class EditContractIntention implements ModCommandAction {
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull ActionContext context) {
     PsiMethod method = getTargetMethod(context);
     PsiAnnotation annotation = method == null ? null : JavaMethodContractUtil.findContractAnnotation(method);
-    String text = "(\"...\")";
-    if (annotation != null) {
-      text = annotation.getParameterList().getText();
-    }
+    String text = annotation != null ? annotation.getParameterList().getText() : "(\"...\")";
     return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "@Contract()\nclass X{}",
                                                "@Contract" + text + "\nclass X{}");
   }
@@ -77,7 +74,7 @@ public final class EditContractIntention implements ModCommandAction {
   }
 
   private static class ContractData implements OptionContainer {
-    @NotNull private final PsiMethod method;
+    private final @NotNull PsiMethod method;
     @NlsSafe String contract = "";
     boolean impure = true;
     @NlsSafe String mutates = "";
@@ -126,11 +123,10 @@ public final class EditContractIntention implements ModCommandAction {
     var manager = ModCommandAwareExternalAnnotationsManager.getInstance(project);
     PsiAnnotation mockAnno = DefaultInferredAnnotationProvider.createContractAnnotation(
       project, !data.impure, data.contract, requireNonNullElse(data.mutates, ""));
-    if (mockAnno != null) {
-      return manager.annotateExternallyModCommand(method, JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT,
-                                                  mockAnno.getParameterList().getAttributes());
-    }
-    return manager.deannotateModCommand(List.of(method), List.of(JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT));
+    return mockAnno != null
+           ? manager.annotateExternallyModCommand(method, JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT,
+                                                  mockAnno.getParameterList().getAttributes())
+           : manager.deannotateModCommand(List.of(method), List.of(JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT));
   }
 
   private static @Nullable @NlsContexts.DialogMessage String getMutatesErrorMessage(String mutates, PsiMethod method) {

@@ -26,5 +26,7 @@ class ApiCheckTest {
   }
 
   @TestFactory
-  fun api(): List<DynamicTest> = performApiCheckTest(cs, MonorepoProjectStructure.communityProject.modules)
+  fun api(): List<DynamicTest> {
+    return performApiCheckTest(cs, ModulesToCheck.AllModules(MonorepoProjectStructure.communityProject))
+  }
 }

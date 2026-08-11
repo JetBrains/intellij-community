@@ -6,12 +6,13 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
-import com.jetbrains.python.packaging.management.ui.updatePackagesByNamesBackground
+import com.jetbrains.python.packaging.management.ui.updatePackagesBackground
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.requirements.getPythonSdk
 
-internal class UpdateAllRequirementQuickFix(val outdatedPyRequirements: Set<String>) : LocalQuickFix {
+internal class UpdateAllRequirementQuickFix(val outdatedPackages: List<PythonOutdatedPackage>) : LocalQuickFix {
   override fun getFamilyName() = PyBundle.message("QFIX.NAME.update.all.requirements")
   override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
   override fun startInWriteAction(): Boolean = false
@@ -22,11 +23,13 @@ internal class UpdateAllRequirementQuickFix(val outdatedPyRequirements: Set<Stri
     val manager = PythonPackageManagerUI.forSdk(project, sdk)
 
     PyPackageCoroutine.launch(project) {
-      val outdatedPackages = manager.manager.listOutdatedPackages()
-      val packagesForUpdate = outdatedPyRequirements.intersect(outdatedPackages.keys).ifEmpty {
-        return@launch
-      }
-      manager.updatePackagesByNamesBackground(packagesForUpdate.toList())
+      val actualOutdatedPackages = manager.manager.listOutdatedPackages()
+      val packagesForUpdate =
+        outdatedPackages
+          .filter { it.name in actualOutdatedPackages }
+          .ifEmpty { return@launch }
+
+      manager.updatePackagesBackground(packagesForUpdate)
     }
   }
 }

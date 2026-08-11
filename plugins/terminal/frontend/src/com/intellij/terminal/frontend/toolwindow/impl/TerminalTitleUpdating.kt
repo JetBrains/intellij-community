@@ -10,7 +10,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.flow.throttleLatest
-import com.intellij.terminal.frontend.session.TerminalTabsManager
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.ui.content.Content
 import kotlinx.coroutines.CoroutineScope
@@ -77,29 +76,7 @@ internal fun updateFileNameOnTitleChange(
   }
 }
 
-internal fun updateBackendTabNameOnTitleChange(
-  terminalView: TerminalView,
-  backendTabId: Int,
-  project: Project,
-  scope: CoroutineScope,
-) {
-  scope.launch {
-    terminalView.titleStateFlow()
-      .throttleLatest(TITLE_UPDATE_DELAY)
-      .collect {
-        // Save either user-defined or default tab name, ignore the application title.
-        // Because when the tab is restored, the saved application title won't relate to the new terminal session context.
-        val tabName = it.userDefinedName ?: it.defaultName ?: return@collect
-        TerminalTabsManager.getInstance(project).renameTerminalTab(
-          tabId = backendTabId,
-          newName = tabName,
-          isUserDefinedName = it.userDefinedName != null
-        )
-      }
-  }
-}
-
-private fun TerminalView.titleStateFlow(): Flow<TitleData> {
+internal fun TerminalView.titleStateFlow(): Flow<TitleData> {
   val terminalView = this
 
   val titleStateFlow: Flow<TitleData> = title.stateFlow(

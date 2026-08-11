@@ -63,11 +63,16 @@ public enum OS {
   }
 
   /// Checks whether the current OS version is at least the specified major and minor versions.
-  /// If the current OS version has only major number (e.g., Windows 11), pass `0` as the minor version.
+  /// If the current OS version has only a major number (e.g., Windows 11), pass `0` as the minor version.
   @SuppressWarnings("MethodMayBeStatic")
   public final boolean isAtLeast(int major, int minor) {
     if (major <= 0 || minor < 0) throw new IllegalArgumentException();
     return VersionHolder.VAL.compareTo(new Version(major, minor, 0)) >= 0;
+  }
+
+  /// Amends the given name with an executable file extension for the platform, if needed.
+  public final String getBinaryName(@NotNull String baseName) {
+    return baseName + (this == Windows ? ".exe" : "");
   }
 
   /// Returns an instance of [OsInfo] for the current OS.

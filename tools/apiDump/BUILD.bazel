@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.tools.apiDump` start
-
 jvm_library(
     name = "apiDump",
     srcs = glob(
@@ -17,7 +16,7 @@ jvm_library(
     exports = ["@lib//:kotlinx-bcv"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/asm-tools",
         "@lib//:kotlinx-bcv",
@@ -39,6 +38,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":apiDump",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/asm-tools:asm-tools_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     ],

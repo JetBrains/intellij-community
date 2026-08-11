@@ -9,6 +9,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -30,15 +31,15 @@ public final class JavaSuperClassNameOccurenceIndex extends StringStubIndexExten
    */
   @Deprecated
   @Override
-  public Collection<PsiReferenceList> get(@NotNull String baseClassName,
+  public @Unmodifiable Collection<PsiReferenceList> get(@NotNull String baseClassName,
                                           @NotNull Project project,
                                           @NotNull GlobalSearchScope scope) {
     return getOccurrences(baseClassName, project, scope);
   }
 
-  public @NotNull Collection<PsiReferenceList> getOccurrences(@NotNull String baseClassName,
-                                                              @NotNull Project project,
-                                                              @NotNull GlobalSearchScope scope) {
+  public @NotNull @Unmodifiable Collection<PsiReferenceList> getOccurrences(@NotNull String baseClassName,
+                                                                            @NotNull Project project,
+                                                                            @NotNull GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), baseClassName, project, new JavaSourceFilterScope(scope), PsiReferenceList.class);
   }
 

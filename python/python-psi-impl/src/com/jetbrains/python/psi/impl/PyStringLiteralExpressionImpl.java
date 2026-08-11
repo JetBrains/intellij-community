@@ -31,7 +31,9 @@ import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
@@ -146,7 +148,10 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl
                                                                           (file != null &&
                                                                            file.hasImportFromFuture(FutureFeature.UNICODE_LITERALS)));
       if (PyTokenTypes.UNICODE_NODES.contains(type)) {
-        return builtinCache.getUnicodeType(languageLevel);
+        var result = languageLevel.isPython2() || !PyLiteralType.inferLiteralTypeForLiteralExpressions()
+               ? builtinCache.getUnicodeType(languageLevel)
+               : PyLiteralType.stringLiteral(this, getStringValue());
+        return result == null ? PyAnyType.getUnknown() : result;
       }
     }
     return builtinCache.getStrType();

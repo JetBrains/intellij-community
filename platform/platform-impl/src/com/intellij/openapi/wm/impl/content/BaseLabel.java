@@ -13,6 +13,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WatermarkIcon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -180,6 +181,7 @@ public class BaseLabel extends JLabel {
     return accessibleContext;
   }
 
+  @ApiStatus.Internal
   protected class AccessibleBaseLabel extends AccessibleJLabel {
   }
 }

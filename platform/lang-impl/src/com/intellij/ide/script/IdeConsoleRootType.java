@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import javax.swing.Icon;
 /**
  * @author gregsh
  */
+@ApiStatus.Internal
 public final class IdeConsoleRootType extends com.intellij.execution.console.IdeConsoleRootType  {
   IdeConsoleRootType() {
     super("ide", LangBundle.message("root.type.ide.consoles"));

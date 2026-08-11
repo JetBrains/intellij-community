@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Experimental
-internal interface MarkdownExportProvider {
+interface MarkdownExportProvider {
   val formatDescription: MarkdownFileActionFormat
 
   fun exportFile(project: Project, mdFile: VirtualFile, outputFile: String)
@@ -27,9 +27,10 @@ internal interface MarkdownExportProvider {
     val allProviders: List<MarkdownExportProvider>
       get() = EP_NAME.extensionList
 
-    internal object NotificationIds {
-      const val exportSuccess = "markdown.export.success"
-      const val exportFailed = "markdown.export.failed"
+    @Suppress("ConstPropertyName")
+    object NotificationIds {
+      const val exportSuccess: String = "markdown.export.success"
+      const val exportFailed: String = "markdown.export.failed"
     }
   }
 }

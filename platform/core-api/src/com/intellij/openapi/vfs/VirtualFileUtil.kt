@@ -66,9 +66,16 @@ fun VirtualFile.isTooLargeForIntellijSense(): Boolean {
   return length > maxFileSize
 }
 
-fun VirtualFile.toNioPathOrNull(): Path? {
-  return runCatching { toNioPath() }.getOrNull()
-}
+/**
+ * Works as [VirtualFile.toNioPath] but returns `null` instead of throwing [UnsupportedOperationException]
+ */
+fun VirtualFile.toNioPathOrNull(): Path? =
+  try {
+    toNioPath()
+  }
+  catch (_: UnsupportedOperationException) {
+    null
+  }
 
 @RequiresReadLock
 fun VirtualFile.findDocument(): Document? {
@@ -216,6 +223,14 @@ fun VirtualFile.findOrCreateDirectory(relativePath: @SystemIndependent String): 
     """.trimMargin())
   }
   return directory
+}
+
+/**
+ * Find [VirtualFile] by [Path] without refreshing the file system.
+ */
+fun Path.findVirtualFileOrDirectory(): VirtualFile? {
+  val fileManager = VirtualFileManager.getInstance()
+  return fileManager.findFileByNioPath(this.normalize())
 }
 
 fun Path.refreshAndFindVirtualFileOrDirectory(): VirtualFile? {

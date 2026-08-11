@@ -79,8 +79,8 @@ internal class GitLabPushNotificationCustomizer(private val project: Project) : 
     projectMapping: GitLabProjectMapping,
   ): List<AnAction> {
     val accountManager = serviceAsync<GitLabAccountManager>()
-    val token = accountManager.findCredentials(account) ?: return emptyList()
-    val api = serviceAsync<GitLabApiManager>().getClient(account.server, token)
+    val credentials = accountManager.findCredentials(account) ?: return emptyList()
+    val api = serviceAsync<GitLabApiManager>().getClient(account.server, credentials.accessToken)
 
     if (!canCreateReview(api, projectFullPath, remoteBranch)) {
       return emptyList()

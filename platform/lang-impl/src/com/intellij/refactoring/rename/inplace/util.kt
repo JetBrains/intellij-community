@@ -50,6 +50,7 @@ internal fun deleteInplaceTemplateSegments(
   val hostDocumentContent = document.text
   val stateBefore: List<Pair<RangeMarker, String>> = templateSegmentRanges.map { range ->
     val marker = document.createRangeMarker(range).also {
+      it.isGreedyToLeft = true
       it.isGreedyToRight = true
     }
     val content = range.substring(hostDocumentContent)

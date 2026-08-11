@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GrModifierListUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers
@@ -95,6 +95,7 @@ private fun GrTypeDefinition.isAbstractClass(): Boolean {
 }
 
 private fun GrModifierList.isFinal(): Boolean {
+  if (hasExplicitModifier("val")) return true;
   return when (val owner = parent) {
     is GrTypeDefinition -> owner.isFinalClass()
     is GrVariableDeclaration -> owner.isFinalField(this)

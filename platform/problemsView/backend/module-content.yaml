@@ -1,3 +1,3 @@
-- name: dist.all/lib/intellij.platform.problemsView.backend.jar
+- name: dist.all/lib/intellij.platform.problemView.backend.jar
   modules:
-  - name: intellij.platform.problemsView.backend
+  - name: intellij.platform.problemView.backend

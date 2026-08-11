@@ -3,8 +3,12 @@ package com.jetbrains.python.quickFixes
 
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyQuickFixTestCase
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.inspections.PyPandasTruthValueIsAmbiguousInspection
 
+@Subsystems.QuickFixes
+@Layers.Functional
 class PyPandasTruthValueIsAmbiguousQuickFixTest : PyQuickFixTestCase() {
   private val emptinessQuickFixName = PyPsiBundle.message("QFIX.pandas.truth.value.is.ambiguous.emptiness.check")
   private val noneQuickFixName = PyPsiBundle.message("QFIX.pandas.truth.value.is.ambiguous.none.check")

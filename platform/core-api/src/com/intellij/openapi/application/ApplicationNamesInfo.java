@@ -148,7 +148,8 @@ public final class ApplicationNamesInfo {
     assert names != null;
     myProductName = names.getAttributeValue("product");
     myFullProductName = names.getAttributeValue("fullname", myProductName);
-    myEditionName = names.getAttributeValue("edition");
+    String editionName = names.getAttributeValue("edition");
+    myEditionName = editionName == null || editionName.isEmpty() ? null : editionName;
     myScriptName = names.getAttributeValue("script");
     myMotto = names.getAttributeValue("motto", "The Drive to Develop");
   }

@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
@@ -29,6 +32,8 @@ import com.jetbrains.python.psi.LanguageLevel;
 
 import java.util.List;
 
+@Subsystems.Editing
+@Layers.Functional
 public class PySmartEnterTest extends PyTestCase {
   private static List<SmartEnterProcessor> getSmartProcessors(Language language) {
     return SmartEnterProcessors.INSTANCE.forKey(language);

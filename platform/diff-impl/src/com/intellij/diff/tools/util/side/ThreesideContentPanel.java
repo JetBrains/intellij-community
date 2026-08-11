@@ -28,6 +28,7 @@ public class ThreesideContentPanel extends JPanel {
   public ThreesideContentPanel(@NotNull List<? extends JComponent> contents) {
     super(new BorderLayout());
     assert contents.size() == 3;
+    setOpaque(false);
 
     myPanels = ContainerUtil.map(contents, it -> new DiffContentPanel(it));
     DiffContentLayoutPanel.syncTitleHeights(myPanels);

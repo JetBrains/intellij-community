@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector.components;
 
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.InternalActionsBundle;
+import com.intellij.internal.inspector.IdeUiInspectorBundle;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorAction;
 import com.intellij.internal.inspector.UiInspectorCustomComponentChildProvider;
@@ -29,8 +31,10 @@ import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -46,6 +50,7 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.InlineBanner;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBThinOverlappingScrollBar;
 import com.intellij.ui.components.panels.Wrapper;
@@ -59,6 +64,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -71,6 +77,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.JSeparator;
@@ -99,6 +106,7 @@ import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -206,6 +214,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
     actions.add(myShowAccessibilityIssuesAction);
     actions.addSeparator();
     actions.add(new ToggleAltHoverAction());
+    actions.addSeparator();
+    actions.add(new ExportTreeAction());
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CONTEXT_TOOLBAR, actions, true);
     toolbar.setTargetComponent(getRootPane());
@@ -456,6 +466,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     uninstallAltKeyListener();
     DimensionService.getInstance().setSize(getDimensionServiceKey(), getSize(), null);
     DimensionService.getInstance().setLocation(getDimensionServiceKey(), getLocation(), null);
+    Disposer.dispose(myInspector);
     Disposer.dispose(myInspectorTable);
     super.dispose();
     // remove this object from the Disposer hierarchy manually here because this method could be called from Swing when it e.g., hides the popup and calls Window.dispose()
@@ -778,11 +789,11 @@ public final class InspectorWindow extends JDialog implements Disposable {
     private boolean showAccessibilityIssues;
 
     private ToggleShowAccessibilityIssuesAction() {
-      super(InternalActionsBundle.messagePointer("action.Anonymous.text.ShowAccessibilityIssues"));
+      super(IdeUiInspectorBundle.messagePointer("action.Anonymous.text.ShowAccessibilityIssues"));
       showAccessibilityIssues =
         isAccessibilityAuditEnabled && PropertiesComponent.getInstance().getBoolean(SHOW_ACCESSIBILITY_ISSUES_KEY, false);
       getTemplatePresentation().setDescription(
-        InternalActionsBundle.messagePointer("action.Anonymous.description.ShowAccessibilityIssues"));
+        IdeUiInspectorBundle.messagePointer("action.Anonymous.description.ShowAccessibilityIssues"));
     }
 
     @Override
@@ -821,7 +832,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
   private final class RefreshAction extends MyTextAction {
     private RefreshAction() {
-      super(InternalActionsBundle.messagePointer("action.Anonymous.text.refresh"));
+      super(IdeUiInspectorBundle.messagePointer("action.Anonymous.text.refresh"));
     }
 
     @Override
@@ -842,7 +853,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
   private final class ToggleAccessibleAction extends MyTextAction implements Toggleable {
     private ToggleAccessibleAction() {
-      super(InternalActionsBundle.messagePointer("action.Anonymous.text.Accessible"));
+      super(IdeUiInspectorBundle.messagePointer("action.Anonymous.text.Accessible"));
     }
 
     @Override
@@ -869,7 +880,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
   private final class ToggleThemeColorPickerAction extends MyTextAction implements Toggleable {
     private ToggleThemeColorPickerAction() {
-      super(InternalActionsBundle.messagePointer("action.Anonymous.text.colorPicker"));
+      super(IdeUiInspectorBundle.messagePointer("action.Anonymous.text.colorPicker"));
     }
 
     @Override
@@ -892,8 +903,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
     private static final String ALT_HOVER_ENABLED_KEY = "ui.inspector.alt.hover.enabled.key";
 
     private ToggleAltHoverAction() {
-      super(InternalActionsBundle.messagePointer("action.Anonymous.text.AltHover"));
-      getTemplatePresentation().setDescription(InternalActionsBundle.messagePointer("action.Anonymous.description.AltHover"));
+      super(IdeUiInspectorBundle.messagePointer("action.Anonymous.text.AltHover"));
+      getTemplatePresentation().setDescription(IdeUiInspectorBundle.messagePointer("action.Anonymous.description.AltHover"));
       myIsAltHoverEnabled = PropertiesComponent.getInstance().getBoolean(ALT_HOVER_ENABLED_KEY, true);
     }
 
@@ -922,7 +933,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
   private final class ShowDataContextAction extends MyTextAction {
     private ShowDataContextAction() {
-      super(InternalActionsBundle.messagePointer("action.Anonymous.text.DataContext"));
+      super(IdeUiInspectorBundle.messagePointer("action.Anonymous.text.DataContext"));
     }
 
     @Override
@@ -942,6 +953,39 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
+  private final class ExportTreeAction extends DumbAwareAction {
+    private ExportTreeAction() {
+      super(
+        IdeUiInspectorBundle.messagePointer("action.Anonymous.text.ExportTree"),
+        IdeUiInspectorBundle.messagePointer("action.Anonymous.description.ExportTree"),
+        AllIcons.Actions.Copy
+      );
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      String text = myHierarchyTree.exportTreeAsJson();
+      if (text.isEmpty()) return;
+      CopyPasteManager.getInstance().setContents(new TextTransferable(text));
+      JLabel hint = new JLabel(IdeUiInspectorBundle.message("ui.inspector.tree.exported.hint"));
+      // The hint is shown in a bare popup, so it has to pad itself away from the popup border.
+      hint.setBorder(JBUI.Borders.empty(4, 8));
+      HintManager.getInstance().showHint(
+        hint, getHintPoint(e),
+        HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_OTHER_HINT, 3000);
+    }
+
+    /** Right below the toolbar button that was pressed, or the middle of the inspector window if there is no button to anchor to. */
+    private @NotNull RelativePoint getHintPoint(@NotNull AnActionEvent e) {
+      InputEvent inputEvent = e.getInputEvent();
+      Component source = inputEvent == null ? null : inputEvent.getComponent();
+      if (source instanceof JComponent jSource && jSource.isShowing()) {
+        return RelativePoint.getSouthWestOf(jSource);
+      }
+      return RelativePoint.getCenterOf(getRootPane());
+    }
+  }
+
   private abstract static class MyTextAction extends IconWithTextAction implements DumbAware {
     private MyTextAction(Supplier<String> text) {
       super(text);
@@ -953,7 +997,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
       super(true);
       Presentation presentation = getTemplatePresentation();
       presentation.setText(ActionsBundle.messagePointer("action.EditSource.text"));
-      presentation.setDescription(InternalActionsBundle.messagePointer("action.Anonymous.description.open.definition"));
+      presentation.setDescription(IdeUiInspectorBundle.messagePointer("action.Anonymous.description.open.definition"));
       presentation.putClientProperty(SHORTCUT_SHOULD_SHOWN, true);
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.execution.wsl.WSLDistribution
@@ -33,6 +33,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesException
 import com.intellij.platform.eel.LocalEelApi
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.getPath
@@ -42,8 +43,8 @@ import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
-import com.intellij.platform.eel.provider.utils.EelPathUtils.getActualPath
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
+import com.intellij.platform.eel.provider.utils.impl.getActualWslPath
 import com.intellij.platform.eel.where
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -402,15 +403,28 @@ object MavenEelUtil {
     ApplicationManager.getApplication().invokeLater {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(
         {
-          var needReset = false
+          // The JDK now configured for the maven importer. If it cannot be resolved, fall back to the
+          // conservative behavior and restart every connector of the project.
+          val importerJdk = try {
+            MavenUtil.getJdkForImporter(project)
+          }
+          catch (e: Exception) {
+            MavenLog.LOG.warn("Cannot resolve JDK for importer, restarting all maven connectors of $project", e)
+            null
+          }
 
-          MavenServerManager.getInstance().getAllConnectors().forEach {
-            if (it.project == project) {
-              needReset = true
-              MavenServerManager.getInstance().shutdownConnector(it, true)
+          var hadProjectConnector = false
+          MavenServerManager.getInstance().getAllConnectors().forEach { connector ->
+            if (connector.project != project) return@forEach
+            hadProjectConnector = true
+            // Only restart a connector whose JDK actually differs from the one now configured for the
+            // importer. A connector already bound to the correct JDK must not be torn down: shutting it
+            // down races with an in-flight startup and kills the server mid-handshake.
+            if (importerJdk == null || connector.jdk.name != importerJdk.name) {
+              MavenServerManager.getInstance().shutdownConnector(connector, true)
             }
           }
-          if (!needReset) {
+          if (!hadProjectConnector) {
             MavenProjectsManager.getInstance(project).embeddersManager.reset()
           }
 
@@ -535,17 +549,18 @@ object MavenEelUtil {
   private fun EelApi.tryMavenFromPath(): MavenInSpecificPath? {
     val eelPath = runBlockingMaybeCancellable { exec.where("mvn") } ?: return null
     val mavenHome = eelPath.parent?.parent ?: return null
-    return fs.tryMavenRoot(mavenHome)
+    return tryMavenRoot(mavenHome)
   }
 
   private fun EelFileSystemApi.tryMavenRoot(path: String): MavenInSpecificPath? {
     return tryMavenRoot(getPath(path))
   }
 
-  private fun EelFileSystemApi.tryMavenRoot(path: EelPath): MavenInSpecificPath? {
+  private fun tryMavenRoot(path: EelPath): MavenInSpecificPath? {
     val home = path.asNioPath()
     // we want to prevent paths like "\\wsl.localhost\Ubuntu\mnt\c\Something\something" from being leaked into the execution
-    if (isValidMavenHome(home) && home == getActualPath(home)) {
+    @OptIn(EelDelicateApi::class)
+    if (isValidMavenHome(home) && home == getActualWslPath(home)) {
       MavenLog.LOG.debug("Maven home found at $path")
       return MavenInSpecificPath(home)
     }

@@ -1,5 +1,8 @@
 <idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.joni"/>
     <module name="intellij.textmate.core"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

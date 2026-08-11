@@ -1,7 +1,7 @@
 // "Create property '!u00A0'" "true"
 // ERROR: Property must be initialized
-// K2_ERROR: Unresolved reference '!u00A0'.
-// K2_AFTER_ERROR: Property must be initialized.
+// K2_AFTER_ERROR: MUST_BE_INITIALIZED
+// K2_ERROR: UNRESOLVED_REFERENCE
 fun test() {
     val t: Int = <caret>`!u00A0`
 }

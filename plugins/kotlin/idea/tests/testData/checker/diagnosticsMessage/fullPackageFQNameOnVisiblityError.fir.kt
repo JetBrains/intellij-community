@@ -2,5 +2,5 @@
 
 package a.b
 
-@kotlin.internal.<error descr="[INVISIBLE_REFERENCE] Symbol kotlin/internal/InlineOnly.InlineOnly is invisible">InlineOnly</error>
+@kotlin.internal.<error descr="[INVISIBLE_REFERENCE]">InlineOnly</error>
 inline fun foo() {}

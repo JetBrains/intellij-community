@@ -19,7 +19,18 @@ internal class JsonSchemaIdValidationRule : CustomValidationRule() {
   override fun getRuleId(): String = "json_schema_id_rule"
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
-    return if (AllowListHolder.allowedNames.contains(data)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
+    val normalizedData = if (data.startsWith(CURRENT_SCHEMA_STORE_PREFIX)) {
+      LEGACY_SCHEMA_STORE_PREFIX + data.removePrefix(CURRENT_SCHEMA_STORE_PREFIX)
+    }
+    else {
+      data
+    }
+    return if (AllowListHolder.allowedNames.contains(normalizedData)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
+  }
+
+  private companion object {
+    const val CURRENT_SCHEMA_STORE_PREFIX = "https://www.schemastore.org/"
+    const val LEGACY_SCHEMA_STORE_PREFIX = "https://json.schemastore.org/"
   }
 
   object AllowListHolder {

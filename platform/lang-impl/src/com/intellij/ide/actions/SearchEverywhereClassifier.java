@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import java.util.Objects;
  * @author Philipp Smorygo
  */
 public interface SearchEverywhereClassifier {
+  @ApiStatus.Internal
   final class EP_Manager {
     private EP_Manager() {}
 

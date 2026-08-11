@@ -70,6 +70,7 @@ private val ourPatternToDetectLinesAndColumns: Pattern = Pattern.compile(
 
 internal val patternToDetectAnonymousClasses: Pattern = Pattern.compile("([.\\w]+)((\\$\\d+)*(\\$)?)")
 
+@Deprecated("The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere (com.intellij.platform.searchEverywhere).")
 abstract class AbstractGotoSEContributor @ApiStatus.Internal protected constructor(
   event: AnActionEvent,
   @ApiStatus.Internal val contributorModules: List<SearchEverywhereContributorModule>?
@@ -122,6 +123,7 @@ abstract class AbstractGotoSEContributor @ApiStatus.Internal protected construct
   protected val project: Project
     get() = myProject
 
+  @ApiStatus.Internal
   companion object {
     @JvmStatic
     fun createContext(project: Project?, psiContext: SmartPsiElementPointer<PsiElement?>?): DataContext {
@@ -346,25 +348,35 @@ abstract class AbstractGotoSEContributor @ApiStatus.Internal protected construct
         })
       }
 
+      val diagEmittedCount = java.util.concurrent.atomic.AtomicInteger(0)
       when (provider) {
         is ChooseByNameInScopeItemProvider -> {
           val parameters = FindSymbolParameters.wrap(pattern, scope)
           provider.filterElementsWithWeights(viewModel, parameters, progressIndicator
           ) { item: FoundItemDescriptor<*> ->
+            diagEmittedCount.incrementAndGet()
             processElement(progressIndicator, consumer, model, item.item, item.weight)
           }
         }
         is ChooseByNameWeightedItemProvider -> {
           provider.filterElementsWithWeights(viewModel, pattern, everywhere, progressIndicator
           ) { item: FoundItemDescriptor<*> ->
+            diagEmittedCount.incrementAndGet()
             processElement(progressIndicator, consumer, model, item.item, item.weight)
           }
         }
         else -> {
           provider.filterElements(viewModel, pattern, everywhere, progressIndicator) { element: Any ->
+            diagEmittedCount.incrementAndGet()
             processElement(progressIndicator, consumer, model, element, getElementPriority(element, pattern))
           }
         }
+      }
+      if (LOG.isDebugEnabled) {
+        LOG.debug(
+          "[symbol-se-diag] $searchProviderId finished: pattern='$pattern'," +
+          " scope='${scope.displayName}', everywhere=$everywhere, elementsFromModel=${diagEmittedCount.get()}"
+        )
       }
     }
 
@@ -550,4 +562,3 @@ private fun getSelectedScopes(project: Project): MutableMap<String, String?> {
   }
   return map
 }
-

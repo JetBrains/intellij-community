@@ -168,4 +168,14 @@ public class YamlByJsonSchemaCompletionTest extends JsonBySchemaCompletionBaseTe
     @Language("JSON") String schema = "{\"properties\": {\"Identifier\": {}, \"Baa\": {\"properties\": {\"Identifier\": {}}}}}";
     testBySchema(schema, "Identifier: \"123\"\nBaa:\n  <caret>", "someFile.yml", "Identifier");
   }
+
+  public void testNoCompletionInsideComment() throws Exception {
+    // IJPL-249582: typing inside a YAML comment must not trigger JSON-schema key completion.
+    @Language("JSON") String schema = "{\"properties\": {\"author\": {}, \"branding\": {}, \"name\": {}}}";
+    // Full-line comment, with and without a leading space after '#'
+    testBySchema(schema, "name: CI\n# <caret>", "someFile.yml");
+    testBySchema(schema, "name: CI\n#<caret>", "someFile.yml");
+    // Trailing comment on a key-value line
+    testBySchema(schema, "name: CI # <caret>", "someFile.yml");
+  }
 }

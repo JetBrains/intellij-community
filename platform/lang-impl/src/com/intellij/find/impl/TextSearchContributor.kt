@@ -128,9 +128,15 @@ open class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEvery
 
     val presentation = FindInProjectUtil.setupProcessPresentation(UsageViewPresentation())
 
+    // Every produced FindResultUsageInfo keeps a reference to this model and re-runs the search through it in
+    // isValid(). `model` is the shared find-in-project model, which anyone may mutate once this search is over -
+    // in particular SeTextItemsProvider restores it after All tab search - and the results would then all
+    // report themselves as invalid and be dropped by the usage view (IJPL-251370). Search through a snapshot.
+    val searchModel = model.clone()
+
     val scope = GlobalSearchScope.projectScope(project) // TODO use scope from model ?
     val recentItemRef = ThreadLocal<Reference<SearchEverywhereItem>>()
-    FindInProjectUtil.findUsages(model, project, indicator, presentation, emptySet()) {
+    FindInProjectUtil.findUsages(searchModel, project, indicator, presentation, emptySet()) {
       val usage = UsageInfo2UsageAdapter.CONVERTER.`fun`(it) as UsageInfo2UsageAdapter
       indicator.checkCanceled()
 

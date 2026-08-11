@@ -22,6 +22,7 @@ import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.installSuvorovProgress
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
@@ -49,12 +50,14 @@ import com.intellij.util.cancelOnDispose
 import com.intellij.util.ref.DebugReflectionUtil
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
+import io.ktor.utils.io.CancellationException
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
@@ -72,6 +75,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.Collections
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -97,6 +101,16 @@ class PlatformUtilitiesTest {
         assertThat(application.isWriteIntentLockAcquired).isFalse()
         assertThat(TransactionGuard.getInstance().isWritingAllowed).isTrue()
       }, ModalityState.nonModal())
+  }
+
+  @Test
+  fun `invokeAndWaitIfNeeded rethrows PCE from runnable`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    assertThrows<ProcessCanceledException> {
+      invokeAndWaitIfNeeded {
+        assertThat(EDT.isCurrentThreadEdt()).isTrue
+        throw ProcessCanceledException()
+      }
+    }
   }
 
   @Test
@@ -302,7 +316,30 @@ class PlatformUtilitiesTest {
         }
       }
       assertThat(exception.message).isEqualTo("custom message")
+      assertThat(exception.suppressed.single()).hasMessageContaining("breaks atomicity")
     }
+  }
+
+  @Test
+  fun `cancellation of a background WA with transferred write action rethrows exceptions`(): Unit = concurrencyTest {
+    val waJob = launch {
+      backgroundWriteAction {
+        InternalThreading.invokeAndWaitWithTransferredWriteAction {
+          checkpoint(1)
+          while (true) {
+            try {
+              Cancellation.ensureActive()
+            } catch (e: CancellationException) {
+              Thread.sleep(2)
+              throw e
+            }
+          }
+        }
+      }
+    }
+    checkpoint(2)
+    waJob.cancel(CancellationException("test cancellation"))
+    waJob.join()
   }
 
   class MyElement : AbstractCoroutineContextElement(MyElement) {

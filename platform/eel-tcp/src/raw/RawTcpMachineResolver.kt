@@ -40,7 +40,7 @@ internal class RawTcpMachineResolver(coroutineScope: CoroutineScope) : EelMachin
       deploy = deploy,
       coroutineScope = @OptIn(EelDelicateApi::class) IjentScope(
         coroutineScope,
-        coroutineScope.s.childScope("Scope for ${RawTcpEelMachine::class.simpleName} $deploy")
+        coroutineScope.s.childScope("Scope for ${RawTcpEelMachine::class.simpleName} $deploy", context = IjentScope.IjentContext())
       ),
     )
   }

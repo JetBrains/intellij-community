@@ -37,6 +37,7 @@ import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
 import java.util.Objects
+import javax.accessibility.AccessibleContext
 import javax.swing.Icon
 import javax.swing.JLabel
 import javax.swing.JList
@@ -296,9 +297,9 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
     main.size = Dimension(list.width - extra.width - mnemonic.width - list.insets.left - list.insets.right - splitIconWidth, main.height)
     value.prepareMainRenderer(main, selected)
     applySpeedSearchHighlighting(switcher, main, false, selected)
-    panel.accessibleContext.accessibleName = value.mainText
-    panel.accessibleContext.accessibleDescription =
-      AccessibleContextUtil.combineAccessibleStrings(value.statusText, ", ", value.shortcutText)
+    panel.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, value.mainText)
+    panel.putClientProperty(AccessibleContext.ACCESSIBLE_DESCRIPTION_PROPERTY,
+                            AccessibleContextUtil.combineAccessibleStrings(value.statusText, ", ", value.shortcutText))
     return panel
   }
 }

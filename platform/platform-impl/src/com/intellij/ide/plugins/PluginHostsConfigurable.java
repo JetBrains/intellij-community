@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -213,7 +213,7 @@ public final class PluginHostsConfigurable implements Configurable.NoScroll, Con
       public void run(@NotNull ProgressIndicator indicator) {
         for (int i = 0, size = infos.size(); i < size; i++) {
           try {
-            if (RepositoryHelper.loadPlugins(infos.get(i).name, null, indicator).isEmpty()) {
+            if (RepositoryHelper.loadPluginModels(infos.get(i).name, null, indicator).isEmpty()) {
               results.set(i, IdeBundle.message("error.no.plugins.found"));
             }
           }

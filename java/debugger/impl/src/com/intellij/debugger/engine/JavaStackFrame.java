@@ -293,7 +293,6 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       .toList();
   }
 
-  // copied from DebuggerTree
   protected void buildVariablesThreadAction(DebuggerContextImpl debuggerContext, XValueChildrenList children, XCompositeNode node) {
     try {
       final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();

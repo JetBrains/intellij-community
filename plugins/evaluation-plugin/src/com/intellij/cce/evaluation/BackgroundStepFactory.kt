@@ -11,10 +11,8 @@ import com.intellij.cce.evaluation.step.HeadlessFinishEvaluationStep
 import com.intellij.cce.evaluation.step.ReorderElementsStep
 import com.intellij.cce.evaluation.step.ReportGenerationStep
 import com.intellij.cce.evaluation.step.SetupRegistryStep
-import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
-import com.intellij.openapi.application.ApplicationManager
 
 class BackgroundStepFactory(
   private val feature: EvaluableFeature<EvaluationStrategy>,
@@ -30,7 +28,7 @@ class BackgroundStepFactory(
     ActionsInterpretationStep(config, environment, datasetContext, newWorkspace = false)
 
   override fun generateReportStep(): EvaluationStep =
-    ReportGenerationStep(inputWorkspacePaths?.map { EvaluationWorkspace.open(it, SetupStatsCollectorStep.statsCollectorLogsDirectory) },
+    ReportGenerationStep(inputWorkspacePaths?.map { EvaluationWorkspace.open(it) },
                          config.reports.sessionsFilters, config.reports.comparisonFilters,
                          config.reports.lookupFilters, feature)
 
@@ -41,11 +39,7 @@ class BackgroundStepFactory(
     ReorderElementsStep(config)
 
   override fun setupStatsCollectorStep(): EvaluationStep? =
-    if ((config.interpret.saveLogs || config.interpret.saveFeatures || config.interpret.experimentGroup != null)
-        && !ApplicationManager.getApplication().isUnitTestMode
-        && SetupStatsCollectorStep.isStatsCollectorEnabled())
-      SetupStatsCollectorStep(config.interpret.experimentGroup, config.interpret.logLocationAndItemText)
-    else null
+    null
 
   override fun setupRegistryStep(): EvaluationStep = SetupRegistryStep(config.interpret.registry)
 

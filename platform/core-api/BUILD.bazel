@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.core` start
-
 jvm_library(
     name = "core",
     srcs = glob(
@@ -41,7 +40,7 @@ jvm_library(
         "//platform/util/multiplatform",
         "//platform/util/base/multiplatform",
         "//platform/util/base",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/fastutil",
     ],
 )
@@ -82,6 +81,7 @@ jvm_library(
         "//platform/util/multiplatform:multiplatform_test_lib",
         "//platform/util/base/multiplatform:multiplatform_test_lib",
         "//platform/util/base:base_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
     ],
 )

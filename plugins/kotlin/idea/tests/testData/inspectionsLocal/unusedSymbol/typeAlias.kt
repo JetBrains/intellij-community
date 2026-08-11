@@ -1,5 +1,5 @@
 // PROBLEM: none
-// K2_ERROR: Cannot use typealias 'Other' as a callable qualifier in import. Use original class 'MyEnum' instead or rewrite calls with 'Other' as a qualifier. See https://youtrack.jetbrains.com/issue/KT-64431.
+// K2_ERROR: TYPEALIAS_AS_CALLABLE_QUALIFIER_IN_IMPORT_ERROR
 
 import Other.HELLO
 

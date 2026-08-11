@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -26,6 +29,8 @@ import com.jetbrains.python.psi.PyFunction;
 /**
  * Decorator-specific tests.
  */
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyDecoratorTest extends PyTestCase {
   private PsiElement find() {
     PsiReference ref = myFixture.getReferenceAtCaretPosition("/resolve/decorators/" + getTestName(false) + ".py");

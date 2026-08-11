@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.json.syntax` start
-
 create_kotlinc_options(
     name = "custom_syntax",
     x_no_call_assertions = True,
@@ -23,9 +22,6 @@ jvm_library(
             "src/**/*.kt",
             "src/**/*.java",
             "src/**/*.form",
-            "srcJvm/**/*.kt",
-            "srcJvm/**/*.java",
-            "srcJvm/**/*.form",
         ],
         allow_empty = True,
     ),
@@ -41,7 +37,8 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//platform/syntax/syntax-api:syntax",
         "//platform/syntax/syntax-util:util",
-        "@lib//:jetbrains-annotations",
+        "//platform/syntax/syntax-extensions:extensions",
+        "//libraries/jetbrains/annotations",
         ":platform_multiplatformSupport_provided",
     ],
 )
@@ -61,6 +58,8 @@ jvm_library(
         ":syntax",
         "//platform/syntax/syntax-api:syntax_test_lib",
         "//platform/syntax/syntax-util:util_test_lib",
+        "//platform/syntax/syntax-extensions:extensions_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/multiplatformSupport",
         "//platform/multiplatformSupport:multiplatformSupport_test_lib",
     ],

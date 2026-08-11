@@ -3,8 +3,8 @@
 // ACTION: Make 'foo' internal
 // ACTION: Make 'foo' public
 // ERROR: Cannot access 'foo': it is private in 'A'
-// K2_ERROR: Cannot access 'val foo: Int': it is private in 'A'.
-// K2_AFTER_ERROR: Cannot access 'val foo: Int': it is private in 'A'.
+// K2_AFTER_ERROR: INVISIBLE_REFERENCE
+// K2_ERROR: INVISIBLE_REFERENCE
 
 class A {
     private val foo = 1

@@ -71,6 +71,7 @@ internal fun StringBuilder.appendInlinedModuleSet(
           ContentModule(
             moduleId = module.moduleId,
             loading = effectiveLoading,
+            requiredIfAvailable = module.requiredIfAvailable,
             includeDependencies = module.includeDependencies,
             allowedMissingPluginIds = module.allowedMissingPluginIds,
           ),
@@ -162,6 +163,9 @@ internal fun StringBuilder.appendModuleLine(
   // Only output loading attribute for non-default values (OPTIONAL is the default, omit it)
   if (module.loading != ModuleLoadingRuleValue.OPTIONAL) {
     append(" loading=\"${module.loading.xmlValue}\"")
+  }
+  if (module.requiredIfAvailable != null) {
+    append(" required-if-available=\"${module.requiredIfAvailable.name}\"")
   }
   append("/>\n")
 }

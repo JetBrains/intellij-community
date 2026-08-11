@@ -17,6 +17,8 @@ class LineNumberFileLinkDestinationReferenceTest : BasePlatformTestCase() {
 
   fun `test github single line`() = doTest("github_single_line.md", "Target.cs:L3")
 
+  fun `test github single line bare dotfile`() = doTest("github_bare_dotfile.md", ".env:L5")
+
   fun `test bitbucket single line`() = doTest("bitbucket_single_line.md", "Target.cs:L3")
 
   fun `test bitbucket cloud multi line`() = doTest("bitbucket_multi_reference.md", "Target.cs:L7")
@@ -25,14 +27,6 @@ class LineNumberFileLinkDestinationReferenceTest : BasePlatformTestCase() {
 
   fun `test github line range relative path`() =
     doTest("docs/pages/line_range_relative.md", "MolliePaymentDriver.php:L286")
-
-  fun `test missing file with valid line fragment shows feedback`() {
-    myFixture.configureByFile("missing_file_valid_line.md")
-    val ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
-    val resolved = ref?.let { PsiReferenceUtil.unwrapMultiReference(it) }
-      ?.firstNotNullOfOrNull { it.resolve() as? PsiNamedElement }
-    assertEquals("Missing.cs", resolved?.name)
-  }
 
   private fun doTest(fileName: String, expectedName: String) {
     myFixture.configureByFile(fileName)

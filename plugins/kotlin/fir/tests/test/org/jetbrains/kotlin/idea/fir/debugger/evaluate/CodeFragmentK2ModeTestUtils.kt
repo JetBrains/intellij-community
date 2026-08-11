@@ -5,15 +5,21 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.namedClassSymbol
+import org.jetbrains.kotlin.analysis.api.types.defaultType
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
+import org.jetbrains.kotlin.idea.base.analysis.KotlinK2CodeFragmentUtils
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
 import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
-import org.jetbrains.kotlin.idea.debugger.evaluate.util.KotlinK2CodeFragmentUtils
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import java.io.File
 
 @OptIn(KaExperimentalApi::class)
@@ -29,10 +35,15 @@ fun JavaCodeInsightTestFixture.configureByK2ModeCodeFragment(filePath: String) {
 
     file.putCopyableUserData(KotlinK2CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR_K2) { expression ->
         if (typeStr != null) {
+            // A local class has no `ClassId`, so `KotlinK2RuntimeTypeEvaluator` reports it by its short name.
+            // Resolve such names against the classes declared in the context file of the fragment.
+            val contextFile = (expression.containingFile as? KtCodeFragment)?.context?.containingFile as? KtFile
+            val localClasses = contextFile?.collectDescendantsOfType<KtClassOrObject> { it.isLocal() }.orEmpty()
             analyze(expression) {
                 // Accept either a single class FQN or an intersection like "A & B & C".
                 val conjuncts = typeStr.split(" & ").map { name ->
-                    typeCreator.classType(ClassId.topLevel(FqName(name)))
+                    localClasses.firstOrNull { it.name == name }?.namedClassSymbol?.defaultType
+                        ?: typeCreator.classType(ClassId.topLevel(FqName(name)))
                 }
                 val kaType = when (conjuncts.size) {
                     1 -> conjuncts.single()

@@ -43,6 +43,7 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -90,7 +91,7 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
     );
   }
 
-  private static @NotNull List<PsiParameter> filterFinal(PsiParameter[] parameters) {
+  private static @NotNull @Unmodifiable List<PsiParameter> filterFinal(PsiParameter[] parameters) {
     return ContainerUtil.filter(parameters, parameter -> !parameter.hasModifierProperty(PsiModifier.FINAL));
   }
 

@@ -17,6 +17,8 @@ import org.kodein.di.direct
 import org.kodein.di.instance
 import java.nio.file.Path
 
+private const val NATIVE_FRONTEND_COMMANDS_MIN_BUILD = 243
+
 fun IDETestContext.isRemDevContext() = this is IDERemDevTestContext
 fun IDETestContext.asRemDevContext(): IDERemDevTestContext = this as IDERemDevTestContext
 
@@ -122,10 +124,11 @@ class IDERemDevTestContext private constructor(
 
 val IDETestContext.frontendTestCase: TestCase<out ProjectInfoSpec>
   get() {
-    // This path is used in resolveIDE -> com.intellij.ide.starter.ide.LinuxIdeDistribution.installIde
     val executableFileName = when {
-      SystemInfo.isLinux && ConfigurationStorage.useInstaller() -> "jetbrains_client.sh"
-      SystemInfo.isWindows && ConfigurationStorage.useInstaller() -> "jetbrains_client"
+      !ConfigurationStorage.useInstaller() || ide.isMajorBuildVersionAtLeast(NATIVE_FRONTEND_COMMANDS_MIN_BUILD) ->
+        this.testCase.ideInfo.executableFileName
+      SystemInfo.isLinux -> "jetbrains_client.sh"
+      SystemInfo.isWindows -> "jetbrains_client"
       else -> this.testCase.ideInfo.executableFileName
     }
 

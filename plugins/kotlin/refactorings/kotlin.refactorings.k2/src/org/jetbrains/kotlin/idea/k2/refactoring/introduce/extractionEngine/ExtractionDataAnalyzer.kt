@@ -12,25 +12,31 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
-import org.jetbrains.kotlin.analysis.api.components.KaDataFlowExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.diagnostics
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.dataflow.KaDataFlowExitPointSnapshot
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyzeCopy
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.builtinTypes
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
@@ -174,7 +180,8 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
         // FIXME: KTIJ-34278
         @OptIn(KaImplementationDetail::class)
         KaBaseIllegalPsiException.allowIllegalPsiAccess {
-            val exitSnapshot: KaDataFlowExitPointSnapshot = computeExitPointSnapshot(extractionData.expressions)
+            val exitSnapshot: KaDataFlowExitPointSnapshot =
+                org.jetbrains.kotlin.analysis.api.dataflow.computeExitPointSnapshot(extractionData.expressions)
 
             val defaultExpressionInfo = exitSnapshot.defaultExpressionInfo
             val typeOfDefaultFlow = defaultExpressionInfo?.type?.takeIf {
@@ -187,7 +194,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
                 defaultResultExpression = defaultExpressionInfo?.expression,
                 typeOfDefaultFlow = approximateWithResolvableType(typeOfDefaultFlow, scope) ?: builtinTypes.unit,
                 implicitReturn = exitSnapshot.valuedReturnExpressions.filter { it !is KtReturnExpression }.singleOrNull(),
-                lastExpressionHasNothingType = extractionData.expressions.lastOrNull()?.expressionType?.isNothingType == true,
+                lastExpressionHasNothingType = extractionData.expressions.lastOrNull()?.expressionType?.classId == KaStandardTypeClassIds.NOTHING,
                 valuedReturnExpressions = exitSnapshot.valuedReturnExpressions.filter { it is KtReturnExpression },
                 returnValueType = approximateWithResolvableType(exitSnapshot.returnValueType, scope) ?: builtinTypes.unit,
                 jumpExpressions = exitSnapshot.jumpExpressions.filter { it is KtBreakExpression || it is KtContinueExpression || it is KtReturnExpression && it.returnedExpression == null },

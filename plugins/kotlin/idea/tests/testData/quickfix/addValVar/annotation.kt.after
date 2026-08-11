@@ -1,5 +1,5 @@
 // "Add 'val' to parameter 'x'" "true"
-// K2_ERROR: 'val' keyword is missing in annotation parameter.
+// K2_ERROR: MISSING_VAL_ON_ANNOTATION_PARAMETER
 
 annotation class A(val x: Int)
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.AddValVarToConstructorParameterAction$QuickFix

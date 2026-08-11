@@ -20,6 +20,7 @@ abstract class GeneratorNewProjectWizardBuilderAdapter(val wizard: GeneratorNewP
   override fun isAvailable(): Boolean = wizard.isEnabled()
   override fun createStep(context: WizardContext): NewProjectWizardStep = wizard.createStep(context)
 
+  @ApiStatus.Internal
   companion object {
     /**
      * NPW generators, which ids start with [NPW_PREFIX], will skip common ProjectSettingsStep.

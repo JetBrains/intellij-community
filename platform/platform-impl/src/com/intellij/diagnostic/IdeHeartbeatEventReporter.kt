@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.diagnostic.VMOptions.MemoryKind
@@ -30,6 +30,8 @@ import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit.NANOSECONDS
 import kotlin.math.roundToInt
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
 internal class IdeHeartbeatEventReporter : ProjectActivity {
@@ -72,7 +74,7 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
   }
 
   private suspend fun heartBeatRoutine() {
-    delay(Registry.intValue("ide.heartbeat.delay").toLong())
+    delay(Registry.intValue("ide.heartbeat.delay").toLong().milliseconds)
 
     val cpuTimeDiffer = LongDiffer(0)//cpu time is in nanoseconds
     //other durations are in milliseconds by default:
@@ -127,7 +129,7 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
 }
 
 internal object UILatencyLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("performance", 81)
+  private val GROUP = EventLogGroup("performance", 82)
 
   private val SYSTEM_CPU_LOAD = EventFields.Int("system_cpu_load")
   private val SWAP_LOAD = EventFields.Int("swap_load")
@@ -172,7 +174,12 @@ internal object UILatencyLogger : CounterUsagesCollector() {
   }
 
   private val LATENCY = GROUP.registerEvent("ui.latency", EventFields.DurationMs)
-  private val LAGGING = GROUP.registerEvent("ui.lagging", EventFields.DurationMs, EventFields.Boolean("during_indexing"))
+  private val LAGGING = GROUP.registerEvent(
+    eventId = "ui.lagging",
+    eventField1 = EventFields.DurationMs,
+    eventField2 = EventFields.Boolean("during_indexing"),
+    eventField3 = EventFields.Boolean("freeze_popup_shown", description = "Whether the Freeze Popup was shown (or going to be shown) during the UI lag. " +
+                                                                          "The appearance of the popup indicates that the UI thread was processing the Read-Write lock."))
   private val COLD_START = EventFields.Boolean("cold_start")
   private val ACTION_POPUP_LATENCY = GROUP.registerVarargEvent(
     "popup.latency",
@@ -184,8 +191,8 @@ internal object UILatencyLogger : CounterUsagesCollector() {
     LATENCY.log(latencyMs)
   }
 
-  fun logLagging(latencyMs: Long, hasIndexingGoingOn: Boolean) {
-    LAGGING.log(latencyMs, hasIndexingGoingOn)
+  fun logLagging(latencyMs: Long, hasIndexingGoingOn: Boolean, wasFreezePopupShown: Boolean) {
+    LAGGING.log(latencyMs, hasIndexingGoingOn, wasFreezePopupShown)
   }
 
   @JvmStatic
@@ -198,8 +205,8 @@ internal object UILatencyLogger : CounterUsagesCollector() {
     )
   }
 
-  fun logMainMenuLatency(startMs: Long) {
-    MAIN_MENU_LATENCY.log(System.currentTimeMillis() - startMs)
+  fun logMainMenuLatency(startNs: Long) {
+    MAIN_MENU_LATENCY.log((System.nanoTime() - startNs).nanoseconds.inWholeMilliseconds)
   }
 
   private val MEMORY_TYPE_FIELD = EventFields.Enum<MemoryKind>("type")

@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.testcontainers` start
-
 jvm_library(
     name = "testcontainers",
     srcs = glob(
@@ -16,13 +15,13 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:testcontainers",
-        "@lib//:testcontainers-junit-jupiter",
+        "@lib//:libraries-testcontainers-testcontainers",
+        "@lib//:libraries-testcontainers-testcontainers-junit-jupiter",
     ],
     runtime_deps = [
         # do not sort,
-        "@lib//:testcontainers",
-        "@lib//:testcontainers-junit-jupiter",
+        "@lib//:libraries-testcontainers-testcontainers",
+        "@lib//:libraries-testcontainers-testcontainers-junit-jupiter",
         "//libraries/junit5",
         "//libraries/junit4",
     ],
@@ -39,8 +38,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:testcontainers",
-        "@lib//:testcontainers-junit-jupiter",
+        "@lib//:libraries-testcontainers-testcontainers",
+        "@lib//:libraries-testcontainers-testcontainers-junit-jupiter",
     ],
     runtime_deps = [
         # do not sort,

@@ -1,5 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <spellchecker.support implementationClass="org.jetbrains.kotlin.idea.spellchecker.KotlinSpellcheckingStrategy" language="kotlin"/>
-  </extensions>
-</idea-plugin>

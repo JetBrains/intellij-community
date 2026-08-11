@@ -25,9 +25,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
-    <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
-    <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />
+    <orderEntry type="module" module-name="intellij.kotlin.references" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
@@ -57,15 +58,16 @@
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis.utils" />
-    <orderEntry type="module" module-name="kotlin.highlighting.shared" />
+    <orderEntry type="module" module-name="intellij.kotlin.highlighting" />
     <orderEntry type="module" module-name="intellij.java.impl" />
-    <orderEntry type="library" name="kotlinc.analysis-api-impl-base" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.impl.base" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
-    <orderEntry type="module" module-name="kotlin.refactorings.common" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.base" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis" />
     <orderEntry type="module" module-name="intellij.kotlin.base.facet" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" />
-    <orderEntry type="library" name="kotlinc.analysis-api-k2" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.k2" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.symbol.light.classes" />
     <orderEntry type="module" module-name="intellij.kotlin.formatter.minimal" />
     <orderEntry type="module" module-name="intellij.kotlin.refactorings" />
     <orderEntry type="module" module-name="intellij.java" />
@@ -80,15 +82,15 @@
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.overrideImplement" />
-    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.kotlin.searching" />
     <orderEntry type="module" module-name="intellij.kotlin.base.statistics" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
-    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.descriptions" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.descriptions" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.kotlin.base.platforms" />
+    <orderEntry type="module" module-name="intellij.kotlin.highlighting.minimal" />
   </component>
 </module>

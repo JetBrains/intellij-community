@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.markdown.java` start
-
 jvm_library(
     name = "java",
     srcs = glob(
@@ -28,6 +27,9 @@ jvm_library(
         "//platform/core-api:core",
         "//java/java-indexing-api:indexing",
         "//java/java-psi-api:psi",
+        "//java/java-impl:impl",
+        "//java/java-psi-impl:psi-impl",
+        "//platform/core-impl",
         "//platform/lang-api:lang",
     ],
 )
@@ -51,6 +53,9 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//java/java-indexing-api:indexing_test_lib",
         "//java/java-psi-api:psi_test_lib",
+        "//java/java-impl:impl_test_lib",
+        "//java/java-psi-impl:psi-impl_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
         "//platform/lang-api:lang_test_lib",
     ],
 )

@@ -19,6 +19,7 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PyDocumentationSettingsDetector;
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings;
 import com.jetbrains.python.testing.TestRunnerService;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -28,9 +29,15 @@ import java.util.List;
  * Configures {@link PyDefaultProjectAwareService}s
  * for new project.
  */
+@ApiStatus.Internal
 final class PyDefaultProjectAwareServiceConfigurator implements DirectoryProjectConfigurator {
+  private static final PyDocumentationSettingsDetector PY_DOCUMENTATION_SETTINGS_DETECTOR = new PyDocumentationSettingsDetector();
+
   @Override
-  public void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef, boolean isProjectCreatedWithWizard) {
+  public void configureProject(@NotNull Project project,
+                               @NotNull VirtualFile baseDir,
+                               @NotNull Ref<Module> moduleRef,
+                               boolean isProjectCreatedWithWizard) {
     final Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode()) {
       return;
@@ -54,6 +61,4 @@ final class PyDefaultProjectAwareServiceConfigurator implements DirectoryProject
       configurator.configureModule(module, newProject);
     }
   }
-
-  private static final PyDocumentationSettingsDetector PY_DOCUMENTATION_SETTINGS_DETECTOR = new PyDocumentationSettingsDetector();
 }

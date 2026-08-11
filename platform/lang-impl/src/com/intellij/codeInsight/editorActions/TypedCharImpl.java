@@ -19,7 +19,6 @@ import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
-
 final class TypedCharImpl {
   private static final Set<Character> COMPLEX_CHARS = Set.of('\n', '\t', '(', ')', '<', '>', '[', ']', '{', '}', '"', '\'');
 

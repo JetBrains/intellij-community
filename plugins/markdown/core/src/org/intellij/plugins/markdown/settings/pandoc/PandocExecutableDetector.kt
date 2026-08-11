@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.settings.pandoc
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -9,24 +9,18 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.EnvironmentUtil
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import org.intellij.plugins.markdown.MarkdownBundle
-import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.exists
 
+@OptIn(LowLevelLocalMachineAccess::class)
 internal object PandocExecutableDetector {
   private const val WIN_EXECUTABLE = "pandoc.exe"
   private const val WIN_PANDOC_DIR_NAME = "Pandoc"
   private const val UNIX_EXECUTABLE = "pandoc"
-
-  private val UNIX_PATHS by lazy {
-    listOf(
-      "/usr/local/bin",
-      "/opt/local/bin",
-      "/usr/bin",
-      "/opt/bin"
-    )
-  }
 
   private val PANDOC_VERSION_OUTPUT_FIRST_LINE = "pandoc(?:.exe)? .*".toRegex()
 
@@ -37,15 +31,11 @@ internal object PandocExecutableDetector {
   fun detect(project: Project): String? {
     if (!TrustedProjects.isProjectTrusted(project)) return null
 
-    val executableFromPath = PathEnvironmentVariableUtil.findInPath(
-      if (SystemInfo.isWindows) WIN_EXECUTABLE else UNIX_EXECUTABLE,
-      PathEnvironmentVariableUtil.getPathVariableValue(),
-      null
-    )
+    val executableFromPath = PathEnvironmentVariableUtil.findFirst("pandoc")
 
     return when {
-      executableFromPath != null -> return executableFromPath.absolutePath
-      SystemInfo.isWindows -> detectForWindows() ?: ""
+      executableFromPath != null -> executableFromPath.toString()
+      OS.CURRENT == OS.Windows -> detectForWindows() ?: ""
       else -> detectForUnix() ?: ""
     }
   }
@@ -60,7 +50,8 @@ internal object PandocExecutableDetector {
       try {
         val output = ExecUtil.execAndGetOutput(command).takeIf { it.stderr.isEmpty() }
         return output?.stdoutLines?.let(::extractVersion)
-      } catch (exception: Throwable) {
+      }
+      catch (_: Throwable) {
         return null
       }
     }
@@ -75,23 +66,28 @@ internal object PandocExecutableDetector {
   }
 
   private fun detectForUnix(): String? {
-    return UNIX_PATHS.asSequence().map { File(it, UNIX_EXECUTABLE) }.firstOrNull { it.exists() }?.path
+    val paths = listOf(
+      "/usr/local/bin",
+      "/opt/local/bin",
+      "/usr/bin",
+      "/opt/bin"
+    )
+    return paths.asSequence()
+      .map { Path.of(it, UNIX_EXECUTABLE) }
+      .firstOrNull { it.exists() }
+      ?.toString()
   }
 
   private fun detectForWindows(): String? {
-    val paths = listOf(
-      EnvironmentUtil.getValue("LOCALAPPDATA"),
-      EnvironmentUtil.getValue("ProgramFiles"),
-      EnvironmentUtil.getValue("ProgramFiles(x86)"),
-      EnvironmentUtil.getValue("HOMEPATH")
+    val envVars = listOf(
+      "LOCALAPPDATA",
+      "ProgramFiles",
+      "ProgramFiles(x86)",
+      "HOMEPATH"
     )
-    for (basePath in paths) {
-      val path = File(basePath, WIN_PANDOC_DIR_NAME)
-      val file = File(path, WIN_EXECUTABLE)
-      if (file.exists()) {
-        return file.path
-      }
-    }
-    return null
+    return envVars.asSequence()
+      .mapNotNull { EnvironmentUtil.getValue(it)?.let { dir -> Path.of(dir, WIN_PANDOC_DIR_NAME, WIN_EXECUTABLE) } }
+      .firstOrNull { it.exists() }
+      ?.toString()
   }
 }

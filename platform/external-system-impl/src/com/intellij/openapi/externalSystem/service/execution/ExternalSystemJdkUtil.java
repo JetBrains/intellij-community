@@ -353,4 +353,11 @@ public final class ExternalSystemJdkUtil {
     var allJdks = sdkTable.getSdksOfType(getJavaSdkType());
     return ContainerUtil.find(allJdks, it -> FileUtil.pathsEqual(jdkHome, it.getHomePath()));
   }
+
+  @ApiStatus.Internal
+  public static boolean isSdkRegisteredInSdkTable(@NotNull Project project, @NotNull Sdk sdk) {
+    var sdkTable = ProjectJdkTable.getInstance(project);
+    var allSdks = sdkTable.getSdksOfType(sdk.getSdkType());
+    return ContainerUtil.exists(allSdks, sdk::equals);
+  }
 }

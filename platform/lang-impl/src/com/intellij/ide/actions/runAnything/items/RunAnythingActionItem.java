@@ -2,11 +2,13 @@
 package com.intellij.ide.actions.runAnything.items;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 
+@ApiStatus.Internal
 public final class RunAnythingActionItem<T extends AnAction> extends RunAnythingItemBase {
   private final @NotNull T myAction;
 

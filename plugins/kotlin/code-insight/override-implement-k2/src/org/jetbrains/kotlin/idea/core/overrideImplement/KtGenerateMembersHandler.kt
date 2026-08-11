@@ -18,11 +18,6 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
-import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
@@ -31,7 +26,10 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclaratio
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.fakeOverrideOriginal
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.ShortenCommandForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsForIde
@@ -87,7 +85,7 @@ abstract class KtGenerateMembersHandler(
             }
 
         runWriteAction {
-            commands.forEach { it.invokeShortening() }
+            commands.forEach { it.invokeShortening(results = null) }
             val project = classOrObject.project
             val codeStyleManager = CodeStyleManager.getInstance(project)
             insertedBlocks.forEach { block ->

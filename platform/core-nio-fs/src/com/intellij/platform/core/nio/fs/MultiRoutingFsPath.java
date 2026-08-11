@@ -43,9 +43,19 @@ public final class MultiRoutingFsPath implements Path, sun.nio.fs.BasicFileAttri
    * Behaves like {@link #getInitialDelegate} if the path is relative.
    */
   public Path getCurrentDelegate() {
-    return myDelegate.isAbsolute()
-           ? ((MultiRoutingFsPath)myFileSystem.getPath(myDelegate.toString())).getInitialDelegate()
-           : myDelegate;
+    if (!myDelegate.isAbsolute()) {
+      return myDelegate;
+    }
+
+    String delegateAsString = myDelegate.toString();
+    var newFileSystem = myFileSystem.getBackend(delegateAsString);
+    if (newFileSystem.equals(myDelegate.getFileSystem())) {
+      // This check mitigates bugs with paths that can be constructed from bytes but can't be re-constructed from strings.
+      // An example of such cases is when some file name contains UTF-8 characters but the charset is US_ASCII.
+      return myDelegate;
+    }
+
+    return newFileSystem.getPath(delegateAsString);
   }
 
   @Override

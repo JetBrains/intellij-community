@@ -281,6 +281,7 @@ public final class UserDefinedJsonSchemaConfiguration {
       mappingKind = directory ? JsonMappingKind.Directory : JsonMappingKind.File;
     }
 
+    @NotNull
     public String getPresentation() {
       if (mappingKind == JsonMappingKind.Directory && StringUtil.isEmpty(path)) {
         return JsonBundle.message("schema.configuration.project.directory", mappingKind.getPrefix());

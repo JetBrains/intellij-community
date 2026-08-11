@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase
 
 import com.intellij.openapi.application.ModalityState
@@ -111,7 +111,9 @@ private suspend fun showDialogForMessage(project: Project, specs: Collection<Rew
                                                  selectedChanges = null,
                                                  validateCommitEditable = { validateRewordable(logData, specs) },
                                                  title = GitBundle.message("rebase.log.reword.dialog.title"),
-                                                 dialogLabel = buildRewordDialogLabel(specs))
+                                                 dialogLabel = buildRewordDialogLabel(specs),
+                                                 commitIds = specs.map { logData.getCommitIndex(it.commit.id, it.repository.root) },
+                                                 logData = logData)
     suspendCancellableCoroutine { cont ->
       dialog.show(onOk = { if (cont.isActive) cont.resume(it) }, onClose = {
         if (cont.isActive) {

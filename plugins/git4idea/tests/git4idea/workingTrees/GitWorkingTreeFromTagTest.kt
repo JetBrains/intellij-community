@@ -2,14 +2,18 @@
 package git4idea.workingTrees
 
 import com.intellij.openapi.vcs.LocalFilePath
+import com.intellij.testFramework.junit5.TestApplication
 import git4idea.GitTag
 import git4idea.GitWorkingTree
 import git4idea.actions.workingTree.GitWorkingTreeDialogData
 import git4idea.repo.GitRefUtil
+import git4idea.test.git
 import git4idea.test.tac
+import org.junit.jupiter.api.Test
 import java.nio.file.Path
 
-internal class GitWorkingTreeFromTagTest : GitWorkingTreeTestBase() {
+@TestApplication
+internal class GitWorkingTreeFromTagTest : GitWorkingTreeTestBase(gitWorkingTreeSingleRepoFixture()) {
 
   override val mainRepoPath: Path
     get() = repo.root.toNioPath()
@@ -18,7 +22,8 @@ internal class GitWorkingTreeFromTagTest : GitWorkingTreeTestBase() {
     return listOf(GitWorkingTree(repo.root.path, repo.currentBranch!!.fullName, true, true))
   }
 
-  fun `test creating a worktree from tag`() {
+  @Test
+  fun `test creating a worktree from tag`(): Unit = with(context) {
     val commit = tac("a.txt")
     val tagName = "v1.0"
     git("tag $tagName")
@@ -35,7 +40,8 @@ internal class GitWorkingTreeFromTagTest : GitWorkingTreeTestBase() {
     )
   }
 
-  fun `test creating a worktree from annotated tag`() {
+  @Test
+  fun `test creating a worktree from annotated tag`(): Unit = with(context) {
     val commit = tac("a.txt")
     val tagName = "v1.0"
     git("tag -a $tagName -m annotated")
@@ -52,7 +58,8 @@ internal class GitWorkingTreeFromTagTest : GitWorkingTreeTestBase() {
     )
   }
 
-  fun `test creating a worktree from tag with new branch`() {
+  @Test
+  fun `test creating a worktree from tag with new branch`(): Unit = with(context) {
     val commit = tac("a.txt")
     val tagName = "v1.0"
     git("tag $tagName")

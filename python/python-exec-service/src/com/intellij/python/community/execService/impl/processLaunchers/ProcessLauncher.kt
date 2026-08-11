@@ -7,6 +7,7 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ConcurrentProcessWeight
 import com.intellij.python.community.execService.DownloadConfig
 import com.intellij.python.community.execService.TtySize
+import com.intellij.python.community.execService.UploadConfig
 import com.intellij.python.community.execService.impl.LoggingProcess
 import com.jetbrains.python.Result
 import com.jetbrains.python.TraceContext
@@ -61,5 +62,6 @@ internal data class LaunchRequest(
   val args: Args,
   val env: Map<String, String>,
   val usePty: TtySize?,
+  val uploadConfig: UploadConfig? = null,
   val downloadConfig: DownloadConfig? = null,
 )

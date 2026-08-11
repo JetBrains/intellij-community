@@ -4,12 +4,16 @@ package com.jetbrains.python.documentation.docstings
 import com.intellij.idea.TestFor
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.testFramework.TestDataPath
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyFile
 
 @TestFor(classes = [PyDocstringGenerator::class])
 @TestDataPath("\$CONTENT_ROOT/../testData/docGeneration")
+@Subsystems.QuickDocumentation
+@Layers.Functional
 class PyDocstringGeneratorTestCase : PyTestCase() {
   override fun getTestDataPath(): String = super.getTestDataPath() + "/docGeneration"
 

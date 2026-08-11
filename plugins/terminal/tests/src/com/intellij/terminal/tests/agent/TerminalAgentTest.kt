@@ -7,7 +7,6 @@ import com.intellij.util.ui.EmptyIcon
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.agent.TerminalAgent
 import org.jetbrains.plugins.terminal.agent.TerminalAgentProvider
-import org.jetbrains.plugins.terminal.agent.DefaultTerminalAgentProvider
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -16,49 +15,12 @@ import javax.swing.Icon
 @RunWith(JUnit4::class)
 internal class TerminalAgentTest : BasePlatformTestCase() {
   @Test
-  fun `default provider returns built-in agent terminals in expected order`() {
-    val terminalAgents = DefaultTerminalAgentProvider().getTerminalAgents()
-
-    assertThat(terminalAgents.map { it.agentKey.key }).containsExactly("junie", "claude_code", "codex")
-  }
-
-  @Test
-  fun `default provider exposes bundled selector fields`() {
-    val agentsByKey = DefaultTerminalAgentProvider().getTerminalAgents().associateBy { it.agentKey.key }
-    val junie = agentsByKey.getValue("junie")
-    val codex = agentsByKey.getValue("codex")
-    val claude = agentsByKey.getValue("claude_code")
-
-    assertThat(junie.installActionText).isEqualTo("Install Junie CLI")
-    assertThat(junie.secondaryText).isEqualTo("by JetBrains")
-    assertThat(junie.showsNewBadge).isTrue()
-
-    assertThat(codex.installActionText).isNull()
-    assertThat(codex.secondaryText).isNull()
-    assertThat(codex.showsNewBadge).isFalse()
-    assertThat(codex.posixKnownLocationCandidates).containsExactly("\$HOME/.local/bin", "/usr/local/bin")
-    assertThat(codex.windowsKnownLocationCandidates).containsExactly("\$HOME\\AppData\\Roaming\\npm")
-    assertThat(codex.windowsExecutableExtensions).containsExactly("exe", "bat", "cmd", "ps1")
-
-    assertThat(claude.installActionText).isNull()
-    assertThat(claude.secondaryText).isNull()
-    assertThat(claude.showsNewBadge).isFalse()
-    assertThat(claude.posixKnownLocationCandidates).containsExactly("\$HOME/.local/bin", "/usr/local/bin")
-    assertThat(claude.windowsKnownLocationCandidates).containsExactly("\$HOME\\AppData\\Roaming\\npm", "\$HOME\\.local\\bin")
-    assertThat(claude.windowsExecutableExtensions).containsExactly("exe", "bat", "cmd", "ps1")
-
-    assertThat(junie.posixKnownLocationCandidates).containsExactly("\$HOME/.local/bin")
-    assertThat(junie.windowsKnownLocationCandidates).containsExactly("\$HOME\\.local\\bin")
-    assertThat(junie.windowsExecutableExtensions).containsExactly("bat")
-  }
-
-  @Test
   fun `flatten providers preserves provider order and first duplicate wins`() {
-    val alpha = TestTerminalAgent("alpha")
-    val duplicateFromFirstProvider = TestTerminalAgent("duplicate")
-    val beta = TestTerminalAgent("beta")
-    val duplicateFromSecondProvider = TestTerminalAgent("duplicate")
-    val gamma = TestTerminalAgent("gamma")
+    val alpha = MyTerminalAgent("alpha")
+    val duplicateFromFirstProvider = MyTerminalAgent("duplicate")
+    val beta = MyTerminalAgent("beta")
+    val duplicateFromSecondProvider = MyTerminalAgent("duplicate")
+    val gamma = MyTerminalAgent("gamma")
 
     val flattened = TerminalAgent.flattenProviders(
       listOf(
@@ -72,10 +34,10 @@ internal class TerminalAgentTest : BasePlatformTestCase() {
 
   @Test
   fun `find by key returns first matching terminal from extension point`() {
-    val duplicateFromFirstProvider = TestTerminalAgent("duplicate")
-    val alpha = TestTerminalAgent("alpha")
-    val duplicateFromSecondProvider = TestTerminalAgent("duplicate")
-    val beta = TestTerminalAgent("beta")
+    val duplicateFromFirstProvider = MyTerminalAgent("duplicate")
+    val alpha = MyTerminalAgent("alpha")
+    val duplicateFromSecondProvider = MyTerminalAgent("duplicate")
+    val beta = MyTerminalAgent("beta")
     val firstProvider = TestTerminalAgentProvider(duplicateFromFirstProvider, alpha)
     val secondProvider = TestTerminalAgentProvider(duplicateFromSecondProvider, beta)
 
@@ -93,8 +55,8 @@ private class TestTerminalAgentProvider(
   override fun getTerminalAgents(): List<TerminalAgent> = agents.toList()
 }
 
-private class TestTerminalAgent(
-  key: String
+private class MyTerminalAgent(
+  key: String,
 ) : TerminalAgent {
   override val agentKey = TerminalAgent.AgentKey(key)
   override val displayName: String = agentKey.key

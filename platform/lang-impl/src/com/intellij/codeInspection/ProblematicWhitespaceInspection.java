@@ -43,12 +43,12 @@ public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final FileEditorManager editorManager = FileEditorManager.getInstance(project);
-      final Editor editor = editorManager.getSelectedTextEditor();
+      FileEditorManager editorManager = FileEditorManager.getInstance(project);
+      Editor editor = editorManager.getSelectedTextEditor();
       if (editor == null) {
         return;
       }
-      final EditorSettings settings = editor.getSettings();
+      EditorSettings settings = editor.getSettings();
       settings.setLeadingWhitespaceShown(true);
       settings.setWhitespacesShown(!settings.isWhitespacesShown());
       editor.getComponent().repaint();
@@ -64,7 +64,7 @@ public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement file = descriptor.getPsiElement();
+      PsiElement file = descriptor.getPsiElement();
       if (!(file instanceof PsiFile)) {
         return;
       }
@@ -90,7 +90,7 @@ public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
     @Override
     public void visitFile(@NotNull PsiFile psiFile) {
       super.visitFile(psiFile);
-      final FileType fileType = psiFile.getFileType();
+      FileType fileType = psiFile.getFileType();
       if (!(fileType instanceof LanguageFileType)) {
         return;
       }
@@ -98,27 +98,27 @@ public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
         // don't warn multiple times on files which have multiple views like PHP and JSP
         return;
       }
-      final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
+      InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
       if (injectedLanguageManager.isInjectedFragment(psiFile)) {
         return;
       }
-      final CodeStyleSettings settings = CodeStyle.getSettings(psiFile);
-      final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptionsByFile(psiFile);
-      final boolean useTabs = indentOptions.USE_TAB_CHARACTER;
-      final boolean smartTabs = indentOptions.SMART_TABS;
-      final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
+      CodeStyleSettings settings = CodeStyle.getSettings(psiFile);
+      CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptionsByFile(psiFile);
+      boolean useTabs = indentOptions.USE_TAB_CHARACTER;
+      boolean smartTabs = indentOptions.SMART_TABS;
+      Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
       if (document == null) {
         return;
       }
-      final int lineCount = document.getLineCount();
+      int lineCount = document.getLineCount();
       int previousLineIndent = 0;
       for (int i = 0; i < lineCount; i++) {
-        final int startOffset = document.getLineStartOffset(i);
-        final int endOffset = document.getLineEndOffset(i);
-        final String line = document.getText(new TextRange(startOffset, endOffset));
+        int startOffset = document.getLineStartOffset(i);
+        int endOffset = document.getLineEndOffset(i);
+        String line = document.getText(new TextRange(startOffset, endOffset));
         boolean spaceSeen = false;
         for (int j = 0, length = line.length(); j < length; j++) {
-          final char c = line.charAt(j);
+          char c = line.charAt(j);
           if (c == '\t') {
             if (useTabs) {
               if (smartTabs && spaceSeen) {
@@ -169,11 +169,11 @@ public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
     }
 
     private boolean registerError(PsiFile file, int startOffset, boolean tab) {
-      final PsiElement element = file.findElementAt(startOffset);
+      PsiElement element = file.findElementAt(startOffset);
       if (element != null && isSuppressedFor(element)) {
         return false;
       }
-      final String description = tab
+      String description = tab
                                  ? LangBundle.message("problematic.whitespace.spaces.problem.descriptor", file.getName())
                                  : LangBundle.message("problematic.whitespace.tabs.problem.descriptor", file.getName());
       if (myIsOnTheFly) {

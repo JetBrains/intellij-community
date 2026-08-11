@@ -5,15 +5,14 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -62,7 +61,7 @@ internal fun KtElement.containingFunction(): KtNamedFunction? {
         is KtFunctionLiteral -> {
             val call = containingFunction.getStrictParentOfType<KtCallExpression>()
             val resolvedCall = call?.resolveToCall()?.successfulFunctionCallOrNull()
-            if (resolvedCall?.partiallyAppliedSymbol?.symbol?.isInlineOrInsideInline() == true) {
+            if (resolvedCall?.symbol?.isInlineOrInsideInline() == true) {
                 containingFunction.containingFunction()
             } else {
                 null
@@ -79,13 +78,13 @@ private fun KaDeclarationSymbol?.isInlineOrInsideInline(): Boolean = getInlineCa
 
 @OptIn(KaExperimentalApi::class)
 context(_: KaSession)
-private fun KaDeclarationSymbol?.getInlineCallSiteVisibility(): Visibility? {
+private fun KaDeclarationSymbol?.getInlineCallSiteVisibility(): KaSymbolVisibility? {
     var declaration: KaDeclarationSymbol? = this
-    var result: Visibility? = null
+    var result: KaSymbolVisibility? = null
     while (declaration != null) {
         if (declaration is KaNamedFunctionSymbol && declaration.isInline) {
-            val visibility = declaration.compilerVisibility
-            if (Visibilities.isPrivate(visibility)) {
+            val visibility = declaration.visibility
+            if (visibility == KaSymbolVisibility.PRIVATE) {
                 return visibility
             }
             result = visibility

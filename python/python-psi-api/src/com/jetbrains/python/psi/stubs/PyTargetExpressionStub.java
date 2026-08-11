@@ -45,6 +45,15 @@ public interface PyTargetExpressionStub
   @Nullable
   PyLiteralKind getAssignedLiteralKind();
 
+  /**
+   * The textual value of the assigned literal (e.g. {@code "42"}, the decoded string, or {@code "true"}/{@code "false"}),
+   * interpreted according to {@link #getAssignedLiteralKind()}. {@code null} when no literal value is stored
+   * (e.g. for {@code FLOAT}/{@code NONE}, non-plain strings, or non-literal initializers).
+   */
+  @ApiStatus.Internal
+  @Nullable
+  String getAssignedLiteralValue();
+
   boolean isQualified();
 
   @ApiStatus.Internal

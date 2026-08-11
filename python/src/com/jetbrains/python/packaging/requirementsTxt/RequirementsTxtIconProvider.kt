@@ -5,8 +5,8 @@ import com.intellij.ide.IconProvider
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.python.requirements.RequirementsFileType
 import com.jetbrains.python.icons.PythonIcons
-import com.jetbrains.python.requirements.RequirementsFileType
 import com.jetbrains.python.sdk.pythonSdk
 import javax.swing.Icon
 
@@ -21,7 +21,7 @@ internal class RequirementsTxtIconProvider : IconProvider() {
     val module = ModuleUtil.findModuleForFile(vFile, psiFile.project) ?: return null
 
     val sdk = module.pythonSdk ?: return null
-    val saved = PythonRequirementTxtSdkUtils.findRequirementsTxt(sdk)
+    val saved = PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(sdk)
     return if (saved == vFile) {
       PythonIcons.Python.ReferencedFile
     } else {

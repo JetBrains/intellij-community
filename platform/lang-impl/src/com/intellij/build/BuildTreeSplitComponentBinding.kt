@@ -17,5 +17,10 @@ val BuildTreeSplitComponentBinding: SplitComponentBinding<BuildViewId> = SplitCo
 @ApiStatus.Internal
 data class BuildViewId(
   override val uid: UID,
-  val modelIsOnClient: Boolean = PlatformUtils.isJetBrainsClient(),
-) : Id
+  private val modelIsOnClient: Boolean = PlatformUtils.isJetBrainsClient(),
+) : Id {
+  /**
+   * This tells whether the id can be used to access the local model ([BuildTreeViewModel]) directly, using [findValue].
+   */
+  fun isLocal(): Boolean = modelIsOnClient == PlatformUtils.isJetBrainsClient()
+}

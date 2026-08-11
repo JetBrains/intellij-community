@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui
 
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
@@ -24,7 +23,7 @@ internal class NewKeymapsRenderer(private val actionsTree: ActionsTree) : Action
 
     @JvmStatic
     val isFeatureEnabled: Boolean
-      get() = ExperimentalUI.isNewUI() && Registry.`is`("ide.ui.keymap.ijpl187594", true)
+      get() = ExperimentalUI.isNewUI()
   }
 
   private var data: ShortcutsData? = null

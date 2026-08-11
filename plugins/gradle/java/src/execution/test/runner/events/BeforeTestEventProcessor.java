@@ -34,8 +34,6 @@ public class BeforeTestEventProcessor extends AbstractBeforeTestEventProcessor {
 
   @Override
   public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
-    getExecutionConsole().getFileComparisonEventPatcher()
-      .setBuiltInTestEventsUsed();
     super.process(testEvent);
   }
 

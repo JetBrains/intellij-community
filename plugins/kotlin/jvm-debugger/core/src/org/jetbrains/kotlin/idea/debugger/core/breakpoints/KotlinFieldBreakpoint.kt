@@ -33,6 +33,7 @@ import com.sun.jdi.request.MethodEntryRequest
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.debugger.base.util.runSmartAnalyze
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
@@ -151,7 +152,7 @@ class KotlinFieldBreakpoint(
     private fun computeBreakpointType(property: KtCallableDeclaration): BreakpointType {
         return runSmartAnalyze(property) {
             val hasBackingField = when (val symbol = property.symbol) {
-                is KaValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty?.hasBackingField ?: false
+                is KaValueParameterSymbol -> symbol.primaryConstructorProperty?.hasBackingField ?: false
                 is KaKotlinPropertySymbol -> symbol.hasBackingField
                 else -> false
             }
@@ -221,9 +222,9 @@ class KotlinFieldBreakpoint(
         val locationQName = location.declaringType().name() + "." + location.method().name()
         val locationFileName = try {
             location.sourceName()
-        } catch (e: AbsentInformationException) {
+        } catch (_: AbsentInformationException) {
             fileName
-        } catch (e: InternalError) {
+        } catch (_: InternalError) {
             fileName
         }
 
@@ -325,7 +326,7 @@ class KotlinFieldBreakpoint(
 
     override fun getVerifiedWarningsIcon(isMuted: Boolean): Icon = AllIcons.Debugger.Db_exception_breakpoint
 
-    override fun getCategory() = CATEGORY
+    override fun getCategory(): Key<FieldBreakpoint> = CATEGORY
 
     override fun getDisplayName(): String {
         if (!isValid) {

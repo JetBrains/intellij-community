@@ -22,10 +22,12 @@ import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.run.PythonRunConfigurationProducer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 
+@ApiStatus.Internal
 public class PyRunFileInConsoleAction extends AnAction implements DumbAware {
   private static final HashMap<PythonRunConfiguration, Boolean> waitingForExecution = new HashMap<>();
 

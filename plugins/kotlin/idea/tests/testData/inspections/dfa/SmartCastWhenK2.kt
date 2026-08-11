@@ -35,7 +35,7 @@ fun some(
             test2 != null -> {
             }
             // Differs from K1: error message text is different
-            test1 == null<error descr="[COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT] Use '||' instead of commas in conditions of 'when' without a subject.">,</error> test1.toLong() == 100L -> {
+            test1 == null<error descr="[COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT]">,</error> test1.toLong() == 100L -> {
             }
         }
     }

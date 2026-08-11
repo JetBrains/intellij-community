@@ -1,55 +1,46 @@
 package com.intellij.python.hatch.sdk.evolution
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.hatch.HatchConfiguration
+import com.intellij.python.hatch.PyHatchBundle
 import com.intellij.python.hatch.getHatchService
 import com.intellij.python.hatch.icons.PythonHatchIcons
-import com.intellij.python.sdk.ui.evolution.SelectEnvAction
-import com.intellij.python.sdk.ui.evolution.sdk.EvoModuleSdk
-import com.intellij.python.sdk.ui.evolution.sdk.EvoSdk
-import com.intellij.python.sdk.ui.evolution.sdk.resolvePythonExecutable
-import com.intellij.python.sdk.ui.evolution.tool.hatch.sdk.HatchEvoSdkManager.buildEvoSdk
-import com.intellij.python.sdk.ui.evolution.ui.EvoSelectSdkProvider
-import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeElement
-import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLazyNodeElement
-import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLeafElement
-import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeSection
-import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.intellij.python.sdk.backend.evolution.EvoSdk
+import com.intellij.python.sdk.backend.evolution.EvoSelectSdkProvider
+import com.intellij.python.sdk.backend.evolution.evoWarning
+import com.intellij.python.sdk.backend.evolution.resolvePythonExecutable
+import com.intellij.python.sdk.backend.evolution.toSelectLeaf
+import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
+import com.intellij.python.sdk.common.evolution.EvoSectionDto
+import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.toFileSystem
+import javax.swing.Icon
 
 internal class HatchSelectSdkProvider : EvoSelectSdkProvider {
-  override fun getTreeElement(evoModuleSdk: EvoModuleSdk): EvoTreeElement =
-    EvoTreeLazyNodeElement("Hatch", PythonHatchIcons.Logo) {
-      val fileSystem = localEel.toFileSystem()
-      val hatchExecutablePath = HatchConfiguration.getOrDetectHatchExecutablePath(fileSystem).getOr {
-        return@EvoTreeLazyNodeElement it // Result.failure(IllegalAccessError("Hatch (https://hatch.pypa.io) executable is not found")
-      }
+  override val id: String get() = "Hatch"
+  override val label: String get() = "Hatch"
+  override val icon: Icon get() = PythonHatchIcons.Logo
 
-      val environments = findEnvironments(evoModuleSdk.module, fileSystem).getOr {
-        return@EvoTreeLazyNodeElement it
-      }
-      val environmentActions = environments.map { evoSdk -> EvoTreeLeafElement(SelectEnvAction(evoSdk)) }
-      val sections = listOf(
-        EvoTreeSection(ListSeparator(hatchExecutablePath.toString()), environmentActions),
-      )
-      //Result.failure(IllegalAccessError("Hatch (https://hatch.pypa.io) executable is not found"))
-      Result.Companion.success(sections)
-    }
+  override suspend fun loadSections(module: Module): EvoLoadResultDto {
+    val fileSystem = localEel.toFileSystem()
+    val hatchExecutablePath = HatchConfiguration.getOrDetectHatchExecutablePath(fileSystem).getOrNull()
+                              ?: return evoWarning(PyHatchBundle.message("evolution.hatch.executable.is.not.found"))
+    val leaves = findEnvironments(module, fileSystem).map { it.toSelectLeaf() }
+    return EvoLoadResultDto.Ok(listOf(EvoSectionDto(label = hatchExecutablePath.toString(), leaves = leaves)))
+  }
 }
 
-private suspend fun findEnvironments(module: Module, fileSystem: FileSystem<PathHolder.Eel>): Result<List<EvoSdk>, PyError> {
-  val hatchService = module.getHatchService(fileSystem).getOr { return it }
-  val environments = hatchService.findVirtualEnvironments().getOr { return it }
-  val evoSdks = environments.map { env ->
-    buildEvoSdk(
-      env.pythonVirtualEnvironment?.pythonHomePath?.resolvePythonExecutable(),
-      env.hatchEnvironment.name
+private suspend fun findEnvironments(module: Module, fileSystem: FileSystem<PathHolder.Eel>): List<EvoSdk> {
+  val hatchService = module.getHatchService(fileSystem).getOrNull() ?: return emptyList()
+  val environments = hatchService.findVirtualEnvironments().getOrNull() ?: return emptyList()
+  return environments.map { env ->
+    EvoSdk(
+      icon = PythonHatchIcons.Logo,
+      name = env.hatchEnvironment.name,
+      pythonBinaryPath = env.pythonVirtualEnvironment?.pythonHomePath?.path?.resolvePythonExecutable(),
     )
   }
-  return Result.success(evoSdks)
 }

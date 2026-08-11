@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -361,10 +361,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
   }
 
   public static boolean isNullabilityAnnotationApplicable(@NotNull PsiModifierListOwner owner) {
-    if (owner instanceof PsiMethod) {
-      PsiType returnType = ((PsiMethod)owner).getReturnType();
-      return returnType != null && !(returnType instanceof PsiPrimitiveType);
-    }
-    return !(owner instanceof PsiClass);
+    PsiType type = PsiUtil.getTypeByPsiElement(owner);
+    return type != null && !(type instanceof PsiPrimitiveType);
   }
 }

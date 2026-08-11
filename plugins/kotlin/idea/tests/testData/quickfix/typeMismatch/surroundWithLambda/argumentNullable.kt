@@ -1,8 +1,8 @@
 // "Surround with lambda" "true"
 // PRIORITY: HIGH
 // ERROR: Type mismatch: inferred type is String? but String was expected
-// K2_ERROR: Argument type mismatch: actual type is 'String?', but '() -> String' was expected.
-// K2_AFTER_ERROR: Return type mismatch: expected 'String', actual 'String?'.
+// K2_AFTER_ERROR: RETURN_TYPE_MISMATCH
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 fun nullableFn() {
     val nullableStr: String? = null
     str(<caret>nullableStr)

@@ -9,8 +9,11 @@ import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.xml.XmlPropertiesFileImpl;
 import com.intellij.lang.properties.xml.XmlProperty;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.ElementManipulators;
@@ -126,6 +129,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     var propertiesFiles = getPropertiesFiles();
     if (propertiesFiles == null) {
       properties = PropertiesImplUtil.findPropertiesByKey(getElement().getProject(), key);
+      properties.removeIf(p -> isFileInJdk(p.getPropertiesFile()));
     }
     else {
       properties = new ArrayList<>();
@@ -148,6 +152,14 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
       results[i] = new PsiElementResolveResult(property instanceof PsiElement psi ? psi : PomService.convertToPsi((PsiTarget)property));
     }
     return results;
+  }
+
+  private static boolean isFileInJdk(@Nullable PropertiesFile file) {
+    if (file == null) return false;
+    VirtualFile vFile = file.getVirtualFile();
+    if (vFile == null) return false;
+    ProjectFileIndex index = ProjectFileIndex.getInstance(file.getProject());
+    return ContainerUtil.exists(index.getOrderEntriesForFile(vFile), e -> e instanceof JdkOrderEntry);
   }
 
   protected abstract @Nullable List<PropertiesFile> getPropertiesFiles();

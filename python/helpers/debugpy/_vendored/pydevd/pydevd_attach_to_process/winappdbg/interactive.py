@@ -127,7 +127,7 @@ class ConsoleDebugger(Cmd, EventHandler):
     confirm_quit = True
 
     # Valid plugin name characters.
-    valid_plugin_name_chars = "ABCDEFGHIJKLMNOPQRSTUVWXY" "abcdefghijklmnopqrstuvwxy" "012345678" "_"
+    valid_plugin_name_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYabcdefghijklmnopqrstuvwxy012345678_"
 
     # Names of the registers.
     segment_names = ("cs", "ds", "es", "fs", "gs")
@@ -974,7 +974,7 @@ class ConsoleDebugger(Cmd, EventHandler):
                 try:
                     doc = getattr(self, name).__doc__.split("\n")
                 except Exception:
-                    return "No help available when Python" " is run with the -OO switch."
+                    return "No help available when Python is run with the -OO switch."
                 for x in doc:
                     x = x.strip()
                     if x:
@@ -1150,7 +1150,7 @@ class ConsoleDebugger(Cmd, EventHandler):
     def _spawn_python_shell(self, arg):
         import winappdbg
 
-        banner = 'Python %s on %s\nType "help", "copyright", ' '"credits" or "license" for more information.\n'
+        banner = 'Python %s on %s\nType "help", "copyright", "credits" or "license" for more information.\n'
         platform = winappdbg.version.lower()
         platform = "WinAppDbg %s" % platform
         banner = banner % (sys.version, platform)
@@ -1680,9 +1680,9 @@ class ConsoleDebugger(Cmd, EventHandler):
                     printed_process_banner = True
                 for label, action, oneshot in dbplist:
                     if oneshot:
-                        address = "  Deferred unconditional one-shot" " code breakpoint at %s"
+                        address = "  Deferred unconditional one-shot code breakpoint at %s"
                     else:
-                        address = "  Deferred unconditional" " code breakpoint at %s"
+                        address = "  Deferred unconditional code breakpoint at %s"
                     address = address % label
                     print("  %s" % address)
             bplist = debug.get_process_page_breakpoints(pid)

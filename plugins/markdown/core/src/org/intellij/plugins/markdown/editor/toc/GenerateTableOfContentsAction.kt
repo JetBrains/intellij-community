@@ -1,5 +1,6 @@
 package org.intellij.plugins.markdown.editor.toc
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -24,8 +25,10 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
+import org.jetbrains.annotations.ApiStatus
 
-internal class GenerateTableOfContentsAction: AnAction() {
+@ApiStatus.Internal
+class GenerateTableOfContentsAction: AnAction() {
   init {
     addTextOverride(MarkdownActionPlaces.INSERT_POPUP) {
       MarkdownBundle.message("action.Markdown.GenerateTableOfContents.insert.popup.text")
@@ -90,10 +93,11 @@ internal class GenerateTableOfContentsAction: AnAction() {
 
     private fun buildToc(file: MarkdownFile): String {
       val headers = collectHeaders(file)
+      val indentSize = CodeStyle.getIndentSize(file)
       return buildString {
         appendLine(sectionDelimiter)
         for (header in headers) {
-          appendHeader(header)
+          appendHeader(header, indentSize)
           appendLine()
         }
         append(sectionDelimiter)
@@ -102,7 +106,12 @@ internal class GenerateTableOfContentsAction: AnAction() {
 
     fun obtainToc(file: MarkdownFile): String {
       return CachedValuesManager.getCachedValue(file) {
-        CachedValueProvider.Result.create(buildToc(file), PsiModificationTracker.MODIFICATION_COUNT)
+        val settings = CodeStyle.getSettings(file)
+        CachedValueProvider.Result.create(
+          buildToc(file),
+          PsiModificationTracker.MODIFICATION_COUNT,
+          settings.modificationTracker,
+        )
       }
     }
 
@@ -116,11 +125,11 @@ internal class GenerateTableOfContentsAction: AnAction() {
       return topLevelElements.filterIsInstance<MarkdownHeader>()
     }
 
-    private fun StringBuilder.appendHeader(header: MarkdownHeader) {
+    private fun StringBuilder.appendHeader(header: MarkdownHeader, indentSize: Int) {
       val text = header.buildVisibleText(hideImages = false) ?: return
       val reference = header.anchorText ?: return
-      repeat(header.level - 1) {
-        append("  ")
+      repeat((header.level - 1) * indentSize) {
+        append(' ')
       }
       append("* [")
       append(text)

@@ -514,6 +514,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
   }
 
+  @ApiStatus.Internal
   protected final class MyPanel extends JPanel implements UiDataProvider {
     final PasteProvider myPasteProvider = new PasteProvider() {
       @Override

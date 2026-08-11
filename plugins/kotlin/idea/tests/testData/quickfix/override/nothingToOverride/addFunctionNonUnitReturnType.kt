@@ -1,6 +1,6 @@
 // "Add 'open fun f(): Int' to 'A'" "true"
 // WITH_STDLIB
-// K2_ERROR: 'f' overrides nothing.
+// K2_ERROR: NOTHING_TO_OVERRIDE
 open class A {
 }
 class B : A() {

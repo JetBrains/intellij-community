@@ -77,6 +77,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.treeStructure.CachingTreePath;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
@@ -439,6 +440,15 @@ public class UsageViewImpl implements UsageViewEx {
           updateImmediately();
         }
       });
+    scheduleUpdateTargetNodes();
+  }
+
+  private void scheduleUpdateTargetNodes() {
+    addUpdateRequest(() -> {
+      ReadAction.runBlocking(() -> {
+        myModel.updateTargetNodes(edtFireTreeNodesChangedQueue);
+      });
+    });
   }
 
   @Override
@@ -1249,27 +1259,18 @@ public class UsageViewImpl implements UsageViewEx {
     ThreadingAssertions.assertEventDispatchThread();
     //always expand the last level group
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTree.getModel().getRoot();
-    try {
-      if (myTree != null) {
-        myTree.suspendExpandCollapseAccessibilityAnnouncements();
-      }
-      for (int i = root.getChildCount() - 1; i >= 0; i--) {
-        DefaultMutableTreeNode child = (DefaultMutableTreeNode)root.getChildAt(i);
-        if (child instanceof GroupNode) {
-          TreePath treePath = new TreePath(child.getPath());
-          myTree.expandPath(treePath);
-        }
-      }
-      myTree.getSelectionModel().clearSelection();
-      for (UsageState usageState : states) {
-        usageState.restore(this);
+    var treeState = new UsageTreeState(root.getChildCount() + states.size());
+    for (int i = root.getChildCount() - 1; i >= 0; i--) {
+      DefaultMutableTreeNode child = (DefaultMutableTreeNode)root.getChildAt(i);
+      if (child instanceof GroupNode) {
+        TreePath treePath = new CachingTreePath(child.getPath());
+        treeState.addExpandedPath(treePath);
       }
     }
-    finally {
-      if (myTree != null) {
-        myTree.resumeExpandCollapseAccessibilityAnnouncements();
-      }
+    for (UsageState usageState : states) {
+      usageState.restore(this, treeState);
     }
+    treeState.applyTo(myTree);
   }
 
   public void expandAll() {
@@ -1422,6 +1423,7 @@ public class UsageViewImpl implements UsageViewEx {
     synchronized (modelToSwingNodeChanges) {
       modelToSwingNodeChanges.clear();
     }
+    scheduleUpdateTargetNodes();
   }
 
   @ApiStatus.Internal
@@ -2359,7 +2361,7 @@ public class UsageViewImpl implements UsageViewEx {
           if (action != null) {
             if (myNeedUpdateButtons) {
               Boolean isDumbAware = (Boolean)action.getValue(DUMB_AWARE_KEY);
-              button.setEnabled(!isSearchInProgress && action.isEnabled() && (!isDumb || isDumbAware));
+              button.setEnabled(!isSearchInProgress && action.isEnabled() && (!isDumb || Boolean.TRUE.equals(isDumbAware)));
             }
             Object name = action.getValue(Action.NAME);
             if (name instanceof String string) {
@@ -2377,7 +2379,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   private record UsageState(@NotNull Usage usage, boolean isSelected) {
     @RequiresEdt
-    private void restore(@NotNull UsageViewImpl usageView) {
+    private void restore(@NotNull UsageViewImpl usageView, @NotNull UsageTreeState usageTreeState) {
       ThreadingAssertions.assertEventDispatchThread();
       UsageNode node = usageView.myUsageNodes.get(usage);
       if (node == NULL_NODE || node == null) {
@@ -2385,12 +2387,36 @@ public class UsageViewImpl implements UsageViewEx {
       }
       DefaultMutableTreeNode parentGroupingNode = (DefaultMutableTreeNode)node.getParent();
       if (parentGroupingNode != null) {
-        TreePath treePath = new TreePath(parentGroupingNode.getPath());
-        usageView.myTree.expandPath(treePath);
+        TreePath treePath = new CachingTreePath(parentGroupingNode.getPath());
+        usageTreeState.addExpandedPath(treePath);
         if (isSelected) {
-          usageView.myTree.addSelectionPath(treePath.pathByAddingChild(node));
+          usageTreeState.addSelectedPath(treePath.pathByAddingChild(node));
         }
       }
+    }
+  }
+  
+  private static class UsageTreeState {
+    private final List<TreePath> expandedPaths;
+    private final List<TreePath> selectedPaths;
+    
+    UsageTreeState(int expandedPathCount) {
+      expandedPaths = new ArrayList<>(expandedPathCount);
+      selectedPaths = new ArrayList<>(1); // typically there's only one or none
+    }
+
+    void addExpandedPath(@NotNull TreePath path) {
+      expandedPaths.add(path);
+    }
+
+    void addSelectedPath(@NotNull TreePath path) {
+      selectedPaths.add(path);
+    }
+    
+    void applyTo(@NotNull Tree tree) {
+      tree.getSelectionModel().clearSelection();
+      tree.expandPaths(expandedPaths);
+      tree.setSelectionPaths(selectedPaths.toArray(new TreePath[0]));
     }
   }
 

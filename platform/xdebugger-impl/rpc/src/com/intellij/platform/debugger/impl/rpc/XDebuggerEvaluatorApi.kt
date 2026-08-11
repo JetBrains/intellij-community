@@ -7,8 +7,8 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.rpc.Id
-import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
@@ -43,7 +43,8 @@ interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebuggerEvaluatorApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<XDebuggerEvaluatorApi>())
+      // TODO: IJPL-252054
+      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<XDebuggerEvaluatorApi>())
     }
   }
 }
@@ -130,6 +131,12 @@ data class XValueDto(
 @Serializable
 data class XValueDtoWithPresentation(
   val value: XValueDto,
+  val presentationData: XValuePresentationDataDto,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XValuePresentationDataDto(
   val presentation: RpcFlow<XValueSerializedPresentation>,
   val fullValueEvaluator: RpcFlow<XFullValueEvaluatorDto?>,
   val additionalLink: RpcFlow<XDebuggerTreeNodeHyperlinkDto?>,
@@ -166,6 +173,7 @@ data class XDebuggerEvaluatorDto(val canEvaluateInDocument: Boolean)
 @ApiStatus.Internal
 @Serializable
 data class XFullValueEvaluatorDto(
+  @JvmField val id: XFullValueEvaluatorId,
   @NlsSafe @JvmField val linkText: String,
   @JvmField val isEnabledFlow: RpcFlow<Boolean>,
   @JvmField val isShowValuePopup: Boolean,
@@ -179,6 +187,10 @@ data class XFullValueEvaluatorDto(
     @JvmField val shortcut: String?,
   )
 }
+
+@ApiStatus.Internal
+@Serializable
+data class XFullValueEvaluatorId(override val uid: UID) : Id
 
 @ApiStatus.Internal
 @Serializable

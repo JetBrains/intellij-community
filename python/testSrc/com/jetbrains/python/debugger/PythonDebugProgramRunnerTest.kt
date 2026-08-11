@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunConfigurationBase
@@ -27,6 +30,8 @@ import java.util.concurrent.atomic.AtomicReference
  * Tests that Python debug runner backend resolution happens during execution, not while the platform caches a runner.
  */
 @TestApplication
+@Subsystems.Debugger
+@Layers.Functional
 internal class PythonDebugProgramRunnerTest {
   companion object {
     private val projectFixture = projectFixture()

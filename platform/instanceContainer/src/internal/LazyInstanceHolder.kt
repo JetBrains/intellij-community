@@ -220,7 +220,7 @@ internal abstract class LazyInstanceHolder(
           error("Unexpected state")
         }
         is InProgress -> {
-          val newState = state.copy(waiters = state.waiters.add(waiter))
+          val newState = state.copy(waiters = state.waiters.adding(waiter))
           val witness = stateHandle.compareAndExchange(this, state, newState)
           if (witness === state) {
             waiter.invokeOnCancellation {
@@ -277,7 +277,7 @@ internal abstract class LazyInstanceHolder(
           error("Unexpected state")
         }
         is InProgress -> {
-          val newState = state.copy(waiters = state.waiters.remove(waiter))
+          val newState = state.copy(waiters = state.waiters.removing(waiter))
           val witness = stateHandle.compareAndExchange(this, state, newState)
           if (witness === state) {
             return

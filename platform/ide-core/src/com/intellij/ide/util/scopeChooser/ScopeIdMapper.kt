@@ -30,6 +30,9 @@ abstract class ScopeIdMapper {
     const val OPEN_FILES_SCOPE_ID: String = "Open Files"
     const val CURRENT_FILE_SCOPE_ID: String = "Current File"
 
+    /**
+     * **Note**: the list is used in some FUS collectors; remember bumping the versions on adding/removing/renaming values.
+     */
     @JvmStatic
     val standardNames: Set<String> = setOf(
       ALL_PLACES_SCOPE_ID, PROJECT_AND_LIBRARIES_SCOPE_ID, PROJECT_FILES_SCOPE_ID, PROJECT_PRODUCTION_FILES_SCOPE_ID,

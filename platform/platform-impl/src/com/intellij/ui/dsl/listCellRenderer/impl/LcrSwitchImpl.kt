@@ -2,22 +2,19 @@
 package com.intellij.ui.dsl.listCellRenderer.impl
 
 import com.intellij.ui.components.OnOffButton
-import com.intellij.ui.dsl.checkTrue
 import com.intellij.ui.dsl.listCellRenderer.LcrRow
 import com.intellij.ui.dsl.listCellRenderer.LcrSwitchInitParams
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JList
 
-@ApiStatus.Internal
 internal class LcrSwitchImpl(initParams: LcrSwitchInitParams, baselineAlign: Boolean, beforeGap: LcrRow.Gap, val isOn: Boolean) :
   LcrCellBaseImpl<LcrSwitchInitParams>(initParams, baselineAlign, beforeGap) {
 
   override val type = Type.SWITCH
 
   override fun apply(component: JComponent, enabled: Boolean, list: JList<*>, isSelected: Boolean) {
-    checkTrue(type.isInstance(component))
+    check(type.isInstance(component))
 
     component as OnOffButton
     component.isSelected = isOn

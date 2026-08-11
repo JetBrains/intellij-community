@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.base.analysis.platform` start
-
 create_kotlinc_options(
     name = "custom_kotlin-base-analysis-platform",
     opt_in = [
@@ -35,9 +34,9 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/references",
         "//libraries/caffeine",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
         "//platform/core-api:core",
         "//platform/workspace/storage",
         "//plugins/kotlin/base/analysis",
@@ -57,6 +56,7 @@ jvm_library(
         "//java/java-analysis-impl:analysis-impl",
         "//java/codeserver/core",
         "//libraries/guava",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
     ],
 )
 
@@ -75,6 +75,9 @@ jvm_library(
         ":kotlin-base-analysis-platform",
         "//plugins/kotlin/references:references_test_lib",
         "//libraries/caffeine:caffeine_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/workspace/storage:storage_test_lib",
         "//plugins/kotlin/base/analysis:analysis_test_lib",
@@ -94,6 +97,7 @@ jvm_library(
         "//java/java-analysis-impl:analysis-impl_test_lib",
         "//java/codeserver/core:core_test_lib",
         "//libraries/guava:guava_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.analysis.platform` end

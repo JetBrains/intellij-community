@@ -102,7 +102,6 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
             // will only be the case if debugger does not use ObjectReference.disableCollection() because of Patches.IBM_JDK_DISABLE_COLLECTION_BUG
             Messages.showWarningDialog(getProject(), JavaDebuggerBundle.message("evaluation.error.array.collected") + "\n" + JavaDebuggerBundle
               .message("warning.recalculate"), JavaDebuggerBundle.message("title.set.value"));
-            //node.getParent().calcValue();
             return;
           }
           final ArrayType arrType = (ArrayType)array.referenceType();

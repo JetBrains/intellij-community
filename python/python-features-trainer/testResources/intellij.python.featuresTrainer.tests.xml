@@ -2,9 +2,11 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.featuresTrainer.tests"/>
-    <module name="intellij.libraries.junit5.params"/>
     <module name="intellij.python.community.junit5Tests.framework._test"/>
     <module name="intellij.python.featuresTrainer"/>
+    <module name="intellij.libraries.junit4"/>
+    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.junit5.params"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.platform.analysis"/>

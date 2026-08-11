@@ -13,6 +13,7 @@ import com.intellij.grazie.utils.isPromotionAllowed
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiFile
@@ -20,7 +21,7 @@ import javax.swing.Icon
 
 private val logger = logger<GrazieEnableCloudAction>()
 
-class GrazieEnableCloudAction : IntentionAndQuickFixAction(), Iconable, CustomizableIntentionAction {
+class GrazieEnableCloudAction : IntentionAndQuickFixAction(), Iconable, CustomizableIntentionAction, DumbAware {
 
   override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean =
     isPromotionAllowed && !GrazieCloudConnector.hasAdditionalConnectors() && GrazieConfig.get().explicitlyChosenProcessing == null

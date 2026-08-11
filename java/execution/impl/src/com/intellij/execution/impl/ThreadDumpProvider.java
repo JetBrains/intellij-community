@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.debugger.impl.attach.JavaDebuggerAttachUtil;
@@ -8,9 +8,9 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.system.OS;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 
@@ -21,7 +21,6 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public abstract class ThreadDumpProvider {
   static final Logger LOG = Logger.getInstance(ThreadDumpProvider.class);
@@ -42,9 +41,7 @@ class JstackThreadDumpProvider extends ThreadDumpProvider {
     if (handle != null) {
       String commandLine = handle.info().command().orElse(null);
       if (commandLine != null) {
-        Path javaPath = Paths.get(commandLine);
-        String jstack = "jstack" + (SystemInfo.isWindows ? ".exe" : "");
-        Path jstackPath = javaPath.resolveSibling(jstack);
+        Path jstackPath = Path.of(commandLine).resolveSibling(OS.CURRENT.getBinaryName("jstack"));
         if (Files.isExecutable(jstackPath)) {
           try {
             GeneralCommandLine command = new GeneralCommandLine(jstackPath.toAbsolutePath().toString(), pid);

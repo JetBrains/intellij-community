@@ -6,7 +6,7 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.Hash
-import com.intellij.vcs.log.util.VcsLogUtil
+import git4idea.GitUtil
 import org.jetbrains.annotations.Nls
 import java.util.regex.Pattern
 
@@ -34,7 +34,7 @@ class StashInfo(val root: VirtualFile, val hash: Hash, val parentHashes: List<Ha
   companion object {
     val StashInfo.subject: @NlsSafe String
       get() {
-        return Pattern.compile("^" + VcsLogUtil.HASH_REGEX.pattern()).matcher(message).replaceFirst("").trim()
+        return Pattern.compile("^" + GitUtil.HASH_REGEX.pattern()).matcher(message).replaceFirst("").trim()
       }
 
     val StashInfo.branchName: @NlsSafe String?

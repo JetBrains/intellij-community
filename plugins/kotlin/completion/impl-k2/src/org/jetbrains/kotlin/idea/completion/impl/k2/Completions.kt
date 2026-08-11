@@ -163,16 +163,16 @@ internal fun KotlinRawPositionContext.allowsOnlyNamedArguments(): Boolean {
     val call = callElement.resolveToCall()?.singleCallOrNull<KaFunctionCall<*>>() ?: return false
 
     if (CallParameterInfoProvider.isJavaArgumentWithNonDefaultName(
-            call.partiallyAppliedSymbol.signature,
-            call.argumentMapping,
+            call.signature,
+            call.valueArgumentMapping,
             valueArgument
         )
     ) return true
 
     val firstArgumentInNamedMode = CallParameterInfoProvider.firstArgumentInNamedMode(
         callElement,
-        call.partiallyAppliedSymbol.signature,
-        call.argumentMapping,
+        call.signature,
+        call.valueArgumentMapping,
         callElement.languageVersionSettings
     ) ?: return false
 

@@ -33,6 +33,10 @@ fun <T : CommandChain> T.waitForSmartMode(): T = apply {
   addCommand("${CMD_PREFIX}waitForSmart")
 }
 
+fun <T : CommandChain> T.waitForFirstScanningToFinish(): T = apply {
+  addCommand("${CMD_PREFIX}waitForFirstScanningToFinish")
+}
+
 fun <T : CommandChain> T.replaceBrowser(): T = apply {
   addCommand("${CMD_PREFIX}replaceBrowser")
 }
@@ -1395,6 +1399,10 @@ fun <T : CommandChain> T.detectProjectLeaks(): T = apply {
   addCommand("${CMD_PREFIX}detectProjectLeaks")
 }
 
+fun <T : CommandChain> T.logProjectLibrariesAndSdks(): T = apply {
+  addCommand("${CMD_PREFIX}logProjectLibrariesAndSdks")
+}
+
 fun <T : CommandChain> T.hideAllToolWindows(): T = apply {
   addCommand("${CMD_PREFIX}takeScreenshot before_close_all_tabs")
   addCommand("${CMD_PREFIX}hideAllToolWindows")
@@ -1403,4 +1411,8 @@ fun <T : CommandChain> T.hideAllToolWindows(): T = apply {
 fun <T : CommandChain> T.optimizeImportsOnDirectory(directoryPath: String = ""): T = apply {
   if (directoryPath.isEmpty()) addCommand("${CMD_PREFIX}optimizeImportsOnDirectory")
   else addCommand("${CMD_PREFIX}optimizeImportsOnDirectory $directoryPath")
+}
+
+fun <T : CommandChain> T.retypeFile(filePath: String, delayMs: Int = 20): T = apply {
+  addCommand("${CMD_PREFIX}retypeFile $filePath $delayMs")
 }

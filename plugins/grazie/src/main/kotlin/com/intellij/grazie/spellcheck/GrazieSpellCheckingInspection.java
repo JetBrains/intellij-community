@@ -2,6 +2,7 @@
 package com.intellij.grazie.spellcheck;
 
 import ai.grazie.nlp.langs.LanguageISO;
+import ai.grazie.rules.de.DigraphExpansion;
 import ai.grazie.spell.suggestion.ranker.AsciiRanker;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionToolSession;
@@ -51,6 +52,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -72,8 +74,13 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
   private static final AtomicBoolean IS_LOGGED = new AtomicBoolean(false);
 
   public static Set<SpellCheckingScope> buildAllowedScopes(PsiElement element) {
-    var tool = getTool(element.getContainingFile(), SPELL_CHECKING_INSPECTION_TOOL_NAME, GrazieSpellCheckingInspection.class);
-    if (tool == null) return Set.of();
+    PsiFile file = element.getContainingFile();
+    var tool = getTool(file, SPELL_CHECKING_INSPECTION_TOOL_NAME, GrazieSpellCheckingInspection.class);
+    if (tool == null) {
+      // The commit editor uses a restricted profile that omits the spellcheck inspection.
+      // CommitAnnotator (already gated by the "Commit messages" toggle) drives the check, so allow all scopes.
+      return CommitMessage.isCommitMessage(file) ? EnumSet.allOf(SpellCheckingScope.class) : Set.of();
+    }
     return tool.buildAllowedScopes();
   }
 
@@ -311,11 +318,26 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
         return true;
       }
 
+      if (isAcceptedAsUnicodeExpansion(word)) {
+        return false;
+      }
+
       Project project = myElement.getProject();
       return SpellCheckerManager.getInstance(project).getSuggestions(word)
         .stream()
         .filter(suggestion -> RenameUtil.isValidName(project, myElement, suggestion))
         .noneMatch(suggestion -> AsciiRanker.equalsIgnoringDiacritics(word, suggestion));
+    }
+
+    private boolean isAcceptedAsUnicodeExpansion(String word) {
+      for (String candidate : DigraphExpansion.generateCombinations(word)) {
+        if (candidate.equalsIgnoreCase(word)) continue;
+        String lower = StringUtil.toLowerCase(candidate);
+        if (!myManager.hasProblem(lower) || !myManager.hasProblem(StringUtil.capitalize(lower))) {
+          return true;
+        }
+      }
+      return false;
     }
 
     private static boolean isOnlyEnglishDictionaryEnabled(Project project) {

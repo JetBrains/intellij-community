@@ -3,9 +3,9 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.projectStructure.copyOrigin
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyzeCopy
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KaDanglingFileResolutionModeProvider
 import org.jetbrains.kotlin.psi.KtElement
 
@@ -29,7 +29,8 @@ interface ContextProvider<E : KtElement, C : Any> {
      *
      * @param element a physical PSI
      */
-    fun KaSession.prepareContext(element: E): C?
+    context(session: KaSession)
+    fun prepareContext(element: E): C?
 }
 
 @OptIn(KaExperimentalApi::class)

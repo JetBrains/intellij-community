@@ -10,8 +10,10 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.UIBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class FatalErrorWidgetFactory implements StatusBarWidgetFactory, LightEditCompatible {
   @Override
   public @NotNull String getId() {

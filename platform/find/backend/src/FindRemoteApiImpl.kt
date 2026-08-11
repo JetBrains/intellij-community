@@ -17,8 +17,10 @@ import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.platform.find.FindInFilesResult
@@ -32,6 +34,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG: Logger = logger<FindRemoteApiImpl>()
@@ -45,7 +48,6 @@ internal class FindRemoteApiImpl : FindRemoteApi {
       val presentation = FindUsagesProcessPresentation(UsageViewPresentation())
 
       val isReplaceState = findModel.isReplaceState
-      val previousResult = ThreadLocal<UsageInfo2UsageAdapter>()
 
       val project = projectId.findProjectOrNull()
       if (project == null) {
@@ -57,7 +59,18 @@ internal class FindRemoteApiImpl : FindRemoteApi {
       setCustomScopeById(project, findModel)
       //read action is necessary in case of the loading from a directory
       val scope = readAction { FindInProjectUtil.getGlobalSearchScope(project, findModel) }
+      LOG.debug {
+        "FiF-backend: findByModel start query='${findModel.stringToFind}' scope=$scope isDumb=${DumbService.isDumb(project)} " +
+        "isCustomScope=${findModel.isCustomScope} customScopeId=${findModel.customScopeId} projectScope=${findModel.isProjectScope} " +
+        "directory=${findModel.directoryName} module=${findModel.moduleName} filesToScanInitially=${filesToScanInitially.size} maxUsages=$maxUsagesCount"
+      }
+
       coroutineToIndicator {
+        // Per-thread "previous result" for merging adjacent matches (the consumer runs concurrently on several
+        // threads). A search-scoped map, NOT a ThreadLocal: on pooled dispatcher threads a ThreadLocal would
+        // outlive the search and pin the last adapter -> FindManager -> a disposed project.
+        val previousResults = ConcurrentHashMap<Thread, UsageInfo2UsageAdapter>()
+
         FindInProjectUtil.findUsages(findModel, project, presentation, filesToScanInitially) { usageInfo ->
           val virtualFile = usageInfo.virtualFile
           if (virtualFile == null)
@@ -68,9 +81,9 @@ internal class FindRemoteApiImpl : FindRemoteApi {
           }
 
           val adapter = UsageInfo2UsageAdapter(usageInfo)
-          val previousItem: UsageInfo2UsageAdapter? = previousResult.get()
+          val previousItem: UsageInfo2UsageAdapter? = previousResults[Thread.currentThread()]
           if (!isReplaceState && previousItem != null) adapter.merge(previousItem)
-          previousResult.set(adapter)
+          previousResults[Thread.currentThread()] = adapter
           adapter.updateCachedPresentation()
           val textChunks = adapter.text.map {
             it.toSerializableTextChunk()
@@ -100,10 +113,15 @@ internal class FindRemoteApiImpl : FindRemoteApi {
           if (sent.isSuccess) {
             sentItems.incrementAndGet()
           }
+          else {
+            LOG.debug { "FiF-backend: send failed (channel closed=${sent.isClosed}); stopping search for query='${findModel.stringToFind}'" }
+          }
 
           sentItems.get() <= maxUsagesCount
         }
       }
+
+      LOG.debug { "FiF-backend: findByModel finished query='${findModel.stringToFind}' produced=${sentItems.get()}" }
     }.buffer(capacity = maxUsagesCount)
   }
 

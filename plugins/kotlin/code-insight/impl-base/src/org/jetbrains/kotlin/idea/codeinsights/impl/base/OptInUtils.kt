@@ -5,9 +5,9 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
-import org.jetbrains.kotlin.analysis.api.components.evaluateAsAnnotationValue
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluateAsAnnotationValue
 import org.jetbrains.kotlin.analysis.api.components.isClassType
-import org.jetbrains.kotlin.analysis.api.components.type
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.config.AnalysisFlags

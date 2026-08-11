@@ -1,0 +1,8 @@
+<!--suppress ModuleNotRegisteredAsPluginContent -->
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.commons.imaging"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

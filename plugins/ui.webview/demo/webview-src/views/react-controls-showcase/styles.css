@@ -1,0 +1,275 @@
+/* Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */
+
+.react-controls-showcase-root {
+  background: var(--jb-bg-window, var(--ij-bg-window));
+  color: var(--jb-text-color, var(--ij-text-primary));
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.reactShowcaseShell {
+  display: grid;
+  gap: 16px;
+  margin: 0 auto;
+  max-width: 1040px;
+  padding: 16px;
+}
+
+.reactShowcaseHeader {
+  display: grid;
+  gap: 4px;
+}
+
+.reactShowcaseHeader h1 {
+  font-size: var(--jb-font-size-h3);
+  font-weight: var(--jb-font-weight-medium);
+  line-height: var(--jb-line-height-heading);
+  margin: 0;
+}
+
+.reactShowcaseHeader p {
+  color: var(--jb-text-muted);
+  line-height: var(--jb-line-height-paragraph);
+  margin: 0;
+  max-width: 760px;
+}
+
+.reactShowcaseGrid {
+  align-items: start;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.reactShowcasePanel {
+  border: 1px solid var(--jb-border-color-muted);
+  border-radius: 6px;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.reactShowcaseWidePanel {
+  grid-column: 1 / -1;
+}
+
+.reactShowcasePanelTitle {
+  color: var(--jb-text-muted);
+  font-size: var(--jb-font-size-small);
+  line-height: var(--jb-line-height);
+  margin: 0;
+}
+
+.reactShowcaseFormStack {
+  display: grid;
+  gap: 10px;
+}
+
+.reactShowcaseTwoColumns {
+  align-items: start;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.reactShowcaseButtonRow,
+.reactShowcaseInlineControls,
+.reactShowcaseToolbarRow {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.reactShowcaseToolbarRow {
+  background: var(--jb-bg-panel);
+  border: 1px solid var(--jb-border-color-muted);
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.reactShowcaseField {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(88px, max-content) minmax(160px, 1fr);
+  min-width: 0;
+}
+
+.reactShowcaseField > span {
+  color: var(--jb-text-muted);
+}
+
+.reactShowcaseField .jbReactControlChrome {
+  width: 100%;
+}
+
+.reactShowcaseFormStack :where(jb-text-field, jb-password-field, jb-text-area, jb-select, jb-combobox, jb-number-field, jb-spinner, jb-slider, jb-expandable-text-field) {
+  width: 100%;
+}
+
+.reactShowcaseFieldGroupBody,
+.reactShowcaseDisclosureBody,
+.reactShowcaseTabBody {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.reactShowcaseDisclosureBody {
+  padding-top: 8px;
+}
+
+.reactShowcaseSeparatorBlock {
+  color: var(--jb-text-muted);
+  display: grid;
+  gap: 8px;
+}
+
+.reactShowcaseIconText {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+}
+
+.reactShowcaseIcon {
+  color: currentColor;
+  display: inline-block;
+  height: 12px;
+  position: relative;
+  width: 12px;
+}
+
+.reactShowcaseIconBack::before {
+  border: solid currentColor;
+  border-width: 0 1.5px 1.5px 0;
+  content: "";
+  height: 6px;
+  left: 4px;
+  position: absolute;
+  top: 2px;
+  transform: rotate(135deg);
+  width: 6px;
+}
+
+.reactShowcaseIconRefresh::before {
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  content: "";
+  height: 8px;
+  left: 1px;
+  position: absolute;
+  top: 2px;
+  width: 8px;
+}
+
+.reactShowcaseIconRefresh::after {
+  border: solid currentColor;
+  border-width: 0 1.5px 1.5px 0;
+  content: "";
+  height: 4px;
+  position: absolute;
+  right: 0;
+  top: 1px;
+  transform: rotate(-35deg);
+  width: 4px;
+}
+
+.reactShowcaseIconPin::before {
+  background: currentColor;
+  border-radius: 1px;
+  content: "";
+  height: 7px;
+  left: 5px;
+  position: absolute;
+  top: 2px;
+  transform: rotate(45deg);
+  width: 2px;
+}
+
+.reactShowcaseIconPin::after {
+  background: currentColor;
+  content: "";
+  height: 2px;
+  left: 3px;
+  position: absolute;
+  top: 3px;
+  transform: rotate(45deg);
+  width: 6px;
+}
+
+.reactShowcaseIconSettings::before {
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  box-shadow: 0 -4px 0 -2px currentColor, 0 4px 0 -2px currentColor, 4px 0 0 -2px currentColor, -4px 0 0 -2px currentColor;
+  content: "";
+  height: 7px;
+  left: 2px;
+  position: absolute;
+  top: 2px;
+  width: 7px;
+}
+
+.reactShowcaseStatus {
+  color: var(--jb-text-muted);
+  font-size: var(--jb-font-size-small);
+  line-height: var(--jb-line-height);
+  margin: 0;
+}
+
+.reactShowcasePopoverRows {
+  display: grid;
+  gap: 6px 10px;
+  grid-template-columns: max-content minmax(0, 1fr);
+}
+
+.reactShowcasePopoverRows span {
+  color: var(--jb-text-muted);
+}
+
+.reactShowcasePopoverRows strong {
+  font-weight: var(--jb-font-weight-medium);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.reactShowcaseTextButton {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--jb-accent-text-color);
+  cursor: default;
+  justify-self: start;
+  padding: 0;
+}
+
+.reactShowcaseChromeSample {
+  min-height: var(--jb-control-height);
+  padding: 0 var(--jb-control-padding-x);
+}
+
+.reactShowcaseGroupLabel {
+  color: var(--jb-text-muted);
+  font-size: var(--jb-font-size-small);
+  padding: var(--jb-space-xs) var(--jb-space-sm);
+}
+
+@media (max-width: 560px) {
+  .reactShowcaseShell {
+    padding: 10px;
+  }
+
+  .reactShowcaseField {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .reactShowcasePopoverRows {
+    grid-template-columns: 1fr;
+  }
+}

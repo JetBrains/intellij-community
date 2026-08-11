@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.rpc.topics` start
-
 jvm_library(
     name = "rpc-topics",
     srcs = glob(
@@ -21,6 +20,7 @@ jvm_library(
     exports = ["//fleet/openmap"],
     deps = [
         # do not sort,
+        "//platform/kernel/rpc.lite",
         "@lib//:kotlin-stdlib",
         "//platform/kernel/shared:kernel",
         "//platform/util",
@@ -50,6 +50,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":rpc-topics",
+        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
         "//platform/util:util_test_lib",
         "//platform/core-api:core_test_lib",

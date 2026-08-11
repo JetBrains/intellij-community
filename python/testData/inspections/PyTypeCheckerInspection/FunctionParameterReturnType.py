@@ -12,13 +12,13 @@ def f(x):
 
 
 def test():
-    for item in func(<warning descr="Expected type '(Any) -> str', got '(x: Any) -> int' instead">f</warning>, []):
+    for item in func(<warning descr="Expected type '(Unknown) -> str', got '(x: Unknown) -> int' instead">f</warning>, []):
         pass
 
-    for item in func(<warning descr="Expected type '(Any) -> str', got 'Type[int]' instead">int</warning>, []):
+    for item in func(<warning descr="Expected type '(Unknown) -> str', got 'Type[int]' instead">int</warning>, []):
         pass
 
-    for item in func(<warning descr="Expected type '(Any) -> str', got '(x: Any) -> int' instead">lambda x: int(x)</warning>, []):
+    for item in func(<warning descr="Expected type '(Unknown) -> str', got '(x: Unknown) -> int' instead">lambda x: int(x)</warning>, []):
         pass
 
     for item in func(lambda x: str(x), []):

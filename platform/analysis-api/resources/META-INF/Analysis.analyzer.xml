@@ -30,5 +30,6 @@
     <extensionPoint qualifiedName="com.intellij.weigher" beanClass="com.intellij.psi.WeigherExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.Weigher"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.newRdCompletionVeto" interface="com.intellij.codeInsight.completion.NewRdCompletionVeto" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

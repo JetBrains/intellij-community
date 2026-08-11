@@ -1,0 +1,21 @@
+<html>
+<body>
+Reports collection concatenations that can be converted to a collection builder call.
+<p>The quick-fix replaces chained <code>+</code> and <code>-</code> collection operations with <code>buildList</code> or <code>buildSet</code>.</p>
+<p><b>Example:</b></p>
+<pre><code>
+fun test(): List&lt;Int&gt; {
+    return listOf(1, 2) + listOf(3, 4)
+}
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+fun test(): List&lt;Int&gt; {
+    return buildList {
+        addAll(listOf(1, 2))
+        addAll(listOf(3, 4))
+    }
+}
+</code></pre>
+</body>
+</html>

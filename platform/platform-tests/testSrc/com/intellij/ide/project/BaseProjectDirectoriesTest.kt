@@ -6,6 +6,7 @@ import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDire
 import com.intellij.openapi.project.BaseProjectDirectoriesDiff
 import com.intellij.openapi.project.BaseProjectDirectoriesListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
@@ -15,6 +16,7 @@ import com.intellij.testFramework.rules.ProjectModelExtension
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -107,6 +109,20 @@ class BaseProjectDirectoriesTest {
     val externalFile = VfsTestUtil.createFile(externalDir, "file.txt")
     assertNull(service.getBaseDirectoryFor(externalDir))
     assertNull(service.getBaseDirectoryFor(externalFile))
+  }
+
+  @Test
+  fun `guess project directory doesn't return an invalid base directory`() {
+    val module = projectModel.createModule()
+    val root = projectModel.baseProjectDir.newVirtualDirectory("root")
+    ModuleRootModificationUtil.addContentRoot(module, root)
+    checkBaseDirectories(root)
+
+    VfsTestUtil.deleteFile(root)
+
+    val guessedDirectory = projectModel.project.guessProjectDir()
+    assertTrue(guessedDirectory == null || guessedDirectory.isValid,
+               "A guessed project directory must be safe to use after a content root is invalidated")
   }
 
   @Test

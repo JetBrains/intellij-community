@@ -22,7 +22,7 @@ public interface ModuleMavenCoordinateEntityBuilder : WorkspaceEntityBuilder<Mod
 }
 
 internal object ModuleMavenCoordinateEntityType : EntityType<ModuleMavenCoordinateEntity, ModuleMavenCoordinateEntityBuilder>() {
-  override val entityClass: Class<ModuleMavenCoordinateEntity> get() = ModuleMavenCoordinateEntity::class.java
+  override val entityImplClass: Class<*> get() = ModuleMavenCoordinateEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ModuleMavenCoordinateEntityImpl.Builder::class.java
   operator fun invoke(
     coordinates: MavenCoordinates,
@@ -44,7 +44,6 @@ public fun MutableEntityStorage.modifyModuleMavenCoordinateEntity(
 
 public var ModuleEntityBuilder.mavenCoordinates: ModuleMavenCoordinateEntityBuilder?
   by WorkspaceEntity.extensionBuilder(ModuleMavenCoordinateEntity::class.java)
-
 
 @JvmOverloads
 @JvmName("createModuleMavenCoordinateEntity")

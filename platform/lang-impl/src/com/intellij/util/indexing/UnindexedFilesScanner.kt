@@ -2,7 +2,6 @@
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readActionUndispatched
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -116,7 +115,7 @@ class ScanningIterators(
  * MAYBE RC: drop Closeable, just leave [close] method? -- avoids 'Closeable without try-w-resources' inspection warnings
  */
 @ApiStatus.Internal
-class UnindexedFilesScanner (
+class UnindexedFilesScanner(
   private val project: Project,
   private val onProjectOpen: Boolean,
   isIndexingFilesFilterUpToDate: Boolean,
@@ -250,7 +249,8 @@ class UnindexedFilesScanner (
 
     val mergedPredicate = if (triggerA == null && triggerB == null) {
       null
-    } else {
+    }
+    else {
       BiPredicate { f: IndexedFile, stamp: FileIndexingStamp ->
         (triggerA != null && triggerA.test(f, stamp)) ||
         (triggerB != null && triggerB.test(f, stamp))
@@ -278,8 +278,9 @@ class UnindexedFilesScanner (
 
     markStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles) {
       val projectIndexingDependenciesService = project.getService(ProjectIndexingDependenciesService::class.java)
-      val scanningRequest = if (onProjectOpen) projectIndexingDependenciesService.newScanningTokenOnProjectOpen(forceCheckingForOutdatedIndexesUsingFileModCount)
-      else projectIndexingDependenciesService.newScanningToken()
+      val scanningRequest =
+        if (onProjectOpen) projectIndexingDependenciesService.newScanningTokenOnProjectOpen(forceCheckingForOutdatedIndexesUsingFileModCount)
+        else projectIndexingDependenciesService.newScanningToken()
 
       try {
         ScanningSession(project, scanningHistory, forceReindexingTrigger, filterHandler, indicator, progressReporter, scanningRequest)
@@ -479,13 +480,14 @@ class UnindexedFilesScanner (
     ) {
       runBlockingCancellable {
         tracer.spanBuilder("runBlocking in scanning").useWithScope(context = SCANNING_DISPATCHER) {
-          providers.forEachConcurrent(SCANNING_PARALLELISM)  { provider ->
+          providers.forEachConcurrent(SCANNING_PARALLELISM) { provider ->
             try {
               tracer.spanBuilder("Scanning of ${provider.debugName}").use {
                 scanSingleProvider(provider, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
               }
             }
             catch (t: Throwable) {
+              @Suppress("RethrowControlFlowExceptionWithUtil")
               if (t is CancellationException) throw t
               if (t is ControlFlowException) {
                 LOG.warn("Unexpected exception during scanning: ${t.message}")
@@ -539,7 +541,9 @@ class UnindexedFilesScanner (
           }
         }
       }
-      catch (e: Exception) {
+      // A plugin's code (e.g. an index input filter) may throw an Error -- NoClassDefFoundError.
+      // Such an Error must not escape and cancel the scanning of _all_ the other providers.
+      catch (e: Throwable) {
         scanningRequest.markUnsuccessful()
 
         // Some code doesn't care if we are inside a non-cancellable section, or in a coroutine.
@@ -573,48 +577,48 @@ class UnindexedFilesScanner (
       try {
         outerWhile@ while (files.isNotEmpty()) {
           indicator.suspendIfPaused()
-          var counter = 0
-          readActionUndispatched {
-            val currentCounter = counter++
-            if (currentCounter != 0) {
-              // report only restarts of scanning read action
-              span.addEvent("Read action restart #${currentCounter} (${files.size} files remain to scan)")
-            }
-            val finder =
-              if (ourTestMode == TestMode.PUSHING) null
-              else UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger, scanningRequest)
-            val pushingUtil = PushingUtil(project, provider)
-            if (!pushingUtil.mayBeUsed()) {
-              LOG.warn("Iterator based on $provider can't be used.")
-              return@readActionUndispatched
-            }
 
-            innerWhile@ while (files.isNotEmpty()) {
-              if (indicator.isPaused()) break@innerWhile
-              val file = files.removeFirst()
-              try {
-                if (file.isValid) {
-                  if (file is VirtualFileWithId) {
-                    filterHandler.addFileId(project, file.id)
+          val finder =
+            if (ourTestMode == TestMode.PUSHING) null
+            else UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger, scanningRequest)
+          val pushingUtil = PushingUtil(project, provider)
+          if (!pushingUtil.mayBeUsed()) {
+            LOG.warn("Iterator based on $provider can't be used.")
+            return
+          }
+
+          innerWhile@ while (files.isNotEmpty()) {
+            if (indicator.isPaused()) break@innerWhile
+            val file = files.removeFirst()
+            try {
+              if (file.isValid) {
+                if (file is VirtualFileWithId) {
+                  filterHandler.addFileId(project, file.id)
+                }
+                pushingUtil.applyPushers(file)
+                val status = finder?.getFileStatus(file)
+                if (status != null) {
+                  if (status.shouldIndex && ourTestMode == null) {
+                    indexingQueue.addFile(file, scanningHistory.scanningSessionId)
                   }
-                  pushingUtil.applyPushers(file)
-                  val status = finder?.getFileStatus(file)
-                  if (status != null) {
-                    if (status.shouldIndex && ourTestMode == null) {
-                      indexingQueue.addFile(file, scanningHistory.scanningSessionId)
-                    }
-                    scanningStatistics.addStatus(file, status, project)
-                  }
+                  scanningStatistics.addStatus(file, status, project)
                 }
               }
-              catch (e: ProcessCanceledException) {
+            }
+            catch (e: Throwable) {
+              if (e is CancellationException || e is ControlFlowException) {
+                //Cancellation is not a failure: the read action is restarted (ReadAction.CannotReadException is a PCE), so the
+                // file must stay in the queue to be scanned again.
                 files.addFirst(file)
                 throw e
               }
-              catch (e: Exception) {
-                LOG.error("Error while scanning ${file.presentableUrl}\n" +
-                          "To reindex this file IDE has to be restarted", e)
-              }
+
+              // A plugin's code invoked from getFileStatus()/applyPushers() may throw an Error -- e.g. a broken
+              // index input filter throwing NoClassDefFoundError for every file. Skip the file, keep scanning the rest,
+              // and make sure the incomplete result is not mistaken for a complete one
+              scanningRequest.markUnsuccessful()
+              LOG.error("Error while scanning ${file.presentableUrl}\n" +
+                        "To reindex this file IDE has to be restarted", e)
             }
           }
         }

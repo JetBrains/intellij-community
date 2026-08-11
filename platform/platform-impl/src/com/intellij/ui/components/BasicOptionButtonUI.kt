@@ -35,6 +35,7 @@ import com.intellij.ui.util.width
 import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.scale
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Container
 import java.awt.Dimension
@@ -379,6 +380,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
 
   open inner class ArrowButton : BaseButton()
 
+  @ApiStatus.Internal
   open inner class OptionButtonLayout : AbstractLayoutManager() {
     override fun layoutContainer(parent: Container) {
       val mainButtonWidth = optionButton.width - if (arrowButton.isVisible) arrowButton.preferredSize.width else 0
@@ -391,6 +393,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     override fun minimumLayoutSize(parent: Container): Dimension = parent.minimumSize
   }
 
+  @ApiStatus.Internal
   inner class OptionButtonPopup(step: ActionPopupStep,
                                 dataContext: DataContext,
                                 private val ensureSelection: Boolean)
@@ -429,6 +432,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     }
   }
 
+  @ApiStatus.Internal
   open inner class OptionButtonPopupStep(actions: List<PopupFactoryImpl.ActionItem>,
                                          place: String, private val defaultSelection: Condition<in AnAction>?,
                                          dataContext: DataContext, presentationFactory: PresentationFactory)
@@ -440,6 +444,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     override fun isSpeedSearchEnabled(): Boolean = false
   }
 
+  @ApiStatus.Internal
   open inner class ActionDelegate(val action: Action) : DumbAwareAction() {
     init {
       isEnabledInModalContext = true
@@ -459,6 +464,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     }
   }
 
+  @ApiStatus.Internal
   companion object {
     @Suppress("UNUSED_PARAMETER")
     @JvmStatic

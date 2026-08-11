@@ -7,11 +7,11 @@ import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.ide.bookmark.BookmarksManager
 import com.intellij.ide.bookmark.FileBookmark
-import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.fileTypes.impl.FileTypeValidationRule
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
@@ -34,7 +34,7 @@ class SearchEverywhereFileFeaturesProvider
   : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java, RecentFilesSEContributor::class.java) {
 
   object Fields {
-    val FILETYPE_DATA_KEY = EventFields.StringValidatedByCustomRule("file_type", FileTypeUsagesCollector.ValidationRule::class.java)
+    val FILETYPE_DATA_KEY = EventFields.StringValidatedByCustomRule("file_type", FileTypeValidationRule::class.java)
     val IS_BOOKMARK_DATA_KEY = EventFields.Boolean("is_bookmark")
 
     val IS_DIRECTORY_DATA_KEY = EventFields.Boolean("is_directory")

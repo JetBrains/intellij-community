@@ -31,6 +31,7 @@ import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
 import org.jetbrains.jewel.ui.theme.tooltipStyle
 
+/** Renders an action button that wraps [IconButton] and applies horizontal content padding around [content]. */
 @Composable
 public fun ActionButton(
     onClick: () -> Unit,
@@ -47,6 +48,10 @@ public fun ActionButton(
     }
 }
 
+/**
+ * Renders an action button with an associated [tooltip] that wraps [IconButton] and applies horizontal content padding
+ * around [content].
+ */
 @Composable
 public fun ActionButton(
     onClick: () -> Unit,

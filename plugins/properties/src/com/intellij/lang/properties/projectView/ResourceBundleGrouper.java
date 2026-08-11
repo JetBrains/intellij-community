@@ -14,6 +14,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
@@ -41,10 +42,11 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
       return children;
     }
 
-    return ReadAction.compute(() -> {
+    return ReadAction.nonBlocking(() -> {
       List<AbstractTreeNode<?>> result = new ArrayList<>();
       List<PropertiesFile> dirPropertiesFiles = new SmartList<>();
       for (AbstractTreeNode<?> child : children) {
+        ProgressManager.checkCanceled();
         Object f = child.getValue();
         if (f instanceof PsiFile && child.getClass() == PsiFileNode.class) { // process raw nodes only
           PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile((PsiFile)f);
@@ -60,7 +62,7 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
       }
       appendPropertiesFilesNodes(dirPropertiesFiles, myProject, result::add, settings);
       return result;
-    });
+    }).executeSynchronously();
   }
 
   private static void appendPropertiesFilesNodes(@NotNull List<? extends PropertiesFile> files,

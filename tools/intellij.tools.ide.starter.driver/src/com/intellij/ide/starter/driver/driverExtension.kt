@@ -16,6 +16,8 @@ import com.intellij.tools.ide.performanceTesting.commands.CommandChain
 import com.intellij.tools.ide.performanceTesting.commands.SdkObject
 import com.intellij.tools.ide.util.common.logOutput
 import kotlin.io.path.absolutePathString
+import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 fun Driver.execute(commands: CommandChain, project: Project? = null) {
   waitForProjectOpen()
@@ -51,13 +53,11 @@ fun <T> DriverTestLogger.run(text: String, action: () -> T): T = try {
   val startedText = "$text started"
   logOutput(startedText.color(LogColor.GREEN))
   info(startedText)
-  val actionStarted = System.currentTimeMillis()
-  val result = action()
-  val time = System.currentTimeMillis() - actionStarted
-  val finishedText = "$text finished in ${time}ms"
+  val timedResult = measureTimedValue { action() }
+  val finishedText = "$text finished in ${timedResult.duration}"
   logOutput(finishedText.color(LogColor.GREEN))
   runCatching { info(finishedText) }
-  result
+  timedResult.value
 } catch (e: Throwable) {
   runCatching { warn("$text failed with '${e.message}'") }
   throw e

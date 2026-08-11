@@ -58,6 +58,7 @@ import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
@@ -105,7 +106,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
                                       @NotNull List<I18nizedPropertyData<D>> keyValuePairs,
                                       @NotNull Set<PsiFile> contextFiles,
                                       @Nullable ResourceBundleManager bundleManager,
-                                      @NotNull Function<? super D, ? extends List<UsageInfo>> usagePreviewProvider,
+                                      @NotNull Function<? super D, ? extends @Unmodifiable List<UsageInfo>> usagePreviewProvider,
                                       Icon markAsNonNlsButtonIcon,
                                       boolean canShowCodeInfo) {
     super(project, true);

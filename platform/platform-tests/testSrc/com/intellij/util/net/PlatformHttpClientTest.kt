@@ -28,6 +28,7 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.GZIPOutputStream
+import kotlin.io.path.createTempFile
 import kotlin.io.path.writeText
 
 @TestFixtures
@@ -88,6 +89,19 @@ class PlatformHttpClientTest {
     assertThat(response.statusCode()).isEqualTo(HttpURLConnection.HTTP_OK)
     assertThat(response.body()).isEmpty()
     assertThat(requested.get()).isEqualTo(2)
+  }
+
+  @Test fun redirectToFileUrl(@TempDir tempDir: Path) {
+    val tempFile = createTempFile(tempDir, "test.", ".txt").apply {
+      writeText("secret content")
+    }
+    server.createContext("/") { ex ->
+      ex.responseHeaders.add("Location", tempFile.toUri().toString())
+      ex.sendResponseHeaders(HttpURLConnection.HTTP_MOVED_TEMP, -1)
+      ex.close()
+    }
+    assertThatThrownBy { PlatformHttpClient.send(client, serverRequest, HttpResponse.BodyHandlers.ofString()) }
+      .isInstanceOf(HttpRequests.HttpStatusException::class.java)
   }
 
   @Suppress("NonAsciiCharacters")

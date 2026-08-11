@@ -39,12 +39,11 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.impl.ad.isRhizomeAdRebornEnabled
-import com.intellij.openapi.editor.impl.ad.util.ThreadLocalRhizomeDB
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher
 import com.intellij.openapi.keymap.impl.KeyState
+import com.intellij.openapi.keymap.impl.ui.ShortcutTextField
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
@@ -78,7 +77,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import sun.awt.AppContext
 import sun.awt.PeerEvent
 import sun.awt.SunToolkit
 import java.awt.AWTEvent
@@ -995,8 +993,6 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   fun getReturnedEventCount(): Long = eventsReturned.get()
 
-  fun getPostedSystemEventCount(): Long = (AppContext.getAppContext()?.get("jb.postedSystemEventCount") as? AtomicLong)?.get() ?: -1
-
   fun flushNativeEventQueue() {
     SunToolkit.flushPendingEvents()
   }
@@ -1111,8 +1107,6 @@ internal fun performActivity(e: AWTEvent, runnable: () -> Unit) {
       com.intellij.ide.transactionGuard = transactionGuard
     }
   }
-
-  setImplicitThreadLocalRhizomeIfEnabled()
 
   if (transactionGuard == null) {
     runnable()
@@ -1308,6 +1302,12 @@ private class WindowsAltSuppressor : IdeEventQueue.NonLockedEventDispatcher {
       return false
     }
 
+    if (isShortcutTextFieldEvent(ke)) {
+      waitingForAltRelease = false
+      altPressedOnly = false
+      return false
+    }
+
     val component = ke.component
     var dispatch = true
     if (ke.id == KeyEvent.KEY_PRESSED) {
@@ -1345,6 +1345,10 @@ private class WindowsAltSuppressor : IdeEventQueue.NonLockedEventDispatcher {
   }
 }
 
+private fun isShortcutTextFieldEvent(event: KeyEvent): Boolean {
+  return event.source is ShortcutTextField || KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner is ShortcutTextField
+}
+
 @Internal
 interface ClientIdAwareEvent {
   val clientId: ClientId?
@@ -1368,23 +1372,23 @@ private fun abracadabraDaberBoreh(eventQueue: IdeEventQueue) {
   // - replace `PostEventQueue` value in `AppContext` with this new `PostEventQueue`
   // After that, the control flow goes like this:
   //   PostEventQueue.flush() -> IdeEventQueue.postEvent() -> we intercepted the event and incremented counters.
-  val aClass = Class.forName("sun.awt.PostEventQueue")
-  val constructor = MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
-    .findConstructor(aClass, MethodType.methodType(Void.TYPE, EventQueue::class.java))
+  val postEventClass = Class.forName("sun.awt.PostEventQueue")
+  val constructor = MethodHandles.privateLookupIn(postEventClass, MethodHandles.lookup())
+    .findConstructor(postEventClass, MethodType.methodType(Void.TYPE, EventQueue::class.java))
   val postEventQueue = constructor.invoke(eventQueue)
-  AppContext.getAppContext().put("PostEventQueue", postEventQueue)
-}
-
-private fun setImplicitThreadLocalRhizomeIfEnabled() {
-  if (isRhizomeAdRebornEnabled) {
-    // It is a workaround on tricky `updateDbInTheEventDispatchThread()` where
-    // the thread local DB is reset by `fleet.kernel.DbSource.ContextElement.restoreThreadContext`
-    try {
-      ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
-    }
-    catch (e: Exception) {
-      Logs.LOG.error(e)
-    }
+  try {
+    // JDK < 27
+    val appContextClass = Class.forName("sun.awt.AppContext")
+    val appContext = appContextClass.getMethod("getAppContext").invoke(null)
+    appContextClass.getMethod("put", Any::class.java, Any::class.java).invoke(appContext, "PostEventQueue", postEventQueue)
+  } catch (e: ReflectiveOperationException) {
+    // JDK >= 27
+    // `sun.awt.AppContext` is removed starting JDK 27, try to use other way of replacing `PostEventQueue`
+    // TODO: Change the order of attempts when JDK >= 27 becomes the happy path
+    val sunToolkitClass = Class.forName("sun.awt.SunToolkit")
+    MethodHandles.privateLookupIn(sunToolkitClass, MethodHandles.lookup())
+      .findStaticSetter(sunToolkitClass, "postEventQueue", postEventClass)
+      .invoke(postEventQueue)
   }
 }
 

@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.compiler` start
-
 jvm_library(
     name = "java-compiler",
     srcs = glob(
@@ -40,6 +39,7 @@ jvm_library(
         "//platform/platform-api:ide",
         "//platform/lang-api:lang",
         "//java/java-psi-api:psi",
+        "//platform/lang-impl",
     ],
 )
 
@@ -78,6 +78,7 @@ jvm_library(
         "//platform/platform-api:ide_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//java/java-psi-api:psi_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.compiler` end

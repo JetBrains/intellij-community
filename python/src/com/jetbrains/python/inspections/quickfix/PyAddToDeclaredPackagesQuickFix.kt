@@ -6,7 +6,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.packaging.PyRequirementParser
+import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import org.jetbrains.annotations.Nls

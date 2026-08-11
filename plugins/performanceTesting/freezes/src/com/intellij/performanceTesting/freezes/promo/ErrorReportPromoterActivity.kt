@@ -17,7 +17,6 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.RegistryManager
-import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.Time
 import com.intellij.util.application
@@ -28,11 +27,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private const val PROMO_SHOWN_KEY = "promo.notification.automatic.error.report.shown"
+
+internal const val FREEZE_COUNT_KEY = "performance.plugin.promo.freeze.count"
 internal const val FREEZE_THRESHOLD = 3
 
 internal class ErrorReportPromoterActivity : ProjectActivity {
   init {
-    if (application.isHeadlessEnvironment() || IdeProductMode.isBackend) throw ExtensionNotApplicableException.create()
+    if (application.isHeadlessEnvironment) throw ExtensionNotApplicableException.create()
   }
 
   override suspend fun execute(project: Project) {

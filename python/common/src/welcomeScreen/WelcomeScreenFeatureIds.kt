@@ -1,4 +1,4 @@
-package com.intellij.python.common.welcomeScreen
+package com.intellij.python.community.common.welcomeScreen
 
 import org.jetbrains.annotations.ApiStatus
 

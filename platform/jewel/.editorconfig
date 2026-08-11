@@ -49,6 +49,7 @@ ktlint_standard_try-catch-finally-spacing = disabled
 ktlint_standard_blank-line-between-when-conditions = disabled
 ktlint_standard_when-entry-bracing = disabled
 ktlint_standard_wrapping = disabled
+ktlint_standard_spacing-between-declarations-with-comments=disabled
 trim_trailing_whitespace = false
 
 [gradlew.bat]

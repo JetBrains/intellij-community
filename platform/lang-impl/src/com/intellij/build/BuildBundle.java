@@ -3,6 +3,7 @@
 package com.intellij.build;
 
 import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class BuildBundle {
   private static final @NonNls String BUNDLE = "messages.BuildBundle";
   private static final DynamicBundle INSTANCE = new DynamicBundle(BuildBundle.class, BUNDLE);

@@ -10,6 +10,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.ChannelsAccessor.FileChannelOperation;
 import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOperation;
 import com.intellij.util.io.storage.AbstractStorage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,15 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Clos
 
   private static final @NotNull ThreadLocal<byte[]> ourTypedIOBuffer = ThreadLocal.withInitial(() -> new byte[8]);
 
+  /**
+   * @deprecated this is quite useful to setup deep trees of storages with the same set of configuration parameters, but
+   * it has a significant downside for maintainability: it is hard to trace where specific configuration parameters come
+   * from. It is also easy to miss the cases there storages (re-)initialized later, not in ctor, outside of thread-local
+   * wrapping
+   * TODO RC: So the more explicit (though verbose) approach is advised: pass the parameters needed through all the tree
+   *          of ctors.
+   *          This is partially implemented already, but a few legacy cases still remain to be converted later
+   */
   public static final @NotNull ThreadLocal<StorageLockContext> THREAD_LOCAL_STORAGE_LOCK_CONTEXT = new ThreadLocal<>();
 
   private final @NotNull StorageLockContext myStorageLockContext;

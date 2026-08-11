@@ -32,7 +32,7 @@ public class ViewBreakpointsAction extends DumbAwareAction implements SplitDebug
     XBreakpointProxy initialBreakpointProxy = XBreakpointProxy.DATA_KEY.getData(dataContext);
     XBreakpointId initialBreakpointId = initialBreakpointProxy != null ? initialBreakpointProxy.getId() : null;
     if (initialBreakpointId == null && editor != null) {
-      var breakpointProxy = XBreakpointUIUtil.findSelectedBreakpointProxy(project, editor).second;
+      var breakpointProxy = XBreakpointUIUtil.findSelectedBreakpoint(project, editor);
       if (breakpointProxy != null) {
         initialBreakpointId = breakpointProxy.getId();
       }

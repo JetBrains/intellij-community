@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.MapGetWithNotNullAssertionOperatorInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.MapGetWithNotNullAssertionOperatorInspection

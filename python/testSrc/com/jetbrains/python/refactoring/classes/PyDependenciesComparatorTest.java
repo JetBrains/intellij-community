@@ -7,6 +7,8 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStatement;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,6 +18,8 @@ import java.util.List;
 /**
  * @author Ilya.Kazakevich
  */
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyDependenciesComparatorTest extends PyTestCase {
 
   public void test() {

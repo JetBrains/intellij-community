@@ -9,7 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.project.findProjectOrNull
-import com.intellij.platform.structureView.frontend.uiModel.StructureUiModelImpl
+import com.intellij.platform.structureView.frontend.uiModel.StructureUiModelSession
 import com.intellij.platform.structureView.impl.StructureTreeApi
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
@@ -18,7 +18,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 @Service(Service.Level.APP)
 internal class ShowStructurePopupFlowService(cs: CoroutineScope) {
   init {
@@ -30,7 +29,7 @@ internal class ShowStructurePopupFlowService(cs: CoroutineScope) {
             request.received.send(Unit)
           }
           catch (_: Throwable) {
-            StructureTreeApi.callDisposeModel(request.modelId)
+            StructureTreeApi.callDisposeModel(request.projectId, request.modelId)
             return@collect
           }
           withContext(Dispatchers.EDT) {
@@ -38,18 +37,18 @@ internal class ShowStructurePopupFlowService(cs: CoroutineScope) {
             val file = request.fileId?.virtualFile()
 
             if (project == null || project.isDisposed) {
-              StructureTreeApi.callDisposeModel(request.modelId)
+              StructureTreeApi.callDisposeModel(request.projectId, request.modelId)
               return@withContext
             }
 
             try {
-              val model = StructureUiModelImpl(file, project, request.modelId, request.model)
+              val model = StructureUiModelSession(file, project, request.modelId, request.model)
               val popup = FileStructurePopup(project, null, model)
               request.title?.let { popup.setTitle(it) }
               popup.show()
             }
             catch (t: Throwable) {
-              StructureTreeApi.callDisposeModel(request.modelId)
+              StructureTreeApi.callDisposeModel(request.projectId, request.modelId)
               throw t
             }
           }
@@ -63,7 +62,6 @@ internal class ShowStructurePopupFlowService(cs: CoroutineScope) {
   }
 }
 
-@ApiStatus.Internal
 internal class ShowStructurePopupFlowStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     ShowStructurePopupFlowService.getInstance()

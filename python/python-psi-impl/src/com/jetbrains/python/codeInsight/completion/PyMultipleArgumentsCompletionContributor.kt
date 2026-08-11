@@ -39,7 +39,7 @@ class PyMultipleArgumentsCompletionContributor : CompletionContributor(), DumbAw
   private object MyCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
       val position = parameters.position
-      val argumentExplicitIndex = getArgumentIndex(position) ?: return
+      val argumentIndex = getArgumentIndex(position) ?: return
 
       val call = PsiTreeUtil.getParentOfType(position, PyCallExpression::class.java) ?: return
       val typeEvalContext = parameters.getTypeEvalContext()
@@ -52,7 +52,6 @@ class PyMultipleArgumentsCompletionContributor : CompletionContributor(), DumbAw
 
       callableTypes.forEach { callableType ->
         val callableParameters = callableType.getParameters(typeEvalContext)
-        val argumentIndex = callableType.implicitOffset + argumentExplicitIndex
         if (callableParameters == null ||
             argumentIndex >= callableParameters.size ||
             callableParameters.any { it.isKeywordContainer || it.isPositionalContainer }

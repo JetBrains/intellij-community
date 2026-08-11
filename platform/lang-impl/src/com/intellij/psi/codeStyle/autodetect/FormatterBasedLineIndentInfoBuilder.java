@@ -75,7 +75,7 @@ public final class FormatterBasedLineIndentInfoBuilder {
   }
 
   private static boolean hasOnlyNormalOrNoneIndents(List<Indent.Type> indents) {
-    Indent.Type outerMostIndent = indents.get(0);
+    Indent.Type outerMostIndent = indents.getFirst();
     if (outerMostIndent != Indent.Type.NONE && outerMostIndent != Indent.Type.NORMAL) {
       return false;
     }
@@ -103,7 +103,7 @@ public final class FormatterBasedLineIndentInfoBuilder {
         ((AbstractBlock)block).setBuildIndentsOnly(true);
       }
       List<Block> subBlocks = block.getSubBlocks();
-      block = subBlocks.isEmpty() ? null : subBlocks.get(0);
+      block = subBlocks.isEmpty() ? null : subBlocks.getFirst();
     }
     
     return indentsOnStartOffset;

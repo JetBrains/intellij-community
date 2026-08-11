@@ -58,6 +58,7 @@
     <orderEntry type="module" module-name="intellij.java.i18n" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.frontback.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.java.i18n" />
 </module>

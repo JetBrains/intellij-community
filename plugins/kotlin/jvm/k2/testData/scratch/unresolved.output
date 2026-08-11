@@ -1,4 +1,3 @@
 Compilation failed: unresolved.kts:1:1: error: unresolved reference 'foo'.
 foo()
 ^
-

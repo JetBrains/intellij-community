@@ -2,7 +2,6 @@
 @file:ApiStatus.Internal
 @file:JvmName("Main")
 @file:OptIn(LowLevelLocalMachineAccess::class)
-@file:Suppress("KotlinPrintToLogpoint")
 package com.intellij.idea
 
 import com.intellij.DynamicBundle
@@ -10,8 +9,9 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.BootstrapBundle
-import com.intellij.ide.plugins.PluginMainDescriptor
+import com.intellij.ide.CommandLineProcessor
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.InitialConfigImportState
@@ -178,14 +178,8 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
     }
 
     startApplication(
-      scope = this,
-      args = args,
-      configImportNeededDeferred = configImportNeededDeferred,
-      customTargetDirectoryToImportConfig = customTargetDirectoryToImportConfig,
-      mainClassLoaderDeferred = mainClassLoaderDeferred,
-      appStarterDeferred = appStarterDeferred,
-      mainScope = mainScope,
-      busyThread = busyThread,
+      scope = this, args, configImportNeededDeferred, customTargetDirectoryToImportConfig, mainClassLoaderDeferred,
+      appStarterDeferred, mainScope, busyThread
     )
   }
 }
@@ -300,36 +294,34 @@ private fun preprocessArgs(rawArgs: Array<String>): List<String> {
   }
 
   val filteredArgs = ApplicationStartArguments.stripKnownArguments(args)
-  val firstArg = @Suppress("ReplaceSizeCheckWithIsNotEmpty") when {
-    filteredArgs.size > 1 && (filteredArgs[0] == "-e" || filteredArgs[0] == "--edit") -> filteredArgs[1]
-    filteredArgs.size > 0 -> filteredArgs[0]
-    else -> null
+  val firstArg = when (filteredArgs.firstOrNull()) {
+    "-e", "--edit" -> filteredArgs.getOrNull(1)
+    else -> filteredArgs.firstOrNull()
   }
-  when (firstArg) {
-    "--help", "-h", "-?" -> {
+  when {
+    firstArg == "--help" || firstArg == "-h" || firstArg == "-?" -> {
       printBasicHelp()
       exitProcess(0)
     }
-    "--list-commands" -> {
+    firstArg == "--list-commands" -> {
       printCommands()
       exitProcess(0)
     }
-    "--version", "-version", "-v" -> {
+    firstArg == "--version" || firstArg == "-version" || firstArg == "-v" -> {
       printVersion()
       exitProcess(0)
     }
-  }
-
-  if (firstArg != null && firstArg.startsWith('-')) {
-    println("unrecognized option: ${firstArg}")
-    exitProcess(1)
+    firstArg != null && firstArg.startsWith('-') && !CommandLineProcessor.isSupportedOption(firstArg) -> {
+      println("unrecognized option: ${firstArg}")
+      exitProcess(1)
+    }
   }
 
   return args
 }
 
 private fun printBasicHelp() {
-  println("""
+  println(@Suppress("GrazieInspection") """
     Basic commands and options:
     --help           prints the short list of basic commands and options
     --list-commands  prints the full list of commands available in this installation
@@ -359,14 +351,16 @@ private fun printCommands() {
   }
   val isInternal = System.getProperty(ApplicationManagerEx.IS_INTERNAL_PROPERTY).toBoolean()
   pluginSet.enabledPlugins.forEach { plugin ->
-    val starters = (sequenceOf(plugin) + plugin.contentModules.asSequence())
-      .flatMap { it.extensions["com.intellij.appStarter"] ?: emptyList() }
-      .filter { isInternal || !it.element?.attributes?.get("internal").toBoolean() }
+    val startersWithOwners = (sequenceOf(plugin) + plugin.contentModules.asSequence())
+      .flatMap { owningModule ->
+        owningModule.extensions["com.intellij.appStarter"].orEmpty().map { it to owningModule }
+      }
+      .filter { (starter, _) -> isInternal || !starter.element?.attributes?.get("internal").toBoolean() }
       .toList()
-    if (starters.isNotEmpty()) {
+    if (startersWithOwners.isNotEmpty()) {
       println("=== ${if (plugin.pluginId == PluginManagerCore.CORE_ID) "Built-in" else plugin.name} commands")
-      starters.forEach { starter ->
-        val message = starterHelp(plugin, starter).replace("\n", "\n  ")
+      startersWithOwners.forEach { (starter, owningModule) ->
+        val message = starterHelp(owningModule, starter).replace("\n", "\n  ")
         println("\n${starter.orderId}\n  ${message}")
       }
       println()
@@ -374,8 +368,8 @@ private fun printCommands() {
   }
 }
 
-private fun starterHelp(plugin: PluginMainDescriptor, starter: ExtensionDescriptor): String {
-  val classLoader = plugin.pluginClassLoader
+private fun starterHelp(owner: PluginModuleDescriptor, starter: ExtensionDescriptor): String {
+  val classLoader = owner.pluginClassLoader
   if (classLoader != null) {
     val bundle = starter.element?.attributes?.get("bundle")
     val key = starter.element?.attributes?.get("key")
@@ -401,12 +395,7 @@ private fun runMarketplaceCommandsInActionScript() {
     // (referencing a string constant is OK - it is inlined by the compiler 🤞)
     val scriptFile = PathManager.getStartupScriptDir().resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE)
     if (Files.isRegularFile(scriptFile)) {
-      if (System.getProperty("disable.IJPL.221005") == "true") {
-        // just in case the fix for IJPL-221005 blows up in the minor update, TODO drop after 26.1
-        StartupActionScriptManager.executeActionScript()
-      } else {
-        StartupActionScriptManager.executeMarketplaceCommandsFromActionScript()
-      }
+      StartupActionScriptManager.executeMarketplaceCommandsFromActionScript()
     }
   }
   catch (e: Throwable) {

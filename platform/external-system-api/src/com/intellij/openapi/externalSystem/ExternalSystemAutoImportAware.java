@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -44,7 +45,7 @@ public interface ExternalSystemAutoImportAware {
   @Nullable
   String getAffectedExternalProjectPath(@NotNull String changedFileOrDirPath, @NotNull Project project);
 
-  default @NotNull List<Path> getAffectedExternalProjectFilePaths(String projectPath, @NotNull Project project) {
+  default @NotNull @Unmodifiable List<Path> getAffectedExternalProjectFilePaths(String projectPath, @NotNull Project project) {
     return ContainerUtil.map(getAffectedExternalProjectFiles(projectPath, project), File::toPath);
   }
 

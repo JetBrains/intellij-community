@@ -257,18 +257,20 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
 
   private fun trackNewLanguageAddition() {
     GrazieConfig.subscribe(this) {
-      val newLanguages = loadLanguages() ?: return@subscribe
+      SwingUtilities.invokeLater {
+        val newLanguages = loadLanguages() ?: return@invokeLater
 
-      val lang = if (langComboModel.selected != null && langComboModel.selected in newLanguages) {
-        langComboModel.selected!!
-      } else {
-        GrazieConfig.get().availableLanguages.first { it.isEnglish() }
+        val lang = if (langComboModel.selected != null && langComboModel.selected in newLanguages) {
+          langComboModel.selected!!
+        } else {
+          GrazieConfig.get().availableLanguages.first { it.isEnglish() }
+        }
+        val language = lang.toLanguage()
+        settings.clear()
+        settings.addTextStyle(textStyle, language, filterComponent)
+        repaintSettings(textStyle, language)
+        langCombo.selected = lang
       }
-      val language = lang.toLanguage()
-      settings.clear()
-      settings.addTextStyle(textStyle, language, filterComponent)
-      repaintSettings(textStyle, language)
-      langCombo.selected = lang
     }
   }
 

@@ -129,9 +129,6 @@
         <keyboard-shortcut first-keystroke="f5" />
     </action>
     <action id="Debugger.EditArrayFilter" />
-    <action id="Debugger.EditFrameSource">
-        <keyboard-shortcut first-keystroke="f4" />
-    </action>
     <action id="Debugger.RemoveArrayFilter">
         <keyboard-shortcut first-keystroke="delete" />
         <keyboard-shortcut first-keystroke="back_space" />
@@ -422,10 +419,12 @@
     <action id="Maven.ExpandAll">
         <keyboard-shortcut first-keystroke="meta add" />
     </action>
+    <action id="MethodDown" />
     <action id="MethodHierarchy" />
     <action id="MethodHierarchy.OverrideMethodAction" />
     <action id="MethodOverloadSwitchDown" />
     <action id="MethodOverloadSwitchUp" />
+    <action id="MethodUp" />
     <action id="MoveLineDown">
         <keyboard-shortcut first-keystroke="alt down" />
     </action>

@@ -63,20 +63,15 @@ abstract class CustomLibraryDescriptionWithDeferredConfig(
                 libraryPresentationManager.isLibraryOfKind(classFiles, libraryKind)
             } as? LibraryEx ?: return
 
-            val model = library.modifiableModel
-            try {
-                val collector = NotificationMessageCollector.create(module.project)
+            val collector = NotificationMessageCollector.create(module.project)
 
-                // Now that we know the SDK which is going to be set for the module, we can add jre 7/8 if required
-                val descriptorWithSdk = configurator.libraryJarDescriptor
-                if (descriptorWithSdk.findExistingJar(library) != null) {
-                    configurator.configureLibraryJar(module.project, model, descriptorWithSdk, collector) // Updates KotlinJavaRuntime.xml
-                }
-
-                collector.showNotification()
-            } finally {
-                model.commit()
+            // Now that we know the SDK which is going to be set for the module, we can add jre 7/8 if required
+            val descriptorWithSdk = configurator.libraryJarDescriptor
+            if (descriptorWithSdk.findExistingJar(library) != null) {
+                configurator.configureLibraryJar(module.project, library, descriptorWithSdk, collector) // Updates KotlinJavaRuntime.xml
             }
+
+            collector.showNotification()
         }
     }
 

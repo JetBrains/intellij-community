@@ -21,13 +21,14 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
 import org.jetbrains.kotlin.tools.projectWizard.core.KotlinAssetsProvider
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.StdlibVersionChooserDialog
 import org.jetbrains.kotlin.tools.projectWizard.wizard.withKotlinSampleCode
 
-internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
+internal class IntelliJKotlinNewProjectWizard(private val coroutineScope: CoroutineScope) : BuildSystemKotlinNewProjectWizard {
 
     companion object {
         const val USE_COMPACT_PROJECT_STRUCTURE_NAME: String = "NewProjectWizard.useCompactProjectStructure"
@@ -38,10 +39,10 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
     override val ordinal = 0
 
     override fun createStep(parent: KotlinNewProjectWizard.Step): NewProjectWizardStep =
-        Step(parent)
+        Step(coroutineScope, parent)
             .nextStep(::AssetsStep)
 
-    class Step(parent: KotlinNewProjectWizard.Step) :
+    class Step(private val coroutineScope: CoroutineScope, parent: KotlinNewProjectWizard.Step) :
         IntelliJNewProjectWizardStep<KotlinNewProjectWizard.Step>(parent),
         IntelliJKotlinNewProjectWizardData,
         BuildSystemKotlinNewProjectWizardData by parent {
@@ -85,7 +86,7 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                 searchForKotlinStdlibAndShowDialogIfFoundSeveral(project)
             } else null
 
-            val builder = KotlinModuleBuilder(kotlinStdlib, context.isCreatingNewProject, useCompactProjectStructure)
+            val builder = KotlinModuleBuilder(coroutineScope , kotlinStdlib, context.isCreatingNewProject, useCompactProjectStructure)
             setupProject(project, builder)
         }
 

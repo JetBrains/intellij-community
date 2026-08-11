@@ -1,6 +1,6 @@
 // "Lift assignment out of 'try' expression" "true"
 // WITH_STDLIB
-// K2_ERROR: 'val' cannot be reassigned.
+// K2_ERROR: VAL_REASSIGNMENT
 
 fun foo() {
     val x: Int

@@ -55,6 +55,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.ArrayDeque
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.CoroutineContext
 import kotlin.system.measureNanoTime
 
@@ -65,6 +66,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
 
   @Volatile
   private var myDisposed = false
+  private val myClosed = AtomicBoolean(false)
 
   internal val debuggerThreadDispatcher = DebuggerThreadDispatcher(this)
   private var _vmProxy: VirtualMachineProxyImpl? = null
@@ -92,6 +94,15 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
 
   override fun dispose() {
     myDisposed = true
+    closeAndCancel()
+  }
+
+  @ApiStatus.Internal
+  fun closeAndCancel() {
+    if (myClosed.compareAndSet(false, true)) {
+      close()
+      cancelScope()
+    }
   }
 
   @ApiStatus.Internal
@@ -347,7 +358,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
 
   @ApiStatus.Internal
   fun restartIfNeeded() {
-    if (myEvents.isClosed) {
+    if (!myDisposed && myClosed.compareAndSet(true, false)) {
       myEvents.reopen()
       LOG.assertTrue(!coroutineScope.isActive, "Coroutine scope should be cancelled")
       coroutineScope = createScope()

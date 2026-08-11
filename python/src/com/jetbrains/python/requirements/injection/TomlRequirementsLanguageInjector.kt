@@ -8,7 +8,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.impl.source.tree.injected.InjectionBackgroundSuppressor
-import com.jetbrains.python.requirements.RequirementsLanguage
+import com.intellij.python.requirements.RequirementsLanguage
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlLiteral
 import org.toml.lang.psi.TomlTable
@@ -27,15 +27,32 @@ class TomlRequirementsLanguageInjector : MultiHostInjector {
     val injectionHost = (context as PsiLanguageInjectionHost).also {
       it.putUserData(InjectionBackgroundSuppressor.SUPPRESS_INJECTION_BACKGROUND, Unit)
     }
+    val textRange = requirementsContentRange(injectionHost.text) ?: return
 
-    val endOffset = injectionHost.textLength - 1
-    if (endOffset < 1) return
-
-    val textRange = TextRange.create(1, endOffset)
     registrar
-      .startInjecting(RequirementsLanguage.INSTANCE)
+      .startInjecting(RequirementsLanguage)
       .addPlace(null, null, injectionHost, textRange)
       .doneInjecting()
+  }
+
+  companion object {
+    /**
+     * Content range of a TOML string literal, excluding its delimiters: one char for the single
+     * `"…"` / `'…'` forms and three for the triple-quoted multiline forms `"""…"""` / `'''…'''`.
+     * Returns null for an empty / too-short / unterminated literal so nothing gets injected.
+     */
+    @JvmStatic
+    fun requirementsContentRange(text: CharSequence): TextRange? {
+      val delimiter = when {
+        text.length >= 6 && text.startsWith("\"\"\"") && text.endsWith("\"\"\"") -> 3
+        text.length >= 6 && text.startsWith("'''") && text.endsWith("'''") -> 3
+        text.length >= 2 && text.startsWith("\"") && text.endsWith("\"") -> 1
+        text.length >= 2 && text.startsWith("'") && text.endsWith("'") -> 1
+        else -> return null // unterminated / malformed while typing — inject nothing
+      }
+      val end = text.length - delimiter
+      return if (end > delimiter) TextRange.create(delimiter, end) else null
+    }
   }
 
   override fun elementsToInjectIn(): List<Class<out PsiElement>> {

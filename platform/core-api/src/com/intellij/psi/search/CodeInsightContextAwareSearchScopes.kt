@@ -7,9 +7,18 @@ package com.intellij.psi.search
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.anyContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
+
+private val diagLog = fileLogger()
+
+private fun CodeInsightContextFileInfo.diagName(): String = when (this) {
+  is ActualContextFileInfo -> "ActualContextFileInfo(contexts=${contexts.size})"
+  is NoContextFileInfo -> "NoContextFileInfo"
+  is DoesNotContainFileInfo -> "DoesNotContainFileInfo(EXCLUDED)"
+}
 
 /**
  * Implement this interface in your [SearchScope] if you want to associate information about [CodeInsightContext]s and [VirtualFile]s
@@ -30,16 +39,18 @@ interface CodeInsightContextAwareSearchScope {
 @ApiStatus.Experimental
 fun SearchScope.contains(file: VirtualFile, context: CodeInsightContext): Boolean {
   val info = this.codeInsightContextInfo
-  return when (info) {
+  val result = when (info) {
     is NoContextInformation -> this.contains(file)
     is ActualCodeInsightContextInfo -> info.contains(file, context)
   }
+  diagLog.debug { "[scope-ctx-diag] contains file=${file.name} context=$context scope=${this.javaClass.simpleName}/${this.displayName} -> $result" }
+  return result
 }
 
 @ApiStatus.Experimental
 fun SearchScope.getFileContextInfo(file: VirtualFile): CodeInsightContextFileInfo {
   val info = this.codeInsightContextInfo
-  return when (info) {
+  val result = when (info) {
     is NoContextInformation -> {
       if (this.contains(file))
         NoContextFileInfo()
@@ -48,6 +59,8 @@ fun SearchScope.getFileContextInfo(file: VirtualFile): CodeInsightContextFileInf
     }
     is ActualCodeInsightContextInfo -> info.getFileInfo(file)
   }
+  diagLog.debug { "[scope-ctx-diag] getFileContextInfo file=${file.name} scope=${this.javaClass.simpleName}/${this.displayName} -> ${result.diagName()}" }
+  return result
 }
 
 @ApiStatus.Experimental

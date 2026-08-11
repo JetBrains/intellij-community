@@ -26,7 +26,7 @@ interface KotlinScriptEntityBuilder : WorkspaceEntityBuilder<KotlinScriptEntity>
 }
 
 internal object KotlinScriptEntityType : EntityType<KotlinScriptEntity, KotlinScriptEntityBuilder>() {
-    override val entityClass: Class<KotlinScriptEntity> get() = KotlinScriptEntity::class.java
+    override val entityImplClass: Class<*> get() = KotlinScriptEntityImpl::class.java
     override val entityImplBuilderClass: Class<*> get() = KotlinScriptEntityImpl.Builder::class.java
     operator fun invoke(
         virtualFileUrl: VirtualFileUrl,

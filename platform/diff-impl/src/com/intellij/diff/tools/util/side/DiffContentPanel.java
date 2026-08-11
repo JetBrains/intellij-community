@@ -3,6 +3,9 @@ package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement;
 import com.intellij.diff.tools.util.breadcrumbs.DiffBreadcrumbsPanel;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.ui.IslandsState;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +18,19 @@ public class DiffContentPanel extends DiffContentLayoutPanel {
 
   public DiffContentPanel(@NotNull JComponent content) {
     super(content);
+
+    // setting this here instead of superclass to avoid double borders in remdev
+    //TODO: make dynamic
+    if (IslandsState.Companion.isEnabled()) {
+      var border = JBUI.Borders.compound(
+        JBUI.Borders.customLineBottom(DiffUtil.getContentTitleSeparatorColor()),
+        JBUI.Borders.empty(DiffUtil.getContentTitleBorderInsets())
+      );
+      myTitle.setBorder(border);
+    }
+    else {
+      myTitle.setBorder(JBUI.Borders.empty(DiffUtil.getContentTitleBorderInsets()));
+    }
   }
 
   public void setBreadcrumbs(@Nullable DiffBreadcrumbsPanel breadcrumbs) {

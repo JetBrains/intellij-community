@@ -7,7 +7,9 @@ interface Color {
     fun toHex(): String
 
     companion object {
-        val Transparent: Color = sRGB(0f, 0f, 0f, 0f)
+      val Transparent: Color = sRGB(0f, 0f, 0f, 0f)
+      val Black: Color = sRGB(0f, 0f, 0f, 1f)
+      val White: Color = sRGB(1f, 1f, 1f, 1f)
     }
 }
 

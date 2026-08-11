@@ -32,7 +32,11 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
     myTable = table;
     myGrid = grid;
     myTracker = new GridSelectionTrackerImpl(myGrid, myTable);
-    myTable.putClientProperty(SelectionModelUtil.SELECTION_MODEL_KEY, this);
+  }
+
+  public static void install(@NotNull TableResultView table, @NotNull DataGrid grid) {
+    TableSelectionModel tableSelectionModel = new TableSelectionModel(table, grid);
+    table.putClientProperty(SelectionModelUtil.SELECTION_MODEL_KEY, tableSelectionModel);
   }
 
   @Override
@@ -245,10 +249,30 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
   private static void setSelection(ListSelectionModel selectionModel, boolean add, int maxSelectionIdx, int... selection) {
     if (maxSelectionIdx < 0) return;
     if (!add) selectionModel.clearSelection();
+    // Coalesce contiguous indexes to avoid flooding Swing selection listeners on large restores.
+    // Normalize and sort first: input may arrive unsorted or with duplicates (converted model/view arrays, clamping).
+    int[] normalized = new int[selection.length];
+    int count = 0;
     for (int index : selection) {
       if (index == -1) continue;
-      setSelectionInterval(selectionModel, true, maxSelectionIdx, index, index);
+      normalized[count++] = index(index, maxSelectionIdx);
     }
+    if (count == 0) return;
+    Arrays.sort(normalized, 0, count);
+    int start = normalized[0];
+    int end = normalized[0];
+    for (int i = 1; i < count; i++) {
+      int value = normalized[i];
+      if (value <= end + 1) { // contiguous or duplicate
+        end = Math.max(end, value);
+      }
+      else {
+        selectionModel.addSelectionInterval(start, end);
+        start = value;
+        end = value;
+      }
+    }
+    selectionModel.addSelectionInterval(start, end);
   }
 
   private static void setSelectionInterval(ListSelectionModel selectionModel, boolean add, int maxSelectionIdx, int idx0, int idx1) {
@@ -299,4 +323,3 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
     selectionModel.setSelection(selection.getSelectedRows(), selection.getSelectedColumns());
   }
 }
-

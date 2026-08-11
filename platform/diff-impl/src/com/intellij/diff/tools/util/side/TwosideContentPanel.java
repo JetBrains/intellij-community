@@ -25,6 +25,7 @@ public class TwosideContentPanel extends JPanel {
   public TwosideContentPanel(@NotNull List<? extends JComponent> contents) {
     super(new BorderLayout());
     assert contents.size() == 2;
+    setOpaque(false);
 
     myPanels = ContainerUtil.map(contents, it -> new DiffContentPanel(it));
     DiffContentLayoutPanel.syncTitleHeights(myPanels);

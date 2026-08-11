@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.jvmDecompiler
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.WritingAccessProvider
-import org.jetbrains.kotlin.idea.highlighter.isKotlinDecompiledFile
+import org.jetbrains.kotlin.idea.highlighting.isKotlinDecompiledFile
 
 class DecompiledFileWritingAccessProvider : WritingAccessProvider() {
     override fun isPotentiallyWritable(file: VirtualFile): Boolean = !file.isKotlinDecompiledFile

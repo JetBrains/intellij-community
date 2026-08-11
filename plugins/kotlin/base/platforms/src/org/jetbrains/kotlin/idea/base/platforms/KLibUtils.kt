@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.platform.wasm.WasmPlatformWithTarget
 import org.jetbrains.kotlin.platform.wasm.WasmTarget
 import java.util.Properties
 
-@ApiStatus.Internal
 internal fun VirtualFile.isKLibRootCandidate(): Boolean {
     return (nameSequence.endsWith(KLIB_FILE_EXTENSION_WITH_DOT) || !FileTypeRegistry.getInstance().isFileOfType(this, ArchiveFileType.INSTANCE)) && isDirectory
 }

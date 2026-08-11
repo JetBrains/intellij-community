@@ -76,11 +76,34 @@ public class LombokUtilsAllGetterTest {
     assertThat(result, is(Arrays.asList("getISmyField", "isISmyField")));
   }
 
-
   @Test
   public void testToAllGetterNames_NonBoolean_Fluent() {
     makeResults("myField", false, AccessorsInfo.DEFAULT.withFluent(true));
 
     assertThat(result, is(Collections.singletonList("myField")));
+  }
+
+  @SuppressWarnings("NonAsciiCharacters")
+  @Test
+  public void testToAllGetterNames_NonBoolean_SpecialCharacter() {
+    makeResults("ß", false, AccessorsInfo.DEFAULT);
+
+    assertThat(result, is(Collections.singletonList("getß")));
+  }
+
+  @SuppressWarnings("NonAsciiCharacters")
+  @Test
+  public void testToAllGetterNames_NonBoolean_MultipleSpecialCharacters() {
+    makeResults("ßßß", false, AccessorsInfo.DEFAULT);
+
+    assertThat(result, is(Collections.singletonList("getßßß")));
+  }
+
+  @SuppressWarnings("NonAsciiCharacters")
+  @Test
+  public void testToAllGetterNames_NonBoolean_Cyrillic() {
+    makeResults("ы", false, AccessorsInfo.DEFAULT);
+
+    assertThat(result, is(Collections.singletonList("getЫ")));
   }
 }

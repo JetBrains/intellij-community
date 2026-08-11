@@ -1,6 +1,6 @@
 // "Change type of 'myFunction' to '(Int) -> KFunction0<Boolean>'" "true"
 // WITH_STDLIB
-// K2_ERROR: Initializer type mismatch: expected '(Int, Int) -> Int', actual 'KFunction1<Int, KFunction0<Boolean>>'.
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
 
 fun foo() {
     var myFunction: (Int, Int) -> Int = <caret>::verifyData

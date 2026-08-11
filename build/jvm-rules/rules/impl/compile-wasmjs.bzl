@@ -23,18 +23,47 @@ visibility("private")
 KtWasmJsInfo = provider(
     doc = "Information required to compile Kotlin to Wasm/JS",
     fields = {
-        "compile_klibs": "depset(File): klibs visible on the compiler classpath, added to the compile library path of *direct* dependents",
+        "compile_klibs": "depset(File): klibs visible on the compiler classpath of *direct* dependents",
         "link_klibs": "depset(File): klibs that must be given to the Wasm/JS linker, propagated transitively",
         "klib": "File: klib of this module",
         "source_jar": "File: sources of this module",
+        "npm_packages": """depset(struct(specifier, label, files)): NPM packages required at runtime by a binary
+          linked with that library, propagated transitively along the runtime (link) closure. `specifier` is the
+          bare import specifier (the npm package name), `label` the npm package target, and `files` its files
+          depset (an npm package directory whose root contains a package.json).""",
     },
 )
 
-KtWasmJsBin = provider(
-    fields = {
-        "mjs": "The linked `.mjs` module of that module",
-    },
-)
+def npm_package_entries(runtime_npm_package_deps_attr):
+    """Converts an `runtime_npm_package_deps_attr` attribute (bare import specifier -> npm package files target) into
+    the entries carried by `KtWasmJsInfo.npm_packages`."""
+    return [
+        struct(
+            specifier = specifier,
+            label = target.label,
+            files = target[DefaultInfo].files,
+        )
+        for specifier, target in runtime_npm_package_deps_attr.items()
+    ]
+
+def merged_npm_packages(entries, owner):
+    """Merges npm package entries into a dict keyed by specifier, failing on a specifier provided by
+    two different targets: npm packages of a linked binary live in a single flat `/node_modules/`."""
+    merged = {}
+    for entry in entries:
+        existing = merged.get(entry.specifier)
+        if existing != None and existing.label != entry.label:
+            fail("%s requires the npm package '%s' from conflicting targets: %s and %s" % (
+                owner,
+                entry.specifier,
+                existing.label,
+                entry.label,
+            ))
+        merged[entry.specifier] = entry
+    return merged
+
+def _wasmjs_ir_output_name(ctx):
+    return ctx.attr.ir_output_name or ctx.attr.module_name
 
 def _wasmjs_kotlinc_options(kotlinc_options):
     jvm_specific_options = ["jvm_default", "jvm_target"]
@@ -45,8 +74,7 @@ def _wasmjs_kotlinc_options(kotlinc_options):
     }
     return KotlincOptions(**filtered_options)
 
-def _create_wasmjs_compilation_common_args(ctx):
-    kotlinc_opts_target = ctx.attr.kotlinc_opts
+def _create_wasmjs_common_args(ctx, kotlinc_opts_target, ir_output_name):
     kotlinc_options = _wasmjs_kotlinc_options(kotlinc_opts_target[KotlincOptions])
     kotlinc_extra_options = kotlinc_opts_target[KotlincExtraOptionsInfo]
 
@@ -58,48 +86,53 @@ def _create_wasmjs_compilation_common_args(ctx):
     args.add("-Xmulti-platform")
     args.add_all(kotlinc_options_to_flags(kotlinc_options, kotlinc_extra_options))
 
-    args.add("-ir-output-name", "%s_%s" % (ctx.attr.module_name, ctx.label.name))
+    args.add("-ir-output-name", ir_output_name)
+
+    # Emitted per-module file name in multimodule linking; without it the linker derives an escaped
+    # name from the klib uniqueName (e.g. `_fleet.build-x_`). Same flag the Kotlin Gradle plugin sets
+    # per compilation (KotlinJsIrSubTarget).
+    args.add("-Xir-per-module-output-name=%s" % ir_output_name)
 
     # TODO: add support for `-Xfriend-modules`
 
     return args
 
-def wasmjs_produce_module_actions(ctx, rule_kind):
+def wasmjs_compile_actions(ctx):
     srcs = [f.path for f in ctx.files.fragment_sources]
 
     compile_exported_deps_klibs = depset([], transitive = [d[KtWasmJsInfo].compile_klibs for d in ctx.attr.exports])
     compile_deps_klibs = depset([], transitive = [d[KtWasmJsInfo].compile_klibs for d in ctx.attr.deps])
+    compile_libraries = depset([], transitive = [compile_exported_deps_klibs, compile_deps_klibs])
 
     link_exported_deps_klibs = depset([], transitive = [d[KtWasmJsInfo].link_klibs for d in ctx.attr.exports])
     link_deps_klibs = depset([], transitive = [d[KtWasmJsInfo].link_klibs for d in ctx.attr.deps])
-    link_libraries = depset([], transitive = [link_exported_deps_klibs, link_deps_klibs])
+    link_runtime_deps_klibs = depset([], transitive = [d[KtWasmJsInfo].link_klibs for d in ctx.attr.runtime_deps])
+    link_libraries = depset([], transitive = [link_exported_deps_klibs, link_deps_klibs, link_runtime_deps_klibs])
 
-    exported_deps_exported_compiler_plugins = depset([], transitive = [dep[KotlinInfo].exported_compiler_plugins for dep in ctx.attr.exports if dep[KotlinInfo]])
+    exported_deps_exported_compiler_plugins = depset([], transitive = [dep[KotlinInfo].exported_compiler_plugins for dep in ctx.attr.exports if KotlinInfo in dep])
+
+    # npm packages follow the runtime (link) closure, like link_klibs
+    npm_packages = depset(
+        npm_package_entries(ctx.attr.runtime_npm_package_deps),
+        transitive = [d[KtWasmJsInfo].npm_packages for d in ctx.attr.exports + ctx.attr.deps + ctx.attr.runtime_deps],
+    )
 
     if not srcs:
         return [
             KtWasmJsInfo(
-                compile_klibs = depset([], transitive = [compile_exported_deps_klibs]),
-                link_klibs = depset([], transitive = [link_libraries]),
+                compile_klibs = compile_exported_deps_klibs,
+                link_klibs = link_libraries,
                 klib = None,
                 source_jar = None,  # TODO: support that
-            ),
-            KtWasmJsBin(
-                mjs = None,
+                npm_packages = npm_packages,
             ),
             KotlinInfo(
                 exported_compiler_plugins = exported_deps_exported_compiler_plugins,
             ),
-            OutputGroupInfo(
-                klib = [],
-                js = [],
-            ),
         ]
 
-    compile_libraries = depset([], transitive = [compile_exported_deps_klibs, compile_deps_klibs])
-
-    compile_args = _create_wasmjs_compilation_common_args(ctx)
-    klib_out = ctx.actions.declare_file("%s_%s.klib" % (ctx.attr.module_name, ctx.label.name))
+    compile_args = _create_wasmjs_common_args(ctx, ctx.attr.kotlinc_opts, _wasmjs_ir_output_name(ctx))
+    klib_out = ctx.actions.declare_file("%s.klib" % _wasmjs_ir_output_name(ctx))
     compile_args.add("-ir-output-dir", klib_out.dirname)
     compile_args.add("-Xir-produce-klib-file")
     all_fragments = set()
@@ -115,8 +148,7 @@ def wasmjs_produce_module_actions(ctx, rule_kind):
     for fragment_name in all_fragments:
         compile_args.add("-Xfragments=%s" % fragment_name)
 
-    perTargetPlugins = ctx.attr.plugins if hasattr(ctx.attr, "plugins") else []
-    plugins = compiler_plugins_from(perTargetPlugins + exported_compiler_plugins_from(deps = ctx.attr.deps + ctx.attr.exports))
+    plugins = compiler_plugins_from(ctx.attr.plugins + exported_compiler_plugins_from(deps = ctx.attr.deps + ctx.attr.exports))
 
     # TODO: switch to -Xcompiler-plugin option when it's ready (currently a prototype, and K2-only) https://jetbrains.slack.com/archives/C942U8L4R/p1708709995859629
     # Note: this is technically wrong, because we resolve each compiler plugin classpath independently, but the
@@ -156,17 +188,60 @@ def wasmjs_produce_module_actions(ctx, rule_kind):
 
     all_link_libraries = depset([klib_out], transitive = [link_libraries])
 
-    mjs_out = ctx.actions.declare_directory("%s_%s-js" % (ctx.attr.module_name, ctx.label.name))
-    link_args = _create_wasmjs_compilation_common_args(ctx)
+    return [
+        KtWasmJsInfo(
+            compile_klibs = depset([klib_out], transitive = [compile_exported_deps_klibs]),
+            link_klibs = all_link_libraries,
+            klib = klib_out,
+            source_jar = None,  # TODO: support that
+            npm_packages = npm_packages,
+        ),
+        KotlinInfo(
+            exported_compiler_plugins = exported_deps_exported_compiler_plugins,
+        ),
+        DefaultInfo(
+            files = depset([klib_out]),
+        ),
+    ]
+
+def wasmjs_link_action(ctx, ir_output_name, module_klib, link_klibs):
+    """Registers the KotlinLinkWasmJs action linking `module_klib` against `link_klibs`.
+
+    `link_klibs` is expected to already contain `module_klib` (as `KtWasmJsInfo.link_klibs` does).
+    Requires on ctx: kotlinc_opts, source_maps, source_map_base_dirs, source_map_prefix, _wasmjs_builder,
+    _wasmjs_builder_jvm_flags, _wasmjs_builder_launcher, _tool_java_runtime.
+
+    Returns the declared linked output directory (`<ir_output_name>-js`).
+    """
+    mjs_out = ctx.actions.declare_directory("%s-js" % ir_output_name)
+    link_args = _create_wasmjs_common_args(ctx, ctx.attr.kotlinc_opts, ir_output_name)
     link_args.add("-ir-output-dir", mjs_out.path)
     link_args.add("-Xir-produce-js")
-    link_args.add("-Xinclude=%s" % klib_out.path)  # TODO: what is the `-Xinclude`, is that what will be linked? Do we need `runtime_deps_klibs` here?
+    link_args.add("-Xinclude=%s" % module_klib.path)  # TODO: what is the `-Xinclude`, is that what will be linked?
     link_args.add("-Xir-dce")
-    link_args.add_joined("-libraries", [klib.path for klib in all_link_libraries.to_list()], join_with = ctx.configuration.host_path_separator, omit_if_empty = True)
+    if ctx.attr.source_maps:
+        link_args.add("-source-map")
+        if ctx.attr.source_map_prefix:
+            # A prefix switches the compiler off link-output-relative paths onto paths relative to the
+            # source roots, and without explicit roots it derives them itself (the common ancestor of the
+            # sources), which is what put `..` in the emitted paths. Every path the compiler sees is
+            # exec-root-relative, hence the `.` default of `source_map_base_dirs`; the builder resolves the
+            # roots against the exec root (see `PATH_LIST_ARGS` in WasmJsBuildWorker.kt, which also explains
+            # why they must end up absolute).
+            link_args.add_joined(
+                "-source-map-base-dirs",
+                ctx.attr.source_map_base_dirs,
+                join_with = ctx.configuration.host_path_separator,
+                omit_if_empty = True,
+            )
+            link_args.add("-source-map-prefix", ctx.attr.source_map_prefix)
+    link_args.add_joined("-libraries", [klib.path for klib in link_klibs.to_list()], join_with = ctx.configuration.host_path_separator, omit_if_empty = True)
+
+    java_runtime = ctx.attr._tool_java_runtime[java_common.JavaRuntimeInfo]
 
     ctx.actions.run(
         mnemonic = "KotlinLinkWasmJs",
-        inputs = depset(transitive = [all_link_libraries, java_runtime.files]),  # TODO: remove `java_runtime.files` when running worker support is done (redundant then)
+        inputs = depset(transitive = [link_klibs, java_runtime.files]),  # TODO: remove `java_runtime.files` when running worker support is done (redundant then)
         outputs = [mjs_out],
         tools = [ctx.file._wasmjs_builder_launcher, ctx.file._wasmjs_builder],
         executable = java_runtime.java_executable_exec_path,
@@ -182,27 +257,6 @@ def wasmjs_produce_module_actions(ctx, rule_kind):
             ctx.file._wasmjs_builder.path,
             link_args,
         ],
-        progress_message = "Linking %%{label}",
+        progress_message = "Linking %{label}",
     )
-
-    return [
-        KtWasmJsInfo(
-            compile_klibs = depset([klib_out], transitive = [compile_exported_deps_klibs]),
-            link_klibs = all_link_libraries,
-            klib = klib_out,
-            source_jar = None,  # TODO: support that
-        ),
-        KtWasmJsBin(
-            mjs = mjs_out,
-        ),
-        KotlinInfo(
-            exported_compiler_plugins = exported_deps_exported_compiler_plugins,
-        ),
-        DefaultInfo(
-            files = depset([klib_out, mjs_out], transitive = []),  # run both compilation and linking when running `bazel build`
-        ),
-        OutputGroupInfo(
-            klib = depset([klib_out], transitive = []),
-            mjs = depset([mjs_out], transitive = []),
-        ),
-    ]
+    return mjs_out

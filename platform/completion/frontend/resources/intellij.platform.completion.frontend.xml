@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.completion.common"/>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.kernel"/>

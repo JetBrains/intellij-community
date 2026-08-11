@@ -34,6 +34,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.themes" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.devkit.themes" />
 </module>

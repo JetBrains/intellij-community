@@ -151,9 +151,13 @@ def jvm_library(
     effective_kotlinc_opts = kotlinc_opts if kotlinc_opts != None else Label("//:default-kotlinc-opts")
 
     if use_rules_kotlin_backend:
+        # rules_kotlin's kt_jvm_library only accepts .kt/.java/.srcjar in srcs. IntelliJ GUI
+        # Designer .form files are an IJ-specific concept instrumented only by the JPS backend
+        # (see _partitioned_srcs in impl/compile.bzl); the rules_kotlin/BTA backend has no form
+        # instrumenter, so they would fail kt_jvm_library's srcs validation here.
         kt_jvm_library(
             name = name,
-            srcs = srcs,
+            srcs = [s for s in srcs if not s.endswith(".form")] if type(srcs) == "list" else srcs,
             deps = deps,
             exports = exports,
             runtime_deps = runtime_deps,

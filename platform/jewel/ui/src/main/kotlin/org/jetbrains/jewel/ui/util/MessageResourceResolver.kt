@@ -4,6 +4,7 @@ package org.jetbrains.jewel.ui.util
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.foundation.InternalJewelApi
 
 /**
@@ -22,9 +23,10 @@ public interface MessageResourceResolver {
      * @return The resolved message string associated with the provided key. If the key is not found, an empty string
      *   will be returned.
      */
-    public fun resolveIdeBundleMessage(key: String): String
+    @Nls public fun resolveIdeBundleMessage(key: String): String
 }
 
+/** The composition local providing the [MessageResourceResolver] for resolving IDE bundle messages. */
 @InternalJewelApi
 @get:ApiStatus.Internal
 public val LocalMessageResourceResolverProvider: ProvidableCompositionLocal<MessageResourceResolver> =

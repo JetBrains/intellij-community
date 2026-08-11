@@ -16,7 +16,7 @@ fun castNumber() {
 }
 fun castIntToFloat(c: Int) {
     // Difference from K1: another diagnostic
-    c <warning descr="[NUMERIC_CAST_NEVER_SUCCEEDS_BUT_CAN_BE_REPLACED_WITH_TO_CALL] This cast can never succeed. Use 'toFloat' to perform numeric conversion.">as Float</warning>
+    c <warning descr="[NUMERIC_CAST_NEVER_SUCCEEDS_BUT_CAN_BE_REPLACED_WITH_TO_CALL]">as Float</warning>
 }
 fun safeCast(b: Boolean) {
     val x : Any = if (b) "x" else 5

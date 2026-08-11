@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.provider.LocalEelMachine
@@ -102,7 +103,7 @@ internal class SdkModificatorBridgeImpl(
   override fun addRoot(root: VirtualFile, rootType: OrderRootType) {
     val virtualFileUrlManager = GlobalWorkspaceModel.getInstance(LocalEelMachine).getVirtualFileUrlManager()
     modifiedSdkEntity.roots.add(
-      SdkRoot(virtualFileUrlManager.getOrCreateFromUrl(root.url), rootTypes[rootType.customName]!!)
+      SdkRoot(root.toVirtualFileUrl(virtualFileUrlManager), rootTypes[rootType.customName]!!)
     )
   }
 

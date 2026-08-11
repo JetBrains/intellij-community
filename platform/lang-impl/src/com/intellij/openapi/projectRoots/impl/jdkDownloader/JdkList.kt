@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
@@ -63,7 +63,7 @@ data class JdkProduct(
   val product: @NlsSafe String?,
   val flavour: @NlsSafe String?,
 ) {
-  val packagePresentationText: String
+  val packagePresentationText: @NlsSafe String
     get() = buildString {
       append(vendor)
       if (product != null) {
@@ -231,6 +231,7 @@ data class JdkItem(
   }
 }
 
+@Internal
 enum class JdkPackageType(@NonNls val type: String) {
   ZIP("zip") {
     override fun openDecompressor(archiveFile: Path): Decompressor = Decompressor.Zip(archiveFile).withZipExtensions()
@@ -243,6 +244,7 @@ enum class JdkPackageType(@NonNls val type: String) {
 
   abstract fun openDecompressor(archiveFile: Path): Decompressor
 
+  @Internal
   companion object {
     fun findType(jsonText: String): JdkPackageType? = entries.firstOrNull { it.type.equals(jsonText, ignoreCase = true) }
   }

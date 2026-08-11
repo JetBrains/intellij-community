@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xcontext-sensitive-resolution
+package test
+
+sealed class MyResult {
+    class Ok(val value: String) : MyResult()
+    class Err(val message: String) : MyResult()
+}
+
+// The lhs has type `Any`, not `MyResult` — CSR must not shorten the type even though
+// the feature is enabled and the position is an `is` type-operator.
+fun handle(x: Any) {
+    if (x is <selection>MyResult.Ok</selection>) {}
+}

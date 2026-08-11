@@ -6,18 +6,23 @@ import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
 import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl;
 import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbModeListenerBackgroundable;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.LowMemoryWatcher;
@@ -29,6 +34,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.AbstractFileViewProvider;
+import com.intellij.psi.FileThreadingContracts;
 import com.intellij.psi.FileTypeFileViewProviders;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.FileViewProviderFactory;
@@ -45,6 +51,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.file.impl.FileViewProviderCache.Entry;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -62,6 +69,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -92,16 +100,73 @@ public final class FileManagerImpl implements FileManagerEx {
 
     LowMemoryWatcher.register(() -> processQueue(), manager);
 
+    myConnection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        LOG.warn("Signalling possible invalidation in `beforePluginLoaded`: " + pluginDescriptor);
+        PossibleInvalidationKt.signalBulkInvalidationNeeded();
+      }
+
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        LOG.warn("Signalling possible invalidation in `beforePluginUnload`: " + pluginDescriptor);
+        PossibleInvalidationKt.signalBulkInvalidationNeeded();
+      }
+
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        LOG.warn("Signalling possible invalidation in `pluginUnloaded`: " + pluginDescriptor);
+        PossibleInvalidationKt.signalBulkInvalidationNeeded();
+      }
+    });
+
     myConnection.subscribe(DumbModeListenerBackgroundable.TOPIC, new DumbModeListenerBackgroundable() {
       @Override
       public void enteredDumbMode() {
+        analyzeInvalidations(true);
         processFileTypesChanged(false);
       }
 
       @Override
       public void exitDumbMode() {
+        analyzeInvalidations(false);
         processFileTypesChanged(false);
       }
+    });
+  }
+
+  private void analyzeInvalidations(boolean entered) {
+    boolean toBeInvalidated = PossibleInvalidationKt.pollInvalidationAfterPropertyPush();
+    if (toBeInvalidated) {
+      return;
+    }
+    myVFileToViewProviderMap.getAllEntries().forEach(entry -> {
+      FileViewProvider viewProvider = entry.getProvider();
+      if (PossibleInvalidationKt.isPossiblyInvalidated(viewProvider) || !(viewProvider instanceof AbstractFileViewProvider)) {
+        return;
+      }
+      AbstractFileViewProvider abstractProvider = (AbstractFileViewProvider)viewProvider;
+      String recreationFailureReason;
+      if (abstractProvider.getVirtualFile() instanceof LightVirtualFile) {
+        recreationFailureReason = myLightViewProviderCache.getRecreationFailureReason(abstractProvider);
+      } else {
+        recreationFailureReason = myVFileToViewProviderMap.getRecreationFailureReason(abstractProvider);
+      }
+      if (recreationFailureReason == null) {
+        return;
+      }
+
+      Throwable dumbModeStartTrace = DumbService.getInstance(myManager.getProject()).getDumbModeStartTrace();
+      Attachment[] attachment = dumbModeStartTrace == null ? Attachment.EMPTY_ARRAY : new Attachment[]{ new Attachment("dumb mode start trace", dumbModeStartTrace) };
+      String viewProviderRepresentation;
+      try {
+        viewProviderRepresentation = viewProvider.toString(); // toString calls getContent, which might behave poorly for binary files and decompilers
+      } catch (Throwable e) {
+        viewProviderRepresentation = "[class: " + viewProvider.getClass().getName() + "languages: " + viewProvider.getLanguages() + "]";
+      }
+      LOG.error(new RuntimeExceptionWithAttachments("FileViewProvider " + viewProviderRepresentation + " got invalid as part of dumb mode!\n" +
+                                                    "on: " + (entered ? "enteredDumbMode" : "exitDumbMode") + "\n" +
+                                                    recreationFailureReason, attachment));
     });
   }
 
@@ -260,6 +325,10 @@ public final class FileManagerImpl implements FileManagerEx {
   @Override
   public FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
     FileViewProvider viewProvider = myVFileToViewProviderMap.getAndReanimateIfNecessary(vFile, context);
+    if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+      return viewProvider;
+    }
+
     if (viewProvider == null) {
       return myLightViewProviderCache.getAndReanimateIfNecessary(vFile, context);
     }
@@ -283,6 +352,7 @@ public final class FileManagerImpl implements FileManagerEx {
 
   @Override
   public void setViewProvider(@NotNull VirtualFile vFile, @Nullable FileViewProvider viewProvider) {
+    FileThreadingContracts.assertWriteAccessForExposedLightFile(vFile);
     // todo IJPL-339 investigate if we need a context here
     if (viewProvider == null) {
       // Let's drop all providers.
@@ -432,7 +502,7 @@ public final class FileManagerImpl implements FileManagerEx {
       FileViewProvider viewProvider = entry.getProvider();
       LOG.assertTrue(vFile.isValid());
       PsiFile psiFile1 = findFile(vFile, context);
-      if (psiFile1 != null && viewProvider.isPhysical()) {
+      if (psiFile1 != null && viewProvider.correspondsToRealFile()) {
         PsiFile psi = viewProvider.getPsi(viewProvider.getBaseLanguage());
         assert psi != null : viewProvider + "; " + viewProvider.getBaseLanguage() + "; " + psiFile1;
         assert psiFile1.getClass().equals(psi.getClass()) : psiFile1 + "; " + psi + "; " + psiFile1.getClass() + "; " + psi.getClass();
@@ -463,21 +533,19 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   @Override
-  @RequiresReadLock(generateAssertion = false) // assert for real vFile
+  @RequiresReadLock
   public @Nullable PsiFile findFile(@NotNull VirtualFile vFile) {
-    EditorLockFreeTyping.assertReadAccess(vFile);
     CodeInsightContext context = CodeInsightContexts.anyContext();
     return findFile(vFile, context);
   }
 
   @Override
-  @RequiresReadLock(generateAssertion = false) // assert for real vFile
   public @Nullable PsiFile findFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
-    EditorLockFreeTyping.assertReadAccess(vFile);
+    InternalPsiVersioning.assertReadAccessOrVersionedEnvironment();
     if (vFile.isDirectory()) return null;
 
     if (!vFile.isValid()) {
-      LOG.error(new InvalidVirtualFileAccessException(vFile));
+      LOG.warn(new InvalidVirtualFileAccessException(vFile));
       return null;
     }
 
@@ -486,10 +554,9 @@ public final class FileManagerImpl implements FileManagerEx {
     return viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 
-  @RequiresReadLock(generateAssertion = false) // assert for real vFile
+  @RequiresReadLock
   @Override
   public @Nullable PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
-    EditorLockFreeTyping.assertReadAccess(vFile);
     return getCachedPsiFile(vFile, CodeInsightContexts.anyContext());
   }
 
@@ -501,7 +568,7 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   @Override
-  public @NotNull List<@NotNull PsiFile> getCachedPsiFilesInner(@NotNull VirtualFile vFile) {
+  public @NotNull @Unmodifiable List<@NotNull PsiFile> getCachedPsiFilesInner(@NotNull VirtualFile vFile) {
     List<FileViewProvider> viewProviders = findCachedViewProviders(vFile);
     return ContainerUtil.mapNotNull(viewProviders, p -> ((AbstractFileViewProvider)p).getCachedPsi(p.getBaseLanguage()));
   }
@@ -630,17 +697,75 @@ public final class FileManagerImpl implements FileManagerEx {
     });
   }
 
-  public static boolean areViewProvidersEquivalent(@NotNull FileViewProvider view1, @NotNull FileViewProvider view2) {
-    if (view1.getClass() != view2.getClass() || view1.getFileType() != view2.getFileType()) return false;
+  public static final class ViewProviderDiff {
+    private final @NotNull String myReason;
+    private final @NotNull ViewProviderCharacterization myOriginalCharacterization;
+    private final @NotNull ViewProviderCharacterization myRecreatedCharacterization;
+
+    private ViewProviderDiff(@NotNull String reason, @NotNull FileViewProvider original, @NotNull FileViewProvider recreated) {
+      myReason = reason;
+      myOriginalCharacterization = new ViewProviderCharacterization(original);
+      myRecreatedCharacterization = new ViewProviderCharacterization(recreated);
+    }
+
+    @Override
+    public @NotNull String toString() {
+      return "View providers are not equivalent: " + myReason + "\n" +
+             "original: " + myOriginalCharacterization + "\n" +
+             "recreated: " + myRecreatedCharacterization;
+    }
+  }
+
+  private static class ViewProviderCharacterization {
+    private final @NotNull Class<?> clazz;
+    private final @NotNull FileType fileType;
+    private final @NotNull Language baseLanguage;
+    private final @NotNull Set<Language> auxiliaryLanguages;
+    private final @Nullable Class<?> classOfPsiFile;
+
+    private ViewProviderCharacterization(@NotNull FileViewProvider viewProvider) {
+      this.clazz = viewProvider.getClass();
+      this.fileType = viewProvider.getFileType();
+      this.baseLanguage = viewProvider.getBaseLanguage();
+      this.auxiliaryLanguages = viewProvider.getLanguages();
+      PsiFile file = viewProvider.getPsi(baseLanguage);
+      this.classOfPsiFile = file == null ? null : file.getClass();
+    }
+
+    @Override
+    public @NotNull String toString() {
+      return "ViewProviderCharacterization{" +
+             "class=" + clazz.getName() +
+             ", fileType=" + fileType +
+             ", baseLanguage=" + baseLanguage +
+             ", auxiliaryLanguages=" + auxiliaryLanguages +
+             ", classOfPsiFile=" + (classOfPsiFile == null ? null : classOfPsiFile.getName()) +
+             '}';
+    }
+  }
+
+  public static @Nullable ViewProviderDiff areViewProvidersEquivalent(@NotNull FileViewProvider view1, @NotNull FileViewProvider view2) {
+    if (view1.getClass() != view2.getClass()) {
+      return new ViewProviderDiff("different view provider classes", view1, view2);
+    }
+    if (view1.getFileType() != view2.getFileType()) {
+      return new ViewProviderDiff("different file types", view1, view2);
+    }
 
     Language baseLanguage = view1.getBaseLanguage();
-    if (baseLanguage != view2.getBaseLanguage()) return false;
+    if (baseLanguage != view2.getBaseLanguage()) {
+      return new ViewProviderDiff("different base languages", view1, view2);
+    }
 
-    if (!view1.getLanguages().equals(view2.getLanguages())) return false;
+    if (!view1.getLanguages().equals(view2.getLanguages())) {
+      return new ViewProviderDiff("different languages", view1, view2);
+    }
     PsiFile psi1 = view1.getPsi(baseLanguage);
     PsiFile psi2 = view2.getPsi(baseLanguage);
-    if (psi1 == null || psi2 == null) return psi1 == psi2;
-    return psi1.getClass() == psi2.getClass();
+    if (psi1 == null || psi2 == null) {
+      return psi1 == psi2 ? null : new ViewProviderDiff("different base PSI files", view1, view2);
+    }
+    return psi1.getClass() == psi2.getClass() ? null : new ViewProviderDiff("different base PSI file classes", view1, view2);
   }
 
   @RequiresWriteLock
@@ -660,7 +785,8 @@ public final class FileManagerImpl implements FileManagerEx {
 
   @Override
   public void reloadPsiAfterTextChange(@NotNull FileViewProvider viewProvider, @NotNull VirtualFile vFile) {
-    if (!areViewProvidersEquivalent(viewProvider, createFileViewProvider(vFile, false))) {
+    if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(vFile) ||
+        areViewProvidersEquivalent(viewProvider, createFileViewProvider(vFile, false)) != null) {
       forceReload(vFile);
       return;
     }

@@ -10,12 +10,16 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.util.List;
 
 /**
  * User : ktisha
  */
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyUnwrapperTest extends PyTestCase {
 
   @Override

@@ -142,6 +142,81 @@ public final class FormatDecode {
     return decode(formatString, argumentCount, false, true);
   }
 
+  /**
+   * A single format specifier.
+   *
+   * @param range              the specifier's range (e.g. {@code %s}) within the format string
+   * @param argumentIndex      0-based index of the consumed argument, or {@code -1} for {@code %%} / {@code %n}
+   * @param literalReplacement the text a no-argument specifier expands to ({@code "%"}, {@code "\n"}), else {@code null}
+   */
+  public record FormatSpecifier(@NotNull TextRange range, int argumentIndex, @Nullable String literalReplacement) {
+  }
+
+  /**
+   * Result of {@link #getFormatSpecifiers(String, int)}: the specifiers in textual order plus the {@code implicitStart}
+   * ({@code nextImplicit}) to pass for the next part, so multi-part format strings keep numbering implicit arguments
+   * continuously.
+   */
+  public record FormatSpecifiers(@NotNull List<FormatSpecifier> specifiers, int nextImplicit) {
+  }
+
+  /**
+   * Returns the format specifiers of {@code formatString} in textual order. Implicit specifiers are numbered from
+   * {@code implicitStart}; positional ({@code %k$}) and {@code '<'} specifiers are resolved absolutely, as in
+   * {@link #decode}. Unlike {@code decode}, this never throws.
+   * <p>
+   * Returns {@code null} when the format string is malformed; the caller should then treat the injection as
+   * frankenstein rather than rely on a fabricated argument index. Otherwise, only recognizable specifiers are reported.
+   */
+  public static @Nullable FormatSpecifiers getFormatSpecifiers(@NotNull String formatString, int implicitStart) {
+    final List<FormatSpecifier> result = new ArrayList<>();
+    final Matcher matcher = fsPattern.matcher(formatString);
+    int implicit = implicitStart;
+    int pos = 0;
+    boolean previousAllowed = false;
+    int i = 0;
+    while (matcher.find(i)) {
+      i = matcher.end();
+      final TextRange range = TextRange.create(matcher.start(), matcher.end());
+      final String conversion = matcher.group("conversion");
+      if ("n".equals(conversion)) {
+        result.add(new FormatSpecifier(range, -1, "\n"));
+        continue;
+      }
+      if ("%".equals(conversion)) {
+        result.add(new FormatSpecifier(range, -1, "%"));
+        continue;
+      }
+      final String posSpec = matcher.group("posSpec");
+      final String flags = matcher.group("flags");
+      if (posSpec != null) {
+        Integer curPos = parsePositionSpecifier(posSpec);
+        if(curPos == null) return null;
+        pos = curPos;
+        previousAllowed = true;
+      }
+      else if (flags != null && flags.indexOf('<') >= 0) {
+        // the '<' ("use previous argument") flag: reuse the last position and consume no new argument
+        if (!previousAllowed) continue;
+      }
+      else {
+        pos = implicit++;
+        previousAllowed = true;
+      }
+      result.add(new FormatSpecifier(range, pos, null));
+    }
+    return new FormatSpecifiers(result, implicit);
+  }
+
+  private static @Nullable Integer parsePositionSpecifier(@NotNull String posSpec) {
+    try {
+      return Integer.parseInt(posSpec.substring(0, posSpec.length() - 1)) - 1;
+    }
+    catch (NumberFormatException e) {
+      return null;
+    }
+  }
+
   private static Validator @NotNull [] decode(String formatString, int argumentCount, boolean isPrefix, boolean noVerify) {
     final ArrayList<Validator> parameters = new ArrayList<>();
 

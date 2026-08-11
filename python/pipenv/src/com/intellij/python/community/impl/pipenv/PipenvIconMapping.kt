@@ -8,6 +8,6 @@ import com.intellij.python.processOutput.common.ProcessOutputIconMapping
 
 internal class PipenvIconMapping : ProcessOutputIconMapping() {
   override val mapping: Map<ProcessBinaryFileName, ProcessIcon> = mapOf(
-    ProcessBinaryFileName("pipenv") to ProcessIcon(PIPENV_ICON, PythonCommunityImplPipenvIcons::class.java)
+    ProcessBinaryFileName("pipenv") to ProcessIcon(PythonCommunityImplPipenvIcons.PythonClosed, PythonCommunityImplPipenvIcons::class.java)
   )
 }

@@ -7,7 +7,6 @@ import com.jetbrains.rhizomedb.Entity
 import com.jetbrains.rhizomedb.EntityType
 import com.jetbrains.rhizomedb.Indexing
 import com.jetbrains.rhizomedb.Mixin
-import com.jetbrains.rhizomedb.Version
 import com.jetbrains.rhizomedb.entity
 import com.jetbrains.rhizomedb.entityModule
 import com.jetbrains.rhizomedb.get
@@ -36,7 +35,7 @@ data class StorageKey(val storage: String)
  * By declaring an entity durable, one guarantees that all values they hold are serializable.
  * The entire transitive closure of direct references of a Durable Entity must also be durable.
  * The clients of such entities can assign the [Durable.StorageKeyAttr] attribute to specify the durability policy for them.
- * Consider adding [Version] annotation to it to control the compatibility.
+ * Consider use [version] constructor parameter to it to control the compatibility.
  * When loading the code, entities with an older Versions are retracted from the database.
  * On the other hand, the matching versions will overlive the code successfully, unless the schema is actually changed or serialization error raised,
  * such an event would also lead to the entity retraction together will all other entitis refering them by required attributes.

@@ -1,5 +1,5 @@
 // "Replace array of boxed with array of primitive" "true"
-// K2_ERROR: Invalid type of annotation member.
+// K2_ERROR: INVALID_TYPE_OF_ANNOTATION_MEMBER
 annotation class SuperAnnotation(
         val l: <caret>Array<Long>,
         val str: Array<String>

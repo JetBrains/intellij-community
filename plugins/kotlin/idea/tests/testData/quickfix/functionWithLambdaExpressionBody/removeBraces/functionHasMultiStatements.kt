@@ -1,5 +1,5 @@
 // "Remove braces" "false"
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.FunctionWithLambdaExpressionBodyInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.FunctionWithLambdaExpressionBodyInspection
 // ACTION: Convert to anonymous function
 // ACTION: Convert to block body
 // ACTION: Convert to run { ... }

@@ -26,7 +26,7 @@ import java.util.concurrent.CompletableFuture
  * 'Standard' requests and notifications are the ones that are documented
  * in the official [LSP specification](https://microsoft.github.io/language-server-protocol/specification).
  *
- * To handle custom undocumented requests/notifications from the server, plugins need to override [LspServerDescriptor.createLsp4jClient]
+ * To handle custom undocumented requests/notifications from the server, plugins need to override [LspClientDescriptor.createLsp4jClient]
  * and return their subclass of this [Lsp4jClient]. This subclass should contain specially annotated functions, which will be called
  * via reflection by the `lsp4j` library once the corresponding request/notification arrives from the LSP server.
  *
@@ -35,7 +35,7 @@ import java.util.concurrent.CompletableFuture
  *    @JsonNotification("@/foo/bar")
  *    fun fooBar(fooBar: FooBarNotification) { ... }
  *
- * @see LspServerDescriptor.createLsp4jClient
+ * @see LspClientDescriptor.createLsp4jClient
  */
 @ApiStatus.OverrideOnly
 open class Lsp4jClient(private val serverNotificationsHandler: LspServerNotificationsHandler) : LanguageClient {

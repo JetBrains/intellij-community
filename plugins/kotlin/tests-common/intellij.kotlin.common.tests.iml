@@ -9,7 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-cli" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
@@ -20,7 +20,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="library" name="kotlin-test" level="project" />
-    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" />
     <orderEntry type="module" module-name="intellij.platform.indexing" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
@@ -38,10 +38,11 @@
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.java.testFramework" />
     <orderEntry type="module" module-name="intellij.java.frontback.psi" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlinc.analysis-api-impl-base" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
   </component>
 </module>

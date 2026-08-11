@@ -2,7 +2,7 @@ import java.util.stream.Stream;
 
 public class AccessToPrivateClassInStaticContext {
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     Stream.generate(() -> new MyClass()).mapToInt(x -> x.field).limit(10).count();
   }
 

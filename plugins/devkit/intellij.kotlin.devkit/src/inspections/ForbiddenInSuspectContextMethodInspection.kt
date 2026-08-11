@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.codeInspection.IntentionAndQuickFixAction
@@ -19,17 +19,24 @@ import com.intellij.util.containers.toArray
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.idea.devkit.util.isInspectionForBlockingContextAvailable
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.util.isImported
@@ -71,7 +78,7 @@ private val restrictsSuspensionName = FqName(RESTRICTS_SUSPENSION)
 private val intelliJEdtDispatcher = FqName(INTELLIJ_EDT_DISPATCHER)
 private val coroutinesLaunch = FqName(LAUNCH)
 
-private const val COROUTINE_CHECK_CANCELED_FIX = "com.intellij.openapi.progress.checkCancelled"
+private const val COROUTINE_CHECK_CANCELED_FIX = "com.intellij.openapi.progress.checkCanceled"
 private const val WITH_CONTEXT = "kotlinx.coroutines.withContext"
 private const val DISPATCHERS = "kotlinx.coroutines.Dispatchers"
 private const val COROUTINE_SCOPE = "kotlinx.coroutines.CoroutineScope"
@@ -103,7 +110,7 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
     override fun visitCallExpression(expression: KtCallExpression) {
       analyze(expression) {
         val functionCall = expression.resolveToCall()?.singleFunctionCallOrNull()
-        val calledSymbol = functionCall?.partiallyAppliedSymbol?.symbol
+        val calledSymbol = functionCall?.symbol
 
         if (calledSymbol !is KaNamedSymbol) return
         val hasAnnotation = RequiresBlockingContextAnnotationId in calledSymbol.annotations
@@ -198,7 +205,8 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
       return callingElement?.let { arrayOf(NavigateToCallInSuspendFunction(it)) } ?: LocalQuickFix.EMPTY_ARRAY
     }
 
-    private fun KaSession.getReplaceWithQuickFix(expression: KtCallExpression, calledSymbol: KaAnnotatedSymbol): LocalQuickFix? {
+    context(session: KaSession)
+    private fun getReplaceWithQuickFix(expression: KtCallExpression, calledSymbol: KaAnnotatedSymbol): LocalQuickFix? {
       val requiresBlockingContextAnnotation = calledSymbol.annotations[RequiresBlockingContextAnnotationId].firstOrNull()
         ?: return null
 
@@ -230,15 +238,16 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
       return ReplaceWithSuspendAlternativeFix(callName, ReplaceWithData(replacementExpression, imports, false))
     }
 
-    private fun KaSession.provideFixesForInvokeLater(callExpression: KtCallExpression): Array<LocalQuickFix> {
+    context(session: KaSession)
+    private fun provideFixesForInvokeLater(callExpression: KtCallExpression): Array<LocalQuickFix> {
       callingElement?.let { return arrayOf(NavigateToCallInSuspendFunction(it)) }
 
       return buildList<LocalQuickFix> {
         add(ReplaceInvokeLaterWithWithContextQuickFix(callExpression))
 
-        val implicitReceiverTypesAtPosition = collectImplicitReceiverTypes(callExpression)
+        val implicitReceiverTypesAtPosition = callExpression.containingKtFile.scopeContext(callExpression).implicitReceivers
         val coroutineScopeClassId = ClassId.topLevel(FqName(COROUTINE_SCOPE))
-        val hasCoroutineScope = implicitReceiverTypesAtPosition.any { it.isSubtypeOf(coroutineScopeClassId) }
+        val hasCoroutineScope = implicitReceiverTypesAtPosition.any { it.type.isSubtypeOf(coroutineScopeClassId) }
         if (hasCoroutineScope) {
           add(ReplaceInvokeLaterWithLaunchQuickFix(callExpression))
         }
@@ -392,7 +401,8 @@ internal fun isSuspensionRestricted(function: KtNamedFunction): Boolean {
   }
 }
 
-internal fun KaSession.isSuspensionRestricted(lambdaType: KaType): Boolean {
+context(session: KaSession)
+internal fun isSuspensionRestricted(lambdaType: KaType): Boolean {
   assert(lambdaType.isSuspendFunctionType)
 
   val receiverTypeSymbol = (lambdaType as? KaFunctionType)?.receiverType?.expandedSymbol

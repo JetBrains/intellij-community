@@ -15,11 +15,16 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * Checks auto-unindenting of 'else' and friends.
  */
+@Subsystems.Editing
+@Layers.Functional
 public class PyAutoUnindentTest extends PyTestCase {
 
   public void testSingleElse() {

@@ -656,10 +656,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     public Project getProject() {
       return value.getProject();
     }
-
-    @Override
-    public void setRenderer(NodeRenderer renderer) {
-    }
   }
 
   //returns expression that evaluates descriptor value

@@ -1,0 +1,20 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.internal"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.rpc.backend"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <actions resource-bundle="messages.PlatformInternalBundle">
+    <action id="ShowRegisteredRemoteApis" internal="true" class="com.intellij.platform.ide.internal.backend.ShowRegisteredRemoteApisAction">
+      <add-to-group group-id="Internal.Ex"/>
+    </action>
+  </actions>
+</idea-plugin>

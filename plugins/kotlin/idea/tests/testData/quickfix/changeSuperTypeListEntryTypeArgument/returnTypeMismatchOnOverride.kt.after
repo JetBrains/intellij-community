@@ -1,5 +1,5 @@
 // "Change type argument to Long" "true"
-// K2_ERROR: Return type of 'fun foo1(): Long' is not a subtype of the return type of the overridden member 'fun foo1(): Int' defined in 'Test'.
+// K2_ERROR: RETURN_TYPE_MISMATCH_ON_OVERRIDE
 abstract class Foo<T1, T2> {
     abstract fun foo1(): T1
     abstract val foo2: T2

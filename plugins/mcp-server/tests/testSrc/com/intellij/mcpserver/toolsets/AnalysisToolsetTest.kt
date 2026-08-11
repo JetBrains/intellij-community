@@ -3,17 +3,23 @@
 package com.intellij.mcpserver.toolsets
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.AnalysisToolset
+import com.intellij.mcpserver.toolsets.general.LintFilesTelemetry
 import com.intellij.mcpserver.toolsets.general.RequestedLintFile
 import com.intellij.mcpserver.toolsets.general.prepareLintFiles
 import com.intellij.mcpserver.toolsets.general.prepareRequestedLintFiles
 import com.intellij.mcpserver.toolsets.general.withLintFilesCollectorOverride
+import com.intellij.mcpserver.toolsets.general.withLintFilesTelemetryReporterOverride
 import com.intellij.mcpserver.util.attachJarLibrary
+import com.intellij.mcpserver.util.INDEXING_PARTIAL_RESULT_REASON
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.project.DumbService
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.junit5.fixture.fileOrDirInProjectFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
@@ -128,6 +134,31 @@ class AnalysisToolsetTest : GeneralMcpToolsetTestBase() {
       assertThat(result.isError).isFalse()
       assertThat(text).contains("… and 1 more")
       assertThat(text).contains("childOffset=1")
+    }
+  }
+
+  @Test
+  fun analyze_calls_prepends_partial_result_note_during_indexing() = runBlocking(Dispatchers.Default) {
+    assumeTrue(isJavaPluginInstalled(), "Java plugin is required for this test")
+    DumbService.getInstance(project).waitForSmartMode()
+
+    val token = DumbModeTestUtils.startEternalDumbModeTask(project)
+    try {
+      testMcpTool(
+        AnalysisToolset::analyze_calls.name,
+        buildJsonObject {
+          put("symbolFqn", JsonPrimitive("calls.CallGraph.root"))
+          put("analysisKind", JsonPrimitive(AnalysisToolset.AnalysisKind.OUTGOING_CALLS.name))
+          put("depth", JsonPrimitive(1))
+        },
+      ) { result ->
+        val text = result.textContent.text
+        assertThat(result.isError).isFalse()
+        assertThat(text).startsWith("> Note: $INDEXING_PARTIAL_RESULT_REASON")
+      }
+    }
+    finally {
+      DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode(project, token)
     }
   }
 
@@ -424,6 +455,66 @@ class AnalysisToolsetTest : GeneralMcpToolsetTestBase() {
   }
 
   @Test
+  fun lint_files_accepts_strong_warning_severity() = runBlocking(Dispatchers.Default) {
+    assertLintFilesMinSeverity("strong_warning", HighlightSeverity.WARNING)
+  }
+
+  @Test
+  fun lint_files_preserves_legacy_warning_severity() = runBlocking(Dispatchers.Default) {
+    assertLintFilesMinSeverity("warning", HighlightSeverity.WEAK_WARNING)
+  }
+
+  @Test
+  fun lint_files_rejects_unknown_min_severity() = runBlocking(Dispatchers.Default) {
+    testMcpTool(
+      AnalysisToolset::lint_files.name,
+      buildJsonObject {
+        put("files", buildJsonArray {
+          add(JsonPrimitive(project.projectDirectory.relativizeIfPossible(mainJavaFile)))
+        })
+        put("min_severity", JsonPrimitive("unknown"))
+      },
+    ) { result ->
+      assertThat(result.isError).isTrue()
+      assertThat(result.textContent.text).contains("warning, strong_warning, error")
+    }
+  }
+
+  @Test
+  fun lint_files_returns_inspection_id_when_available() = runBlocking(Dispatchers.Default) {
+    val mainPath = project.projectDirectory.relativizeIfPossible(mainJavaFile)
+    withLintFilesCollector(
+      collector = { _, onFileResult ->
+        onFileResult(
+          AnalysisToolset.LintFileResult(
+            filePath = mainPath,
+            problems = listOf(
+              AnalysisToolset.LintProblem(
+                severity = HighlightSeverity.ERROR.name,
+                inspectionId = "TestInspection",
+                description = "Problem",
+                lineText = "line",
+                line = 1,
+                column = 1,
+              )
+            ),
+          )
+        )
+      },
+    ) {
+      testMcpTool(
+        AnalysisToolset::lint_files.name,
+        buildJsonObject {
+          put("files", buildJsonArray { add(JsonPrimitive(mainPath)) })
+        },
+      ) { result ->
+        assertThat(result.isError).isFalse()
+        assertThat(result.textContent.text).contains("\"inspectionId\":\"TestInspection\"")
+      }
+    }
+  }
+
+  @Test
   fun lint_files_timeout() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       AnalysisToolset::lint_files.name,
@@ -438,6 +529,103 @@ class AnalysisToolsetTest : GeneralMcpToolsetTestBase() {
       assertThat(text).contains(""""items":[]""")
       assertThat(text).contains(""""more":true""")
     }
+  }
+
+  @Test
+  fun lint_files_logs_safe_aggregate_outcome() {
+    val mainPath = project.projectDirectory.relativizeIfPossible(mainJavaFile)
+    val classPath = project.projectDirectory.relativizeIfPossible(classJavaFile)
+    val testPath = project.projectDirectory.relativizeIfPossible(testJavaFile)
+    var telemetry: LintFilesTelemetry? = null
+    var durationMs: Long? = null
+
+    runBlocking(Dispatchers.Default) {
+      withLintFilesTelemetryReporterOverride(
+        project = project,
+        reporter = { value, duration ->
+          telemetry = value
+          durationMs = duration
+        },
+      ) {
+        withLintFilesCollector(
+          collector = { _, onFileResult ->
+            onFileResult(
+              AnalysisToolset.LintFileResult(
+                filePath = mainPath,
+                problems = listOf(
+                  AnalysisToolset.LintProblem(
+                    severity = HighlightSeverity.ERROR.name,
+                    inspectionId = "SensitiveInspectionId",
+                    description = "Sensitive diagnostic description",
+                    lineText = "sensitive source text",
+                    line = 1,
+                    column = 1,
+                  ),
+                  AnalysisToolset.LintProblem(
+                    severity = HighlightSeverity.WARNING.name,
+                    description = "Another sensitive diagnostic description",
+                    lineText = "more sensitive source text",
+                    line = 2,
+                    column = 1,
+                  ),
+                ),
+              )
+            )
+            onFileResult(AnalysisToolset.LintFileResult(filePath = classPath, timedOut = true))
+            onFileResult(AnalysisToolset.LintFileResult(filePath = testPath, notAnalyzedReason = "Sensitive reason"))
+          },
+        ) {
+          testMcpTool(
+            AnalysisToolset::lint_files.name,
+            buildJsonObject {
+              put("files", buildJsonArray {
+                add(JsonPrimitive(mainPath))
+                add(JsonPrimitive(classPath))
+                add(JsonPrimitive(testPath))
+              })
+              put("min_severity", JsonPrimitive("strong_warning"))
+            },
+          ) { result ->
+            assertThat(result.isError).isFalse()
+          }
+        }
+      }
+    }
+
+    assertThat(telemetry).isEqualTo(
+      LintFilesTelemetry(
+        minSeverity = "strong_warning",
+        requestedFileCount = 3,
+        problemFileCount = 1,
+        problemCount = 2,
+        errorCount = 1,
+        timedOutFileCount = 1,
+        notAnalyzedFileCount = 1,
+        more = false,
+      )
+    )
+    assertThat(durationMs).isNotNull().isGreaterThanOrEqualTo(0)
+  }
+
+  private suspend fun assertLintFilesMinSeverity(value: String, expected: HighlightSeverity) {
+    var actual: HighlightSeverity? = null
+    withLintFilesCollectorOverride(
+      project,
+      collector = { request, _ -> actual = request.minSeverity },
+    ) {
+      testMcpTool(
+        AnalysisToolset::lint_files.name,
+        buildJsonObject {
+          put("files", buildJsonArray {
+            add(JsonPrimitive(project.projectDirectory.relativizeIfPossible(mainJavaFile)))
+          })
+          put("min_severity", JsonPrimitive(value))
+        },
+      ) { result ->
+        assertThat(result.isError).isFalse()
+      }
+    }
+    assertThat(actual).isEqualTo(expected)
   }
 
   @Test

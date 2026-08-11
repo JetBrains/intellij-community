@@ -15,6 +15,7 @@ import java.util.List;
 public abstract class TableResultViewColumn extends TableColumn implements ResultViewColumn {
   private final UserDataHolder myDataHolderDelegate = new UserDataHolderBase();
   private int myWidthFromLayout;
+  private boolean myWidthSetByUser;
 
   public TableResultViewColumn(int modelIndex) {
     super(modelIndex);
@@ -40,7 +41,24 @@ public abstract class TableResultViewColumn extends TableColumn implements Resul
   @Override
   public void setColumnWidth(int width) {
     myWidthFromLayout = width;
+    myWidthSetByUser = false;
     setPreferredWidth(width);
+  }
+
+  @Override
+  public void setColumnWidthByUser(int width) {
+    myWidthSetByUser = true;
+    setPreferredWidth(width);
+  }
+
+  @Override
+  public boolean isWidthSetByUser() {
+    return myWidthSetByUser;
+  }
+
+  @Override
+  public void clearWidthSetByUser() {
+    myWidthSetByUser = false;
   }
 
   public boolean isWidthSetByLayout() {

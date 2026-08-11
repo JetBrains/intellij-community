@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.PyKeywordPattern;
 import com.jetbrains.python.psi.PyPattern;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyNeverType;
 import com.jetbrains.python.psi.types.PyType;
@@ -55,7 +56,7 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
       final PyType captureType = PyCaptureContext.getCaptureType(this, context);
       return Ref.deref(PyTypeAssertionEvaluator.createAssertionType(captureType, instanceType, true, true, context));
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   @Override
@@ -73,7 +74,7 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
 
     final List<PyPattern> arguments = getArgumentList().getPatterns();
     final @Nullable String classQName = classType.getClassQName();
-    if (classQName != null && SPECIAL_BUILTINS.contains(classQName)) {
+    if (classQName != null && SPECIAL_BUILTINS.contains(PyNames.FQN.unqualifyBuiltinName(classQName))) {
       if (arguments.isEmpty()) return true;
       if (arguments.size() > 1) return false;
       return isExhaustive(arguments.getFirst(), context);
@@ -124,7 +125,7 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
     return PyTypeUtil.toStream(context.getType(this)).map(type -> {
       if (type instanceof PyClassType classType) {
         final @Nullable String classQName = classType.getClassQName();
-        if (classQName != null && SPECIAL_BUILTINS.contains(classQName)) {
+        if (classQName != null && SPECIAL_BUILTINS.contains(PyNames.FQN.unqualifyBuiltinName(classQName))) {
           if (index == 0) {
             return classType;
           }

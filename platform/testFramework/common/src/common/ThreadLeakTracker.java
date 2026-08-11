@@ -7,12 +7,12 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.impl.TestOnlyThreading;
+import com.intellij.openapi.diagnostic.AsyncLogKt;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -70,7 +70,7 @@ public final class ThreadLeakTracker {
   private static final Set<String> wellKnownOffenders;
 
   static {
-    @SuppressWarnings({"deprecation", "SpellCheckingInspection"}) List<String> offenders = List.of(
+    @SuppressWarnings("deprecation") List<String> offenders = List.of(
       "ApplicationImpl pooled thread ", // com.intellij.util.concurrency.AppScheduledExecutorService.POOLED_THREAD_PREFIX
       "AWT-EventQueue-",
       "AWT-Shutdown",
@@ -91,9 +91,9 @@ public final class ThreadLeakTracker {
       "embeddings-server",
       "EventQueueMonitor-ComponentEvtDispatch", // com.sun.java.accessibility.util.ComponentEvtDispatchThread
       "External compiler",
-      FilePageCacheLockFree.DEFAULT_HOUSEKEEPER_THREAD_NAME,
       "Finalizer",
       FlushingDaemon.NAME,
+      "FrontendToBackend",
       "grpc-default-worker-",  // grpc_netty_shaded
       "grpc-nio-worker-",
       "HttpClient-",  // JRE's HttpClient thread pool is not supposed to be disposed - to reuse connections
@@ -128,6 +128,7 @@ public final class ThreadLeakTracker {
       "rd throttler", // daemon thread created by com.jetbrains.rd.util.AdditionalApiKt.getTimer
       "Reference Handler",
       "Rider.Backend", // ignore process + io threads because backend follows application lifecycle and can be started during the test
+      "Rider.LightweightBackend", // same as Rider.Backend, but for the lightweight backend process
       "RMI GC Daemon",
       "RMI TCP ",
       "Save classpath indexes for file loader",
@@ -142,6 +143,7 @@ public final class ThreadLeakTracker {
       "UserActivityMonitor thread",
       "VM Periodic Task Thread",
       "VM Thread",
+      "WriteAheadLogFlusher",
       "YJPAgent-Telemetry"
     );
     validateWhitelistedThreads(offenders);
@@ -162,6 +164,7 @@ public final class ThreadLeakTracker {
   }
 
   public static void awaitQuiescence() {
+    AsyncLogKt.awaitLogQueueProcessed();
     NettyUtil.awaitQuiescenceOfGlobalEventExecutor(100, TimeUnit.SECONDS);
     ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
   }

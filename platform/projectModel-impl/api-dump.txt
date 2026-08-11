@@ -110,16 +110,24 @@ f:com.intellij.ide.projectView.impl.ProjectRootsUtil
 - s:isSourceRoot(com.intellij.psi.PsiDirectory):Z
 c:com.intellij.openapi.components.PathMacroManager
 - com.intellij.openapi.components.PathMacroSubstitutor
+- sf:Companion:com.intellij.openapi.components.PathMacroManager$Companion
 - <init>(com.intellij.openapi.application.PathMacros):V
 - collapsePath(java.lang.String,Z):java.lang.String
 - collapsePaths(org.jdom.Element,Z):V
+- sf:collapsePaths(org.jdom.Element,Z,com.intellij.application.options.ReplacePathToMacroMap):V
 - p:computeReplacePathMap():com.intellij.application.options.ReplacePathToMacroMap
 - expandPath(java.lang.String):java.lang.String
 - expandPaths(org.jdom.Element):V
 - getExpandMacroMap():com.intellij.openapi.components.ExpandMacroToPathMap
+- sf:getInstance(com.intellij.openapi.components.ComponentManager):com.intellij.openapi.components.PathMacroManager
+- sf:getInstance(com.intellij.openapi.module.Module):com.intellij.openapi.components.PathMacroManager
 - f:getMacroFilter():com.intellij.openapi.application.PathMacroFilter
 - f:getReplacePathMap():com.intellij.application.options.ReplacePathToMacroMap
 - psf:pathsEqual(java.lang.String,java.lang.String):Z
+f:com.intellij.openapi.components.PathMacroManager$Companion
+- f:collapsePaths(org.jdom.Element,Z,com.intellij.application.options.ReplacePathToMacroMap):V
+- f:getInstance(com.intellij.openapi.components.ComponentManager):com.intellij.openapi.components.PathMacroManager
+- f:getInstance(com.intellij.openapi.module.Module):com.intellij.openapi.components.PathMacroManager
 com.intellij.openapi.components.PathMacroSubstitutor
 - collapsePath(java.lang.String):java.lang.String
 - a:collapsePath(java.lang.String,Z):java.lang.String

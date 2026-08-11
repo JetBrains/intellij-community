@@ -4,10 +4,12 @@ package com.intellij.codeInsight.template.postfix.templates.editable;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.ui.components.JBPanel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
 
+@ApiStatus.Internal
 public final class DefaultPostfixTemplateEditor implements PostfixTemplateEditor {
   private final @NotNull PostfixTemplateProvider myTemplateProvider;
   private final @NotNull PostfixTemplate myTemplateToEdit;

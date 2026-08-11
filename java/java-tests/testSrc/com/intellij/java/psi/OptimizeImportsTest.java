@@ -148,7 +148,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   public void testImplicitIoImport2() {
     implicitIoImport();
   }
-  
+
   public void testImplicitIoImport3() {
     implicitIoImport();
   }
@@ -406,7 +406,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     CodeStyle.doWithTemporarySettings(getProject(), temp, () -> doTest());
   }
 
-  public void testScratch() throws Exception {
+  public void testScratch() {
     myFixture.enableInspections(new UnusedImportInspection());
     VirtualFile scratch =
       ScratchRootType.getInstance()
@@ -423,7 +423,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     myFixture.checkResult("class Scratch { }");
   }
 
-  public void testLeavesDocumentUnblocked() throws Exception {
+  public void testLeavesDocumentUnblocked() {
     myFixture.enableInspections(new UnusedImportInspection());
     myFixture.configureByText("a.java", "import static java.ut<caret>il.List.*; class Foo {}");
     runOptimizeImports();
@@ -587,7 +587,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     assertNull(intention);
   }
 
-  public void testRemovingAllUnusedImports() throws Exception {
+  public void testRemovingAllUnusedImports() {
     myFixture.enableInspections(new UnusedImportInspection());
     myFixture.configureByText("a.java", """
       package p;
@@ -908,4 +908,64 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   public void testUnresolvedReferenceAfterParenthesis() { doTest(); }
   public void testInvalidExtendsList() { doTest(); }
   public void testUnusedImportInBrokenAssignment() { doTest(); }
+  public void testNotCollapseIfThereIsFieldConflict() { doTest(); }
+  public void testCollapseIfThereIsMethodConflict() { doTest(); }
+
+  public void testNotCollapseWithImplicitConflict() {
+    myFixture.addClass("""
+                         package imports;
+                         
+                         public enum Values {
+                             String, Object, Objects, Double, Float, Integer
+                         }""");
+    doTest();
+  }
+
+  public void testCollapseWithoutConflict() {
+    //now it is collapsed, but it is under the question
+    myFixture.addClass("""
+      package imports;
+      
+      public enum Values {
+         Object, Objects, Double, Float, Integer
+      }""");
+    doTest();
+  }
+
+  public void testNotCollapseEvenWithoutConflict() {
+    //this behavior is conservative
+    myFixture.addClass("""
+    package imports
+    
+    public enum Values {
+        Object, Objects, Double, Float, Integer
+    }""");
+    doTest();
+  }
+
+  public void testNotCollapseAccessible() {
+    myFixture.addClass("""
+    package imports;
+    
+    public class Holder {
+        public static final int A = 1;
+        public static final int B = 2;
+        public static final int C = 3;
+        public static final int Files = 999;
+    }""");
+    doTest();
+  }
+
+  public void testCollapseNotAccessible() {
+    myFixture.addClass("""
+    package imports;
+    
+    public class Holder {
+        public static final int A = 1;
+        public static final int B = 2;
+        public static final int C = 3;
+        private static final int Files = 999;
+    }""");
+    doTest();
+  }
 }

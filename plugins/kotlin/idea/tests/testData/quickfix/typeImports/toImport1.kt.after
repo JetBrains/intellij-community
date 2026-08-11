@@ -1,5 +1,5 @@
 // "Remove initializer from property" "true"
-// K2_ERROR: Property with initializer cannot be abstract.
+// K2_ERROR: ABSTRACT_PROPERTY_WITH_INITIALIZER
 package a
 
 public fun <T> emptyList(): List<T> = null!!

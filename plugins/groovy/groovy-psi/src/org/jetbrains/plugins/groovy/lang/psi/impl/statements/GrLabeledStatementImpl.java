@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
@@ -12,7 +11,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
@@ -40,9 +39,8 @@ public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrLa
 
   @Override
   public @NotNull PsiElement getLabel() {
-    final PsiElement label = findChildByType(GroovyTokenTypes.mIDENT);
-    assert label != null;
-    return label;
+    final PsiElement label = findChildByType(TokenSets.PROPERTY_NAMES);
+    return label == null ? findNotNullChildByType(TokenSets.GROOVY_KEYWORDS) : label;
   }
 
   @Override

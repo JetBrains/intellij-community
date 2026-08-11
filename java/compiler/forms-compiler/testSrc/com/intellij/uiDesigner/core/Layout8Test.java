@@ -15,18 +15,21 @@
  */
 package com.intellij.uiDesigner.core;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.Dimension;
 import java.awt.Insets;
 
-public final class Layout8Test extends TestCase{
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public final class Layout8Test {
   /**
    * label 1 (pref=100, min=10, can shrink, can grow) | label 2 (pref=100, min=10, can shrink)
    *                                            (can grow, want grow)
    */
+  @Test
   public void test1() {
     final GridLayoutManager layoutManager = new GridLayoutManager(2,2, new Insets(0,0,0,0), 0, 0);
     final JPanel panel = new JPanel(layoutManager);

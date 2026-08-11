@@ -5,6 +5,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.util.List;
  * @author Bas Leijdekkers
  */
 public abstract class InspectionProfileActionProvider {
+  @ApiStatus.Internal
   public static final ExtensionPointName<InspectionProfileActionProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.inspectionProfileActionProvider");
 

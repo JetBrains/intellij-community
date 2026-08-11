@@ -34,16 +34,14 @@ class LspDocumentMapping(private val lspClient: LspClientImpl) {
   }
 
   fun getAdapterForFile(file: VirtualFile): LspDocumentAdapter {
-    val notebookSupported = isNotebookSupportedByServer()
     val extensions = LspDocumentAdapter.EP_NAME.extensionList
-    return extensions.firstOrNull { it.acceptsFile(file, notebookSupported) }
+    return extensions.firstOrNull { it.acceptsFile(lspClient, file) }
            ?: defaultAdapter
   }
 
   fun getAdapterForUrl(url: String): LspDocumentAdapter {
-    val notebookSupported = isNotebookSupportedByServer()
     val extensions = LspDocumentAdapter.EP_NAME.extensionList
-    return extensions.firstOrNull { it.acceptsUrl(url, notebookSupported) }
+    return extensions.firstOrNull { it.acceptsUrl(lspClient, url) }
            ?: defaultAdapter
   }
 
@@ -122,9 +120,6 @@ class LspDocumentMapping(private val lspClient: LspClientImpl) {
 
   class HostCoordinates(val hostFile: VirtualFile, val hostDocument: Document, val hostOffset: Int)
 
-  private fun isNotebookSupportedByServer(): Boolean {
-    return lspClient.serverCapabilities?.notebookDocumentSync != null
-  }
 }
 
 /**

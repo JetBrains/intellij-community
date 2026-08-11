@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionContributorEP;
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionPhase;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionType;
@@ -66,6 +67,7 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
@@ -77,6 +79,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JList;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -814,6 +817,78 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     finally {
       edt(() -> EditorFactory.getInstance().releaseEditor(another.get()));
     }
+  }
+
+  public void testEmptyAutoPopupReleasesDisposedEditor() {
+    // IJPL-249705: an EmptyAutoPopup phase must not keep referencing (and thus leak) its editor
+    // once the editor is disposed.
+    PsiFile file = myFixture.addFileToProject("b.java", "class B {}");
+    Ref<Editor> editor = Ref.create();
+    Ref<Editor> unrelated = Ref.create();
+    try {
+      edt(() -> {
+        editor.set(EditorFactory.getInstance().createEditor(file.getViewProvider().getDocument(), getProject()));
+        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.EmptyAutoPopup(editor.get(), Collections.emptySet()));
+        assertInstanceOf(CompletionServiceImpl.getCompletionPhase(), CompletionPhase.EmptyAutoPopup.class);
+
+        // releasing an unrelated editor must not reset the phase
+        unrelated.set(EditorFactory.getInstance().createEditor(file.getViewProvider().getDocument(), getProject()));
+        EditorFactory.getInstance().releaseEditor(unrelated.get());
+        unrelated.set(null);
+        assertInstanceOf(CompletionServiceImpl.getCompletionPhase(), CompletionPhase.EmptyAutoPopup.class);
+
+        // releasing the editor backing the phase must reset it to NoCompletion, dropping the reference
+        EditorFactory.getInstance().releaseEditor(editor.get());
+        editor.set(null);
+        assertSame(CompletionPhase.NoCompletion, CompletionServiceImpl.getCompletionPhase());
+      });
+    }
+    finally {
+      edt(() -> {
+        if (!editor.isNull()) EditorFactory.getInstance().releaseEditor(editor.get());
+        if (!unrelated.isNull()) EditorFactory.getInstance().releaseEditor(unrelated.get());
+        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+      });
+    }
+  }
+
+  public void testHidingLookupAfterExternalPhaseResetKeepsCompletionUsable() {
+    // IJPL-192597: the phase can be moved away from a live indicator without closing it (handleEmptyLookup,
+    // performance-testing commands, ...), which leaves the lookup on screen. Hiding it afterwards finishes that
+    // orphaned completion: the platform reports the inconsistency, but must not reset a phase it doesn't own anymore.
+    myFixture.configureByText("a.java", """
+      class Foo {
+        void foo(String iterable) {
+          <caret>
+        }
+      }""");
+    type("i");
+    LookupImpl lookup = getLookup();
+    assertNotNull(lookup);
+
+    List<String> loggedErrors = new ArrayList<>();
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
+      @Override
+      public @NotNull Set<Action> processError(@NotNull String category,
+                                              @NotNull String message,
+                                              String @NotNull [] details,
+                                              @Nullable Throwable t) {
+        loggedErrors.add(message);
+        return Action.NONE;
+      }
+    }, () -> edt(() -> {
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+      lookup.hideLookup(false);
+      assertTrue(lookup.isLookupDisposed());
+      assertSame(CompletionPhase.NoCompletion, CompletionServiceImpl.getCompletionPhase());
+    }));
+
+    assertSize(1, loggedErrors);
+    assertTrue(loggedErrors.getFirst(), loggedErrors.getFirst().contains("null!=CompletionProgressIndicator"));
+
+    // the completion machinery is still usable afterwards
+    type("t");
+    assertContains("iterable");
   }
 
   public static class LongReplacementOffsetContributor extends CompletionContributor {

@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.mcpserver.terminal.frontend` start
-
 jvm_library(
     name = "mcpserver.terminal.frontend",
     srcs = glob(
@@ -20,9 +19,10 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//plugins/mcp-server:mcpserver",
+        "//plugins/mcp-server/mcpserver.frontend",
         "//platform/core-api:core",
         "//platform/platform-frontend:frontend",
         "//platform/platform-api:ide",
@@ -51,7 +51,9 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":mcpserver.terminal.frontend",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//plugins/mcp-server:mcpserver_test_lib",
+        "//plugins/mcp-server/mcpserver.frontend:mcpserver.frontend_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/platform-frontend:frontend_test_lib",
         "//platform/platform-api:ide_test_lib",

@@ -262,6 +262,49 @@ public final class PsiMethodReferenceUtil {
     return new QualifierResolveResult(containingClass, substitutor, false);
   }
 
+  /**
+   * 15.13.1: the type to search for the compile-time declaration is the result of capture conversion (5.1.10)
+   * applied to the qualifier type. Note that the subtyping check which decides whether the second search is
+   * possible must be performed against the uncaptured qualifier type instead, see {@link #isReceiverType}.
+   *
+   * @param qualifierResolveResult qualifier resolve result of {@code methodRef}
+   * @param methodRef              method reference expression to be used as a capture context
+   * @return substitutor of the qualifier class with the top level wildcards captured,
+   *         or the original substitutor when the qualifier parameterization mentions no wildcards
+   */
+  public static @NotNull PsiSubstitutor getTypeToSearchSubstitutor(@NotNull QualifierResolveResult qualifierResolveResult,
+                                                                  @NotNull PsiMethodReferenceExpression methodRef) {
+    PsiClass containingClass = qualifierResolveResult.getContainingClass();
+    PsiSubstitutor substitutor = qualifierResolveResult.getSubstitutor();
+    return containingClass == null ? substitutor : getTypeToSearchSubstitutor(containingClass, substitutor, methodRef);
+  }
+
+  /**
+   * @param qualifierClass       class the type to search is based on
+   * @param qualifierSubstitutor parameterization of {@code qualifierClass}; a raw or an already captured one is returned as is
+   * @param methodRef            method reference expression to be used as a capture context
+   * @see #getTypeToSearchSubstitutor(QualifierResolveResult, PsiMethodReferenceExpression)
+   */
+  public static @NotNull PsiSubstitutor getTypeToSearchSubstitutor(@NotNull PsiClass qualifierClass,
+                                                                  @NotNull PsiSubstitutor qualifierSubstitutor,
+                                                                  @NotNull PsiMethodReferenceExpression methodRef) {
+    if (!hasWildcards(qualifierClass, qualifierSubstitutor)) {
+      return qualifierSubstitutor;
+    }
+    PsiClassType qualifierType = JavaPsiFacade.getElementFactory(qualifierClass.getProject()).createType(qualifierClass, qualifierSubstitutor);
+    PsiType captured = PsiUtil.captureToplevelWildcards(qualifierType, methodRef);
+    return captured instanceof PsiClassType ? ((PsiClassType)captured).resolveGenerics().getSubstitutor() : qualifierSubstitutor;
+  }
+
+  private static boolean hasWildcards(@NotNull PsiClass containingClass, @NotNull PsiSubstitutor substitutor) {
+    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(containingClass)) {
+      if (substitutor.substitute(parameter) instanceof PsiWildcardType) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public static boolean isStaticallyReferenced(@NotNull PsiMethodReferenceExpression methodReferenceExpression) {
     final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
     if (qualifierExpression != null) {

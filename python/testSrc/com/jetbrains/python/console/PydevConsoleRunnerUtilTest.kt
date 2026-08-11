@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+
 import com.intellij.execution.Platform
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentConfiguration
@@ -13,6 +16,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import org.assertj.core.api.SoftAssertions
 import org.junit.Test
 
+@Subsystems.PythonConsole
+@Layers.Functional
 class PydevConsoleRunnerUtilTest {
   @Test
   fun `test constructPyPathAndWorkingDirCommand`() {

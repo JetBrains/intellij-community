@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.workspaceModel.ide.OptionalExclusionUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.stream.Stream;
 
 public class MarkExcludeRootAction extends MarkRootActionBase {
   public MarkExcludeRootAction() {
@@ -26,6 +27,9 @@ public class MarkExcludeRootAction extends MarkRootActionBase {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    if (files == null || files.length == 0) {
+      return;
+    }
 
     if (Registry.is("ide.hide.excluded.files")) {
       String message = files.length == 1
@@ -53,8 +57,14 @@ public class MarkExcludeRootAction extends MarkRootActionBase {
   }
 
   @Override
+  protected boolean acceptsFiles() {
+    return true;
+  }
+
+  @Override
   protected boolean isEnabled(@NotNull RootsSelection selection, @NotNull Module module) {
     ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
-    return selection.mySelectedDirectories.stream().allMatch(file -> index.isInContent(file));
+    return Stream.concat(selection.mySelectedDirectories.stream(), selection.mySelectedFiles.stream())
+      .allMatch(index::isInContent);
   }
 }

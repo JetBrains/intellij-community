@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.psi.CommonClassNames;
@@ -12,10 +12,12 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -37,7 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorReference;
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
+import org.jetbrains.plugins.groovy.util.LightProjectTest;
 import org.jetbrains.plugins.groovy.util.ResolveTest;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -47,20 +49,23 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class ResolveMethodTest extends GroovyLatestTest implements ResolveTest {
+public class ResolveMethodTest extends LightProjectTest implements ResolveTest {
 
   public ResolveMethodTest() {
     super("resolve/method");
   }
 
-  @NotNull
-  private PsiReference configureByFile(@NonNls String filePath) {
+  @Override
+  public LightProjectDescriptor getProjectDescriptor() {
+    return GroovyProjectDescriptors.GROOVY_5_0;
+  }
+
+  private @NotNull PsiReference configureByFile(@NonNls String filePath) {
     getFixture().configureByFile(getTestName() + "/" + filePath);
     return referenceUnderCaret(PsiReference.class);
   }
 
-  @Nullable
-  private PsiElement resolve(String fileName) {
+  private @Nullable PsiElement resolve(String fileName) {
     return configureByFile(fileName).resolve();
   }
 
@@ -208,6 +213,14 @@ public class ResolveMethodTest extends GroovyLatestTest implements ResolveTest {
 
   @Test
   public void arrayDefault1() {
+    PsiReference ref = configureByFile("A.groovy");
+    PsiElement resolved = ref.resolve();
+    Assert.assertTrue(resolved instanceof PsiMethod);
+    Assert.assertTrue(resolved instanceof GrGdkMethod);
+  }
+
+  @Test
+  public void arrayDefault2() {
     PsiReference ref = configureByFile("A.groovy");
     PsiElement resolved = ref.resolve();
     Assert.assertTrue(resolved instanceof PsiMethod);

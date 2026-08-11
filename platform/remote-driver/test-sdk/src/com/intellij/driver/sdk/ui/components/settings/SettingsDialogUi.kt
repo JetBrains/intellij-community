@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.ui.components.settings
 
+import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
@@ -7,12 +8,15 @@ import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.common.WelcomeScreenUI
 import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
+import com.intellij.driver.sdk.ui.components.elements.JButtonUiComponent
+import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
 import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
 import com.intellij.driver.sdk.ui.components.elements.accessibleTree
 import com.intellij.driver.sdk.ui.components.elements.button
 import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.ui
+import com.intellij.ide.IdeBundle
 import javax.swing.JDialog
 import javax.swing.JFrame
 import javax.swing.JTextField
@@ -28,9 +32,10 @@ private fun Finder.onSettingsDialog(
   x(SettingsDialogUiComponent::class.java, locator).apply(action)
 
 open class SettingsDialogUiComponent(data: ComponentData) : DialogUiComponent(data) {
-  open val settingsTree: JTreeUiComponent = accessibleTree { byAccessibleName("Settings categories") }
+  open val settingsTree: JTreeUiComponent = accessibleTree(SettingsTreeUiComponent::class.java) { byAccessibleName("Settings categories") }
   val searchTextField = textField { and(byType(JTextField::class.java), byAccessibleName("Search")) }
   val applyButton = button("Apply")
+  val revertChangesLink: UiComponent = x { byClass("ActionLink") and byText("Revert changes") }
 
   fun openTreeSettingsSection(vararg path: String, fullMatch: Boolean = true) {
     settingsTree.should(message = "Settings tree is empty", timeout = 5.seconds) { collectExpandedPaths().isNotEmpty() }
@@ -39,4 +44,14 @@ open class SettingsDialogUiComponent(data: ComponentData) : DialogUiComponent(da
 
   fun content(action: UiComponent.() -> Unit = {}): UiComponent =
     x { byType("com.intellij.openapi.options.ex.ConfigurableCardPanel") }.apply(action)
+
+  protected class SettingsTreeUiComponent(data: ComponentData): JTreeUiComponent(data) {
+    override fun collectExpandedPaths(): List<TreePathToRow> {
+      return super.collectExpandedPaths().map {
+        it.apply {
+          path = path.map { rowValue -> rowValue.substringBeforeLast(" " + IdeBundle.message("badge.text.new")) } // remove "New" badge
+        }
+      }
+    }
+  }
 }

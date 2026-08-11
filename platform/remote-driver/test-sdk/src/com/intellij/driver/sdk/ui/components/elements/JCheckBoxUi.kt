@@ -16,7 +16,7 @@ import kotlin.time.Duration.Companion.seconds
 fun Finder.checkBox(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@class='JCheckBox']",
                                                                   JCheckBoxUi::class.java)
 
-fun Finder.checkBox(locator: QueryBuilder.() -> String) = x(JCheckBoxUi::class.java) {locator()}
+fun Finder.checkBox(readableName: String? = null, locator: QueryBuilder.() -> String) = x(JCheckBoxUi::class.java, readableName) {locator()}
 
 fun Finder.checkBoxWithName(name: String) = x(JCheckBoxUi::class.java) { byAccessibleName(name) }
 

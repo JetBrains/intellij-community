@@ -106,7 +106,7 @@ public final class PackagingElementFactoryImpl extends PackagingElementFactory {
 
   @Override
   public @NotNull List<PackagingElementType> getAllElementTypes() {
-    return toPersistentList(PackagingElementType.EP_NAME.getExtensionList()).addAll(STANDARD_TYPES);
+    return toPersistentList(PackagingElementType.EP_NAME.getExtensionList()).addingAll(STANDARD_TYPES);
   }
 
   @Override

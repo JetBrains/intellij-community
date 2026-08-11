@@ -46,6 +46,16 @@ public abstract class K2JsOptimizeImportsTestGenerated extends AbstractK2JsOptim
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("OperationReferenceFromObjectSuperInterface_Infix.kt")
+            public void testOperationReferenceFromObjectSuperInterface_Infix() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/basic/OperationReferenceFromObjectSuperInterface_Infix.kt");
+            }
+
+            @TestMetadata("OperationReferenceFromObjectSuperInterface_Operator.kt")
+            public void testOperationReferenceFromObjectSuperInterface_Operator() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/basic/OperationReferenceFromObjectSuperInterface_Operator.kt");
+            }
+
             @TestMetadata("TypealiasedObject_InvokeFunction.kt")
             public void testTypealiasedObject_InvokeFunction() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/basic/TypealiasedObject_InvokeFunction.kt");
@@ -159,9 +169,29 @@ public abstract class K2JsOptimizeImportsTestGenerated extends AbstractK2JsOptim
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("AliasEnumEntryImport.kt")
+            public void testAliasEnumEntryImport() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/contextSensitiveResolution/AliasEnumEntryImport.kt");
+            }
+
             @TestMetadata("EnumConstants.kt")
             public void testEnumConstants() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/contextSensitiveResolution/EnumConstants.kt");
+            }
+
+            @TestMetadata("ExplicitEnumEntryImportCanBeRemoved.kt")
+            public void testExplicitEnumEntryImportCanBeRemoved() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/contextSensitiveResolution/ExplicitEnumEntryImportCanBeRemoved.kt");
+            }
+
+            @TestMetadata("ExplicitEnumEntryImportWithoutContextSensitiveResolution.kt")
+            public void testExplicitEnumEntryImportWithoutContextSensitiveResolution() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/contextSensitiveResolution/ExplicitEnumEntryImportWithoutContextSensitiveResolution.kt");
+            }
+
+            @TestMetadata("ExplicitSealedSubclassImportConflictsWithSameFileClass.kt")
+            public void testExplicitSealedSubclassImportConflictsWithSameFileClass() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/contextSensitiveResolution/ExplicitSealedSubclassImportConflictsWithSameFileClass.kt");
             }
 
             @TestMetadata("FromCompanionObject.kt")

@@ -4,7 +4,7 @@ actual interface B {
     fun x()
 }
 
-<error descr="[ABSTRACT_MEMBER_NOT_IMPLEMENTED] Class 'Impl' is not abstract and does not implement abstract member public abstract fun x(): Unit defined in Both">class Impl</error> : Both {
+<error descr="[ABSTRACT_MEMBER_NOT_IMPLEMENTED]">class Impl</error> : Both {
     override fun z() {
     }
 }

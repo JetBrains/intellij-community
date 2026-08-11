@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.serviceView.frontend
 
 import com.intellij.ide.IdeBundle
@@ -47,11 +47,7 @@ internal class SwitchServiceViewImplementationAction : DumbAwareToggleAction(), 
 
         val affectedRegistryFlagsPatch = getServiceViewRegistryFlagsState().entries
           .joinToString(prefix = "\n", separator = ",\n", postfix = "\n") { (key, value) ->
-            val patchedValueToOffer = when {
-              key.startsWith("xdebugger") -> value
-              else -> !value
-            }
-            "- $key = $patchedValueToOffer"
+            "- $key = ${!value}"
           }
         thisLogger().warn("Service View registry flags patch to apply:\n$affectedRegistryFlagsPatch")
 

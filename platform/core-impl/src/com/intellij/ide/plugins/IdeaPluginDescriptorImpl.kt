@@ -52,8 +52,6 @@ sealed class IdeaPluginDescriptorImpl(
 
   abstract val ownClassPath: List<Path>?
 
-  /** **DO NOT USE** outside plugin subsystem internal code. It is public now due to an unfinished migration */
-  var isMarkedForLoading: Boolean = true
   private var _pluginClassLoader: ClassLoader? = null
 
   abstract val isIndependentFromCoreClassLoader: Boolean
@@ -75,7 +73,7 @@ sealed class IdeaPluginDescriptorImpl(
   }
 
   @Deprecated("Deprecated in Java")
-  override fun isEnabled(): Boolean = isMarkedForLoading
+  override fun isEnabled(): Boolean = isLoaded
 
   internal fun createDependsSubDescriptor(
     subBuilder: PluginDescriptorBuilder,
@@ -210,7 +208,8 @@ class DependsSubDescriptor(
 
   @Deprecated("use main descriptor")
   override fun getPluginPath(): Path = parent.pluginPath
-  @Deprecated("use main descriptor") override val useIdeaClassLoader: Boolean get() = parent.useIdeaClassLoader
+  @Deprecated("use main descriptor")
+  override val useIdeaClassLoader: Boolean get() = parent.useIdeaClassLoader
 
   @Deprecated("use main descriptor")
   override fun allowBundledUpdate(): Boolean = parent.allowBundledUpdate()
@@ -269,6 +268,8 @@ class ContentModuleDescriptor(
   val visibility: ModuleVisibility = raw.moduleVisibility.convert()
 
   override val moduleDependencies: ModuleDependencies = convertDependencies(raw.dependencies, parent)
+
+  override val pluginAliases: List<PluginId> = filterBackendRdClientAlias(super.pluginAliases, parent.pluginId)
 
   override val useCoreClassLoader: Boolean
     get() = parent.useCoreClassLoader
@@ -504,8 +505,66 @@ private fun convertExtensions(rawMap: Map<String, List<ExtensionElement>>): Map<
 }
 
 @get:Internal
-val IdeaPluginDescriptorImpl.shortLogDescription: String get() = when (this) {
-  is PluginMainDescriptor -> "plugin '$name' ($pluginId, $version)"
-  is DependsSubDescriptor -> "<depends> config '${descriptorPath}' of plugin ${pluginId}"
-  is ContentModuleDescriptor -> "module ${moduleId.displayName}"
+val IdeaPluginDescriptorImpl.shortLogDescription: String
+  get() {
+    return when (this) {
+      is PluginMainDescriptor -> "plugin '$name' ($pluginId, $version)"
+      is DependsSubDescriptor -> "<depends> config '${descriptorPath}' of plugin ${pluginId}"
+      is ContentModuleDescriptor -> "module ${moduleId.displayName}"
+    }
+  }
+
+internal fun getPackagePrefixConflictModuleId(descriptor: PluginModuleDescriptor): String {
+  return when (descriptor) {
+    is PluginMainDescriptor -> descriptor.pluginId.idString
+    is ContentModuleDescriptor -> descriptor.moduleId.name
+  }
 }
+
+internal fun getPackagePrefixConflictNamespace(descriptor: PluginModuleDescriptor): String {
+  return when (descriptor) {
+    is PluginMainDescriptor -> descriptor.implicitNamespaceForPluginDescriptorModule ?: "<none>"
+    is ContentModuleDescriptor -> descriptor.moduleId.namespace
+  }
+}
+
+internal fun formatPackagePrefixConflictDetails(descriptor: PluginModuleDescriptor): String {
+  val plugin = descriptor.getMainDescriptor()
+  val descriptorPathDescription = descriptor.getDescriptorPath()?.let { ", descriptor=$it" }.orEmpty()
+  return "plugin '${plugin.name}' (${plugin.pluginId}), " +
+         "module '${getPackagePrefixConflictModuleId(descriptor)}', " +
+         "namespace=${getPackagePrefixConflictNamespace(descriptor)}, " +
+         "packagePrefix=${descriptor.packagePrefix ?: "<none>"}" +
+         descriptorPathDescription
+}
+
+/**
+ * Workaround for the `com.intellij.rd.client.capable` alias being declared in two plugins (IJPL-220139):
+ * in frontend-like modes the JetBrains Client core plugin declares it, while the dual-mode clion-radler plugin
+ * declares it in its backend-only marker module (`intellij.clion.radler.backend.marker`). That marker can never
+ * load in such modes, but its alias still conflicts with the core plugin's and would exclude the whole clion-radler
+ * plugin — so drop it from non-core content modules when `intellij.platform.backend` is unavailable.
+ *
+ * TODO remove once on-demand module loading (IJPL-242789) makes this alias-based loading of `intellij.rd.client` unnecessary
+ */
+private fun filterBackendRdClientAlias(aliases: List<PluginId>, pluginId: PluginId): List<PluginId> {
+  if (pluginId != PluginManagerCore.CORE_ID &&
+      aliases.contains(RD_CLIENT_CAPABLE_ALIAS_ID) &&
+      !isPlatformBackendModuleAvailable()) {
+    LOG.info("Plugin alias '$RD_CLIENT_CAPABLE_ALIAS_ID' is removed from a content module of plugin '$pluginId' " +
+             "because '${PLATFORM_BACKEND_MODULE_ID.displayName}' is unavailable in the current product mode")
+    return aliases.filterNot { it == RD_CLIENT_CAPABLE_ALIAS_ID }
+  }
+
+  return aliases
+}
+
+private fun isPlatformBackendModuleAvailable(): Boolean {
+  // The following logic is copied from PluginContentDescriptor.ModuleItem.determineLoadingRule
+  val initContext = PluginInitContextFactory.getInstance().getContextForEffectiveModuleLoadingRuleDetermination()
+  val backendModuleData = initContext.environmentConfiguredModules[PLATFORM_BACKEND_MODULE_ID]
+  return backendModuleData != null && backendModuleData.isAvailable
+}
+
+private val RD_CLIENT_CAPABLE_ALIAS_ID: PluginId = PluginId.getId("com.intellij.rd.client.capable")
+private val PLATFORM_BACKEND_MODULE_ID = PluginModuleId("intellij.platform.backend", PluginModuleId.JETBRAINS_NAMESPACE)

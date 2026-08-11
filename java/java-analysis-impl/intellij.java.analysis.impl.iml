@@ -25,6 +25,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
+    <orderEntry type="module" module-name="intellij.java.indexing.serializers" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.indexing.impl" exported="" />

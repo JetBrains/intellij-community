@@ -114,7 +114,7 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
     }
 
     @Override
-    public TextAttributesKey @NotNull [] getTokenHighlights(IElementType type) {
+    public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(@NotNull IElementType type) {
       return pack(ourAttributes.get(type));
     }
   }

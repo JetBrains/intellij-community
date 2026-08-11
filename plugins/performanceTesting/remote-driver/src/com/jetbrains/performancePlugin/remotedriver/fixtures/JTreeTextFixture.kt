@@ -4,6 +4,7 @@ package com.jetbrains.performancePlugin.remotedriver.fixtures
 import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.model.TreePathToRowList
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.ui.tree.TreeUtil
@@ -139,6 +140,11 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
       tree.scrollRowToVisible(row)
       AWT.centerOf(tree.visibleRect.intersection(tree.getRowBounds(row)))
     }
+  }
+
+  fun getTextAttributes(row: Int): List<Pair<String, SimpleTextAttributes>> {
+    val rowComponent = getComponentAtRow(row)
+    return rowComponent.collectTextAttributes(robot())
   }
 
   private fun JTree.checkRowInBounds(row: Int): Int {

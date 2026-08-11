@@ -2005,8 +2005,12 @@ f:com.intellij.vcs.commit.CommitChecksResult$SmartModeRequired
 com.intellij.vcs.commit.CommitExecutorListener
 - java.util.EventListener
 - a:executorCalled(com.intellij.openapi.vcs.changes.CommitExecutor):V
+com.intellij.vcs.commit.CommitMessageListener
+- java.util.EventListener
+- a:onTextChanged(java.lang.String):V
 com.intellij.vcs.commit.CommitMessageUi
 - com.intellij.ui.TextAccessor
+- addCommitMessageListener(com.intellij.vcs.commit.CommitMessageListener):V
 - a:focus():V
 - a:getText():java.lang.String
 - a:setText(java.lang.String):V

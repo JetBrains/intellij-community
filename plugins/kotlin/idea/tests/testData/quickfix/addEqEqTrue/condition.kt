@@ -1,5 +1,5 @@
 // "Add '== true'" "true"
-// K2_ERROR: Condition type mismatch: inferred type is 'Boolean?' but 'Boolean' was expected.
+// K2_ERROR: CONDITION_TYPE_MISMATCH
 class Foo {
     fun bar() = true
 }

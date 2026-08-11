@@ -50,6 +50,7 @@ trait
 transient
 true
 try
+val
 var
 void
 volatile

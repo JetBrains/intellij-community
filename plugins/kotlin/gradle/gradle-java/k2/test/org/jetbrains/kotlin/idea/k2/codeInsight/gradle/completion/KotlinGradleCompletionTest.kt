@@ -324,6 +324,27 @@ class KotlinGradleCompletionTest : AbstractGradleCodeInsightTest() {
         verifyCompletion(gradleVersion)
     }
 
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("buildSrcDir/gradleGeneratedContainerSuggestionsInKtFileInBuildSrc.test")
+    fun testGradleGeneratedContainerSuggestionsInKtFileInBuildSrc(gradleVersion: GradleVersion) {
+        verifyCompletion(gradleVersion)
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("buildSrcDir/gradleGeneratedFileSuggestionsInKtFileInBuildSrc.test")
+    fun testGradleGeneratedFileSuggestionsInKtFileInBuildSrc(gradleVersion: GradleVersion) {
+        verifyCompletion(gradleVersion)
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("buildSrcDir/generatedAnnotationLookalikeSuggestionsInKtFileInBuildSrc.test")
+    fun testGeneratedAnnotationLookalikeSuggestionsInKtFileInBuildSrc(gradleVersion: GradleVersion) {
+        verifyCompletion(gradleVersion)
+    }
+
     private fun verifyCompletion(gradleVersion: GradleVersion) {
         test(gradleVersion, GRADLE_KMP_KOTLIN_FIXTURE) {
             val mainFileContent = mainTestDataFile

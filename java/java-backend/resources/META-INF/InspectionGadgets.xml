@@ -1,5 +1,7 @@
 <idea-plugin>
-
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.naming.convention.class" interface="com.intellij.codeInspection.naming.NamingConvention" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.naming.convention.method" interface="com.intellij.codeInspection.naming.NamingConvention" dynamic="true"/>
@@ -1176,6 +1178,10 @@
                      key="unnecessary.unicode.escape.display.name" groupBundle="messages.InspectionsBundle" runForWholeFile="true"
                      groupKey="group.names.internationalization.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.internationalization.UnnecessaryUnicodeEscapeInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ConvertToBasicLatin" bundle="messages.InspectionGadgetsBundle" key="inspection.non.basic.latin.character.display.name"
+                     groupKey="group.names.internationalization.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.internationalization.ConvertToBasicLatinInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="ImplicitDefaultCharsetUsage" bundle="messages.InspectionGadgetsBundle"
                      key="implicit.default.charset.usage.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
@@ -1261,7 +1267,7 @@
                      implementationClass="com.siyeh.ig.javadoc.HtmlTagCanBeJavadocTagInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="MissingDeprecatedAnnotation" bundle="messages.InspectionGadgetsBundle"
                      key="missing.deprecated.annotation.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING" runForWholeFile="true"
+                     groupKey="group.names.javadoc.issues" enabledByDefault="true" level="WARNING" runForWholeFile="true"
                      implementationClass="com.siyeh.ig.javadoc.MissingDeprecatedAnnotationInspection" cleanupTool="true"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="MissingPackageInfo" bundle="messages.InspectionGadgetsBundle"
                       key="missing.package.info.display.name" groupBundle="messages.InspectionsBundle"

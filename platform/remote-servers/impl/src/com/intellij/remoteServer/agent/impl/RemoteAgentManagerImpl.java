@@ -9,11 +9,15 @@ import com.intellij.util.Base64;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 @ApiStatus.Internal
 public class RemoteAgentManagerImpl extends RemoteAgentManager {
@@ -58,8 +62,8 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
     private final RemoteAgentProxyFactory myAgentProxyFactory;
     private final Class<T> myAgentInterface;
 
+    private final Path myPluginPath;
     private final String myAllPluginsRoot;
-    private final boolean myRunningFromSources;
 
     AgentBuilderImpl(@NotNull RemoteAgentProxyFactory agentProxyFactory,
                             @NotNull Class<T> agentInterface,
@@ -67,9 +71,8 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
       myAgentProxyFactory = agentProxyFactory;
       myAgentInterface = agentInterface;
 
-      File plugin = new File(PathUtil.getJarPathForClass(pluginClass));
-      myAllPluginsRoot = plugin.getParent();
-      myRunningFromSources = plugin.isDirectory();
+      myPluginPath = Path.of(PathUtil.getJarPathForClass(pluginClass));
+      myAllPluginsRoot = myPluginPath.getParent().toString();
     }
 
     @Override
@@ -109,15 +112,51 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
 
     @Override
     public Builder<T> withModuleDependency(@NotNull String runtimeModuleName, @NotNull String buildPathToJar) {
-      if (myRunningFromSources) {
-        Path specificsModule = Path.of(myAllPluginsRoot).resolve(runtimeModuleName);
-        myModuleDependencies.add(specificsModule);
-      }
-      else {
-        Path specificsDir = Path.of(myAllPluginsRoot).resolve(FileUtil.toSystemDependentName(buildPathToJar));
+      Path specificsDir = Path.of(myAllPluginsRoot).resolve(FileUtil.toSystemDependentName(buildPathToJar));
+      if (Files.exists(specificsDir)) {
         myModuleDependencies.add(specificsDir);
+        return this;
       }
+      myModuleDependencies.add(resolveBuildPath(buildPathToJar));
       return this;
+    }
+
+    private @Nullable Path resolveBuildPath(@NotNull String buildPathToJar) {
+      Path pluginsRoot = Path.of(myAllPluginsRoot);
+      Path specificsDir = pluginsRoot.resolve(FileUtil.toSystemDependentName(buildPathToJar));
+      if (Files.isDirectory(specificsDir)) {
+        return specificsDir;
+      }
+      return resolveJarCacheDependency(buildPathToJar);
+    }
+
+    private Path resolveJarCacheDependency(@NotNull String buildPathToJar) {
+      String jarName = Path.of(FileUtil.toSystemDependentName(buildPathToJar)).getFileName().toString();
+      Path cacheEntriesRoot = findJarCacheEntriesRoot();
+      if (cacheEntriesRoot == null || jarName.isEmpty()) {
+        return null;
+      }
+
+      String cacheSuffix = "__" + jarName;
+      try (Stream<Path> paths = Files.walk(cacheEntriesRoot)) {
+        return paths
+          .filter(Files::isRegularFile)
+          .filter(path -> path.getFileName().toString().endsWith(cacheSuffix))
+          .max(Comparator.comparingLong(path -> path.toFile().lastModified()))
+          .orElse(null);
+      }
+      catch (IOException ignored) {
+        return null;
+      }
+    }
+
+    private Path findJarCacheEntriesRoot() {
+      for (Path current = myPluginPath.getParent(); current != null; current = current.getParent()) {
+        if ("entries".equals(current.getFileName() != null ? current.getFileName().toString() : null)) {
+          return current;
+        }
+      }
+      return null;
     }
   }
 }

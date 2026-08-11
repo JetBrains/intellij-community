@@ -4,10 +4,12 @@ package com.intellij.testFramework;
 import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.application.impl.TestOnlyThreading;
@@ -18,6 +20,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ObjectTree;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
@@ -44,6 +47,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.SwingUtilities;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Field;
 import java.lang.ref.SoftReference;
 import java.util.Collection;
 import java.util.Collections;
@@ -51,12 +55,14 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 @TestOnly
 public final class LeakHunter {
   private static final Logger LOG = Logger.getInstance(LeakHunter.class);
+  private static final List<Runnable> ourProjectCleanups = new CopyOnWriteArrayList<>();
 
   @TestOnly
   private static @NotNull String getCreationPlace(@NotNull Project project) {
@@ -66,17 +72,33 @@ public final class LeakHunter {
 
   @TestOnly
   public static void checkProjectLeak() throws AssertionError {
-    checkLeak(allRoots(), ProjectImpl.class, project -> !project.isDefault() && !project.isLight());
+    checkProjectLeak(Predicates.alwaysTrue());
+  }
+
+  @TestOnly
+  public static void checkProjectLeak(@NotNull Predicate<Field> shouldExamineField) throws AssertionError {
+    checkLeak(allRoots(), ProjectImpl.class, shouldExamineField, project -> !project.isDefault() && !project.isLight());
   }
 
   @TestOnly
   public static void checkNonDefaultProjectLeak() {
-    checkLeak(allRoots(), ProjectImpl.class, project -> !project.isDefault());
+    checkNonDefaultProjectLeak(Predicates.alwaysTrue());
+  }
+
+  @TestOnly
+  public static void checkNonDefaultProjectLeak(@NotNull Predicate<Field> shouldExamineField) {
+    checkLeak(allRoots(), ProjectImpl.class, shouldExamineField, project -> !project.isDefault());
   }
 
   @TestOnly
   public static void checkNonDefaultProjectLeakWithIgnoredEntries(@NotNull List<? extends IgnoredTraverseEntry> ignoredTraverseEntries) {
-    checkLeak(allRoots(), ProjectImpl.class, ignoredTraverseEntries, project -> !project.isDefault());
+    checkNonDefaultProjectLeakWithIgnoredEntries(ignoredTraverseEntries, Predicates.alwaysTrue());
+  }
+
+  @TestOnly
+  public static void checkNonDefaultProjectLeakWithIgnoredEntries(@NotNull List<? extends IgnoredTraverseEntry> ignoredTraverseEntries,
+                                                                  @NotNull Predicate<Field> shouldExamineField) {
+    checkLeak(allRoots(), ProjectImpl.class, ignoredTraverseEntries, shouldExamineField, project -> !project.isDefault());
   }
 
   @TestOnly
@@ -93,7 +115,15 @@ public final class LeakHunter {
   public static <T> void checkLeak(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
                                    @NotNull Class<T> suspectClass,
                                    @Nullable Predicate<? super T> isReallyLeak) throws AssertionError {
-    processLeaks(rootsSupplier, suspectClass, isReallyLeak, null, (leaked, backLink)->{
+    checkLeak(rootsSupplier, suspectClass, Predicates.alwaysTrue(), isReallyLeak);
+  }
+
+  @TestOnly
+  public static <T> void checkLeak(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
+                                   @NotNull Class<T> suspectClass,
+                                   @NotNull Predicate<Field> shouldExamineField,
+                                   @Nullable Predicate<? super T> isReallyLeak) throws AssertionError {
+    processLeaks(rootsSupplier, suspectClass, isReallyLeak, null, shouldExamineField, (leaked, backLink) -> {
       String message = getLeakedObjectDetails(leaked, backLink, true);
 
       System.out.println(message);
@@ -109,22 +139,38 @@ public final class LeakHunter {
                                    @NotNull Class<T> suspectClass,
                                    @NotNull List<? extends IgnoredTraverseEntry> ignoredTraverseEntries,
                                    @Nullable Predicate<? super T> isReallyLeak) throws AssertionError {
-    processLeaks(rootsSupplier, suspectClass, isReallyLeak, (backLink) -> {
+    checkLeak(rootsSupplier, suspectClass, ignoredTraverseEntries, Predicates.alwaysTrue(), isReallyLeak);
+  }
+
+  @TestOnly
+  public static <T> void checkLeak(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
+                                   @NotNull Class<T> suspectClass,
+                                   @NotNull List<? extends IgnoredTraverseEntry> ignoredTraverseEntries,
+                                   @NotNull Predicate<Field> shouldExamineField,
+                                   @Nullable Predicate<? super T> isReallyLeak) throws AssertionError {
+    processLeaks(rootsSupplier, suspectClass, isReallyLeak,
+                 createLeakBackLinkProcessor(ignoredTraverseEntries),
+                 shouldExamineField,
+                 (leaked, backLink) -> {
+                   String message = getLeakedObjectDetails(leaked, backLink, true);
+
+                   System.out.println(message);
+                   System.out.println(";-----");
+                   ThreadUtil.printThreadDump();
+
+                   throw new AssertionError(message);
+                 });
+  }
+
+  private static @NotNull Predicate<? super DebugReflectionUtil.BackLink<?>> createLeakBackLinkProcessor(@NotNull List<? extends IgnoredTraverseEntry> ignoredTraverseEntries) {
+    return backLink -> {
       for (IgnoredTraverseEntry entry : ignoredTraverseEntries) {
         if (entry.test(backLink)) {
           return true;
         }
       }
       return false;
-    }, (leaked, backLink) -> {
-      String message = getLeakedObjectDetails(leaked, backLink, true);
-
-      System.out.println(message);
-      System.out.println(";-----");
-      ThreadUtil.printThreadDump();
-
-      throw new AssertionError(message);
-    });
+    };
   }
 
   /**
@@ -136,22 +182,30 @@ public final class LeakHunter {
                                          @Nullable Predicate<? super T> isReallyLeak,
                                          @Nullable Predicate<? super DebugReflectionUtil.BackLink<?>> leakBackLinkProcessor,
                                          @NotNull PairProcessor<? super T, Object> processor) throws AssertionError {
+    return processLeaks(rootsSupplier, suspectClass, isReallyLeak, leakBackLinkProcessor, Predicates.alwaysTrue(), processor);
+  }
+
+  @TestOnly
+  public static <T> boolean processLeaks(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
+                                         @NotNull Class<T> suspectClass,
+                                         @Nullable Predicate<? super T> isReallyLeak,
+                                         @Nullable Predicate<? super DebugReflectionUtil.BackLink<?>> leakBackLinkProcessor,
+                                         @NotNull Predicate<Field> shouldExamineField,
+                                         @NotNull PairProcessor<? super T, Object> processor) throws AssertionError {
     tryClearingNonReachableObjects();
 
     Computable<Boolean> runnable = () -> {
-      Ref<Boolean> leakDetected = new Ref<>(false);
+      boolean leakDetected;
       try (AccessToken ignored = ProhibitAWTEvents.start("checking for leaks")) {
-        runDetectorPass(rootsSupplier, suspectClass, isReallyLeak, leakBackLinkProcessor, (leaked, backLink) -> {
-          leakDetected.set(true);
-          return false;
-        });
+        leakDetected = !runDetectorPass(rootsSupplier, suspectClass, isReallyLeak, leakBackLinkProcessor, shouldExamineField,
+                                        PairProcessor.alwaysFalse());
       }
-      if (!leakDetected.get()) {
+      if (!leakDetected) {
         return true;
       }
       runAdditionalCleanup();
       try (AccessToken ignored = ProhibitAWTEvents.start("checking for leaks")) {
-        return runDetectorPass(rootsSupplier, suspectClass, isReallyLeak, leakBackLinkProcessor, processor);
+        return runDetectorPass(rootsSupplier, suspectClass, isReallyLeak, leakBackLinkProcessor, shouldExamineField, processor);
       }
     };
     Application application = ApplicationManager.getApplication();
@@ -159,19 +213,21 @@ public final class LeakHunter {
   }
 
   private static <T> boolean runDetectorPass(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
-                                       @NotNull Class<T> suspectClass,
-                                       @Nullable Predicate<? super T> isReallyLeak,
-                                       @Nullable Predicate<? super DebugReflectionUtil.BackLink<?>> leakBackLinkProcessor,
-                                       @NotNull PairProcessor<? super T, Object> processor) {
-    return DebugReflectionUtil.walkObjects(1_000, 1_000_000, rootsSupplier.get(), suspectClass, _ -> true, (leaked, backLink) -> {
-      if (leakBackLinkProcessor != null && leakBackLinkProcessor.test(backLink)) {
-        return true;
-      }
-      if (isReallyLeak == null || isReallyLeak.test(leaked)) {
-        return processor.process(leaked, backLink);
-      }
-      return true;
-    });
+                                             @NotNull Class<T> suspectClass,
+                                             @Nullable Predicate<? super T> isReallyLeak,
+                                             @Nullable Predicate<? super DebugReflectionUtil.BackLink<?>> leakBackLinkProcessor,
+                                             @NotNull Predicate<Field> shouldExamineField,
+                                             @NotNull PairProcessor<? super T, Object> processor) {
+    return DebugReflectionUtil.walkObjects(1_000, 1_000_000, rootsSupplier.get(), suspectClass, Predicates.alwaysTrue(), shouldExamineField,
+                                           (leaked, backLink) -> {
+                                             if (leakBackLinkProcessor != null && leakBackLinkProcessor.test(backLink)) {
+                                               return true;
+                                             }
+                                             if (isReallyLeak == null || isReallyLeak.test(leaked)) {
+                                               return processor.process(leaked, backLink);
+                                             }
+                                             return true;
+                                           });
   }
 
 
@@ -215,8 +271,17 @@ public final class LeakHunter {
    * Checks if there is a memory leak if an object of type {@code suspectClass} is strongly accessible via references from the {@code root} object.
    */
   @TestOnly
-  public static <T> void checkLeak(@NotNull Object root, @NotNull Class<T> suspectClass, @Nullable Predicate<? super T> isReallyLeak) throws AssertionError {
-    checkLeak(() -> Collections.singletonMap(root, "Root object"), suspectClass, isReallyLeak);
+  public static <T> void checkLeak(@NotNull Object root, @NotNull Class<T> suspectClass, @Nullable Predicate<? super T> isReallyLeak)
+    throws AssertionError {
+    checkLeak(root, suspectClass, Predicates.alwaysTrue(), isReallyLeak);
+  }
+
+  @TestOnly
+  public static <T> void checkLeak(@NotNull Object root,
+                                   @NotNull Class<T> suspectClass,
+                                   @NotNull Predicate<Field> shouldExamineField,
+                                   @Nullable Predicate<? super T> isReallyLeak) throws AssertionError {
+    checkLeak(() -> Collections.singletonMap(root, "Root object"), suspectClass, shouldExamineField, isReallyLeak);
   }
 
   @TestOnly
@@ -307,11 +372,33 @@ public final class LeakHunter {
       result += "\nExisting strong reference path to the instance:\n" +backLink.toString().indent(2);
     }
 
+    if (backLink instanceof DebugReflectionUtil.BackLink<?>) {
+      Disposable anchor = findObjectTreeAnchor((DebugReflectionUtil.BackLink<?>)backLink);
+      if (anchor != null) {
+        String path = Disposer.getTree().printParentChainToRoot(anchor);
+        if (path != null) {
+          result += "\n\nThe leaked object is reachable via a Disposable in the Disposer tree." +
+                    "\nPath from that Disposable up to the Disposer ROOT:\n" + path;
+        }
+      }
+    }
+
     String creationPlace = leaked instanceof Project ? getCreationPlace((Project)leaked) : null;
     if (creationPlace != null) {
       result += "\nThe instance was created at: "+creationPlace;
     }
     return result;
+  }
+
+  private static @Nullable Disposable findObjectTreeAnchor(@NotNull DebugReflectionUtil.BackLink<?> start) {
+    ObjectTree tree = Disposer.getTree();
+    for (DebugReflectionUtil.BackLink<?> link = start; link != null; link = link.prev()) {
+      Object value = link.getValue();
+      if (value instanceof Disposable && tree.printParentChainToRoot((Disposable)value) != null) {
+        return (Disposable)value;
+      }
+    }
+    return null;
   }
 
   @TestOnly
@@ -351,5 +438,16 @@ public final class LeakHunter {
   // Here we forcibly flush the batch and avoid a leak of component managers.
   private static void flushTelemetry() {
     TelemetryManager.getInstance().forceFlushMetricsBlocking();
+  }
+
+  public static void registerProjectCleanup(@NotNull Runnable cleanup) {
+    ourProjectCleanups.add(cleanup);
+  }
+
+  public static void cleanupAllProjects() {
+    for (var each : ourProjectCleanups) {
+      each.run();
+    }
+    ourProjectCleanups.clear();
   }
 }

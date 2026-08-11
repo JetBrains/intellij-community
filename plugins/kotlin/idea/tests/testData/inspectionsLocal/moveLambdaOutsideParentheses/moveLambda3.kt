@@ -3,10 +3,10 @@
 // ERROR: No value passed for parameter 'b'
 // ERROR: Unresolved reference: it
 // AFTER_ERROR: No value passed for parameter 'a'
-// K2_AFTER_ERROR: No value passed for parameter 'a'.
-// K2_ERROR: Argument type mismatch: actual type is '() -> ??? (Unknown lambda return type)', but 'Int' was expected.
-// K2_ERROR: No value passed for parameter 'b'.
-// K2_ERROR: Unresolved reference 'it'.
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: UNRESOLVED_REFERENCE
 fun foo() {
     bar(<caret>{ it })
 }

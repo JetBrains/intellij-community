@@ -11,11 +11,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.concurrency.Semaphore;
 import com.jetbrains.jsonSchema.JsonSchemaTestServiceImpl;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory;
+import com.jetbrains.jsonSchema.extension.SchemaType;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
@@ -158,6 +160,19 @@ public class JsonSchemaReadTest extends BasePlatformTestCase {
     Assert.assertNull(nonTextualNode);
   }
 
+  public void testSingleSchemaUsesFirstAvailableProviderWhenNoUserSchema() {
+    VirtualFile targetFile = myFixture.addFileToProject("target.json", "{}").getVirtualFile();
+    VirtualFile firstSchema = myFixture.addFileToProject("json_schema_test/first.json", "{\"type\":\"object\"}").getVirtualFile();
+    VirtualFile secondSchema = myFixture.addFileToProject("json_schema_test/second.json", "{\"type\":\"object\"}").getVirtualFile();
+    JsonSchemaServiceImpl service = new JsonSchemaTestServiceImpl(getProject());
+
+    JsonSchemaTestServiceImpl.setProviders(new NonUserSchemaProvider(firstSchema), new NonUserSchemaProvider(secondSchema));
+    Disposer.register(getTestRootDisposable(), () -> JsonSchemaTestServiceImpl.setProvider(null));
+    ServiceContainerUtil.replaceService(getProject(), JsonSchemaService.class, service, getTestRootDisposable());
+
+    Assert.assertEquals(List.of(firstSchema), List.copyOf(service.getSchemasForFile(targetFile, true, false)));
+  }
+
   private void doTestSchemaReadNotHung(final File file) throws Exception {
     // because of threading
     if (Runtime.getRuntime().availableProcessors() < 2) return;
@@ -187,6 +202,34 @@ public class JsonSchemaReadTest extends BasePlatformTestCase {
     }
     finally {
       thread.get();
+    }
+  }
+
+  private static final class NonUserSchemaProvider implements JsonSchemaFileProvider {
+    private final @NotNull VirtualFile mySchemaFile;
+
+    private NonUserSchemaProvider(@NotNull VirtualFile schemaFile) {
+      mySchemaFile = schemaFile;
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull VirtualFile file) {
+      return "target.json".equals(file.getName());
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return mySchemaFile.getNameWithoutExtension();
+    }
+
+    @Override
+    public @NotNull VirtualFile getSchemaFile() {
+      return mySchemaFile;
+    }
+
+    @Override
+    public @NotNull SchemaType getSchemaType() {
+      return SchemaType.schema;
     }
   }
 }

@@ -8,7 +8,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.getOrCreateUserData
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.BrowserHyperlinkListener
@@ -25,9 +24,6 @@ private val NOTIFICATION_ALLOWED_KEY = Key.create<Boolean>("KotlinUiDslUsageNoti
 private const val NOTIFICATION_ENABLED_KEY = "devkit.uiDsl.usage.notification.enabled"
 private const val NOTIFICATION_ENABLED_DEFAULT = true
 
-private val isNotificationFeatureEnabled: Boolean
-  get() = Registry.`is`("devkit.uiDsl.usage.notification.feature.enabled", true)
-
 private var isNotificationEnabled: Boolean
   get() = PropertiesComponent.getInstance().getBoolean(NOTIFICATION_ENABLED_KEY, NOTIFICATION_ENABLED_DEFAULT)
   set(value) {
@@ -40,7 +36,7 @@ internal class KotlinUiDslUsageNotificationProvider : EditorNotificationProvider
     project: Project,
     file: VirtualFile,
   ): Function<in FileEditor, out JComponent?>? {
-    if (!isNotificationFeatureEnabled || !isNotificationEnabled || file.extension != "kt") {
+    if (!isNotificationEnabled || file.extension != "kt") {
       return null
     }
 

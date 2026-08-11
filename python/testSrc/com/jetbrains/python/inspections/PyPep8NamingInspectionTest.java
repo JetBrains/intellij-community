@@ -15,8 +15,13 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyTestCase;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyPep8NamingInspectionTest extends PyTestCase {
 
   public void testFunctionVariable() {

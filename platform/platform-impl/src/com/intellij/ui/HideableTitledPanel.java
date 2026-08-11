@@ -11,7 +11,7 @@ import java.awt.BorderLayout;
 /**
  * @author evgeny zakrevsky
  *
- * @deprecated Use Kotlin UI DSL 2, see Panel#collapsibleGroup
+ * @deprecated Use Kotlin UI DSL, see Panel#collapsibleGroup
  */
 @Deprecated
 public class HideableTitledPanel extends JPanel {

@@ -18,6 +18,12 @@ import org.jetbrains.jewel.ui.painter.hints.Stroke
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
 import org.jetbrains.jewel.ui.theme.tooltipStyle
 
+/**
+ * Renders a toggleable icon action button using the given [key] to resolve the icon.
+ *
+ * The button visually reflects its toggled [value] and notifies [onValueChange] when the user clicks it. An optional
+ * [extraHint] may be supplied to further customise how the icon is painted.
+ */
 @Composable
 public fun ToggleableIconActionButton(
     key: IconKey,
@@ -51,6 +57,13 @@ public fun ToggleableIconActionButton(
     )
 }
 
+/**
+ * Renders a toggleable icon action button using the given [key] to resolve the icon, with a tooltip shown on hover.
+ *
+ * The button visually reflects its toggled [value] and notifies [onValueChange] when the user clicks it. The [tooltip]
+ * composable is displayed according to [tooltipPlacement]. An optional [extraHint] may be supplied to further customise
+ * how the icon is painted.
+ */
 @Suppress("ComposableParamOrder") // To fix in JEWEL-932
 @Composable
 public fun ToggleableIconActionButton(
@@ -92,6 +105,12 @@ public fun ToggleableIconActionButton(
     }
 }
 
+/**
+ * Renders a toggleable icon action button using the given [key] to resolve the icon.
+ *
+ * The button visually reflects its toggled [value] and notifies [onValueChange] when the user clicks it. The
+ * [extraHints] array is forwarded to the icon painter to further customise rendering.
+ */
 @Composable
 public fun ToggleableIconActionButton(
     key: IconKey,
@@ -125,6 +144,13 @@ public fun ToggleableIconActionButton(
     )
 }
 
+/**
+ * Renders a toggleable icon action button using the given [key] to resolve the icon, with a tooltip shown on hover.
+ *
+ * The button visually reflects its toggled [value] and notifies [onValueChange] when the user clicks it. The
+ * [extraHints] array is forwarded to the icon painter to further customise rendering. The [tooltip] composable is
+ * displayed according to [tooltipPlacement].
+ */
 @Suppress("ComposableParamOrder") // To fix in JEWEL-932
 @Composable
 public fun ToggleableIconActionButton(

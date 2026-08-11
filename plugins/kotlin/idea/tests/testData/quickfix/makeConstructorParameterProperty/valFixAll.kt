@@ -1,6 +1,6 @@
 // "Apply all 'Make constructor parameter a property' fixes in file" "true"
-// K2_ERROR: Unresolved reference 'bar'.
-// K2_ERROR: Unresolved reference 'foo'.
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 class A(foo: String) {
     fun bar() {

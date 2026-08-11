@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -39,13 +38,13 @@ public abstract class FileDocumentManager implements SavingRequestor {
   }
 
   /**
-   * Returns the document for the specified virtual file.<p/>
+   * Returns the document for the specified virtual file.
    * <p>
-   * Documents are cached on weak or strong references, depending on the nature of the virtual file. If the document
+   * Documents are cached on weak references for real virtual files, or on strong references for light virtual files. If the document
    * for the given virtual file is not yet cached, the file's contents are read from VFS and loaded into heap memory.
    * An appropriate encoding is used. All line separators are converted to {@code \n}.<p/>
    * <p>
-   * Should be invoked in a read action.
+   * Should be invoked in a read action or (experimental) {@link com.intellij.psi.util.PsiVersioningService#freezePsiVersion  versioned environment}.
    *
    * @param file the file for which the document is requested.
    * @return the document, or null if the file represents a directory, or is binary without an associated decompiler,
@@ -53,14 +52,13 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * @see VirtualFile#contentsToByteArray()
    * @see Application#runReadAction(Computable)
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false)
   public abstract @Nullable Document getDocument(@NotNull VirtualFile file);
 
   @Internal
   @ApiStatus.Experimental
-  @RequiresReadLock(generateAssertion = false) // assert for real file
+  @RequiresReadLock
   public @Nullable Document getDocument(@NotNull VirtualFile file, @NotNull Project preferredProject) {
-    EditorLockFreeTyping.assertReadAccess(file);
     try (AccessToken ignored = ProjectLocator.withPreferredProject(file, preferredProject)) {
       return getDocument(file);
     }

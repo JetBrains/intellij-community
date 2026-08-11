@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
@@ -101,7 +102,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public final class GroovyCompletionData {
   public static final String[] BUILT_IN_TYPES = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "void"};
-  public static final String[] MODIFIERS = new String[]{"private", "public", "protected", "transient", "abstract", "native", "volatile", "strictfp", "static", "sealed", "non-sealed"};
+  public static final String[] MODIFIERS = {"private", "public", "protected", "transient", "abstract", "native", "volatile", "strictfp", "static", "sealed", "non-sealed"};
   public static final ElementPattern<PsiElement> IN_CAST_TYPE_ELEMENT = StandardPatterns.or(
     PsiJavaPatterns.psiElement().afterLeaf(PsiJavaPatterns.psiElement().withText("(").withParent(
       PsiJavaPatterns.psiElement(GrParenthesizedExpression.class, GrTypeCastExpression.class))),
@@ -240,10 +241,8 @@ public final class GroovyCompletionData {
         }
         if (suggestFinalDef(position) || PsiJavaPatterns
           .psiElement().afterLeaf(PsiJavaPatterns.psiElement().withText("(").withParent(GrForStatement.class)).accepts(position)) {
-          addKeywords(consumer, true, JavaKeywords.FINAL, "def");
-          if (!isVarDisallowed(position)) {
-            addKeywords(consumer, true, "var");
-          }
+          addKeywords(consumer, true, JavaKeywords.FINAL, GrModifier.DEF);
+          addVarVal(consumer, position);
         }
       }
     }
@@ -815,7 +814,7 @@ public final class GroovyCompletionData {
       return true;
     }
     if (GroovyCompletionUtil.isFirstElementAfterPossibleModifiersInVariableDeclaration(context, false) &&
-        !PsiJavaPatterns.psiElement().afterLeaf("def", "var").accepts(context)) {
+        !PsiJavaPatterns.psiElement().afterLeaf(GrModifier.DEF, GrModifier.VAR, GrModifier.VAL).accepts(context)) {
       return true;
     }
 
@@ -870,19 +869,16 @@ public final class GroovyCompletionData {
         GroovyCompletionUtil.isNewStatement(context, false);
   }
 
-  /// @return Whether the `var` keyword is disallowed
-  /// in practice, only for methods since var as a contextual keyword since Groovy 3.0
-  private static boolean isVarDisallowed(PsiElement context) {
-    if (!GroovyConfigUtils.isAtLeastGroovy30(context)) {
-      return true;
-    }
+  private static void addVarVal(GroovyCompletionConsumer consumer, PsiElement context) {
+    if (!GroovyConfigUtils.isAtLeastGroovy30(context)) return;
+    boolean addVal = GroovyConfigUtils.isAtLeastGroovy60(context);
 
     // Caret right before a method in a class
     if (context.getParent() instanceof GrReferenceElement &&
         context.getParent().getParent() instanceof GrTypeElement &&
         context.getParent().getParent().getParent() instanceof GrMethod &&
         context.getParent().getParent().getParent().getParent() instanceof GrTypeDefinitionBody) {
-      return true;
+      return;
     }
 
     // Caret before a function in a Groovy script
@@ -892,9 +888,10 @@ public final class GroovyCompletionData {
     ) {
       GroovyPsiElement[] arguments = applicationStatement.getArgumentList().getAllArguments();
       if (arguments.length == 1 && arguments[0] instanceof GrMethodCallExpression) {
-        return true;
+        return;
       }
     }
-    return false;
+    addKeywords(consumer, true, GrModifier.VAR);
+    if (addVal) addKeywords(consumer, true, GrModifier.VAL);
   }
 }

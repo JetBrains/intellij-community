@@ -1,5 +1,5 @@
 // "Remove 'fun' modifier" "true"
-// K2_ERROR: Functional interface must have exactly one abstract function.
+// K2_ERROR: FUN_INTERFACE_WRONG_COUNT_OF_ABSTRACT_MEMBERS
 interface WrongFunFace
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

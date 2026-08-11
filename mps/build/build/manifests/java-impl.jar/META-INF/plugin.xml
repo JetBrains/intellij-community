@@ -17,21 +17,23 @@
   <xi:include href="/META-INF/JavaPlugin.xml"/>
 
   <content namespace="jetbrains">
-    <module name="intellij.java.frontback.psi.impl" loading="embedded"/>
-
     <module name="intellij.java" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
     <module name="intellij.java.analysis"  loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
     <module name="intellij.java.analysis.impl" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
+    <module name="intellij.java.backend" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
     <module name="intellij.java.compiler" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
     <module name="intellij.java.compiler.impl" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
     <module name="intellij.java.debugger" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
     <module name="intellij.java.debugger.impl" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
+    <module name="intellij.java.execution.impl" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
     <module name="intellij.java.frontback.psi" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
+    <module name="intellij.java.frontback.psi.impl" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
     <module name="intellij.java.impl" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
     <module name="intellij.java.indexing" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
     <module name="intellij.java.psi" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
     <module name="intellij.java.psi.impl" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
     <module name="intellij.java.syntax" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
+    <module name="intellij.java.ui" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
     <module name="intellij.jsp" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
     <module name="intellij.java.compiler.instrumentationUtil" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>
     <module name="intellij.platform.jps.build.javac.rt" loading="embedded"><![CDATA[<idea-plugin visibility="public"></idea-plugin>]]></module>

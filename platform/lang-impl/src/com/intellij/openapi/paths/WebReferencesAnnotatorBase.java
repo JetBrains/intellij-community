@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.io.HttpRequests;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+@ApiStatus.Internal
 public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebReferencesAnnotatorBase.MyInfo[], WebReferencesAnnotatorBase.MyInfo[]> {
   private static final Logger LOG = Logger.getInstance(WebReferencesAnnotatorBase.class);
 
@@ -178,6 +180,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
     OK, UNKNOWN_HOST, NONEXISTENCE
   }
 
+  @ApiStatus.Internal
   protected static final class MyInfo {
     final PsiAnchor myAnchor;
     final String myUrl;

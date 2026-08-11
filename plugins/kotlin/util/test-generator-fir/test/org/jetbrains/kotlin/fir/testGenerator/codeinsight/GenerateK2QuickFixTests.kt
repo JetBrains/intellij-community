@@ -82,6 +82,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/convertToIsArrayOfCall", pattern = pattern)
             model("$idea/quickfix/contextParameterWithoutName", pattern = pattern)
             model("$idea/quickfix/contextParameter", pattern = pattern)
+            model("$idea/quickfix/createContextParameterFromNamedArugment", pattern = pattern)
             model("$idea/quickfix/createFromUsage/createClass", pattern = pattern, excludedDirectories = listOf("importDirective/kt21515", "callExpression/typeArguments"))
             model("$idea/quickfix/createFromUsage/createSecondaryConstructor", pattern = pattern)
             model("$idea/quickfix/createFromUsage/createFunction/binaryOperations", pattern = pattern)
@@ -113,6 +114,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/isEnumEntry", pattern = pattern)
             model("$idea/quickfix/javaClassOnCompanion", pattern = pattern)
             model("$idea/quickfix/kdocMissingDocumentation", pattern = pattern)
+            model("$idea/quickfix/kotlinTimeToJavaInstant", pattern = pattern)
             model("$idea/quickfix/lateinit", pattern = pattern)
             model("$idea/quickfix/leakingThis", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/libraries", pattern = pattern)
@@ -354,6 +356,16 @@ internal fun MutableTWorkspace.generateK2FixTests() {
                 "$idea/quickfix/override",
                 pattern = pattern,
                 testMethodName = testMethodName
+            )
+            model(
+                "$idea/quickfix/createContextParameterFromNamedArugment/multiFile",
+                pattern = pattern,
+                testMethodName = testMethodName,
+            )
+            model(
+                "$idea/quickfix/convertToAnonymousObject",
+                pattern = pattern,
+                testMethodName = testMethodName,
             )
         }
 

@@ -34,6 +34,7 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
   private final InitializerType myInitializerType;
   private final QualifiedName myInitializer;
   private final @Nullable PyLiteralKind myAssignedLiteralKind;
+  private final @Nullable String myAssignedLiteralValue;
   private final boolean myQualified;
   private final String myTypeComment;
   private final String myAnnotation;
@@ -57,6 +58,7 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
     myHasAssignedValue = hasAssignedValue;
     myInitializerType = InitializerType.Custom;
     myAssignedLiteralKind = null;
+    myAssignedLiteralValue = null;
     myInitializer = null;
     myQualified = false;
     myCustomStub = customStub;
@@ -68,6 +70,7 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
                                     final InitializerType initializerType,
                                     final QualifiedName initializer,
                                     final @Nullable PyLiteralKind assignedLiteralKind,
+                                    final @Nullable String assignedLiteralValue,
                                     final boolean qualified,
                                     @Nullable String typeComment,
                                     @Nullable String annotation,
@@ -83,6 +86,7 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
     myInitializerType = initializerType;
     myInitializer = initializer;
     myAssignedLiteralKind = assignedLiteralKind;
+    myAssignedLiteralValue = assignedLiteralValue;
     myQualified = qualified;
     myCustomStub = null;
     myDocString = docString;
@@ -106,6 +110,11 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
   @Override
   public @Nullable PyLiteralKind getAssignedLiteralKind() {
     return myAssignedLiteralKind;
+  }
+
+  @Override
+  public @Nullable String getAssignedLiteralValue() {
+    return myAssignedLiteralValue;
   }
 
   @Override
@@ -145,6 +154,7 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
            ", myInitializerType=" + myInitializerType +
            ", myInitializer=" + myInitializer +
            ", myAssignedLiteralKind=" + myAssignedLiteralKind +
+           ", myAssignedLiteralValue=" + myAssignedLiteralValue +
            ", myQualified=" + myQualified +
            ", myTypeComment='" + myTypeComment + '\'' +
            ", myAnnotation='" + myAnnotation + '\'' +

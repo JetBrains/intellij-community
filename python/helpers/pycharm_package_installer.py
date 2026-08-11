@@ -48,7 +48,7 @@ MACOS = sys.platform == "darwin"
 
 class PipRunCommand(Enum):
     PIP = ("-m", "pip")
-    WHL = (f"pip-24.3.1-py2.py3-none-any.whl{os.sep}pip", )
+    WHL = (f"pip-25.0.1-py3-none-any.whl{os.sep}pip", )
 
 def data_dir(package_dir_name) -> Path:
     if WINDOWS:

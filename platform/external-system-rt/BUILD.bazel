@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.externalSystem.rt` start
-
 jvm_library(
     name = "externalSystem-rt",
     srcs = glob(
@@ -18,7 +17,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//platform/object-serializer:objectSerializer-annotations",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -36,6 +35,7 @@ jvm_library(
         # do not sort,
         ":externalSystem-rt",
         "//platform/object-serializer:objectSerializer-annotations_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.externalSystem.rt` end

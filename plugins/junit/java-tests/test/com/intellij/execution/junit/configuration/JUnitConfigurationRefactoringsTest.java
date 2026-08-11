@@ -169,7 +169,7 @@ public class JUnitConfigurationRefactoringsTest extends JUnitConfigurationTestCa
   private void initModule() {
     mySource.initModule();
     mySource.copyJdkFrom(myModule);
-    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
+    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4");
     for (File file : junit4Library.getClasses()) {
       VirtualFile libFile = LocalFileSystem.getInstance().findFileByIoFile(file);
       assertNotNull(libFile);

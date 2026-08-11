@@ -2,9 +2,14 @@ f:com.intellij.remote.DeferredRemoteProcess
 - com.intellij.execution.process.PtyBasedProcess
 - hasPty():Z
 com.intellij.remote.ExceptionFix
+- a:apply():V
 - a:getNotificationMessage(java.lang.String):java.lang.String
 a:com.intellij.remote.PathMappingProvider
 - s:getSuitableMappingProviders(com.intellij.remote.RemoteSdkAdditionalData):java.util.List
+com.intellij.remote.ProcessControlWithMappings
+- getMappingSettings():com.intellij.util.PathMapper
+e:com.intellij.remote.RemoteConnectionType
+- java.lang.Enum
 com.intellij.remote.RemoteConnector
 - getAdditionalData():java.lang.String
 - a:getConnectorKey():java.lang.Object
@@ -13,11 +18,31 @@ com.intellij.remote.RemoteConnector
 - a:getType():com.intellij.remote.RemoteConnectionType
 - a:produceRemoteCredentials(com.intellij.util.Consumer):V
 f:com.intellij.remote.RemoteMappingsManager
+- com.intellij.openapi.components.PersistentStateComponent
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.remote.RemoteMappingsManager
 - setForServer(com.intellij.remote.RemoteMappingsManager$Mappings):V
 c:com.intellij.remote.RemoteMappingsManager$Mappings
+- <init>():V
+- getSettings():java.util.List
 - setSettings(java.util.List):V
 a:com.intellij.remote.RemoteSdkFactoryImpl
 - pa:createSdk(com.intellij.openapi.project.Project,java.util.Collection,com.intellij.openapi.projectRoots.SdkType,com.intellij.remote.RemoteSdkAdditionalData,java.lang.String):com.intellij.openapi.projectRoots.Sdk
 - createUnfinished(com.intellij.openapi.project.Project,com.intellij.remote.RemoteSdkAdditionalData,java.util.Collection):com.intellij.openapi.projectRoots.Sdk
 - generateSdkHomePath(com.intellij.openapi.project.Project,com.intellij.remote.RemoteSdkAdditionalData):java.lang.String
+f:com.intellij.remote.VagrantNotStartedException
+- java.lang.RuntimeException
+- getMachineName():java.lang.String
+- getVagrantFolder():java.lang.String
+a:com.intellij.remote.ext.LanguageCaseCollector
+- <init>():V
+com.intellij.remote.ui.CredentialsEditorProvider
+- a:createEditor(com.intellij.openapi.project.Project,com.intellij.remote.ext.CredentialsLanguageContribution,com.intellij.remote.ui.RemoteSdkEditorForm):com.intellij.remote.ext.CredentialsEditor
+- a:getDefaultInterpreterPath(com.intellij.remote.ui.BundleAccessor):java.lang.String
+- a:isAvailable(com.intellij.remote.ext.CredentialsLanguageContribution):Z
+com.intellij.remote.ui.RemoteSdkEditorForm
+- a:getBundleAccessor():com.intellij.remote.ui.BundleAccessor
+- a:getDisposable():com.intellij.openapi.Disposable
+- a:getParentContainer():com.intellij.remote.ui.RemoteSdkEditorContainer
+- a:getSdkScopeController():com.intellij.remote.ui.SdkScopeController
+- a:getValidator():java.lang.Runnable
+- a:isSdkInConsistentState(com.intellij.remote.CredentialsType):Z

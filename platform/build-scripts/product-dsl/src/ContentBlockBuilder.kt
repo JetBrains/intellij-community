@@ -79,6 +79,7 @@ internal fun buildContentBlocksAndChainMapping(
                 ContentModule(
                   moduleId = existingModule.moduleId,
                   loading = effectiveLoading,
+                  requiredIfAvailable = existingModule.requiredIfAvailable,
                   includeDependencies = existingModule.includeDependencies,
                   allowedMissingPluginIds = existingModule.allowedMissingPluginIds,
                 )
@@ -128,6 +129,7 @@ internal fun buildContentBlocksAndChainMapping(
         ContentModule(
           moduleId = module.moduleId,
           loading = effectiveLoading,
+          requiredIfAvailable = module.requiredIfAvailable,
           includeDependencies = module.includeDependencies,
           allowedMissingPluginIds = module.allowedMissingPluginIds,
         )
@@ -164,6 +166,7 @@ internal fun buildContentBlocksAndChainMapping(
       ContentModule(
         moduleId = module.moduleId,
         loading = module.loading,
+        requiredIfAvailable = module.requiredIfAvailable,
         includeDependencies = module.includeDependencies,
         allowedMissingPluginIds = module.allowedMissingPluginIds,
       )

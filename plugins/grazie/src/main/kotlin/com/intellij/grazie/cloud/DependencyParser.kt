@@ -17,10 +17,14 @@ import com.intellij.grazie.jlanguage.LazyCachingConcurrentDisambiguator
 import com.intellij.grazie.rule.CloudOrLocalBatchParser
 import com.intellij.grazie.rule.SentenceBatcher
 import com.intellij.grazie.rule.SentenceBatcher.AsyncBatchParser
+import com.intellij.grazie.rule.SentenceTokenizer
 import com.intellij.grazie.text.TextChecker.ProofreadingContext
 import com.intellij.grazie.text.TextContent
+import com.intellij.grazie.utils.HighlightingUtil
 import com.intellij.grazie.utils.HunspellUtil
+import com.intellij.grazie.utils.NaturalTextDetector.seemsNatural
 import com.intellij.grazie.utils.getLanguageIfAvailable
+import com.intellij.grazie.utils.hasLanguage
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -92,7 +96,21 @@ object DependencyParser {
     }
   }
 
-  private fun getBatcher(language: Language): Batcher? {
+  internal suspend fun getLocalTrees(contexts: List<ProofreadingContext>): Map<Language, Map<SentenceWithExclusions, Tree?>> {
+    val checkedDomains = HighlightingUtil.checkedDomains()
+    return contexts
+      .filter { it.hasLanguage() && it.text.domain in checkedDomains && !HighlightingUtil.isTooLargeText(it.text) && seemsNatural(it.text) }
+      .groupBy { it.language }
+      .map { (language, contexts) ->
+        val sentences = contexts.flatMap { context ->
+          SentenceTokenizer.tokenize(context.text).flatMap { listOfNotNull(it.swe(), it.stubbedSwe()) }
+        }
+        language to getLocalParser(language).parseAsync(sentences)
+      }
+      .toMap()
+  }
+
+  internal fun getBatcher(language: Language): Batcher? {
     return application.service<BatcherHolder>().batchers[language]
   }
 
@@ -145,7 +163,7 @@ object DependencyParser {
     }
   }
 
-  private class Batcher(language: Language): SentenceBatcher<Tree>(language, TreeSupport.CLOUD_BATCH_SIZE, quoteMarkup = true) {
+  internal class Batcher(language: Language): SentenceBatcher<Tree>(language, TreeSupport.CLOUD_BATCH_SIZE, quoteMarkup = true) {
     override suspend fun parse(sentences: List<SentenceWithExclusions>, project: Project): Map<SentenceWithExclusions, Tree> {
       if (GrazieCloudConnector.isAfterRecentGecError()) {
         return emptyMap()

@@ -1,11 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.java.JavaBundle;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -15,9 +13,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBoxWithWidePopup;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.panel.PanelGridBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -29,19 +24,12 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiProvidesStatement;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Action;
-import javax.swing.ButtonGroup;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JComponent;
-import javax.swing.JRadioButton;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -174,65 +162,5 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
     String name = myImplementationClassName.substring(qualifierText.length() + 1);
     PsiClass psiClass = WriteAction.compute(() -> createClassInOuterImpl(name, outerClass, mySuperClassName));
     positionCursor(psiClass);
-  }
-
-  private static class CreateServiceImplementationDialog extends DialogWrapper {
-    private final ComboBoxWithWidePopup<PsiDirectory> myRootDirCombo = new ComboBoxWithWidePopup<>();
-    private final JRadioButton mySubclassButton = new JBRadioButton();
-    private final JRadioButton myProviderButton = new JBRadioButton();
-
-    protected CreateServiceImplementationDialog(@Nullable Project project,
-                                                PsiDirectory @NotNull [] psiRootDirs,
-                                                @NotNull String superClassName) {
-      super(project);
-      setTitle(QuickFixBundle.message("create.service.implementation"));
-
-      mySubclassButton.setText(JavaBundle.message("radio.button.subclass.of.0", superClassName));
-      mySubclassButton.setSelected(true);
-      myProviderButton.setText(JavaBundle.message("radio.button.with.provider.method"));
-
-      ButtonGroup group = new ButtonGroup();
-      group.add(mySubclassButton);
-      group.add(myProviderButton);
-
-      myRootDirCombo.setRenderer(new PsiDirectoryListCellRenderer());
-      myRootDirCombo.setModel(new DefaultComboBoxModel<>(psiRootDirs));
-
-      init();
-    }
-
-    @Override
-    protected Action @NotNull [] createActions() {
-      return new Action[]{getOKAction(), getCancelAction()};
-    }
-
-    @Override
-    protected JComponent createCenterPanel() {
-      return null;
-    }
-
-    @Override
-    protected @Nullable JComponent createNorthPanel() {
-      PanelGridBuilder builder = UI.PanelFactory.grid();
-      builder.add(UI.PanelFactory.panel(mySubclassButton).withLabel(JavaBundle.message("label.implementation")))
-             .add(UI.PanelFactory.panel(myProviderButton));
-      if (myRootDirCombo.getModel().getSize() > 1) {
-        builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel(CommonBundle.message("label.source.root") + ":"));
-      }
-      return builder.createPanel();
-    }
-
-    @Override
-    public @Nullable JComponent getPreferredFocusedComponent() {
-      return mySubclassButton;
-    }
-
-    public @Nullable PsiDirectory getRootDir() {
-      return (PsiDirectory)myRootDirCombo.getSelectedItem();
-    }
-
-    public boolean isSubclass() {
-      return mySubclassButton.isSelected();
-    }
   }
 }

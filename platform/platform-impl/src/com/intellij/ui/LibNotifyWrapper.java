@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.util.messages.MessageBusConnection;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
@@ -22,7 +21,7 @@ final class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
     return ourInstance;
   }
 
-  @SuppressWarnings({"SpellCheckingInspection", "UnusedReturnValue"})
+  @SuppressWarnings("UnusedReturnValue")
   private interface LibNotify extends Library {
     int notify_init(String appName);
     void notify_uninit();
@@ -36,18 +35,17 @@ final class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
   private boolean myDisposed = false;
 
   private LibNotifyWrapper() {
-    //noinspection SpellCheckingInspection
     myLibNotify = Native.load("libnotify.so.4", LibNotify.class);
 
-    String appName = ApplicationNamesInfo.getInstance().getProductName();
+    var appName = ApplicationNamesInfo.getInstance().getProductName();
     if (myLibNotify.notify_init(appName) == 0) {
       throw new IllegalStateException("notify_init failed");
     }
 
-    String icon = AppUIUtilKt.findAppIcon();
+    var icon = AppUIUtil.findAppIcon();
     myIcon = icon != null ? icon : "dialog-information";
 
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    var connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
@@ -64,7 +62,7 @@ final class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       synchronized (myLock) {
         if (!myDisposed) {
-          Pointer notification = myLibNotify.notify_notification_new(title, description, myIcon);
+          var notification = myLibNotify.notify_notification_new(title, description, myIcon);
           myLibNotify.notify_notification_show(notification, null);
         }
       }

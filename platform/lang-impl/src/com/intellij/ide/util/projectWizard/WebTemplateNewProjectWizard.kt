@@ -1,4 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:ApiStatus.Internal
+
 package com.intellij.ide.util.projectWizard
 
 import com.intellij.ide.util.projectWizard.WebTemplateProjectWizardData.Companion.webTemplateData
@@ -14,6 +16,7 @@ import com.intellij.platform.ProjectGeneratorPeer
 import com.intellij.ui.UIBundle
 import java.util.function.Consumer
 import javax.swing.Icon
+import org.jetbrains.annotations.ApiStatus
 
 abstract class WebTemplateNewProjectWizardBase : GeneratorNewProjectWizard {
   override val groupName: String = WebModuleBuilder.GROUP_NAME
@@ -35,6 +38,7 @@ class WebTemplateNewProjectWizard(val template: WebProjectTemplate<*>) : WebTemp
     WebTemplateProjectWizardStep(parent, template)
 }
 
+@ApiStatus.Internal
 abstract class MultiWebTemplateNewProjectWizard(protected val templates: List<WebProjectTemplate<*>>) : WebTemplateNewProjectWizardBase() {
   override fun createTemplateStep(parent: NewProjectWizardBaseStep): NewProjectWizardStep {
     return object : AbstractNewProjectWizardMultiStepBase(parent) {

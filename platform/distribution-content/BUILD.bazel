@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.distributionContent.testFramework` start
-
 create_kotlinc_options(
     name = "custom_distributionContent-testFramework",
     opt_in = ["kotlinx.serialization.ExperimentalSerializationApi"],
@@ -27,7 +26,7 @@ jvm_library(
         "@lib//:kaml",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -46,6 +45,7 @@ jvm_library(
         ":distributionContent-testFramework",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.distributionContent.testFramework` end

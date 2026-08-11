@@ -10,9 +10,9 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.checkCanceled
@@ -30,7 +30,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
-import com.intellij.platform.eel.provider.LocalEelMachine
+import com.intellij.platform.eel.provider.getEelMachine
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
@@ -71,7 +71,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.writeText
 import kotlin.system.measureTimeMillis
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.minutes
 
 private val EP_NAME: ExtensionPointName<BridgeInitializer> = ExtensionPointName("com.intellij.workspace.bridgeInitializer")
 
@@ -90,7 +90,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   private val reactive = WmReactive(this)
 
   final override val entityStorage: VersionedEntityStorageImpl
-  private val unloadedEntitiesStorage: VersionedEntityStorageImpl
+  final override val unloadedEntitiesStorage: VersionedEntityStorageImpl
   private val lock = ThreadContextAwareReentrantLock()
 
   /** replay = 1 is needed to send the very first state when the subscription fo the flow happens.
@@ -134,7 +134,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   constructor(project: Project, cs: CoroutineScope) {
     this.project = project
     this.coroutineScope = cs
-    this.virtualFileManager = IdeVirtualFileUrlManagerImpl(isProjectCaseSensitive(project))
+    this.virtualFileManager = createIdeVirtualFileUrlManager(isProjectCaseSensitive(project))
     log.debug { "Loading workspace model" }
     val start = Milliseconds.now()
 
@@ -364,7 +364,11 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
    * Things that must be considered if you'd love to change this logic: IDEA-342103
    */
   private fun checkRecursiveUpdate() = checkRecursiveUpdateTimeMs.addMeasuredTime {
-    val stackStraceIterator = RuntimeException().stackTrace.iterator()
+    val stackTrace = RuntimeException().stackTrace
+    if (stackTrace.size < 6) {
+      return@addMeasuredTime
+    }
+    val stackStraceIterator = stackTrace.iterator()
     // Skip six methods of the current update
     repeat(6) { stackStraceIterator.next() }
     while (stackStraceIterator.hasNext()) {
@@ -490,7 +494,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
     if (EDT.isCurrentThreadEdt() && ModalityState.current() != ModalityState.nonModal()) {
       throw IllegalStateException("awaitSynchronizationWithJpsModel() can only be called in non-modal context. Current context: ${ModalityState.current()}")
     }
-    GlobalWorkspaceModel.getInstance(LocalEelMachine).awaitSynchronizationWithJpsModel()
+    GlobalWorkspaceModel.getInstance(project.getEelMachine()).awaitSynchronizationWithJpsModel()
 
     CompletableDeferred<Unit>().also { deferred ->
       JpsProjectLoadingManager.getInstance(project).jpsProjectLoaded { deferred.complete(Unit) }
@@ -500,17 +504,19 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       }
 
       if (!deferred.isCompleted && ApplicationManager.getApplication().isUnitTestMode) {
+        // Startup activities including DelayedProjectSynchronizer are skipped in unit tests unless it's explicitly specified
+        // that they have to be run. So we need to trigger synchronization manually.
         ProjectSynchronizerUtil.getInstance(project).applyJpsModelToProjectModel()
+        deferred.complete(Unit)
       }
-
-      if (waitingTimedOut.get()) {
+      else if (waitingTimedOut.get()) {
         deferred.complete(Unit) // don't wait again
       }
       else {
         // Safety net: if the callback is never invoked (e.g. due to a platform bug), unblock waiters after a timeout.
         coroutineScope.launch {
           // JpsGlobalModelSynchronizerImpl has a 5-second delay and ModuleManagerComponentBridgeInitializer has a 1-second delay;
-          val timeout = 20.seconds
+          val timeout = 1.minutes
           delay(timeout)
           if (deferred.complete(Unit) && !waitingTimedOut.getAndSet(true)) {
             val threadDump = buildString {
@@ -521,7 +527,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
             }
             val logFile = PathManager.getLogDir().resolve("jps-project-loaded-timeout-${System.currentTimeMillis()}.txt")
             logFile.writeText(threadDump)
-            thisLogger().error(
+            thisLogger().warn(
               "JPS project loaded callback was not called within $timeout, proceeding anyway. " +
               "Thread dump saved to ${logFile}. " +
               "Project: ${project.name} (locationHash=${project.locationHash})."
@@ -621,7 +627,8 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
     }
     catch (e: Throwable) {
       if (e is AlreadyDisposedException) throw e
-      if (e is ControlFlowException) throw e // Control flow exceptions should never be logger, only rethrown. Related: IJPL-155938
+      rethrowControlFlowException(e) // Control flow exceptions should never be logger, only rethrown. Related: IJPL-155938
+
       val message = "Exception at Workspace Model event handling"
       if (userWarningLoggingLevel) {
         log.warn(message, e)

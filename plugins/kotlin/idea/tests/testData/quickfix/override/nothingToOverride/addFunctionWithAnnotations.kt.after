@@ -1,5 +1,5 @@
 // "Add 'abstract fun foo()' to 'I'" "true"
-// K2_ERROR: 'foo' overrides nothing.
+// K2_ERROR: NOTHING_TO_OVERRIDE
 annotation class A(vararg val names: String)
 annotation class B(val i: Int)
 

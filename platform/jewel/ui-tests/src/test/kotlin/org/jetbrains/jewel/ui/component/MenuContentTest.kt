@@ -4,7 +4,7 @@ package org.jetbrains.jewel.ui.component
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.input.InputMode
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import javax.swing.KeyStroke
 import org.jetbrains.jewel.intui.standalone.menuShortcut.StandaloneShortcutProvider
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme

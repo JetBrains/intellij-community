@@ -136,6 +136,91 @@ public class JavaTests extends BazelIncBuildTest {
   }
 
   @Test
+  public void testAddNestedClassDollarOuterCapture() throws Exception {
+    // '$' in the OUTER class' source name (class Out$er): the on-demand scope canonicalization collapses
+    // the binary name identically on the emission side (import ppp.Out$er.*) and the probe side (outerFqName),
+    // so the capture still works despite the '$'-identifier lossiness
+    performTest("java/common/addNestedClassDollarOuterCapture").assertFailure();
+  }
+
+  @Test
+  public void testAddDollarNamedNestedClassCapture() throws Exception {
+    // '$' in the simple name of the added/referenced class (He$lper): getShortName strips exactly the
+    // outer prefix (not up to the last '$'), and the short-name matcher sees the '/'-delimited owner,
+    // so the subclass capture works for '$'-containing identifiers
+    performTest("java/common/addDollarNamedNestedClassCapture").assertFailure();
+  }
+
+  @Test
+  public void testAddNestedClassDollarSuffixOverAffection() throws Exception {
+    // documents deliberate over-approximation: the short-name matcher treats '$' as a name delimiter,
+    // so adding member class "lper" matches a subclass' reference to "qqq.He$lper" (suffix after '$') and
+    // recompiles it needlessly; harmless — the recompilation succeeds unchanged (round 2 with exit OK)
+    performTest("java/common/addNestedClassDollarSuffixOverAffection").assertSuccessful();
+  }
+
+  @Test
+  public void testTopLevelDollarClassBecomesNested() throws Exception {
+    // same binary name, different source-level owner: dependents re-check via ClassUsage, and the declaring
+    // source is force-co-compiled with them (a dependent compiled alone against the class file would resolve
+    // the binary 'A$B' name and silently diverge from a full rebuild)
+    performTest("java/common/topLevelDollarClassBecomesNested").assertFailure();
+  }
+
+  @Test
+  public void testAddNestedClassCapturesNestedImport() throws Exception {
+    // capture in a subclass where the shadowed reference is bound to a single-type-imported NESTED class:
+    // the usage owner is "qqq/Other$Inner", pinning the '$' delimiter support in the short-name matcher
+    performTest("java/common/addNestedClassCapturesNestedImport").assertFailure();
+  }
+
+  @Test
+  public void testAddNestedClassCapturesInSubclass() throws Exception {
+    // added nested class captures a short name referenced in a subclass of its outer class
+    // (inherited-scope capture, JLS 6.5.5: inherited member types shadow imports)
+    performTest("java/common/addNestedClassCapturesInSubclass").assertFailure();
+  }
+
+  @Test
+  public void testNestedCarrierCapturesInSubclass() throws Exception {
+    // nested-carrier leg of the subclass capture: the short-name reference lives on the Sub$Worker node,
+    // so all classes sharing the subclass' sources must be inspected, not just the subclass node itself
+    performTest("java/common/nestedCarrierCapturesInSubclass").assertFailure();
+  }
+
+  @Test
+  public void testPromoteLocalClassToMember() throws Exception {
+    // a local class promoted to a member class starts capturing short-name references in subclasses
+    performTest("java/common/promoteLocalClassToMember").assertFailure();
+  }
+
+  @Test
+  public void testAddNestedClassImportOnDemand() throws Exception {
+    // added nested class captures a short name for a consumer with a class-qualified on-demand import
+    performTest("java/common/addNestedClassImportOnDemand").assertFailure();
+  }
+
+  @Test
+  public void testRenameNestedClass() throws Exception {
+    // nested class rename = remove+add: the add-side short-name capture must affect on-demand importers
+    performTest("java/common/renameNestedClass").assertFailure();
+  }
+
+  @Test
+  public void testAddClassInDependencyCapture() throws Exception {
+    // class added in an upstream module captures a short name in a downstream consumer
+    performTest("java/common/addClassInDependencyCapture").assertFailure();
+  }
+
+  @Test
+  public void testAddNestedClassImportOnDemandNestedScope() throws Exception {
+    // doubly-nested on-demand scope: `import ppp.Outer.Mid.*` consumer must be affected when Mid gains a
+    // member type; pins the slash-normalized ImportPackageOnDemandUsage scope form across javac emission
+    // (binary '$' names) and the added-class probe (outerFqName with '$' replaced by '/')
+    performTest("java/common/addNestedClassImportOnDemandNestedScope").assertFailure();
+  }
+
+  @Test
   public void testAddClassHidingImportedClass() throws Exception {
     performTest("java/common/addClassHidingImportedClass").assertSuccessful();
   }
@@ -203,8 +288,43 @@ public class JavaTests extends BazelIncBuildTest {
   }
 
   @Test
+  public void testAnnotationBecamePackagePrivate() throws Exception {
+    performTest("java/classModifiers/annotationBecamePackagePrivate").assertFailure();
+  }
+
+  @Test
   public void testBecameSealed() throws Exception {
     performTest("java/classModifiers/becameSealed").assertFailure();
+  }
+
+  @Test
+  public void testBecameSealedLambdaTarget() throws Exception {
+    // a sealed interface is no longer a functional interface (JLS 9.8) => lambda sites must be re-checked
+    performTest("java/classModifiers/becameSealedLambdaTarget").assertFailure();
+  }
+
+  @Test
+  public void testBecameSealedPermittedNotRechecked() throws Exception {
+    // a permitted direct subclass must declare final/sealed/non-sealed once the parent becomes sealed
+    performTest("java/classModifiers/becameSealedPermittedNotRechecked").assertFailure();
+  }
+
+  @Test
+  public void testDroppedSealed() throws Exception {
+    // 'non-sealed' on a direct subclass becomes illegal; the default-less pattern switch loses exhaustiveness
+    performTest("java/classModifiers/droppedSealed").assertFailure();
+  }
+
+  @Test
+  public void testSealedPermitsEntryAdded() throws Exception {
+    // a new permitted subclass breaks exhaustiveness of pattern switches that reference only the sibling case labels
+    performTest("java/classModifiers/sealedPermitsEntryAdded").assertFailure();
+  }
+
+  @Test
+  public void testSealedReparentedSubclass() throws Exception {
+    // a pre-existing class joining a sealed hierarchy arrives as a changed node: same exhaustiveness re-check as for added ones
+    performTest("java/classModifiers/sealedReparentedSubclass").assertFailure();
   }
 
   @Test
@@ -218,13 +338,88 @@ public class JavaTests extends BazelIncBuildTest {
   }
 
   @Test
+  public void testDecAccessStaticOnly() throws Exception {
+    performTest("java/classModifiers/decAccessStaticOnly").assertFailure();
+  }
+
+  @Test
+  public void testClassBecamePublic() throws Exception {
+    performTest("java/classModifiers/classBecamePublic").assertFailure();
+  }
+
+  @Test
+  public void testDecNestedClassAccess() throws Exception {
+    performTest("java/classModifiers/decNestedClassAccess").assertFailure();
+  }
+
+  @Test
+  public void testDecNestedClassAccessConstantOnly() throws Exception {
+    performTest("java/classModifiers/decNestedClassAccessConstantOnly").assertFailure();
+  }
+
+  @Test
+  public void testDecNestedClassAccessFieldOnly() throws Exception {
+    performTest("java/classModifiers/decNestedClassAccessFieldOnly").assertFailure();
+  }
+
+  @Test
+  public void testDecNestedClassAccessScopes() throws Exception {
+    performTest("java/classModifiers/decNestedClassAccessScopes").assertFailure();
+  }
+
+  @Test
+  public void testDecNestedClassAccessUnusedSingleImport() throws Exception {
+    performTest("java/classModifiers/decNestedClassAccessUnusedSingleImport").assertFailure();
+  }
+
+  @Test
+  public void testDecNestedClassAccessUnusedStarImport() throws Exception {
+    performTest("java/classModifiers/decNestedClassAccessUnusedStarImport").assertFailure();
+  }
+
+  @Test
+  public void testDecNestedClassAccessUnusedStaticMemberImport() throws Exception {
+    performTest("java/classModifiers/decNestedClassAccessUnusedStaticMemberImport").assertFailure();
+  }
+
+  @Test
+  public void testPrivateNestedBecamePublic() throws Exception {
+    performTest("java/classModifiers/privateNestedBecamePublic").assertFailure();
+  }
+
+  @Test
   public void testDropAbstract() throws Exception {
     performTest("java/classModifiers/dropAbstract").assertSuccessful();
   }
 
   @Test
+  public void testNestedBecamePrivate() throws Exception {
+    performTest("java/classModifiers/nestedBecamePrivate").assertFailure();
+  }
+
+  @Test
+  public void testNestedBecamePrivateFinal() throws Exception {
+    performTest("java/classModifiers/nestedBecamePrivateFinal").assertFailure();
+  }
+
+  @Test
+  public void testNestedBecameProtected() throws Exception {
+    performTest("java/classModifiers/nestedBecameProtected").assertFailure();
+  }
+
+  @Test
+  public void testNestedInheritedMemberAccess() throws Exception {
+    performTest("java/classModifiers/nestedInheritedMemberAccess").assertFailure();
+  }
+
+  @Test
   public void testRemoveStatic() throws Exception {
     performTest("java/classModifiers/removeStatic").assertFailure();
+  }
+
+  @Test
+  public void testSealedPermitsNestedBecamePrivate() throws Exception {
+    performTest("java/classModifiers/sealedPermitsNestedBecamePrivate").assertFailure();
   }
 
   @Test
@@ -310,6 +505,11 @@ public class JavaTests extends BazelIncBuildTest {
   }
 
   @Test
+  public void testWidenPrivateFieldStaticImportCapture() throws Exception {
+    performTest("java/fieldModifiers/widenPrivateFieldStaticImportCapture").assertFailure();
+  }
+
+  @Test
   public void testSetProtected() throws Exception {
     performTest("java/fieldModifiers/setProtected").assertFailure();
   }
@@ -372,6 +572,16 @@ public class JavaTests extends BazelIncBuildTest {
   }
 
   @Test
+  public void testMethodPackagePrivateToProtectedOverrideCapture() throws Exception {
+    performTest("java/methodModifiers/packagePrivateToProtectedOverrideCapture").assertFailure();
+  }
+
+  @Test
+  public void testMethodProtectedAccessViaBaseReceiver() throws Exception {
+    performTest("java/methodModifiers/protectedAccessViaBaseReceiver").assertFailure();
+  }
+
+  @Test
   public void testMethodSetAbstract() throws Exception {
     performTest("java/methodModifiers/setAbstract").assertFailure();
   }
@@ -392,6 +602,21 @@ public class JavaTests extends BazelIncBuildTest {
   }
 
   @Test
+  public void testMethodInterfaceStaticToDefaultDiamond() throws Exception {
+    performTest("java/methodModifiers/interfaceMethodStaticToDefaultDiamond").assertFailure();
+  }
+
+  @Test
+  public void testMethodSetPackagePrivateBreaksOverrider() throws Exception {
+    performTest("java/methodModifiers/setPackagePrivateBreaksOverrider").assertFailure();
+  }
+
+  @Test
+  public void testMethodSetPrivateBreaksOverrider() throws Exception {
+    performTest("java/methodModifiers/setPrivateBreaksOverrider").assertFailure();
+  }
+
+  @Test
   public void testMethodSetProtectedFromPublic() throws Exception {
     performTest("java/methodModifiers/setProtectedFromPublic").assertFailure();
   }
@@ -409,6 +634,11 @@ public class JavaTests extends BazelIncBuildTest {
   @Test
   public void testMethodUnsetFinal() throws Exception {
     performTest("java/methodModifiers/unsetFinal").assertSuccessful();
+  }
+
+  @Test
+  public void testMethodUnsetStaticWithHidingSubclass() throws Exception {
+    performTest("java/methodModifiers/unsetStaticWithHidingSubclass").assertFailure();
   }
 
   @Test
@@ -551,6 +781,12 @@ public class JavaTests extends BazelIncBuildTest {
   }
 
   @Test
+  public void testVarargFlagCleared() throws Exception {
+    // T... -> T[] keeps the descriptor but invalidates vararg-style call sites
+    performTest("java/methodProperties/varargFlagCleared").assertFailure();
+  }
+
+  @Test
   public void testChangeLambdaSAMMethodSignature() throws Exception {
     performTest("java/methodProperties/changeLambdaSAMMethodSignature").assertFailure();
   }
@@ -600,6 +836,13 @@ public class JavaTests extends BazelIncBuildTest {
   @Test
   public void testAddExtends() throws Exception {
     performTest("java/classProperties/addExtends").assertSuccessful();
+  }
+
+  @Test
+  public void testAddExtendsOverloadAmbiguity() throws Exception {
+    // adding a superclass grows the supertype set: a call site passing the class to a method overloaded
+    // on the class' supertypes becomes ambiguous and must be re-checked
+    performTest("java/classProperties/addExtendsOverloadAmbiguity").assertFailure();
   }
 
   @Test
@@ -730,6 +973,19 @@ public class JavaTests extends BazelIncBuildTest {
   }
 
   @Test
+  public void testWildcardStaticImportTypeAdded() throws Exception {
+    performTest("java/imports/wildcardStaticImportTypeAdded").assertFailure();
+  }
+
+  @Test
+  public void testWildcardStaticImportNestedScope() throws Exception {
+    // nested static-import scope: `import static ppp.Outer.Mid.*` consumer must be affected when Mid gains
+    // a static member; pins the '/'-canonicalized ImportStaticOnDemandUsage scope across javac emission
+    // (binary '$' names) and the member-channel probe (class node id in affectStaticMemberOnDemandUsages)
+    performTest("java/imports/wildcardStaticImportNestedScope").assertFailure();
+  }
+
+  @Test
   public void testWildcardStaticImportFieldBecameStatic() throws Exception {
     performTest("java/imports/wildcardStaticImportFieldBecameStatic").assertFailure();
   }
@@ -779,6 +1035,11 @@ public class JavaTests extends BazelIncBuildTest {
   @Test
   public void testAnnotationRemoveDefaultFromAnnotationMember() throws Exception {
     performTest("java/annotations/removeDefaultFromAnnotationMember").assertFailure();
+  }
+
+  @Test
+  public void testAnnotationRemoveDefaultFromAnnotationMemberTwoAnnotations() throws Exception {
+    performTest("java/annotations/removeDefaultFromAnnotationMemberTwoAnnotations").assertFailure();
   }
 
   @Test
@@ -849,6 +1110,26 @@ public class JavaTests extends BazelIncBuildTest {
   @Test
   public void testAnnotationAddRecordComponentAnnotationTarget() throws Exception {
     performTest("java/annotations/addRecordComponentAnnotationTarget").assertSuccessful();
+  }
+
+  @Test
+  public void testAnnotationAddAnnotationTargetClause() throws Exception {
+    performTest("java/annotations/addAnnotationTargetClause").assertFailure();
+  }
+
+  @Test
+  public void testAnnotationRemoveRepeatable() throws Exception {
+    performTest("java/annotations/removeRepeatable").assertFailure();
+  }
+
+  @Test
+  public void testAnnotationRemoveNestedAnnotationDefault() throws Exception {
+    performTest("java/annotations/removeNestedAnnotationDefault").assertFailure();
+  }
+
+  @Test
+  public void testAnnotationTypeUseAnnotationChangedInSignature() throws Exception {
+    performTest("java/annotations/typeUseAnnotationChangedInSignature").assertSuccessful();
   }
 
   @Test
@@ -1061,6 +1342,12 @@ public class JavaTests extends BazelIncBuildTest {
   @Test
   public void testMembersAddConstructorParameter() throws Exception {
     performTest("java/membersChange/addConstructorParameter").assertFailure();
+  }
+
+  @Test
+  public void testMembersAddDefaultConstructorOverVararg() throws Exception {
+    // an added no-arg constructor captures `new X()` invocations currently bound to a vararg constructor
+    performTest("java/membersChange/addDefaultConstructorOverVararg").assertSuccessful();
   }
 
   @Test
@@ -1393,8 +1680,27 @@ public class JavaTests extends BazelIncBuildTest {
   // packageInfo tests
 
   @Test
+  public void testPackageAnnotationChanged() throws Exception {
+    // package annotations are analysis defaults for every declaration of the package => same-package classes
+    // and their Kotlin consumers must be re-checked
+    performTest("java/packageInfo/packageAnnotationChanged").assertSuccessful();
+  }
+
+  @Test
+  public void testPackageInfoAdded() throws Exception {
+    // a package-info appearance introduces package-level defaults => re-check the package scope
+    performTest("java/packageInfo/packageInfoAdded").assertSuccessful();
+  }
+
+  @Test
   public void testPackageInfoRecompileOnConstantChange() throws Exception {
     performTest("java/packageInfo/packageInfoRecompileOnConstantChange").assertSuccessful();
+  }
+
+  @Test
+  public void testPackageInfoRemoved() throws Exception {
+    // package-level defaults disappear => re-check the package scope
+    performTest("java/packageInfo/packageInfoRemoved").assertSuccessful();
   }
 
   // changeName tests
@@ -1440,6 +1746,12 @@ public class JavaTests extends BazelIncBuildTest {
   // java9-features tests
 
   @Test
+  public void testAddTransitiveRequiresSplitPackage() throws Exception {
+    // added 'requires transitive' grants readers implied readability => split-package conflict must surface in the reader
+    performTest("java/java9-features/addTransitiveRequiresSplitPackage").assertFailure();
+  }
+
+  @Test
   public void testChangeQualifiedTransitiveModuleExportsNoRebuild() throws Exception {
     performTest("java/java9-features/changeQualifiedTransitiveModuleExportsNoRebuild").assertSuccessful();
   }
@@ -1465,8 +1777,34 @@ public class JavaTests extends BazelIncBuildTest {
   }
 
   @Test
+  public void testDualExportsNarrowedToQualified() throws Exception {
+    // two exports narrowed to different qualified target lists in one edit: the affected audiences must union,
+    // so a reader listed in one narrowing but not the other is still recompiled
+    performTest("java/java9-features/dualExportsNarrowedToQualified").assertFailure();
+  }
+
+  @Test
   public void testModuleInfoAdded() throws Exception {
     performTest("java/java9-features/moduleInfoAdded").assertSuccessful();
+  }
+
+  @Test
+  public void testModuleInfoAddedConcealsPackages() throws Exception {
+    // automatic module became explicit => non-exported packages get concealed from reader modules
+    performTest("java/java9-features/moduleInfoAddedConcealsPackages").assertFailure();
+  }
+
+  @Test
+  public void testNarrowedPlusAddedExports() throws Exception {
+    // one edit narrows an export to qualified AND adds a new export: the still-listed target of the narrowing
+    // must nevertheless be re-checked against the newly exported package (split-package conflict)
+    performTest("java/java9-features/narrowedPlusAddedExports").assertFailure();
+  }
+
+  @Test
+  public void testPromoteRequiresToTransitiveSplitPackage() throws Exception {
+    // 'requires' promoted to 'requires transitive' grants readers implied readability => split-package conflict in the reader
+    performTest("java/java9-features/promoteRequiresToTransitiveSplitPackage").assertFailure();
   }
 
   @Test
@@ -1497,5 +1835,357 @@ public class JavaTests extends BazelIncBuildTest {
   @Test
   public void testRemoveTransitiveModuleRequires() throws Exception {
     performTest("java/java9-features/removeTransitiveModuleRequires").assertFailure();
+  }
+
+  @Test
+  public void testServiceProviderCtorBecamePrivate() throws Exception {
+    // no-arg constructor of a provider named in 'provides ... with' became private => module-info must be revalidated
+    performTest("java/java9-features/serviceProviderCtorBecamePrivate").assertFailure();
+  }
+
+  @Test
+  public void testServiceProviderLosesNoArgConstructor() throws Exception {
+    // provider named in 'provides ... with' lost its no-arg constructor => module-info must be revalidated
+    performTest("java/java9-features/serviceProviderLosesNoArgConstructor").assertFailure();
+  }
+
+  @Test
+  public void testSplitPackageOnExportAdded() throws Exception {
+    // newly exported package collides with a package the reader already sees from another module
+    performTest("java/java9-features/splitPackageOnExportAdded").assertFailure();
+  }
+
+  @Test
+  public void testAddPackagePrivateClassCapture() throws Exception {
+    performTest("java/common/addPackagePrivateClassCapture").assertFailure();
+  }
+
+  @Test
+  public void testClassToEnum() throws Exception {
+    performTest("java/enums/classToEnum").assertFailure();
+  }
+
+  @Test
+  public void testEnumToClass() throws Exception {
+    performTest("java/enums/enumToClass").assertFailure();
+  }
+
+  @Test
+  public void testClassToRecord() throws Exception {
+    performTest("java/records/classToRecord").assertFailure();
+  }
+
+  @Test
+  public void testRecordToClass() throws Exception {
+    performTest("java/records/recordToClass").assertFailure();
+  }
+
+  @Test
+  public void testClassToAnnotation() throws Exception {
+    performTest("java/annotations/classToAnnotation").assertFailure();
+  }
+
+  @Test
+  public void testInterfaceToAnnotation() throws Exception {
+    performTest("java/annotations/interfaceToAnnotation").assertFailure();
+  }
+
+  @Test
+  public void testAnnotationToInterface() throws Exception {
+    performTest("java/annotations/annotationToInterface").assertFailure();
+  }
+
+  @Test
+  public void testEnumToRecord() throws Exception {
+    performTest("java/enums/enumToRecord").assertFailure();
+  }
+
+  @Test
+  public void testRecordToEnum() throws Exception {
+    performTest("java/records/recordToEnum").assertFailure();
+  }
+
+  @Test
+  public void testMoveNestedClassToOtherOuter() throws Exception {
+    performTest("java/common/moveNestedClassToOtherOuter").assertFailure();
+  }
+
+  @Test
+  public void testMoveClassFromDependencyModule() throws Exception {
+    performTest("java/common/moveClassFromDependencyModule").assertSuccessful();
+  }
+
+  @Test
+  public void testIncConstructorAccess() throws Exception {
+    performTest("java/methodModifiers/incConstructorAccess").assertSuccessful();
+  }
+
+  @Test
+  public void testIncNestedClassAccess() throws Exception {
+    performTest("java/classModifiers/incNestedClassAccess").assertSuccessful();
+  }
+
+  @Test
+  public void testReorderTypeParameters() throws Exception {
+    performTest("java/generics/reorderTypeParameters").assertFailure();
+  }
+
+  @Test
+  public void testAddInterfaceBound() throws Exception {
+    performTest("java/generics/addInterfaceBound").assertFailure();
+  }
+
+  @Test
+  public void testAddMethodTypeParameter() throws Exception {
+    performTest("java/generics/addMethodTypeParameter").assertFailure();
+  }
+
+  @Test
+  public void testChangeMethodTypeParameterBound() throws Exception {
+    performTest("java/generics/changeMethodTypeParameterBound").assertFailure();
+  }
+
+  @Test
+  public void testAddWildcardToReturnType() throws Exception {
+    performTest("java/generics/addWildcardToReturnType").assertFailure();
+  }
+
+  @Test
+  public void testAddUntrackedClassAnnotation() throws Exception {
+    performTest(2, "java/annotations/addUntrackedClassAnnotation").assertSuccessful();
+  }
+
+  @Test
+  public void testChangeUntrackedAnnotationValue() throws Exception {
+    performTest("java/annotations/changeUntrackedAnnotationValue").assertSuccessful();
+  }
+
+  @Test
+  public void testAddJavaDeprecated() throws Exception {
+    performTest("java/annotations/addJavaDeprecated").assertSuccessful();
+  }
+
+  @Test
+  public void testSourceRetentionAnnotationChanged() throws Exception {
+    performTest("java/annotations/sourceRetentionAnnotationChanged").assertSuccessful();
+  }
+
+  @Test
+  public void testChangeExtendsSkipAncestor() throws Exception {
+    performTest("java/classProperties/changeExtendsSkipAncestor").assertFailure();
+  }
+
+  @Test
+  public void testChangeExtendsInsertIntermediate() throws Exception {
+    performTest("java/classProperties/changeExtendsInsertIntermediate").assertSuccessful();
+  }
+
+  @Test
+  public void testRemoveExtendsFromInterface() throws Exception {
+    performTest("java/classProperties/removeExtendsFromInterface").assertFailure();
+  }
+
+  @Test
+  public void testAddImplementsDefaultMethodDiamond() throws Exception {
+    performTest("java/classProperties/addImplementsDefaultMethodDiamond").assertSuccessful();
+  }
+
+  @Test
+  public void testMemberClassBecomesLocal() throws Exception {
+    performTest("java/common/memberClassBecomesLocal").assertFailure();
+  }
+
+  @Test
+  public void testDropFinal() throws Exception {
+    performTest("java/classModifiers/dropFinal").assertSuccessful();
+  }
+
+  @Test
+  public void testPermitsClauseFormChange() throws Exception {
+    performTest("java/classModifiers/permitsClauseFormChange").assertSuccessful();
+  }
+
+  @Test
+  public void testEnumConstantsReordered() throws Exception {
+    performTest("java/enums/enumConstantsReordered").assertSuccessful();
+  }
+
+  @Test
+  public void testEnumConstantRenamed() throws Exception {
+    performTest("java/enums/enumConstantRenamed").assertFailure();
+  }
+
+  @Test
+  public void testRecordComponentAdded() throws Exception {
+    performTest("java/records/recordComponentAdded").assertFailure();
+  }
+
+  @Test
+  public void testRecordComponentAddedPatternUser() throws Exception {
+    // the deconstruction pattern's arity breaks although the user references only the unchanged accessors
+    performTest("java/records/recordComponentAddedPatternUser").assertFailure();
+  }
+
+  @Test
+  public void testRecordComponentRenamed() throws Exception {
+    performTest("java/records/recordComponentRenamed").assertFailure();
+  }
+
+  @Test
+  public void testRecordComponentTypeChanged() throws Exception {
+    performTest("java/records/recordComponentTypeChanged").assertFailure();
+  }
+
+  @Test
+  public void testRecordComponentsReorderedDifferentTypes() throws Exception {
+    performTest("java/records/recordComponentsReorderedDifferentTypes").assertFailure();
+  }
+
+  @Test
+  public void testRecordComponentsReorderedPatternUser() throws Exception {
+    // positional re-typing of the deconstruction pattern; the accessors the user references are unchanged
+    performTest("java/records/recordComponentsReorderedPatternUser").assertFailure();
+  }
+
+  @Test
+  public void testRecordComponentsReorderedSameTypes() throws Exception {
+    // ctor descriptor and accessors unchanged => empty member-level diff; positional binding silently swaps,
+    // so ctor and pattern users must recompile (build stays green)
+    performTest("java/records/recordComponentsReorderedSameTypes").assertSuccessful();
+  }
+
+  @Test
+  public void testRecordCompactToExplicitCtor() throws Exception {
+    performTest("java/records/recordCompactToExplicitCtor").assertSuccessful();
+  }
+
+  @Test
+  public void testRemoveAnnotationTargetClause() throws Exception {
+    performTest("java/annotations/removeAnnotationTargetClause").assertFailure();
+  }
+
+  @Test
+  public void testChangeAnnotationRetentionPolicy5() throws Exception {
+    performTest("java/annotations/changeAnnotationRetentionPolicy5").assertSuccessful();
+  }
+
+  @Test
+  public void testBoundUsageOnSupertypeRemoved() throws Exception {
+    performTest("java/generics/boundUsageOnSupertypeRemoved").assertSuccessful();
+  }
+
+  @Test
+  public void testRemoveDefaultMultipleUsesOneNode() throws Exception {
+    performTest("java/annotations/removeDefaultMultipleUsesOneNode").assertFailure();
+  }
+
+  @Test
+  public void testRemoveDefaultMethod() throws Exception {
+    performTest("java/membersChange/removeDefaultMethod").assertFailure();
+  }
+
+  @Test
+  public void testWildcardStaticImportInterfaceMethod() throws Exception {
+    performTest(2, "java/imports/wildcardStaticImportInterfaceMethod").assertFailure();
+  }
+
+  @Test
+  public void testAddAbstractMethodToEnum() throws Exception {
+    performTest("java/membersChange/addAbstractMethodToEnum").assertFailure();
+  }
+
+  @Test
+  public void testRemoveRecordComponent() throws Exception {
+    performTest("java/records/removeRecordComponent").assertFailure();
+  }
+
+  @Test
+  public void testAddStaticInitializer() throws Exception {
+    performTest("java/membersChange/addStaticInitializer").assertSuccessful();
+  }
+
+  @Test
+  public void testUnsetAbstract() throws Exception {
+    performTest("java/methodModifiers/unsetAbstract").assertSuccessful();
+  }
+
+  @Test
+  public void testInterfaceMethodStaticToDefault() throws Exception {
+    performTest("java/methodModifiers/interfaceMethodStaticToDefault").assertFailure();
+  }
+
+  @Test
+  public void testAddSameDescriptorOverride() throws Exception {
+    performTest("java/membersChange/addSameDescriptorOverride").assertSuccessful();
+  }
+
+  @Test
+  public void testAddRemoveHidingStaticMethod() throws Exception {
+    performTest(2, "java/membersChange/addRemoveHidingStaticMethod").assertSuccessful();
+  }
+
+  @Test
+  public void testAddFieldHidingInterfaceField() throws Exception {
+    performTest("java/membersChange/addFieldHidingInterfaceField").assertSuccessful();
+  }
+
+  @Test
+  public void testPullFieldUp() throws Exception {
+    performTest("java/membersChange/pullFieldUp").assertSuccessful();
+  }
+
+  @Test
+  public void testTypeChangeKinds() throws Exception {
+    performTest("java/fieldProperties/typeChangeKinds").assertFailure();
+  }
+
+  @Test
+  public void testFloatNaNConstantChange() throws Exception {
+    performTest("java/fieldProperties/floatNaNConstantChange").assertSuccessful();
+  }
+
+  @Test
+  public void testSignedZeroConstantChange() throws Exception {
+    performTest("java/fieldProperties/signedZeroConstantChange").assertSuccessful();
+  }
+
+  @Test
+  public void testConditionalCompilationFlagFlip() throws Exception {
+    performTest("java/fieldProperties/conditionalCompilationFlagFlip").assertSuccessful();
+  }
+
+  @Test
+  public void testVolatileRemovedTransientAdded() throws Exception {
+    performTest("java/fieldModifiers/volatileRemovedTransientAdded").assertSuccessful();
+  }
+
+  @Test
+  public void testSerialVersionUIDChanged() throws Exception {
+    performTest("java/fieldProperties/serialVersionUIDChanged").assertSuccessful();
+  }
+
+  @Test
+  public void testModuleInfoRemoved() throws Exception {
+    performTest("java/java9-features/moduleInfoRemoved").assertFailure();
+  }
+
+  @Test
+  public void testModuleRenamed() throws Exception {
+    performTest("java/java9-features/moduleRenamed").assertFailure();
+  }
+
+  @Test
+  public void testExportsReplacedByOpens() throws Exception {
+    performTest("java/java9-features/exportsReplacedByOpens").assertFailure();
+  }
+
+  @Test
+  public void testServiceInterfaceRenamed() throws Exception {
+    performTest("java/java9-features/serviceInterfaceRenamed").assertFailure();
+  }
+
+  @Test
+  public void testPatternSwitchConstantLabelRenamed() throws Exception {
+    performTest("java/enums/patternSwitchConstantLabelRenamed").assertFailure();
   }
 }

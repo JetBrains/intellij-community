@@ -5,11 +5,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Graphics;
 
+@ApiStatus.Internal
 public class BasicGutterContentProvider extends GutterContentProvider {
   public static final String EVAL_OUT_MARKER = "\u200C";
   public static final String EVAL_IN_MARKER = EVAL_OUT_MARKER + EVAL_OUT_MARKER;

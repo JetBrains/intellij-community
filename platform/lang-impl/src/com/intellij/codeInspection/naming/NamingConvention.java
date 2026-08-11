@@ -39,7 +39,7 @@ public abstract class NamingConvention<T extends PsiNameIdentifierOwner> {
   }
 
   public @InspectionMessage String createErrorMessage(String name, NamingConventionBean bean) {
-    final int length = name.length();
+    int length = name.length();
     if (length < bean.m_minLength) {
       return InspectionsBundle.message("naming.convention.problem.descriptor.short", getElementDescription(),
                                              Integer.valueOf(length), Integer.valueOf(bean.m_minLength));

@@ -23,6 +23,7 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,6 +112,7 @@ public final class RunAnythingUtil {
     }
   }
 
+  @ApiStatus.Internal
   public static @Nullable RunAnythingSearchListModel getSearchingModel(@NotNull JBList list) {
     ListModel model = list.getModel();
     return model instanceof RunAnythingSearchListModel ? (RunAnythingSearchListModel)model : null;

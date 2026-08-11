@@ -8,14 +8,12 @@ import com.intellij.build.BuildTreeViewModel
 import com.intellij.build.BuildViewId
 import com.intellij.build.findValue
 import com.intellij.platform.buildView.BuildTreeApi
-import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.flow.Flow
 
 internal sealed interface BuildTreeViewModelProxy {
   companion object {
     fun getInstance(buildViewId: BuildViewId): BuildTreeViewModelProxy {
-      val modelIsLocal = buildViewId.modelIsOnClient == PlatformUtils.isJetBrainsClient()
-      val localModel = if (modelIsLocal) {
+      val localModel = if (buildViewId.isLocal()) {
         buildViewId.findValue()
       }
       else {

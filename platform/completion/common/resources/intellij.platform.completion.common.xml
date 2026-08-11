@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
@@ -10,6 +11,8 @@
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->

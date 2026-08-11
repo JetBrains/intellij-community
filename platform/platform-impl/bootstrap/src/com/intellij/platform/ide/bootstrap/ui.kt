@@ -20,9 +20,7 @@ import com.intellij.platform.icons.impl.intellij.IntelliJIconManager
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.IconManager
 import com.intellij.ui.icons.CoreIconManager
-import com.intellij.ui.isWindowIconAlreadyExternallySet
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.util.ui.RawSwingDispatcher
@@ -34,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Font
 import java.awt.GraphicsEnvironment
@@ -158,7 +157,10 @@ private suspend fun initAwtToolkit(busyThread: Thread) {
       sun.awt.AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread)
     }
     catch (e: IllegalAccessError) {
-      throw RuntimeException("Required '--add-opens' option wasn't added to JVM arguments. If you're running the IDE from sources, most probably it means that 'DevKit' plugin isn't enabled", e)
+      throw RuntimeException(
+        "Required '--add-opens' options weren't added to JVM arguments." +
+        " If you're running the IDE from sources, most probably it means that the 'DevKit' plugin isn't enabled",
+      e)
     }
   }
 
@@ -199,6 +201,7 @@ private suspend fun replaceIdeEventQueue(isHeadless: Boolean) {
 }
 
 @VisibleForTesting
+@ApiStatus.Internal
 fun checkHiDPISettings() {
   if (!System.getProperty("hidpi", "true").toBoolean()) {
     // suppress JRE-HiDPI mode
@@ -239,13 +242,13 @@ internal fun scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(
     }
 
     // `updateWindowIcon` should be called after `initUiJob`, because it uses computed system font data for scale context
-    if (!isWindowIconAlreadyExternallySet()) {
+    if (!AppUIUtil.isWindowIconAlreadyExternallySet()) {
       launch {
         initUiScale.join()
         appInfoDeferred.join()
-        // most of the time is consumed by loading SVG and can be done in parallel
-        span("update window icon") {
-          updateAppWindowIcon(JOptionPane.getRootFrame())
+        // Early Java2D/SVG icon rendering must not race splash peer creation.
+        span("update window icon", RawSwingDispatcher) {
+          AppUIUtil.updateAppWindowIcon(JOptionPane.getRootFrame())
         }
       }
     }

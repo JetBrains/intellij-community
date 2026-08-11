@@ -13,8 +13,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ThreadingAssertions
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
+@ApiStatus.Internal
 class SuggestedRefactoringChangeCollector(
   private val availabilityIndicator: SuggestedRefactoringAvailabilityIndicator
 ) : SuggestedRefactoringSignatureWatcher {

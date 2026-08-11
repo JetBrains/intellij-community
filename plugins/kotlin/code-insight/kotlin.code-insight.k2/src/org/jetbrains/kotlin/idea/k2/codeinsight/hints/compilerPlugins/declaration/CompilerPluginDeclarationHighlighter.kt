@@ -15,8 +15,9 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.containers.addIfNotNull
 import kotlinx.collections.immutable.persistentListOf
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExtension
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlighter
 import org.jetbrains.kotlin.psi.KtFile
@@ -148,7 +149,7 @@ internal object CompilerPluginDeclarationHighlighter {
 
         private fun withNewTag(tag: TokenTag, action: () -> Unit) {
             val oldTags = tagsInTheCurrentScope
-            tagsInTheCurrentScope = tagsInTheCurrentScope.add(tag)
+            tagsInTheCurrentScope = tagsInTheCurrentScope.adding(tag)
             try {
                 action()
             } finally {

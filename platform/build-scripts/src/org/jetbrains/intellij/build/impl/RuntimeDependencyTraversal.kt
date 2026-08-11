@@ -42,7 +42,7 @@ fun collectTransitiveRuntimeDependencies(
   while (frontier.isNotEmpty()) {
     val nextFrontier = ArrayList<Pair<String, PersistentList<String>>>()
     for ((moduleName, dependencyChain) in frontier) {
-      val chain = dependencyChain.add(moduleName)
+      val chain = dependencyChain.adding(moduleName)
       for (dependencyName in dependencyResolver.getRuntimeDependencies(moduleName)) {
         if (!blockedOrSeen.add(dependencyName)) {
           continue

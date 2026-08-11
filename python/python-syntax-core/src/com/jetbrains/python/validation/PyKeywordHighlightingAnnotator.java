@@ -50,6 +50,7 @@ public final class PyKeywordHighlightingAnnotator extends PyAnnotatorBase implem
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull PyAnnotationHolder holder) {
+    if (holder.isBatchMode()) return;
     element.accept(new MyVisitor(holder));
   }
 

@@ -1,11 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RemoteRepositoryDescription;
+import com.intellij.jarRepository.RepositoryLibraryDefinition;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -69,36 +71,28 @@ public final class IdeaTestUtil {
     final LanguageLevel moduleLevel = LanguageLevelUtil.getCustomLanguageLevel(module);
     final Application application = ApplicationManager.getApplication();
     try {
-      application.invokeAndWait(() -> {
-        application.runWriteAction(() -> projectExt.setLanguageLevel(level));
-      });
+      application.invokeAndWait(() -> application.runWriteAction(() -> projectExt.setLanguageLevel(level)));
       setModuleLanguageLevel(module, level);
       IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
       r.run();
     }
     finally {
       setModuleLanguageLevel(module, moduleLevel);
-      application.invokeAndWait(() -> {
-        application.runWriteAction(() -> projectExt.setLanguageLevel(projectLevel));
-      });
+      application.invokeAndWait(() -> application.runWriteAction(() -> projectExt.setLanguageLevel(projectLevel)));
       IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
     }
   }
 
   public static void setProjectLanguageLevel(@NotNull Project project, @NotNull LanguageLevel level, @NotNull Disposable disposable) {
     LanguageLevel oldLevel = setProjectLanguageLevel(project, level);
-    Disposer.register(disposable, () -> {
-      setProjectLanguageLevel(project, oldLevel);
-    });
+    Disposer.register(disposable, () -> setProjectLanguageLevel(project, oldLevel));
   }
 
   public static LanguageLevel setProjectLanguageLevel(@NotNull Project project, @NotNull LanguageLevel level) {
     LanguageLevelProjectExtension projectExt = LanguageLevelProjectExtension.getInstance(project);
     LanguageLevel oldLevel = projectExt.getLanguageLevel();
     Application application = ApplicationManager.getApplication();
-    application.invokeAndWait(() -> {
-      application.runWriteAction(() -> projectExt.setLanguageLevel(level));
-    });
+    application.invokeAndWait(() -> application.runWriteAction(() -> projectExt.setLanguageLevel(level)));
     IndexingTestUtil.waitUntilIndexesAreReady(project);
     return oldLevel;
   }
@@ -112,9 +106,7 @@ public final class IdeaTestUtil {
 
   public static void setModuleLanguageLevel(@NotNull Module module, @NotNull LanguageLevel level, @NotNull Disposable parentDisposable) {
     LanguageLevel prev = setModuleLanguageLevel(module, level);
-    Disposer.register(parentDisposable, () -> {
-      setModuleLanguageLevel(module, prev);
-    });
+    Disposer.register(parentDisposable, () -> setModuleLanguageLevel(module, prev));
   }
 
   /**
@@ -182,6 +174,13 @@ public final class IdeaTestUtil {
     List<RemoteRepositoryDescription> repos = MavenDependencyUtil.getRemoteRepositoryDescriptions();
     String coordinates = "org.jetbrains.mockjdk:" + MOCK_JDK_GROUP_ID + ":" + version + ".0.0";
     RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(coordinates, false);
+    // If the repositoryLibrary EP is missing (e.g. in a lightweight test application), register an empty one so that
+    // mock JDK resolution does not fail with "Missing extension point".
+    if (!ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(RepositoryLibraryDefinition.EP_NAME)) {
+      ApplicationManager.getApplication().getExtensionArea()
+        .registerExtensionPoint(RepositoryLibraryDefinition.EP_NAME.getName(), RepositoryLibraryDefinition.class.getName(),
+                                ExtensionPoint.Kind.BEAN_CLASS, false);
+    }
     Collection<OrderRoot> roots =
       JarRepositoryManager.loadDependenciesModal(ProjectManager.getInstance().getDefaultProject(), libraryProperties, false, false, null,
                                                  repos);
@@ -259,7 +258,7 @@ public final class IdeaTestUtil {
 
     JavaSdkImpl.attachJdkAnnotations(sdkModificator);
     Application application = ApplicationManager.getApplication();
-    Runnable runnable = () -> sdkModificator.commitChanges();
+    Runnable runnable = sdkModificator::commitChanges;
     if (application.isDispatchThread()) {
       application.runWriteAction(runnable);
     } else {
@@ -439,9 +438,7 @@ public final class IdeaTestUtil {
   private static void setSdkVersion(@NotNull Sdk sdk, @Nullable String sdkVersion) {
     SdkModificator sdkModificator = sdk.getSdkModificator();
     sdkModificator.setVersionString(sdkVersion);
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      sdkModificator.commitChanges();
-    });
+    ApplicationManager.getApplication().runWriteAction(sdkModificator::commitChanges);
   }
 
   public static @NotNull String requireRealJdkHome() {
@@ -449,7 +446,7 @@ public final class IdeaTestUtil {
     List<String> paths =
       ContainerUtil.packNullables(javaHome, new File(javaHome).getParent(), System.getenv("JDK_16_x64"), System.getenv("JDK_16"));
     for (String path : paths) {
-      if (JdkUtil.checkForJdk(path)) {
+      if (JdkUtil.checkForJdk(Path.of(path))) {
         return path;
       }
     }

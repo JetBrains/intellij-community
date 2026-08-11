@@ -1,6 +1,6 @@
 // "Replace with 'emptyList()' call" "true"
 // WITH_STDLIB
-// K2_ERROR: Null cannot be a value of a non-null type 'Collection<String>'.
+// K2_ERROR: NULL_FOR_NONNULL_TYPE
 
 fun foo(a: String?): Collection<String> {
     val w = a ?: return null<caret>

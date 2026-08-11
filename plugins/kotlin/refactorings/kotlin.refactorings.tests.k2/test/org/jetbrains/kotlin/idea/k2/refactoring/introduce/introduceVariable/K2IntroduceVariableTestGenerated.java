@@ -176,6 +176,19 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/explicitBackingFields")
+    public static class ExplicitBackingFields extends AbstractK2IntroduceVariableTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("backingField.kt")
+        public void testBackingField() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/explicitBackingFields/backingField.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/extractToScope")
     public static class ExtractToScope extends AbstractK2IntroduceVariableTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -780,6 +793,16 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/enumEntry.kt");
         }
 
+        @TestMetadata("explicitContextArgument.kt")
+        public void testExplicitContextArgument() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/explicitContextArgument.kt");
+        }
+
+        @TestMetadata("explicitContextArgument2.kt")
+        public void testExplicitContextArgument2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/explicitContextArgument2.kt");
+        }
+
         @TestMetadata("expressionBodyErrorType.kt")
         public void testExpressionBodyErrorType() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/expressionBodyErrorType.kt");
@@ -885,6 +908,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceLambdaAndCreateBlock2.kt");
         }
 
+        @TestMetadata("IntroduceNameBasedDestructuringCommentSaver.kt")
+        public void testIntroduceNameBasedDestructuringCommentSaver() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringCommentSaver.kt");
+        }
+
         @TestMetadata("IntroduceNameBasedDestructuringDeclarationComplete.kt")
         public void testIntroduceNameBasedDestructuringDeclarationComplete() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringDeclarationComplete.kt");
@@ -928,6 +956,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
         @TestMetadata("IntroducePositionBasedDestructuringDeclarationOnlySyntax.kt")
         public void testIntroducePositionBasedDestructuringDeclarationOnlySyntax() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroducePositionBasedDestructuringDeclarationOnlySyntax.kt");
+        }
+
+        @TestMetadata("IntroducePositionalBasedDestructuringDeclarationNameMismatch.kt")
+        public void testIntroducePositionalBasedDestructuringDeclarationNameMismatch() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroducePositionalBasedDestructuringDeclarationNameMismatch.kt");
         }
 
         @TestMetadata("introduceToClass.kt")

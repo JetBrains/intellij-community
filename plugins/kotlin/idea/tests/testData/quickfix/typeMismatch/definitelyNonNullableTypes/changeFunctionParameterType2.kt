@@ -6,10 +6,10 @@
 // ACTION: Change parameter 'x' type of function 'foo' to 'List<T>'
 // ACTION: Create function 'foo'
 // LANGUAGE_VERSION: 1.8
-// K2_ERROR: Argument type mismatch: actual type is 'List<T#1 (of fun <T> bar)>', but 'List<uninferred T (of fun <T> foo) & Any>' was expected.
-// K2_ERROR: Cannot infer type for type parameter 'T'. Specify it explicitly.
-// K2_AFTER_ERROR: Argument type mismatch: actual type is 'List<T#1 (of fun <T> bar)>', but 'List<uninferred T (of fun <T> foo) & Any>' was expected.
-// K2_AFTER_ERROR: Cannot infer type for type parameter 'T'. Specify it explicitly.
+// K2_AFTER_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_AFTER_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
 package a
 
 fun <T> foo(x: List<T & Any>) {}

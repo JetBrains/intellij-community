@@ -208,13 +208,6 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
     val list = try {
       collectMatchedActions(pattern, allIds, weightMatcher, unmatchedIdsChannel)
     }
-    catch (e: Throwable) {
-      val t = Throwable(e)
-      if (LOG.isDebugEnabled && pattern == "Collect Host and Client Logs") {
-        LOG.warn("[$pattern] TEST DIAGNOSTICS: exception during collectMatchedActions: ${t.message}", t)
-      }
-      throw e
-    }
     finally {
       unmatchedIdsChannel.close()
     }
@@ -316,22 +309,10 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
       return@mapNotNull action
     }
 
-    if (LOG.isDebugEnabled) {
-      LOG.debug { "[$pattern] TEST DIAGNOSTICS: allIds contains \"CollectZippedLogs\": ${allIds.contains("CollectZippedLogs")}" }
-    }
-
     val extendedActionsList: List<AnAction> = model.dataContext.getData(QuickActionProvider.KEY)?.getActions(true) ?: emptyList()
     val directActions: Sequence<AnAction> = mainActions + extendedActionsList.asSequence()
     val matchedActions = produce(capacity = Channel.UNLIMITED) {
       directActions.forEach { action ->
-        val isCollectLogsAction = LOG.isDebugEnabled && action::class.java.simpleName.let {
-          it == "ClientCollectZippedLogsWithRemoteAction" || it == "CWMBackendCollectZippedLogsWithRemoteAction"
-        }
-
-        if (isCollectLogsAction) {
-           LOG.debug { "[$pattern] TEST DIAGNOSTICS: allActions contains Collect Logs action: ${action::class.java.simpleName}" }
-        }
-
         launchMatchAction(action, pattern, matcher, weightMatcher, unmatchedIdsChannel)
       }
 
@@ -352,8 +333,6 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
         }
       }
     }.toList()
-
-    LOG.debug { "[$pattern] TEST DIAGNOSTICS: matchedActions list is ready (${matchedActions.size})" }
 
     val comparator = Comparator.comparing<MatchedAction, Int> { it.weight ?: 0 }.reversed()
     return@coroutineScope matchedActions.sortedWith(comparator)

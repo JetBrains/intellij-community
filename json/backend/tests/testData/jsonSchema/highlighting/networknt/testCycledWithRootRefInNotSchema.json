@@ -1,0 +1,10 @@
+{
+  <warning descr="Property 'testProp' is not allowed">"testProp"</warning>: {
+    "testProp": {
+      "alala": {
+      }
+    }
+  },
+  <warning descr="Property 'alala' is not allowed">"alala"</warning>: {
+  }
+}

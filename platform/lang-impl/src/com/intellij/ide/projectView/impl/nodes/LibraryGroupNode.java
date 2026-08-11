@@ -28,6 +28,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+@ApiStatus.Internal
 public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
   public LibraryGroupNode(Project project, @NotNull LibraryGroupElement value, ViewSettings viewSettings) {
     super(project, value, viewSettings);

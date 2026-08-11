@@ -9,9 +9,27 @@
   ]]></description>
 
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.json.backend"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.jsonpath"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.spellchecker"/>
+    <!-- endregion -->
   </dependencies>
+  <content namespace="jetbrains"/>
 
   <resource-bundle>messages.JsonPathBundle</resource-bundle>
 

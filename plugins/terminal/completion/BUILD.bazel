@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.terminal.completion` start
-
 jvm_library(
     name = "completion",
     srcs = glob(
@@ -40,7 +39,8 @@ jvm_library(
         ":completion",
         "//platform/util:util_test_lib",
         "//platform/util/base:base_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
     ],
@@ -57,7 +57,6 @@ exports_files(
 ### auto-generated section `iml intellij.terminal.completion` end
 
 ### auto-generated section `build intellij.terminal.completion.tests` start
-
 jvm_library(
     name = "completion-tests",
     srcs = glob(
@@ -95,7 +94,8 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//platform/util/base",
         "//platform/util/base:base_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
     ],
@@ -112,7 +112,6 @@ exports_files(
 ### auto-generated section `iml intellij.terminal.completion.tests` end
 
 ### auto-generated section `test intellij.terminal.completion.tests` start
-
 jps_test(
     name = "completion-tests_test",
     runtime_deps = [":completion-tests_test_lib"],

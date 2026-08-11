@@ -1,5 +1,5 @@
 // "Make A.x open" "true"
-// K2_ERROR: 'x' in 'A' is final and cannot be overridden.
+// K2_ERROR: OVERRIDING_FINAL_MEMBER
 open class A {
     open var x = 42;
 }

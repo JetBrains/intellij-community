@@ -21,6 +21,7 @@ import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class LibraryTypeServiceImpl extends LibraryTypeService {
   private static final String DEFAULT_LIBRARY_NAME = "Unnamed";
 

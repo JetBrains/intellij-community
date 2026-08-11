@@ -23,22 +23,25 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.editor.actions.lists.DefaultListSplitJoinContextKt.isComma;
 
-
 public final class FlipCommaIntention extends PsiUpdateModCommandAction<PsiElement> implements DumbAware {
+  @ApiStatus.Internal
   public FlipCommaIntention() {
     super(PsiElement.class);
   }
-  
+
+  @ApiStatus.Internal
   @Override
   public @NotNull String getFamilyName() {
     return CodeInsightBundle.message("intention.family.name.flip");
   }
 
+  @ApiStatus.Internal
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
     PsiElement comma = currentCommaElement(context);
@@ -51,6 +54,7 @@ public final class FlipCommaIntention extends PsiUpdateModCommandAction<PsiEleme
     return Presentation.of(CodeInsightBundle.message("intention.name.flip"));
   }
 
+  @ApiStatus.Internal
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PsiElement comma = updater.getWritable(currentCommaElement(context));

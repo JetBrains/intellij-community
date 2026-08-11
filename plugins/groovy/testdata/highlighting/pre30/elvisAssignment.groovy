@@ -1,1 +1,1 @@
-a <error descr="Elvis assignment is not supported in current version">?=</error> b
+a <error descr="Elvis assignments are available in Groovy 3.0 and later">?=</error> b

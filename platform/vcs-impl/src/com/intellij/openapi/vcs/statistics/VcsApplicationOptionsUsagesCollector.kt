@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.openapi.vcs.VcsApplicationSettings
 
 internal class VcsApplicationOptionsUsagesCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("vcs.application.configuration", 5)
+  private val GROUP = EventLogGroup("vcs.application.configuration", 6)
   private val SHOW_WHITESPACES_IN_LST = GROUP.registerVarargEvent("show.whitespaces.in.lst", EventFields.Enabled)
   private val SHOW_LST_GUTTER_MARKERS = GROUP.registerVarargEvent("show.lst.gutter.markers", EventFields.Enabled)
   private val SHOW_LST_ERROR_STRIPE_MARKERS = GROUP.registerVarargEvent("show.lst.error.stripe.markers", EventFields.Enabled)

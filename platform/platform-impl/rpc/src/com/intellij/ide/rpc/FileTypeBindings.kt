@@ -12,9 +12,16 @@ import org.jetbrains.annotations.ApiStatus
  * This method is useful when you want all the editors created for this [Document] to have backend features.
  */
 // TODO: it is not ok to attach Document to fileType
-@ApiStatus.Internal
 internal fun Document.bindEditorsToBackend() {
   this.putUserData(BIND_DOCUMENT_EDITORS, true)
+}
+
+/**
+ * @return true if the [Document] was explicitly marked for backend editor binding, false otherwise
+ */
+@ApiStatus.Internal
+fun Document.shouldBindToBackend(): Boolean {
+  return getUserData(BIND_DOCUMENT_EDITORS) == true
 }
 
 /**
@@ -22,7 +29,7 @@ internal fun Document.bindEditorsToBackend() {
  */
 @ApiStatus.Internal
 fun Editor.shouldBindToBackend(): Boolean {
-  return document.getUserData(BIND_DOCUMENT_EDITORS) == true
+  return document.shouldBindToBackend()
 }
 
 @ApiStatus.Internal

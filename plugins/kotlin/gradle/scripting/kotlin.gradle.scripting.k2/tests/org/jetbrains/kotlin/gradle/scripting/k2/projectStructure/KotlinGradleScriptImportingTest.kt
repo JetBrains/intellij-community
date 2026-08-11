@@ -26,7 +26,6 @@ import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildScriptName
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleWrapper
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.initProject
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.settingsScriptName
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaProjectInfo
@@ -120,7 +119,6 @@ class KotlinGradleScriptImportingTest {
 
     fun `test base script model is loaded when settings script has compilation errors`(gradle: GradleTestFixture) = runBlocking {
         val projectInfo = gradleProjectInfo(gradle.gradleVersion) {
-            gradleWrapper()
             simpleSettingsFile {
                 addCode("unresolvedSettingsScriptReference()")
             }

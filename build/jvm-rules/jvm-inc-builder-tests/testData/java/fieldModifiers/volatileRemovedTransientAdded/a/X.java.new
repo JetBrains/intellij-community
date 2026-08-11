@@ -1,0 +1,4 @@
+public class X {
+  public int v = 1;
+  public transient int t = 2;
+}

@@ -2,7 +2,7 @@
 // WITH_STDLIB
 // ERROR: Not enough information to infer type variable T
 // K2_ERROR:
-// K2_AFTER_ERROR: Cannot infer type for type parameter 'T'. Specify it explicitly.
+// K2_AFTER_ERROR: CANNOT_INFER_PARAMETER_TYPE
 
 abstract class Main<T>
 

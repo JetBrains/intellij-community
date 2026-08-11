@@ -1,18 +1,42 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="org.toml.lang"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.python.common"/>
-    <module name="intellij.python.community"/>
-    <module name="intellij.python.psi.impl"/>
-    <module name="intellij.python.requirements"/>
-    <module name="intellij.python.sdk"/>
     <module name="intellij.libraries.tuweni.toml"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.community.common"/>
+    <module name="intellij.python.psi.impl"/>
+    <module name="intellij.python.requirements.backend"/>
+    <module name="intellij.python.sdk.backend"/>
     <module name="intellij.toml.core"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <resource-bundle>messages.PyProjectTomlBundle</resource-bundle>
+  <actions>
+    <action id="AddPyProject" class="com.intellij.python.pyproject.model.internal.addPyProject.AddPyProjectAction">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+    </action>
+    <action id="ConvertToPyProject" class="com.intellij.python.pyproject.model.internal.addPyProject.ConvertToPyProjectAction">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="RenameElement"/>
+    </action>
+  </actions>
   <extensions defaultExtensionNs="com.intellij">
     <!-- "ask" means "ask user"-->
     <registryKey defaultValue="[off*|on|ask]" description="Load project structure from pyproject.toml" key="intellij.python.pyproject.model"
@@ -26,6 +50,11 @@
     <!-- Claim pyproject.toml as TOML file belonging to the Python plugin so that the
          plugin advertiser doesn't promote unrelated third-party plugins (PY-90131). -->
     <fileType name="TOML" fileNames="pyproject.toml"/>
+    <!-- Navigation for uv workspace members, Poetry packages and path dependencies (PY-90384). -->
+    <psi.referenceContributor language="TOML"
+                              implementation="com.intellij.python.pyproject.psi.PyProjectTomlPathReferenceContributor"/>
+    <applicationService serviceImplementation="com.intellij.python.pyproject.model.internal.pyProject.PyProjectServiceImpl"
+                        serviceInterface="com.jetbrains.python.project.impl.PyProjectService"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -33,7 +62,7 @@
   </extensions>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.python.pyproject.model.tool" interface="com.intellij.python.pyproject.model.spi.Tool"
+    <extensionPoint qualifiedName="com.intellij.python.pyproject.model.pyprojectmanager" interface="com.intellij.python.pyproject.model.spi.PyProjectManager"
                     dynamic="true"/>
   </extensionPoints>
 

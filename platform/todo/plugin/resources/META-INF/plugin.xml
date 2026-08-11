@@ -3,8 +3,9 @@
 <!--suppress AllContentModulesOptionalLoadingRule -->
 <idea-plugin>
   <id>intellij.todo.plugin</id>
-  <name>TODO View</name>
-  <description>Provides TODO View platform modules for the IDE.</description>
+  <name>TODO Comments</name>
+  <description>Highlights TODO and FIXME comments in the editor and lists every occurrence in the TODO tool window,
+    with grouping and filtering.</description>
   <vendor>JetBrains</vendor>
   <content namespace="jetbrains">
     <module name="intellij.platform.todo"/>

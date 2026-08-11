@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.driver.model` start
-
 jvm_library(
     name = "model",
     srcs = glob(
@@ -20,7 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
     ],
 )
@@ -34,7 +33,11 @@ jvm_library(
     ),
     module_name = "intellij.driver.model",
     visibility = ["//visibility:public"],
-    runtime_deps = [":model"],
+    runtime_deps = [
+        # do not sort,
+        ":model",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.driver.model` end
 

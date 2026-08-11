@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch;
 
 import com.intellij.lang.ASTNode;
@@ -7,7 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrFlowInterruptingStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrLabelReference;
@@ -22,7 +21,8 @@ public abstract class GrFlowInterruptingStatementImpl extends GroovyPsiElementIm
 
   @Override
   public @Nullable PsiElement getLabelIdentifier() {
-    return findChildByType(GroovyTokenTypes.mIDENT);
+    PsiElement result = findChildByType(TokenSets.PROPERTY_NAMES);
+    return result == null ? findChildByType(TokenSets.GROOVY_KEYWORDS) : result;
   }
 
   @Override

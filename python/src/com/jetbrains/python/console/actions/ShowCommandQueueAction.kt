@@ -21,11 +21,6 @@ internal class ShowCommandQueueAction(private val consoleView: PythonConsoleView
                  PyBundle.message("python.console.command.queue.show.action.description"),
                  emptyQueueIcon), DumbAware {
 
-  companion object {
-    @JvmStatic
-    fun isCommandQueueIcon(icon: Icon): Boolean = icon == emptyQueueIcon || icon == notEmptyQueueIcon
-  }
-
   override fun update(e: AnActionEvent) {
     super.update(e)
     val communication = consoleView.file.getCopyableUserData(CONSOLE_COMMUNICATION_KEY)
@@ -33,7 +28,7 @@ internal class ShowCommandQueueAction(private val consoleView: PythonConsoleView
       if (PyConsoleUtil.isCommandQueueEnabled(consoleView.project)) {
         e.presentation.isEnabled = true
 
-        if (PyConsoleUtil.isCommandQueueEmpty(communication)) {
+        if (PyConsoleUtil.isCommandQueueEmpty(consoleView.project, communication)) {
           e.presentation.icon = emptyQueueIcon
         }
         else {
@@ -68,3 +63,4 @@ internal class ShowCommandQueueAction(private val consoleView: PythonConsoleView
 
 private val emptyQueueIcon = PythonIcons.Python.CommandQueue
 private val notEmptyQueueIcon = ExecutionUtil.getLiveIndicator(emptyQueueIcon)
+internal fun isCommandQueueIcon(icon: Icon): Boolean = icon == emptyQueueIcon || icon == notEmptyQueueIcon

@@ -7,6 +7,7 @@ import java.awt.LinearGradientPaint
 import java.awt.MultipleGradientPaint
 import java.awt.Paint
 
+@ApiStatus.Internal
 object ProgressBarUtil {
   const val STATUS_KEY: String = "ProgressBar.status"
 

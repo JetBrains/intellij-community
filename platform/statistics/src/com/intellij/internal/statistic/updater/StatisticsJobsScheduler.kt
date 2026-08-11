@@ -18,6 +18,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.progress.runBlockingCancellable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -122,16 +123,21 @@ private suspend fun CoroutineScope.runValidationRulesUpdate() {
   serviceAsync<StatisticsValidationUpdatedService>().updatedDeferred.complete(Unit)
 }
 
-private suspend fun CoroutineScope.launchValidationRulesUpdate(provider: StatisticsEventLoggerProvider) {
+private fun CoroutineScope.launchValidationRulesUpdate(provider: StatisticsEventLoggerProvider) {
   if (provider.isLoggingEnabled()) {
     val validator = IntellijSensitiveDataValidator.getInstance(provider.recorderId)
     listenToOptionsChanges(provider.recorderId, validator.messageBus)
     listenToMetadataEvents(provider.recorderId, validator.messageBus)
-    validator.validationRulesStorage.update(this)
+    launch {
+      validator.remoteConfig.scheduleUpdate()
+    }
+    launch {
+      validator.validationRulesStorage.scheduleUpdate()
+    }
   }
 }
 
-fun updateValidationRules() {
+fun updateValidationRules(): Unit = runBlockingCancellable {
   val providers = getEventLogProviders()
   for (provider in providers) {
     if (provider.isLoggingEnabled()) {

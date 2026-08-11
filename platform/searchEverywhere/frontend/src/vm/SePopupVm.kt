@@ -57,10 +57,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -73,6 +73,7 @@ class SePopupVm(
   val session: SeSession,
   private val project: Project?,
   tabs: List<SeTab>,
+  initialDummyTabVms: List<SeDummyTabVm>,
   deferredTabs: List<SuspendLazyProperty<SeTab?>>,
   adaptedTabs: SuspendLazyProperty<List<SeTab>>,
   initialSearchPattern: String?,
@@ -88,15 +89,13 @@ class SePopupVm(
   private val _deferredTabVms = MutableSharedFlow<SeTabInitEvent>(replay = 100)
   private val _tabsModelFlow = MutableStateFlow(run {
     val customizer = SeTabsCustomizer.getInstance()
-    val tabsVms = tabs.mapNotNull {
+    val initializedTabVms = tabs.mapNotNull {
       val tabInfo = customizer.customizeTabInfo(it.id, SeTabInfo(it.priority, it.name)) ?: return@mapNotNull null
       SeTabVmImpl(project, coroutineScope, it, tabInfo, searchPattern, availableLegacyContributors.allTab)
     }
 
-    // Just for safety in case the initially selected tab is not in the initial tabs
-    val initialTabId =
-      if (tabsVms.containsId(initialTabId)) initialTabId
-      else tabsVms.first().tabId
+    val initialisedTabVmIds = initializedTabVms.map { it.tabId }.toSet()
+    val tabsVms = initializedTabVms + initialDummyTabVms.filter { !initialisedTabVmIds.contains(it.tabId) }
 
     SeTabsModel(tabsVms, initialTabId)
   })
@@ -157,7 +156,9 @@ class SePopupVm(
     coroutineScope.launch {
       _deferredTabVms.collect { tabInitEvent ->
         _tabsModelFlow.update { model ->
-          model.newModelWithReplacedTab(tabInitEvent.newTabs, removeDummy = tabInitEvent.removeDummy)
+          model.newModelWithReplacedTab(tabInitEvent.newTabs,
+                                        selectedTabId = tabInitEvent.selectedTabId ?: model.selectedTabIdFlow.value,
+                                        removeDummy = tabInitEvent.removeDummy)
         }
       }
     }
@@ -174,7 +175,7 @@ class SePopupVm(
         it.getValue()?.let { tab ->
           val newInfo = tabsCustomizer.customizeTabInfo(tab.id, SeTabInfo(tab.priority, tab.name)) ?: return@launch
           val tabVm = SeTabVmImpl(project, coroutineScope, tab, newInfo, searchPattern, availableLegacyContributors.allTab)
-          _deferredTabVms.emit(SeTabInitEvent(listOf(tabVm)))
+          _deferredTabVms.emit(SeTabInitEvent(listOf(tabVm), selectedTabId = initialTabId.takeIf { tab.id == initialTabId }))
         }
       }
     }
@@ -192,7 +193,10 @@ class SePopupVm(
         }
       }
 
-      _deferredTabVms.emit(SeTabInitEvent(adaptedCustomized, true))
+      SeLog.log(SeLog.LIFE_CYCLE) { "Initialized deferred adapted tabs: [${adaptedCustomized.joinToString { it.tabId }}]" }
+      _deferredTabVms.emit(SeTabInitEvent(adaptedCustomized, selectedTabId = initialTabId.takeIf {
+        adaptedCustomized.containsId(initialTabId)
+      }, true))
     }
 
     coroutineScope.launch {
@@ -358,7 +362,7 @@ class SePopupVm(
     }
   }
 
-  private class SeTabInitEvent(val newTabs: List<SeTabVm>, val removeDummy: Boolean = false)
+  private class SeTabInitEvent(val newTabs: List<SeTabVm>, val selectedTabId: String?, val removeDummy: Boolean = false)
 }
 
 @ApiStatus.Internal
@@ -370,26 +374,32 @@ class SePreviewConfiguration(
 @ApiStatus.Internal
 class SeTabsModel(tabVms: List<SeTabVm>, selectedTabId: String) {
   val sortedTabVms: List<SeTabVm> = tabVms.sortedBy { -it.priority }
+  private val size get() = sortedTabVms.size
 
-  val selectedTabIndexFlow: MutableStateFlow<Int> = MutableStateFlow(sortedTabVms.indexOfFirst { it.tabId == selectedTabId })
-  val selectedTabFlow: Flow<SeTabVm> = selectedTabIndexFlow.filter { it in sortedTabVms.indices }.map { sortedTabVms[it] }
-  val selectedTab: SeTabVm get() = sortedTabVms[selectedTabIndexFlow.value]
+  val selectedTabIdFlow: MutableStateFlow<String> = MutableStateFlow(
+    if (sortedTabVms.any { it.tabId == selectedTabId }) selectedTabId
+    else sortedTabVms.first().tabId
+  )
+  val selectedTabFlow: Flow<SeTabVm> = selectedTabIdFlow.mapNotNull { id -> sortedTabVms.firstOrNull { it.tabId == id } }
+  val selectedTab: SeTabVm get() = sortedTabVms.firstOrNull { it.tabId == selectedTabIdFlow.value } ?: sortedTabVms.first()
 
   init {
     require(sortedTabVms.isNotEmpty()) { "Search Everywhere tabs must not be empty" }
-    require(selectedTabIndexFlow.value != -1) { "Selected tab ID must be present in the list of tabs" }
+    SeLog.log(SeLog.LIFE_CYCLE) { "SeTabsModel built: tabs=[${sortedTabVms.joinToString { it.tabId }}], selected=${selectedTabIdFlow.value}" }
   }
 
+  private fun indexOf(tabId: String): Int = sortedTabVms.indexOfFirst { it.tabId == tabId }.coerceAtLeast(0)
+
   fun selectNextTab() {
-    selectedTabIndexFlow.update { (it + 1) % sortedTabVms.size }
+    selectedTabIdFlow.update { sortedTabVms[(indexOf(it) + 1) % size].tabId }
   }
 
   fun selectPreviousTab() {
-    selectedTabIndexFlow.update { (it - 1 + sortedTabVms.size) % sortedTabVms.size }
+    selectedTabIdFlow.update { sortedTabVms[(indexOf(it) - 1 + size) % size].tabId }
   }
 
   fun showTab(tabId: String) {
-    sortedTabVms.indexOfFirst { it.tabId == tabId }.takeIf { it != -1 }?.let { selectedTabIndexFlow.value = it }
+    if (contains(tabId)) selectedTabIdFlow.value = tabId
   }
 
   fun contains(tabId: String): Boolean = sortedTabVms.any { it.tabId == tabId }

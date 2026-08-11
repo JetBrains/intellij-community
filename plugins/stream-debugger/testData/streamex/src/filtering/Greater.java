@@ -6,7 +6,7 @@ import java.util.OptionalDouble;
 
 public class Greater {
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     final OptionalDouble result = DoubleStreamEx.of(1., 2., 3., 4.).greater(2).min();
     System.out.println(result.orElse(-1.));
   }

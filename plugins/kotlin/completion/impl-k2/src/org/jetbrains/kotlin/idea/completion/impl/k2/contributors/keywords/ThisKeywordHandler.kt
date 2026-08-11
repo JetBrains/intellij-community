@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
-import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
+import org.jetbrains.kotlin.idea.completion.implCommon.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.completion.labelNameToTail
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.renderVerbose
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher.MatchesExpectedType

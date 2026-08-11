@@ -1,0 +1,3 @@
+package second
+
+object Key

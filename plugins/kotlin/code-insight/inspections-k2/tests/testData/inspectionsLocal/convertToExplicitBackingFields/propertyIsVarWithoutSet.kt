@@ -1,6 +1,6 @@
 // COMPILER_ARGUMENTS: -Xexplicit-backing-fields
 // PROBLEM: none
-// K2_ERROR: Property must be initialized.
+// K2_ERROR: MUST_BE_INITIALIZED
 interface Parent
 class Child : Parent
 

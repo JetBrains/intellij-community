@@ -3,6 +3,9 @@ This directory contains several tests:
 tests the stubs with [mypy](https://github.com/python/mypy/)
 - `tests/pyright_test.py` tests the stubs with
 [pyright](https://github.com/microsoft/pyright).
+- `tests/ty_test.py` tests the stubs with [ty](https://github.com/astral-sh/ty).
+- `tests/pyrefly_test.py` tests the stubs with
+[pyrefly](https://github.com/facebook/pyrefly).
 - `tests/regr_test.py` runs mypy against the test cases for typeshed's
 stubs, guarding against accidental regressions.
 - `tests/check_typeshed_structure.py` checks that typeshed's directory
@@ -80,6 +83,39 @@ this script uses the same pyright version and configuration as the CI.
 checks that would typically fail on incomplete stubs (such as `Unknown` checks).
 In typeshed's CI, pyright is run with these configuration settings on a subset of
 the stubs in typeshed (including the standard library).
+
+## ty\_test.py
+
+Run using:
+```bash
+(.venv)$ python3 tests/ty_test.py --python=.venv
+(.venv)$ python3 tests/ty_test.py stubs/PySocks --python=.venv
+```
+
+This test checks the stdlib and third-party stubs with ty, using the configuration
+in `ty.toml`. It selects the stdlib modules supported by the requested Python
+version using `stdlib/VERSIONS` and adds the third-party stub roots to ty's module
+search path. Unlike pyright, it checks `geopandas`, `seaborn`, and `shapely` on
+every target version; only the obsolete `requests` and legacy `distutils` stubs
+are excluded. Run
+`python tests/ty_test.py --help` for the supported options.
+
+## pyrefly\_test.py
+
+Run using:
+```bash
+(.venv)$ python3 tests/pyrefly_test.py --python=.venv/bin/python
+(.venv)$ python3 tests/pyrefly_test.py stubs/PySocks --python=.venv/bin/python
+```
+
+This test checks the stdlib and third-party stubs with pyrefly, using the
+configuration in `pyrefly.toml`. Like `ty_test.py`, it selects the stdlib modules
+supported by the requested Python version using `stdlib/VERSIONS` and adds the
+third-party stub roots to pyrefly's search path; only the obsolete `requests` and
+legacy `distutils` stubs are excluded. The `--python` argument is passed to
+pyrefly as `--python-interpreter-path`, so it should point at an interpreter
+rather than an environment directory. Run
+`python tests/pyrefly_test.py --help` for the supported options.
 
 ## regr\_test.py
 

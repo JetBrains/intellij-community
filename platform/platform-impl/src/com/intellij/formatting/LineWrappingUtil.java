@@ -137,7 +137,7 @@ public final class LineWrappingUtil {
 
       // We know that current line exceeds right margin if control flow reaches this place, so, wrap it.
       int wrapOffset = strategy.calculateWrapPosition(
-        document, project, Math.max(startLineOffset, startOffsetToUse), Math.min(endLineOffset, endOffsetToUse),
+        editor, Math.max(startLineOffset, startOffsetToUse), Math.min(endLineOffset, endOffsetToUse),
         preferredWrapPosition, false, false
       );
       if (wrapOffset < 0 // No appropriate wrap position is found.

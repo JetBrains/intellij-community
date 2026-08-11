@@ -5,9 +5,9 @@ import com.intellij.CommonBundle;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.coverage.analysis.AnalysisUtils;
+import com.intellij.coverage.analysis.ClassFilesLocator;
+import com.intellij.coverage.analysis.CoverageOutputRoots;
 import com.intellij.coverage.analysis.JavaCoverageAnnotator;
-import com.intellij.coverage.analysis.JavaCoverageClassesEnumerator;
-import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.coverage.listeners.java.CoverageListener;
 import com.intellij.coverage.view.CoverageViewExtension;
 import com.intellij.coverage.view.JavaCoverageViewExtension;
@@ -31,7 +31,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -61,11 +60,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.rt.coverage.data.BranchData;
-import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.JumpData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
-import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.data.SwitchData;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.task.impl.ProjectTaskManagerImpl;
@@ -368,7 +365,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     }
     final CoverageDataManager dataManager = CoverageDataManager.getInstance(module.getProject());
     final boolean includeTests = suite.isTrackTestFolders();
-    final VirtualFile[] roots = JavaCoverageClassesEnumerator.getRoots(dataManager, module, includeTests);
+    final VirtualFile[] roots = CoverageOutputRoots.getRoots(dataManager, module, includeTests);
     final boolean rootsExist = roots.length >= (includeTests ? 2 : 1) && ContainerUtil.all(roots, (root) -> root != null && root.exists());
     if (!rootsExist) {
       final Project project = module.getProject();
@@ -408,23 +405,11 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @Override
-  public @Nullable List<Integer> collectSrcLinesForUntouchedFile(final @NotNull Path classFile, final @NotNull CoverageSuitesBundle suite) {
-    final ProjectData projectData = new ProjectData();
-    final PackageAnnotator annotator = new PackageAnnotator(suite, suite.getProject(), projectData);
-
-    try {
-      ClassData classData = annotator.collectNonCoveredClassInfo(classFile, projectData);
-      if (classData == null) return null;
-      return SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(classData, suite.getProject());
-    }
-    catch (Exception e) {
-      if (e instanceof ControlFlowException) throw e;
-      LOG.error("Fail to process class from: " + classFile, e);
-    }
-    finally {
-      annotator.close();
-    }
-    return null;
+  public @NotNull List<Integer> collectSrcLinesForUntouchedFile(final @NotNull Path classFile, final @NotNull CoverageSuitesBundle suite) {
+    var suites = suite.getSuites();
+    var firstRunner = suites[0].getRunner();
+    if (!(firstRunner instanceof JavaCoverageRunner uniqueRunner)) return Collections.emptyList();
+    return uniqueRunner.collectSrcLinesForUntouchedFile(classFile, suite);
   }
 
   @Override
@@ -494,7 +479,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final Project project = module.getProject();
     final CoverageDataManager dataManager = CoverageDataManager.getInstance(project);
     boolean includeTests = suite.isTrackTestFolders();
-    final VirtualFile[] roots = JavaCoverageClassesEnumerator.getRoots(dataManager, module, includeTests);
+    final VirtualFile[] roots = CoverageOutputRoots.getRoots(dataManager, module, includeTests);
 
 
     String packageVmName = AnalysisUtils.fqnToInternalName(getPackageName(srcFile));
@@ -510,7 +495,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
     for (VirtualFile root : roots) {
       if (root == null) continue;
-      classFiles.addAll(JavaCoverageClassesEnumerator.collectClassFiles(root.toNioPath(), packageVmName, classNames));
+      classFiles.addAll(ClassFilesLocator.collectClassFiles(root.toNioPath(), packageVmName, classNames));
     }
     return classFiles;
   }
@@ -740,14 +725,6 @@ public class JavaCoverageEngine extends CoverageEngine {
   @Override
   public @Nls String getPresentableText() {
     return JavaCoverageBundle.message("java.coverage.engine.presentable.text");
-  }
-
-  @Override
-  protected boolean isGeneratedCode(Project project, String qualifiedName, Object lineData) {
-    if (JavaCoverageOptionsProvider.getInstance(project).isGeneratedConstructor(qualifiedName, ((LineData)lineData).getMethodSignature())) {
-      return true;
-    }
-    return super.isGeneratedCode(project, qualifiedName, lineData);
   }
 
   @Override

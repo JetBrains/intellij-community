@@ -20,8 +20,10 @@ import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyLiteralStringType
+import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isUnknown
 
 class PyPandasSeriesToListInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -49,14 +51,14 @@ class PyPandasSeriesToListInspection : PyInspection() {
      */
     private fun hasSeriesType(expression: PyExpression, context: TypeEvalContext): Boolean {
       if (expression is PySubscriptionExpression) {
-        val type = context.getType(expression.indexExpression)
+        val type = PyLiteralType.upcastLiteralToClass(context.getType(expression.indexExpression))
         return type.isPyClassWithName("str") || type is PyLiteralStringType
       }
 
       val expressionType = context.getType(expression)
       if (expressionType.isPyClassWithName("Series")) return true
 
-      if (expressionType != null) return false
+      if (!expressionType.isUnknown) return false
       return isQualifiedDataframeCall(expression, context)
     }
 

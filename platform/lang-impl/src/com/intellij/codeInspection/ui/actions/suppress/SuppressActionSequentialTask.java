@@ -52,10 +52,10 @@ public final class SuppressActionSequentialTask implements SequentialTask {
 
   @Override
   public boolean iteration(@NotNull ProgressIndicator indicator) {
-    final SuppressableInspectionTreeNode node = myNodesToSuppress[myCount++];
+    SuppressableInspectionTreeNode node = myNodesToSuppress[myCount++];
     indicator.setFraction((double)myCount / myNodesToSuppress.length);
 
-    final Pair<PsiElement, CommonProblemDescriptor> content = node.getSuppressContent();
+    Pair<PsiElement, CommonProblemDescriptor> content = node.getSuppressContent();
     if (content.first != null) {
       suppress(content.first, content.second, mySuppressAction, myWrapper, node);
     }
@@ -70,22 +70,22 @@ public final class SuppressActionSequentialTask implements SequentialTask {
 
   @Override
   public void prepare() {
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setText(InspectionsBundle.message("inspection.action.suppress", myWrapper.getDisplayName()));
     }
   }
 
-  private void suppress(final @NotNull PsiElement element,
-                        final @Nullable CommonProblemDescriptor descriptor,
-                        final @NotNull SuppressIntentionAction action,
+  private void suppress(@NotNull PsiElement element,
+                        @Nullable CommonProblemDescriptor descriptor,
+                        @NotNull SuppressIntentionAction action,
                         @NotNull InspectionToolWrapper wrapper,
-                        final @NotNull SuppressableInspectionTreeNode node) {
+                        @NotNull SuppressableInspectionTreeNode node) {
     if (action instanceof SuppressIntentionActionFromFix && !(descriptor instanceof ProblemDescriptor)) {
       LOG.info("local suppression fix for specific problem descriptor:  " + wrapper.getTool().getClass().getName());
     }
 
-    final Project project = element.getProject();
+    Project project = element.getProject();
     try {
 
       PsiElement container = null;
@@ -105,7 +105,7 @@ public final class SuppressActionSequentialTask implements SequentialTask {
           runnable.run();
         }
       }
-      final Set<GlobalInspectionContextImpl> globalInspectionContexts =
+      Set<GlobalInspectionContextImpl> globalInspectionContexts =
         ((InspectionManagerEx)InspectionManager.getInstance(element.getProject())).getRunningContexts();
       for (GlobalInspectionContextImpl context : globalInspectionContexts) {
         context.resolveElement(wrapper.getTool(), container);

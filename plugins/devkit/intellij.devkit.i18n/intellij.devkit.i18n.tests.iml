@@ -29,6 +29,7 @@
     <orderEntry type="module" module-name="intellij.xml.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.devkit.plugin.main.noKotlin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
@@ -36,6 +37,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.i18n" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.devkit.i18n" />
 </module>

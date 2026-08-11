@@ -1,19 +1,53 @@
 MODULES
 include-kotlin
 
-include-kotlin.main
+include-kotlin.commonMain
     externalProjectId = :include-kotlin
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     targetPlatform = JS
 
-include-kotlin.test
+include-kotlin.commonTest
     externalProjectId = :include-kotlin
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
-    additionalVisibleModuleNames = :include-kotlin:main
+    additionalVisibleModuleNames = :include-kotlin:commonMain, :include-kotlin:jsMain, :include-kotlin:webMain
+    targetPlatform = JS
+
+include-kotlin.jsMain
+    externalProjectId = :include-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :include-kotlin:commonMain, :include-kotlin:webMain
+    targetPlatform = JS
+
+include-kotlin.jsTest
+    externalProjectId = :include-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :include-kotlin:commonTest, :include-kotlin:webTest
+    additionalVisibleModuleNames = :include-kotlin:commonMain, :include-kotlin:jsMain, :include-kotlin:webMain
+    targetPlatform = JS
+
+include-kotlin.webMain
+    externalProjectId = :include-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :include-kotlin:commonMain
+    targetPlatform = JS
+
+include-kotlin.webTest
+    externalProjectId = :include-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :include-kotlin:commonTest
+    additionalVisibleModuleNames = :include-kotlin:commonMain, :include-kotlin:jsMain, :include-kotlin:webMain
     targetPlatform = JS
 
 include-plugin

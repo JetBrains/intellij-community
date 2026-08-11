@@ -3,7 +3,6 @@
 package org.jetbrains.intellij.build.productLayout.discovery
 
 import com.intellij.platform.pluginGraph.ContentModuleName
-import com.intellij.platform.pluginGraph.TargetName
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.debug
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
@@ -28,29 +27,33 @@ internal fun validateDslTestPluginOwnedDependency(
   declaredRootModule: ContentModuleName?,
   testPluginSpec: TestPluginSpec,
   productName: String,
-  bundledPluginNames: Set<TargetName>,
   allowedMissingPluginIds: Set<String>,
   owningProdPlugins: List<OwningPlugin>,
+  resolvableProdPlugins: Set<OwningPlugin>,
   updateSuppressions: Boolean,
   suppressionUsageSink: MutableList<SuppressionUsage>?,
   errorSink: ErrorSink,
 ) {
-  val resolvableOwners = owningProdPlugins.filter {
-    it.name in bundledPluginNames || it.name in testPluginSpec.additionalBundledPluginTargetNames
-  }
-  if (resolvableOwners.isNotEmpty()) {
+  if (resolvableProdPlugins.isNotEmpty()) {
     debug("dslTestDeps") {
-      "skip plugin-owned dep=$depName from=$moduleName owners=${owningProdPlugins.joinToString { it.pluginId.value }}"
+      "skip plugin-owned dep=$depName from=$moduleName owners=${resolvableProdPlugins.joinToString { it.pluginId.value }}"
     }
     return
   }
 
   val unresolvedOwners = owningProdPlugins.filter { it.pluginId.value != testPluginSpec.pluginId.value }
+  val allowedOwners = unresolvedOwners.filter { it.pluginId.value in allowedMissingPluginIds }
+  if (allowedOwners.isNotEmpty()) {
+    debug("dslTestDeps") {
+      "skip allowed plugin-owned dep=$depName from=$moduleName owners=${allowedOwners.joinToString { it.pluginId.value }}"
+    }
+    return
+  }
+
   val disallowedOwners = unresolvedOwners.filterNot { it.pluginId.value in allowedMissingPluginIds }
   if (disallowedOwners.isEmpty()) {
     return
   }
-
 
   if (updateSuppressions) {
     val suppressionSource = declaredRootModule ?: moduleName

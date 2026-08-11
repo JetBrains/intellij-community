@@ -11,6 +11,8 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntr
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFile
+import org.jetbrains.intellij.build.materializeCacheDir
+import org.jetbrains.intellij.build.materializeCacheFile
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Path
@@ -103,15 +105,18 @@ internal suspend fun handleCustomPlatformSpecificAssets(
           is UnpackedZipSource -> {
             val dir = extractFileToCacheLocation(archiveFile = source.file, communityRoot = context.paths.communityHomeDirRoot)
             val dirPrefix = dir.toString().length + 1
-            copyDir(
-              sourceDir = dir,
-              targetDir = rootDir,
-              fileFilter = source.filter?.let { filter ->
-                {
-                  filter(it.invariantSeparatorsPathString.substring(dirPrefix))
-                }
-              },
-            )
+            val filter = source.filter
+            if (filter == null) {
+              // the whole of an extract-cache directory, so a dev run directory may share its bytes
+              materializeCacheDir(sourceDir = dir, targetDir = rootDir, context = context)
+            }
+            else {
+              copyDir(
+                sourceDir = dir,
+                targetDir = rootDir,
+                fileFilter = { filter(it.invariantSeparatorsPathString.substring(dirPrefix)) },
+              )
+            }
 
             distEntries.add(CustomAssetEntry(path = source.file, hash = lazySource.precomputedHash, relativeOutputFile = customAsset.relativePath))
           }
@@ -124,7 +129,12 @@ internal suspend fun handleCustomPlatformSpecificAssets(
 
           is FileSource -> {
             val targetFile = rootDir.resolve(source.relativePath)
-            copyFile(source.file, targetFile)
+            if (source.fromImmutableCache) {
+              materializeCacheFile(source = source.file, target = targetFile, context = context)
+            }
+            else {
+              copyFile(source.file, targetFile)
+            }
             distEntries.add(
               CustomAssetEntry(
                 path = targetFile,

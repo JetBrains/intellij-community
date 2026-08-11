@@ -19,21 +19,20 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.nio.file.Files
-import java.nio.file.Path
+import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionResourceReadMode
+import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionResourceReader
 import kotlin.time.Duration.Companion.seconds
 
-@Service(Service.Level.APP)
+@Service(Service.Level.PROJECT)
 @ApiStatus.Internal
-class SplitModeQodanaInspectionScopeLimiter {
+class SplitModeQodanaInspectionScopeLimiter(private val project: Project) {
 
   companion object {
     private val LOG: Logger = logger<SplitModeQodanaInspectionScopeLimiter>()
-    private const val QODANA_ANALYSIS_SCOPE_PROJECT_RELATIVE_PATH =
-      "community/plugins/devkit/devkit-core/resources/remotedevInspectionData/SplitModeQodanaAnalysisScope.json"
+    private const val QODANA_ANALYSIS_SCOPE_RESOURCE_PATH = "remotedevInspectionData/SplitModeQodanaAnalysisScope.json"
 
     @JvmStatic
-    fun getInstance(): SplitModeQodanaInspectionScopeLimiter = service()
+    fun getInstance(project: Project): SplitModeQodanaInspectionScopeLimiter = project.service()
   }
 
   @Volatile
@@ -44,12 +43,15 @@ class SplitModeQodanaInspectionScopeLimiter {
     isLenient = true
   }
 
+  private val resourceReader: SplitModeInspectionResourceReader
+    get() = SplitModeInspectionResourceReader.getInstance(project)
+
   fun shouldInspectFileInQodanaMode(file: PsiFile): Boolean {
     if (!isQodanaOrUnitTestMode() || !SplitModeAnalysisFlags.isQodanaAnalysisScopeLimiterEnabled()) {
       return true
     }
 
-    val scope = getScope(file.project)
+    val scope = getScope()
     if (scope.isEmpty()) {
       return true
     }
@@ -63,38 +65,37 @@ class SplitModeQodanaInspectionScopeLimiter {
   }
 
   @TestOnly
-  fun reloadScopeForTest(project: Project) {
-    cachedScope = loadScope(project.basePath, SplitModeAnalysisFlags.getAdditionalQodanaAnalysisScopeFilePath())
+  fun reloadScopeForTest() {
+    cachedScope = loadScope(SplitModeAnalysisFlags.getQodanaAnalysisScopeReadMode())
   }
 
-  private fun getScope(project: Project): ScopeConfiguration {
-    val projectBasePath = project.basePath
-    val additionalFilePath = SplitModeAnalysisFlags.getAdditionalQodanaAnalysisScopeFilePath()
+  private fun getScope(): ScopeConfiguration {
+    val readMode = SplitModeAnalysisFlags.getQodanaAnalysisScopeReadMode()
     val cached = cachedScope
-    if (cached != null && cached.projectBasePath == projectBasePath && cached.additionalFilePath == additionalFilePath) {
+    if (cached != null && cached.readMode == readMode) {
       return cached.scopeConfiguration
     }
 
-    val loadedScope = loadScopeWithTimeout(projectBasePath, additionalFilePath)
+    val loadedScope = loadScopeWithTimeout(readMode)
     cachedScope = loadedScope
     return loadedScope.scopeConfiguration
   }
 
-  private fun loadScopeWithTimeout(projectBasePath: String?, additionalFilePath: String?): CachedScope {
+  private fun loadScopeWithTimeout(readMode: SplitModeInspectionResourceReadMode): CachedScope {
     return runBlockingCancellable {
       withTimeoutOrNull(1.seconds) {
         withContext(Dispatchers.IO) {
-          loadScope(projectBasePath, additionalFilePath)
+          loadScope(readMode)
         }
       }
-    } ?: CachedScope(projectBasePath, additionalFilePath, ScopeConfiguration()).also {
+    } ?: CachedScope(readMode, ScopeConfiguration()).also {
       LOG.warn("Timed out loading split-mode Qodana analysis scope")
     }
   }
 
-  private fun loadScope(projectBasePath: String?, additionalFilePath: String?): CachedScope {
+  private fun loadScope(readMode: SplitModeInspectionResourceReadMode): CachedScope {
     val scopeConfiguration = try {
-      loadScopeConfiguration(projectBasePath, additionalFilePath)
+      loadScopeConfiguration(readMode)
     }
     catch (e: IllegalArgumentException) {
       LOG.warn("Ignoring invalid split-mode Qodana analysis scope configuration", e)
@@ -113,51 +114,12 @@ class SplitModeQodanaInspectionScopeLimiter {
       "Loaded ${scopeConfiguration.moduleNames.size} split-mode Qodana analysis scope module names and " +
       "${scopeConfiguration.ignoredModules.size} ignored modules",
     )
-    return CachedScope(projectBasePath, additionalFilePath, scopeConfiguration)
+    return CachedScope(readMode, scopeConfiguration)
   }
 
-  private fun loadScopeConfiguration(projectBasePath: String?, additionalFilePath: String?): ScopeConfiguration {
-    return listOfNotNull(
-      readProjectQodanaAnalysisScopeJson(projectBasePath),
-      readAdditionalQodanaAnalysisScopeJson(additionalFilePath),
-    ).map(::parseScopeConfiguration)
-      .fold(ScopeConfiguration()) { result, scope ->
-        ScopeConfiguration(
-          moduleNames = result.moduleNames + scope.moduleNames,
-          ignoredModules = result.ignoredModules + scope.ignoredModules,
-        )
-      }
-  }
-
-  private fun readProjectQodanaAnalysisScopeJson(projectBasePath: String?): String? {
-    if (projectBasePath == null) {
-      LOG.info("Cannot load split-mode Qodana analysis scope: project base path is unknown")
-      return null
-    }
-
-    val path = Path.of(projectBasePath).resolve(QODANA_ANALYSIS_SCOPE_PROJECT_RELATIVE_PATH)
-    if (!Files.isRegularFile(path)) {
-      LOG.info("Project split-mode Qodana analysis scope file does not exist: $QODANA_ANALYSIS_SCOPE_PROJECT_RELATIVE_PATH")
-      return null
-    }
-
-    LOG.info("Loading project split-mode Qodana analysis scope from $path")
-    return Files.readString(path)
-  }
-
-  private fun readAdditionalQodanaAnalysisScopeJson(filePath: String?): String? {
-    if (filePath == null) {
-      return null
-    }
-
-    val path = Path.of(filePath)
-    if (!Files.isRegularFile(path)) {
-      LOG.info("Additional split-mode Qodana analysis scope file does not exist: $filePath")
-      return null
-    }
-
-    LOG.info("Loading additional split-mode Qodana analysis scope from $filePath")
-    return Files.readString(path)
+  private fun loadScopeConfiguration(readMode: SplitModeInspectionResourceReadMode): ScopeConfiguration {
+    val jsonText = resourceReader.readText(QODANA_ANALYSIS_SCOPE_RESOURCE_PATH, readMode) ?: return ScopeConfiguration()
+    return parseScopeConfiguration(jsonText)
   }
 
   private fun parseScopeConfiguration(jsonText: String): ScopeConfiguration {
@@ -171,8 +133,7 @@ class SplitModeQodanaInspectionScopeLimiter {
   }
 
   private data class CachedScope(
-    val projectBasePath: String?,
-    val additionalFilePath: String?,
+    val readMode: SplitModeInspectionResourceReadMode,
     val scopeConfiguration: ScopeConfiguration,
   )
 

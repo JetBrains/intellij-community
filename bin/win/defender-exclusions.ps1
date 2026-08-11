@@ -23,6 +23,9 @@ try {
     foreach ($exclusion in $exclusions) {
       try {
         $expanded = [System.Environment]::ExpandEnvironmentVariables($exclusion)
+        if ([string]::IsNullOrWhiteSpace($expanded)) {
+          continue
+        }
         $resolvedPaths = Resolve-Path -Path $expanded -ErrorAction Stop
         foreach ($resolved in $resolvedPaths) {
           $result += $resolved.ProviderPath

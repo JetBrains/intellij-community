@@ -1,6 +1,6 @@
 // "Replace 'listOf(1)' with 'mutableListOf(1)'" "true"
 // PRIORITY: HIGH
-// K2_ERROR: Return type mismatch: expected 'MutableList<out Number>', actual 'List<Int>'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 
 fun foo(): MutableList<out Number> {
     return mutableList<caret>Of(1)

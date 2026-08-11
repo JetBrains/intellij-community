@@ -63,7 +63,8 @@ class EelFileWatcher : PluggableFileWatcher() {
 
   override fun dispose() {
     myShuttingDown = true
-    shutdownWatcherJobs()
+    // Application disposal runs on EDT, and a remote unwatch request may never complete if EEL is already unavailable.
+    shutdownWatcherJobs(resetRemoteWatches = false)
   }
 
   override fun isOperational(): Boolean = Registry.`is`("use.eel.file.watcher", false) && isEnabled
@@ -72,6 +73,11 @@ class EelFileWatcher : PluggableFileWatcher() {
 
   override fun setWatchRoots(recursive: List<String>, flat: List<String>, shuttingDown: Boolean) {
     if (!isOperational) return
+    if (shuttingDown) {
+      myShuttingDown = true
+      shutdownWatcherJobs(resetRemoteWatches = false)
+      return
+    }
     myRetryJob?.cancel()
     myRetryJob = null
     val recursiveFiltered = filterAndNotifyManualWatchRoots(recursive)
@@ -79,15 +85,9 @@ class EelFileWatcher : PluggableFileWatcher() {
     if (recursiveFiltered.isEmpty() && flatFiltered.isEmpty()) {
       // EEL descriptor providers may not be ready during early startup.
       // Schedule a one-time delayed retry to re-resolve paths that could not be matched.
-      if (!shuttingDown && (recursive.isNotEmpty() || flat.isNotEmpty())) {
+      if (recursive.isNotEmpty() || flat.isNotEmpty()) {
         scheduleRetryForUnresolvedRoots(recursive, flat)
       }
-      return
-    }
-
-    if (shuttingDown) {
-      myShuttingDown = true
-      shutdownWatcherJobs()
       return
     }
 
@@ -107,8 +107,12 @@ class EelFileWatcher : PluggableFileWatcher() {
       }
     }
 
+    removeObsoleteWatchedEels(newData.keys)
+  }
+
+  private fun removeObsoleteWatchedEels(activeDescriptors: Set<EelDescriptor>) {
     myWatchedEels.entries.removeIf { (key, value) ->
-      if (!newData.containsKey(key)) {
+      if (!activeDescriptors.contains(key)) {
         value.cancel()
         true
       } else false
@@ -150,8 +154,8 @@ class EelFileWatcher : PluggableFileWatcher() {
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  private fun setupWatcherJob(data: EelData): () -> Unit {
-    if (myShuttingDown) return {}
+  private fun setupWatcherJob(data: EelData): (Boolean) -> Unit {
+    if (myShuttingDown) return { _ -> }
 
     mySettingRoots.incrementAndGet()
     val scope = GlobalScope.childScope("IJentFileWatcher")
@@ -187,10 +191,12 @@ class EelFileWatcher : PluggableFileWatcher() {
         }
       }
 
-      return {
+      return { resetRemoteWatches ->
         job.cancel()
         scope.cancel()
-        runBlocking { FileWatcherUtil.reset(eel) }
+        if (resetRemoteWatches) {
+          runBlocking { FileWatcherUtil.reset(eel) }
+        }
       }
     }
     catch (e: Exception) {
@@ -198,7 +204,7 @@ class EelFileWatcher : PluggableFileWatcher() {
       mySettingRoots.decrementAndGet()
       scope.cancel()
       reportManualWatchRoots(data)
-      return {}
+      return { _ -> }
     }
   }
 
@@ -269,11 +275,21 @@ class EelFileWatcher : PluggableFileWatcher() {
     }
   }
 
-  private fun shutdownWatcherJobs() {
+  private fun shutdownWatcherJobs(resetRemoteWatches: Boolean = true) {
     myRetryJob?.cancel()
     myRetryJob = null
-    myWatchedEels.values.forEach { it.cancel() }
+    myWatchedEels.values.forEach { it.cancel(resetRemoteWatches) }
     myWatchedEels.clear()
+  }
+
+  @TestOnly
+  internal fun addWatchedEelForTest(descriptor: EelDescriptor, cancelCallback: (Boolean) -> Unit) {
+    check(myWatchedEels.putIfAbsent(descriptor, WatchedEel(EelData(descriptor), cancelCallback)) == null)
+  }
+
+  @TestOnly
+  internal fun retainWatchedEelsForTest(activeDescriptors: Set<EelDescriptor>) {
+    removeObsoleteWatchedEels(activeDescriptors)
   }
 
   @TestOnly
@@ -288,11 +304,11 @@ class EelFileWatcher : PluggableFileWatcher() {
   }
 }
 
-private class WatchedEel(val data: EelData, private val cancelCallback: () -> Unit) {
-  fun cancel() {
+private class WatchedEel(val data: EelData, private val cancelCallback: (Boolean) -> Unit) {
+  fun cancel(resetRemoteWatches: Boolean = true) {
     try {
       // May throw UnsupportedOperationException if FileWatcherUtil.reset(eel) is called
-      cancelCallback()
+      cancelCallback(resetRemoteWatches)
     } catch (e: UnsupportedOperationException) {
       LOG.warn(e.message)
     }

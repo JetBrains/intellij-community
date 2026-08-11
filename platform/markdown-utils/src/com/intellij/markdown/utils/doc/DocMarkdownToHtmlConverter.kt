@@ -5,8 +5,8 @@ import com.intellij.lang.Language
 import com.intellij.lang.documentation.QuickDocHighlightingHelper
 import com.intellij.markdown.utils.doc.impl.DocFlavourDescriptor
 import com.intellij.markdown.utils.doc.impl.DocTagRenderer
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
@@ -214,7 +214,7 @@ object DocMarkdownToHtmlConverter {
         .generateHtml(DocTagRenderer(text))
     }
     catch (e: Exception) {
-      if (e is ControlFlowException) throw e
+      rethrowControlFlowException(e)
       LOG.warn(e.message, e)
       return null
     }

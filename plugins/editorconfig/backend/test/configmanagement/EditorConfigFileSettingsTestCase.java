@@ -30,7 +30,7 @@ public abstract class EditorConfigFileSettingsTestCase extends LightPlatformTest
     Utils.setEnabledInTests(true);
 
     // move test data to temp dir to ensure that IJ Project .editorConfig files don't affect tests
-    Path testDataDir = Paths.get(PathManagerEx.getHomePath(EditorConfigFileSettingsTestCase.class), getRelativePath(), getTestName(true));
+    Path testDataDir = Paths.get(PathManagerEx.getCommunityHomePath(), getRelativePath(), getTestName(true));
     // no need to delete temp dir - global temp dir is created for each test and deleted after test execution
     contentDir = Paths.get(FileUtil.getTempDirectory(), FileUtil.sanitizeFileName(getTestName(true), false));
     FileUtil.copyDir(testDataDir.toFile(), contentDir.toFile());

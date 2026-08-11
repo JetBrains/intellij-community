@@ -35,6 +35,7 @@ import org.junit.platform.suite.api.Suite;
   DataFlowInspection11Test.class,
   DataFlowInspection16Test.class,
   DataFlowInspection21Test.class,
+  DataFlowInspection26Test.class,
   DataFlowInspectionHeavyTest.class,
   DataFlowInspectionAncientTest.class,
   DataFlowInspectionCancellingTest.class,
@@ -79,7 +80,9 @@ import org.junit.platform.suite.api.Suite;
   DeleteRedundantUpdateFixTest.class,
   ReplaceTypeInCastFixTest.class,
   ReplaceMinMaxWithArgumentFixTest.class,
-  OptionalOfNullableMisuseInspectionTest.class
+  OptionalOfNullableMisuseInspectionTest.class,
+
+  DataFlowInspectionTrackerTest.class
   })
 public class DataFlowInspectionTestSuite {
 }

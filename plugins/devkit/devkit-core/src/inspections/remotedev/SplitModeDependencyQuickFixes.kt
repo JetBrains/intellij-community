@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.remotedev
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
@@ -18,10 +19,10 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiDocumentManager
@@ -31,10 +32,11 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.idea.devkit.DevKitBundle.message
 import org.jetbrains.idea.devkit.dom.Dependency
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeAnalysisFlags
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.getExplicitPlatformDependencyName
-import org.jetbrains.idea.devkit.inspections.remotedev.analysis.resolveDependencyKind
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.recognizeExplicitDependencyKind
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 
@@ -65,6 +67,7 @@ internal object SplitModeDependencyQuickFixes {
     return fixes.toTypedArray()
   }
 
+  // Removes unsuitable and adds desired module kind dependencies, broader refactoring than the createAddExplicitDependenciesFixes
   fun createMixedModuleFixes(module: Module, currentDescriptor: IdeaPlugin?): Array<LocalQuickFix> {
     val availableDependencies = getRuntimeDependencies(module, currentDescriptor)
     val fixes = mutableListOf<LocalQuickFix>(
@@ -77,7 +80,8 @@ internal object SplitModeDependencyQuickFixes {
     return fixes.toTypedArray()
   }
 
-  fun createNonNativePluginFixes(
+  // Only adds platform.frontend/backend dependencies and does not touch others - for modules that are implicitly fe/be only
+  fun createAddExplicitDependenciesFixes(
     module: Module,
     currentDescriptor: IdeaPlugin?,
     actualModuleKind: SplitModeApiRestrictionsService.ModuleKind,
@@ -152,14 +156,14 @@ internal object SplitModeDependencyQuickFixes {
     availableDependencies: DependenciesForFixAvailability,
     desiredModuleKind: SplitModeApiRestrictionsService.ModuleKind,
   ): Boolean {
-    return availableDependencies.runtimeDependencies.any { shouldRemoveDependency(it, desiredModuleKind) }
+    return availableDependencies.runtimeDependencies.any { shouldRemoveDependency(availableDependencies.project, it, desiredModuleKind) }
   }
 
   private fun hasCompileDependencyToRemove(
     availableDependencies: DependenciesForFixAvailability,
     desiredModuleKind: SplitModeApiRestrictionsService.ModuleKind,
   ): Boolean {
-    return availableDependencies.compileDependencies.any { shouldRemoveDependency(it, desiredModuleKind) }
+    return availableDependencies.compileDependencies.any { shouldRemoveDependency(availableDependencies.project, it, desiredModuleKind) }
   }
 
   private fun isExplicitDependencyActionable(
@@ -185,18 +189,29 @@ internal object SplitModeDependencyQuickFixes {
 
     override fun startInWriteAction(): Boolean = IntentionPreviewUtils.isIntentionPreviewActive()
 
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+      if (previewDescriptor.psiElement.containingFile !is XmlFile) {
+        return IntentionPreviewInfo.EMPTY
+      }
+      return super.generatePreview(project, previewDescriptor)
+    }
+
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val ideaPlugin = findQuickFixTargetDescriptor(descriptor) ?: return
       val module = findTargetModule(descriptor)
       val xmlFile = ideaPlugin.xmlElement?.containingFile ?: return
-      if (!IntentionPreviewUtils.prepareElementForWrite(xmlFile)) return
 
       if (IntentionPreviewUtils.isIntentionPreviewActive()) {
-        applyDependencyFixInPreview(ideaPlugin, module, desiredModuleKind)
+        if (IntentionPreviewUtils.isPreviewElement(xmlFile)) {
+          applyDependencyFixInPreview(ideaPlugin, module, desiredModuleKind)
+        }
         return
       }
 
-      val commandName: @NlsContexts.Command String = message("inspection.remote.dev.make.only.kind.dependencies.fix.progress.title", desiredModuleKind.id)
+      if (!IntentionPreviewUtils.prepareElementForWrite(xmlFile)) return
+
+      val commandName: @NlsContexts.Command String =
+        message("inspection.remote.dev.make.only.kind.dependencies.fix.progress.title", desiredModuleKind.id)
 
       runWithModalProgressBlocking(project, commandName) {
         applyDependencyFix(project, ideaPlugin, module, desiredModuleKind, commandName)
@@ -220,18 +235,29 @@ internal object SplitModeDependencyQuickFixes {
 
     override fun startInWriteAction(): Boolean = IntentionPreviewUtils.isIntentionPreviewActive()
 
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+      if (previewDescriptor.psiElement.containingFile !is XmlFile) {
+        return IntentionPreviewInfo.EMPTY
+      }
+      return super.generatePreview(project, previewDescriptor)
+    }
+
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val ideaPlugin = findQuickFixTargetDescriptor(descriptor) ?: return
       val module = findTargetModule(descriptor)
       val xmlFile = ideaPlugin.xmlElement?.containingFile ?: return
-      if (!IntentionPreviewUtils.prepareElementForWrite(xmlFile)) return
 
       if (IntentionPreviewUtils.isIntentionPreviewActive()) {
-        applyDependencyFixInPreview(ideaPlugin, module, desiredModuleKind)
+        if (IntentionPreviewUtils.isPreviewElement(xmlFile)) {
+          applyDependencyFixInPreview(ideaPlugin, module, desiredModuleKind)
+        }
         return
       }
 
-      val commandName: @NlsContexts.Command String = message("inspection.remote.dev.make.only.kind.dependencies.fix.progress.title", desiredModuleKind.id)
+      if (!IntentionPreviewUtils.prepareElementForWrite(xmlFile)) return
+
+      val commandName: @NlsContexts.Command String =
+        message("inspection.remote.dev.make.only.kind.dependencies.fix.progress.title", desiredModuleKind.id)
 
       runWithModalProgressBlocking(project, commandName) {
         applyDependencyFix(project, ideaPlugin, module, desiredModuleKind, commandName)
@@ -243,6 +269,7 @@ internal object SplitModeDependencyQuickFixes {
 private data class DependenciesForFixAvailability(
   val runtimeDependencies: Set<String>,
   val compileDependencies: Set<String>,
+  val project: Project,
 )
 
 private data class DependenciesRemovalPlan(
@@ -261,6 +288,7 @@ private fun getRuntimeDependencies(module: Module, currentDescriptor: IdeaPlugin
   return DependenciesForFixAvailability(
     runtimeDependencies = getRuntimeDependencies(targetDescriptor),
     compileDependencies = getCompileDependencies(module),
+    project = module.project,
   )
 }
 
@@ -332,7 +360,7 @@ private suspend fun applyDependencyFix(
         PsiDocumentManager.getInstance(project).commitAllDocuments()
       }
 
-    runJpsToBazelConverter(project)
+    runJpsToBazelConverterIfNeeded(project)
   }
 }
 
@@ -493,7 +521,7 @@ private fun buildMonolithDependenciesRemovalPlan(
   includeCompileDependencies: Boolean,
 ): DependenciesRemovalPlan {
   val runtimeDependenciesToRemove = getRuntimeDependencies(ideaPlugin)
-    .filter { shouldRemoveDependency(it, SplitModeApiRestrictionsService.ModuleKind.MONOLITH) }
+    .filter { shouldRemoveDependency(module?.project ?: ideaPlugin.xmlElement?.project, it, SplitModeApiRestrictionsService.ModuleKind.MONOLITH) }
     .toSet()
 
   val compileDependenciesToRemove = if (!includeCompileDependencies || module == null) {
@@ -501,7 +529,7 @@ private fun buildMonolithDependenciesRemovalPlan(
   }
   else {
     getCompileDependencies(module)
-      .filter { shouldRemoveDependency(it, SplitModeApiRestrictionsService.ModuleKind.MONOLITH) }
+      .filter { shouldRemoveDependency(module.project, it, SplitModeApiRestrictionsService.ModuleKind.MONOLITH) }
       .toSet()
   }
 
@@ -576,8 +604,8 @@ private fun addModuleDependency(module: Module?, dependencyName: String) {
   }
 }
 
-private fun runJpsToBazelConverter(project: Project) {
-  if (ApplicationManager.getApplication().isUnitTestMode) {
+private fun runJpsToBazelConverterIfNeeded(project: Project) {
+  if (ApplicationManager.getApplication().isUnitTestMode || !SplitModeAnalysisFlags.isRunJpsToBazelInQuickFixEnabled()) {
     return
   }
 
@@ -587,10 +615,11 @@ private fun runJpsToBazelConverter(project: Project) {
 }
 
 private fun shouldRemoveDependency(
+  project: Project?,
   dependencyName: String,
   desiredModuleKind: SplitModeApiRestrictionsService.ModuleKind,
 ): Boolean {
-  val dependencyKind = resolveDependencyKindForQuickFix(dependencyName)
+  val dependencyKind = resolveDependencyKindForQuickFix(project, dependencyName)
   return when (desiredModuleKind) {
     SplitModeApiRestrictionsService.ModuleKind.FRONTEND -> {
       dependencyKind == SplitModeApiRestrictionsService.ModuleKind.BACKEND
@@ -643,7 +672,7 @@ private fun resolveRuntimeDependencyKind(
   if (dependencyModule != null) {
     return SplitModeModuleKindResolver.getOrComputeModuleAnalysis(dependencyModule).resolvedModuleKind.kind
   }
-  return resolveDependencyKindForQuickFix(dependencyName)
+  return resolveDependencyKindForQuickFix(dependencyDescriptor?.xmlElement?.project, dependencyName)
 }
 
 private fun resolveCompileDependencyKind(
@@ -653,15 +682,18 @@ private fun resolveCompileDependencyKind(
   if (dependencyModule != null) {
     return SplitModeModuleKindResolver.getOrComputeModuleAnalysis(dependencyModule).resolvedModuleKind.kind
   }
-  return resolveDependencyKindForQuickFix(dependencyName)
+  return resolveDependencyKindForQuickFix(null, dependencyName)
 }
 
-private fun resolveDependencyKindForQuickFix(dependencyName: String): SplitModeApiRestrictionsService.ModuleKind? {
-  val dependencyKind = resolveDependencyKind(dependencyName)
+private fun resolveDependencyKindForQuickFix(
+  project: Project?,
+  dependencyName: String,
+): SplitModeApiRestrictionsService.ModuleKind? {
+  val dependencyKind = recognizeExplicitDependencyKind(dependencyName)
   if (dependencyKind != null) {
     return dependencyKind
   }
-  return SplitModeApiRestrictionsService.getInstance().getPredefinedDependencyKind(dependencyName)
+  return project?.let { SplitModeApiRestrictionsService.getInstance(it).getPredefinedDependencyKind(dependencyName) }
 }
 
 private fun resolveDescriptorDependencyKind(

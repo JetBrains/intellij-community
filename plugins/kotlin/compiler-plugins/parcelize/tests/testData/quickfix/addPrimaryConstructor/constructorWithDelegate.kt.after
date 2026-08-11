@@ -1,6 +1,6 @@
 // "Add empty primary constructor" "true"
 // WITH_STDLIB
-// K2_ERROR: 'Parcelable' must have a primary constructor.
+// K2_ERROR: PARCELABLE_SHOULD_HAVE_PRIMARY_CONSTRUCTOR
 
 package com.myapp.activity
 

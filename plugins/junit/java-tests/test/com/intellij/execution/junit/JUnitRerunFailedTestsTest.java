@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
@@ -16,6 +16,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.rt.execution.TestListenerProtocol;
 import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.TestDataProvider;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -161,6 +162,53 @@ public class JUnitRerunFailedTestsTest extends LightJavaCodeInsightFixtureTestCa
     assertNotNull(location);
     PsiElement element = location.getPsiElement();
     assertEquals(aClass, element);
+  }
+
+  public void testRerunWholeClassOnClassConfigurationFailure() {
+    myFixture.addClass("""
+                         public class MyTest extends junit.framework.TestCase {
+                             public void testFoo() {}
+                         }""");
+    final SMTestProxy testProxy = new SMTestProxy(TestListenerProtocol.CLASS_CONFIGURATION, false, "java:suite://MyTest");
+    final Project project = getProject();
+    final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
+    testProxy.setLocator(JavaTestLocator.INSTANCE);
+
+    final Location<?> location = testProxy.getLocation(project, searchScope);
+    assertNotNull(location);
+    assertInstanceOf(location.getPsiElement(), PsiClass.class);
+
+    //a class-level configuration failure reruns the whole class: entry has no comma
+    assertEquals("MyTest", TestMethods.getTestPresentation(testProxy, project, searchScope));
+  }
+
+  public void testRerunWholeNestedClassOnClassConfigurationFailure() {
+    myFixture.addClass("""
+                         public class Outer {
+                             public static class Nested extends junit.framework.TestCase {
+                                 public void testFoo() {}
+                             }
+                         }""");
+    final SMTestProxy testProxy = new SMTestProxy(TestListenerProtocol.CLASS_CONFIGURATION, false, "java:suite://Outer$Nested");
+    final Project project = getProject();
+    final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
+    testProxy.setLocator(JavaTestLocator.INSTANCE);
+
+    assertEquals("Outer$Nested", TestMethods.getTestPresentation(testProxy, project, searchScope));
+  }
+
+  public void testClassConfigurationNameWithMethodLocationStillRerunsMethod() {
+    myFixture.addClass("""
+                         public class MyTest extends junit.framework.TestCase {
+                             public void testFoo() {}
+                         }""");
+    //a "Class Configuration" node whose location is a method (e.g. a @TestFactory container) must keep the method mapping
+    final SMTestProxy testProxy = new SMTestProxy(TestListenerProtocol.CLASS_CONFIGURATION, false, "java:test://MyTest/testFoo");
+    final Project project = getProject();
+    final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
+    testProxy.setLocator(JavaTestLocator.INSTANCE);
+
+    assertEquals("MyTest,testFoo", TestMethods.getTestPresentation(testProxy, project, searchScope));
   }
 
   public void testPresentationForJunit5MethodsWithParameters() {

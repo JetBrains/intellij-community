@@ -34,7 +34,6 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -45,6 +44,10 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.Credentials
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
+import org.jetbrains.intellij.build.dependencies.PreloadedDownloads
+import org.jetbrains.intellij.build.dependencies.archiveCacheKey
+import org.jetbrains.intellij.build.dependencies.extractToCacheLocation
 import java.io.IOException
 import java.net.SocketException
 import java.nio.channels.FileChannel
@@ -155,7 +158,7 @@ internal inline fun <T> Span.use(operation: (Span) -> T): T {
 // copy from util, do not make public
 internal suspend inline fun <T> SpanBuilder.useWithScope(crossinline operation: suspend (Span) -> T): T {
   val span = startSpan()
-  return withContext(Context.current().with(span).asContextElement()) {
+  return withContext(span.asContextElement()) {
     span.use {
       operation(span)
     }
@@ -202,6 +205,53 @@ fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependencie
 
 suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot): Path {
   return downloadFileToCacheLocation(url = url, communityRoot = communityRoot, authConfigSettings = null)
+}
+
+/**
+ * A build dependency ready to be read, and its SHA-256 when the build knows it without hashing.
+ *
+ * [sha256] is exactly the digest declared for a preloaded Bazel input; it is `null` for a file that
+ * came from the network, whose content nothing has vouched for beyond the download itself.
+ */
+data class ResolvedDownload(@JvmField val file: Path, @JvmField val sha256: String?)
+
+/**
+ * Resolves [url] to a file that may only be read.
+ *
+ * A preloaded Bazel input is handed over where it already lies, in the runfiles tree, instead of being
+ * copied into the download cache first. That tree can be read-only, so nothing may write to the
+ * returned path or beside it - a caller that needs a writable neighbourhood wants
+ * [downloadFileToCacheLocation] instead.
+ */
+suspend fun resolveFileForReading(url: String, communityRoot: BuildDependenciesCommunityRoot): ResolvedDownload {
+  val preloaded = withContext(Dispatchers.IO) {
+    PreloadedDownloads.findByUrl(url)
+  }
+  if (preloaded != null) {
+    return ResolvedDownload(file = preloaded.source, sha256 = preloaded.sha256)
+  }
+  return ResolvedDownload(file = downloadFileToCacheLocation(url = url, communityRoot = communityRoot), sha256 = null)
+}
+
+/**
+ * Extracts the archive at [url] into the download cache, reading a preloaded Bazel input straight from
+ * the runfiles tree.
+ *
+ * The extraction is keyed by content whenever the content is known, so it survives the archive turning
+ * up at a different path - which a runfile does, per test target and per sandbox.
+ */
+suspend fun resolveAndExtractToCacheLocation(
+  url: String,
+  communityRoot: BuildDependenciesCommunityRoot,
+  vararg options: BuildDependenciesExtractOptions,
+): Path {
+  val resolved = resolveFileForReading(url = url, communityRoot = communityRoot)
+  return extractToCacheLocation(
+    archiveFile = resolved.file,
+    communityRoot = communityRoot,
+    cacheKey = archiveCacheKey(archiveFile = resolved.file, sha256 = resolved.sha256),
+    options = options,
+  )
 }
 
 suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot, token: String): Path {
@@ -253,7 +303,8 @@ private suspend fun downloadFileToCacheLocation(
 ): Path = withContext(Dispatchers.IO) {
   BuildDependenciesDownloader.cleanUpIfRequired(communityRoot)
 
-  val target = BuildDependenciesDownloader.getTargetFile(communityRoot, url)
+  val preloaded = PreloadedDownloads.findByUrl(url)
+  val target = BuildDependenciesDownloader.getTargetFile(communityRoot, url, preloaded?.sha256)
   val targetPath = target.toString()
   fileLocks.getLock(targetPath).withLock {
     if (Files.exists(target)) {
@@ -270,6 +321,18 @@ private suspend fun downloadFileToCacheLocation(
       }
       catch (e: IOException) {
         Span.current().addEvent("update asset file modification time failed: $e")
+      }
+      return@withLock target
+    }
+
+    if (preloaded != null) {
+      val tempFile = Files.createTempFile(target.parent, target.fileName.toString(), ".preloaded.tmp")
+      try {
+        Files.copy(preloaded.source, tempFile, StandardCopyOption.REPLACE_EXISTING)
+        Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+      }
+      finally {
+        Files.deleteIfExists(tempFile)
       }
       return@withLock target
     }

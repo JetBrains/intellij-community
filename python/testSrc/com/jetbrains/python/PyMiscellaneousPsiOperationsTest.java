@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,6 +39,8 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyMiscellaneousPsiOperationsTest extends PyTestCase {
 
   public void testQualifiedNameExtraction() {

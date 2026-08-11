@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.base.test` start
-
 jvm_library(
     name = "base-test",
     srcs = glob(
@@ -11,7 +10,11 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.base.test",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//libraries/kotlin/reflect"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlin/reflect",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
+    ],
 )
 
 jvm_library(
@@ -43,7 +46,10 @@ jvm_library(
         "//plugins/kotlin/tests-common:common-tests_test_lib",
         "//plugins/kotlin/base/testFramework",
         "//plugins/kotlin/base/testFramework:testFramework_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin/references",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//plugins/kotlin/test-framework",
@@ -91,8 +97,6 @@ jvm_library(
         "//libraries/guava",
         "//libraries/guava:guava_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
-        "//plugins/kotlin/code-insight/line-markers-shared:kotlin-code-insight-line-markers-shared",
-        "//plugins/kotlin/code-insight/line-markers-shared:kotlin-code-insight-line-markers-shared_test_lib",
         "//plugins/kotlin/base/facet",
         "//plugins/kotlin/base/facet:facet_test_lib",
         "//platform/lang-core",
@@ -104,11 +108,10 @@ jvm_library(
         "//java/java-runtime:rt_test_lib",
         "//plugins/kotlin/code-insight/utils",
         "//plugins/kotlin/code-insight/utils:utils_test_lib",
-        "@lib//:kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
         "//plugins/groovy/groovy-psi:psi",
         "//plugins/groovy/groovy-psi:psi_test_lib",
-        "//plugins/kotlin/inspections",
-        "//plugins/kotlin/inspections:inspections_test_lib",
         "//platform/code-style-api:codeStyle",
         "//platform/code-style-api:codeStyle_test_lib",
         "//plugins/kotlin/formatter/minimal",
@@ -119,13 +122,14 @@ jvm_library(
         "//libraries/gson:gson_test_lib",
         "//plugins/kotlin/code-insight/api",
         "//plugins/kotlin/code-insight/api:api_test_lib",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//plugins/kotlin/frontend-independent",
         "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
         "//plugins/kotlin/jvm/shared",
         "//plugins/kotlin/jvm/shared:shared_test_lib",
-        "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
-        "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
         "//java/execution/openapi:java-execution",
@@ -150,13 +154,14 @@ jvm_library(
         "//java/idea-ui:ui_test_lib",
         "//java/java-syntax:syntax",
         "//java/java-syntax:syntax_test_lib",
-        "@lib//:jet_check",
+        "//libraries/jetcheck",
+        "//libraries/jetcheck:jetcheck_test_lib",
         "//platform/structure-view-impl:structureView",
         "//platform/structure-view-impl:structureView_test_lib",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
         "//java/java-impl-refactorings:impl-refactorings",
         "//java/java-impl-refactorings:impl-refactorings_test_lib",
         "//java/java-tests:tests",
@@ -209,6 +214,14 @@ jvm_library(
         "//platform/testRunner:testRunner_test_lib",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
+        "//plugins/kotlin/code-insight/line-markers",
+        "//plugins/kotlin/code-insight/line-markers:line-markers_test_lib",
+        "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
+        "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.test` end
@@ -223,7 +236,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.base.test` end
 
 ### auto-generated section `test intellij.kotlin.base.test` start
-
 jps_test(
     name = "base-test_test",
     runtime_deps = [":base-test_test_lib"],

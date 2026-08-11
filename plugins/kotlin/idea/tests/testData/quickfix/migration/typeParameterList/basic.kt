@@ -1,5 +1,5 @@
 // "Migrate type parameter list syntax" "true"
-// K2_ERROR: Type parameters must be placed before function name.
+// K2_ERROR: DEPRECATED_TYPE_PARAMETER_SYNTAX
 fun f<caret><T>() {}
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MigrateTypeParameterListFix

@@ -48,12 +48,12 @@ project.iosX64Test
 project.jsMain
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
-    compilerSettings = -main call
+    compilerSettings = -main call -nopack
 
 project.jsTest
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
-    compilerSettings = -main call
+    compilerSettings = -main call -nopack
 
 project.jvmMain
     languageLevel = 2.2

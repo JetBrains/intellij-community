@@ -15,9 +15,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
   override fun initializeMetadata() {
     val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
     val primitiveTypeListNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "List")
-
     var typeMetadata: StorageTypeMetadata
-
     typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.util.indexing.testEntities.TestModuleEntitySource",
                                                      properties = listOf(OwnPropertyMetadata(isComputable = false,
                                                                                              isKey = false,
@@ -29,9 +27,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                  fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
                                                                                              withDefault = false)),
                                                      supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
-
     addMetadata(typeMetadata)
-
     typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.util.indexing.testEntities.ReferredTestEntityId",
                                                     properties = listOf(OwnPropertyMetadata(isComputable = false,
                                                                                             isKey = false,
@@ -46,9 +42,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                             valueType = primitiveTypeStringNotNullable,
                                                                                             withDefault = false)),
                                                     supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
-
     addMetadata(typeMetadata)
-
     typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.util.indexing.testEntities.WithReferenceTestEntityId",
                                                     properties = listOf(OwnPropertyMetadata(isComputable = false,
                                                                                             isKey = false,
@@ -63,9 +57,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                             valueType = primitiveTypeStringNotNullable,
                                                                                             withDefault = false)),
                                                     supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.util.indexing.testEntities.ChildTestEntity",
                                   entityDataFqName = "com.intellij.util.indexing.testEntities.impl.ChildTestEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -94,9 +86,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.util.indexing.testEntities.ExcludedTestEntity",
                                   entityDataFqName = "com.intellij.util.indexing.testEntities.impl.ExcludedTestEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -118,9 +108,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.util.indexing.testEntities.IndexingTestEntity",
                                   entityDataFqName = "com.intellij.util.indexing.testEntities.impl.IndexingTestEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -154,9 +142,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.util.indexing.testEntities.IndexingTestEntity2",
                                   entityDataFqName = "com.intellij.util.indexing.testEntities.impl.IndexingTestEntity2Data",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -190,9 +176,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.util.indexing.testEntities.NonIndexableTestEntity",
                                   entityDataFqName = "com.intellij.util.indexing.testEntities.impl.NonIndexableTestEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -214,9 +198,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.util.indexing.testEntities.NonRecursiveTestEntity",
                                   entityDataFqName = "com.intellij.util.indexing.testEntities.impl.NonRecursiveTestEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -238,9 +220,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.util.indexing.testEntities.OneMoreWithReferenceTestEntity",
                                   entityDataFqName = "com.intellij.util.indexing.testEntities.impl.OneMoreWithReferenceTestEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -293,9 +273,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.util.indexing.testEntities.ParentTestEntity",
                                   entityDataFqName = "com.intellij.util.indexing.testEntities.impl.ParentTestEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -341,9 +319,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.util.indexing.testEntities.ReferredTestEntity",
                                   entityDataFqName = "com.intellij.util.indexing.testEntities.impl.ReferredTestEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
@@ -397,9 +373,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.util.indexing.testEntities.SiblingEntity",
                                   entityDataFqName = "com.intellij.util.indexing.testEntities.impl.SiblingEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -428,9 +402,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.util.indexing.testEntities.WithReferenceTestEntity",
                                   entityDataFqName = "com.intellij.util.indexing.testEntities.impl.WithReferenceTestEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
@@ -515,7 +487,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
   }
 
@@ -527,12 +498,12 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.NonIndexableTestEntity", metadataHash = -1869731996)
     addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.NonRecursiveTestEntity", metadataHash = 1038466544)
     addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.OneMoreWithReferenceTestEntity", metadataHash = -1353528005)
+    addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.DependencyItem", metadataHash = 829948846)
+    addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.ReferredTestEntityId", metadataHash = 1649223808)
     addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.ParentTestEntity", metadataHash = -2109221898)
     addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.ReferredTestEntity", metadataHash = 471114380)
     addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.SiblingEntity", metadataHash = 1415423063)
     addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.WithReferenceTestEntity", metadataHash = 579056395)
-    addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.DependencyItem", metadataHash = 829948846)
-    addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.ReferredTestEntityId", metadataHash = 1649223808)
     addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.WithReferenceTestEntityId", metadataHash = 243998870)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1279624819)
     addMetadataHash(typeFqn = "com.intellij.util.indexing.testEntities.TestModuleEntitySource", metadataHash = -1815413801)

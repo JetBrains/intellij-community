@@ -15,69 +15,89 @@
  */
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.importProjectsAsync
+import com.intellij.maven.testFramework.fixtures.initProjectsManager
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.setIgnoredFilesPathForNextImport
+import com.intellij.maven.testFramework.fixtures.updateAllProjects
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class IgnoresImportingTest : MavenMultiVersionImportingTestCase() {
-  override fun setUp() {
-    super.setUp()
-    initProjectsManager(false)
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class IgnoresImportingTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
+  @BeforeEach
+  fun setUp() {
+    maven.initProjectsManager(false)
   }
 
   @Test
   fun testDoNotImportIgnoredProjects() = runBlocking {
-    val p1 = createModulePom("project1",
+    val p1 = maven.createModulePom("project1",
                              """
                                        <groupId>test</groupId>
                                        <artifactId>project1</artifactId>
                                        <version>1</version>
                                        """.trimIndent())
 
-    val p2 = createModulePom("project2",
+    val p2 = maven.createModulePom("project2",
                              """
                                        <groupId>test</groupId>
                                        <artifactId>project2</artifactId>
                                        <version>1</version>
                                        """.trimIndent())
 
-    setIgnoredFilesPathForNextImport(listOf(p1.getPath()))
-    importProjects(p1, p2)
-    assertModules("project2")
+    maven.setIgnoredFilesPathForNextImport(listOf(p1.getPath()))
+    maven.importProjectsAsync(p1, p2)
+    maven.assertModules("project2")
   }
 
   @Test
   fun testAddingAndRemovingModulesWhenIgnoresChange() = runBlocking {
-    val p1 = createModulePom("project1",
+    val p1 = maven.createModulePom("project1",
                              """
                                        <groupId>test</groupId>
                                        <artifactId>project1</artifactId>
                                        <version>1</version>
                                        """.trimIndent())
 
-    val p2 = createModulePom("project2",
+    val p2 = maven.createModulePom("project2",
                              """
                                        <groupId>test</groupId>
                                        <artifactId>project2</artifactId>
                                        <version>1</version>
                                        """.trimIndent())
-    importProjects(p1, p2)
-    assertModules("project1", "project2")
+    maven.importProjectsAsync(p1, p2)
+    maven.assertModules("project1", "project2")
 
-    setIgnoredFilesPathForNextImport(listOf(p1.getPath()))
+    maven.setIgnoredFilesPathForNextImport(listOf(p1.getPath()))
     doReadAndImport()
-    assertModules("project2")
+    maven.assertModules("project2")
 
-    setIgnoredFilesPathForNextImport(listOf(p2.getPath()))
+    maven.setIgnoredFilesPathForNextImport(listOf(p2.getPath()))
     doReadAndImport()
-    assertModules("project1")
+    maven.assertModules("project1")
 
-    setIgnoredFilesPathForNextImport(emptyList<String>())
+    maven.setIgnoredFilesPathForNextImport(emptyList<String>())
     doReadAndImport()
-    assertModules("project1", "project2")
+    maven.assertModules("project1", "project2")
   }
 
   private suspend fun doReadAndImport() {
-    updateAllProjects()
+    maven.updateAllProjects()
   }
 }

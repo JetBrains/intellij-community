@@ -554,6 +554,20 @@ public class KotlinTests extends BazelIncBuildTest {
   }
 
   @Test
+  public void testCompanionAddedCapturesShortName() throws Exception {
+    // members of a newly added companion object are a closer resolution scope than top-level declarations:
+    // an unqualified call in a subclass re-binds from a top-level function to the companion member
+    performTest("kotlin/pureKotlin/companionAddedCapturesShortName").assertFailure();
+  }
+
+  @Test
+  public void testDslMarkerAdded() throws Exception {
+    // @DslMarker added to an annotation class makes outer implicit receivers inaccessible in nested
+    // lambdas whose receivers carry the same marker (dsl scope violation) — zero bytecode delta at use sites
+    performTest("kotlin/pureKotlin/dslMarkerAdded").assertFailure();
+  }
+
+  @Test
   public void testRemoveAndRestoreCompanion() throws Exception {
     performTest(2, "kotlin/pureKotlin/removeAndRestoreCompanion").assertSuccessful();
   }
@@ -589,8 +603,22 @@ public class KotlinTests extends BazelIncBuildTest {
   }
 
   @Test
+  public void testVarargBecameArray() throws Exception {
+    // `vararg x: T` -> `x: Array<T>` clears ACC_VARARGS with an unchanged descriptor;
+    // vararg-style call sites must be re-checked
+    performTest("kotlin/pureKotlin/varargBecameArray").assertFailure();
+  }
+
+  @Test
   public void testRemoveImportedRootProperty() throws Exception {
     performTest("kotlin/pureKotlin/removeImportedRootProperty").assertFailure();
+  }
+
+  @Test
+  public void testTopLevelPropertyRemovedUnusedImport() throws Exception {
+    // an unused `import lib.p` still resolves at compile time: removing the top-level property must
+    // recompile the importer (importable top-level/companion properties get lookup affection on removal)
+    performTest("kotlin/pureKotlin/topLevelPropertyRemovedUnusedImport").assertFailure();
   }
 
   @Test
@@ -861,6 +889,13 @@ public class KotlinTests extends BazelIncBuildTest {
   }
 
   @Test
+  public void testEnumEntryRemovedUnusedImport() throws Exception {
+    // Kotlin enum entry removed while a consumer holds an UNUSED entry import: no FieldUsage exists,
+    // so the consumer is protected by the removed-field Kotlin lookup affection for enum-flagged fields
+    performTest("kotlin/pureKotlin/enumEntryRemovedUnusedImport").assertFailure();
+  }
+
+  @Test
   public void testEnumMemberChanged() throws Exception {
     performTest(2, "kotlin/classHierarchyAffected/enumMemberChanged").assertSuccessful();
   }
@@ -1029,6 +1064,14 @@ public class KotlinTests extends BazelIncBuildTest {
   @Test
   public void testInvokeOverFun() throws Exception {
     performTest(2, "kotlin/resolution/invokeOverFun").assertSuccessful();
+  }
+
+  @Test
+  public void testWidenedConstructorVsFun() throws Exception {
+    // a constructor widened out of private visibility becomes a resolution candidate for `Foo(...)` calls
+    // currently bound to a same-named function; the golden includes fooFun.kt as a benign extra recompile
+    // (the declarer of `fun Foo` holds the same name lookup — indistinguishable from a reference at lookup grain)
+    performTest("kotlin/resolution/widenedConstructorVsFun").assertFailure();
   }
 
   // inlineFunCallSite tests
@@ -1275,6 +1318,15 @@ public class KotlinTests extends BazelIncBuildTest {
   // withJava/javaUsedInKotlin tests
 
   @Test
+  public void testAddClassStarImportCapture() throws Exception {
+    // Kotlin consumer with `import ppp.*`: adding java class ppp.Helper captures the short name previously
+    // bound via `import qqq.*` (ambiguity). Relies on kotlinc >= 2.4 ImportTracker reporting all-under
+    // imports with the ".*" suffix (FirImportResolveTransformer), which makes the on-demand import
+    // channel live for Kotlin consumers
+    performTest("kotlin/withJava/javaUsedInKotlin/addClassStarImportCapture").assertFailure();
+  }
+
+  @Test
   public void testChangeFieldType() throws Exception {
     performTest("kotlin/withJava/javaUsedInKotlin/changeFieldType").assertSuccessful();
   }
@@ -1342,6 +1394,50 @@ public class KotlinTests extends BazelIncBuildTest {
   @Test
   public void testJavaEnumEntryRemoved() throws Exception {
     performTest(2, "kotlin/withJava/javaUsedInKotlin/enumEntryRemoved").assertSuccessful();
+  }
+
+  @Test
+  public void testJavaFieldShadowsExtensionProperty() throws Exception {
+    // an added Java member field wins over a same-named Kotlin extension property in resolution;
+    // added non-private fields fire member lookup affection over the owner and its subclasses
+    performTest("kotlin/withJava/javaUsedInKotlin/javaFieldShadowsExtensionProperty").assertFailure();
+  }
+
+  @Test
+  public void testKotlinUnusedStaticImportMethodDeleted() throws Exception {
+    // Java static method removed while a Kotlin consumer holds an UNUSED static-member import:
+    // no MethodUsage exists, so the consumer is protected by the removed-member Kotlin lookup affection
+    performTest("kotlin/withJava/javaUsedInKotlin/kotlinUnusedStaticImportMethodDeleted").assertFailure();
+  }
+
+  @Test
+  public void testAddStaticMemberStarImportCapture() throws Exception {
+    // a Java static method is added, capturing the unqualified name a Kotlin consumer resolves
+    // through another star import; protected by ImportStaticOnDemandUsage now emitted for Kotlin
+    // '.*' imports (a Kotlin class-qualified star import is the union of Java's type- and
+    // static-import-on-demand, so it maps to BOTH on-demand usage kinds)
+    performTest("kotlin/withJava/javaUsedInKotlin/addStaticMemberStarImportCapture").assertFailure();
+  }
+
+  @Test
+  public void testMethodBecameStaticStarImportCapture() throws Exception {
+    // a Java instance method becomes static, joining the scope of a Kotlin consumer's class-qualified
+    // star import and making the unqualified call ambiguous vs another star import
+    performTest("kotlin/withJava/javaUsedInKotlin/methodBecameStaticStarImportCapture").assertFailure();
+  }
+
+  @Test
+  public void testAddStaticFieldStarImportCapture() throws Exception {
+    // a Java static field is added, capturing the unqualified name a Kotlin consumer resolves
+    // through another star import
+    performTest("kotlin/withJava/javaUsedInKotlin/addStaticFieldStarImportCapture").assertFailure();
+  }
+
+  @Test
+  public void testFieldBecameStaticStarImportCapture() throws Exception {
+    // a Java instance field becomes static, joining the scope of a Kotlin consumer's class-qualified
+    // star import and making the unqualified reference ambiguous vs another star import
+    performTest("kotlin/withJava/javaUsedInKotlin/fieldBecameStaticStarImportCapture").assertFailure();
   }
 
   @Test
@@ -1775,5 +1871,291 @@ public class KotlinTests extends BazelIncBuildTest {
   @Test
   public void testKotlinToJava() throws Exception {
     performTest("kotlin/withJava/convertBetweenJavaAndKotlin/kotlinToJava").assertSuccessful();
+  }
+
+  @Test
+  public void testParamNullabilityMoved() throws Exception {
+    performTest("kotlin/withJava/javaUsedInKotlin/paramNullabilityMoved").assertFailure();
+  }
+
+  @Test
+  public void testSealedModifierRemoved() throws Exception {
+    performTest("kotlin/sealed/sealedModifierRemoved").assertFailure();
+  }
+
+  @Test
+  public void testStaticImportedConstantChanged() throws Exception {
+    performTest("kotlin/withJava/javaUsedInKotlin/staticImportedConstantChanged").assertSuccessful();
+  }
+
+  @Test
+  public void testBridgeRemoved() throws Exception {
+    performTest("kotlin/classHierarchyAffected/bridgeRemoved").assertSuccessful();
+  }
+
+  @Test
+  public void testModuleInfoAddedToKotlinTarget() throws Exception {
+    performTest("kotlin/jpms/moduleInfoAddedToKotlinTarget").assertSuccessful();
+  }
+
+  @Test
+  public void testRemoveModuleExportsKotlinConsumer() throws Exception {
+    performTest("kotlin/jpms/removeModuleExportsKotlinConsumer").assertFailure();
+  }
+
+  @Test
+  public void testExportsNarrowedToQualified() throws Exception {
+    // 'exports p' -> 'exports p to C': non-listed Kotlin reader B recompiles and fails, listed reader C stays untouched
+    performTest("kotlin/jpms/exportsNarrowedToQualified").assertFailure();
+  }
+
+  @Test
+  public void testFileFacadeBecomesMultifile() throws Exception {
+    performTest("kotlin/pureKotlin/fileFacadeBecomesMultifile").assertSuccessful();
+  }
+
+  @Test
+  public void testClassBecameAbstract() throws Exception {
+    performTest("kotlin/classModifiers/classBecameAbstract").assertFailure();
+  }
+
+  @Test
+  public void testClassBecameSealed() throws Exception {
+    performTest("kotlin/sealed/classBecameSealed").assertFailure();
+  }
+
+  @Test
+  public void testMethodMovedToCompanion() throws Exception {
+    performTest("kotlin/pureKotlin/methodMovedToCompanion").assertFailure();
+  }
+
+  @Test
+  public void testArgumentsBecameNotNull() throws Exception {
+    performTest("kotlin/pureKotlin/argumentsBecameNotNull").assertFailure();
+  }
+
+  @Test
+  public void testJvmOverloadsRemoved() throws Exception {
+    performTest("kotlin/withJava/kotlinUsedInJava/jvmOverloadsRemoved").assertFailure();
+  }
+
+  @Test
+  public void testParameterBecameReceiver() throws Exception {
+    performTest("kotlin/pureKotlin/parameterBecameReceiver").assertFailure();
+  }
+
+  @Test
+  public void testContextReceiverAddedToFunction() throws Exception {
+    performTest("kotlin/pureKotlin/contextReceiverAddedToFunction").assertFailure();
+  }
+
+  @Test
+  public void testInternalFunBecamePublic() throws Exception {
+    performTest("kotlin/pureKotlin/internalFunBecamePublic").assertSuccessful();
+  }
+
+  @Test
+  public void testFunctionBecamePrivate() throws Exception {
+    performTest("kotlin/pureKotlin/functionBecamePrivate").assertFailure();
+  }
+
+  @Test
+  public void testVarBecameVal() throws Exception {
+    performTest("kotlin/pureKotlin/varBecameVal").assertFailure();
+  }
+
+  @Test
+  public void testPropertyBecameNotNull() throws Exception {
+    performTest("kotlin/pureKotlin/propertyBecameNotNull").assertFailure();
+  }
+
+  @Test
+  public void testValConstValRoundtrip() throws Exception {
+    performTest(2, "kotlin/pureKotlin/valConstValRoundtrip").assertSuccessful();
+  }
+
+  @Test
+  public void testCustomSetterAddedThenPrivate() throws Exception {
+    performTest(2, "kotlin/pureKotlin/customSetterAddedThenPrivate").assertFailure();
+  }
+
+  @Test
+  public void testJvmFieldRemoved() throws Exception {
+    performTest("kotlin/withJava/kotlinUsedInJava/jvmFieldRemoved").assertFailure();
+  }
+
+  @Test
+  public void testExtensionPropertyReceiverChanged() throws Exception {
+    performTest("kotlin/pureKotlin/extensionPropertyReceiverChanged").assertFailure();
+  }
+
+  @Test
+  public void testContextReceiverAddedToProperty() throws Exception {
+    performTest("kotlin/pureKotlin/contextReceiverAddedToProperty").assertFailure();
+  }
+
+  @Test
+  public void testTypealiasBecamePrivate() throws Exception {
+    performTest("kotlin/pureKotlin/typealiasBecamePrivate").assertFailure();
+  }
+
+  @Test
+  public void testTypealiasBecamePublicAmbiguity() throws Exception {
+    // a widened alias enters importing scopes like an added one: a star-importing consumer's
+    // previously-unambiguous short name becomes ambiguous
+    performTest("kotlin/pureKotlin/typealiasBecamePublicAmbiguity").assertFailure();
+  }
+
+  @Test
+  public void testTypealiasBecamePublicCapture() throws Exception {
+    // the package scope outranks star imports: a widened alias silently captures a same-package
+    // consumer's name currently bound to a star-imported class (no ambiguity, clean re-resolution)
+    performTest("kotlin/pureKotlin/typealiasBecamePublicCapture").assertFailure();
+  }
+
+  @Test
+  public void testTypealiasChainCascade() throws Exception {
+    // typealias A = B, typealias B = String -> Int: A's underlying type still reads `B`, but its
+    // fully expanded type changes when its file recompiles — the expandedType diff drives the
+    // multi-round cascade to A's users
+    performTest("kotlin/pureKotlin/typealiasChainCascade").assertFailure();
+  }
+
+  @Test
+  public void testTypealiasDeprecatedError() throws Exception {
+    // @Deprecated(level = ERROR) on a typealias lives only in metadata; the alias annotations diff
+    // affects alias-name lookups so every use site surfaces the error
+    performTest("kotlin/pureKotlin/typealiasDeprecatedError").assertFailure();
+  }
+
+  @Test
+  public void testTypealiasFileRemoved() throws Exception {
+    // alias users reference the expanded type in bytecode and hold no dependency on the declaring
+    // node: whole-file deletion must affect alias-name lookups explicitly
+    performTest("kotlin/pureKotlin/typealiasFileRemoved").assertFailure();
+  }
+
+  @Test
+  public void testFunctionTypeParamBecameSam() throws Exception {
+    performTest("kotlin/pureKotlin/functionTypeParamBecameSam").assertSuccessful();
+  }
+
+  @Test
+  public void testThrowsAdded() throws Exception {
+    performTest("kotlin/withJava/kotlinUsedInJava/throwsAdded").assertFailure();
+  }
+
+  @Test
+  public void testComponentOrderSwapped() throws Exception {
+    performTest("kotlin/dataClasses/componentOrderSwapped").assertSuccessful();
+  }
+
+  @Test
+  public void testExtensionPropertyReceiverNullabilityChanged() throws Exception {
+    performTest("kotlin/pureKotlin/extensionPropertyReceiverNullabilityChanged").assertFailure();
+  }
+
+  @Test
+  public void testTypeParameterBoundBecameNonNullable() throws Exception {
+    performTest("kotlin/pureKotlin/typeParameterBoundBecameNonNullable").assertFailure();
+  }
+
+  @Test
+  public void testDefinitelyNonNullableAdded() throws Exception {
+    performTest("kotlin/pureKotlin/definitelyNonNullableAdded").assertFailure();
+  }
+
+  // metadata-only Kotlin ABI changes (byte-identical JVM signatures)
+
+  @Test
+  public void testNamedArgumentParameterRenamed() throws Exception {
+    // parameter names live only in metadata; renames (name-SET changes) break named-argument call sites
+    performTest("kotlin/pureKotlin/namedArgumentParameterRenamed").assertFailure();
+  }
+
+  @Test
+  public void testDefaultValueMovedBetweenParameters() throws Exception {
+    // the $default bridges keep their signatures; a parameter LOSING its default breaks omitting call sites
+    performTest("kotlin/pureKotlin/defaultValueMovedBetweenParameters").assertFailure();
+  }
+
+  @Test
+  public void testInlineFunctionDefaultValueChanged() throws Exception {
+    // default-argument expressions of an inline function live in the '<name>$default' dispatcher and are
+    // inlined at call sites omitting arguments — the dispatcher's body is content-hashed like the body itself
+    performTest("kotlin/pureKotlin/inlineFunctionDefaultValueChanged").assertSuccessful();
+  }
+
+  @Test
+  public void testOperatorAndInfixModifiersRemoved() throws Exception {
+    performTest("kotlin/operatorConventions/operatorAndInfixModifiersRemoved").assertFailure();
+  }
+
+  @Test
+  public void testOperatorModifierAddedOnMember() throws Exception {
+    // a member gaining 'operator' outranks a same-named operator extension at convention call sites
+    performTest("kotlin/operatorConventions/operatorModifierAddedOnMember").assertFailure();
+  }
+
+  @Test
+  public void testReturnTypeArgumentNullabilityChanged() throws Exception {
+    // type-argument nullability is invisible in descriptors AND generic signatures; both the function-return
+    // and the property-type positions must reach their consumers
+    performTest("kotlin/pureKotlin/returnTypeArgumentNullabilityChanged").assertFailure();
+  }
+
+  @Test
+  public void testRequiresOptInAdded() throws Exception {
+    // an annotation whose declaration is meta-annotated @RequiresOptIn gates every use site when applied
+    performTest("kotlin/jvmAnnotations/requiresOptInAdded").assertFailure();
+  }
+
+  @Test
+  public void testFunctionBecameProperty() throws Exception {
+    // the JVM accessor survives the conversion, so call sites of the function form re-resolve via lookups
+    performTest("kotlin/pureKotlin/functionBecameProperty").assertFailure();
+  }
+
+  @Test
+  public void testClassBecameValueClass() throws Exception {
+    // value-class attribute changes re-erase/re-mangle signatures MENTIONING the type in dependents
+    performTest(2, "kotlin/valueClasses/classBecameValueClass").assertSuccessful();
+  }
+
+  @Test
+  public void testFunInterfaceModifierRemoved() throws Exception {
+    // the 'fun' modifier exists only in metadata; dropping it forbids SAM conversion at lambda sites
+    performTest("kotlin/pureKotlin/funInterfaceModifierRemoved").assertFailure();
+  }
+
+  @Test
+  public void testContractRemoved() throws Exception {
+    // contracts drive smart casts at call sites; presence transitions are tracked in the function diff
+    performTest("kotlin/pureKotlin/contractRemoved").assertFailure();
+  }
+
+  @Test
+  public void testSupertypeArgumentNullabilityChanged() throws Exception {
+    // supertype INSTANTIATION changed with identical erased hierarchy: subtyping and inherited-member
+    // substitution shift for Kotlin consumers
+    performTest("kotlin/pureKotlin/supertypeArgumentNullabilityChanged").assertFailure();
+  }
+
+  @Test
+  public void testPublishedApiRemoved() throws Exception {
+    // @PublishedApi is the visibility contract for public-inline access to internal declarations
+    performTest("kotlin/pureKotlin/publishedApiRemoved").assertFailure();
+  }
+
+  @Test
+  public void testJvmFieldBecameSynthetic() throws Exception {
+    // ACC_SYNTHETIC hides the field from Java source-level resolution — effectively a removal for Java consumers
+    performTest("kotlin/withJava/kotlinUsedInJava/jvmFieldBecameSynthetic").assertFailure();
+  }
+
+  @Test
+  public void testJvmSyntheticRemoved() throws Exception {
+    // the method enters Java overload resolution: callers bound to another applicable overload may re-bind
+    performTest("kotlin/withJava/kotlinUsedInJava/jvmSyntheticRemoved").assertFailure();
   }
 }

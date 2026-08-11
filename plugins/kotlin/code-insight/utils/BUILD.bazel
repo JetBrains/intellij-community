@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.codeInsight.utils` start
-
 create_kotlinc_options(
     name = "custom_utils",
     opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
@@ -21,13 +20,18 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_utils",
     module_name = "intellij.kotlin.codeInsight.utils",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/reflect",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
+        "//plugins/kotlin/references",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/indexing-api:indexing",
@@ -41,7 +45,7 @@ jvm_library(
         "//platform/lang-impl",
         "//platform/editor-ui-api:editor-ui",
         "//java/java-psi-api:psi",
-        "@lib//:kotlinc-analysis-api-impl-base",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
         "//platform/core-ui",
     ],
 )
@@ -60,6 +64,9 @@ jvm_library(
         # do not sort,
         ":utils",
         "//libraries/kotlin/reflect:reflect_test_lib",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/indexing-api:indexing_test_lib",
@@ -73,6 +80,7 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//java/java-psi-api:psi_test_lib",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_test_lib",
         "//platform/core-ui:core-ui_test_lib",
     ],
 )

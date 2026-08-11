@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
+/** Combines [TextAreaColors] and [TextAreaMetrics] to fully style a text area component. */
 @Stable
 @GenerateDataFunctions
 public class TextAreaStyle(override val colors: TextAreaColors, override val metrics: TextAreaMetrics) :
@@ -35,9 +36,14 @@ public class TextAreaStyle(override val colors: TextAreaColors, override val met
 
     override fun toString(): String = "TextAreaStyle(colors=$colors, metrics=$metrics)"
 
+    /** Companion object for [TextAreaStyle]. */
     public companion object
 }
 
+/**
+ * Holds color tokens for the text area component in its various states, including background, content, border, caret,
+ * and placeholder colors.
+ */
 @Immutable
 @GenerateDataFunctions
 public class TextAreaColors(
@@ -61,6 +67,7 @@ public class TextAreaColors(
     override val caretFocused: Color,
     override val caretPressed: Color,
     override val caretHovered: Color,
+    /** The color used for placeholder text when the text area is empty. */
     public val placeholder: Color,
 ) : InputFieldColors {
     override fun equals(other: Any?): Boolean {
@@ -145,9 +152,14 @@ public class TextAreaColors(
             ")"
     }
 
+    /** Companion object for [TextAreaColors]. */
     public companion object
 }
 
+/**
+ * Holds size and spacing metrics for the text area component, including border width, content padding, corner size, and
+ * minimum size.
+ */
 @Stable
 @GenerateDataFunctions
 public class TextAreaMetrics(
@@ -187,9 +199,11 @@ public class TextAreaMetrics(
             ")"
     }
 
+    /** Companion object for [TextAreaMetrics]. */
     public companion object
 }
 
+/** CompositionLocal used to provide the current [TextAreaStyle] down the composition tree. */
 public val LocalTextAreaStyle: ProvidableCompositionLocal<TextAreaStyle> = staticCompositionLocalOf {
     error("No TextAreaStyle provided. Have you forgotten the theme?")
 }

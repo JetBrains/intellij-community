@@ -10,6 +10,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.util.List;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
+@ApiStatus.Internal
 public abstract class PushDownDelegate<MemberInfo extends MemberInfoBase<Member>,
                                       Member extends PsiElement> {
   public static final LanguageExtension<PushDownDelegate> EP_NAME = new LanguageExtension<>("com.intellij.refactoring.pushDown");

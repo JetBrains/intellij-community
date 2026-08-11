@@ -15,12 +15,15 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
+import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.IOUtil;
@@ -178,6 +181,9 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
       Integer.valueOf(3),
       gist.getFileData(getProject(), file)
     );
+
+    // make sure the file is indexed
+    FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry("foo", true), file, (_, _) -> true, GlobalSearchScope.allScope(getProject()));
 
     PushedFilePropertiesUpdater.getInstance(getProject()).filePropertiesChanged(file, Conditions.alwaysTrue());
     assertEquals(

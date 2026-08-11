@@ -24,7 +24,8 @@ class GitConfig private constructor(
   private val remotes: List<Remote>,
   private val urlSubstitutions: List<UrlSubstitution>,
   private val trackedInfos: List<BranchConfig>,
-  private val core: Core,
+  val core: Core,
+  val objectFormat: GitObjectFormat,
 ) {
   /**
    * Returns Git remotes defined in `.git/config`.
@@ -47,13 +48,13 @@ class GitConfig private constructor(
       .let { (fetch, pushOnly) -> fetch.convertToSortedList() to pushOnly.convertToSortedList() }
 
     return mapConfiguredRemotes { remote ->
-      val urls = remote.urls.substitutePrefixes(substitutions)
+      val urls = remote.urls.map { substitutions.substitutePrefix(it) ?: it }
       val pushUrls = if (remote.pushUrls.isNotEmpty()) {
         // for explicitly set pushUrls only insteadOf substitutions will be used
-        remote.pushUrls.substitutePrefixes(substitutions)
+        remote.pushUrls.map { substitutions.substitutePrefix(it) ?: it }
       }
       else if (pushOnlySubstitutions.isNotEmpty()) {
-        remote.urls.substitutePrefixes(pushOnlySubstitutions)
+        remote.urls.map { pushOnlySubstitutions.substitutePrefix(it) ?: substitutions.substitutePrefix(it) ?: it }
       }
       else urls
       createGitRemote(remote, urls, pushUrls)
@@ -69,9 +70,7 @@ class GitConfig private constructor(
   private fun List<UrlSubstitution>.convertToSortedList(): List<UrlSubstitution> =
     asSequence().distinctBy { it.prefix }.sortedByDescending { it.prefix.length }.toList()
 
-  private fun List<String>.substitutePrefixes(substitutions: List<UrlSubstitution>) = map { url ->
-    substitutions.find { url.startsWith(it.prefix) }?.substitutePrefix(url) ?: url
-  }
+  private fun List<UrlSubstitution>.substitutePrefix(url: String): String? = find { url.startsWith(it.prefix) }?.substitutePrefix(url)
 
   private fun UrlSubstitution.substitutePrefix(url: String) = substitution + url.substring(prefix.length)
 
@@ -86,13 +85,6 @@ class GitConfig private constructor(
     trackedInfos.mapNotNull { config ->
       convertBranchConfig(config, localBranches, remoteBranches)
     }.toSet()
-
-  /**
-   * Return core info
-   */
-  fun parseCore(): Core {
-    return core
-  }
 
   private data class Remote(
     val name: String,
@@ -128,6 +120,7 @@ class GitConfig private constructor(
     private const val URL_SECTION = "url"
     private const val BRANCH_INFO_SECTION = "branch"
     private const val CORE_SECTION = "core"
+    private const val EXTENSIONS_SECTION = "extensions"
 
     /**
      * Creates an instance of GitConfig by reading information from the specified `.git/config` file.
@@ -141,7 +134,7 @@ class GitConfig private constructor(
         GitConfigUtil.getValues(project, root, null)
       }
       catch (_: VcsException) {
-        return GitConfig(listOf(), listOf(), listOf(), Core(null))
+        return GitConfig(listOf(), listOf(), listOf(), Core(null), GitObjectFormat.SHA1)
       }
 
       val remotes = mutableListOf<Remote>()
@@ -159,7 +152,8 @@ class GitConfig private constructor(
         }
       }
 
-      return GitConfig(remotes, urls, trackedInfos, core)
+      val objectFormat = GitObjectFormat.parse(configurations["$EXTENSIONS_SECTION.objectformat"]?.lastOrNull())
+      return GitConfig(remotes, urls, trackedInfos, core, objectFormat)
     }
 
     private fun parseSectionNameAndVariable(key: String): Pair<String, String>? {

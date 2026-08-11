@@ -19,7 +19,7 @@ interface AnotherOneToManyRefEntityBuilder : WorkspaceEntityBuilder<AnotherOneTo
 }
 
 internal object AnotherOneToManyRefEntityType : EntityType<AnotherOneToManyRefEntity, AnotherOneToManyRefEntityBuilder>() {
-  override val entityClass: Class<AnotherOneToManyRefEntity> get() = AnotherOneToManyRefEntity::class.java
+  override val entityImplClass: Class<*> get() = AnotherOneToManyRefEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = AnotherOneToManyRefEntityImpl.Builder::class.java
   operator fun invoke(
     version: Int,

@@ -1,0 +1,13 @@
+[package]
+name = "linux_webkitgtk_bridge"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "build.rs"
+
+[lib]
+name = "linux_webkitgtk_bridge"
+crate-type = ["cdylib"]
+
+[dependencies]
+jni = "0.21.1"

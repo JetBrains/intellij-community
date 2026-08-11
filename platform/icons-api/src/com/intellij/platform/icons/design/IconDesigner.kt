@@ -40,4 +40,5 @@ fun IconDesigner.badge(
 
 interface IconAnimationDesigner {
     fun frame(duration: Long, builder: IconDesigner.() -> Unit)
+    fun frame(fadeIn: Long, stay: Long, fadeOut: Long, builder: IconDesigner.() -> Unit)
 }

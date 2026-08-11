@@ -2,7 +2,7 @@ from _typeshed import FileDescriptorOrPath, Incomplete, Unused
 from collections.abc import Callable, Mapping
 from socket import _Address, socket as _socket
 from ssl import SSLContext, _PasswordType
-from typing import Any, AnyStr, Generic, overload
+from typing import Any, AnyStr, Generic, Literal, overload
 from typing_extensions import Self, TypeVar, deprecated
 
 from .charset import charset_by_id as charset_by_id, charset_by_name as charset_by_name
@@ -91,7 +91,7 @@ class Connection(Generic[_C]):
         binary_prefix: bool = False,
         program_name: str | None = None,
         server_public_key: bytes | None = None,
-        ssl: dict[str, Incomplete] | SSLContext | None = None,
+        ssl: SSLContext | None = None,  # Passing a dict is deprecated
         ssl_ca: str | None = None,
         ssl_cert: str | None = None,
         ssl_disabled: bool | None = None,
@@ -104,6 +104,53 @@ class Connection(Generic[_C]):
         # different between overloads:
         passwd: None = None,  # deprecated
         db: None = None,  # deprecated
+    ) -> None: ...
+    @overload
+    @deprecated("Passing a dict for 'ssl' parameter is deprecated. Use 'ssl_*' parameters or 'ssl.SSLContext' instead.")
+    def __init__(
+        self,
+        *,
+        user: str | bytes | None = None,
+        password: str | bytes = "",
+        host: str | None = None,
+        database: str | bytes | None = None,
+        unix_socket: _Address | None = None,
+        port: int = 0,
+        charset: str = "",
+        collation: str | None = None,
+        sql_mode: str | None = None,
+        read_default_file: str | None = None,
+        conv: dict[int | type[Any], Callable[[Any], str] | Callable[[str], Any]] | None = None,
+        use_unicode: bool = True,
+        client_flag: int = 0,
+        cursorclass: type[_C] = ...,
+        init_command: str | None = None,
+        connect_timeout: float = 10,
+        read_default_group: str | None = None,
+        autocommit: bool | None = False,
+        local_infile: bool = False,
+        max_allowed_packet: int = 16_777_216,
+        defer_connect: bool = False,
+        auth_plugin_map: dict[str, Callable[[Connection[Any]], Any]] | None = None,
+        read_timeout: float | None = None,
+        write_timeout: float | None = None,
+        bind_address: str | None = None,
+        binary_prefix: bool = False,
+        program_name: str | None = None,
+        server_public_key: bytes | None = None,
+        ssl: dict[str, Incomplete],  # Passing a dict is deprecated
+        ssl_ca: str | None = None,
+        ssl_cert: str | None = None,
+        ssl_disabled: bool | None = None,
+        ssl_key: str | None = None,
+        ssl_key_password: _PasswordType | None = None,
+        ssl_verify_cert: bool | None = None,
+        ssl_verify_identity: bool | None = None,
+        compress: Unused = None,
+        named_pipe: Unused = None,
+        # different between overloads:
+        passwd: str | bytes | None = None,  # deprecated
+        db: str | bytes | None = None,  # deprecated
     ) -> None: ...
     @overload
     @deprecated("'passwd' and 'db' arguments are deprecated. Use 'password' and 'database' instead.")
@@ -138,7 +185,7 @@ class Connection(Generic[_C]):
         binary_prefix: bool = False,
         program_name: str | None = None,
         server_public_key: bytes | None = None,
-        ssl: dict[str, Incomplete] | SSLContext | None = None,
+        ssl: dict[str, Incomplete] | SSLContext | None = None,  # Passing a dict is deprecated
         ssl_ca: str | None = None,
         ssl_cert: str | None = None,
         ssl_disabled: bool | None = None,
@@ -176,8 +223,14 @@ class Connection(Generic[_C]):
     def next_result(self, unbuffered: bool = False) -> int: ...
     def affected_rows(self): ...
     def kill(self, thread_id): ...
-    def ping(self, reconnect: bool = True) -> None: ...
-    @deprecated("Method is deprecated. Use set_character_set() instead.")
+
+    @overload
+    def ping(self, reconnect: Literal[False] | None = False) -> None: ...
+    @overload
+    @deprecated("The 'reconnect' parameter is deprecated. Create a new connection if you want to reconnect.")
+    def ping(self, reconnect: Literal[True]) -> None: ...
+
+    @deprecated("Method is deprecated. Use 'set_character_set()' instead.")
     def set_charset(self, charset: str) -> None: ...
     def set_character_set(self, charset: str, collation: str | None = None) -> None: ...
     def connect(self, sock: _socket | None = None) -> None: ...

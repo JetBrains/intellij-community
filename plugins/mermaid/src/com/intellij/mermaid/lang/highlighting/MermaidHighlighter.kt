@@ -14,7 +14,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     return MermaidLexer()
   }
 
-  override fun getTokenHighlights(tokenType: IElementType): Array<TextAttributesKey> {
+  override fun getTokenHighlights(tokenType: IElementType): Array<out TextAttributesKey> {
     val highlight = highlights[tokenType] ?: HighlighterColors.TEXT
     return arrayOf(highlight)
   }

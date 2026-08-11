@@ -17,6 +17,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
+
 public final class PyTypeParameterMapping {
   private final List<Couple<PyType>> myMappedTypes;
 
@@ -24,14 +26,16 @@ public final class PyTypeParameterMapping {
     for (Couple<PyType> couple : mapping) {
       PyType expectedType = couple.getFirst();
       PyType actualType = couple.getSecond();
-      if (expectedType != null && actualType != null) {
-        if (expectedType instanceof PyPositionalVariadicType ^ actualType instanceof PyPositionalVariadicType ||
-            expectedType instanceof PyCallableParameterVariadicType ^ actualType instanceof PyCallableParameterVariadicType) {
-          throw new IllegalArgumentException("Mapping of incompatible types: " + expectedType + " -> " + actualType);
-        }
+      if (!isUnknown(expectedType) && !isUnknown(actualType) && haveIncompatibleVariadicKinds(expectedType, actualType)) {
+        throw new IllegalArgumentException("Mapping of incompatible types: " + expectedType + " -> " + actualType);
       }
     }
     myMappedTypes = mapping;
+  }
+
+  private static boolean haveIncompatibleVariadicKinds(@NotNull PyType expectedType, @NotNull PyType actualType) {
+    return expectedType instanceof PyPositionalVariadicType ^ actualType instanceof PyPositionalVariadicType ||
+           expectedType instanceof PyCallableParameterVariadicType ^ actualType instanceof PyCallableParameterVariadicType;
   }
 
   public static @Nullable PyTypeParameterMapping mapByShape(@NotNull List<? extends PyType> expectedTypes,
@@ -60,7 +64,7 @@ public final class PyTypeParameterMapping {
       }
       PyType leftmostActual = actualTypesDeque.peekFirst();
       if (leftmostExpected != null &&
-          leftmostActual != null &&
+          !isUnknown(leftmostActual) &&
           leftmostExpected instanceof PyCallableParameterVariadicType ^ leftmostActual instanceof PyCallableParameterVariadicType) {
         break;
       }
@@ -70,7 +74,7 @@ public final class PyTypeParameterMapping {
       }
       expectedTypesDeque.removeFirst();
       actualTypesDeque.removeFirst();
-      leftMappedTypes.add(Couple.of(leftmostExpected, leftmostActual));
+      leftMappedTypes.add(Couple.of(leftmostExpected, leftmostActual instanceof PyType first ? first : PyAnyType.getUnknown()));
     }
 
     while (expectedTypesDeque.size() != 0 && actualTypesDeque.size() != 0) {
@@ -196,9 +200,14 @@ public final class PyTypeParameterMapping {
     if (optionSet.contains(Option.USE_DEFAULTS) &&
         unmatchedExpectedType instanceof PyTypeParameterType typeParameterType &&
         typeParameterType.getDefaultType() != null) {
-      return Couple.of(unmatchedExpectedType, Ref.deref(typeParameterType.getDefaultType()));
+      PyType defaultType = Ref.deref(typeParameterType.getDefaultType());
+      // A malformed default (e.g. a parameter list `[int]` used as the default of a regular TypeVar) would yield a
+      // variadic-incompatible mapping that the constructor rejects; ignore such a default and fall back below.
+      if (defaultType == null || !haveIncompatibleVariadicKinds(unmatchedExpectedType, defaultType)) {
+        return Couple.of(unmatchedExpectedType, defaultType);
+      }
     }
-    else if (optionSet.contains(Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY)) {
+    if (optionSet.contains(Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY)) {
       return Couple.of(unmatchedExpectedType, PyAnyType.getUnknown());
     }
     return null;

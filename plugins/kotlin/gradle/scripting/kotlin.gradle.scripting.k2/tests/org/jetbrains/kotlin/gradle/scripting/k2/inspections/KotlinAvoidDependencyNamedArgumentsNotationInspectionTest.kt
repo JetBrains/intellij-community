@@ -12,6 +12,13 @@ import org.junit.jupiter.params.ParameterizedTest
 
 class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeInsightTestCase() {
 
+    override fun setUp() {
+        super.setUp()
+        if (isMissingDeprecationAnnotationAddedToKotlinDsl(gradleVersion)) {
+            disableBuiltInKotlinHighlighters()
+        }
+    }
+
     private fun runTest(
         gradleVersion: GradleVersion,
         test: () -> Unit,

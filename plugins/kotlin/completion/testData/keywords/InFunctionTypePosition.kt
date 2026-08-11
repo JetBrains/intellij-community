@@ -5,4 +5,5 @@ fun foo() {
 }
 
 // EXIST: suspend
+// EXIST: context
 // NOTHING_ELSE

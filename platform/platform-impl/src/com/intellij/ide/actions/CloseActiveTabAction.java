@@ -13,8 +13,10 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class CloseActiveTabAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

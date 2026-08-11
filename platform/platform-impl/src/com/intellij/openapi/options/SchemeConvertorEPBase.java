@@ -6,12 +6,14 @@ import com.intellij.DynamicBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ResourceBundle;
 
+@ApiStatus.Internal
 public class SchemeConvertorEPBase<T> extends BaseKeyedLazyInstance<T> {
   private static final Logger LOG = Logger.getInstance(SchemeExporterEP.class);
 

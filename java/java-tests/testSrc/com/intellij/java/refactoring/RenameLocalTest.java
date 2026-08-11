@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -16,6 +16,7 @@ import com.intellij.refactoring.rename.JavaNameSuggestionProvider;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameWrongRefHandler;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
+import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
@@ -26,9 +27,8 @@ import java.util.HashSet;
 public class RenameLocalTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/refactoring/renameLocal/";
 
-  @NotNull
   @Override
-  protected String getTestDataPath() {
+  protected @NotNull String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
@@ -76,7 +76,7 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
     assertTrue(result.toString(), result.contains("window"));
   }
 
-  private void doTest(final String newName) {
+  private void doTest(String newName) {
     configureByFile();
     new RenameProcessor(getProject(), getTargetElement(), newName, true, true).run();
     checkResultByFile();
@@ -85,11 +85,11 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
   public void testRenameInPlaceQualifyFieldReference() {
     doTestInplaceRename("myI");
   }
-  
+
   public void testRenameInPlaceQualifyFieldReferenceInChild() {
     doTestInplaceRename("myI");
   }
-  
+
   public void testRenameInPlaceThisNeeded() {
     doTestInplaceRename("a");
   }
@@ -101,23 +101,29 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
   public void testRenameInPlaceParamInOverriderAutomaticRenamer() {
     doTestInplaceRename("pp");
   }
-  
+
   public void testRenameFieldWithConstructorParamAutomatic() {
-    doTest("pp");
+    configureByFile();
+    RenameProcessor processor = new RenameProcessor(getProject(), getTargetElement(), "pp", true, true);
+    for (AutomaticRenamerFactory factory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
+      processor.addRenamerFactory(factory);
+    }
+    processor.run();
+    checkResultByFile();
   }
-  
+
   public void testConflictWithPattern() {
-    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class, 
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class,
                  "An existing pattern variable <b><code>s</code></b> has the same name",
                  () -> doTest("s"));
   }
 
   public void testConflictWithPatternInline() {
-    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class, 
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class,
                  "Variable 's' Already Exists",
                  () -> doTestInplaceRename("s"));
   }
-  
+
   public void testConflictInLambdaParameter() {
     assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class,
                  "Variable 'o' Already Exists",
@@ -125,7 +131,7 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testConflictWithFutureVar() {
-    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class, 
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class,
                  "An existing local variable <b><code>y</code></b> has the same name",
                  () -> doTest("y"));
   }
@@ -137,7 +143,7 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
   public void testRenameResource() {
     doTest("r1");
   }
-  
+
   public void testRecordCanonicalConstructor() {
     doTest("Bar");
   }
@@ -177,7 +183,7 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
     doRenameWrongRef("i");
   }
 
-  private void doRenameWrongRef(final String newName) {
+  private void doRenameWrongRef(String newName) {
     configureByFile();
 
     TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
@@ -196,7 +202,7 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
     checkResultByFile();
   }
 
-  private void doTestInplaceRename(final String newName) {
+  private void doTestInplaceRename(String newName) {
     configureByFile();
 
     PsiElement element = getTargetElement();
@@ -206,8 +212,7 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
     checkResultByFile();
   }
 
-  @NotNull
-  private PsiElement getTargetElement() {
+  private @NotNull PsiElement getTargetElement() {
     final PsiElement element = TargetElementUtil
       .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertNotNull(element);

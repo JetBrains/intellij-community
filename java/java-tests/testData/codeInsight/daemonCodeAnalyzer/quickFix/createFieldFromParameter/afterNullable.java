@@ -6,7 +6,6 @@ import java.util.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 public class TestBefore {
-
     @Nullable
     private final String myName;
 

@@ -20,7 +20,8 @@ object CachedImageIconSerializer: KSerializer<CachedImageIcon> {
   override val descriptor: SerialDescriptor = actualSerializer.descriptor
 
   override fun serialize(encoder: Encoder, value: CachedImageIcon) {
-    actualSerializer.serialize(encoder, SerializedIconDataHolder(value.encodeToByteArray()))
+    val data = value.encodeToByteArray() ?: error("Cannot serialize CachedImageIcon: it has no image descriptor or URL")
+    actualSerializer.serialize(encoder, SerializedIconDataHolder(data))
   }
 
   override fun deserialize(decoder: Decoder): CachedImageIcon {

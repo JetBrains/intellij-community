@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -16,7 +15,6 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedPropsOrderDataClass
@@ -28,12 +26,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersio
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChangedPropsOrderEntityImpl(private val dataSource: ChangedPropsOrderEntityData) : ChangedPropsOrderEntity,
                                                                                                   WorkspaceEntityBase(dataSource) {
-
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
 
   override val version: Int
     get() {
@@ -55,7 +47,6 @@ internal class ChangedPropsOrderEntityImpl(private val dataSource: ChangedPropsO
       readField("data")
       return dataSource.data
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -63,36 +54,14 @@ internal class ChangedPropsOrderEntityImpl(private val dataSource: ChangedPropsO
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: ChangedPropsOrderEntityData?) :
     ModifiableWorkspaceEntityBase<ChangedPropsOrderEntity, ChangedPropsOrderEntityData>(result), ChangedPropsOrderEntityBuilder {
     internal constructor() : this(ChangedPropsOrderEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity ChangedPropsOrderEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -109,7 +78,7 @@ internal class ChangedPropsOrderEntityImpl(private val dataSource: ChangedPropsO
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -130,14 +99,12 @@ internal class ChangedPropsOrderEntityImpl(private val dataSource: ChangedPropsO
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var version: Int
       get() = getEntityData().version
@@ -180,12 +147,10 @@ internal class ChangedPropsOrderEntityImpl(private val dataSource: ChangedPropsO
         checkModificationAllowed()
         getEntityData(true).data = value
         changedProperty.add("data")
-
       }
 
     override fun getEntityClass(): Class<ChangedPropsOrderEntity> = ChangedPropsOrderEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -194,29 +159,11 @@ internal class ChangedPropsOrderEntityData : WorkspaceEntityData<ChangedPropsOrd
   lateinit var string: String
   lateinit var list: MutableList<Set<Int>>
   lateinit var data: ChangedPropsOrderDataClass
-
-
   internal fun isStringInitialized(): Boolean = ::string.isInitialized
   internal fun isListInitialized(): Boolean = ::list.isInitialized
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChangedPropsOrderEntity> {
-    val modifiable = ChangedPropsOrderEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): ChangedPropsOrderEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = ChangedPropsOrderEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): ChangedPropsOrderEntity = ChangedPropsOrderEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<ChangedPropsOrderEntity, *> = ChangedPropsOrderEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedPropsOrderEntity") as EntityMetadata
   }

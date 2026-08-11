@@ -1,19 +1,25 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
+import com.intellij.idea.AppMode
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.util.BazelEnvironmentUtil
+import com.intellij.util.application
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
@@ -21,6 +27,7 @@ import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX_PATH
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.OLD_KOTLIN_DIST_ARTIFACT_ID
@@ -37,6 +44,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.util.EnumSet
 import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.seconds
 
@@ -45,6 +53,10 @@ object KotlinArtifactsDownloader {
     fun getUnpackedKotlinDistPath(version: String): File =
         if (IdeKotlinVersion.get(version).isStandaloneCompilerVersion) KotlinPluginLayout.kotlinc
         else KOTLIN_DIST_LOCATION_PREFIX.resolve(version)
+
+    fun getUnpackedKotlinDist(version: String): Path =
+        if (IdeKotlinVersion.get(version).isStandaloneCompilerVersion) KotlinPluginLayout.kotlincPath
+        else KOTLIN_DIST_LOCATION_PREFIX_PATH.resolve(version)
 
     fun getUnpackedKotlinDistPath(project: Project) = getUnpackedKotlinDistPath(KotlinJpsPluginSettings.jpsVersion(project))
 
@@ -218,6 +230,35 @@ object KotlinArtifactsDownloader {
     suspend fun downloadArtifactForIdeFromSources(version: String): Path? =
         downloadMavenArtifact(KOTLIN_MAVEN_GROUP_ID, OLD_KOTLIN_DIST_ARTIFACT_ID, version)
 
+    fun resolveProjectCompilerPluginArtifact(
+        project: Project,
+        groupId: String,
+        artifactId: String,
+        version: String,
+    ): Path? {
+        return try {
+            val descriptor = JpsMavenRepositoryLibraryDescriptor(
+                groupId,
+                artifactId,
+                version,
+                false,
+                emptyList(),
+            )
+            val repos = getMavenRepos(project)
+            val roots = JarRepositoryManager.loadDependenciesSync(
+                project, descriptor, EnumSet.of(ArtifactKind.ARTIFACT), repos, /* copyTo = */ null
+            ) ?: return null
+            roots.firstOrNull()?.let { VfsUtilCore.virtualToIoFile(it.file).canonicalFile.toPath() }
+        } catch (e: ProcessCanceledException) {
+            throw e
+        } catch (e: Throwable) {
+            COMPILER_PLUGIN_RESOLVE_LOG.warn(
+                "Failed to resolve $groupId:$artifactId:$version from project Maven repositories", e,
+            )
+            null
+        }
+    }
+
     private fun getAllIneOneOldFormatLazyDistUnpacker(version: IdeKotlinVersion) =
         if (isAllInOneOldFormatDistFormatAvailable(version)) LazyZipUnpacker(getUnpackedKotlinDistPath(version.rawVersion)) else null
 
@@ -259,6 +300,8 @@ object KotlinArtifactsDownloader {
         ) + "\n\n" + suggestion
     }
 }
+
+private val COMPILER_PLUGIN_RESOLVE_LOG = logger<KotlinArtifactsDownloader>()
 
 // downloads and atomically replaces downloaded file with temp file
 // do one additional try in 5 seconds after fail
@@ -309,16 +352,33 @@ suspend fun <T : Any> retryWithBackOff(
 }
 
 private fun openStream(artifactCoordinates: String): InputStream? {
-    val urls = listOf(
-        "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/$artifactCoordinates",
-        "https://cache-redirector.jetbrains.com/intellij-dependencies/$artifactCoordinates",
-        "https://repo1.maven.org/maven2/$artifactCoordinates"
-    )
+    val urls = kotlinArtifactRepositoryCoordinates
+        .map { "$it/$artifactCoordinates" }
 
     return urls.firstNotNullOfOrNull { urlString ->
         runCatching { URL(urlString).openStream() }
             .onFailure { if (it is CancellationException) throw it }
             .getOrNull()
+    }
+}
+
+@get:ApiStatus.Internal
+val kotlinArtifactRepositoryCoordinates: List<String> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    buildList {
+        add("https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+        add("https://cache-redirector.jetbrains.com/intellij-dependencies")
+        add("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
+
+        // This aims to cover tests when run both from sources and binaries, and the debug IDE in various configurations
+        val isTestLikeRun = application.isUnitTestMode
+                || KotlinPluginLayoutModeProvider.kotlinPluginLayoutMode == KotlinPluginLayoutMode.SOURCES
+                || AppMode.isRunningFromDevBuild()
+                || BazelEnvironmentUtil.isBazelTestRun()
+
+        if (isTestLikeRun) {
+            // Do not use the experimental repository in production
+            add("https://packages.jetbrains.team/maven/p/kt/experimental")
+        }
     }
 }
 

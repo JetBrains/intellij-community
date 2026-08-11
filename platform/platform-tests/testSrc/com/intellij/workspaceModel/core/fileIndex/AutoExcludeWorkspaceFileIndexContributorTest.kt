@@ -3,10 +3,14 @@ package com.intellij.workspaceModel.core.fileIndex
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID
 import com.intellij.workspaceModel.ide.registerProjectRoot
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -34,6 +38,11 @@ class AutoExcludeWorkspaceFileIndexContributorTest {
 
   @Test
   fun `default excluded directories are not in content after project root entity is added`() = runBlocking {
+    projectModel.project.workspaceModel.update("convert module to java") {
+      it.modifyModuleEntity(it.entities(ModuleEntity::class.java).first()) {
+        type = JAVA_MODULE_ENTITY_TYPE_ID
+      }
+    }
     val worktreesDir = projectModel.baseProjectDir.newVirtualDirectory("projectRoot/.worktrees")
     val claudeWorktreesDir = projectModel.baseProjectDir.newVirtualDirectory("projectRoot/.claude/worktrees")
     val srcDir = projectModel.baseProjectDir.newVirtualDirectory("projectRoot/src")
@@ -42,6 +51,24 @@ class AutoExcludeWorkspaceFileIndexContributorTest {
     assertTrue(readAction { fileIndex.isInContent(srcDir) })
 
     registerProjectRoot(projectModel.project, Path.of(projectRoot.path))
+
+    assertFalse(readAction { fileIndex.isInContent(worktreesDir) })
+    assertFalse(readAction { fileIndex.isInContent(claudeWorktreesDir) })
+    assertTrue(readAction { fileIndex.isInContent(srcDir) })
+  }
+
+  @Test
+  fun `default excluded directories are not in content after non-java module is added`() = runBlocking {
+    val moduleRoot = projectModel.baseProjectDir.newVirtualDirectory("moduleRoot")
+    val worktreesDir = projectModel.baseProjectDir.newVirtualDirectory("moduleRoot/.worktrees")
+    val claudeWorktreesDir = projectModel.baseProjectDir.newVirtualDirectory("moduleRoot/.claude/worktrees")
+    val srcDir = projectModel.baseProjectDir.newVirtualDirectory("moduleRoot/src")
+
+    assertFalse(readAction { fileIndex.isInContent(worktreesDir) })
+    assertFalse(readAction { fileIndex.isInContent(srcDir) })
+
+    val module = projectModel.createModule("nonJavaModule")
+    PsiTestUtil.addSourceContentToRoots(module, moduleRoot)
 
     assertFalse(readAction { fileIndex.isInContent(worktreesDir) })
     assertFalse(readAction { fileIndex.isInContent(claudeWorktreesDir) })

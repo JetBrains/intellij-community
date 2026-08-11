@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.java.analysis.impl` start
-
 create_kotlinc_options(
     name = "custom_analysis-impl",
     x_explicit_api_mode = "strict",
@@ -37,6 +36,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//java/java-indexing-api:indexing",
+        "//java/java-indexing-serializers:indexing-serializers",
         "//platform/analysis-api:analysis",
         "//platform/analysis-impl",
         "//java/java-indexing-impl:indexing-impl",
@@ -114,6 +114,7 @@ jvm_library(
         # do not sort,
         ":analysis-impl",
         "//java/java-indexing-api:indexing_test_lib",
+        "//java/java-indexing-serializers:indexing-serializers_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/analysis-impl:analysis-impl_test_lib",
         "//java/java-indexing-impl:indexing-impl_test_lib",

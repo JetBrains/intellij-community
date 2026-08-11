@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.repository.search.common` start
-
 create_kotlinc_options(
     name = "custom_common",
     opt_in = [

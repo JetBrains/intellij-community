@@ -23,12 +23,14 @@ import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgress
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.ApiStatus;
@@ -126,6 +128,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
 
   @Override
   public void execute(final @NotNull ProgressIndicator indicator, ExternalSystemTaskNotificationListener @NotNull ... listeners) {
+    attachProgressIndicator(indicator);
     indicator.setIndeterminate(true);
     var listener = getProgressIndicatorListener(indicator);
     execute(ArrayUtil.append(listeners, listener));
@@ -335,7 +338,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   }
 
   /**
-   * @see com.intellij.openapi.util.UserDataHolderBase#copyUserDataTo
+   * @see UserDataHolderBase#copyUserDataTo
    */
   @ApiStatus.Internal
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -361,6 +364,18 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
         manager.onTaskOutput(id, text, processOutputType);
       }
     };
+  }
+
+  private void attachProgressIndicator(@NotNull ProgressIndicator indicator) {
+    if (indicator instanceof ProgressIndicatorEx indicatorEx) {
+      indicatorEx.addStateDelegate(new AbstractProgressIndicatorExBase() {
+        @Override
+        public void cancel() {
+          super.cancel();
+          AbstractExternalSystemTask.this.cancel();
+        }
+      });
+    }
   }
 
   private @NotNull ExternalSystemTaskNotificationListener getProgressIndicatorListener(@NotNull ProgressIndicator indicator) {

@@ -201,10 +201,14 @@ def end_redirect(std="stdout"):
             setattr(sys, std, redirect_info.original)
 
 
-def redirect_stream_to_pydb_io_messages(std):
+def redirect_stream_to_pydb_io_messages(std, keep_original_redirection=True):
     """
     :param std:
         'stdout' or 'stderr'
+    :param keep_original_redirection:
+        If True (default), wraps sys.stdout/stderr with IORedirector that fans out to both the
+        original stream and RedirectToPyDBIoMessages. If False, replaces sys.stdout/stderr entirely
+        with RedirectToPyDBIoMessages (output goes only through JSON-RPC).
     """
     with _RedirectionsHolder._lock:
         redirect_to_name = "_pydevd_%s_redirect_" % (std,)
@@ -213,7 +217,7 @@ def redirect_stream_to_pydb_io_messages(std):
             original = getattr(sys, std)
 
             redirect_to = RedirectToPyDBIoMessages(1 if std == "stdout" else 2, original, wrap_buffer)
-            start_redirect(keep_original_redirection=True, std=std, redirect_to=redirect_to)
+            start_redirect(keep_original_redirection=keep_original_redirection, std=std, redirect_to=redirect_to)
 
             stack = getattr(_RedirectionsHolder, "_stack_%s" % std)
             setattr(_RedirectionsHolder, redirect_to_name, stack[-1])
@@ -246,7 +250,7 @@ def redirect_stream_to_pydb_io_messages_context():
     with _RedirectionsHolder._lock:
         redirecting = []
         for std in ("stdout", "stderr"):
-            if redirect_stream_to_pydb_io_messages(std):
+            if redirect_stream_to_pydb_io_messages(std, keep_original_redirection=False):
                 redirecting.append(std)
 
         try:

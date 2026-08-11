@@ -1,0 +1,16 @@
+// FIR_IDENTICAL
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+package test
+
+import dependency.AChecker
+import dependency.CheckerContext
+import dependency.DiagnosticReporter
+
+object CheckerImpl : AChecker {
+    context(checkerContext: CheckerContext, diagnosticReporter: DiagnosticReporter)
+    override fun check(d: String) {
+        TODO("Not yet implemented")
+    }
+}
+
+// MEMBER: "context(checkerContext: CheckerContext, diagnosticReporter: DiagnosticReporter)\n check(d: String): Unit"

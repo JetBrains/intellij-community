@@ -2,8 +2,15 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build intellij.java.byteCodeViewer` start
+jps_test(
+    name = "java-byteCodeViewer-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":java-byteCodeViewer-tests_test_lib"],
+)
+### skip generation section `test intellij.java.byteCodeViewer.tests`
 
+### auto-generated section `build intellij.java.byteCodeViewer` start
 create_kotlinc_options(
     name = "custom_java-byteCodeViewer",
     x_explicit_api_mode = "strict",
@@ -98,7 +105,6 @@ exports_files(
 ### auto-generated section `iml intellij.java.byteCodeViewer` end
 
 ### auto-generated section `build intellij.java.byteCodeViewer.tests` start
-
 create_kotlinc_options(
     name = "custom_java-byteCodeViewer-tests",
     x_explicit_api_mode = "strict",
@@ -173,6 +179,8 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//java/java-frontback-psi-impl:frontback-psi-impl",
         "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.byteCodeViewer.tests` end
@@ -185,11 +193,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.byteCodeViewer.tests` end
-
-### auto-generated section `test intellij.java.byteCodeViewer.tests` start
-
-jps_test(
-    name = "java-byteCodeViewer-tests_test",
-    runtime_deps = [":java-byteCodeViewer-tests_test_lib"],
-)
-### auto-generated section `test intellij.java.byteCodeViewer.tests` end

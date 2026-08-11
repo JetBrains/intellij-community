@@ -11,10 +11,12 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
-import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.poetry.common.poetryPath
 import com.intellij.python.community.services.systemPython.SystemPythonService
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.psi.resolvePythonVersionSpecifiers
 import com.jetbrains.python.PyBundle
@@ -40,7 +42,9 @@ import com.jetbrains.python.sdk.poetry.getPoetryExecutable
 import com.jetbrains.python.sdk.poetry.runPoetry
 import com.jetbrains.python.sdk.poetry.setupPoetry
 import com.jetbrains.python.sdk.poetry.suggestedSdkName
-import com.jetbrains.python.util.ShowingMessageErrorSync
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.withProject
+import com.jetbrains.python.sdk.poetry.POETRY_TOML
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
@@ -53,6 +57,8 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
   }
 
   override val toolId: ToolId = POETRY_TOOL_ID
+
+  override val potentialDependencyFiles: Set<String> = setOf(PY_PROJECT_TOML, POETRY_TOML)
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(
@@ -99,11 +105,11 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
      */
     else if (poetryLockExists || (isPoetryProject && checkToml)) {
       val pathPersister: (Path) -> Unit = { path -> PropertiesComponent.getInstance().poetryPath = path.toString() }
-      val toolName = "poetry"
+      val tool = PoetryPyTool.getInstance()
       EnvCheckerResult.SuggestToolInstallation(
-        toolToInstall = toolName,
+        toolToInstall = tool.packageName.name,
         pathPersister = pathPersister,
-        intentionName = PyBundle.message("sdk.create.custom.venv.install.fix.title.using.pip", "poetry")
+        intentionName = PyBundle.message("sdk.create.custom.venv.install.fix.title", tool.presentableName)
       )
     }
     else EnvCheckerResult.CannotConfigure
@@ -138,7 +144,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
         basePythonBinaryPath = baseSystemPython.pythonBinary,
         installPackages = true,
         init = tomlFile == null,
-        errorSink = ShowingMessageErrorSync.withProject(module.project)
+        errorSink = ErrorSink().withProject(module.project)
       ).getOr { return@withBackgroundProgress it }
 
       val path = poetry.resolvePythonBinary()
@@ -150,7 +156,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
       LOGGER.debug("Setting up associated poetry environment: $path, $basePath")
       val sdk = createSdk(
         PathHolder.Eel(file.toNioPath()),
-        PyPoetrySdkAdditionalData(module.baseDir?.path?.let { Path.of(it) }),
+        PyPoetrySdkAdditionalData(basePath),
         suggestedSdkName(basePath)
       ).getOr { return@withBackgroundProgress it }
 

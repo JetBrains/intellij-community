@@ -2,38 +2,19 @@
 
 package org.jetbrains.kotlin.idea.core.script.v1
 
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.util.NlsContexts
-import org.jetbrains.annotations.Nls
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.suspendCancellableCoroutine
-import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
-import javax.swing.Icon
-import kotlin.script.experimental.api.IdeScriptCompilationConfigurationKeys
-import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptDiagnostic
-import kotlin.script.experimental.api.fileExtension
-import kotlin.script.experimental.api.ide
-import kotlin.script.experimental.util.PropertiesCollection
 
 fun indexSourceRootsEagerly(): Boolean = Registry.`is`("kotlin.scripting.index.dependencies.sources", false)
 
 val KtFile.alwaysVirtualFile: VirtualFile get() = originalFile.virtualFile ?: viewProvider.virtualFile
-
-@set:TestOnly
-var Application.isScriptChangesNotifierDisabled: Boolean by NotNullableUserDataProperty(
-    Key.create("SCRIPT_CHANGES_NOTIFIER_DISABLED"), true
-)
 
 fun loggingReporter(severity: ScriptDiagnostic.Severity, message: String) {
     when (severity) {
@@ -47,22 +28,6 @@ fun loggingReporter(severity: ScriptDiagnostic.Severity, message: String) {
 
         else -> {}
     }
-}
-
-data class KotlinScriptTemplate(var id: String = "") {
-    @Nls
-    var title: String = ""
-    var templateName: String = "Kotlin Script"
-    var icon: Icon = KotlinIcons.SCRIPT
-
-    @Nls
-    var description: String = ""
-}
-
-val IdeScriptCompilationConfigurationKeys.kotlinScriptTemplate: PropertiesCollection.Key<KotlinScriptTemplate> by PropertiesCollection.key()
-
-fun ScriptCompilationConfiguration.Builder.kotlinScriptTemplate(init: KotlinScriptTemplate.() -> Unit) {
-    ide.kotlinScriptTemplate(KotlinScriptTemplate().apply(init))
 }
 
 fun Project.getKtFile(virtualFile: VirtualFile?, ktFile: KtFile? = null): KtFile? {

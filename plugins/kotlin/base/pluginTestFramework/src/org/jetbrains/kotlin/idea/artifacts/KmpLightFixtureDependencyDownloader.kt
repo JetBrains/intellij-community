@@ -10,7 +10,7 @@ import org.eclipse.aether.repository.RemoteRepository
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
-import org.jetbrains.kotlin.konan.file.unzipTo
+import org.jetbrains.kotlin.io.unzipTo
 import org.jetbrains.kotlin.konan.target.TargetSupportException
 import java.io.File
 import java.nio.file.Path

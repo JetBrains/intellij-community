@@ -2,8 +2,16 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build intellij.platform.syntax.extensions` start
+jps_test(
+    name = "extensions-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":extensions-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.syntax.extensions.tests`
+
+### auto-generated section `build intellij.platform.syntax.extensions` start
 create_kotlinc_options(
     name = "custom_extensions",
     jvm_target = "8",
@@ -35,7 +43,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/syntax/syntax-api:syntax",
         ":platform_multiplatformSupport_provided",
     ],
@@ -54,6 +62,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":extensions",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/multiplatformSupport",
         "//platform/multiplatformSupport:multiplatformSupport_test_lib",
         "//libraries/junit5",
@@ -75,7 +84,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.syntax.extensions` end
 
 ### auto-generated section `build intellij.platform.syntax.extensions.tests` start
-
 jvm_library(
     name = "extensions-tests",
     srcs = glob(
@@ -106,7 +114,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/multiplatformSupport",
         "//platform/multiplatformSupport:multiplatformSupport_test_lib",
         "//libraries/junit5",
@@ -127,11 +136,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.syntax.extensions.tests` end
-
-### auto-generated section `test intellij.platform.syntax.extensions.tests` start
-
-jps_test(
-    name = "extensions-tests_test",
-    runtime_deps = [":extensions-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.syntax.extensions.tests` end

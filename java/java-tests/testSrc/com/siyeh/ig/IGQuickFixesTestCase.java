@@ -21,7 +21,7 @@ import java.nio.file.Path;
 /**
  * @author anna
  */
-@TestDataPath("$CONTENT_ROOT/../test")
+@TestDataPath("$CONTENT_ROOT/testData/ig/com/siyeh/igfixes/")
 public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCase {
   protected String myDefaultHint = null;
   protected String myRelativePath = null;

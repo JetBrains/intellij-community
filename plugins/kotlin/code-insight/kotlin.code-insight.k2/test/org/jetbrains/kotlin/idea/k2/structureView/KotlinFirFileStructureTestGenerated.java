@@ -38,6 +38,11 @@ public class KotlinFirFileStructureTestGenerated extends AbstractKotlinFirFileSt
         runTest("../../idea/tests/testData/structureView/fileStructure/CheckMemberLocationForJava.kt");
     }
 
+    @TestMetadata("ContextParameters.kt")
+    public void testContextParameters() throws Exception {
+        runTest("../../idea/tests/testData/structureView/fileStructure/ContextParameters.kt");
+    }
+
     @TestMetadata("DoNotShowParentsInLocationJava.kt")
     public void testDoNotShowParentsInLocationJava() throws Exception {
         runTest("../../idea/tests/testData/structureView/fileStructure/DoNotShowParentsInLocationJava.kt");

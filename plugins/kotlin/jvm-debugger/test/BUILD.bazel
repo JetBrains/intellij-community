@@ -7,7 +7,6 @@ filegroup(
 )
 
 ### auto-generated section `build kotlin.jvm-debugger.test` start
-
 jvm_library(
     name = "test",
     srcs = glob(

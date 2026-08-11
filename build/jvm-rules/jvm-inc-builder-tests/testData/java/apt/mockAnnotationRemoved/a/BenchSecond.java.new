@@ -1,0 +1,7 @@
+package a;
+
+public class BenchSecond {
+  public int second() {
+    return 7;
+  }
+}

@@ -4,8 +4,10 @@ package com.intellij.openapi.vfs.impl.http;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.ex.http.HttpVirtualFileListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public abstract class RemoteFileManager {
   public static RemoteFileManager getInstance() {
     return ApplicationManager.getApplication().getService(RemoteFileManager.class);

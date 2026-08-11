@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,7 @@ import java.util.function.Supplier;
  * {@link TargetDirectory#getPathToCreate()} and {@link NewFileLocation#getSubPath()}. If there are multiple target directories, it shows
  * a popup where users can select the desired target directory.
  */
+@ApiStatus.Internal
 public final class CreateDirectoryPathFix extends AbstractCreateFileFix {
   // invoked from another module
   @SuppressWarnings("WeakerAccess")

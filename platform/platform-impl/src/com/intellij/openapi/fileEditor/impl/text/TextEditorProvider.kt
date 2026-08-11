@@ -109,6 +109,9 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     document: Document?,
     editorCoroutineScope: CoroutineScope,
   ): TextEditor {
+    val interceptedEditor = ImplicitSplitModeEditorBinder.tryBindSuppliedEditorToBackendAsync(this, project, file, document, editorCoroutineScope)
+    if (interceptedEditor != null) return interceptedEditor
+
     val asyncLoader = createAsyncEditorLoader(
       provider = this@TextEditorProvider,
       project = project,
@@ -126,6 +129,9 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
   }
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
+    val interceptedEditor = ImplicitSplitModeEditorBinder.tryBindSuppliedEditorToBackend(this, project, file)
+    if (interceptedEditor != null) return interceptedEditor
+
     val asyncLoader = createAsyncEditorLoader(provider = this, project = project, fileForTelemetry = file, editorCoroutineScope = null)
     val editor = createEditorImpl(project = project, file = file, asyncLoader = asyncLoader).first
     return TextEditorImpl(
@@ -135,7 +141,19 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     )
   }
 
-  override fun readState(element: Element, project: Project, file: VirtualFile): FileEditorState {
+  @Deprecated("Implemented to keep compatibility, do not call directly")
+  override fun readState(
+    element: Element,
+    project: Project,
+    file: VirtualFile,
+  ): FileEditorState {
+    if (element.isEmpty) {
+      return TextEditorState()
+    }
+    return TextEditorState(readCarets(element), readRelativeCaretPosition(element))
+  }
+
+  override fun readState(element: Element, project: Project, file: Lazy<VirtualFile?>): FileEditorState {
     if (element.isEmpty) {
       return TextEditorState()
     }

@@ -1,18 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring;
 
-import com.intellij.lang.LanguageRefactoringSupport;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodHandler;
 import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodUtil;
 import org.jetbrains.annotations.NotNull;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.io.File;
 
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyExtractMethodTest extends LightMarkedTestCase {
 
   private void doTest(String newName) {
@@ -36,10 +38,7 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
 
   private void performExtractMethod(@NotNull String newName, @NotNull String beforeName, @NotNull String afterName) {
     myFixture.configureByFile(beforeName);
-    final RefactoringSupportProvider provider = LanguageRefactoringSupport.getInstance().forLanguage(PythonLanguage.getInstance());
-    assertNotNull(provider);
-    final RefactoringActionHandler handler = provider.getExtractMethodHandler();
-    assertNotNull(handler);
+    final RefactoringActionHandler handler = new PyExtractMethodHandler();
     System.setProperty(PyExtractMethodUtil.NAME, newName);
     try {
       refactorUsingHandler(handler);
@@ -165,7 +164,7 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   }
 
   public void testWrongSelectionIfPart() {
-    doFail("bar", "Cannot perform the Extract Method refactoring using the selected elements");
+    doFail("bar", "Cannot perform the Extract Function refactoring using the selected elements");
   }
 
   public void testWrongSelectionFromImportStar() {

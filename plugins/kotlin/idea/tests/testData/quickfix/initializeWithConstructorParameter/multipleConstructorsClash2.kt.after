@@ -1,6 +1,6 @@
+// K2_ERROR: MUST_BE_INITIALIZED_OR_BE_ABSTRACT
 
 // "Initialize with constructor parameter" "true"
-// K2_ERROR: Property must be initialized or be abstract.
 class User(n: Int, userName: String) {
     constructor(n: Int, s: String, userName: String) : this(n, userName)
 

@@ -7,11 +7,13 @@ import com.intellij.platform.feedback.ExternalFeedbackSurveyConfig
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.toKotlinLocalDate
+import java.time.LocalDate as JavaLocalDate
 
 class DemoExternalFeedbackSurveyConfig : ExternalFeedbackSurveyConfig {
 
   override val surveyId: String = "external_demo_survey"
-  override val lastDayOfFeedbackCollection: LocalDate = LocalDate(1999, 6, 11)
+  override val lastDayOfFeedbackCollection: LocalDate = JavaLocalDate.of(1999, 6, 11).toKotlinLocalDate()
   override val requireIdeEAP: Boolean = true
 
   private val suitableIdeVersion = "2023.2"

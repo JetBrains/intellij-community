@@ -4,9 +4,7 @@ package com.intellij.ide.projectWizard.projectTypeStep
 import com.intellij.ide.util.newProjectWizard.TemplatesGroup
 import com.intellij.ide.wizard.GeneratorNewProjectWizard
 import com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal class LanguageGeneratorItem(
   val wizard: GeneratorNewProjectWizard
 ) : TemplateGroupItem(createTemplateGroup(wizard)) {

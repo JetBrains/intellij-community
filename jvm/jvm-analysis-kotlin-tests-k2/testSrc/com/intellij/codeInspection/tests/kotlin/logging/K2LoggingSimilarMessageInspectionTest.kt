@@ -10,7 +10,7 @@ class K2LoggingSimilarMessageInspectionTest : KotlinLoggingSimilarMessageInspect
       import org.slf4j.LoggerFactory
       
       internal class Logging {
-          private val LOG: Logger = LoggerFactory.getLogger(Logging::class.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'java' on receiver of type 'KClass<Logging>'.">java</error>)
+          private val LOG: Logger = LoggerFactory.getLogger(Logging::class.<error descr="[UNRESOLVED_REFERENCE]">java</error>)
       
           private fun request1(i: String) {
               val msg = "log messages: {}"
@@ -32,7 +32,7 @@ class K2LoggingSimilarMessageInspectionTest : KotlinLoggingSimilarMessageInspect
       import org.slf4j.LoggerFactory
       
       internal class Logging {
-          private val LOG: Logger = LoggerFactory.getLogger(Logging::class.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'java' on receiver of type 'KClass<Logging>'.">java</error>)
+          private val LOG: Logger = LoggerFactory.getLogger(Logging::class.<error descr="[UNRESOLVED_REFERENCE]">java</error>)
       
           private fun request1(i: String) {
               val msg = "log messages: {}" + i
@@ -55,7 +55,7 @@ class K2LoggingSimilarMessageInspectionTest : KotlinLoggingSimilarMessageInspect
       import org.slf4j.LoggerFactory
       
       internal class Logging {
-          private val LOG: Logger = LoggerFactory.getLogger(Logging::class.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'java' on receiver of type 'KClass<Logging>'.">java</error>)
+          private val LOG: Logger = LoggerFactory.getLogger(Logging::class.<error descr="[UNRESOLVED_REFERENCE]">java</error>)
       
           private fun request1(i: String) {
               val msg = "${"\${i}"}1234356${"\${i}"}"
@@ -76,7 +76,7 @@ class K2LoggingSimilarMessageInspectionTest : KotlinLoggingSimilarMessageInspect
       import org.slf4j.LoggerFactory
       
       internal class Logging {
-          private val LOG: Logger = LoggerFactory.getLogger(Logging::class.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'java' on receiver of type 'KClass<Logging>'.">java</error>)
+          private val LOG: Logger = LoggerFactory.getLogger(Logging::class.<error descr="[UNRESOLVED_REFERENCE]">java</error>)
       
           private fun request2() {
             LOG.warn("Non-cached operation ${"\${operationName(\"update\")}"}")
@@ -97,7 +97,7 @@ class K2LoggingSimilarMessageInspectionTest : KotlinLoggingSimilarMessageInspect
         import org.slf4j.LoggerFactory
         
         internal object Logging {
-            private val LOG: Logger = LoggerFactory.getLogger(Logging::class.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'java' on receiver of type 'KClass<Logging>'.">java</error>)
+            private val LOG: Logger = LoggerFactory.getLogger(Logging::class.<error descr="[UNRESOLVED_REFERENCE]">java</error>)
         
             private fun request1(i: String) {
                 LOG.debug("Call successful")
@@ -117,7 +117,7 @@ class K2LoggingSimilarMessageInspectionTest : KotlinLoggingSimilarMessageInspect
       import org.slf4j.LoggerFactory
       
       internal object Logging {
-          private val LOG: Logger = LoggerFactory.getLogger(Logging::class.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'java' on receiver of type 'KClass<Logging>'.">java</error>)
+          private val LOG: Logger = LoggerFactory.getLogger(Logging::class.<error descr="[UNRESOLVED_REFERENCE]">java</error>)
       
           private fun request1(i: String) {
               LOG.debug("Call successful")

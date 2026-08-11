@@ -3,11 +3,12 @@ package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
 import com.intellij.model.psi.ImplicitReferenceProvider
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -19,6 +20,8 @@ abstract class AbstractKotlinGradleReferenceProvider: ImplicitReferenceProvider 
     companion object {
         @JvmStatic
         protected val GRADLE_DSL_PACKAGE: FqName = FqName("org.gradle.kotlin.dsl")
+        @JvmStatic
+        protected val GRADLE_DSL_SUPPORT_DELEGATES_PACKAGE: FqName = FqName("org.gradle.kotlin.dsl.support.delegates")
         @JvmStatic
         protected val KGP_PACKAGE: FqName = FqName("org.jetbrains.kotlin.gradle.plugin")
     }

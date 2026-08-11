@@ -10,7 +10,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.net.UnknownHostException
 
 object GHAPIExceptionUtil {
-  private const val OAUTH_ERROR_SUPPORT_LINK = "https://youtrack.jetbrains.com/articles/SUPPORT-A-2404"
+  internal const val OAUTH_ERROR_SUPPORT_LINK = "https://youtrack.jetbrains.com/articles/SUPPORT-A-2404"
   private const val OAUTH_ERROR_MESSAGE_PREFIX = "Could not resolve to a Repository"
 
   /**

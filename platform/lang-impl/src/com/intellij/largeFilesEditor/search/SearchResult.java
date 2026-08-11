@@ -3,8 +3,10 @@ package com.intellij.largeFilesEditor.search;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
+@ApiStatus.Internal
 public final class SearchResult {
 
   public static final Key<SearchResult> KEY = new Key<>("lfe.SearchResult");

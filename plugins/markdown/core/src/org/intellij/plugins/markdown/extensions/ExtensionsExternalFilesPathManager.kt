@@ -36,7 +36,6 @@ abstract class ExtensionsExternalFilesPathManager {
     path.delete(recursively = true)
   }
 
-  @ApiStatus.Internal
   internal class Impl: ExtensionsExternalFilesPathManager() {
     override val baseDirectory: Path
       get() = Path.of(PathManager.getSystemPath(), "markdown", "download")

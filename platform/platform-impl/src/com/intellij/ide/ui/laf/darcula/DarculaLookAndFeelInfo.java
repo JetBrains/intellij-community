@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.UIManager;
@@ -9,6 +10,7 @@ import javax.swing.UIManager;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class DarculaLookAndFeelInfo extends UIManager.LookAndFeelInfo {
   public static final @NonNls String CLASS_NAME = DarculaLaf.class.getName();
 

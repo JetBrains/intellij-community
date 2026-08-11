@@ -17,11 +17,12 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.PyDataclassNames.Attrs
-import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
-import com.jetbrains.python.codeInsight.PyDataclassParameters
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Attrs
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Dataclasses
+import com.jetbrains.python.codeInsight.getDataclassInitVars
 import com.jetbrains.python.codeInsight.parseDataclassParameters
-import com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider
+import com.jetbrains.python.codeInsight.stdlib.PyAttrsDataclassType
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibDataclassType
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.extensions.afterDefInMethod
 import com.jetbrains.python.extensions.inParameterList
@@ -47,10 +48,10 @@ class PyDataclassCompletionContributor : CompletionContributor(), DumbAware {
       val dataclassParameters = parseDataclassParameters(cls, typeEvalContext)
       if (dataclassParameters == null || !dataclassParameters.init) return
 
-      if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
+      if (dataclassParameters.type == PyStdlibDataclassType) {
         val postInitParameters = mutableListOf(PyNames.CANONICAL_SELF)
 
-        PyDataclassTypeProvider.Helper.getInitVars(cls, dataclassParameters, typeEvalContext).orEmpty().forEach {
+        getDataclassInitVars(cls, dataclassParameters, typeEvalContext).orEmpty().forEach {
           val name = it.targetExpression.name
           val typeHint = PyTypingTypeProvider.getAnnotationValue(it.targetExpression, typeEvalContext)
           if (name != null && typeHint is PySubscriptionExpression) {
@@ -68,7 +69,7 @@ class PyDataclassCompletionContributor : CompletionContributor(), DumbAware {
         addMethodToResult(result, cls, typeEvalContext,
                           Dataclasses.DUNDER_POST_INIT, postInitParameters.joinToString(prefix = "(", postfix = ")"))
       }
-      else if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
+      else if (dataclassParameters.type == PyAttrsDataclassType) {
         addMethodToResult(result, cls, typeEvalContext, Attrs.DUNDER_POST_INIT)
       }
     }
@@ -90,7 +91,7 @@ class PyDataclassCompletionContributor : CompletionContributor(), DumbAware {
 
       val typeEvalContext = parameters.getTypeEvalContext()
 
-      if (parseDataclassParameters(cls, typeEvalContext)?.type?.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
+      if (parseDataclassParameters(cls, typeEvalContext)?.type == PyAttrsDataclassType) {
         result.addElement(LookupElementBuilder.create(if (index == 1) "attribute" else "value").withIcon(AllIcons.Nodes.Parameter))
       }
     }

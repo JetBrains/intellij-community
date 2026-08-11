@@ -75,7 +75,7 @@ internal class VcsUsagesCollector : ProjectUsagesCollector() {
     return set
   }
 
-  private val GROUP = EventLogGroup("vcs.configuration", 3)
+  private val GROUP = EventLogGroup("vcs.configuration", 4)
   private val VCS_FIELD = EventFields.StringValidatedByEnum("vcs", "vcs")
   private val ACTIVE_VCS = GROUP.registerEvent("active.vcs", EventFields.PluginInfo,
                                                VCS_FIELD)

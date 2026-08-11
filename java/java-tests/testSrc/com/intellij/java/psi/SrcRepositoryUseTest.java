@@ -308,6 +308,9 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
 
     PsiField field = aClass.findFieldByName("field1", false);
     assertTrue(field.isDeprecated());
+    
+    PsiField field2 = aClass.findFieldByName("field2", false);
+    assertFalse(field2.isDeprecated());
 
     teardownLoadingFilter();
   }

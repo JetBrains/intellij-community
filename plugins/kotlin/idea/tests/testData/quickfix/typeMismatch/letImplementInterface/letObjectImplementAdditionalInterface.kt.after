@@ -1,5 +1,5 @@
 // "Let the anonymous object implement interface 'A'" "true"
-// K2_ERROR: Argument type mismatch: actual type is '<anonymous>', but 'A' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 package let.implement
 
 fun bar() {

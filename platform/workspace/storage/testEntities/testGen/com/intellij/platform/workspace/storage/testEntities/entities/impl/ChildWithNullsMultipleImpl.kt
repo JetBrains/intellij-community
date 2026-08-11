@@ -7,14 +7,12 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNullsMultiple
@@ -26,18 +24,11 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNu
 internal class ChildWithNullsMultipleImpl(private val dataSource: ChildWithNullsMultipleData) : ChildWithNullsMultiple,
                                                                                                 WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val childData: String
     get() {
       readField("childData")
       return dataSource.childData
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -45,36 +36,14 @@ internal class ChildWithNullsMultipleImpl(private val dataSource: ChildWithNulls
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: ChildWithNullsMultipleData?) :
     ModifiableWorkspaceEntityBase<ChildWithNullsMultiple, ChildWithNullsMultipleData>(result), ChildWithNullsMultipleBuilder {
     internal constructor() : this(ChildWithNullsMultipleData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity ChildWithNullsMultiple is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -85,7 +54,7 @@ internal class ChildWithNullsMultipleImpl(private val dataSource: ChildWithNulls
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -96,14 +65,12 @@ internal class ChildWithNullsMultipleImpl(private val dataSource: ChildWithNulls
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var childData: String
       get() = getEntityData().childData
@@ -115,32 +82,14 @@ internal class ChildWithNullsMultipleImpl(private val dataSource: ChildWithNulls
 
     override fun getEntityClass(): Class<ChildWithNullsMultiple> = ChildWithNullsMultiple::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChildWithNullsMultipleData : WorkspaceEntityData<ChildWithNullsMultiple>() {
   lateinit var childData: String
-
   internal fun isChildDataInitialized(): Boolean = ::childData.isInitialized
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChildWithNullsMultiple> {
-    val modifiable = ChildWithNullsMultipleImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): ChildWithNullsMultiple {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = ChildWithNullsMultipleImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): ChildWithNullsMultiple = ChildWithNullsMultipleImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<ChildWithNullsMultiple, *> = ChildWithNullsMultipleImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNullsMultiple") as EntityMetadata
   }

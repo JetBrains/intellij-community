@@ -7,7 +7,6 @@ import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal class PlaceholderImpl(parent: RowImpl) : PlaceholderBaseImpl<Placeholder>(parent), Placeholder {
 
   override fun resizableColumn(): Placeholder {

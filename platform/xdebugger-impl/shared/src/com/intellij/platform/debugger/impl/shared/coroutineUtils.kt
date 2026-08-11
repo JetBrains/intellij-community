@@ -1,8 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.shared
 
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.asDisposable
 import com.intellij.xdebugger.XDebugSessionListener
 import kotlinx.coroutines.CoroutineScope
@@ -11,7 +14,19 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
+suspend fun Document.awaitCommited(project: Project) {
+  val manager = PsiDocumentManager.getInstance(project)
+  if (manager.isCommitted(this)) return
+  suspendCancellableCoroutine { continuation ->
+    manager.performForCommittedDocument(this) {
+      continuation.resumeWith(Result.success(Unit))
+    }
+  }
+}
 
 // Used only for Java code, since MutableStateFlow function cannot be called there.
 @ApiStatus.Internal

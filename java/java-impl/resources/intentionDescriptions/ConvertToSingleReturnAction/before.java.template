@@ -1,4 +1,4 @@
-void test(String s) {
+<spot>void test(String s)</spot> {
   if(s == null) return;
   if(s.isEmpty()) return;
   System.out.println(s);

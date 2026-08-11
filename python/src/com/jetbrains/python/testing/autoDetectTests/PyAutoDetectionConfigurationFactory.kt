@@ -2,14 +2,11 @@
 package com.jetbrains.python.testing.autoDetectTests
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.testing.PyAbstractTestFactory
 import com.jetbrains.python.testing.PyUnitTestFactory
 import com.jetbrains.python.testing.PythonTestConfigurationType
-import org.jetbrains.annotations.ApiStatus
 
 
 class PyAutoDetectionConfigurationFactory(private val type: PythonTestConfigurationType) : PyAbstractTestFactory<PyAutoDetectTestConfiguration>(
@@ -20,13 +17,6 @@ class PyAutoDetectionConfigurationFactory(private val type: PythonTestConfigurat
     val factoriesExcludingThis: Collection<PyAbstractTestFactory<*>>
       get() =
         PythonTestConfigurationType.getInstance().typedFactories.toTypedArray().filterNot { it is PyAutoDetectionConfigurationFactory }
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use getFactory(sdk, project)", ReplaceWith("getFactory(sdk, project)"), DeprecationLevel.ERROR)
-  fun getFactory(sdk: Sdk): PyAbstractTestFactory<*> {
-    val project = ProjectManager.getInstance().openProjects.firstOrNull { sdk == it.pythonSdk }!!
-    return factoriesExcludingThis.firstOrNull { it.isFrameworkInstalled(project, sdk) } ?: PyUnitTestFactory(type)
   }
 
   fun getFactory(sdk: Sdk, project: Project): PyAbstractTestFactory<*> =

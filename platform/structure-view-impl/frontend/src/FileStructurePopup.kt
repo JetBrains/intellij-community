@@ -17,9 +17,10 @@ import com.intellij.ide.util.FileStructurePopupListener
 import com.intellij.ide.util.FileStructurePopupLoadingStateUpdater
 import com.intellij.ide.util.FileStructurePopupTimeTracker
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.NodeRenderer
+import com.intellij.ide.util.treeView.TreeState
 import com.intellij.lang.LangBundle
+import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -48,7 +49,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -58,14 +58,15 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.structureView.frontend.uiModel.CheckboxTreeAction
+import com.intellij.platform.structureView.frontend.uiModel.FilterTreeAction
+import com.intellij.platform.structureView.frontend.uiModel.NodeProviderTreeAction
 import com.intellij.platform.structureView.frontend.uiModel.StructureTreeAction
 import com.intellij.platform.structureView.frontend.uiModel.StructureUiModel
 import com.intellij.platform.structureView.frontend.uiModel.StructureUiModelListener
-import com.intellij.platform.structureView.impl.StructureViewScopeHolder
+import com.intellij.platform.structureView.frontend.impl.StructureViewScopeHolder
 import com.intellij.platform.structureView.impl.uiModel.StructureUiTreeElement
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ClickListener
@@ -81,15 +82,9 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.PopupUpdateProcessor
 import com.intellij.ui.scale.JBUIScale.scale
-import com.intellij.ui.speedSearch.ElementFilter
-import com.intellij.ui.tree.AsyncTreeModel
-import com.intellij.ui.tree.StructureTreeModel
-import com.intellij.ui.tree.TreeVisitor
-import com.intellij.ui.tree.TreeVisitor.VisitThread
+import com.intellij.ui.tree.ui.DefaultTreeUI.AUTO_EXPAND_ALLOWED
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure
-import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure.FilteringNode
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SpeedSearchAdvertiser
 import com.intellij.util.ui.UIUtil
@@ -97,22 +92,17 @@ import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.concurrency.asPromise
 import java.awt.BorderLayout
 import java.awt.GridLayout
@@ -134,10 +124,9 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 import javax.swing.TransferHandler
+import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -151,12 +140,9 @@ class FileStructurePopup(
   private var myPopup: JBPopup? = null
   private var myTitle: @NlsContexts.PopupTitle String? = null
 
+  private val rootNode = myModel.rootElement
+  private val treeModel = DefaultTreeModel(rootNode)
   private val tree: Tree
-  private val myTreeStructure: StructureViewTreeStructure
-  private val myFilteringStructure: FilteringTreeStructure
-
-  private val myAsyncTreeModel: AsyncTreeModel
-  private val myStructureTreeModel: StructureTreeModel<*>
   private val mySpeedSearch: MyTreeSpeedSearch
 
   private val myCheckBoxes = hashMapOf<String, JBCheckBox>()
@@ -167,13 +153,12 @@ class FileStructurePopup(
   private val myTreeExpander: TreeExpander
   private val mySorters = mutableListOf<AnAction>()
 
-  private val mutex = Mutex()
-
   private val cs = StructureViewScopeHolder.getInstance(myProject).cs.childScope("$this scope")
 
   private val constructorCallTime = System.nanoTime()
   private var showTime: Long = 0
   private val rebuildCounter = AtomicLong()
+  private var wasNarrowedDown: Boolean = false
 
   private var myCanClose = true
 
@@ -182,31 +167,8 @@ class FileStructurePopup(
 
     //Stop code analyzer to speed up the EDT
     DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this)
-    myTreeStructure = object : StructureViewTreeStructure(myProject, myModel) {
-      override fun rebuildTree() {
-        ProgressManager.getInstance().computePrioritized(ThrowableComputable {
-          super.rebuildTree()
-          myFilteringStructure.rebuild()
-        })
-      }
-
-      override fun isToBuildChildrenInBackground(element: Any): Boolean {
-        return rootElement === element
-      }
-
-      @NonNls
-      override fun toString(): @NonNls String {
-        return "structure view tree structure(model=$myModel)"
-      }
-    }
-
-    val filter = FileStructurePopupFilter()
-    myFilteringStructure = FilteringTreeStructure(filter, myTreeStructure, false)
-
-    myStructureTreeModel = StructureTreeModel<FilteringTreeStructure>(myFilteringStructure, this)
-    myAsyncTreeModel = AsyncTreeModel(myStructureTreeModel, this)
-    tree = MyTree(myAsyncTreeModel)
-    tree.model.addTreeModelListener(StructureViewExpandListener(tree, myModel))
+    tree = MyTree(treeModel)
+    tree.putClientProperty(AUTO_EXPAND_ALLOWED, true)
     PopupUtil.applyNewUIBackground(tree)
     tree.getAccessibleContext().setAccessibleName(LangBundle.message("file.structure.tree.accessible.name"))
     Disposer.register(this, myModel)
@@ -220,7 +182,7 @@ class FileStructurePopup(
         }
 
         cs.launch(Dispatchers.UI) {
-          rebuild(false)
+          rebuildVisibleTree(RebuildReason.MODEL_UPDATE)
 
           if (updaterInstalled.compareAndSet(false, true)) {
             myProject.service<FileStructurePopupLoadingStateUpdater>()
@@ -238,10 +200,16 @@ class FileStructurePopup(
         updateActions()
       }
     })
-    tree.setCellRenderer(NodeRenderer())
+    tree.setCellRenderer(object : NodeRenderer() {
+      override fun getPresentation(node: Any?): ItemPresentation? {
+        if (node is StructureUiTreeElement) return node.presentation
+
+        return super.getPresentation(node)
+      }
+    })
     myProject.getMessageBus()
       .connect(this)
-      .subscribe<UISettingsListener>(UISettingsListener.TOPIC, UISettingsListener { cs.launch(Dispatchers.UI) { rebuild(false) } })
+      .subscribe<UISettingsListener>(UISettingsListener.TOPIC, UISettingsListener { cs.launch(Dispatchers.UI) { rebuildVisibleTree(RebuildReason.UI_SETTINGS) } })
 
     tree.setTransferHandler(object : TransferHandler() {
       override fun importData(support: TransferSupport): Boolean {
@@ -333,13 +301,12 @@ class FileStructurePopup(
               val isBackspace = prefix.length < previousFilter.length
               previousFilter = prefix
 
-              rebuild(true)
+              rebuildVisibleTree(RebuildReason.SPEED_SEARCH)
 
-              TreeUtil.promiseExpandAll(tree)
               if (isBackspace && handleBackspace(prefix)) {
                 return@withContext
               }
-              if (myFilteringStructure.rootElement.getChildren().size == 0) {
+              if (rootNode.visibleChildren.isEmpty()) {
                 for (box in myCheckBoxes.values) {
                   if (!box.isSelected) {
                     myAutoClicked.add(box)
@@ -371,67 +338,13 @@ class FileStructurePopup(
   }
 
   suspend fun select(element: StructureUiTreeElement): TreePath? {
-    val visitor: TreeVisitor = object : TreeVisitor {
-      override fun visitThread() = VisitThread.BGT
-
-      override fun visit(path: TreePath): TreeVisitor.Action {
-        val last = path.lastPathComponent
-        val value = unwrapTreeElement(last)?.value
-
-        return if (value == element) {
-          TreeVisitor.Action.INTERRUPT
-        }
-        else {
-          TreeVisitor.Action.CONTINUE
-        }
+    return withContext(Dispatchers.UI) {
+      val path = findPathForElementOrAncestor(element)
+      if (path != null) {
+        selectPath(path)
       }
+      path
     }
-
-    return selectInner(visitor) ?: element.parent?.let { select(it) }
-  }
-
-  suspend fun select(element: StructureViewTreeElement): TreePath? {
-    val visitor: TreeVisitor = object : TreeVisitor {
-      override fun visitThread() = VisitThread.BGT
-
-      override fun visit(path: TreePath): TreeVisitor.Action {
-        val last = path.lastPathComponent
-        val treeElement = unwrapTreeElement(last)
-
-        return if (treeElement == element) {
-          TreeVisitor.Action.INTERRUPT
-        }
-        else if (treeElement != null && !treeElement.isAncestorOf(element)) {
-          TreeVisitor.Action.SKIP_CHILDREN
-        }
-        else {
-          TreeVisitor.Action.CONTINUE
-        }
-      }
-
-      private fun StructureViewTreeElement.isAncestorOf(child: StructureViewTreeElement): Boolean {
-        var element = child.parent
-        while (element != null) {
-          if (element == this) return true
-          element = element.parent
-        }
-        return false
-      }
-    }
-
-    return selectInner(visitor)
-  }
-
-  private suspend fun selectInner(visitor: TreeVisitor): TreePath? {
-    val result = myAsyncTreeModel.accept(visitor).asDeferred().await()
-    if (result == null) return null
-
-    withContext(Dispatchers.UI) {
-      tree.expandPath(result)
-      TreeUtil.selectPath(tree, result)
-      TreeUtil.ensureSelection(tree)
-    }
-    return result
   }
 
   override fun dispose() {
@@ -602,7 +515,7 @@ class FileStructurePopup(
     return label
   }
 
-  private val selectedNode: StructureViewTreeElement?
+  private val selectedNode: StructureUiTreeElement?
     get() {
       val path = tree.selectionPath
       return unwrapTreeElement(if (path == null) null else path.lastPathComponent)
@@ -618,7 +531,7 @@ class FileStructurePopup(
       }
     }
 
-    myModel.navigateTo(selectedNode?.value).thenAccept {
+    myModel.navigateTo(selectedNode).thenAccept {
       if (it) {
         cs.launch(Dispatchers.UI) {
           myPopup!!.cancel()
@@ -643,7 +556,7 @@ class FileStructurePopup(
       val state = checkBox.isSelected
       myModel.setActionEnabled(action, state, myAutoClicked.contains(checkBox))
       cs.launch(Dispatchers.UI) {
-        rebuild(false)
+        rebuildVisibleTree(RebuildReason.ACTION_STATE)
         if (mySpeedSearch.isPopupActive) {
           mySpeedSearch.refreshSelection()
         }
@@ -663,119 +576,277 @@ class FileStructurePopup(
     myCheckBoxes[action.name] = checkBox
   }
 
-  private suspend fun rebuild(refilterOnly: Boolean) {
+  /**
+   * Rebuilds the Swing-visible tree projection. Backend DTOs are already applied to [StructureUiTreeElement.sourceChildren] by the UI
+   * model; this method caches the action-projected topology in [StructureUiTreeElement.projectedChildren] and rewrites
+   * [StructureUiTreeElement.visibleChildren].
+   *
+   * Existing expansion is restored by [TreeState]. The previous popup selection is then replayed explicitly so Swing applies expansion
+   * from the selected path. If the previous popup selection is no longer visible, the current editor selection is selected when
+   * possible; otherwise [TreeUtil.ensureSelection] provides a fallback selection.
+   */
+  @RequiresEdt
+  private fun rebuildVisibleTree(reason: RebuildReason) {
     val rebuildId = rebuildCounter.incrementAndGet()
-    LOG.trace { "FileStructurePopup#rebuild[$rebuildId]: requested; refilterOnly=$refilterOnly" }
-    withContext(Dispatchers.UI) {
-      val selection = tree.getSelectionPaths()?.firstNotNullOf { unwrapTreeElement(it.lastPathComponent) } ?: myModel.editorSelection.value
-      withContext(Dispatchers.Default) {
-        mutex.withLock {
-          rebuildAndSelect(refilterOnly, selection, null, rebuildId)
-        }
+    val rebuildStartTime = System.nanoTime()
+    val visibilitySnapshot = createVisibilitySnapshot()
+    val shouldRebuildProjection = reason.requiresProjectionRebuild()
+    val shouldRebuildVisibility = shouldRebuildProjection || visibilitySnapshot.narrowDown || wasNarrowedDown
+
+    if (!shouldRebuildVisibility) {
+      LOG.trace {
+        "FileStructurePopup#rebuild[$rebuildId]: skipped; reason=$reason, narrowDown=${visibilitySnapshot.narrowDown}"
+      }
+      mySpeedSearch.refreshSelection()
+      return
+    }
+
+    val projectionSnapshot = if (shouldRebuildProjection) createProjectionSnapshot() else null
+    val selectionBeforeRebuild = selectedNode
+    // nodeStructureChanged(root) can make JTree discard descendant expansion state even when node instances are reused.
+    val treeState = TreeState.createOn(tree, true, false)
+
+    LOG.trace {
+      "FileStructurePopup#rebuild[$rebuildId]: started; reason=$reason, selection=${selectionBeforeRebuild?.id}, " +
+      "filters=${projectionSnapshot?.enabledFilters?.size ?: 0}, " +
+      "providers=${projectionSnapshot?.enabledNodeProviders?.size ?: 0}, narrowDown=${visibilitySnapshot.narrowDown}, " +
+      "rebuildProjection=$shouldRebuildProjection"
+    }
+
+    if (projectionSnapshot != null) {
+      rebuildProjectedAndVisibleChildren(rootNode, projectionSnapshot, visibilitySnapshot)
+    }
+    else {
+      rebuildVisibleChildrenFromProjected(rootNode, visibilitySnapshot)
+    }
+
+    wasNarrowedDown = visibilitySnapshot.narrowDown
+    treeModel.nodeStructureChanged(rootNode)
+    treeState.applyTo(tree)
+    if (visibilitySnapshot.narrowDown) {
+      expandAllVisibleNodes(TreePath(rootNode))
+    }
+    else {
+      expandAutoNodes(TreePath(rootNode))
+    }
+
+    val selectionPath = selectionBeforeRebuild?.let { findPathForElementOrAncestor(it) }
+                        ?: myModel.editorSelection.value?.let { findPathForElementOrAncestor(it) }
+    if (selectionPath != null) {
+      selectPath(selectionPath)
+    }
+    else {
+      TreeUtil.ensureSelection(tree)
+    }
+
+    mySpeedSearch.refreshSelection()
+
+    val totalRebuildTime = System.nanoTime() - rebuildStartTime
+    LOG.trace { "FileStructurePopup#rebuild[$rebuildId]: completed in ${totalRebuildTime.asTraceDuration()}; reason=$reason" }
+    FileStructurePopupTimeTracker.logRebuildTime(totalRebuildTime)
+  }
+
+  private fun createProjectionSnapshot(): ProjectionSnapshot {
+    val actions = myModel.getActions()
+    return ProjectionSnapshot(
+      enabledFilters = actions.filterIsInstance<FilterTreeAction>().filter { myModel.isActionEnabled(it) },
+      enabledNodeProviders = actions.filterIsInstance<NodeProviderTreeAction>().filter { myModel.isActionEnabled(it) },
+    )
+  }
+
+  private fun createVisibilitySnapshot(): VisibilitySnapshot {
+    val prefix = searchPrefix
+    val isNarrowDownActive = isShouldNarrowDown &&
+                             StringUtil.isNotEmpty(prefix) &&
+                             (ApplicationManager.getApplication().isUnitTestMode() || mySpeedSearch.isPopupActive)
+    return VisibilitySnapshot(
+      searchPrefix = prefix,
+      narrowDown = isNarrowDownActive,
+    )
+  }
+
+  private fun rebuildProjectedAndVisibleChildren(
+    node: StructureUiTreeElement,
+    projectionSnapshot: ProjectionSnapshot,
+    visibilitySnapshot: VisibilitySnapshot,
+  ): Boolean {
+    val children = ArrayList<StructureUiTreeElement>()
+    children.addAll(node.sourceChildren)
+    for (provider in projectionSnapshot.enabledNodeProviders) {
+      children.addAll(provider.getNodes(node))
+    }
+    children.sortBy { it.indexInParent }
+
+    node.projectedChildren.clear()
+    node.visibleChildren.clear()
+    var hasMatchingDescendant = false
+    for (child in children) {
+      if (!projectionSnapshot.enabledFilters.all { it.isVisible(child) }) {
+        clearProjectedAndVisibleChildren(child)
+        continue
+      }
+
+      node.projectedChildren.add(child)
+      val childMatchesSpeedSearch = visibilitySnapshot.matchesSpeedSearch(child)
+
+      // Match the old FilteringTreeStructure-based popup: keep direct matches and all of their visible ancestors.
+      val hasMatchingDescendantInChild = rebuildProjectedAndVisibleChildren(child, projectionSnapshot, visibilitySnapshot)
+      if (!visibilitySnapshot.narrowDown || childMatchesSpeedSearch || hasMatchingDescendantInChild) {
+        node.visibleChildren.add(child)
+        hasMatchingDescendant = hasMatchingDescendant || childMatchesSpeedSearch || hasMatchingDescendantInChild
+      }
+      else {
+        clearVisibleChildren(child)
+      }
+    }
+
+    return hasMatchingDescendant
+  }
+
+  private fun rebuildVisibleChildrenFromProjected(node: StructureUiTreeElement, visibilitySnapshot: VisibilitySnapshot): Boolean {
+    node.visibleChildren.clear()
+    var hasMatchingDescendant = false
+    for (child in node.projectedChildren) {
+      val childMatchesSpeedSearch = visibilitySnapshot.matchesSpeedSearch(child)
+      val hasMatchingDescendantInChild = rebuildVisibleChildrenFromProjected(child, visibilitySnapshot)
+      if (!visibilitySnapshot.narrowDown || childMatchesSpeedSearch || hasMatchingDescendantInChild) {
+        node.visibleChildren.add(child)
+        hasMatchingDescendant = hasMatchingDescendant || childMatchesSpeedSearch || hasMatchingDescendantInChild
+      }
+      else {
+        clearVisibleChildren(child)
+      }
+    }
+    return hasMatchingDescendant
+  }
+
+  private fun clearProjectedAndVisibleChildren(node: StructureUiTreeElement) {
+    node.projectedChildren.clear()
+    clearVisibleChildren(node)
+  }
+
+  private fun clearVisibleChildren(node: StructureUiTreeElement) {
+    for (child in node.visibleChildren) {
+      clearVisibleChildren(child)
+    }
+    node.visibleChildren.clear()
+  }
+
+  private fun VisibilitySnapshot.matchesSpeedSearch(node: StructureUiTreeElement): Boolean {
+    if (!narrowDown) return false
+
+    val prefix = searchPrefix ?: return false
+    val text = node.speedSearchText ?: return false
+    return mySpeedSearch.comparator.matchingFragments(prefix, text) != null
+  }
+
+  private fun expandAllVisibleNodes(path: TreePath) {
+    tree.expandPath(path)
+    val node = path.lastPathComponent as? StructureUiTreeElement ?: return
+    for (child in node.visibleChildren) {
+      expandAllVisibleNodes(path.pathByAddingChild(child))
+    }
+  }
+
+  private fun expandAutoNodes(path: TreePath, depth: Int = 0) {
+    val node = path.lastPathComponent as? StructureUiTreeElement ?: return
+    val shouldExpand = depth < myModel.minimumAutoExpandDepth ||
+                       node.shouldAutoExpand ||
+                       // Preserve com.intellij.ide.structureView.newStructureView.StructureViewComponent.MyExpandListener smart-expand
+                       // behavior: automatically continue along single-child branches.
+                       (myModel.smartExpand && node.visibleChildren.size == 1)
+    if (shouldExpand) {
+      tree.expandPath(path)
+    }
+    if (shouldExpand || tree.isExpanded(path)) {
+      for (child in node.visibleChildren) {
+        expandAutoNodes(path.pathByAddingChild(child), depth + 1)
       }
     }
   }
 
-  @RequiresBackgroundThread
-  private suspend fun rebuildAndSelect(refilterOnly: Boolean, selection: Any?, rebuildStartTime: Long?, rebuildId: Long): TreePath? {
-    check(mutex.isLocked)
+  private fun findPathForElementOrAncestor(element: StructureUiTreeElement): TreePath? {
+    val ancestors = collectAncestors(element)
+    if (ancestors.isEmpty() || ancestors.first().id != rootNode.id) return null
 
-    var rebuildStartTime = rebuildStartTime
-    if (rebuildStartTime == null) {
-      rebuildStartTime = System.nanoTime()
+    var visibleNode = rootNode
+    var visiblePath = TreePath(rootNode)
+    for (index in 1 until ancestors.size) {
+      val targetElement = ancestors[index]
+      val visibleChild = visibleNode.findVisibleChild(targetElement) ?: return visiblePath
+      visibleNode = visibleChild
+      visiblePath = visiblePath.pathByAddingChild(visibleChild)
     }
+    return visiblePath
+  }
 
-    val finalLastRebuildStartTime = rebuildStartTime
-
-    LOG.trace {
-      val rebuildKind = if (!refilterOnly) "full" else "refilter"
-      "FileStructurePopup#rebuild[$rebuildId]: rebuildAndSelect started; phaseRefilterOnly=$refilterOnly, " +
-      "kind=$rebuildKind, selectionType=${selection?.javaClass?.name}"
+  private fun collectAncestors(element: StructureUiTreeElement): List<StructureUiTreeElement> {
+    val elements = mutableListOf<StructureUiTreeElement>()
+    var current: StructureUiTreeElement? = element
+    while (current != null) {
+      elements.add(current)
+      current = current.parent
     }
+    elements.reverse()
+    return elements
+  }
 
-    val treePath = coroutineScope {
-      suspendCancellableCoroutine { continuation ->
-        myStructureTreeModel.invoker.invoke {
-          if (refilterOnly) {
-            val filteringRebuildStartTime = System.nanoTime()
-            myFilteringStructure.rebuild()
-            myFilteringStructure.refilter()
-            LOG.trace {
-              "FileStructurePopup#rebuild[$rebuildId]: refiltered in ${(System.nanoTime() - filteringRebuildStartTime).asTraceDuration()}"
-            }
-            val invalidateStartTime = System.nanoTime()
-            myStructureTreeModel.invalidateAsync().thenRun {
-              LOG.trace {
-                "FileStructurePopup#rebuild[$rebuildId]: structure tree invalidation completed in " +
-                (System.nanoTime() - invalidateStartTime).asTraceDuration()
-              }
-              launch {
-                try {
-                  val selectionApplyStartTime = System.nanoTime()
-                  val result = when (selection) {
-                    is StructureViewTreeElement -> select(selection)
-                    is StructureUiTreeElement -> select(selection)
-                    else -> {
-                      myAsyncTreeModel.accept { TreeVisitor.Action.CONTINUE }.asDeferred().await()
-                      null
-                    }
-                  }
-                  LOG.trace {
-                    "FileStructurePopup#rebuild[$rebuildId]: selection applied in " +
-                    "${(System.nanoTime() - selectionApplyStartTime).asTraceDuration()}; result=${result != null}"
-                  }
-                  val uiFinalizeStartTime = System.nanoTime()
-                  withContext(Dispatchers.UI) {
-                    TreeUtil.expand(this@FileStructurePopup.tree, myModel.minimumAutoExpandDepth)
-                    TreeUtil.ensureSelection(this@FileStructurePopup.tree)
-                    mySpeedSearch.refreshSelection()
-                    val totalRebuildTime = System.nanoTime() - finalLastRebuildStartTime
-                    LOG.trace {
-                      "FileStructurePopup#rebuild[$rebuildId]: UI finalization completed in " +
-                      "${(System.nanoTime() - uiFinalizeStartTime).asTraceDuration()}; total=${totalRebuildTime.asTraceDuration()}"
-                    }
-                    FileStructurePopupTimeTracker.logRebuildTime(totalRebuildTime)
-                  }
-                  continuation.resume(result)
-                }
-                catch (e: Exception) {
-                  mySpeedSearch.refreshSelection()
-                  continuation.resumeWithException(e)
-                }
-              }
-            }
-          }
-          else {
-            val treeRebuildStartTime = System.nanoTime()
-            myTreeStructure.rebuildTree()
-            LOG.trace {
-              "FileStructurePopup#rebuild[$rebuildId]: tree structure rebuild completed in " +
-              (System.nanoTime() - treeRebuildStartTime).asTraceDuration()
-            }
-            val invalidateStartTime = System.nanoTime()
-            myStructureTreeModel.invalidateAsync().thenRun {
-              LOG.trace {
-                "FileStructurePopup#rebuild[$rebuildId]: full tree invalidation completed in " +
-                (System.nanoTime() - invalidateStartTime).asTraceDuration()
-              }
-              launch {
-                try {
-                  val result = rebuildAndSelect(true, selection ?: myModel.editorSelection.value, finalLastRebuildStartTime, rebuildId)
-                  continuation.resume(result)
-                }
-                catch (e: Exception) {
-                  continuation.resumeWithException(e)
-                }
-              }
-            }
-          }
-        }.onError {
-          continuation.resumeWithException(it)
-        }
-      }
+  private fun StructureUiTreeElement.findVisibleChild(element: StructureUiTreeElement): StructureUiTreeElement? {
+    return visibleChildren.firstOrNull { it.id == element.id }
+  }
+
+  private fun findPath(node: StructureUiTreeElement, predicate: (StructureUiTreeElement) -> Boolean): TreePath? {
+    return findPath(TreePath(node), predicate)
+  }
+
+  private fun findPath(path: TreePath, predicate: (StructureUiTreeElement) -> Boolean): TreePath? {
+    val node = path.lastPathComponent as? StructureUiTreeElement ?: return null
+    if (predicate(node)) return path
+
+    for (child in node.visibleChildren) {
+      val childPath = findPath(path.pathByAddingChild(child), predicate)
+      if (childPath != null) return childPath
     }
+    return null
+  }
 
-    return treePath
+  private fun selectPath(path: TreePath) {
+    tree.expandPath(path)
+    TreeUtil.selectPath(tree, path)
+    tree.scrollPathToVisible(path)
+    TreeUtil.ensureSelection(tree)
+  }
+
+  private data class ProjectionSnapshot(
+    val enabledFilters: List<FilterTreeAction>,
+    val enabledNodeProviders: List<NodeProviderTreeAction>,
+  )
+
+  private data class VisibilitySnapshot(
+    val searchPrefix: String?,
+    val narrowDown: Boolean,
+  )
+
+  private enum class RebuildReason {
+    MODEL_UPDATE,
+    ACTION_STATE,
+    SPEED_SEARCH,
+    NARROW_DOWN,
+    UI_SETTINGS,
+    TEST,
+  }
+
+  private fun RebuildReason.requiresProjectionRebuild(): Boolean {
+    return when (this) {
+      RebuildReason.MODEL_UPDATE,
+      RebuildReason.ACTION_STATE,
+      RebuildReason.UI_SETTINGS,
+      RebuildReason.TEST,
+      -> true
+      RebuildReason.SPEED_SEARCH,
+      RebuildReason.NARROW_DOWN,
+      -> false
+    }
   }
 
   override fun setTitle(title: @NlsContexts.PopupTitle String) {
@@ -802,7 +873,7 @@ class FileStructurePopup(
 
   @TestOnly
   @ApiStatus.Internal
-  override fun setTreeActionState(actionName: String, state: Boolean) {
+  override fun setTreeActionState(actionName: String, state: Boolean): Promise<*> {
     val checkBox = myCheckBoxes[actionName]
     if (checkBox != null) {
       checkBox.setSelected(state)
@@ -813,6 +884,7 @@ class FileStructurePopup(
     else {
       LOG.error("Action '$actionName' not found in FileStructurePopup")
     }
+    return waitUpdateFinishedAsync()
   }
 
   @TestOnly
@@ -866,34 +938,20 @@ class FileStructurePopup(
   @ApiStatus.Internal
   @TestOnly
   suspend fun rebuildAndUpdate() {
-    rebuild(false)
-    val visitor = TreeVisitor {
-      TreeUtil.getLastUserObject(AbstractTreeNode::class.java, it)?.update()
-      TreeVisitor.Action.CONTINUE
+    withContext(Dispatchers.UI) {
+      rebuildVisibleTree(RebuildReason.TEST)
     }
-    myAsyncTreeModel.accept(visitor).asDeferred().await()
   }
 
   @ApiStatus.Internal
   @TestOnly
   suspend fun selectCurrent() {
     val id = myModel.getNewSelection()
-    val visitor: TreeVisitor = object : TreeVisitor {
-      override fun visitThread() = VisitThread.BGT
-
-      override fun visit(path: TreePath): TreeVisitor.Action {
-        val last = path.lastPathComponent
-        val value = unwrapTreeElement(last)?.value
-
-        return if (value?.id == id) {
-          TreeVisitor.Action.INTERRUPT
-        }
-        else {
-          TreeVisitor.Action.CONTINUE
-        }
-      }
+    if (id == null) return
+    withContext(Dispatchers.UI) {
+      val path = findPath(rootNode) { it.id == id } ?: return@withContext
+      selectPath(path)
     }
-    selectInner(visitor)
   }
 
   @TestOnly
@@ -916,32 +974,6 @@ class FileStructurePopup(
 
   override fun isActionActive(name: String?): Boolean {
     return false
-  }
-
-  private inner class FileStructurePopupFilter : ElementFilter<Any?> {
-    private var myLastFilter: String? = null
-    private val isUnitTest = ApplicationManager.getApplication().isUnitTestMode()
-
-    override fun shouldBeShowing(value: Any?): Boolean {
-      if (!isShouldNarrowDown) return true
-
-      val filter: String? = searchPrefix
-      if (!StringUtil.equals(myLastFilter, filter)) {
-        myLastFilter = filter
-      }
-      if (filter != null) {
-        val text: String? = if (value is StructureViewTreeElement) getSpeedSearchText(value) else null
-        if (text == null) return false
-
-        return matches(filter, text)
-      }
-      return true
-    }
-
-    fun matches(filter: String, text: String): Boolean {
-      return (isUnitTest || mySpeedSearch.isPopupActive) &&
-             StringUtil.isNotEmpty(filter) && mySpeedSearch.comparator.matchingFragments(filter, text) != null
-    }
   }
 
   private val searchPrefix: String?
@@ -1026,16 +1058,12 @@ class FileStructurePopup(
     }
   }
 
-  private fun unwrapTreeElement(o: Any?): StructureViewTreeElement? {
-    val p = TreeUtil.getUserObject(o)
-    val node = if (p is FilteringNode) p.delegate else p
-    return node as? StructureViewTreeElement
+  private fun unwrapTreeElement(o: Any?): StructureUiTreeElement? {
+    return TreeUtil.getUserObject(o) as? StructureUiTreeElement
   }
 
-  private fun unwrapTreeElement(o: TreePath?): StructureViewTreeElement? {
-    val p = TreeUtil.getLastUserObject(o)
-    val node = if (p is FilteringNode) p.delegate else p
-    return node as? StructureViewTreeElement
+  private fun unwrapTreeElement(o: TreePath?): StructureUiTreeElement? {
+    return TreeUtil.getLastUserObject(o) as? StructureUiTreeElement
   }
 
   private inner class ToggleNarrowDownAction :
@@ -1052,7 +1080,7 @@ class FileStructurePopup(
       PropertiesComponent.getInstance().setValue(NARROW_DOWN_PROPERTY_KEY, state.toString())
       if (mySpeedSearch.isPopupActive && !StringUtil.isEmpty(mySpeedSearch.enteredPrefix)) {
         cs.launch(Dispatchers.UI) {
-          rebuild(true)
+          rebuildVisibleTree(RebuildReason.NARROW_DOWN)
         }
       }
     }
@@ -1084,8 +1112,8 @@ class FileStructurePopup(
       return action.shortcuts ?: arrayOf()
     }
 
-    fun getSpeedSearchText(element: StructureViewTreeElement): String? {
-      return element.getValue().speedSearchText
+    fun getSpeedSearchText(element: StructureUiTreeElement): String? {
+      return element.speedSearchText
     }
 
     private fun find(
@@ -1097,8 +1125,7 @@ class FileStructurePopup(
     }
 
     private fun isElement(element: StructureUiTreeElement, path: TreePath?): Boolean {
-      val treeElement = TreeUtil.getLastUserObject(FilteringNode::class.java, path)?.delegate as? StructureViewTreeElement
-      return element == treeElement?.getValue()
+      return element == TreeUtil.getLastUserObject(path)
     }
 
     private fun isParent(parent: StructureUiTreeElement, path: TreePath?): Boolean {

@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
+import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectUtil;
@@ -43,6 +44,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -75,6 +77,10 @@ public class ProjectViewDirectoryHelper {
   }
 
   public @Nullable String getLocationString(@NotNull PsiDirectory psiDirectory, boolean includeUrl, boolean includeRootType) {
+    return getLocationString(psiDirectory, includeUrl, includeRootType, true);
+  }
+
+  public @Nullable String getLocationString(@NotNull PsiDirectory psiDirectory, boolean includeUrl, boolean includeRootType, boolean includeModuleAdditionalInfo) {
     StringBuilder result = new StringBuilder();
 
     final VirtualFile directory = psiDirectory.getVirtualFile();
@@ -206,7 +212,7 @@ public class ProjectViewDirectoryHelper {
     ModuleFileIndex moduleFileIndex = module == null ? null : ModuleRootManager.getInstance(module).getFileIndex();
     if (!settings.isFlattenPackages() || skipDirectory(psiDirectory)) {
       processPsiDirectoryChildren(psiDirectory, directoryChildrenInProject(psiDirectory, settings),
-                                  children, fileIndex, null, settings, withSubDirectories, filter);
+                                  children, fileIndex, false, settings, withSubDirectories, filter);
     }
     else { // source directory in "flatten packages" mode
       final PsiDirectory parentDir = psiDirectory.getParentDirectory();
@@ -231,7 +237,8 @@ public class ProjectViewDirectoryHelper {
           children.add(new PsiDirectoryNode(project, subdir, settings, filter));
         }
       }
-      processPsiDirectoryChildren(psiDirectory, psiDirectory.getFiles(), children, fileIndex, moduleFileIndex, settings,
+      boolean skipNonProjectContent = moduleFileIndex != null;
+      processPsiDirectoryChildren(psiDirectory, psiDirectory.getFiles(), children, fileIndex, skipNonProjectContent, settings,
                                   withSubDirectories, filter);
     }
     return children;
@@ -262,6 +269,30 @@ public class ProjectViewDirectoryHelper {
     return topLevelContentRoots;
   }
 
+  @NotNull Set<VirtualFile> topLevelBaseDirectories() {
+    // A root's parent may still be recognized as a content root by the file index even after its module is
+    // unloaded (see ProjectRootsUtil#findUnloadedModuleByContentRoot), so isFileUnderContentRoot() - and not just
+    // membership in the (loaded-only) BaseProjectDirectories set - is needed to correctly detect nested roots.
+    Set<VirtualFile> result = new LinkedHashSet<>();
+    for (VirtualFile root : BaseProjectDirectories.getBaseDirectories(myProject)) {
+      if (!isFileUnderContentRoot(root.getParent())) {
+        result.add(root);
+      }
+    }
+
+    // Unloaded modules' entities live in a separate workspace-model storage and aren't tracked by
+    // BaseProjectDirectories, so their top-level content roots have to be collected separately.
+    for (UnloadedModuleDescription description : ModuleManager.getInstance(myProject).getUnloadedModuleDescriptions()) {
+      for (VirtualFilePointer pointer : description.getContentRoots()) {
+        VirtualFile root = pointer.getFile();
+        if (root != null && !isFileUnderContentRoot(root.getParent())) {
+          result.add(root);
+        }
+      }
+    }
+    return result;
+  }
+
   @NotNull
   @Unmodifiable
   List<VirtualFile> getTopLevelModuleRoots(Module module, ViewSettings settings) {
@@ -283,8 +314,7 @@ public class ProjectViewDirectoryHelper {
       .collect(Collectors.toList());
   }
 
-
-   boolean isFileUnderContentRoot(@Nullable VirtualFile file) {
+  boolean isFileUnderContentRoot(@Nullable VirtualFile file) {
     return file != null && file.isValid() && myFileIndex.getContentRootForFile(file, false) != null;
   }
 
@@ -314,7 +344,7 @@ public class ProjectViewDirectoryHelper {
 
     PsiManager manager = psiDirectory.getManager();
     Set<PsiElement> directoriesOnTheWayToContentRoots = new HashSet<>();
-    for (VirtualFile root : getTopLevelRoots()) {
+    for (VirtualFile root : topLevelBaseDirectories()) {
       VirtualFile current = root;
       while (current != null) {
         VirtualFile parent = current.getParent();
@@ -348,12 +378,12 @@ public class ProjectViewDirectoryHelper {
                                            PsiElement[] children,
                                            List<? super AbstractTreeNode<?>> container,
                                            ProjectFileIndex projectFileIndex,
-                                           @Nullable ModuleFileIndex moduleFileIndex,
+                                           boolean skipNonProjectContent,
                                            ViewSettings viewSettings,
                                            boolean withSubDirectories,
                                            @Nullable PsiFileSystemItemFilter filter) {
     for (PsiElement child : children) {
-      LOG.assertTrue(child.isValid());
+      assertChildIsValid(psiDir, child, viewSettings);
 
       if (!(child instanceof PsiFileSystemItem)) {
         LOG.error("Either PsiFile or PsiDirectory expected as a child of " + child.getParent() + ", but was " + child);
@@ -363,7 +393,11 @@ public class ProjectViewDirectoryHelper {
       if (vFile == null) {
         continue;
       }
-      if (moduleFileIndex != null && !moduleFileIndex.isInContent(vFile)) {
+      // BAZEL-3331
+      // Previously, module index was queried instead of project index.
+      // It was changed, because with the Bazel plugin a directory might be a part of a different module (dummy module) than its children.
+      // It results in confusing empty project view when Flatten Packages is switched on.
+      if (skipNonProjectContent && !projectFileIndex.isInContent(vFile)) {
         continue;
       }
       if (filter != null && !filter.shouldShow((PsiFileSystemItem)child)) {
@@ -378,7 +412,7 @@ public class ProjectViewDirectoryHelper {
           if (!vFile.equals(projectFileIndex.getSourceRootForFile(vFile))) { // if is not a source root
             if (viewSettings.isHideEmptyMiddlePackages() && !skipDirectory(psiDir) && isEmptyMiddleDirectory(dir, true, filter)) {
               processPsiDirectoryChildren(
-                dir, directoryChildrenInProject(dir, viewSettings), container, projectFileIndex, moduleFileIndex, viewSettings, true, filter
+                dir, directoryChildrenInProject(dir, viewSettings), container, projectFileIndex, skipNonProjectContent, viewSettings, true, filter
               ); // expand it recursively
               continue;
             }
@@ -387,6 +421,41 @@ public class ProjectViewDirectoryHelper {
         }
       }
     }
+  }
+
+  private void assertChildIsValid(@NotNull PsiDirectory psiDir, @NotNull PsiElement child, @NotNull ViewSettings viewSettings) {
+    if (!child.isValid()) {
+      reportInvalidChild(psiDir, child, viewSettings);
+    }
+  }
+
+  private void reportInvalidChild(@NotNull PsiDirectory psiDir, @NotNull PsiElement child, @NotNull ViewSettings viewSettings) {
+    if(child.isValid()) return;
+
+    LOG.error("Invalid PSI child in Project View directory children: " +
+              ", child: " + child +
+              " {child.class: " + child.getClass().getName() + "}, " +
+              ", child.virtualFile: " + getVirtualFileInfo(child) +
+              ", parent: " + psiDir +
+              ", parent.valid: " + psiDir.isValid() +
+              ", parent.virtualFile: " + getVirtualFileInfo(psiDir.getVirtualFile()) +
+              ", parent.shouldBeShown: " + shouldBeShown(psiDir.getVirtualFile(), viewSettings) +
+              ", settings: " + getSettingsInfo(viewSettings)
+    );
+  }
+
+  private static @NotNull String getVirtualFileInfo(@NotNull PsiElement element) {
+    return element instanceof PsiFileSystemItem item ? getVirtualFileInfo(item.getVirtualFile()) : "n/a";
+  }
+
+  private static @NotNull String getVirtualFileInfo(@Nullable VirtualFile file) {
+    return file == null ? "null" : file + " (valid=" + file.isValid() + ", directory=" + file.isDirectory() + ")";
+  }
+
+  private static @NotNull String getSettingsInfo(@NotNull ViewSettings settings) {
+    return "flattenPackages=" + settings.isFlattenPackages() +
+           ", hideEmptyMiddlePackages=" + settings.isHideEmptyMiddlePackages() +
+           ", showExcludedFiles=" + shouldShowExcludedFiles(settings);
   }
 
   // used only in flatten packages mode

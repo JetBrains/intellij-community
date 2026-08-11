@@ -10,6 +10,7 @@ import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BooleanSupplier;
@@ -17,6 +18,7 @@ import java.util.function.Consumer;
 
 import static com.intellij.util.PlatformUtils.isIntelliJ;
 
+@ApiStatus.Internal
 public final class FlattenModulesToggleAction extends ToggleAction implements DumbAware {
   private final BooleanSupplier myIsEnabled;
   private final BooleanSupplier myIsSelected;

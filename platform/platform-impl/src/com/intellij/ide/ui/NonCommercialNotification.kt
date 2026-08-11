@@ -165,7 +165,6 @@ private class NonCommercialPopup(private val widget: NonCommercialWidget) : Clic
   }
 }
 
-@ApiStatus.Internal
 internal object NonCommercialWidgetUsagesCollector : CounterUsagesCollector() {
   private val nonCommercialUseGroup = EventLogGroup("non.commercial.use", 1)
 

@@ -1,5 +1,5 @@
 // "Add function to supertype…" "true"
-// K2_ERROR: 'foo' overrides nothing.
+// K2_ERROR: NOTHING_TO_OVERRIDE
 interface A {}
 interface B {}
 class C: A, B {

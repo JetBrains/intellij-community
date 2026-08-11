@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.producer
 
-import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation
 import com.intellij.openapi.util.Ref
@@ -15,7 +14,6 @@ import org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConf
 import org.jetbrains.plugins.gradle.execution.test.runner.PatternGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer
-import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.settings.TestRunner
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
@@ -258,12 +256,7 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
   @Test
   fun `test template-defined arguments are kept`() {
     val projectData = generateAndImportTemplateProject()
-    val gradleRCTemplate = RunManager.getInstance(myProject).getConfigurationTemplate(
-      GradleExternalTaskConfigurationType.getInstance().factory).configuration as? GradleRunConfiguration
-
-    gradleRCTemplate?.settings?.scriptParameters = "-DmyKey=myVal --debug"
-
-    try {
+    withTemplateScriptParameters("-DmyKey=myVal --debug") {
       assertConfigurationFromContext<TestMethodGradleConfigurationProducer>(
         """:test --tests "TestCase.test1" -DmyKey=myVal --debug""",
         projectData["project"]["TestCase"]["test1"].element
@@ -276,8 +269,39 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
         """:test --tests "pkg.*" -DmyKey=myVal --debug""",
         runReadActionAndWait { projectData["project"]["pkg.TestCase"].element.containingFile.containingDirectory }
       )
-    } finally {
-      gradleRCTemplate?.settings?.scriptParameters = ""
+    }
+  }
+
+  @Test
+  fun `test template-defined arguments are kept when several test tasks are executed`() {
+    val projectData = generateAndImportTemplateProject()
+    withTemplateScriptParameters("-DmyKey=myVal --debug") {
+      assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
+        """:autoTest :automationTest :test -DmyKey=myVal --debug --continue""",
+        projectData["project"].root
+      )
+      assertConfigurationFromContext<PatternGradleConfigurationProducer>(
+        """:test --tests "TestCase.test1" --tests "pkg.TestCase.test1" """ +
+        """:module:test --tests "ModuleTestCase.test1" -DmyKey=myVal --debug --continue""",
+        projectData["project"]["TestCase"]["test1"].element,
+        projectData["project"]["pkg.TestCase"]["test1"].element,
+        projectData["module"]["ModuleTestCase"]["test1"].element
+      )
+    }
+  }
+
+  @Test
+  fun `test template-defined continue argument is not duplicated`() {
+    val projectData = generateAndImportTemplateProject()
+    withTemplateScriptParameters("--continue") {
+      assertConfigurationFromContext<AllInDirectoryGradleConfigurationProducer>(
+        """:autoTest :automationTest :test --continue""",
+        projectData["project"].root
+      )
+      assertConfigurationFromContext<TestClassGradleConfigurationProducer>(
+        """:test --tests "TestCase" --continue""",
+        projectData["project"]["TestCase"].element
+      )
     }
   }
 

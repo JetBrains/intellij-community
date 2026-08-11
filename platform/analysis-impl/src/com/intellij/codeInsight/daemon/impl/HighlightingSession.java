@@ -50,6 +50,7 @@ public interface HighlightingSession {
   @NotNull
   ProperTextRange getVisibleRange();
 
+  @ApiStatus.Internal
   boolean isEssentialHighlightingOnly();
 
   /**

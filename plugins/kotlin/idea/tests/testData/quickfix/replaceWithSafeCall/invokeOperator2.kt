@@ -1,5 +1,6 @@
 // "Replace with safe (?.) call" "true"
 // WITH_STDLIB
+// K2_ERROR: FUNCTION_EXPECTED
 class Foo(val bar: Bar)
 
 class Bar {

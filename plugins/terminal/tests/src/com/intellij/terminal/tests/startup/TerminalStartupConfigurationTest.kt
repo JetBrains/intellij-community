@@ -85,7 +85,7 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
       "bash",
       allowShellIntegration,
     ), ConfiguredOptions(
-      tempDir.asEelPath(eelApi.descriptor),
+      tempDir.asEelPath(),
       expectedConfiguredBashCommand(listOf("bash"), allowShellIntegration),
       ShellIntegration(ShellType.BASH, true).takeIf { allowShellIntegration }
     ))
@@ -99,7 +99,7 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
       "/bin/zsh",
       allowShellIntegration,
     ), ConfiguredOptions(
-      tempDir.asEelPath(eelApi.descriptor),
+      tempDir.asEelPath(),
       expectedConfiguredZshCommand(listOf("/bin/zsh")),
       ShellIntegration(ShellType.ZSH, true).takeIf { allowShellIntegration }
     ))
@@ -113,7 +113,7 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
       "powershell.exe",
       allowShellIntegration,
     ), ConfiguredOptions(
-      tempDir.asEelPath(LocalEelDescriptor),
+      tempDir.asEelPath(),
       expectedConfiguredPowerShellCommand(listOf("powershell.exe"), allowShellIntegration),
       ShellIntegration(ShellType.POWERSHELL, expectedCommandBlocks(LocalEelDescriptor)).takeIf { allowShellIntegration }
     ))
@@ -130,7 +130,7 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
       "wsl.exe -d $distribName",
       allowShellIntegration,
     ), ConfiguredOptions(
-      tempDir.asEelPath(eelApi.descriptor),
+      tempDir.asEelPath(),
       expectedConfiguredBashCommand(listOf(bashInWsl), allowShellIntegration),
       ShellIntegration(ShellType.BASH, expectedCommandBlocks(eelApi.descriptor)).takeIf { allowShellIntegration },
     ))
@@ -166,7 +166,7 @@ internal class TerminalStartupConfigurationTest(private val eelHolder: EelHolder
       "powershell.exe",
       allowShellIntegration,
     ), ConfiguredOptions(
-      tempDir.asEelPath(LocalEelDescriptor),
+      tempDir.asEelPath(),
       expectedConfiguredPowerShellCommand(listOf("powershell.exe"), allowShellIntegration),
       ShellIntegration(ShellType.POWERSHELL, expectedCommandBlocks(LocalEelDescriptor)).takeIf { allowShellIntegration }
     ))

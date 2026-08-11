@@ -64,7 +64,6 @@ import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
-import com.jetbrains.python.documentation.PyTypeRenderer.Feature;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
@@ -85,6 +84,8 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -114,6 +115,29 @@ public abstract class PyTestCase extends UsefulTestCase {
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
+
+    // Enable Any/Unknown type support by default in all tests; opt out per method or class with @PyAnyTypeDisabled.
+    Registry.get("python.type.any").setValue(!isPyAnyTypeDisabledForCurrentTest());
+  }
+
+  private boolean isPyAnyTypeDisabledForCurrentTest() {
+    for (Class<?> c = getClass(); c != null && PyTestCase.class.isAssignableFrom(c); c = c.getSuperclass()) {
+      if (c.isAnnotationPresent(PyAnyTypeDisabled.class)) {
+        return true;
+      }
+    }
+    String name = getName();
+    if (name != null) {
+      try {
+        Method testMethod = getClass().getMethod(name);
+        if (testMethod.isAnnotationPresent(PyAnyTypeDisabled.class)) {
+          return true;
+        }
+      }
+      catch (NoSuchMethodException ignored) {
+      }
+    }
+    return false;
   }
 
   @Override
@@ -136,6 +160,7 @@ public abstract class PyTestCase extends UsefulTestCase {
       addSuppressedException(e);
     }
     finally {
+      Registry.get("python.type.any").resetToDefault();
       super.tearDown();
     }
   }
@@ -309,6 +334,35 @@ public abstract class PyTestCase extends UsefulTestCase {
       modificator.commitChanges();
     });
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+  }
+
+  protected void enableTestDataTypeshedStubsForPackages(String @NotNull ... packageNames) throws IOException {
+    final String absPath = getTestDataPath() + "/resolve/typeshed/stubs";
+    final VirtualFile sourceThirdPartyStubRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(absPath);
+    assertNotNull("Third-party typeshed root '" + absPath + "' not found", sourceThirdPartyStubRoot);
+
+    final VirtualFile targetThirdPartyStubRoot = PyTypeShed.INSTANCE.getThirdPartyStubRoot();
+    assertNotNull("Bundled third-party typeshed root not found", targetThirdPartyStubRoot);
+
+    final List<VirtualFile> copiedStubRoots = new ArrayList<>();
+    WriteAction.run(() -> {
+      for (String packageName : packageNames) {
+        final VirtualFile sourceStubRoot = sourceThirdPartyStubRoot.findChild(packageName);
+        assertNotNull("Stub package root for " + packageName + " not found under " + absPath, sourceStubRoot);
+
+        final VirtualFile existingStubRoot = targetThirdPartyStubRoot.findChild(packageName);
+        if (existingStubRoot != null) {
+          VfsTestUtil.deleteFile(existingStubRoot);
+        }
+
+        final VirtualFile targetStubRoot = VfsTestUtil.createDir(targetThirdPartyStubRoot, packageName);
+        VfsUtil.copyDirectory(this, sourceStubRoot, targetStubRoot, null);
+        copiedStubRoots.add(targetStubRoot);
+      }
+    });
+
+    Disposer.register(getTestRootDisposable(), () -> WriteAction.run(() -> copiedStubRoots.forEach(VfsTestUtil::deleteFile)));
+    enablePyiStubsForPackages(packageNames);
   }
 
   protected void enablePyiStubsForPackages(String @NotNull ... packageNames) {
@@ -620,7 +674,7 @@ public abstract class PyTestCase extends UsefulTestCase {
                                 @NotNull PyTypedElement element,
                                 @NotNull TypeEvalContext context) {
     final PyType actual = context.getType(element);
-    final String actualType = PythonDocumentationProvider.getTypeName(actual, context, Feature.UNSAFE_UNION);
+    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
     assertEquals(message, expectedType, actualType);
   }
 

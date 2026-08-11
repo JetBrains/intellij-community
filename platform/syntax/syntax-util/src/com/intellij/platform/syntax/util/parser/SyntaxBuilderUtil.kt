@@ -254,8 +254,13 @@ object SyntaxBuilderUtil {
       balance = 0
     }
 
+    var i = 0
     while (true) {
-      cancellationProvider?.checkCancelled()
+      if (i % 100 == 0) {
+        cancellationProvider?.checkCancelled()
+      }
+      i++
+
       val type = curType()
 
       if (type == null) {

@@ -7,11 +7,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.dispatchReceiverType
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.javaInterop.callableSymbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
@@ -19,14 +24,21 @@ import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.scopes.staticMemberScope
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
@@ -241,6 +253,7 @@ internal fun removeContracts(codeToInline: MutableCodeToInline) {
 /**
  * Mark parameter/receiver usages inside the function. To use the marks during parameter -> argument substitution
  */
+@OptIn(KaExperimentalApi::class)
 internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, originalDeclaration: KtDeclaration) {
     val isAnonymousFunction = originalDeclaration is KtNamedFunction && originalDeclaration.nameIdentifier == null
     val isAnonymousFunctionWithReceiver = isAnonymousFunction && originalDeclaration.receiverTypeReference != null
@@ -266,6 +279,22 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
             expression.putCopyableUserData(CodeToInline.TYPE_PARAMETER_USAGE_KEY, target.nameAsName)
         } else if (resolve == (originalDeclaration as? KtNamedFunction)?.receiverTypeReference && isAnonymousFunctionWithReceiver && expression.getReceiverExpression() == null) {
             expression.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, Name.identifier("p1"))
+        }
+
+        analyze(expression) {
+            val callableSymbol =
+                expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+            if (callableSymbol != null) {
+                val usedContextParams = callableSymbol.symbol.contextParameters.zip(callableSymbol.contextArguments)
+                    .mapNotNull { (calleeParameter, ctxArg) ->
+                        val containerParameterName = ((ctxArg as? KaImplicitReceiverValue)?.symbol as? KaContextParameterSymbol)
+                            ?.name?.takeUnless { it.isSpecial } ?: return@mapNotNull null
+                        calleeParameter.name to containerParameterName
+                    }.toMap()
+                if (usedContextParams.isNotEmpty()) {
+                    expression.putCopyableUserData(CodeToInline.CONTEXT_PARAMETER_USAGE_KEY, usedContextParams)
+                }
+            }
         }
 
         fun isImportable(t: PsiElement): Boolean {
@@ -363,7 +392,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                         ((originalDeclaration as? KtPropertyAccessor)?.property ?: originalDeclaration).symbol as? KaCallableSymbol
                     val originalSymbolReceiverType = originalSymbol?.receiverType
                     val originalSymbolDispatchType = originalSymbol?.dispatchReceiverType
-                    if (value != null && !(resolve is KtParameter && resolve.ownerFunction == originalDeclaration)) {
+                    if (value != null && !(resolve is KtParameter && resolve.ownerDeclaration == originalDeclaration)) {
                         require(partiallyAppliedSymbol != null)
                         val receiverToDelete = originalSymbolReceiverType != null
                                 && (partiallyAppliedSymbol.extensionReceiver as? KaImplicitReceiverValue)?.symbol !is KaReceiverParameterSymbol

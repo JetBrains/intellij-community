@@ -8,7 +8,7 @@ import com.intellij.openapi.project.currentOrDefaultProject
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.frontend.ml.SeMlService
-import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
+import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
 import com.intellij.platform.searchEverywhere.withWeight
 import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchResultAdapter
@@ -79,6 +79,6 @@ internal class SplitSeMlService : SeMlService {
   }
 
   private fun SeParams.isSearchEverywhere(): Boolean {
-    return SeEverywhereFilter.isEverywhere(this.filter) ?: false
+    return SeEverywhereFilterImpl.isEverywhere(this.filter) ?: false
   }
 }

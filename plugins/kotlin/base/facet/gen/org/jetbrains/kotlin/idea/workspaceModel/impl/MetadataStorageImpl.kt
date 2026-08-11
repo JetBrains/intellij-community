@@ -20,9 +20,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
         val primitiveTypeSetNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Set")
         val primitiveTypeStringNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = true, type = "String")
         val primitiveTypeIntNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Int")
-
         var typeMetadata: StorageTypeMetadata
-
         typeMetadata = FinalClassMetadata.ClassMetadata(
             fqName = "org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsId", properties = listOf(
                 OwnPropertyMetadata(
@@ -75,9 +73,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                 )
             ), supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")
         )
-
         addMetadata(typeMetadata)
-
         typeMetadata = EntityMetadata(
             fqName = "org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity",
             entityDataFqName = "org.jetbrains.kotlin.idea.workspaceModel.impl.KotlinSettingsEntityData",
@@ -504,7 +500,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
             ),
             isAbstract = false
         )
-
         addMetadata(typeMetadata)
     }
 

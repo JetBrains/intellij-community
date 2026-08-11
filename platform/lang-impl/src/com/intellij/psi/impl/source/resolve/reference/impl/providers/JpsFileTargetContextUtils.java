@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -16,6 +17,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import java.util.Collection;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class JpsFileTargetContextUtils {
   private JpsFileTargetContextUtils() {
   }

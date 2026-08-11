@@ -16,6 +16,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.time.Duration.Companion.milliseconds
 import org.jetbrains.jewel.foundation.BorderColors
@@ -44,6 +45,7 @@ import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
 
+/** Applies a minimal test theme for Markdown rendering tests, providing stub styles and a [NoOpCodeHighlighter]. */
 @Composable
 fun MarkdownTestTheme(content: @Composable () -> Unit) {
     CompositionLocalProvider(
@@ -56,9 +58,11 @@ fun MarkdownTestTheme(content: @Composable () -> Unit) {
     }
 }
 
+/** Creates a minimal [DividerStyle] with a 1dp black line for use in Markdown rendering tests. */
 fun createMarkdownTestDividerStyle() =
     DividerStyle(color = Color.Black, metrics = DividerMetrics(thickness = 1.dp, startIndent = 0.dp))
 
+/** Creates a minimal [ScrollbarStyle] with stub colors and metrics for use in Markdown rendering tests. */
 fun createMarkdownTestScrollbarStyle() =
     ScrollbarStyle(
         colors =
@@ -90,6 +94,7 @@ fun createMarkdownTestScrollbarStyle() =
             ),
     )
 
+/** Creates a minimal [ThemeDefinition] with stub colors and metrics for use in Markdown rendering tests. */
 fun createMarkdownTestThemeDefinition(): ThemeDefinition =
     ThemeDefinition(
         name = "Test",
@@ -128,7 +133,11 @@ fun createMarkdownTestThemeDefinition(): ThemeDefinition =
         disabledAppearanceValues = DisabledAppearanceValues(brightness = 33, contrast = -35, alpha = 100),
     )
 
-fun createMarkdownTestStyling(codeEditorTextStyle: TextStyle = TextStyle.Default): MarkdownStyling {
+/** Creates a minimal [MarkdownStyling] with stub span styles for use in Markdown rendering tests. */
+fun createMarkdownTestStyling(
+    codeEditorTextStyle: TextStyle = TextStyle.Default,
+    blockVerticalSpacing: Dp = 8.dp,
+): MarkdownStyling {
     val mockSpanStyle = SpanStyle(Color.Black)
     val inlinesStyling =
         InlinesStyling(
@@ -145,7 +154,7 @@ fun createMarkdownTestStyling(codeEditorTextStyle: TextStyle = TextStyle.Default
             inlineHtml = mockSpanStyle,
         )
     return MarkdownStyling(
-        blockVerticalSpacing = 8.dp,
+        blockVerticalSpacing = blockVerticalSpacing,
         paragraph = MarkdownStyling.Paragraph(inlinesStyling),
         heading =
             MarkdownStyling.Heading(
@@ -205,7 +214,11 @@ fun createMarkdownTestStyling(codeEditorTextStyle: TextStyle = TextStyle.Default
                         itemVerticalSpacingTight = 2.dp,
                         padding = PaddingValues(4.dp),
                         numberFormatStyles =
-                            MarkdownStyling.List.Ordered.NumberFormatStyles(firstLevel = NumberFormatStyle.Decimal),
+                            MarkdownStyling.List.Ordered.NumberFormatStyles(
+                                firstLevel = NumberFormatStyle.Decimal,
+                                secondLevel = NumberFormatStyle.Roman,
+                                thirdLevel = NumberFormatStyle.Alphabetical,
+                            ),
                     ),
                 unordered =
                     MarkdownStyling.List.Unordered(

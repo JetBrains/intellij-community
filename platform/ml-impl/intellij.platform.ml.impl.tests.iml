@@ -47,7 +47,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ml" scope="TEST" />
@@ -56,6 +56,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ml.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.ml.impl" />
 </module>

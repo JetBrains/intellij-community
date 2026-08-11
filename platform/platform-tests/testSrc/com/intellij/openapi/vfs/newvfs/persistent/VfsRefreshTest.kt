@@ -126,6 +126,48 @@ class VfsRefreshTest {
 
   @Test
   @RegistryKey("vfs.refresh.use.background.write.action", "true")
+  fun `cancelling suspending vfs refresh cancels active scan`() = concurrencyTest {
+    val dir1 = createTempDirectory()
+    val dir2 = createTempDirectory()
+    dir1.resolve("file1").createFile()
+    dir2.resolve("file2").createFile()
+    val virtualFile1 = VirtualFileManager.getInstance().findFileByNioPath(dir1)!!
+    val virtualFile2 = VirtualFileManager.getInstance().findFileByNioPath(dir2)!!
+    val path1 = virtualFile1.path
+    val path2 = virtualFile2.path
+    val secondRootVisited = AtomicBoolean(false)
+
+    RefreshQueueImpl.setTestListener { file ->
+      when {
+        file != null && file.path == path1 -> {
+          checkpoint(1)
+          checkpoint(3)
+        }
+        file != null && file.path == path2 -> {
+          secondRootVisited.set(true)
+        }
+      }
+    }
+    try {
+      val refreshJob = launch(Dispatchers.Default) {
+        RefreshQueue.getInstance().refresh(false, listOf(virtualFile1, virtualFile2))
+      }
+      checkpoint(2)
+      refreshJob.cancel()
+      checkpoint(3)
+      refreshJob.join()
+
+      assertThat(secondRootVisited.get()).isFalse()
+    }
+    finally {
+      RefreshQueueImpl.setTestListener(null)
+      dir1.delete()
+      dir2.delete()
+    }
+  }
+
+  @Test
+  @RegistryKey("vfs.refresh.use.background.write.action", "true")
   fun `suspending vfs refresh uses modality of its context`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
       val currentModality = coroutineContext.contextModality()

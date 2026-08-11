@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.PsiManager;
+import com.intellij.python.requirements.parser.PyRequirementParser;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -114,12 +115,13 @@ public final class PyPackageUtil {
   @SuppressWarnings("unused")
   public static @Nullable VirtualFile findRequirementsTxt(@NotNull Module module) {
     Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-    if (sdk == null) {
-      return PythonRequirementTxtSdkUtils.detectRequirementsTxtInModule(module);
+    if (sdk != null) {
+      VirtualFile stored = PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(sdk);
+      if (stored != null) {
+        return stored;
+      }
     }
-    else {
-      return PythonRequirementTxtSdkUtils.findRequirementsTxt(sdk);
-    }
+    return PythonRequirementTxtSdkUtils.detectRequirementsTxtInModule(module);
   }
 
   @RequiresReadLock(generateAssertion = false)

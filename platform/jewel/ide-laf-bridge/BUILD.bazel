@@ -2,8 +2,16 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build intellij.platform.jewel.ideLafBridge` start
+jps_test(
+    name = "ideLafBridge-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":ideLafBridge-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.jewel.ideLafBridge.tests`
+
+### auto-generated section `build intellij.platform.jewel.ideLafBridge` start
 create_kotlinc_options(
     name = "custom_ide-laf-bridge",
     opt_in = [
@@ -43,7 +51,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
         "//platform/jewel/foundation",
@@ -54,7 +62,7 @@ jvm_library(
         "//platform/platform-api:ide",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
-        "@lib//:jna",
+        "//libraries/jna",
         "//libraries/skiko",
         "//platform/core-ui",
         "//platform/util:util-ui",
@@ -86,6 +94,7 @@ jvm_library(
         # do not sort,
         ":ide-laf-bridge",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/jewel/foundation:foundation_test_lib",
@@ -96,6 +105,7 @@ jvm_library(
         "//platform/platform-api:ide_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//libraries/skiko:skiko_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/util:util-ui_test_lib",
@@ -127,7 +137,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.jewel.ideLafBridge` end
 
 ### auto-generated section `build intellij.platform.jewel.ideLafBridge.tests` start
-
 create_kotlinc_options(
     name = "custom_ideLafBridge-tests",
     opt_in = [
@@ -195,7 +204,8 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui",
@@ -213,7 +223,8 @@ jvm_library(
         "//platform/platform-api:ide",
         "//platform/platform-api:ide_test_lib",
         "//platform/platform-impl:ide-impl",
-        "@lib//:jna",
+        "//libraries/jna",
+        "//libraries/jna:jna_test_lib",
         "//libraries/skiko",
         "//libraries/skiko:skiko_test_lib",
         "//platform/core-ui",
@@ -248,11 +259,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.jewel.ideLafBridge.tests` end
-
-### auto-generated section `test intellij.platform.jewel.ideLafBridge.tests` start
-
-jps_test(
-    name = "ideLafBridge-tests_test",
-    runtime_deps = [":ideLafBridge-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.jewel.ideLafBridge.tests` end

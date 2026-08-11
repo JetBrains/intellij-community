@@ -1,8 +1,18 @@
 <idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.repository.search.common"/>
     <module name="intellij.repository.search.completion"/>
+    <module name="intellij.xml.psi"/>
   </dependencies>
   <!-- endregion -->
 
@@ -36,6 +46,9 @@
 
     <typedHandler implementation="com.intellij.maven.completion.MavenDependenciesAutoPopupHandler"
                   id="MavenDependenciesAutoPopupHandler"/>
+
+    <lookup.charFilter id="MavenCompletionCharFilter" order="first"
+                       implementation="com.intellij.maven.completion.MavenCompletionCharFilter"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">

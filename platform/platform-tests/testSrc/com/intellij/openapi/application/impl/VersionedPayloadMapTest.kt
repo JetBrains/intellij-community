@@ -64,6 +64,16 @@ internal class VersionedPayloadMapTest {
   }
 
   @Test
+  fun `insert into empty map creates one entry map`() {
+    val payload = Payload("payload")
+    val map = VersionedPayloadMap.empty().insert(10, payload)!!
+
+    assertEquals("VersionedPayloadMap1", map.javaClass.simpleName)
+    assertEquals(1, map.size())
+    assertSame(payload, map.lowerBound(20))
+  }
+
+  @Test
   fun `ordered map keeps null payload as explicit removal until newer version appears`() {
     val first = Payload("first")
     val second = Payload("second")
@@ -190,6 +200,7 @@ internal class VersionedPayloadMapTest {
 
     val cleaned = map.cleanupStaleVersions(20)!!
 
+    assertEquals("VersionedPayloadMap1", cleaned.javaClass.simpleName)
     assertEquals(1, cleaned.size())
     assertNull(cleaned.lowerBound(19))
     assertSame(second, cleaned.lowerBound(20))

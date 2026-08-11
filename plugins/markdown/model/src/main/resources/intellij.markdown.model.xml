@@ -1,9 +1,25 @@
 <idea-plugin>
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
+    <module name="intellij.platform.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.markdown.backend"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.xml.parser"/>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.xml.psi.impl"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-    <typedHandler implementation="org.intellij.plugins.markdown.model.HeaderAnchorCompletionPopupTypedHandler"/>
+    <completion.contributor language="Markdown"
+                            implementationClass="org.intellij.plugins.markdown.model.psi.labels.MarkdownLinkLabelCompletionContributor"/>
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
               implementationClass="org.intellij.plugins.markdown.model.psi.MarkdownSymbolUsageSearcher"/>
 

@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.testFramework.junit5.eel` start
-
 jvm_library(
     name = "eel",
     srcs = glob(
@@ -18,7 +17,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//libraries/junit5-jupiter",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/junit5",
@@ -52,6 +51,7 @@ jvm_library(
         # do not sort,
         ":eel",
         "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/junit5-params",
         "//libraries/junit5-params:junit5-params_test_lib",
@@ -88,7 +88,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.testFramework.junit5.eel` end
 
 ### auto-generated section `build intellij.platform.testFramework.junit5.eel.tests` start
-
 jvm_library(
     name = "testFramework-junit5-eel-tests",
     srcs = glob(
@@ -130,7 +129,8 @@ jvm_library(
         # do not sort,
         "//libraries/junit5-jupiter",
         "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
@@ -152,10 +152,14 @@ jvm_library(
         "//platform/ide-core-impl",
         "//platform/ijent",
         "//platform/ijent:ijent_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/util",
         "//platform/util:util_test_lib",
+        "//libraries/commons/compress",
+        "//libraries/commons/compress:compress_test_lib",
         "//platform/util/coroutines",
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/util-ex",
@@ -178,7 +182,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.testFramework.junit5.eel.tests` end
 
 ### auto-generated section `test intellij.platform.testFramework.junit5.eel.tests` start
-
 jps_test(
     name = "testFramework-junit5-eel-tests_test",
     runtime_deps = [":testFramework-junit5-eel-tests_test_lib"],

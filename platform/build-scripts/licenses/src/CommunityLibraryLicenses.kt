@@ -11,6 +11,7 @@ object CommunityLibraryLicenses {
   @Suppress("SpellCheckingInspection", "NonAsciiCharacters")
   val LICENSES_LIST: List<LibraryLicense> = listOf(
     LibraryLicense("A fast Java JSON schema validator", libraryName = "json-schema-validator", url = "https://github.com/networknt/json-schema-validator")
+      .additionalLibraryNames("json-schema-validator-jetbrains")
       .apache("https://github.com/networknt/json-schema-validator/blob/master/LICENSE"),
 
     LibraryLicense("aalto-xml", libraryName = "aalto-xml", url = "https://github.com/FasterXML/aalto-xml/")
@@ -280,10 +281,6 @@ object CommunityLibraryLicenses {
       )
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
-    LibraryLicense("Compose Multiplatform Compiler", libraryName = "jetbrains.compose.compiler.hosted", url = "https://github.com/JetBrains/compose-multiplatform")
-      .apache("https://github.com/JetBrains/compose-multiplatform/blob/master/LICENSE.txt")
-      .suppliedByOrganizations(Suppliers.JETBRAINS),
-
     LibraryLicense("Compose Runtime", libraryName = "androidx.compose.runtime.desktop", url = "https://source.android.com/")
       .apache("https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:LICENSE.txt")
       .suppliedByOrganizations(Suppliers.GOOGLE),
@@ -324,7 +321,7 @@ object CommunityLibraryLicenses {
       .suppliedByOrganizations("SmartBear Software"),
 
     LibraryLicense("dbus-java", libraryName = "dbus-java", url = "https://github.com/hypfvieh/dbus-java")
-      .lgpl2("https://github.com/hypfvieh/dbus-java/blob/dbus-java-3.0/LICENSE")
+      .mit("https://github.com/hypfvieh/dbus-java/blob/dbus-java-parent-4.2.1/LICENSE")
       .suppliedByPersons("David M. <hypfvieh@googlemail.com>"),
 
     LibraryLicense("debugpy", version = LibraryLicense.CUSTOM_REVISION, attachedTo="intellij.python", url = "https://github.com/microsoft/debugpy")
@@ -540,7 +537,7 @@ object CommunityLibraryLicenses {
       .suppliedByPersons("Asami Tomoharu", "Murata Makoto", "Kohsuke Kawaguchi"),
 
     LibraryLicense("Jackson", libraryName = "jackson", url = "https://github.com/FasterXML/jackson")
-      .additionalLibraryNames("jackson3")
+      .additionalLibraryNames("jackson3", "jackson-core-3")
       .apache("https://github.com/FasterXML/jackson-core/blob/2.14/LICENSE")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
@@ -554,7 +551,7 @@ object CommunityLibraryLicenses {
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
     LibraryLicense("Jackson Databind", libraryName = "jackson-databind", url = "https://github.com/FasterXML/jackson-databind")
-      .additionalLibraryNames("jackson3-databind")
+      .additionalLibraryNames("jackson3-databind", "jackson-databind-3")
       .apache("https://github.com/FasterXML/jackson-databind/blob/2.16/LICENSE")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
@@ -685,11 +682,11 @@ object CommunityLibraryLicenses {
       ),
 
     LibraryLicense(libraryName = "jediterm-core", url = "https://github.com/JetBrains/jediterm")
-      .lgpl3("https://github.com/JetBrains/jediterm/blob/master/LICENSE-LGPLv3.txt")
+      .apache("https://github.com/JetBrains/jediterm/blob/master/LICENSE-APACHE-2.0.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
     LibraryLicense(libraryName = "jediterm-ui", url = "https://github.com/JetBrains/jediterm")
-      .lgpl3("https://github.com/JetBrains/jediterm/blob/master/LICENSE-LGPLv3.txt")
+      .apache("https://github.com/JetBrains/jediterm/blob/master/LICENSE-APACHE-2.0.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
     LibraryLicense("JetBrains Annotations", libraryName = "jetbrains-annotations", url = "https://github.com/JetBrains/java-annotations")
@@ -1139,6 +1136,34 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "opentest4j", url = "https://github.com/ota4j-team/opentest4j")
       .apache("https://github.com/ota4j-team/opentest4j/blob/master/LICENSE"),
 
+    LibraryLicense("org.eclipse.lsp4j.debug:0.14.0", libraryName = "eclipse.lsp4j.debug", url = "https://github.com/eclipse/lsp4j")
+      .eplV2("https://github.com/eclipse-lsp4j/lsp4j/blob/main/LICENSE")
+      .suppliedByPersons(
+        "Sven Efftinge", "Christian Dietrich", "Dennis Hübner", "Anton Kosyakov", "Miro Spönemann", "Jonah Graham",
+        "Akos Kitta", "Yaohai Zheng"
+      ),
+
+    LibraryLicense("org.eclipse.lsp4j.jsonrpc.debug:0.14.0", libraryName = "eclipse.lsp4j.jsonrpc.debug", url = "https://github.com/eclipse/lsp4j")
+      .eplV2("https://github.com/eclipse-lsp4j/lsp4j/blob/main/LICENSE")
+      .suppliedByPersons(
+        "Sven Efftinge", "Christian Dietrich", "Dennis Hübner", "Anton Kosyakov", "Miro Spönemann", "Jonah Graham",
+        "Akos Kitta", "Yaohai Zheng"
+      ),
+
+    LibraryLicense("org.eclipse.lsp4j.jsonrpc:0.14.0", libraryName = "eclipse.lsp4j.jsonrpc", url = "https://github.com/eclipse/lsp4j")
+      .eplV2("https://github.com/eclipse-lsp4j/lsp4j/blob/main/LICENSE")
+      .suppliedByPersons(
+        "Sven Efftinge", "Christian Dietrich", "Dennis Hübner", "Anton Kosyakov", "Miro Spönemann", "Jonah Graham",
+        "Akos Kitta", "Yaohai Zheng"
+      ),
+
+    LibraryLicense("org.eclipse.lsp4j:0.14.0", libraryName = "eclipse.lsp4j", url = "https://github.com/eclipse/lsp4j")
+      .eplV2("https://github.com/eclipse-lsp4j/lsp4j/blob/main/LICENSE")
+      .suppliedByPersons(
+        "Sven Efftinge", "Christian Dietrich", "Dennis Hübner", "Anton Kosyakov", "Miro Spönemann", "Jonah Graham",
+        "Akos Kitta", "Yaohai Zheng"
+      ),
+
     LibraryLicense("org.eclipse.xtext.xbase", libraryName = "xtext-xbase", url = "https://github.com/eclipse/xtext-lib")
       .eplV2("https://github.com/eclipse/xtext-lib/blob/master/LICENSE")
       .suppliedByPersons(
@@ -1332,10 +1357,6 @@ object CommunityLibraryLicenses {
     LibraryLicense("thriftpy2", version = "0.4.13", attachedTo = "intellij.python", url = "https://github.com/Thriftpy/thriftpy2/")
       .mit("https://github.com/Thriftpy/thriftpy2/blob/master/LICENSE"),
 
-    LibraryLicense("toml4j", libraryName = "toml4j", url = "https://github.com/mwanji/toml4j")
-      .mit("https://github.com/mwanji/toml4j/blob/master/LICENSE")
-      .suppliedByPersons("Moandji Ezana"),
-
     // for traceprocessor-proto module library in intellij.android.profilersAndroid
     LibraryLicense("Trang", libraryName = "trang-core.jar", version = LibraryLicense.CUSTOM_REVISION, url = "https://relaxng.org/jclark/trang.html")
       .newBsd("https://opensource.org/license/bsd-3-clause/"),
@@ -1445,29 +1466,18 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("com.jetbrains.fus.reporting.ap.validation.all"),
     jetbrainsLibrary("com.jetbrains.fus.reporting.fus-api"),
     jetbrainsLibrary("completion-log-events"),
-    jetbrainsLibrary("completion-ranking-cpp-exp"),
     jetbrainsLibrary("completion-ranking-css-exp"),
     jetbrainsLibrary("completion-ranking-dart-exp"),
-    jetbrainsLibrary("completion-ranking-go-exp"),
     jetbrainsLibrary("completion-ranking-html-exp"),
     jetbrainsLibrary("completion-ranking-java"),
-    jetbrainsLibrary("completion-ranking-java-exp"),
-    jetbrainsLibrary("completion-ranking-java-exp2"),
-    jetbrainsLibrary("completion-ranking-js-exp"),
     jetbrainsLibrary("completion-ranking-kotlin"),
-    jetbrainsLibrary("completion-ranking-kotlin-exp"),
-    jetbrainsLibrary("completion-ranking-php-exp"),
     jetbrainsLibrary("completion-ranking-python-exp"),
     jetbrainsLibrary("completion-ranking-python-with-full-line"),
-    jetbrainsLibrary("completion-ranking-ruby-exp"),
-    jetbrainsLibrary("completion-ranking-rust-exp"),
     jetbrainsLibrary("completion-ranking-scala-exp"),
     jetbrainsLibrary("completion-ranking-sh"),
-    jetbrainsLibrary("completion-ranking-sh-exp"),
-    jetbrainsLibrary("completion-ranking-swift-exp"),
-    jetbrainsLibrary("completion-ranking-typescript-exp"),
     jetbrainsLibrary("debugger-agent"),
     jetbrainsLibrary("debugger-memory-agent"),
+    jetbrainsLibrary("diogen-analysis"),
     jetbrainsLibrary("download-pgp-verifier"),
     jetbrainsLibrary("file-prediction-model"),
     jetbrainsLibrary("find-action-model"),
@@ -1482,6 +1492,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("jetbrains.compose.components.ui.tooling.preview.desktop"),
     jetbrainsLibrary("jetbrains.compose.hot.reload.devtools.api"),
     jetbrainsLibrary("jetbrains.compose.hot.reload.gradle.idea"),
+    jetbrainsLibrary("jetbrains.fus.reporting.api.jvm"),
     jetbrainsLibrary("jetbrains.intellij.deps.rwmutex.idea"),
     jetbrainsLibrary("jetbrains.kotlin.jps.plugin.classpath"),
     jetbrainsLibrary("jetbrains.ml.models.jetenry.inline.prompt.detection.model"),
@@ -1499,7 +1510,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlin-tooling-core"),
     jetbrainsLibrary("kotlinc.allopen-compiler-plugin"),
     jetbrainsLibrary("kotlinc.analysis-api"),
-    jetbrainsLibrary("kotlinc.analysis-api-fe10"),
     jetbrainsLibrary("kotlinc.analysis-api-impl-base"),
     jetbrainsLibrary("kotlinc.analysis-api-k2"),
     jetbrainsLibrary("kotlinc.analysis-api-platform-interface"),

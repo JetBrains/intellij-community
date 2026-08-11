@@ -12,7 +12,6 @@ import com.intellij.internal.statistic.eventLog.filters.LogEventFalseFilter
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter
 import com.intellij.internal.statistic.eventLog.filters.LogEventMetadataFilter
 import com.intellij.internal.statistic.eventLog.filters.LogEventSnapshotBuildFilter
-import com.jetbrains.fus.reporting.configuration.ConfigurationClient
 import com.jetbrains.fus.reporting.model.config.v4.ConfigurationBucketRange
 import com.jetbrains.fus.reporting.model.config.v4.ConfigurationReleaseFilter
 import com.jetbrains.fus.reporting.model.config.v4.ConfigurationVersion
@@ -34,7 +33,7 @@ import javax.net.ssl.SSLHandshakeException
  */
 @ApiStatus.Internal
 abstract class EventLogSettingsClient {
-  abstract val configurationClient: ConfigurationClient
+  abstract val configurationClient: CachedConfigurationClient
   abstract val applicationInfo: EventLogApplicationInfo
   abstract val recorderId: String
 

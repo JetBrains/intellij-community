@@ -1,6 +1,6 @@
-// K2_ERROR: 'when' expression must be exhaustive. Add the 'C' branch or an 'else' branch.
 // ERROR: 'when' expression must be exhaustive, add necessary 'C' branch or 'else' branch instead
 // PROBLEM: none
+// K2_ERROR: NO_ELSE_IN_WHEN
 
 enum class TestEnum{
     A, B, C

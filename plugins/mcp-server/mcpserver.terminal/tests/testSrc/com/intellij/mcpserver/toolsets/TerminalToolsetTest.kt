@@ -24,12 +24,15 @@ class TerminalToolsetTest : GeneralMcpToolsetTestBase() {
 
   @Test
   fun execute_terminal_command() = runBlocking(Dispatchers.Default) {
-    testMcpTool(
-      TerminalToolset::execute_terminal_command.name,
-      buildJsonObject {
-        put("command", JsonPrimitive("cat missingfile"))
-      },
-      """{"command_exit_code":1,"command_output":"cat: missingfile: No such file or directory\n"}"""
-    )
+    val terminalToolset = TerminalToolset()
+    withRegisteredTestTools(terminalToolset::execute_terminal_command) {
+      testMcpTool(
+        TerminalToolset::execute_terminal_command.name,
+        buildJsonObject {
+          put("command", JsonPrimitive("cat missingfile"))
+        },
+        """{"command_exit_code":1,"command_output":"cat: missingfile: No such file or directory\n"}"""
+      )
+    }
   }
 }

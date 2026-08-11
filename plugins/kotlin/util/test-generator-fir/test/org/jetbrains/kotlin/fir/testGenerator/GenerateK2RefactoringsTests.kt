@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2MovePackageTest
 import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2MoveTopLevelTest
 import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2MoveTopLevelToInnerTest
 import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2MultiModuleMoveTest
+import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.AbstractK2MoveToClassWithConversionTest
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.AbstractK2PullUpTest
 import org.jetbrains.kotlin.idea.k2.refactoring.pushDown.AbstractK2PushDownTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractFirMultiModuleSafeDeleteTest
@@ -168,6 +169,9 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         }
         testClass<AbstractK2MultiModuleMoveTest> {
             model("refactoring/moveMultiModule", pattern = TEST, flatten = true)
+        }
+        testClass<AbstractK2MoveToClassWithConversionTest> {
+            model("refactoring/moveToClassWithConversion", pattern = TEST, flatten = true)
         }
     }
 

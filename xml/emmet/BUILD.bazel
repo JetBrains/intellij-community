@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.xml.emmet` start
-
 jvm_provided_library(
     name = "platform_core_provided",
     lib = "//platform/core-api:core",
@@ -60,11 +59,6 @@ jvm_provided_library(
 jvm_provided_library(
     name = "platform_core-impl_provided",
     lib = "//platform/core-impl",
-)
-
-jvm_provided_library(
-    name = "xml_ui-common_provided",
-    lib = "//xml/xml-ui-common:ui-common",
 )
 
 jvm_provided_library(
@@ -127,11 +121,6 @@ jvm_provided_library(
     lib = "//fleet/rpc",
 )
 
-jvm_provided_library(
-    name = "platform_kernel_rpc_provided",
-    lib = "//platform/kernel/rpc",
-)
-
 jvm_library(
     name = "emmet",
     srcs = glob(
@@ -151,9 +140,11 @@ jvm_library(
     deps = [
         # do not sort,
         "//platform/kernel/shared:kernel",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib-provided",
+        "//xml/xml-ui-common:ui-common",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/kernel/rpc",
         ":platform_core_provided",
         ":platform_analysis-impl_provided",
         ":xml_psi_provided",
@@ -166,7 +157,6 @@ jvm_library(
         ":libraries_xerces_provided",
         ":platform_analysis_provided",
         ":platform_core-impl_provided",
-        ":xml_ui-common_provided",
         ":platform_ide-core_provided",
         ":platform_ide-impl_provided",
         ":platform_editor-ex_provided",
@@ -179,7 +169,6 @@ jvm_library(
         ":platform_project_project_provided",
         ":libraries_kotlinx_serialization_core_provided",
         ":fleet_rpc_provided",
-        ":platform_kernel_rpc_provided",
     ],
 )
 
@@ -196,6 +185,7 @@ jvm_library(
         # do not sort,
         ":emmet",
         "//platform/kernel/shared:kernel_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//platform/analysis-impl",
@@ -221,7 +211,6 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
-        "//xml/xml-ui-common:ui-common",
         "//xml/xml-ui-common:ui-common_test_lib",
         "//platform/ide-core",
         "//platform/ide-core:ide-core_test_lib",
@@ -248,7 +237,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//fleet/rpc",
         "//fleet/rpc:rpc_test_lib",
-        "//platform/kernel/rpc",
         "//platform/kernel/rpc:rpc_test_lib",
     ],
 )

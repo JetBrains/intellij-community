@@ -33,6 +33,8 @@ public abstract class PsiDocumentManagerEx extends PsiDocumentManager implements
 
   public abstract void associatePsi(@NotNull Document document, @NotNull PsiFile file);
 
+  public abstract @Nullable Document getDocumentForNonPhysicalLightFile(@NotNull PsiFile psiFile);
+
   public abstract @Nullable PsiFile getRawCachedFile(@NotNull VirtualFile virtualFile, @NotNull CodeInsightContext context);
 
   public abstract @NotNull @Unmodifiable List<FileViewProvider> getCachedViewProviders(@NotNull Document document);

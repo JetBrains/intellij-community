@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.writeText
-import com.intellij.platform.ModuleAttachProcessor
+import com.intellij.platform.attachToProjectAsync
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.FacetEntity
@@ -25,7 +25,7 @@ import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.jps.entities.sdkId
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
-import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.SEP
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.api.ModelRebuiltListener
 import com.intellij.python.pyproject.model.internal.MODEL_REBUILD
@@ -113,7 +113,7 @@ internal class PyProjectTomlLifecycleTest {
     try {
       val moduleAttachedDef = CompletableDeferred<Unit>()
       val workspace2Nio = workspace2.toNioPath()
-      ModuleAttachProcessor().attachToProjectAsync(f.project, workspace2Nio, { _, _ -> moduleAttachedDef.complete(Unit) })
+      attachToProjectAsync(f.project, workspace2Nio, callback = { _, _ -> moduleAttachedDef.complete(Unit) })
       log.info("Waiting for the module attach callback")
       moduleAttachedDef.await()
       log.info("Waiting for the WSM update")
@@ -222,7 +222,7 @@ internal class PyProjectTomlLifecycleTest {
     f.reloadProject()
     // assertModuleNames verifies entity source consistency on all children (PY-87499)
     f.assertProjectStructure(
-      ExpectedModule("lib", contentRoot = "lib", sourceRoots = listOf("lib${SEP}src"), excludedFolders = listOf("lib${SEP}node_modules")),
+      ExpectedModule("lib", contentRoot = "lib", sourceRoots = listOf("lib" / "src"), excludedFolders = listOf("lib" / "node_modules")),
       ExpectedModule("root", contentRoot = "."),
     )
   }
@@ -384,8 +384,8 @@ internal class PyProjectTomlLifecycleTest {
     // - excluded folders: sub and sub/__pycache__
     f.assertProjectStructure(ExpectedModule(
       "root", contentRoot = ".",
-      sourceRoots = listOf("sub${SEP}src"),
-      excludedFolders = listOf("sub", "sub${SEP}__pycache__"),
+      sourceRoots = listOf("sub" / "src"),
+      excludedFolders = listOf("sub", "sub" / "__pycache__"),
     ))
   }
 

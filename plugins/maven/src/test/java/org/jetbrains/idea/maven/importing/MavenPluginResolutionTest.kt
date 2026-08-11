@@ -1,16 +1,33 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.projectsTree
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenPluginResolutionTest : MavenMultiVersionImportingTestCase() {
-  override fun skipPluginResolution() = false
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenPluginResolutionTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion,
+    skipPluginResolution = false,
+  )
+  
 
   @Test
   fun `test resolve bundle packaging plugin versions`() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -26,8 +43,8 @@ class MavenPluginResolutionTest : MavenMultiVersionImportingTestCase() {
                       </plugins>
                     </build>
                     """.trimIndent())
-    assertEquals(1, projectsTree.projects.size)
-    val errors = projectsTree.projects.first().problems.filter { it.isError }
+    assertEquals(1, maven.projectsTree.projects.size)
+    val errors = maven.projectsTree.projects.first().problems.filter { it.isError }
     assertEmpty(errors)
   }
 }

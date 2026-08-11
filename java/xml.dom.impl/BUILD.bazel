@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.xml.dom.impl` start
-
 jvm_library(
     name = "xml.dom.impl",
     srcs = glob(
@@ -18,6 +17,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//java/java-backend:backend"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -73,6 +73,7 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//platform/util:util-ui_test_lib",
         "//java/openapi:java_test_lib",
+        "//java/java-backend:backend_test_lib",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
         "//java/java-impl:impl_test_lib",
         "//java/java-frontback-impl:frontback-impl_test_lib",

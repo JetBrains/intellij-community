@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.compose.ide.plugin.resources.android` start
-
 jvm_library(
     name = "ide-plugin-resources-android",
     srcs = glob(
@@ -24,6 +23,9 @@ jvm_library(
         "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources",
         "@lib//:studio-platform-provided",
         "//platform/util",
+        "//android/android-npw:newProjectWizard",
+        "//platform/core-ui",
+        "//platform/platform-api:ide",
     ],
 )
 
@@ -42,6 +44,9 @@ jvm_library(
         "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources_test_lib",
         "@lib//:studio-platform-provided",
         "//platform/util:util_test_lib",
+        "//android/android-npw:newProjectWizard_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/platform-api:ide_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.resources.android` end

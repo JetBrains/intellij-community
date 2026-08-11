@@ -16,16 +16,31 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
-import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.checkHighlighting
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenSpellcheckerTest : MavenDomTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenSpellcheckerTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun testSpell() = runBlocking {
-    fixture.enableInspections(GrazieSpellCheckingInspection::class.java)
+    maven.fixture.enableInspections(GrazieSpellCheckingInspection::class.java)
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -40,6 +55,6 @@ class MavenSpellcheckerTest : MavenDomTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    checkHighlighting()
+    maven.checkHighlighting()
   }
 }

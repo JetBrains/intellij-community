@@ -2,7 +2,9 @@
 package com.intellij.openapi.observable.operation.core
 
 import com.intellij.openapi.observable.operation.OperationExecutionId
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface ObservableOperationState {
 
   val status: ObservableOperationStatus

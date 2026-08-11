@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 ### auto-generated section `build intellij.lombok` start
-
 jvm_library(
     name = "lombok",
     srcs = glob(
@@ -99,7 +98,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//libraries/mockito",
         "//libraries/mockito:mockito_test_lib",
         "//java/java-impl-inspections:impl-inspections_test_lib",
@@ -135,7 +135,6 @@ exports_files(
 ### auto-generated section `iml intellij.lombok` end
 
 ### auto-generated section `build intellij.lombok.tests` start
-
 resourcegroup(
     name = "lombok-tests_test_resources",
     srcs = glob(
@@ -245,7 +244,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//libraries/mockito",
         "//libraries/mockito:mockito_test_lib",
         "//java/java-impl-inspections:impl-inspections",
@@ -273,8 +273,12 @@ jvm_library(
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
+        "//plugins/lombok/plugin",
+        "//plugins/lombok/plugin:plugin_test_lib",
         "//platform/statistics",
         "//platform/statistics:statistics_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.lombok.tests` end
@@ -289,7 +293,6 @@ exports_files(
 ### auto-generated section `iml intellij.lombok.tests` end
 
 ### auto-generated section `test intellij.lombok.tests` start
-
 jps_test(
     name = "lombok-tests_test",
     runtime_deps = [":lombok-tests_test_lib"],

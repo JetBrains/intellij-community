@@ -17,6 +17,7 @@ import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.advertiser.PluginFeatureMap
 import com.intellij.ide.plugins.isBrokenPlugin
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.plugins.newui.PluginDependencyModel
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUiModelBuilderFactory
 import com.intellij.ide.ui.PluginBooleanOptionDescriptor
@@ -243,10 +244,8 @@ open class PluginAdvertiserServiceImpl(
   /**
    * Checks if the plugin is compatible with the current build of the IDE.
    */
-  private fun isPluginCompatible(descriptor: IdeaPluginDescriptor): Boolean {
-    val incompatibilityReason = PluginManagerCore.checkBuildNumberCompatibility(descriptor, PluginManagerCore.buildNumber)
-    return incompatibilityReason == null
-  }
+  private fun isPluginCompatible(descriptor: IdeaPluginDescriptor): Boolean =
+    PluginManagerCore.isCompatible(descriptor, PluginManagerCore.buildNumber)
 
   private suspend fun fetchFeatures(
     features: Collection<UnknownFeature>,
@@ -365,16 +364,15 @@ open class PluginAdvertiserServiceImpl(
     }
 
     val builder = builderFactory.createBuilder(descriptor.pluginId)
-    .setName(descriptor.name)
-    .setSize("0")
-    .setDescription(descriptor.description)
-    .setChangeNotes(descriptor.changeNotes)
-    .setVersion(descriptor.version)
-    .setVendor(descriptor.vendor)
-    .setVendorDetails(descriptor.organization)
-    .setIsConverted(true)
-
-    descriptor.dependencies.forEach { builder.addDependency(it.pluginId.idString, it.isOptional) }
+      .setName(descriptor.name)
+      .setSize("0")
+      .setDescription(descriptor.description)
+      .setChangeNotes(descriptor.changeNotes)
+      .setVersion(descriptor.version)
+      .setVendor(descriptor.vendor)
+      .setVendorDetails(descriptor.organization)
+      .setIsConverted(true)
+      .setDependencies(descriptor.dependencies.map { PluginDependencyModel(it.pluginId, it.isOptional) })
     return builder.build()
   }
 

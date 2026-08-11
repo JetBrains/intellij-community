@@ -4,11 +4,13 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
@@ -17,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.Point;
 import java.awt.Rectangle;
 
+@ApiStatus.Internal
 public class IntentionsUIImpl extends IntentionsUI {
   @ApiStatus.Internal
   public static final Key<Integer> SHOW_INTENTION_BULB_ON_ANOTHER_LINE = Key.create("IntentionsUIImpl.SHOW_INTENTION_BULB_ON_ANOTHER_LINE");
@@ -67,7 +70,19 @@ public class IntentionsUIImpl extends IntentionsUI {
         && cachedIntentions.showBulb()
         // do not show bulb when the user explicitly ESCaped it away
         && !DaemonCodeAnalyzerEx.getInstanceEx(project).isEscapeJustPressed()) {
-      myLastIntentionHint = IntentionHintComponent.showIntentionHint(project, cachedIntentions.getFile(), editor, false, cachedIntentions);
+      IntentionHintComponent hint = IntentionHintComponent.showIntentionHint(project, cachedIntentions.getFile(), editor, false, cachedIntentions);
+      // drop the reference as soon as the hint is disposed through any path (e.g., popup cancel or editor release),
+      // otherwise a stale hint would retain the released editor (IJPL-251590)
+      Disposable dropHintReference = () -> {
+        if (myLastIntentionHint == hint) {
+          myLastIntentionHint = null;
+        }
+      };
+      // registration fails if the hint is already disposed - do not store it then
+      boolean alive = Disposer.tryRegister(hint, dropHintReference);
+      if (alive) {
+        myLastIntentionHint = hint;
+      }
     }
     else {
       if (DaemonCodeAnalyzerImpl.LOG.isDebugEnabled()) {
@@ -98,8 +113,14 @@ public class IntentionsUIImpl extends IntentionsUI {
   @RequiresEdt
   public void hideForEditor(@NotNull Editor editor) {
     IntentionHintComponent hint = myLastIntentionHint;
-    if (hint != null && hint.hideIfDisplayedForEditor(editor)) {
-      myLastIntentionHint = null;
+    if (hint == null || !hint.isForEditor(editor)) {
+      return;
+    }
+    // drop the reference even when the hint cannot be hidden (already disposed or never shown),
+    // otherwise it would retain the released editor (IJPL-251590)
+    myLastIntentionHint = null;
+    if (!hint.isDisposed()) {
+      hint.hide();
     }
   }
 }

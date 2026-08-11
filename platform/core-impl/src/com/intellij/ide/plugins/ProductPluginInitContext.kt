@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.core.CoreBundle
 import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.ide.plugins.PluginInitializationContext.EnvironmentConfiguredModuleData
+import com.intellij.ide.plugins.PluginInitializationContext.RemainingCandidatesView
 import com.intellij.ide.plugins.PluginManagerCore.CORE_ID
 import com.intellij.ide.plugins.PluginManagerCore.JAVA_PLUGIN_ALIAS_ID
 import com.intellij.ide.plugins.PluginManagerCore.getPluginNameAndVendor
@@ -45,17 +46,22 @@ class ProductPluginInitContext(
     buildSet {
       add(CORE_ID)
       addAll(ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds())
-      if (AppMode.isRemoteDevHost()) {
-        if (PlatformUtils.isRider()) {
-          add(REMOTE_DEVELOPMENT_RIDER_PLUGIN_ID)
-        }
-        else {
-          add(REMOTE_DEVELOPMENT_PLUGIN_ID)
-        }
+      if (AppMode.isRemoteDevHost() || PlatformUtils.isJetBrainsClient()) {
+        add(REMOTE_DEVELOPMENT_PLUGIN_ID)
       }
     }
   }
-  private val disabledPlugins: Set<PluginId> get() = disabledPluginsOverride ?: DisabledPluginsState.getDisabledIds()
+
+  private val disabledPlugins: Set<PluginId> get() {
+    if (disabledPluginsOverride != null) {
+      return disabledPluginsOverride
+    }
+    if (explicitPluginSubsetToLoad != null) {
+      return emptySet()
+    }
+    return DisabledPluginsState.getDisabledIds()
+  }
+
   private val expiredPlugins: Set<PluginId> get() = expiredPluginsOverride ?: ExpiredPluginsState.expiredPluginIds
   private val brokenPluginVersions: Map<PluginId, Set<String>> get() = brokenPluginVersionsOverride ?: getBrokenPluginVersions()
 
@@ -109,17 +115,20 @@ class ProductPluginInitContext(
   override fun provideCompatibilityDependencies(descriptor: IdeaPluginDescriptorImpl, pluginSet: UnambiguousPluginSet): Sequence<DependencyRef> =
     defaultProductCompatibilityDependenciesProvider(descriptor, pluginSet)
 
+  override fun provideCompatibilityDependenciesForRemainingCandidates(descriptor: IdeaPluginDescriptorImpl, remainingCandidates: RemainingCandidatesView): Sequence<DependencyRef> =
+    defaultProductCompatibilityDependenciesForRemainingCandidatesProvider(descriptor, remainingCandidates)
+
   override fun provideModuleExclusionsImposedByProductRules(pluginSet: UnambiguousPluginSet): Sequence<Pair<PluginModuleDescriptor, ProductRulesImposedExclusionReason>> =
     defaultProductRulesImposedExclusions(pluginSet, expiredPlugins, thirdPartyPluginsWithoutConsentCheckResult)
-
-  override fun provideCustomRuntimeModuleGroupAffiliation(module: PluginModuleDescriptor, pluginSet: UnambiguousPluginSet): PluginModuleDescriptor? =
-    defaultRuntimeModuleGroupAffiliation(module, pluginSet)
 
   override fun shouldIncludeContentModulesForDependsEdgeTarget(resolvedTarget: PluginMainDescriptor): Boolean =
     defaultShouldIncludeContentModulesForDependsEdgeTarget(resolvedTarget)
 
-  override fun runConfigurationDuringStartup(totalPluginSet: AmbiguousPluginSet) {
-    thirdPartyPluginsWithoutConsentCheckResult = checkThirdPartyPluginsPrivacyConsent(totalPluginSet)
+  override fun runConfigurationDuringStartup(candidateSubset: UnambiguousPluginSet) {
+    if (checkEssentialPlugins && candidateSubset.resolvePluginId(CORE_ID) == null) {
+      throw EssentialPluginMissingException(listOf("$CORE_ID (platform prefix: ${System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)})"))
+    }
+    thirdPartyPluginsWithoutConsentCheckResult = checkThirdPartyPluginsPrivacyConsent(candidateSubset)
     thirdPartyPluginsWithoutConsentCheckResult?.let { result ->
       if (result.privacyNoteAccepted != null) {
         ThirdPartyPluginsPrivacyConsentState.setState(result.privacyNoteAccepted)
@@ -130,7 +139,7 @@ class ProductPluginInitContext(
   data class ThirdPartyPluginsWithoutConsentCheckResult(
     /** null if wasn't asked */
     val privacyNoteAccepted: Boolean?,
-    val pluginsToExcludeFromLoading: List<PluginMainDescriptor>
+    val pluginsToExcludeFromLoading: List<PluginMainDescriptor>,
   )
 
   private var thirdPartyPluginsWithoutConsentCheckResult: ThirdPartyPluginsWithoutConsentCheckResult? = null
@@ -141,8 +150,8 @@ class ProductPluginInitContext(
    *
    * Invoked only during startup initialization.
    */
-  private fun checkThirdPartyPluginsPrivacyConsent(pluginSet: AmbiguousPluginSet): ThirdPartyPluginsWithoutConsentCheckResult? {
-    val aliens = ThirdPartyPluginsWithoutConsentFile.consumeAliensFile().mapNotNull { pluginSet.resolvePluginId(it).firstOrNull()?.getMainDescriptor() }
+  private fun checkThirdPartyPluginsPrivacyConsent(candidateSubset: UnambiguousPluginSet): ThirdPartyPluginsWithoutConsentCheckResult? {
+    val aliens = ThirdPartyPluginsWithoutConsentFile.consumeAliensFile().mapNotNull { candidateSubset.resolvePluginId(it)?.getMainDescriptor() }
     if (aliens.isEmpty()) {
       return null
     }
@@ -190,35 +199,66 @@ class ProductPluginInitContext(
   }
 
   companion object {
+    private enum class ProductModes(val id: String) {
+      MONOLITH("monolith"),
+      FRONTEND("frontend"),
+      BACKEND("backend"),
+      LIGHT("light"),
+      LIGHT_WITH_RD_CONNECTION("light_with_rd_connection"),
+      LANGUAGE_SERVER("language_server");
+
+      val hasBackend get() = this == MONOLITH || this == BACKEND || this == LANGUAGE_SERVER
+      val hasFrontend get() = this != BACKEND && this != LANGUAGE_SERVER
+      val isLight get() = this == LIGHT || this == LIGHT_WITH_RD_CONNECTION
+    }
+
     @VisibleForTesting
     fun MutableMap<PluginModuleId, EnvironmentConfiguredModuleData>.configureProductModeModules(productModeId: String) {
-      val frontendSplit = PluginModuleId("intellij.platform.frontend.split", PluginModuleId.JETBRAINS_NAMESPACE)
-      val frontendSplitBase = PluginModuleId("intellij.platform.frontend.split.base", PluginModuleId.JETBRAINS_NAMESPACE)
-      val platformSplit = PluginModuleId("intellij.platform.split", PluginModuleId.JETBRAINS_NAMESPACE)
-      val platformSplitConnection = PluginModuleId("intellij.platform.split.connection", PluginModuleId.JETBRAINS_NAMESPACE)
-      val rdClient = PluginModuleId("intellij.rd.client", PluginModuleId.JETBRAINS_NAMESPACE)
-      val frontend = PluginModuleId("intellij.platform.frontend", PluginModuleId.JETBRAINS_NAMESPACE)
-      val backend = PluginModuleId("intellij.platform.backend", PluginModuleId.JETBRAINS_NAMESPACE)
-      val backendJps = PluginModuleId("intellij.platform.jps.build", PluginModuleId.JETBRAINS_NAMESPACE)
-      val backendJpsGraph = PluginModuleId("intellij.platform.jps.build.dependencyGraph", PluginModuleId.JETBRAINS_NAMESPACE)
+      val productMode = ProductModes.entries.firstOrNull { it.id == productModeId } ?: error("Unknown productMode $productModeId")
 
-      for (moduleId in listOf(frontend, backend, frontendSplit, backendJps, backendJpsGraph, rdClient, platformSplit)) {
-        val isAvailable = when (productModeId) {
-          /** intellij.platform.backend.split is currently available in 'monolith' mode because it's used as a backend in CodeWithMe */
-          "monolith" -> moduleId != frontendSplit && moduleId != frontendSplitBase
-          "backend" -> moduleId != frontend && moduleId != frontendSplit && moduleId != frontendSplitBase
-          "frontend" -> moduleId != backend && moduleId != backendJps && moduleId != backendJpsGraph
-          "light" -> moduleId != backend && moduleId != frontendSplit && moduleId != backendJps && moduleId != backendJpsGraph
-                     && moduleId != rdClient && moduleId != platformSplit && moduleId != platformSplitConnection
-          "light_with_rd_connection" -> moduleId != backend && moduleId != frontendSplit && moduleId != backendJps && moduleId != backendJpsGraph
-                                        && moduleId != rdClient && moduleId != platformSplit
-          else -> true
-        }
-        val unavailabilityReason =
-          if (isAvailable) null
-          else UnsuitableProductModeModuleUnavailabilityReason(moduleId, productModeId)
-        val replaced = put(moduleId, EnvironmentConfiguredModuleData(unavailabilityReason))
+      fun setModuleAvailability(moduleId: PluginModuleId, isAvailable: Boolean) {
+        val moduleData =
+          if (isAvailable) EnvironmentConfiguredModuleData(null)
+          else EnvironmentConfiguredModuleData(UnsuitableProductModeModuleUnavailabilityReason(moduleId, productMode.id))
+        val replaced = this.put(moduleId, moduleData)
         check(replaced == null) { "${moduleId.displayName} is already registered as environment-configured module" }
+      }
+
+      setModuleAvailability(FRONTEND_MODULE_ID, productMode.hasFrontend)
+      setModuleAvailability(BACKEND_MODULE_ID, productMode.hasBackend)
+
+      val backendSplit = PluginModuleId("intellij.platform.backend.split", PluginModuleId.JETBRAINS_NAMESPACE)
+      setModuleAvailability(backendSplit, productMode == ProductModes.BACKEND || productMode == ProductModes.MONOLITH)
+
+      val frontendSplitBase = PluginModuleId("intellij.platform.frontend.split.base", PluginModuleId.JETBRAINS_NAMESPACE)
+      val frontendSplit = PluginModuleId("intellij.platform.frontend.split", PluginModuleId.JETBRAINS_NAMESPACE)
+      when {
+        productMode.isLight -> {
+          val rpc = PluginModuleId("intellij.platform.rpc", PluginModuleId.JETBRAINS_NAMESPACE)
+          val platformSplitConnection = PluginModuleId("intellij.platform.split.connection", PluginModuleId.JETBRAINS_NAMESPACE)
+          val platformSplit = PluginModuleId("intellij.platform.split", PluginModuleId.JETBRAINS_NAMESPACE)
+          val rdClient = PluginModuleId("intellij.rd.client", PluginModuleId.JETBRAINS_NAMESPACE)
+          val cwmPluginCommon = PluginModuleId("intellij.cwm.plugin.common", PluginModuleId.JETBRAINS_NAMESPACE)
+
+          setModuleAvailability(frontendSplitBase, true)
+
+          for (moduleId in listOf(frontendSplit, platformSplit, rpc, rdClient, cwmPluginCommon)) {
+            setModuleAvailability(moduleId, false)
+          }
+
+          for (moduleId in listOf(platformSplitConnection)) {
+            setModuleAvailability(moduleId, productMode == ProductModes.LIGHT_WITH_RD_CONNECTION)
+          }
+        }
+        else -> {
+          setModuleAvailability(frontendSplitBase, productMode == ProductModes.FRONTEND)
+          setModuleAvailability(frontendSplit, productMode == ProductModes.FRONTEND)
+        }
+      }
+
+      if (productMode != ProductModes.LANGUAGE_SERVER) { // this condition is a workaround for LSP-1549
+        val backendJpsGraph = PluginModuleId("intellij.platform.jps.build.dependencyGraph", PluginModuleId.JETBRAINS_NAMESPACE)
+        setModuleAvailability(backendJpsGraph, productMode.hasBackend)
       }
     }
 
@@ -229,18 +269,14 @@ class ProductPluginInitContext(
           yield(ref)
         }
       }
-      suspend fun SequenceScope<DependencyRef>.yieldPlatformAliasCompatibilityDependencies() {
-        for (contentModuleId in contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins) {
-          yieldIfResolves(DependencyRef.of(contentModuleId))
-        }
-      }
       return sequence {
         if (descriptor.pluginId != CORE_ID) {
           yieldIfResolves(DependencyRef.of(CORE_ID))
         }
         if (descriptor is PluginModuleDescriptor && descriptor.pluginId != CORE_ID && isExternalNonBundledPlugin(descriptor)) {
-          for (dependencyRef in externalNonBundledPluginCompatibilityDependencies) {
-            yieldIfResolves(dependencyRef)
+          if (doesDependOnModule(descriptor, BACKEND_MODULE_ID) ||
+              doesDependOnModule(descriptor, FRONTEND_MODULE_ID)) {
+            yieldIfResolves(DependencyRef.of(RPC_MODULE_ID))
           }
         }
 
@@ -305,38 +341,55 @@ class ProductPluginInitContext(
           if (doesDependOnPluginAlias(descriptor, RIDER_ALIAS_ID)) {
             yieldIfResolves(DependencyRef.of(RIDER_MODULE_ID))
           }
-          if (doesDependOnPluginAlias(descriptor, PluginId.getId("org.jetbrains.completion.full.line"))) {
-            fullLineApiContentModules.forEach { fullLineModule ->
-              yieldIfResolves(DependencyRef.of(fullLineModule))
+
+          if (PlatformUtils.isGateway() && doesDependOnPluginAlias(descriptor, PluginId.getId("com.jetbrains.gateway"))) {
+            contentModulesExtractedInCorePluginInGateway.forEach { module ->
+              yieldIfResolves(DependencyRef.of(module))
             }
           }
         }
 
+      }
+    }
+
+    @VisibleForTesting
+    fun defaultProductCompatibilityDependenciesForRemainingCandidatesProvider(
+      descriptor: IdeaPluginDescriptorImpl,
+      remainingCandidates: RemainingCandidatesView,
+    ): Sequence<DependencyRef> {
+      return sequence {
+        suspend fun SequenceScope<DependencyRef>.yieldIfResolves(ref: DependencyRef) {
+          if (remainingCandidates.resolveReference(ref) != null) {
+            yield(ref)
+          }
+        }
+        suspend fun SequenceScope<DependencyRef>.yieldPlatformAliasCompatibilityDependencies() {
+          for (contentModuleId in contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins) {
+            yieldIfResolves(DependencyRef.of(contentModuleId))
+          }
+        }
+        if (descriptor is PluginModuleDescriptor && descriptor.pluginId != CORE_ID && isExternalNonBundledPlugin(descriptor)) {
+          for (dependencyRef in externalNonBundledPluginCompatibilityDependencies) {
+            yieldIfResolves(dependencyRef)
+          }
+        }
         if (descriptor !is PluginMainDescriptor || descriptor.pluginId != CORE_ID) { // FIXME violator: DesignedCorePlugin.xml which is xi:included from IdeaPlugin.xml
           for (depends in descriptor.pluginDependencies) {
             if (depends.subDescriptor != null) { // will be processed when invoked for the sub-descriptor
               continue
             }
-            if ((depends.pluginId == PLATFORM_PLUGIN_ALIAS_ID || depends.pluginId == LANG_PLUGIN_ALIAS_ID) && pluginSet.resolvePluginId(depends.pluginId) != null) {
+            if ((depends.pluginId == PLATFORM_PLUGIN_ALIAS_ID || depends.pluginId == LANG_PLUGIN_ALIAS_ID) && remainingCandidates.resolvePluginId(depends.pluginId) != null) {
               yieldPlatformAliasCompatibilityDependencies()
             }
           }
         }
 
         if (descriptor is DependsSubDescriptor) {
-          if ((descriptor.dependsTargetId == PLATFORM_PLUGIN_ALIAS_ID || descriptor.dependsTargetId == LANG_PLUGIN_ALIAS_ID) && pluginSet.resolvePluginId(descriptor.pluginId) != null) {
+          if ((descriptor.dependsTargetId == PLATFORM_PLUGIN_ALIAS_ID || descriptor.dependsTargetId == LANG_PLUGIN_ALIAS_ID) && remainingCandidates.resolvePluginId(descriptor.pluginId) != null) {
             yieldPlatformAliasCompatibilityDependencies()
           }
         }
       }
-    }
-
-    @VisibleForTesting
-    fun defaultRuntimeModuleGroupAffiliation(module: PluginModuleDescriptor, pluginSet: UnambiguousPluginSet): PluginModuleDescriptor? {
-      if (module is ContentModuleDescriptor && module.moduleId.name == "intellij.platform.backend") {
-        return module.parent // FIXME this should not exist IJPL-201428
-      }
-      return null
     }
 
     @VisibleForTesting
@@ -349,11 +402,11 @@ class ProductPluginInitContext(
         for (expiredPluginId in expiredPlugins) {
           val plugin = pluginSet.resolvePluginId(expiredPluginId)
                        ?: continue
-          yield(plugin to PluginHasExpiredLicense())
+          yield(plugin to PluginHasExpiredLicense)
         }
         thirdPartyPluginsWithoutConsentCheckResult?.let {
           for (plugin in it.pluginsToExcludeFromLoading) {
-            yield(plugin to ThirdPartyPrivacyNoticeIsNotAccepted())
+            yield(plugin to ThirdPartyPrivacyNoticeIsNotAccepted)
           }
         }
       }
@@ -366,18 +419,13 @@ class ProductPluginInitContext(
   }
 }
 
-@ApiStatus.Internal
-sealed interface IntellijImposedModuleExclusionReason : ProductRulesImposedExclusionReason
-
-@ApiStatus.Internal
-class PluginHasExpiredLicense : IntellijImposedModuleExclusionReason
-
-@ApiStatus.Internal
-class ThirdPartyPrivacyNoticeIsNotAccepted : IntellijImposedModuleExclusionReason
-
 // alias in most cases points to Core plugin, so we cannot use computed dependencies to check
-private fun doesDependOnPluginAlias(plugin: IdeaPluginDescriptorImpl, @Suppress("SameParameterValue") aliasId: PluginId): Boolean {
+private fun doesDependOnPluginAlias(plugin: IdeaPluginDescriptorImpl, aliasId: PluginId): Boolean {
   return plugin.dependencies.any { it.pluginId == aliasId } || plugin.moduleDependencies.plugins.any { it == aliasId }
+}
+
+private fun doesDependOnModule(plugin: IdeaPluginDescriptorImpl, moduleId: PluginModuleId): Boolean {
+  return plugin.moduleDependencies.modules.any { it == moduleId }
 }
 
 private fun isExternalNonBundledPlugin(plugin: IdeaPluginDescriptorImpl): Boolean {
@@ -434,15 +482,9 @@ private val vcsApiContentModules = arrayOf(
 
 private val COLLABORATION_TOOLS_MODULE_ID = PluginModuleId("intellij.platform.collaborationTools", PluginModuleId.JETBRAINS_NAMESPACE)
 
-/**
- * List of content modules from the core plugin which should be automatically added as dependencies to all plugins with dependency on `org.jetbrains.completion.full.line` plugin
- * alias for compatibility.
- */
-private val fullLineApiContentModules = arrayOf(
-  "intellij.fullLine.core",
-  "intellij.fullLine.local",
-  "intellij.fullLine.core.impl",
-).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
+private val BACKEND_MODULE_ID = PluginModuleId("intellij.platform.backend", PluginModuleId.JETBRAINS_NAMESPACE)
+private val FRONTEND_MODULE_ID = PluginModuleId("intellij.platform.frontend", PluginModuleId.JETBRAINS_NAMESPACE)
+private val RPC_MODULE_ID = PluginModuleId("intellij.platform.rpc", PluginModuleId.JETBRAINS_NAMESPACE)
 
 /**
  * Specifies the list of content modules which was recently extracted from the main module of the core plugin and may have external usages.
@@ -464,4 +506,29 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.spellchecker",
   "intellij.platform.structuralSearch",
   "intellij.xml.emmet",
+  "intellij.xml.impl",
+  "intellij.xml.analysis",
+  "intellij.xml.analysis.impl",
+  "intellij.xml.dom",
+  "intellij.xml.dom.impl",
+  "intellij.xml.parser",
+  "intellij.xml.psi",
+  "intellij.xml.psi.impl",
+  "intellij.xml.syntax",
+  "intellij.xml.ui.common",
+  "intellij.platform.webide.impl",
+  "intellij.platform.ssh",
+  "intellij.platform.ssh.core",
+  "intellij.platform.ssh.core.ui",
+  "intellij.platform.ssh.attach",
+).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
+
+/**
+ * Specifies the list of content modules which was recently extracted from the Gateway main module of the core plugin.
+ * See [contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins]
+ */
+private val contentModulesExtractedInCorePluginInGateway = arrayOf(
+  "intellij.gateway.core",
+  "intellij.gateway.ssh",
+  "intellij.gateway.standalone",
 ).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }

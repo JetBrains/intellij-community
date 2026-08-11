@@ -76,6 +76,7 @@ public class InferenceSessionContainer {
         session.propagateVariables(inferenceSession);
       }
     }
+    session.excludeNestedSessionVariables(returnExpression);
   }
 
   static PsiSubstitutor infer(PsiTypeParameter @NotNull [] typeParameters,

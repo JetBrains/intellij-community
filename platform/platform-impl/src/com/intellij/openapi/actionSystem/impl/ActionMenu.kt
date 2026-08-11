@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.diagnostic.UILatencyLogger
@@ -350,7 +350,7 @@ class ActionMenu constructor(
         return
       }
 
-      val startMs = System.currentTimeMillis()
+      val startNs = System.nanoTime()
       val helper = UsabilityHelper(this@ActionMenu)
       if (disposable == null) {
         disposable = Disposer.newDisposable()
@@ -364,8 +364,9 @@ class ActionMenu constructor(
       if (MacMenuSettings.isSystemMenu && ActionPlaces.MAIN_MENU == place) {
         fillMenu()
         // NOTE: FUS for OSX system menu is implemented in MacNativeActionMenu
-      } else {
-        UILatencyLogger.logMainMenuLatency(System.currentTimeMillis() - startMs)
+      }
+      else {
+        UILatencyLogger.logMainMenuLatency(startNs)
       }
     }
   }

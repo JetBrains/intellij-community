@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.idea.TestFor;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.module.Module;
@@ -22,6 +25,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   private static final String TEST_DIRECTORY = "inspections/PyUnresolvedReferencesInspection3K/";
 
@@ -37,7 +42,11 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
   }
 
   protected void doMultiFileTest(@NotNull String filename, @NotNull List<String> sourceRoots) {
-    myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+    doMultiFileTest(getTestName(false), filename, sourceRoots);
+  }
+
+  protected void doMultiFileTest(@NotNull String testDirectory, @NotNull String filename, @NotNull List<String> sourceRoots) {
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY + testDirectory, "");
     final Module module = myFixture.getModule();
     for (String root : sourceRoots) {
       PsiTestUtil.addSourceRoot(module, myFixture.findFileInTempDir(root));
@@ -511,6 +520,26 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
     });
   }
 
+  // PY-55589
+  public void testPartialStubPackageUser() {
+    doMultiFileTest("a.py");
+  }
+
+  // PY-55589
+  public void testPartialStubPackageUserNested() {
+    doMultiFileTest("a/b.py");
+  }
+
+  // PY-55589
+  public void testPartialStubPackageUserNestedWithSiblingStub() {
+    doMultiFileTest("a/b.py");
+  }
+
+  // PY-55589
+  public void testPartialStubPackageUserNestedWithSiblingStubSourceRoot() {
+    doMultiFileTest("PartialStubPackageUserNestedWithSiblingStub", "a/b.py", Collections.singletonList("mypackage-stubs"));
+  }
+
   // PY-85880
   public void testLiteralUnionInTuple() {
     doTestByText("""
@@ -530,7 +559,7 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                    
                    def f(e: Literal[1, 2]):
                        a: tuple | None = None
-                       _ = e <weak_warning descr="Member 'None' of 'tuple[Any, ...] | None' does not have attribute '__contains__'">in</weak_warning> a
+                       _ = e <weak_warning descr="Member 'None' of 'tuple[Unknown, ...] | None' does not have attribute '__contains__'">in</weak_warning> a
                    """);
   }
 
@@ -547,7 +576,7 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                        def do_smth(self):
                            print("Something more from", self)
                            super().do_smth()
-                           super().<warning descr="Cannot find reference 'non_existing' in 'A | ABC'">non_existing</warning>()
+                           super().<warning descr="Cannot find reference 'non_existing' in 'UnsafeUnion[A, ABC]'">non_existing</warning>()
                    """);
   }
 
@@ -563,7 +592,21 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
 
   // PY-86608
   public void testFromImportComprehensionVariableLeakUnstubbed() {
-    String testDir = getTestCaseDirectory() + "FromImportComprehensionVariableLeak";
+    doUnstubbedComprehensionVariableLeakTest("FromImportComprehensionVariableLeak");
+  }
+
+  @TestFor(issues = "PY-88569")
+  public void testFromImportWalrusComprehensionVariableLeak() {
+    doMultiFileTest();
+  }
+
+  @TestFor(issues = "PY-88569")
+  public void testFromImportWalrusComprehensionVariableLeakUnstubbed() {
+    doUnstubbedComprehensionVariableLeakTest("FromImportWalrusComprehensionVariableLeak");
+  }
+
+  private void doUnstubbedComprehensionVariableLeakTest(@NotNull String testDirName) {
+    String testDir = getTestCaseDirectory() + testDirName;
     myFixture.copyDirectoryToProject(testDir, "");
     PsiFile cPy = myFixture.configureFromTempProjectFile("c.py");
 
@@ -619,6 +662,20 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
     myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
   }
 
+  @TestFor(issues="PY-87799")
+  public void testStrictInstanceAttributes() {
+    doTest();
+  }
+
+  @TestFor(issues="PY-87799")
+  public void testStrictInstanceAttributesOff() {
+    final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
+    inspection.strictInstanceAttributes = false;
+    myFixture.enableInspections(inspection);
+    myFixture.configureByFile(getTestCaseDirectory() + getTestName(true) + ".py");
+    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+  }
+
   @TestFor(issues="PY-82245")
   public void testStringInAnnotated() {
     doTestByText(
@@ -652,6 +709,278 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                    
                    a = A()
                    a <warning descr="Class 'A' does not define '__iadd__', so the '+=' operator cannot be used on its instances">+=</warning> a
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberAugAssignInplaceOperatorPresent() {
+    doTestByText("""
+                   class WithIadd:
+                       def __iadd__(self, other): pass
+
+                   class WithAdd:
+                       def __add__(self, other): pass
+
+                   class Rhs:
+                       pass
+  
+                   def f(x: WithIadd | WithAdd):
+                       x += Rhs()  # no error: WithIadd has __iadd__, WithAdd has __add__
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberAugAssignFallbackToNormalOperator() {
+    doTestByText("""
+                   class WithAdd:
+                       def __add__(self, other): pass
+
+                   class WithIaddAndAdd:
+                       def __iadd__(self, other): pass
+                       def __add__(self, other): pass
+
+                   class Rhs:
+                       pass
+  
+                   def f(x: WithAdd | WithIaddAndAdd):
+                       x += Rhs()  # no error: both satisfy __add__ or __iadd__
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberAugAssignReflectedOperatorOnRhsConsidered() {
+    doTestByText("""
+                   class Empty:
+                       pass
+
+                   class WithRadd:
+                       def __radd__(self, other): pass
+
+                   def f(x: Empty | None, y: WithRadd):
+                       x += y
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberAugAssignNoFalsePositiveForFloatIntUnion() {
+    doTestByText("""
+                   def f(foo: float | int):
+                       foo += 1
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberAugAssignNoFallback() {
+    doTestByText("""
+                 class Empty:
+                     pass
+
+                 class Rhs:
+                     pass
+
+                 def f(x: Empty | None):
+                     x <weak_warning descr="Member 'Empty' of 'Empty | None' does not have attribute '__iadd__'">+=</weak_warning> Rhs()
+                 """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberAugAssignRhsUnionPartialRadd() {
+    doTestByText("""
+                   class Empty:
+                       pass
+
+                   class WithRadd:
+                       def __radd__(self, other): pass
+
+                   def f(x: Empty | None, y: WithRadd | None):
+                       x <weak_warning descr="Member 'Empty' of 'Empty | None' does not have attribute '__iadd__'">+=</weak_warning> y
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberAugAssignRhsUnionAllRadd() {
+    doTestByText("""
+                   class Empty:
+                       pass
+
+                   class WithRadd:
+                       def __radd__(self, other): pass
+
+                   class WithRadd2:
+                       def __radd__(self, other): pass
+
+                   def f(x: Empty | None, y: WithRadd | WithRadd2):
+                       x += y
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberBinaryOperatorLhsMissingAddRhsPartialRadd() {
+    doTestByText("""
+                   class Empty:
+                       pass
+                   
+                   class WithRadd:
+                       def __radd__(self, other): pass
+                   
+                   def f(x: Empty | None, y: WithRadd | None):
+                       _ = x <weak_warning descr="Member 'None' of 'WithRadd | None' does not have attribute '__radd__'">+</weak_warning> y
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberBinaryOperatorRhsUnionAllRadd() {
+    doTestByText("""
+                   class Empty:
+                       pass
+
+                   class WithRadd:
+                       def __radd__(self, other): pass
+
+                   class WithRadd2:
+                       def __radd__(self, other): pass
+
+                   def f(x: Empty | None, y: WithRadd | WithRadd2):
+                       _ = x + y
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberBinaryOperatorPresent() {
+    doTestByText("""
+                  class WithAdd:
+                      def __add__(self, other): pass
+
+                  class WithAdd2:
+                      def __add__(self, other): pass
+
+                  class Rhs:
+                      pass
+
+                  def f(x: WithAdd | WithAdd2):
+                     _ = x + Rhs()  # no error: both members have __add__
+                  """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberBinaryOperatorReflectedOnRhsConsidered() {
+    doTestByText("""
+                   class Empty:
+                       pass
+
+                   class WithRadd:
+                       def __radd__(self, other): pass
+
+                   def f(x: Empty | None, y: WithRadd):
+                       _ = x + y  # no error: WithRadd.__radd__ covers the fallback
+                   """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberBinaryOperatorLhsMissingButRhsHasRadd() {
+    doTestByText("""
+                  class Empty:
+                    pass
+
+                  class RhsWithRadd:
+                    def __radd__(self, other): pass
+
+                  def f(x: Empty | None):
+                    _ = x + RhsWithRadd()  # no strict-union warning: RHS provides __radd__
+                  """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberBinaryOperatorOneMemberMissingNoRadd() {
+    doTestByText("""
+                  class WithAdd:
+                      def __add__(self, other): pass
+
+                  class NoRadd:
+                      pass
+
+                  def f(x: WithAdd | None):
+                      _ = x <weak_warning descr="Member 'None' of 'WithAdd | None' does not have attribute '__add__'">+</weak_warning> NoRadd()
+                  """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberBinaryOperatorNoFallback() {
+    doTestByText("""
+                  class Empty:
+                      pass
+
+                  class Rhs:
+                      pass
+
+                  def f(x: Empty | None):
+                      _ = x <weak_warning descr="Member 'Empty' of 'Empty | None' does not have attribute '__add__'">+</weak_warning> Rhs()
+                  """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberBinaryOperatorUnsafeUnionSomeMembersMissingAddWithAny() {
+    doTestByText("""
+                  from typing import Any
+  
+                  class WithAdd:
+                      def __add__(self, other): ...
+  
+                  class NoAdd:
+                      pass
+  
+                  class NoRaddRhs:
+                      pass
+  
+                  def f(x: WithAdd | NoAdd | Any):
+                      _ = x <weak_warning descr="Member 'NoAdd' of 'WithAdd | NoAdd | Any' does not have attribute '__add__'">+</weak_warning> NoRaddRhs()
+                  """);
+  }
+
+  @TestFor(issues = "PY-89978")
+  public void testStrictUnionMemberBinaryOperatorRhsUnsafeUnionAllRaddWithAny() {
+    doTestByText("""
+                  from typing import Any
+    
+                  class Empty:
+                      pass
+    
+                  class WithRadd:
+                      def __radd__(self, other): ...
+    
+                  class WithRadd2:
+                      def __radd__(self, other): ...
+    
+                  def f(x: Empty | None, y: WithRadd | WithRadd2 | Any):
+                      _ = x + y  # all non-Any RHS members define '__radd__'
+                  """);
+  }
+
+  @TestFor(issues = "PY-89798")
+  public void testStrictUnionAugAssignmentOnMultipleLocalVariablesNoError() {
+    doTestByText("""
+                  def foo() -> None:
+                    left, right = 0, 42
+
+                    while left < right:
+                        left += 1
+                        #  no error:  ^^ Member 'Literal[0]' of 'Literal[0] | int' does not have attribute '__iadd__'
+                        right -= 1
+                        #  no error:   ^^ Member 'Literal[42]' of 'Literal[42] | int' does not have attribute '__isub__'
+                  """);
+  }
+
+  @TestFor(issues = "PY-90475")
+  public void testStrictUnionAugAssignmentOnLocalVariableNoError() {
+    doTestByText("""
+                   def bar(a: int, b: int):
+                       foo = 2
+      
+                       if a > 0:
+                           foo += 1
+      
+                       if b > 0:
+                           foo -= 1
                    """);
   }
 }

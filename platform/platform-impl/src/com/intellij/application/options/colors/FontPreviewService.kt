@@ -3,9 +3,11 @@ package com.intellij.application.options.colors
 
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.service
+import org.jetbrains.annotations.ApiStatus
 
 /** IDE-specific sample text on the Settings | Editor | Font page */
 open class FontPreviewService {
+  @ApiStatus.Internal
   companion object {
     @JvmStatic
     fun getInstance(): FontPreviewService = service()

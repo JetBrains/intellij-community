@@ -13,7 +13,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.findTopmostParentInFile
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPackageDirective
 

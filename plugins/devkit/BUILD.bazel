@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.devkit` start
-
 jvm_library(
     name = "devkit",
     srcs = glob(
@@ -39,7 +38,6 @@ exports_files(
 ### auto-generated section `iml intellij.devkit` end
 
 ### auto-generated section `build intellij.devkit.plugin.main` start
-
 jvm_library(
     name = "devkit-plugin-main",
     srcs = glob(
@@ -95,7 +93,6 @@ exports_files(
 ### auto-generated section `iml intellij.devkit.plugin.main` end
 
 ### auto-generated section `build intellij.devkit.plugin.main.noKotlin` start
-
 jvm_library(
     name = "devkit-plugin-main-noKotlin",
     srcs = glob(
@@ -109,6 +106,7 @@ jvm_library(
         "//plugins/devkit",
         "//plugins/devkit/devkit-core:core",
         "//plugins/devkit/intellij.devkit.debugger:debugger",
+        "//plugins/devkit/intellij.devkit.experiments:experiments",
         "//plugins/devkit/intellij.devkit.gradle:gradle",
         "//plugins/devkit/intellij.devkit.i18n:i18n",
         "//plugins/devkit/intellij.devkit.intelliLang:intelliLang",
@@ -137,6 +135,7 @@ jvm_library(
         "//plugins/devkit:devkit_test_lib",
         "//plugins/devkit/devkit-core:core_test_lib",
         "//plugins/devkit/intellij.devkit.debugger:debugger_test_lib",
+        "//plugins/devkit/intellij.devkit.experiments:experiments_test_lib",
         "//plugins/devkit/intellij.devkit.gradle:gradle_test_lib",
         "//plugins/devkit/intellij.devkit.i18n:i18n_test_lib",
         "//plugins/devkit/intellij.devkit.intelliLang:intelliLang_test_lib",

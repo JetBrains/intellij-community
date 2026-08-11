@@ -1,5 +1,5 @@
 // "Add arrayOf wrapper" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'String', but 'Array<String>' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 annotation class ArrAnn(val value: Array<String>)
 

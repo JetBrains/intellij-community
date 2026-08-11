@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.psi.impl` start
-
 jvm_library(
     name = "psi-impl",
     srcs = glob(
@@ -61,11 +60,14 @@ jvm_library(
         "//python/python-syntax-core:syntax-core",
         "//python/impl.helperLocator:community-helpersLocator",
         "//libraries/hash4j",
-        "//python/python-sdk:sdk",
+        "//python/python-sdk/backend",
         "//platform/statistics",
         "//libraries/hdr-histogram",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//python/python-requirements:requirements",
+        "//python/python-requirements/backend",
+        "//plugins/toml",
+        "//plugins/toml/core",
+        "//libraries/markdown",
     ],
 )
 
@@ -123,11 +125,14 @@ jvm_library(
         "//python/python-syntax-core:syntax-core_test_lib",
         "//python/impl.helperLocator:community-helpersLocator_test_lib",
         "//libraries/hash4j:hash4j_test_lib",
-        "//python/python-sdk:sdk_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//libraries/hdr-histogram:hdr-histogram_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//python/python-requirements:requirements_test_lib",
+        "//python/python-requirements/backend:backend_test_lib",
+        "//plugins/toml:toml_test_lib",
+        "//plugins/toml/core:core_test_lib",
+        "//libraries/markdown:markdown_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.psi.impl` end

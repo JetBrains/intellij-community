@@ -9,11 +9,12 @@ import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
@@ -25,8 +26,26 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.roots.libraries.LibraryType
+import com.intellij.platform.backend.observation.launchTracked
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
+import com.intellij.platform.workspace.jps.entities.LibraryRoot
+import com.intellij.platform.workspace.jps.entities.LibraryTypeId
+import com.intellij.platform.workspace.jps.entities.libraryProperties
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase.Companion.serializeComponentAsString
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl.Companion.toLibraryRootType
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -49,9 +68,8 @@ import org.jetbrains.kotlin.idea.projectConfiguration.askUpdateRuntime
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 
-abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected constructor() : KotlinProjectConfigurator {
+abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected constructor(protected val coroutineScope: CoroutineScope) : KotlinProjectConfigurator {
     protected abstract val libraryName: String
 
     protected abstract val messageForOverrideDialog: String
@@ -209,14 +227,9 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         val library = (findAndFixBrokenKotlinLibrary(module, collector)
             ?: getKotlinLibrary(module)
             ?: getKotlinLibrary(project)
-            ?: error("Kotlin Library has to be created in advance")) as LibraryEx
+            ?: error("$libraryName has to be created in advance")) as LibraryEx
 
-        library.modifiableModel.let { libraryModel ->
-            configureLibraryJar(project, libraryModel, libraryJarDescriptor, collector, ProgressManager.getGlobalProgressIndicator())
-
-            // commit will be performed later on EDT
-            writeActions.addOrExecute { runWriteAction { libraryModel.commit() } }
-        }
+        configureLibraryJar(project, library, libraryJarDescriptor, collector)
 
         addLibraryToModuleIfNeeded(module, library, collector, writeActions)
         return true
@@ -232,27 +245,25 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
 
     fun configureLibraryJar(
         project: Project,
-        library: LibraryEx.ModifiableModelEx,
+        library: LibraryEx,
         libraryJarDescriptor: LibraryJarDescriptor,
-        collector: NotificationMessageCollector,
-        progressIndicator: ProgressIndicator? = null
+        collector: NotificationMessageCollector
     ) {
-        library.kind = RepositoryLibraryType.REPOSITORY_LIBRARY_KIND
-        val properties = libraryJarDescriptor.repositoryLibraryProperties
-        library.properties = properties
-        val dependencies =
-            if (progressIndicator != null) {
-                JarRepositoryManager.loadDependenciesSync(project, properties, true, true, null, null, progressIndicator)
-            } else {
-                JarRepositoryManager.loadDependenciesModal(project, properties, true, true, null, null)
-            }
+        val repositoryProperties = libraryJarDescriptor.repositoryLibraryProperties
 
-        dependencies.forEach {
-            library.addRoot(it.file, it.type)
+        coroutineScope.downloadAndConfigureKotlinStdlib(
+            project,
+            library,
+            libraryName,
+            repositoryProperties
+        ) {
+            collector.addMessage(
+                KotlinProjectConfigurationBundle.message(
+                    "added.0.to.library.configuration",
+                    libraryJarDescriptor.mavenArtifactId
+                )
+            )
         }
-
-        collector.addMessage(KotlinProjectConfigurationBundle.message("added.0.to.library.configuration", libraryJarDescriptor.mavenArtifactId))
-        return
     }
 
     private fun getKotlinLibrary(project: Project): Library? {
@@ -404,5 +415,57 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
     companion object {
         private fun getDependencyScope(module: Module): DependencyScope =
             if (hasKotlinFilesInTestsOnly(module)) DependencyScope.TEST else DependencyScope.COMPILE
+
+        @ApiStatus.Internal
+        fun CoroutineScope.downloadAndConfigureKotlinStdlib(
+            project: Project,
+            library: Library,
+            libraryName: String,
+            repositoryProperties: RepositoryLibraryProperties,
+            postConfigure: () -> Unit = {}
+        ) {
+            val libraryId: LibraryId = (library as? LibraryBridge)?.libraryId
+                ?: error("unable to obtain libraryId for '${library.name}'")
+            launchTracked {
+                val dependencies = withBackgroundProgress(
+                    project,
+                    KotlinProjectConfigurationBundle.message(
+                        "progress.title.loading.kotlin.stdlib.library.0",
+                        repositoryProperties.version
+                    ),
+                    cancellable = false
+                ) {
+                    JarRepositoryManager.loadDependenciesSync(
+                        project,
+                        repositoryProperties,
+                        true, true, null, null, EmptyProgressIndicator()
+                    )
+                }
+
+                val workspaceModel = WorkspaceModel.getInstance(project)
+                val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
+                val libraryRoots = dependencies.map {
+                    LibraryRoot(
+                        it.file.toVirtualFileUrl(virtualFileUrlManager),
+                        it.type.toLibraryRootType()
+                    )
+                }
+
+                edtWriteAction {
+                    workspaceModel.updateProjectModel("update roots of '$libraryName'") { storage: MutableEntityStorage ->
+                        val libraryEntity = libraryId.resolve(storage) ?: return@updateProjectModel
+                        storage.modifyEntity(LibraryEntityBuilder::class.java, libraryEntity) {
+                            this.typeId = LibraryTypeId(RepositoryLibraryType.LIBRARY_TYPE_ID.name)
+                            this.libraryProperties = LibraryPropertiesEntity(entitySource) {
+                                this.propertiesXmlTag = serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, repositoryProperties)
+                            }
+                            this.roots.addAll(0, libraryRoots)
+                        }
+                    }
+
+                    postConfigure()
+                }
+            }
+        }
     }
 }

@@ -1,13 +1,22 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="org.jetbrains.kotlin"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.psi"/>
-    <!-- endregion -->
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.references"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
   </dependencies>
+  <!-- endregion -->
 
-  <extensions defaultExtensionNs="com.intellij.cce">
-    <!--<completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinCompletionEvaluationVisitor"/>-->
+<extensions defaultExtensionNs="com.intellij.cce">
+<!--<completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinCompletionEvaluationVisitor"/>-->
     <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinMultiLineEvaluationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinTextCompletionEvaluationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinCompletionContextEvaluationVisitor"/>

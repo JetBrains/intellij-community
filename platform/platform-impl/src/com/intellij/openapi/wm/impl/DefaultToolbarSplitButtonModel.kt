@@ -5,7 +5,9 @@ import kotlinx.collections.immutable.toImmutableList
 import java.awt.event.ActionListener
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 open class DefaultToolbarSplitButtonModel: ToolbarSplitButtonModel {
 
   private var myActionButtonSelected: Boolean = false

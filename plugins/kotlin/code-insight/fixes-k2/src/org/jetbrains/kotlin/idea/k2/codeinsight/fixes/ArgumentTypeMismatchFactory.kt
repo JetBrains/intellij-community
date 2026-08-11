@@ -5,9 +5,12 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.arrayElementType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddArrayOfTypeFix
 import org.jetbrains.kotlin.idea.quickfix.WrapWithArrayLiteralFix
@@ -48,7 +51,8 @@ internal object ArgumentTypeMismatchFactory {
         )
     }
 
-    private fun KaSession.isQuickFixAvailable(diagnostic: KaFirDiagnostic.ArgumentTypeMismatch): Boolean {
+    context(session: KaSession)
+    private fun isQuickFixAvailable(diagnostic: KaFirDiagnostic.ArgumentTypeMismatch): Boolean {
         if (PsiTreeUtil.getParentOfType(diagnostic.psi, KtAnnotationEntry::class.java) == null) return false
         val expectedType = diagnostic.expectedType
         val arrayElementType = expectedType.arrayElementType

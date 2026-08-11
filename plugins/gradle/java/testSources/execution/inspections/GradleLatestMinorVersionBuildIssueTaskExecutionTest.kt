@@ -86,11 +86,11 @@ class GradleLatestMinorVersionBuildIssueTaskExecutionTest : GradleExecutionTestC
 
     internal fun shouldShowMinorGradleVersionWarning(gradleVersion: GradleVersion) =
       !GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion) &&
-      gradleVersion < GradleJvmSupportMatrix.getLatestMinorGradleVersion(gradleVersion.majorVersion)
+      gradleVersion < GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(gradleVersion.majorVersion)
 
     internal fun assertNewMinorGradleVersionNodeConsoleText(gradleVersion: GradleVersion, consoleText: String) {
       val oldVersion = gradleVersion.version
-      val newVersion = GradleJvmSupportMatrix.getLatestMinorGradleVersion(gradleVersion.majorVersion).version
+      val newVersion = GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(gradleVersion.majorVersion).version
       Assertions.assertThat(consoleText)
         .isEqualToIgnoringNewLines("""
           Gradle $oldVersion is not the latest minor version.
@@ -98,7 +98,7 @@ class GradleLatestMinorVersionBuildIssueTaskExecutionTest : GradleExecutionTestC
           We recommend upgrading to Gradle version $newVersion.
           
           Possible solutions:
-           - Switch to Gradle $newVersion and re-sync
+           - Change Gradle wrapper version to $newVersion and re-sync
            - Edit inspection settings
           """.trimIndent()
         )

@@ -1,5 +1,5 @@
 // "Add 'E' as upper bound for F" "true"
-// K2_ERROR: Type argument is not within its bounds: type parameter 'U (of fun <T, U : T> foo)' must be subtype of 'E (of fun <E, F> bar)', but actual: 'F (of fun <E, F> bar)'.
+// K2_ERROR: UPPER_BOUND_VIOLATED
 
 fun <T, U : T> foo() = 1
 

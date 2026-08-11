@@ -1,7 +1,7 @@
 *:com.intellij.collaboration.api.HttpApiHelper
 - a:loadImage(java.net.http.HttpRequest,kotlin.coroutines.Continuation):java.lang.Object
-- a:request(java.lang.String):java.net.http.HttpRequest$Builder
-- a:request(java.net.URI):java.net.http.HttpRequest$Builder
+- a:request(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- a:request(java.net.URI,kotlin.coroutines.Continuation):java.lang.Object
 - a:sendAndAwaitCancellable(java.net.http.HttpRequest,java.net.http.HttpResponse$BodyHandler,kotlin.coroutines.Continuation):java.lang.Object
 - a:sendAndAwaitCancellable(java.net.http.HttpRequest,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.collaboration.api.HttpApiHelperKt
@@ -9,8 +9,8 @@ f:com.intellij.collaboration.api.HttpApiHelperKt
 - *bs:HttpApiHelper$default(com.intellij.openapi.diagnostic.Logger,com.intellij.collaboration.api.httpclient.HttpClientFactory,com.intellij.collaboration.api.httpclient.HttpRequestConfigurer,kotlin.jvm.functions.Function2,I,java.lang.Object):com.intellij.collaboration.api.HttpApiHelper
 *:com.intellij.collaboration.api.graphql.GraphQLApiHelper
 - a:loadResponseByClass(java.net.http.HttpRequest,java.lang.Class,java.lang.String[],kotlin.coroutines.Continuation):java.lang.Object
-- a:query(java.net.URI,kotlin.jvm.functions.Function0,java.lang.Object):java.net.http.HttpRequest
-- bs:query$default(com.intellij.collaboration.api.graphql.GraphQLApiHelper,java.net.URI,kotlin.jvm.functions.Function0,java.lang.Object,I,java.lang.Object):java.net.http.HttpRequest
+- a:query(java.net.URI,kotlin.jvm.functions.Function0,java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
+- bs:query$default(com.intellij.collaboration.api.graphql.GraphQLApiHelper,java.net.URI,kotlin.jvm.functions.Function0,java.lang.Object,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 f:com.intellij.collaboration.api.graphql.GraphQLApiHelperKt
 - *sf:GraphQLApiHelper(com.intellij.openapi.diagnostic.Logger,com.intellij.collaboration.api.HttpApiHelper,com.intellij.collaboration.api.json.JsonDataSerializer,com.intellij.collaboration.api.graphql.GraphQLDataDeserializer):com.intellij.collaboration.api.graphql.GraphQLApiHelper
 *:com.intellij.collaboration.api.graphql.GraphQLDataDeserializer
@@ -535,6 +535,9 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListComponentFactory
 - f:createIn(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel,com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModel,java.lang.String):com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
 - f:getSELECTED_CHANGES():com.intellij.openapi.actionSystem.DataKey
+*f:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListDataKeys
+- sf:INSTANCE:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListDataKeys
+- f:getSELECTED_CHANGES():com.intellij.openapi.actionSystem.DataKey
 *f:com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 - f:createIn(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModel,com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory$Config,com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$IconConfig):javax.swing.JComponent
@@ -705,8 +708,10 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - f:createRequiredResolveConversationsComponent(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):javax.swing.JComponent
 - f:createRequiredReviewsComponent(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlinx.coroutines.flow.Flow):javax.swing.JComponent
 - f:createRestrictionComponent(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlinx.coroutines.flow.Flow):javax.swing.JComponent
-- f:createReviewersReviewStateComponent(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3,Z):javax.swing.JComponent
-- bs:createReviewersReviewStateComponent$default(com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsStatusComponentFactory,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3,Z,I,java.lang.Object):javax.swing.JComponent
+- f:createReviewersReviewStateComponent(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- f:createReviewersReviewStateComponent(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- bs:createReviewersReviewStateComponent$default(com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsStatusComponentFactory,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
+- bs:createReviewersReviewStateComponent$default(com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsStatusComponentFactory,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
 *f:com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsTitleComponentFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsTitleComponentFactory
 - f:create(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel,java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,kotlin.jvm.functions.Function0):javax.swing.JComponent
@@ -787,8 +792,10 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - f:getTarget():java.lang.String
 - hashCode():I
 *:com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
+- checkoutInNewWorktree():V
 - a:fetchAndCheckoutRemoteBranch():V
 - fetchAndShowInLog():V
+- getCanCheckoutInNewWorktree():Z
 - getCanShowInLog():Z
 - a:getShowBranchesRequests():kotlinx.coroutines.flow.SharedFlow
 - a:getSourceBranch():kotlinx.coroutines.flow.StateFlow
@@ -816,12 +823,14 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - hashCode():I
 *:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 - *sf:Companion:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel$Companion
+- canEdit(com.intellij.collaboration.util.RefComparisonChange):Z
 - a:getChanges():java.util.List
 - a:getChangesSelection():kotlinx.coroutines.flow.StateFlow
 - a:getProject():com.intellij.openapi.project.Project
 - a:getSelectionRequests():kotlinx.coroutines.flow.SharedFlow
 - a:showDiff():V
 - a:showDiffPreview():V
+- startEditing(com.intellij.collaboration.util.RefComparisonChange):V
 - a:updateSelectedChanges(com.intellij.collaboration.util.ChangesSelection):V
 *f:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel$Companion
 - f:getDATA_KEY():com.intellij.openapi.actionSystem.DataKey

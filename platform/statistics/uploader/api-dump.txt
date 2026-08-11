@@ -1,3 +1,27 @@
+f:com.intellij.internal.statistic.eventLog.EventLogFile
+- sf:Companion:com.intellij.internal.statistic.eventLog.EventLogFile$Companion
+- <init>(java.io.File):V
+- f:component1():java.io.File
+- f:copy(java.io.File):com.intellij.internal.statistic.eventLog.EventLogFile
+- bs:copy$default(com.intellij.internal.statistic.eventLog.EventLogFile,java.io.File,I,java.lang.Object):com.intellij.internal.statistic.eventLog.EventLogFile
+- equals(java.lang.Object):Z
+- f:getFile():java.io.File
+- hashCode():I
+f:com.intellij.internal.statistic.eventLog.EventLogFile$Companion
 com.intellij.internal.statistic.eventLog.EventLogFilesProvider
 - a:getLogFiles():java.util.List
 - a:getLogFilesExceptActive():java.util.List
+f:com.intellij.internal.statistic.eventLog.MachineId
+- sf:Companion:com.intellij.internal.statistic.eventLog.MachineId$Companion
+- sf:DISABLED:com.intellij.internal.statistic.eventLog.MachineId
+- sf:UNKNOWN:com.intellij.internal.statistic.eventLog.MachineId
+- <init>(java.lang.String,I):V
+- f:component1():java.lang.String
+- f:component2():I
+- f:copy(java.lang.String,I):com.intellij.internal.statistic.eventLog.MachineId
+- bs:copy$default(com.intellij.internal.statistic.eventLog.MachineId,java.lang.String,I,I,java.lang.Object):com.intellij.internal.statistic.eventLog.MachineId
+- equals(java.lang.Object):Z
+- f:getId():java.lang.String
+- f:getRevision():I
+- hashCode():I
+f:com.intellij.internal.statistic.eventLog.MachineId$Companion

@@ -1,6 +1,18 @@
 - name: lib/mermaid.jar
   modules:
   - name: intellij.mermaid
+- name: lib/modules/intellij.mermaid.backend.split.jar
+  contentModules:
+  - name: intellij.mermaid.backend.split
+- name: lib/modules/intellij.mermaid.frontend.split.jar
+  contentModules:
+  - name: intellij.mermaid.frontend.split
+- name: lib/modules/intellij.mermaid.json.jar
+  contentModules:
+  - name: intellij.mermaid.json
 - name: lib/modules/intellij.mermaid.markdown.jar
   contentModules:
   - name: intellij.mermaid.markdown
+- name: lib/modules/intellij.mermaid.spellchecker.jar
+  contentModules:
+  - name: intellij.mermaid.spellchecker

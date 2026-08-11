@@ -69,6 +69,7 @@ import java.nio.file.Path
 data class ContentModule(
   @JvmField val moduleId: PluginModuleId,
   @JvmField val loading: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL,
+  @JvmField val requiredIfAvailable: PluginModuleId? = null,
   @JvmField val includeDependencies: Boolean = false,
   @Transient @JvmField val allowedMissingPluginIds: List<PluginId> = emptyList(),
 )
@@ -112,12 +113,14 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
     name: String,
     namespace: String? = PluginModuleId.DEFAULT_NAMESPACE,
     loading: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL,
+    requiredIfAvailable: PluginModuleId? = null,
     allowedMissingPluginIds: List<String> = emptyList(),
   ) {
     modules.add(
       ContentModule(
         moduleId = PluginModuleId(name, namespace),
         loading = loading,
+        requiredIfAvailable = requiredIfAvailable,
         includeDependencies = defaultIncludeDependencies,
         allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
       )
@@ -173,10 +176,10 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
  *
  * Example:
  * ```
- * fun ssh() = moduleSet("ssh") {
- *   embeddedModule("intellij.platform.ssh.core")
- *   embeddedModule("intellij.platform.ssh")
- *   module("intellij.platform.ssh.ui")
+ * fun lsp() = moduleSet("lsp") {
+ *   embeddedModule("intellij.platform.lsp")
+ *   embeddedModule("intellij.platform.lsp.impl")
+ *   module("intellij.platform.lsp.impl.structureView")
  * }
  *
  * // With module alias:

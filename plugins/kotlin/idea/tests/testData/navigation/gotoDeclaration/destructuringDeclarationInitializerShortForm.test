@@ -1,0 +1,19 @@
+// FILE: before.kt
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=complete
+package c
+
+class Foo(val bar: String)
+
+fun main() {
+    val (baz = b<caret>ar) = Foo("")
+}
+
+// FILE: after.kt
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=complete
+package c
+
+class Foo(val <caret>bar: String)
+
+fun main() {
+    val (baz = bar) = Foo("")
+}

@@ -4,6 +4,7 @@
 // ACTION: Replace overloaded operator with function call
 // ACTION: Wrap with '?.let { ... }' call
 // ERROR: Reference has a nullable type 'String?', use explicit '?.invoke()' to make a function-like call instead
+// K2_ERROR: UNSAFE_IMPLICIT_INVOKE_CALL
 
 fun String?.foo(exec: (String.() -> Unit)) = exec<caret>()
 // IGNORE_K2

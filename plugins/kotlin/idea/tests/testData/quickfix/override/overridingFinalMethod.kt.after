@@ -1,5 +1,5 @@
 // "Make A.foo open" "true"
-// K2_ERROR: 'foo' in 'A' is final and cannot be overridden.
+// K2_ERROR: OVERRIDING_FINAL_MEMBER
 open class A {
     open fun foo() {}
 }

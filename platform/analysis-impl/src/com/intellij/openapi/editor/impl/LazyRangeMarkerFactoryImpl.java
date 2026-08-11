@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -23,7 +23,7 @@ public final class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
 
   @Override
   public @NotNull RangeMarker createRangeMarker(@NotNull VirtualFile file, int offset) {
-    return ReadAction.computeBlocking(() -> DocumentImpl.createRangeMarkerForVirtualFile(file, offset, -1, -1, -1, -1, false));
+    return ReadAction.computeBlocking(() -> RMTreeReference.createRangeMarkerForVirtualFile(file, offset, -1, -1, -1, -1, false));
   }
 
   @Override
@@ -32,10 +32,10 @@ public final class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
       Document document = file.getFileType().isBinary() ? null : FileDocumentManager.getInstance().getCachedDocument(file);
       if (document != null) {
         int offset = DocumentUtil.calculateOffset(document, line, column, CodeStyle.getFacade(myProject, document, file.getFileType()).getTabSize());
-        return DocumentImpl.createRangeMarkerForVirtualFile(file, offset, line, column, line, column, persistent);
+        return RMTreeReference.createRangeMarkerForVirtualFile(file, offset, line, column, line, column, persistent);
       }
 
-      return DocumentImpl.createRangeMarkerForVirtualFile(file, 0, line, column, line, column, true); // must be persistent to be able to restore from line/col
+      return RMTreeReference.createRangeMarkerForVirtualFile(file, 0, line, column, line, column, true); // must be persistent to be able to restore from line/col
     });
   }
 }

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.java.debugger.libraries.jb.jdi.jar
+  modules:
+  - name: intellij.java.debugger.libraries.jb.jdi
+    libraries:
+      jb-jdi:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2/jb-jdi-2.jar

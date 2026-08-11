@@ -3,27 +3,32 @@ package org.jetbrains.plugins.gradle.execution.build.output
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.events.BuildEvent
-import com.intellij.build.events.DuplicateMessageAware
-import com.intellij.build.events.FinishEvent
 import com.intellij.build.events.StartEvent
 import com.intellij.build.events.impl.OutputBuildEventImpl
 import com.intellij.build.output.BuildOutputInstantReaderImpl
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.build.output.LineProcessor
-import com.intellij.openapi.externalSystem.service.execution.AbstractOutputMessageDispatcher
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcherImpl
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcher
+import com.intellij.util.containers.addIfNotNull
 import org.apache.commons.lang3.ClassUtils
 import org.gradle.api.logging.LogLevel
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.enums.enumEntries
 
+@Internal
 class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
-  override val externalSystemId = GradleConstants.SYSTEM_ID
+
+  override val externalSystemId: ProjectSystemId = GradleConstants.SYSTEM_ID
 
   override fun create(
     buildId: Any,
@@ -34,106 +39,113 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     return GradleOutputMessageDispatcher(buildId, buildProgressListener, appendOutputToMainConsole, parsers)
   }
 
-  private class GradleOutputMessageDispatcher(
+  @Internal
+  data class TaskNameId(val name: String)
+
+  @VisibleForTesting
+  class GradleOutputMessageDispatcher(
     private val buildId: Any,
-    private val myBuildProgressListener: BuildProgressListener,
+    listener: BuildProgressListener,
     private val appendOutputToMainConsole: Boolean,
-    private val parsers: List<BuildOutputParser>
-  ) : AbstractOutputMessageDispatcher(
-    myBuildProgressListener) {
-    override var stdOut: Boolean = true
-    private val lineProcessor: LineProcessor
-    private val myRootReader: BuildOutputInstantReaderImpl
-    private val tasksOutputReaders: MutableMap<String, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
-    private val tasksEventIds: MutableMap<String, Any> = ConcurrentHashMap()
-    private val redefinedReaders = mutableListOf<BuildOutputInstantReaderImpl>()
+    private val parsers: List<BuildOutputParser>,
+  ) : ExternalSystemOutputMessageDispatcherImpl(buildId, listener, parsers) {
 
-    init {
-      val deferredRootEvents = mutableListOf<BuildEvent>()
-      myRootReader = object : BuildOutputInstantReaderImpl(buildId, buildId, BuildProgressListener { _: Any, event: BuildEvent ->
-        var buildEvent = event
-        val parentId = buildEvent.parentId
-        if (parentId != buildId && parentId is String) {
-          val taskEventId = tasksEventIds[parentId]
-          if (taskEventId != null) {
-            buildEvent = BuildEventInvocationHandler.wrap(event, taskEventId)
-          }
-        }
-        if (buildEvent is DuplicateMessageAware) {
-          deferredRootEvents += buildEvent
-        }
-        else {
-          myBuildProgressListener.onEvent(buildId, buildEvent)
-        }
-      }, parsers) {
-        override fun closeAndGetFuture(): CompletableFuture<Unit> =
-          super.closeAndGetFuture().whenComplete { _, _ -> deferredRootEvents.forEach { myBuildProgressListener.onEvent(buildId, it) } }
-      }
+    private val tasksEventIds: MutableMap<TaskNameId, Any> = ConcurrentHashMap()
+    private val deferredTaskEvents: MutableMap<TaskNameId, MutableList<BuildEvent>> = ConcurrentHashMap()
+    private val tasksOutputReaders: MutableMap<TaskNameId, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
+    private val tasksOutputRedefinedReaders = mutableListOf<BuildOutputInstantReaderImpl>()
 
-      lineProcessor = object : LineProcessor() {
-        private var myCurrentReader: BuildOutputInstantReaderImpl = myRootReader
-        override fun process(line: String) {
-          val cleanLine = removeLoggerPrefix(line)
-          // skip Gradle test runner output
-          if (cleanLine.startsWith("<ijLog>")) return
+    private val lineProcessor = object : LineProcessor() {
 
-          if (cleanLine.startsWith("> Task :")) {
-            val taskName = cleanLine.removePrefix("> Task ").substringBefore(' ')
-            myCurrentReader = tasksOutputReaders[taskName] ?: myRootReader
-          }
-          else if (cleanLine.startsWith("> Configure") ||
-                   cleanLine.startsWith("FAILURE: Build failed") ||
-                   cleanLine.startsWith("FAILURE: Build completed") ||
-                   cleanLine.startsWith("[Incubating] Problems report is available at:") ||
-                   cleanLine.startsWith("CONFIGURE SUCCESSFUL") ||
-                   cleanLine.startsWith("BUILD SUCCESSFUL")) {
-            myCurrentReader = myRootReader
-          }
+      private var currentReader = reader
 
-          myCurrentReader.appendLine(cleanLine)
-          if (myCurrentReader != myRootReader) {
-            val parentEventId = myCurrentReader.parentEventId
-            myBuildProgressListener.onEvent(buildId, OutputBuildEventImpl(parentEventId, line + '\n', stdOut)) //NON-NLS
-          }
+      override fun process(line: String) {
+        val cleanLine = removeLoggerPrefix(line)
+        // skip Gradle test runner output
+        if (cleanLine.startsWith("<ijLog>")) return
+
+        if (cleanLine.startsWith("> Task :")) {
+          val taskNameId = TaskNameId(cleanLine.removePrefix("> Task ").substringBefore(' '))
+          val taskOutputReader = BuildOutputInstantReaderImpl(buildId, taskNameId, this@GradleOutputMessageDispatcher, parsers)
+          val oldTaskOutputReader = tasksOutputReaders.put(taskNameId, taskOutputReader)
+          // multiple invocations of the same task during the build session
+          tasksOutputRedefinedReaders.addIfNotNull(oldTaskOutputReader)
+          currentReader = taskOutputReader
         }
+        else if (cleanLine.startsWith("> Configure") ||
+                 cleanLine.startsWith("FAILURE: Build failed") ||
+                 cleanLine.startsWith("FAILURE: Build completed") ||
+                 cleanLine.startsWith("[Incubating] Problems report is available at:") ||
+                 cleanLine.startsWith("CONFIGURE SUCCESSFUL") ||
+                 cleanLine.startsWith("BUILD SUCCESSFUL")) {
+          currentReader = reader
+        }
+
+        if (currentReader != reader) {
+          onEvent(buildId, OutputBuildEventImpl(currentReader.parentEventId, line + '\n', stdOut)) //NON-NLS
+        }
+
+        currentReader.appendLine(cleanLine)
       }
     }
 
     override fun onEvent(buildId: Any, event: BuildEvent) {
-      super.onEvent(buildId, event)
-      if (event.parentId != buildId) return
-      if (event is StartEvent) {
-        val eventId = event.id
-        val oldValue = tasksOutputReaders.put(event.message,
-                                              BuildOutputInstantReaderImpl(buildId, eventId, myBuildProgressListener, parsers))
-        if (oldValue != null) {  // multiple invocations of the same task during the build session
-          redefinedReaders.add(oldValue)
+      val buildEvent = when (val parentId = event.parentId) {
+        buildId -> event
+        is TaskNameId -> {
+          val taskEventId = tasksEventIds[parentId] ?: run {
+            deferredTaskEvents.getOrPut(parentId) { ArrayList() }
+              .add(event)
+            return
+          }
+          BuildEventInvocationHandler.wrap(event, taskEventId)
         }
-        tasksEventIds[event.message] = eventId
+        is String -> {
+          val taskEventId = tasksEventIds[TaskNameId(parentId)]
+          if (taskEventId != null) {
+            LOG.error(
+              "The implicit API for the event redefinition via String parent event ID is deprecated. Use TaskNameId instead.",
+              Throwable()
+            )
+          }
+          when (taskEventId != null) {
+            true -> BuildEventInvocationHandler.wrap(event, taskEventId)
+            else -> event
+          }
+        }
+        else -> event
       }
-      else if (event is FinishEvent) {
-        // unreceived output is still possible after finish task event but w/o long pauses between chunks
-        // also no output expected for up-to-date tasks
-        tasksOutputReaders[event.message]?.disableActiveReading()
+
+      super.onEvent(buildId, buildEvent)
+
+      if (event.parentId == buildId && event is StartEvent) {
+        val taskEventId = event.id
+        val taskNameId = TaskNameId(event.message)
+        tasksEventIds[taskNameId] = taskEventId
+
+        val deferredEvents = deferredTaskEvents.remove(taskNameId) ?: emptyList()
+        for (deferredEvent in deferredEvents) {
+          onEvent(buildId, deferredEvent)
+        }
       }
     }
 
-    override fun closeAndGetFuture(): CompletableFuture<*> {
+    override fun doClose() {
       lineProcessor.close()
-      val futures = (tasksOutputReaders.values.asSequence()
-                     + redefinedReaders.asSequence()
-                     + sequenceOf(myRootReader))
-        .map { it.closeAndGetFuture() }
-        .toList()
 
-      tasksOutputReaders.clear()
-      redefinedReaders.clear()
-      return CompletableFuture.allOf(*futures.toTypedArray())
+      super.doClose()
+
+      for (taskOutputReader in tasksOutputReaders.values) {
+        taskOutputReader.close()
+      }
+      for (redefinedReader in tasksOutputRedefinedReaders) {
+        redefinedReader.close()
+      }
     }
 
     override fun append(csq: CharSequence): Appendable {
       if (appendOutputToMainConsole) {
-        myBuildProgressListener.onEvent(buildId, OutputBuildEventImpl(buildId, csq.toString(), stdOut)) //NON-NLS
+        onEvent(buildId, OutputBuildEventImpl(buildId, csq.toString(), stdOut)) //NON-NLS
       }
       lineProcessor.append(csq)
       return this
@@ -141,7 +153,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
     override fun append(csq: CharSequence, start: Int, end: Int): Appendable {
       if (appendOutputToMainConsole) {
-        myBuildProgressListener.onEvent(buildId, OutputBuildEventImpl(buildId, csq.subSequence(start, end).toString(), stdOut)) //NON-NLS
+        onEvent(buildId, OutputBuildEventImpl(buildId, csq.subSequence(start, end).toString(), stdOut)) //NON-NLS
       }
       lineProcessor.append(csq, start, end)
       return this
@@ -149,7 +161,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
     override fun append(c: Char): Appendable {
       if (appendOutputToMainConsole) {
-        myBuildProgressListener.onEvent(buildId, OutputBuildEventImpl(buildId, c.toString(), stdOut))
+        onEvent(buildId, OutputBuildEventImpl(buildId, c.toString(), stdOut))
       }
       lineProcessor.append(c)
       return this
@@ -169,7 +181,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
       }
 
       val logLevel = list[1].drop(1).dropLast(1)
-      return if (enumValues<LogLevel>().none { it.name == logLevel }) {
+      return if (enumEntries<LogLevel>().none { it.name == logLevel }) {
         line
       }
       else {
@@ -196,6 +208,10 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
           return Proxy.newProxyInstance(classLoader, interfaces, invocationHandler) as BuildEvent
         }
       }
+    }
+
+    companion object {
+      private val LOG = logger<GradleOutputMessageDispatcher>()
     }
   }
 }

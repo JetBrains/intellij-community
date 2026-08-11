@@ -18,6 +18,7 @@ package com.intellij.notification.impl
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.openapi.util.text.Strings
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author Konstantin Bulenkov
@@ -46,6 +47,7 @@ data class NotificationSettings @JvmOverloads constructor(var groupId: String,
     }
   }
 
+  @ApiStatus.Internal
   companion object {
     fun load(element: Element): NotificationSettings? {
       val displayTypeString = element.getAttributeValue("displayType")

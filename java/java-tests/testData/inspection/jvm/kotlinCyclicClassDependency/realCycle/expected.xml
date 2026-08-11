@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.kt</file>
+    <line>1</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Cyclic class dependency</problem_class>
+    <description>Class 'Alpha' is cyclically dependent on class 'Beta'</description>
+  </problem>
+
+  <problem>
+    <file>Test.kt</file>
+    <line>5</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Cyclic class dependency</problem_class>
+    <description>Class 'Beta' is cyclically dependent on class 'Alpha'</description>
+  </problem>
+</problems>

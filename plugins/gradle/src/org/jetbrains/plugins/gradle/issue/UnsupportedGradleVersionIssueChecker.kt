@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.issue
 
 import com.intellij.build.issue.BuildIssue
 import org.gradle.util.GradleVersion
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.util.GradleBundle
 
@@ -14,11 +13,11 @@ import org.jetbrains.plugins.gradle.util.GradleBundle
  *
  * @author Vladislav.Soroka
  */
-@ApiStatus.Internal
+@Internal
 class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
 
   override fun check(issueData: GradleIssueData): BuildIssue? {
-    val rootCause = getRootCauseAndLocation(issueData.error).first
+    val rootCause = issueData.failure.rootCause
     val gradleVersion = getGradleVersion(issueData)
 
     when {
@@ -41,31 +40,35 @@ class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
   }
 
   private fun getGradleVersion(issueData: GradleIssueData): GradleVersion? {
-    if (issueData.buildEnvironment != null) {
-      return GradleVersion.version(issueData.buildEnvironment.gradle.gradleVersion)
+    val buildEnvironment = issueData.buildEnvironment
+    if (buildEnvironment != null) {
+      return GradleVersion.version(buildEnvironment.gradle.gradleVersion)
     }
-    if (issueData.error is GradleExecutionHelper.UnsupportedGradleVersionByIdeaException) {
-      return issueData.error.gradleVersion
+    @Suppress("DEPRECATION")
+    val error = issueData.error
+    if (error is GradleExecutionHelper.UnsupportedGradleVersionByIdeaException) {
+      return error.gradleVersion
     }
     return null
   }
 
   private fun isGradleUnsupportedByIdea(issueData: GradleIssueData): Boolean {
+    @Suppress("DEPRECATION")
     return issueData.error is GradleExecutionHelper.UnsupportedGradleVersionByIdeaException
   }
 
-  private fun isOldGradleClasspathInfererIssue(rootCause: Throwable): Boolean {
-    val message = rootCause.message ?: return false
-    if (!message.startsWith("Cannot determine classpath for resource")) return false
-    return rootCause.stackTrace.find { it.className == "org.gradle.tooling.internal.provider.ClasspathInferer" } != null
+  private fun isOldGradleClasspathInfererIssue(rootCause: GradleIssueFailure): Boolean {
+    val message = rootCause.messageOrDescription ?: return false
+    return message.startsWith("Cannot determine classpath for resource") &&
+           rootCause.description?.contains("org.gradle.tooling.internal.provider.ClasspathInferer") == true
   }
 
-  private fun isModelBuilderApiUnsupported(rootCause: Throwable): Boolean {
-    return rootCause.toString().endsWith(UNSUPPORTED_MODEL_BUILDER_API_EXCEPTION_TEXT)
+  private fun isModelBuilderApiUnsupported(rootCause: GradleIssueFailure): Boolean {
+    return rootCause.text.endsWith(UNSUPPORTED_MODEL_BUILDER_API_EXCEPTION_TEXT)
   }
 
-  private fun isGradleUnsupportedByToolingApi(rootCause: Throwable): Boolean {
-    return rootCause.toString().startsWith(UNSUPPORTED_VERSION_EXCEPTION_MESSAGE_PREFIX)
+  private fun isGradleUnsupportedByToolingApi(rootCause: GradleIssueFailure): Boolean {
+    return rootCause.text.startsWith(UNSUPPORTED_VERSION_EXCEPTION_MESSAGE_PREFIX)
   }
 
   companion object {
@@ -78,33 +81,37 @@ class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
 
 private class UnsupportedGradleVersionIssue(gradleVersion: GradleVersion?, projectPath: String) : ConfigurableGradleBuildIssue() {
   init {
-    val oldestSupportedGradleVersion = GradleJvmSupportMatrix.getOldestSupportedGradleVersionByIdea()
-    val recommendedGradleVersion = GradleJvmSupportMatrix.getRecommendedGradleVersionByIdea()
+    val oldestSupportedGradleVersion = GradleJvmSupportMatrix.suggestOldestSupportedGradleVersionByIdea()
+    val recommendedGradleVersion = GradleJvmSupportMatrix.suggestRecommendedGradleVersionByIdea()
     setTitle(GradleBundle.message("gradle.build.issue.gradle.unsupported.title"))
     if (gradleVersion == null) {
       addDescription(GradleBundle.message("gradle.build.issue.gradle.unsupported.unknown.description"))
       addDescription(GradleBundle.message("gradle.build.issue.gradle.recommended.description", recommendedGradleVersion.version))
-      addGradleVersionQuickFix(projectPath, recommendedGradleVersion)
+      addGradleWrapperVersionQuickFix(projectPath, recommendedGradleVersion)
     }
     else {
       addDescription(GradleBundle.message("gradle.build.issue.gradle.unsupported.description", gradleVersion.version))
-      addDescription(GradleBundle.message("gradle.build.issue.gradle.recommended.description", recommendedGradleVersion.version))
-      addGradleVersionQuickFix(projectPath, recommendedGradleVersion)
-      if (oldestSupportedGradleVersion < recommendedGradleVersion) {
+      if (gradleVersion < oldestSupportedGradleVersion) {
         addDescription(GradleBundle.message("gradle.build.issue.gradle.supported.description", oldestSupportedGradleVersion.version))
-        addGradleVersionQuickFix(projectPath, oldestSupportedGradleVersion)
+        addGradleWrapperVersionQuickFix(projectPath, oldestSupportedGradleVersion)
+      } else if (gradleVersion < recommendedGradleVersion) {
+        addDescription(GradleBundle.message("gradle.build.issue.gradle.recommended.description", recommendedGradleVersion.version))
+        addGradleWrapperVersionQuickFix(projectPath, recommendedGradleVersion)
       }
     }
   }
 }
 
-@ApiStatus.Internal
+@Internal
 class DeprecatedGradleVersionIssue(gradleVersion: GradleVersion, projectPath: String) : ConfigurableGradleBuildIssue() {
   init {
-    val recommendedGradleVersion = GradleJvmSupportMatrix.getRecommendedGradleVersionByIdea()
+    val oldestNonDeprecatedGradleVersion = GradleJvmSupportMatrix.suggestOldestNonDeprecatedGradleVersionByIdea()
     setTitle(GradleBundle.message("gradle.build.issue.gradle.deprecated.title"))
     addDescription(GradleBundle.message("gradle.build.issue.gradle.deprecated.description", gradleVersion.version))
-    addDescription(GradleBundle.message("gradle.build.issue.gradle.recommended.description", recommendedGradleVersion.version))
-    addGradleVersionQuickFix(projectPath, recommendedGradleVersion)
+    addDescription(GradleBundle.message(
+      "gradle.build.issue.gradle.recommended.at.least.description",
+      oldestNonDeprecatedGradleVersion.version)
+    )
+    addGradleWrapperVersionQuickFix(projectPath, oldestNonDeprecatedGradleVersion)
   }
 }

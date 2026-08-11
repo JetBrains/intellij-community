@@ -3,7 +3,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
-import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.SEP
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
 import com.intellij.testFramework.TestDataPath
@@ -32,8 +32,8 @@ internal class UvWorkspaceCodeInsightCheckTest {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule("my-uv-monorepo", contentRoot = ".", sourceRoots = listOf(".")),
-      ExpectedModule("package_a", contentRoot = "packages${SEP}package_a"),
-      ExpectedModule("package_b", contentRoot = "packages${SEP}package_b", deps = listOf("package_a")),
+      ExpectedModule("package_a", contentRoot = "packages" / "package_a"),
+      ExpectedModule("package_b", contentRoot = "packages" / "package_b", deps = listOf("package_a")),
     )
   }
 }

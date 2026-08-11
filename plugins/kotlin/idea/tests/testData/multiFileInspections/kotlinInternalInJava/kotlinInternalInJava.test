@@ -1,5 +1,5 @@
 {
-    "k2InspectionClass": "org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinInternalInJavaInspection",
+    "k2InspectionClass": "org.jetbrains.kotlin.idea.codeInsight.inspections.KotlinInternalInJavaInspection",
     "withRuntime": "true",
     "isMultiModule": "true"
 }

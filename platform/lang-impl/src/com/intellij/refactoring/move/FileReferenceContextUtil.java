@@ -19,12 +19,14 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class FileReferenceContextUtil {
   private static final Logger LOG = Logger.getInstance(FileReferenceContextUtil.class);
   private static final Key<Pair<PsiFileSystemItem, Integer>> REF_FILE_SYSTEM_ITEM_KEY = Key.create("REF_FILE_SYSTEM_ITEM_KEY");

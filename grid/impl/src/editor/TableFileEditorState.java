@@ -96,6 +96,8 @@ public class TableFileEditorState implements FileEditorState, Serializable {
     public String languageId = Language.ANY.getID();
     @Attribute("position")
     public int position;
+    @Attribute("width")
+    public int width = 0;
     @Attribute("binaryDisplayType")
     public BinaryDisplayType binaryDisplayType;
     @Attribute("numberDisplayType")

@@ -8,17 +8,16 @@ import com.intellij.openapi.util.Key
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaStandardTypeClassIds
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.components.isNothingType
-import org.jetbrains.kotlin.analysis.api.components.isNullable
-import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.components.isUnitType
-import org.jetbrains.kotlin.analysis.api.components.typeCreator
-import org.jetbrains.kotlin.analysis.api.components.upperBoundIfFlexible
-import org.jetbrains.kotlin.analysis.api.components.withNullability
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.symbols.isSubClassOf
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
+import org.jetbrains.kotlin.analysis.api.types.upperBoundIfFlexible
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
@@ -88,7 +87,7 @@ internal object ExpectedTypeWeigher {
 
         symbol !is KaCallableSymbol -> MatchesExpectedType.NON_TYPABLE
 
-        expectedType.isUnitType -> MatchesExpectedType.MATCHES
+        expectedType.classId == KaStandardTypeClassIds.UNIT -> MatchesExpectedType.MATCHES
         else -> MatchesExpectedType.matches(symbol.returnType, expectedType)
     }
 
@@ -133,12 +132,12 @@ internal object ExpectedTypeWeigher {
             fun matches(actualType: KaType, expectedType: KaType): MatchesExpectedType = when {
                 // We exclude the Nothing type because it would match everything, but we should not give it priority.
                 // The only exception where we should prefer is for the `null` constant, which will be of type `Nothing?`
-                actualType.isNothingType && !actualType.isMarkedNullable -> NOT_MATCHES
+                actualType.classId == KaStandardTypeClassIds.NOTHING && !actualType.isMarkedNullable -> NOT_MATCHES
 
                 actualType.isSubtypeOf(expectedType) -> MATCHES
 
                 // This matches for `null`, which should not ever be suggested for non-nullable expecte types
-                actualType.isNothingType && actualType.isMarkedNullable && !expectedType.isNullable -> NOT_MATCHES
+                actualType.classId == KaStandardTypeClassIds.NOTHING && actualType.isMarkedNullable && !expectedType.isNullable -> NOT_MATCHES
 
                 actualType.withNullability(false).isSubtypeOf(expectedType) -> MATCHES_WITHOUT_NULLABILITY
 

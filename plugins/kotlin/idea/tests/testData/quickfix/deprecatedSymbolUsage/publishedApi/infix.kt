@@ -1,5 +1,5 @@
 // "Replace with generated @PublishedApi bridge call '`access$foo`(...)'" "true"
-// K2_ERROR: Protected function call from public-API inline function is prohibited.
+// K2_ERROR: PROTECTED_CALL_FROM_PUBLIC_INLINE_ERROR
 open class A {
     protected infix fun foo(p: Int) {
     }

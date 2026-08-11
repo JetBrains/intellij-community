@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.codeInsight.fixes` start
-
 create_kotlinc_options(
     name = "custom_kotlin-codeInsight-fixes",
     opt_in = [
@@ -34,11 +33,12 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin/references",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-compiler-fir",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-analysis-api-k2",
-        "@lib//:kotlinc-analysis-api-impl-base",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
         "//libraries/guava",
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
@@ -58,7 +58,7 @@ jvm_library(
         "//plugins/kotlin/code-insight/utils",
         "//plugins/kotlin/base/resources:kotlin-base-resources",
         "//plugins/kotlin/base/util",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
         "//plugins/kotlin/base/project-structure",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
         "//plugins/kotlin/base/psi",
@@ -67,7 +67,6 @@ jvm_library(
         "//plugins/kotlin/code-insight/api",
         "//plugins/kotlin/base/facet",
         "//plugins/kotlin/frontend-independent",
-        "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
         "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
         "//plugins/kotlin/base/analysis",
         "//plugins/kotlin/base/kdoc",
@@ -94,6 +93,11 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-codeInsight-fixes",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_test_lib",
         "//libraries/guava:guava_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
@@ -113,7 +117,7 @@ jvm_library(
         "//plugins/kotlin/code-insight/utils:utils_test_lib",
         "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
         "//plugins/kotlin/base/project-structure:project-structure_test_lib",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
         "//plugins/kotlin/base/psi:psi_test_lib",
@@ -122,7 +126,6 @@ jvm_library(
         "//plugins/kotlin/code-insight/api:api_test_lib",
         "//plugins/kotlin/base/facet:facet_test_lib",
         "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
-        "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared_test_lib",
         "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings_test_lib",
         "//plugins/kotlin/base/analysis:analysis_test_lib",
         "//plugins/kotlin/base/kdoc:kdoc_test_lib",

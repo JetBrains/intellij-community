@@ -106,7 +106,7 @@ public final class PropertyFoldingBuilder extends FoldingBuilderEx {
     final UElement parent = injectionHost.getUastParent();
     if (!msg.equals(UastLiteralUtils.getValueIfStringLiteral(injectionHost)) &&
         parent instanceof UCallExpression expressions &&
-        expressions.getValueArguments().get(0).getSourcePsi() == injectionHost.getSourcePsi()) {
+        expressions.getValueArguments().getFirst().getSourcePsi() == injectionHost.getSourcePsi()) {
       PsiElement callSourcePsi = expressions.getSourcePsi();
       if (callSourcePsi == null) return;
       final int count = JavaI18nUtil.getPropertyValueParamsMaxCount(injectionHost);
@@ -171,10 +171,10 @@ public final class PropertyFoldingBuilder extends FoldingBuilderEx {
   public static @NotNull Pair<String, List<Couple<Integer>>> format(@NotNull UCallExpression methodCallExpression) {
     final List<UExpression> args = methodCallExpression.getValueArguments();
     PsiElement callSourcePsi = methodCallExpression.getSourcePsi();
-    if (!args.isEmpty() && args.get(0) instanceof UInjectionHost injectionHost && isI18nProperty(injectionHost)) {
-      final int count = JavaI18nUtil.getPropertyValueParamsMaxCount(args.get(0));
+    if (!args.isEmpty() && args.getFirst() instanceof UInjectionHost injectionHost && isI18nProperty(injectionHost)) {
+      final int count = JavaI18nUtil.getPropertyValueParamsMaxCount(args.getFirst());
       if (args.size() == 1 + count) {
-        String text = getI18nMessage((UInjectionHost)args.get(0));
+        String text = getI18nMessage((UInjectionHost)args.getFirst());
         List<Couple<Integer>> replacementPositions = new ArrayList<>();
         for (int i = 1; i < count + 1; i++) {
           Object value = args.get(i).evaluate();

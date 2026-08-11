@@ -2,7 +2,6 @@
 package com.intellij.find.impl
 
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Session-scoped paging/autoload state. One instance per [FindPopupPanel]; its lifetime
@@ -11,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
  *
  * Threading: **this class is confined to the EDT and is intentionally not thread-safe.**
  */
-@ApiStatus.Internal
 internal class FindPopupSearchState {
   /** Per-pass emission cap; grows by pageSize/2 on each `maybeLoadMore`, reset to pageSize on every fresh search.  */
   @get:RequiresEdt

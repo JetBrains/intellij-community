@@ -11,8 +11,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class SafeDeleteAction extends BaseRefactoringAction {
   public SafeDeleteAction() {
     setInjectedContext(true);

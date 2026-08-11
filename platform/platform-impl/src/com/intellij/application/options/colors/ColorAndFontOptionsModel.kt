@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.colors.Groups
 import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
 
-@ApiStatus.Internal
 internal class ColorAndFontOptionsModel {
   private var schemes: MutableMap<String, EditorColorsScheme> = mutableMapOf()
   var selectedScheme: EditorColorsScheme? = null

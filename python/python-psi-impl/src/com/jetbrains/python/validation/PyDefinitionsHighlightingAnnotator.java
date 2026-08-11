@@ -37,6 +37,7 @@ import java.util.Objects;
 public final class PyDefinitionsHighlightingAnnotator extends PyAnnotatorBase {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull PyAnnotationHolder holder) {
+    if (holder.isBatchMode()) return;
     element.accept(new MyVisitor(holder));
   }
 

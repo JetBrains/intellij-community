@@ -18,6 +18,7 @@ import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class MoveModuleToGroupTopLevel extends ActionGroup {
   @Override
   public void update(@NotNull AnActionEvent e){

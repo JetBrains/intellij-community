@@ -10,6 +10,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,12 +31,14 @@ public abstract class RunAnythingGroup {
    * Group's 'load more...' index in the main list.
    * -1 means that group has all items loaded and no more 'load more..' placeholder
    */
+  @ApiStatus.Internal
   volatile int myMoreIndex = -1;
 
   /**
    * An index of group title in the main list.
    * -1 means that group has zero elements and thus has no showing title
    */
+  @ApiStatus.Internal
   volatile int myTitleIndex = -1;
 
   /**
@@ -65,6 +68,7 @@ public abstract class RunAnythingGroup {
    * @param pattern     input search string
    * @param itemsToInsert number of items to insert
    */
+  @ApiStatus.Internal
   public abstract SearchResult getItems(@NotNull DataContext dataContext,
                                         @NotNull List<RunAnythingItem> model,
                                         @NotNull String pattern,
@@ -73,6 +77,7 @@ public abstract class RunAnythingGroup {
   /**
    * Resets current group 'load more..' {@link #myMoreIndex} index.
    */
+  @ApiStatus.Internal
   public void resetMoreIndex() {
     myMoreIndex = -1;
   }
@@ -90,6 +95,7 @@ public abstract class RunAnythingGroup {
    *
    * @return group title if {@code titleIndex} is equals to group {@link #myTitleIndex} and {@code null} if nothing found
    */
+  @ApiStatus.Internal
   public static @Nullable @NlsContexts.PopupTitle String getTitle(@NotNull Collection<? extends RunAnythingGroup> groups, int titleIndex) {
     return Optional.ofNullable(findGroup(groups, titleIndex)).map(RunAnythingGroup::getTitle).orElse(null);
   }
@@ -99,6 +105,7 @@ public abstract class RunAnythingGroup {
    *
    * @return group if {@code titleIndex} is equals to group {@link #myTitleIndex} and {@code null} if nothing found
    */
+  @ApiStatus.Internal
   public static @Nullable RunAnythingGroup findGroup(@NotNull Collection<? extends RunAnythingGroup> groups, int titleIndex) {
     return groups.stream().filter(runAnythingGroup -> titleIndex == runAnythingGroup.myTitleIndex).findFirst().orElse(null);
   }
@@ -106,6 +113,7 @@ public abstract class RunAnythingGroup {
   /**
    * Finds group {@code itemIndex} belongs to.
    */
+  @ApiStatus.Internal
   public static @Nullable RunAnythingGroup findItemGroup(@NotNull List<? extends RunAnythingGroup> groups, int itemIndex) {
     RunAnythingGroup runAnythingGroup = null;
     for (RunAnythingGroup group : groups) {
@@ -133,6 +141,7 @@ public abstract class RunAnythingGroup {
   /**
    * Clears {@link #myMoreIndex} of all groups.
    */
+  @ApiStatus.Internal
   public static void clearMoreIndex(@NotNull Collection<? extends RunAnythingGroup> groups) {
     groups.forEach(runAnythingGroup -> runAnythingGroup.myMoreIndex = -1);
   }
@@ -147,6 +156,7 @@ public abstract class RunAnythingGroup {
   /**
    * Joins {@link #myTitleIndex} and {@link #myMoreIndex} of all groups; using for navigating by 'TAB' between groups.
    */
+  @ApiStatus.Internal
   public static int[] getAllIndexes(@NotNull Collection<? extends RunAnythingGroup> groups) {
     IntList list = new IntArrayList();
     for (RunAnythingGroup runAnythingGroup : groups) {
@@ -162,6 +172,7 @@ public abstract class RunAnythingGroup {
   /**
    * Finds matched by {@link #myMoreIndex} group.
    */
+  @ApiStatus.Internal
   public static @Nullable RunAnythingGroup findGroupByMoreIndex(@NotNull Collection<? extends RunAnythingGroup> groups, int moreIndex) {
     return ContainerUtil.find(groups, runAnythingGroup -> moreIndex == runAnythingGroup.myMoreIndex);
   }
@@ -169,6 +180,7 @@ public abstract class RunAnythingGroup {
   /**
    * Finds group matched by {@link #myTitleIndex}.
    */
+  @ApiStatus.Internal
   public static @Nullable RunAnythingGroup findGroupByTitleIndex(@NotNull Collection<? extends RunAnythingGroup> groups, int titleIndex) {
     return ContainerUtil.find(groups, runAnythingGroup -> titleIndex == runAnythingGroup.myTitleIndex);
   }
@@ -176,6 +188,7 @@ public abstract class RunAnythingGroup {
   /**
    * Returns {@code true} if {@code index} is a {@link #myMoreIndex} of some group, {@code false} otherwise
    */
+  @ApiStatus.Internal
   public static boolean isMoreIndex(@NotNull Collection<? extends RunAnythingGroup> groups, int index) {
     return groups.stream().anyMatch(runAnythingGroup -> runAnythingGroup.myMoreIndex == index);
   }
@@ -183,6 +196,7 @@ public abstract class RunAnythingGroup {
   /**
    * Shifts {@link #myMoreIndex} and {@link #myTitleIndex} of all groups starting from {@code baseIndex} to {@code shift}.
    */
+  @ApiStatus.Internal
   public static void shiftIndexes(@NotNull Collection<? extends RunAnythingGroup> groups, int baseIndex, int shift) {
     shiftTitleIndex(groups, baseIndex, shift);
     shiftMoreIndex(groups, baseIndex, shift);
@@ -191,6 +205,7 @@ public abstract class RunAnythingGroup {
   /**
    * Clears {@link #myMoreIndex} and {@link #myTitleIndex} of all groups.
    */
+  @ApiStatus.Internal
   public static void clearIndexes(@NotNull Collection<? extends RunAnythingGroup> groups) {
     clearTitleIndex(groups);
     clearMoreIndex(groups);
@@ -203,6 +218,7 @@ public abstract class RunAnythingGroup {
    * @param model       needed to avoid adding duplicates into the list
    * @param pattern     input search string
    */
+  @ApiStatus.Internal
   public final synchronized void collectItems(@NotNull DataContext dataContext,
                                               @NotNull List<RunAnythingItem> model,
                                               @NotNull String pattern) {
@@ -219,6 +235,7 @@ public abstract class RunAnythingGroup {
   /**
    * Represents collection of the group items with {@code myNeedMore} flag is set to true when limit is exceeded
    */
+  @ApiStatus.Internal
   public static final class SearchResult extends ArrayList<RunAnythingItem> {
     boolean myNeedMore;
 

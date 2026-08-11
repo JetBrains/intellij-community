@@ -13,20 +13,16 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<idea-plugin visibility="public">
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+
+  <xi:include href="/META-INF/RegistryKeysIndexingImpl.xml"/>
+
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.allOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.java.shortNamesCache" area="IDEA_PROJECT" interface="com.intellij.psi.search.PsiShortNamesCache" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.java.staticMethodNamesCache" area="IDEA_PROJECT" interface="com.intellij.psi.search.JavaStaticMethodNameCache" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.classesWithAnnotatedMembersSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.allClassesSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.overridingMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.methodReferencesSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.directClassInheritorsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.classInheritorsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.annotatedElementsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.implicitClassSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.javaModuleSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.annotatedPackagesSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.functionalExpressionSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.implicitToStringSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
@@ -40,8 +36,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <languageStubDefinition language="JAVA" implementationClass="com.intellij.psi.impl.java.stubs.JavaStubDefinition"/>
-
-    <stubElementRegistryExtension implementation="com.intellij.psi.impl.java.stubs.JavaStubRegistryExtension"/>
 
     <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex"/>
@@ -95,6 +89,6 @@
     <referencesSearch implementation="com.intellij.psi.impl.search.PsiAnnotationMethodReferencesSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.JavaRecordComponentSearcher"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.JavaBinaryPlusExpressionIndex"/>
-    <superMethodsSearch implementation="com.intellij.psi.impl.search.MethodSuperSearcher"/>
+
   </extensions>
 </idea-plugin>

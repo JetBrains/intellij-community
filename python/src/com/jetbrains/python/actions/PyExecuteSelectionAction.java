@@ -19,10 +19,12 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.PyExecuteConsoleCustomizer;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.run.PythonRunConfiguration;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyExecuteSelectionAction extends DumbAwareAction {
+@ApiStatus.Internal
+public final class PyExecuteSelectionAction extends DumbAwareAction {
 
   public PyExecuteSelectionAction() {
     super(PyBundle.messagePointer("python.execute.selection.action.execute.selection.in.console"));

@@ -1,6 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.parsing
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.intellij.idea.TestFor
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
@@ -15,6 +19,8 @@ import com.jetbrains.python.fixtures.PyTestCase
  *
  * @see com.jetbrains.python.psi.impl.PyStatementListElementType.isReparseable
  */
+@Subsystems.Parsing
+@Layers.Functional
 class PythonStaleErrorsReparseTest : PyTestCase() {
 
   companion object {
@@ -113,6 +119,44 @@ class PythonStaleErrorsReparseTest : PyTestCase() {
     anchor = "    def process(self",
     charToInsert = "\""
   )
+
+  /** Move Line Down on a tab-indented line must not report a phantom indentation error. */
+  @TestFor(issues = ["PY-75099"])
+  fun testMoveLineDownWithTabIndents() = doMoveLineTest(
+    source = "def test_move_line():\n\t<caret>print(\"A\")\n\tprint(\"B\")\n",
+    action = IdeActions.ACTION_MOVE_LINE_DOWN_ACTION
+  )
+
+  /** Move Line Up, the other direction reported in the issue. */
+  @TestFor(issues = ["PY-75099"])
+  fun testMoveLineUpWithTabIndents() = doMoveLineTest(
+    source = "def test_move_line():\n\tprint(\"A\")\n\t<caret>print(\"B\")\n",
+    action = IdeActions.ACTION_MOVE_LINE_UP_ACTION
+  )
+
+  /** the moved line sits strictly inside a nested tab-indented block. */
+  @TestFor(issues = ["PY-75099"])
+  fun testMoveLineDownInNestedTabIndentedBlock() = doMoveLineTest(
+    source = "def f(x):\n\tif x:\n\t\t<caret>print(\"A\")\n\t\tprint(\"B\")\n\t\treturn 1\n\treturn 0\n",
+    action = IdeActions.ACTION_MOVE_LINE_DOWN_ACTION
+  )
+
+  /** Same nested scenario with space indents, to keep the tab-only cause from regressing silently. */
+  @TestFor(issues = ["PY-75099"])
+  fun testMoveLineDownInNestedSpaceIndentedBlock() = doMoveLineTest(
+    source = "def f(x):\n    if x:\n        <caret>print(\"A\")\n        print(\"B\")\n        return 1\n    return 0\n",
+    action = IdeActions.ACTION_MOVE_LINE_DOWN_ACTION
+  )
+
+  private fun doMoveLineTest(source: String, action: String) = withIncrementalReparse {
+    myFixture.configureByText("test.py", source)
+    commitAndGetDocument()
+    assertNoErrors("Initial")
+
+    myFixture.performEditorAction(action)
+    commit()
+    assertNoErrors("After $action")
+  }
 
   private fun doInsertAndRemoveCharTest(source: String, anchor: String, charToInsert: String) =
     withIncrementalReparse {

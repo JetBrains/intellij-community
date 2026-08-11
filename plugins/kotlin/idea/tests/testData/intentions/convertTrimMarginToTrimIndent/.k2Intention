@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertTrimMarginToTrimIndentIntention
+org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertTrimMarginToTrimIndentIntention

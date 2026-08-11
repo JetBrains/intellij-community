@@ -17,25 +17,17 @@ _struct.pack
 _struct.pack_into
 _thread.RLock.__exit__
 _thread.lock.__exit__
-copy.deepcopy
 dataclasses.MISSING
 dataclasses._MISSING_TYPE
 dataclasses.field
-doctest.DocTestRunner.report_skip
 importlib._abc.Loader.load_module
 importlib._bootstrap_external.NamespacePath
-importlib.abc.InspectLoader.source_to_code
 importlib.abc.MetaPathFinder.discover
 importlib.abc.PathEntryFinder.discover
 importlib.resources._common.package_to_anchor
-mailbox.Mailbox.__enter__
-mailbox.Mailbox.__exit__
 mailbox._ProxyFile.__class_getitem__
 multiprocessing.process.BaseProcess.__init__
 threading.Condition.locked
-tkinter.Image.__iter__
-tkinter.Misc.__iter__
-tkinter.font.Font.__iter__
 
 # =============================================================
 # Allowlist entries that cannot or should not be fixed; >= 3.15
@@ -46,9 +38,6 @@ base64.b64decode
 urllib.parse.urlunparse
 urllib.parse.urlunsplit
 
-# Runtime __all__ includes no_type_check_decorator, but the attribute does not exist on Python 3.15.
-typing_extensions.__all__
-
 # Internal implementation details of the sampling profiler.
 profiling.sampling.binary_collector
 profiling.sampling.binary_reader
@@ -56,24 +45,6 @@ profiling.sampling.cli
 profiling.sampling.constants
 profiling.sampling.dump
 profiling.sampling.errors
-profiling.sampling.gecko_collector.CATEGORY_CODE_TYPE
-profiling.sampling.gecko_collector.CATEGORY_CPU
-profiling.sampling.gecko_collector.CATEGORY_EXCEPTION
-profiling.sampling.gecko_collector.CATEGORY_GC
-profiling.sampling.gecko_collector.CATEGORY_GIL
-profiling.sampling.gecko_collector.CATEGORY_NATIVE
-profiling.sampling.gecko_collector.CATEGORY_OPCODES
-profiling.sampling.gecko_collector.CATEGORY_OTHER
-profiling.sampling.gecko_collector.CATEGORY_PYTHON
-profiling.sampling.gecko_collector.DEFAULT_SUBCATEGORY
-profiling.sampling.gecko_collector.FRAME_ADDRESS_NONE
-profiling.sampling.gecko_collector.FRAME_INLINE_DEPTH_ROOT
-profiling.sampling.gecko_collector.GECKO_CATEGORIES
-profiling.sampling.gecko_collector.GECKO_FORMAT_VERSION
-profiling.sampling.gecko_collector.GECKO_PREPROCESSED_VERSION
-profiling.sampling.gecko_collector.PROCESS_TYPE_MAIN
-profiling.sampling.gecko_collector.RESOURCE_TYPE_LIBRARY
-profiling.sampling.gecko_collector.STACKWALK_DISABLED
 profiling.sampling.heatmap_collector.FileStats
 profiling.sampling.heatmap_collector.TreeNode
 profiling.sampling.module_utils

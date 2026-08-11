@@ -2,8 +2,15 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build intellij.gradle.toolingExtension.impl` start
+jps_test(
+    name = "toolingExtension-tests_test",
+    timeout = "long",
+    tags = ["community-aggregator"],
+    runtime_deps = [":toolingExtension-tests_test_lib"],
+)
+### skip generation section `test intellij.gradle.toolingExtension.tests`
 
+### auto-generated section `build intellij.gradle.toolingExtension.impl` start
 create_kotlinc_options(
     name = "custom_toolingExtension-impl",
     jvm_target = "8",
@@ -44,7 +51,7 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/external-system-rt:externalSystem-rt",
         "//plugins/gradle/tooling-extension-api:toolingExtension",
         "@lib//:gradle",
@@ -60,6 +67,7 @@ jvm_library(
         "//libraries/commons/lang3",
         "//libraries/commons/io",
         "//libraries/guava",
+        "//libraries/kryo5",
         ":libraries_groovy_provided",
         ":libraries_groovy_ant_provided",
     ],
@@ -83,6 +91,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":toolingExtension-impl",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/external-system-rt:externalSystem-rt_test_lib",
         "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
         "//libraries/gson:gson_test_lib",
@@ -98,6 +107,7 @@ jvm_library(
         "//libraries/groovy:groovy_test_lib",
         "//libraries/groovy/ant",
         "//libraries/groovy/ant:ant_test_lib",
+        "//libraries/kryo5:kryo5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.toolingExtension.impl` end
@@ -112,7 +122,6 @@ exports_files(
 ### auto-generated section `iml intellij.gradle.toolingExtension.impl` end
 
 ### auto-generated section `build intellij.gradle.toolingExtension.tests` start
-
 jvm_library(
     name = "toolingExtension-tests",
     srcs = glob(
@@ -170,8 +179,22 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/smRunner",
+        "//platform/smRunner:smRunner_test_lib",
+        "//spellchecker",
+        "//spellchecker:spellchecker_test_lib",
+        "//platform/structure-view-impl:structureView",
+        "//platform/structure-view-impl:structureView_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/testRunner",
+        "//platform/testRunner:testRunner_test_lib",
+        "//platform/testRunner/plugin",
+        "//platform/testRunner/plugin:plugin_test_lib",
+        "//platform/todo/backend",
+        "//platform/todo/backend:backend_test_lib",
         "//java/openapi:java",
         "//java/openapi:java_test_lib",
         "//libraries/fastutil",
@@ -186,6 +209,20 @@ jvm_library(
         "//platform/util/trove:trove_test_lib",
         "//libraries/commons/lang3",
         "//libraries/commons/lang3:lang3_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
+        "//aether-dependency-resolver/plugin",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
+        "//libraries/misc/plugin",
+        "//libraries/misc/plugin:plugin_test_lib",
+        "//platform/structure-view-impl/plugin",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//platform/todo/plugin",
+        "//platform/todo/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.toolingExtension.tests` end
@@ -198,11 +235,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.gradle.toolingExtension.tests` end
-
-### auto-generated section `test intellij.gradle.toolingExtension.tests` start
-
-jps_test(
-    name = "toolingExtension-tests_test",
-    runtime_deps = [":toolingExtension-tests_test_lib"],
-)
-### auto-generated section `test intellij.gradle.toolingExtension.tests` end

@@ -1,8 +1,8 @@
 // ERROR: Too many arguments for public final fun foo(): Boolean defined in A
-// K2_ERROR: Too many arguments for 'fun foo(): Boolean'.
 // SHOULD_FAIL_WITH: Call with arguments will be skipped: foo(2)
 // AFTER-WARNING: Variable 't' is never used
-// K2_AFTER_ERROR: Too many arguments for 'fun foo(): Boolean'.
+// K2_AFTER_ERROR: TOO_MANY_ARGUMENTS
+// K2_ERROR: TOO_MANY_ARGUMENTS
 class A(val n: Int) {
     fun <caret>foo(): Boolean = n > 1
 }

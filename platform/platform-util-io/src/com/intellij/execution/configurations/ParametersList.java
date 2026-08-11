@@ -309,6 +309,10 @@ public final class ParametersList implements Cloneable {
     myParameters.set(ind, new CompositeParameterTargetedValue(value));
   }
 
+  public void removeAt(int index) {
+    myParameters.remove(index);
+  }
+
   public String get(int ind) {
     return myParameters.get(ind).getLocalValue();
   }

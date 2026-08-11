@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.lang.ASTFactory;
 import com.intellij.openapi.project.Project;
@@ -17,6 +19,7 @@ import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiExpressionStatement;
@@ -50,10 +53,12 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -217,6 +222,7 @@ public final class FieldFromParameterUtils {
                                                      @NotNull PsiClass targetClass,
                                                      @NotNull PsiMethod method,
                                                      @NotNull PsiParameter parameter,
+                                                     @Nullable NullabilityAnnotationInfo originalNullability, 
                                                      @NotNull PsiType fieldType,
                                                      @NotNull String fieldName,
                                                      boolean isStatic,
@@ -232,9 +238,8 @@ public final class FieldFromParameterUtils {
     modifierList.setModifierProperty(PsiModifier.STATIC, isStatic);
     modifierList.setModifierProperty(PsiModifier.FINAL, isFinal);
 
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-    if (manager.copyNullableAnnotation(parameter, field) == null && isFinal) {
-      manager.copyNotNullAnnotation(parameter, field);
+    if (originalNullability != null && (originalNullability.getNullability() == Nullability.NULLABLE || originalNullability.getNullability() == Nullability.NOT_NULL && isFinal)) {
+      AnnotationUtil.copyAnnotation(originalNullability.getAnnotation(), field);
     }
 
     PsiCodeBlock methodBody = method.getBody();
@@ -282,13 +287,25 @@ public final class FieldFromParameterUtils {
     }
 
     if (targetClass.findFieldByName(fieldName, false) == null) {
-      if (!anchor.isNull()) {
-        PsiField inField = anchor.get();
-        if (isBefore.get()) {
-          return (PsiField)targetClass.addBefore(field, inField);
+      PsiElement anchorElement = anchor.get();
+      boolean before = isBefore.get();
+      if (anchorElement == null) {
+        if (targetClass.isEnum()) {
+          PsiElement lastConstant = ContainerUtil.findLast(Arrays.asList(targetClass.getChildren()), c -> c instanceof PsiEnumConstant);
+          anchorElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(lastConstant);
+          before = true;
+        }
+        if (anchorElement == null) {
+          before = false;
+          anchorElement = targetClass.getLBrace();
+        }
+      }
+      if (anchorElement != null) {
+        if (before) {
+          return (PsiField)targetClass.addBefore(field, anchorElement);
         }
         else {
-          return (PsiField)targetClass.addAfter(field, inField);
+          return (PsiField)targetClass.addAfter(field, anchorElement);
         }
       }
       else {

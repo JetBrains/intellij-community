@@ -6,8 +6,8 @@ import com.intellij.notebooks.ui.visualization.DefaultNotebookEditorAppearanceSi
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearance
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceSizes
 import com.intellij.openapi.editor.Editor
-import com.intellij.ui.JBColor
-import com.intellij.util.ui.UIUtil
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.markup.TextAttributes
 import java.awt.Color
 
 open class DefaultNotebookEditorAppearance(
@@ -24,28 +24,40 @@ open class DefaultNotebookEditorAppearance(
            ?: editor.colorsScheme.defaultBackground
   }
 
+  override fun codeCellFoldedTextAttribute(): TextAttributes? {
+    return editor.colorsScheme.getAttributes(NotebookEditorAppearance.CODE_CELL_FOLDED_TEXT_ATTRIBUTES)
+  }
+
+  override fun codeCellSelectionBackgroundColor(): Color? {
+    return editor.colorsScheme.getColor(NotebookEditorAppearance.CODE_CELL_SELECTION_BACKGROUND)
+  }
+
   override fun cellStripeSelectedColor(): Color {
     return editor.colorsScheme.getColor(NotebookEditorAppearance.CELL_STRIPE_SELECTED_COLOR)
            ?: editor.colorsScheme.getColor(NotebookEditorAppearance.CELL_STRIPE_SELECTED_COLOR_OLD)
-           ?: JBColor.BLUE
+           ?: editor.colorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)
+           ?: editor.colorsScheme.defaultForeground
   }
 
   override fun cellStripeHoveredColor(): Color {
     return editor.colorsScheme.getColor(NotebookEditorAppearance.CELL_STRIPE_HOVERED_COLOR)
            ?: editor.colorsScheme.getColor(NotebookEditorAppearance.CELL_STRIPE_HOVERED_COLOR_OLD)
-           ?: JBColor.GRAY
+           ?: editor.colorsScheme.getColor(EditorColors.INDENT_GUIDE_COLOR)
+           ?: editor.colorsScheme.defaultForeground
   }
 
   override fun cellFrameSelectedColor(): Color {
     return editor.colorsScheme.getColor(NotebookEditorAppearance.CELL_FRAME_SELECTED_COLOR)
            ?: editor.colorsScheme.getColor(NotebookEditorAppearance.CELL_STRIPE_SELECTED_COLOR)
-           ?: JBColor.BLUE
+           ?: editor.colorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)
+           ?: editor.colorsScheme.defaultForeground
   }
 
   override fun cellFrameHoveredColor(): Color {
     return editor.colorsScheme.getColor(NotebookEditorAppearance.CELL_FRAME_HOVERED_COLOR)
            ?: editor.colorsScheme.getColor(NotebookEditorAppearance.CELL_STRIPE_HOVERED_COLOR)
-           ?: JBColor.border()
+           ?: editor.colorsScheme.getColor(EditorColors.INDENT_GUIDE_COLOR)
+           ?: editor.colorsScheme.defaultForeground
   }
 
   override fun caretRowColor(): Color? {
@@ -64,7 +76,8 @@ open class DefaultNotebookEditorAppearance(
 
   override fun executionTimeForeground(): Color {
     return editor.colorsScheme.getColor(NotebookEditorAppearance.EXECUTION_TIME_COLOR)
-           ?: UIUtil.getLabelInfoForeground()
+           ?: editor.colorsScheme.getColor(EditorColors.LINE_NUMBERS_COLOR)
+           ?: editor.colorsScheme.defaultForeground
   }
 
   override fun getCellLeftLineWidth(editor: Editor): Int =

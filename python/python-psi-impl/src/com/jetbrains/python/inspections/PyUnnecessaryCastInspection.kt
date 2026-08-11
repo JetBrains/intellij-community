@@ -16,8 +16,8 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.PyCallExpression
-import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.isSameType
 
 class PyUnnecessaryCastInspection : PyInspection() {
@@ -28,10 +28,10 @@ class PyUnnecessaryCastInspection : PyInspection() {
         downgradeHighlightForTypeEngine = context.usesExternalTypeEngine
       }
       override fun visitPyCallExpression(callExpression: PyCallExpression) {
-        val callees = callExpression.multiResolveCalleeFunction(resolveContext)
-        val isCastCall = callees.any {
-          (it as? PyFunction)?.qualifiedName == PyTypingTypeProvider.CAST ||
-          (it as? PyFunction)?.qualifiedName == PyTypingTypeProvider.CAST_EXT
+        val callee = callExpression.callee ?: return
+        val callables = PyTypeUtil.getCallableItems(context.getType(callee))
+        val isCastCall = callables.map { it.callable?.qualifiedName }.any {
+          it == PyTypingTypeProvider.CAST || it == PyTypingTypeProvider.CAST_EXT
         }
         if (!isCastCall) return
 

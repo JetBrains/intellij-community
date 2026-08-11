@@ -12,8 +12,10 @@ interface OperationExecutionId {
   /**
    * Execution context allows to forward data through execution events.
    */
+  @get:ApiStatus.Internal
   val executionContext: OperationExecutionContext
 
+  @ApiStatus.Internal
   companion object {
 
     val NONE: OperationExecutionId = createId("NONE")

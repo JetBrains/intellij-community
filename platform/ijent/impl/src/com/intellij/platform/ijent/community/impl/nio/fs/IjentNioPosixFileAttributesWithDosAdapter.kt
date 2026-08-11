@@ -46,7 +46,6 @@ fun IjentNioPath.getCachedFileAttributesAndWrapToDosAttributesAdapter(): IjentNi
   }
 }
 
-@ApiStatus.Internal
 @OptIn(LowLevelLocalMachineAccess::class)
 internal fun IjentNioPath.getCachedFileAttributesAndWrapToDosAttributesAdapterIfNeeded(): BasicFileAttributes? =
   if (OS.CURRENT == OS.Windows) getCachedFileAttributesAndWrapToDosAttributesAdapter()

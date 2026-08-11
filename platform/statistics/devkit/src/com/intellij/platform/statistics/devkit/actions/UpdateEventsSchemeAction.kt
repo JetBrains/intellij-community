@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAwareAction
 
 internal class UpdateEventsSchemeAction(val recorder: String)
@@ -26,7 +27,9 @@ internal class UpdateEventsSchemeAction(val recorder: String)
                                                                    false) {
       override fun run(indicator: ProgressIndicator) {
         val validator = IntellijSensitiveDataValidator.getInstance(recorder)
-        validator.update()
+        runBlockingCancellable {
+          validator.update()
+        }
       }
     })
   }

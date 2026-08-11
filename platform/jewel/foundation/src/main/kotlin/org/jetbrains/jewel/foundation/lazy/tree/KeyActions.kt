@@ -22,10 +22,23 @@ import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 import org.jetbrains.jewel.foundation.lazy.SelectionMode
 import org.jetbrains.skiko.hostOs
 
+/** Combines keybindings and on-key-event actions for a selectable list or tree, dispatching keyboard events. */
 public interface KeyActions {
+    /** The keybindings that define which key combinations trigger selection actions. */
     public val keybindings: SelectableColumnKeybindings
+
+    /** The handler that performs selection actions in response to key events. */
     public val actions: SelectableColumnOnKeyEvent
 
+    /**
+     * Returns a handler lambda for [event] that, when invoked on the [KeyEvent], applies the appropriate selection
+     * action and returns `true` if the event was consumed, or `false` to let it propagate.
+     *
+     * @param event The incoming key event.
+     * @param keys All selectable keys in the current list.
+     * @param state The mutable selection and scroll state.
+     * @param selectionMode The active selection mode.
+     */
     public fun handleOnKeyEvent(
         event: KeyEvent,
         keys: List<SelectableLazyListKey>,
@@ -34,7 +47,21 @@ public interface KeyActions {
     ): KeyEvent.() -> Boolean
 }
 
+/**
+ * Handles pointer (mouse) events for a selectable list or tree, including click-based selection and range extension.
+ */
 public interface PointerEventActions {
+    /**
+     * Handles a pointer press event, updating selection in [selectableLazyListState] for [key] based on modifier keys
+     * and [selectionMode].
+     *
+     * @param pointerEvent The raw pointer event containing modifier key state.
+     * @param keybindings The keybindings defining which modifier keys trigger multi/range select.
+     * @param selectableLazyListState The mutable selection state to update.
+     * @param selectionMode The active selection mode.
+     * @param allKeys All selectable keys in the list.
+     * @param key The key of the item that was pressed.
+     */
     public fun handlePointerEventPress(
         pointerEvent: PointerEvent,
         keybindings: SelectableColumnKeybindings,
@@ -44,6 +71,14 @@ public interface PointerEventActions {
         key: Any,
     )
 
+    /**
+     * Toggles the selection state of [key] in [selectableLazyListState], respecting [selectionMode].
+     *
+     * @param key The key to toggle.
+     * @param allKeys All selectable keys in the list.
+     * @param selectableLazyListState The mutable selection state to update.
+     * @param selectionMode The active selection mode.
+     */
     public fun toggleKeySelection(
         key: Any,
         allKeys: List<SelectableLazyListKey>,
@@ -51,6 +86,14 @@ public interface PointerEventActions {
         selectionMode: SelectionMode,
     )
 
+    /**
+     * Extends the current selection from the active item to [key], adding all items in between.
+     *
+     * @param key The target key to extend selection to.
+     * @param allKeys All selectable keys in the list.
+     * @param state The mutable selection state to update.
+     * @param selectionMode The active selection mode.
+     */
     public fun onExtendSelectionToKey(
         key: Any,
         allKeys: List<SelectableLazyListKey>,
@@ -59,6 +102,7 @@ public interface PointerEventActions {
     )
 }
 
+/** Default [PointerEventActions] for selectable lazy columns, handling click, multi-select, and range-select. */
 public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
     override fun handlePointerEventPress(
         pointerEvent: PointerEvent,
@@ -147,6 +191,7 @@ public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
     }
 }
 
+/** [DefaultSelectableLazyColumnEventAction] for tree views, adding single/double-click detection for node expansion. */
 public open class DefaultTreeViewPointerEventAction(private val treeState: TreeState) :
     DefaultSelectableLazyColumnEventAction() {
     override fun handlePointerEventPress(
@@ -188,6 +233,18 @@ public open class DefaultTreeViewPointerEventAction(private val treeState: TreeS
     // for item click that lose focus and fail to match if a operation is a double-click
     private var elementClickedTmpHolder: Any? = null
 
+    /**
+     * Detects whether [item] was single-clicked or double-clicked within [doubleClickTimeDelayMillis] and invokes the
+     * appropriate callback. For double-clicks on a [Tree.Element.Node], the node is also toggled.
+     *
+     * @param T The type of data in the tree.
+     * @param item The tree element that was clicked.
+     * @param scope The coroutine scope used to launch the double-click timeout.
+     * @param doubleClickTimeDelayMillis The window in milliseconds within which a second click counts as a
+     *   double-click.
+     * @param onElementClick Callback invoked on a single click.
+     * @param onElementDoubleClick Callback invoked on a double click.
+     */
     @ApiStatus.Internal
     @InternalJewelApi
     public fun <T> notifyItemClicked(
@@ -216,6 +273,11 @@ public open class DefaultTreeViewPointerEventAction(private val treeState: TreeS
     }
 }
 
+/**
+ * Creates a [DefaultTreeViewKeyActions] with platform-appropriate keybindings (macOS or Windows/Linux).
+ *
+ * @param treeState The [TreeState] used by key actions to expand/collapse nodes.
+ */
 public fun DefaultTreeViewKeyActions(treeState: TreeState): DefaultTreeViewKeyActions {
     val keybindings =
         when {
@@ -225,8 +287,13 @@ public fun DefaultTreeViewKeyActions(treeState: TreeState): DefaultTreeViewKeyAc
     return DefaultTreeViewKeyActions(keybindings, DefaultTreeViewOnKeyEvent(keybindings, treeState))
 }
 
+/**
+ * [KeyActions] for tree views, adding expand/collapse key handling on top of [DefaultSelectableLazyColumnKeyActions].
+ */
 public class DefaultTreeViewKeyActions(
+    /** The tree-view-specific keybindings, including expand and collapse key mappings. */
     override val keybindings: TreeViewKeybindings,
+    /** The handler that performs tree-view actions (expand, collapse, selection) in response to key events. */
     override val actions: DefaultTreeViewOnKeyEvent,
 ) : DefaultSelectableLazyColumnKeyActions(keybindings, actions) {
     override fun handleOnKeyEvent(
@@ -259,10 +326,17 @@ public class DefaultTreeViewKeyActions(
     }
 }
 
+/**
+ * Default [KeyActions] for selectable lazy columns, dispatching key events via configurable [keybindings] and
+ * [actions].
+ */
 public open class DefaultSelectableLazyColumnKeyActions(
+    /** The keybindings that define which key combinations trigger selection actions. */
     override val keybindings: SelectableColumnKeybindings,
+    /** The handler that performs selection actions in response to key events. */
     override val actions: SelectableColumnOnKeyEvent = DefaultSelectableOnKeyEvent(keybindings),
 ) : KeyActions {
+    /** The default singleton instance using platform-appropriate keybindings (macOS or Windows/Linux). */
     public companion object :
         DefaultSelectableLazyColumnKeyActions(
             when {
@@ -359,12 +433,18 @@ public open class DefaultSelectableLazyColumnKeyActions(
     }
 }
 
+/**
+ * A no-op [KeyActions] whose [handleOnKeyEvent] always returns a handler that consumes nothing (false), so no key event
+ * is ever handled. For internal use when keyboard input handling must be disabled.
+ */
 @ApiStatus.Internal
 @InternalJewelApi
 public object NoopListKeyActions : KeyActions {
+    /** The keybindings used by this no-op implementation (default column keybindings). */
     override val keybindings: SelectableColumnKeybindings
         get() = DefaultSelectableColumnKeybindings
 
+    /** The on-key-event handler used by this no-op implementation. */
     override val actions: SelectableColumnOnKeyEvent = DefaultSelectableOnKeyEvent(keybindings)
 
     override fun handleOnKeyEvent(

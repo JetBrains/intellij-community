@@ -1,0 +1,37 @@
+<html>
+<body>
+Reports references in plugin XML descriptors whose targets are not reachable through the containing module's
+compile and runtime dependencies.
+<p>
+  The following references are checked:
+</p>
+<ul>
+  <li>Extension points referenced from <code>&lt;extensions&gt;</code> entries.</li>
+  <li>Implementation and interface classes referenced from plugin descriptor attributes and tags
+    (excluding registrations, which are handled by <code>PluginXmlRegistrationCheckInspection</code>).</li>
+  <li>Action and group IDs referenced by other actions and groups (e.g. <code>use-shortcut-of</code>,
+    <code>relative-to-action</code>, group children).</li>
+  <li>Resource bundle references (e.g. <code>resource-bundle</code>, action <code>bundle</code>).</li>
+</ul>
+
+<p>
+  A plugin may be assembled from several modules. Such modules share a registration scope at runtime, so extension points,
+  actions, and groups declared in a sibling module's production roots are reachable even without a module dependency and
+  are not reported. Classes and resource bundles resolve through classloaders instead and are exempt only between sibling
+  modules loaded by the plugin's main classloader: content modules included with <code>loading="embedded"</code> everywhere,
+  or modules packaged into the main plugin jar without an own content-module descriptor. A content module with any other
+  loading mode gets its own classloader, which sees only declared dependencies, so its classes and bundles are still
+  reported. The multi-module plugin configuration is picked from the
+  <code>Plugin DevKit | Plugin descriptor | Plugin.xml registration check</code> inspection.
+</p>
+
+<p>
+  A quick fix is available to add a build system dependency on the module that contains the referenced element,
+  and, when applicable, the corresponding <code>&lt;depends&gt;</code>, <code>&lt;dependencies&gt;</code> / <code>&lt;plugin&gt;</code>,
+  or <code>&lt;dependencies&gt;</code> / <code>&lt;module&gt;</code> entry in the plugin descriptor.
+  A descriptor in a test root gets a test-scoped dependency instead, since it is only loaded on the test classpath.
+  A production descriptor referencing a test root of another module gets no fix,
+  since test output is not packaged into a plugin.
+</p>
+</body>
+</html>

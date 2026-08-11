@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class EncodingReference implements PsiReference, EmptyResolveMessageProvider {
   private final PsiElement myElement;
 

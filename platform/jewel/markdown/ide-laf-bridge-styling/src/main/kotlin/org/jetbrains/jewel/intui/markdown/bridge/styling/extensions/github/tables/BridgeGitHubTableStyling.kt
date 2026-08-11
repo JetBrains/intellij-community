@@ -16,6 +16,7 @@ import org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableMetrics
 import org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling
 import org.jetbrains.jewel.markdown.extensions.github.tables.RowBackgroundStyle
 
+/** Creates a default [GfmTableStyling] for the current IntelliJ LaF theme. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun GfmTableStyling.Companion.create(
@@ -24,6 +25,7 @@ public fun GfmTableStyling.Companion.create(
     headerBaseFontWeight: FontWeight = FontWeight.SemiBold,
 ): GfmTableStyling = GfmTableStyling(colors, metrics, headerBaseFontWeight)
 
+/** Creates a default [GfmTableColors] for the current IntelliJ LaF theme. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun GfmTableColors.Companion.create(
@@ -33,6 +35,7 @@ public fun GfmTableColors.Companion.create(
     rowBackgroundStyle: RowBackgroundStyle = RowBackgroundStyle.Striped,
 ): GfmTableColors = GfmTableColors(borderColor, rowBackgroundColor, alternateRowBackgroundColor, rowBackgroundStyle)
 
+/** Creates a default [GfmTableMetrics] for the current IntelliJ LaF theme. */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun GfmTableMetrics.Companion.create(

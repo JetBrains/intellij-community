@@ -12,12 +12,11 @@ import com.intellij.lsp.ui.settings.LspServerSettings
 import com.intellij.openapi.project.Project
 
 internal class LspServerUsagesCollector : ProjectUsagesCollector() {
-  private val GROUP = EventLogGroup("lspserver", 1)
-  private val LSP_SERVER_CONFIGURED = GROUP.registerEvent("lsp.server.configured",
+  private val GROUP = EventLogGroup("lsp.ui", 1)
+  private val LSP_SERVER_CONFIGURED = GROUP.registerEvent("server.configured",
                                                           EventFields.Boolean("enabled"),
                                                           StringListValidatedByCustomRule("file_extensions", FileExtensionValidationRule::class.java),
                                                           EventFields.Enum<LspServerConfiguration.CommunicationMode>("communication_mode") { it.name.lowercase() })
-
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -25,7 +24,7 @@ internal class LspServerUsagesCollector : ProjectUsagesCollector() {
     val metrics = mutableSetOf<MetricEvent>()
 
     val settings = LspServerSettings.getInstance(project)
-    settings.servers.forEach { server ->
+    for (server in settings.servers) {
       metrics.add(LSP_SERVER_CONFIGURED.metric(
         server.enabled,
         server.getFileExtensions(),

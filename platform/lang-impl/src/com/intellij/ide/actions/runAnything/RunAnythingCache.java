@@ -13,6 +13,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.util.xmlb.annotations.XMap;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ public final class RunAnythingCache implements PersistentStateComponent<RunAnyth
   /**
    * @return true is group is visible; false if it's hidden
    */
+  @ApiStatus.Internal
   public boolean isGroupVisible(@NotNull RunAnythingGroup group) {
     Boolean visible = mySettings.myKeys.get(group.getTitle());
     if (visible != null) {
@@ -55,6 +57,7 @@ public final class RunAnythingCache implements PersistentStateComponent<RunAnyth
    * @param group     to store visibility flag
    * @param visible true if group should be shown
    */
+  @ApiStatus.Internal
   public void saveGroupVisibilityKey(@NotNull RunAnythingGroup group, boolean visible) {
     mySettings.myKeys.put(group.getTitle(), visible);
   }

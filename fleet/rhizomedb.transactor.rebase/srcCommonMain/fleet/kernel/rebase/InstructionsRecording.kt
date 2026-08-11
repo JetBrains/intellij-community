@@ -85,7 +85,7 @@ internal fun Mut.withIdMemoization(
       entityTypeEid: EID,
       initials: List<Pair<Attribute<*>, Any>>
     ): EID = run {
-      val key = (pipeline.impl.meta[KeyStack] ?: persistentListOf()).add(entityTypeEid)
+      val key = (pipeline.impl.meta[KeyStack] ?: persistentListOf()).adding(entityTypeEid)
       val defaultPart = pipeline.impl.defaultPart
       val eid = eidMemo.memo(true, key) { EidGen.freshEID(defaultPart) }
       val uid = uidMemo.memo(true, key) { UID.random() }

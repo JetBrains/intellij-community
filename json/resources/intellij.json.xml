@@ -1,12 +1,31 @@
 <idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.platform.syntax.psi"/>
     <module name="intellij.json.syntax"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.json.jsonLiteralChecker"
                     interface="com.intellij.json.codeinsight.JsonLiteralChecker"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.lazyParsingVetoer"
+                    interface="com.intellij.json.syntax.JsonLazyParsingVetoer"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -25,6 +44,7 @@
               language="JSON Lines"/>
 
     <registryKey defaultValue="true" description="Enable lazy parsing of JSON" key="json.lazy.parsing" restartRequired="true"/>
+    <json.lazyParsingVetoer implementation="com.intellij.json.JsonRegistryLazyParsingVetoer"/>
 
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
     <lang.parserDefinition language="JSON5" implementationClass="com.intellij.json.json5.Json5ParserDefinition"/>

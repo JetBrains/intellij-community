@@ -16,9 +16,8 @@ override var entitySource: EntitySource
 var name: String
 var childrenEntitiesCollection: List<SimpleEntityBuilder>
 }
-
 internal object ChildrenCollectionFieldEntityType : EntityType<ChildrenCollectionFieldEntity, ChildrenCollectionFieldEntityBuilder>(){
-override val entityClass: Class<ChildrenCollectionFieldEntity> get() = ChildrenCollectionFieldEntity::class.java
+override val entityImplClass: Class<*> get() = ChildrenCollectionFieldEntityImpl::class.java
 override val entityImplBuilderClass: Class<*> get() = ChildrenCollectionFieldEntityImpl.Builder::class.java
 operator fun invoke(
 name: String,
@@ -32,12 +31,10 @@ init?.invoke(builder)
 return builder
 }
 }
-
 fun MutableEntityStorage.modifyChildrenCollectionFieldEntity(
 entity: ChildrenCollectionFieldEntity,
 modification: ChildrenCollectionFieldEntityBuilder.() -> Unit,
 ): ChildrenCollectionFieldEntity = modifyEntity(ChildrenCollectionFieldEntityBuilder::class.java, entity, modification)
-
 @JvmOverloads
 @JvmName("createChildrenCollectionFieldEntity")
 fun ChildrenCollectionFieldEntity(

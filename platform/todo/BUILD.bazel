@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.todo` start
-
 jvm_library(
     name = "todo",
     srcs = glob(
@@ -20,6 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//platform/kernel/rpc",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/serialization/core",
         "//platform/analysis-api:analysis",
@@ -51,6 +51,7 @@ jvm_library(
         "//libraries/fastutil",
         "//platform/util:util-ui",
         "//fleet/rhizomedb",
+        "//platform/util/coroutines",
     ],
 )
 
@@ -66,6 +67,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":todo",
+        "//platform/kernel/rpc:rpc_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
@@ -96,6 +98,7 @@ jvm_library(
         "//libraries/fastutil:fastutil_test_lib",
         "//platform/util:util-ui_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.todo` end

@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.indexing.FileBasedIndexDataInitialization.FileBasedIndexDataInitializationResult;
 import kotlin.Pair;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -23,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled;
 
+@ApiStatus.Internal
 public final class RegisteredIndexes {
   private final @NotNull FileDocumentManager myFileDocumentManager;
   private final @NotNull FileBasedIndexImpl myFileBasedIndex;

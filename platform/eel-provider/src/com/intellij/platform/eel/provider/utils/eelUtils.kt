@@ -10,12 +10,13 @@ import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
+@ApiStatus.Obsolete
 fun EelExecApi.fetchLoginShellEnvVariablesBlocking(): Map<String, String> {
   return runBlockingMaybeCancellable { fetchLoginShellEnvVariables() }
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun EelPlatform.toOs(): OS {
   return when (this) {
     is EelPlatform.Windows -> OS.Windows
@@ -36,11 +37,11 @@ private val archMap by lazy {
   }
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun CpuArch.toEelArch(): EelPlatform.Arch = archMap[this] ?: EelPlatform.Arch.Unknown
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun EelPlatform.Arch.toCpuArch(): CpuArch = archMap.getKeysByValue(this)?.single() ?: CpuArch.UNKNOWN
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun EelApi.systemOs(): OS = platform.toOs()

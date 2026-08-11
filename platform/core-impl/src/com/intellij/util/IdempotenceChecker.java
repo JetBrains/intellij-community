@@ -173,7 +173,7 @@ public final class IdempotenceChecker {
                                                           @NotNull Computable<? extends T> recomputeValue) {
     ResultWithLog<T> rwl = computeWithLogging(recomputeValue);
     T freshest = rwl.result;
-    @NonNls String msg = "\n\nRecomputation gives " + objAndClass(freshest);
+    @NonNls String msg = "\n\nRecomputation gives " + objAndClass(freshest, false);
     if (checkValueEquivalence(existing, freshest) == null) {
       msg += " which is equivalent to 'existing'";
     }
@@ -212,13 +212,13 @@ public final class IdempotenceChecker {
     }
   }
 
-  private static @NonNls String objAndClass(Object o) {
+  private static @NonNls @NotNull String objAndClass(Object o, boolean includeHash) {
     if (o == null) return "null";
 
     String s = o instanceof Object[] ? Arrays.toString((Object[])o) : o.toString();
     return s.contains(o.getClass().getSimpleName()) || o instanceof String || o instanceof Number || o instanceof Class
            ? s
-           : s + " (" + (o.getClass().isArray() ? o.getClass().getComponentType()+"[]": o.getClass()) + ")";
+           : s + " (" + (o.getClass().isArray() ? o.getClass().getComponentType()+"[]": o.getClass()) + (includeHash ? ", hash:"+System.identityHashCode(o) : "")+")";
   }
 
   private static String checkValueEquivalence(@Nullable Object existing, @Nullable Object fresh) {
@@ -302,7 +302,8 @@ public final class IdempotenceChecker {
     if (deps1.length != deps2.length) {
       String msg = reportProblem(deps1.length, deps2.length);
       msg = appendDetail(msg, "which is length of CachedValue dependencies: " + Arrays.toString(deps1) + " and " + Arrays.toString(deps2));
-      msg = appendDetail(msg, "where values are  " + objAndClass(eValue) + " and " + objAndClass(fValue));
+      boolean includeHash = objAndClass(eValue, false).equals(objAndClass(fValue, false));
+      msg = appendDetail(msg, "where values are  " + objAndClass(eValue, includeHash) + " and " + objAndClass(fValue, includeHash));
       return msg;
     }
 
@@ -391,8 +392,9 @@ public final class IdempotenceChecker {
   }
 
   private static @NotNull String reportProblem(@Nullable Object o1, @Nullable Object o2) {
+    boolean includeHash = objAndClass(o1, false).equals(objAndClass(o2, false));
     return appendDetail("Non-idempotent computation: it returns different results when invoked multiple times or on different threads:",
-                        objAndClass(o1) + " != " + objAndClass(o2));
+                        objAndClass(o1, includeHash) + " != " + objAndClass(o2, includeHash));
   }
 
   @Contract(pure = true)

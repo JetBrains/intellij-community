@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import git4idea.remote.hosting.http.HostedGitAuthenticationFailureManager
 import git4idea.remote.hosting.http.SilentHostedGitHttpAuthDataProvider
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
@@ -36,6 +37,10 @@ internal class GHSilentHttpAuthDataProvider : SilentHostedGitHttpAuthDataProvide
   override suspend fun getAccountLogin(account: GithubAccount, token: String): String? {
     return getAccountDetails(account, token)?.login
   }
+
+  override fun getPresentableErrorMessage(errorOutput: List<String>): @Nls String? =
+    GHGitErrorMessagesUtils.oauthRestrictionMessage(errorOutput)
+
 
   companion object {
     suspend fun getAccountsWithTokens(project: Project, url: String): Map<GithubAccount, String?> {

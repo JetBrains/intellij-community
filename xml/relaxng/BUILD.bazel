@@ -1,8 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.relaxng` start
+jps_test(
+    name = "relaxng-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":relaxng-tests_test_lib"],
+)
+### skip generation section `test intellij.relaxng.tests`
 
+### auto-generated section `build intellij.relaxng` start
 jvm_library(
     name = "relaxng",
     srcs = glob(
@@ -114,7 +121,6 @@ exports_files(
 ### auto-generated section `iml intellij.relaxng` end
 
 ### auto-generated section `build intellij.relaxng.tests` start
-
 jvm_library(
     name = "relaxng-tests",
     srcs = glob(
@@ -147,6 +153,7 @@ jvm_library(
         ":relaxng-tests",
         "//platform/backend:backend_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-impl/internal:internal_test_lib",
     ],
     deps = [
         # do not sort,
@@ -172,7 +179,10 @@ jvm_library(
         "//xml/impl:impl_test_lib",
         "//xml/dom-openapi:dom",
         "//xml/dom-openapi:dom_test_lib",
+        "//xml/dom-impl",
+        "//xml/dom-impl:dom-impl_test_lib",
         "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl/internal",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/testFramework",
@@ -206,6 +216,8 @@ jvm_library(
         "//jps/model-api:model_test_lib",
         "//jps/model-impl",
         "//jps/model-impl:model-impl_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.relaxng.tests` end
@@ -218,11 +230,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.relaxng.tests` end
-
-### auto-generated section `test intellij.relaxng.tests` start
-
-jps_test(
-    name = "relaxng-tests_test",
-    runtime_deps = [":relaxng-tests_test_lib"],
-)
-### auto-generated section `test intellij.relaxng.tests` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.execution.process.OSProcessHandler;
@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.system.OS;
@@ -90,10 +89,12 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       else {
         notifyOnFailure(IdeCoreBundle.message("watcher.exe.not.exists"), null);
       }
+      NativeFileWatcherCollector.cannotStart();
     }
     else if (!Files.isExecutable(myExecutable)) {
       var message = IdeCoreBundle.message("watcher.exe.not.exe", myExecutable);
-      notifyOnFailure(message, (notification, event) -> RevealFileAction.openFile(myExecutable));
+      notifyOnFailure(message, (_, _) -> RevealFileAction.openFile(myExecutable));
+      NativeFileWatcherCollector.cannotStart();
     }
     else {
       try {
@@ -103,6 +104,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       catch (IOException e) {
         LOG.warn(e.getMessage());
         notifyOnFailure(IdeCoreBundle.message("watcher.failed.to.start"), null);
+        NativeFileWatcherCollector.cannotStart();
       }
     }
   }
@@ -134,29 +136,24 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  /**
-   * Subclasses should override this method if they want to use custom logic to disable their file watcher.
-   */
+  /// Subclasses should override this method if they want to use custom logic to disable their file watcher.
   protected boolean isDisabled() {
     if (Boolean.getBoolean(PROPERTY_WATCHER_DISABLED)) return true;
     var app = ApplicationManager.getApplication();
     return app.isCommandLine() || app.isUnitTestMode();
   }
 
-  /**
-   * Subclasses should override this method to provide a custom binary to run.
-   */
+  /// Subclasses should override this method to provide a custom binary to run.
   protected @Nullable Path getExecutable() {
     var customPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
     if (customPath != null) {
       var customFile = PathManager.findBinFile(customPath);
       return customFile == null ? Path.of(customPath) : customFile;
     }
-    var name =
-      OS.CURRENT == OS.Windows ? "fsnotifier.exe" :
-      OS.CURRENT == OS.macOS || OS.CURRENT == OS.Linux && (CpuArch.isIntel64() || CpuArch.isArm64()) ? "fsnotifier" :
-      null;
-    return name != null ? PathManager.findBinFile(name) : null;
+    if (OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS || OS.CURRENT == OS.Linux && (CpuArch.isIntel64() || CpuArch.isArm64())) {
+      return PathManager.findBinFile(OS.CURRENT.getBinaryName("fsnotifier"));
+    }
+    return null;
   }
 
   /* internal stuff */
@@ -176,10 +173,12 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
     if (myStartAttemptCount.incrementAndGet() > MAX_PROCESS_LAUNCH_ATTEMPT_COUNT) {
       notifyOnFailure(IdeCoreBundle.message("watcher.bailed.out.10x"), null);
+      NativeFileWatcherCollector.disabled();
       return;
     }
 
     if (restart) {
+      NativeFileWatcherCollector.restart(myStartAttemptCount.get());
       shutdownProcess(true);
     }
 
@@ -211,7 +210,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       var timeout = TimeUnit.MILLISECONDS.toNanos(EXIT_TIMEOUT_MS) + System.nanoTime();
       while (!processHandler.isProcessTerminated()) {
         if (System.nanoTime() > timeout) {
-          LOG.warn("File watcher is still alive, doing a force quit.");
+          LOG.warn("File watcher is still alive, doing force quit.");
           processHandler.destroyProcess();
           break;
         }
@@ -291,7 +290,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS ? StandardCharsets.UTF_8 : CharsetToolkit.getPlatformCharset();
 
   private static final BaseOutputReader.Options READER_OPTIONS = new BaseOutputReader.Options() {
-    @Override public BaseDataReader.SleepingPolicy policy() { return BaseDataReader.SleepingPolicy.BLOCKING; }
     @Override public boolean sendIncompleteLines() { return false; }
     @Override public boolean withSeparators() { return false; }
   };
@@ -334,7 +332,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       }
       catch (IOException e) {
         shutdownProcess(true);
-        LOG.warn("Watcher terminated and attempt to restart has failed. Exiting watching thread.", e);
+        LOG.warn("Watcher terminated and the restart attempt has failed. Exiting watching thread.", e);
       }
     }
 
@@ -364,6 +362,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
         if (watcherOp == WatcherOp.GIVEUP) {
           notifyOnFailure(IdeCoreBundle.message("watcher.gave.up"), null);
           myIsShuttingDown = true;
+          NativeFileWatcherCollector.givenUp();
         }
         else if (watcherOp == WatcherOp.RESET) {
           myNotificationSink.notifyReset(null);

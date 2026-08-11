@@ -23,150 +23,11 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
     /**
      * Module which contains META-INF/plugin.xml
      */
-    const val MAIN_KOTLIN_PLUGIN_MODULE: String = "kotlin.plugin"
+    const val MAIN_KOTLIN_PLUGIN_MODULE: String = "intellij.kotlin.plugin"
     const val MAIN_FRONTEND_MODULE_NAME: String = "kotlin.frontend.split"
 
     val MODULES: List<String> = java.util.List.of(
-      "kotlin.plugin.common",
-      "kotlin.plugin.k2",
-      "intellij.kotlin.base.util",
-      "intellij.kotlin.base.indices",
-      "intellij.kotlin.base.compilerConfiguration",
-      "intellij.kotlin.base.plugin",
-      "intellij.kotlin.base.psi",
-      "intellij.kotlin.base.kdoc",
-      "intellij.kotlin.base.platforms",
-      "intellij.kotlin.base.facet",
-      "intellij.kotlin.base.projectStructure",
-      "intellij.kotlin.base.externalSystem",
-      "intellij.kotlin.base.scripting",
-      "intellij.kotlin.base.scripting.main.kts",
-      "intellij.kotlin.base.scripting.shared",
-      "intellij.kotlin.base.scripting.scratch.definition",
-      "intellij.kotlin.base.analysis.platform",
-      "intellij.kotlin.base.analysis",
-      "intellij.kotlin.base.codeInsight",
-      "intellij.kotlin.base.jps",
-      "intellij.kotlin.base.analysis.utils",
-      "intellij.kotlin.base.compilerConfiguration.ui",
-      "intellij.kotlin.base.statistics",
-      "intellij.kotlin.ide",
-      "kotlin.fir.frontend-independent",
-      "kotlin.jvm.shared",
-      "intellij.kotlin.jvm",
-      "intellij.kotlin.compilerReferenceIndex",
-      "intellij.kotlin.compilerPlugins.parcelize.common",
-      "intellij.kotlin.compilerPlugins.parcelize",
-      "intellij.kotlin.compilerPlugins.allopen.maven",
-      "intellij.kotlin.compilerPlugins.support",
-      "intellij.kotlin.compilerPlugins.support.gradle",
-      "intellij.kotlin.compilerPlugins.support.maven",
-      "intellij.kotlin.compilerPlugins.powerAssert.gradle",
-      "intellij.kotlin.compilerPlugins.kapt",
-      "intellij.kotlin.compilerPlugins.serialization",
-      "intellij.kotlin.compilerPlugins.serialization.gradle",
-      "intellij.kotlin.compilerPlugins.serialization.maven",
-      "intellij.kotlin.compilerPlugins.dataframe.maven",
-      "intellij.kotlin.compilerPlugins.noarg.gradle",
-      "intellij.kotlin.compilerPlugins.noarg.maven",
-      "intellij.kotlin.compilerPlugins.samWithReceiver.maven",
-      "intellij.kotlin.compilerPlugins.assignment.fixes",
-      "intellij.kotlin.compilerPlugins.assignment.gradle",
-      "intellij.kotlin.compilerPlugins.assignment.maven",
-      "intellij.kotlin.compilerPlugins.lombok.gradle",
-      "intellij.kotlin.compilerPlugins.lombok.maven",
-      "intellij.kotlin.compilerPlugins.scripting",
-      "intellij.kotlin.completion.api",
-      "kotlin.completion.impl.shared",
-      "intellij.kotlin.completion.impl",
-      "intellij.kotlin.lombok",
-      "intellij.kotlin.maven",
-      "intellij.kotlin.gradle.tooling",
-      "intellij.kotlin.gradle.gradle",
-      "intellij.kotlin.gradle.codeInsight.common",
-      "kotlin.gradle.gradle-java",
-      "intellij.kotlin.gradle.java",
-      "intellij.kotlin.gradle.scripting",
-      "kotlin.gradle.scripting.shared",
-      "intellij.kotlin.gradle.codeInsight.groovy",
-      "intellij.kotlin.gradle.codeInsight.toml",
-      "intellij.kotlin.native",
-      "intellij.kotlin.grazie",
-      "intellij.kotlin.runConfigurations.jvm",
-      "intellij.kotlin.runConfigurations.junit",
-      "intellij.kotlin.runConfigurations.testng",
-      "intellij.kotlin.formatter",
-      "intellij.kotlin.git",
-      "kotlin.base.injection",
-      "intellij.kotlin.injection",
       "kotlin.scripting",
-      "intellij.kotlin.coverage",
-      "intellij.kotlin.completion.ml",
-      "intellij.kotlin.copyright",
-      "intellij.kotlin.spellchecker",
-      "intellij.kotlin.jvm.decompiler",
-      "kotlin.j2k.shared",
-      "intellij.kotlin.j2k",
-      "intellij.kotlin.onboarding",
-      "intellij.kotlin.onboarding.gradle",
-      "intellij.kotlin.onboarding.maven",
-      "intellij.kotlin.plugin.updater",
-      "intellij.kotlin.preferences",
-      "intellij.kotlin.references",
-      "intellij.kotlin.projectConfiguration",
-      "intellij.kotlin.projectWizard.cli",
-      "intellij.kotlin.projectWizard.core",
-      "intellij.kotlin.projectWizard.idea",
-      "intellij.kotlin.projectWizard.maven",
-      "intellij.kotlin.projectWizard.gradle",
-      "intellij.kotlin.projectWizard.compose",
-      "intellij.kotlin.jvm.debugger.core",
-      "kotlin.jvm-debugger.evaluation",
-      "intellij.kotlin.jvm.debugger.evaluation",
-      "intellij.kotlin.jvm.debugger.eval4j",
-      "intellij.kotlin.uast.base",
-      "intellij.kotlin.uast.idea.base",
-      "intellij.kotlin.i18n",
-      "intellij.kotlin.migration",
-      "kotlin.inspections",
-      "intellij.kotlin.featuresTrainer",
-      "intellij.kotlin.analysis.platform",
-      "intellij.kotlin.codeInsight.base",
-      "intellij.kotlin.projectStructure",
-      "intellij.kotlin.scripting",
-      "intellij.kotlin.codeInsight.api",
-      "intellij.kotlin.codeInsight.utils",
-      "kotlin.code-insight.intentions.shared",
-      "kotlin.code-insight.inspections.shared",
-      "intellij.kotlin.codeInsight.descriptions",
-      "intellij.kotlin.codeInsight.fixes",
-      "intellij.kotlin.codeInsight.intentions",
-      "intellij.kotlin.codeInsight.inspections",
-      "intellij.kotlin.codeInsight",
-      "kotlin.code-insight.override-implement.shared",
-      "intellij.kotlin.codeInsight.overrideImplement",
-      "kotlin.code-insight.live-templates.shared",
-      "intellij.kotlin.codeInsight.liveTemplates",
-      "intellij.kotlin.codeInsight.postfixTemplates",
-      "intellij.kotlin.codeInsight.structuralSearch",
-      "kotlin.code-insight.line-markers.shared",
-      "intellij.kotlin.codeInsight.lineMarkers",
-      "kotlin.fir",
-      "intellij.kotlin.searching",
-      "intellij.kotlin.searching.base",
-      "kotlin.highlighting.shared",
-      "intellij.kotlin.highlighting",
-      "intellij.kotlin.uast",
-      "intellij.kotlin.uast.idea",
-      "intellij.kotlin.navigation",
-      "kotlin.refactorings.common",
-      "intellij.kotlin.refactorings",
-      "intellij.kotlin.refactorings.rename",
-      "intellij.kotlin.performanceExtendedPlugin",
-      "intellij.kotlin.compilerPlugins.support.bundled",
-      "kotlin.jsr223",
-      "intellij.kotlin.internal",
-      "intellij.kotlin.base.serialization"
     )
 
     private val KOTLIN_SCRIPTING_LIBRARIES = java.util.List.of(
@@ -176,23 +37,24 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
 
     private val MODULES_SHARED_WITH_CLIENT = java.util.List.of(
       "intellij.kotlin.base.codeInsight.minimal",
-      "intellij.kotlin.highlighting.minimal",
-      "intellij.kotlin.formatter.minimal"
+      "intellij.kotlin.highlighting.minimal"
+    )
+
+    private val KOTLINC_LIBRARY_MODULES = java.util.List.of(
+      "intellij.libraries.kotlinc.analysis.api",
+      "intellij.libraries.kotlinc.analysis.api.impl.base",
+      "intellij.libraries.kotlinc.analysis.api.k2",
+      "intellij.libraries.kotlinc.analysis.api.platform.interface",
+      "intellij.libraries.kotlinc.low.level.api.fir",
+      "intellij.libraries.kotlinc.symbol.light.classes",
     )
 
     private val LIBRARIES_UNPACKED = java.util.List.of(
-      "kotlinc.analysis-api-platform-interface",
-      "kotlinc.analysis-api",
-      "kotlinc.analysis-api-fe10",
-      "kotlinc.analysis-api-impl-base",
       "kotlinc.kotlin-scripting-compiler-impl",
       "kotlinc.kotlin-scripting-common",
       "kotlinc.kotlin-scripting-dependencies",
       "kotlinc.kotlin-gradle-statistics",
-      "kotlinc.analysis-api-k2",
       "kotlinc.kotlin-compiler-fir",
-      "kotlinc.low-level-api-fir",
-      "kotlinc.symbol-light-classes",
       "kotlin-metadata",
       "kotlinc.kotlin-build-tools-api",
       "kotlinc.kotlin-build-tools-impl",
@@ -205,17 +67,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlinc.kotlin-jps-common",
       "vavr",
       "javax-inject",
-    )
-
-    private val GRADLE_TOOLING_MODULES = java.util.List.of(
-      "intellij.kotlin.base.projectModel",
-      "intellij.kotlin.gradle.tooling.impl",
-    )
-
-    private val GRADLE_TOOLING_LIBRARIES = java.util.List.of(
-      "kotlin-gradle-plugin-idea",
-      "kotlin-gradle-plugin-idea-proto",
-      "kotlin-tooling-core",
     )
 
     private val COMPILER_PLUGINS = java.util.List.of(
@@ -247,14 +98,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       }
 
       basePluginsAndLibraries(spec)
-
-      val toolingJarName = "kotlin-gradle-tooling.jar"
-      for (moduleName in GRADLE_TOOLING_MODULES) {
-        spec.withModule(moduleName, toolingJarName)
-      }
-      for (library in GRADLE_TOOLING_LIBRARIES) {
-        spec.withProjectLibraryUnpackedIntoJar(library, toolingJarName)
-      }
 
       spec.withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
       withKotlincInPluginDirectory(spec = spec)
@@ -294,6 +137,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
 
   /** paired with [excludeKotlinLibraries] */
   fun basePluginsAndLibraries(spec: PluginLayout.PluginLayoutSpec) {
+    spec.withModules(KOTLINC_LIBRARY_MODULES)
     for (libraryName in LIBRARIES_UNPACKED) {
       spec.withProjectLibraryUnpackedIntoJar(libraryName, spec.mainJarName)
     }
@@ -314,7 +158,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
     for (library in COMPILER_PLUGINS) {
       spec.excludeProjectLibrary(library)
     }
-    spec.excludeProjectLibrary("kotlinc.kotlin-compiler-common")
     for (library in LIBRARIES) {
       spec.excludeProjectLibrary(library)
     }
@@ -336,17 +179,17 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
   fun kotlinFrontendPlugin(): PluginLayout {
     return PluginLayout.plugin(MAIN_FRONTEND_MODULE_NAME) { spec ->
       spec.withModules(MODULES_SHARED_WITH_CLIENT)
-      spec.withProjectLibrary("kotlinc.kotlin-compiler-common")
+      spec.withModule(KOTLINC_KOTLIN_COMPILER_COMMON_MODULE, KOTLINC_KOTLIN_COMPILER_COMMON_JAR)
     }
   }
 
   fun kotlinScriptingPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
-    val mainModuleName = "kotlin.scripting-plugin"
+    val mainModuleName = "intellij.kotlin.jsr223.plugin"
     return PluginLayout.pluginAutoWithCustomDirName(mainModuleName) { spec ->
       spec.directoryName = "KotlinScripting"
       spec.mainJarName = "kotlin-scripting-plugin.jar"
 
-      spec.withModule("kotlin.jsr223")
+      spec.withModule("intellij.kotlin.jsr223")
 
       withKotlincKotlinCompilerCommonLibrary(spec, mainModuleName)
       spec.withProjectLibrary("kotlinc.kotlin-compiler-fe10")
@@ -359,10 +202,10 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
 
 private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayoutSpec, mainPluginModule: String) {
   val kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
-  spec.withProjectLibrary(kotlincKotlinCompilerCommon)
+  spec.withModule(KOTLINC_KOTLIN_COMPILER_COMMON_MODULE, KOTLINC_KOTLIN_COMPILER_COMMON_JAR)
 
   spec.withPatch { patcher, context ->
-    val jars = context.outputProvider.findLibraryRoots(kotlincKotlinCompilerCommon, moduleLibraryModuleName = null)
+    val jars = context.outputProvider.findLibraryRoots(kotlincKotlinCompilerCommon, moduleLibraryModuleName = KOTLINC_KOTLIN_COMPILER_COMMON_MODULE)
     if (jars.size != 1) {
       throw IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
     }
@@ -372,6 +215,9 @@ private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayo
     }
   }
 }
+
+private const val KOTLINC_KOTLIN_COMPILER_COMMON_MODULE = "intellij.libraries.kotlinc.kotlin.compiler.common"
+private const val KOTLINC_KOTLIN_COMPILER_COMMON_JAR = "intellij.libraries.kotlinc.kotlin.compiler.common.jar"
 
 private fun withKotlincInPluginDirectory(libName: String = "kotlin-dist", target: String = "kotlinc", spec: PluginLayout.PluginLayoutSpec) {
   spec.withGeneratedResources { targetDir, context ->

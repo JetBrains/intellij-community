@@ -38,7 +38,9 @@ import java.awt.Cursor
 import java.awt.datatransfer.StringSelection
 import java.io.IOException
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask
@@ -264,7 +266,9 @@ private fun ExternalLinkImpl(
     )
 }
 
-private fun openUri(uriHandler: UriHandler, link: String) {
+@ApiStatus.Internal
+@InternalJewelApi
+public fun openUri(uriHandler: UriHandler, link: String) {
     try {
         uriHandler.openUri(link)
     } catch (e: IllegalArgumentException) {
@@ -435,9 +439,13 @@ private fun LinkImpl(
     }
 }
 
+/** Encodes the enabled, focused, hovered, pressed, active, and visited interaction states of a link as a bit mask. */
 @Immutable
 @JvmInline
-public value class LinkState(public val state: ULong) : FocusableComponentState {
+public value class LinkState(
+    /** The raw bit mask encoding all interaction states. */
+    public val state: ULong
+) : FocusableComponentState {
     override val isActive: Boolean
         get() = state and Active != 0UL
 
@@ -447,6 +455,7 @@ public value class LinkState(public val state: ULong) : FocusableComponentState 
     override val isFocused: Boolean
         get() = state and Focused != 0UL
 
+    /** Whether the link has been visited. */
     public val isVisited: Boolean
         get() = state and Visited != 0UL
 
@@ -460,6 +469,7 @@ public value class LinkState(public val state: ULong) : FocusableComponentState 
         "${javaClass.simpleName}(enabled=$isEnabled, focused=$isFocused, visited=$isVisited, " +
             "pressed=$isPressed, hovered=$isHovered, isActive=$isActive)"
 
+    /** Returns a copy of this [LinkState] with the given fields replaced by their new values. */
     public fun copy(
         enabled: Boolean = isEnabled,
         focused: Boolean = isFocused,
@@ -477,6 +487,12 @@ public value class LinkState(public val state: ULong) : FocusableComponentState 
             active = active,
         )
 
+    /**
+     * Selects and returns a value based on the current interaction state, including the visited state.
+     *
+     * Evaluates the current state in priority order — disabled, pressed, hovered, focused, visited, active — and
+     * returns the corresponding value, falling back to [normal] when none of the special states apply.
+     */
     @Composable
     public fun <T> chooseValueWithVisited(
         normal: T,
@@ -497,11 +513,13 @@ public value class LinkState(public val state: ULong) : FocusableComponentState 
             else -> normal
         }
 
+    /** Companion object for [LinkState]. */
     public companion object {
         private const val VISITED_BIT_OFFSET = CommonStateBitMask.FIRST_AVAILABLE_OFFSET
 
         private val Visited = 1UL shl VISITED_BIT_OFFSET
 
+        /** Constructs a [LinkState] from individual flags. */
         public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,

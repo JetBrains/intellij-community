@@ -1,6 +1,7 @@
 from hvac.api.secrets_engines.active_directory import ActiveDirectory as ActiveDirectory
 from hvac.api.secrets_engines.aws import Aws as Aws
 from hvac.api.secrets_engines.azure import Azure as Azure
+from hvac.api.secrets_engines.consul import Consul as Consul
 from hvac.api.secrets_engines.database import Database as Database
 from hvac.api.secrets_engines.gcp import Gcp as Gcp
 from hvac.api.secrets_engines.identity import Identity as Identity
@@ -38,3 +39,21 @@ __all__ = (
 class SecretsEngines(VaultApiCategory):
     implemented_classes: list[type[VaultApiBase]]
     unimplemented_classes: list[str]
+
+    # The following attributes are dynamically created at runtime by
+    # VaultApiCategory based on implemented_classes.
+    # These explicit assignments make them visible for static type checkers.
+    aws: Aws
+    azure: Azure
+    gcp: Gcp
+    activedirectory: ActiveDirectory
+    identity: Identity
+    kv: Kv
+    ldap: Ldap
+    pki: Pki
+    transform: Transform
+    transit: Transit
+    database: Database
+    consul: Consul
+    rabbitmq: RabbitMQ
+    ssh: Ssh

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.platform.util.coroutines.childScope
@@ -72,9 +72,29 @@ class ToolVersionsWatcherLightTests : UsefulTestCase() {
 
       "graalvm-community-21.0.2" to "GraalVM CE 23.1.2 - Java 21.0.2",
     )) {
-      assert(
-        AsdfReleaseData.parse(candidate)?.matchVersionString(version) == true
-      ) { "$candidate doesn't match $version" }
+      assertEquals("$candidate doesn't exactly match $version",
+                   ReleaseDataMatching.EXACT_MATCH,
+                   AsdfReleaseData.parse(candidate)?.matchVersionString(version))
     }
+  }
+
+  fun `test exact match`() {
+    assertEquals(ReleaseDataMatching.EXACT_MATCH,
+                 AsdfReleaseData.parse("temurin-17.0.7+7")?.matchVersionString("Eclipse Temurin 17.0.7"))
+  }
+
+  fun `test major match`() {
+    assertEquals(ReleaseDataMatching.FEATURE_MATCH,
+                 AsdfReleaseData.parse("temurin-17.0.0+1")?.matchVersionString("Eclipse Temurin 17.0.7"))
+  }
+
+  fun `test no match on variant`() {
+    assertEquals(ReleaseDataMatching.NO_MATCH,
+                 AsdfReleaseData.parse("temurin-17.0.7+7")?.matchVersionString("Azul Zulu 17.0.7"))
+  }
+
+  fun `test no match on version`() {
+    assertEquals(ReleaseDataMatching.NO_MATCH,
+                 AsdfReleaseData.parse("temurin-17.0.7+7")?.matchVersionString("Eclipse Temurin 21.0.2"))
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.picker.ColorListener;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ import java.util.Objects;
 /**
  * @author gregsh
  */
+@ApiStatus.Internal
 public final class ColorSelectionComponent extends JPanel {
   private final Map<String, ColorButton> myColorToButtonMap = new LinkedHashMap<>();
   private final ButtonGroup myButtonGroup = new ButtonGroup();

@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
 import java.time.LocalDateTime
@@ -11,6 +12,7 @@ import kotlin.math.max
 
 data class EventLogFile(val file: File) {
   companion object {
+    @ApiStatus.Internal
     @JvmStatic
     fun create(dir: Path, buildType: EventLogBuildType, suffix: String): EventLogFile {
       var file = dir.resolve(newName(buildType, suffix)).toFile()
@@ -37,6 +39,7 @@ data class EventLogFile(val file: File) {
     }
   }
 
+  @ApiStatus.Internal
   fun getType(defaultType: EventLogBuildType = EventLogBuildType.UNKNOWN): EventLogBuildType {
     return when (parseType()) {
       EventLogBuildType.EAP.text -> EventLogBuildType.EAP

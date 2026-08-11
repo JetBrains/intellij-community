@@ -26,6 +26,8 @@ class KafkaProtocolError(KafkaError):
 class CorrelationIdError(KafkaProtocolError):
     retriable: bool
 
+class InvalidReceiveError(KafkaProtocolError): ...
+
 class KafkaTimeoutError(KafkaError):
     retriable: bool
 

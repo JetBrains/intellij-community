@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GroovyParserUtils")
 @file:Suppress("UNUSED_PARAMETER", "LiftReturnOrAssignment")
 
@@ -21,9 +21,20 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.tree.TokenSet.create
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kAS
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kIN
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kPERMITS
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kRECORD
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kSEALED
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kTRAIT
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kVAL
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kVAR
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kYIELD
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mIDENT
 import org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser.closure_header_with_arrow
 import org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser.lambda_expression_head
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.APPLICATION_EXPRESSION
@@ -32,9 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_LAMBDA_BOD
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_LAMBDA_BODY_SWITCH_AWARE
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLOSURE
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLOSURE_SWITCH_AWARE
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.IDENTIFIER
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.INSTANCEOF_EXPRESSION
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_RECORD
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.METHOD_CALL_EXPRESSION
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NEW_EXPRESSION
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NL
@@ -110,16 +119,25 @@ private val insideParentheses: Key<Boolean> = Key.create("groovy.parse.inside.pa
 private val insideSwitchExpression: Key<Boolean> = Key.create("groovy.parse.inside.switch.expression")
 private val forbidLambdaExpression: Key<Boolean> = Key.create("groovy.parse.defer.lambda.expressions")
 private val compactConstructors: Key<Boolean> = Key.create("groovy.parse.contracted.constructors")
+private val identifiers: TokenSet = create(
+  mIDENT,
+  kAS,
+  // 'def' not included
+  kIN,
+  kPERMITS,
+  kRECORD,
+  kSEALED,
+  kTRAIT,
+  kVAL,
+  kVAR,
+  kYIELD
+)
 
 fun classIdentifier(builder: PsiBuilder, level: Int): Boolean {
-  if (builder.tokenType === IDENTIFIER || builder.tokenType === KW_RECORD) {
-    builder[currentClassNames]!!.push(builder.tokenText)
-    builder.advanceLexer()
-    return true
-  }
-  else {
-    return false
-  }
+  if (!identifiers.contains(builder.tokenType)) return false
+  builder[currentClassNames]!!.push(builder.tokenText)
+  builder.advanceLexer()
+  return true
 }
 
 fun popClassIdentifier(builder: PsiBuilder, level: Int): Boolean {
@@ -128,9 +146,9 @@ fun popClassIdentifier(builder: PsiBuilder, level: Int): Boolean {
 }
 
 fun constructorIdentifier(builder: PsiBuilder, level: Int): Boolean {
-  return builder.advanceIf {
-    tokenType === IDENTIFIER && tokenText == this[currentClassNames]!!.peek()
-  }
+  if (!identifiers.contains(builder.tokenType) || builder.tokenText != builder[currentClassNames]!!.peek()) return false
+  builder.advanceLexer()
+  return true
 }
 
 fun allowDiamond(builder: PsiBuilder, level: Int, parser: Parser): Boolean {

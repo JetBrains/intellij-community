@@ -38,8 +38,7 @@ import com.intellij.platform.workspace.storage.impl.serialization.StorageInterne
 import com.intellij.platform.workspace.storage.impl.serialization.TypeInfo
 import com.intellij.platform.workspace.storage.impl.serialization.getTypeInfo
 import com.intellij.platform.workspace.storage.impl.toClassId
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerEx
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -171,14 +170,12 @@ internal class StorageSerializerUtil(
   }
 
   internal val virtualFileUrlImplementationClass: Class<out VirtualFileUrl>
-    get() = (virtualFileManager as VirtualFileUrlManagerImpl).virtualFileUrlImplementationClass
-  
+    get() = (virtualFileManager as VirtualFileUrlManagerEx).virtualFileUrlImplementationClass
   internal fun getVirtualFileUrlSerializer(): Serializer<VirtualFileUrl> = object : Serializer<VirtualFileUrl>(false, true) {
     override fun write(kryo: Kryo, output: Output, obj: VirtualFileUrl) {
       // TODO Write IDs only
 
-      obj as VirtualFileUrlImpl
-      val urlToWrite = urlRelativizer?.toRelativeUrl(obj.url) ?: obj.getUrlSegments()
+      val urlToWrite = urlRelativizer?.toRelativeUrl(obj.url) ?: obj.url.split('/', '\\')
       kryo.writeObject(output, urlToWrite)
     }
 
@@ -189,7 +186,7 @@ internal class StorageSerializerUtil(
 
       if (urlRelativizer == null) {
         val url = kryo.readObject(input, ArrayList::class.java) as List<String>
-        return (virtualFileManager as VirtualFileUrlManagerImpl).fromUrlSegments(url)
+        return virtualFileManager.getOrCreateFromUrl(url.joinToString("/"))
       }
       else {
         val serializedUrl = kryo.readObject(input, String::class.java) as String

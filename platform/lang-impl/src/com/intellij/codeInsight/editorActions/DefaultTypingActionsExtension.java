@@ -9,6 +9,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -128,6 +129,10 @@ public class DefaultTypingActionsExtension implements TypingActionsExtension {
   protected void adjustLineIndent(@NotNull Project project, @NotNull Editor editor, int startOffset, int endOffset) {
     Document document = editor.getDocument();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    if (Elf.getElf().isUnsupportedOperationGuardActive()) {
+      // commitDocument is not supported yet for lock-free typing
+      return;
+    }
     documentManager.commitDocument(document);
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return;

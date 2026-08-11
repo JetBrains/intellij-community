@@ -14,10 +14,10 @@
 // K2_ACTIONS_LIST: Enable a trailing comma by default in the formatter
 // K2_ACTIONS_LIST: Replace 'when' with 'if'
 // ERROR: Unresolved reference: BBB
-// K2_ERROR: Unresolved reference 'AAA'.
-// K2_ERROR: Unresolved reference 'BBB'.
-// K2_AFTER_ERROR: Return type mismatch: expected 'I?', actual 'AAA?'.
-// K2_AFTER_ERROR: Unresolved reference 'BBB'.
+// K2_AFTER_ERROR: RETURN_TYPE_MISMATCH
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 abstract class I
 

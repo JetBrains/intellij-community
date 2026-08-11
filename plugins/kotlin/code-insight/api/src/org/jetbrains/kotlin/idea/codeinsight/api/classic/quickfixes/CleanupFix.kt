@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Marker interface for quickfixes that can be used as part of the "Cleanup Code" action. The diagnostics
  * that produce these quickfixes need to be added to
- * [org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinCleanupInspectionKt.isCleanup].
+ * [org.jetbrains.kotlin.idea.codeInsight.inspections.KotlinCleanupInspectionKt.isCleanup].
  */
 interface CleanupFix : IntentionAction {
     @ApiStatus.Experimental

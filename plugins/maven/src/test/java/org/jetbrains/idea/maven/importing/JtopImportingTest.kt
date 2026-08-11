@@ -1,16 +1,35 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertModuleModuleDeps
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class JtopImportingTest : MavenMultiVersionImportingTestCase() {
-  override fun skipPluginResolution() = false
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class JtopImportingTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion,
+    skipPluginResolution = false,
+  )
+  
 
   @Test
   fun testJtop() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>de.bmarwell.jtop</groupId>
                        <artifactId>jtop</artifactId>
                        <version>1.0-SNAPSHOT</version>
@@ -21,7 +40,7 @@ class JtopImportingTest : MavenMultiVersionImportingTestCase() {
                         </modules>
                        """.trimIndent())
 
-    createModulePom("library", """
+    maven.createModulePom("library", """
       <parent>
         <groupId>de.bmarwell.jtop</groupId>
         <artifactId>jtop</artifactId>
@@ -39,7 +58,7 @@ class JtopImportingTest : MavenMultiVersionImportingTestCase() {
       </modules>
 """)
 
-    createModulePom("library/api", """
+    maven.createModulePom("library/api", """
         <parent>
     <groupId>de.bmarwell.jtop</groupId>
     <artifactId>jtop-library</artifactId>
@@ -52,7 +71,7 @@ class JtopImportingTest : MavenMultiVersionImportingTestCase() {
   <name>jtop :: library :: api</name>
 """)
 
-    val appFile = createModulePom("app", """
+    val appFile = maven.createModulePom("app", """
         <parent>
     <groupId>de.bmarwell.jtop</groupId>
     <artifactId>jtop</artifactId>
@@ -73,11 +92,11 @@ class JtopImportingTest : MavenMultiVersionImportingTestCase() {
     </dependencies>
 """)
 
-    importProjectAsync()
-    assertModules("jtop-library", "jtop", "jtop-app", "jtop-library-api")
-    val app = projectsManager.findProject(appFile)
+    maven.importProjectAsync()
+    maven.assertModules("jtop-library", "jtop", "jtop-app", "jtop-library-api")
+    val app = maven.projectsManager.findProject(appFile)
     assertEmpty(app!!.problems)
-    assertModuleModuleDeps("jtop-app", "jtop-library-api")
+    maven.assertModuleModuleDeps("jtop-app", "jtop-library-api")
   }
 
 }

@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.hdr.histogram` start
-
 jvm_library(
     name = "hdr-histogram",
     srcs = glob(

@@ -4,6 +4,8 @@ package com.intellij.ui.components;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.icons.scale.IconScale;
+import com.intellij.platform.icons.swing.SwingIconKt;
 import com.intellij.ui.AnchorableComponent;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
@@ -62,6 +64,16 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
 
   public JBLabel(@Nullable Icon image) {
     super(image);
+  }
+
+  @ApiStatus.Internal
+  public JBLabel(@NotNull com.intellij.platform.icons.Icon icon, IconScale scale) {
+    super(SwingIconKt.toSwingIcon(icon, scale));
+  }
+
+  @ApiStatus.Internal
+  public JBLabel(@NotNull com.intellij.platform.icons.Icon icon) {
+    this(icon, IconScale.Default);
   }
 
   public JBLabel(@NotNull @NlsContexts.Label String text) {

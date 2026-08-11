@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.base.codeInsight` start
-
 create_kotlinc_options(
     name = "custom_code-insight",
     opt_in = [
@@ -35,14 +34,17 @@ jvm_library(
     exports = ["//plugins/kotlin/base/code-insight/minimal"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/reflect",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
+        "//plugins/kotlin/references",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "@lib//:kotlinc-kotlin-jps-common",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
+        "//java/java-backend:backend",
         "//platform/lang-core",
         "//platform/projectModel-api:projectModel",
         "//plugins/kotlin/base/util",
@@ -98,9 +100,15 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":code-insight",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlin/reflect:reflect_test_lib",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
+        "//java/java-backend:backend_test_lib",
         "//platform/lang-core:lang-core_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",
@@ -134,7 +142,8 @@ jvm_library(
         "//java/testFramework:testFramework_test_lib",
         "//platform/backend/workspace:workspace_test_lib",
         "//plugins/kotlin/formatter:formatter_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//plugins/kotlin/base/testFramework",
@@ -142,7 +151,8 @@ jvm_library(
         "//plugins/kotlin/tests-common:common-tests",
         "//plugins/kotlin/tests-common:common-tests_test_lib",
         "//plugins/kotlin/base/code-insight/minimal:minimal_test_lib",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/util:util-ui_test_lib",
     ],
@@ -159,7 +169,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.base.codeInsight` end
 
 ### auto-generated section `build intellij.kotlin.base.codeInsight.tests` start
-
 create_kotlinc_options(
     name = "custom_kotlin-base-codeInsight-tests",
     opt_in = [
@@ -212,12 +221,15 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/reflect",
         "//libraries/kotlin/reflect:reflect_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "@lib//:kotlinc-kotlin-jps-common",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
@@ -281,7 +293,8 @@ jvm_library(
         "//platform/backend/workspace:workspace_test_lib",
         "//plugins/kotlin/formatter",
         "//plugins/kotlin/formatter:formatter_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//plugins/kotlin/base/testFramework",
@@ -295,6 +308,8 @@ jvm_library(
         "//platform/util/concurrency:concurrency_test_lib",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.codeInsight.tests` end
@@ -309,7 +324,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.base.codeInsight.tests` end
 
 ### auto-generated section `test intellij.kotlin.base.codeInsight.tests` start
-
 jps_test(
     name = "kotlin-base-codeInsight-tests_test",
     runtime_deps = [":kotlin-base-codeInsight-tests_test_lib"],

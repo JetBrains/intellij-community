@@ -60,7 +60,7 @@ public abstract class CompletionService {
                                              @NotNull PrefixMatcher matcher,
                                              @NotNull Consumer<? super CompletionResult> consumer) {
     List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
-    boolean groupEnabledInApp = GroupedCompletionContributor.isGroupEnabledInApp();
+    boolean groupEnabledInApp = GroupedCompletionContributor.isGroupEnabled(parameters.getEditor());
 
     int startingIndex = from != null ? contributors.indexOf(from) + 1 : 0;
     for (int i = startingIndex; i < contributors.size(); i++) {
@@ -97,7 +97,7 @@ public abstract class CompletionService {
   protected void getVariantsFromGroupContributors(@NotNull CompletionParameters parameters,
                                                   @NotNull PrefixMatcher matcher,
                                                   @NotNull Consumer<? super CompletionResult> consumer) {
-    if (!GroupedCompletionContributor.isGroupEnabledInApp()) {
+    if (!GroupedCompletionContributor.isGroupEnabled(parameters.getEditor())) {
       return;
     }
     final List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);

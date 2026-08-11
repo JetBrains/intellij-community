@@ -9,6 +9,8 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.listeners.RefactoringEventData
@@ -20,13 +22,17 @@ import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.usageView.UsageViewUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -186,7 +192,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
 
     @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     override fun performRefactoring(usages: Array<out UsageInfo>) {
-        val movedElements = allowAnalysisOnEdt {
+        val movedElements: List<SmartPsiElementPointer<KtNamedDeclaration>> = allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 operationDescriptor.moveDescriptors.flatMap { moveDescriptor ->
                     preprocessUsages(moveDescriptor.project, moveDescriptor.source, usages.toList())
@@ -220,7 +226,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
                         listeners[original]?.elementMoved(new)
                     }
                     publisher.afterMove(moveDescriptor)
-                    oldToNewMap.values
+                    oldToNewMap.values.map { it.createSmartPointer() }
                 }
             }
         }
@@ -527,9 +533,9 @@ open class K2MoveDeclarationsRefactoringProcessor(
      * Can be overridden to not open the files or to invoke other operations like rename.
      * Note: this is invoked in an `invokeLater` so it does not happen immediately after the move is completed.
      */
-    open fun openFilesAfterMoving(movedElements: List<KtNamedDeclaration>) {
+    open fun openFilesAfterMoving(movedElements: List<SmartPsiElementPointer<KtNamedDeclaration>>) {
         if (MoveFilesOrDirectoriesDialog.isOpenInEditorProperty()) { // for simplicity, we re-use logic from move files
-            EditorHelper.openFilesInEditor(movedElements.toTypedArray())
+            EditorHelper.openFilesInEditor(movedElements.mapNotNull { it.element }.toTypedArray())
         }
     }
 }

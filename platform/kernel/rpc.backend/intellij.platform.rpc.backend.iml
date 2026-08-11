@@ -8,11 +8,13 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.extensions" />
     <orderEntry type="module" module-name="intellij.platform.rpc" exported="" />
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="fleet.rpc.server" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.lite" />
   </component>
 </module>

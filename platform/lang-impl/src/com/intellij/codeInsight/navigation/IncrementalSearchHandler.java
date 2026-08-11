@@ -35,6 +35,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.text.StringSearcher;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +56,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+@ApiStatus.Internal
 public final class IncrementalSearchHandler {
   private static final Key<PerEditorSearchData> SEARCH_DATA_IN_EDITOR_VIEW_KEY = Key.create("IncrementalSearchHandler.SEARCH_DATA_IN_EDITOR_VIEW_KEY");
   private static final Key<PerHintSearchData> SEARCH_DATA_IN_HINT_KEY = Key.create("IncrementalSearchHandler.SEARCH_DATA_IN_HINT_KEY");
@@ -353,6 +355,7 @@ public final class IncrementalSearchHandler {
     }
   }
 
+  @ApiStatus.Internal
   public static final class MyTypedHandler extends TypedActionHandlerBase {
     public MyTypedHandler(@Nullable TypedActionHandler originalHandler) {
       super(originalHandler);
@@ -381,6 +384,7 @@ public final class IncrementalSearchHandler {
     }
   }
 
+  @ApiStatus.Internal
   public static final class BackSpaceHandler extends EditorActionHandler{
     private final EditorActionHandler myOriginalHandler;
 
@@ -407,6 +411,7 @@ public final class IncrementalSearchHandler {
     }
   }
 
+  @ApiStatus.Internal
   public static final class UpHandler extends EditorActionHandler {
     private final EditorActionHandler myOriginalHandler;
 
@@ -440,6 +445,7 @@ public final class IncrementalSearchHandler {
     }
   }
 
+  @ApiStatus.Internal
   public static final class DownHandler extends EditorActionHandler {
     private final EditorActionHandler myOriginalHandler;
 

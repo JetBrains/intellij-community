@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.base.externalSystem` start
-
 jvm_library(
     name = "kotlin-base-externalSystem",
     srcs = glob(
@@ -29,7 +28,7 @@ jvm_library(
         "//platform/util",
         "//platform/execution",
         "//platform/external-system-api:externalSystem",
-        "@lib//:kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
     ],
 )
 
@@ -53,6 +52,7 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//platform/execution:execution_test_lib",
         "//platform/external-system-api:externalSystem_test_lib",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.externalSystem` end

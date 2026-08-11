@@ -35,7 +35,7 @@ class WSGIRequest(HttpRequest):
     def COOKIES(self) -> dict[str, str]: ...  # type: ignore[override]
     @property
     @override
-    def FILES(self) -> MultiValueDict[str, uploadedfile.UploadedFile]: ...  # type: ignore[override]
+    def FILES(self) -> MultiValueDict[str, uploadedfile.UploadedFile[Any]]: ...  # type: ignore[override]
 
 class WSGIHandler(base.BaseHandler):
     request_class: type[WSGIRequest]

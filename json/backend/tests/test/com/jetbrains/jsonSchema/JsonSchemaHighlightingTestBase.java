@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.widget.JsonSchemaStatusWidgetFactory;
 import org.intellij.lang.annotations.Language;
@@ -24,6 +25,12 @@ public abstract class JsonSchemaHighlightingTestBase extends BasePlatformTestCas
   protected abstract String getTestFileName();
   protected abstract InspectionProfileEntry getInspectionProfile();
   protected abstract Predicate<VirtualFile> getAvailabilityPredicate();
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    ((CodeInsightTestFixtureImpl)myFixture).canChangeDocumentDuringHighlighting(true);
+  }
 
   protected void doTest(@Language("JSON") @NotNull String schema,
                         @NotNull String text) {

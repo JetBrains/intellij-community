@@ -1,5 +1,5 @@
 // "Cast expression 'a + a' to 'B'" "true"
-// K2_ERROR: Return type mismatch: expected 'B', actual 'A'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 interface A {
     operator fun plus(x: Any): A
 }

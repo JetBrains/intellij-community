@@ -1,8 +1,8 @@
 // "Remove explicitly specified return type of enclosing function" "true"
 // ERROR: Function declaration must have a name
-// K2_ERROR: Function declaration must have a name.
-// K2_ERROR: Return type mismatch: expected 'Int', actual 'Unit'.
-// K2_AFTER_ERROR: Function declaration must have a name.
+// K2_AFTER_ERROR: FUNCTION_DECLARATION_WITH_NO_NAME
+// K2_ERROR: FUNCTION_DECLARATION_WITH_NO_NAME
+// K2_ERROR: RETURN_TYPE_MISMATCH
 fun () {
     return<caret>
 }

@@ -8,7 +8,6 @@ import com.intellij.ui.tree.ui.DefaultTreeUI.AUTO_EXPAND_ALLOWED
 import com.intellij.util.ui.showingScope
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.newProjectWizard.PyV3UIServices
-import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -21,7 +20,7 @@ internal object PyV3UIServicesProd : PyV3UIServices {
     }
   }
 
-  override val errorSink: ErrorSink = ShowingMessageErrorSync
+  override val errorSink: ErrorSink get() = ErrorSink()
 
   override suspend fun expandProjectTreeView(project: Project): Unit = withContext(Dispatchers.EDT) {
     // Null means no project pane opened

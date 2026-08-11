@@ -1,17 +1,14 @@
 package com.intellij.driver.sdk.ui.components.common.popups
 
-import com.intellij.driver.client.Remote
 import com.intellij.driver.client.impl.RefWrapper
-import com.intellij.driver.model.OnDispatcher
-import com.intellij.driver.sdk.ActionManager
-import com.intellij.driver.sdk.ActionUtils
-import com.intellij.driver.sdk.AnAction
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.common.JBTabbedPaneUiComponent
+import com.intellij.driver.sdk.ui.components.common.tabbedPane
 import com.intellij.driver.sdk.ui.components.elements.ActionButtonUi
 import com.intellij.driver.sdk.ui.components.elements.JCheckBoxUi
 import com.intellij.driver.sdk.ui.components.elements.JListUiComponent
@@ -30,7 +27,7 @@ import javax.swing.JList
 import kotlin.time.Duration.Companion.seconds
 
 
-fun Finder.searchEverywherePopup(isSplit: Boolean = false, @Language("xpath") xpath: String? = null, block: SearchEverywherePopupUI.() -> Unit = {}): SearchEverywherePopupUI =
+fun Finder.searchEverywherePopup(isSplit: Boolean = true, @Language("xpath") xpath: String? = null, block: SearchEverywherePopupUI.() -> Unit = {}): SearchEverywherePopupUI =
   if (isSplit) x(xpath ?: xQuery { componentWithChild(byClass("HeavyWeightWindow"), byClass("SePopupContentPane")) }, SearchEverywhereSplitPopupUI::class.java).apply(block)
   else x(xpath ?: xQuery { componentWithChild(byClass("HeavyWeightWindow"), byClass("SearchEverywhereUI")) }, SearchEverywherePopupUI::class.java).apply(block)
 
@@ -46,15 +43,14 @@ open class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data)
   val openInFindToolWindowButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Open in Find Tool Window") })
   val previewButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Preview") })
   val typeFilterButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Filter") })
-  val searchEverywhereUi: SearchEveryWhereUi =
-    x(SearchEveryWhereUi::class.java) { byType("com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI") }
   val openInRightSplitActionLink: UiComponent = x { byAccessibleName("Open In Right Split") }
+  private val tabbedPane: JBTabbedPaneUiComponent = tabbedPane()
 
   fun invokeSelectAction() {
-    invokeActionWithShortcut("[pressed ENTER]")
+    keyboard { enter() }
   }
 
-  fun getSelectedTab(): SearchEverywhereTab = SearchEverywhereTab.entries.single { it.id == searchEverywhereUi.getSelectedTabID() }
+  fun getSelectedTab(): SearchEverywhereTab = SearchEverywhereTab.entries.single { it.name == tabbedPane.selectedTabName }
 
   fun search(text: String) {
     step("Search for '$text' in Search Everywhere") {
@@ -77,7 +73,7 @@ open class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data)
   }
 
   fun closePopup() {
-    searchEverywhereUi.closePopup()
+    keyboard { escape() }
     waitFor("Popup is closed") { notPresent() }
   }
 
@@ -99,35 +95,12 @@ open class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data)
     x { byVisibleText(tab) }.click()
   }
 
-  private fun invokeActionWithShortcut(shortcut: String, chooser: (List<AnAction>) -> AnAction? = { it.singleOrNull() }) {
-    val action = driver.utility(ActionUtils::class).getActions(searchEverywhereUi.component).filter {
-      it.getShortcutSet().getShortcuts().singleOrNull()?.toString() == shortcut
-    }.let(chooser) ?: error("'Action with shortcut '$shortcut' was not found")
-    driver.withContext(OnDispatcher.EDT) {
-      service(ActionManager::class).tryToExecute(action, null, null, null, true)
-    }
-  }
-
   enum class SearchEverywhereTab(val id: String) {
-    All("SearchEverywhereContributor.All"),
-    Classes("ClassSearchEverywhereContributor"),
-    Files("FileSearchEverywhereContributor"),
-    Symbols("SymbolSearchEverywhereContributor"),
-    Actions("ActionSearchEverywhereContributor"),
-  }
-
-  class SearchEveryWhereUi(data: ComponentData) : UiComponent(data) {
-    private val searchEverywhereUiComponent get() = driver.cast(component, SearchEverywhereUiComponent::class)
-
-    fun getSelectedTabID(): String = searchEverywhereUiComponent.getSelectedTabID()
-
-    fun closePopup() = driver.withContext(OnDispatcher.EDT) { searchEverywhereUiComponent.closePopup() }
-  }
-
-  @Remote("com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI")
-  interface SearchEverywhereUiComponent {
-    fun getSelectedTabID(): String
-    fun closePopup()
+    All("All"),
+    Classes("Classes"),
+    Files("Files"),
+    Symbols("Symbols"),
+    Actions("Actions"),
   }
 }
 

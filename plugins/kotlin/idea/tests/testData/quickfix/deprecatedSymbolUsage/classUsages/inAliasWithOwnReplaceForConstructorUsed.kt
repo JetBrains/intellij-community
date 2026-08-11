@@ -1,5 +1,6 @@
 // "Replace with 'NewClass'" "true"
 // SHOULD_BE_AVAILABLE_AFTER_EXECUTION
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
 
 package aa
 

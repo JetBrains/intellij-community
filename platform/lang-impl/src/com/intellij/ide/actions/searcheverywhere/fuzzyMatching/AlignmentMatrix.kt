@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere.fuzzyMatching
 
-import org.jetbrains.annotations.ApiStatus
-
 /**
  * Manages the dynamic programming matrix for the Smith-Waterman algorithm.
  *
@@ -12,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
  *
  * For traceback, we store the full matrix since we need to reconstruct the alignment path.
  */
-@ApiStatus.Internal
 internal class AlignmentMatrix(
   private val patternLength: Int,
   private val targetLength: Int

@@ -5,12 +5,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.DialogWrapperPeerFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Component;
 import java.awt.Window;
 
+@ApiStatus.Internal
 public class DialogWrapperPeerFactoryImpl extends DialogWrapperPeerFactory {
   @Override
   public @NotNull DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent) {

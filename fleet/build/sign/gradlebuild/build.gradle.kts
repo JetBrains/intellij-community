@@ -49,6 +49,8 @@ kotlin {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
     }
+  }
+  sourceSets.jvmMain.dependencies {
     implementation(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
       exclude(group = "org.slf4j", module = "slf4j-jdk14")

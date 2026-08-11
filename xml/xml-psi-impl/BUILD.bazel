@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 ### auto-generated section `build intellij.xml.psi.impl` start
-
 resourcegroup(
     name = "psi-impl_resources",
     srcs = glob(

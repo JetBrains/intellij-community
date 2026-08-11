@@ -171,6 +171,11 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
 
       val actionEvent = AnActionEvent.createEvent(dataContext, null, "", ActionUiKind.NONE, null)
       val providersHolder = SeProvidersHolder.initialize(actionEvent, project, session, "Backend", true)
+
+      if (!Disposer.tryRegister(project, providersHolder)) {
+        Disposer.dispose(providersHolder)
+        return@withLock null
+      }
       sessionIdToProviderHolders[sessionEntity.eid] = providersHolder
 
       sessionEntity.onDispose(coroutineScope.coroutineContext[Rete]!!) {
@@ -296,6 +301,10 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
   ): Boolean {
     val providersHolder = getProvidersHolder(session, dataContextId)
     if (providersHolder == null) return false
+
+    val providerIds = providerIds.filter { providerId ->
+      providersHolder.get(providerId, isAllTab)?.canBeShownInFindResults() == true
+    }
 
     SeFindToolWindowManager(project).openInFindToolWindow(
       providerIds, params, isAllTab, providersHolder, projectId,

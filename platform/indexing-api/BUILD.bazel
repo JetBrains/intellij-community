@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.indexing` start
-
 create_kotlinc_options(
     name = "custom_indexing",
     opt_in = ["kotlinx.serialization.ExperimentalSerializationApi"],
@@ -27,7 +26,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/core-api:core",
         "//jps/model-api:model",
         "//platform/projectModel-api:projectModel",
@@ -59,6 +58,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":indexing",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/core-api:core_test_lib",
         "//jps/model-api:model_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",

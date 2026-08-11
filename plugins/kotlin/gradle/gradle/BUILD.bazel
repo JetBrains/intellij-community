@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.gradle.gradle` start
-
 create_kotlinc_options(
     name = "custom_gradle",
     opt_in = ["org.jetbrains.kotlin.gradle.ExperimentalGradleToolingApi"],
@@ -39,16 +38,16 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/reflect",
         "//libraries/kotlinx/coroutines/core",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-scripting-compiler-impl",
         "@lib//:kotlinc-kotlin-script-runtime",
         "@lib//:kotlinc-kotlin-scripting-common",
         "@lib//:kotlinc-kotlin-scripting-jvm",
         "@lib//:kotlinc-kotlin-gradle-statistics",
         "@lib//:kotlinc-kotlin-jps-common",
-        "@lib//:kotlin-tooling-core",
-        "@lib//:kotlin-gradle-plugin-idea-proto",
-        "@lib//:kotlin-gradle-plugin-idea",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+        "//libraries/kotlin/gradle-plugin-idea-proto:libraries-kotlin-gradle-plugin-idea-proto",
+        "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea",
         "//libraries/guava",
         "@lib//:gradle",
         "//platform/analysis-api:analysis",
@@ -105,7 +104,11 @@ jvm_library(
         ":gradle",
         "//libraries/kotlin/reflect:reflect_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
+        "//libraries/kotlin/gradle-plugin-idea-proto:libraries-kotlin-gradle-plugin-idea-proto_test_lib",
+        "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea_test_lib",
         "//libraries/guava:guava_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",

@@ -648,17 +648,6 @@ f:com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsMan
 - setStoreExternally(Z):V
 - s:setupCreatedProject(com.intellij.openapi.project.Project):com.intellij.openapi.project.Project
 - updateExternalProjectData(com.intellij.openapi.externalSystem.model.ExternalProjectInfo):V
-f:com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension
-- com.intellij.openapi.keymap.KeymapExtension
-- <init>():V
-- createGroup(com.intellij.openapi.util.Condition,com.intellij.openapi.project.Project):com.intellij.openapi.keymap.KeymapGroup
-- s:getActionPrefix(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
-- s:getOrRegisterAction(com.intellij.openapi.project.Project,com.intellij.execution.RunnerAndConfigurationSettings):com.intellij.openapi.externalSystem.action.ExternalSystemAction
-- s:getOrRegisterAction(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.externalSystem.model.task.TaskData):com.intellij.openapi.externalSystem.action.ExternalSystemAction
-- s:updateActions(com.intellij.openapi.project.Project,java.util.Collection):V
-com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension$ActionsProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:createGroup(com.intellij.openapi.util.Condition,com.intellij.openapi.project.Project):com.intellij.openapi.keymap.KeymapGroup
 c:com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator
 - sf:RUN_CONFIGURATION_TASK_PREFIX:java.lang.String
 - <init>(com.intellij.openapi.project.Project):V

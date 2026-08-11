@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.MoveMembersIntoClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.NormalizeBracketsFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QualifySuperArgumentFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QualifyWithThisFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceReversedComparingFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceVarWithExplicitTypeFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithYieldFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableArrayTypeFix;
@@ -1241,6 +1242,7 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
           myFactory.createReplaceTypeWithWrongImportFixes(classReference).forEach(sink);
         }
       }
+      ReplaceReversedComparingFix.registerFixes(sink, error.psi(), list);
     });
     fix(TYPE_ARGUMENT_PRIMITIVE, error -> {
       PsiTypeElement typeElement = error.psi();

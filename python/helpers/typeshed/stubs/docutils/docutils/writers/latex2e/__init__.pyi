@@ -3,8 +3,8 @@ from _typeshed import Incomplete, StrPath
 from collections.abc import Callable, Iterable
 from io import TextIOWrapper
 from pathlib import Path
-from typing import ClassVar, Final, Literal, NoReturn, TypeVar, overload
-from typing_extensions import deprecated
+from typing import ClassVar, Final, Literal, TypeVar, overload
+from typing_extensions import Never, deprecated
 
 from docutils import nodes
 from docutils.frontend import Values
@@ -420,4 +420,4 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def depart_transition(self, node: nodes.transition) -> None: ...
     def visit_version(self, node: nodes.version) -> None: ...
     def depart_version(self, node: nodes.version) -> None: ...
-    def unimplemented_visit(self, node: nodes.Node) -> NoReturn: ...
+    def unimplemented_visit(self, node: nodes.Node) -> Never: ...

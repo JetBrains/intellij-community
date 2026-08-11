@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.treeStructure.TreeNodeViewModel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ public abstract class ProjectViewPaneSelectionHelper {
    * @return collection of tree paths to select in tree or null if this helper can't handle {@link SelectionDescriptor}
    * @see AbstractTreeNode#canRepresent
    */
+  @ApiStatus.Internal
   protected abstract @Nullable List<? extends TreePath> computeAdjustedPaths(@NotNull SelectionDescriptor selectionDescriptor);
 
   protected abstract @Nullable List<? extends TreeNodeViewModel> computeAdjustedNodes(@NotNull List<? extends TreeNodeViewModel> originalNodes);
@@ -54,6 +56,7 @@ public abstract class ProjectViewPaneSelectionHelper {
     return originalNodes;
   }
 
+  @ApiStatus.Internal
   public record SelectionDescriptor(@Nullable PsiElement targetPsiElement,
                                @Nullable VirtualFile targetVirtualFile,
                                @NotNull List<TreePath> originalTreePaths) {

@@ -52,6 +52,7 @@ import com.intellij.util.ui.update.DebouncedUpdates;
 import com.intellij.util.ui.update.UpdateQueue;
 import kotlin.Unit;
 import kotlinx.coroutines.Dispatchers;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -84,6 +85,7 @@ import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgro
 /**
  * @param <T> List item type. Must implement {@code equals()/hashCode()} correctly.
  */
+@ApiStatus.Internal
 public abstract class FinderRecursivePanel<T> extends OnePixelSplitter
   implements UiCompatibleDataProvider, UserDataHolder, Disposable {
 
@@ -746,6 +748,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter
    * in order to dispose created objects on selection change.
    * {@link DisposablePanel} could be used as a right component in that case.
    */
+  @ApiStatus.Internal
   protected static final class DisposablePanel extends JPanel implements Disposable {
     public DisposablePanel(LayoutManager layout, @Nullable Disposable parent) {
       super(layout);

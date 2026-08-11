@@ -1,5 +1,5 @@
 // "Add parameter to function 'fooFun'" "true"
-// K2_ERROR: Too many arguments for 'fun fooFun(): Int'.
+// K2_ERROR: TOO_MANY_ARGUMENTS
 sealed class Foo {
     class SubFoo : Foo()
     class Sub2Foo : Foo()

@@ -4,6 +4,7 @@ package com.intellij.platform.lsp.impl
 import com.intellij.platform.lsp.api.LspServer
 
 @Deprecated("Use LspClientImpl", ReplaceWith("LspClientImpl"))
+@Suppress("unused")
 typealias LspServerImpl = LspClientImpl
 
 /**

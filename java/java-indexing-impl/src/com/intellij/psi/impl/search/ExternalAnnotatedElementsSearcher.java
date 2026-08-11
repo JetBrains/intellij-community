@@ -45,9 +45,12 @@ public final class ExternalAnnotatedElementsSearcher implements QueryExecutor<Ps
       return true;
     }
 
-    PsiClass annClass = queryParameters.getAnnotationClass();
-    Project project = annClass.getProject();
-    String annotationFQN = ReadAction.computeBlocking(annClass::getQualifiedName);
+    Project project = queryParameters.getProject();
+    String name = queryParameters.getAnnotationName();
+    String annotationFQN = name != null ? name : ReadAction.computeBlocking(() -> {
+      PsiClass annClass = queryParameters.getAnnotationClass();
+      return annClass == null ? null : annClass.getQualifiedName();
+    });
     if (annotationFQN == null) return true;
 
     ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);

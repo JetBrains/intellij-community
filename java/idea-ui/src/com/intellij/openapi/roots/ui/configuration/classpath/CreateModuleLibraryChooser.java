@@ -149,6 +149,7 @@ public final class CreateModuleLibraryChooser implements ClasspathElementChooser
       };
     }
     chooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myModule);
+    chooserDescriptor.withEnvironmentRestricted(true);
 
     var project = myModule.getProject();
     var files = FileChooser.chooseFiles(chooserDescriptor, myParentComponent, project, ProjectUtil.guessProjectDir(project));

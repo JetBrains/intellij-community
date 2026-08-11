@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build kotlin.util.compiler-dependencies` start
-
 jvm_library(
     name = "compiler-dependencies",
     srcs = glob(
@@ -10,6 +9,16 @@ jvm_library(
     ),
     module_name = "kotlin.util.compiler-dependencies",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/low-level-api-fir:libraries-kotlinc-low-level-api-fir",
+    ],
 )
 
 jvm_library(
@@ -25,24 +34,23 @@ jvm_library(
         # do not sort,
         ":compiler-dependencies",
         "@lib//:kotlinc-allopen-compiler-plugin-provided",
-        "@lib//:kotlinc-analysis-api-k2-provided",
-        "@lib//:kotlinc-analysis-api-fe10-provided",
-        "@lib//:kotlinc-analysis-api-provided",
-        "@lib//:kotlinc-analysis-api-impl-base-provided",
-        "@lib//:kotlinc-analysis-api-platform-interface-provided",
-        "@lib//:kotlinc-symbol-light-classes-provided",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_test_lib",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "@lib//:kotlinc-incremental-compilation-impl-tests-provided",
         "@lib//:kotlinc-kotlin-build-common-tests-provided",
         "@lib//:kotlinc-kotlin-compiler-cli-provided",
         "@lib//:kotlinc-kotlin-compiler-tests-provided",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-fe10-provided",
         "@lib//:kotlinc-kotlin-compiler-fir-provided",
         "@lib//:kotlinc-kotlin-compiler-ir-provided",
         "@lib//:kotlinc-kotlin-gradle-statistics-provided",
         "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
         "@lib//:kotlinc-lombok-compiler-plugin-provided",
-        "@lib//:kotlinc-low-level-api-fir-provided",
+        "//libraries/kotlinc/low-level-api-fir:libraries-kotlinc-low-level-api-fir_test_lib",
         "@lib//:kotlinc-noarg-compiler-plugin-provided",
         "@lib//:kotlinc-parcelize-compiler-plugin-provided",
         "@lib//:kotlinc-sam-with-receiver-compiler-plugin-provided",

@@ -47,32 +47,32 @@ TOOL_VERIFY_ALL_PLATFORMS=1 ./community/tools/npx.cmd
 
 ### Key Design Decisions
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| **Configuration storage** | Embedded in script | Self-contained, single file to update |
-| **Checksum algorithm** | SHA-256 | Industry standard, published by releases |
-| **Error handling** | Hard fail, never save bad downloads | Security first |
-| **Download tool (Unix)** | curl | Standard, available everywhere |
-| **Download tool (Windows)** | PowerShell (only when needed) | Native, no external dependencies |
-| **Archive extraction** | Auto-detect and strip if nested | Handles both nested (single top-level dir) and flat archives |
-| **Archive structure** | Support nested and flat | Nested archives stripped, flat archives extracted directly |
-| **Retry logic** | None | Simple, user can retry manually |
-| **Version override** | Not supported | Version pinned in script, no bypass |
-| **Windows arch detection** | Registry query | More reliable than env var |
-| **Path handling** | Quote all paths | Support spaces in usernames/paths |
-| **Concurrency** | File locking (hard links on Unix, Mutex on Windows) | Safe for parallel runs |
-| **Cache scope** | Full extracted tree | Supports tools with multiple files |
+| Decision                    | Choice                                              | Rationale                                                    |
+|-----------------------------|-----------------------------------------------------|--------------------------------------------------------------|
+| **Configuration storage**   | Embedded in script                                  | Self-contained, single file to update                        |
+| **Checksum algorithm**      | SHA-256                                             | Industry standard, published by releases                     |
+| **Error handling**          | Hard fail, never save bad downloads                 | Security first                                               |
+| **Download tool (Unix)**    | curl                                                | Standard, available everywhere                               |
+| **Download tool (Windows)** | PowerShell (only when needed)                       | Native, no external dependencies                             |
+| **Archive extraction**      | Auto-detect and strip if nested                     | Handles both nested (single top-level dir) and flat archives |
+| **Archive structure**       | Support nested and flat                             | Nested archives stripped, flat archives extracted directly   |
+| **Retry logic**             | None                                                | Simple, user can retry manually                              |
+| **Version override**        | Not supported                                       | Version pinned in script, no bypass                          |
+| **Windows arch detection**  | Registry query                                      | More reliable than env var                                   |
+| **Path handling**           | Quote all paths                                     | Support spaces in usernames/paths                            |
+| **Concurrency**             | File locking (hard links on Unix, Mutex on Windows) | Safe for parallel runs                                       |
+| **Cache scope**             | Full extracted tree                                 | Supports tools with multiple files                           |
 
 ### Supported Platforms
 
-| Platform | Architecture | Target Triple (uv) |
-|----------|--------------|-------------------|
-| Linux | x86_64 | x86_64-unknown-linux-gnu |
-| Linux | aarch64 | aarch64-unknown-linux-gnu |
-| Windows | x64 | x86_64-pc-windows-msvc |
-| Windows | arm64 | aarch64-pc-windows-msvc |
-| macOS | x64 | x86_64-apple-darwin |
-| macOS | arm64 | aarch64-apple-darwin |
+| Platform | Architecture | Target Triple (uv)        |
+|----------|--------------|---------------------------|
+| Linux    | x86_64       | x86_64-unknown-linux-gnu  |
+| Linux    | aarch64      | aarch64-unknown-linux-gnu |
+| Windows  | x64          | x86_64-pc-windows-msvc    |
+| Windows  | arm64        | aarch64-pc-windows-msvc   |
+| macOS    | x64          | x86_64-apple-darwin       |
+| macOS    | arm64        | aarch64-apple-darwin      |
 
 ### Cache Structure
 
@@ -91,7 +91,7 @@ TOOL_VERIFY_ALL_PLATFORMS=1 ./community/tools/npx.cmd
 
 1. Create `community/tools/<toolname>.cmd` (polyglot script)
 2. Set required environment variables:
-   - `TOOL_NAME` - tool name (used in cache path)
+   - `TOOL_NAME` - tool name (used in the cache path)
    - `TOOL_VERSION` - pinned version
    - `TOOL_CHECKSUM_<PLATFORM>` - SHA-256 for each platform
    - `TOOL_URL_<PLATFORM>` - download URL for each platform
@@ -155,7 +155,7 @@ Then `TOOL_BINARY="uv"` and after extraction the cache will contain:
 
 ### Flat Archives
 
-Archives with multiple top-level entries (or files at root) are extracted directly
+Archives with multiple top-level entries (or files at the root) are extracted directly
 without stripping. `TOOL_BINARY` should be the direct path to the binary.
 
 **Example:** If an archive contains:
@@ -190,16 +190,16 @@ This mode:
 - Reports archive structure type (nested or flat)
 - Compares against expected values
 - Extracts archive and verifies `TOOL_BINARY` exists (using `TOOL_BINARY_UNIX`/`TOOL_BINARY_WINDOWS` if set)
-- Prints detailed report (URL, expected checksum, actual checksum, file size, structure, binary)
-- Cleans up temp directory
+- Prints a detailed report (URL, expected checksum, actual checksum, file size, structure, binary)
+- Cleans up the temp directory
 - Exits 0 if all pass, non-zero if any fail
 
 Useful for:
 - CI verification before release
 - Validating checksums after version bump
 - Ensuring archives haven't been tampered with
-- Verifying archive structure is compatible
-- Verifying binary paths are correct for all platforms
+- Verifying the archive structure is compatible
+- Verifying that binary paths are correct for all platforms
 
 ## Concurrency Safety
 
@@ -210,9 +210,9 @@ The tool wrapper is safe for parallel execution (e.g., multiple CI jobs or build
 - Windows: PowerShell global Mutex
 
 **Behavior:**
-- First process acquires lock and downloads
+- The first process acquires the lock and downloads
 - Other processes wait and display "Waiting for process N to finish downloading..."
-- When lock is released, waiting processes detect completion via `.complete` flag file
+- When the lock is released, waiting processes detect completion via `.complete` flag file
 - All processes use the cached binary
 
 ```bash
@@ -227,17 +227,17 @@ for i in {1..10}; do ./community/tools/uv.cmd --version & done; wait
 - **Supply chain attacks**: Mitigated by pinned versions and checksums
 - **MITM attacks**: Mitigated by HTTPS + checksum verification
 - **Corrupted downloads**: Mitigated by verifying before moving to cache
-- **Unexpected archives**: Mitigated by validating single top-level directory
+- **Unexpected archives**: Mitigated by validating a single top-level directory
 
 ### Checksum Verification
 
-1. Download to temp file (never directly to cache)
-2. Compute SHA-256 of downloaded file
+1. Download to a temp file (never directly to the cache)
+2. Compute SHA-256 of the downloaded file
 3. Compare against embedded expected checksum
 4. Validate archive has exactly one top-level directory
 5. Only extract and cache if all checks pass
 6. Validate `TOOL_BINARY` exists after extraction
-7. Delete temp file on any failure, exit with error
+7. Delete the temp file on any failure, exit with error
 
 ### Updating Tool Versions
 
@@ -248,4 +248,4 @@ When updating a tool version:
 4. Commit changes
 
 **IMPORTANT**: Each wrapper script contains a reminder comment about this requirement.
-Never skip the verification step - checksums from release notes may differ from actual archives.
+Never skip the verification step – checksums from release notes may differ from actual archives.

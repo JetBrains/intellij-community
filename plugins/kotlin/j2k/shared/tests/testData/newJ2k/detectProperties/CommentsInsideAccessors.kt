@@ -18,10 +18,10 @@ internal class AccessorsArePreserved {
 
 internal class AccessorsAreRemoved {
     // set body
-// set footer
-// set header
-// get body
-// get footer
-// get header
+    // set footer
+    // set header
+    // get body
+    // get footer
+    // get header
     var someInt: Int? = 1
 }

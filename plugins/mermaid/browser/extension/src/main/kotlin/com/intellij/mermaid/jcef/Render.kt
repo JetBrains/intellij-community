@@ -3,7 +3,9 @@ package com.intellij.mermaid.jcef
 import com.intellij.mermaid.api.Mermaid
 import com.intellij.mermaid.api.MermaidRenderResult
 import com.intellij.mermaid.api.appendTo
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.await
+import kotlinx.coroutines.withContext
 import org.w3c.dom.Element
 import org.w3c.dom.asList
 
@@ -29,10 +31,13 @@ suspend fun renderBlock(
 
   val id = "mermaid-generated-$cacheId"
   try {
-    // Remove when `mermaid.render` will throw correct error messages
-    Mermaid.core.parse(content).await()
-
-    val renderResult = Mermaid.core.render(id, content).await()
+    // Never cancel a render mid-flight: mermaid uses shared global state and returns a promise that
+    // can't be aborted, so an overlapping follow-up render (see markdownExtensionMain) would corrupt it.
+    val renderResult = withContext(NonCancellable) {
+      // Remove when `mermaid.render` will throw correct error messages
+      Mermaid.core.parse(content).await()
+      Mermaid.core.render(id, content).await()
+    }
     renderResult.appendTo(block)
     val node = block.findSvgElement()
     checkNotNull(node) { "Failed to find svg node after append" }

@@ -1,6 +1,6 @@
 // PROBLEM: none
 // COMPILER_ARGUMENTS: -XXLanguage:-WhenGuards
-// K2_ERROR: The feature "when guards" is disabled
+// K2_ERROR: UNSUPPORTED_FEATURE
 
 fun test(param: Any, flag: Boolean) {
     when (param) {

@@ -23,12 +23,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.RefactoringDescriptionLocation;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 @State(name = "SliceManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class SliceManager implements PersistentStateComponent<SliceManager.StoredSettingsBean> {

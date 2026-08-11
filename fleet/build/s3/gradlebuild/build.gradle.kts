@@ -61,10 +61,6 @@ kotlin {
       exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-common")
       exclude(group = "org.slf4j", module = "slf4j-api")
     }
-    implementation(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      isTransitive = false
-      exclude(group = "org.slf4j", module = "slf4j-jdk14")
-    }
     implementation(project(":fleet.build.platform"))
     implementation(project(":fleet.build.fs"))
   }
@@ -73,6 +69,12 @@ kotlin {
       isTransitive = false
     }
     implementation(project(":fleet.test.runtime"))
+  }
+  sourceSets.jvmMain.dependencies {
+    implementation(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      isTransitive = false
+      exclude(group = "org.slf4j", module = "slf4j-jdk14")
+    }
   }
   // KOTLIN__MARKER_END
 }

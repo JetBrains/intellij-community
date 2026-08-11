@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.devkit.kotlin.fir.tests` start
-
 jvm_library(
     name = "kotlin-fir-tests",
     srcs = glob(
@@ -77,6 +76,8 @@ jvm_library(
         "//plugins/devkit:devkit_test_lib",
         "//plugins/devkit/devkit-core:core",
         "//plugins/devkit/devkit-core:core_test_lib",
+        "//plugins/devkit/intellij.devkit.mcp.inspections:mcp-inspections",
+        "//plugins/devkit/intellij.devkit.mcp.inspections:mcp-inspections_test_lib",
         "//java/openapi:java",
         "//java/openapi:java_test_lib",
         "//plugins/devkit/devkit-tests:testFramework",
@@ -95,7 +96,8 @@ jvm_library(
         "//xml/xml-analysis-api:analysis_test_lib",
         "//plugins/kotlin/base/testFramework",
         "//plugins/kotlin/base/testFramework:testFramework_test_lib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//plugins/devkit/devkit-kotlin-tests:kotlin-tests",
         "//plugins/devkit/devkit-kotlin-tests:kotlin-tests_test_lib",
         "//platform/testFramework/junit5",
@@ -133,6 +135,10 @@ jvm_library(
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
         "//plugins/devkit/intellij.devkit.themes:themes-tests",
         "//plugins/devkit/intellij.devkit.themes:themes-tests_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.kotlin.fir.tests` end
@@ -147,7 +153,6 @@ exports_files(
 ### auto-generated section `iml intellij.devkit.kotlin.fir.tests` end
 
 ### auto-generated section `test intellij.devkit.kotlin.fir.tests` start
-
 jps_test(
     name = "kotlin-fir-tests_test",
     runtime_deps = [":kotlin-fir-tests_test_lib"],

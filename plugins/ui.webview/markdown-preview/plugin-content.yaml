@@ -1,0 +1,3 @@
+- name: lib/markdown-webview-preview.jar
+  modules:
+  - name: intellij.markdown.webview.preview

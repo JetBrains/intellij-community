@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.InjectionUtils;
@@ -63,8 +64,13 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
 
   @Override
   public void assertFileIsFromCorrectProject(@NotNull VirtualFile virtualFile) {
+    if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+      return;
+    }
     if (myUnitTestMode && virtualFile.isValid()) {
-      Collection<Project> projects = ProjectLocator.getInstance().getProjectsForFile(virtualFile);
+      Project preferredProject = ProjectLocator.getPreferredProject(virtualFile);
+      Collection<Project> projects = preferredProject == null ? ProjectLocator.getInstance().getProjectsForFile(virtualFile)
+                                                              : Collections.singleton(preferredProject);
       boolean isMyProject = projects.isEmpty() || projects.contains(myProject)
                             // set aside the use-case for lazy developers who just don't care to retrieve the correct project for the file
                             // and use DefaultProjectFactory.getDefaultProject() because why bother

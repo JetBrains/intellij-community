@@ -5,12 +5,14 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
 open class JComponentFileType(@JvmField @NonNls protected val name: String = "JComponent",
                               @JvmField @NlsContexts.Label protected val description: String = "",
                               @JvmField protected val icon: Icon = AllIcons.FileTypes.Text) : FakeFileType() {
+  @ApiStatus.Internal
   companion object {
     val INSTANCE: JComponentFileType = JComponentFileType()
   }

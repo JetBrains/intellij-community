@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.codeInsight.structuralSearch` start
-
 create_kotlinc_options(
     name = "custom_kotlin-codeInsight-structuralSearch",
     opt_in = [
@@ -32,8 +31,9 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
+        "//plugins/kotlin/references",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/guava",
         "//platform/duplicates-analysis",
         "//platform/analysis-api:analysis",
@@ -51,8 +51,8 @@ jvm_library(
         "//plugins/kotlin/base/psi",
         "//plugins/kotlin/base/resources:kotlin-base-resources",
         "//plugins/kotlin/base/util",
-        "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+        "//plugins/kotlin/code-insight/live-templates-k2:kotlin-codeInsight-liveTemplates",
     ],
 )
 
@@ -69,6 +69,9 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-codeInsight-structuralSearch",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//libraries/guava:guava_test_lib",
         "//platform/duplicates-analysis:duplicates-analysis_test_lib",
         "//platform/analysis-api:analysis_test_lib",
@@ -86,8 +89,8 @@ jvm_library(
         "//plugins/kotlin/base/psi:psi_test_lib",
         "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",
-        "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared_test_lib",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
+        "//plugins/kotlin/code-insight/live-templates-k2:kotlin-codeInsight-liveTemplates_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.structuralSearch` end

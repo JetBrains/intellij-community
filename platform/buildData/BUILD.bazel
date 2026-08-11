@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.buildData` start
-
 create_kotlinc_options(
     name = "custom_buildData",
     opt_in = [
@@ -33,7 +32,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/serialization/core",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -51,6 +50,7 @@ jvm_library(
         # do not sort,
         ":buildData",
         "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildData` end

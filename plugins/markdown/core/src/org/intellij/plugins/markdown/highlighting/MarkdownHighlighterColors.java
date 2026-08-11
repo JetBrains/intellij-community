@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.highlighting;
 
+import com.intellij.execution.process.ConsoleHighlighter;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 
@@ -68,4 +69,10 @@ public final class MarkdownHighlighterColors {
   public static final TextAttributesKey FRONT_MATTER_HEADER_DELIMITER = createTextAttributesKey("MARKDOWN_FRONT_MATTER_HEADER_DELIMITER", LIST_MARKER);
 
   public static final TextAttributesKey FOOTNOTE_DEFINITION = createTextAttributesKey("MARKDOWN_FOOTNOTE_DEFINITION", CODE_BLOCK);
+
+  public static final TextAttributesKey ALERT_TITLE_NOTE = createTextAttributesKey("MARKDOWN_ALERT_TITLE_NOTE", ConsoleHighlighter.BLUE);
+  public static final TextAttributesKey ALERT_TITLE_TIP = createTextAttributesKey("MARKDOWN_ALERT_TITLE_TIP", ConsoleHighlighter.GREEN);
+  public static final TextAttributesKey ALERT_TITLE_IMPORTANT = createTextAttributesKey("MARKDOWN_ALERT_TITLE_IMPORTANT", ConsoleHighlighter.MAGENTA);
+  public static final TextAttributesKey ALERT_TITLE_WARNING = createTextAttributesKey("MARKDOWN_ALERT_TITLE_WARNING", ConsoleHighlighter.YELLOW);
+  public static final TextAttributesKey ALERT_TITLE_CAUTION = createTextAttributesKey("MARKDOWN_ALERT_TITLE_CAUTION", ConsoleHighlighter.RED);
 }

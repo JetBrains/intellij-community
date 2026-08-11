@@ -3,7 +3,6 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from logging import Logger
 from socket import socket
 from threading import Condition, Event, Lock, Thread
-from types import ModuleType
 from typing import Any, Protocol, TypeAlias, type_check_only
 
 from paramiko.auth_handler import AuthHandler, AuthOnlyHandler, _InteractiveCallback
@@ -14,7 +13,6 @@ from paramiko.pkey import PKey
 from paramiko.proxy import ProxyCommand
 from paramiko.server import ServerInterface, SubsystemHandler
 from paramiko.sftp_client import SFTPClient
-from paramiko.ssh_gss import _SSH_GSSAuth
 from paramiko.util import ClosingContextManager
 
 _Addr: TypeAlias = tuple[str, int]
@@ -26,12 +24,9 @@ class _KexEngine(Protocol):
     def parse_next(self, ptype: int, m: Message) -> None: ...
 
 class Transport(Thread, ClosingContextManager):
-    active: bool
-    hostname: str | None
-    server_extensions: dict[str, bytes]
-    advertise_strict_kex: bool
-    agreed_on_strict_kex: bool
+    daemon: bool
     sock: socket | Channel
+
     packetizer: Packetizer
     local_version: str
     remote_version: str
@@ -42,21 +37,21 @@ class Transport(Thread, ClosingContextManager):
     session_id: bytes | None
     host_key_type: str | None
     host_key: PKey | None
-    use_gss_kex: bool
-    gss_kex_used: bool
-    kexgss_ctxt: _SSH_GSSAuth | None
-    gss_host: str
+
     kex_engine: _KexEngine | None
     H: bytes | None
     K: int | None
+
     initial_kex_done: bool
     in_kex: bool
     authenticated: bool
     lock: Lock
+
     channel_events: dict[int, Event]
     channels_seen: dict[int, bool]
     default_max_packet_size: int
     default_window_size: int
+
     saved_exception: Exception | None
     clear_to_send: Event
     clear_to_send_lock: Lock
@@ -69,21 +64,22 @@ class Transport(Thread, ClosingContextManager):
     banner_timeout: float
     handshake_timeout: float
     auth_timeout: float
+    channel_timeout: float
     disabled_algorithms: Mapping[str, Iterable[str]] | None
+    server_sig_algs: bool
+
     server_mode: bool
     server_object: ServerInterface | None
     server_key_dict: dict[str, PKey]
     server_accepts: list[Channel]
     server_accept_cv: Condition
     subsystem_table: dict[str, tuple[type[SubsystemHandler], tuple[Any, ...], dict[str, Any]]]
-    sys: ModuleType
+
     def __init__(
         self,
         sock: _SocketLike,
         default_window_size: int = 2097152,
         default_max_packet_size: int = 32768,
-        gss_kex: bool = False,
-        gss_deleg_creds: bool = True,
         disabled_algorithms: Mapping[str, Iterable[str]] | None = None,
         server_sig_algs: bool = True,
         strict_kex: bool = True,
@@ -103,7 +99,6 @@ class Transport(Thread, ClosingContextManager):
     def preferred_compression(self) -> Sequence[str]: ...
     def atfork(self) -> None: ...
     def get_security_options(self) -> SecurityOptions: ...
-    def set_gss_host(self, gss_host: str | None, trust_dns: bool = True, gssapi_requested: bool = True) -> None: ...
     def start_client(self, event: Event | None = None, timeout: float | None = None) -> None: ...
     def start_server(self, event: Event | None = None, server: ServerInterface | None = None) -> None: ...
     def add_server_key(self, key: PKey) -> None: ...
@@ -139,16 +134,7 @@ class Transport(Thread, ClosingContextManager):
     def global_request(self, kind: str, data: Iterable[Any] | None = None, wait: bool = True) -> Message | None: ...
     def accept(self, timeout: float | None = None) -> Channel | None: ...
     def connect(
-        self,
-        hostkey: PKey | None = None,
-        username: str = "",
-        password: str | None = None,
-        pkey: PKey | None = None,
-        gss_host: str | None = None,
-        gss_auth: bool = False,
-        gss_kex: bool = False,
-        gss_deleg_creds: bool = True,
-        gss_trust_dns: bool = True,
+        self, hostkey: PKey | None = None, username: str = "", password: str | None = None, pkey: PKey | None = None
     ) -> None: ...
     def get_exception(self) -> Exception | None: ...
     def set_subsystem_handler(self, name: str, handler: type[SubsystemHandler], *larg: Any, **kwarg: Any) -> None: ...
@@ -162,8 +148,6 @@ class Transport(Thread, ClosingContextManager):
     def auth_interactive_dumb(
         self, username: str, handler: _InteractiveCallback | None = None, submethods: str = ""
     ) -> list[str]: ...
-    def auth_gssapi_with_mic(self, username: str, gss_host: str, gss_deleg_creds: bool) -> list[str]: ...
-    def auth_gssapi_keyex(self, username: str) -> list[str]: ...
     def set_log_channel(self, name: str) -> None: ...
     def get_log_channel(self) -> str: ...
     def set_hexdump(self, hexdump: bool) -> None: ...

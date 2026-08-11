@@ -2,6 +2,8 @@
 
 package com.intellij.openapi.editor.actions;
 
+import org.jetbrains.annotations.ApiStatus;
+@ApiStatus.Internal
 public final class DeleteToWordStartAction extends TextComponentEditorAction {
   public DeleteToWordStartAction() {
     super(new DeleteToWordBoundaryHandler(true, false));

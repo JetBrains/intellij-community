@@ -1,5 +1,5 @@
 // "Add 'abstract fun foo(x: String = "")' to 'I'" "true"
-// K2_ERROR: 'foo' overrides nothing.
+// K2_ERROR: NOTHING_TO_OVERRIDE
 interface I
 
 class Foo : I {

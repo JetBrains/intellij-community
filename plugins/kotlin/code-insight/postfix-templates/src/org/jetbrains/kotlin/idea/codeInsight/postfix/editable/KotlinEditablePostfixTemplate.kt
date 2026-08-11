@@ -18,10 +18,11 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtStatementExpression
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.utils.yieldIfNotNull
 
 // Note: Override of equals/hashCode is needed if we add custom properties
 @Suppress("PostfixTemplateDescriptionNotFound")
@@ -56,13 +57,22 @@ class KotlinEditablePostfixTemplate : EditablePostfixTemplateWithMultipleExpress
         /* provider = */ provider
     )
 
-    private fun PsiElement.applicableElements(): Sequence<KtExpression> {
-        // In Kotlin, we do not want to stop at the argument list boundary if we are at a lambda argument
-        // that is supplied as the last argument outside the parentheses.
-        // For example, `listOf(1, 2).forEach { }.<caret>` should include the entire expression rather than just the function literal.
-        return parentsWithSelf
-            .takeWhile { (it is KtExpression || it is KtLambdaArgument) && (it !is KtStatementExpression || it is KtFunctionLiteral) }
-            .filterIsInstance<KtExpression>()
+    private fun PsiElement.applicableElements(): Sequence<KtExpression> = sequence {
+        var current = this@applicableElements
+        while (true) {
+            yieldIfNotNull(current as? KtExpression)
+            val parent = current.parent
+            val parentParent = parent?.parent
+            when {
+                parentParent is KtIfExpression && parentParent.`else` == current -> current = parentParent
+                // In Kotlin, we do not want to stop at the argument list boundary if we are at a lambda argument
+                // that is supplied as the last argument outside the parentheses.
+                // For example, `listOf(1, 2).forEach { }.<caret>` should include the entire expression rather than just the function literal.
+                parent is KtStatementExpression && parent !is KtFunctionLiteral -> break
+                parent is KtExpression || parent is KtLambdaArgument -> current = parent
+                else -> break
+            }
+        }
     }
 
     override fun getTopmostExpression(element: PsiElement): PsiElement {

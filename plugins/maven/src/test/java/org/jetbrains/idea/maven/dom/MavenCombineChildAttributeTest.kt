@@ -1,13 +1,28 @@
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenCombineChildAttributeTest : MavenDomTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenCombineChildAttributeTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun testCompletion() = runBlocking {
-    createProjectPom(
+    maven.createProjectPom(
       """
               <groupId>test</groupId>
               <artifactId>project</artifactId>
@@ -34,6 +49,6 @@ class MavenCombineChildAttributeTest : MavenDomTestCase() {
               </build>
         """.trimIndent())
 
-    assertCompletionVariants(projectPom, "override", "append", "merge")
+    maven.assertCompletionVariants(maven.projectPom, "override", "append", "merge")
   }
 }

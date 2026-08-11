@@ -108,7 +108,7 @@ class Scheme(
 
     /**
      * Compare to [Scheme] instances for equality. Two [Scheme]s are considered equal if they are
-     * [alpha equivalent][https://en.wikipedia.org/wiki/Lambda_calculus#%CE%B1-conversion]. This
+     * [alpha equivalent](https://en.wikipedia.org/wiki/Lambda_calculus#%CE%B1-conversion). This
      * is accomplished by normalizing both schemes and then comparing them simply for equality.
      * See [alphaRename] for details.
      */

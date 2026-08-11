@@ -8,22 +8,20 @@ import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
-import com.intellij.compose.ide.plugin.resources.ComposeResourcesManager
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesDataProvider
 import com.intellij.compose.ide.plugin.resources.ResourceType
-import com.intellij.compose.ide.plugin.resources.findComposeResourcesDirFor
+import com.intellij.compose.ide.plugin.resources.STRINGS_XML_FILENAME
 import com.intellij.compose.ide.plugin.resources.intentions.hasSubTagWithName
-import com.intellij.compose.ide.plugin.resources.psi.getResourcePackageName
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -38,12 +36,12 @@ private const val NEW_STRING_RESOURCE_INNER_TEXT_PLACEHOLDER = "TODO"
 
 private data class TemplateData(val template: Template, val offset: Int)
 
-
 internal class CreateStringResourceQuickFix(
   private val resourceName: String,
   private val resourceType: ResourceType,
   private val sourceKtFileUrl: String,
-  private val stringsXmlUrl: String,
+  private val stringsXmlUrl: String?,
+  private val composeResourcesDirUrl: String,
 ) : IntentionAction, PriorityAction {
 
   override fun getText(): String =
@@ -57,8 +55,7 @@ internal class CreateStringResourceQuickFix(
 
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
     val vfm = VirtualFileManager.getInstance()
-    return vfm.findFileByUrl(stringsXmlUrl) != null
-           && vfm.findFileByUrl(sourceKtFileUrl) != null
+    return vfm.findFileByUrl(sourceKtFileUrl) != null
            && resourceType.isStringType
   }
 
@@ -66,7 +63,7 @@ internal class CreateStringResourceQuickFix(
     val vfm = VirtualFileManager.getInstance()
     val psiManager = PsiManager.getInstance(project)
 
-    val virtualStringsXmlFile = vfm.findFileByUrl(stringsXmlUrl) ?: return
+    val virtualStringsXmlFile = findOrCreateStringsXmlFile(project, composeResourcesDirUrl, stringsXmlUrl) ?: return
     val stringsXmlFile = psiManager.findFile(virtualStringsXmlFile) as? XmlFile ?: return
     val rootTag = stringsXmlFile.rootTag ?: return
     if (rootTag.hasSubTagWithName(resourceType.typeName, resourceName)) return
@@ -74,10 +71,9 @@ internal class CreateStringResourceQuickFix(
     val virtualSourceKtFile = vfm.findFileByUrl(sourceKtFileUrl) ?: return
     val ktFile = psiManager.findFile(virtualSourceKtFile) as? KtFile ?: return
 
-    val path = stringsXmlFile.virtualFile.toNioPathOrNull() ?: return
-    val composeResourcesDir = project.findComposeResourcesDirFor(path) ?: return
-    val composeResources = project.service<ComposeResourcesManager>().composeResourcesByModulePath[composeResourcesDir.moduleName] ?: return
-    val resourcePackageName = composeResourcesDir.getResourcePackageName(project, composeResources.packageOfResClass)
+    val composeData = ComposeResourcesDataProvider.findProviderForProject(project)
+      ?.getComposeDataForResourceFile(stringsXmlFile) ?: return
+    val resourcePackageName = composeData.packageOfResClass
 
     val addedTag = WriteCommandAction.writeCommandAction(project, stringsXmlFile, ktFile)
                      .withName(text)
@@ -96,7 +92,7 @@ internal class CreateStringResourceQuickFix(
                          } ?: return
 
     runInEdt {
-      project.startTemplate(virtualStringsXmlFile, virtualSourceKtFile, editor, templateData)
+      project.startTemplate(virtualStringsXmlFile, templateData)
     }
   }
 }
@@ -114,33 +110,45 @@ private fun XmlTag.findTodoPlaceholder(): PsiElement? {
   return targetTag.value.textElements.firstOrNull { it.text == NEW_STRING_RESOURCE_INNER_TEXT_PLACEHOLDER }
 }
 
-private fun Project.startTemplate(
-  xmlVirtualFile: VirtualFile,
-  sourceKtVirtualFile: VirtualFile,
-  originalEditor: Editor?,
-  data: TemplateData,
-) {
+private fun Project.startTemplate(xmlVirtualFile: VirtualFile, data: TemplateData) {
   val fileEditorManager = FileEditorManager.getInstance(this)
   val descriptor = OpenFileDescriptor(this, xmlVirtualFile, data.offset)
   val openedEditor = fileEditorManager.openTextEditor(descriptor, true) ?: return
 
-  val offset = originalEditor?.caretModel?.offset ?: 0
   openedEditor.caretModel.moveToOffset(data.offset)
-
-  fun navigateBackToSource() {
-    val backDescriptor = OpenFileDescriptor(this, sourceKtVirtualFile, offset)
-    fileEditorManager.openTextEditor(backDescriptor, true)
-  }
 
   TemplateManager.getInstance(this).startTemplate(openedEditor, data.template, object : TemplateEditingAdapter() {
     override fun templateFinished(template: Template, brokenOff: Boolean) {
-      navigateBackToSource()
-    }
-
-    override fun templateCancelled(template: Template?) {
-      navigateBackToSource()
+      if (brokenOff) return
+      runInEdt { fileEditorManager.closeFile(xmlVirtualFile) }
     }
   })
+}
+
+private fun findOrCreateStringsXmlFile(
+  project: Project,
+  composeResourcesDirUrl: String,
+  stringsXmlUrl: String?,
+): VirtualFile? {
+  val vfm = VirtualFileManager.getInstance()
+
+  stringsXmlUrl?.let { url ->
+    vfm.findFileByUrl(url)?.let { return it }
+  }
+
+  val composeResourcesDir = vfm.findFileByUrl(composeResourcesDirUrl) ?: return null
+
+  return WriteCommandAction.writeCommandAction(project)
+    .withName(ComposeIdeBundle.message("compose.resources.intention.create.extension.property.family.name"))
+    .compute<VirtualFile?, RuntimeException> {
+      val valuesDir = composeResourcesDir.findChild(ResourceType.STRING.dirName)
+                      ?: composeResourcesDir.createChildDirectory(project, ResourceType.STRING.dirName)
+
+      valuesDir.findChild(STRINGS_XML_FILENAME)
+      ?: valuesDir.createChildData(project, STRINGS_XML_FILENAME).also {
+        VfsUtil.saveText(it, "<resources>\n</resources>\n")
+      }
+    }
 }
 
 private fun XmlTag.addEntry(resourceType: ResourceType, name: String): XmlTag {

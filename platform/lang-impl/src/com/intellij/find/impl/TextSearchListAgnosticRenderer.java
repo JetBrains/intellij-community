@@ -80,9 +80,10 @@ public final class TextSearchListAgnosticRenderer extends JPanel implements List
       myUsageRenderer.setBackground(color);
       myFileAndLineNumber.setBackground(color);
     }
-    getAccessibleContext().setAccessibleName(
-      FindBundle.message("find.popup.found.element.accesible.name", myUsageRenderer.getAccessibleContext().getAccessibleName(),
-                         myFileAndLineNumber.getAccessibleContext().getAccessibleName()));
+    putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY,
+                      FindBundle.message("find.popup.found.element.accesible.name",
+                                         myUsageRenderer.getAccessibleContext().getAccessibleName(),
+                                         myFileAndLineNumber.getAccessibleContext().getAccessibleName()));
     return this;
   }
 

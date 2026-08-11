@@ -2,12 +2,15 @@
 package com.intellij.ide.wizard
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 
 @Suppress("DEPRECATION")
 @JvmDefaultWithCompatibility
 @Deprecated("Use LanguageGeneratorNewProjectWizard instead")
+@ApiStatus.Internal
 interface LanguageNewProjectWizard : NewProjectWizardMultiStepFactory<NewProjectWizardLanguageStep> {
 
+  @ApiStatus.Internal
   companion object {
 
     @JvmField

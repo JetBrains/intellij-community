@@ -1,9 +1,9 @@
 // "Show conflicting 'myLocalProperty' declarations" "true"
 // SHOULD_BE_AVAILABLE_AFTER_EXECUTION
-// K2_ERROR: Conflicting declarations:<br>local val myLocalProperty: Int<br>local val myLocalProperty: String
-// K2_ERROR: Conflicting declarations:<br>local val myLocalProperty: Int<br>local val myLocalProperty: String
-// K2_AFTER_ERROR: Conflicting declarations:<br>local val myLocalProperty: Int<br>local val myLocalProperty: String
-// K2_AFTER_ERROR: Conflicting declarations:<br>local val myLocalProperty: Int<br>local val myLocalProperty: String
+// K2_AFTER_ERROR: REDECLARATION
+// K2_AFTER_ERROR: REDECLARATION
+// K2_ERROR: REDECLARATION
+// K2_ERROR: REDECLARATION
 
 package test
 

@@ -18,26 +18,26 @@ public interface CleanupInspectionUtil {
     return ApplicationManager.getApplication().getService(CleanupInspectionUtil.class);
   }
 
-  AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
-                                            @NotNull @NlsContexts.DialogTitle String presentationText,
-                                            @NotNull @Unmodifiable List<? extends ProblemDescriptor> descriptions,
-                                            @Nullable Class<?> quickfixClass,
-                                            boolean startInWriteAction);
+  @NotNull AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
+                                                     @NotNull @NlsContexts.DialogTitle String presentationText,
+                                                     @NotNull @Unmodifiable List<? extends ProblemDescriptor> descriptions,
+                                                     @Nullable Class<?> quickfixClass,
+                                                     boolean startInWriteAction);
 
-  default AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
-                                                    @NotNull @NlsContexts.DialogTitle String presentationText,
-                                                    @NotNull @Unmodifiable List<? extends ProblemDescriptor> descriptions,
-                                                    @Nullable Class<?> quickfixClass,
-                                                    boolean startInWriteAction,
-                                                    boolean markGlobal) {
+  default @NotNull AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
+                                                             @NotNull @NlsContexts.DialogTitle String presentationText,
+                                                             @NotNull @Unmodifiable List<? extends ProblemDescriptor> descriptions,
+                                                             @Nullable Class<?> quickfixClass,
+                                                             boolean startInWriteAction,
+                                                             boolean markGlobal) {
     return applyFixesNoSort(project, presentationText, descriptions, quickfixClass, startInWriteAction);
   }
 
-  default AbstractPerformFixesTask applyFixes(@NotNull Project project,
-                                              @NotNull @NlsContexts.DialogTitle String presentationText,
-                                              @NotNull @Unmodifiable List<? extends ProblemDescriptor> descriptions,
-                                              @Nullable Class<?> quickfixClass,
-                                              boolean startInWriteAction) {
+  default @NotNull AbstractPerformFixesTask applyFixes(@NotNull Project project,
+                                                       @NotNull @NlsContexts.DialogTitle String presentationText,
+                                                       @NotNull @Unmodifiable List<? extends ProblemDescriptor> descriptions,
+                                                       @Nullable Class<?> quickfixClass,
+                                                       boolean startInWriteAction) {
     return applyFixesNoSort(project, presentationText, sortDescriptions(descriptions), quickfixClass, startInWriteAction, true);
   }
 

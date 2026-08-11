@@ -1,12 +1,13 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mcpserver.toolwindow
 
-import com.intellij.execution.services.ServiceEventListener
 import com.intellij.mcpserver.ClientInfo
 import com.intellij.mcpserver.McpCallInfo
+import com.intellij.mcpserver.McpToolCallResult
 import com.intellij.mcpserver.McpToolDescriptor
 import com.intellij.mcpserver.McpToolSideEffectEvent
 import com.intellij.mcpserver.ToolCallListener
-import com.intellij.mcpserver.services.McpServiceViewContributor
+import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -21,14 +22,35 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlin.coroutines.cancellation.CancellationException
 
+private val responseJsonPrinter = Json { prettyPrint = true }
+
+private fun McpToolCallResult.renderResponseText(): String {
+  val text = content.joinToString("\n") { it.toString() }
+  if (text.isNotBlank()) return text.prettifyJsonOrSelf()
+  val structured = structuredContent ?: return text
+  return responseJsonPrinter.encodeToString(JsonObject.serializer(), structured)
+}
+
+/** Reformats a JSON string as pretty-printed JSON, or returns it unchanged when it is not valid JSON. */
+private fun String.prettifyJsonOrSelf(): String = runCatching {
+  responseJsonPrinter.encodeToString(JsonElement.serializer(), responseJsonPrinter.parseToJsonElement(this))
+}.getOrNull() ?: this
+
 @Service
-internal class McpDiagnosticService(private val cs: CoroutineScope) {
+class McpDiagnosticService(private val cs: CoroutineScope) {
   private val MAX_TOOL_CALLS = 5000
 
   private val _sessions = MutableStateFlow<List<McpSessionInfo>>(emptyList())
   private val _toolCalls = MutableStateFlow<List<McpToolCallEntry>>(emptyList())
+
+  /** When enabled, tool call responses are captured into [McpToolCallEntry.responseText]. */
+  @Volatile
+  var recordResponses: Boolean = false
 
   val activeSessionCount: Int get() = _sessions.value.size
 
@@ -63,6 +85,7 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
         events: List<McpToolSideEffectEvent>,
         error: Throwable?,
         callInfo: McpCallInfo,
+        result: McpToolCallResult?,
       ) {
         val endTime = System.currentTimeMillis()
         val status = when (error) {
@@ -70,6 +93,7 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
           is CancellationException -> ToolCallStatus.CANCELLED
           else -> ToolCallStatus.ERROR
         }
+        val responseText = if (recordResponses) result?.renderResponseText() else null
         _toolCalls.update { current ->
           current.map { entry ->
             if (entry.callId == callInfo.callId) {
@@ -78,6 +102,7 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
                 status = status,
                 errorMessage = error?.message,
                 sideEffectsCount = events.size,
+                responseText = responseText,
               )
             }
             else entry
@@ -111,39 +136,112 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
     }
   }
 
-  fun sessionStarted(sessionId: String, transportType: TransportType, startTimeMs: Long, localAgentId: String?) {
+  fun sessionStarted(
+    sessionId: String,
+    clientInfo: ClientInfo?,
+    transportType: TransportType,
+    startTimeMs: Long,
+    localAgentId: String?,
+    toolsCount: Int,
+  ) {
     val info = McpSessionInfo(
       sessionId = sessionId,
-      clientInfo = null,
+      clientInfo = clientInfo,
       transportType = transportType,
       startTimeMs = startTimeMs,
       localAgentId = localAgentId,
     )
-    _sessions.update { it + info }
-    fireServiceViewReset()
-  }
-
-  fun sessionInitialized(sessionId: String, clientInfo: ClientInfo) {
-    _sessions.update { list ->
-      list.map { if (it.sessionId == sessionId) it.copy(clientInfo = clientInfo) else it }
+    val previousSession = _sessions.value.firstOrNull { it.sessionId == sessionId }
+    if (previousSession != null) {
+      disposeSessionInfo(previousSession)
     }
-    fireServiceViewReset()
+    _sessions.update { sessions ->
+      sessions.filter { it.sessionId != sessionId } + info
+    }
+    McpServerCounterUsagesCollector.logSessionStarted(
+      clientName = clientInfo?.name ?: "unknown",
+      clientVersion = clientInfo?.version ?: "unknown",
+      transport = transportType,
+      hasLocalAgent = localAgentId != null,
+      toolsCount = toolsCount,
+    )
   }
 
   fun sessionEnded(sessionId: String) {
+    val ended = _sessions.value.firstOrNull { it.sessionId == sessionId }
+    if (ended != null) {
+      val durationMs = System.currentTimeMillis() - ended.startTimeMs
+      McpServerCounterUsagesCollector.logSessionFinished(
+        clientName = ended.clientInfo?.name ?: "unknown",
+        transport = ended.transportType,
+        durationMs = durationMs,
+      )
+    }
     _sessions.update { list ->
       list.filter { it.sessionId != sessionId }
     }
-    fireServiceViewReset()
+    if (ended != null) {
+      disposeSessionInfo(ended)
+    }
   }
 
   fun clearToolCalls() {
     _toolCalls.update { emptyList() }
   }
 
-  private fun fireServiceViewReset() {
-    application.messageBus
-      .syncPublisher(ServiceEventListener.TOPIC)
-      .handle(ServiceEventListener.ServiceEvent.createResetEvent(McpServiceViewContributor::class.java))
+  private fun disposeSessionInfo(sessionInfo: McpSessionInfo) {
+    if (application.isDispatchThread) {
+      Disposer.dispose(sessionInfo)
+    }
+    else {
+      application.invokeLater {
+        Disposer.dispose(sessionInfo)
+      }
+    }
   }
 }
+
+class McpSessionInfo(
+  val sessionId: String,
+  val clientInfo: ClientInfo?,
+  val transportType: TransportType,
+  val startTimeMs: Long,
+  @Suppress("unused")
+  val localAgentId: String?,
+) : Disposable {
+  override fun dispose() = Unit
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is McpSessionInfo) return false
+    return sessionId == other.sessionId
+  }
+
+  override fun hashCode(): Int = sessionId.hashCode()
+}
+
+enum class TransportType {
+  SSE,
+  STREAMABLE_HTTP,
+  STDIO,
+}
+
+data class McpToolCallEntry(
+  val callId: Int,
+  val sessionId: String?,
+  val toolName: String,
+  val clientInfo: ClientInfo,
+  val projectName: String?,
+  val arguments: JsonObject,
+  val startTimeMs: Long,
+  val endTimeMs: Long?,
+  val status: ToolCallStatus,
+  val errorMessage: String?,
+  val sideEffectsCount: Int,
+  val responseText: String? = null,
+)
+
+enum class ToolCallStatus {
+  IN_PROGRESS, SUCCESS, ERROR, CANCELLED,
+}
+

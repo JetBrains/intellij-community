@@ -1,4 +1,5 @@
 from collections.abc import Collection
+from typing import Literal
 from typing_extensions import Self
 
 from .base import BaseMultipartGeometry
@@ -12,5 +13,7 @@ class MultiLineString(BaseMultipartGeometry[LineString]):
     def __new__(self, lines: BaseMultipartGeometry | Collection[_ConvertibleToLineString] | None = None) -> Self: ...
     def svg(self, scale_factor: float = 1.0, stroke_color: str | None = None, opacity: float | None = None) -> str: ...  # type: ignore[override]
     # more precise base overrides
+    @property
+    def geom_type(self) -> Literal["MultiLineString"]: ...
     @property
     def boundary(self) -> MultiPoint: ...

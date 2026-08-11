@@ -1,9 +1,8 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.compose.ide.plugin.k2` start
-
 create_kotlinc_options(
     name = "custom_ide-plugin-k2",
     x_context_parameters = True,
@@ -39,20 +38,24 @@ jvm_library(
         "//platform/analysis-impl",
         "//platform/editor-ui-api:editor-ui",
         "//platform/core-impl",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
         "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
-        "@lib//:kotlinc-analysis-api-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
         "//java/java-psi-api:psi",
         "//plugins/kotlin/code-insight/api",
         "//plugins/kotlin/base/code-insight",
-        "@lib//:kotlinc-analysis-api-k2-provided",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
         "@lib//:kotlinc-compose-compiler-plugin-provided",
         "//platform/projectModel-api:projectModel",
         "//plugins/gradle",
         "//platform/external-system-impl:externalSystem-impl",
         "@lib//:kotlinc-kotlin-compiler-fir-provided",
+        "//plugins/kotlin/base/facet",
+        "//platform/lang-core",
+        "@lib//:kotlinc-kotlin-jps-common-provided",
+        "//plugins/kotlin/base/compiler-configuration",
     ],
 )
 
@@ -79,20 +82,24 @@ jvm_library(
         "//platform/analysis-impl:analysis-impl_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/core-impl:core-impl_test_lib",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
         "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
-        "@lib//:kotlinc-analysis-api-provided",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
         "//java/java-psi-api:psi_test_lib",
         "//plugins/kotlin/code-insight/api:api_test_lib",
         "//plugins/kotlin/base/code-insight:code-insight_test_lib",
-        "@lib//:kotlinc-analysis-api-k2-provided",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
         "@lib//:kotlinc-compose-compiler-plugin-provided",
         "//platform/projectModel-api:projectModel_test_lib",
         "//plugins/gradle:gradle_test_lib",
         "//platform/external-system-impl:externalSystem-impl_test_lib",
         "@lib//:kotlinc-kotlin-compiler-fir-provided",
+        "//plugins/kotlin/base/facet:facet_test_lib",
+        "//platform/lang-core:lang-core_test_lib",
+        "@lib//:kotlinc-kotlin-jps-common-provided",
+        "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.k2` end
@@ -107,7 +114,6 @@ exports_files(
 ### auto-generated section `iml intellij.compose.ide.plugin.k2` end
 
 ### auto-generated section `build intellij.compose.ide.plugin.k2.tests` start
-
 create_kotlinc_options(
     name = "custom_ide-plugin-k2-tests",
     x_context_parameters = True,
@@ -121,6 +127,12 @@ jvm_library(
     ),
     module_name = "intellij.compose.ide.plugin.k2.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+    ],
 )
 
 jvm_library(
@@ -140,7 +152,11 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_ide-plugin-k2-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":ide-plugin-k2-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":ide-plugin-k2-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
@@ -151,8 +167,8 @@ jvm_library(
         "//java/testFramework:testFramework_test_lib",
         "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
         "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings_test_lib",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
         "//platform/refactoring",
         "//platform/refactoring:refactoring_test_lib",
         "//platform/core-api:core",
@@ -167,8 +183,6 @@ jvm_library(
         "//plugins/kotlin/base/testFramework:testFramework_test_lib",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "//plugins/kotlin/tests-common:common-tests",
         "//plugins/kotlin/tests-common:common-tests_test_lib",
         "//plugins/kotlin/test-framework",
@@ -179,9 +193,12 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/core",
         "//platform/testFramework/core:core_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-common-provided",
-        "@lib//:kotlinc-analysis-api-provided",
-        "@lib//:kotlin-test-assertions-core-jvm",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//plugins/kotlin/gradle/gradle-java/tests.shared",
         "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
         "//plugins/gradle:gradle-tests",
@@ -204,6 +221,8 @@ jvm_library(
         "//platform/external-system-api:externalSystem_test_lib",
         "//plugins/gradle/settings",
         "//plugins/gradle/settings:settings_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.k2.tests` end
@@ -218,7 +237,6 @@ exports_files(
 ### auto-generated section `iml intellij.compose.ide.plugin.k2.tests` end
 
 ### auto-generated section `test intellij.compose.ide.plugin.k2.tests` start
-
 jps_test(
     name = "ide-plugin-k2-tests_test",
     runtime_deps = [":ide-plugin-k2-tests_test_lib"],

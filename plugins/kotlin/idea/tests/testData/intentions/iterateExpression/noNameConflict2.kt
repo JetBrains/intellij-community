@@ -11,4 +11,4 @@ fun foo(values: List<String>, value: String) {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.IterateExpressionIntention
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.intentions.IterateExpressionIntention
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.intentions.IterateExpressionIntention

@@ -1,0 +1,9 @@
+*:com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
+- *sf:Companion:com.intellij.platform.rpc.lite.LiteRemoteApiProviderService$Companion
+- a:awaitConnectionAndResolve(fleet.rpc.RemoteApiDescriptor,kotlin.coroutines.Continuation):java.lang.Object
+- a:isConnected():Z
+- a:tryResolve(fleet.rpc.RemoteApiDescriptor):fleet.rpc.RemoteApi
+*f:com.intellij.platform.rpc.lite.LiteRemoteApiProviderService$Companion
+- f:awaitConnectionAndResolve(fleet.rpc.RemoteApiDescriptor,kotlin.coroutines.Continuation):java.lang.Object
+- f:isConnected():Z
+- f:tryResolve(fleet.rpc.RemoteApiDescriptor):fleet.rpc.RemoteApi

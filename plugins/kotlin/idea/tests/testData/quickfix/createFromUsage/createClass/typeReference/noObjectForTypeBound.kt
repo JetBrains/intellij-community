@@ -1,5 +1,5 @@
 // "Create object 'NotExistent'" "false"
 // ERROR: Unresolved reference: NotExistent
-// K2_ERROR: Unresolved reference 'NotExistent'.
-// K2_AFTER_ERROR: Unresolved reference 'NotExistent'.
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 class TPB<X : <caret>NotExistent>

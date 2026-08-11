@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
+import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class Suppliers {

@@ -31,8 +31,10 @@ import com.intellij.openapi.util.registry.withValue
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.TestObservation
 import com.intellij.testFramework.assertEqualsToFile
 import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.useProject
 import com.intellij.ui.UiInterceptors
 import com.intellij.ui.UiInterceptors.UiInterceptor
@@ -65,6 +67,7 @@ import org.junit.Rule
 import org.junit.rules.TestName
 import java.io.File
 import java.net.URL
+import kotlin.time.Duration.Companion.minutes
 
 @TestRoot("project-wizard/tests")
 class IntelliJKotlinNewProjectWizardTest : NewProjectWizardTestCase() {
@@ -171,13 +174,17 @@ class IntelliJKotlinNewProjectWizardTest : NewProjectWizardTestCase() {
         addSampleCode: Boolean = false,
         useCompactProjectStructure: Boolean = true
     ): Project {
-        return createProjectFromTemplate(KOTLIN) {
-            it.setWizardData(
-                name = name,
-                relativePath = "",
-                addSampleCode = addSampleCode,
-                useCompactProjectStructure = useCompactProjectStructure,
-            )
+        return timeoutRunBlocking(1.minutes) {
+            TestObservation.awaitProjectActivity(myProject) {
+                createProjectFromTemplate(KOTLIN) {
+                    it.setWizardData(
+                        name = name,
+                        relativePath = "",
+                        addSampleCode = addSampleCode,
+                        useCompactProjectStructure = useCompactProjectStructure,
+                    )
+                }
+            }
         }
     }
 

@@ -26,17 +26,24 @@ import com.intellij.util.Processor
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.map2Array
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.javaInterop.callableSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.directlyOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.isSubClassOf
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -67,7 +74,6 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtImportAlias
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
@@ -166,7 +172,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
             analyze(expression) {
                 val declarationSymbol = decl.symbol as? KaCallableSymbol ?: return@forEachDescendantOfType
                 val functionCall = expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() ?: return@forEachDescendantOfType
-                if (expression is KtCallExpression && (functionCall as? KaSimpleFunctionCall)?.isImplicitInvoke != true) return@forEachDescendantOfType
+                if (expression is KtCallExpression && (functionCall !is KaImplicitInvokeCall)) return@forEachDescendantOfType
                 val resolvedSymbol = functionCall.partiallyAppliedSymbol
                 if (declarationSymbol.allOverriddenSymbols.firstOrNull { it == resolvedSymbol.symbol } != null) return@forEachDescendantOfType
                 if (resolvedSymbol.contextArguments.any { (it.unwrapSmartCasts() as? KaImplicitReceiverValue)?.symbol == element.symbol }) {
@@ -231,10 +237,24 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                     return@Processor isInside(place)
                 })) {
                 additionalElementsToDelete.add(overriddenFunction)
-                result.add(SafeDeleteReferenceSimpleDeleteUsageInfo(overriddenFunction, element, true))
+                result.add(createParameterAwareDeleteUsageInfo(overriddenFunction, element))
             }
             else {
                 JavaSafeDeleteDelegate.EP.forLanguage(overriddenFunction.language)?.createCleanupOverriding(overriddenFunction, allElementsToDelete, result)
+            }
+        }
+    }
+
+    private fun createParameterAwareDeleteUsageInfo(elementToDelete: PsiElement, referencedElement: PsiElement): SafeDeleteReferenceSimpleDeleteUsageInfo {
+        if (elementToDelete !is KtParameter) {
+            return SafeDeleteReferenceSimpleDeleteUsageInfo(elementToDelete, referencedElement, true)
+        }
+
+        return object : SafeDeleteReferenceSimpleDeleteUsageInfo(elementToDelete, referencedElement, true) {
+            override fun deleteElement() {
+                val parameter = element as? KtParameter ?: return
+                deleteSeparatingComma(parameter)
+                parameter.delete()
             }
         }
     }

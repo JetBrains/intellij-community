@@ -25,9 +25,22 @@ interface XBreakpointAttachment {
 
   /**
    * Called when the breakpoint's state changes:
-   * - Breakpoint creation
    * - Breakpoint changes via the "Edit Breakpoint" popup
    * - State-changing interactions via gutter (drag-and-drop, enable, disable)
    */
   fun breakpointChanged()
+
+  /**
+   * Called before the breakpoint proxy is disposed because the breakpoint was removed.
+   * This is not called when the frontend model is cleared during state reset.
+   */
+  fun breakpointRemoved() {}
+}
+
+/**
+ * Optional capability for breakpoint proxies that own attachments.
+ */
+@ApiStatus.Internal
+interface XBreakpointAttachmentNotifier {
+  fun notifyBreakpointAttachments()
 }

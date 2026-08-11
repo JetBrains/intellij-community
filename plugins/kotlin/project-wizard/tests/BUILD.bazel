@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build kotlin.project-wizard.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(
@@ -14,9 +13,9 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlin/reflect",
-        "//plugins/kotlin/plugin/k2",
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "//plugins/kotlin/base/testFramework",
         "//plugins/kotlin/base/analysis",
         "//plugins/kotlin/frontend-independent",
@@ -29,8 +28,8 @@ jvm_library(
         "//platform/execution.serviceView/plugin",
         "//plugins/kotlin/gradle/gradle-java",
         "//plugins/gradle:gradle-common",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlin-tooling-core",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
     ],
 )
 
@@ -50,18 +49,20 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":tests",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/execution.serviceView/plugin:plugin_test_lib",
         "//platform/ide-core:ide-core_test_lib",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
         "//libraries/kotlin/reflect",
         "//libraries/kotlin/reflect:reflect_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle",
@@ -156,12 +157,12 @@ jvm_library(
         "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
         "//platform/backend/observation",
         "//platform/backend/observation:observation_test_lib",
-        "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
-        "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared_test_lib",
         "//plugins/kotlin/base/scripting/scripting.shared",
         "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlin-tooling-core",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
         "//platform/backend/workspace",
         "//platform/backend/workspace:workspace_test_lib",
         "//platform/workspace/storage",
@@ -181,6 +182,12 @@ jvm_library(
         "//java/java-syntax:syntax_test_lib",
         "//java/java-psi-api:psi",
         "//java/java-psi-api:psi_test_lib",
+        "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections",
+        "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.project-wizard.tests` end
@@ -195,7 +202,6 @@ exports_files(
 ### auto-generated section `iml kotlin.project-wizard.tests` end
 
 ### auto-generated section `test kotlin.project-wizard.tests` start
-
 jps_test(
     name = "tests_test",
     runtime_deps = [":tests_test_lib"],

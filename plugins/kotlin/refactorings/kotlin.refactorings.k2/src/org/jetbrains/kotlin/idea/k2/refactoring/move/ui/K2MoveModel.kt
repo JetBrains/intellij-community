@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.transform
@@ -12,6 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.refactoring.move.MoveCallback
+import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
@@ -199,12 +202,13 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
         }
 
         private fun K2MoveTargetModel.Declarations.isValidRefactoring(): Boolean {
-            return if (destinationTargetType == MoveTargetType.FILE) {
-                isValidFileRefactoring(fileName)
-            } else {
-                val destinationClass = destinationClass ?: return false
-                // Cannot allow moving the class into itself
-                destinationClass.parentsWithSelf.none { it in source.elements }
+            return when (destinationTargetType) {
+                MoveTargetType.FILE -> isValidFileRefactoring(fileName)
+                MoveTargetType.CLASS -> {
+                    val destinationClass = destinationClass ?: return false
+                    // Cannot allow moving the class into itself
+                    destinationClass.parentsWithSelf.none { it in source.elements }
+                }
             }
         }
 
@@ -224,10 +228,10 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
                 singleFile.declarations.all { it in declarations }
             } ?: false
             val targetFileName = (target as? K2MoveTargetModel.FileChooser)?.fileName
-            val fileNamesMatch = targetFileName == singleSourceFileOrNull?.name
-            val targetFileExists = (target as? K2MoveTargetModel.FileChooser)?.directory?.files?.find { it.name == targetFileName } != null
+            val targetFileExists = target.directory.files.find { it.name == targetFileName } != null
+            val sourceFileNameExistsInTargetDir = target.directory.files.find { it.name == singleSourceFileOrNull?.name } != null
 
-            return !mppDeclarations.state && allDeclarationsInFileAreMoved && fileNamesMatch && !targetFileExists
+            return !mppDeclarations.state && allDeclarationsInFileAreMoved && !targetFileExists && !sourceFileNameExistsInTargetDir
         }
 
         override fun isValidRefactoring(): Boolean {
@@ -237,7 +241,7 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
         /**
          * Creates a move descriptor from a move model for declarations.
          *
-         * — If the move is non-KMP and all declarations from a single file are selected without the file name being changed,
+         * — If the move is non-KMP and all declarations from a single file are selected,
          *   [K2MoveOperationDescriptor.Files] move is used instead of the move for declarations to better preserve VCS history.
          *
          * — If the KMP move option is enabled and some declarations are `expect` or `actual`,
@@ -253,11 +257,35 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
             val searchInComments = searchInComments.state
 
             if (shouldMoveDeclarationsAsFile(source, target)) {
+                val sourceFileName = source.elements.first().containingKtFile.name
+                val targetFileName = (target as? K2MoveTargetModel.FileChooser)?.fileName
+
                 val moveDescriptor = K2MoveDescriptor.Files(
                     project = project,
                     source = K2MoveSourceDescriptor.FileSource(listOf(declarations.first().containingFile)),
                     target = K2MoveTargetDescriptor.Directory(target.pkgName, target.directory, target.isMoveToExplicitPackage()),
                 )
+
+                val moveCallBackWithFileRename = if (sourceFileName != targetFileName && targetFileName != null) {
+                    object : MoveCallback {
+                        override fun refactoringCompleted() {
+                            ApplicationManager.getApplication().invokeLater(l@{
+                                val targetDir = moveDescriptor.target.getOrCreateTarget(dirStructureMatchesPkg = true)
+                                if (targetDir !is PsiDirectory) return@l
+                                val file = targetDir.files.find { it.name == sourceFileName } ?: return@l
+                                RenameProcessor(
+                                    /* project = */ project,
+                                    /* element = */ file,
+                                    /* newName = */ targetFileName,
+                                    /* isSearchInComments = */ true,
+                                    /* isSearchTextOccurrences = */ true,
+                                ).run()
+
+                                moveCallBack?.refactoringCompleted()
+                            }, ModalityState.nonModal(), /* expired = */ project.disposed)
+                        }
+                    }
+                } else moveCallBack
 
                 return K2MoveOperationDescriptor.Files(
                     project = project,
@@ -267,7 +295,7 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
                     searchReferences = searchForReferences,
                     dirStructureMatchesPkg = true,
                     isMoveToExplicitPackage = target.isMoveToExplicitPackage(),
-                    moveCallBack = moveCallBack,
+                    moveCallBack = moveCallBackWithFileRename,
                 )
             } else if (mppDeclarations.state && declarations.any { it.isExpectOrActual() }) {
                 val descriptors = declarations.flatMap { elem ->

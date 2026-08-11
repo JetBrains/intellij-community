@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.codeInsight.hint.LineTooltipRenderer;
@@ -57,7 +57,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.DapMode;
-import com.intellij.xdebugger.SplitDebuggerMode;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
@@ -122,7 +121,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     myBreakpointManager = new XBreakpointManagerImpl(project, this, messageBusConnection, coroutineScope);
     XDebuggerWatchesManagerImpl.getInstance(project);
 
-    if (!SplitDebuggerMode.isSplitDebugger() || AppMode.isRemoteDevHost()) {
+    if (AppMode.isRemoteDevHost()) {
       startContentSelectionListening(messageBusConnection);
     }
     if (!DapMode.isDap()) {
@@ -346,7 +345,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   }
 
   private void onActiveSessionChanged(@Nullable XDebugSession previousSession, @Nullable XDebugSession currentSession) {
-    myBreakpointManager.getLineBreakpointManager().queueAllBreakpointsUpdate();
     if (!myProject.isDisposed()) {
       myProject.getMessageBus().syncPublisher(TOPIC).currentSessionChanged(previousSession, currentSession);
       if (currentSession != null && previousSession != null) {

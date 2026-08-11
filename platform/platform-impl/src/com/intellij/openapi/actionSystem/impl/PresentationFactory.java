@@ -98,6 +98,7 @@ public class PresentationFactory {
     }
   }
 
+  @ApiStatus.Internal
   public interface TransparentWrapper {
   }
 }

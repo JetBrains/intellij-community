@@ -1,30 +1,50 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.connectors
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assumeVersionMoreThan
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.projectPath
 import com.intellij.openapi.components.service
 import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap
 import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.util.Properties
 
-class MavenConnectorApiTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenConnectorApiTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
 
 
-  override fun setUp() {
-    super.setUp()
-    projectsManager.initForTests()
+  @BeforeEach
+  fun setUp() {
+    maven.projectsManager.initForTests()
   }
 
   @Test
   fun testResolveProjectsWithProfiles() = runBlocking {
-    assumeVersionMoreThan("3.1.0")
-    val mavenProject = createProjectPom("""
+    maven.assumeVersionMoreThan("3.1.0")
+    val mavenProject = maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -35,7 +55,7 @@ class MavenConnectorApiTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -53,7 +73,7 @@ class MavenConnectorApiTest : MavenMultiVersionImportingTestCase() {
       </profiles>
       """.trimIndent())
 
-    val m2 = createModulePom("m2", """
+    val m2 = maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
@@ -65,8 +85,8 @@ class MavenConnectorApiTest : MavenMultiVersionImportingTestCase() {
         </dependency>
       </dependencies>
       """.trimIndent())
-    val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
-    val embedder = mavenEmbedderWrappers.getEmbedder(projectPath)
+    val mavenEmbedderWrappers = maven.project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
+    val embedder = mavenEmbedderWrappers.getEmbedder(maven.projectPath)
     val map = MavenWorkspaceMap()
     map.register(MavenId("test:m1:1"), m1.toNioPath().toFile())
     map.register(MavenId("test:m2:1"), m2.toNioPath().toFile())

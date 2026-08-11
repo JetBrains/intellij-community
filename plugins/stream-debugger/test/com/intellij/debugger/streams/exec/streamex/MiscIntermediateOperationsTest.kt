@@ -4,7 +4,7 @@ package com.intellij.debugger.streams.exec.streamex
 /**
  * @author Vitaliy.Bibaev
  */
-class MiscIntermediateOperationsTest : StreamExTestCase() {
+open class MiscIntermediateOperationsTest : StreamExTestCase() {
   override val packageName: String = "misc"
 
   fun testHeadTail() = doStreamExWithResultTest()
@@ -16,8 +16,4 @@ class MiscIntermediateOperationsTest : StreamExTestCase() {
   fun testZipWithSameSizes() = doStreamExVoidTest()
   fun testZipWithLesser() = doStreamExVoidTest()
   fun testZipWithGreater() = doStreamExVoidTest()
-
-  fun testPrefix() = doStreamExVoidTest()
-  fun testPrefixKeys() = doStreamExVoidTest()
-  fun testPrefixValues() = doStreamExVoidTest()
 }

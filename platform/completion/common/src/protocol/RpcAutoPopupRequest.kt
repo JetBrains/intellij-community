@@ -9,4 +9,7 @@ import kotlinx.serialization.Serializable
 data class RpcAutoPopupRequest(
   val editorId: EditorId,
   val completionType: CompletionType,
+  /** Backend editor version captured when the autopopup was scheduled; -1 means unknown (skip the version check on the frontend). */
+  val caretModelVersion: Int,
+  val documentVersion: Int,
 )

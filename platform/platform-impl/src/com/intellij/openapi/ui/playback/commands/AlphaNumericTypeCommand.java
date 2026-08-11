@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -16,6 +17,7 @@ import java.awt.KeyboardFocusManager;
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
 
+@ApiStatus.Internal
 public class AlphaNumericTypeCommand extends TypeCommand {
   public AlphaNumericTypeCommand(String text, int line) {
     super(text, line, true);

@@ -8,6 +8,12 @@
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.duplicates.analysis"/>
+    <module name="intellij.platform.lang.impl"/>
   </dependencies>
   <!-- endregion -->
 

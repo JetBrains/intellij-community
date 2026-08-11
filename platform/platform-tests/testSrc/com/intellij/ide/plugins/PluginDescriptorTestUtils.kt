@@ -30,25 +30,13 @@ fun ObjectAssert<out IdeaPluginDescriptorImpl>.doesNotHaveTransitiveParentClassl
     .doesNotContain(*parentDescriptors.map { it.classLoader }.toTypedArray())
 }
 
-fun ObjectAssert<out IdeaPluginDescriptorImpl>.isMarkedEnabled() = apply {
-  extracting { it.isEnabled }
-    .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-    .isTrue
-}
-
-fun ObjectAssert<out IdeaPluginDescriptorImpl>.isNotMarkedEnabled() = apply {
-  extracting { it.isEnabled }
-    .asInstanceOf(InstanceOfAssertFactories.BOOLEAN)
-    .isFalse
-}
-
-fun ObjectAssert<out IdeaPluginDescriptorImpl>.hasExactlyEnabledContentModules(vararg ids: String) = apply {
-  extracting { it.contentModules.mapNotNull { it.takeIf { it.isEnabled }?.moduleId?.name } }
+fun ObjectAssert<out IdeaPluginDescriptorImpl>.hasExactlyContentModules(vararg ids: String) = apply {
+  extracting { it.contentModules.map { it.moduleId.name } }
     .asList()
     .containsExactly(*ids)
 }
 
-fun ObjectAssert<out IdeaPluginDescriptorImpl>.doesNotHaveEnabledContentModules() = hasExactlyEnabledContentModules()
+fun ObjectAssert<out IdeaPluginDescriptorImpl>.doesNotHaveContentModules() = hasExactlyContentModules()
 
 fun ObjectAssert<out IdeaPluginDescriptorImpl>.hasExactlyApplicationServices(vararg impls: String) = apply {
   extracting { it.appContainerDescriptor.services.mapNotNull { it.serviceImplementation } }

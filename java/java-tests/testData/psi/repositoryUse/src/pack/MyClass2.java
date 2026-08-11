@@ -6,6 +6,7 @@ public class MyClass2 extends String implements Runnable{
    */
   int field1 = 0;
 
+  /// @deprecated The annotation is missing so no real deprecation
   Object field2[];
 
   java.lang.Object[] field3;

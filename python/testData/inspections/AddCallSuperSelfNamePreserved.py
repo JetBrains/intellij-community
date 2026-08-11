@@ -4,5 +4,5 @@ class A:
 
 
 class B(A):
-    def <warning descr="Call to __init__ of super class is missed">__init_<caret>_</warning>(this, y):
+    def <warning descr="Call to '__init__' of super class is missing">__init_<caret>_</warning>(this, y):
         this.y = y

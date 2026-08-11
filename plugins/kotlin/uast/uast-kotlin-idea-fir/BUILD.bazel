@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.uast.idea` start
-
 create_kotlinc_options(
     name = "custom_kotlin-uast-idea",
     opt_in = [
@@ -25,13 +24,17 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_kotlin-uast-idea",
     module_name = "intellij.kotlin.uast.idea",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
         "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base",
         "//platform/util",
         "//plugins/kotlin/frontend-independent",
@@ -44,7 +47,7 @@ jvm_library(
         "//uast/uast-common:uast",
         "//plugins/kotlin/uast/uast-kotlin-fir:kotlin-uast",
         "//plugins/kotlin/base/util",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
         "//uast/uast-common-ide:ide",
         "//plugins/kotlin/references",
@@ -64,7 +67,11 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-uast-idea",
-        "@lib//:kotlin-test",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
         "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base_test_lib",
         "//platform/util:util_test_lib",
         "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
@@ -79,7 +86,7 @@ jvm_library(
         "//plugins/kotlin/test-framework",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
         "//uast/uast-common-ide:ide_test_lib",
         "//plugins/kotlin/references:references_test_lib",

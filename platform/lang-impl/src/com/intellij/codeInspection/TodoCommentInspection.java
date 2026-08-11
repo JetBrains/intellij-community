@@ -52,23 +52,23 @@ public final class TodoCommentInspection extends LocalInspectionTool {
 
   @Override
   public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    final List<TextRange> ranges = getTodoRanges(file);
+    List<TextRange> ranges = getTodoRanges(file);
     if (ranges.isEmpty()) {
       return null;
     }
 
-    final List<ProblemDescriptor> result = new SmartList<>();
+    List<ProblemDescriptor> result = new SmartList<>();
     int lastEndOffset = -1;
     for (TextRange todoRange : ranges) {
-      final int todoStart = todoRange.getStartOffset();
-      final int todoEnd = todoRange.getEndOffset();
+      int todoStart = todoRange.getStartOffset();
+      int todoEnd = todoRange.getEndOffset();
       if (todoStart < lastEndOffset) continue;
       PsiElement element = file.findElementAt(todoStart);
       while (element != null && element.getTextRange().getEndOffset() < todoEnd) element = element.getParent();
       if (element != null) {
-        final int elementStart = element.getTextRange().getStartOffset();
-        final TextRange range = new TextRange(todoStart - elementStart, todoEnd - elementStart);
-        final String message = onlyWarnOnEmpty
+        int elementStart = element.getTextRange().getStartOffset();
+        TextRange range = new TextRange(todoStart - elementStart, todoEnd - elementStart);
+        String message = onlyWarnOnEmpty
                                ? LangBundle.message("todo.comment.without.details.problem.descriptor")
                                : LangBundle.message("todo.comment.problem.descriptor");
         result.add(manager.createProblemDescriptor(element, range, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
@@ -79,10 +79,10 @@ public final class TodoCommentInspection extends LocalInspectionTool {
   }
 
   private List<TextRange> getTodoRanges(@NotNull PsiFile file) {
-    final List<String> excludedWords = new SmartList<>();
-    final StringBuilder fileText = new StringBuilder();
-    final TodoIndexPatternProvider todoIndexPatternProvider = TodoIndexPatternProvider.getInstance();
-    final Collection<IndexPatternOccurrence> occurrences =
+    List<String> excludedWords = new SmartList<>();
+    StringBuilder fileText = new StringBuilder();
+    TodoIndexPatternProvider todoIndexPatternProvider = TodoIndexPatternProvider.getInstance();
+    Collection<IndexPatternOccurrence> occurrences =
       IndexPatternSearch.search(file, todoIndexPatternProvider, TodoConfiguration.getInstance().isMultiLine()).findAll();
     return occurrences.stream()
       .map(occurrence -> {
@@ -101,7 +101,7 @@ public final class TodoCommentInspection extends LocalInspectionTool {
           }
         }
         if (fileText.isEmpty()) fileText.append(file.getText());
-        final CharSequence text = range.subSequence(fileText);
+        CharSequence text = range.subSequence(fileText);
         outer: for (String word : StringUtil.getWordsIn(text.toString())) {
           for (String excludedWord : excludedWords) {
             if (word.equalsIgnoreCase(excludedWord)) {

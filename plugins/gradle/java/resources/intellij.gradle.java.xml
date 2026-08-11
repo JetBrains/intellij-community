@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.gradle"/>
+    <module name="intellij.gradle.properties"/>
     <module name="intellij.gradle.toolingExtension.impl"/>
     <module name="intellij.java.debugger.impl.shared"/>
     <module name="intellij.java"/>
@@ -16,10 +17,34 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.java.ui"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.hash4j"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.xstream"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.externalSystem.dependencyUpdater"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.jps.build"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.testRunner"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.properties.backend.psi"/>
   </dependencies>
   <!-- endregion -->
@@ -81,6 +106,7 @@
                         serviceImplementation="org.jetbrains.plugins.gradle.GradleJavaIdeManager"/>
 
     <treeStructureProvider implementation="org.jetbrains.plugins.gradle.projectView.GradleTreeStructureProvider" order="last"/>
+    <projectViewNodeDecorator implementation="org.jetbrains.plugins.gradle.projectView.GradleModuleDirectoryDecorator" order="first"/>
     <attachSourcesProviderFilter implementation="org.jetbrains.plugins.gradle.editor.GradleAttachSourcesProviderFilter"/>
 
     <compileServer.plugin classpath="gradle-jps.jar"/>
@@ -169,6 +195,14 @@
                      key="inspection.display.name.deprecated.configurations" groupKey="inspection.validity" groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleDeprecatedConfigurationInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="RedundantKotlinStdLibDependency"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.redundant.kotlin.std.lib.dependency" groupKey="inspection.best.practices"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleRedundantKotlinStdLibInspection"
+                     isInternal="false"/>
 
     <localInspection language="UAST" groupPath="Gradle" shortName="AvoidDependencyNamedArgumentsNotation"
                      bundle="messages.GradleInspectionBundle"

@@ -18,7 +18,7 @@ interface NonRecursiveTestEntityBuilder : WorkspaceEntityBuilder<NonRecursiveTes
 }
 
 internal object NonRecursiveTestEntityType : EntityType<NonRecursiveTestEntity, NonRecursiveTestEntityBuilder>() {
-  override val entityClass: Class<NonRecursiveTestEntity> get() = NonRecursiveTestEntity::class.java
+  override val entityImplClass: Class<*> get() = NonRecursiveTestEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = NonRecursiveTestEntityImpl.Builder::class.java
   operator fun invoke(
     root: VirtualFileUrl,

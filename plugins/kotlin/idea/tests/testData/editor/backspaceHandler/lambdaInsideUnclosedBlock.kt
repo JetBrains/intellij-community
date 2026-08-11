@@ -1,0 +1,4 @@
+fun bar() {
+    if (true) {
+    foo {<caret> }
+}

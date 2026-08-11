@@ -14,6 +14,7 @@ import java.lang.reflect.Field
  * @param <E> the type of the field's class
  * @param <T> the type of the field
 </T></E> */
+@ApiStatus.Internal
 class FieldAccessor<E, T>(private val aClass: Class<E>,
                           private val name: @NonNls String,
                           private val type: Class<T>? = null) {

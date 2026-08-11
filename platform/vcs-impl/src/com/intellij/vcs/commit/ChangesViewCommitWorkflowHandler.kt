@@ -91,6 +91,7 @@ class ChangesViewCommitWorkflowHandler(
     busConnection.subscribe(ProjectCloseListener.TOPIC, this)
 
     commitMessagePolicy.init()
+    commitMessagePolicy.saveCommitMessageOnTypingStrategy()
     Disposer.register(this, commitMessagePolicy)
   }
 

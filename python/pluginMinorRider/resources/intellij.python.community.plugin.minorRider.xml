@@ -10,6 +10,11 @@
     <plugin id="com.intellij.modules.rider"/>
     <!-- for library facet etc -->
     <module name="intellij.python.community.plugin.impl"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -1,11 +1,19 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.devkit.core"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.compose"/>
-    <!-- endregion -->
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
+  <!-- endregion -->
 
   <resource-bundle>messages.DevkitThreadingBundle</resource-bundle>
 

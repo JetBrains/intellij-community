@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.download.pgp.verifier` start
-
 jvm_library(
     name = "download-pgp-verifier",
     srcs = glob(

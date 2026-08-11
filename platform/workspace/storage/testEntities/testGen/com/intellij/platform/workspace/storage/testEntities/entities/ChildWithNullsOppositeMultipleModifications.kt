@@ -18,7 +18,7 @@ interface ChildWithNullsOppositeMultipleBuilder : WorkspaceEntityBuilder<ChildWi
 }
 
 internal object ChildWithNullsOppositeMultipleType : EntityType<ChildWithNullsOppositeMultiple, ChildWithNullsOppositeMultipleBuilder>() {
-  override val entityClass: Class<ChildWithNullsOppositeMultiple> get() = ChildWithNullsOppositeMultiple::class.java
+  override val entityImplClass: Class<*> get() = ChildWithNullsOppositeMultipleImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ChildWithNullsOppositeMultipleImpl.Builder::class.java
   operator fun invoke(
     childData: String,

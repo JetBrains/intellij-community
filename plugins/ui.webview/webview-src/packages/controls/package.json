@@ -1,0 +1,143 @@
+{
+  "name": "@jetbrains/intellij-webview-controls",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./define/all": {
+      "types": "./src/define/all.ts",
+      "default": "./src/define/all.ts"
+    },
+    "./define/icon": {
+      "types": "./src/define/icon.ts",
+      "default": "./src/define/icon.ts"
+    },
+    "./elements/action-button": {
+      "types": "./src/elements/action-button/index.ts",
+      "default": "./src/elements/action-button/index.ts"
+    },
+    "./elements/button": {
+      "types": "./src/elements/button/index.ts",
+      "default": "./src/elements/button/index.ts"
+    },
+    "./elements/checkbox": {
+      "types": "./src/elements/checkbox/index.ts",
+      "default": "./src/elements/checkbox/index.ts"
+    },
+    "./elements/combobox": {
+      "types": "./src/elements/combobox/index.ts",
+      "default": "./src/elements/combobox/index.ts"
+    },
+    "./elements/context-help": {
+      "types": "./src/elements/context-help/index.ts",
+      "default": "./src/elements/context-help/index.ts"
+    },
+    "./elements/disclosure": {
+      "types": "./src/elements/disclosure/index.ts",
+      "default": "./src/elements/disclosure/index.ts"
+    },
+    "./elements/dropdown-link": {
+      "types": "./src/elements/dropdown-link/index.ts",
+      "default": "./src/elements/dropdown-link/index.ts"
+    },
+    "./elements/expandable-text-field": {
+      "types": "./src/elements/expandable-text-field/index.ts",
+      "default": "./src/elements/expandable-text-field/index.ts"
+    },
+    "./elements/field": {
+      "types": "./src/elements/field/index.ts",
+      "default": "./src/elements/field/index.ts"
+    },
+    "./elements/field-group": {
+      "types": "./src/elements/field-group/index.ts",
+      "default": "./src/elements/field-group/index.ts"
+    },
+    "./elements/help-text": {
+      "types": "./src/elements/help-text/index.ts",
+      "default": "./src/elements/help-text/index.ts"
+    },
+    "./elements/icon": {
+      "types": "./src/elements/icon/index.ts",
+      "default": "./src/elements/icon/index.ts"
+    },
+    "./elements/label": {
+      "types": "./src/elements/label/index.ts",
+      "default": "./src/elements/label/index.ts"
+    },
+    "./elements/menu-button": {
+      "types": "./src/elements/menu-button/index.ts",
+      "default": "./src/elements/menu-button/index.ts"
+    },
+    "./elements/number-field": {
+      "types": "./src/elements/number-field/index.ts",
+      "default": "./src/elements/number-field/index.ts"
+    },
+    "./elements/password-field": {
+      "types": "./src/elements/password-field/index.ts",
+      "default": "./src/elements/password-field/index.ts"
+    },
+    "./elements/radio": {
+      "types": "./src/elements/radio/index.ts",
+      "default": "./src/elements/radio/index.ts"
+    },
+    "./elements/radio-group": {
+      "types": "./src/elements/radio-group/index.ts",
+      "default": "./src/elements/radio-group/index.ts"
+    },
+    "./elements/segmented-control": {
+      "types": "./src/elements/segmented-control/index.ts",
+      "default": "./src/elements/segmented-control/index.ts"
+    },
+    "./elements/select": {
+      "types": "./src/elements/select/index.ts",
+      "default": "./src/elements/select/index.ts"
+    },
+    "./elements/separator": {
+      "types": "./src/elements/separator/index.ts",
+      "default": "./src/elements/separator/index.ts"
+    },
+    "./elements/slider": {
+      "types": "./src/elements/slider/index.ts",
+      "default": "./src/elements/slider/index.ts"
+    },
+    "./elements/spinner": {
+      "types": "./src/elements/spinner/index.ts",
+      "default": "./src/elements/spinner/index.ts"
+    },
+    "./elements/tabs": {
+      "types": "./src/elements/tabs/index.ts",
+      "default": "./src/elements/tabs/index.ts"
+    },
+    "./elements/text": {
+      "types": "./src/elements/text/index.ts",
+      "default": "./src/elements/text/index.ts"
+    },
+    "./elements/text-area": {
+      "types": "./src/elements/text-area/index.ts",
+      "default": "./src/elements/text-area/index.ts"
+    },
+    "./elements/text-field": {
+      "types": "./src/elements/text-field/index.ts",
+      "default": "./src/elements/text-field/index.ts"
+    },
+    "./jsx": {
+      "types": "./src/jsx.ts",
+      "default": "./src/jsx.ts"
+    },
+    "./tokens.css": "./tokens.css",
+    "./tokens.json": "./tokens.json",
+    "./custom-elements.json": "./custom-elements.json"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "lit": "^3.0.0"
+  }
+}

@@ -17,12 +17,10 @@ import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.selected
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.event.DocumentEvent
 
-@ApiStatus.Internal
 internal class ConsoleConfigurableUI(
   isEditFoldingsOnly: Boolean, positivePanel: JComponent, negativePanel: JComponent,
   appendConfigurables: (Panel) -> Unit,

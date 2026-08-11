@@ -701,9 +701,15 @@ internal val KeyEvent.isPgDn: Boolean
 
 internal fun lerp(start: Float, stop: Float, fraction: Float): Float = (1 - fraction) * start + fraction * stop
 
+/**
+ * Represents the UI state of a [Slider], encoding enabled, focused, hovered, pressed, and active states as a bit mask.
+ */
 @Immutable
 @JvmInline
-public value class SliderState(public val state: ULong) : FocusableComponentState {
+public value class SliderState(
+    /** The raw bit mask encoding all active state flags. */
+    public val state: ULong
+) : FocusableComponentState {
     override val isActive: Boolean
         get() = state and Active != 0UL
 
@@ -719,6 +725,7 @@ public value class SliderState(public val state: ULong) : FocusableComponentStat
     override val isPressed: Boolean
         get() = state and Pressed != 0UL
 
+    /** Returns a copy of this [SliderState] with the given fields replaced by their new values. */
     public fun copy(
         enabled: Boolean = isEnabled,
         focused: Boolean = isFocused,
@@ -731,7 +738,9 @@ public value class SliderState(public val state: ULong) : FocusableComponentStat
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, isHovered=$isHovered, " +
             "isPressed=$isPressed, isActive=$isActive)"
 
+    /** Companion object for [SliderState]. */
     public companion object {
+        /** Constructs a [SliderState] from individual state flags. */
         public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,

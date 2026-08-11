@@ -1,9 +1,13 @@
 package com.jetbrains.python.parsing
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.psi.impl.PyStatementListElementType
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
+@Subsystems.Parsing
+@Layers.Functional
 class PyStatementListReparseThresholdTest {
 
   // Production defaults - mirror constants in PyStatementListElementType.

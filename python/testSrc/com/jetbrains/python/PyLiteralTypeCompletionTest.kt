@@ -1,11 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.testFramework.TestDataPath
 import com.jetbrains.python.fixtures.PyTestCase
 
 // PY-40480
 @TestDataPath("\$CONTENT_ROOT/../testData/completion/literalType")
+@Subsystems.CodeCompletion
+@Layers.Functional
 class PyLiteralTypeCompletionTest : PyTestCase() {
   fun testInCallExpression() {
     doTestCompletionVariantsContains("inCallExpression.py", "\"1\"", "\"2\"", "\"foo\"", "\"5\"")

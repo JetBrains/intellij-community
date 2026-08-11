@@ -38,7 +38,7 @@ public class IJPerfSyntaxHighlighter extends SyntaxHighlighterBase {
   }
 
   @Override
-  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
+  public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(@NotNull IElementType tokenType) {
     if (tokenType.equals(IJPerfElementTypes.COMMAND)) {
       return pack(COMMAND);
     }

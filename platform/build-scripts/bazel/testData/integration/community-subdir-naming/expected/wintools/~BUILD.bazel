@@ -1,26 +1,35 @@
-### auto-generated section `build intellij.community.wintools.tests` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+### auto-generated section `build intellij.community.wintools.tests` start
 jvm_library(
-  name = "wintools-tests",
-  module_name = "intellij.community.wintools.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+    name = "wintools-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.community.wintools.tests",
+    visibility = ["//visibility:public"],
 )
 
 jvm_library(
-  name = "wintools-tests_test_lib",
-  testonly = True,
-  module_name = "intellij.community.wintools.tests",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  kotlinc_opts = "@community//:k21",
-  runtime_deps = [":wintools-tests"]
+    name = "wintools-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k21",
+    module_name = "intellij.community.wintools.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":wintools-tests"],
 )
 ### auto-generated section `build intellij.community.wintools.tests` end
 
 ### auto-generated section `iml intellij.community.wintools.tests` start
-exports_files([
-  "intellij.community.wintools.tests.iml",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        "intellij.community.wintools.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
 ### auto-generated section `iml intellij.community.wintools.tests` end

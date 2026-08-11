@@ -16,9 +16,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.xmlb.XmlSerializerUtil
+import org.jetbrains.annotations.ApiStatus
 
 @State(name = "ProjectViewState", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE))])
 class ProjectViewState : PersistentStateComponent<ProjectViewState> {
+  @ApiStatus.Internal
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ProjectViewState = project.service()

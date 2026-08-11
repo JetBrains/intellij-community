@@ -20,7 +20,7 @@ interface CustomImlComponentEntityBuilder : WorkspaceEntityBuilder<CustomImlComp
 }
 
 internal object CustomImlComponentEntityType : EntityType<CustomImlComponentEntity, CustomImlComponentEntityBuilder>() {
-  override val entityClass: Class<CustomImlComponentEntity> get() = CustomImlComponentEntity::class.java
+  override val entityImplClass: Class<*> get() = CustomImlComponentEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = CustomImlComponentEntityImpl.Builder::class.java
   operator fun invoke(
     components: Map<String, String>,

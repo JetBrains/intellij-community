@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.common` start
-
 jvm_library(
     name = "kotlin-gradle-codeInsight-common",
     srcs = glob(
@@ -21,9 +20,9 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-jps-common",
-        "@lib//:kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
@@ -45,7 +44,6 @@ jvm_library(
         "//plugins/kotlin/base/code-insight",
         "//plugins/kotlin/project-configuration",
         "//plugins/kotlin/plugin-updater",
-        "//plugins/kotlin/inspections",
         "//plugins/kotlin/gradle/gradle",
         "//platform/core-impl",
         "//platform/projectModel-api:projectModel",
@@ -58,7 +56,6 @@ jvm_library(
         "//plugins/kotlin/base/statistics",
         "//platform/vcs-api/vcs-api-core:vcs-core",
         "//platform/core-ui",
-        "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
         "//platform/execution",
         "//platform/lang-api:lang",
         "//platform/backend/observation",
@@ -78,6 +75,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-gradle-codeInsight-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
@@ -98,7 +97,6 @@ jvm_library(
         "//plugins/kotlin/base/code-insight:code-insight_test_lib",
         "//plugins/kotlin/project-configuration:project-configuration_test_lib",
         "//plugins/kotlin/plugin-updater:plugin-updater_test_lib",
-        "//plugins/kotlin/inspections:inspections_test_lib",
         "//plugins/kotlin/gradle/gradle:gradle_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
@@ -111,7 +109,6 @@ jvm_library(
         "//plugins/kotlin/base/statistics:statistics_test_lib",
         "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
         "//platform/core-ui:core-ui_test_lib",
-        "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared_test_lib",
         "//platform/execution:execution_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/backend/observation:observation_test_lib",

@@ -1,15 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.guessProjectForContentFile
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -24,12 +23,13 @@ import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.HttpUtil
 import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager
-import org.jetbrains.builtInWebServer.hasAccess
+import org.jetbrains.builtInWebServer.checkAccess
 import org.jetbrains.io.send
 import java.nio.file.Path
 import java.util.regex.Pattern
 import javax.swing.SwingUtilities
 import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.math.max
 
 /**
@@ -38,9 +38,9 @@ import kotlin.math.max
  * @apiGroup Platform
  *
  * @apiParam {String} file The path of the file. Relative (to project base dir, VCS root, module source or content root) or absolute.
- * @apiParam {Integer} [line] The line number of the file (1-based).
- * @apiParam {Integer} [column] The column number of the file (1-based).
- * @apiParam {Boolean} [focused=true] Whether to focus a project window.
+ * @apiParam {Integer} \[line] The line number of the file (1-based).
+ * @apiParam {Integer} \[column] The column number of the file (1-based).
+ * @apiParam {Boolean} \[focused=true] Whether to focus a project window.
  *
  * @apiExample {curl} Absolute path
  * curl http://localhost:63342/api/file//absolute/path/to/file.kt
@@ -54,7 +54,6 @@ import kotlin.math.max
  * @apiExample {curl} Query parameters
  * curl http://localhost:63342/api/file?file=path/to/file.kt&line=100&column=34
  */
-@Suppress("KDocUnresolvedReference")
 internal class OpenFileHttpService : RestService() {
   private val LINE_AND_COLUMN = Pattern.compile("^(.*?)(?::(\\d+))?(?::(\\d+))?$")
 
@@ -107,7 +106,7 @@ internal class OpenFileHttpService : RestService() {
     val vfsPath = PathUtil.toSystemIndependentName(OSAgnosticPathUtil.expandUserHome(requestedFile))
     val file = Path.of(PathUtil.toSystemDependentName(vfsPath))
     val fileAndProject = if (!file.isAbsolute) {
-      findByRelativePath(FileUtil.toCanonicalPath(vfsPath, '/'))
+      findByRelativePath(file.normalize().invariantSeparatorsPathString)
     }
     else if (file.exists()) {
       var isAllowed = checkAccess(file)
@@ -146,8 +145,9 @@ internal class OpenFileHttpService : RestService() {
   }
 
   private fun findByAbsolutePath(file: Path): Pair<VirtualFile, Project?>? {
-    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)
-    return if (virtualFile != null) virtualFile to runReadAction { guessProjectForContentFile(virtualFile) } else null
+    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)?.let {
+      runReadActionBlocking { it to guessProjectForContentFile(it) }
+    }
   }
 
   private fun findByRelativePath(path: String): Pair<VirtualFile, Project?>? {
@@ -159,18 +159,6 @@ internal class OpenFileHttpService : RestService() {
       }
     }
     return null
-  }
-
-  private fun checkAccess(file: Path): Boolean {
-    var parent = file
-    do {
-      if (!hasAccess(parent)) {
-        return false
-      }
-      parent = parent.parent ?: break
-    }
-    while (parent != file.root)
-    return true
   }
 
   private fun navigate(project: Project?, file: VirtualFile, request: OpenFileRequest) {

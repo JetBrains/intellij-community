@@ -7,6 +7,13 @@ from socket import AF_INET
 from socket import SOCK_STREAM
 from socket import socket
 
+# `_shaded_thriftpy` is bundled under helpers/third_party/thriftpy and imported (transitively) below.
+# The IDE only puts that directory on PYTHONPATH, which a wrapper interpreter (e.g. an OSGeo4W/QGIS
+# .bat) can reset, so add it from this file's location before the imports that need it. PY-90847
+_thriftpy_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'third_party', 'thriftpy')
+if _thriftpy_dir not in sys.path:
+    sys.path.insert(0, _thriftpy_dir)
+
 from _prof_imports import ProfilerResponse
 from prof_io import ProfWriter, ProfReader
 from prof_util import generate_snapshot_filepath, stats_to_response, \
@@ -30,7 +37,7 @@ def start_client(host, port):
             time.sleep(0.2)
             continue
 
-    sys.stderr.write(f"Could not connect to {host}: {port}\n")
+    sys.stderr.write("Could not connect to {0}: {1}\n".format(host, port))
     sys.stderr.flush()
     traceback.print_exc()
     sys.exit(1)
@@ -74,7 +81,7 @@ class Profiler:
                 remote_run or send_stat_flag
             )
         else:
-            raise AssertionError(f"Unknown request {dir(message)}")
+            raise AssertionError("Unknown request {0}".format(dir(message)))
 
     def run(self, file, package=None):
         m = save_main_module(file, 'run_profiler')
@@ -129,7 +136,7 @@ class Profiler:
 
         if filename is not None:
             filename = self.dump_snapshot(filename)
-            print(f'Snapshot saved to {filename}')
+            print('Snapshot saved to {0}'.format(filename))
 
         if not send_stat:
             response = ProfilerResponse(id=id, snapshot_filepath=filename)
@@ -145,7 +152,7 @@ class Profiler:
 def setup_module_execution(module_name):
     package_path = get_fullname(module_name)
     if package_path is None:
-        exit_with_error(f"No module named {module_name}")
+        exit_with_error("No module named {0}".format(module_name))
 
     main_filename = os.path.join(os.path.dirname(package_path), '__main__.py')
     package = module_name
@@ -156,7 +163,7 @@ def setup_module_execution(module_name):
     if os.path.exists(package_path):
         return package_path, ".".join(module_name.split(".")[:-1]), os.path.dirname(os.path.dirname(package_path))
 
-    exit_with_error(f"No module named {module_name}")
+    exit_with_error("No module named {0}".format(module_name))
 
 def exit_with_error(message):
     sys.stderr.write(message + "\n")
@@ -204,7 +211,7 @@ def main():
     try:
         profiler.connect(args.host, args.port)
     except:
-        sys.stderr.write(f"Could not connect to {args.host}: {args.port}\n")
+        sys.stderr.write("Could not connect to {0}: {1}\n".format(args.host, args.port))
         traceback.print_exc()
         sys.exit(1)
 

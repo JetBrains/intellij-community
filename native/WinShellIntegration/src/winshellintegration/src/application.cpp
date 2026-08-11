@@ -1,8 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #include "winshellintegration/application.h"
-#include "winshellintegration/winapi.h"         // SetCurrentProcessExplicitAppUserModelID,
-                                                // GetCurrentProcessExplicitAppUserModelID,
+#include "winshellintegration/winapi.h"         // GetCurrentProcessExplicitAppUserModelID,
                                                 // COM,
                                                 // Shell
 
@@ -323,18 +322,6 @@ namespace intellij::ui::win
     {
         static Application instance;
         return instance;
-    }
-
-
-    void Application::setAppUserModelId(const UserModelId& appId) noexcept(false)
-    {
-        if (const auto hr = SetCurrentProcessExplicitAppUserModelID(appId.c_str()); hr != S_OK)
-            errors::throwCOMException(
-                hr,
-                "SetCurrentProcessExplicitAppUserModelID failed",
-                __func__,
-                applicationCtxName
-            );
     }
 
 

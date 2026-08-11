@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
-import org.intellij.plugins.markdown.lang.isMarkdownLanguage
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 
 internal class TableColumnAlignmentActionsGroup: DefaultActionGroup() {
   override fun update(event: AnActionEvent) {
@@ -17,7 +17,7 @@ internal class TableColumnAlignmentActionsGroup: DefaultActionGroup() {
     if (editor == null
         || file == null
         || offset == null
-        || !file.language.isMarkdownLanguage()) {
+        || !file.supportsMarkdown(event.dataContext)) {
       event.presentation.isEnabledAndVisible = false
       return
     }

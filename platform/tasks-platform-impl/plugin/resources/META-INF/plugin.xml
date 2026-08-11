@@ -1,0 +1,14 @@
+<!--suppress SplitModeImplicitModuleKind -->
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>intellij.platform.tasks.plugin</id>
+  <name>Tasks Platform</name>
+  <description>Provides Tasks platform modules for the IDE.</description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.tasks" loading="required"/>
+    <module name="intellij.platform.tasks.impl"/>
+    <module name="intellij.platform.tasks.impl.bookmarks"/>
+    <module name="intellij.platform.tasks.impl.debugger"/>
+  </content>
+</idea-plugin>

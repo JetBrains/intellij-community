@@ -13,7 +13,6 @@ import com.intellij.cce.workspace.storages.FeaturesStorageImpl
 import com.intellij.cce.workspace.storages.FileErrorsStorage
 import com.intellij.cce.workspace.storages.FullLineLogsStorage
 import com.intellij.cce.workspace.storages.LogsSaver
-import com.intellij.cce.workspace.storages.StatLogsSaver
 import com.intellij.openapi.util.io.FileUtil
 import java.io.FileWriter
 import java.nio.file.Files
@@ -24,24 +23,23 @@ import java.util.Date
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
 
-class EvaluationWorkspace private constructor(private val basePath: Path,
-                                              statsLogsPath: Path) {
+class EvaluationWorkspace private constructor(private val basePath: Path) {
   companion object {
     private const val DEFAULT_REPORT_TYPE = "html"
     private val gson = Gson()
     private val formatter = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss")
 
-    fun open(workspaceDir: String, statsLogsPath: Path): EvaluationWorkspace {
-      return EvaluationWorkspace(Paths.get(workspaceDir).toAbsolutePath(), statsLogsPath)
+    fun open(workspaceDir: String): EvaluationWorkspace {
+      return EvaluationWorkspace(Paths.get(workspaceDir).toAbsolutePath())
     }
 
-    fun create(config: Config, statsLogsPath: Path, debug: Boolean = false): EvaluationWorkspace {
+    fun create(config: Config, debug: Boolean = false): EvaluationWorkspace {
       val path = Paths.get(config.outputDir).toAbsolutePath()
         .resolve(if (debug) "debug" else formatter.format(Date()))
       if (debug) {
         FileUtil.deleteRecursively(path)
       }
-      val workspace = EvaluationWorkspace(path, statsLogsPath)
+      val workspace = EvaluationWorkspace(path)
       workspace.writeConfig(config)
       return workspace
     }
@@ -60,8 +58,6 @@ class EvaluationWorkspace private constructor(private val basePath: Path,
   val individualScoresStorage: CompositeIndividualScoresStorage = CompositeIndividualScoresStorage(sessionsDir.toString())
 
   val errorsStorage: FileErrorsStorage = FileErrorsStorage(errorsDir.toString())
-
-  val statLogsSaver: StatLogsSaver = StatLogsSaver(statsLogsPath, subdir("logs"))
 
   val fusLogsSaver: LogsSaver = FusLogsSaver(subdir("fus-logs"))
 

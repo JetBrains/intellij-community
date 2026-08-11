@@ -1,17 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.conda
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Components
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.packaging.PyRequirement
-import com.jetbrains.python.packaging.PyRequirementParser
+import com.intellij.python.requirements.parser.PyRequirementParser
 import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.intellij.python.community.impl.conda.environmentYml.format.EnvironmentYmlModifier
 import com.intellij.testFramework.common.timeoutRunBlocking
 import org.junit.jupiter.api.Assertions
 import java.io.File
 
+@Subsystems.Interpreters
+@Components.Conda
+@Layers.Functional
 class EnvironmentYmlHelperTest : PyTestCase() {
   fun testAddRequirementEmpty() = timeoutRunBlocking {
     val virtualFile = getVirtualFileByName("$testDataPath/requirement/environmentYmlEmpty/environment.yml")!!

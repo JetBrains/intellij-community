@@ -1,7 +1,30 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+jps_test(
+    name = "testFramework-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":testFramework-tests_test_lib"],
+)
+
+### skip generation section `test intellij.maven.testFramework.tests`
 
 ### auto-generated section `build intellij.maven.testFramework` start
+jvm_provided_library(
+    name = "libraries_junit4_provided",
+    lib = "//libraries/junit4",
+)
+
+jvm_provided_library(
+    name = "libraries_junit5_provided",
+    lib = "//libraries/junit5",
+)
+
+jvm_provided_library(
+    name = "libraries_junit5-params_provided",
+    lib = "//libraries/junit5-params",
+)
 
 jvm_library(
     name = "testFramework",
@@ -34,7 +57,6 @@ jvm_library(
         "//plugins/maven/plugin",
         "@lib//:maven-test_framework-io-takari-maven-wrapper",
         "//platform/util/jdom",
-        "//plugins/repository-search",
         "//java/java-runtime:rt",
         "//java/java-impl:impl",
         "//platform/usageView",
@@ -56,6 +78,11 @@ jvm_library(
         "//platform/ide-core",
         "//java/testFramework/backend",
         "//plugins/repository-search/common",
+        "//platform/util:util-ui",
+        "//platform/testFramework/junit5",
+        ":libraries_junit4_provided",
+        ":libraries_junit5_provided",
+        ":libraries_junit5-params_provided",
     ],
 )
 
@@ -87,7 +114,6 @@ jvm_library(
         "//plugins/maven:maven_test_lib",
         "//plugins/maven/plugin:plugin_test_lib",
         "//platform/util/jdom:jdom_test_lib",
-        "//plugins/repository-search:repository-search_test_lib",
         "//java/java-runtime:rt_test_lib",
         "//java/java-impl:impl_test_lib",
         "//platform/usageView:usageView_test_lib",
@@ -109,6 +135,14 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//java/testFramework/backend:backend_test_lib",
         "//plugins/repository-search/common:common_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.testFramework` end
@@ -123,7 +157,6 @@ exports_files(
 ### auto-generated section `iml intellij.maven.testFramework` end
 
 ### auto-generated section `build intellij.maven.testFramework.tests` start
-
 jvm_library(
     name = "testFramework-tests",
     srcs = glob(
@@ -182,8 +215,6 @@ jvm_library(
         "@lib//:maven-test_framework-tests-io-takari-maven-wrapper",
         "//platform/util/jdom",
         "//platform/util/jdom:jdom_test_lib",
-        "//plugins/repository-search",
-        "//plugins/repository-search:repository-search_test_lib",
         "//java/java-runtime:rt",
         "//java/java-runtime:rt_test_lib",
         "//java/java-impl:impl",
@@ -224,6 +255,8 @@ jvm_library(
         "//java/testFramework/backend:backend_test_lib",
         "//plugins/repository-search/common",
         "//plugins/repository-search/common:common_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.testFramework.tests` end
@@ -236,11 +269,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.maven.testFramework.tests` end
-
-### auto-generated section `test intellij.maven.testFramework.tests` start
-
-jps_test(
-    name = "testFramework-tests_test",
-    runtime_deps = [":testFramework-tests_test_lib"],
-)
-### auto-generated section `test intellij.maven.testFramework.tests` end

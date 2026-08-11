@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.components.JBList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,13 +17,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere
+ * ({@code com.intellij.platform.searchEverywhere}). This functionality is obsolete.
+ */
+@Deprecated
+@ApiStatus.Internal
 final class MixedListFactory extends SEResultsListFactory {
 
   private final List<String> prioritizedContributors = new ArrayList<>();
 
   MixedListFactory() {
     prioritizedContributors.add(CalculatorSEContributor.class.getName());
-    prioritizedContributors.add("AutocompletionContributor");
     prioritizedContributors.add("CommandsContributor");
     prioritizedContributors.add(TopHitSEContributor.class.getSimpleName());
     if (AdvancedSettings.getBoolean("search.everywhere.recent.at.top")) {

@@ -30,7 +30,6 @@ import org.jetbrains.intellij.build.productLayout.generator.collectPluginGraphDe
 import org.jetbrains.intellij.build.productLayout.generator.computeActionGroupModuleDependencies
 import org.jetbrains.intellij.build.productLayout.generator.computeAliasPreservedPluginDeps
 import org.jetbrains.intellij.build.productLayout.generator.computeExistingDependencyHandling
-import org.jetbrains.intellij.build.productLayout.generator.embeddedCheckProductNames
 import org.jetbrains.intellij.build.productLayout.generator.filterPluginDependencies
 import org.jetbrains.intellij.build.productLayout.generator.planContentModuleDependenciesWithBothSets
 import org.jetbrains.intellij.build.productLayout.generator.updateGraphWithModuleDependencyPlans
@@ -124,8 +123,7 @@ internal suspend fun generatePluginDependencies(
     val outputProvider = testSetup.jps.outputProvider
     val contentModuleCache = AsyncCache<String, PlannedContentModuleResult?>()
     val testContentModuleCache = AsyncCache<String, DependencyFileResult?>()
-    val allRealProductNames = embeddedCheckProductNames(testSetup.products.map { it.name })
-    val pluginGraphDeps = collectPluginGraphDeps(graph = graph, allRealProductNames = allRealProductNames)
+    val pluginGraphDeps = collectPluginGraphDeps(graph = graph)
       .associateBy { it.pluginContentModuleName.value }
     val actionGroupProviderModules = buildActionGroupProviderModules(graph = graph, descriptorCache = descriptorCache)
 
@@ -137,7 +135,6 @@ internal suspend fun generatePluginDependencies(
           graphDeps = graphDeps,
           pluginContentCache = pluginContentCache,
           graph = graph,
-          allRealProductNames = allRealProductNames,
           outputProvider = outputProvider,
           descriptorCache = descriptorCache,
           actionGroupProviderModules = actionGroupProviderModules,
@@ -232,7 +229,6 @@ private suspend fun generatePluginDependency(
   graphDeps: PluginGraphDeps,
   pluginContentCache: PluginContentProvider,
   graph: PluginGraph,
-  allRealProductNames: Set<String>,
   outputProvider: ModuleOutputProvider,
   descriptorCache: ModuleDescriptorCache,
   actionGroupProviderModules: Map<String, Set<ContentModuleName>>,
@@ -313,8 +309,9 @@ private suspend fun generatePluginDependency(
       val generation = planContentModuleDependenciesWithBothSets(
         contentModuleName = contentModule,
         descriptorCache = descriptorCache,
+        outputProvider = outputProvider,
+        projectLibraryToModuleMap = outputProvider.getProjectLibraryToModuleMap(),
         pluginGraph = graph,
-        allRealProductNames = allRealProductNames,
         isTestDescriptor = isTestModule,
         suppressionConfig = effectiveConfig,
         updateSuppressions = updateSuppressions,
@@ -380,7 +377,7 @@ private fun writeContentModulePlan(plan: ContentModuleDependencyPlan, strategy: 
       testDependencies = emptyList(),
       existingXmlModuleDependencies = emptySet(),
       writtenPluginDependencies = emptyList(),
-      allJpsPluginDependencies = emptySet(),
+      requiredPluginDependencies = emptySet(),
       suppressionUsages = emptyList(),
     )
   }
@@ -403,7 +400,7 @@ private fun writeContentModulePlan(plan: ContentModuleDependencyPlan, strategy: 
     testDependencies = plan.testDependencies,
     existingXmlModuleDependencies = plan.existingXmlModuleDependencies,
     writtenPluginDependencies = plan.writtenPluginDependencies,
-    allJpsPluginDependencies = plan.allJpsPluginDependencies,
+    requiredPluginDependencies = plan.requiredPluginDependencies,
     suppressionUsages = plan.suppressionUsages,
   )
 }

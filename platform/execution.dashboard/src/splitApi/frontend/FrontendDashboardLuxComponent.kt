@@ -10,6 +10,7 @@ import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceRpc
 import com.intellij.platform.execution.serviceView.FrontendServiceViewLuxComponent
 import com.intellij.platform.project.projectId
 import com.intellij.ui.components.panels.Wrapper
+import fleet.rpc.client.RpcClientDisconnectedException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -33,19 +34,14 @@ class FrontendDashboardLuxComponent(scope: CoroutineScope,
         requestedBinding.collect { requested ->
           if (requested != bound) {
             bound = requested
-            if (requested) {
-              doBind()
-            }
-            else {
-              doUnbind()
-            }
+            updateBinding(requested)
           }
         }
       }
       finally {
         if (bound) {
           withContext(NonCancellable) {
-            doUnbind()
+            updateBinding(false)
           }
         }
       }
@@ -60,14 +56,21 @@ class FrontendDashboardLuxComponent(scope: CoroutineScope,
     requestedBinding.value = false
   }
 
-  private suspend fun doBind() {
-    val componentInfo = RunDashboardServiceRpc.getInstance().startLuxingContentForService(project.projectId(), id)
-    val component = componentInfo?.getComponent()
-    setContent(component)
-  }
-
-  private suspend fun doUnbind() {
-    setContent(null)
-    RunDashboardServiceRpc.getInstance().pauseLuxingContentForService(project.projectId(), id)
+  private suspend fun updateBinding(bind: Boolean) {
+    try {
+      if (bind) {
+        val componentInfo = RunDashboardServiceRpc.getInstance().startLuxingContentForService(project.projectId(), id)
+        val component = componentInfo?.getComponent()
+        setContent(component)
+      }
+      else {
+        setContent(null)
+        RunDashboardServiceRpc.getInstance().pauseLuxingContentForService(project.projectId(), id)
+      }
+    }
+    catch (_: RpcClientDisconnectedException) {
+      // The backend side of the luxed content is already gone.
+      setContent(null)
+    }
   }
 }

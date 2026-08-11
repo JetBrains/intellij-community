@@ -248,13 +248,6 @@ public final class MultipleBuildsViewImpl implements MultipleBuildsView {
           threeComponentsSplitter.setFirstComponent(scrollPane);
           myBuildsList.setVisible(true);
           myBuildsList.setSelectedIndex(0);
-
-          for (BuildView consoleView : myViewMap.values()) {
-            BuildTreeConsoleView buildConsoleView = consoleView.getView(BuildTreeConsoleView.class.getName(), BuildTreeConsoleView.class);
-            if (buildConsoleView != null) {
-              buildConsoleView.hideRootNode();
-            }
-          }
         }
         else {
           threeComponentsSplitter.setFirstComponent(null);

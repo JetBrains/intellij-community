@@ -1,0 +1,204 @@
+---
+name: poly-symbols
+description: Implement PolySymbols completion, references, rename, and docs across languages.
+---
+
+# PolySymbols
+
+PolySymbols is a framework built on top of the platform's [Symbol API](../symbols-api/SKILL.md)
+(`PolySymbol : Symbol`) for sharing symbol definitions and code-insight features (completion,
+references, documentation, navigation, rename, find-usages, semantic highlighting) across
+languages and frameworks. It was called "Web Symbols" in 2022.3–2025.1 and is still marked
+experimental. Core module: `community/platform/polySymbols/` (`src`, `backend`, `src-web`).
+
+### Do not modify PolySymbols platform source
+
+**Never edit anything under `community/platform/polySymbols/**` without the user's explicit,
+one-time permission for that specific change** — not even a small, purely-additive generalization
+that looks obviously safe. This is shared framework code consumed by every PolySymbols integration
+in the repo (Angular, Vue, CSS, JS, GDScript, mermaid, etc.); a "safe-looking" generalization made to
+fix one integration's test can silently change behavior for all the others. If you hit a real gap or
+limitation in platform behavior while integrating a language/framework, the default response is to
+**report it and ask**, not to patch the platform — the right fix is almost always something owned by
+your own plugin (a plugin-registered EP implementation, e.g. its own `UsageSearcher`/
+`RenameUsageSearcher`/`CustomUsageSearcher`, not a platform-file edit). This was learned the hard way:
+a session generalized `PolySymbolUsageSearcher`'s `PsiLinkedPolySymbol`-only raw-PSI-reference bridge
+to also cover `PolySymbolDeclaredInPsi`, when the actual, documented platform design is that
+`PolySymbolDeclaredInPsi` intentionally does **not** provide that bridge (see
+[references/query-model.md](references/query-model.md#declarations)) — the fix should have stopped
+at "ask the user," not at "patch the framework."
+
+Implementing a new integration typically means: build declaration/reference/completion providers
+on the platform side as usual, plus a handful of PolySymbols contributor classes — find-usages,
+documentation, and rename then work automatically through reference resolution to a `PolySymbol`.
+
+### Consumer code must not cast to a concrete symbol class
+
+**Code that *consumes* `PolySymbol`s (annotators, inspections, completion/line-marker/parameter-info
+providers — and a language integration's own customizers/scopes, not just downstream callers)
+should never cast a `PolySymbol` to a concrete implementation class to detect its kind or read its
+data.** This is explicitly documented in `PolySymbol.kt`'s own "## Properties" doc comment ("when you
+get results from a `PolySymbolQueryExecutor` query, you should avoid casting symbols to specialized
+interfaces... a query may return symbols of unexpected classes contributed by some 3rd party
+plugins") — it is a platform convention every consumer is expected to follow, not a one-off rule:
+
+- **Kind detection** → check the `kind` property (`symbol.kind == SomeKind`), which is always
+  available on the plain `PolySymbol` interface. Never `is ConcreteLeafSymbolClass`.
+- **Any other data** (a type, a signature, a navigable element, a boolean flag not expressible via
+  `kind`) → define a `PolySymbolProperty<T>` object and annotate the concrete class's real member
+  with `@PolySymbol.Property(TheProperty::class)`, then read it via `symbol[TheProperty]` (the
+  `PolySymbol.get` operator) — never `(symbol as? ConcreteLeafSymbolClass)?.someMember`.
+- **Package the property behind a `PolySymbol.xxx` extension**, so consumer call sites read
+  `symbol.xxx` and never see the property object or a cast at all — mirror
+  `plugins/JavaScriptLanguage/web-platform/src/com/intellij/polySymbols/js/JSSymbolUtils.kt`'s
+  `PolySymbol.jsType`/`jsKind`/`toPropertySignature`, the reference example cited in `PolySymbol.kt`
+  itself. Note `toPropertySignature`'s fallback branch (when the property is absent) builds its
+  result purely from other plain `PolySymbol` members (`name`, `modifiers`, `jsType`) — it never
+  casts, not even as a fallback.
+- A **shared, uniformly-implemented interface** across a framework's own symbol kinds (e.g.
+  GDScript's `GdClassSymbol`, exposing `directMemberScope`/`resolveSuperClassSymbol()` identically
+  from both PSI- and SDK-backed class symbols) is *not* what this rule targets — that's legitimate
+  polymorphic dispatch within a framework's own resolution machinery, not "cast down to read hidden,
+  kind/backing-specific data" in consumer code. The anti-pattern is casting to a *leaf* class
+  (`GdPsiMethodSymbol`, `GdSdkClassSymbol`) or a *backing-specific* base (`GdPsiPolySymbol` vs.
+  `GdSdkPolySymbol`) from outside the symbol-definition package.
+- **Reflection technique worth knowing**: a `@PolySymbol.Property`-annotated member declared once on
+  a shared *abstract base class* is found by every subclass automatically — `PolySymbolPropertyGetter`
+  walks superclasses/interfaces when building its per-concrete-class accessor map, and Java/Kotlin
+  generate a bridge method (matching the base class's erased signature) for any subclass override
+  with a covariant return type, which is exactly what `Method.invoke()` resolves against. So you
+  don't need to repeat the annotation on every leaf subclass when the member is inherited unchanged.
+
+## Interface cheat sheet
+
+| Interface / class | Purpose |
+|---|---|
+| `PolySymbol` | Core element — `kind` (namespace + kindName) + `name`, plus optional icon/priority/modifiers/apiStatus/pattern |
+| `PolySymbolScope` | A symbol that *contains* other symbols (an HTML element containing attributes, a JS class containing members) |
+| `PolySymbolQueryExecutor` / `Factory` | Runs `nameMatchQuery`/`listSymbolsQuery`/`codeCompletionQuery` against contributed scopes |
+| `PolySymbolQueryScopeContributor` | Registers `PolySymbolScope`s for a PSI location — the main extension point you implement |
+| `PolySymbolQueryConfigurator` | Supplies `PolyContext` rules + symbol name-conversion rules |
+| `PsiPolySymbolReferenceProvider` | Resolves a host `PsiElement` to a referenced `PolySymbol` — registered via EP, produces *external* references |
+| `PolySymbolOwnReferences` | Alternative to `PsiPolySymbolReferenceProvider`: builds references to return from `PsiElement.getOwnReferences()` directly — a language's own canonical resolve, not EP-registered |
+| `PolySymbolDeclarationProvider` | Supplies `PolySymbolDeclaration`s for a `PsiElement` (skip if `PsiLinkedPolySymbol` covers your case) |
+| `PolySymbolsCompletionProviderBase` | Base class for a `CompletionProvider` that runs a `codeCompletionQuery` |
+| `PolySymbolWithPattern` | A symbol expanded via a microsyntax pattern into a `PolySymbolMatch` |
+| `PsiLinkedPolySymbol` | A symbol backed 1:1 by a real `PsiElement` — gets declarations/navigation/find-usages "for free" |
+| `ReferencingPolySymbol` | Utility: makes one symbol kind stand in for/alias another kind |
+| `PolyContext` | Gates scopes/configurators here, but is a general-purpose, performance-optimized context API usable well beyond PolySymbols — see **[poly-context](../poly-context/SKILL.md)** |
+| Web Types | Static JSON symbol definitions — see **[references/web-types.md](references/web-types.md)** |
+
+See **[references/query-model.md](references/query-model.md)** for the full query/scope/declaration/
+reference/completion wiring, and **[references/patterns.md](references/patterns.md)** for the
+pattern DSL and microsyntax matching.
+
+## The rule: PolySymbols is additive, not automatically authoritative
+
+**Every real integration studied in this repo keeps legacy PSI-based reference/completion code
+running alongside PolySymbols — none resolve entirely through it.** This is not a migration
+artifact you can ignore; it is the load-bearing design fact for anyone adding a new integration.
+See **[references/case-studies.md](references/case-studies.md)** for full detail, but the pattern
+repeats everywhere:
+
+- **JS/TS/HTML/CSS** (the platform's own built-in support) grafts PolySymbols onto pre-existing
+  extension points (`XmlElementDescriptorProvider`, `css.elementDescriptorProvider`,
+  `JSReferenceExpression.resolve()`) and *explicitly steps aside* for standard/spec symbols —
+  e.g. `HtmlElementSymbolDescriptorsProvider.getElementDescriptor()` returns `null` when the query
+  result `hasOnlyStandardHtmlSymbols()`, deferring to the bundled RelaxNG HTML5 schema; the legacy
+  `CssElementDescriptorProviderImpl` is kept registered with `order="last"` as the CSS fallback;
+  `TypeScriptReferenceExpressionResolver` only consults PolySymbols for unqualified references
+  inside injected/embedded expression hosts. Standard tag/attribute/property lists are **not**
+  Web Types data — they're the pre-existing RelaxNG schema and webref CSS XML.
+- **Vue and Angular** — the docs' own "heaviest adopters" — are close to fully PolySymbols-driven
+  for their *template/markup* surface (components, directives/selectors, props/inputs, slots,
+  events, modifiers), but Vuex, `<style src>`/`ref=`/file-path references, and CSS `v-bind()`
+  bindings (Vue), and the Angular2 expression-language layer, `templateUrl`/pipe-name references
+  (Angular) all still run through plain `PsiReferenceContributor`/`CompletionContributor` code with
+  no PolySymbols involvement at all.
+- **GDScript**, the newest integration, is explicitly dual-track by its own admission — its
+  in-tree README (`dotnet/Plugins/godot-support/gdscript/.../polySymbols/README.md`) states the PSI
+  and PolySymbols implementations both run today and produce **duplicate Find Usages results**
+  until the legacy path is deleted. Local variables, parameters, for-loop bindings, resource-path
+  references, and the entire TSCN language have no PolySymbols coverage yet.
+
+**Actionable takeaway:** for every new integration or feature, decide *explicitly* whether
+PolySymbols is the resolution path of record for that PSI element/feature, or merely a
+supplementary layer contributing extra symbols on top of an existing mechanism. If a legacy
+`PsiReferenceContributor`/`CompletionContributor` and a new PolySymbols registration can both fire
+on the *same* host `PsiElement`, either gate one off (a feature flag, a `context` check, an early
+`return null`/empty-list from whichever should defer) or accept and document the overlap — don't
+assume the platform will pick one for you.
+
+## Wiring checklist — adding PolySymbol support
+
+1. **Opt the language in**: register `polySymbols.enableInLanguage language="..."` (EP
+   `com.intellij.polySymbols.enableInLanguage`) so `PsiExternalReferenceHost`s in that language are
+   eligible for PolySymbols reference resolution at all.
+2. **Contribute scopes**: implement `PolySymbolQueryScopeContributor`
+   (EP `com.intellij.polySymbols.queryScopeContributor`) — map PSI locations to `PolySymbolScope`s
+   via the registrar DSL. This is almost always the first and most important class you write.
+   Details: [references/query-model.md](references/query-model.md).
+3. **Resolve references**: implement `PsiPolySymbolReferenceProvider` per host `PsiElement` type
+   (EP `com.intellij.polySymbols.psiReferenceProvider`, one registration per `hostElementClass`).
+   Alternative: implement `PsiElement.getOwnReferences()` directly via the `PolySymbolOwnReferences`
+   builder when PolySymbols should be the language's own canonical resolve rather than an
+   EP-contributed layer (e.g. replacing a legacy `PsiReferenceContributor`) — see
+   [references/query-model.md](references/query-model.md#references--own-references-polysymbolownreferences).
+   Don't register both for the same host — own references pre-empt external ones.
+4. **Supply declarations**: if a symbol maps 1:1 onto a real `PsiElement` and lives purely in the
+   PolySymbols model, implement `PolySymbolDeclaredInPsi` plus a `PolySymbolDeclarationProvider`
+   (EP `com.intellij.polySymbols.declarationProvider`) that builds the symbol — this is the default.
+   **The provider is pure dispatch**: decide which symbol(s) a `PsiElement` backs, instantiate them,
+   and return `symbol.declaration` (the interface's own default). Don't hand-roll a
+   `PolySymbolDeclaration` implementation or thread a range through the provider — a non-default
+   declaration range is a `textRangeInSourceElement` override on the symbol class itself; the symbol
+   represents itself, the provider only knows *which* symbol to build.
+   Reach for `PsiLinkedPolySymbol` + `polySymbols.psiLinkedSymbol host="..."` only when that same
+   `PsiElement` must *also* keep working as a target for a **legacy, non-PolySymbols**
+   find-usages/rename mechanism you're running alongside (a bridge for partial migrations, not a
+   general shortcut — see [references/query-model.md](references/query-model.md#declarations)).
+   For symbols with no backing `PsiElement` at all (synthetic/SDK symbols), write a
+   `PolySymbolDeclarationProvider` by hand.
+5. **Wire completion**: register an ordinary `completion.contributor` whose provider extends
+   `PolySymbolsCompletionProviderBase` and calls `queryExecutor.codeCompletionQuery(...)`.
+6. **Optional**: `PolySymbolQueryConfigurator` for context rules/name-conversion rules;
+   `PolySymbolQueryResultsCustomizerFactory` to post-filter/remap query results;
+   `polySymbols.webTypes` if standard-library symbols can be shipped as static JSON instead of code
+   (see [references/web-types.md](references/web-types.md)); a `PolySymbolFramework`
+   (`polySymbols.framework`) + `PolyContextProvider` (`polySymbols.context`) if you're introducing a
+   new framework identity (see [poly-context](../poly-context/SKILL.md)).
+7. Use `PolySymbolWithPattern`/the pattern DSL when the language/framework layers a microsyntax on
+   top of base syntax (directive-style attribute names, event-modifier chains). See
+   [references/patterns.md](references/patterns.md).
+
+## Case studies
+
+Four real integrations in this repo, each ending in an explicit PolySymbols-vs-legacy verdict — read
+[references/case-studies.md](references/case-studies.md) for the full writeup with file:line
+evidence.
+
+| Integration | Where | One-line verdict |
+|---|---|---|
+| GDScript | `dotnet/Plugins/godot-support/gdscript/.../polySymbols/` | Dual-track: SDK/engine symbols are PolySymbols-first; user-code locals, resource refs, and TSCN are legacy-only, both paths run concurrently on some elements |
+| JS/TS, HTML, CSS | `plugins/JavaScriptLanguage/web-platform/`, `community/xml`, `plugins/css` | PolySymbols is grafted onto legacy extension points and steps aside for anything standard/spec-defined |
+| Vue | `contrib/vuejs/vuejs-backend/src/org/jetbrains/vuejs/web/` | Template/markup surface (components/directives/props/slots/events) is ~fully PolySymbols; Vuex, refs, CSS bindings are not |
+| Angular | `contrib/Angular/angular-backend/src/org/angular2/web/` | Markup/selector surface is ~fully PolySymbols; the Angular2 expression-language layer and some file/pipe-name refs are not |
+
+## Related skills
+
+- **[symbols-api](../symbols-api/SKILL.md)** — the `Symbol` foundation this framework builds on.
+- **[poly-context](../poly-context/SKILL.md)** — framework/environment detection.
+- Official docs: [Poly Symbols](https://plugins.jetbrains.com/docs/intellij/polysymbols.html),
+  [Implementing Poly Symbols](https://plugins.jetbrains.com/docs/intellij/polysymbols-implementation.html),
+  [Poly Symbols Integration with Language Features](https://plugins.jetbrains.com/docs/intellij/polysymbols-integration.html).
+
+## Supporting files
+
+Load only when needed:
+
+- [Query model](references/query-model.md) — query executor, scopes, contributors, configurators, declarations, references, completion, search/rename/nav hookups.
+- [Patterns](references/patterns.md) — the pattern DSL, `PolySymbolMatch`/name segments, `ReferencingPolySymbol`, the Vue directive worked example.
+- [Case studies](references/case-studies.md) — GDScript, JS/TS/HTML/CSS, Vue, Angular, in depth.
+- [Web Types](references/web-types.md) — static JSON symbol definitions.
+- [Testing](references/testing.md) — writing tests for a PolySymbols integration: the `PolySymbolsTestCase` hierarchy, the `PolySymbolsTestUtil.kt` cheat sheet, feature-by-feature recipes.
+- [Migration](references/migration.md) — migrating a PSI-based feature to PolySymbols, tests-first: the preliminary-tests-migration recipe, forbidden `CodeInsightTestFixture` methods, the per-kind production migration unit.

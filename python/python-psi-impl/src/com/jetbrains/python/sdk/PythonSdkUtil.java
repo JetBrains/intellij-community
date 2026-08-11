@@ -9,12 +9,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -99,22 +97,22 @@ public final class PythonSdkUtil {
   }
 
   /**
-   * @deprecated use {@link PyRichSdk}
+   * @deprecated use {@link PythonInterpreter}
    */
   @Deprecated
   @RequiresBackgroundThread(generateAssertion = false)
   public static boolean isVirtualEnv(@NotNull Sdk sdk) {
-    return PyRichSdkKt.pyRichSdk(sdk, false).getPythonEnvironment() instanceof PythonEnvironment.Venv;
+    return PythonInterpreterKt.pythonInterpreter(sdk, false).getPythonEnvironment() instanceof PythonEnvironment.Venv;
   }
 
   /**
-   * @deprecated use {@link PyRichSdk}
+   * @deprecated use {@link PythonInterpreter}
    */
   @Deprecated
   @RequiresBackgroundThread(generateAssertion = false)
   public static boolean isCondaVirtualEnv(@NotNull Sdk sdk) {
-    PyRichSdk pyRichSdk = PyRichSdkKt.pyRichSdk(sdk, false);
-    PythonEnvironment environment = pyRichSdk.getPythonEnvironment();
+    PythonInterpreter pythonInterpreter = PythonInterpreterKt.pythonInterpreter(sdk, false);
+    PythonEnvironment environment = pythonInterpreter.getPythonEnvironment();
     return environment instanceof PythonEnvironment.Conda && !((PythonEnvironment.Conda)environment).isBase();
   }
 }

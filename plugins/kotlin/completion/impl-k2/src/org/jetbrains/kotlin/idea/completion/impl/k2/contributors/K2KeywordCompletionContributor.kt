@@ -18,10 +18,10 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
 import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeToken
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.implCommon.keywords.BreakContinueKeywordHandler
-import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandlerProvider
-import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandlers
-import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHandlerProvider
-import org.jetbrains.kotlin.idea.completion.keywords.createLookups
+import org.jetbrains.kotlin.idea.completion.implCommon.keywords.CompletionKeywordHandlerProvider
+import org.jetbrains.kotlin.idea.completion.implCommon.keywords.CompletionKeywordHandlers
+import org.jetbrains.kotlin.idea.completion.implCommon.keywords.DefaultCompletionKeywordHandlerProvider
+import org.jetbrains.kotlin.idea.completion.implCommon.keywords.createLookups
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinAnnotationTypeNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinClassifierNamePositionContext

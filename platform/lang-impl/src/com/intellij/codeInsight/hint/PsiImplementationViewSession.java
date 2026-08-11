@@ -282,7 +282,7 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
 
     if (element == null && file == null) return null;
     PsiFile containingFile = element != null ? element.getContainingFile() : file;
-    if (containingFile == null || !containingFile.getViewProvider().isPhysical()) return null;
+    if (containingFile == null || !containingFile.getViewProvider().correspondsToRealFile()) return null;
 
 
     PsiReference ref = null;

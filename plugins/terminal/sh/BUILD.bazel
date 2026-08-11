@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.terminal.sh` start
-
 jvm_library(
     name = "sh",
     srcs = glob(
@@ -18,7 +17,6 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -49,7 +47,6 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//plugins/terminal:terminal_test_lib",
         "//plugins/sh/core:core_test_lib",
-        "//platform/backend:backend_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
     ],

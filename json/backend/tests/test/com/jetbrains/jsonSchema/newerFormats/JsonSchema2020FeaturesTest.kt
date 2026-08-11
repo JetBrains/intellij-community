@@ -4,6 +4,7 @@ package com.jetbrains.jsonSchema.newerFormats
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.navigation.action.GotoDeclarationUtil
 import com.intellij.json.psi.JsonProperty
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.asSafely
@@ -13,9 +14,14 @@ import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectBackedByJackson
 import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage
 import org.junit.Assert
 
-internal class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
+internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
   override val testDataLanguage: TestDataLanguage
     get() = TestDataLanguage.JSON
+
+  override fun setUp() {
+    super.setUp()
+    Registry.get("json.schema.use.networknt.validation").setValue(false, testRootDisposable)
+  }
 
   fun `test dynamic anchor resolve`() {
     val schemaFile = LightVirtualFile("schema.json", """
@@ -214,7 +220,7 @@ internal class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
-  fun `test array items validation against always invalid schema`() {
+  open fun `test array items validation against always invalid schema`() {
     doTestSchemaValidation(
       """
         {
@@ -550,7 +556,7 @@ internal class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     }
   }
 
-  fun `test unevaluatedProperties constant support`() {
+  open fun `test unevaluatedProperties constant support`() {
     doTestSchemaValidation(
       """
         {
@@ -609,7 +615,7 @@ internal class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
-  fun `test unevaluatedProperties with pattern`() {
+  open fun `test unevaluatedProperties with pattern`() {
     doTestSchemaValidation(
       """
         {
@@ -668,7 +674,7 @@ internal class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
-  fun `test unevaluatedProperties with adjacent nested properties`() {
+  open fun `test unevaluatedProperties with adjacent nested properties`() {
     doTestSchemaValidation(
       """
         {
@@ -703,7 +709,7 @@ internal class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
-  fun `test unevaluatedItems constant schema validation`() {
+  open fun `test unevaluatedItems constant schema validation`() {
     doTestSchemaValidation(
       """
         {
@@ -741,7 +747,7 @@ internal class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
-  fun `test unevaluatedItems and prefixItems compound validation`() {
+  open fun `test unevaluatedItems and prefixItems compound validation`() {
     doTestSchemaValidation(
       """
         {

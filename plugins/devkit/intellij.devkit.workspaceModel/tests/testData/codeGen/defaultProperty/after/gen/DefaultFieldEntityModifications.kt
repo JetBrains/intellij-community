@@ -21,9 +21,8 @@ var defaultSet: MutableSet<String>
 var defaultList: MutableList<String>
 var defaultMap: Map<String, String>
 }
-
 internal object DefaultFieldEntityType : EntityType<DefaultFieldEntity, DefaultFieldEntityBuilder>(){
-override val entityClass: Class<DefaultFieldEntity> get() = DefaultFieldEntity::class.java
+override val entityImplClass: Class<*> get() = DefaultFieldEntityImpl::class.java
 override val entityImplBuilderClass: Class<*> get() = DefaultFieldEntityImpl.Builder::class.java
 operator fun invoke(
 version: Int,
@@ -39,12 +38,10 @@ init?.invoke(builder)
 return builder
 }
 }
-
 fun MutableEntityStorage.modifyDefaultFieldEntity(
 entity: DefaultFieldEntity,
 modification: DefaultFieldEntityBuilder.() -> Unit,
 ): DefaultFieldEntity = modifyEntity(DefaultFieldEntityBuilder::class.java, entity, modification)
-
 @JvmOverloads
 @JvmName("createDefaultFieldEntity")
 fun DefaultFieldEntity(

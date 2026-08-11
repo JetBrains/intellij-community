@@ -7,4 +7,5 @@ fun testing() {}
 // EXIST: in
 // EXIST: out
 // EXIST: reified
+// EXIST: context
 // NOTHING_ELSE

@@ -36,10 +36,32 @@ data class PythonPackageMetadata(
   val license: @NlsSafe String = "",
   @SerialName("requires_python") val requiresPython: @NlsSafe String = "",
   val keywords: @NlsSafe String = "",
-  @SerialName("project_urls") val projectUrls: Map<@NlsSafe String, @NlsSafe String> = emptyMap(),
+  @SerialName("project_urls") private val projectUrls: Map<@NlsSafe String, @NlsSafe String> = emptyMap(),
   @SerialName("requires_dist") val requiresDist: List<@NlsSafe String> = emptyList(),
   val classifiers: List<@NlsSafe String> = emptyList(),
-)
+) {
+  /**
+   * [projectUrls] restricted to entries whose value is a browser-safe absolute web URL (http/https).
+   *
+   * METADATA is attacker-controlled input: a malicious distribution can declare
+   * `Project-URL: Homepage, javascript:…`, and handing that value to `HTMLEditorProvider.openEditor`
+   * would execute the script in the resulting JCEF tab (PY-90871). The raw [projectUrls] map is
+   * private precisely so consumers that turn a project URL into a clickable/openable link (navigation,
+   * Quick Doc) can only reach it through this filtered view — the scheme allowlist lives in one place
+   * instead of being duplicated, and re-forgotten, at every call site.
+   */
+  val safeProjectUrls: Map<@NlsSafe String, @NlsSafe String> by lazy {
+    projectUrls.filterValues(::isBrowserSafeUrl)
+  }
+}
+
+// http/https allowlist. Everything else (javascript:, data:, file:, mailto:, scheme-relative or
+// relative refs) is unsafe and dropped, matching what BrowserUtil/JCEF should ever open. Leading
+// whitespace is tolerated (\s*) so a stray-padded but otherwise valid URL still resolves; http://
+// stays allowed on purpose, since plenty of package homepages are still plain http.
+private val BROWSER_SAFE_SCHEME = Regex("""^\s*https?://""", RegexOption.IGNORE_CASE)
+
+private fun isBrowserSafeUrl(url: String): Boolean = BROWSER_SAFE_SCHEME.containsMatchIn(url)
 
 /**
  * Parses the JSON emitted by `read_package_metadata.py` into a PEP 503-normalized
@@ -84,12 +106,15 @@ suspend fun Sdk.loadInstalledPackagesMetadata(): PyResult<Map<PyPackageName, Pyt
  * Picks the most informative `Project-URL:` entry: Homepage > Documentation > Source > Repository,
  * matched case-insensitively against METADATA's keys. The returned [ProjectUrl.label] is the
  * canonical capitalisation from the priority list, even when METADATA spelled the key differently.
+ *
+ * Only [PythonPackageMetadata.safeProjectUrls] are considered, so an unsafe-scheme upstream URL is
+ * skipped in favour of the next safe candidate (or `null`) rather than surfaced for navigation.
  */
 @ApiStatus.Internal
 fun PythonPackageMetadata.preferredProjectUrl(): ProjectUrl? {
-  if (projectUrls.isEmpty()) return null
+  if (safeProjectUrls.isEmpty()) return null
   for (priority in PROJECT_URL_PRIORITY) {
-    val match = projectUrls.entries.firstOrNull { it.key.equals(priority, ignoreCase = true) && it.value.isNotBlank() }
+    val match = safeProjectUrls.entries.firstOrNull { it.key.equals(priority, ignoreCase = true) && it.value.isNotBlank() }
     if (match != null) return ProjectUrl(priority, match.value)
   }
   return null

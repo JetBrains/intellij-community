@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -36,6 +39,8 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
+@Subsystems.QuickDocumentation
+@Layers.Functional
 public class PySectionBasedDocStringTest extends PyTestCase {
 
   public void testSimpleGoogleDocString() {

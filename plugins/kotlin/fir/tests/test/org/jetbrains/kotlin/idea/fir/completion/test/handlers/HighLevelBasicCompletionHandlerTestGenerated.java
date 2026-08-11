@@ -253,34 +253,81 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/handlers/basic/contextSensitiveResolution")
-        public static class ContextSensitiveResolution extends AbstractHighLevelBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        public abstract static class ContextSensitiveResolution extends AbstractHighLevelBasicCompletionHandlerTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../completion/testData/handlers/basic/contextSensitiveResolution/expressions")
+            public static class Expressions extends AbstractHighLevelBasicCompletionHandlerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("dontQualifyQualifiedEnum.kt")
+                public void testDontQualifyQualifiedEnum() throws Exception {
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/expressions/dontQualifyQualifiedEnum.kt");
+                }
+
+                @TestMetadata("qualifyEnum.kt")
+                public void testQualifyEnum() throws Exception {
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/expressions/qualifyEnum.kt");
+                }
+
+                @TestMetadata("shortenEnumInParameter.kt")
+                public void testShortenEnumInParameter() throws Exception {
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/expressions/shortenEnumInParameter.kt");
+                }
+
+                @TestMetadata("shortenEnumInVariableDeclaration.kt")
+                public void testShortenEnumInVariableDeclaration() throws Exception {
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/expressions/shortenEnumInVariableDeclaration.kt");
+                }
+
+                @TestMetadata("shortenEnumInWhenBranch.kt")
+                public void testShortenEnumInWhenBranch() throws Exception {
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/expressions/shortenEnumInWhenBranch.kt");
+                }
             }
 
-            @TestMetadata("dontQualifyQualifiedEnum.kt")
-            public void testDontQualifyQualifiedEnum() throws Exception {
-                runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/dontQualifyQualifiedEnum.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../completion/testData/handlers/basic/contextSensitiveResolution/types")
+            public static class Types extends AbstractHighLevelBasicCompletionHandlerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("qualifyEnum.kt")
-            public void testQualifyEnum() throws Exception {
-                runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/qualifyEnum.kt");
-            }
+                @TestMetadata("dontShortenSealedSubclassInIsFeatureDisabled.kt")
+                public void testDontShortenSealedSubclassInIsFeatureDisabled() throws Exception {
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/types/dontShortenSealedSubclassInIsFeatureDisabled.kt");
+                }
 
-            @TestMetadata("shortenEnumInParameter.kt")
-            public void testShortenEnumInParameter() throws Exception {
-                runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/shortenEnumInParameter.kt");
-            }
+                @TestMetadata("dontShortenSealedSubclassInIsUnrelatedLhs.kt")
+                public void testDontShortenSealedSubclassInIsUnrelatedLhs() throws Exception {
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/types/dontShortenSealedSubclassInIsUnrelatedLhs.kt");
+                }
 
-            @TestMetadata("shortenEnumInVariableDeclaration.kt")
-            public void testShortenEnumInVariableDeclaration() throws Exception {
-                runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/shortenEnumInVariableDeclaration.kt");
-            }
+                @TestMetadata("shortenSealedSubclassInAs.kt")
+                public void testShortenSealedSubclassInAs() throws Exception {
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/types/shortenSealedSubclassInAs.kt");
+                }
 
-            @TestMetadata("shortenEnumInWhenBranch.kt")
-            public void testShortenEnumInWhenBranch() throws Exception {
-                runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/shortenEnumInWhenBranch.kt");
+                @TestMetadata("shortenSealedSubclassInAsSafe.kt")
+                public void testShortenSealedSubclassInAsSafe() throws Exception {
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/types/shortenSealedSubclassInAsSafe.kt");
+                }
+
+                @TestMetadata("shortenSealedSubclassInIs.kt")
+                public void testShortenSealedSubclassInIs() throws Exception {
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/types/shortenSealedSubclassInIs.kt");
+                }
+
+                @TestMetadata("shortenSealedSubclassInNegatedIs.kt")
+                public void testShortenSealedSubclassInNegatedIs() throws Exception {
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/types/shortenSealedSubclassInNegatedIs.kt");
+                }
+
+                @TestMetadata("shortenSealedSubclassInWhenIsBranch.kt")
+                public void testShortenSealedSubclassInWhenIsBranch() throws Exception {
+                    runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/types/shortenSealedSubclassInWhenIsBranch.kt");
+                }
             }
         }
 
@@ -816,6 +863,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../../completion/testData/handlers/basic/override/ImplementAnnotatedFunctionMultipleAnnotations2.kt");
             }
 
+            @TestMetadata("ImplementAnnotatedFunctionWithExistingAnnotation.kt")
+            public void testImplementAnnotatedFunctionWithExistingAnnotation() throws Exception {
+                runTest("../../completion/testData/handlers/basic/override/ImplementAnnotatedFunctionWithExistingAnnotation.kt");
+            }
+
             @TestMetadata("ImplementAnnotatedFunctionWithExtension.kt")
             public void testImplementAnnotatedFunctionWithExtension() throws Exception {
                 runTest("../../completion/testData/handlers/basic/override/ImplementAnnotatedFunctionWithExtension.kt");
@@ -1128,9 +1180,19 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../../completion/testData/handlers/basic/stringTemplate/GlobalValInCurlyBraces.kt");
             }
 
+            @TestMetadata("IndexingOperator.kt")
+            public void testIndexingOperator() throws Exception {
+                runTest("../../completion/testData/handlers/basic/stringTemplate/IndexingOperator.kt");
+            }
+
             @TestMetadata("InsertCurlyBracesBeforeLetter.kt")
             public void testInsertCurlyBracesBeforeLetter() throws Exception {
                 runTest("../../completion/testData/handlers/basic/stringTemplate/InsertCurlyBracesBeforeLetter.kt");
+            }
+
+            @TestMetadata("InvokeOperator.kt")
+            public void testInvokeOperator() throws Exception {
+                runTest("../../completion/testData/handlers/basic/stringTemplate/InvokeOperator.kt");
             }
 
             @TestMetadata("NotEmptyPrefix.kt")
@@ -2029,6 +2091,26 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             runTest("../../completion/testData/handlers/AddNameToExistingArgument.kt");
         }
 
+        @TestMetadata("AnonymousObjectAliasedImportedJavaType.kt")
+        public void testAnonymousObjectAliasedImportedJavaType() throws Exception {
+            runTest("../../completion/testData/handlers/AnonymousObjectAliasedImportedJavaType.kt");
+        }
+
+        @TestMetadata("AnonymousObjectImportedJavaType.kt")
+        public void testAnonymousObjectImportedJavaType() throws Exception {
+            runTest("../../completion/testData/handlers/AnonymousObjectImportedJavaType.kt");
+        }
+
+        @TestMetadata("AnonymousObjectNonImportedJavaType.kt")
+        public void testAnonymousObjectNonImportedJavaType() throws Exception {
+            runTest("../../completion/testData/handlers/AnonymousObjectNonImportedJavaType.kt");
+        }
+
+        @TestMetadata("AnonymousObjectStarImportedJavaType.kt")
+        public void testAnonymousObjectStarImportedJavaType() throws Exception {
+            runTest("../../completion/testData/handlers/AnonymousObjectStarImportedJavaType.kt");
+        }
+
         @TestMetadata("BasicCompletionWorksAfterLastAllowedArgument.kt")
         public void testBasicCompletionWorksAfterLastAllowedArgument() throws Exception {
             runTest("../../completion/testData/handlers/BasicCompletionWorksAfterLastAllowedArgument.kt");
@@ -2077,6 +2159,16 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
         @TestMetadata("ClassFromClassObjectInPackage.kt")
         public void testClassFromClassObjectInPackage() throws Exception {
             runTest("../../completion/testData/handlers/ClassFromClassObjectInPackage.kt");
+        }
+
+        @TestMetadata("ConstructorJavaType.kt")
+        public void testConstructorJavaType() throws Exception {
+            runTest("../../completion/testData/handlers/ConstructorJavaType.kt");
+        }
+
+        @TestMetadata("ConstructorNonJavaType.kt")
+        public void testConstructorNonJavaType() throws Exception {
+            runTest("../../completion/testData/handlers/ConstructorNonJavaType.kt");
         }
 
         @TestMetadata("DoNotInsertDefaultJsImports.kt")
@@ -2277,6 +2369,16 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
         @TestMetadata("PropertiesGetter.kt")
         public void testPropertiesGetter() throws Exception {
             runTest("../../completion/testData/handlers/PropertiesGetter.kt");
+        }
+
+        @TestMetadata("SAMImportedJavaType.kt")
+        public void testSAMImportedJavaType() throws Exception {
+            runTest("../../completion/testData/handlers/SAMImportedJavaType.kt");
+        }
+
+        @TestMetadata("SAMNonImportedJavaType.kt")
+        public void testSAMNonImportedJavaType() throws Exception {
+            runTest("../../completion/testData/handlers/SAMNonImportedJavaType.kt");
         }
 
         @TestMetadata("SingleBrackets.kt")

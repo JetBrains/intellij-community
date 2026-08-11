@@ -343,7 +343,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
    */
   @Test
   @IJIgnore(issue = "IDEA-350585")
-  @Ignore
+  @Ignore("IDEA-350585")
   public void testPumpingExceptionPropagation() throws Exception {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
     TestLoggerKt.rethrowLoggedErrorsIn(() -> {

@@ -1,2 +1,2 @@
-org.jetbrains.kotlin.idea.k2.codeinsight.intentions.RemoveEmptyPrimaryConstructorIntention
+org.jetbrains.kotlin.idea.codeinsight.intentions.RemoveEmptyPrimaryConstructorIntention
 

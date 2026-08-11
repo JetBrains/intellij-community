@@ -1,27 +1,42 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.maven.configuration
 
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.testRootDisposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
-import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenImporterTest
-import org.junit.Test
+import org.jetbrains.kotlin.idea.maven.KotlinMavenImportingTestBase
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class KotlinMavenAutoConfigTest : AbstractKotlinMavenImporterTest() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class KotlinMavenAutoConfigTest(mavenVersion: String, modelVersion: String) :
+    KotlinMavenImportingTestBase(mavenVersion, modelVersion) {
 
-    override fun shouldRunTest(): Boolean {
-        return super.shouldRunTest() && !AndroidStudioTestUtils.skipIncompatibleTestAgainstAndroidStudio()
+    @BeforeEach
+    fun assumeNotAndroidStudio() {
+        Assumptions.assumeFalse(AndroidStudioTestUtils.skipIncompatibleTestAgainstAndroidStudio())
     }
 
     private fun testConfigure(moduleName: String, expectedSuccess: Boolean) {
         return runBlocking(Dispatchers.EDT) {
             val registryValue = Registry.get("kotlin.configuration.maven.autoConfig.enabled")
             val oldValue = registryValue.asBoolean()
-            registryValue.setValue(true, testRootDisposable)
+            registryValue.setValue(true, maven.testRootDisposable)
             try {
                 val module = readAction {
                     ModuleManager.getInstance(project).findModuleByName(moduleName)!!
@@ -42,7 +57,7 @@ class KotlinMavenAutoConfigTest : AbstractKotlinMavenImporterTest() {
     fun testSingleModuleNoKotlin() {
         val moduleName = "module"
         runBlocking {
-            importProjectAsync(
+            maven.importProjectAsync(
                 """
     <groupId>org.example</groupId>
     <artifactId>$moduleName</artifactId>
@@ -63,7 +78,7 @@ class KotlinMavenAutoConfigTest : AbstractKotlinMavenImporterTest() {
     fun testKotlinAlreadyConfigured() {
         val moduleName = "module"
         runBlocking {
-            importProjectAsync(
+            maven.importProjectAsync(
                 """
     <groupId>org.example</groupId>
     <artifactId>$moduleName</artifactId>

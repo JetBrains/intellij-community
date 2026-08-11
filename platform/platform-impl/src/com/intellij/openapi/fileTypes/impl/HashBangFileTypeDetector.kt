@@ -6,10 +6,12 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.util.io.ByteSequence
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Consider using <code>hashBangs</code> attribute of <code>fileType</code>
  */
+@ApiStatus.Internal
 open class HashBangFileTypeDetector(val fileType: FileType, val marker: String) : FileTypeRegistry.FileTypeDetector {
   override fun detect(file: VirtualFile, firstBytes: ByteSequence, firstCharsIfText: CharSequence?): FileType? {
     return if (FileUtil.isHashBangLine(firstCharsIfText, marker)) fileType else null

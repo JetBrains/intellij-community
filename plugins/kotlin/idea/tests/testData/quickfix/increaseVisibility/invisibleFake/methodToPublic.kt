@@ -1,6 +1,6 @@
 // "Make 'doSth' public" "true"
 // PRIORITY: HIGH
-// K2_ERROR: Cannot access 'fun doSth(): Unit': it is private in 'A'.
+// K2_ERROR: INVISIBLE_REFERENCE
 
 open class A {
     private fun doSth() {

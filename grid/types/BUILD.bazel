@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.grid.types` start
-
 jvm_library(
     name = "types",
     srcs = glob(
@@ -22,7 +21,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//platform/util-rt",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -40,6 +39,7 @@ jvm_library(
         # do not sort,
         ":types",
         "//platform/util-rt:util-rt_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.grid.types` end

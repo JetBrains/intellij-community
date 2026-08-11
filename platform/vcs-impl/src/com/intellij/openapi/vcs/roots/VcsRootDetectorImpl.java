@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -66,7 +67,7 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
   }
 
   @Override
-  public @NotNull Collection<VcsRoot> getOrDetect() {
+  public @NotNull @Unmodifiable Collection<VcsRoot> getOrDetect() {
     MAPPING_DETECTION_LOG.debug("VcsRootDetectorImpl.getOrDetect");
     synchronized (LOCK) {
       if (myDetectedRoots != null) {

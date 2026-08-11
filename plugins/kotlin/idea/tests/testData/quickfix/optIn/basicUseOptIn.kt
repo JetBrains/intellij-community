@@ -1,7 +1,7 @@
 // "Opt in for 'MyExperimentalAPI' on 'bar'" "true"
 // PRIORITY: HIGH
-// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@a.b.MyExperimentalAPI' or '@OptIn(a.b.MyExperimentalAPI::class)'
-// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@a.b.MyExperimentalAPI' or '@OptIn(a.b.MyExperimentalAPI::class)'
+// K2_ERROR: OPT_IN_USAGE_ERROR
+// K2_ERROR: OPT_IN_USAGE_ERROR
 
 package a.b
 

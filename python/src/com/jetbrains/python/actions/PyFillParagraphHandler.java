@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,8 @@ import java.util.List;
 /**
  * User : ktisha
  */
-public final class PyFillParagraphHandler extends ParagraphFillHandler {
+@ApiStatus.Internal
+final class PyFillParagraphHandler extends ParagraphFillHandler {
 
   @Override
   protected @NotNull String getPrefix(final @NotNull PsiElement element) {

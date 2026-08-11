@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-@ApiStatus.Internal
 internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent: RowImpl) : CellBaseImpl<T>() {
 
   private var placeholderCellData: PlaceholderCellData? = null

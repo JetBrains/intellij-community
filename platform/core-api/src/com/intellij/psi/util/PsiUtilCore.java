@@ -577,7 +577,7 @@ public class PsiUtilCore {
     if (viewProvider != null) {
       List<PsiFile> files = viewProvider.getAllFiles();
       sb.append(" language=").append(viewProvider.getBaseLanguage().getID());
-      sb.append(" physical=").append(viewProvider.isPhysical());
+      sb.append(" physical=").append(viewProvider.correspondsToRealFile());
       sb.append(" rootCount=").append(files.size());
       for (PsiFile o : files) {
         sb.append("\n  root=").append(o.getLanguage().getID()).append("/").append(o.getClass().getName());

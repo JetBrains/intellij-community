@@ -23,7 +23,57 @@ class SingleSymbolGoToDeclarationTest: LightPlatformCodeInsightTestCase() {
     val after = """
     [full reference link][link]
 
-    <caret>[link]: http://some.com
+    [<caret>link]: http://some.com
+    """.trimIndent()
+    doTest(content, after)
+  }
+
+  fun `test collapsed link label`() {
+    // language=Markdown
+    val content = """
+    [li<caret>nk  title][]
+
+    [LINK title]: http://some.com
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    [link  title][]
+
+    [<caret>LINK title]: http://some.com
+    """.trimIndent()
+    doTest(content, after)
+  }
+
+  fun `test shortcut link label`() {
+    // language=Markdown
+    val content = """
+    [li<caret>nk]
+
+    [LINK]: http://some.com
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    [link]
+
+    [<caret>LINK]: http://some.com
+    """.trimIndent()
+    doTest(content, after)
+  }
+
+  fun `test first equivalent declaration wins`() {
+    // language=Markdown
+    val content = """
+    [<caret>foo]
+
+    [foo]: http://first.com
+    [FOO]: http://second.com
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    [foo]
+
+    [<caret>foo]: http://first.com
+    [FOO]: http://second.com
     """.trimIndent()
     doTest(content, after)
   }

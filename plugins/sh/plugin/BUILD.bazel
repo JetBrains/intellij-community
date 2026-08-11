@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.sh.plugin` start
-
 jvm_library(
     name = "plugin",
     srcs = glob(
@@ -39,7 +38,6 @@ exports_files(
 ### auto-generated section `iml intellij.sh.plugin` end
 
 ### auto-generated section `build intellij.sh.plugin.main` start
-
 jvm_library(
     name = "plugin-main",
     srcs = glob(

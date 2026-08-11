@@ -18,7 +18,7 @@ interface OptionalOneToOneChildEntityBuilder : WorkspaceEntityBuilder<OptionalOn
 }
 
 internal object OptionalOneToOneChildEntityType : EntityType<OptionalOneToOneChildEntity, OptionalOneToOneChildEntityBuilder>() {
-  override val entityClass: Class<OptionalOneToOneChildEntity> get() = OptionalOneToOneChildEntity::class.java
+  override val entityImplClass: Class<*> get() = OptionalOneToOneChildEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = OptionalOneToOneChildEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,

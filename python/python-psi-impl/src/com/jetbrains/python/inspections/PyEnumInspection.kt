@@ -10,7 +10,7 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.EnumAttributeKind
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.documentation.PythonDocumentationProvider
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.impl.PyClassImpl
@@ -36,7 +36,7 @@ class PyEnumInspection : PyInspection() {
             if (PyStdlibTypeProvider.isCustomEnum(superClass, myTypeEvalContext)) {
               if (!PyStdlibTypeProvider.getEnumMembers(superClass, myTypeEvalContext).isEmpty()) {
                 registerProblem(superClassExpression,
-                                PyPsiBundle.message("INSP.enum.enum.class.is.final.and.cannot.be.subclassed", superClass.name),
+                                PyPsiBundle.problemMessage("INSP.enum.enum.class.is.final.and.cannot.be.subclassed", CodifiedParam.ofReference(superClass)),
                                 ProblemHighlightType.GENERIC_ERROR)
               }
             }
@@ -48,7 +48,6 @@ class PyEnumInspection : PyInspection() {
         if (!PyStdlibTypeProvider.isCustomEnum(pyClass, myTypeEvalContext)) return
 
         val declaredType = getDeclaredEnumMemberType(pyClass, myTypeEvalContext)
-        val declaredTypeName = PythonDocumentationProvider.getVerboseTypeName(declaredType, myTypeEvalContext)
 
         for (attribute in pyClass.classAttributes) {
           val info = PyStdlibTypeProvider.getEnumAttributeInfo(pyClass, attribute, myTypeEvalContext)
@@ -60,8 +59,9 @@ class PyEnumInspection : PyInspection() {
               // TODO: > Type checkers may validate consistency between assigned tuple values and the constructor signature
             }
             else if (!PyTypeChecker.match(declaredType, info.assignedValueType, myTypeEvalContext)) {
-              val valueTypeName = PythonDocumentationProvider.getTypeName(info.assignedValueType, myTypeEvalContext)
-              registerProblem(value, PyPsiBundle.message("INSP.enum.type.is.not.assignable.to.declared.type", valueTypeName, declaredTypeName))
+              registerProblem(value, PyPsiBundle.problemMessage("INSP.enum.type.is.not.assignable.to.declared.type",
+                                                                CodifiedParam.ofType(info.assignedValueType, attribute, myTypeEvalContext),
+                                                                CodifiedParam.ofType(declaredType, attribute, myTypeEvalContext, verbose = true)))
             }
           }
 

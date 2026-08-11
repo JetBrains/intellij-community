@@ -37,6 +37,14 @@ public final class ProductMode {
   @ApiStatus.Internal
   public static final ProductMode LIGHT_WITH_RD_CONNECTION = new ProductMode("light_with_rd_connection");
 
+  /**
+   * Indicates that this process is running in a language server mode.
+   * This is a variant of {@link #BACKEND} mode, but without the remote development connection.
+   */
+  @ApiStatus.Internal
+  public static final ProductMode LANGUAGE_SERVER = new ProductMode("language_server");
+
+
   private final String myId;
 
   private ProductMode(@NotNull @NonNls String id) {
@@ -53,6 +61,7 @@ public final class ProductMode {
       case "monolith": return MONOLITH;
       case "frontend": return FRONTEND;
       case "backend": return BACKEND;
+      case "language_server": return LANGUAGE_SERVER;
       case "light": return LIGHT;
       case "light_with_rd_connection": return LIGHT_WITH_RD_CONNECTION;
       default: return null;

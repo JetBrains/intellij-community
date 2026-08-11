@@ -20,37 +20,63 @@
     <module name="intellij.groovy.ant"/>
     <module name="intellij.groovy.copyright"/>
     <module name="intellij.groovy.byteCodeViewer"/>
+    <module name="intellij.groovy.langInjection"/>
+    <module name="intellij.groovy.structuralSearch"/>
+    <module name="intellij.groovy.spock"/>
+  </content>
+  <content>
+    <module name="intellij.libraries.hamcrest" loading="embedded"/>
+    <module name="intellij.libraries.junit4" loading="embedded"/>
+    <module name="intellij.libraries.opentest4j" loading="embedded"/>
   </content>
   <dependencies>
     <plugin id="com.intellij.properties"/>
     <plugin id="com.intellij.groovy.scripting"/>
     <module name="intellij.java.backend"/>
     <module name="intellij.properties.backend.psi"/>
-    <module name="intellij.regexp"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java.debugger.impl"/>
     <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.frontback.psi"/>
-    <module name="intellij.java.langInjection"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.java.ui"/>
     <module name="intellij.java.unscramble"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.protobuf"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.jps.build"/>
     <module name="intellij.platform.jps.build.javac.rt"/>
-    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.macro"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.structureView"/>
-    <module name="intellij.platform.testRunner"/>
+    <module name="intellij.platform.testIntegration.ui"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.properties.backend"/>
     <module name="intellij.properties.psi"/>
+    <module name="intellij.regexp"/>
     <module name="intellij.spellchecker"/>
     <!-- endregion -->
   </dependencies>
-
-  <depends optional="true" config-file="intellilang-groovy-support.xml">org.intellij.intelliLang</depends>
-  <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="groovy-structural-search.xml">com.intellij.modules.structuralsearch</depends>
-  <depends optional="true" config-file="spock-support.xml">JUnit</depends>
 
   <resource-bundle>messages.GroovyBundle</resource-bundle>
 
@@ -963,7 +989,7 @@
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryReturnInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" key="inspection.display.name.final.variable.access"
                      groupKey="inspection.control.flow"
-                     enabledByDefault="true"
+                     enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.finalVar.GrFinalVariableAccessInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.switch.statement.with.no.default"

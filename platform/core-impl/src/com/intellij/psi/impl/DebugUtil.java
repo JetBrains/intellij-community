@@ -615,10 +615,14 @@ public final class DebugUtil {
     }
   }
 
-  public static void onInvalidated(@NotNull PsiElement o) {
+  public static Object onInvalidated(@NotNull PsiElement o) {
     Object trace = PsiInvalidElementAccessException.getInvalidationTrace(o);
     if (trace == null) {
-      PsiInvalidElementAccessException.setInvalidationTrace(o, currentInvalidationTrace());
+      Object currentTrace = currentInvalidationTrace();
+      PsiInvalidElementAccessException.setInvalidationTrace(o, currentTrace);
+      return currentTrace;
+    } else {
+      return trace;
     }
   }
 

@@ -1,18 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.moduleRepository
 
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleVisibility
-import org.jdom.Element
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
-import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.impl.PRODUCT_DESCRIPTOR_META_PATH
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 
 /**
  * Represents the data from `plugin.xml` descriptor that is required to generate [com.intellij.platform.runtime.repository.RuntimePluginHeader]
@@ -22,6 +22,8 @@ internal class PluginDescriptorDataForHeader(
   val pluginDescriptorJpsModuleName: String,
   val additionalFrontendOnlyPlugin: Boolean,
   val contentModules: Map<String, ContentModuleRegistrationDataForHeader>,
+  /** dependencies of this plugin descriptor on other plugin descriptor modules (via `<dependencies><plugin>` tag in `plugin.xml`) */
+  val pluginDescriptorDependenciesOnPluginDescriptorModules: List<RuntimeModuleId>,
 ) {
   override fun toString(): String {
     return "PluginDescriptorDataForHeader{pluginId=$pluginId, pluginDescriptorJpsModuleName=$pluginDescriptorJpsModuleName, additionalFrontendOnlyPlugin=$additionalFrontendOnlyPlugin}"
@@ -34,6 +36,8 @@ internal data class ContentModuleRegistrationDataForHeader(
   val loadingRule: RuntimeModuleLoadingRule,
   val requiredIfAvailable: RuntimeModuleId?,
   val visibility: RuntimeModuleVisibility,
+  /** dependencies of this content module on other plugin descriptor modules (via `<dependencies><plugin>` tag) */
+  val dependenciesOnPluginDescriptorModules: List<RuntimeModuleId>,
 )
 
 /**
@@ -44,8 +48,8 @@ internal fun fetchPluginDescriptorsData(
   platformLayout: PlatformLayout,
   corePluginDescriptorModuleName: String,
   embeddedFrontendDescriptorModuleName: String?,
-  bundledPlugins: List<PluginBuildDescriptor>,
-  additionalFrontendOnlyPlugins: List<PluginBuildDescriptor>
+  bundledPlugins: List<PluginBuildResult>,
+  additionalFrontendOnlyPlugins: List<PluginBuildResult>
 ): List<PluginDescriptorDataForHeader> {
   val platformContainer = platformLayout.descriptorCacheContainer.forPlatform(platformLayout)
   val corePluginContent = platformContainer.getCachedFileData(PRODUCT_DESCRIPTOR_META_PATH) ?: error("Cannot find core plugin descriptor")
@@ -61,19 +65,23 @@ internal fun fetchPluginDescriptorsData(
   val additionalContainersForEmbeddedFrontend =
     if (embeddedFrontendDescriptorModuleName != null) {
       //descriptors for embedded frontend may be stored inside containers for the platform, and for the corresponding plugin, see deprecatedResolveDescriptorForEmbeddedProduct
-      val pluginWithEmbeddedFrontend = bundledPlugins.find { plugin ->
-        plugin.layout.includedModules.any { it.moduleName == embeddedFrontendDescriptorModuleName } && plugin.layout.includedModules.size > 1
-      } ?: error("Cannot find plugin with embedded frontend $embeddedFrontendDescriptorModuleName")
-      listOf(platformContainer, platformLayout.descriptorCacheContainer.forPlugin(pluginWithEmbeddedFrontend.dir))
+      val pluginWithEmbeddedFrontendCandidates = bundledPlugins.filter { plugin ->
+        plugin.distribution.any { it is ModuleOutputEntry && it.owner.moduleName == embeddedFrontendDescriptorModuleName } && plugin.distribution.size > 1
+      }
+      require(pluginWithEmbeddedFrontendCandidates.isNotEmpty()) { "Cannot find plugin with embedded frontend $embeddedFrontendDescriptorModuleName" }
+      require(pluginWithEmbeddedFrontendCandidates.size == 1) { "Found multiple plugins with embedded frontend $embeddedFrontendDescriptorModuleName: $pluginWithEmbeddedFrontendCandidates" }
+      listOf(platformContainer, platformLayout.descriptorCacheContainer.forPlugin(pluginWithEmbeddedFrontendCandidates.single().dir))
     }
     else emptyList()
 
-  fun fetchPluginDescriptorDataForHeader(plugin: PluginBuildDescriptor, additionalFrontendOnlyPlugin: Boolean): PluginDescriptorDataForHeader {
+  fun fetchPluginDescriptorDataForHeader(plugin: PluginBuildResult, additionalFrontendOnlyPlugin: Boolean): PluginDescriptorDataForHeader {
     val descriptorContainer = platformLayout.descriptorCacheContainer.forPlugin(plugin.dir)
-    val fileContent = descriptorContainer.getCachedFileData(PLUGIN_XML_RELATIVE_PATH) ?: error("Cannot find plugin.xml for ${plugin.dir} in the cache")
+    val fileContent = descriptorContainer.getCachedFileData(PLUGIN_XML_RELATIVE_PATH) ?: error(
+      "Cannot find plugin.xml for ${plugin.dir} in the cache"
+    )
     return fetchPluginDescriptorDataForHeader(
       fileContent,
-      pluginDescriptorJpsModuleName = plugin.layout.mainModule,
+      pluginDescriptorJpsModuleName = plugin.mainModule,
       descriptorContainer,
       additionalContainersForEmbeddedFrontend,
       additionalFrontendOnlyPlugin,
@@ -104,22 +112,24 @@ private fun fetchPluginDescriptorDataForHeader(
       moduleXmlData = additionalContainersForEmbeddedFrontend.firstNotNullOfOrNull { it.getCachedFileData(descriptorName) }
     }
     require(moduleXmlData != null) { "Cannot find $descriptorName descriptor for plugin.xml in $pluginDescriptorJpsModuleName" }
-    val moduleXmlRoot = JDOMUtil.load(moduleXmlData)
-    val visibility = parseVisibility(moduleXmlRoot)
     val loadingRule = contentModuleElement.loadingRule.toRuntimeModuleLoadingRule()
     val requiredIfAvailable = contentModuleElement.requiredIfAvailable?.let { RuntimeModuleId.contentModule(it, RuntimeModuleId.DEFAULT_NAMESPACE) }
-    ContentModuleRegistrationDataForHeader(contentModuleElement.name, namespace, loadingRule, requiredIfAvailable, visibility)
+    val rawModuleDescriptorData = parseContentAndXIncludes(moduleXmlData, locationSource = "cached data for $descriptorName")
+    val visibility = rawModuleDescriptorData.moduleVisibility.toRuntimeModuleVisibility()
+    val dependenciesOnPluginDescriptorModules = rawModuleDescriptorData.pluginDependencies.map {
+      RuntimeModuleId.pluginDescriptorModule(it)
+    }
+    ContentModuleRegistrationDataForHeader(contentModuleElement.name, namespace, loadingRule, requiredIfAvailable, visibility, dependenciesOnPluginDescriptorModules)
   }
-  return PluginDescriptorDataForHeader(pluginId, pluginDescriptorJpsModuleName, additionalFrontendOnlyPlugin, contentModules.associateBy { it.name })
+  val pluginDescriptorDependenciesOnPluginDescriptorModules = parsedContent.pluginDependencies.map { RuntimeModuleId.pluginDescriptorModule(it) }
+  return PluginDescriptorDataForHeader(pluginId, pluginDescriptorJpsModuleName, additionalFrontendOnlyPlugin, contentModules.associateBy { it.name }, pluginDescriptorDependenciesOnPluginDescriptorModules)
 }
 
-private fun parseVisibility(moduleXmlRoot: Element): RuntimeModuleVisibility {
-  val visibilityString = moduleXmlRoot.getAttributeValue("visibility")
-  return when (visibilityString) {
-    "public" -> RuntimeModuleVisibility.PUBLIC
-    "internal" -> RuntimeModuleVisibility.INTERNAL
-    "private" -> RuntimeModuleVisibility.PRIVATE
-    else -> RuntimeModuleVisibility.PRIVATE
+private fun ModuleVisibilityValue.toRuntimeModuleVisibility(): RuntimeModuleVisibility {
+  return when (this) {
+    ModuleVisibilityValue.PRIVATE -> RuntimeModuleVisibility.PRIVATE
+    ModuleVisibilityValue.INTERNAL -> RuntimeModuleVisibility.INTERNAL
+    ModuleVisibilityValue.PUBLIC -> RuntimeModuleVisibility.PUBLIC
   }
 }
 

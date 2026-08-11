@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.gradle.scripting` start
-
 create_kotlinc_options(
     name = "custom_kotlin-gradle-scripting",
     opt_in = [
@@ -69,9 +68,10 @@ jvm_library(
         "//platform/util:util-ui",
         "//plugins/kotlin/gradle/gradle-java",
         "//plugins/kotlin/code-insight/api",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-analysis-api-k2",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
+        "//plugins/kotlin/references",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//plugins/kotlin/code-insight/utils",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
         "//java/java-psi-api:psi",
@@ -85,13 +85,14 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//plugins/kotlin/gradle/gradle-tooling/impl",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
         "//platform/eel-provider",
         "//platform/projectModel-impl",
         "//plugins/gradle/java",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
         "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base",
         "//platform/lang-api:lang",
+        "//plugins/gradle/java/properties",
+        "//plugins/properties/properties-psi-api:psi",
     ],
 )
 
@@ -129,6 +130,10 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
         "//plugins/kotlin/code-insight/api:api_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//plugins/kotlin/code-insight/utils:utils_test_lib",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
         "//java/java-psi-api:psi_test_lib",
@@ -142,13 +147,14 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
         "//platform/projectModel-impl:projectModel-impl_test_lib",
         "//plugins/gradle/java:java_test_lib",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
         "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base_test_lib",
         "//platform/lang-api:lang_test_lib",
+        "//plugins/gradle/java/properties:properties_test_lib",
+        "//plugins/properties/properties-psi-api:psi_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.scripting` end
@@ -163,7 +169,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.gradle.scripting` end
 
 ### auto-generated section `build intellij.kotlin.gradle.scripting.tests` start
-
 create_kotlinc_options(
     name = "custom_kotlin-gradle-scripting-tests",
     opt_in = [
@@ -184,7 +189,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        "//plugins/kotlin/plugin/k2",
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "//platform/testRunner/plugin",
         "//plugins/gradle/plugin",
         "//plugins/gradle/java/plugin",
@@ -211,7 +216,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-gradle-scripting-tests",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/testRunner/plugin:plugin_test_lib",
         "//plugins/gradle/plugin:plugin_test_lib",
         "//platform/observable:observable_test_lib",
@@ -270,8 +275,10 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
         "//plugins/kotlin/code-insight/api",
         "//plugins/kotlin/code-insight/api:api_test_lib",
-        "@lib//:kotlinc-analysis-api",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//plugins/kotlin/code-insight/utils",
         "//plugins/kotlin/code-insight/utils:utils_test_lib",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
@@ -296,7 +303,8 @@ jvm_library(
         "//plugins/gradle:gradle-tests_test_lib",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-tests",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/observable",
         "//platform/external-system-impl:externalSystem-tests",
         "//platform/external-system-impl:externalSystem-tests_test_lib",
@@ -322,8 +330,8 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//plugins/kotlin/gradle/gradle-tooling/impl",
         "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
+        "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
+        "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting_test_lib",
         "//platform/eel-provider",
         "//platform/eel-provider:eel-provider_test_lib",
         "//platform/projectModel-impl",
@@ -354,6 +362,10 @@ jvm_library(
         "//libraries/junit5-pioneer:junit5-pioneer_test_lib",
         "//plugins/groovy:groovy-tests",
         "//plugins/groovy:groovy-tests_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.scripting.tests` end
@@ -368,7 +380,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.gradle.scripting.tests` end
 
 ### auto-generated section `test intellij.kotlin.gradle.scripting.tests` start
-
 jps_test(
     name = "kotlin-gradle-scripting-tests_test",
     runtime_deps = [":kotlin-gradle-scripting-tests_test_lib"],

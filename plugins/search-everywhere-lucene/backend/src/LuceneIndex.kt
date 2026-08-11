@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import org.apache.lucene.analysis.Analyzer
+import org.apache.lucene.codecs.Codec
 import org.apache.lucene.document.Document
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.index.IndexWriterConfig
@@ -41,9 +42,8 @@ class LuceneIndex(val project: Project, indexName: String, val log: Logger) : Di
   // These are managed as one to ensure proper cleanup and synchronization.
   private data class IndexReaderWriter(val writer: IndexWriter, val searcherManager: SearcherManager)
 
-  private val indexPath: Path = let {
-    project.getProjectDataPath("luceneIndex") / indexName
-  }
+  // Lucene minor releases may stop loading indexes written by the previous default codec.
+  private val indexPath: Path = project.getProjectDataPath("luceneIndex") / Codec.getDefault().name / indexName
   private val directory = FSDirectory.open(indexPath)
   private var atomicIndexRW: AtomicReference<IndexReaderWriter> = AtomicReference(createIndexReaderWriter())
 

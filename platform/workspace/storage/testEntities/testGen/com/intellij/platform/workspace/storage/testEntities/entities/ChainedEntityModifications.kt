@@ -20,7 +20,7 @@ interface ChainedEntityBuilder : WorkspaceEntityBuilder<ChainedEntity> {
 }
 
 internal object ChainedEntityType : EntityType<ChainedEntity, ChainedEntityBuilder>() {
-  override val entityClass: Class<ChainedEntity> get() = ChainedEntity::class.java
+  override val entityImplClass: Class<*> get() = ChainedEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ChainedEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,

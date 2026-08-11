@@ -17,10 +17,8 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.SimpleTextAttributes
@@ -73,12 +71,18 @@ class ActivateFindToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.FIN
     statusText: StatusText,
     @Nls title: String,
     @Nls description: String,
-    @Nls shortcutText: String,
+    @Nls shortcutText: String?,
     listener: ActionListener? = null,
   ) {
-    statusText.appendText(0, rowId, title, if (listener != null) SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES else StatusText.DEFAULT_ATTRIBUTES, listener)
-    statusText.appendText(1, rowId, " ", StatusText.DEFAULT_ATTRIBUTES, null)
-    statusText.appendText(2, rowId, shortcutText, StatusText.DEFAULT_ATTRIBUTES, null)
+    statusText.appendText(0,
+                          rowId,
+                          title,
+                          if (listener != null) SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES else StatusText.DEFAULT_ATTRIBUTES,
+                          listener)
+    if (shortcutText != null) {
+      statusText.appendText(1, rowId, " ", StatusText.DEFAULT_ATTRIBUTES, null)
+      statusText.appendText(2, rowId, shortcutText, StatusText.DEFAULT_ATTRIBUTES, null)
+    }
     statusText.appendText(3, rowId, " ", StatusText.DEFAULT_ATTRIBUTES, null)
     statusText.appendText(4, rowId, description, StatusText.DEFAULT_ATTRIBUTES, null)
   }
@@ -118,9 +122,8 @@ class ActivateFindToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.FIN
    * Duplicated in [com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter.appendSearchEverywhere]
    */
   @NlsSafe
-  private fun getSearchEveryWhereShortcutText(): String {
+  private fun getSearchEveryWhereShortcutText(): String? {
     val shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts()
-    val message = IdeBundle.message("double.ctrl.or.shift.shortcut", if (SystemInfo.isMac) MacKeymapUtil.SHIFT else "Shift")
-    return if (shortcuts.isEmpty()) message else KeymapUtil.getShortcutsText(shortcuts)
+    return if (shortcuts.isEmpty()) null else KeymapUtil.getShortcutsText(shortcuts)
   }
 }

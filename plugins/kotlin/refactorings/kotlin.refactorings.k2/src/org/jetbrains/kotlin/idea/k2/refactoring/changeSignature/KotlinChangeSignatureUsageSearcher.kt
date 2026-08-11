@@ -5,7 +5,8 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -14,10 +15,17 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.useScope
@@ -41,11 +49,13 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.KtValueArgumentName
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
@@ -95,10 +105,10 @@ internal object KotlinChangeSignatureUsageSearcher {
                 }
             }
         }
-        if (ktCallableDeclaration is KtFunction &&
+        if ((ktCallableDeclaration is KtFunction || ktCallableDeclaration is KtProperty) &&
             changeInfo is KotlinChangeInfo &&
             (changeInfo.oldReceiverInfo == null || changeInfo.newParameters.any { it.oldIndex == changeInfo.oldReceiverInfo.oldIndex && !it.wasContextParameter }) &&
-            changeInfo.receiverParameterInfo?.oldIndex != changeInfo.oldReceiverInfo?.oldIndex
+            !(changeInfo.receiverParameterInfo?.oldIndex == changeInfo.oldReceiverInfo?.oldIndex && changeInfo.receiverParameterInfo?.wasContextParameter == changeInfo.oldReceiverInfo?.isContextParameter)
         ) {
             findReceiverReferences(ktCallableDeclaration, result, changeInfo)
         }
@@ -176,15 +186,29 @@ internal object KotlinChangeSignatureUsageSearcher {
 
                     val call = expression.resolveToCall()
 
-                    if (call == null && originalReceiverType != null) {
-                        //deleted or changed receiver, must be preserved as simple parameter
+                    if (call == null) {
                         val parentExpression = expression.parent
-                        if (parentExpression is KtThisExpression && parentExpression.parent !is KtDotQualifiedExpression &&
-                            parentExpression.expressionType?.isSubtypeOf(originalReceiverType) == true) {
-                            result.add(
-                                KotlinParameterUsage(parentExpression, originalReceiverInfo!!)
-                            )
-                            return
+                        if (originalReceiverType != null) {
+                            //deleted or changed receiver, must be preserved as simple parameter
+                            if (parentExpression is KtThisExpression && parentExpression.parent !is KtDotQualifiedExpression &&
+                                parentExpression.expressionType?.isSubtypeOf(originalReceiverType) == true) {
+                                result.add(
+                                    KotlinParameterUsage(parentExpression, originalReceiverInfo!!)
+                                )
+                                return
+                            }
+                        } else {
+                            // added new extension receiver: unlabeled `this` referring to the containing class
+                            // will be shadowed by the new receiver and must be qualified with a label.
+                            if (parentExpression is KtThisExpression && parentExpression.labelQualifier == null) {
+                                val containingClass = ktCallableDeclaration.containingClassOrObject
+                                val thisTarget = parentExpression.instanceReference.mainReference.resolve()
+                                val containingClassName = containingClass?.nameAsName
+                                if (containingClass != null && thisTarget == containingClass && containingClassName != null) {
+                                    result.add(KotlinNonQualifiedOuterThisUsage(parentExpression, containingClassName))
+                                    return
+                                }
+                            }
                         }
                     }
 

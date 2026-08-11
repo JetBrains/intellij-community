@@ -2,7 +2,6 @@ package fleet.codepoints
 
 import fleet.util.multiplatform.Actual
 
-@Actual internal fun codepointsToStringWasmJs(vararg codepoints: Int): String = MultiplatformCodepoints.codepointsToString(*codepoints)
 @Actual internal fun codepointOfWasmJs(highSurrogate: Char, lowSurrogate: Char): Codepoint = MultiplatformCodepoints.codepointOf(highSurrogate, lowSurrogate)
 @Actual internal fun highSurrogateWasmJs(codepoint: Int): Char = MultiplatformCodepoints.highSurrogate(codepoint)
 @Actual internal fun lowSurrogateWasmJs(codepoint: Int): Char = MultiplatformCodepoints.lowSurrogate(codepoint)
@@ -23,3 +22,6 @@ import fleet.util.multiplatform.Actual
 @Actual internal fun isJavaIdentifierPartWasmJs(codepoint: Int): Boolean = MultiplatformCodepoints.isJavaIdentifierPart(codepoint)
 @Actual internal fun isISOControlWasmJs(codepoint: Int): Boolean = MultiplatformCodepoints.isISOControl(codepoint)
 @Actual internal fun getUnicodeScriptWasmJs(codepoint: Int): UnicodeScript = MultiplatformCodepoints.getUnicodeScript(codepoint)
+@Actual internal fun getCategoryWasmJs(codepoint: Int): Category = MultiplatformCodepoints.getCategory(codepoint)
+@Actual internal fun isPrivateUseWasmJs(codepoint: Int): Boolean = MultiplatformCodepoints.isPrivateUse(codepoint)
+@Actual internal fun isDefinedWasmJs(codepoint: Int): Boolean = MultiplatformCodepoints.isDefined(codepoint)

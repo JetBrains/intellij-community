@@ -2,7 +2,7 @@ package org.intellij.plugins.markdown.reference
 
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.lang.references.paths.MarkdownLinkDestinationWithSpacesInspection
+import com.intellij.markdown.backend.inspections.MarkdownLinkDestinationWithSpacesInspection
 import org.junit.Test
 
 class FileLinkWithSpacesInspectionTest: LightPlatformCodeInsightFixture4TestCase() {
@@ -35,6 +35,12 @@ class FileLinkWithSpacesInspectionTest: LightPlatformCodeInsightFixture4TestCase
   @Test
   fun `test file link without spaces`() {
     val content = "[](some-file.md)"
+    doTest(content)
+  }
+
+  @Test
+  fun `test file link with spaces enclosed in angle brackets`() {
+    val content = "[Target](<markdowns/Target File.md>)"
     doTest(content)
   }
 

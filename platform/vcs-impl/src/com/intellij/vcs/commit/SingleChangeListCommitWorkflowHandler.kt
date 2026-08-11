@@ -25,7 +25,8 @@ class SingleChangeListCommitWorkflowHandler(
   override val workflow: CommitChangeListDialogWorkflow,
   override val ui: SingleChangeListCommitWorkflowUi,
   initialCommitMessage: String?,
-  val initiallyIncluded: Collection<Any>,
+  private val initiallyIncluded: Collection<Any>,
+  private val saveCommentOnCancel: Boolean,
 ) : AbstractCommitWorkflowHandler<CommitChangeListDialogWorkflow, SingleChangeListCommitWorkflowUi>(),
     CommitWorkflowUiStateListener,
     SingleChangeListCommitWorkflowUi.ChangeListListener {
@@ -85,9 +86,11 @@ class SingleChangeListCommitWorkflowHandler(
       LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
     }
 
-    // IJPL-84882 Cherry-pick with conflicts: commit message should be saved if I cancel modal commit
-    ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler?.let { workflowHandler ->
-      getCommitMessage().takeIf { it.isNotEmpty() }?.let { workflowHandler.setCommitMessage(it) }
+    if (saveCommentOnCancel) {
+      // IJPL-84882 Cherry-pick with conflicts: commit message should be saved if I cancel modal commit
+      ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler?.let { workflowHandler ->
+        getCommitMessage().takeIf { it.isNotEmpty() }?.let { workflowHandler.setCommitMessage(it) }
+      }
     }
   }
 

@@ -1,5 +1,5 @@
 // "Change type of base property 'B.x' to '(Int) -> Int'" "true"
-// K2_ERROR: Type of 'val x: (Int) -> Int' is not a subtype of overridden property 'val x: (String) -> Any' defined in 'B'.
+// K2_ERROR: PROPERTY_TYPE_MISMATCH_ON_OVERRIDE
 interface A {
     val x: (Int) -> Int
 }

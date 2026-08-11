@@ -65,6 +65,22 @@ internal class TerminalCompletionUnixShellsEscapingTest : BasePlatformTestCase()
     }
   }
 
+  @Test
+  fun `exclamation mark is escaped on insertion`() {
+    doTest { fixture ->
+      val item = "with! !some te!xt"
+      fixture.mockSuggestions(
+        prefixReplacementIndex = 0,
+        item,
+        "dummy"
+      )
+      fixture.type("test_cmd ")
+      fixture.callCompletionPopup()
+      fixture.insertCompletionItem(item)
+      fixture.assertCommandTextState("""test_cmd with\!\ \!some\ te\!xt<cursor>""")
+    }
+  }
+
   private fun doTest(block: suspend (TerminalCompletionFixture) -> Unit) = timeoutRunBlocking(context = Dispatchers.EDT) {
     val fixtureScope = childScope("TerminalCompletionFixture")
     val startupOptions = TerminalStartupOptionsImpl(

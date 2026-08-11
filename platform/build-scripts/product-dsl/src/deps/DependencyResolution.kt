@@ -2,9 +2,12 @@
 package org.jetbrains.intellij.build.productLayout.deps
 
 import com.intellij.platform.pluginGraph.ContentModuleName
+import com.intellij.platform.pluginGraph.EDGE_CONTAINS_CONTENT
 import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.TargetName
+import com.intellij.platform.pluginGraph.contentLoadingMode
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import org.jetbrains.intellij.build.productLayout.ContentBuildData
 import org.jetbrains.intellij.build.productLayout.contentName
 import org.jetbrains.intellij.build.productLayout.traversal.OwningPlugin
@@ -19,6 +22,7 @@ internal class DependencyResolutionContext(private val graph: PluginGraph) {
 
   private val owningPluginsCache = HashMap<OwningKey, Set<OwningPlugin>>()
   private val bundledPluginsCache = HashMap<String, Set<TargetName>>()
+  private val bundledPluginIdsCache = HashMap<String, Set<PluginId>>()
 
   fun resolveOwningPlugins(module: ContentModuleName, includeTestSources: Boolean = false): Set<OwningPlugin> {
     val key = OwningKey(module, includeTestSources)
@@ -32,6 +36,54 @@ internal class DependencyResolutionContext(private val graph: PluginGraph) {
       collectBundledPluginNames(graph, productName)
     }
     return if (additionalBundles.isEmpty()) bundled else bundled + additionalBundles
+  }
+
+  fun resolveProductOwningPlugins(
+    module: ContentModuleName,
+    productName: String,
+    additionalBundles: Set<TargetName> = emptySet(),
+    includeTestSources: Boolean = false,
+  ): Set<OwningPlugin> {
+    val owners = resolveOwningPlugins(module, includeTestSources = includeTestSources).filter { !it.isTest }
+    if (owners.isEmpty()) return emptySet()
+
+    val bundledTargets = resolveBundledPlugins(productName, additionalBundles)
+    val directlyBundledOwners = owners.filterTo(LinkedHashSet()) { it.name in bundledTargets }
+    if (directlyBundledOwners.isNotEmpty()) return directlyBundledOwners
+
+    val bundledPluginIds = resolveBundledPluginIds(productName, additionalBundles)
+    if (bundledPluginIds.isEmpty()) return emptySet()
+    return owners.filterTo(LinkedHashSet()) { it.pluginId in bundledPluginIds }
+  }
+
+  fun isEmbeddedInSingleOwner(module: ContentModuleName, owners: Collection<OwningPlugin>): Boolean {
+    val owner = owners.singleOrNull() ?: return false
+    return graph.query {
+      val moduleNode = contentModule(module) ?: return@query false
+      val pluginNode = plugin(owner.name.value) ?: return@query false
+      contentLoadingMode(EDGE_CONTAINS_CONTENT, pluginNode.id, moduleNode.id) == ModuleLoadingRuleValue.EMBEDDED
+    }
+  }
+
+  private fun resolveBundledPluginIds(productName: String, additionalBundles: Set<TargetName>): Set<PluginId> {
+    val bundled = bundledPluginIdsCache.getOrPut(productName) {
+      resolvePluginIds(resolveBundledPlugins(productName))
+    }
+    if (additionalBundles.isEmpty()) return bundled
+    val additionalIds = resolvePluginIds(additionalBundles)
+    return if (additionalIds.isEmpty()) bundled else bundled + additionalIds
+  }
+
+  private fun resolvePluginIds(pluginTargetNames: Set<TargetName>): Set<PluginId> {
+    if (pluginTargetNames.isEmpty()) return emptySet()
+    return graph.query {
+      val result = HashSet<PluginId>()
+      for (pluginTargetName in pluginTargetNames) {
+        val pluginId = plugin(pluginTargetName.value)?.pluginIdOrNull ?: continue
+        result.add(pluginId)
+      }
+      result
+    }
   }
 }
 
@@ -64,8 +116,8 @@ internal fun buildAllowedMissingByModule(
   contentData: ContentBuildData,
 ): Map<ContentModuleName, Set<PluginId>> {
   val result = HashMap<ContentModuleName, Set<PluginId>>()
-  for (block in contentData.contentBlocks) {
-    for (module in block.modules) {
+  for ((_, modules) in contentData.contentBlocks) {
+    for (module in modules) {
       val allowed = module.allowedMissingPluginIds
       if (allowed.isNotEmpty()) {
         result[module.contentName()] = allowed.toSet()

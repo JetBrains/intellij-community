@@ -4,6 +4,12 @@ package com.intellij.platform.ijent.spi
 
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelReceiveChannelException
+import com.intellij.platform.eel.channels.PeekableEelReceiveChannel
+import com.intellij.platform.eel.channels.readLine
+import com.intellij.platform.eel.channels.readUntil
+import com.intellij.platform.eel.channels.useLines
 import com.intellij.platform.ijent.IjentLog
 import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentScope
@@ -18,6 +24,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -29,8 +36,9 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.io.InputStream
 import java.lang.reflect.Method
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets.US_ASCII
 import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 import java.util.Collections
@@ -52,12 +60,19 @@ object IjentSessionMediatorUtils {
     // Instead, there's a logic below that decides if a specific IjentUnavailableException should be propagated to the parent scope.
     val trickySupervisorScope = parentScope.s.childScope(ijentLabel, context + dummyExceptionHandler, supervisor = true)
 
-    val ijentProcessScope = trickySupervisorScope.childScope(ijentLabel, supervisor = false)
+    val ijentProcessScope = trickySupervisorScope.childScope(ijentLabel, supervisor = false, context = IjentScope.IjentContext())
 
     ijentProcessScope.coroutineContext.job.invokeOnCompletion { err ->
       trickySupervisorScope.cancel()
 
       if (err != null) {
+        // Safety net: make sure the canonical exit reason is set even if neither the exit-code handler nor the
+        // finalizer managed to publish it. The authoritative producers run before the scope completes, so this
+        // call is normally a no-op (completeExitReason is idempotent and first-completer-wins).
+        (IjentUnavailableException.unwrapFromCancellationExceptions(err) as? IjentUnavailableException)?.let {
+          ijentProcessScope.coroutineContext[IjentScope.IjentContext.Key]?.completeExitReason(it)
+        }
+
         val propagateToParentScope = when (err) {
           is IjentUnavailableException -> when (err) {
             is IjentUnavailableException.ClosedByApplication -> false
@@ -115,14 +130,17 @@ object IjentSessionMediatorUtils {
   }
 
   suspend fun ijentProcessStderrLogger(
-    errorStream: InputStream,
+    errorStream: EelReceiveChannel,
     ijentLabel: String,
     lastStderrMessages: MutableSharedFlow<String?>,
     logger: IjentLog,
   ) {
     val lineConsumer = createIjentStderrLineConsumer(ijentLabel, lastStderrMessages, logger)
     try {
-      errorStream.reader().useLines { lines ->
+      // `useLines` reads the stderr stream with a blocking call that parks its thread for the whole IJent
+      // session. Keep that thread on `IjentThreadPool` instead of the default `Dispatchers.IO`, otherwise a
+      // `DefaultDispatcher-worker-*` thread (not whitelisted by `ThreadLeakTracker`) is reported as a leak.
+      errorStream.useLines(IjentThreadPool.coroutineContext) { lines ->
         for (line in lines) {
           yield()
           lineConsumer.consume(line)
@@ -258,7 +276,7 @@ object IjentSessionMediatorUtils {
     isExitExpected: Boolean,
   ): Nothing {
     val error = if (isExitExpected) {
-      IjentUnavailableException.CommunicationFailure("IJent process exited successfully").apply { exitedExpectedly = true }
+      IjentUnavailableException.CommunicationFailure("IJent process exited successfully", null).apply { exitedExpectedly = true }
     }
     else {
       val stderr = StringBuilder()
@@ -273,9 +291,14 @@ object IjentSessionMediatorUtils {
       }
       IjentUnavailableException.CommunicationFailure(
         "The process $ijentLabel suddenly exited with the code $exitCode",
+        null,
         Attachment("stderr", stderr.toString()),
       )
     }
+
+    // Publish the canonical, fully-enriched exit reason (the stderr Attachment is already attached) before the
+    // scope gets cancelled, so boundary code can resolve and rethrow exactly this instance.
+    currentCoroutineContext()[IjentScope.IjentContext.Key]?.completeExitReason(error)
 
     // TODO IJPL-198706 When IJent unexpectedly terminates, users should be asked for further actions.
     if (isExitExpected) {
@@ -300,7 +323,7 @@ object IjentSessionMediatorUtils {
   @OptIn(DelicateCoroutinesApi::class)
   suspend fun ijentProcessFinalizer(
     ijentLabel: String,
-    mediatorFinalizer: () -> Unit,
+    mediatorFinalizer: suspend () -> Unit,
   ): Nothing {
     try {
       awaitCancellation()
@@ -310,6 +333,7 @@ object IjentSessionMediatorUtils {
 
       val existingIjentUnavailableException = actualErrors.filterIsInstance<IjentUnavailableException>().firstOrNull()
       if (existingIjentUnavailableException != null) {
+        currentCoroutineContext()[IjentScope.IjentContext.Key]?.completeExitReason(existingIjentUnavailableException)
         throw existingIjentUnavailableException
       }
 
@@ -317,12 +341,47 @@ object IjentSessionMediatorUtils {
       val message =
         if (cause is CancellationException) "The coroutine scope of $ijentLabel was cancelled"
         else "IJent communication terminated due to an error"
-      throw IjentUnavailableException.ClosedByApplication(message, cause)
+      val error = IjentUnavailableException.ClosedByApplication(message, cause)
+      currentCoroutineContext()[IjentScope.IjentContext.Key]?.completeExitReason(error)
+      throw error
     }
     finally {
-      mediatorFinalizer()
-
+      withContext(NonCancellable) {
+        mediatorFinalizer()
+      }
     }
+  }
+
+  suspend fun PeekableEelReceiveChannel.readLineOrThrow(charset: Charset, msg: String = "Communication terminated unexpectedly"): String {
+    var cause: Throwable? = null
+    var result: String? = null
+    try {
+      result = this.readLine(charset)
+    }
+    catch (err: EelReceiveChannelException) {
+      cause = err
+    }
+    if (result != null) {
+      return result
+    }
+    val error = IjentUnavailableException.CommunicationFailure(msg, cause)
+    throw error
+  }
+
+  suspend fun PeekableEelReceiveChannel.readLineUntilPipeOrThrow(msg: String = "Communication terminated unexpectedly"): String {
+    val line = StringBuilder()
+    try {
+      val pipeReached = readUntil('|'.code.toByte()) { buffer, _ ->
+        line.append(US_ASCII.decode(buffer))
+      }
+      if (!pipeReached) {
+        throw IjentUnavailableException.CommunicationFailure(msg, null)
+      }
+    }
+    catch (err: EelReceiveChannelException) {
+      throw IjentUnavailableException.CommunicationFailure(msg, err)
+    }
+    return line.toString()
   }
 }
 

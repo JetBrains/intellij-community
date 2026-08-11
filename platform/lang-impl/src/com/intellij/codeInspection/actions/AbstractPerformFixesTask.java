@@ -30,10 +30,10 @@ public abstract class AbstractPerformFixesTask extends PerformFixesModalTask {
     //noinspection unchecked
     QuickFix<ProblemDescriptor>[] fixes = descriptor.getFixes();
     if (fixes != null) {
-      for (final QuickFix<ProblemDescriptor> fix : fixes) {
+      for (QuickFix<ProblemDescriptor> fix : fixes) {
         if (fix != null && (myQuickfixClass == null || ReportingClassSubstitutor.getClassToReport(fix).isAssignableFrom(myQuickfixClass))) {
-          final ProblemDescriptor problemDescriptor = (ProblemDescriptor)descriptor;
-          final PsiElement element = problemDescriptor.getPsiElement();
+          ProblemDescriptor problemDescriptor = (ProblemDescriptor)descriptor;
+          PsiElement element = problemDescriptor.getPsiElement();
           if (element != null && element.isValid()) {
             BatchExecutionResult result = collectFix(fix, problemDescriptor, project);
             myResultCount.merge(result, 1, Integer::sum);

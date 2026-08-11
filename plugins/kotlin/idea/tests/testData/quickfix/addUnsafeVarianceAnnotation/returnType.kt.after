@@ -1,5 +1,5 @@
 // "Add '@UnsafeVariance' annotation" "true"
-// K2_ERROR: Type parameter 'E' is declared as 'in' but occurs in 'out' position in type 'E (of interface Foo<in E>)'.
+// K2_ERROR: TYPE_VARIANCE_CONFLICT_ERROR
 interface Foo<in E> {
     fun bar(): @UnsafeVariance E
 }

@@ -14,7 +14,7 @@ class SnippetsRegistryBuilder(private val weigher: TextMateSelectorWeigher) {
 
   fun register(snippet: TextMateSnippet) {
     snippets.update {
-      it.put(snippet.key, it[snippet.key]?.add(snippet) ?: persistentListOf(snippet))
+      it.putting(snippet.key, it[snippet.key]?.adding(snippet) ?: persistentListOf(snippet))
     }
   }
 

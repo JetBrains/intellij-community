@@ -2,8 +2,10 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.openapi.options.ConfigurableProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class IntentionsConfigurableProvider extends ConfigurableProvider {
   @Override
   public abstract @Nullable IntentionsConfigurable createConfigurable();

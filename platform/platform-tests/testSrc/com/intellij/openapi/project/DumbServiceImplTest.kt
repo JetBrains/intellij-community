@@ -47,6 +47,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -72,6 +73,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.io.File
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.Phaser
 import java.util.concurrent.TimeUnit
@@ -840,6 +842,47 @@ class DumbServiceImplTest {
   }
 
   @Test
+  fun `DumbService_runInDumbMode should handle coroutine cancellation before block starts`(): Unit = runBlocking(Dispatchers.EDT) {
+    val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    val releaseBlockingTask = CountDownLatch(1)
+    try {
+      val scope = CoroutineScope(dispatcher)
+      val dumbTaskBlockStarted = Job()
+      val blockingTaskStarted = Job()
+
+      val dumbTask = scope.launch {
+        dumbService.runInDumbMode("Test dumb task cancelled before block starts") {
+          dumbTaskBlockStarted.complete()
+          awaitCancellation()
+        }
+      }
+      val blockingTask = scope.launch {
+        blockingTaskStarted.complete()
+        releaseBlockingTask.awaitOrThrow(10, "Test didn't release blocking task")
+      }
+
+      withTimeout(10.seconds) {
+        blockingTaskStarted.join()
+        dumbService.state.first { it.isDumb }
+
+        dumbTask.cancel("Cancel dumb task before block starts")
+        assertFalse("Dumb task block should not start", dumbTaskBlockStarted.isCompleted)
+
+        releaseBlockingTask.countDown()
+        dumbTask.join()
+        blockingTask.join()
+        withContext(Dispatchers.IO) {
+          waitForSmartModeFiveSecondsOrThrow()
+        }
+      }
+    }
+    finally {
+      releaseBlockingTask.countDown()
+      dispatcher.close()
+    }
+  }
+
+  @Test
   fun `DumbService_runInDumbMode should properly handle coroutine cancellation`() = runBlocking(Dispatchers.EDT) {
     val dumbTaskStarted = Job()
     val dumbTask = launch(Dispatchers.Default) {
@@ -907,12 +950,27 @@ class DumbServiceImplTest {
       subscribe(DumbService.DUMB_MODE, SampleDumbModeListener())
       subscribe(DumbModeListenerBackgroundable.TOPIC, SampleBackgroundableDumbModeListener())
     }
-    dumbService.queueTask(object : DumbModeTask() {
-      override fun performInDumbMode(indicator: ProgressIndicator) {}
-    })
-    dumbService.runInDumbMode("test", {})
-    listenerEnded.join()
-    listenerEnded2.join()
-    assertEquals(6, dumbModeListenerValidity.get())
+    //we want both queueTask and runInDumbMode to _share_ the same dumb-mode-cycle:
+    val dumbTaskStarted = Job(coroutineContext.job)
+    val releaseDumbTask = CountDownLatch(1)
+    try {
+      dumbService.queueTask(object : DumbModeTask() {
+        override fun performInDumbMode(indicator: ProgressIndicator) {
+          dumbTaskStarted.complete()
+          releaseDumbTask.awaitOrThrow(10/*sec*/, "Queued dumb task was not released")
+        }
+      })
+      dumbTaskStarted.join()  //ensure dumb-mode started
+      dumbService.runInDumbMode("test") {
+        releaseDumbTask.countDown()
+      }
+      listenerEnded.join()
+      listenerEnded2.join()
+      assertEquals("Both listener types should observe one shared dumb-mode cycle",
+                   6, dumbModeListenerValidity.get())
+    }
+    finally {
+      releaseDumbTask.countDown()
+    }
   }
 }

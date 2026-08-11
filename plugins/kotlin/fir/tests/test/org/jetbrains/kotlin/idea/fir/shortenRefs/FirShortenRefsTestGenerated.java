@@ -277,59 +277,141 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution")
-        public static class ContextSensitiveResolution extends AbstractFirShortenRefsTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
+        public abstract static class ContextSensitiveResolution extends AbstractFirShortenRefsTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions")
+            public static class Expressions extends AbstractFirShortenRefsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
+                }
+
+                @TestMetadata("enumEntryFeatureDisabled.kt")
+                public void testEnumEntryFeatureDisabled() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/enumEntryFeatureDisabled.kt");
+                }
+
+                @TestMetadata("enumEntryFromDifferentPackage.kt")
+                public void testEnumEntryFromDifferentPackage() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/enumEntryFromDifferentPackage.kt");
+                }
+
+                @TestMetadata("enumEntryInEquality.kt")
+                public void testEnumEntryInEquality() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/enumEntryInEquality.kt");
+                }
+
+                @TestMetadata("enumEntryInFunctionParameter.kt")
+                public void testEnumEntryInFunctionParameter() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/enumEntryInFunctionParameter.kt");
+                }
+
+                @TestMetadata("enumEntryInVariableDeclaration.kt")
+                public void testEnumEntryInVariableDeclaration() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/enumEntryInVariableDeclaration.kt");
+                }
+
+                @TestMetadata("enumEntryInWhenCondition.kt")
+                public void testEnumEntryInWhenCondition() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/enumEntryInWhenCondition.kt");
+                }
+
+                @TestMetadata("enumEntryNoExpectedType.kt")
+                public void testEnumEntryNoExpectedType() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/enumEntryNoExpectedType.kt");
+                }
+
+                @TestMetadata("sealedSubObjectInFunctionParameter.kt")
+                public void testSealedSubObjectInFunctionParameter() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/sealedSubObjectInFunctionParameter.kt");
+                }
+
+                @TestMetadata("sealedSubObjectInVariableDeclaration.kt")
+                public void testSealedSubObjectInVariableDeclaration() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/sealedSubObjectInVariableDeclaration.kt");
+                }
+
+                @TestMetadata("sealedSubObjectNoExpectedType.kt")
+                public void testSealedSubObjectNoExpectedType() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/expressions/sealedSubObjectNoExpectedType.kt");
+                }
             }
 
-            @TestMetadata("enumEntryFeatureDisabled.kt")
-            public void testEnumEntryFeatureDisabled() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/enumEntryFeatureDisabled.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types")
+            public static class Types extends AbstractFirShortenRefsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
+                }
 
-            @TestMetadata("enumEntryFromDifferentPackage.kt")
-            public void testEnumEntryFromDifferentPackage() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/enumEntryFromDifferentPackage.kt");
-            }
+                @TestMetadata("asExpression.kt")
+                public void testAsExpression() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/asExpression.kt");
+                }
 
-            @TestMetadata("enumEntryInEquality.kt")
-            public void testEnumEntryInEquality() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/enumEntryInEquality.kt");
-            }
+                @TestMetadata("asSafeExpression.kt")
+                public void testAsSafeExpression() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/asSafeExpression.kt");
+                }
 
-            @TestMetadata("enumEntryInFunctionParameter.kt")
-            public void testEnumEntryInFunctionParameter() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/enumEntryInFunctionParameter.kt");
-            }
+                @TestMetadata("isExpression.kt")
+                public void testIsExpression() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/isExpression.kt");
+                }
 
-            @TestMetadata("enumEntryInVariableDeclaration.kt")
-            public void testEnumEntryInVariableDeclaration() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/enumEntryInVariableDeclaration.kt");
-            }
+                @TestMetadata("isExpressionInWhen.kt")
+                public void testIsExpressionInWhen() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/isExpressionInWhen.kt");
+                }
 
-            @TestMetadata("enumEntryInWhenCondition.kt")
-            public void testEnumEntryInWhenCondition() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/enumEntryInWhenCondition.kt");
-            }
+                @TestMetadata("isExpressionUnrelatedLhs.kt")
+                public void testIsExpressionUnrelatedLhs() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/isExpressionUnrelatedLhs.kt");
+                }
 
-            @TestMetadata("enumEntryNoExpectedType.kt")
-            public void testEnumEntryNoExpectedType() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/enumEntryNoExpectedType.kt");
-            }
+                @TestMetadata("negatedIsExpression.kt")
+                public void testNegatedIsExpression() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/negatedIsExpression.kt");
+                }
 
-            @TestMetadata("sealedSubObjectInFunctionParameter.kt")
-            public void testSealedSubObjectInFunctionParameter() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/sealedSubObjectInFunctionParameter.kt");
-            }
+                @TestMetadata("nestedSealedHierarchy.kt")
+                public void testNestedSealedHierarchy() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/nestedSealedHierarchy.kt");
+                }
 
-            @TestMetadata("sealedSubObjectInVariableDeclaration.kt")
-            public void testSealedSubObjectInVariableDeclaration() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/sealedSubObjectInVariableDeclaration.kt");
-            }
+                @TestMetadata("nullableType.kt")
+                public void testNullableType() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/nullableType.kt");
+                }
 
-            @TestMetadata("sealedSubObjectNoExpectedType.kt")
-            public void testSealedSubObjectNoExpectedType() throws Exception {
-                runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/sealedSubObjectNoExpectedType.kt");
+                @TestMetadata("nullableTypeInnerRef.kt")
+                public void testNullableTypeInnerRef() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/nullableTypeInnerRef.kt");
+                }
+
+                @TestMetadata("typeArgumentPartialSelection.kt")
+                public void testTypeArgumentPartialSelection() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/typeArgumentPartialSelection.kt");
+                }
+
+                @TestMetadata("typeFeatureDisabled.kt")
+                public void testTypeFeatureDisabled() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/typeFeatureDisabled.kt");
+                }
+
+                @TestMetadata("typeNotApplicable.kt")
+                public void testTypeNotApplicable() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/typeNotApplicable.kt");
+                }
+
+                @TestMetadata("typeOutsideTypeOperator.kt")
+                public void testTypeOutsideTypeOperator() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/typeOutsideTypeOperator.kt");
+                }
+
+                @TestMetadata("typePartialSelection.kt")
+                public void testTypePartialSelection() throws Exception {
+                    runTest("../../idea/tests/testData/shortenRefsFir/contextSensitiveResolution/types/typePartialSelection.kt");
+                }
             }
         }
 

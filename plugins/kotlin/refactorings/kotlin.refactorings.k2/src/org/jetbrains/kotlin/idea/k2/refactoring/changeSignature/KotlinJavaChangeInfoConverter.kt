@@ -23,15 +23,20 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl
 import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.asPsiType
+import org.jetbrains.kotlin.analysis.api.javaInterop.asKaType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
@@ -165,9 +170,9 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
             }
         }
         val visibility = when (changeInfo.aNewVisibility) {
-            Visibilities.Private -> PsiModifier.PRIVATE
-            Visibilities.Internal -> PsiModifier.PACKAGE_LOCAL
-            Visibilities.Protected -> PsiModifier.PROTECTED
+            KaSymbolVisibility.PRIVATE -> PsiModifier.PRIVATE
+            KaSymbolVisibility.INTERNAL -> PsiModifier.PACKAGE_LOCAL
+            KaSymbolVisibility.PROTECTED -> PsiModifier.PROTECTED
             else -> PsiModifier.PUBLIC
         }
         return JavaChangeInfoImpl.generateChangeInfo(
@@ -192,7 +197,7 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
             allowAnalysisFromWriteAction {
                 analyze(codeFragment) {
                     val ktType = codeFragment.getContentElement()?.type!!
-                    if (unitToVoid && ktType.isUnitType) PsiTypes.voidType() else ktType.asPsiType(originalFunction, true)!!
+                    if (unitToVoid && ktType.classId == KaStandardTypeClassIds.UNIT) PsiTypes.voidType() else ktType.asPsiType(originalFunction, true)!!
                 }
             }
         }
@@ -307,13 +312,13 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
 
             override val aNewReturnType: String? = returnType
 
-            override val aNewVisibility: Visibility
+            override val aNewVisibility: KaSymbolVisibility
                 get() {
                     return when (changeInfo.newVisibility) {
-                        PsiModifier.PRIVATE -> Visibilities.Private
-                        PsiModifier.PACKAGE_LOCAL -> Visibilities.Internal
-                        PsiModifier.PROTECTED -> Visibilities.Protected
-                        else -> Visibilities.Public
+                        PsiModifier.PRIVATE -> KaSymbolVisibility.PRIVATE
+                        PsiModifier.PACKAGE_LOCAL -> KaSymbolVisibility.INTERNAL
+                        PsiModifier.PROTECTED -> KaSymbolVisibility.PROTECTED
+                        else -> KaSymbolVisibility.PUBLIC
                     }
                 }
         }

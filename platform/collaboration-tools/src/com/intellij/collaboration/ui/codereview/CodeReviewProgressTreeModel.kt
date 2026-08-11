@@ -16,14 +16,16 @@ import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.tree.ui.CustomBoundsTreeUI
 import com.intellij.util.asSafely
 import com.intellij.util.containers.DisposableWrapperList
-import com.intellij.util.containers.TreeTraversal
+import com.intellij.util.containers.TreeTraversal.POST_ORDER_DFS
 import com.intellij.util.ui.launchOnShow
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import java.awt.Dimension
 import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
@@ -40,10 +42,12 @@ fun ChangesTree.setupCodeReviewProgressModel(vm: CodeReviewChangeListViewModel, 
   val hasViewedState = vm is CodeReviewChangeListViewModel.WithViewedState
   cellRenderer = CodeReviewProgressRenderer(
     hasViewedState,
-    renderer = ChangesBrowserNodeRenderer(project, { isShowFlatten }, false),
+    textRenderer = ChangesBrowserNodeRenderer(project, { isShowFlatten }, false),
+    canEditTest = { it.userObject?.asSafely<RefComparisonChange>()?.let(vm::canEdit) ?: false },
     codeReviewProgressStateProvider = model::getState
   )
   installViewedStateToggleHandler(vm, model)
+  installJumpToSourceHandler(vm)
 
   model.addChangeListener {
     repaint()
@@ -66,55 +70,78 @@ private fun ChangesTree.installViewedStateToggleHandler(
   val tree = this
 
   if (vm is CodeReviewChangeListViewModel.WithViewedState) {
-    addMouseListener(object : MouseAdapter() {
-      override fun mouseClicked(e: MouseEvent) {
-        if (!SwingUtilities.isLeftMouseButton(e)) return
+    installRendererComponentClickHandler(CodeReviewProgressRendererComponent::getReadCheckboxBounds) { node ->
+      val change = node.userObject.asSafely<RefComparisonChange>() ?: return@installRendererComponentClickHandler
+      val state = model.getState(node)
+      val isViewed = !state.isRead
 
-        val row = getClosestRowForLocation(1, e.y)
-        if (row < 0) return
-
-        val path = getPathForRow(row)
-        val cellBounds = tree.ui?.asSafely<CustomBoundsTreeUI>()?.getActualPathBounds(tree, path) ?: return
-        val positionInCell = Point(e.x - cellBounds.x, e.y - cellBounds.y)
-
-        val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return
-
-        // get the top-level rendered cell component
-        val component = cellRenderer.getTreeCellRendererComponent(
-          tree, node,
-          isRowSelected(row),
-          isExpanded(row),
-          getModel().isLeaf(node),
-          row, true)
-
-        if (component !is CodeReviewProgressRendererComponent) return
-        val checkboxBounds = component.checkboxBounds(cellBounds.size) ?: return
-
-        if (checkboxBounds.contains(positionInCell)) {
-          val change = node.userObject as? RefComparisonChange ?: return
-
-          val state = model.getState(node)
-          val isViewed = !state.isRead
-
-          vm.setViewedState(listOf(change), isViewed)
-          tree.repaint()
-        }
-      }
-    })
+      vm.setViewedState(listOf(change), isViewed)
+      tree.repaint()
+    }
   }
+}
+
+private fun ChangesTree.installJumpToSourceHandler(vm: CodeReviewChangeListViewModel) {
+  installRendererComponentClickHandler(CodeReviewProgressRendererComponent::getJumpToSourceIconBounds) { node ->
+    val change = node.userObject.asSafely<RefComparisonChange>() ?: return@installRendererComponentClickHandler
+    vm.startEditing(change)
+  }
+}
+
+private fun ChangesTree.installRendererComponentClickHandler(
+  boundsInCell: (CodeReviewProgressRendererComponent, Dimension) -> Rectangle?,
+  handler: (ChangesBrowserNode<*>) -> Unit,
+) {
+  val tree = this
+
+  addMouseListener(object : MouseAdapter() {
+    override fun mouseClicked(e: MouseEvent) {
+      if (!SwingUtilities.isLeftMouseButton(e)) return
+
+      val row = getClosestRowForLocation(1, e.y)
+      if (row < 0) return
+
+      val path = getPathForRow(row)
+      val cellBounds = tree.ui?.asSafely<CustomBoundsTreeUI>()?.getActualPathBounds(tree, path) ?: return
+      val positionInCell = Point(e.x - cellBounds.x, e.y - cellBounds.y)
+
+      val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return
+
+      // get the top-level rendered cell component
+      val component = cellRenderer.getTreeCellRendererComponent(
+        tree, node,
+        isRowSelected(row),
+        isExpanded(row),
+        getModel().isLeaf(node),
+        row, true)
+
+      if (component !is CodeReviewProgressRendererComponent) return
+      val componentBounds = boundsInCell(component, cellBounds.size) ?: return
+
+      if (componentBounds.contains(positionInCell)) {
+        handler(node)
+      }
+    }
+  })
 }
 
 /**
  * @param isLoading if true, the state data for the node is still loading.
  */
-internal data class NodeCodeReviewProgressState(val isLoading: Boolean, val isRead: Boolean, val discussionsCount: Int)
+internal data class NodeCodeReviewProgressState(
+  val isLoading: Boolean,
+  val isRead: Boolean,
+  val discussionsCount: Int,
+)
+
+private val DEFAULT_NODE_STATE = NodeCodeReviewProgressState(false, true, 0)
+
+private const val LEAF_PROCESSING_THRESHOLD: Int = 100
 
 abstract class CodeReviewProgressTreeModel<T> {
   abstract val isLoading: StateFlow<Boolean>
 
   private val listeners = DisposableWrapperList<() -> Unit>()
-
-  private val defaultState: NodeCodeReviewProgressState = NodeCodeReviewProgressState(false, true, 0)
 
   private val stateCache = mutableMapOf<ChangesBrowserNode<*>, NodeCodeReviewProgressState>()
 
@@ -132,18 +159,29 @@ abstract class CodeReviewProgressTreeModel<T> {
       return cachedState
     }
     // can be rewritten to hand-made bfs not to go down to leafs if state is cached
-    val calculatedState = TreeUtil.treeNodeTraverser(node).traverse(TreeTraversal.POST_ORDER_DFS)
-      .map {
-        val changesNode = it as? ChangesBrowserNode<*> ?: return@map null
-        val leafValue = asLeaf(changesNode) ?: return@map null
-        getState(leafValue)
+    val leafStates = TreeUtil.treeNodeTraverser(node).traverse(POST_ORDER_DFS)
+      .asSequence()
+      .mapNotNull {
+        it.asSafely<ChangesBrowserNode<*>>()?.let(::asLeaf)
+      }.map {
+        NodeCodeReviewProgressState(isLoading(it), isRead(it), getUnresolvedDiscussionsCount(it))
       }
-      .filterNotNull()
-      .fold(defaultState) { acc, state ->
-        NodeCodeReviewProgressState(acc.isLoading || state.isLoading, acc.isRead && state.isRead, acc.discussionsCount + state.discussionsCount)
+
+    var nodeState = DEFAULT_NODE_STATE
+    var counter = 0
+    for ((isLoading, isRead, discussionsCount) in leafStates) {
+      // don't go too deep to avoid overloading the UI thread
+      if (counter > LEAF_PROCESSING_THRESHOLD || isLoading) {
+        nodeState = DEFAULT_NODE_STATE
+        break
       }
-    stateCache[node] = calculatedState
-    return calculatedState
+      nodeState = nodeState.copy(isRead = nodeState.isRead && isRead,
+                                 discussionsCount = nodeState.discussionsCount + discussionsCount)
+      counter++
+    }
+
+    stateCache[node] = nodeState
+    return nodeState
   }
 
   fun addChangeListener(parent: Disposable, listener: () -> Unit) {
@@ -154,10 +192,6 @@ abstract class CodeReviewProgressTreeModel<T> {
     listeners.add(listener)
   }
 
-  private fun getState(leafValue: T): NodeCodeReviewProgressState {
-    return NodeCodeReviewProgressState(isLoading(leafValue), isRead(leafValue), getUnresolvedDiscussionsCount(leafValue))
-  }
-
   protected fun fireModelChanged() {
     stateCache.clear()
     listeners.forEach { it() }
@@ -165,8 +199,8 @@ abstract class CodeReviewProgressTreeModel<T> {
 }
 
 @OptIn(FlowPreview::class)
-class CodeReviewProgressTreeModelFromDetails(cs: CoroutineScope, vm: CodeReviewChangeListViewModel.WithDetails)
-  : CodeReviewProgressTreeModel<RefComparisonChange>() {
+class CodeReviewProgressTreeModelFromDetails(cs: CoroutineScope, vm: CodeReviewChangeListViewModel.WithDetails) :
+  CodeReviewProgressTreeModel<RefComparisonChange>() {
   private val details = vm.detailsByChange
     .stateInNow(cs, null)
 

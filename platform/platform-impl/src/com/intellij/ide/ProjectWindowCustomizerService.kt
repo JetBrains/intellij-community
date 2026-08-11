@@ -48,9 +48,9 @@ import com.intellij.ui.paint.PaintUtil.alignTxToInt
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.AvatarIcon
 import com.intellij.util.ui.JBUI
@@ -407,7 +407,6 @@ class ProjectWindowCustomizerService internal constructor(private val coroutineS
     }
   }
 
-  @Internal
   internal fun setupWorkspaceStorage(project: Project) {
     clearToolbarColorsAndInMemoryCache(project)
 
@@ -460,7 +459,6 @@ class ProjectWindowCustomizerService internal constructor(private val coroutineS
 
   private fun storageFor(project: Project) = if (project.isDisposed) null else WorkspaceProjectColorStorage(project)
 
-  @Internal
   internal fun getStorageFor(project: Project): ProjectColorStorage = storageFor(project)!!
 
   internal fun update(newValue: Boolean) {
@@ -658,7 +656,6 @@ internal class ProjectWindowCustomizerListener : ProjectActivity, UISettingsList
   }
 }
 
-@Internal
 internal interface ProjectColorStorage {
   var customColor: String?
   var associatedIndex: Int?

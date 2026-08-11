@@ -2,9 +2,13 @@ package com.jetbrains.python.quickFixes
 
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyQuickFixTestCase
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.inspections.PyTypeHintsInspection
 import com.jetbrains.python.psi.LanguageLevel
 
+@Subsystems.QuickFixes
+@Layers.Functional
 class PyUnpackTypeVarTupleQuickFixTest : PyQuickFixTestCase() {
   // PY-53105
   fun testUnpackWithTypingExtensionUnpackOlderVersions() {

@@ -21,8 +21,8 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-@Suppress("HardCodedStringLiteral")
-@Internal
+// todo move to DevKit Runtime plugin
+@Suppress("HardCodedStringLiteral", "unused")
 internal class ShowCompressibleToolbarAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent): Unit = BundleMessagesDialog(e.project).show()
 

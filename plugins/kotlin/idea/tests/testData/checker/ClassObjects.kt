@@ -4,7 +4,7 @@ class A {
   companion object {
     val x = 1
   }
-  <error descr="[MANY_COMPANION_OBJECTS] Only one companion object is allowed per class">companion</error> object Another { // error
+  <error descr="[MANY_COMPANION_OBJECTS]">companion</error> object Another { // error
     val x = 1
   }
 }
@@ -14,7 +14,7 @@ class B() {
 }
 
 object b {
-  <error descr="[WRONG_MODIFIER_CONTAINING_DECLARATION] Modifier 'companion' is not applicable inside 'standalone object'">companion</error> object {
+  <error descr="[WRONG_MODIFIER_CONTAINING_DECLARATION]">companion</error> object {
     val x = 1
   }
   // error

@@ -42,9 +42,12 @@ import kotlin.time.Duration.Companion.milliseconds
  * Once it is canceled, watcher stops, all established forwardings are stopped, and the top component is removed.
  */
 internal fun installPortForwarding(terminalView: TerminalView, coroutineScope: CoroutineScope) {
-  // Trigger eager init.
-  // It is required for ThinClientTerminalPortForwardingManager to receive port forwarding data from the backend before any interaction.
-  TerminalPortForwardingManager.getInstance()
+  // Resolve the manager once and reuse it for the whole lifetime of this session.
+  // The implementations are stateful, so a single session must not switch between them: sessions created before the
+  // RD client is loaded keep using the EEL-based manager, while sessions created afterward use the RD client manager.
+  // This also triggers eager init, which ThinClientTerminalPortForwardingManager needs to receive port forwarding data
+  // from the backend before any interaction.
+  val portForwardingManager = TerminalPortForwardingManager.getInstance()
 
   coroutineScope.launch {
     val session = terminalView.sessionDeferred.await()
@@ -69,9 +72,10 @@ internal fun installPortForwarding(terminalView: TerminalView, coroutineScope: C
     }
 
     val model = PortForwardingViewModel(eelDescriptor)
-    installViewModelUpdating(eelMachine, model, coroutineScope)
+    installViewModelUpdating(portForwardingManager, eelMachine, model, coroutineScope)
 
     val watcher = installPortsWatcher(
+      portForwardingManager = portForwardingManager,
       eelMachine = eelMachine,
       processId = session.processId,
       model = model,
@@ -81,7 +85,7 @@ internal fun installPortForwarding(terminalView: TerminalView, coroutineScope: C
 
     withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
       val panelScope = coroutineScope.childScope("TerminalPortForwardingPanel")
-      val panel = PortForwardingWidget(model, panelScope)
+      val panel = PortForwardingWidget(model, portForwardingManager, panelScope)
       terminalView.setTopComponent(panel, panelScope.asDisposable())
     }
   }
@@ -103,12 +107,12 @@ private suspend fun arePortsAccessibleLocally(eelDescriptor: EelDescriptor): Boo
  * when its state changes (e.g., via [TerminalPortForwardingManager.forwardPort] or [TerminalPortForwardingManager.stopForwarding]).
  */
 private fun installViewModelUpdating(
+  manager: TerminalPortForwardingManager,
   eelMachine: EelMachine,
   model: PortForwardingViewModel,
   coroutineScope: CoroutineScope,
 ) {
   coroutineScope.launch(CoroutineName("")) {
-    val manager = TerminalPortForwardingManager.getInstance()
     manager.stateChangedFlow.collect {
       for (item in model.items.value) {
         val localPort = manager.getForwardedLocalPort(eelMachine, item.remotePort)
@@ -124,6 +128,7 @@ private fun installViewModelUpdating(
 }
 
 private fun installPortsWatcher(
+  portForwardingManager: TerminalPortForwardingManager,
   eelMachine: EelMachine,
   processId: Long,
   model: PortForwardingViewModel,
@@ -136,7 +141,7 @@ private fun installPortsWatcher(
 
       // Then resolve the initial forwarded/not-forwarded state from the manager.
       // Subsequent state changes are handled by the logic in [installViewModelUpdating].
-      val existingLocalPort = TerminalPortForwardingManager.getInstance().getForwardedLocalPort(eelMachine, port.port)
+      val existingLocalPort = portForwardingManager.getForwardedLocalPort(eelMachine, port.port)
       if (existingLocalPort != null) {
         model.setForwarded(port.port, existingLocalPort)
       }

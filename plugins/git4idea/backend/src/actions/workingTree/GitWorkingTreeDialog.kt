@@ -1,9 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions.workingTree
 
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.util.whenDocumentChanged
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
@@ -32,6 +34,7 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.PathUtil.isValidFileName
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.addIfNotNull
+import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.git.ui.GitBranchesTreeIconProvider
 import com.intellij.vcsUtil.VcsUtil
@@ -39,10 +42,13 @@ import git4idea.GitReference
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardLocalBranch
 import git4idea.GitWorkingTree
+import git4idea.branch.GitNewBranchDialog
+import git4idea.branch.GitNewBranchDialog.Companion.cleanBranchNameAndAdjustCursorIfNeeded
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.validators.checkRefName
 import git4idea.repo.tags
+import git4idea.validators.GitRefNameValidator
 import git4idea.workingTrees.GitWorkingTreesService
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Dimension
@@ -71,6 +77,7 @@ internal class GitWorkingTreeDialog(
   private lateinit var parentPathCell: Cell<TextFieldWithBrowseButton>
   private lateinit var projectNameCell: Cell<JBTextField>
 
+  private val validator = GitRefNameValidator.getInstance()
   private val existingRefWithWorkingTree: GraphProperty<RefWithWorkingTree?>
   private val projectName: GraphProperty<String>
   private val parentPath: GraphProperty<String>
@@ -109,6 +116,16 @@ internal class GitWorkingTreeDialog(
   }
 
   override fun createCenterPanel(): JComponent {
+    val newBranchNameField = TextFieldWithCompletion(data.project, createBranchNameCompletion(), "", true, true, false, false)
+      .apply {
+        minimumSize = JBUI.size(240, 0)
+        setupCleanBranchNameAndAdjustCursorIfNeeded()
+        whenDocumentChanged(disposable) {
+          newBranchName.set(text)
+          createNewBranch.set(text.isNotEmpty())
+        }
+    }
+
     return panel {
       row(GitBundle.message("working.tree.dialog.label.existing.branch")) {
         createRefComboBox()
@@ -121,13 +138,11 @@ internal class GitWorkingTreeDialog(
           .bindSelected(createNewBranch)
           .gap(RightGap.SMALL)
 
-        textField()
-          .bindText(newBranchName)
+        cell(newBranchNameField)
           .align(Align.FILL)
           .validationRequestor(WHEN_GRAPH_PROPAGATION_FINISHED(propertyGraph))
           .validationOnInput { validateNewBranchNameField() }
           .validationOnApply { validateNewBranchNameField() }
-          .enabledIf(createNewBranch)
       }
         .bottomGap(BottomGap.MEDIUM)
         .layout(RowLayout.LABEL_ALIGNED)
@@ -291,6 +306,29 @@ internal class GitWorkingTreeDialog(
     }
     else {
       data.projectNameBase.name + "-" + refToUse.substringAfterLast("/")
+    }
+  }
+
+  private fun createBranchNameCompletion(): GitNewBranchDialog.BranchNamesCompletion {
+    val branches = data.repository.branches
+    val localBranches = branches.localBranches.map { it.name }
+    val remoteBranches = branches.remoteBranches.map { it.nameForRemoteOperations }
+    val localDirectories = GitNewBranchDialog.collectDirectories(localBranches, true)
+    val remoteDirectories = GitNewBranchDialog.collectDirectories(remoteBranches, true)
+    val allSuggestions = buildSet {
+      addAll(localBranches)
+      addAll(remoteBranches)
+      addAll(localDirectories)
+      addAll(remoteDirectories)
+    }
+    return GitNewBranchDialog.BranchNamesCompletion(localDirectories.toList(), allSuggestions.toList())
+  }
+
+  private fun TextFieldWithCompletion.setupCleanBranchNameAndAdjustCursorIfNeeded() {
+    whenDocumentChanged(disposable) {
+      invokeLater {
+        cleanBranchNameAndAdjustCursorIfNeeded(validator)
+      }
     }
   }
 

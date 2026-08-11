@@ -19,7 +19,7 @@ fun reportMissingLicenses(collector: SoftAssertions, project: JpsProject, licens
       !nonPublicModules.contains(it.name)
       && !it.name.contains("guiTests")
       && it.name != "intellij.platform.util.immutableKeyValueStore.benchmark"
-      && it.name != "intellij.libraries.mockito"
+      && !it.name.startsWith("intellij.libraries.")
       && !it.name.contains("integrationTests", ignoreCase = true)
       && !it.name.startsWith("intellij.codeowners")
       && !it.name.startsWith("toolbox.")

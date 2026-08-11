@@ -15,10 +15,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider

@@ -21,11 +21,11 @@ class BasicBlock(_bytecode._InstrList):
             index += 1
 
             if not isinstance(instr, (SetLineno, Instr)):
-                raise ValueError("BasicBlock must only contain SetLineno and Instr objects, " "but %s was found" % instr.__class__.__name__)
+                raise ValueError("BasicBlock must only contain SetLineno and Instr objects, but %s was found" % instr.__class__.__name__)
 
             if isinstance(instr, Instr) and instr.has_jump():
                 if index < len(self):
-                    raise ValueError("Only the last instruction of a basic " "block can be a jump")
+                    raise ValueError("Only the last instruction of a basic block can be a jump")
 
                 if not isinstance(instr.arg, BasicBlock):
                     raise ValueError(

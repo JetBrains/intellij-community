@@ -4,6 +4,7 @@ package com.intellij.util.io.writeaheadlog
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory
 import com.intellij.platform.util.io.storages.circular.CircularBytesBuffer
+import com.intellij.platform.util.io.storages.circular.CircularBytesBuffer.OptionallyConsumingDataReader
 import com.intellij.platform.util.io.storages.circular.CircularBytesBufferOverMMappedFile
 import com.intellij.platform.util.io.storages.circular.WriteAheadLogOverCircularBuffer
 import com.intellij.platform.util.io.storages.circular.WriteAheadLogOverCircularBuffer.WriteAheadLogStatistics
@@ -35,9 +36,11 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption.CREATE
 import java.nio.file.StandardOpenOption.READ
 import java.nio.file.StandardOpenOption.WRITE
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.random.Random
 
 
@@ -86,6 +89,282 @@ class WriteAheadLogFileChannelOverCircularBufferTest {
       assertTrue(allStatistics.flushesForcedByOverflow >= expectedStatistics.flushesForcedByOverflow)
       assertTrue(allStatistics.entriesFlushed >= expectedStatistics.entriesFlushed)
       assertTrue(allStatistics.bytesCopiedByApplyUnfinished >= expectedStatistics.bytesCopiedByApplyUnfinished)
+    }
+  }
+
+  @Test
+  fun `per-file flush does not scan WAL records if the file has no pending writes`(@TempDir tempDir: Path) {
+    val pathWithPendingWrite = tempDir.resolve("with-pending-write.bin")
+    val pathWithoutPendingWrite = tempDir.resolve("without-pending-write.bin")
+    val circularBuffer = CountingReadCircularBytesBuffer()
+    val writeAheadLog = WriteAheadLogOverCircularBuffer(
+      circularBuffer,
+      fixedPathEnumerator(pathWithPendingWrite, pathWithoutPendingWrite),
+      { _, _, _ -> },
+    )
+
+    writeAheadLog.openFor(pathWithPendingWrite).write(0, byteArrayOf(1), 0, 1)
+
+    assertEquals(0, writeAheadLog.openFor(pathWithoutPendingWrite).flush())
+    assertEquals(
+      0,
+      circularBuffer.readMaybeConsumeCalls,
+      "Per-file flush must not scan WAL records when the requested file has no pending writes"
+    )
+  }
+
+  @Test
+  fun `per-file flush skips unleased records of another file`(@TempDir tempDir: Path) {
+    val caseDir = tempDir.resolve("wal")
+    Files.createDirectories(caseDir)
+    val foreignPath = Files.createFile(caseDir.resolve("foreign.bin")).toRealPath()
+    val targetPath = Files.createFile(caseDir.resolve("target.bin")).toRealPath()
+    val appliedPaths = CopyOnWriteArrayList<Path>()
+
+    WriteAheadLogOverCircularBuffer.openDefaultWAL(
+      walBufferPath(caseDir),
+      walEnumeratorPath(caseDir),
+      WAL_CAPACITY,
+    ) { path, _, data ->
+      appliedPaths.add(path)
+      data.position(data.limit())
+    }.use { writeAheadLog ->
+      val foreignWriter = writeAheadLog.openFor(foreignPath)
+      val targetWriter = writeAheadLog.openFor(targetPath)
+      foreignWriter.write(0, byteArrayOf(1), 0, 1)
+      targetWriter.write(0, byteArrayOf(2), 0, 1)
+
+      assertEquals(
+        1,
+        targetWriter.flush(),
+        "Per-file flush must consume only target-path records even if a foreign record is earlier in WAL"
+      )
+      assertEquals(
+        listOf(targetPath),
+        appliedPaths.toList(),
+        "Per-file flush must skip earlier foreign records instead of processing them with the target pathId"
+      )
+
+      assertEquals(
+        1,
+        foreignWriter.flush(),
+        "The skipped foreign record must remain pending for its own per-file flush"
+      )
+      assertEquals(listOf(targetPath, foreignPath), appliedPaths.toList())
+    }
+  }
+
+  @Test
+  fun `per-file flush does not wait for leased records of another file`(@TempDir tempDir: Path) {
+    val caseDir = tempDir.resolve("wal")
+    Files.createDirectories(caseDir)
+    val leasedPath = Files.createFile(caseDir.resolve("leased.bin")).toRealPath()
+    val targetPath = Files.createFile(caseDir.resolve("target.bin")).toRealPath()
+    val leasedWriteEntered = CountDownLatch(1)
+    val leasedWriteMayFinish = CountDownLatch(1)
+    val targetWriteFinished = CountDownLatch(1)
+    val writerFailure = AtomicReference<Throwable>()
+
+    val writeAheadLog = WriteAheadLogOverCircularBuffer.openDefaultWAL(
+      walBufferPath(caseDir),
+      walEnumeratorPath(caseDir),
+      WAL_CAPACITY,
+    ) { path, _, data ->
+      try {
+        if (path == leasedPath) {
+          leasedWriteEntered.countDown()
+          assertTrue(
+            leasedWriteMayFinish.await(5, TimeUnit.SECONDS),
+            "The test must release the foreign leased record before global flush can finish"
+          )
+        }
+        else if (path == targetPath) {
+          targetWriteFinished.countDown()
+        }
+        data.position(data.limit())
+      }
+      catch (t: Throwable) {
+        writerFailure.set(t)
+        throw t
+      }
+    }
+
+    try {
+      val leasedWriter = writeAheadLog.openFor(leasedPath)
+      val targetWriter = writeAheadLog.openFor(targetPath)
+      leasedWriter.write(0, byteArrayOf(1), 0, 1)
+      targetWriter.write(0, byteArrayOf(2), 0, 1)
+
+      val globalFlushFailure = AtomicReference<Throwable>()
+      val globalFlushThread = Thread {
+        try {
+          writeAheadLog.flush()
+        }
+        catch (t: Throwable) {
+          globalFlushFailure.set(t)
+        }
+      }.also { thread ->
+        thread.name = "test-wal-global-flush-with-foreign-lease"
+        thread.isDaemon = true
+        thread.start()
+      }
+      assertTrue(
+        leasedWriteEntered.await(5, TimeUnit.SECONDS),
+        "Global flush must lease the first, foreign record before target-path flush starts"
+      )
+
+      val targetFlushFailure = AtomicReference<Throwable>()
+      val targetFlushFinished = CountDownLatch(1)
+      val targetFlushThread = Thread {
+        try {
+          targetWriter.flush()
+        }
+        catch (t: Throwable) {
+          targetFlushFailure.set(t)
+        }
+        finally {
+          targetFlushFinished.countDown()
+        }
+      }.also { thread ->
+        thread.name = "test-wal-target-path-flush"
+        thread.isDaemon = true
+        thread.start()
+      }
+
+      assertTrue(
+        targetWriteFinished.await(5, TimeUnit.SECONDS),
+        "Target-path flush must apply its record without waiting for a foreign leased record"
+      )
+      assertTrue(
+        targetFlushFinished.await(5, TimeUnit.SECONDS),
+        "Target-path flush must finish while the foreign record is still leased"
+      )
+      targetFlushFailure.get()?.let { throw AssertionError("Target-path flush failed", it) }
+
+      leasedWriteMayFinish.countDown()
+      globalFlushThread.join(5_000)
+      targetFlushThread.join(5_000)
+
+      assertFalse(globalFlushThread.isAlive, "Global flush must finish after the foreign record is released")
+      assertFalse(targetFlushThread.isAlive, "Target-path flush thread must finish")
+      writerFailure.get()?.let { throw AssertionError("ToFileWriter failed", it) }
+      globalFlushFailure.get()?.let { throw AssertionError("Global flush failed", it) }
+    }
+    finally {
+      leasedWriteMayFinish.countDown()
+      writeAheadLog.close()
+    }
+  }
+
+  /**
+   * Documents that WAL record leasing preserves the per-path write order even when global and per-file flushes race.
+   */
+  @Test
+  fun `concurrent global and per-file flushes preserve FIFO order for one file`(@TempDir tempDir: Path) {
+    val caseDir = tempDir.resolve("wal")
+    Files.createDirectories(caseDir)
+    val targetPath = Files.createFile(caseDir.resolve("target.bin")).toRealPath()
+    val otherPath = Files.createFile(caseDir.resolve("other.bin")).toRealPath()
+    val recordsCount = 64
+    val flushThreadsCount = 8
+    val flushThreadsStarted = CountDownLatch(flushThreadsCount)
+    val firstTargetWriteEntered = CountDownLatch(1)
+    val firstTargetWriteMayFinish = CountDownLatch(1)
+    val completedTargetOffsets = CopyOnWriteArrayList<Long>()
+    val writerFailure = AtomicReference<Throwable>()
+
+    val writeAheadLog = WriteAheadLogOverCircularBuffer.openDefaultWAL(
+      walBufferPath(caseDir),
+      walEnumeratorPath(caseDir),
+      WAL_CAPACITY,
+    ) { path, offsetInFile, data ->
+      try {
+        if (path == targetPath && offsetInFile == 0L) {
+          firstTargetWriteEntered.countDown()
+          assertTrue(
+            flushThreadsStarted.await(5, TimeUnit.SECONDS),
+            "All flush threads must start while the first target record is leased"
+          )
+          assertTrue(
+            firstTargetWriteMayFinish.await(5, TimeUnit.SECONDS),
+            "The test must release the first target record before the writer can finish"
+          )
+        }
+        else {
+          Thread.yield()
+        }
+
+        data.position(data.limit())
+        if (path == targetPath) {
+          completedTargetOffsets += offsetInFile
+        }
+      }
+      catch (t: Throwable) {
+        writerFailure.set(t)
+        throw t
+      }
+    }
+
+    try {
+      val targetWriter = writeAheadLog.openFor(targetPath)
+      val otherWriter = writeAheadLog.openFor(otherPath)
+      repeat(recordsCount) { recordNo ->
+        targetWriter.write(recordNo.toLong(), byteArrayOf(recordNo.toByte()), 0, 1)
+        otherWriter.write(recordNo.toLong(), byteArrayOf(recordNo.toByte()), 0, 1)
+      }
+
+      val flushFailures = CopyOnWriteArrayList<Throwable>()
+      val flushThreads = List(flushThreadsCount) { threadNo ->
+        Thread {
+          try {
+            flushThreadsStarted.countDown()
+            if (threadNo % 2 == 0) {
+              targetWriter.flush()
+            }
+            else {
+              writeAheadLog.flush()
+            }
+          }
+          catch (t: Throwable) {
+            flushFailures += t
+          }
+        }.also { thread ->
+          thread.name = "test-wal-concurrent-flush-$threadNo"
+          thread.isDaemon = true
+          thread.start()
+        }
+      }
+
+      assertTrue(
+        firstTargetWriteEntered.await(5, TimeUnit.SECONDS),
+        "At least one flush thread must start applying the first target record"
+      )
+      firstTargetWriteMayFinish.countDown()
+      flushThreads.forEach { thread ->
+        thread.join(5_000)
+        assertFalse(thread.isAlive, "Flush thread ${thread.name} must finish")
+      }
+
+      writerFailure.get()?.let { throw AssertionError("ToFileWriter failed", it) }
+      if (flushFailures.isNotEmpty()) {
+        val firstFailure = flushFailures.first()
+        flushFailures.drop(1).forEach(firstFailure::addSuppressed)
+        throw AssertionError("Concurrent flush failed", firstFailure)
+      }
+      assertEquals(
+        0,
+        targetWriter.flush(),
+        "Concurrent global/per-file flushes must drain all target-path records"
+      )
+      assertEquals(
+        (0 until recordsCount).map { it.toLong() },
+        completedTargetOffsets.toList(),
+        "Target-path records must be applied in the same FIFO order in which they were appended"
+      )
+    }
+    finally {
+      firstTargetWriteMayFinish.countDown()
+      writeAheadLog.close()
     }
   }
 
@@ -367,6 +646,67 @@ class WriteAheadLogFileChannelOverCircularBufferTest {
   }
 
   @Test
+  fun `applyUnfinished does not deadlock with concurrent flush`(@TempDir tempDir: Path) {
+    val storagePath = tempDir.resolve("storage.bin").toAbsolutePath()
+    val circularBuffer = ApplyUnfinishedFlushDeadlockCircularBytesBuffer()
+    WriteAheadLogOverCircularBuffer(circularBuffer, singlePathEnumerator(storagePath), { _, _, _ -> }).use { writeAheadLog ->
+      val fileWriter = writeAheadLog.openFor(storagePath)
+      fileWriter.write(0, byteArrayOf(42), 0, 1)
+
+      val applyFinished = CountDownLatch(1)
+      val applyFailure = AtomicReference<Throwable>()
+      val applyThread = Thread {
+        try {
+          fileWriter.applyUnfinished(0, 1, ByteBuffer.allocate(1), 0)
+        }
+        catch (t: Throwable) {
+          applyFailure.set(t)
+        }
+        finally {
+          applyFinished.countDown()
+        }
+      }.also {
+        it.name = "test-apply-unfinished"
+        it.isDaemon = true
+        it.start()
+      }
+
+      assertTrue(circularBuffer.awaitReadEntered(), "applyUnfinished must enter circular buffer read")
+
+      val flushFinished = CountDownLatch(1)
+      val flushFailure = AtomicReference<Throwable>()
+      val flushThread = Thread {
+        try {
+          writeAheadLog.flush()
+        }
+        catch (t: Throwable) {
+          flushFailure.set(t)
+        }
+        finally {
+          flushFinished.countDown()
+        }
+      }.also {
+        it.name = "test-wal-flush"
+        it.isDaemon = true
+        it.start()
+      }
+
+      val completed = try {
+        applyFinished.await(5, TimeUnit.SECONDS) && flushFinished.await(5, TimeUnit.SECONDS)
+      }
+      finally {
+        circularBuffer.releaseRead()
+        applyThread.join(5_000)
+        flushThread.join(5_000)
+      }
+
+      assertTrue(completed, "applyUnfinished and flush must not deadlock")
+      applyFailure.get()?.let { throw AssertionError("applyUnfinished failed", it) }
+      flushFailure.get()?.let { throw AssertionError("flush failed", it) }
+    }
+  }
+
+  @Test
   fun `unfinished records are applied after reopen`(@TempDir tempDir: Path) {
     val caseDir = tempDir.resolve("wal")
     Files.createDirectories(caseDir)
@@ -632,7 +972,7 @@ private class CapacityOnlyCircularBytesBuffer(
     throw AssertionError("Too large WAL record must be rejected before appending to circular buffer")
   }
 
-  override fun read(reader: CircularBytesBuffer.DataReader): Int = 0
+  override fun readMaybeConsuming(reader: OptionallyConsumingDataReader): Int = 0
 
   override fun close() = Unit
 
@@ -654,7 +994,92 @@ private class QueueFullOnceCircularBytesBuffer : CircularBytesBuffer {
     writer.write(ByteBuffer.allocate(entrySize))
   }
 
-  override fun read(reader: CircularBytesBuffer.DataReader): Int = 0
+  override fun readMaybeConsuming(reader: OptionallyConsumingDataReader): Int = 0
+
+  override fun close() = Unit
+
+  override fun flush() = Unit
+}
+
+private class CountingReadCircularBytesBuffer : CircularBytesBuffer {
+  var readMaybeConsumeCalls: Int = 0
+    private set
+  private var hasUnprocessedRecord: Boolean = false
+
+  override fun hasUnprocessedRecords(): Boolean = hasUnprocessedRecord
+
+  override fun maxEntrySize(): Int = 1024
+
+  override fun append(writer: ByteBufferWriter, entrySize: Int) {
+    writer.write(ByteBuffer.allocate(entrySize))
+    hasUnprocessedRecord = true
+  }
+
+  override fun readMaybeConsuming(reader: OptionallyConsumingDataReader): Int {
+    readMaybeConsumeCalls++
+    return 0
+  }
+
+  override fun close() = Unit
+
+  override fun flush() = Unit
+}
+
+private class ApplyUnfinishedFlushDeadlockCircularBytesBuffer : CircularBytesBuffer {
+  private val readEntered = CountDownLatch(1)
+  private val flushEntered = CountDownLatch(1)
+  private val flushFinished = CountDownLatch(1)
+  private val releaseRead = CountDownLatch(1)
+  @Volatile
+  private var entry: ByteArray? = null
+
+  fun awaitReadEntered(): Boolean = readEntered.await(5, TimeUnit.SECONDS)
+
+  fun releaseRead() {
+    releaseRead.countDown()
+  }
+
+  override fun hasUnprocessedRecords(): Boolean = entry != null
+
+  override fun maxEntrySize(): Int = 1024
+
+  override fun append(writer: ByteBufferWriter, entrySize: Int) {
+    val buffer = ByteBuffer.allocate(entrySize)
+    writer.write(buffer)
+    entry = buffer.array()
+  }
+
+  override fun read(reader: CircularBytesBuffer.DataReader) {
+    readEntered.countDown()
+    flushEntered.await()
+    while (flushFinished.count > 0 && releaseRead.count > 0) {
+      releaseRead.await(10, TimeUnit.MILLISECONDS)
+    }
+    entry?.let { reader.read(ByteBuffer.wrap(it)) }
+  }
+
+  override fun readMaybeConsuming(reader: OptionallyConsumingDataReader): Int {
+    check(readEntered.await(5, TimeUnit.SECONDS)) { "applyUnfinished must enter circular buffer read before flush" }
+    flushEntered.countDown()
+    val currentEntry = entry ?: return 0
+    val consumed = try {
+      val decision = reader.decide(ByteBuffer.wrap(currentEntry).asReadOnlyBuffer())
+      if (decision.shouldStop() || !decision.shouldProcess()) {
+        false
+      }
+      else {
+        decision.process(ByteBuffer.wrap(currentEntry))
+        decision.shouldConsumeAfterProcess()
+      }
+    }
+    finally {
+      flushFinished.countDown()
+    }
+    if (consumed) {
+      entry = null
+    }
+    return if (consumed) 1 else 0
+  }
 
   override fun close() = Unit
 
@@ -673,4 +1098,40 @@ private fun singlePathEnumerator(): DurableDataEnumerator<Path> = object : Durab
   override fun force() = Unit
 
   override fun isDirty() = false
+}
+
+private fun singlePathEnumerator(path: Path): DurableDataEnumerator<Path> = object : DurableDataEnumerator<Path> {
+  override fun enumerate(value: Path?): Int {
+    require(value == path) { "Only [$path] could be enumerated, but [$value] requested" }
+    return 1
+  }
+
+  override fun valueOf(idx: Int): Path? = if (idx == 1) path else null
+
+  override fun tryEnumerate(value: Path?): Int = if (value == path) 1 else DataEnumerator.NULL_ID
+
+  override fun close() = Unit
+
+  override fun force() = Unit
+
+  override fun isDirty() = false
+}
+
+private fun fixedPathEnumerator(vararg paths: Path): DurableDataEnumerator<Path> {
+  val pathToId = paths.withIndex().associate { (index, path) -> path to index + 1 }
+  val idToPath = pathToId.entries.associate { (path, id) -> id to path }
+
+  return object : DurableDataEnumerator<Path> {
+    override fun enumerate(value: Path?): Int = pathToId[value] ?: error("Unknown path: $value")
+
+    override fun valueOf(idx: Int): Path? = idToPath[idx]
+
+    override fun tryEnumerate(value: Path?): Int = pathToId[value] ?: DataEnumerator.NULL_ID
+
+    override fun close() = Unit
+
+    override fun force() = Unit
+
+    override fun isDirty() = false
+  }
 }

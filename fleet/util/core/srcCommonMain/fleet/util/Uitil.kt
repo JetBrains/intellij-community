@@ -13,14 +13,9 @@ import kotlin.reflect.KClass
 fun <K, V : Any> PersistentMap<K, V>.update(k: K, f: (V?) -> V?): PersistentMap<K, V> {
   val vPrime = f(this[k])
   return when {
-    vPrime == null -> remove(k)
-    else -> put(k, vPrime)
+    vPrime == null -> removing(k)
+    else -> putting(k, vPrime)
   }
-}
-
-fun <T> constantly(f: () -> T): () -> T {
-  val r = f()
-  return { r }
 }
 
 suspend fun <T> SendChannel<T>.trySendSuspending(t: T): Boolean {

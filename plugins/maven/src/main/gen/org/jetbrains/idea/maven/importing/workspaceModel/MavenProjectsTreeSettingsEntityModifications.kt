@@ -19,7 +19,7 @@ interface MavenProjectsTreeSettingsEntityBuilder : WorkspaceEntityBuilder<MavenP
 
 internal object MavenProjectsTreeSettingsEntityType :
   EntityType<MavenProjectsTreeSettingsEntity, MavenProjectsTreeSettingsEntityBuilder>() {
-  override val entityClass: Class<MavenProjectsTreeSettingsEntity> get() = MavenProjectsTreeSettingsEntity::class.java
+  override val entityImplClass: Class<*> get() = MavenProjectsTreeSettingsEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = MavenProjectsTreeSettingsEntityImpl.Builder::class.java
   operator fun invoke(
     importedFilePaths: List<String>,

@@ -9,15 +9,15 @@ import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.BaseKotlinChangeSignatureTest
 import org.jetbrains.kotlin.idea.test.Diagnostic
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 class KotlinFirChangeSignatureTest :
-    BaseKotlinChangeSignatureTest<KotlinChangeInfo, KotlinParameterInfo, KotlinTypeInfo, Visibility, KotlinMethodDescriptor>() {
+    BaseKotlinChangeSignatureTest<KotlinChangeInfo, KotlinParameterInfo, KotlinTypeInfo, KaSymbolVisibility, KotlinMethodDescriptor>() {
 
     override fun getSuffix(): String {
         return "k2"
@@ -231,6 +231,17 @@ class KotlinFirChangeSignatureTest :
         addParameter(newIntParameter)
     }
 
+    fun testAddMultipleContextParameters() = doTest {
+        val psiFactory = KtPsiFactory(project)
+        val newIntParameter = createKotlinIntParameter(defaultValueForCall = kotlinDefaultIntValue,
+                                                       defaultValueAsDefaultParameter = true)
+        newIntParameter.isContextParameter = true
+        val newStringParameter = createKotlinStringParameter("s", defaultValueForCall = psiFactory.createExpression("\"ctx\""))
+        newStringParameter.isContextParameter = true
+        addParameter(newIntParameter)
+        addParameter(newStringParameter)
+    }
+
     fun testToContextParameterExtensionTopLevelFunctionReceiver() = doTest {
         newParameters[0].isContextParameter = true
         receiverParameterInfo = null
@@ -277,6 +288,12 @@ class KotlinFirChangeSignatureTest :
     fun testFromContextParameterToParameter() = doTest {
         val parameterInfo = newParameters[0]
         parameterInfo.isContextParameter = false
+    }
+
+    fun testContextParameterToReceiver() = doTest {
+        val parameterInfo = newParameters[0]
+        parameterInfo.isContextParameter = false
+        receiverParameterInfo = parameterInfo
     }
 
     fun testDeleteUsedContextParameter() = doTestConflict {

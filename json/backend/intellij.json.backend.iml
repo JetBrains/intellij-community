@@ -56,5 +56,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry" />
   </component>
 </module>

@@ -18,7 +18,7 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
-import com.intellij.openapi.application.EditorLockFreeTyping
+import com.intellij.openapi.editor.elf.ElfFeatureFlag
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -83,7 +83,7 @@ object FileTypeUsageCounterCollector : CounterUsagesCollector() {
   @RequiresEdt
   @JvmStatic
   fun triggerEdit(project: Project, file: VirtualFile) {
-    if (EditorLockFreeTyping.isEnabled()) {
+    if (ElfFeatureFlag.isEnabled()) {
       // TODO: `triggerEdit` acquires RA on EDT while typing,
       //  it should be reworked for lock-free typing (IJPL-54)
       return

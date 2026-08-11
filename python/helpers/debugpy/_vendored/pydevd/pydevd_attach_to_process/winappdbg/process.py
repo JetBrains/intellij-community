@@ -1213,7 +1213,7 @@ class Process(_ThreadContainer, _ModuleContainer):
         """
 
         # Issue a deprecation warning.
-        warnings.warn("Process.get_environment_data() is deprecated" " since WinAppDbg 1.5.", DeprecationWarning)
+        warnings.warn("Process.get_environment_data() is deprecated since WinAppDbg 1.5.", DeprecationWarning)
 
         # Get the environment variables.
         block = [key + "=" + value for (key, value) in self.get_environment_variables()]
@@ -1245,7 +1245,7 @@ class Process(_ThreadContainer, _ModuleContainer):
         """
 
         # Issue a deprecation warning.
-        warnings.warn("Process.parse_environment_data() is deprecated" " since WinAppDbg 1.5.", DeprecationWarning)
+        warnings.warn("Process.parse_environment_data() is deprecated since WinAppDbg 1.5.", DeprecationWarning)
 
         # Create an empty environment dictionary.
         environment = dict()
@@ -2027,7 +2027,7 @@ class Process(_ThreadContainer, _ModuleContainer):
                 self.mprotect(lpBaseAddress, len(lpBuffer), prot)
             except Exception:
                 prot = None
-                msg = "Failed to adjust page permissions" " for process %s at address %s: %s"
+                msg = "Failed to adjust page permissions for process %s at address %s: %s"
                 msg = msg % (self.get_pid(), HexDump.address(lpBaseAddress, self.get_bits()), traceback.format_exc())
                 warnings.warn(msg, RuntimeWarning)
         try:
@@ -3301,7 +3301,7 @@ class Process(_ThreadContainer, _ModuleContainer):
         @raise TypeError: A snapshot of the wrong type was passed.
         """
         if not snapshot or not isinstance(snapshot, list) or not isinstance(snapshot[0], win32.MemoryBasicInformation):
-            raise TypeError("Only snapshots returned by " "take_memory_snapshot() can be used here.")
+            raise TypeError("Only snapshots returned by take_memory_snapshot() can be used here.")
 
         # Get the process handle.
         hProcess = self.get_handle(
@@ -3572,17 +3572,17 @@ class Process(_ThreadContainer, _ModuleContainer):
             # Resolve kernel32.dll!LoadLibraryA
             pllib = aModule.resolve(compat.b("LoadLibraryA"))
             if not pllib:
-                raise RuntimeError("Cannot resolve kernel32.dll!LoadLibraryA" " in the remote process")
+                raise RuntimeError("Cannot resolve kernel32.dll!LoadLibraryA in the remote process")
 
             # Resolve kernel32.dll!GetProcAddress
             pgpad = aModule.resolve(compat.b("GetProcAddress"))
             if not pgpad:
-                raise RuntimeError("Cannot resolve kernel32.dll!GetProcAddress" " in the remote process")
+                raise RuntimeError("Cannot resolve kernel32.dll!GetProcAddress in the remote process")
 
             # Resolve kernel32.dll!VirtualFree
             pvf = aModule.resolve(compat.b("VirtualFree"))
             if not pvf:
-                raise RuntimeError("Cannot resolve kernel32.dll!VirtualFree" " in the remote process")
+                raise RuntimeError("Cannot resolve kernel32.dll!VirtualFree in the remote process")
 
             # Shellcode follows...
             code = compat.b("")
@@ -3683,7 +3683,7 @@ class Process(_ThreadContainer, _ModuleContainer):
                     # This specific error is caused by trying to spawn a new
                     # thread in a process belonging to a different Terminal
                     # Services session (for example a service).
-                    raise NotImplementedError("Target process belongs to a different" " Terminal Services session, cannot inject!")
+                    raise NotImplementedError("Target process belongs to a different Terminal Services session, cannot inject!")
 
                 # Remember the buffer address.
                 #  It will be freed ONLY by the Thread.kill() method
@@ -4164,13 +4164,13 @@ class _ProcessContainer(object):
                 try:
                     if not bAllowElevation:
                         if bFollow:
-                            msg = "Child processes can't be autofollowed" " when dropping UAC elevation."
+                            msg = "Child processes can't be autofollowed when dropping UAC elevation."
                             raise NotImplementedError(msg)
                         if bConsole:
-                            msg = "Child processes can't inherit the debugger's" " console when dropping UAC elevation."
+                            msg = "Child processes can't inherit the debugger's console when dropping UAC elevation."
                             raise NotImplementedError(msg)
                         if bInheritHandles:
-                            msg = "Child processes can't inherit the debugger's" " handles when dropping UAC elevation."
+                            msg = "Child processes can't inherit the debugger's handles when dropping UAC elevation."
                             raise NotImplementedError(msg)
                         try:
                             hWnd = self.get_shell_window()

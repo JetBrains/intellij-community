@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.inspections.interpreter.InterpreterSettingsQuickFix
 import com.jetbrains.python.projectCreation.createVenvAndSdk
@@ -18,7 +17,7 @@ import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.runWithSdkConfigurationLock
 import com.jetbrains.python.statistics.modules
-import com.jetbrains.python.util.ShowingMessageErrorSync
+import com.jetbrains.python.errorProcessing.ErrorSink
 import training.dsl.LessonContext
 import training.lang.AbstractLangSupport
 import training.learn.CourseManager
@@ -33,7 +32,7 @@ import training.util.getFeedbackLink
 import training.util.isLearningProject
 import java.nio.file.Path
 
-internal class PythonLangSupport(private val errorSink: ErrorSink = ShowingMessageErrorSync) : AbstractLangSupport() {
+internal class PythonLangSupport(private val errorSink: ErrorSink = ErrorSink()) : AbstractLangSupport() {
 
   override val contentRootDirectoryName = "PyCharmLearningProject"
 

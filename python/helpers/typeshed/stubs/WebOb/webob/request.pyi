@@ -85,8 +85,8 @@ class BaseRequest:
     server_port: SymmetricProperty[int]
     script_name: AsymmetricPropertyWithDelete[str, str | None]
     path_info: SymmetricProperty[str]
-    uscript_name = script_name  # bw compat
-    upath_info = path_info  # bw compat
+    uscript_name = script_name  # bw compat  # pyrefly: ignore [unknown-name]
+    upath_info = path_info  # bw compat  # pyrefly: ignore [unknown-name]
     content_type: AsymmetricPropertyWithDelete[str, str | None]
     headers: AsymmetricProperty[EnvironHeaders, SupportsKeysAndGetItem[str, str] | Iterable[tuple[str, str]]]
     @property
@@ -167,7 +167,7 @@ class BaseRequest:
     pragma: SymmetricPropertyWithDelete[str | None]
     range: AsymmetricPropertyWithDelete[Range | None, tuple[int, int | None] | list[int | None] | list[int] | str | None]
     referer: SymmetricPropertyWithDelete[str | None]
-    referrer = referer
+    referrer = referer  # pyrefly: ignore [unknown-name]
     user_agent: SymmetricPropertyWithDelete[str | None]
     def as_bytes(self, skip_body: bool = False) -> bytes: ...
     def as_text(self) -> str: ...

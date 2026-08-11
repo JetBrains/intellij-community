@@ -3,10 +3,12 @@ package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class DarculaInstaller {
   public static void uninstall() {
     performImpl(false);

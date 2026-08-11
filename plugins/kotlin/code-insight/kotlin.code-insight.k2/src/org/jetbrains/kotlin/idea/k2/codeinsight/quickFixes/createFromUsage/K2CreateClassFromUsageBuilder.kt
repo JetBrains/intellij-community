@@ -12,25 +12,28 @@ import com.intellij.psi.util.findParentOfType
 import com.intellij.util.text.UniqueNameGenerator
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.components.isAnyType
-import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.expressions.expectedType
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.codeinsight.utils.containsStarProjections
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInheritable
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
-import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
+import org.jetbrains.kotlin.idea.codeinsight.utils.toCompilerVisibility
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableActionTextBuilder.renderCandidatesOfParameterTypes
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.computeExpectedParams
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
@@ -179,7 +182,7 @@ object K2CreateClassFromUsageBuilder {
                     KtTokens.PRIVATE_KEYWORD.value
                 } else if (curVisibility == KtTokens.INTERNAL_KEYWORD.value || param.expectedTypes.any {
                         it.toKtTypeWithNullability(refExpr)?.convertToClass()?.visibilityModifierTypeOrDefault()
-                            ?.toVisibility() == Visibilities.Internal
+                            ?.toCompilerVisibility() == Visibilities.Internal
                     }) {
                     KtTokens.INTERNAL_KEYWORD.value
                 } else {
@@ -317,11 +320,11 @@ object K2CreateClassFromUsageBuilder {
 
     context (_: KaSession)
     private fun isClassKindAccepted(expectedType: KaType?, containingDeclaration: PsiElement, classKind: ClassKind): Boolean {
-        if (expectedType == null || expectedType.isAnyType) {
+        if (expectedType == null || expectedType.classId == KaStandardTypeClassIds.ANY) {
             return true
         }
 
-        val canHaveSubtypes = isInheritable(expectedType) || !(expectedType.containsStarProjections()) || expectedType.isUnitType
+        val canHaveSubtypes = isInheritable(expectedType) || !(expectedType.containsStarProjections()) || expectedType.classId == KaStandardTypeClassIds.UNIT
         val isEnum = expectedType is KaClassType && expectedType.isEnum()
 
         if (!(canHaveSubtypes || isEnum) || expectedType is KaTypeParameterType) return false

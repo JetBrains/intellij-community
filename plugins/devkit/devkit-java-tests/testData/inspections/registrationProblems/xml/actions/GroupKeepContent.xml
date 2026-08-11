@@ -1,0 +1,10 @@
+<idea-plugin>
+  <actions>
+    <group id="keepContentWithOverrides" overrides="true" keep-content="true"/>
+    <group id="keepContentFalseWithoutOverrides" keep-content="false"/>
+
+    <group id="keepContentWithoutOverrides" keep-content="<error descr="'keep-content' is allowed only on a group with 'overrides' set to 'true'">true</error>"/>
+    <group id="keepContentOverridesFalse" overrides="false" keep-content="<error descr="'keep-content' is allowed only on a group with 'overrides' set to 'true'">true</error>"/>
+    <action id="keepContentOnAction" class="foo.bar.BarAction" <error descr="Attribute keep-content is not allowed here">keep-content</error>="true"/>
+  </actions>
+</idea-plugin>

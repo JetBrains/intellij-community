@@ -2,22 +2,55 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.compiler.CompilerConfiguration
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.assumeModel_4_0_0
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.createProjectSubDir
+import com.intellij.maven.testFramework.fixtures.getExpectedTargetLanguageLevel
+import com.intellij.maven.testFramework.fixtures.getModule
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.importProjectWithProfiles
+import com.intellij.maven.testFramework.fixtures.importProjectsAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.mn
+import com.intellij.maven.testFramework.fixtures.projectPath
+import com.intellij.maven.testFramework.fixtures.updateAllProjects
+import com.intellij.maven.testFramework.fixtures.updateModulePom
+import com.intellij.maven.testFramework.fixtures.updateProjectPom
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.zipFile
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class ReimportingTest : MavenMultiVersionImportingTestCase() {
-  override fun setUp() = runBlocking {
-    super.setUp()
-    createProjectPom("""
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class ReimportingTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
+  @BeforeEach
+  fun setUp(): Unit = runBlocking {
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -28,23 +61,23 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    createModulePom("m2", """
+    maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
   }
 
   @Test
   fun testAddingNewModule() = runBlocking {
-    updateProjectPom("""
+    maven.updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -56,19 +89,19 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    updateModulePom("m3", """
+    maven.updateModulePom("m3", """
       <groupId>test</groupId>
       <artifactId>m3</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    updateAllProjects()
-    assertModules("project", "m1", "m2", "m3")
+    maven.updateAllProjects()
+    maven.assertModules("project", "m1", "m2", "m3")
   }
 
   @Test
   fun testRemovingObsoleteModule() = runBlocking {
-    updateProjectPom("""
+    maven.updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -78,13 +111,13 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    importProjectAsync()
-    assertModules("project", "m1")
+    maven.importProjectAsync()
+    maven.assertModules("project", "m1")
   }
 
   @Test
   fun testDoesNotRemoveObsoleteModuleIfUserSaysNo() = runBlocking {
-    updateProjectPom("""
+    maven.updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -94,14 +127,14 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    importProjectAsync()
-    assertModules("project", "m1")
+    maven.importProjectAsync()
+    maven.assertModules("project", "m1")
   }
 
   @Test
   fun testReimportingWithProfiles() = runBlocking {
-    assumeModel_4_0_0("Autoscanning")
-    updateProjectPom("""
+    maven.assumeModel_4_0_0("Autoscanning")
+    maven.updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -128,46 +161,46 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
                        </profiles>
                        """.trimIndent())
 
-    importProjectWithProfiles("profile1")
-    assertModules("project", "m1")
+    maven.importProjectWithProfiles("profile1")
+    maven.assertModules("project", "m1")
 
-    importProjectWithProfiles("profile2")
-    assertModules("project", "m2")
+    maven.importProjectWithProfiles("profile2")
+    maven.assertModules("project", "m2")
   }
 
   @Test
   fun testChangingDependencyTypeToTestJar() = runBlocking {
-    val m1 = updateModulePom("m1", createPomXmlWithModuleDependency("jar"))
+    val m1 = maven.updateModulePom("m1", createPomXmlWithModuleDependency("jar"))
 
-    val m2 = updateModulePom("m2", """
+    val m2 = maven.updateModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    importProjectsAsync(m1, m2)
-    val dep = OrderEntryUtil.findModuleOrderEntry(ModuleRootManager.getInstance(getModule("m1")), getModule("m2"))
+    maven.importProjectsAsync(m1, m2)
+    val dep = OrderEntryUtil.findModuleOrderEntry(ModuleRootManager.getInstance(maven.getModule("m1")), maven.getModule("m2"))
     assertNotNull(dep)
     assertFalse(dep!!.isProductionOnTestDependency())
 
-    updateModulePom("m1", createPomXmlWithModuleDependency("test-jar"))
-    importProjectsAsync(m1, m2)
-    val dep2 = OrderEntryUtil.findModuleOrderEntry(ModuleRootManager.getInstance(getModule("m1")), getModule("m2"))
+    maven.updateModulePom("m1", createPomXmlWithModuleDependency("test-jar"))
+    maven.importProjectsAsync(m1, m2)
+    val dep2 = OrderEntryUtil.findModuleOrderEntry(ModuleRootManager.getInstance(maven.getModule("m1")), maven.getModule("m2"))
     assertNotNull(dep2)
     assertTrue(dep2!!.isProductionOnTestDependency())
   }
 
   @Test
   fun testSettingTargetLevel() = runBlocking {
-    updateModulePom("m1", """
+    maven.updateModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
-    updateAllProjects()
-    assertEquals(getExpectedTargetLanguageLevel(), CompilerConfiguration.getInstance(project).getBytecodeTargetLevel(getModule("m1")))
+    maven.updateAllProjects()
+    assertEquals(maven.getExpectedTargetLanguageLevel(), CompilerConfiguration.getInstance(maven.project).getBytecodeTargetLevel(maven.getModule("m1")))
 
-    updateModulePom("m1", """
+    maven.updateModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -182,10 +215,10 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
         </plugins>
       </build>
       """.trimIndent())
-    updateAllProjects()
-    assertEquals("1.3", CompilerConfiguration.getInstance(project).getBytecodeTargetLevel(getModule("m1")))
+    maven.updateAllProjects()
+    assertEquals("1.3", CompilerConfiguration.getInstance(maven.project).getBytecodeTargetLevel(maven.getModule("m1")))
 
-    updateModulePom("m1", """
+    maven.updateModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -201,23 +234,23 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       </build>
       """.trimIndent())
 
-    updateAllProjects()
-    assertEquals("1.6", CompilerConfiguration.getInstance(project).getBytecodeTargetLevel(getModule("m1")))
+    maven.updateAllProjects()
+    assertEquals("1.6", CompilerConfiguration.getInstance(maven.project).getBytecodeTargetLevel(maven.getModule("m1")))
 
     // after configuration/target element delete in maven-compiler-plugin CompilerConfiguration#getBytecodeTargetLevel should be also updated
-    updateModulePom("m1", """
+    maven.updateModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
-    updateAllProjects()
-    assertEquals(getExpectedTargetLanguageLevel(), CompilerConfiguration.getInstance(project).getBytecodeTargetLevel(getModule("m1")))
+    maven.updateAllProjects()
+    assertEquals(maven.getExpectedTargetLanguageLevel(), CompilerConfiguration.getInstance(maven.project).getBytecodeTargetLevel(maven.getModule("m1")))
   }
 
   @Test
   fun testReimportingWhenModuleHaveRootOfTheParent() = runBlocking {
-    createProjectSubDir("m1/res")
-    updateProjectPom("""
+    maven.createProjectSubDir("m1/res")
+    maven.updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -228,7 +261,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    updateModulePom("m2",
+    maven.updateModulePom("m2",
                     """
                       <groupId>test</groupId>
                       <artifactId>m2</artifactId>
@@ -240,18 +273,18 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
                       </build>
                       """.trimIndent())
 
-    importProjectAsync()
+    maven.importProjectAsync()
   }
 
   @Test
   fun testMoveModuleWithSystemScopedDependency() = runBlocking {
     zipFile {
       file("a.txt")
-    }.generate(projectPath.resolve("lib.jar"))
-    updateModulePom("m1", generatePomWithSystemDependency("../lib.jar"))
-    importProjectAsync()
+    }.generate(maven.projectPath.resolve("lib.jar"))
+    maven.updateModulePom("m1", generatePomWithSystemDependency("../lib.jar"))
+    maven.importProjectAsync()
 
-    updateProjectPom("""
+    maven.updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -261,14 +294,14 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
                          <module>m2</module>
                        </modules>
                        """.trimIndent())
-    updateModulePom("dir/m1", generatePomWithSystemDependency("../../lib.jar"))
-    importProjectAsync()
-    assertModules("project", "m1", "m2")
+    maven.updateModulePom("dir/m1", generatePomWithSystemDependency("../../lib.jar"))
+    maven.importProjectAsync()
+    maven.assertModules("project", "m1", "m2")
   }
 
   @Test
   fun testParentVersionProperty() = runBlocking {
-    assumeModel_4_0_0("[FATAL] 'version' contains an expression but should be a constant.")
+    maven.assumeModel_4_0_0("[FATAL] 'version' contains an expression but should be a constant.")
     val parentPomTemplate =
 
       """
@@ -295,9 +328,9 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
           </plugins>
         </build>
         """.trimIndent()
-    updateProjectPom(String.format(parentPomTemplate, "1.8"))
+    maven.updateProjectPom(String.format(parentPomTemplate, "1.8"))
 
-    updateModulePom("m1",
+    maven.updateModulePom("m1",
                     """
                       <parent>
                         <groupId>test</groupId>
@@ -308,27 +341,27 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
                       <version>${'$'}{parent.version}</version>
                       """.trimIndent())
 
-    val compilerConfiguration = CompilerConfiguration.getInstance(project)
+    val compilerConfiguration = CompilerConfiguration.getInstance(maven.project)
 
-    importProjectAsync()
-    assertEquals(LanguageLevel.JDK_1_8, getEffectiveLanguageLevel(getModule("project")))
-    assertEquals(LanguageLevel.JDK_1_8, getEffectiveLanguageLevel(getModule(mn("project", "m1"))))
-    assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule("project")))
-    assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))))
+    maven.importProjectAsync()
+    assertEquals(LanguageLevel.JDK_1_8, getEffectiveLanguageLevel(maven.getModule("project")))
+    assertEquals(LanguageLevel.JDK_1_8, getEffectiveLanguageLevel(maven.getModule(maven.mn("project", "m1"))))
+    assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(maven.getModule("project")))
+    assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(maven.getModule(maven.mn("project", "m1"))))
 
-    updateProjectPom(String.format(parentPomTemplate, "1.7"))
+    maven.updateProjectPom(String.format(parentPomTemplate, "1.7"))
 
-    importProjectAsync()
-    assertEquals(LanguageLevel.JDK_1_7, getEffectiveLanguageLevel(getModule("project")))
-    assertEquals(LanguageLevel.JDK_1_7, getEffectiveLanguageLevel(getModule(mn("project", "m1"))))
-    assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(getModule("project")))
-    assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))))
+    maven.importProjectAsync()
+    assertEquals(LanguageLevel.JDK_1_7, getEffectiveLanguageLevel(maven.getModule("project")))
+    assertEquals(LanguageLevel.JDK_1_7, getEffectiveLanguageLevel(maven.getModule(maven.mn("project", "m1"))))
+    assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(maven.getModule("project")))
+    assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(maven.getModule(maven.mn("project", "m1"))))
   }
 
   @Test
   fun testParentVersionProperty2() = runBlocking {
-    assumeModel_4_0_0("[FATAL] 'version' contains an expression but should be a constant.")
-    updateProjectPom("""
+    maven.assumeModel_4_0_0("[FATAL] 'version' contains an expression but should be a constant.")
+    maven.updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -362,19 +395,19 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
         </plugins>
       </build>
       """.trimIndent()
-    updateModulePom("m1", String.format(m1pomTemplate, "1.8", "1.8"))
+    maven.updateModulePom("m1", String.format(m1pomTemplate, "1.8", "1.8"))
 
-    val compilerConfiguration = CompilerConfiguration.getInstance(project)
+    val compilerConfiguration = CompilerConfiguration.getInstance(maven.project)
 
-    updateAllProjects()
-    assertEquals(LanguageLevel.JDK_1_8, getEffectiveLanguageLevel(getModule(mn("project", "m1"))))
-    assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))))
+    maven.updateAllProjects()
+    assertEquals(LanguageLevel.JDK_1_8, getEffectiveLanguageLevel(maven.getModule(maven.mn("project", "m1"))))
+    assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(maven.getModule(maven.mn("project", "m1"))))
 
-    updateModulePom("m1", String.format(m1pomTemplate, "17", "17"))
+    maven.updateModulePom("m1", String.format(m1pomTemplate, "17", "17"))
 
-    updateAllProjects()
-    assertEquals(LanguageLevel.JDK_17, getEffectiveLanguageLevel(getModule(mn("project", "m1"))))
-    assertEquals("17", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))))
+    maven.updateAllProjects()
+    assertEquals(LanguageLevel.JDK_17, getEffectiveLanguageLevel(maven.getModule(maven.mn("project", "m1"))))
+    assertEquals("17", compilerConfiguration.getBytecodeTargetLevel(maven.getModule(maven.mn("project", "m1"))))
   }
 
   private suspend fun getEffectiveLanguageLevel(module: Module): LanguageLevel {

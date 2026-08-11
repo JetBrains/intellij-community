@@ -5,9 +5,9 @@ import com.intellij.lang.jvm.actions.ExpectedParameter
 import com.intellij.lang.jvm.actions.ExpectedType
 import com.intellij.psi.PsiTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.builtinTypes
-import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.types.builtinTypes
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.getExpectedKotlinType
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.psi.KtBinaryExpression

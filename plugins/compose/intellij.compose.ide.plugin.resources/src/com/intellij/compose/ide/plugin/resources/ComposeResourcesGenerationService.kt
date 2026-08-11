@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources
 
 import com.intellij.compose.ide.plugin.resources.psi.ComposeResourcesPsiChangesListener
@@ -31,12 +31,12 @@ import kotlin.time.Duration.Companion.milliseconds
 internal class ComposeResourcesGenerationService(private val project: Project, private val scope: CoroutineScope) : Disposable {
   private val notificationService = ComposeResourcesNotificationService.getInstance(project)
 
-  private val composeResourcesPsiChangesFlow = MutableSharedFlow<ComposeResourcesDir>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val composeResourcesPsiChangesFlow = MutableSharedFlow<ComposeResourcesData>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   @TestOnly
   val composeResourcesPsiChanges = composeResourcesPsiChangesFlow.asSharedFlow() // only used to test psi changes listener
 
-  fun tryEmit(composeResourcesDir: ComposeResourcesDir) = composeResourcesPsiChangesFlow.tryEmit(composeResourcesDir)
+  fun tryEmit(composeResourcesData: ComposeResourcesData) = composeResourcesPsiChangesFlow.tryEmit(composeResourcesData)
 
   /**
    * Handles PSI changes related to Compose resources by collecting and processing them in chunks.

@@ -10,6 +10,7 @@ import com.intellij.codeInsight.completion.serialization.PrefixMatcherDescriptor
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 
 open class BetterPrefixMatcher(
   private val original: PrefixMatcher,
@@ -63,6 +64,7 @@ open class BetterPrefixMatcher(
   override fun cloneWithPrefix(prefix: String): PrefixMatcher =
     createCopy(original.cloneWithPrefix(prefix), minMatchingDegree)
 
+  @ApiStatus.Internal
   class AutoRestarting private constructor(
     original: PrefixMatcher,
     minMatchingDegree: Int,

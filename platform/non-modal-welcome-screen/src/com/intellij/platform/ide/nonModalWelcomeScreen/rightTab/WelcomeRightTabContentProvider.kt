@@ -8,6 +8,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.nonModalWelcomeScreen.DefaultFileDragAndDropHandler
+import com.intellij.platform.ide.nonModalWelcomeScreen.FileDragAndDropHandler
 import com.intellij.platform.project.projectId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -28,8 +30,17 @@ interface WelcomeRightTabContentProvider {
   val fileTypeIcon: Icon
   val title: Supplier<@Nls String>
   val secondaryTitle: Supplier<@Nls String>
+  
+  /**
+   * Optional product icon to display above the title (48x48).
+   * Use Valkyrie IDEA plugin to generate the ImageVector from SVG.
+   * Return null if no icon should be displayed.
+   */
+  val productIcon: ImageVector? get() = null
 
   val isDisableOptionVisible: Boolean
+  val isStartupSwitchPanelOptionVisible: Boolean
+    get() = false
 
   val buttonsPerRow: Int
     get() = 3
@@ -53,6 +64,36 @@ interface WelcomeRightTabContentProvider {
     val icon: IconKey,
     val onClick: (Project, CoroutineScope) -> Unit,
   )
+
+  /**
+   * Components displayed below the feature grid (above the banner) on the welcome right tab.
+   * The outer list is a list of rows stacked vertically; the inner list is the row's components
+   * laid out left-to-right, so a component's position in the row defines its column.
+   */
+  @Composable
+  fun getAdditionalComponents(project: Project): List<List<WelcomeContent>> = emptyList()
+
+  fun getFileDragAndDropHandler(): FileDragAndDropHandler = DefaultFileDragAndDropHandler
+
+  /**
+   * A single component placed in the additional-components area returned by [getAdditionalComponents].
+   */
+  sealed interface WelcomeContent {
+    /** Non-interactive text label with an optional trailing [icon] (e.g. a Beta badge). */
+    class Text(
+      val text: @Nls String,
+      val icon: IconKey? = null,
+      val tint: Color = Color.Unspecified,
+    ) : WelcomeContent
+
+    /** Clickable external link rendered with the standard trailing external-arrow icon. */
+    class Link(
+      val text: @Nls String,
+      val onClick: (Project) -> Unit,
+      val tint: Color = Color.Unspecified,
+      val tintHovered: Color = Color.Unspecified,
+    ) : WelcomeContent
+  }
 
   /**
    * Base feature button model. Use for frontend-only features.

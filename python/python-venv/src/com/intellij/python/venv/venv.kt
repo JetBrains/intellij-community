@@ -3,6 +3,7 @@ package com.intellij.python.venv
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.module.Module
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecOptions
@@ -17,17 +18,21 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.getOr
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.jetbrains.python.sdk.workingDirectory
 import com.jetbrains.python.venvReader.Directory
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CheckReturnValue
+import java.nio.file.Path
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.minutes
 
@@ -75,9 +80,13 @@ suspend fun createVenv(
     add(venvDir)
   }
   val version = python.validatePythonAndGetInfo().getOr(PyVenvBundle.message("py.venv.error.cant.base.version")) { return it }.languageLevel
-  val helper = if (version.isAtLeast(LanguageLevel.PYTHON38)) VIRTUALENV_ZIPAPP_NAME else LEGACY_VIRTUALENV_ZIPAPP_NAME
-  execService.executeHelper(python, helper, args, ExecOptions(timeout = 3.minutes))
-    .getOr(PyVenvBundle.message("py.venv.error.executing.script", helper)) { return it }
+  if (!version.isAtLeast(MINIMUM_SUPPORTED_VENV_PYTHON_VERSION)) {
+    return PyResult.localizedError(PyVenvBundle.message("py.venv.error.unsupported.version",
+                                                        version.toPythonVersion(),
+                                                        MINIMUM_SUPPORTED_VENV_PYTHON_VERSION.toPythonVersion()))
+  }
+  execService.executeHelper(python, VIRTUALENV_ZIPAPP_NAME, args, ExecOptions(timeout = 3.minutes))
+    .getOr(PyVenvBundle.message("py.venv.error.executing.script", VIRTUALENV_ZIPAPP_NAME)) { return it }
 
   return Result.success(Unit)
 }
@@ -86,14 +95,27 @@ suspend fun createVenv(
 @Internal
 const val VIRTUALENV_ZIPAPP_NAME: HelperName = "virtualenv-py3.pyz"
 
-// Ancient version, the last one compatible with Py 2.7, 3.6, 3.7
-@Internal
-const val LEGACY_VIRTUALENV_ZIPAPP_NAME: HelperName = "virtualenv-20.13.0.pyz"
-
-
 /**
- * Creates [PythonSdkAdditionalData] for virtual env
+ * Minimum Python version supported by the IDE's bundled environment tooling: the [VIRTUALENV_ZIPAPP_NAME]
+ * zipapp and the bundled pip/setuptools wheels all require Python >= 3.8. Older interpreters stay selectable,
+ * but the IDE can neither create a virtual environment for them nor provision packaging tools.
  */
 @Internal
-fun createVenvAdditionalData(): PythonSdkAdditionalData =
-  PythonSdkAdditionalData(PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance()))
+val MINIMUM_SUPPORTED_VENV_PYTHON_VERSION: LanguageLevel = LanguageLevel.PYTHON38
+
+/**
+ * Creates [PythonSdkAdditionalData] for virtual env using working directory
+ */
+@Internal
+fun createVenvAdditionalData(workingDirectory: Path): PythonSdkAdditionalData =
+  PythonSdkAdditionalData(PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance()), workingDirectory)
+
+/**
+ * Creates [PythonSdkAdditionalData] for virtual env using module baseDir as working directory
+ */
+@Internal
+fun createVenvAdditionalData(module: Module): PyResult<PythonSdkAdditionalData> {
+  return ModuleOrProject.ModuleAndProject(module).workingDirectory?.let {
+    PyResult.success(createVenvAdditionalData(it))
+  } ?: PyResult.localizedError(PySdkBundle.message("python.sdk.cannot.create.working.directory.empty"))
+}

@@ -18,9 +18,14 @@ import java.util.function.Function;
  *
  * @param file                   file where to edit template.
  * @param fields                 template fields
+ * @param optional               if true, the template can be skipped by non-interactive executors, or executors 
+ *                               that don't support templates.
+ *                               If false, then it cannot be skipped, so the whole action should not be executed
+ *                               if it's unable to display the template, as default behavior is not satisfactory. 
  * @param templateFinishFunction
  */
 public record ModStartTemplate(@NotNull VirtualFile file, @NotNull List<@NotNull TemplateField> fields,
+                               boolean optional,
                                @NotNull Function<? super @NotNull PsiFile, ? extends @NotNull ModCommand> templateFinishFunction) 
   implements ModCommand {
 

@@ -132,16 +132,25 @@ public abstract class PyTypeProviderWithCustomContext<Context> extends PyTypePro
     return null;
   }
 
+  @Deprecated
   @Override
   public final @Nullable Ref<@Nullable PyCallableType> prepareCalleeTypeForCall(@Nullable PyType type,
                                                                                 @NotNull PyCallExpression call,
                                                                                 @NotNull TypeEvalContext context) {
+    PyExpression callee = call.getCallee();
+    return callee == null ? null : prepareCalleeTypeForCall(type, callee, context);
+  }
+
+  @Override
+  public final @Nullable Ref<@Nullable PyCallableType> prepareCalleeTypeForCall(@Nullable PyType type,
+                                                                                @NotNull PyExpression callee,
+                                                                                @NotNull TypeEvalContext context) {
     return withCustomContext(context, customContext -> {
-      return prepareCalleeTypeForCall(type, call, customContext);
+      return prepareCalleeTypeForCall(type, callee, customContext);
     });
   }
 
-  public Ref<PyCallableType> prepareCalleeTypeForCall(@Nullable PyType type, @NotNull PyCallExpression call, @NotNull Context context) {
+  public Ref<PyCallableType> prepareCalleeTypeForCall(@Nullable PyType type, @NotNull PyExpression callee, @NotNull Context context) {
     return null;
   }
 

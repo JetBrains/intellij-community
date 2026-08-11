@@ -24,7 +24,7 @@ class PagedFileStorageWithRWLockedPageContent_Livelock_Test {
   fun setup() {
     //just 1 page
     filePageCache = FilePageCacheLockFree(PAGE_SIZE.toLong())
-    storageContext = StorageLockContext(filePageCache, true, true, false)
+    storageContext = StorageLockContext(true, true, false)
   }
 
   @AfterEach
@@ -99,6 +99,7 @@ class PagedFileStorageWithRWLockedPageContent_Livelock_Test {
     return PagedFileStorageWithRWLockedPageContent(
       file,
       storageContext!!,
+      filePageCache!!,
       PAGE_SIZE,
       true,
       false,

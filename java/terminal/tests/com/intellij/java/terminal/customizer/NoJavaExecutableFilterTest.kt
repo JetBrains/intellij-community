@@ -105,6 +105,24 @@ internal class NoJavaExecutableFilterTest {
     """.trimIndent(), listOf(1))
   }
 
+  @Test
+  fun `IDEA-390587`() {
+    doTest(""":
+      
+    """.trimMargin(), listOf())
+  }
+
+  @Test
+  fun `mac os stub launcher`() {
+    doTest("""
+      user.name@MAC-OS ~ % java 
+      The operation couldn’t be completed. Unable to locate a Java Runtime.
+      Please visit http://www.java.com for information on installing Java.
+      
+      user.name@MAC-OS ~ % 
+    """.trimIndent(), listOf(1))
+  }
+
   /** 
    * Run the filter through the lines
    * @param expectedResultLines On which line a result is expected

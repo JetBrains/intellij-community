@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.driver.client` start
-
 jvm_library(
     name = "client",
     srcs = glob(
@@ -22,7 +21,7 @@ jvm_library(
         # do not sort,
         "//platform/remote-driver/model",
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -39,6 +38,7 @@ jvm_library(
         # do not sort,
         ":client",
         "//platform/remote-driver/model:model_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.driver.client` end

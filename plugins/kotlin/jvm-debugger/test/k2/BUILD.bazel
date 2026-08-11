@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 jps_test(
     name = "kotlin-jvm-debugger-test_test",
@@ -19,6 +20,10 @@ jps_test(
 ### skip generation section `test intellij.kotlin.jvm.debugger.test`
 
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test` start
+create_kotlinc_options(
+    name = "custom_kotlin-jvm-debugger-test",
+    x_context_parameters = True,
+)
 
 jvm_library(
     name = "kotlin-jvm-debugger-test",
@@ -30,6 +35,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "//platform/core-api:core",
         "//plugins/kotlin/gradle/gradle",
     ],
@@ -46,11 +52,13 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_kotlin-jvm-debugger-test",
     module_name = "intellij.kotlin.jvm.debugger.test",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
         ":kotlin-jvm-debugger-test",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/core-api:core_test_lib",
         "//plugins/kotlin/gradle/gradle:gradle_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
@@ -59,8 +67,6 @@ jvm_library(
         # do not sort,
         "//platform/core-ui",
         "//platform/core-ui:core-ui_test_lib",
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/reflect",
         "//libraries/kotlin/reflect:reflect_test_lib",
@@ -75,8 +81,10 @@ jvm_library(
         "//libraries/guava:guava_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
-        "@lib//:jb-jdi",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//java/debugger/jb-jdi:java-debugger-libraries-jb-jdi",
+        "//java/debugger/jb-jdi:java-debugger-libraries-jb-jdi_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
         "@lib//:kotlinc-kotlin-compiler-cli",
@@ -143,6 +151,8 @@ jvm_library(
         "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
         "//plugins/kotlin/jvm-debugger/test/k2/testFramework",
         "//plugins/kotlin/jvm-debugger/test/k2/testFramework:testFramework_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test` end

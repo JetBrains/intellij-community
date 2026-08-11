@@ -7,6 +7,7 @@ f:com.intellij.platform.eel.EelProxyKtHelpersKt
 f:com.intellij.platform.eel.EelTunnelsApiHelpersKt
 f:com.intellij.platform.eel.EelTunnelsApiKt
 f:com.intellij.platform.eel.SafeDeferredKt
+f:com.intellij.platform.eel.channels.EelChannelUtilsKt
 f:com.intellij.platform.eel.channels.EelSendChannelKt
 f:com.intellij.platform.eel.channels.PeekableEelReceiveChannelKt
 f:com.intellij.platform.eel.provider.EelMachineProviderUtil

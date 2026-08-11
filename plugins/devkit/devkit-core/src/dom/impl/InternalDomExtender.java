@@ -38,8 +38,6 @@ public class InternalDomExtender {
     @Override
     public void registerExtensions(@NotNull Group group, @NotNull DomExtensionsRegistrar registrar) {
       addInternalAttribute(registrar, Group.class);
-      registrar.registerGenericAttributeValueChildExtension(new XmlName("keep-content"), Group.class)
-        .setConverter(BooleanValueConverter.getInstance(false));
     }
   }
 }

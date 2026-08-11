@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -33,6 +36,8 @@ import org.jetbrains.annotations.NotNull;
 
 @SkipSlowTestLocally
 @PerformanceUnitTest
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
   private static final int NUMBER_OF_OVERLOADS = 1000;
 
@@ -134,8 +139,9 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
     PyCallExpression call = configureAndGetCallExprUnderCaret("mainUnqualified.py");
     PyReferenceExpression refExpr = assertInstanceOf(call.getCallee(), PyReferenceExpression.class);
     ResolveResult[] resolveResults = refExpr.getReference().multiResolve(false);
-    // Overloads, lower-priority imported name and the function itself.
-    assertEquals(NUMBER_OF_OVERLOADS + 2, resolveResults.length);
+    // Overloads and the lower-priority imported name. The runtime function itself is shadowed by the
+    // complete (non-partial) stub package per PEP 561 (see PY-55589).
+    assertEquals(NUMBER_OF_OVERLOADS + 1, resolveResults.length);
   }
 
   public void testOverloadsNotDuplicatedInQualifiedReferenceMultiResolveResults() {

@@ -1,10 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
 import com.intellij.testFramework.LightPlatform4TestCase
 import org.assertj.core.api.SoftAssertions
 import org.junit.Test
 
+@Subsystems.PythonConsole
+@Layers.Functional
 class PythonConsoleScriptsTest : LightPlatform4TestCase() {
   @Test
   internal fun `test buildScriptWithConsoleRun`() {

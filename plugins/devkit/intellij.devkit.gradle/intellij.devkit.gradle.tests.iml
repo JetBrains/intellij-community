@@ -38,6 +38,11 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.gradle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.todo.plugin" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.devkit.gradle" />
 </module>

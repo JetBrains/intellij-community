@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots
 
 import com.intellij.openapi.util.NlsSafe
@@ -39,7 +39,8 @@ enum class JavaSdkVersion(val maxLanguageLevel: LanguageLevel) {
   JDK_24(LanguageLevel.JDK_24),
   JDK_25(LanguageLevel.JDK_25),
   JDK_26(LanguageLevel.JDK_26),
-  JDK_27(LanguageLevel.JDK_X);
+  JDK_27(LanguageLevel.JDK_27),
+  JDK_28(LanguageLevel.JDK_X);
 
   val description: @NlsSafe String
     get() {

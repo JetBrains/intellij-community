@@ -1,6 +1,5 @@
 package com.intellij.grazie.ide.language.markdown.semantics.inspection
 
-import ai.grazie.api.gateway.client.SuspendableAPIGatewayClient
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
 import com.intellij.codeInspection.LocalInspectionTool
@@ -8,27 +7,49 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.grazie.cloud.GrazieCloudConnector
-import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.hasAdditionalConnectors
-import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.hasQuota
-import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.seemsCloudConnected
-import com.intellij.grazie.ide.language.markdown.semantics.analyzer.Analyzer
+import com.intellij.grazie.ide.language.markdown.semantics.analyzer.SpecificationAnalyzer
+import com.intellij.grazie.ide.language.markdown.semantics.inspection.quickfix.SpecificationReplacementQuickFix
+import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils.isAnalysisEnabled
+import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils.isSpecificationLikeFile
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
-import com.intellij.util.text.StringSearcher
+import com.intellij.psi.SmartPointerManager
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.jetbrains.annotations.ApiStatus
 
-internal abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
+@ApiStatus.Internal
+@ApiStatus.Experimental
+abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
 
-  open fun reportProblem(holder: ProblemsHolder, file: PsiFile, issue: LlmIssue<T>) {
-    findAllOccurrences(issue, file).forEach { range ->
-      @Suppress("HardCodedStringLiteral")
-      holder.registerProblem(createProblemDescriptor(file, range, issue.message))
-    }
+  open fun reportProblems(holder: ProblemsHolder, file: PsiFile, dependencies: Set<PsiFile>, issues: List<LlmIssue<T>>) {
+    issues.forEach { issue -> reportProblem(holder, file, issue) }
   }
+
+  private fun reportProblem(holder: ProblemsHolder, file: PsiFile, issue: LlmIssue<T>) {
+    if (issue.startOffset() == -1 && issue.endOffset() == -1) {
+      thisLogger().warn("No occurrences found by ${javaClass.name} in text")
+      return
+    }
+
+    val range = TextRange(issue.startOffset(), issue.endOffset())
+    val underline = SmartPointerManager.getInstance(file.project).createSmartPsiFileRangePointer(file, range)
+    val fixes = SpecificationReplacementQuickFix(underline, issue.replacements).getAllAsFixes()
+    val descriptor = ProblemDescriptorBase(
+      file, file, issue.message, fixes.toTypedArray(),
+      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+      false, range, true, true
+    )
+    holder.registerProblem(descriptor)
+  }
+
+  /**
+   * Returns the dependency set for a given file. The resulting set must always contain [root].
+   */
+  open fun getDependencies(root: PsiFile): Set<PsiFile> = setOf(root)
 
   abstract fun getAnalyzer(file: PsiFile): LlmAnalyzer<T>?
 
@@ -37,59 +58,26 @@ internal abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
   ): PsiElementVisitor {
-    val client = validateAndGetClient(isOnTheFly) ?: return PsiElementVisitor.EMPTY_VISITOR
+    if (!isOnTheFly || !isAnalysisEnabled() || InspectionProfileManager.hasTooLowSeverity(session, this)) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+    val client = GrazieCloudConnector.api() ?: return PsiElementVisitor.EMPTY_VISITOR
 
     return object : PsiElementVisitor() {
       override fun visitFile(file: PsiFile) {
-        if (!isAgentMarkdownFile(file)) {
-          thisLogger().info("${file.name} is not agent-like")
+        // Markdown file has two PSI trees: HTML and Markdown
+        // We need to filter out HTML one otherwise it's going to be analyzed twice
+        if (file !is MarkdownFile) return
+
+        if (!isSpecificationLikeFile(file)) {
+          thisLogger().info("${file.name} is not specification-like")
           return
         }
         val analyzer = getAnalyzer(file) ?: return
-        Analyzer.analyze(analyzer, file, client)
-          .forEach { problem -> reportProblem(holder, file, problem) }
+        val dependencies = getDependencies(file)
+        val issues = SpecificationAnalyzer.analyze(analyzer, file, dependencies , client)
+        reportProblems(holder, file, dependencies, issues)
       }
     }
-  }
-
-  protected fun findAllOccurrences(issue: LlmIssue<T>, file: PsiFile): List<TextRange> {
-    if (issue.startOffset != -1 && issue.endOffset != -1) {
-      return listOf(TextRange(issue.startOffset, issue.endOffset))
-    }
-    val pattern = issue.text
-    val indexes = StringSearcher(pattern, false, true).findAllOccurrences(file.text)
-    if (indexes.isEmpty()) {
-      thisLogger().warn("No occurrences found by ${javaClass.name} in text")
-    }
-    return indexes.map { index -> TextRange(index, index + pattern.length) }
-  }
-
-  protected fun createProblemDescriptor(file: PsiFile, range: TextRange, @InspectionMessage description: String): ProblemDescriptorBase =
-    ProblemDescriptorBase(
-      file, file, description, emptyArray(),
-      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-      false, range, true, true
-    )
-
-  private fun isAgentMarkdownFile(file: PsiFile): Boolean = AGENT_MARKDOWN_FILE_NAME_PATTERN.matches(file.name)
-
-  private fun validateAndGetClient(isOnTheFly: Boolean): SuspendableAPIGatewayClient? {
-    if (!isOnTheFly) return null
-    if (!Registry.`is`("grazie.specification.semantics.enabled")) {
-      thisLogger().debug("Specification semantics inspection is disabled")
-      return null
-    }
-    if (!hasAdditionalConnectors() || !seemsCloudConnected() || !hasQuota()) {
-      thisLogger().warn("Additional connectors = ${hasAdditionalConnectors()}, seemsCloudConnected = ${seemsCloudConnected()}, hasQuota = ${hasQuota()}")
-      return null
-    }
-    return GrazieCloudConnector.api()?.also { thisLogger().info("API client is not null") }
-  }
-
-  companion object {
-    private val AGENT_MARKDOWN_FILE_NAME_PATTERN = Regex(
-      "(agents|agent|ai|claude|copilot-instructions|prompt|skill|system[-_]prompt|spec|architecture)\\.md",
-      RegexOption.IGNORE_CASE,
-    )
   }
 }

@@ -1,12 +1,14 @@
-com.intellij.internal.ml.completion.DecoratingItemsPolicy
-- sf:Companion:com.intellij.internal.ml.completion.DecoratingItemsPolicy$Companion
-- a:itemsToDecorate(java.lang.Iterable):java.util.Set
-f:com.intellij.internal.ml.completion.DecoratingItemsPolicy$ByAbsoluteThreshold
-- <init>(D):V
-f:com.intellij.internal.ml.completion.DecoratingItemsPolicy$ByRelativeThreshold
-- <init>(D):V
-f:com.intellij.internal.ml.completion.DecoratingItemsPolicy$Composite
-- <init>(com.intellij.internal.ml.completion.DecoratingItemsPolicy[]):V
+a:com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
+- sf:Companion:com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider$Companion
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+- f:assertModelMetadataConsistent():V
+- getDisplayNameInSettings():java.lang.String
+- f:getModelDirectory():java.lang.String
+- f:getResourceDirectory():java.lang.String
+f:com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider$Companion
+com.intellij.internal.retype.RetypeFileAssistant
+- a:acceptLookupElement(com.intellij.codeInsight.lookup.LookupElement):Z
+- retypeDone(com.intellij.openapi.editor.Editor):V
 com.intellij.internal.statistic.fileTypes.FileTypeStatisticProvider
 - a:accept(com.intellij.openapi.editor.Editor,com.intellij.openapi.fileTypes.FileType):Z
 - a:getPluginId():java.lang.String

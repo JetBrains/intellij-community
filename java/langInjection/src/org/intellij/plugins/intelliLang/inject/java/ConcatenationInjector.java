@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.lang.Language;
@@ -123,7 +123,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
             InjectorUtils.registerSupport(registrar, getLanguageInjectionSupport(), settingsAvailable);
           }
         );
-        PsiLanguageInjectionHost host = list.get(0).host();
+        PsiLanguageInjectionHost host = list.getFirst().host();
         return Pair.create(host, language);
       }
 
@@ -155,12 +155,22 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
     private final Configuration myConfiguration;
     private final LanguageInjectionSupport mySupport;
     private final PsiElement[] myOperands;
+    private final boolean myConsiderCalls;
     private boolean myShouldStop;
     private boolean myUnparsable;
 
     InjectionProcessor(Configuration configuration, LanguageInjectionSupport support, PsiElement... operands) {
+      this(configuration, support, false, operands);
+    }
+
+    /**
+     * @param considerCalls when {@code true} the discovery walks past the enclosing call to the element its result
+     *                      flows into. Used for {@code String.format(...)} / {@code String.formatted(...)} injection.
+     */
+    public InjectionProcessor(Configuration configuration, LanguageInjectionSupport support, boolean considerCalls, PsiElement... operands) {
       myConfiguration = configuration;
       mySupport = support;
+      myConsiderCalls = considerCalls;
       myOperands = operands;
     }
 
@@ -312,8 +322,8 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
         return;
       }
       while (!places.isEmpty() && !myShouldStop) {
-        PsiElement curPlace = places.remove(0);
-        AnnotationUtilEx.visitAnnotatedElements(curPlace, visitor);
+        PsiElement curPlace = places.removeFirst();
+        AnnotationUtilEx.visitAnnotatedElements(curPlace, visitor, myConsiderCalls);
       }
     }
 

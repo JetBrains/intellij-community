@@ -1,6 +1,6 @@
 // "Opt in for 'NestedMarker' on 'main'" "true"
 // PRIORITY: HIGH
-// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@foo.TopClass.NestedMarker' or '@OptIn(foo.TopClass.NestedMarker::class)'
+// K2_ERROR: OPT_IN_USAGE_ERROR
 
 package foo
 

@@ -37,6 +37,7 @@ import java.io.File;
 import java.util.List;
 
 // TODO this should eventually replace PackageUtil from intellij.java.impl
+@ApiStatus.Internal
 public final class PlatformPackageUtil {
 
   private static final Logger LOG = Logger.getInstance(PlatformPackageUtil.class);

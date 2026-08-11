@@ -14,16 +14,20 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.javaGetterName
+import org.jetbrains.kotlin.analysis.api.components.javaSetterName
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
-import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
@@ -267,6 +271,7 @@ private fun KaSymbol.isStrictAncestorOf(other: KaSymbol): Boolean {
     return false
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun traverseOuterInstanceReferences(
     member: KtNamedDeclaration,
     body: (OuterInstanceReferenceUsageInfo) -> Unit
@@ -281,10 +286,10 @@ private fun traverseOuterInstanceReferences(
             private fun getOuterInstanceReference(element: PsiElement): OuterInstanceReferenceUsageInfo? {
                 return when (element) {
                     is KtThisExpression -> {
-                        val symbol = element.expressionType?.symbol ?: return null
-                        val symbolPsi = symbol.psi
+                        val referencedSymbol = element.resolveSymbol() ?: return null
+                        val symbolPsi = referencedSymbol.psi
                         val isIndirect = when {
-                            symbol == outerClassSymbol -> false
+                            referencedSymbol == outerClassSymbol -> false
                             symbolPsi != null && outerClassPsi != null && symbolPsi.isAncestor(outerClassPsi) -> true
                             else -> return null
                         }

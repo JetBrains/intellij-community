@@ -7,13 +7,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.reformatColumnOnChange
+import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils
+import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.isCorrectlyFormatted
 import org.intellij.plugins.markdown.editor.tables.TableUtils
-import org.intellij.plugins.markdown.lang.isMarkdownType
+import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
 
 internal class MarkdownTableTypedHandler: TypedHandlerDelegate() {
   override fun charTyped(char: Char, project: Project, editor: Editor, file: PsiFile): Result {
-    if (!TableUtils.isFormattingOnTypeEnabledForTables(file) || !file.fileType.isMarkdownType()) {
+    if (!TableUtils.isFormattingOnTypeEnabledForTables(file)) {
       return super.charTyped(char, project, editor, file)
     }
     val caretOffset = editor.caretModel.currentCaret.offset
@@ -23,17 +24,20 @@ internal class MarkdownTableTypedHandler: TypedHandlerDelegate() {
     }
     PsiDocumentManager.getInstance(project).commitDocument(document)
     val table = TableUtils.findTable(file, caretOffset)
-    val cellIndex = TableUtils.findCellIndex(file, caretOffset)
-    if (table == null || cellIndex == null) {
+    if (table == null) {
       return super.charTyped(char, project, editor, file)
     }
+    val tableStyle = getTableStyle(file)
     executeCommand(project) {
-      table.reformatColumnOnChange(
-        document,
-        editor.caretModel.allCarets,
-        cellIndex,
-        trimToMaxContent = true
-      )
+      if (!table.isCorrectlyFormatted(tableStyle, checkAlignment = false)) {
+        TableFormattingUtils.reformatAllColumns(
+          table,
+          editor.document,
+          tableStyle,
+          trimToMaxContent = true,
+          carets = editor.caretModel.allCarets
+        )
+      }
     }
     return Result.STOP
   }

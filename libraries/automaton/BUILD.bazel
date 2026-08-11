@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.automaton` start
-
 jvm_library(
     name = "automaton",
     srcs = glob(

@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.parcelize.ide.test
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2QuickFixTest
+import org.jetbrains.kotlin.idea.quickfix.tests.AbstractK2QuickFixTest
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.parcelize.ParcelizeNames
 import org.jetbrains.kotlin.parcelize.fir.FirParcelizeExtensionRegistrar

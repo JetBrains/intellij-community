@@ -77,14 +77,19 @@ sealed interface McpToolFilter {
 
     companion object {
       /**
-       * Creates a MaskBased filter from a mask list string.
+       * Creates a tool filter from a mask list string.
        *
        * @param maskList comma-separated list of mask patterns with +/- prefixes
-       * @return a new MaskBased filter that denies all if maskList is empty, or AllowAll if null/blank
+       * @return [AllowAll] when [maskList] is `null` (no filter configured — expose all tools),
+       *         [ProhibitAll] when it is an explicitly empty/blank string (deny all),
+       *         otherwise a [MaskBased] filter built from the patterns.
        */
       fun fromMaskList(maskList: String?): McpToolFilter {
-        if (maskList.isNullOrBlank()) {
-          return ProhibitAll // Empty mask = deny all
+        if (maskList == null) {
+          return AllowAll // No filter configured = expose all tools
+        }
+        if (maskList.isBlank()) {
+          return ProhibitAll // Explicitly empty mask = deny all
         }
         return MaskBased(maskList)
       }

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation
 
+import com.intellij.devkit.core.icons.DevkitCoreIcons
 import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
@@ -11,6 +12,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import org.jetbrains.idea.devkit.module.PluginModuleType
+import javax.swing.Icon
 
 @TestDataPath($$"$CONTENT_ROOT/testData/navigation/descriptorsIncludingContentModule")
 class DescriptorsIncludingContentModuleLineMarkerProviderTest : JavaCodeInsightFixtureTestCase() {
@@ -36,8 +38,8 @@ class DescriptorsIncludingContentModuleLineMarkerProviderTest : JavaCodeInsightF
     )
 
     testGutterTargets(
-      testFileRelPath = "test.module/test.module.xml",
-      popupTitle = "'test.module' content module is included in 1 plugin XML descriptors",
+      tooltip = "Shared content module test.module is included in 1 plugin XML descriptors",
+      expectedIcon = AllIcons.Nodes.Module,
       expectedTargets = listOf(
         "declaring.module.xml | <module name=\"test.module\"/>"
       )
@@ -65,8 +67,8 @@ class DescriptorsIncludingContentModuleLineMarkerProviderTest : JavaCodeInsightF
     )
 
     testGutterTargets(
-      testFileRelPath = "test.module/test.module.xml",
-      popupTitle = "'test.module' content module is included in 1 plugin XML descriptors",
+      tooltip = "Shared content module test.module is included in 1 plugin XML descriptors",
+      expectedIcon = AllIcons.Nodes.Module,
       expectedTargets = listOf(
         "declaring.module.xml | <module name=\"test.module\"/>"
       )
@@ -101,8 +103,8 @@ class DescriptorsIncludingContentModuleLineMarkerProviderTest : JavaCodeInsightF
     )
 
     testGutterTargets(
-      testFileRelPath = "test.module/test.module.xml",
-      popupTitle = "'test.module' content module is included in 2 plugin XML descriptors",
+      tooltip = "Shared content module test.module is included in 2 plugin XML descriptors",
+      expectedIcon = AllIcons.Nodes.Module,
       expectedTargets = listOf(
         "declaring.module.1.xml | <module name=\"test.module\"/>",
         "declaring.module.2.xml | <module name=\"test.module\"/>"
@@ -138,11 +140,66 @@ class DescriptorsIncludingContentModuleLineMarkerProviderTest : JavaCodeInsightF
     )
 
     testGutterTargets(
-      testFileRelPath = "test.module/test.module.xml",
-      popupTitle = "'test.module' content module is included in 2 plugin XML descriptors",
+      tooltip = "Shared content module test.module is included in 2 plugin XML descriptors",
+      expectedIcon = AllIcons.Nodes.Module,
       expectedTargets = listOf(
         "declaring.module.1.xml | <module name=\"test.module\" loading=\"embedded\"/>",
         "declaring.module.2.xml | <module name=\"test.module\" loading=\"on-demand\"/>"
+      )
+    )
+  }
+
+  fun testSharedNamedContentModuleUsesSharedIcon() {
+    createModuleWithModuleDescriptor("declaring.module", "declaring.module.xml", """
+      <idea-plugin>
+        <content>
+          <module name="test.module.shared"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    createModuleWithModuleDescriptor("test.module.shared", "test.module.shared.xml", """
+      <idea<caret>-plugin>
+        <!-- any -->
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    testGutterTargets(
+      tooltip = "Shared content module test.module.shared is included in 1 plugin XML descriptors",
+      expectedIcon = DevkitCoreIcons.SharedModule,
+      expectedTargets = listOf(
+        "declaring.module.xml | <module name=\"test.module.shared\"/>"
+      ),
+      descriptorPath = "test.module.shared/test.module.shared.xml",
+    )
+  }
+
+  fun testFrontendContentModuleTooltipAndIcon() {
+    createModuleWithModuleDescriptor("declaring.module", "declaring.module.xml", """
+      <idea-plugin>
+        <content>
+          <module name="test.module"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    createModuleWithModuleDescriptor("test.module", "test.module.xml", """
+      <idea<caret>-plugin>
+        <dependencies>
+          <module name="intellij.platform.frontend"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    testGutterTargets(
+      tooltip = "Frontend content module test.module is included in 1 plugin XML descriptors",
+      expectedIcon = DevkitCoreIcons.FrontendModule,
+      expectedTargets = listOf(
+        "declaring.module.xml | <module name=\"test.module\"/>"
       )
     )
   }
@@ -187,12 +244,17 @@ class DescriptorsIncludingContentModuleLineMarkerProviderTest : JavaCodeInsightF
     myFixture.addFileToProject("$moduleName/$moduleDescriptorName", moduleDescriptorText)
   }
 
-  private fun testGutterTargets(testFileRelPath: String, popupTitle: String, expectedTargets: List<String>) {
-    val gutter = myFixture.findGutter(testFileRelPath)
+  private fun testGutterTargets(
+    tooltip: String,
+    expectedIcon: Icon,
+    expectedTargets: List<String>,
+    descriptorPath: String = "test.module/test.module.xml",
+  ) {
+    val gutter = myFixture.findGutter(descriptorPath)
     DevKitGutterTargetsChecker.checkGutterTargets(
       gutter,
-      popupTitle,
-      AllIcons.Nodes.Module,
+      tooltip,
+      expectedIcon,
       { renderTargetElement(it) },
       *expectedTargets.toTypedArray()
     )
@@ -203,5 +265,4 @@ class DescriptorsIncludingContentModuleLineMarkerProviderTest : JavaCodeInsightF
     val tagText = element.parentOfType<XmlTag>(true) ?: throw IllegalStateException("Cannot find parent XmlTag")
     return "${file.name} | ${tagText.text}"
   }
-
 }

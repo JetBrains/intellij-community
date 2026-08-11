@@ -15,18 +15,18 @@ package override
 
     class MyChildClass : MyClass() {}
 
-    <error descr="[ABSTRACT_MEMBER_NOT_IMPLEMENTED] Class MyIllegalClass is not abstract and does not implement abstract member foo">class MyIllegalClass</error> : MyInterface, MyAbstractClass() {}
+    <error descr="[ABSTRACT_MEMBER_NOT_IMPLEMENTED]">class MyIllegalClass</error> : MyInterface, MyAbstractClass() {}
 
-    <error descr="[ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED] Class MyIllegalClass2 is not abstract and does not implement abstract base class member bar">class MyIllegalClass2</error> : MyInterface, MyAbstractClass() {
+    <error descr="[ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED]">class MyIllegalClass2</error> : MyInterface, MyAbstractClass() {
         override fun foo() {}
     }
 
-    <error descr="[ABSTRACT_MEMBER_NOT_IMPLEMENTED] Class MyIllegalClass3 is not abstract and does not implement abstract member foo">class MyIllegalClass3</error> : MyInterface, MyAbstractClass() {
+    <error descr="[ABSTRACT_MEMBER_NOT_IMPLEMENTED]">class MyIllegalClass3</error> : MyInterface, MyAbstractClass() {
         override fun bar() {}
     }
 
-    <error descr="[ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED] Class MyIllegalClass4 is not abstract and does not implement abstract base class member bar">class MyIllegalClass4</error> : MyInterface, MyAbstractClass() {
-        fun <error descr="[VIRTUAL_MEMBER_HIDDEN] 'foo' hides member of supertype 'MyInterface' and needs 'override' modifier">foo</error>() {}
+    <error descr="[ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED]">class MyIllegalClass4</error> : MyInterface, MyAbstractClass() {
+        fun <error descr="[VIRTUAL_MEMBER_HIDDEN]">foo</error>() {}
         override fun other() {}
     }
 

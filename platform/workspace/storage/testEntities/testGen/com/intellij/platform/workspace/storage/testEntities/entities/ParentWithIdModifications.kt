@@ -19,7 +19,7 @@ interface ParentWithIdBuilder : WorkspaceEntityBuilder<ParentWithId> {
 }
 
 internal object ParentWithIdType : EntityType<ParentWithId, ParentWithIdBuilder>() {
-  override val entityClass: Class<ParentWithId> get() = ParentWithId::class.java
+  override val entityImplClass: Class<*> get() = ParentWithIdImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ParentWithIdImpl.Builder::class.java
   operator fun invoke(
     myId: String,

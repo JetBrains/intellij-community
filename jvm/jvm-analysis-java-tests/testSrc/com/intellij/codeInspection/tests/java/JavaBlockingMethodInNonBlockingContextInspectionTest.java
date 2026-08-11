@@ -45,7 +45,7 @@ public class JavaBlockingMethodInNonBlockingContextInspectionTest extends Useful
       projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
 
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
-    final String dataPath = PathManagerEx.getTestDataPath() + "/codeInspection/blockingCallsDetection";
+    final String dataPath = PathManagerEx.getCommunityHomePath() + "/java/java-tests/testData/codeInspection/blockingCallsDetection";
     myFixture.setTestDataPath(dataPath);
     final JavaModuleFixtureBuilder builder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);

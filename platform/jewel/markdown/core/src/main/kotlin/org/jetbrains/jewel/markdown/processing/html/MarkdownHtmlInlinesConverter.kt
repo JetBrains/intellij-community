@@ -3,6 +3,7 @@ package org.jetbrains.jewel.markdown.processing.html
 
 import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.WithTextContent
+import org.jetbrains.jewel.markdown.parseDimensionSize
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 
 internal class MarkdownHtmlInlinesConverter {
@@ -38,6 +39,9 @@ internal class MarkdownHtmlInlinesConverter {
                                 source = element.attr("src"),
                                 title = element.attr("title").ifEmpty { null },
                                 alt = element.attr("alt"),
+                                width = element.attr("width").parseDimensionSize(),
+                                height = element.attr("height").parseDimensionSize(),
+                                inlineContent = emptyList(),
                             )
                         )
                     }

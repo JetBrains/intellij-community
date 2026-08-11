@@ -1,6 +1,6 @@
 <!--suppress SplitModeMixedDependencies -->
 <!--suppress PluginXmlPluginLogo -->
-<idea-plugin>
+<idea-plugin implementation-detail="true">
   <id>intellij.testRunner.plugin</id>
   <name>Test Runner</name>
   <description>Provides test runner platform modules for the IDE.</description>

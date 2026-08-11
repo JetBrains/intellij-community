@@ -19,7 +19,7 @@ interface ModuleTestEntityBuilder : WorkspaceEntityBuilder<ModuleTestEntity> {
 }
 
 internal object ModuleTestEntityType : EntityType<ModuleTestEntity, ModuleTestEntityBuilder>() {
-  override val entityClass: Class<ModuleTestEntity> get() = ModuleTestEntity::class.java
+  override val entityImplClass: Class<*> get() = ModuleTestEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ModuleTestEntityImpl.Builder::class.java
   operator fun invoke(
     name: String,

@@ -2,3 +2,4 @@
   modules:
   - name: intellij.lombok
   - name: intellij.lombok.generated
+    reason: <- intellij.lombok

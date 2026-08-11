@@ -7,6 +7,6 @@ interface B
 
 interface D<T>
 
-interface CorrectF<T> where T : D<A>, T : <error descr="[REPEATED_BOUND] Type parameter already has this bound">D<B></error>
+interface CorrectF<T> where T : D<A>, T : <error descr="[REPEATED_BOUND]">D<B></error>
 
-fun <T> bar() where T : D<A>, T : <error descr="[REPEATED_BOUND] Type parameter already has this bound">D<B></error> {}
+fun <T> bar() where T : D<A>, T : <error descr="[REPEATED_BOUND]">D<B></error> {}

@@ -276,6 +276,9 @@ fun effect(f: ChangeScope.() -> Unit) {
  * */
 context(cs: ChangeScope)
 fun <E : Entity> EntityType<E>.new(builder: EntityBuilder<E> = EntityBuilder {}): E = let { entityType ->
+  if (cs.context.impl.registerEntityTypeOnEntityCreation) {
+    register(entityType)
+  }
   require(entity(entityType.eid) != null) {
     "Entity type '${entityType.entityTypeIdent}' is not registered.\nRegister it in your Plugin implementation, or use ChangeScope.register as mitigation"
   }

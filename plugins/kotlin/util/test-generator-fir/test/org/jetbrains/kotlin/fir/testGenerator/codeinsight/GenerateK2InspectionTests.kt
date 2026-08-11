@@ -2,20 +2,19 @@
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.idea.inspections.AbstractCoroutineNonBlockingContextDetectionTest
-import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractK2SharedQuickFixTest
-import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2InspectionTest
-import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2LocalInspectionTest
-import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2MultiFileQuickFixTest
-import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractAllOpenLocalInspectionTest
-import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2ActualExpectTest
-import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2AmbiguousActualsTest
-import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2InspectionTest
-import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2LocalInspectionAndGeneralHighlightingTest
-import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2LocalInspectionTest
-import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2MultiFileInspectionTest
-import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2MultiFileLocalInspectionTest
-import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2MultiFileQuickFixTest
-import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2QuickFixTest
+import org.jetbrains.kotlin.idea.inspections.AbstractK2SharedQuickFixTest
+import org.jetbrains.kotlin.idea.inspections.AbstractSharedK2InspectionTest
+import org.jetbrains.kotlin.idea.inspections.AbstractSharedK2MultiFileQuickFixTest
+import org.jetbrains.kotlin.idea.inspections.tests.AbstractAllOpenLocalInspectionTest
+import org.jetbrains.kotlin.idea.inspections.tests.AbstractK2ActualExpectTest
+import org.jetbrains.kotlin.idea.inspections.tests.AbstractK2AmbiguousActualsTest
+import org.jetbrains.kotlin.idea.inspections.tests.AbstractK2InspectionTest
+import org.jetbrains.kotlin.idea.inspections.tests.AbstractK2LocalInspectionAndGeneralHighlightingTest
+import org.jetbrains.kotlin.idea.inspections.tests.AbstractK2LocalInspectionTest
+import org.jetbrains.kotlin.idea.inspections.tests.AbstractK2MultiFileInspectionTest
+import org.jetbrains.kotlin.idea.inspections.tests.AbstractK2MultiFileLocalInspectionTest
+import org.jetbrains.kotlin.idea.quickfix.tests.AbstractK2MultiFileQuickFixTest
+import org.jetbrains.kotlin.idea.quickfix.tests.AbstractK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.INSPECTIONS
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.QUICKFIXES
 import org.jetbrains.kotlin.testGenerator.model.MutableTWorkspace
@@ -33,6 +32,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
     testGroup("code-insight/inspections-k2/tests", category = INSPECTIONS, testDataPath = "../../..") {
         testClass<AbstractK2LocalInspectionTest>(commonSuite = false) {
             val pattern = Patterns.forRegex("^([\\w\\-_\\.]+)\\.(kt|kts)$")
+            model("${idea}/inspectionsLocal/unusedContextParameterCall", pattern = pattern)
             model("${idea}/inspectionsLocal/unusedVariable", pattern = pattern)
             model("${idea}/inspectionsLocal/redundantVisibilityModifier", pattern = pattern)
             model("${idea}/inspectionsLocal/unusedEquals")
@@ -122,6 +122,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/collections/simplifiableCallChain")
             model("${idea}/inspectionsLocal/collections/redundantAsSequence")
             model("${idea}/inspectionsLocal/collections/simplifiableCall")
+            model("${idea}/inspectionsLocal/collections/concatenationToBuildCollection", pattern = pattern)
             model("${idea}/inspectionsLocal/canSimplifyDollarLiteral")
             model("${idea}/inspectionsLocal/canConvertToMultiDollarString")
             model("${idea}/inspectionsLocal/floatingPointLiteralPrecision")
@@ -191,6 +192,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/scriptExecutable", pattern = Patterns.KTS)
             model("${idea}/inspectionsLocal/replaceAddAllWithMapTo")
             model("${idea}/inspectionsLocal/unnecessaryOptInAnnotation")
+            model("${idea}/inspectionsLocal/duplicateArgumentsInSetOfAndMapOfFunctions")
 
             // There is no `RemoveExplicitTypeArgumentsIntention` in K2 because `RemoveExplicitTypeArgumentsInspection` is available
             // and the inspection can have the "No highlighting (fix available)" severity.
@@ -217,6 +219,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             val pattern = Patterns.forRegex("^(inspections\\.test)$")
             model("${idea}/inspections/enumValuesSoftDeprecateInJava", pattern = pattern)
             model("${idea}/inspections/enumValuesSoftDeprecateInKotlin", pattern = pattern)
+            model("${idea}/inspections/escapedCapturedVariable", pattern = pattern)
             model("${idea}/inspections/redundantIf", pattern = pattern)
             model("${idea}/inspections/equalsAndHashCode", pattern = pattern)
             model("${idea}/inspections/protectedInFinal", pattern = pattern)
@@ -280,12 +283,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
         }
     }
 
-    testGroup("code-insight/inspections-shared/tests/k2", category = INSPECTIONS, testDataPath = "../testData") {
-        testClass<AbstractSharedK2LocalInspectionTest> {
-            val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
-            model("inspectionsLocal", pattern = pattern)
-        }
-
+    testGroup("code-insight/inspections-k2/tests", category = INSPECTIONS) {
         testClass<AbstractSharedK2InspectionTest> {
             val pattern = Patterns.forRegex("^(inspections\\.test)$")
             model("inspections", pattern = pattern)
@@ -293,7 +291,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
         }
     }
 
-    testGroup("code-insight/inspections-shared/tests/k2", category = QUICKFIXES, testDataPath = "../testData") {
+    testGroup("code-insight/inspections-k2/tests", category = QUICKFIXES) {
         val relativeIdea = "../../../../$idea"
         testClass<AbstractK2SharedQuickFixTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$")
@@ -308,7 +306,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
         }
 
         testClass<AbstractCoroutineNonBlockingContextDetectionTest>(
-            generatedClassName = "org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.SharedK2CoroutineNonBlockingContextDetectionTestGenerated"
+            generatedClassName = "org.jetbrains.kotlin.idea.codeInsight.inspections.SharedK2CoroutineNonBlockingContextDetectionTestGenerated"
         ) {
             model("inspections/blockingCallsDetection", pattern = KT)
         }

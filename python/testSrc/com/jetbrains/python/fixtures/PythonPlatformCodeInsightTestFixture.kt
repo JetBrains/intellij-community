@@ -18,6 +18,8 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.PythonTestUtil
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixture.PythonCommonCodeInsightTestFixture
 import com.jetbrains.python.psi.LanguageLevel
 import junit.framework.TestCase.assertNotNull
@@ -141,6 +143,8 @@ class PythonPlatformCodeInsightTestFixture(languageLevel: LanguageLevel) : Pytho
 }
 
 @Suppress("JUnitTestCaseWithNoTests")
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyDelegateTestCase(private val languageLevel: LanguageLevel = LanguageLevel.getLatest()) : PyTestCase() {
 
   override fun getProjectDescriptor(): LightProjectDescriptor? {

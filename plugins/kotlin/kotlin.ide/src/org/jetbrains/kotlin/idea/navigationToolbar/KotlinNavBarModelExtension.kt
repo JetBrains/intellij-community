@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.navigationToolbar
 
 import com.intellij.ide.navigationToolbar.StructureAwareNavBarModelExtension
+import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -35,8 +36,34 @@ class KotlinNavBarModelExtension : StructureAwareNavBarModelExtension() {
             }
         }
 
+    override fun findParentInModel(root: StructureViewTreeElement, psiElement: PsiElement): PsiElement? =
+        findParentInModel(root, psiElement, root.value as? PsiElement)
+
+    private fun findParentInModel(
+        root: StructureViewTreeElement,
+        psiElement: PsiElement,
+        nearestPsiParent: PsiElement?,
+    ): PsiElement? {
+        val currentPsiParent = (root.value as? PsiElement) ?: nearestPsiParent
+        for (child in childrenFromNodeAndProviders(root).filterIsInstance<StructureViewTreeElement>()) {
+            if (child.value == psiElement) {
+                return currentPsiParent
+            }
+
+            findParentInModel(child, psiElement, currentPsiParent)?.let { return it }
+        }
+        return null
+    }
+
     override fun getPresentableText(item: Any?): String? =
-        (item as? KtDeclaration)?.let {
-            tryGetRepresentableText(it, renderReceiverType = false, renderArguments = false, renderReturnType = false)
+        when (item) {
+            is KtFile -> item.name
+            is KtDeclaration -> tryGetRepresentableText(
+                item,
+                renderReceiverType = false,
+                renderArguments = false,
+                renderReturnType = false,
+            )
+            else -> null
         }
 }

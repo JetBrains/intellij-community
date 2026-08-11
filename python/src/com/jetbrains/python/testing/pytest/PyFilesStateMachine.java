@@ -2,12 +2,13 @@
 package com.jetbrains.python.testing.pytest;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Automata searches for file links and numbers.
  * Supports 2 modes: "quote-mode" (searches for strings in quotes) and "space mode" -- strings, separated by spaces (or start/end of line)
- * Create one providing appropriate flag.
+ * Create one providing the appropriate flag.
  * <p/>
  * Call {@link #addChar(char, int)} or {@link #endLine()} when line ends and do the following:
  * if result is true, then machine found something. Use {@link #getFileAndLine()} to get result.
@@ -20,6 +21,7 @@ final class PyFilesStateMachine {
   private boolean myLookingForFile = true; // Looking for file if true , for line number if not
   private boolean myInProgress; // True if machine in progress, false if waits to start
   private boolean myWaitingForCharAfterSemicolon; // Semicolon entered, looking for next char
+  private boolean mySkippingUrlToken;
   private int myStart; // start position
   private final StringBuilder myFileName = new StringBuilder();
   private final StringBuilder myLineNumber = new StringBuilder();
@@ -41,10 +43,23 @@ final class PyFilesStateMachine {
    * @return see class doc
    */
   boolean addChar(final char charToCheck, final int charNumber) {
+    if (mySkippingUrlToken) {
+      if (charToCheck == ' ') {
+        mySkippingUrlToken = false;
+        myInProgress = true;
+        myStart = charNumber + 1;
+      }
+      return false;
+    }
+
     if (!myInProgress) {
       if ((charToCheck == '"' && myQuoteMode)) {
         myInProgress = true;
         myStart = charNumber;
+      }
+      else if (charToCheck == ' ' && !myQuoteMode) {
+        myInProgress = true;
+        myStart = charNumber + 1;
       }
       return false;
     }
@@ -59,6 +74,13 @@ final class PyFilesStateMachine {
         return false;
       }
       if (Character.isDigit(charToCheck)) {
+        if (isHttpUrlPrefix()) {
+          resetState();
+          if (!myQuoteMode) {
+            mySkippingUrlToken = true;
+          }
+          return false;
+        }
         // Number? Line numbers started, file name found
         myLookingForFile = false;
         myLineNumber.append(charToCheck);
@@ -136,8 +158,16 @@ final class PyFilesStateMachine {
   private void resetState() {
     myInProgress = false;
     myLookingForFile = true;
+    myWaitingForCharAfterSemicolon = false;
+    mySkippingUrlToken = false;
     myLineNumber.setLength(0);
     myFileName.setLength(0);
+  }
+
+  private boolean isHttpUrlPrefix() {
+    final String fileName = myFileName.toString();
+    return StringUtil.startsWithIgnoreCase(fileName, "http://") ||
+           StringUtil.startsWithIgnoreCase(fileName, "https://");
   }
 
   /**

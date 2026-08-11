@@ -4,11 +4,14 @@ package com.intellij.psi.impl.source;
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.ConcreteAstPointer;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
@@ -28,7 +31,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource.FileTreesPsiReconciliation;
-import static com.intellij.reference.SoftReference.deref;
 import static com.intellij.reference.SoftReference.dereference;
 
 /**
@@ -78,7 +80,7 @@ final class FileTrees {
    * for physical files (allowing the GC to reclaim the AST under memory pressure),
    * or a strong lambda for non-physical files (e.g. {@code DummyHolder}).
    */
-  private final @Nullable Supplier<? extends FileElement> myTreeElementPointer;
+  private final @NotNull ConcreteAstPointer myTreeElementPointer;
 
   /**
    * Weak references to every stubbed PSI element that has been handed out, indexed by spine position.
@@ -92,7 +94,7 @@ final class FileTrees {
 
   private FileTrees(@NotNull PsiFileImpl file,
                     @Nullable Reference<StubTree> stub,
-                    @Nullable Supplier<? extends FileElement> ast,
+                    @NotNull ConcreteAstPointer ast,
                     @Nullable Reference<StubBasedPsiElementBase<?>> @Nullable [] refToPsi) {
     myFile = file;
     myStub = stub;
@@ -109,7 +111,7 @@ final class FileTrees {
   /** Returns the AST root if it is still reachable (not yet GC-ed), or {@code null}. */
   @Nullable
   FileElement derefTreeElement() {
-    return deref(myTreeElementPointer);
+    return myTreeElementPointer.dereference();
   }
 
   /**
@@ -230,7 +232,8 @@ final class FileTrees {
    * @see PsiFileImpl#loadTreeElement()
    */
   @NotNull FileTrees withAst(@NotNull Supplier<? extends FileElement> ast) throws StubTreeLoader.StubTreeAndIndexUnmatchCoarseException {
-    return new FileTrees(myFile, myStub, ast, myRefToPsi).syncPsiWithStub(derefStub(), ast.get(), true);
+    ConcreteAstPointer newPointer = myTreeElementPointer.updateWith(ast);
+    return new FileTrees(myFile, myStub, newPointer, myRefToPsi).syncPsiWithStub(derefStub(), ast.get(), true);
   }
 
   /**
@@ -248,10 +251,25 @@ final class FileTrees {
       .syncPsiWithStub(stub, ast, false);
   }
 
-  /** Creates an initial {@code FileTrees} with no stub tree and an optional AST root. */
+  /**
+   * Creates an initial {@code FileTrees} with no stub tree and an optional AST root.
+   * Prefer using {@link dropStubAndFileElement} for dropping cache semantics.
+   */
   @NotNull
-  static FileTrees noStub(@Nullable FileElement ast, @NotNull PsiFileImpl file) {
-    return new FileTrees(file, null, ast == null ? null : () -> ast, null);
+  static FileTrees noStub(@Nullable FileElement ast, @NotNull PsiFileImpl file, @NotNull FileViewProvider viewProvider) {
+    boolean canBeVersioned = PsiFileImpl.shouldNodeBeVersioned(viewProvider);
+    Supplier<? extends FileElement> treeSupplier = ast == null ? null : () -> ast;
+    ConcreteAstPointer pointer = ConcreteAstPointer.createPointer(canBeVersioned, treeSupplier);
+    return new FileTrees(file, null, pointer, null);
+  }
+
+  /**
+   * Same as {@link noStub}, but retains file elements for previous PSI versions.
+   * This function is useful for dropping caches. If you need to create {@link FileTrees} with no prior information, use {@link noStub}
+   */
+  @NotNull FileTrees dropStubAndFileElement() {
+    ConcreteAstPointer pointer = myTreeElementPointer.updateWith(null);
+    return new FileTrees(myFile, null, pointer, null);
   }
 
   /**
@@ -366,7 +384,7 @@ final class FileTrees {
   public String toString() {
     return "FileTrees{" +
            "stub=" + (myStub == null ? "noRef" : derefStub()) +
-           ", AST=" + (myTreeElementPointer == null ? "noRef" : derefTreeElement()) +
+           ", AST=" + myTreeElementPointer +
            ", useSpineRefs=" + useSpineRefs() +
            '}';
   }

@@ -2,13 +2,11 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.editor"/>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ide.impl"/>
   </dependencies>
   <!-- endregion -->
-  <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="com.intellij.platform.editor.frontend.FrontendEditorHandler"/>
-  </extensions>
 </idea-plugin>

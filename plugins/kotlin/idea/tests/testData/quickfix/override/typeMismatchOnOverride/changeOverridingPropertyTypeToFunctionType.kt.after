@@ -1,5 +1,5 @@
 // "Change type to '(String) -> Int'" "true"
-// K2_ERROR: Type of 'var x: (Int) -> String' doesn't match the type of the overridden 'var' property 'var x: (String) -> Int' defined in 'A'.
+// K2_ERROR: VAR_TYPE_MISMATCH_ON_OVERRIDE
 interface A {
     var x: (String) -> Int
 }

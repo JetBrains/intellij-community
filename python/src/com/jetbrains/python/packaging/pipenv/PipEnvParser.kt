@@ -5,7 +5,10 @@ import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.python.packaging.PyPackage
+import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import org.jetbrains.annotations.ApiStatus
+
+private val outdatedPackageLineRegex = Regex("'(.+)'.+'(.+)'.+'(.+)'")
 
 @ApiStatus.Internal
 object PipEnvParser {
@@ -47,4 +50,15 @@ object PipEnvParser {
       .toList()
   }
 
+  fun parseOutdatedPackagesOutput(output: String): List<PythonOutdatedPackage> =
+    output
+      .lines()
+      .mapNotNull { line ->
+        outdatedPackageLineRegex
+          .find(line)
+          ?.let { result ->
+            val groupValues = result.groupValues
+            PythonOutdatedPackage(groupValues[1], groupValues[2], groupValues[3])
+          }
+      }
 }

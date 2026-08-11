@@ -1,0 +1,32 @@
+LineBreakpoint created at QualifierChain.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! QualifierChain
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Stopped at QualifierChain.java:6
+=== before of (bytecode offset 18) ===
+  [0] traceable Stream.of(1,2) -> map -> toList
+  [1] traceable Stream.of(1,2).map(x->x+1).toList().stream() -> filter -> toList
+=== before map (bytecode offset 26) ===
+  [0] traceable Stream.of(1,2) -> map -> toList
+  [1] traceable Stream.of(1,2).map(x->x+1).toList().stream() -> filter -> toList
+=== after map (bytecode offset 31) ===
+  [0] filtered  Stream.of(1,2) -> map -> toList
+  [1] traceable Stream.of(1,2).map(x->x+1).toList().stream() -> filter -> toList
+=== before toList (bytecode offset 31) ===
+  [0] filtered  Stream.of(1,2) -> map -> toList
+  [1] traceable Stream.of(1,2).map(x->x+1).toList().stream() -> filter -> toList
+=== after toList (bytecode offset 36) ===
+  [0] filtered  Stream.of(1,2) -> map -> toList
+  [1] traceable Stream.of(1,2).map(x->x+1).toList().stream() -> filter -> toList
+=== before stream (bytecode offset 36) ===
+  [0] filtered  Stream.of(1,2) -> map -> toList
+  [1] traceable Stream.of(1,2).map(x->x+1).toList().stream() -> filter -> toList
+=== before filter (bytecode offset 46) ===
+  [0] filtered  Stream.of(1,2) -> map -> toList
+  [1] traceable Stream.of(1,2).map(x->x+1).toList().stream() -> filter -> toList
+=== before toList#1 (bytecode offset 51) ===
+  [0] filtered  Stream.of(1,2) -> map -> toList
+  [1] filtered  Stream.of(1,2).map(x->x+1).toList().stream() -> filter -> toList
+Resuming QualifierChain.java:6
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

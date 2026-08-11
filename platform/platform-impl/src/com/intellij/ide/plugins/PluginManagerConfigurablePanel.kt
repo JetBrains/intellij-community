@@ -8,6 +8,9 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.certificates.PluginCertificateManager
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerManageAction
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSourceEnum
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerTab
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.plugins.newui.MyPluginModel
 import com.intellij.ide.plugins.newui.PluginManagerCustomizer
@@ -15,6 +18,7 @@ import com.intellij.ide.plugins.newui.PluginModelAsyncOperationsExecutor
 import com.intellij.ide.plugins.newui.PluginModelFacade
 import com.intellij.ide.plugins.newui.PluginPriceService
 import com.intellij.ide.plugins.newui.PluginUiModel
+import com.intellij.ide.plugins.newui.PluginUpdateSubscription
 import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.ide.plugins.newui.PluginsGroup
 import com.intellij.ide.plugins.newui.PluginsGroupComponent
@@ -35,9 +39,10 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ModalityState.any
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
@@ -52,6 +57,8 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.updateSettings.impl.PluginAutoUpdateListener
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.updateSettings.impl.UpdateOptions
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
@@ -93,13 +100,17 @@ import javax.accessibility.AccessibleRole
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants
+import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
-class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: String?) : Disposable {
+class PluginManagerConfigurablePanel @RequiresEdt constructor(
+  searchQuery: String?,
+  openSource: PluginManagerOpenSourceEnum = PluginManagerOpenSourceEnum.OTHER,
+) : Disposable {
   private val coroutineScope: CoroutineScope
 
   private val pluginModelFacade: PluginModelFacade
-  private val pluginUpdatesService: PluginUpdatesService
+  private var updateSubscription: PluginUpdateSubscription? = null
   private val pluginManagerCustomizer: PluginManagerCustomizer? = PluginManagerCustomizer.getInstance()
 
   private val tabHeaderComponent: TabbedPaneHeaderComponent
@@ -120,6 +131,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
 
   private val callbackLock: Any = Any()
   private var shutdownCallbackExecuted: Boolean = false
+  private var applyScheduled: Boolean = false
 
   init {
     pluginModelFacade = PluginModelFacade(MyPluginModel(null))
@@ -127,12 +139,6 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
     val childScope = parentScope.childScope(javaClass.name, Dispatchers.IO, true)
     pluginModelFacade.getModel().coroutineScope = childScope
     coroutineScope = childScope
-
-    pluginUpdatesService =
-      UiPluginManager.getInstance().subscribeToUpdatesCount(pluginModelFacade.getModel().sessionId) { updatesCount ->
-        coroutineScope.launch(Dispatchers.EDT + any().asContextElement()) { onPluginUpdatesRecalculation(updatesCount) }
-      }
-    pluginModelFacade.getModel().pluginUpdatesService = pluginUpdatesService
 
     CustomPluginRepositoryService.getInstance().clearCache()
 
@@ -145,9 +151,11 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
 
     laterSearchQuery = searchQuery
 
-    UiPluginManager.getInstance().updateDescriptorsForInstalledPlugins()
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+      UiPluginManager.getInstance().updateDescriptorsForInstalledPlugins()
+    }
 
-    PluginManagerUsageCollector.sessionStarted()
+    PluginManagerUsageCollector.logSessionStarted(openSource)
 
     if (laterSearchQuery != null) {
       val search = enableSearch(laterSearchQuery, forceShowInstalledTabForTag)
@@ -159,6 +167,13 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
     }
     if (pluginManagerCustomizer != null) {
       pluginManagerCustomizer.initCustomizer(cardPanel)
+    }
+
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+      updateSubscription =
+        UiPluginManager.getInstance().subscribeToPluginUpdatesFiltered(pluginModelFacade.getModel().sessionId) { pluginUpdates ->
+          coroutineScope.launch(Dispatchers.UI + any().asContextElement()) { onPluginUpdatesRecalculation(pluginUpdates) }
+        }
     }
   }
 
@@ -182,9 +197,12 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
   }
 
   private fun createTabHeaderComponent(selectionTab: Int): TabbedPaneHeaderComponent {
-    val tabHeaderComponent = object : TabbedPaneHeaderComponent(createGearActions(), { index ->
+    val tabHeaderComponent = object : TabbedPaneHeaderComponent(createGearActions(), { index, userInitiated ->
       cardPanel.select(index, true)
       storeSelectionTab(index)
+      if (userInitiated) {
+        PluginManagerUsageCollector.tabSelected(if (index == MARKETPLACE_TAB) PluginManagerTab.MARKETPLACE else PluginManagerTab.INSTALLED)
+      }
 
       val query = if (index == MARKETPLACE_TAB) installedTab.searchQuery else marketplaceTab.searchQuery
       if (index == MARKETPLACE_TAB) {
@@ -282,31 +300,38 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
   private fun resetPanels() {
     CustomPluginRepositoryService.getInstance().clearCache()
     marketplaceTab.resetCache()
-    pluginUpdatesService.recalculateUpdates()
+    PluginUpdatesService.getInstance().recalculateUpdates()
     marketplaceTab.onPanelReset(tabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB)
   }
 
-  private fun onPluginUpdatesRecalculation(updatesCount: Int?) {
-    val count = updatesCount ?: 0
-    val text = Integer.toString(count)
-
-    val tooltip = PluginUpdatesService.getUpdatesTooltip()
+  private fun onPluginUpdatesRecalculation(pluginUpdates: List<PluginUiModel>) {
+    val text = Integer.toString(pluginUpdates.size)
+    val tooltip = getUpdatesTooltip(pluginUpdates)
     tabHeaderComponent.setTabTooltip(INSTALLED_TAB, tooltip)
 
-    installedTab.onPluginUpdatesRecalculation(updatesCount, tooltip)
+    installedTab.onPluginUpdatesRecalculation(pluginUpdates.size, tooltip)
 
     installedTabHeaderUpdatesCountIcon.setText(text)
     tabHeaderComponent.update()
   }
 
+  @Nls
+  fun getUpdatesTooltip(pluginUpdates: List<PluginUiModel>): @Nls String? {
+    if (pluginUpdates.isEmpty()) {
+      return null
+    }
+    return IdeBundle.message("updates.plugin.ready.tooltip",
+                             StringUtil.join(pluginUpdates.map { it.name }, ", "),
+                             pluginUpdates.size)
+  }
+
   private fun createMarketplaceTab(): MarketplacePluginsTab {
-    return MarketplacePluginsTab(pluginModelFacade, coroutineScope, pluginManagerCustomizer, pluginUpdatesService)
+    return MarketplacePluginsTab(pluginModelFacade, coroutineScope, pluginManagerCustomizer)
   }
 
   private fun createInstalledTab(): InstalledPluginsTab {
     val installedPluginsTab = InstalledPluginsTab(
       pluginModelFacade,
-      pluginUpdatesService,
       coroutineScope,
       { _ -> tabHeaderComponent.setSelectionWithEvents(MARKETPLACE_TAB) },
     )
@@ -354,7 +379,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
 
     installedTab.getInstalledSearchPanel().dispose()
 
-    pluginUpdatesService.dispose()
+    updateSubscription?.cancel()
     PluginPriceService.cancel()
 
     pluginsState.runShutdownCallback()
@@ -377,18 +402,31 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
   }
 
   fun scheduleApply() {
+    synchronized(callbackLock) {
+      if (applyScheduled) {
+        return
+      }
+      applyScheduled = true
+    }
     application.invokeLater({
       try {
-        apply()
-        WelcomeScreenEventCollector.logPluginsModified()
-        synchronized(callbackLock) {
-          if (disposeStarted && !shutdownCallbackExecuted) {
-            InstalledPluginsState.getInstance().runShutdownCallback()
+        if (isModified()) {
+          apply()
+          WelcomeScreenEventCollector.logPluginsModified()
+          synchronized(callbackLock) {
+            if (disposeStarted && !shutdownCallbackExecuted) {
+              InstalledPluginsState.getInstance().runShutdownCallback()
+            }
           }
         }
       }
       catch (exception: ConfigurationException) {
         Logger.getInstance(PluginsTabFactory::class.java).error(exception)
+      }
+      finally {
+        synchronized(callbackLock) {
+          applyScheduled = false
+        }
       }
     }, ModalityState.nonModal())
   }
@@ -468,7 +506,11 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
     }
 
     if (!components.isEmpty()) {
-      installedTab.getInstalledPanel().setSelection(components)
+      // Scrolling to the selection relies on component bounds that are only correct after a pending
+      // layout/validation pass (e.g. triggered by a just-added plugin category promotion panel) completes.
+      SwingUtilities.invokeLater {
+        installedTab.getInstalledPanel().setSelection(components)
+      }
     }
   }
 
@@ -585,6 +627,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
 
   private inner class ManagePluginRepositoriesAction : DumbAwareAction(IdeBundle.message("plugin.manager.repositories")) {
     override fun actionPerformed(e: AnActionEvent) {
+      PluginManagerUsageCollector.manageActionInvoked(PluginManagerManageAction.MANAGE_REPOSITORIES)
       val oldRepoUrls = ArrayList(UpdateSettings.getInstance().getStoredPluginHosts())
       if (ShowSettingsUtil.getInstance().editConfigurable(cardPanel, PluginHostsConfigurable())) {
         if (pluginManagerCustomizer == null) {
@@ -608,6 +651,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
 
   private inner class OpenHttpProxyConfigurableAction : DumbAwareAction(IdeBundle.message("button.http.proxy.settings")) {
     override fun actionPerformed(e: AnActionEvent) {
+      PluginManagerUsageCollector.manageActionInvoked(PluginManagerManageAction.HTTP_PROXY)
       if (HttpProxyConfigurable.editConfigurable(cardPanel)) {
         resetPanels()
       }
@@ -616,6 +660,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
 
   private inner class ManagePluginCertificatesAction : DumbAwareAction(IdeBundle.message("plugin.manager.custom.certificates")) {
     override fun actionPerformed(e: AnActionEvent) {
+      PluginManagerUsageCollector.manageActionInvoked(PluginManagerManageAction.CERTIFICATES)
       if (ShowSettingsUtil.getInstance().editConfigurable(cardPanel, PluginCertificateManager())) {
         resetPanels()
       }
@@ -627,6 +672,11 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
     this@PluginManagerConfigurablePanel.pluginModelFacade.getModel(),
     this@PluginManagerConfigurablePanel.cardPanel,
   ) {
+    override fun actionPerformed(e: AnActionEvent) {
+      PluginManagerUsageCollector.manageActionInvoked(PluginManagerManageAction.INSTALL_FROM_DISK)
+      super.actionPerformed(e)
+    }
+
     @RequiresEdt
     override fun onPluginInstalledFromDisk(callbackData: PluginInstallCallbackData, project: Project?) {
       if (pluginManagerCustomizer != null) {
@@ -637,10 +687,15 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
       }
       this@PluginManagerConfigurablePanel.onPluginInstalledFromDisk(callbackData)
     }
+
+    override fun onPluginWithUpdateSourceInstalledFromDisk(pluginId: PluginId, updateSourceId: PluginUpdateSourceId) {
+      PluginUpdateSourceService.getInstance().setPluginUpdateSourceId(pluginId, updateSourceId)
+    }
   }
 
   private inner class ResetConfigurableAction : DumbAwareAction(IdeBundle.message("plugin.manager.refresh")) {
     override fun actionPerformed(e: AnActionEvent) {
+      PluginManagerUsageCollector.manageActionInvoked(PluginManagerManageAction.RESET)
       resetPanels()
     }
   }
@@ -651,6 +706,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
+      PluginManagerUsageCollector.manageActionInvoked(PluginManagerManageAction.TOGGLE_AUTO_UPDATE)
       pluginsAutoUpdateEnabled = state
     }
 
@@ -668,6 +724,9 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
     private val myEnable: Boolean = enable
 
     override fun actionPerformed(e: AnActionEvent) {
+      PluginManagerUsageCollector.manageActionInvoked(
+        if (myEnable) PluginManagerManageAction.ENABLE_ALL else PluginManagerManageAction.DISABLE_ALL
+      )
       PluginModelAsyncOperationsExecutor.switchPlugins(coroutineScope, pluginModelFacade, myEnable) { models ->
         //noinspection unchecked
         setState(pluginModelFacade, models as Collection<PluginUiModel>, myEnable)

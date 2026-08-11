@@ -11,7 +11,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -19,7 +18,6 @@ import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
@@ -32,24 +30,20 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class CustomImlComponentEntityImpl(private val dataSource: CustomImlComponentEntityData) : CustomImlComponentEntity,
                                                                                                     WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId =
       ConnectionId.create(ModuleEntity::class.java, CustomImlComponentEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     private val connections = listOf<ConnectionId>(MODULE_CONNECTION_ID)
-
   }
 
   override val module: ModuleEntity
     get() = snapshot.instrumentation.getParent(MODULE_CONNECTION_ID, this) as? ModuleEntity
             ?: error("Parent module not found for CustomImlComponentEntity")
-
   override val components: Map<String, String>
     get() {
       readField("components")
       return dataSource.components
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -60,33 +54,11 @@ internal class CustomImlComponentEntityImpl(private val dataSource: CustomImlCom
     return connections
   }
 
-
   internal class Builder(result: CustomImlComponentEntityData?) :
     ModifiableWorkspaceEntityBase<CustomImlComponentEntity, CustomImlComponentEntityData>(result), CustomImlComponentEntityBuilder {
     internal constructor() : this(CustomImlComponentEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity CustomImlComponentEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -118,14 +90,12 @@ internal class CustomImlComponentEntityImpl(private val dataSource: CustomImlCom
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var module: ModuleEntityBuilder
       get() {
@@ -144,10 +114,8 @@ internal class CustomImlComponentEntityImpl(private val dataSource: CustomImlCom
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -157,12 +125,10 @@ internal class CustomImlComponentEntityImpl(private val dataSource: CustomImlCom
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
       }
-
     override var components: Map<String, String>
       get() = getEntityData().components
       set(value) {
@@ -173,32 +139,14 @@ internal class CustomImlComponentEntityImpl(private val dataSource: CustomImlCom
 
     override fun getEntityClass(): Class<CustomImlComponentEntity> = CustomImlComponentEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class CustomImlComponentEntityData : WorkspaceEntityData<CustomImlComponentEntity>() {
   lateinit var components: Map<String, String>
-
   internal fun isComponentsInitialized(): Boolean = ::components.isInitialized
-
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<CustomImlComponentEntity> {
-    val modifiable = CustomImlComponentEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): CustomImlComponentEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = CustomImlComponentEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): CustomImlComponentEntity = CustomImlComponentEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<CustomImlComponentEntity, *> = CustomImlComponentEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.CustomImlComponentEntity") as EntityMetadata
   }

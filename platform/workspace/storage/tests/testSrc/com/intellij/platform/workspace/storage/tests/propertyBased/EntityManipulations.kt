@@ -11,7 +11,7 @@ import com.intellij.platform.workspace.storage.impl.asString
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlreadyExistsException
 import com.intellij.platform.workspace.storage.impl.toClassId
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.impl.url.ConcurrentVirtualFileUrlManager
 import com.intellij.platform.workspace.storage.testEntities.entities.BaseEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.LeftEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.LeftEntityBuilder
@@ -544,13 +544,17 @@ private object ParentEntityManipulation : EntityManipulation {
 }
 
 private object SampleEntityManipulation : EntityManipulation {
+  // Shared on purpose: VirtualFileUrl instances are interned per manager, so entities generated for different
+  // storages must get their URLs from the same manager to be recognized as equal.
+  private val virtualFileManager = ConcurrentVirtualFileUrlManager()
+
   override fun addManipulation(storage: MutableEntityStorageImpl): AddEntity {
     return object : AddEntity(storage, "Sample") {
       override fun makeEntity(source: EntitySource,
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         return storage addEntity SampleEntity(false, someProperty, ArrayList(), HashMap(),
-                                              VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
+                                              virtualFileManager.getOrCreateFromUrl("file:///tmp"),
                                               source) to "property: $someProperty"
       }
     }
@@ -573,7 +577,6 @@ private object SampleEntityManipulation : EntityManipulation {
       override fun makeEntity(source: EntitySource,
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
-        val virtualFileManager = VirtualFileUrlManagerImpl()
         return storage addEntity SampleEntity(false, someProperty, emptyList(), emptyMap(), virtualFileManager.getOrCreateFromUrl("file:///tmp"), source) {
           this.children = emptyList()
         } to "property: $someProperty"

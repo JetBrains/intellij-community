@@ -2,9 +2,11 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.refactoring.util.AbstractVariableData;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class ExtractMethodSettingsImpl<T> implements ExtractMethodSettings<T> {
   private final @NotNull String myMethodName;
   private final AbstractVariableData @NotNull [] myVariableData;

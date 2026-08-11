@@ -2,7 +2,21 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.jetbrains.performancePlugin"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
 
@@ -20,11 +34,18 @@
     <applicationSettings service="com.intellij.performanceTesting.freezes.PluginsFreezesService"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.performanceTesting.freezes.promo.ErrorReportPromoterActivity"/>
-    <diagnostic.freezeNotifier implementation="com.intellij.performanceTesting.freezes.promo.FreezeCounterListener"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.performanceTesting.freezes.AutoReportExceptionsStateCollector"/>
   </extensions>
 
-  <actions resource-bundle="messages.PerformanceTestingBundle">
-    <action id="ResetFreezeNotificationState" class="com.intellij.performanceTesting.freezes.ResetFreezeNotificationStateAction"
-            internal="true"/>
+  <actions resource-bundle="messages.PluginFreezeBundle">
+    <group internal="true" id="Internal.Errors.Additional">
+      <separator/>
+      <action id="ResetFreezeNotificationState" class="com.intellij.performanceTesting.freezes.ResetFreezeNotificationStateAction"
+              internal="true"/>
+      <action id="PrintErrorAutoReporterState" class="com.intellij.performanceTesting.freezes.ErrorAutoReporterStateInternalAction"
+              internal="true">
+      </action>
+      <add-to-group group-id="Internal.Errors" anchor="after" relative-to-action="DebugListen"/>
+    </group>
   </actions>
 </idea-plugin>

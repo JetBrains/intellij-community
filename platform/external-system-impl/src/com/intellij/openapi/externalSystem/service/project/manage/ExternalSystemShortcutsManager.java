@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -30,9 +31,11 @@ public class ExternalSystemShortcutsManager implements Disposable {
   private static final String ACTION_ID_PREFIX = "ExternalSystem_";
   private final @NotNull Project myProject;
   private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
+  private final ActionManager myActionManager;
 
   public ExternalSystemShortcutsManager(@NotNull Project project) {
     myProject = project;
+    myActionManager = ActionManager.getInstance();
   }
 
   public void init() {
@@ -101,7 +104,7 @@ public class ExternalSystemShortcutsManager implements Disposable {
   }
 
   void scheduleKeymapUpdate(@NotNull Collection<? extends DataNode<TaskData>> taskData) {
-    ExternalSystemKeymapExtension.updateActions(myProject, taskData);
+    ExternalSystemKeymapExtension.updateActions(myActionManager, myProject, taskData);
   }
 
   void scheduleRunConfigurationKeymapUpdate(@NotNull ProjectSystemId externalSystemId) {
@@ -110,6 +113,6 @@ public class ExternalSystemShortcutsManager implements Disposable {
 
   @Override
   public void dispose() {
-    ExternalSystemKeymapExtension.clearActions(this);
+    ExternalSystemKeymapExtension.clearActions(myActionManager, this);
   }
 }

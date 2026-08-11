@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.template;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
@@ -16,6 +19,8 @@ import java.util.List;
 /**
  * Tests for HTML language injection in Python template strings (t-strings) and f-strings.
  */
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyHtmlTemplateInjectionTest extends PyTestCase {
 
   public void testSimpleHtmlInjection() {

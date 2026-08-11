@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.marketplace.ModuleDependency;
@@ -27,6 +27,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
   private static final DecimalFormat M_FORMAT = new DecimalFormat("###.#M");
 
+  @ApiStatus.Internal
   public enum Status {
     UNKNOWN, INSTALLED, DOWNLOADED, DELETED
   }
@@ -68,7 +69,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private @NlsSafe String myRepositoryName;
   private String myInstalledVersion;
   private String myRating;
-  private boolean myIncomplete;
   private List<String> myTags;
   private String externalUpdateId;
   private String externalPluginId;
@@ -285,10 +285,12 @@ public final class PluginNode implements IdeaPluginDescriptor {
     this.sinceBuild = sinceBuild;
   }
 
+  @ApiStatus.Internal
   public Status getStatus() {
     return myStatus;
   }
 
+  @ApiStatus.Internal
   public void setStatus(Status status) {
     myStatus = status;
   }
@@ -573,13 +575,16 @@ public final class PluginNode implements IdeaPluginDescriptor {
     return null;
   }
 
+  /// @deprecated obsolete; always `false`
+  @Deprecated(forRemoval = true)
+  @ApiStatus.Internal
   public boolean isIncomplete() {
-    return myIncomplete;
+    return false;
   }
 
-  public void setIncomplete(boolean incomplete) {
-    myIncomplete = incomplete;
-  }
+  /// @deprecated obsolete; no-op
+  @Deprecated(forRemoval = true)
+  public void setIncomplete(boolean ignored) { }
 
   public boolean detailsLoaded() {
     return externalPluginId == null || externalUpdateId == null || description != null;

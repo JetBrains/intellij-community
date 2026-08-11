@@ -67,8 +67,8 @@ class InlineCompletionLogsContainer() {
     random = mocked
   }
 
-  private val logs: Map<Phase, MutableSet<EventPair<*>>> = Phase.entries.associateWith {
-    ConcurrentCollectionFactory.createConcurrentSet<EventPair<*>>()
+  private val logs: Map<Phase, MutableMap<String, EventPair<*>>> = Phase.entries.associateWith {
+    ConcurrentCollectionFactory.createConcurrentMap()
   }
 
   private val asyncAdds = ConcurrentLinkedQueue<Job>()
@@ -99,7 +99,10 @@ class InlineCompletionLogsContainer() {
     val phase = requireNotNull(InlineCompletionLogs.Session.phaseByName[value.field.name]) {
       "Cannot find phase for ${value.field.name}"
     }
-    logs[phase]!!.add(value)
+    // Atomic replace: a log for the same field produced more than once per session (e.g. repeated
+    // postprocessing passes or `updateLatestLogs`) overrides the previous value instead of adding a
+    // duplicate.
+    logs[phase]!![value.field.name] = value
   }
 
   /**
@@ -124,9 +127,9 @@ class InlineCompletionLogsContainer() {
     val filteredEvents = logs.filter { it.value.isNotEmpty() }.mapValues { (_, logs) ->
       // for release, log only basic fields for most of the requests and very rarely log everything.
       if (shouldSendFullLogs) {
-        logs
+        logs.values
       } else {
-        logs.filter { pair -> InlineCompletionLogs.Session.isBasic(pair) }
+        logs.values.filter { pair -> InlineCompletionLogs.Session.isBasic(pair) }
       }
     }
 
@@ -147,7 +150,7 @@ class InlineCompletionLogsContainer() {
       }
     })
     extraLogger?.log(project, filteredEvents)
-    logs.map { it.value }.flatten().forEach { LocalStatistics.getInstance().saveIfRegistered(it) }
+    logs.values.flatMap { it.values }.forEach { LocalStatistics.getInstance().saveIfRegistered(it) }
     logs.forEach { (_, events) -> events.clear() }
   }
 
@@ -163,12 +166,12 @@ class InlineCompletionLogsContainer() {
    */
   suspend fun awaitAndGetCurrentLogs(): List<EventPair<*>> {
     awaitAllAlreadyRunningAsyncAdds()
-    return logs.values.flatten()
+    return logs.values.flatMap { it.values }
   }
 
   suspend fun awaitAndGetCurrentLogsPhased(): Map<Phase, List<EventPair<*>>> {
     awaitAllAlreadyRunningAsyncAdds()
-    return logs.mapValues { it.value.toList() }
+    return logs.mapValues { it.value.values.toList() }
   }
 
   companion object {

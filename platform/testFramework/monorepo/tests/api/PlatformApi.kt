@@ -15,6 +15,7 @@ internal object PlatformApi {
     "intellij.platform.images", // plugin
     "intellij.platform.images.copyright", // plugin
     "intellij.platform.images.xdebugger", // plugin
+    "intellij.platform.images.jcef", // plugin
     "intellij.platform.pluginGraph", // build scripts
     "intellij.platform.images.build", // build scripts
   )
@@ -22,6 +23,8 @@ internal object PlatformApi {
   private val excludeModuleNamePrefixes = setOf(
     "intellij.platform.testFramework.",
     "intellij.platform.buildScripts.",
+    // I don't want to rename the module for the case if we decide to make it really the platform one in future
+    "intellij.platform.ui.webview", // plugin
   )
 
   private val excludeModuleNameSuffixes = setOf(

@@ -15,16 +15,18 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 /**
- * Owner of a limited shared cache of opened {@link FileChannel}s.
+ * Cache of opened {@link FileChannel}s.
  * Cache eviction policy is kind of LRU -- the oldest channel accessed is the first to be evicted, given it is not used right now.
  * <p>
- * The owner exposes two mode-bound {@link ChannelsAccessor} views: {@link #asReadOnly()} and {@link #asWritable()}.
+ * The cache exposes two mode-bound {@link ChannelsAccessor} views: {@link #asReadOnly()} and {@link #asWritable()}.
  * BEWARE: cache caches (potentially) 2 different {@linkplain FileChannel} instances: readOnly and !readOnly.
  * Generally, it is not guaranteed these 2 different FileChannels instances always share the same data -- they
  * could, but also there could be some temporary difference in the content visible via readOnly and !readOnly
@@ -33,8 +35,6 @@ import java.util.Objects;
  */
 @ApiStatus.Internal
 public final class OpenChannelsCache {
-  // TODO: does it make sense to have a background thread, that flushes the cache by timeout?
-
   /** for {@linkplain #toString()} */
   private final String cacheName;
 
@@ -43,6 +43,10 @@ public final class OpenChannelsCache {
 
   //@GuardedBy("cacheLock")
   private final @NotNull Map<CacheKey, ChannelDescriptor> cachedChannels;
+  //@GuardedBy("cacheLock")
+  private final @NotNull Map<CacheKey, Thread> openingChannels = new HashMap<>();
+  //@GuardedBy("cacheLock")
+  private final @NotNull Map<CacheKey, Thread> closingChannels = new HashMap<>();
 
   private final transient Object cacheLock = new Object();
 
@@ -135,30 +139,115 @@ public final class OpenChannelsCache {
 
   private @NotNull ChannelDescriptor acquireDescriptor(@NotNull Path path,
                                                        boolean readOnly) throws IOException {
-    synchronized (cacheLock) {
-      CacheKey key = new CacheKey(path, readOnly);
-      ChannelDescriptor descriptor = cachedChannels.get(key);
-      PerModeStatistics statistics = statisticsFor(readOnly);
-      if (descriptor == null) {
-        boolean somethingDropped = releaseOverCachedChannels();
-        descriptor = new ChannelDescriptor(path, readOnly, channelOpener);
-        cachedChannels.put(key, descriptor);
-        if (somethingDropped) {
-          statistics.missCount++;
+    CacheKey key = new CacheKey(path, readOnly);
+    boolean descriptorsWereDropped = false;
+    boolean cacheWasOverCapacity = false;
+    while (true) {
+      List<DetachedChannelDescriptor> descriptorsToClose;
+      synchronized (cacheLock) {
+        waitForPendingOpen(key);
+        waitForPendingClose(key);
+
+        ChannelDescriptor descriptor = cachedChannels.get(key);
+        if (descriptor != null) {
+          PerModeStatistics statistics = statisticsFor(readOnly);
+          statistics.hitCount++;
+          descriptor.lock();
+          return descriptor;
         }
-        else {
-          statistics.loadCount++;
+
+        EvictionResult eviction = detachOverCachedChannels(1);
+        descriptorsToClose = eviction.descriptorsToClose;
+        cacheWasOverCapacity |= eviction.cacheWasOverCapacity;
+        if (descriptorsToClose.isEmpty()) {
+          openingChannels.put(key, Thread.currentThread());
+          break;
+        }
+
+        descriptorsWereDropped = true;
+      }
+
+      closeDetachedChannels(descriptorsToClose);
+    }
+
+    ChannelDescriptor descriptor = null;
+    try {
+      descriptor = new ChannelDescriptor(path, readOnly, channelOpener);
+
+      while (true) {
+        List<DetachedChannelDescriptor> descriptorsToClose;
+        synchronized (cacheLock) {
+          EvictionResult eviction = detachOverCachedChannels(1);
+          descriptorsToClose = eviction.descriptorsToClose;
+          cacheWasOverCapacity |= eviction.cacheWasOverCapacity;
+          if (descriptorsToClose.isEmpty()) {
+            cachedChannels.put(key, descriptor);
+            PerModeStatistics statistics = statisticsFor(readOnly);
+            if (descriptorsWereDropped || cacheWasOverCapacity) {
+              statistics.missCount++;
+            }
+            else {
+              statistics.loadCount++;
+            }
+            descriptor.lock();
+            finishOpeningUnderLock(key);
+            return descriptor;
+          }
+
+          descriptorsWereDropped = true;
+        }
+
+        closeDetachedChannels(descriptorsToClose);
+      }
+    }
+    catch (Throwable t) {
+      finishOpening(key);
+      if (descriptor != null) {
+        try {
+          descriptor.close();
+        }
+        catch (Throwable closeError) {
+          t.addSuppressed(closeError);
         }
       }
-      else {
-        statistics.hitCount++;
-      }
-      descriptor.lock();
-      return descriptor;
+      throwAsIOExceptionOrUnchecked(t);
+      throw new AssertionError("unreachable");
     }
   }
 
-  private @NotNull OpenChannelsCache.PerModeStatistics statisticsFor(boolean readOnly) {
+  // If there is a channel for a key pending to open -- waits for it to be actually opened.
+  // Must be called under cacheLock (but releases the lock while waiting).
+  private void waitForPendingOpen(@NotNull CacheKey key) {
+    waitForPendingOperation(key, openingChannels);
+  }
+
+  // If there is a channel for a key pending to close -- waits for it to be actually closed.
+  // Must be called under cacheLock (but releases the lock while waiting).
+  private void waitForPendingClose(@NotNull CacheKey key) {
+    waitForPendingOperation(key, closingChannels);
+  }
+
+  private void waitForPendingOperation(@NotNull CacheKey key,
+                                       @NotNull Map<CacheKey, Thread> pendingOperationThreads) {
+    boolean interrupted = false;
+    while (true) {
+      Thread thread = pendingOperationThreads.get(key);
+      if (thread == null || thread == Thread.currentThread()) {
+        break;
+      }
+      try {
+        cacheLock.wait();
+      }
+      catch (InterruptedException e) {
+        interrupted = true;
+      }
+    }
+    if (interrupted) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  private @NotNull PerModeStatistics statisticsFor(boolean readOnly) {
     return readOnly ? readOnlyStats : writableStats;
   }
 
@@ -170,49 +259,131 @@ public final class OpenChannelsCache {
 
   private void closeChannel(@NotNull Path path,
                             boolean readOnly) throws IOException {
+    DetachedChannelDescriptor descriptorToClose;
     synchronized (cacheLock) {
-      closeChannel(new CacheKey(path, readOnly));
+      CacheKey key = new CacheKey(path, readOnly);
+      waitForPendingOpen(key);
+      waitForPendingClose(key);
+      descriptorToClose = detachChannel(key);
+    }
+
+    if (descriptorToClose != null) {
+      closeDetachedChannel(descriptorToClose);
     }
   }
 
+  /// @param slotsToFree after this method it should be at least slotsToFree slots available until capacity
   //@GuardedBy(cacheLock)
-  private boolean releaseOverCachedChannels() throws IOException {
-    int dropCount = cachedChannels.size() - capacity;
+  @SuppressWarnings("SameParameterValue")
+  private @NotNull EvictionResult detachOverCachedChannels(int slotsToFree) {
+    int channelsToEvict = cachedChannels.size() - capacity + slotsToFree;
 
-    if (dropCount < 0) {
-      return false;
+    if (channelsToEvict <= 0) {
+      return EvictionResult.NOT_NEEDED;
     }
 
-    List<CacheKey> keysToDrop = new ArrayList<>();
+    List<CacheKey> keysToEvict = new ArrayList<>();
     for (Map.Entry<CacheKey, ChannelDescriptor> entry : cachedChannels.entrySet()) {
-      if (dropCount < 0) break;
-      if (!entry.getValue().isLocked()) {
-        dropCount--;
-        keysToDrop.add(entry.getKey());
+      if (channelsToEvict <= 0) break;
+      ChannelDescriptor channelDescriptor = entry.getValue();
+      if (!channelDescriptor.isLocked()) {
+        keysToEvict.add(entry.getKey());
+        channelsToEvict--;
       }
     }
 
-    for (CacheKey key : keysToDrop) {
-      closeChannel(key);
+    List<DetachedChannelDescriptor> descriptorsToClose = new ArrayList<>(keysToEvict.size());
+    for (CacheKey keyToDrop : keysToEvict) {
+      DetachedChannelDescriptor descriptorToClose = detachChannel(keyToDrop);
+      if (descriptorToClose != null) {
+        descriptorsToClose.add(descriptorToClose);
+      }
     }
 
-    return true;
+    return new EvictionResult(/* wasOverCapacity: */ true, descriptorsToClose);
   }
 
   //@GuardedBy(cacheLock)
-  private void closeChannel(@NotNull OpenChannelsCache.CacheKey key) throws IOException {
+  private @Nullable DetachedChannelDescriptor detachChannel(@NotNull CacheKey key) {
     ChannelDescriptor descriptor = cachedChannels.remove(key);
 
     if (descriptor != null) {
       assert !descriptor.isLocked() : "Channel is in use: " + descriptor;
-      descriptor.close();
+      closingChannels.put(key, Thread.currentThread());
+      return new DetachedChannelDescriptor(key, descriptor);
+    }
+
+    return null;
+  }
+
+  private void closeDetachedChannels(@NotNull List<DetachedChannelDescriptor> descriptorsToClose) throws IOException {
+    Throwable error = null;
+    for (DetachedChannelDescriptor descriptorToClose : descriptorsToClose) {
+      try {
+        closeDetachedChannel(descriptorToClose);
+      }
+      catch (Throwable t) {
+        if (error == null) {
+          error = t;
+        }
+        else {
+          error.addSuppressed(t);
+        }
+      }
+    }
+
+    if (error == null) {
+      return;
+    }
+    throwAsIOExceptionOrUnchecked(error);
+  }
+
+  private static void throwAsIOExceptionOrUnchecked(@NotNull Throwable error) throws IOException {
+    if (error instanceof IOException) {
+      throw (IOException)error;
+    }
+    if (error instanceof RuntimeException) {
+      throw (RuntimeException)error;
+    }
+    if (error instanceof Error) {
+      throw (Error)error;
+    }
+    throw new IOException(error);
+  }
+
+  private void closeDetachedChannel(@NotNull DetachedChannelDescriptor descriptorToClose) throws IOException {
+    try {
+      descriptorToClose.descriptor.close();
+    }
+    finally {
+      finishClosing(descriptorToClose.key);
     }
   }
 
+  private void finishClosing(@NotNull CacheKey key) {
+    synchronized (cacheLock) {
+      closingChannels.remove(key);
+      cacheLock.notifyAll();
+    }
+  }
+
+  private void finishOpening(@NotNull CacheKey key) {
+    synchronized (cacheLock) {
+      finishOpeningUnderLock(key);
+    }
+  }
+
+  //@GuardedBy(cacheLock)
+  private void finishOpeningUnderLock(@NotNull CacheKey key) {
+    openingChannels.remove(key);
+    cacheLock.notifyAll();
+  }
+
   static final class ChannelDescriptor implements Closeable {
-    private int lockCount = 0;
     private final @NotNull FileChannel channel;
     private final boolean readOnly;
+
+    private int lockCount = 0;
 
     ChannelDescriptor(@NotNull Path path,
                       boolean readOnly,
@@ -336,6 +507,30 @@ public final class OpenChannelsCache {
     private int hitCount;
     private int missCount;
     private int loadCount;
+  }
+
+  private static final class EvictionResult {
+    public static final EvictionResult NOT_NEEDED = new EvictionResult(/* overCapacity: */ false, Collections.emptyList());
+
+    private final boolean cacheWasOverCapacity;
+    private final @NotNull List<DetachedChannelDescriptor> descriptorsToClose;
+
+    private EvictionResult(boolean cacheWasOverCapacity,
+                           @NotNull List<DetachedChannelDescriptor> descriptorsToClose) {
+      this.cacheWasOverCapacity = cacheWasOverCapacity;
+      this.descriptorsToClose = descriptorsToClose;
+    }
+  }
+
+  private static final class DetachedChannelDescriptor {
+    private final @NotNull CacheKey key;
+    private final @NotNull ChannelDescriptor descriptor;
+
+    private DetachedChannelDescriptor(@NotNull CacheKey key,
+                                      @NotNull ChannelDescriptor descriptor) {
+      this.key = key;
+      this.descriptor = descriptor;
+    }
   }
 
   private static final class CacheKey {

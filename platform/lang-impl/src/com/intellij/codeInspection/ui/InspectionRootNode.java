@@ -3,7 +3,9 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class InspectionRootNode extends InspectionTreeNode {
   InspectionRootNode(InspectionTreeModel model) {
     super(null);

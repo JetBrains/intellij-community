@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiClassOwner;
@@ -17,7 +16,6 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -71,6 +69,16 @@ public abstract class NullableNotNullManager {
 
   public abstract boolean canAnnotateLocals(String name);
 
+  /**
+   * Tells whether the supplied annotation denotes an unspecified nullness in the sense of JSpecify.
+   *
+   * @param annotation annotation to check
+   * @return true if the bound walk may go through this annotation
+   * @see com.intellij.util.JavaTypeNullabilityUtil#getValueNullability
+   */
+  @ApiStatus.Internal
+  public abstract boolean shouldGoThroughUnspecifiedNullnessAnnotation(@NotNull PsiAnnotation annotation);
+
   public static NullableNotNullManager getInstance(Project project) {
     return project.getService(NullableNotNullManager.class);
   }
@@ -118,51 +126,22 @@ public abstract class NullableNotNullManager {
    */
   public abstract void setDefaultNotNull(@NotNull String defaultNotNull);
 
-  public void copyNotNullAnnotation(@NotNull PsiModifierListOwner original, @NotNull PsiModifierListOwner generated) {
-    NullabilityAnnotationInfo info = findOwnNullabilityInfo(original);
-    if (info == null || info.getNullability() != Nullability.NOT_NULL) return;
-    copyAnnotation(info.getAnnotation(), generated);
-  }
-
-  public @Nullable PsiAnnotation copyNullableAnnotation(@NotNull PsiModifierListOwner original, @NotNull PsiModifierListOwner generated) {
-    NullabilityAnnotationInfo info = findOwnNullabilityInfo(original);
-    if (info == null || info.getNullability() != Nullability.NULLABLE) return null;
-    return copyAnnotation(info.getAnnotation(), generated);
-  }
+  /**
+   * @param annotationFqn fully qualified name of a known nullability annotation
+   * @param nullability   wanted nullability
+   * @return the preferred annotation that denotes the given {@code nullability} and belongs to the same
+   * annotation framework as {@code annotationFqn}, or {@code null} if {@code annotationFqn} is not a known
+   * nullability annotation, or its framework doesn't define an annotation for the given nullability
+   */
+  public abstract @Nullable String getNullabilityAnnotationInSameFramework(@NotNull String annotationFqn,
+                                                                              @NotNull Nullability nullability);
 
   public @Nullable PsiAnnotation copyNullableOrNotNullAnnotation(@NotNull PsiModifierListOwner original, @NotNull PsiModifierListOwner generated) {
     NullabilityAnnotationInfo src = findOwnNullabilityInfo(original);
     if (src == null) return null;
     NullabilityAnnotationInfo effective = findEffectiveNullabilityInfo(generated);
     if (effective != null && effective.getNullability() == src.getNullability()) return null;
-    return copyAnnotation(src.getAnnotation(), generated);
-  }
-
-  private static @Nullable PsiAnnotation copyAnnotation(@NotNull PsiAnnotation annotation, @NotNull PsiModifierListOwner target) {
-    String qualifiedName = annotation.getQualifiedName();
-    if (qualifiedName != null) {
-      if (JavaPsiFacade.getInstance(annotation.getProject()).findClass(qualifiedName, target.getResolveScope()) == null) {
-        return null;
-      }
-
-      PsiModifierList modifierList = target.getModifierList();
-      PsiType usedType = null;
-      if(target instanceof PsiVariable){
-        usedType = ((PsiVariable)target).getType();
-      }
-      else if (target instanceof PsiMethod) {
-        usedType = ((PsiMethod)target).getReturnType();
-      }
-      // type annotations are part of target's type and should not to be copied explicitly to avoid duplication
-      if (modifierList != null &&
-          (!AnnotationTargetUtil.isStrictlyTypeUseAnnotation(modifierList, annotation) ||
-           (usedType != null && !usedType.hasAnnotation(qualifiedName))) &&
-          !modifierList.hasAnnotation(qualifiedName)) {
-        return modifierList.addAnnotation(qualifiedName);
-      }
-    }
-
-    return null;
+    return AnnotationUtil.copyAnnotation(src.getAnnotation(), generated);
   }
 
   /**
@@ -319,7 +298,7 @@ public abstract class NullableNotNullManager {
           break;
         }
       }
-      return new NullabilityAnnotationInfo(memberAnno.annotation, nullability, memberAnno.owner == owner ? null : memberAnno.owner, false);
+      return new NullabilityAnnotationInfo(memberAnno.annotation, nullability, memberAnno.owner == owner ? null : memberAnno.owner, false, false);
     }
     if (type == null || type instanceof PsiPrimitiveType) return null;
     NullabilityAnnotationInfo info = type.getNullability().toNullabilityAnnotationInfo();

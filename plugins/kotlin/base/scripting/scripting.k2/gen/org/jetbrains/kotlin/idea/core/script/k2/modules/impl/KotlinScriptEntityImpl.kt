@@ -9,7 +9,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
@@ -21,7 +20,6 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -36,12 +34,6 @@ import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptDiagnosticData
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntityData) : KotlinScriptEntity,
     WorkspaceEntityBase(dataSource) {
-
-    private companion object {
-
-        private val connections = listOf<ConnectionId>()
-
-    }
 
     override val virtualFileUrl: VirtualFileUrl
         get() {
@@ -64,9 +56,7 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
             return dataSource.configurationId
         }
     override var relatedModuleIds: List<ModuleId> = dataSource.relatedModuleIds
-
     override var reports: List<ScriptDiagnosticData> = dataSource.reports
-
     override val entitySource: EntitySource
         get() {
             readField("entitySource")
@@ -74,36 +64,14 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
         }
 
     override fun connectionIdList(): List<ConnectionId> {
-        return connections
+        return emptyList()
     }
-
 
     internal class Builder(result: KotlinScriptEntityData?) :
         ModifiableWorkspaceEntityBase<KotlinScriptEntity, KotlinScriptEntityData>(result), KotlinScriptEntityBuilder {
         internal constructor() : this(KotlinScriptEntityData())
 
-        override fun applyToBuilder(builder: MutableEntityStorage) {
-            if (this.diff != null) {
-                if (existsInBuilder(builder)) {
-                    this.diff = builder
-                    return
-                } else {
-                    error("Entity KotlinScriptEntity is already created in a different builder")
-                }
-            }
-            this.diff = builder
-            addToBuilder()
-            this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-            this.currentEntityData = null
-            index(this, "virtualFileUrl", this.virtualFileUrl)
-// Process linked entities that are connected without a builder
-            processLinkedEntities(builder)
-            checkInitialization() // TODO uncomment and check failed tests
-        }
-
-        private fun checkInitialization() {
+        override fun checkInitialization() {
             val _diff = diff
             if (!getEntityData().isEntitySourceInitialized()) {
                 error("Field WorkspaceEntity#entitySource should be initialized")
@@ -117,7 +85,7 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
         }
 
         override fun connectionIdList(): List<ConnectionId> {
-            return connections
+            return emptyList()
         }
 
         override fun afterModification() {
@@ -148,6 +116,9 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
             updateChildToParentReferences(parents)
         }
 
+        override fun index() {
+            index(this, "virtualFileUrl", this.virtualFileUrl)
+        }
 
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
@@ -155,7 +126,6 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
                 checkModificationAllowed()
                 getEntityData(true).entitySource = value
                 changedProperty.add("entitySource")
-
             }
         override var virtualFileUrl: VirtualFileUrl
             get() = getEntityData().virtualFileUrl
@@ -192,7 +162,6 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
                 checkModificationAllowed()
                 getEntityData(true).sdkId = value
                 changedProperty.add("sdkId")
-
             }
         override var configurationId: ScriptCompilationConfigurationId?
             get() = getEntityData().configurationId
@@ -200,7 +169,6 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
                 checkModificationAllowed()
                 getEntityData(true).configurationId = value
                 changedProperty.add("configurationId")
-
             }
         private val relatedModuleIdsUpdater: (value: List<ModuleId>) -> Unit = { value ->
 
@@ -245,7 +213,6 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
 
         override fun getEntityClass(): Class<KotlinScriptEntity> = KotlinScriptEntity::class.java
     }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -256,10 +223,8 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
     var configurationId: ScriptCompilationConfigurationId? = null
     var relatedModuleIds: MutableList<ModuleId> = listOf<ModuleId>().toMutableWorkspaceList()
     var reports: MutableList<ScriptDiagnosticData> = listOf<ScriptDiagnosticData>().toMutableWorkspaceList()
-
     internal fun isVirtualFileUrlInitialized(): Boolean = ::virtualFileUrl.isInitialized
     internal fun isDependenciesInitialized(): Boolean = ::dependencies.isInitialized
-
     override fun getLinks(): Set<SymbolicEntityId<*>> {
         val result = HashSet<SymbolicEntityId<*>>()
         for (item in dependencies) {
@@ -275,8 +240,6 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
         }
         for (item in relatedModuleIds) {
             result.add(item)
-        }
-        for (item in reports) {
         }
         return result
     }
@@ -296,12 +259,9 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
         for (item in relatedModuleIds) {
             index.index(this, item)
         }
-        for (item in reports) {
-        }
     }
 
     override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-// TODO verify logic
         val mutablePreviousSet = HashSet(prev)
         for (item in dependencies) {
             val removedItem_item = mutablePreviousSet.remove(item)
@@ -329,8 +289,6 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
                 index.index(this, item)
             }
         }
-        for (item in reports) {
-        }
         for (removed in mutablePreviousSet) {
             index.remove(this, removed)
         }
@@ -351,6 +309,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
                 it
             }
         }
+
         if (dependencies_data != null) {
             dependencies = dependencies_data as MutableList<KotlinScriptLibraryEntityId>
         }
@@ -365,6 +324,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
         } else {
             null
         }
+
         if (sdkId_data_optional != null) {
             sdkId = sdkId_data_optional
         }
@@ -379,6 +339,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
         } else {
             null
         }
+
         if (configurationId_data_optional != null) {
             configurationId = configurationId_data_optional
         }
@@ -395,29 +356,15 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
                 it
             }
         }
+
         if (relatedModuleIds_data != null) {
             relatedModuleIds = relatedModuleIds_data as MutableList<ModuleId>
         }
         return changed
     }
 
-    override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<KotlinScriptEntity> {
-        val modifiable = KotlinScriptEntityImpl.Builder(null)
-        modifiable.diff = diff
-        modifiable.id = createEntityId()
-        return modifiable
-    }
-
-    override fun createEntity(snapshot: EntityStorageInstrumentation): KotlinScriptEntity {
-        val entityId = createEntityId()
-        return snapshot.initializeEntity(entityId) {
-            val entity = KotlinScriptEntityImpl(this)
-            entity.snapshot = snapshot
-            entity.id = entityId
-            entity
-        }
-    }
-
+    override fun newInstance(): KotlinScriptEntity = KotlinScriptEntityImpl(this)
+    override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<KotlinScriptEntity, *> = KotlinScriptEntityImpl.Builder(null)
     override fun getMetadata(): EntityMetadata {
         return MetadataStorageImpl.getMetadataByTypeFqn("org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity") as EntityMetadata
     }

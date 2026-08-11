@@ -433,7 +433,6 @@ data class VMOptions(
 
   fun enforceSplash() {
     addLine("-Dsplash=true")
-    addLine("-Didea.show.splash.longer=true")
   }
 
   @Suppress("SpellCheckingInspection")
@@ -467,5 +466,9 @@ data class VMOptions(
   fun disableNativeFileChooser() {
     addSystemProperty("ide.mac.file.chooser.native", false)
     addSystemProperty("ide.win.file.chooser.native", false)
+  }
+
+  fun disableUniversalFileChooser() {
+    addSystemProperty("universal.file.chooser.is.enabled", false)
   }
 }

@@ -75,6 +75,8 @@ class EditorCellOutputView internal constructor(
 
   fun getOutputComponent(): JComponent = component.mainComponent
 
+  fun getOutputComponentForSearch(): JComponent = component.mainComponent
+
   private fun getFoldingBounds(): Pair<Int, Int> {
     val bounds = calculateBounds()
     return bounds.y to bounds.height

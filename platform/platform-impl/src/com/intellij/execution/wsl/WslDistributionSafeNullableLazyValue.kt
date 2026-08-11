@@ -3,7 +3,6 @@ package com.intellij.execution.wsl
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
@@ -139,9 +138,6 @@ class WslDistributionSafeNullableLazyValue<T> private constructor(private val co
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun Deferred<T>.isCompletedExceptionally() = isCompleted && getCompletionExceptionOrNull() != null
-
-  @Service(Service.Level.APP)
-  private class ScopeHolder(val coroutineScope: CoroutineScope)
 
   companion object {
     private val LOG = logger<WslDistributionSafeNullableLazyValue<*>>()

@@ -1,5 +1,5 @@
 // "Replace with safe (?.) call" "true"
-// K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'A?'.
+// K2_ERROR: UNSAFE_CALL
 class A(var s: String? = null)
 
 fun foo(a: A?) {

@@ -7,4 +7,11 @@
     <module name="intellij.platform.projectModel"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.documentMerger" interface="com.intellij.formatting.service.DocumentMerger" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lineIndentProvider" interface="com.intellij.psi.codeStyle.lineIndent.LineIndentProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.formatting.injectedOptions" interface="com.intellij.formatting.InjectedFormattingOptionsProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.predefinedCodeStyle" interface="com.intellij.psi.codeStyle.PredefinedCodeStyle" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.fileSetDescriptorFactory" interface="com.intellij.formatting.fileSet.FileSetDescriptorFactory" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

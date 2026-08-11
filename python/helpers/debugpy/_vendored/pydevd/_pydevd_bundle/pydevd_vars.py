@@ -1,13 +1,14 @@
-""" pydevd_vars deals with variables:
-    resolution/conversion to XML.
+"""pydevd_vars deals with variables:
+resolution/conversion to XML.
 """
+
 import pickle
 from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, iter_chars, silence_warnings_decorator, get_global_debugger
 
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
 from _pydev_bundle import pydev_log
 import functools
-from _pydevd_bundle.pydevd_thread_lifecycle import resume_threads, mark_thread_suspended, suspend_all_threads
+from _pydevd_bundle.pydevd_thread_lifecycle import resume_threads, mark_thread_suspended, suspend_all_threads, suspend_threads_lock
 from _pydevd_bundle.pydevd_comm_constants import CMD_SET_BREAK
 
 import sys  # @Reimport
@@ -338,10 +339,11 @@ def _run_with_unblock_threads(original_func, py_db, curr_thread, frame, expressi
 
     finally:
         if on_timeout_unblock_threads is not None and on_timeout_unblock_threads.called:
-            mark_thread_suspended(curr_thread, CMD_SET_BREAK)
-            py_db.threads_suspended_single_notification.increment_suspend_time()
-            suspend_all_threads(py_db, except_thread=curr_thread)
-            py_db.threads_suspended_single_notification.on_thread_suspend(tid, curr_thread, CMD_SET_BREAK)
+            with suspend_threads_lock:
+                mark_thread_suspended(curr_thread, CMD_SET_BREAK)
+                py_db.threads_suspended_single_notification.increment_suspend_time()
+                suspend_all_threads(py_db, except_thread=curr_thread)
+                py_db.threads_suspended_single_notification.on_thread_suspend(tid, curr_thread, CMD_SET_BREAK)
 
 
 def _evaluate_with_timeouts(original_func):
@@ -471,9 +473,9 @@ def evaluate_expression(py_db, frame, expression, is_exec):
         There are some changes in this function depending on whether it's an exec or an eval.
 
         When it's an exec (i.e.: is_exec==True):
-            This function returns None.
+            If the expression can be compiled as an eval, the result of the evaluation is returned.
+            If the expression can only be compiled as an exec (i.e.: a statement), None is returned.
             Any exception that happens during the evaluation is reraised.
-            If the expression could actually be evaluated, the variable is printed to the console if not None.
 
         When it's an eval (i.e.: is_exec==False):
             This function returns the result from the evaluation.
@@ -537,12 +539,13 @@ def evaluate_expression(py_db, frame, expression, is_exec):
 
         if is_exec:
             try:
-                # Try to make it an eval (if it is an eval we can print it, otherwise we'll exec it and
-                # it will have whatever the user actually did)
+                # Try to make it an eval (if it is an eval we can return the result to the caller,
+                # otherwise we'll exec it and it will have whatever the user actually did)
                 compiled = compile_as_eval(expression)
             except Exception:
                 compiled = None
 
+            result = None
             if compiled is None:
                 try:
                     compiled = _compile_as_exec(expression)
@@ -572,9 +575,7 @@ def evaluate_expression(py_db, frame, expression, is_exec):
                         result = t.evaluated_value
                 else:
                     result = eval(compiled, updated_globals, updated_locals)
-                if result is not None:  # Only print if it's not None (as python does)
-                    sys.stdout.write("%s\n" % (result,))
-            return
+            return result
 
         else:
             ret = eval_in_context(expression, updated_globals, updated_locals, py_db)
@@ -596,7 +597,7 @@ def evaluate_expression(py_db, frame, expression, is_exec):
         del frame
 
 
-def change_attr_expression(frame, attr, expression, dbg, value=SENTINEL_VALUE, /, scope: Optional[ScopeRequest]=None):
+def change_attr_expression(frame, attr, expression, dbg, value=SENTINEL_VALUE, scope: Optional[ScopeRequest] = None):
     """Changes some attribute in a given frame."""
     if frame is None:
         return
@@ -640,7 +641,6 @@ def change_attr_expression(frame, attr, expression, dbg, value=SENTINEL_VALUE, /
 
     except Exception as e:
         pydev_log.exception(e)
-    
 
 
 MAXIMUM_ARRAY_SIZE = 100

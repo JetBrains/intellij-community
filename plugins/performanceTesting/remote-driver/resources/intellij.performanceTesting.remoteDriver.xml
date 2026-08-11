@@ -1,6 +1,19 @@
 <idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.libraries.assertj.core"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.jsoup"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.platform.builtInServer"/>
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.util.ui"/>
+    <!-- endregion -->
   </dependencies>
   <extensionPoints>
     <extensionPoint interface="com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelExtension"

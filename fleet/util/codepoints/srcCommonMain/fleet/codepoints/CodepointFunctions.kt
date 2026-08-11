@@ -2,7 +2,6 @@ package fleet.codepoints
 
 import fleet.util.multiplatform.linkToActual
 
-internal fun codepointsToString(vararg codepoints: Int): String = linkToActual()
 internal fun codepointOf(highSurrogate: Char, lowSurrogate: Char): Codepoint = linkToActual()
 internal fun highSurrogate(codepoint: Int): Char = linkToActual()
 internal fun lowSurrogate(codepoint: Int): Char = linkToActual()
@@ -23,3 +22,6 @@ internal fun isJavaIdentifierStart(codepoint: Int): Boolean = linkToActual()
 internal fun isJavaIdentifierPart(codepoint: Int): Boolean = linkToActual()
 internal fun isISOControl(codepoint: Int): Boolean = linkToActual()
 internal fun getUnicodeScript(codepoint: Int): UnicodeScript = linkToActual()
+internal fun getCategory(codepoint: Int): Category = linkToActual()
+internal fun isPrivateUse(codepoint: Int): Boolean = linkToActual()
+internal fun isDefined(codepoint: Int): Boolean = linkToActual()

@@ -7,13 +7,13 @@ import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.components.isUnitType
-import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.types.buildSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.components.type
-import org.jetbrains.kotlin.analysis.api.components.withNullability
+import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.findSamSymbolOrNull
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.hasRecursiveSamCall
 import org.jetbrains.kotlin.idea.k2.codeinsight.isSamConversionAliasedWithVariance
 import org.jetbrains.kotlin.idea.k2.refactoring.util.LambdaToAnonymousFunctionUtil
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -62,7 +64,7 @@ internal object ConvertToAnonymousObjectFixFactories {
         val lambdaParameters = functionLiteral.symbol.valueParameters
         if (lambdaParameters.any { it.returnType is KaErrorType }) return null
 
-        val samName = samMethod.name.asString()
+        val samName = samMethod.name.render()
         if (functionLiteral.hasRecursiveSamCall(samName, lambdaParameters)) return null
 
         val callee = call.calleeExpression
@@ -115,8 +117,8 @@ private fun prepareFunctionText(
     val psiFactory = KtPsiFactory.contextual(lambda)
     val preparedFunctionText = LambdaToAnonymousFunctionUtil.prepareFunctionText(
         lambda = lambda,
-        functionName = samMethod.name.asString(),
-        parameterNames = samMethod.valueParameters.map { it.name.asString() },
+        functionName = samMethod.name.render(),
+        parameterNames = samMethod.valueParameters.map { it.name.render() },
         forceNonNullReturnType = true,
     ) ?: return null
     val preparedFunction = psiFactory.createFunction(preparedFunctionText)
@@ -138,7 +140,7 @@ private fun prepareFunctionText(
     }
 
     val returnTypeText = samMethod.returnType
-        .takeIf { !it.isUnitType && it !is KaErrorType }
+        .takeIf { it.classId != KaStandardTypeClassIds.UNIT && it !is KaErrorType }
         ?.let(substitutor::substitute)
         ?.let { returnType ->
             val adjustedType = if (preparedFunction.typeReference?.text?.endsWith("?") == false) {
@@ -151,7 +153,7 @@ private fun prepareFunctionText(
 
     return buildString {
         append("fun ")
-        append(samMethod.name.asString())
+        append(samMethod.name.render())
         append("(")
         append(parameterTexts.joinToString(separator = ", "))
         append(")")

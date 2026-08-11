@@ -254,6 +254,11 @@ abstract class AbstractEntityCodeGenTest {
     doTest()
   }
 
+  @Test
+  fun testKeyField() {
+    doTest()
+  }
+
   private fun doTestAndCheckErrorMessage(expectedMessage: String) {
     val exception = Assertions.assertThrows(IllegalStateException::class.java) {
       doTest()

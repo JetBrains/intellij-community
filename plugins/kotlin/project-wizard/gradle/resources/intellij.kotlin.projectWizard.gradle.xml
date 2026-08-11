@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.tools.projectWizard.gradle">
+<idea-plugin>
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
@@ -6,9 +6,24 @@
     <module name="intellij.gradle.java"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.java.ui"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.gradle.codeInsight.common"/>
+    <module name="intellij.kotlin.gradle.tooling.impl"/>
+    <module name="intellij.kotlin.projectConfiguration"/>
+    <module name="intellij.kotlin.projectWizard.core"/>
     <module name="intellij.kotlin.projectWizard.idea"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
     <module name="intellij.libraries.jackson.dataformat.toml"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="kotlin.gradle.gradle-java"/>
   </dependencies>
   <!-- endregion -->

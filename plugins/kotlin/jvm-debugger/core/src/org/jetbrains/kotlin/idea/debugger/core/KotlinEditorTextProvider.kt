@@ -12,7 +12,8 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.parents
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaAnnotationCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -207,11 +208,11 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
                         languageVersionSettings.supportsFeature(LanguageFeature.InstantiationOfAnnotationClasses)
                     }
                     is KaFunctionCall<*> -> {
-                        val functionSymbol = call.partiallyAppliedSymbol.symbol
+                        val functionSymbol = call.symbol
                         isSymbolAllowed(functionSymbol, allowMethodCalls)
                     }
                     is KaCompoundVariableAccessCall -> {
-                        val functionSymbol = call.compoundOperation.operationPartiallyAppliedSymbol.symbol
+                        val functionSymbol = call.operationCall.symbol
                         isSymbolAllowed(functionSymbol, allowMethodCalls)
                     }
                     else -> false
@@ -224,7 +225,6 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
         }
     }
 
-    @OptIn(KaExperimentalApi::class) // for KaContextParameterSymbol
     private fun isSymbolAllowed(symbol: KaSymbol, allowMethodCalls: Boolean): Boolean {
         return when (symbol) {
             is KaClassSymbol -> symbol.classKind.isObject

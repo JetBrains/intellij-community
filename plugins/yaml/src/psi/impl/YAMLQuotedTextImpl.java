@@ -14,7 +14,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
-import org.jetbrains.yaml.lexer.YAMLGrammarCharUtil;
+import org.jetbrains.yaml.YamlGrammarCharUtil;
 import org.jetbrains.yaml.psi.YAMLQuotedText;
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 
@@ -54,7 +54,8 @@ public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuot
         lineStart++;
       }
       else {
-        while (lineStart < line.length() && YAMLGrammarCharUtil.isSpaceLike(line.charAt(lineStart))) {
+        while (lineStart < line.length()) {
+          if (!YamlGrammarCharUtil.isSpaceLike(line.charAt(lineStart))) break;
           lineStart++;
         }
       }
@@ -63,7 +64,8 @@ public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuot
         lineEnd--;
       }
       else {
-        while (lineEnd > lineStart && YAMLGrammarCharUtil.isSpaceLike(line.charAt(lineEnd - 1))) {
+        while (lineEnd > lineStart) {
+          if (!YamlGrammarCharUtil.isSpaceLike(line.charAt(lineEnd - 1))) break;
           lineEnd--;
         }
       }
@@ -129,7 +131,7 @@ public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuot
     for (int i = 0; i < input.length(); ++i) {
       final char c = input.charAt(i);
       if (c == '\n') {
-        if (!isSingleQuote() && i + 1 < input.length() && YAMLGrammarCharUtil.isSpaceLike(input.charAt(i + 1))) {
+        if (!isSingleQuote() && i + 1 < input.length() && YamlGrammarCharUtil.isSpaceLike(input.charAt(i + 1))) {
           result.add(Pair.create(TextRange.from(i, 1), "\\n\\\n" + indentString + "\\"));
         }
         else if (!isSingleQuote() && i + 1 < input.length() && input.charAt(i + 1) == '\n' && i > 0) {
@@ -149,11 +151,13 @@ public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuot
         if (isSingleQuote()) {
           replacement = "\n" + indentString;
         }
-        else if (YAMLGrammarCharUtil.isSpaceLike(c)) {
-          replacement = "\\\n" + indentString + "\\";
-        }
         else {
-          replacement = "\\\n" + indentString;
+          if (YamlGrammarCharUtil.isSpaceLike(c)) {
+            replacement = "\\\n" + indentString + "\\";
+          }
+          else {
+            replacement = "\\\n" + indentString;
+          }
         }
         result.add(Pair.create(TextRange.from(i, isSingleQuote() ? 1 : 0), replacement));
         currentLength = 0;

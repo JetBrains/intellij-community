@@ -12,10 +12,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReferenceService
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceUtil
-import org.intellij.plugins.markdown.lang.isMarkdownType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDefinition
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination
 import org.intellij.plugins.markdown.lang.references.paths.FileWithoutExtensionReference
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.util.MarkdownLinkFragmentUtil
 
 internal class HeaderAnchorSymbolReferenceProvider: PsiSymbolReferenceProvider {
@@ -37,7 +37,7 @@ internal class HeaderAnchorSymbolReferenceProvider: PsiSymbolReferenceProvider {
       // consider this a non header link (there might be a plain http link like 'https://jetbrains.com#some')
       return emptyList()
     }
-    if (referencedFile != null && !referencedFile.fileType.isMarkdownType()) {
+    if (referencedFile != null && !referencedFile.supportsMarkdown()) {
       return emptyList()
     }
     val reference = HeaderAnchorLinkDestinationReference(

@@ -14,7 +14,11 @@ import com.intellij.psi.util.startOffset
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.expressions.contextSensitiveResolutionStatus
+import org.jetbrains.kotlin.analysis.api.resolution.KaContextSensitiveResolutionStatus
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -116,7 +120,7 @@ private fun addQualifierIfNeeded(position: PsiElement): PsiElement? {
 
     analyze(fileCopy) {
         val reference = replaced.mainReference
-        if (!replaced.usesContextSensitiveResolution) return null
+        if (replaced.contextSensitiveResolutionStatus !is KaContextSensitiveResolutionStatus.Used) return null
 
         val fqName = reference.resolveToSymbol()?.importableFqName?.parent() ?: return null
 

@@ -2,13 +2,28 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.java-capable"/>
-    <module name="intellij.platform.vcs"/>
-    <module name="intellij.java.psi"/>
     <module name="intellij.platform.externalSystem"/>
     <module name="intellij.java.analysis"/>
     <module name="intellij.java.indexing"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.xml.dom"/>
+    <module name="intellij.xml.psi"/>
   </dependencies>
   <!-- endregion -->
 

@@ -8,7 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" scope="TEST" name="slf4j-api" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.guava" scope="TEST" />
@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.selfContainedProjects" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.testFramework.selfContainedProjects" />
 </module>

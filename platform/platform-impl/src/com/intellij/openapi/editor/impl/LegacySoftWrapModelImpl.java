@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.ActivityTracker;
@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.CustomWrap;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.Inlay;
@@ -237,7 +236,6 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
       storage.removeAll();
       mySoftWrapNotifier.notifySoftWrapsChanged();
       editor.myView.reinitSettings();
-      if (editor.myAdView != null) editor.myView.reinitSettings();
       if (AsyncEditorLoader.isEditorLoaded(editor)) {
         editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
       }
@@ -256,7 +254,6 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
 
   @Override
   public boolean isSoftWrappingEnabled() {
-    EditorThreading.assertInteractionAllowed();
     return myUseSoftWraps && !editor.isPurePaintingMode();
   }
 
@@ -402,7 +399,7 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
       myDirty = false;
     }
 
-    applianceManager.recalculateIfNecessary();
+    applianceManager.recalculateIfNecessary("prepareToMapping");
   }
 
   /**
@@ -520,7 +517,7 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
         forceSoftWraps();
         if (isSoftWrappingEnabled()) {
           myDirty = false;
-          applianceManager.recalculateAll();
+          applianceManager.recalculateAll("force soft wraps on document change");
           return;
         }
       }
@@ -534,7 +531,8 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
       int textLength = event.getDocument().getTextLength();
       // adding +1, as inlays at the end of the moved range stick to the following text (and impact its layout)
       applianceManager.recalculate(Arrays.asList(new TextRange(srcOffset, Math.min(textLength, srcOffset + event.getNewLength() + 1)),
-                                                 new TextRange(dstOffset, Math.min(textLength, dstOffset + event.getNewLength() + 1))));
+                                                 new TextRange(dstOffset, Math.min(textLength, dstOffset + event.getNewLength() + 1))),
+                                   "move insertion");
     }
   }
 
@@ -549,7 +547,7 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
     if (!myUseSoftWraps && shouldSoftWrapsBeForced()) {
       forceSoftWraps();
     }
-    recalculate();
+    recalculate("document bulk update finished");
   }
 
   @Override
@@ -573,7 +571,7 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
     }
     try {
       if (!myDirty) { // no need to recalculate specific areas if the whole document will be reprocessed
-        applianceManager.recalculate(deferredFoldRegions);
+        applianceManager.recalculate(deferredFoldRegions, "fold processing end");
       }
     }
     finally {
@@ -607,7 +605,7 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
       if (inlay.getPlacement() == Inlay.Placement.AFTER_LINE_END) {
         offset = DocumentUtil.getLineEndOffset(offset, document);
       }
-      applianceManager.recalculate(Collections.singletonList(new TextRange(offset, offset)));
+      applianceManager.recalculate(Collections.singletonList(new TextRange(offset, offset)), "inlay updated");
     }
   }
 
@@ -616,7 +614,7 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
     if (document.isInBulkUpdate()) return;
     if (myInlayChangedInBatchMode) {
       myInlayChangedInBatchMode = false;
-      recalculate();
+      recalculate("inlay batch mode finished");
     }
   }
 
@@ -640,7 +638,7 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
   }
 
   @Override
-  void recalculate() {
+  void recalculate(@NotNull String reason) {
     if (!isSoftWrappingEnabled()) {
       myDirty = true;
       return;
@@ -650,7 +648,7 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
     storage.removeAll();
     mySoftWrapNotifier.notifySoftWrapsChanged();
     deferredFoldRegions.clear();
-    applianceManager.recalculateIfNecessary();
+    applianceManager.recalculateIfNecessary(reason + " (full recalc)");
   }
 
   @Override

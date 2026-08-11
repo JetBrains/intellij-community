@@ -55,6 +55,6 @@ internal object FilePredictionReferencesHelper {
 }
 
 @ApiStatus.Internal
-internal interface FileExternalReferencesProvider {
+interface FileExternalReferencesProvider {
   fun externalReferences(file: PsiFile): ExternalReferencesResult?
 }

@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.vcs.impl.shared` start
-
 jvm_library(
     name = "shared",
     srcs = glob(
@@ -21,6 +20,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//platform/kernel/rpc",
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
         "//platform/kernel/shared:kernel",
@@ -66,6 +66,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":shared",
+        "//platform/kernel/rpc:rpc_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
         "//platform/project/shared:project_test_lib",
@@ -109,7 +110,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.vcs.impl.shared` end
 
 ### auto-generated section `build intellij.platform.vcs.impl.shared.tests` start
-
 jvm_library(
     name = "vcs-impl-shared-tests",
     srcs = glob(
@@ -200,6 +200,10 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//fleet/rhizomedb",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.vcs.impl.shared.tests` end
@@ -214,7 +218,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.vcs.impl.shared.tests` end
 
 ### auto-generated section `test intellij.platform.vcs.impl.shared.tests` start
-
 jps_test(
     name = "vcs-impl-shared-tests_test",
     runtime_deps = [":vcs-impl-shared-tests_test_lib"],

@@ -1,0 +1,2 @@
+> [!NOTE]
+> Some note content

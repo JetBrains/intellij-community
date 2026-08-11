@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.internal.statistic.collectors.fus.ui
@@ -18,6 +18,8 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidat
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
+import com.intellij.notification.NotificationLocation
+import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.actionSystem.ex.QuickListsManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
@@ -66,7 +68,7 @@ private enum class HidpiMode {
   per_monitor_dpi, system_dpi
 }
 
-private val GROUP = EventLogGroup("ui.info.features", 17)
+private val GROUP = EventLogGroup("ui.info.features", 18)
 private val orientationField = Enum("value", VisibilityType::class.java)
 private val UI_TYPE = GROUP.registerEvent("UI.type", Enum("value", UiType::class.java))
 private val NAV_BAR = GROUP.registerEvent("Nav.Bar", Enum("value", NavBarType::class.java))
@@ -98,6 +100,15 @@ private val SCREEN_RESOLUTION = GROUP.registerEvent("Screen.Resolution", Int("di
 private val BACKGROUND_IMAGE_SET = Boolean("background_image_set")
 private val BACKGROUND_IMAGE = GROUP.registerEvent("background.image", BACKGROUND_IMAGE_SET)
 private val SWITCHED_FROM_CLASSIC_TO_ISLANDS = GROUP.registerEvent("switched.from.classic.to.islands", Boolean("value"))
+private val NOTIFICATION_LOCATION = GROUP.registerEvent(
+  "notification.location",
+  Enum<NotificationLocation>("value") {
+    // beautify enum names from "TOP_LEFT" to "Top Left"
+    loc -> loc.name.split("_").joinToString(" ") {
+      it.lowercase().replaceFirstChar(Char::uppercaseChar)
+    }
+  }
+)
 
 private suspend fun getDescriptors(): Set<MetricEvent> {
   val set = HashSet<MetricEvent>()
@@ -130,6 +141,7 @@ private suspend fun getDescriptors(): Set<MetricEvent> {
   ExperimentalUI.switchedFromClassicToIslands?.let {
     set.add(SWITCHED_FROM_CLASSIC_TO_ISLANDS.metric(it))
   }
+  set.add(NOTIFICATION_LOCATION.metric(NotificationsConfigurationImpl.getInstanceImpl().notificationLocation))
   return set
 }
 

@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.idea.gradle.configuration.klib.KlibInfo.NativeTarget
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KlibInfo.NativeTargets.NativeTargetsList
 import org.jetbrains.kotlin.konan.library.KONAN_DISTRIBUTION_SOURCES_DIR
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
-import org.jetbrains.kotlin.konan.properties.hasProperty
 import org.jetbrains.kotlin.library.KLIB_PROPERTY_NATIVE_TARGETS
 import org.jetbrains.kotlin.library.KLIB_PROPERTY_SHORT_NAME
 import org.jetbrains.kotlin.library.KLIB_PROPERTY_UNIQUE_NAME
@@ -33,7 +32,7 @@ internal class DefaultKlibInfoProvider(
     override fun getKlibInfo(libraryFile: File): KlibInfo? {
         val manifest = manifestProvider.getManifest(libraryFile.toPath()) ?: return null
 
-        if (manifest.hasProperty(KLIB_PROPERTY_COMMONIZER_TARGET)) {
+        if (KLIB_PROPERTY_COMMONIZER_TARGET in manifest) {
             return getCommonizedKlibInfo(libraryFile, manifest)
         }
 

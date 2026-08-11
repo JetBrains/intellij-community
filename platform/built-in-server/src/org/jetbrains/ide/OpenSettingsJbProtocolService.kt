@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.intellij.ide.IdeBundle
@@ -9,8 +9,6 @@ import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsContexts.DialogMessage
-import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.UIBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -23,11 +21,9 @@ class OpenSettingsJbProtocolService : JBProtocolCommand("settings") {
     val requestedPage = parameters["page_id"]
 
     if (name != null) {
-      return if (Util.doOpenSettings(name)) {
-        null
-      }
-      else {
-        IdeBundle.message("jb.protocol.settings.no.configurable", name)
+      return when {
+        Util.doOpenSettings(name) -> null
+        else -> IdeBundle.message("jb.protocol.settings.no.configurable", name)
       }
     }
 
@@ -52,10 +48,9 @@ class OpenSettingsJbProtocolService : JBProtocolCommand("settings") {
       val project = RestService.getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
       val configurable = SearchConfigurableByNameHelper(name, project).searchByName() ?: return false
       ApplicationManager.getApplication().invokeLater(
-        Runnable {
-          ShowSettingsUtil.getInstance().showSettingsDialog(project, configurable)
-                 },
-        project.disposed)
+        Runnable { ShowSettingsUtil.getInstance().showSettingsDialog(project, configurable) },
+        project.disposed
+      )
       return true
     }
   }

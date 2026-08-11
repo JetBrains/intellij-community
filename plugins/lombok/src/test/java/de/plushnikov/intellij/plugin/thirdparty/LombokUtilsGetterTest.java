@@ -82,4 +82,27 @@ public class LombokUtilsGetterTest {
     assertThat(result, equalTo("isISmyField"));
   }
 
+  @SuppressWarnings("NonAsciiCharacters")
+  @Test
+  public void testToGetterNames_NonBoolean_SpecialCharacter() {
+    String result = makeResults("ß", false);
+
+    assertThat(result, equalTo("getß"));
+  }
+
+  @SuppressWarnings("NonAsciiCharacters")
+  @Test
+  public void testToGetterNames_NonBoolean_MultipleSpecialCharacters() {
+    String result = makeResults("ßßß", false);
+
+    assertThat(result, equalTo("getßßß"));
+  }
+
+  @SuppressWarnings("NonAsciiCharacters")
+  @Test
+  public void testToGetterNames_NonBoolean_Cyrillic() {
+    String result = makeResults("ы", false);
+
+    assertThat(result, equalTo("getЫ"));
+  }
 }

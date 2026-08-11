@@ -107,5 +107,11 @@ public interface ModTemplateBuilder {
    */
   @NotNull ModTemplateBuilder finishAt(int offset);
 
+  /**
+   * Marks template as required making the action non-available for non-interactive execution.
+   * @return this builder
+   */
+  @NotNull ModTemplateBuilder required();
+
   @NotNull ModTemplateBuilder onTemplateFinished(@NotNull Function<? super @NotNull PsiFile, ? extends @NotNull ModCommand> templateFinishFunction);
 }

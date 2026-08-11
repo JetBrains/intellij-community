@@ -25,7 +25,9 @@ private class BackendRunDashboardContentDescriptorLifecycleListener(private val 
   override fun beforeContentShown(descriptor: RunContentDescriptor, executor: Executor) {
     if (!isShowLuxedRunToolwindowInServicesView()) return
 
-    BackendLuxedRunDashboardContentManager.getInstance(project).unregisterLuxedToolWindowContent(descriptor, executor)
+    val luxedContentManager = BackendLuxedRunDashboardContentManager.getInstance(project)
+    luxedContentManager.unregisterLuxedToolWindowContent(descriptor, executor)
+    luxedContentManager.exchangeStaleDebugDescriptorIfNeeded(descriptor, executor)
   }
 
   override fun afterContentShown(descriptor: RunContentDescriptor, executor: Executor) {

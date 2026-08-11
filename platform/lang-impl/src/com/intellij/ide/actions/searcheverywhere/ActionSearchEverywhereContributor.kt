@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.GotoActionAction
+import com.intellij.ide.actions.SearchEverywhereBaseAction
 import com.intellij.ide.actions.SetShortcutAction
 import com.intellij.ide.actions.searcheverywhere.footer.ActionHistoryManager
 import com.intellij.ide.actions.searcheverywhere.footer.createActionExtendedInfo
@@ -57,6 +58,7 @@ import javax.swing.ListCellRenderer
 
 private val LOG = logger<ActionSearchEverywhereContributor>()
 
+@Internal
 open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContributor<MatchedValue>, LightEditCompatible, SearchEverywhereExtendedInfoProvider {
   private val myProject: Project?
   private val myContextComponent: WeakReference<Component?>
@@ -190,10 +192,12 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
     }
 
     GotoActionAction.openOptionOrPerformAction(selected, text, myProject, myContextComponent.get(), modifiers, myDataContextProvider)
-    val inplaceChange = (selected is GotoActionModel.ActionWrapper && selected.action is ToggleAction)
+    val inplaceChange = (selected is GotoActionModel.ActionWrapper && (selected.action is ToggleAction ||
+                                                                       selected.action is SearchEverywhereBaseAction))
     return !inplaceChange
   }
 
+  @Internal
   class Factory : SearchEverywhereContributorFactory<MatchedValue> {
     override fun createContributor(initEvent: AnActionEvent): SearchEverywhereContributor<MatchedValue> {
       return ActionSearchEverywhereContributor(
@@ -255,6 +259,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
     }
   }
 
+  @Internal
   companion object {
     fun showAssignShortcutDialog(myProject: Project?, value: MatchedValue) {
       val action = value.getUnwrappedAction()

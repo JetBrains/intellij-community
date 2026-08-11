@@ -5,8 +5,8 @@
 // ACTION: Expand boolean expression to 'if else'
 // ACTION: Flip '>'
 // ACTION: Replace overloaded operator with function call
-// K2_ERROR: Operator call is prohibited on a nullable receiver of type 'SafeType?'. Use '?.'-qualified call instead.
-// K2_AFTER_ERROR: Operator call is prohibited on a nullable receiver of type 'SafeType?'. Use '?.'-qualified call instead.
+// K2_AFTER_ERROR: UNSAFE_OPERATOR_CALL
+// K2_ERROR: UNSAFE_OPERATOR_CALL
 
 class SafeType {
     operator fun compareTo(other : SafeType) = 0

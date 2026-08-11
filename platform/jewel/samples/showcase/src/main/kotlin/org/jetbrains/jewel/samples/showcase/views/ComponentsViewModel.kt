@@ -16,6 +16,7 @@ import org.jetbrains.jewel.samples.showcase.components.Buttons
 import org.jetbrains.jewel.samples.showcase.components.Checkboxes
 import org.jetbrains.jewel.samples.showcase.components.ChipsAndTrees
 import org.jetbrains.jewel.samples.showcase.components.ComboBoxes
+import org.jetbrains.jewel.samples.showcase.components.GotItTooltipShowcase
 import org.jetbrains.jewel.samples.showcase.components.Icons
 import org.jetbrains.jewel.samples.showcase.components.Links
 import org.jetbrains.jewel.samples.showcase.components.Menus
@@ -34,6 +35,7 @@ import org.jetbrains.jewel.samples.showcase.components.TypographyShowcase
 import org.jetbrains.jewel.ui.component.SplitLayoutState
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 
+/** ViewModel that holds the list of component showcase views and tracks which view is currently selected. */
 public class ComponentsViewModel(
     alwaysVisibleScrollbarVisibility: ScrollbarVisibility.AlwaysVisible,
     whenScrollingScrollbarVisibility: ScrollbarVisibility.WhenScrolling,
@@ -42,6 +44,7 @@ public class ComponentsViewModel(
     private var verticalSplitState by mutableStateOf(SplitLayoutState(0.5f))
     private var innerSplitState by mutableStateOf(SplitLayoutState(0.5f))
 
+    /** Returns the list of all available component showcase views. */
     public fun getViews(): SnapshotStateList<ViewInfo> = views
 
     private val views: SnapshotStateList<ViewInfo> =
@@ -113,12 +116,15 @@ public class ComponentsViewModel(
                 content = { SpeedSearches() },
             ),
             ViewInfo(title = "Badges", iconKey = ShowcaseIcons.Components.badge, content = { Badges() }),
+            ViewInfo(title = "Got It", iconKey = ShowcaseIcons.Components.gotIt, content = { GotItTooltipShowcase() }),
         )
 
     private var _currentView: ViewInfo by mutableStateOf(views.first())
 
+    /** Returns the currently selected component showcase view. */
     public fun getCurrentView(): ViewInfo = _currentView
 
+    /** Sets [view] as the currently selected component showcase view. */
     public fun setCurrentView(view: ViewInfo) {
         _currentView = view
     }

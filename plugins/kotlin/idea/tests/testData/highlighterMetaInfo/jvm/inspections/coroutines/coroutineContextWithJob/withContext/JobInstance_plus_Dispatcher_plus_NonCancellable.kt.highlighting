@@ -11,4 +11,4 @@ suspend fun test(job: Job) {
 
     withContext(job + (Dispatchers.IO + NonCancellable)) {}
 }
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutineContextWithJobInspection

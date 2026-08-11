@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.util.containers.FastUtilHashingStrategies;
@@ -16,6 +16,10 @@ import java.util.Set;
  * Common {@link Processor} collect/find implementations.
  */
 public final class CommonProcessors {
+
+  /**
+   * @see Processors#cancelableCollectProcessor(Collection)
+   */
   public static class CollectProcessor<T> implements Processor<T> {
     private final Collection<T> myCollection;
 

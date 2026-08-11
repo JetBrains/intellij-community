@@ -2,7 +2,7 @@
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.RpcFlow
@@ -22,7 +22,8 @@ interface XDependentBreakpointManagerApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDependentBreakpointManagerApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<XDependentBreakpointManagerApi>())
+      // TODO: IJPL-252054
+      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<XDependentBreakpointManagerApi>())
     }
   }
 }

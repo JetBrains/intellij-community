@@ -93,7 +93,25 @@ abstract class KotlinTestProperties {
 
         var result = text
         allPropertiesValuesById.forEach { (key, value) ->
-            result = result.replace(Regex("""\{\s*\{\s*${key}\s*}\s*}""", RegexOption.IGNORE_CASE), value)
+            val regex = Regex(
+                """\{\s*\{\s*${Regex.escape(key)}\s*}\s*}""",
+                RegexOption.IGNORE_CASE,
+            )
+
+            result = result.replace(regex) { match ->
+                val lineStart = result.lastIndexOf('\n', match.range.first).let {
+                    if (it == -1) 0 else it + 1
+                }
+
+                val prefix = result.substring(lineStart, match.range.first)
+                val isStandalonePlaceholder = prefix.all { it == ' ' || it == '\t' }
+
+                if (isStandalonePlaceholder) {
+                    value.prependIndent(prefix)
+                } else {
+                    value
+                }
+            }
         }
 
         assertNoPatternsLeftUnsubstituted(result, sourceFile, allPropertiesValuesById.keys)

@@ -36,7 +36,7 @@ public class MavenImportEventProcessor implements AnsiEscapeDecoder.ColoredTextA
   }
 
   public void finish() {
-    myInstantReader.close();
+    myInstantReader.closeAndGetFuture().join();
   }
 
   @Override

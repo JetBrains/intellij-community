@@ -5,11 +5,12 @@ import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.issue.BuildIssue
 import org.gradle.internal.buildconfiguration.DaemonJvmPropertiesConfigurator
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.gradleJava.issues.quickfix.GradleAddDownloadToolchainRepositoryQuickFix
 import org.jetbrains.plugins.gradle.issue.ConfigurableGradleBuildIssue
 import org.jetbrains.plugins.gradle.issue.GradleIssueChecker
 import org.jetbrains.plugins.gradle.issue.GradleIssueData
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import java.util.function.Consumer
 
@@ -21,13 +22,15 @@ import java.util.function.Consumer
  * "Cannot find a Java installation on your machine (Mac OS X 14.7.1 aarch64) matching: {languageVersion=99, vendor=any vendor,
  * implementation=vendor-specific}. Toolchain download repositories have not been configured."
  */
+@Internal
 class GradleUndefinedToolchainRepositoriesIssueChecker : GradleIssueChecker {
 
     override fun check(issueData: GradleIssueData): BuildIssue? {
-        val rootCause = getRootCauseAndLocation(issueData.error).first
-        if (rootCause.message?.contains("Toolchain download repositories have not been configured.") == true ||
-            rootCause.message?.contains("Toolchain resolvers did not return download URLs providing a JDK matching") == true) {
-            return GradleUndefinedToolchainRepositoriesBuildIssue(rootCause, issueData.projectPath)
+        val rootCause = issueData.failure.rootCause
+        val message = rootCause.messageOrDescription
+        if (message?.contains("Toolchain download repositories have not been configured.") == true ||
+            message?.contains("Toolchain resolvers did not return download URLs providing a JDK matching") == true) {
+            return GradleUndefinedToolchainRepositoriesBuildIssue(message, issueData.projectPath)
         }
         return null
     }
@@ -45,12 +48,12 @@ class GradleUndefinedToolchainRepositoriesIssueChecker : GradleIssueChecker {
 }
 
 private class GradleUndefinedToolchainRepositoriesBuildIssue(
-    cause: Throwable,
+    @Nls causeMessage: String?,
     externalProjectPath: String
 ) : ConfigurableGradleBuildIssue() {
     init {
         setTitle(GradleBundle.message("gradle.build.issue.daemon.toolchain.repositories.undefined.title"))
-        addDescription(cause.message ?: title)
+        addDescription(causeMessage ?: title)
         run {
             val quickFix = GradleAddDownloadToolchainRepositoryQuickFix(externalProjectPath)
             val hyperlinkReference = addQuickFix(quickFix)

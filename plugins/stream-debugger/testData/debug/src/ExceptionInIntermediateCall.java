@@ -12,7 +12,7 @@ public class ExceptionInIntermediateCall {
   }
 
   private static void check() {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     final List<Integer> res = Stream.of(1, 2, 3).map(x -> {
       if (x % 2 == 1) {
         return x;

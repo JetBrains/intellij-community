@@ -9,5 +9,5 @@ fun test() {
 
 }
 
-// ABSENT: { itemText: "foo: Foo" }
-// ABSENT: { itemText: "foo: BarFoo" }
+// EXIST: { itemText: "foo: Foo" }
+// EXIST: { itemText: "foo: BarFoo" }

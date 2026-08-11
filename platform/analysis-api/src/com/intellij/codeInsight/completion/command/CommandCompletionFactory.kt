@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command
 
 import com.intellij.lang.Language
@@ -17,21 +17,12 @@ import org.jetbrains.annotations.ApiStatus
  * Serves as a customization point for enhancing code completion workflows.
  *
  * Should implement DumbAware to support dumb mode
+ *
+ * The suffixes are declared in [CommandCompletionSuffixProvider], because the frontend needs them
+ * without the PSI-based part of this factory.
  */
 @ApiStatus.Experimental
-interface CommandCompletionFactory : PossiblyDumbAware {
-  /**
-   * Provides the default character suffix. After that, suffix command completion will be enabled
-   *
-   * @return The character suffix, which is '.'.
-   */
-  fun suffix(): Char = '.'
-
-  /**
-   * Determines the character suffix to filter only command lookup
-   */
-  fun filterSuffix(): Char? = '.'
-
+interface CommandCompletionFactory : CommandCompletionSuffixProvider, PossiblyDumbAware {
   /**
    * Retrieves a list of command providers responsible for supplying completion commands.
    * The default implementation returns a set of providers.
@@ -48,7 +39,7 @@ interface CommandCompletionFactory : PossiblyDumbAware {
    * For injected languages, the context is the injected file.
    * Should be fast because it can be called on EDT.
    *
-   * @param psiFile the PSI file representing the file in which the applicability is being evaluated
+   * @param psiFile the PSI file representing the file in which the applicability is being evaluated (check a cleaned file)
    * @param offset the position within the file where the applicability should be checked
    * @return true if the functionality is applicable at the specified context, false otherwise
    */
@@ -79,14 +70,6 @@ interface CommandCompletionFactory : PossiblyDumbAware {
    *
    */
   fun createFile(originalFile: PsiFile, text: String): PsiFile? = null
-
-  /**
-   * Determines whether the functionality supports filtering with a double prefix.
-   * If it doesn't support other items (non-command completion) will be not filtered out.
-   *
-   * @return true if double prefix filtering is supported, false otherwise
-   */
-  fun supportFiltersWithDoublePrefix(): Boolean = true
 
   /**
    * Adjust the caret position after GoTo command completion.

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="completion-ranking-cpp" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-cpp:0.1.5">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-cpp/0.1.5/completion-ranking-cpp-0.1.5.jar">
+              <sha256sum>2c09237e1e0e76d571b77c4f43371d8cd828903ffa442f0e3593894bce3021c3</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-cpp/0.1.5/completion-ranking-cpp-0.1.5.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-cpp/0.1.5/completion-ranking-cpp-0.1.5-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

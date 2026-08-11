@@ -17,8 +17,6 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
@@ -37,7 +35,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Title
 import java.awt.Dimension
 import java.awt.Rectangle
-import java.util.concurrent.CancellationException
 import java.util.function.Supplier
 
 internal class ProviderWithSettings<T : Any>(
@@ -297,37 +294,28 @@ object InlayHintsUtils {
     return storage
   }
 
+  /**
+   * @param expectsIndicator Whether [computable] expects indicator context.
+   * Previously, `expectsIndicator = true` was needed to ensure that
+   * [com.intellij.openapi.progress.ProgressIndicatorProvider.getGlobalProgressIndicator] returns non-null inside [computable].
+   * Currently, this indicator is always installed, but this may change in the future.
+   */
   @JvmOverloads
-  fun computeCodeVisionUnderReadAction(expectsIndicator: Boolean = false, computable: () -> CodeVisionState): CodeVisionState {
-    try {
-      if (!EDT.isCurrentThreadEdt()) {
-        return ReadAction.computeCancellable<CodeVisionState, Throwable> {
-          if (expectsIndicator) {
-            blockingContextToIndicator {
-              computable.invoke()
-            }
-          }
-          else {
-            computable.invoke()
-          }
-        }
+  fun computeCodeVisionUnderReadAction(
+    @Suppress("unused") expectsIndicator: Boolean = false,
+    computable: () -> CodeVisionState
+  ): CodeVisionState {
+    if (!EDT.isCurrentThreadEdt()) {
+      return ReadAction.nonBlocking<CodeVisionState> {
+        computable.invoke()
+      }.executeSynchronously()
+    }
+    else {
+      // In tests [computeCodeVision] is executed in sync mode on EDT
+      assert(ApplicationManager.getApplication().isUnitTestMode)
+      return ReadAction.computeBlocking<CodeVisionState, Throwable> {
+        computable.invoke()
       }
-      else {
-        // In tests [computeCodeVision] is executed in sync mode on EDT
-        assert(ApplicationManager.getApplication().isUnitTestMode)
-        return ReadAction.computeBlocking<CodeVisionState, Throwable> {
-          computable.invoke()
-        }
-      }
-    }
-    catch (e: ReadAction.CannotReadException) {
-      return CodeVisionState.NotReady
-    }
-    catch (e: ProcessCanceledException) {
-      return CodeVisionState.NotReady
-    }
-    catch (e: CancellationException) {
-      return CodeVisionState.NotReady
     }
   }
 }

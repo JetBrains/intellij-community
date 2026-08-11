@@ -16,8 +16,16 @@ data class RpcCompletionRequest(
   val editorId: EditorId,
   val projectId: ProjectId,
   val startingEditorVersion: Int,
+  val startingDocumentVersion: Int,
   val completionType: CompletionType = CompletionType.BASIC,
   val invocationCount: Int = 0,
+  /**
+   * True for a request the backend created to restart completion after a write action (see
+   * `BackendCompletionSession.restartAfterWriteAction`). Used to break supersession ties deterministically: at equal
+   * editor/document versions a frontend-issued request always wins over a write-action restart, so the two processes
+   * agree on the surviving request regardless of which one registered first. Always false for frontend-issued requests.
+   */
+  val isWriteActionRestart: Boolean = false,
 ) {
   override fun toString(): String = buildToString("RpcCompletionRequest") {
     field("id", id)
@@ -25,7 +33,9 @@ data class RpcCompletionRequest(
     field("editorId", editorId)
     field("projectId", projectId)
     field("startingEditorVersion", startingEditorVersion)
+    field("startingDocumentVersion", startingDocumentVersion)
     fieldWithDefault("completionType", completionType, CompletionType.BASIC)
     fieldWithDefault("invocationCount", invocationCount, 0)
+    fieldWithDefault("isWriteActionRestart", isWriteActionRestart, false)
   }
 }

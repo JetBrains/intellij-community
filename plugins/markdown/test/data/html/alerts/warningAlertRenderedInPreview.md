@@ -1,0 +1,2 @@
+> [!WARNING]
+> Warning content

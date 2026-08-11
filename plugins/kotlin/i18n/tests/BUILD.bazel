@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.i18n.tests` start
-
 jvm_library(
     name = "tests",
     srcs = glob(
@@ -14,8 +13,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//plugins/kotlin/plugin/k2",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "//plugins/kotlin/frontend-independent",
         "//plugins/kotlin/i18n",
         "//plugins/java-i18n",
@@ -39,13 +38,15 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":tests",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:junit4",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
         "//java/java-psi-api:psi",
@@ -90,7 +91,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.i18n.tests` end
 
 ### auto-generated section `test intellij.kotlin.i18n.tests` start
-
 jps_test(
     name = "tests_test",
     runtime_deps = [":tests_test_lib"],

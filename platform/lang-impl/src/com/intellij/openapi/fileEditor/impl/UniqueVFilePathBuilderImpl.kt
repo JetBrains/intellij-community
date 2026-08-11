@@ -8,11 +8,13 @@ import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
+import com.intellij.openapi.fileEditor.UniqueVFileProjectPathBuilder
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,8 +38,15 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 internal class UniqueVFilePathBuilderImpl : UniqueVFilePathBuilder() {
+
   override fun getUniqueVirtualFilePath(project: Project, file: VirtualFile, scope: GlobalSearchScope): String {
-    return getUniqueVirtualFilePath(project = project, file = file, skipNonOpenedFiles = false, scope = scope)
+    return getUniqueVirtualFilePath(
+      project = project,
+      editorHistoryManager = EditorHistoryManager.getInstance(project),
+      file = file,
+      skipNonOpenedFiles = false,
+      scope = scope
+    )
   }
 
   override fun getUniqueVirtualFilePath(project: Project, vFile: VirtualFile): String {
@@ -47,6 +56,40 @@ internal class UniqueVFilePathBuilderImpl : UniqueVFilePathBuilder() {
   override fun getUniqueVirtualFilePathWithinOpenedFileEditors(project: Project, vFile: VirtualFile): String {
     return getUniqueVirtualFilePath(
       project = project,
+      editorHistoryManager = EditorHistoryManager.getInstance(project),
+      file = vFile,
+      skipNonOpenedFiles = true,
+      scope = GlobalSearchScope.projectScope(project),
+    )
+  }
+
+  override fun withProject(project: Project): UniqueVFileProjectPathBuilder = UniqueVFileProjectPathBuilderImpl(project)
+}
+
+private class UniqueVFileProjectPathBuilderImpl(private val project: Project) : UniqueVFileProjectPathBuilder {
+  private val editorHistoryManager = EditorHistoryManager.getInstance(project) // preload EditorHistoryManager out of read action
+
+  override fun getUniqueVirtualFilePath(vFile: VirtualFile): @NlsSafe String {
+    return getUniqueVirtualFilePath(vFile = vFile, scope = GlobalSearchScope.projectScope(project))
+  }
+
+  override fun getUniqueVirtualFilePath(
+    vFile: VirtualFile,
+    scope: GlobalSearchScope,
+  ): @NlsSafe String {
+    return getUniqueVirtualFilePath(
+      project = project,
+      editorHistoryManager = editorHistoryManager,
+      file = vFile,
+      skipNonOpenedFiles = false,
+      scope = GlobalSearchScope.projectScope(project)
+    )
+  }
+
+  override fun getUniqueVirtualFilePathWithinOpenedFileEditors(vFile: VirtualFile): @NlsSafe String {
+    return getUniqueVirtualFilePath(
+      project = project,
+      editorHistoryManager = editorHistoryManager,
       file = vFile,
       skipNonOpenedFiles = true,
       scope = GlobalSearchScope.projectScope(project),
@@ -54,20 +97,24 @@ internal class UniqueVFilePathBuilderImpl : UniqueVFilePathBuilder() {
   }
 }
 
-private val shortNameBuilderCacheKey = Key.create<CachedValue<ConcurrentMap<GlobalSearchScope, ConcurrentMap<String, UniqueNameBuilder<VirtualFile>>>>>("project's.short.file.name.builder")
-private val shortNameOpenedBuilderCacheKey = Key.create<CachedValue<ConcurrentMap<GlobalSearchScope, ConcurrentMap<String, UniqueNameBuilder<VirtualFile>>>>>("project's.short.file.name.opened.builder")
+private val shortNameBuilderCacheKey =
+  Key.create<CachedValue<ConcurrentMap<GlobalSearchScope, ConcurrentMap<String, UniqueNameBuilder<VirtualFile>>>>>("project's.short.file.name.builder")
+private val shortNameOpenedBuilderCacheKey =
+  Key.create<CachedValue<ConcurrentMap<GlobalSearchScope, ConcurrentMap<String, UniqueNameBuilder<VirtualFile>>>>>("project's.short.file.name.opened.builder")
 private val emptyBuilder = UniqueNameBuilder<VirtualFile>(/* root = */ null, /* separator = */ null)
 
 private fun getName(file: VirtualFile): String = if (file is VirtualFilePathWrapper) file.presentableName else file.name
 
 private fun getUniqueVirtualFilePath(
   project: Project,
+  editorHistoryManager: EditorHistoryManager,
   file: VirtualFile,
   skipNonOpenedFiles: Boolean,
   scope: GlobalSearchScope,
 ): String {
   val builder = getUniqueVirtualFileNameBuilder(
     project = project,
+    editorHistoryManager,
     file = file,
     skipNonOpenedFiles = skipNonOpenedFiles,
     scope = scope,
@@ -77,6 +124,7 @@ private fun getUniqueVirtualFilePath(
 
 private fun getUniqueVirtualFileNameBuilder(
   project: Project,
+  editorHistoryManager: EditorHistoryManager,
   file: VirtualFile,
   skipNonOpenedFiles: Boolean,
   scope: GlobalSearchScope,
@@ -104,12 +152,13 @@ private fun getUniqueVirtualFileNameBuilder(
   if (builder == null) {
     createAndCacheBuilders(
       project = project,
+      editorHistoryManager,
       requiredFile = file,
       valueMap = valueMap,
       skipNonOpenedFiles = skipNonOpenedFiles,
       scope = scope,
     )
-    builder = valueMap.get(fileName)?.takeIf { it != emptyBuilder}
+    builder = valueMap.get(fileName)?.takeIf { it != emptyBuilder }
   }
   else if (builder == emptyBuilder) {
     builder = null
@@ -136,6 +185,7 @@ private fun getFilenameIndexModificationTracker(project: Project): ModificationT
 
 private fun createAndCacheBuilders(
   project: Project,
+  editorHistoryManager: EditorHistoryManager,
   requiredFile: VirtualFile,
   valueMap: MutableMap<String?, UniqueNameBuilder<VirtualFile>?>,
   skipNonOpenedFiles: Boolean,
@@ -143,7 +193,7 @@ private fun createAndCacheBuilders(
 ) {
   val useIndex = !skipNonOpenedFiles && !LightEdit.owns(project)
   val openFiles = FileEditorManager.getInstance(project).openFiles
-  val recentFiles = EditorHistoryManager.getInstance(project).fileList
+  val recentFiles = editorHistoryManager.fileList
 
   val multiMap = MultiMap.createSet<String, VirtualFile>()
   if (useIndex) {

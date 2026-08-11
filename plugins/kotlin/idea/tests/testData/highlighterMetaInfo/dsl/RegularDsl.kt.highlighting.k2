@@ -20,13 +20,17 @@ fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesK
 fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>ForDsl<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>bar<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>f<!>: () -> <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_OBJECT'")!>Unit<!>) {
 }
 
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>ForDsl<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>baz<!>() {}
+
 
 fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>test<!>() {
     <!HIGHLIGHTING("severity='DSL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_DSL_STYLE1'")!>foo<!> {
-
+        <!HIGHLIGHTING("severity='DSL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_DSL_STYLE1'")!>bar<!> {}
+        <!HIGHLIGHTING("severity='DSL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_DSL_STYLE1'")!>baz<!>()
     }
     <!HIGHLIGHTING("severity='DSL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_DSL_STYLE1'")!>merge<!> {}
-    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CONSTRUCTOR'")!>ForDsl<!>().<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_EXTENSION_FUNCTION_CALL'")!>bar<!> {}
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CONSTRUCTOR'")!>ForDsl<!>().<!HIGHLIGHTING("severity='DSL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_DSL_STYLE1'")!>baz<!>()
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CONSTRUCTOR'")!>ForDsl<!>().<!HIGHLIGHTING("severity='DSL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_DSL_STYLE1'")!>bar<!> {}
     <!HIGHLIGHTING("severity='DSL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_DSL_STYLE1'")!>DslBuilder<!>().<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_EXTENSION_FUNCTION_CALL'")!>apply<!> {
 
     }

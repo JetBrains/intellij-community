@@ -22,6 +22,20 @@ peewee.SelectBase.peek
 peewee.SelectBase.scalar
 peewee.SelectBase.scalars
 
+# Descriptor methods exist on FieldAccessor at runtime, but are declared on the
+# generic Field classes in the stub so that `instance.field` resolves to the
+# field's Python value and `Model.field` resolves to the field (for queries).
+peewee.Field.__get__
+peewee.Field.__set__
+# BigBitField overrides __get__ to yield a BigBitFieldData wrapper, not bytes.
+peewee.BigBitField.__get__
+peewee.Field.__init__
+# These fields take named constructor args, carried by their __new__ overloads.
+peewee.CharField.__init__
+peewee.ForeignKeyField.__init__
+peewee.DecimalField.__init__
+peewee.IdentityField.__init__
+
 # Ignore missing playhouse modules and names we don't currently provide
 playhouse\.\w+?
 playhouse.flask_utils.PaginatedQuery

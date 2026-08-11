@@ -6,9 +6,11 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -144,9 +146,17 @@ public final class UpdateRequestsQueue {
         semaphore.down();
         myWaitingUpdateCompletionSemaphores.add(semaphore);
       }
-      if (!semaphore.waitFor(100 * 1000)) {
-        LOG.error("Too long VCS update\n" + ThreadDumper.dumpThreadsToString());
-        return;
+      if (EDT.isCurrentThreadEdt()) {
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+          if (!semaphore.waitFor(100 * 1000)) {
+            LOG.error("Too long VCS update\n" + ThreadDumper.dumpThreadsToString());
+          }
+        }, "", true, myProject);
+      } else {
+        if (!semaphore.waitFor(100 * 1000)) {
+          LOG.error("Too long VCS update\n" + ThreadDumper.dumpThreadsToString());
+          return;
+        }
       }
     }
   }

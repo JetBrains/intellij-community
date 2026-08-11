@@ -15,22 +15,13 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationPanel.Status
 import com.intellij.ui.EditorNotificationProvider
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.gradle.scripting.shared.GradleStandaloneScriptActionsManager
+import org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptRootResolver.NotificationKind.DONT_CARE
+import org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptRootResolver.NotificationKind.OUTSIDE_ANYTHING
+import org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptRootResolver.NotificationKind.WAS_NOT_IMPORTED_AFTER_CREATION
 import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
 import org.jetbrains.kotlin.gradle.scripting.shared.isGradleKotlinScript
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.dontCare
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.legacy
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.legacyOutside
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.notEvaluatedInLastImport
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.outsideAnything
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.standalone
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.standaloneLegacy
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.wasNotImportedAfterCreation
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
 import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
-import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
@@ -47,130 +38,35 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
             return null
         }
 
-        val standaloneScriptActions = GradleStandaloneScriptActionsManager.getInstance(project)
-        val rootsManager = GradleBuildRootsLocator.getInstance(project)
-        val scriptUnderRoot = rootsManager.findScriptBuildRoot(file) ?: return null
-
-        // todo: this actions will be usefull only when gradle fix https://github.com/gradle/gradle/issues/12640
-        fun EditorNotificationPanel.showActionsToFixNotEvaluated() {
-            // suggest to reimport project if something changed after import
-            val build: Imported = scriptUnderRoot.nearest as? Imported ?: return
-            val importTs = build.data.importTs
-            if (!build.areRelatedFilesChangedBefore(file, importTs)) {
-                createActionLabel(KotlinGradleScriptingBundle.message("action.LoadKtGradleConfiguration.text")) {
-                    rootsManager.updateStandaloneScripts {
-                      runPartialGradleImport(project, build)
-                    }
-                }
-            }
-
-            // suggest to choose new gradle project
-            createActionLabel(KotlinGradleScriptingBundle.message("notification.outsideAnything.linkAction")) {
-                linkProject(project, scriptUnderRoot)
-            }
-        }
+        val scriptUnderRoot = GradleScriptRootResolver.findScriptBuildRoot(project, file) ?: return null
+        if (KotlinScriptEntityProvider.findKotlinScriptEntity(project, file) != null) return null
 
         return Function { fileEditor ->
-            if (isImported(file, project)) return@Function null
             when (scriptUnderRoot.notificationKind) {
-                dontCare, notEvaluatedInLastImport -> null
-                legacy -> {
-                    val actions = standaloneScriptActions[file]
-                    if (actions == null) null
-                    else {
-                        object : EditorNotificationPanel(fileEditor, Status.Info) {
-                            val contextHelp = KotlinGradleScriptingBundle.message("notification.gradle.legacy.firstLoad.info")
-
-                            init {
-                                if (actions.isFirstLoad) {
-                                    text(KotlinGradleScriptingBundle.message("notification.gradle.legacy.firstLoad"))
-                                    toolTipText = contextHelp
-                                } else {
-                                    text(KotlinGradleScriptingBundle.message("notification.text.script.configuration.has.been.changed"))
-                                }
-
-                                createActionLabel(KotlinGradleScriptingBundle.message("notification.action.text.load.script.configuration")) {
-                                    actions.reload()
-                                }
-
-                                createActionLabel(KotlinBaseScriptingBundle.message("notification.action.text.enable.auto.reload")) {
-                                    actions.enableAutoReload()
-                                }
-
-                                if (actions.isFirstLoad) {
-                                    contextHelp(contextHelp)
-                                }
-                            }
-                        }
-                    }
-                }
-                legacyOutside -> EditorNotificationPanel(fileEditor, Status.Warning).apply {
-                    text(KotlinGradleScriptingBundle.message("notification.gradle.legacy.outsideProject"))
-                    createActionLabel(KotlinGradleScriptingBundle.message("notification.notEvaluatedInLastImport.addAsStandaloneAction")) {
-                        rootsManager.updateStandaloneScripts {
-                            addStandaloneScript(file.path)
-                        }
-                    }
-                    contextHelp(KotlinGradleScriptingBundle.message("notification.gradle.legacy.outsideProject.addToStandaloneHelp"))
-                }
-                outsideAnything -> EditorNotificationPanel(fileEditor, Status.Warning).apply {
+                DONT_CARE -> null
+                OUTSIDE_ANYTHING -> EditorNotificationPanel(fileEditor, Status.Warning).apply {
                     text(KotlinGradleScriptingBundle.message("notification.outsideAnything.text"))
                     createActionLabel(KotlinGradleScriptingBundle.message("notification.outsideAnything.linkAction")) {
                         linkProject(project, scriptUnderRoot)
                     }
                 }
-                wasNotImportedAfterCreation -> EditorNotificationPanel(fileEditor, Status.Warning).apply {
+                WAS_NOT_IMPORTED_AFTER_CREATION -> EditorNotificationPanel(fileEditor, Status.Warning).apply {
                     text(KotlinGradleScriptingBundle.message("notification.wasNotImportedAfterCreation.text"))
                     createActionLabel(KotlinGradleScriptingBundle.message("action.LoadKtGradleConfiguration.text")) {
                         val root = scriptUnderRoot.nearest
                         if (root != null) {
-                          runPartialGradleImport(project, root)
+                            runPartialGradleImport(project, root)
                         }
                     }
                     contextHelp(KotlinGradleScriptingBundle.message("notification.wasNotImportedAfterCreation.help"))
-                }
-                standalone, standaloneLegacy -> EditorNotificationPanel(fileEditor, Status.Info).apply {
-                    val actions = standaloneScriptActions[file]
-                    if (actions != null) {
-                        text(
-                            KotlinGradleScriptingBundle.message("notification.standalone.text") +
-                                    ". " +
-                                    KotlinGradleScriptingBundle.message("notification.text.script.configuration.has.been.changed")
-                        )
-
-                        createActionLabel(KotlinGradleScriptingBundle.message("notification.action.text.load.script.configuration")) {
-                            actions.reload()
-                        }
-
-                        createActionLabel(KotlinBaseScriptingBundle.message("notification.action.text.enable.auto.reload")) {
-                            actions.enableAutoReload()
-                        }
-                    } else {
-                        text(KotlinGradleScriptingBundle.message("notification.standalone.text"))
-                    }
-
-                    createActionLabel(KotlinGradleScriptingBundle.message("notification.standalone.disableScriptAction")) {
-                        rootsManager.updateStandaloneScripts {
-                            removeStandaloneScript(file.path)
-                        }
-                    }
-
-                    if (scriptUnderRoot.notificationKind == standaloneLegacy) {
-                        contextHelp(KotlinGradleScriptingBundle.message("notification.gradle.legacy.standalone.info"))
-                    } else {
-                        contextHelp(KotlinGradleScriptingBundle.message("notification.standalone.info"))
-                    }
                 }
             }
         }
     }
 
-    private fun isImported(virtualFile: VirtualFile, project: Project): Boolean =
-        KotlinScriptEntityProvider.findKotlinScriptEntity(project, virtualFile) != null
-
     private fun linkProject(
         project: Project,
-        scriptUnderRoot: GradleBuildRootsLocator.ScriptUnderRoot,
+        scriptUnderRoot: GradleScriptRootResolver.ScriptUnderRoot,
     ) {
         val settingsFile: File? = tryFindGradleSettings(scriptUnderRoot)
 
@@ -199,7 +95,7 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
         }
     }
 
-    private fun tryFindGradleSettings(scriptUnderRoot: GradleBuildRootsLocator.ScriptUnderRoot): File? {
+    private fun tryFindGradleSettings(scriptUnderRoot: GradleScriptRootResolver.ScriptUnderRoot): File? {
         try {
             var parent = File(scriptUnderRoot.filePath).canonicalFile.parentFile
             while (parent.isDirectory) {

@@ -6,8 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.usages.Usage
 import com.intellij.usages.impl.UsageViewImpl
 import java.util.concurrent.Future
+import org.jetbrains.annotations.ApiStatus
 
 open class ShowUsagesManager {
+  @ApiStatus.Internal
   companion object {
     @JvmStatic
     fun getInstance(project: Project) = project.service<ShowUsagesManager>()

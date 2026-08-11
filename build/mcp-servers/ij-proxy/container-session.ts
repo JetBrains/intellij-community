@@ -112,29 +112,3 @@ export function toContainerPath(workspacePath: string, relativePath: string): st
   if (relativePath.startsWith('/')) return relativePath
   return `${workspacePath}/${relativePath}`
 }
-
-/**
- * Convert a container-absolute path back to a project-relative path.
- *
- * Example: fromContainerPath("/workspace", "/workspace/src/main.kt") → "src/main.kt"
- */
-export function fromContainerPath(workspacePath: string, containerPath: string): string {
-  const prefix = workspacePath.endsWith('/') ? workspacePath : `${workspacePath}/`
-  if (containerPath.startsWith(prefix)) {
-    return containerPath.slice(prefix.length)
-  }
-  return containerPath
-}
-
-/**
- * Tools that should be routed through the container when a container session is active.
- * All other tools fall through to the host IDE unchanged (semantic tools use the host index).
- */
-export const CONTAINER_ROUTED_TOOLS = new Set([
-  'read_file',
-  'apply_patch',
-  'search_text',
-  'search_regex',
-  'search_file',
-  'list_dir'
-])

@@ -7,7 +7,7 @@ MarkdownFile
     PsiElement(Markdown:Markdown:FRONT_MATTER_HEADER_DELIMITER)('---')
   PsiWhiteSpace('\n')
   PsiWhiteSpace('\n')
-  markdown: Markdown:ATX_1
+  Markdown:Markdown:ATX_1
     PsiElement(Markdown:Markdown:ATX_HEADER)('#')
     MarkdownHeaderContent(Markdown:ATX_CONTENT)
       PsiWhiteSpace(' ')

@@ -15,7 +15,6 @@ import com.intellij.util.ArrayUtilRt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus
 import java.util.MissingResourceException
 
 @State(
@@ -24,7 +23,6 @@ import java.util.MissingResourceException
   useLoadedStateAsExisting = false,
   category = SettingsCategory.SYSTEM,
 )
-@ApiStatus.Internal
 internal class RegistryManagerImpl(coroutineScope: CoroutineScope) : PersistentStateComponent<Element>, RegistryManager {
   private val defaultValueChangeListener = object : RegistryValueListener {
     override fun afterValueChanged(value: RegistryValue) {

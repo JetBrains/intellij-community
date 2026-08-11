@@ -18,7 +18,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
-import com.jetbrains.python.documentation.doctest.PyDocstringFile;
+import com.jetbrains.python.documentation.doctest.PyDoctestFile;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyExpression;
@@ -43,7 +43,7 @@ public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
-    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDocstringFile) return false;
+    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDoctestFile) return false;
 
     final PyFunction function = findSuitableFunction(editor, psiFile);
     if (function == null) return false;

@@ -1,4 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
 package com.intellij.openapi.observable.operation.core
 
 import com.intellij.openapi.Disposable
@@ -52,7 +53,6 @@ suspend fun ObservableOperationTrace.awaitOperationCompletion(
   completionTimeout: Duration
 ): Unit = waitForOperationCompletion(completionTimeout) { awaitPromise(it) }
 
-@ApiStatus.Internal
 inline fun <R> ObservableOperationTrace.waitForOperation(
   startTimeout: Duration,
   finishTimeout: Duration,
@@ -79,7 +79,6 @@ inline fun <R> ObservableOperationTrace.waitForOperation(
   }
 }
 
-@ApiStatus.Internal
 inline fun ObservableOperationTrace.waitForOperationCompletion(
   completionTimeout: Duration,
   wait: Promise<*>.(Duration) -> Unit,
@@ -91,7 +90,6 @@ inline fun ObservableOperationTrace.waitForOperationCompletion(
   }
 }
 
-@ApiStatus.Internal
 private fun <T> Result<T>.wrapTimeoutException(lazyMessage: () -> String): Result<T> {
   return try {
     Result.success(getOrThrow())
@@ -107,7 +105,6 @@ private fun <T> Result<T>.wrapTimeoutException(lazyMessage: () -> String): Resul
   }
 }
 
-@ApiStatus.Internal
 fun <T> Result<T>.throwOnFailureAndWrapTimeout(lazyMessage: () -> String) {
   wrapTimeoutException(lazyMessage).getOrThrow()
 }

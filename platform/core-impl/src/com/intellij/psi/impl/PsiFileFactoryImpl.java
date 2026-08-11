@@ -9,10 +9,12 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.FileViewProviderFactory;
@@ -51,8 +53,8 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
 
   @Override
   public @NotNull PsiFile createFileFromText(@NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
-                                             long modificationStamp, boolean eventSystemEnabled) {
-    return createFileFromText(name, fileType, text, modificationStamp, eventSystemEnabled, true);
+                                             long modificationStamp, boolean supportsSendingPsiEvents) {
+    return createFileFromText(name, fileType, text, modificationStamp, supportsSendingPsiEvents, true);
   }
 
   @Override
@@ -62,19 +64,19 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
 
   @Override
   public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
-                                    boolean eventSystemEnabled, boolean markAsCopy) {
-    return createFileFromText(name, language, text, eventSystemEnabled, markAsCopy, false);
+                                    boolean supportsSendingPsiEvents, boolean markAsCopy) {
+    return createFileFromText(name, language, text, supportsSendingPsiEvents, markAsCopy, false);
   }
 
   @Override
   public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
-                                    boolean eventSystemEnabled, boolean markAsCopy, boolean noSizeLimit) {
-    return createFileFromText(name, language, text, eventSystemEnabled, markAsCopy, noSizeLimit, null);
+                                    boolean supportsSendingPsiEvents, boolean markAsCopy, boolean noSizeLimit) {
+    return createFileFromText(name, language, text, supportsSendingPsiEvents, markAsCopy, noSizeLimit, null);
   }
 
   @Override
   public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
-                                    boolean eventSystemEnabled, boolean markAsCopy, boolean noSizeLimit,
+                                    boolean supportsSendingPsiEvents, boolean markAsCopy, boolean noSizeLimit,
                                     @Nullable VirtualFile original) {
     LightVirtualFile virtualFile = new LightVirtualFile(name, language, text);
     if (original != null) {
@@ -84,7 +86,7 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     if (noSizeLimit) {
       SingleRootFileViewProvider.doNotCheckFileSizeLimit(virtualFile);
     }
-    return trySetupPsiForFile(virtualFile, language, eventSystemEnabled, markAsCopy);
+    return trySetupPsiForFile(virtualFile, language, supportsSendingPsiEvents, markAsCopy);
   }
 
   @Override
@@ -92,43 +94,47 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
                                              @NotNull FileType fileType,
                                              @NotNull CharSequence text,
                                              long modificationStamp,
-                                             boolean eventSystemEnabled,
+                                             boolean supportsSendingPsiEvents,
                                              boolean markAsCopy) {
     LightVirtualFile lightVirtualFile = new LightVirtualFile(name, fileType, text, modificationStamp);
-    Language language = LanguageUtil.getLanguageForPsi(myManager.getProject(), lightVirtualFile, fileType);
-    if (language != null) {
-      PsiFile file = trySetupPsiForFile(lightVirtualFile, language, eventSystemEnabled, markAsCopy);
-      if (file != null) return file;
+    try (AccessToken ignored = ProjectLocator.withPreferredProject(lightVirtualFile, myManager.getProject())) {
+      Language language = LanguageUtil.getLanguageForPsi(myManager.getProject(), lightVirtualFile, fileType);
+      if (language != null) {
+        PsiFile file = trySetupPsiForFile(lightVirtualFile, language, supportsSendingPsiEvents, markAsCopy);
+        if (file != null) return file;
+      }
+      SingleRootFileViewProvider singleRootFileViewProvider =
+        new SingleRootFileViewProvider(myManager, lightVirtualFile, supportsSendingPsiEvents);
+      PsiPlainTextFileImpl plainTextFile = new PsiPlainTextFileImpl(singleRootFileViewProvider);
+      if(markAsCopy) CodeEditUtil.setNodeGenerated(plainTextFile.getNode(), true);
+      return plainTextFile;
     }
-    SingleRootFileViewProvider singleRootFileViewProvider =
-      new SingleRootFileViewProvider(myManager, lightVirtualFile, eventSystemEnabled);
-    PsiPlainTextFileImpl plainTextFile = new PsiPlainTextFileImpl(singleRootFileViewProvider);
-    if(markAsCopy) CodeEditUtil.setNodeGenerated(plainTextFile.getNode(), true);
-    return plainTextFile;
   }
 
   public @Nullable PsiFile trySetupPsiForFile(@NotNull LightVirtualFile lightVirtualFile,
                                               @NotNull Language language,
-                                              boolean physical, boolean markAsCopy) {
-    FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
-    FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(lightVirtualFile, language, myManager, physical) : null;
-    if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, lightVirtualFile, physical);
+                                              boolean supportsSendingPsiEvents, boolean markAsCopy) {
+    try (AccessToken ignored = ProjectLocator.withPreferredProject(lightVirtualFile, myManager.getProject())) {
+      FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
+      FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(lightVirtualFile, language, myManager, supportsSendingPsiEvents) : null;
+      if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, lightVirtualFile, supportsSendingPsiEvents);
 
-    language = viewProvider.getBaseLanguage();
-    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-    if (parserDefinition != null) {
-      PsiFile psiFile = viewProvider.getPsi(language);
-      if (psiFile != null) {
-        if (markAsCopy) {
-          if (psiFile.getNode() == null) {
-            throw new AssertionError("No node for file " + psiFile + "; language=" + language);
+      language = viewProvider.getBaseLanguage();
+      ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+      if (parserDefinition != null) {
+        PsiFile psiFile = viewProvider.getPsi(language);
+        if (psiFile != null) {
+          if (markAsCopy) {
+            if (psiFile.getNode() == null) {
+              throw new AssertionError("No node for file " + psiFile + "; language=" + language);
+            }
+            markGenerated(psiFile);
           }
-          markGenerated(psiFile);
+          return psiFile;
         }
-        return psiFile;
       }
+      return null;
     }
-    return null;
   }
 
   public @NotNull PsiFile createFileFromText(@NotNull String name,
@@ -137,27 +143,28 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
                                              boolean physical,
                                              boolean markAsCopy) {
     LightVirtualFile lightVirtualFile = new LightVirtualFile(name, fileType, text, modificationStamp);
+    try (AccessToken ignored = ProjectLocator.withPreferredProject(lightVirtualFile, myManager.getProject())) {
+      ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+      FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
+      FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(lightVirtualFile, language, myManager, physical) : null;
+      if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, lightVirtualFile, physical);
 
-    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-    FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
-    FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(lightVirtualFile, language, myManager, physical) : null;
-    if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, lightVirtualFile, physical);
-
-    if (parserDefinition != null){
-      PsiFile psiFile = viewProvider.getPsi(targetLanguage);
-      if (psiFile != null) {
-        if(markAsCopy) {
-          markGenerated(psiFile);
+      if (parserDefinition != null){
+        PsiFile psiFile = viewProvider.getPsi(targetLanguage);
+        if (psiFile != null) {
+          if(markAsCopy) {
+            markGenerated(psiFile);
+          }
+          return psiFile;
         }
-        return psiFile;
       }
-    }
 
-    SingleRootFileViewProvider singleRootFileViewProvider =
+      SingleRootFileViewProvider singleRootFileViewProvider =
         new SingleRootFileViewProvider(myManager, lightVirtualFile, physical);
-    PsiPlainTextFileImpl plainTextFile = new PsiPlainTextFileImpl(singleRootFileViewProvider);
-    if(markAsCopy) CodeEditUtil.setNodeGenerated(plainTextFile.getNode(), true);
-    return plainTextFile;
+      PsiPlainTextFileImpl plainTextFile = new PsiPlainTextFileImpl(singleRootFileViewProvider);
+      if(markAsCopy) CodeEditUtil.setNodeGenerated(plainTextFile.getNode(), true);
+      return plainTextFile;
+    }
   }
 
   @Override

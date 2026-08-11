@@ -6,10 +6,10 @@
 // ACTION: Enable a trailing comma by default in the formatter
 // ERROR: Unresolved reference: X
 // ERROR: Unresolved reference: X
-// K2_ERROR: Unresolved reference 'X'.
-// K2_ERROR: Unresolved reference 'X'.
-// K2_AFTER_ERROR: Unresolved reference 'X'.
-// K2_AFTER_ERROR: Unresolved reference 'X'.
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 class A {
     class B
 

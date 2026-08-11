@@ -22,6 +22,7 @@ public interface LargeFileEditor extends FileEditor {
 
   LfeSearchManager getSearchManager();
 
+  @ApiStatus.Internal
   void showSearchResult(SearchResult searchResult);
 
   Project getProject();
@@ -40,6 +41,7 @@ public interface LargeFileEditor extends FileEditor {
 
   FileDataProviderForSearch getFileDataProviderForSearch();
 
+  @ApiStatus.Internal
   @NotNull
   EditorModel getEditorModel();
 

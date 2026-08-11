@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.application.options.CodeCompletionConfigurable;
@@ -35,6 +35,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -246,7 +247,7 @@ final class LookupUi {
     }
 
     LookupElement item = lookup.getCurrentItem();
-    if (item != null && ReadAction.computeBlocking(() -> item.isValid())) {
+    if (item != null && Elf.getElf().runReadAction(() -> item.isValid())) {
       ReadAction.nonBlocking(() -> lookup.getActionsFor(item))
         .expireWhen(() -> !item.isValid() || hintAlarm.isDisposed())
         .finishOnUiThread(modalityState, actions -> {

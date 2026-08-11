@@ -20,9 +20,13 @@ sealed interface EelResult<out P, out E /*: EelError*//* TODO Uncomment and fix 
   }
 }
 
+/**
+ * Marker interface for EEL error descriptors: the typed error side of an [EelResult] and the payload carried by an [EelException].
+ */
 @ApiStatus.NonExtendable
 @ApiStatus.Experimental
 interface EelError {
+  /** A generic, unspecified error. */
   object Unknown : EelError
 }
 

@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInspection.CommonProblemDescriptor
@@ -25,6 +27,7 @@ val RELATED_PROBLEMS_ROOT_HASH = Key.create<String>("RELATED_PROBLEMS_ROOT_HASH"
 val RELATED_PROBLEMS_CHILD_HASH = Key.create<String>("RELATED_PROBLEMS_CHILD_HASH")
 val PROBLEM_DESCRIPTOR_TAG = Key.create<List<String>>("PROBLEM_DESCRIPTOR_TAG")
 
+@ApiStatus.Internal
 class ProblemRelatedLocation {
   private val problemDescriptor: ProblemDescriptorBase
 

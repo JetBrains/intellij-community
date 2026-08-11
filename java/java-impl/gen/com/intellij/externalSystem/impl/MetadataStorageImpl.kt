@@ -16,9 +16,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
   override fun initializeMetadata() {
     val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
     val primitiveTypeStringNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = true, type = "String")
-
     var typeMetadata: StorageTypeMetadata
-
     typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.externalSystem.JavaBridgeCoordinateEntitySource",
                                                      properties = listOf(OwnPropertyMetadata(isComputable = false,
                                                                                              isKey = false,
@@ -30,9 +28,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                  fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
                                                                                              withDefault = false)),
                                                      supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.java.impl.dependencySubstitution.LibraryMavenCoordinateEntity",
                                   entityDataFqName = "com.intellij.java.impl.dependencySubstitution.impl.LibraryMavenCoordinateEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -115,9 +111,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                            isNullable = true),
                                                                              withDefault = false)),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.java.impl.dependencySubstitution.ModuleMavenCoordinateEntity",
                                   entityDataFqName = "com.intellij.java.impl.dependencySubstitution.impl.ModuleMavenCoordinateEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -200,14 +194,13 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                            isNullable = true),
                                                                              withDefault = false)),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
   }
 
   override fun initializeMetadataHash() {
     addMetadataHash(typeFqn = "com.intellij.java.impl.dependencySubstitution.LibraryMavenCoordinateEntity", metadataHash = 330790206)
-    addMetadataHash(typeFqn = "com.intellij.java.impl.dependencySubstitution.ModuleMavenCoordinateEntity", metadataHash = -2145731156)
     addMetadataHash(typeFqn = "com.intellij.java.library.MavenCoordinates", metadataHash = -1988359172)
+    addMetadataHash(typeFqn = "com.intellij.java.impl.dependencySubstitution.ModuleMavenCoordinateEntity", metadataHash = -2145731156)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -1889898909)
     addMetadataHash(typeFqn = "com.intellij.externalSystem.JavaBridgeCoordinateEntitySource", metadataHash = 1980250535)
   }

@@ -67,6 +67,15 @@ class ForMultiLanguageSupport {
 }
 
 /**
+ * The Markdown lexer folds a nested list item's leading indentation into its `LIST_BULLET`/`LIST_NUMBER` token
+ * (e.g. `"  - "`), so a list / list-item block would otherwise start inside the line's indentation. Trim that
+ * leading whitespace here so the block starts at its real content; otherwise offset-based consumers such as
+ * indent auto-detection (`ForMultiLanguageSupport`) undercount the indent of nested list lines.
+ */
+fun ff() {}
+
+
+/**
  * Returns `an true` if expression is part of when condition expression that looks like
  * ```
  * when {

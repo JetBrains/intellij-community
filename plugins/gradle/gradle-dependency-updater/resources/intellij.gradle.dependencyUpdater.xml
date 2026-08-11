@@ -1,8 +1,17 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.gradle"/>
     <plugin id="org.jetbrains.idea.gradle.dsl"/>
+    <module name="intellij.android.gradle.dsl.android"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.externalSystem.dependencyUpdater"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <externalSystem.dependencyModifier implementation="org.jetbrains.plugins.gradle.dsl.GradleDependencyModificator"/>

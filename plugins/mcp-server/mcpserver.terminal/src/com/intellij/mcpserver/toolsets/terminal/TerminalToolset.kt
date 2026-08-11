@@ -10,8 +10,8 @@ import com.intellij.mcpserver.clientInfo
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
+import com.intellij.mcpserver.toolsets.util.checkUserConfirmationIfNeeded
 import com.intellij.mcpserver.util.TruncateMode
-import com.intellij.mcpserver.util.checkUserConfirmationIfNeeded
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.ToolWindowManager
 import kotlinx.coroutines.currentCoroutineContext
@@ -24,6 +24,10 @@ import kotlin.time.Duration.Companion.milliseconds
 private val logger = logger<TerminalToolset>()
 
 class TerminalToolset : McpToolset {
+  override fun displayName(): String = McpServerBundle.message("toolset.display.name.terminal")
+
+  override fun displayDescription(toolName: String): String? = McpServerBundle.message("tool.description.$toolName")
+
   @McpTool
   @McpDescription("""
         Executes a specified shell command in the IDE's integrated terminal.
@@ -53,7 +57,7 @@ class TerminalToolset : McpToolset {
     @McpDescription(Constants.MAX_LINES_COUNT_DESCRIPTION)
     maxLinesCount: Int = Constants.MAX_LINES_COUNT_VALUE,
     @McpDescription(Constants.TRUNCATE_MODE_DESCRIPTION)
-    truncateMode: TruncateMode = Constants.TRUCATE_MODE_VALUE,
+    truncateMode: TruncateMode = Constants.TRUNCATE_MODE_VALUE,
   ): CommandExecutionResult {
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.running.command", command))
     val project = currentCoroutineContext().project

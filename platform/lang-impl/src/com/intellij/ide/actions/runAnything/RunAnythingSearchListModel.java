@@ -11,6 +11,7 @@ import com.intellij.ui.CollectionListModel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 @SuppressWarnings("unchecked")
 public abstract class RunAnythingSearchListModel extends CollectionListModel<Object> {
   protected abstract @NotNull List<RunAnythingGroup> getGroups();

@@ -10,6 +10,6 @@ package com.intellij.platform.lsp.api
  *
  * Plugins need to override [Lsp4jServer] only if they need to send custom undocumented notifications or requests to the LSP server.
  *
- * @see LspServerDescriptor.lsp4jServerClass
+ * @see LspClientDescriptor.lsp4jServerClass
  */
 typealias Lsp4jServer = org.eclipse.lsp4j.services.LanguageServer

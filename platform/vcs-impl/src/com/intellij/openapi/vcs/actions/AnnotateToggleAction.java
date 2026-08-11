@@ -40,8 +40,6 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.ide.core.permissions.Permission;
-import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -56,7 +54,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -67,7 +64,7 @@ import java.util.Set;
  * @author Konstantin Bulenkov
  * @author lesya
  */
-public final class AnnotateToggleAction extends ToggleAction implements DumbAware, RequiresPermissions {
+public final class AnnotateToggleAction extends ToggleAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(AnnotateToggleAction.class);
 
   public static final ExtensionPointName<Provider> EP_NAME =
@@ -96,11 +93,6 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     if (provider != null) {
       presentation.setText(provider.getActionName(e));
     }
-  }
-
-  @Override
-  public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
-    return List.of();
   }
 
   private static @Nls @NotNull String getVcsActionName(@Nullable Project project) {

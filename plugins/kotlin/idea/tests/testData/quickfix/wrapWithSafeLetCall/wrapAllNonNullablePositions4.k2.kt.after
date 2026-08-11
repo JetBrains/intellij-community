@@ -1,8 +1,8 @@
 // "Wrap with '?.let { ... }' call" "true"
 // WITH_STDLIB
-// K2_ERROR: Argument type mismatch: actual type is 'String?', but 'String' was expected.
-// K2_ERROR: Missing return statement.
-// K2_AFTER_ERROR: Missing return statement.
+// K2_AFTER_ERROR: NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY
 
 fun test(s: String?): String? {
     if (true) {

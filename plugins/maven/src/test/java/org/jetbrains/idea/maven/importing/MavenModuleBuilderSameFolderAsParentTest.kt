@@ -1,28 +1,54 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertDefaultResources
+import com.intellij.maven.testFramework.fixtures.assertDefaultTestResources
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.assertRelativeContentRoots
+import com.intellij.maven.testFramework.fixtures.assertSources
+import com.intellij.maven.testFramework.fixtures.assertTestSources
+import com.intellij.maven.testFramework.fixtures.createPomXml
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.getModule
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.projectPath
+import com.intellij.maven.testFramework.fixtures.waitForImportWithinTimeout
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.nio.file.Path
 
-class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenModuleBuilderSameFolderAsParentTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   private var myBuilder: AbstractMavenModuleBuilder? = null
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myBuilder = MavenJavaModuleBuilder()
-    createJdk()
-    setModuleNameAndRoot("module", projectPath)
+    setModuleNameAndRoot("module", maven.projectPath)
   }
 
   private fun setModuleNameAndRoot(name: String, root: Path) {
@@ -32,14 +58,14 @@ class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestC
   }
 
   private fun setParentProject(pom: VirtualFile) {
-    myBuilder!!.parentProject = projectsManager.findProject(pom)
+    myBuilder!!.parentProject = maven.projectsManager.findProject(pom)
   }
 
   private suspend fun createNewModule(id: MavenId) {
     myBuilder!!.projectId = id
-    waitForImportWithinTimeout {
+    maven.waitForImportWithinTimeout {
       edtWriteAction {
-        val model = getInstance(project).getModifiableModel()
+        val model = getInstance(maven.project).getModifiableModel()
         myBuilder!!.createModule(model)
         model.commit()
       }
@@ -48,27 +74,27 @@ class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestC
 
   @Test
   fun testSameFolderAsParent() = runBlocking {
-    val customPomXml = createProjectSubFile("custompom.xml", createPomXml(
+    val customPomXml = maven.createProjectSubFile("custompom.xml", maven.createPomXml(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
         <version>1</version>
         """.trimIndent()))
-    importProjectAsync(customPomXml)
-    assertModules("project")
-    setModuleNameAndRoot("module", projectPath)
+    maven.importProjectAsync(customPomXml)
+    maven.assertModules("project")
+    setModuleNameAndRoot("module", maven.projectPath)
     setParentProject(customPomXml)
     createNewModule(MavenId("org.foo", "module", "1.0"))
-    assertSources("project", "src/main/java")
-    assertTestSources("project", "src/test/java")
-    assertDefaultResources("project")
-    assertDefaultTestResources("project")
+    maven.assertSources("project", "src/main/java")
+    maven.assertTestSources("project", "src/test/java")
+    maven.assertDefaultResources("project")
+    maven.assertDefaultTestResources("project")
 
-    assertRelativeContentRoots("module", "")
+    maven.assertRelativeContentRoots("module", "")
 
-    val module = MavenProjectsManager.getInstance(project).findProject(getModule("module"))
+    val module = MavenProjectsManager.getInstance(maven.project).findProject(maven.getModule("module"))
     readAction {
-      val domProjectModel = MavenDomUtil.getMavenDomProjectModel(project, module!!.file)
+      val domProjectModel = MavenDomUtil.getMavenDomProjectModel(maven.project, module!!.file)
       assertEquals("custompom.xml", domProjectModel!!.getMavenParent().getRelativePath().getRawText())
     }
   }

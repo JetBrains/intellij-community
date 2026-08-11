@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.scopeChooser
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -40,7 +41,7 @@ interface ScopeModelService {
 @ApiStatus.Internal
 @Serializable
 enum class ScopesFilterConditionType {
-  FIND, OTHER;
+  FIND, TODO, OTHER;
 
   fun getScopeFilterByType(): ((ScopeDescriptor) -> Boolean)? {
     return when (this) {
@@ -52,6 +53,19 @@ enum class ScopesFilterConditionType {
         return scopesFilter@{ descriptor: ScopeDescriptor? ->
           val display = descriptor?.displayName ?: return@scopesFilter true
           return@scopesFilter !display.startsWith(moduleFilesScopeName)
+        }
+      }
+      TODO -> {
+        // hide the selection-based and usage view-based scopes,
+        // matching ScopeChooserCombo.setCurrentSelection(false)/setUsageView(false).
+        val excludedNames = setOf(
+          IdeBundle.message("scope.selection"),
+          IdeBundle.message("scope.previous.search.results"),
+          IdeBundle.message("scope.files.in.previous.search.result"),
+        )
+        return scopesFilter@{ descriptor: ScopeDescriptor? ->
+          val display = descriptor?.displayName ?: return@scopesFilter true
+          return@scopesFilter display !in excludedNames
         }
       }
       else -> null

@@ -1,8 +1,8 @@
 // ERROR: Companion object of enum class 'E' is uninitialized here
 // ERROR: Variable 'foo' must be initialized
 // AFTER_ERROR: Companion object of enum class 'E' is uninitialized here
-// K2_ERROR: Companion object of enum class 'E' is uninitialized here.
-// K2_AFTER_ERROR: Companion object of enum class 'E' is uninitialized here.
+// K2_AFTER_ERROR: UNINITIALIZED_ENUM_COMPANION
+// K2_ERROR: UNINITIALIZED_ENUM_COMPANION
 enum class E(val value: String) {
     E1(E.<caret>Companion.foo);
 

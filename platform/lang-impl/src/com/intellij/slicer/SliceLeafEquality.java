@@ -8,9 +8,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.tree.AstBufferUtil;
 import com.intellij.util.containers.HashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class SliceLeafEquality implements HashingStrategy<PsiElement> {
   protected @NotNull PsiElement substituteElement(@NotNull PsiElement element) {
     return element;

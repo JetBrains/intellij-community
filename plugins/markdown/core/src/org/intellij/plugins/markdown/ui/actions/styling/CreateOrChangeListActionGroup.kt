@@ -5,9 +5,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.client.currentSessionOrNull
-import com.intellij.openapi.command.executeCommand
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
@@ -117,15 +116,15 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
       val caretOffset = caret.selectionStart
       val document = editor.document
       val list = findList(file, document, caretOffset)
-      runWriteAction {
-        executeCommand(project) {
+      WriteCommandAction.writeCommandAction(project, file)
+        .withName(templatePresentation.text)
+        .run<RuntimeException> {
           when {
             state && list == null -> createListFromText(project, document, caret)
             state && list != null -> replaceList(list)
             !state && list != null -> replaceListWithText(document, list)
           }
         }
-      }
     }
 
     override fun isSelected(event: AnActionEvent): Boolean {

@@ -18,8 +18,9 @@ import javax.xml.stream.XMLStreamConstants
 private const val REGION_START = "<!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->"
 private const val REGION_END = "<!-- endregion -->"
 private const val REGION_MARKER = "region Generated dependencies"
-// Legacy marker for backward compatibility with existing files
+// Legacy markers for backward compatibility with existing files
 private const val LEGACY_MARKER = "editor-fold desc=\"Generated dependencies"
+private const val LEGACY_REGION_END = "<!-- end editor-fold -->"
 
 /**
  * Returns true when the comment is one of the fold/region markers owned by the generator
@@ -78,8 +79,8 @@ private fun findFoldRegion(content: String, markerStart: Int): FoldRegion? {
   var endIndex = content.indexOf(REGION_END, markerStart)
   var endMarkerLength = REGION_END.length
   if (endIndex == -1) {
-    endIndex = content.indexOf("<!-- end editor-fold -->", markerStart)
-    endMarkerLength = "<!-- end editor-fold -->".length
+    endIndex = content.indexOf(LEGACY_REGION_END, markerStart)
+    endMarkerLength = LEGACY_REGION_END.length
   }
   if (endIndex == -1) return null
 
@@ -89,6 +90,31 @@ private fun findFoldRegion(content: String, markerStart: Int): FoldRegion? {
   if (endOffset < content.length && content[endOffset] == '\n') endOffset++
 
   return FoldRegion(lineStart, endOffset, indent)
+}
+
+/**
+ * Returns the offset just past the region end marker that follows [from] with only whitespace in between,
+ * or null when no marker directly follows.
+ */
+private fun findRegionEndAfter(content: String, from: Int): Int? {
+  var index = from
+  while (index < content.length && content[index].isWhitespace()) index++
+  val marker = when {
+    content.startsWith(REGION_END, index) -> REGION_END
+    content.startsWith(LEGACY_REGION_END, index) -> LEGACY_REGION_END
+    else -> return null
+  }
+  var end = index + marker.length
+  if (end < content.length && content[end] == '\r') end++
+  if (end < content.length && content[end] == '\n') end++
+  return end
+}
+
+/** Returns the offset of `/` when the tag spanning [tagStart]..[tagEnd] (offset of `>`) is self-closing, `-1` otherwise. */
+private fun selfClosingSlashIndex(content: String, tagStart: Int, tagEnd: Int): Int {
+  var index = tagEnd - 1
+  while (index > tagStart && content[index].isWhitespace()) index--
+  return if (content[index] == '/') index else -1
 }
 
 private fun StringBuilder.appendModules(indent: String, modules: List<String>) {
@@ -408,19 +434,29 @@ private fun parseDependenciesInfo(content: String, allowInsideSectionRegion: Boo
                regionType = RegionType.NONE,
              )
 
+  // A region starting before `<dependencies>` wraps the whole section, so its end marker has to follow `</dependencies>`.
+  // A stray `endregion` inside the section (left over from a hand-edit) would otherwise cut the replaced range short
+  // and leave an orphaned `</dependencies>` behind, producing malformed XML.
+  val regionEnd = if (foldStart < depsStart && fold.endOffset < depsEnd) {
+    findRegionEndAfter(content, depsEnd) ?: depsEnd
+  }
+  else {
+    fold.endOffset
+  }
+
   // Determine which entries are inside the generated region
   val occurrences = entries.mapIndexed { index, entry ->
     val offset = entryOffsets[index]
     DepOccurrence(
       entry = entry,
       startOffset = offset,
-      inRegion = offset >= fold.startOffset && offset < fold.endOffset,
+      inRegion = offset >= fold.startOffset && offset < regionEnd,
     )
   }
 
   return if (foldStart < depsStart) {
     // Editor-fold wraps entire section (module descriptors)
-    DependenciesInfo(fold.startOffset, fold.endOffset, occurrences, fold.indent, RegionType.WRAPS_ENTIRE_SECTION)
+    DependenciesInfo(fold.startOffset, regionEnd, occurrences, fold.indent, RegionType.WRAPS_ENTIRE_SECTION)
   }
   else {
     if (allowInsideSectionRegion) {
@@ -525,8 +561,20 @@ private fun removeRanges(content: String, ranges: List<RemovalRange>): String {
 }
 
 private fun insertDependenciesSection(content: String, modules: List<String>, plugins: List<String>): String {
-  val pos = content.indexOf('>', content.indexOf("<idea-plugin"))
+  val rootStart = content.indexOf("<idea-plugin")
+  if (rootStart == -1) return content
+  val pos = content.indexOf('>', rootStart)
   if (pos == -1) return content
+
+  // A self-closing root (`<idea-plugin .../>`) has no body - expand it into an open/close pair,
+  // otherwise the section would be appended after the root element and the file would not parse.
+  val slashIndex = selfClosingSlashIndex(content, rootStart, pos)
+  if (slashIndex != -1) {
+    return content.substring(0, slashIndex).trimEnd() + ">\n" +
+           buildFullBlock("  ", emptyList(), modules, plugins) +
+           "</idea-plugin>\n" +
+           content.substring(pos + 1).removeSingleLeadingLineBreak()
+  }
 
   val nextLine = content.indexOf('\n', pos + 1)
   val indent = (if (nextLine != -1) content.substring(nextLine + 1).takeWhile { it == ' ' || it == '\t' } else "").ifEmpty { "  " }

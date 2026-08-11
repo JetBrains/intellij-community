@@ -77,7 +77,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
   fun addScanningStatistics(statistics: ScanningStatistics) {
     val jsonStatistics = statistics.toJsonStatistics()
-    scanningStatisticsItems.updateAndGet { it.add(jsonStatistics) }
+    scanningStatisticsItems.updateAndGet { it.adding(jsonStatistics) }
   }
 
   private sealed interface Event {

@@ -1,6 +1,6 @@
-switch (n) {
-  case 1:
-  case 2:
-    s = "x";
-    break;
+String f(int n) {
+  return switch (n) {
+    case 1, <spot>2</spot> -> "x";
+    default -> null;
+  };
 }

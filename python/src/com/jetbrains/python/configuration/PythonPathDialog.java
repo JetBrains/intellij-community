@@ -6,15 +6,17 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.ui.IdeaDialog;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
 import java.awt.Dimension;
 
-public class PythonPathDialog extends IdeaDialog {
+@ApiStatus.Internal
+final class PythonPathDialog extends IdeaDialog {
   private final PythonPathEditor myEditor;
 
-  public PythonPathDialog(final @NotNull Project project, final @NotNull PythonPathEditor editor) {
+  PythonPathDialog(final @NotNull Project project, final @NotNull PythonPathEditor editor) {
     super(project);
     myEditor = editor;
     init();
@@ -29,5 +31,4 @@ public class PythonPathDialog extends IdeaDialog {
 
     return mainPanel;
   }
-
 }

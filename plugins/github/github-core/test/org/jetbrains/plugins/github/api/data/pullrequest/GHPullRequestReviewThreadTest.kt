@@ -9,6 +9,7 @@ import git4idea.changes.GitTextFilePatchWithHistory
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.github.api.GithubApiContentHelper
 import org.jetbrains.plugins.github.api.data.GHCommitHash
 import org.jetbrains.plugins.github.api.data.GHReactable
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThreadTest.Util.Commit
@@ -221,6 +222,35 @@ class GHPullRequestReviewThreadTest {
       .isEqualTo((Side.RIGHT to 11) to (Side.LEFT to 14))
   }
 
+  @Test
+  fun `subjectType defaults to LINE`() {
+    val thread = Util.createPRThread()
+
+    assertThat(thread.subjectType).isEqualTo(GHPullRequestReviewThreadSubjectType.LINE)
+  }
+
+  @Test
+  fun `subjectType is preserved when deserialized from a GraphQL response`() {
+    val thread = Util.createPRThread(subjectType = GHPullRequestReviewThreadSubjectType.FILE)
+
+    val json = GithubApiContentHelper.toJson(thread, gqlNaming = true)
+    val parsed = GithubApiContentHelper.fromJson(json, GHPullRequestReviewThread::class.java, gqlNaming = true)
+
+    assertThat(parsed.subjectType).isEqualTo(GHPullRequestReviewThreadSubjectType.FILE)
+  }
+
+  @Test
+  fun `subjectType falls back to LINE when absent in a GraphQL response`() {
+    val thread = Util.createPRThread(subjectType = GHPullRequestReviewThreadSubjectType.FILE)
+
+    // Older GitHub Enterprise servers may not return the field at all.
+    val jsonWithoutSubjectType = GithubApiContentHelper.toJson(thread, gqlNaming = true)
+      .replace(Regex(""""subjectType"\s*:\s*"[^"]*"\s*,?"""), "")
+    val parsed = GithubApiContentHelper.fromJson(jsonWithoutSubjectType, GHPullRequestReviewThread::class.java, gqlNaming = true)
+
+    assertThat(parsed.subjectType).isEqualTo(GHPullRequestReviewThreadSubjectType.LINE)
+  }
+
   //region: Util
   private object Util {
     enum class Commit(val sha: String) {
@@ -302,11 +332,14 @@ class GHPullRequestReviewThreadTest {
 
       commit: Commit? = null,
       originalCommit: Commit? = null,
+
+      subjectType: GHPullRequestReviewThreadSubjectType = GHPullRequestReviewThreadSubjectType.LINE,
     ): GHPullRequestReviewThread = GHPullRequestReviewThread(
       id = "",
       isResolved = false,
       isOutdated = false,
       path = PATH,
+      subjectType = subjectType,
       side = side,
       line = line?.plus(1),
       originalLine = originalLine?.plus(1),

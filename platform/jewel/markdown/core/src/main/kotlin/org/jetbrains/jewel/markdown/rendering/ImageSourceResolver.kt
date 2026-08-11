@@ -34,6 +34,7 @@ public interface ImageSourceResolver {
      */
     public fun resolve(rawDestination: String): String?
 
+    /** Companion object for [ImageSourceResolver]. */
     public companion object {
         @VisibleForTesting
         internal val defaultCapabilities =

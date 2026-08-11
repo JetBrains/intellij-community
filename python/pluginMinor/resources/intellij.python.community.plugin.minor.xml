@@ -1,4 +1,5 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <!--Any IDE but NOT PyCharm-->
     <plugin id="com.intellij.modules.python-in-non-pycharm-ide-capable"/>
@@ -6,10 +7,17 @@
     <plugin id="com.intellij.modules.python-in-mini-ide-capable"/>
     <!-- and compatible with Python -->
     <plugin id="com.intellij.modules.python-core-capable"/>
-
     <!-- for library facet etc -->
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.community.plugin.impl"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <projectConfigurable groupId="build"
@@ -20,6 +28,7 @@
                          groupWeight="118"/> <!-- id is used in InterpreterSettingsQuickFix.showPythonInterpreterSettings -->
 
     <facetType implementation="com.intellij.python.community.plugin.minor.facet.MinorPythonFacetType"/>
+    <applicationService serviceImplementation="com.intellij.python.community.plugin.minor.facet.PySdkToFacetSetterMinorImpl" serviceInterface="com.jetbrains.python.module.PySdkToFacetSetter"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

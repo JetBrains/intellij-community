@@ -23,17 +23,18 @@ import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
@@ -42,7 +43,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExplicitlyIgnoredByName
 import org.jetbrains.kotlin.idea.highlighting.analyzers.isCalleeExpression
 import org.jetbrains.kotlin.idea.highlighting.analyzers.isConstructorCallReference
@@ -163,11 +163,11 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
 
             override fun visitBinaryExpression(expression: KtBinaryExpression) {
                 val call = expression.resolveToCall()?.successfulCallOrNull<KaCall>() ?: return
-                if (call is KaSimpleFunctionCall) {
+                if (call is KaFunctionCall<*>) {
                     refHolder.registerLocalRef(call.symbol.psi)
                 }
                 if (call is KaCompoundAccessCall) {
-                    refHolder.registerLocalRef(call.compoundOperation.operationPartiallyAppliedSymbol.symbol.psi)
+                    refHolder.registerLocalRef(call.operationCall.symbol.psi)
                 }
             }
 
@@ -180,9 +180,9 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
                 val callee = expression.calleeExpression ?: return
                 val call = expression.resolveToCall()?.singleCallOrNull<KaCall>() ?: return
                 if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return
-                refHolder.registerLocalRef((call as? KaSimpleFunctionCall)?.symbol?.psi)
-                if (call is KaSimpleFunctionCall && call.isImplicitInvoke) {
-                    call.partiallyAppliedSymbol.contextArguments.forEach {
+                refHolder.registerLocalRef((call as? KaFunctionCall<*>)?.symbol?.psi)
+                if (call is KaImplicitInvokeCall) {
+                    call.contextArguments.forEach {
                         refHolder.registerLocalRef(((it as? KaImplicitReceiverValue)?.symbol as? KaContextParameterSymbol)?.psi)
                     }
                 }
@@ -252,7 +252,7 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
         if (problemPsiElement == null) return
         if (isEntryPoint(declaration)) return
         val description = declaration.describe() ?: return
-        val message = KotlinBaseHighlightingBundle.message("inspection.message.never.used", description)
+        val message = K2HighlightingBundle.message("inspection.message.never.used", description)
         val builder = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(problemPsiElement, message, deadCodeInfoType, null)
         val fixes = K2UnusedSymbolUtil.createQuickFixes(declaration)
         fixes.forEach { builder.registerFix(it, null, null, null, deadCodeKey) }
@@ -296,7 +296,7 @@ class KotlinRefsHolder(val containingFile: KtFile) {
 internal class SafeDeleteFix(declaration: KtNamedDeclaration) : LocalQuickFixAndIntentionActionOnPsiElement(declaration) {
     @Nls
     private val name: String =
-        KotlinBaseHighlightingBundle.message(declaration.toNameKey(), declaration.name ?: declaration.text)
+        K2HighlightingBundle.message(declaration.toNameKey(), declaration.name ?: declaration.text)
 
     private fun KtNamedDeclaration.toNameKey(): String =
         when (this) {
@@ -310,7 +310,7 @@ internal class SafeDeleteFix(declaration: KtNamedDeclaration) : LocalQuickFixAnd
        return name
     }
 
-    override fun getFamilyName(): String = KotlinBaseHighlightingBundle.message("safe.delete.family")
+    override fun getFamilyName(): String = K2HighlightingBundle.message("safe.delete.family")
 
     override fun startInWriteAction(): Boolean = false
 

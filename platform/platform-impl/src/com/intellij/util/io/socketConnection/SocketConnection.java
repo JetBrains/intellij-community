@@ -16,11 +16,13 @@
 package com.intellij.util.io.socketConnection;
 
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
+@ApiStatus.Internal
 public interface SocketConnection<Request extends AbstractRequest, Response extends AbstractResponse> extends Disposable {
   @NotNull
   ConnectionState getState();

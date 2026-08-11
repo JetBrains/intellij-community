@@ -12,7 +12,6 @@ import com.intellij.internal.statistic.eventLog.events.IntEventField
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -27,7 +26,6 @@ import com.intellij.usages.Usage
 import com.intellij.usages.UsageView
 import com.intellij.usages.rules.PsiElementUsage
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.fus.reporting.api.IEventContext
 import com.jetbrains.fus.reporting.api.ValidationResultType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -49,7 +47,7 @@ enum class TooManyUsagesUserAction {
 object UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  val GROUP: EventLogGroup = EventLogGroup("usage.view", 23)
+  val GROUP: EventLogGroup = EventLogGroup("usage.view", 24)
 
   val USAGE_VIEW: PrimitiveEventField<UsageView?> = object : PrimitiveEventField<UsageView?>() {
     override val name: String = "usage_view"
@@ -117,11 +115,8 @@ object UsageViewStatisticsCollector : CounterUsagesCollector() {
 
   private val FIND_USAGES_ML_SERVICE_ENABLED: BooleanEventField = EventFields.Boolean("find_usages_ml_service_enabled")
   private val FIND_USAGES_ML_SERVICE_NEW_IMPLEMENTATION: BooleanEventField = EventFields.Boolean("find_usages_ml_service_new_implementation")
-
-  const val SCOPE_RULE_ID: String = "scopeRule"
-
   private val SYMBOL_CLASS = EventFields.Class("symbol")
-  private val SEARCH_SCOPE = EventFields.StringValidatedByCustomRule("scope", ScopeRuleValidator::class.java)
+  private val SEARCH_SCOPE = EventFields.String("scope", ScopeIdMapper.standardNames.toList(), defaultValue = ValidationResultType.THIRD_PARTY.description)
   private val RESULTS_TOTAL = EventFields.Int("results_total")
   private val FIRST_RESULT_TS = EventFields.Long("duration_first_results_ms")
   private val TOO_MANY_RESULTS = EventFields.Boolean("too_many_result_warning")
@@ -153,8 +148,8 @@ object UsageViewStatisticsCollector : CounterUsagesCollector() {
 
   private val TAB_SWITCHED = GROUP.registerEvent("switch.tab", USAGE_VIEW)
 
-  private val PREVIOUS_SCOPE = EventFields.StringValidatedByCustomRule("previous", ScopeRuleValidator::class.java)
-  private val NEW_SCOPE = EventFields.StringValidatedByCustomRule("new", ScopeRuleValidator::class.java)
+  private val PREVIOUS_SCOPE = EventFields.String("previous", ScopeIdMapper.standardNames.toList(), defaultValue = ValidationResultType.THIRD_PARTY.description)
+  private val NEW_SCOPE = EventFields.String("new", ScopeIdMapper.standardNames.toList(), defaultValue = ValidationResultType.THIRD_PARTY.description)
   private val SCOPE_CHANGED = GROUP.registerVarargEvent("scope.changed", USAGE_VIEW, PREVIOUS_SCOPE, NEW_SCOPE, SYMBOL_CLASS)
 
   private val OPEN_IN_FIND_TOOL_WINDOW = GROUP.registerEvent("open.in.tool.window", USAGE_VIEW)
@@ -361,12 +356,4 @@ object UsageViewStatisticsCollector : CounterUsagesCollector() {
     durationTime?.let { showUsagesHandlerEventData.add(EventFields.DurationMs.with(it)) }
     POPUP_CLOSED.log(project, showUsagesHandlerEventData)
   }
-}
-
-@ApiStatus.Internal
-class ScopeRuleValidator : CustomValidationRule() {
-  override fun doValidate(data: String, context: IEventContext): ValidationResultType =
-    if (ScopeIdMapper.standardNames.contains(data)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
-
-  override fun getRuleId(): String = UsageViewStatisticsCollector.SCOPE_RULE_ID
 }

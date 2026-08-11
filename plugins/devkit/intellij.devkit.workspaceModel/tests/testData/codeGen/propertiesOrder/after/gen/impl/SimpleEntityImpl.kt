@@ -1,5 +1,4 @@
 @file:OptIn(EntityStorageInstrumentationApi::class)
-
 package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.*
@@ -7,7 +6,6 @@ import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.workspaceModel.test.api.SimpleEntity
@@ -17,57 +15,25 @@ import com.intellij.workspaceModel.test.api.SimpleId
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class SimpleEntityImpl(private val dataSource: SimpleEntityData): SimpleEntity, WorkspaceEntityBase(dataSource) {
-
-private companion object {
-
-private val connections = listOf<ConnectionId>()
-
-}
+internal class SimpleEntityImpl(private val dataSource: SimpleEntityData): SimpleEntity, WorkspaceEntityBase(dataSource){
 override val symbolicId: SimpleId = super.symbolicId
 
 override val name: String
-get() {
+get(){
 readField("name")
 return dataSource.name
 }
-
 override val entitySource: EntitySource
-get() {
+get(){
 readField("entitySource")
 return dataSource.entitySource
 }
-
-override fun connectionIdList(): List<ConnectionId> {
-return connections
+override fun connectionIdList(): List<ConnectionId>{
+return emptyList()
 }
-
-
-internal class Builder(result: SimpleEntityData?): ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(result), SimpleEntityBuilder {
+internal class Builder(result: SimpleEntityData?): ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(result), SimpleEntityBuilder{
 internal constructor(): this(SimpleEntityData())
-
-override fun applyToBuilder(builder: MutableEntityStorage){
-if (this.diff != null){
-if (existsInBuilder(builder)){
-this.diff = builder
-return
-}
-else{
-error("Entity SimpleEntity is already created in a different builder")
-}
-}
-this.diff = builder
-addToBuilder()
-this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-this.currentEntityData = null
-// Process linked entities that are connected without a builder
-processLinkedEntities(builder)
-checkInitialization() // TODO uncomment and check failed tests
-}
-
-private fun checkInitialization(){
+override fun checkInitialization(){
 val _diff = diff
 if (!getEntityData().isEntitySourceInitialized()){
 error("Field WorkspaceEntity#entitySource should be initialized")
@@ -77,7 +43,7 @@ error("Field SimpleEntity#name should be initialized")
 }
 }
 override fun connectionIdList(): List<ConnectionId>{
-return connections
+return emptyList()
 }
 // Relabeling code, move information from dataSource to this builder
 override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?){
@@ -86,69 +52,42 @@ if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource
 if (this.name != dataSource.name) this.name = dataSource.name
 updateChildToParentReferences(parents)
 }
-
-        
 override var entitySource: EntitySource
 get() = getEntityData().entitySource
-set(value) {
+set(value){
 checkModificationAllowed()
 getEntityData(true).entitySource = value
 changedProperty.add("entitySource")
-
 }
 override var name: String
 get() = getEntityData().name
-set(value) {
+set(value){
 checkModificationAllowed()
 getEntityData(true).name = value
 changedProperty.add("name")
 }
-
 override fun getEntityClass(): Class<SimpleEntity> = SimpleEntity::class.java
 }
-
 }
-
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>(){
 lateinit var name: String
-
 internal fun isNameInitialized(): Boolean = ::name.isInitialized
-
-override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SimpleEntity>{
-val modifiable = SimpleEntityImpl.Builder(null)
-modifiable.diff = diff
-modifiable.id = createEntityId()
-return modifiable
-}
-
-override fun createEntity(snapshot: EntityStorageInstrumentation): SimpleEntity{
-val entityId = createEntityId()
-return snapshot.initializeEntity(entityId){
-val entity = SimpleEntityImpl(this)
-entity.snapshot = snapshot
-entity.id = entityId
-entity
-}
-}
-
+override fun newInstance(): SimpleEntity = SimpleEntityImpl(this)
+override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<SimpleEntity, *> = SimpleEntityImpl.Builder(null)
 override fun getMetadata(): EntityMetadata{
 return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.SimpleEntity") as EntityMetadata
 }
-
 override fun getEntityInterface(): Class<out WorkspaceEntity>{
 return SimpleEntity::class.java
 }
-
 override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*>{
 return SimpleEntity(name, entitySource)
 }
-
 override fun getRequiredParents(): List<Class<out WorkspaceEntity>>{
 val res = mutableListOf<Class<out WorkspaceEntity>>()
 return res
 }
-
 override fun equals(other: Any?): Boolean{
 if (other == null) return false
 if (this.javaClass != other.javaClass) return false
@@ -157,7 +96,6 @@ if (this.entitySource != other.entitySource) return false
 if (this.name != other.name) return false
 return true
 }
-
 override fun equalsIgnoringEntitySource(other: Any?): Boolean{
 if (other == null) return false
 if (this.javaClass != other.javaClass) return false
@@ -165,7 +103,6 @@ other as SimpleEntityData
 if (this.name != other.name) return false
 return true
 }
-
 override fun hashCode(): Int{
 var result = entitySource.hashCode()
 result = 31 * result + name.hashCode()

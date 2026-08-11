@@ -4,12 +4,13 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiParameter;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiRecordComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,11 +30,11 @@ public record ExternalAnnotation(@NotNull PsiModifierListOwner owner, @NotNull S
 
   private static boolean canBeExternallyAnnotated(@Nullable PsiModifierListOwner owner) {
     if (owner instanceof PsiPackage || owner instanceof PsiClass) return true;
-    if (owner instanceof PsiParameter) {
-      owner = PsiTreeUtil.getParentOfType(owner, PsiMethod.class, true);
+    if (owner instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiMethod m) {
+      owner = m;
     }
-    if (owner instanceof PsiField || owner instanceof PsiMethod) {
-      return PsiTreeUtil.getParentOfType(owner, PsiClass.class, true) != null;
+    if (owner instanceof PsiField || owner instanceof PsiMethod || owner instanceof PsiRecordComponent) {
+      return ((PsiMember) owner).getContainingClass() != null;
     }
     return false;
   }

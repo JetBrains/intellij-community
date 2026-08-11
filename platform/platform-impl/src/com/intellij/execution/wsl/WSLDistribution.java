@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.google.common.net.InetAddresses;
@@ -44,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import java.io.File;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
@@ -452,11 +451,11 @@ public class WSLDistribution implements AbstractWslDistribution {
   public static @Nullable Path findWslExe() {
     if (testOverriddenWslExe != null) return testOverriddenWslExe;
 
-    File file = PathEnvironmentVariableUtil.findInPath(WSL_EXE);
+    var file = PathEnvironmentVariableUtil.findFirst(WSL_EXE);
     if (LOG.isTraceEnabled() && isAttemptToFindWslExeLogged.compareAndSet(false, true)) {
       LOG.trace(new Throwable("findWslExe called"));
     }
-    return file != null ? file.toPath() : null;
+    return file;
   }
 
   private static @NotNull List<String> buildLinuxCommand(@NotNull GeneralCommandLine commandLine, boolean executeCommandInShell) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -14,6 +14,7 @@ import com.intellij.psi.PsiParenthesizedExpression;
 import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.PsiPrefixExpression;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -26,11 +27,6 @@ import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
-
-import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
  * @author Bas Leijdekkers
@@ -39,20 +35,16 @@ public final class SimplifiableBooleanExpressionInspection extends BaseInspectio
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
-    final Object info = infos[0];
-    if (info instanceof PsiPrefixExpression prefixExpression) {
-      return InspectionGadgetsBundle.message("boolean.expression.can.be.simplified.problem.descriptor",
-                                             calculateReplacementExpression(prefixExpression, new CommentTracker()));
-    }
-    else {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)info;
-      return InspectionGadgetsBundle.message("boolean.expression.can.be.simplified.problem.descriptor",
-                                             calculateReplacementExpression(binaryExpression, new CommentTracker()));
-    }
+    String replacement = switch (infos[0]) {
+      case PsiPrefixExpression prefix -> calculateReplacementExpression(prefix, new CommentTracker());
+      case PsiBinaryExpression bin -> calculateReplacementExpression(bin, new CommentTracker());
+      case null, default -> throw new AssertionError("should not be reached");
+    };
+    return InspectionGadgetsBundle.message("boolean.expression.can.be.simplified.problem.descriptor", replacement);
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     return new SimplifiableBooleanExpressionFix();
   }
 
@@ -66,21 +58,14 @@ public final class SimplifiableBooleanExpressionInspection extends BaseInspectio
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       CommentTracker commentTracker = new CommentTracker();
-      final String replacement;
-      if (element instanceof PsiPrefixExpression prefixExpression) {
-        replacement = calculateReplacementExpression(prefixExpression, commentTracker);
+      final String replacement = switch (element) {
+        case PsiPrefixExpression prefix -> calculateReplacementExpression(prefix, commentTracker);
+        case PsiBinaryExpression bin -> calculateReplacementExpression(bin, commentTracker);
+        default -> null;
+      };
+      if (replacement != null) {
+        PsiReplacementUtil.replaceExpression((PsiExpression)element, replacement, commentTracker);
       }
-      else if (element instanceof PsiBinaryExpression binaryExpression) {
-        replacement = calculateReplacementExpression(binaryExpression, commentTracker);
-      }
-      else {
-        return;
-      }
-      if (replacement == null) {
-        return;
-      }
-
-      PsiReplacementUtil.replaceExpression((PsiExpression)element, replacement, commentTracker);
     }
   }
 
@@ -99,9 +84,7 @@ public final class SimplifiableBooleanExpressionInspection extends BaseInspectio
   }
 
   static @NonNls String calculateReplacementExpression(PsiBinaryExpression expression, CommentTracker commentTracker) {
-    PsiPolyadicExpression conjunction =
-      tryCast(PsiUtil.skipParenthesizedExprDown(expression.getLOperand()), PsiPolyadicExpression.class);
-    if (conjunction == null) return null;
+    if (!(PsiUtil.skipParenthesizedExprDown(expression.getLOperand()) instanceof PsiPolyadicExpression conjunction)) return null;
     final PsiExpression rightDisjunct = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
     if (rightDisjunct == null) return null;
 
@@ -123,19 +106,16 @@ public final class SimplifiableBooleanExpressionInspection extends BaseInspectio
       conjunctionRemnant = commentTracker.text(operands[isFirst ? 1 : 0], ParenthesesUtils.OR_PRECEDENCE);
     }
     else {
-      if (isFirst) {
-        conjunctionRemnant = commentTracker.rangeText(operands[1], operands[operands.length - 1]);
-      }
-      else {
-        conjunctionRemnant = commentTracker.rangeText(operands[0], operands[operands.length - 2]);
-      }
+      conjunctionRemnant = isFirst
+                           ? commentTracker.rangeText(operands[1], operands[operands.length - 1])
+                           : commentTracker.rangeText(operands[0], operands[operands.length - 2]);
       if (expression.getLOperand() instanceof PsiParenthesizedExpression) {
         conjunctionRemnant = "(" + conjunctionRemnant + ")";
       }
     }
-    return isFirst ?
-           commentTracker.text(rightDisjunct, ParenthesesUtils.OR_PRECEDENCE) + "||" + conjunctionRemnant :
-           conjunctionRemnant + "||" + commentTracker.text(rightDisjunct, ParenthesesUtils.OR_PRECEDENCE);
+    return isFirst
+           ? commentTracker.text(rightDisjunct, ParenthesesUtils.OR_PRECEDENCE) + "||" + conjunctionRemnant
+           : conjunctionRemnant + "||" + commentTracker.text(rightDisjunct, ParenthesesUtils.OR_PRECEDENCE);
   }
 
   @Override
@@ -148,11 +128,11 @@ public final class SimplifiableBooleanExpressionInspection extends BaseInspectio
     @Override
     public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
-      if (!JavaTokenType.EXCL.equals(expression.getOperationTokenType())) return;
-
-      PsiBinaryExpression maybeXor = tryCast(PsiUtil.skipParenthesizedExprDown(expression.getOperand()), PsiBinaryExpression.class);
-      if (maybeXor == null || !JavaTokenType.XOR.equals(maybeXor.getOperationTokenType())) return;
-
+      if (!JavaTokenType.EXCL.equals(expression.getOperationTokenType())
+          || !(PsiUtil.skipParenthesizedExprDown(expression.getOperand()) instanceof PsiBinaryExpression maybeXor)
+          || !JavaTokenType.XOR.equals(maybeXor.getOperationTokenType())) {
+        return;
+      }
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(maybeXor.getLOperand());
       final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(maybeXor.getROperand());
       if (lhs == null || rhs == null) {
@@ -164,27 +144,27 @@ public final class SimplifiableBooleanExpressionInspection extends BaseInspectio
     @Override
     public void visitBinaryExpression(@NotNull PsiBinaryExpression disjunction) {
       super.visitBinaryExpression(disjunction);
-      if (!JavaTokenType.OROR.equals(disjunction.getOperationTokenType())) return;
-      PsiPolyadicExpression conjunction =
-        tryCast(PsiUtil.skipParenthesizedExprDown(disjunction.getLOperand()), PsiPolyadicExpression.class);
-      if (conjunction == null || !JavaTokenType.ANDAND.equals(conjunction.getOperationTokenType())) return;
+      if (!JavaTokenType.OROR.equals(disjunction.getOperationTokenType())
+          || !(PsiUtil.skipParenthesizedExprDown(disjunction.getLOperand()) instanceof PsiPolyadicExpression conjunction)
+          || !JavaTokenType.ANDAND.equals(conjunction.getOperationTokenType())) {
+        return;
+      }
 
       final PsiExpression rightDisjunct = PsiUtil.skipParenthesizedExprDown(disjunction.getROperand());
-      if (hasOperand(conjunction, rightDisjunct) && !SideEffectChecker.mayHaveSideEffects(conjunction)) {
+      if ((rightDisjunct == null || hasOperand(conjunction, rightDisjunct) )&& !SideEffectChecker.mayHaveSideEffects(conjunction)) {
         registerError(disjunction, disjunction);
       }
       PsiExpression[] operands = conjunction.getOperands();
       if (operands.length >= 2 && (BoolUtils.areExpressionsOpposite(operands[0], rightDisjunct) ||
-           BoolUtils.areExpressionsOpposite(operands[operands.length - 1], rightDisjunct)) &&
-          !SideEffectChecker.mayHaveSideEffects(rightDisjunct)) {
+                                   BoolUtils.areExpressionsOpposite(operands[operands.length - 1], rightDisjunct))
+          && !SideEffectChecker.mayHaveSideEffects(rightDisjunct)) {
         registerError(disjunction, disjunction);
       }
     }
   }
 
-  private static boolean hasOperand(PsiPolyadicExpression polyadic, PsiExpression operand) {
-    if (operand == null) return false;
+  private static boolean hasOperand(PsiPolyadicExpression polyadic, @NotNull PsiExpression operand) {
     EquivalenceChecker equivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
-    return Arrays.stream(polyadic.getOperands()).anyMatch(op -> equivalence.expressionsAreEquivalent(op, operand));
+    return ContainerUtil.exists(polyadic.getOperands(), op -> equivalence.expressionsAreEquivalent(op, operand));
   }
 }

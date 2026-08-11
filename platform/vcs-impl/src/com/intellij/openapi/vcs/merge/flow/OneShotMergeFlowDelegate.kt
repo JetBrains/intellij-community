@@ -2,23 +2,16 @@
 package com.intellij.openapi.vcs.merge.flow
 
 import com.intellij.CommonBundle
-import com.intellij.ide.setToolTipText
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.actionSystem.UiDataProvider
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.diff.statistics.FileOpenedFrom
+import com.intellij.diff.statistics.SideAppliedFrom
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper.DEFAULT_ACTION
 import com.intellij.openapi.ui.DialogWrapper.createJButtonForAction
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeResolveActionContext
-import com.intellij.openapi.vcs.merge.MergeResolveActionPresentation
-import com.intellij.openapi.vcs.merge.MergeResolveActionProvider
-import com.intellij.openapi.vcs.merge.MergeResolveActionSupport
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.dsl.builder.Align
@@ -30,6 +23,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.initOnShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.awt.Dimension
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
@@ -45,8 +39,8 @@ internal class OneShotMergeFlowDelegate(
   private val rootPane: JRootPane,
   private val files: List<VirtualFile>,
   private val onClose: () -> Unit,
-  private val acceptForResolution: (MergeSession.Resolution) -> Unit,
-  private val showMergeDialog: () -> Unit,
+  private val acceptForResolution: (MergeSession.Resolution, SideAppliedFrom) -> Unit,
+  private val showMergeDialog: (FileOpenedFrom) -> Unit,
   private val toggleGroupByDirectory: (Boolean) -> Unit,
   private val getGroupByDirectory: () -> Boolean,
 ) : MergeFlowDelegate {
@@ -55,8 +49,19 @@ internal class OneShotMergeFlowDelegate(
   private lateinit var acceptTheirsButton: JButton
   private lateinit var mergeButton: JButton
   private var selectionHintFiles: List<VirtualFile> = emptyList()
+  private var resolveActionControllers: List<MergeResolveActionComponentController> = emptyList()
 
   override fun createCenterPanel(): JComponent {
+    val project = this.project
+    if (project != null) {
+      val mergeContext = MergeResolveActionContext(
+        project = project,
+        selectionHintFilesProvider = { selectionHintFiles },
+        closeSourceUiHandler = onClose,
+      )
+      resolveActionControllers = createMergeResolveActionComponentControllers(mergeContext, ONE_SHOT_MERGE_DIALOG_ACTION_PLACE)
+    }
+
     return panel {
       row {
         label(VcsBundle.message("merge.loading.merge.details")).applyToComponent {
@@ -77,20 +82,20 @@ internal class OneShotMergeFlowDelegate(
         panel {
           row {
             acceptYoursButton = button(VcsBundle.message("multiple.file.merge.accept.yours")) {
-              acceptForResolution(MergeSession.Resolution.AcceptedYours)
+              acceptForResolution(MergeSession.Resolution.AcceptedYours, SideAppliedFrom.BUTTON)
             }.align(AlignX.FILL)
               .component
           }
           row {
             acceptTheirsButton = button(VcsBundle.message("multiple.file.merge.accept.theirs")) {
-              acceptForResolution(MergeSession.Resolution.AcceptedTheirs)
+              acceptForResolution(MergeSession.Resolution.AcceptedTheirs, SideAppliedFrom.BUTTON)
             }.align(AlignX.FILL)
               .component
           }
           row {
             val mergeAction = object : AbstractAction(VcsBundle.message("multiple.file.merge.merge")) {
               override fun actionPerformed(e: ActionEvent) {
-                showMergeDialog()
+                showMergeDialog(FileOpenedFrom.RESOLVE_BUTTON)
               }
             }
             mergeAction.putValue(DEFAULT_ACTION, true)
@@ -98,9 +103,9 @@ internal class OneShotMergeFlowDelegate(
             cell(mergeButton)
               .align(AlignX.FILL)
           }
-          createResolveActionButtons().forEach { button ->
+          for (controller in resolveActionControllers) {
             row {
-              cell(button).align(AlignX.FILL)
+              cell(controller.component).align(AlignX.FILL)
             }
           }
         }.align(AlignY.TOP)
@@ -118,6 +123,8 @@ internal class OneShotMergeFlowDelegate(
     }.apply {
       // Temporary workaround for IDEA-302779
       minimumSize = JBUI.size(200, 150)
+      val size = preferredSize
+      preferredSize = Dimension(maxOf(size.width, JBUI.scale(650)), size.height)
     }
   }
 
@@ -139,10 +146,11 @@ internal class OneShotMergeFlowDelegate(
     unacceptableFileSelected: Boolean,
   ) {
     selectionHintFiles = selectedFiles
-    val haveSelection = selectedFiles.any()
+    val haveSelection = selectedFiles.isNotEmpty()
     acceptYoursButton.isEnabled = haveSelection && !unacceptableFileSelected
     acceptTheirsButton.isEnabled = haveSelection && !unacceptableFileSelected
     mergeButton.isEnabled = haveSelection && !unmergeableFileSelected
+    resolveActionControllers.forEach { it.update() }
   }
 
   override fun buildTreeModel(
@@ -153,91 +161,4 @@ internal class OneShotMergeFlowDelegate(
 
   override fun createSouthPanel(): JComponent? = null
 
-  private fun createResolveActionButtons(): List<JComponent> {
-    val project = project ?: return emptyList()
-    val mergeContext = MergeResolveActionContext(
-      project = project,
-      selectionHintFilesProvider = { selectionHintFiles },
-      closeSourceUiHandler = onClose,
-      isContextValidHandler = { rootPane.isDisplayable },
-    )
-    return MergeResolveActionProvider.EP_NAME.extensionList
-      .sortedBy(MergeResolveActionProvider::order)
-      .mapNotNull { provider -> createResolveActionComponent(provider, mergeContext) }
-  }
-
-  private fun createResolveActionComponent(
-    provider: MergeResolveActionProvider,
-    mergeContext: MergeResolveActionContext,
-  ): JComponent? {
-    val action = provider.action
-    return if (action is CustomComponentAction) {
-      createResolveActionCustomComponent(action, mergeContext)
-    }
-    else {
-      createResolveActionButton(provider, mergeContext)
-    }
-  }
-
-  private fun createResolveActionButton(
-    provider: MergeResolveActionProvider,
-    mergeContext: MergeResolveActionContext,
-  ): JButton? {
-    val button = JButton()
-    updateResolveActionButton(provider, mergeContext, button)
-    if (!button.isVisible) return null
-    button.addActionListener {
-      MergeResolveActionSupport.performAction(provider, mergeContext, button, MERGE_DIALOG_ACTION_PLACE)
-      updateResolveActionButton(provider, mergeContext, button)
-    }
-    return button
-  }
-
-  private fun createResolveActionCustomComponent(
-    action: CustomComponentAction,
-    mergeContext: MergeResolveActionContext,
-  ): JComponent? {
-    val anAction = action as? com.intellij.openapi.actionSystem.AnAction ?: return null
-    val presentation = MergeResolveActionSupport.getUpdatedPresentation(anAction, mergeContext, null, MERGE_DIALOG_ACTION_PLACE)
-                       ?: return null
-    val component = action.createCustomComponent(presentation, MERGE_DIALOG_ACTION_PLACE)
-    action.updateCustomComponent(component, presentation)
-    return wrapResolveActionComponent(component, mergeContext)
-  }
-
-  private fun updateResolveActionButton(
-    provider: MergeResolveActionProvider,
-    mergeContext: MergeResolveActionContext,
-    button: JButton,
-  ) {
-    syncResolveActionButton(button, MergeResolveActionSupport.createActionPresentation(provider, mergeContext, button, MERGE_DIALOG_ACTION_PLACE))
-  }
-
-  private fun syncResolveActionButton(button: JButton, presentation: MergeResolveActionPresentation?) {
-    if (presentation == null) {
-      button.isVisible = false
-      return
-    }
-
-    button.text = presentation.text
-    button.icon = presentation.icon
-    button.setToolTipText(presentation.description?.let(HtmlChunk::text))
-    button.isEnabled = presentation.isEnabled
-    button.isVisible = true
-  }
-
-  private fun wrapResolveActionComponent(
-    component: JComponent,
-    mergeContext: MergeResolveActionContext,
-  ): JComponent {
-    return UiDataProvider.wrapComponent(component) { sink ->
-      sink[CommonDataKeys.PROJECT] = mergeContext.project
-      sink[PlatformCoreDataKeys.CONTEXT_COMPONENT] = component
-      sink[MergeResolveActionContext.KEY] = mergeContext
-    }
-  }
-
-  private companion object {
-    const val MERGE_DIALOG_ACTION_PLACE: String = "Merge.OneShotDialog"
-  }
 }

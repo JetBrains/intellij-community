@@ -512,8 +512,8 @@ object GHGQLRequests {
           withOperationName("get pull request timeline items")
         }
 
-      private class TimelineConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPRTimelineItem> = listOf())
-        : GraphQLConnectionDTO<GHPRTimelineItem>(pageInfo, nodes)
+      private class TimelineConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPRTimelineItem?> = listOf())
+        : GraphQLConnectionDTO<GHPRTimelineItem>(pageInfo, nodes.filterNotNull())
     }
 
     object Review {

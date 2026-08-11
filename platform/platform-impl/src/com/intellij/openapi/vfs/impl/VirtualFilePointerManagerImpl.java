@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -166,10 +166,9 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   @TestOnly
-  public synchronized @NotNull Collection<? extends VirtualFilePointer> getPointersUnder(@NotNull VirtualFileSystemEntry parent,
-                                                                                         @NotNull String childName) {
-    assert !StringUtil.isEmptyOrSpaces(childName);
-    @NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> nodes = MultiMap.create();
+  public synchronized @NotNull Collection<VirtualFilePointer> getPointersUnder(@NotNull VirtualFileSystemEntry parent, @NotNull String childName) {
+    assert !childName.isBlank();
+    var nodes = MultiMap.<VirtualFilePointerListener, VirtualFilePointer>create();
     addRelevantPointers(null, parent, toNameId(childName), nodes, new ArrayList<>(), true, parent.getFileSystem(), new VFileDeleteEvent(this, parent));
     return nodes.values();
   }

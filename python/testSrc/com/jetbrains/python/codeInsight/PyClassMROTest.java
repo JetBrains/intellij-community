@@ -7,6 +7,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
@@ -21,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyClassMROTest extends PyTestCase {
   public void testSimpleDiamond() {
     assertMRO(getClass("C"), "B1", "B2", "object");

@@ -21,7 +21,8 @@ abstract class ConfigurableBuildIssue : BuildIssue {
   final override val description: @BuildEventsNls.Description String
     get() = configurator.createDescription()
 
-  override fun getNavigatable(project: Project): Navigatable? = null
+  final override fun getNavigatable(project: Project): Navigatable? =
+    configurator.navigatable(project)
 
   fun setTitle(title: @BuildEventsNls.Title String) {
     configurator.title = title
@@ -49,6 +50,10 @@ abstract class ConfigurableBuildIssue : BuildIssue {
     return hyperlinkReference
   }
 
+  fun setNavigatable(navigatable: (Project) -> Navigatable?) {
+    configurator.navigatable = navigatable
+  }
+
   private class QuickFix(
     hyperlinkReference: String,
     private val delegate: BuildIssueQuickFix
@@ -63,6 +68,7 @@ abstract class ConfigurableBuildIssue : BuildIssue {
     val description: MutableList<@BuildEventsNls.Description String> = ArrayList()
     val quickFixPrompts: MutableList<@BuildEventsNls.Description String> = ArrayList()
     val quickFixes: MutableList<BuildIssueQuickFix> = ArrayList()
+    var navigatable: (Project) -> Navigatable? = { null }
 
     fun createDescription(): @NlsSafe String {
       return buildString {

@@ -11,6 +11,11 @@ interface ProjectManager {
   fun getDefaultProject(): Project
 }
 
+@Remote("com.intellij.ide.trustedProjects.TrustedProjects")
+interface TrustedProjects {
+  fun isProjectTrusted(project: Project): Boolean
+}
+
 fun Driver.getOpenProjects(rdTarget: RdTarget = RdTarget.DEFAULT): List<Project> {
   return service<ProjectManager>(rdTarget).getOpenProjects().toList()
 }
@@ -34,4 +39,8 @@ fun Driver.isProjectOpened(project: Project? = null): Boolean {
     return ideFrame?.getComponent()?.isShowing() == true
   }
   return false
+}
+
+fun Driver.isProjectTrusted(project: Project = singleProject()): Boolean {
+  return utility(TrustedProjects::class).isProjectTrusted(project)
 }

@@ -57,20 +57,20 @@ public final class SuppressActionWrapper extends ActionGroup {
   }
 
   @Override
-  public AnAction @NotNull [] getChildren(final @Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return getSuppressionActions(getView(e));
   }
 
   public static AnAction @NotNull [] getSuppressionActions(InspectionResultsView view) {
     if (view == null) return EMPTY_ARRAY;
-    final InspectionToolWrapper<?, ?> wrapper = view.getTree().getSelectedToolWrapper(true);
+    InspectionToolWrapper<?, ?> wrapper = view.getTree().getSelectedToolWrapper(true);
     if (wrapper == null) return EMPTY_ARRAY;
-    final Set<SuppressIntentionAction> suppressActions = view.getSuppressActionHolder().getSuppressActions(wrapper);
+    Set<SuppressIntentionAction> suppressActions = view.getSuppressActionHolder().getSuppressActions(wrapper);
 
     if (suppressActions.isEmpty()) return EMPTY_ARRAY;
 
-    final ArrayList<SuppressIntentionAction> actionsList = new ArrayList<>();
-    final ArrayList<SuppressIntentionAction> suppressAllList = new ArrayList<>();
+    ArrayList<SuppressIntentionAction> actionsList = new ArrayList<>();
+    ArrayList<SuppressIntentionAction> suppressAllList = new ArrayList<>();
 
     for (SuppressIntentionAction action : suppressActions) {
       if (!action.isSuppressAll()) { actionsList.add(action); }
@@ -94,7 +94,7 @@ public final class SuppressActionWrapper extends ActionGroup {
   public static final class SuppressTreeAction extends KeyAwareInspectionViewAction {
     private final @NotNull SuppressIntentionAction mySuppressAction;
 
-    public SuppressTreeAction(final @NotNull SuppressIntentionAction suppressAction) {
+    public SuppressTreeAction(@NotNull SuppressIntentionAction suppressAction) {
       super(suppressAction.getText());
       mySuppressAction = suppressAction;
     }
@@ -102,25 +102,25 @@ public final class SuppressActionWrapper extends ActionGroup {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       InspectionResultsView view = getView(e);
-      final InspectionToolWrapper wrapper = getToolWrapper(e);
+      InspectionToolWrapper wrapper = getToolWrapper(e);
       LOG.assertTrue(wrapper != null);
-      final Set<SuppressableInspectionTreeNode> nodesAsSet = getNodesToSuppress(e);
+      Set<SuppressableInspectionTreeNode> nodesAsSet = getNodesToSuppress(e);
       Project project = e.getProject();
       ApplicationManager.getApplication().invokeLater(() -> {
-        final String templatePresentationText = getTemplatePresentation().getText();
+        String templatePresentationText = getTemplatePresentation().getText();
         LOG.assertTrue(templatePresentationText != null);
 
-        final SuppressableInspectionTreeNode[] nodes = nodesAsSet.toArray(new SuppressableInspectionTreeNode[0]);
+        SuppressableInspectionTreeNode[] nodes = nodesAsSet.toArray(new SuppressableInspectionTreeNode[0]);
         CommandProcessor.getInstance().executeCommand(project, () -> {
           CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-          final SequentialModalProgressTask progressTask =
+          SequentialModalProgressTask progressTask =
             new SequentialModalProgressTask(project, templatePresentationText, true);
           progressTask.setMinIterationTime(200);
           progressTask.setTask(new SuppressActionSequentialTask(nodes, mySuppressAction, wrapper));
           ProgressManager.getInstance().run(progressTask);
         }, templatePresentationText, null);
 
-        final Set<GlobalInspectionContextImpl> globalInspectionContexts =
+        Set<GlobalInspectionContextImpl> globalInspectionContexts =
           ((InspectionManagerEx)InspectionManager.getInstance(project)).getRunningContexts();
         for (GlobalInspectionContextImpl context : globalInspectionContexts) {
           context.refreshViews();
@@ -131,10 +131,10 @@ public final class SuppressActionWrapper extends ActionGroup {
 
     @Override
     protected boolean isEnabled(@NotNull InspectionResultsView view, AnActionEvent e) {
-      final Set<SuppressableInspectionTreeNode> nodesToSuppress = getNodesToSuppress(e);
+      Set<SuppressableInspectionTreeNode> nodesToSuppress = getNodesToSuppress(e);
       if (nodesToSuppress.isEmpty()) return false;
       if (nodesToSuppress.size() == 1) {
-        final PsiElement element = Objects.requireNonNull(ContainerUtil.getFirstItem(nodesToSuppress)).getSuppressContent().getFirst();
+        PsiElement element = Objects.requireNonNull(ContainerUtil.getFirstItem(nodesToSuppress)).getSuppressContent().getFirst();
         String text = mySuppressAction.getFamilyName();
         if (element != null) {
           mySuppressAction.isAvailable(e.getProject(), null, element);
@@ -154,10 +154,10 @@ public final class SuppressActionWrapper extends ActionGroup {
     private Set<SuppressableInspectionTreeNode> getNodesToSuppress(AnActionEvent e) {
       Object[] selectedNodes = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
       if (selectedNodes == null) return Collections.emptySet();
-      final Set<SuppressableInspectionTreeNode> result = new HashSet<>();
+      Set<SuppressableInspectionTreeNode> result = new HashSet<>();
       for (Object selectedNode : selectedNodes) {
         if (!TreeUtil.treeNodeTraverser((TreeNode)selectedNode).traverse().processEach(node1 -> {    //fetch leaves
-          final InspectionTreeNode n = (InspectionTreeNode)node1;
+          InspectionTreeNode n = (InspectionTreeNode)node1;
           if (n instanceof SuppressableInspectionTreeNode &&
               ((SuppressableInspectionTreeNode)n).canSuppress() &&
               n.isValid()) {

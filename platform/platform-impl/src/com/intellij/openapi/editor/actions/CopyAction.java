@@ -26,6 +26,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,7 @@ public final class CopyAction extends TextComponentEditorAction implements HintM
     super(new Handler(), false);
   }
 
+  @ApiStatus.Internal
   public static final class Handler extends EditorActionHandler {
     @Override
     public void doExecute(final @NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {

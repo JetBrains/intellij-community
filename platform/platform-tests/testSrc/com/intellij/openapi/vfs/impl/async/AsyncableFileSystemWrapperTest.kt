@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.executor.AsyncFileContentWrite
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -136,6 +135,30 @@ class AsyncableFileSystemWrapperTest {
     }
   }
 
+  @Test
+  fun `implicit timestamp update failures are swallowed`() {
+    underlyingFileSystem.failTimeStampUpdates = true
+    underlyingFileSystem.timeStampAfterImplicitWrite = 42L
+    val content = "content".toByteArray()
+
+    asyncFileSystemWrapper.getOutputStream(file, asyncAllowingRequestor, 1, -1).use { it.write(content) }
+    asyncFileSystemWrapper.fsync(file)
+
+    assertFalse(asyncFileSystemWrapper.hasUnfinishedTasks())
+    assertContentEquals(content, underlyingFileSystem.contentsToByteArray(file))
+    assertEquals(42L, asyncFileSystemWrapper.getTimeStamp(file))
+  }
+
+  @Test
+  fun `explicit timestamp update failures are reported`() {
+    underlyingFileSystem.failTimeStampUpdates = true
+
+    assertThrows<IOException> {
+      asyncFileSystemWrapper.getOutputStream(file, asyncAllowingRequestor, 1, 42L).use { it.write(byteArrayOf(1)) }
+      asyncFileSystemWrapper.fsync(file)
+    }
+  }
+
   private class TestFileSystem : MockLocalFileSystem() {
     private val contentByPath = HashMap<String, ByteArray>()
     private val timeStampByPath = HashMap<String, Long>()
@@ -144,6 +167,12 @@ class AsyncableFileSystemWrapperTest {
 
     @Volatile
     var failWrites = false
+
+    @Volatile
+    var failTimeStampUpdates = false
+
+    @Volatile
+    var timeStampAfterImplicitWrite = -1L
 
     @Volatile
     private var releaseWrites = CountDownLatch(0)
@@ -184,9 +213,16 @@ class AsyncableFileSystemWrapperTest {
             throw IOException("Write failed")
           }
           contentByPath[file.path] = toByteArray()
-          timeStampByPath[file.path] = timeStamp
+          timeStampByPath[file.path] = if (timeStamp > 0) timeStamp else timeStampAfterImplicitWrite
         }
       }
+    }
+
+    override fun setTimeStamp(file: VirtualFile, timeStamp: Long) {
+      if (failTimeStampUpdates) {
+        throw IOException("Timestamp update failed")
+      }
+      timeStampByPath[file.path] = timeStamp
     }
 
     override fun renameFile(requestor: Any?, vFile: VirtualFile, newName: String) {

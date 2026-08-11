@@ -11,7 +11,7 @@ public class FlatMapToEntry {
   }
 
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     final long count = StreamEx.of(1, 2, 3).flatMapToEntry(FlatMapToEntry::toMap).count();
     System.out.println(count);
   }

@@ -7,7 +7,7 @@ import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.concurrency.Job;
@@ -17,7 +17,6 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -51,6 +50,7 @@ import com.intellij.util.Functions;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -89,6 +89,7 @@ public final class PassExecutorService implements Disposable {
   private final AtomicReference<@NotNull Map<ScheduledPass, Job>> mySubmittedPasses = new AtomicReference<>(new ConcurrentHashMap<>());
   private final Project myProject;
   private volatile boolean isDisposed;
+  private static final ThreadLocal<AtomicInteger> PASS_RUNNING = ThreadLocal.withInitial(() -> new AtomicInteger());
 
   PassExecutorService(@NotNull Project project) {
     myProject = project;
@@ -145,18 +146,22 @@ public final class PassExecutorService implements Disposable {
     }
   }
 
+  // must not acquire ReadLock here, to avoid deadlocks, because this method is invoked inside TextEditorHighlightingPassRegistrar lock
   @RequiresBackgroundThread
+  @RequiresReadLockAbsence
   void submitPasses(@NotNull Document document,
+                    @NotNull CodeInsightContext context,
                     @NotNull VirtualFile virtualFile,
                     @NotNull PsiFile psiFile,
                     @NotNull FileEditor fileEditor,
                     HighlightingPass @NotNull [] passes,
                     @NotNull DaemonProgressIndicator updateProgress) {
+    ThreadingAssertions.assertBackgroundThread();
+    ThreadingAssertions.assertNoReadAccess();
     if (isDisposed()) {
       ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopAndRestartMyProcess(updateProgress, null, "PES is disposed");
       return;
     }
-    ThreadingAssertions.assertBackgroundThread();
 
     List<TextEditorHighlightingPass> documentBoundPasses = new ArrayList<>();
     List<EditorBoundHighlightingPass> editorBoundPasses = new ArrayList<>();
@@ -185,12 +190,8 @@ public final class PassExecutorService implements Disposable {
     // passId -> created pass
     Int2ObjectMap<ScheduledPass> toBeSubmitted = new Int2ObjectOpenHashMap<>();
     sortById(documentBoundPasses);
-    for (TextEditorHighlightingPass pass : documentBoundPasses) {
-      createScheduledPass(fileEditor, document, virtualFile, psiFile, pass, toBeSubmitted, id2Pass, freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
-    }
-
-    for (EditorBoundHighlightingPass pass : editorBoundPasses) {
-      createScheduledPass(fileEditor, document, virtualFile, psiFile, pass, toBeSubmitted, id2Pass, freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
+    for (TextEditorHighlightingPass pass : ContainerUtil.concat(documentBoundPasses, editorBoundPasses)) {
+      createScheduledPass(fileEditor, document, context, virtualFile, psiFile, pass, toBeSubmitted, id2Pass, freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
     }
 
     if (CHECK_CONSISTENCY && !ApplicationManagerEx.isInStressTest()) {
@@ -263,7 +264,7 @@ public final class PassExecutorService implements Disposable {
     assert id2Visits.size() == threadsToStartCountdown.get() : "Expected "+threadsToStartCountdown+" but got "+id2Visits.size()+": "+id2Visits;
   }
 
-  private void checkConsistency(@NotNull ScheduledPass pass, Map<ScheduledPass, Pair<ScheduledPass, Integer>> id2Visits) {
+  private void checkConsistency(@NotNull ScheduledPass pass, @NotNull Map<ScheduledPass, Pair<ScheduledPass, Integer>> id2Visits) {
     for (ScheduledPass successor : ContainerUtil.concat(pass.mySuccessorsOnCompletion, pass.mySuccessorsOnSubmit)) {
       Pair<ScheduledPass, Integer> pair = id2Visits.get(successor);
       if (pair == null) {
@@ -281,6 +282,7 @@ public final class PassExecutorService implements Disposable {
 
   private @NotNull ScheduledPass createScheduledPass(@NotNull FileEditor fileEditor,
                                                      @NotNull Document document,
+                                                     @NotNull CodeInsightContext context,
                                                      @NotNull VirtualFile virtualFile,
                                                      @NotNull PsiFile psiFile,
                                                      @NotNull TextEditorHighlightingPass pass,
@@ -300,7 +302,7 @@ public final class PassExecutorService implements Disposable {
     threadsToStartCountdown.incrementAndGet();
     toBeSubmitted.put(passId, scheduledPass);
     for (int predecessorId : pass.getCompletionPredecessorIds()) {
-      ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditor, document, virtualFile, psiFile, toBeSubmitted, id2Pass, freePasses, dependentPasses,
+      ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditor, document, context, virtualFile, psiFile, toBeSubmitted, id2Pass, freePasses, dependentPasses,
                                                               updateProgress, threadsToStartCountdown, predecessorId,
                                                               toBeSubmitted, id2Pass);
       if (predecessor != null) {
@@ -308,7 +310,7 @@ public final class PassExecutorService implements Disposable {
       }
     }
     for (int predecessorId : pass.getStartingPredecessorIds()) {
-      ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditor, document, virtualFile, psiFile, toBeSubmitted, id2Pass, freePasses, dependentPasses,
+      ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditor, document, context, virtualFile, psiFile, toBeSubmitted, id2Pass, freePasses, dependentPasses,
                                                               updateProgress, threadsToStartCountdown, predecessorId,
                                                               toBeSubmitted, id2Pass);
       if (predecessor != null) {
@@ -326,10 +328,10 @@ public final class PassExecutorService implements Disposable {
       ProgressManager.checkCanceled();
       Editor editor = text.getEditor();
       ShowIntentionsPass ip = new ShowIntentionsPass(psiFile, editor, false);
-      ip.setContext(ReadAction.computeBlocking(()->CodeInsightContextUtil.getCodeInsightContext(psiFile)));
+      ip.setContext(context);
       assignUniqueId(ip, id2Pass);
       ip.setCompletionPredecessorIds(new int[]{passId});
-      createScheduledPass(fileEditor, document, virtualFile, psiFile, ip, toBeSubmitted, id2Pass, freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
+      createScheduledPass(fileEditor, document, context, virtualFile, psiFile, ip, toBeSubmitted, id2Pass, freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
     }
 
     return scheduledPass;
@@ -337,6 +339,7 @@ public final class PassExecutorService implements Disposable {
 
   private ScheduledPass findOrCreatePredecessorPass(@NotNull FileEditor fileEditor,
                                                     @NotNull Document document,
+                                                    @NotNull CodeInsightContext context,
                                                     @NotNull VirtualFile virtualFile,
                                                     @NotNull PsiFile psiFile,
                                                     @NotNull Int2ObjectMap<ScheduledPass> toBeSubmitted,
@@ -351,7 +354,8 @@ public final class PassExecutorService implements Disposable {
     ScheduledPass predecessor = thisEditorId2ScheduledPass.get(predecessorId);
     if (predecessor == null) {
       TextEditorHighlightingPass textEditorPass = thisEditorId2Pass.get(predecessorId);
-      predecessor = textEditorPass == null ? null : createScheduledPass(fileEditor, document, virtualFile, psiFile, textEditorPass, toBeSubmitted,
+      predecessor = textEditorPass == null ? null : createScheduledPass(fileEditor, document, context,
+                                                                        virtualFile, psiFile, textEditorPass, toBeSubmitted,
                                                                         id2Pass, freePasses,
                                                                         dependentPasses, updateProgress, myThreadsToStartCountdown);
     }
@@ -411,6 +415,7 @@ public final class PassExecutorService implements Disposable {
     @Override
     public void run() {
       ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() -> {
+        PASS_RUNNING.get().incrementAndGet();
         try {
           ((FileTypeManagerImpl)FileTypeManager.getInstance()).cacheFileTypesInside(() -> doRun());
         }
@@ -420,6 +425,9 @@ public final class PassExecutorService implements Disposable {
         catch (RuntimeException | Error e) {
           myUpdateProgress.cancel(e, "exception thrown");
           throw e;
+        }
+        finally {
+          PASS_RUNNING.get().decrementAndGet();
         }
       });
     }
@@ -482,7 +490,7 @@ public final class PassExecutorService implements Disposable {
               ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopAndRestartMyProcess(myUpdateProgress,
                                                                                                           ObjectUtils.notNull(e.getCause(), e), "PCE was thrown by pass");
               if (LOG.isDebugEnabled()) {
-                LOG.debug("PCE was thrown by " + myPass.getClass(), e);
+                LOG.debug("PCE was thrown by " + myPass.getClass(), new RuntimeException(e));
               }
             }
           }
@@ -649,5 +657,10 @@ public final class PassExecutorService implements Disposable {
     catch (InterruptedException e) {
       return true;
     }
+  }
+
+  @ApiStatus.Internal
+  static boolean assertHighlightingPassNotRunning() {
+    return PASS_RUNNING.get().get() == 0;
   }
 }

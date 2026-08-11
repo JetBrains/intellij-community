@@ -2,7 +2,6 @@
 package com.intellij.ui.dsl.builder.components
 
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
@@ -11,8 +10,6 @@ import java.awt.Insets
 import java.awt.RenderingHints
 import javax.swing.border.LineBorder
 
-@ApiStatus.Internal
-@ApiStatus.Experimental
 internal class RoundedLineBorderWithBackground(
   color: Color,
   private val bgColor: Color,

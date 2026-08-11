@@ -132,7 +132,7 @@ export function splitPathListArgsByIde(
   }
 }
 
-const PATH_ARG_KEYS = ['pathInProject', 'file_path', 'dir_path', 'directoryPath', 'filePath']
+const PATH_ARG_KEYS = ['pathInProject', 'directoryPath', 'filePath']
 
 export function extractPathArg(args: Record<string, unknown>): string | undefined {
   for (const key of PATH_ARG_KEYS) {

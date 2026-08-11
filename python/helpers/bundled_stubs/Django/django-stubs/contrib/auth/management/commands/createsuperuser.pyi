@@ -12,8 +12,8 @@ PASSWORD_FIELD: str
 
 class Command(BaseCommand):
     UserModel: type[AbstractBaseUser]
-    username_field: Field
+    username_field: Field[Any, Any]
     stdin: Any
-    def get_input_data(self, field: Field, message: str, default: str | None = ...) -> str | None: ...
+    def get_input_data(self, field: Field[Any, Any], message: str, default: str | None = ...) -> str | None: ...
     @cached_property
     def username_is_unique(self) -> bool: ...

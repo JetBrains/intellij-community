@@ -1,13 +1,15 @@
 - name: lib/editorconfig-plugin.jar
   modules:
   - name: intellij.editorconfig.plugin
+- name: lib/intellij.libraries.ec4j.core.jar
+  contentModules:
+  - name: intellij.libraries.ec4j.core
+    libraries:
+      ec4j-core:
+      - name: $MAVEN_REPOSITORY$/org/ec4j/core/ec4j-core/0/ec4j-core-0.jar
 - name: lib/modules/intellij.editorconfig.backend.jar
   contentModules:
   - name: intellij.editorconfig.backend
-  library: ec4j-core
-  files:
-  - name: $MAVEN_REPOSITORY$/org/ec4j/core/ec4j-core/0/ec4j-core-0.jar
-  reason: <- intellij.editorconfig.backend
 - name: lib/modules/intellij.editorconfig.backend.spellchecking.jar
   contentModules:
   - name: intellij.editorconfig.backend.spellchecking

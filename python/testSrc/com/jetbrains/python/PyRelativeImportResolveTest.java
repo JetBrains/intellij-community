@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
@@ -24,6 +27,8 @@ import java.util.List;
 import static org.junit.Assert.assertNotEquals;
 
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyRelativeImportResolveTest extends PyMultiFileResolveTestCase {
   private static final String PLAIN_DIR = "plainDirectory";
   private static final String NAMESPACE_PACK_DIR = "namespacePackage";

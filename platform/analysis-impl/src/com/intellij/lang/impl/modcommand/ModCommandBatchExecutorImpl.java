@@ -120,11 +120,12 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     }
     if (command instanceof ModNavigate || command instanceof ModHighlight ||
         command instanceof ModCopyToClipboard || command instanceof ModStartRename ||
-        command instanceof ModStartTemplate || command instanceof ModUpdateSystemOptions ||
+        command instanceof ModUpdateSystemOptions ||
         command instanceof ModUpdateReferences || command instanceof ModOpenUrl) {
       return Result.INTERACTIVE;
     }
     return switch (command) {
+      case ModStartTemplate template -> template.optional() ? Result.NOTHING : Result.INTERACTIVE;
       case ModLaunchEditorAction action -> action.optional() ? Result.NOTHING : Result.INTERACTIVE;
       case ModRegisterTabOut ignored -> Result.NOTHING;
       case ModUpdateFileText upd -> executeUpdate(project, upd) ? Result.SUCCESS : Result.ABORT;
@@ -142,6 +143,12 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       }
       case ModCompositeCommand(var commands) -> {
         BatchExecutionResult result = Result.NOTHING;
+        for (ModCommand subCommand : commands) {
+          if (subCommand instanceof ModStartTemplate template && !template.optional() ||
+              subCommand instanceof ModLaunchEditorAction action && !action.optional()) {
+            yield Result.INTERACTIVE;
+          }
+        }
         for (ModCommand subCommand : commands) {
           result = result.compose(doExecuteInBatch(context, subCommand));
           if (result == Result.ABORT || result instanceof Error) break;

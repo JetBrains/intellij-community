@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.application.Topics;
@@ -105,7 +105,6 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static com.intellij.vcsUtil.VcsUtil.isFileForVcs;
-import static java.util.Collections.emptyList;
 import static java.util.function.Function.identity;
 
 public final class SvnVcs extends AbstractVcs {
@@ -174,27 +173,31 @@ public final class SvnVcs extends AbstractVcs {
    * TODO: formats. And should be removed when 1.6 working copies are no longer supported by IDEA.
    */
   private void cleanup17copies() {
-    Runnable callCleanupWorker = () -> {
+    getSvnFileUrlMappingImpl().scheduleRefresh(() -> {
       if (myProject.isDisposed()) return;
-      new CleanupWorker(this, emptyList()) {
-        @Override
-        protected void fillRoots() {
-          for (WCInfo info : getAllWcInfos()) {
-            if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat())) {
-              VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(info.getRootInfo().getIoFile());
-              if (file == null) {
-                LOG.info("Wasn't able to find virtual file for wc root: " + info.getPath());
-              }
-              else {
-                myRoots.add(file);
-              }
-            }
-          }
-        }
-      }.execute();
-    };
+      List<VirtualFile> roots = collect17WorkingCopies();
+      if (roots.isEmpty()) return;
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (myProject.isDisposed()) return;
+        new CleanupWorker(this, roots).execute();
+      });
+    });
+  }
 
-    getSvnFileUrlMappingImpl().scheduleRefresh(() -> ApplicationManager.getApplication().invokeLater(callCleanupWorker));
+  private @NotNull List<VirtualFile> collect17WorkingCopies() {
+    List<VirtualFile> roots = new ArrayList<>();
+    for (WCInfo info : getAllWcInfos()) {
+      if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat())) {
+        VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(info.getRootInfo().getIoFile());
+        if (file == null) {
+          LOG.info("Wasn't able to find virtual file for wc root: " + info.getPath());
+        }
+        else {
+          roots.add(file);
+        }
+      }
+    }
+    return roots;
   }
 
   public boolean checkCommandLineVersion() {

@@ -29,6 +29,10 @@ internal class DefaultFilesToSendProvider(
       files.take(maxFilesToSend)
     }
     eventLoggerProvider.eventLogSystemLogger.logFileToSendCalculated(files.size, maxFilesToSend, filteredFiles.size)
+    if (files.isNotEmpty()) {
+      val oldestPendingFileWaitMs = System.currentTimeMillis() - files.minOf { it.lastModified() }
+      eventLoggerProvider.eventLogSystemLogger.logBacklogSnapshot(files.size, files.sumOf { it.length() }, oldestPendingFileWaitMs)
+    }
     return filteredFiles
   }
 }

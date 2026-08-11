@@ -1,8 +1,8 @@
 // "Add 'Any' as upper bound for T to make it non-nullable" "true"
 // LANGUAGE_VERSION: 1.7
-// K2_ERROR: Argument type mismatch: actual type is 'Foo<T#1 (of class Bar<T, U>), U#1 (of class Bar<T, U>)>', but 'Foo<uninferred T (of fun <T, U> foo) & Any, uninferred U (of fun <T, U> foo)>' was expected.
-// K2_ERROR: Cannot infer type for type parameter 'T'. Specify it explicitly.
-// K2_ERROR: Cannot infer type for type parameter 'U'. Specify it explicitly.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
 
 class Foo<T, U>
 

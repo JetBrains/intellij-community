@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.java.impl` start
-
 create_kotlinc_options(
     name = "custom_impl",
     x_explicit_api_mode = "strict",
@@ -35,6 +34,7 @@ jvm_library(
         "//java/java-psi-impl:psi-impl",
         "//java/java-frontback-impl:frontback-impl",
         "//java/java-indexing-impl:indexing-impl",
+        "//java/java-indexing-serializers:indexing-serializers",
         "//java/java-analysis-impl:analysis-impl",
         "//java/java-structure-view:structureView",
     ],
@@ -64,7 +64,6 @@ jvm_library(
         "//libraries/oro-matcher",
         "//java/java-runtime:rt",
         "//platform/lang-impl",
-        "//platform/vcs-api:vcs",
         "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
         "//platform/usageView",
         "//platform/execution-impl",
@@ -80,6 +79,7 @@ jvm_library(
         "//java/java-frontback-psi-api:frontback-psi",
         "//RegExpSupport:regexp",
         "//java/java-indexing-impl:indexing-impl",
+        "//java/java-indexing-serializers:indexing-serializers",
         "//java/java-indexing-api:indexing",
         "//jps/model-impl",
         "//java/java-analysis-impl:analysis-impl",
@@ -94,7 +94,7 @@ jvm_library(
         "//platform/object-serializer:objectSerializer-annotations",
         "//platform/external-system-impl:externalSystem-impl",
         "//platform/diff-impl",
-        "@lib//:java-impl-completion-ranking-java",
+        "//libraries/completion-ranking-java",
         "//platform/util/jdom",
         "//libraries/stream",
         "//platform/statistics",
@@ -128,6 +128,7 @@ jvm_library(
         "//java/java-syntax:syntax",
         "//java/java-psi-api:psi",
         "//platform/execution",
+        "//platform/testIntegration-ui",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/lang-api:lang",
@@ -164,6 +165,8 @@ jvm_library(
         "//java/java-frontback-impl:frontback-impl_test_lib",
         "//java/java-indexing-impl:indexing-impl",
         "//java/java-indexing-impl:indexing-impl_test_lib",
+        "//java/java-indexing-serializers:indexing-serializers",
+        "//java/java-indexing-serializers:indexing-serializers_test_lib",
         "//java/java-analysis-impl:analysis-impl",
         "//java/java-analysis-impl:analysis-impl_test_lib",
         "//java/java-structure-view:structureView",
@@ -229,8 +232,6 @@ jvm_library(
         "//java/java-runtime:rt_test_lib",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/vcs-api:vcs",
-        "//platform/vcs-api:vcs_test_lib",
         "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
         "//platform/usageView",
         "//platform/usageView:usageView_test_lib",
@@ -258,6 +259,8 @@ jvm_library(
         "//RegExpSupport:regexp_test_lib",
         "//java/java-indexing-impl:indexing-impl",
         "//java/java-indexing-impl:indexing-impl_test_lib",
+        "//java/java-indexing-serializers:indexing-serializers",
+        "//java/java-indexing-serializers:indexing-serializers_test_lib",
         "//java/java-indexing-api:indexing",
         "//java/java-indexing-api:indexing_test_lib",
         "//jps/model-impl",
@@ -286,7 +289,8 @@ jvm_library(
         "//platform/external-system-impl:externalSystem-impl_test_lib",
         "//platform/diff-impl",
         "//platform/diff-impl:diff-impl_test_lib",
-        "@lib//:java-impl-completion-ranking-java",
+        "//libraries/completion-ranking-java",
+        "//libraries/completion-ranking-java:completion-ranking-java_test_lib",
         "//platform/util/jdom",
         "//platform/util/jdom:jdom_test_lib",
         "//libraries/stream",
@@ -349,6 +353,8 @@ jvm_library(
         "//java/java-psi-api:psi_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
+        "//platform/testIntegration-ui",
+        "//platform/testIntegration-ui:testIntegration-ui_test_lib",
         "//platform/testFramework/common",
         "//platform/testFramework/common:common_test_lib",
         "//libraries/kotlinx/serialization/core",
@@ -371,7 +377,6 @@ exports_files(
 ### auto-generated section `iml intellij.java.impl` end
 
 ### auto-generated section `test intellij.java.impl` start
-
 jps_test(
     name = "impl_test",
     runtime_deps = [":impl_test_lib"],

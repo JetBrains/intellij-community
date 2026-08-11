@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.grazie.core` start
-
 jvm_library(
     name = "core",
     srcs = glob(
@@ -30,9 +29,9 @@ jvm_library(
     ],
     runtime_deps = [
         # do not sort,
-        "@lib//:jna",
+        "//libraries/jna",
         "//libraries/guava",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/commons/lang3",
     ],
     deps = [
@@ -163,9 +162,11 @@ jvm_library(
         "//libraries/miglayout-swing:miglayout-swing_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//libraries/guava:guava_test_lib",
         "//platform/platform-api:ide_test_lib",
         "//platform/statistics:statistics_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
         "//platform/util-class-loader:util-classLoader_test_lib",
         "//libraries/javax/activation:activation_test_lib",

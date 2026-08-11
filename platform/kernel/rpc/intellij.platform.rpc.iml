@@ -7,9 +7,9 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" packagePrefix="com.intellij.platform.rpc" />
     </content>
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="module" module-name="intellij.platform.klogger" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="fleet.util.logging.api" />
     <orderEntry type="module" module-name="fleet.rpc" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.core" />

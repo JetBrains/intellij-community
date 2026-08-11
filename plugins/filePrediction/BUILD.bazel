@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.filePrediction` start
-
 jvm_library(
     name = "filePrediction",
     srcs = glob(
@@ -29,12 +28,8 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/core-api:core",
         "//platform/projectModel-api:projectModel",
-        "//platform/vcs-api:vcs",
         "//platform/ide-core-impl",
         "//platform/ide-core",
-        "//platform/vcs-log/impl",
-        "//plugins/git4idea/backend",
-        "//uast/uast-common:uast",
         "//platform/platform-impl/internal",
         "//platform/statistics",
         "@lib//:file_prediction-file-prediction-model",
@@ -66,12 +61,8 @@ jvm_library(
         "//jps/model-api:model",
         "//jps/model-api:model_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/vcs-api:vcs_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
-        "//platform/vcs-log/impl:impl_test_lib",
-        "//plugins/git4idea/backend:backend_test_lib",
-        "//uast/uast-common:uast_test_lib",
         "//platform/platform-impl/internal:internal_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
@@ -99,7 +90,6 @@ exports_files(
 ### auto-generated section `iml intellij.filePrediction` end
 
 ### auto-generated section `build intellij.filePrediction.tests` start
-
 jvm_library(
     name = "filePrediction-tests",
     srcs = glob(
@@ -185,6 +175,10 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/statistics/testFramework",
         "//platform/statistics/testFramework:testFramework_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//plugins/filePrediction/java",
+        "//plugins/filePrediction/java:java_test_lib",
     ],
 )
 ### auto-generated section `build intellij.filePrediction.tests` end
@@ -199,7 +193,6 @@ exports_files(
 ### auto-generated section `iml intellij.filePrediction.tests` end
 
 ### auto-generated section `test intellij.filePrediction.tests` start
-
 jps_test(
     name = "filePrediction-tests_test",
     runtime_deps = [":filePrediction-tests_test_lib"],

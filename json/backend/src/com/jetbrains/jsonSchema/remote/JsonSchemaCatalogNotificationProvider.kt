@@ -15,8 +15,10 @@ import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration
+import com.jetbrains.jsonSchema.fus.JsonSchemaCatalogNotificationAction
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
+import com.jetbrains.jsonSchema.fus.logNotificationAction
 import java.util.function.Function
 import javax.swing.JComponent
 
@@ -69,9 +71,18 @@ class JsonSchemaCatalogNotificationProvider : EditorNotificationProvider, DumbAw
   ) : EditorNotificationPanel(fileEditor, Status.Info) {
     init {
       text = JsonBundle.message("schema.catalog.suggestion.text", schemaInfo.description)
-      createActionLabel(JsonBundle.message("schema.catalog.suggestion.apply")) { applySchema(project, file, schemaInfo) }
-      createActionLabel(JsonBundle.message("schema.widget.no.mapping")) { ignoreSchema(project, file) }
-      createActionLabel(JsonBundle.message("schema.catalog.suggestion.disable")) { disableCatalogSuggestions(project) }
+      createActionLabel(JsonBundle.message("schema.catalog.suggestion.apply")) {
+        logNotificationAction(project, schemaInfo, JsonSchemaCatalogNotificationAction.APPLY)
+        applySchema(project, file, schemaInfo)
+      }
+      createActionLabel(JsonBundle.message("schema.widget.no.mapping")) {
+        logNotificationAction(project, schemaInfo, JsonSchemaCatalogNotificationAction.IGNORE_FILE)
+        ignoreSchema(project, file)
+      }
+      createActionLabel(JsonBundle.message("schema.catalog.suggestion.disable")) {
+        logNotificationAction(project, schemaInfo, JsonSchemaCatalogNotificationAction.DISABLE_CATALOG)
+        disableCatalogSuggestions(project)
+      }
     }
   }
 

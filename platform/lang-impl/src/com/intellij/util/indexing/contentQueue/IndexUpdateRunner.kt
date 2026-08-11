@@ -312,21 +312,20 @@ class IndexUpdateRunner(
         // ProjectRootManager.isExcluded looks safe enough, but not exactly the same check as done by scanning.
         // upd: also, files, registered as non indexable (see WorkspaceFileKind.CONTENT_NON_INDEXABLE) should be skipped during indexing.
         val workspaceFileIndex = WorkspaceFileIndex.getInstance(project)
-        val excluded = readActionUndispatched {
-          val isIndexable = workspaceFileIndex.isIndexable(file)
-          val belongsToNonIndexable = workspaceFileIndex.findFileSet(file,
-                                                                     true,
-                                                                     false,
-                                                                     includeContentNonIndexableSets = true,
-                                                                     false,
-                                                                     false,
-                                                                     includeExternalNonIndexableSets = true,
-                                                                     false) != null
-          // We don't want to just exclude all !isIndexable,
-          // because they may be contributed by an indexing contributor while WorkspaceFileIndex is not aware about it.
-          // We only want to exclude the files that are explicitly registered as non indexable.
-          ProjectRootManager.getInstance(project).fileIndex.isExcluded(file) || (!isIndexable && belongsToNonIndexable)
-        }
+
+        val isIndexable = workspaceFileIndex.isIndexable(file)
+        val belongsToNonIndexable = workspaceFileIndex.findFileSet(file,
+                                                                   true,
+                                                                   false,
+                                                                   includeContentNonIndexableSets = true,
+                                                                   false,
+                                                                   false,
+                                                                   includeExternalNonIndexableSets = true,
+                                                                   false) != null
+        // We don't want to just exclude all !isIndexable,
+        // because they may be contributed by an indexing contributor while WorkspaceFileIndex is not aware about it.
+        // We only want to exclude the files that are explicitly registered as non indexable.
+        val excluded = ProjectRootManager.getInstance(project).fileIndex.isExcluded(file) || (!isIndexable && belongsToNonIndexable)
         if (excluded) {
           val counter = badFileCounter.incrementAndGet()
           // respect user: only log file names in debug level

@@ -148,7 +148,7 @@ internal suspend fun generateAllProductXmlFiles(
     DiscoveredProduct(
       name = name,
       config = ProductConfiguration(
-        className = "test-product",
+        className = TEST_PRODUCT_CLASS_NAME,
         modules = emptyList(),
         pluginXmlPath = xmlPath,
       ),
@@ -172,7 +172,7 @@ internal suspend fun generateAllProductXmlFiles(
         // Extract ProductProperties class name for the source comment.
         // Use the declaring class of `getProductContentDescriptor` method.
         val productPropertiesClass = when (val props = discovered.properties) {
-          null -> "test-product"
+          null -> TEST_PRODUCT_CLASS_NAME
           else -> (props.javaClass.methods.firstOrNull { it.name == "getProductContentDescriptor" }?.declaringClass
                    ?: props.javaClass).name
         }

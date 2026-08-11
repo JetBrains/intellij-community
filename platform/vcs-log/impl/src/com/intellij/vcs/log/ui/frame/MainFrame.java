@@ -42,6 +42,7 @@ import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -267,7 +268,7 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
 
   private class MyFocusPolicy extends ComponentsListFocusTraversalPolicy {
     @Override
-    protected @NotNull List<Component> getOrderedComponents() {
+    protected @NotNull @Unmodifiable List<Component> getOrderedComponents() {
       return ContainerUtil.skipNulls(
         Arrays.asList(myGraphTable,
                       myChangesBrowser.getPreferredFocusedComponent(),

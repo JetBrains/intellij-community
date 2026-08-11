@@ -5,6 +5,8 @@ import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.CredentialStore
 import com.intellij.credentialStore.Credentials
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 
 /**
  * [See the documentation](https://plugins.jetbrains.com/docs/intellij/persisting-sensitive-data.html).
@@ -24,6 +26,8 @@ abstract class PasswordSafe : CredentialStore, PasswordStorage {
 
   abstract val isMemoryOnly: Boolean
 
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
   abstract operator fun set(attributes: CredentialAttributes, credentials: Credentials?, memoryOnly: Boolean)
 
   abstract fun isPasswordStoredOnlyInMemory(attributes: CredentialAttributes, credentials: Credentials): Boolean

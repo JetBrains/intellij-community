@@ -13,7 +13,7 @@ class Compiler(base.Compiler):
     static_lib_extension: ClassVar[str]
     shared_lib_extension: ClassVar[str]
     shared_lib_format: ClassVar[str]
-    static_lib_format = shared_lib_format
+    static_lib_format = shared_lib_format  # pyrefly: ignore [unknown-name]
     exe_extension: ClassVar[str]
     initialized: bool
     plat_name: str | None

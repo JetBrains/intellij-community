@@ -1,21 +1,62 @@
-<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.jvm.shared">
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
     <module name="intellij.java.ui"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.compilerConfiguration.ui"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.platforms"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.projectModel"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.base.scripting.shared"/>
+    <module name="intellij.kotlin.base.statistics"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
+    <module name="intellij.kotlin.formatter"/>
+    <module name="intellij.kotlin.highlighting"/>
+    <module name="intellij.kotlin.ide"/>
+    <module name="intellij.kotlin.jsr223"/>
+    <module name="intellij.kotlin.projectConfiguration"/>
     <module name="intellij.kotlin.runConfigurations.jvm"/>
+    <module name="intellij.libraries.asm"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diff.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lvcs"/>
+    <module name="intellij.platform.lvcs.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.vcs.core"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.xml.psi.impl"/>
+    <module name="kotlin.fir.frontend-independent"/>
   </dependencies>
   <!-- endregion -->
-  <extensionPoints>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.idea.jvm.shared.bytecode.compilationConfigurationEnricher"
-            interface="org.jetbrains.kotlin.idea.jvm.shared.bytecode.CompilationConfigurationEnricher"
-            dynamic="true"/>
-  </extensionPoints>
 
   <actions>
     <action id="CreateIncrementalCompilationBackup"
@@ -36,6 +77,8 @@
     <action id="ConfigureKotlinInProject" class="org.jetbrains.kotlin.idea.jvm.shared.actions.ConfigureKotlinInProjectAction">
       <add-to-group group-id="KotlinToolsGroup"/>
     </action>
+    <action id="Kotlin.ClearScratch" class="org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ClearScratchAction" icon="AllIcons.Actions.GC"/>
+    <action id="Kotlin.StopScratch" class="org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.StopScratchAction" icon="AllIcons.Actions.Suspend"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -50,22 +93,13 @@
 
     <library.javaSourceRootDetector implementation="org.jetbrains.kotlin.idea.jvm.shared.configuration.KotlinSourceRootDetector"/>
 
-    <multipleRunLocationsProvider implementation="org.jetbrains.kotlin.idea.run.multiplatform.KotlinMultiplatformRunLocationsProvider"/>
-
     <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.compiler.KotlinCompilableFileTypesProvider"/>
-
-    <consoleFilterProvider implementation="org.jetbrains.kotlin.idea.run.KotlinConsoleFilterProvider"/>
 
     <compiler.task execute="BEFORE" implementation="org.jetbrains.kotlin.idea.jvm.shared.internal.makeBackup.MakeBackupCompileTask"/>
 
-    <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.configuration.KotlinExternalSystemSyncListener"/>
 
-    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.versions.UnsupportedAbiVersionNotificationPanelProvider"/>
-
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerStartupActivity"/>
-
-    <notificationGroup id="Configure Kotlin in Project" displayType="STICKY_BALLOON" isLogByDefault="true"
-                       bundle="messages.KotlinJvmBundle" key="notification.group.configure.kotlin.in.project"/>
+      <notificationGroup id="Configure Kotlin in Project" displayType="STICKY_BALLOON" isLogByDefault="true"
+                         bundle="messages.KotlinJvmBundle" key="notification.group.configure.kotlin.in.project"/>
 
     <registryKey key="kotlin.ultra.light.classes.empty.text.range"
                  description="Return 'null' text range as in old light class implementation"
@@ -91,13 +125,7 @@
 
   <resource-bundle>messages.KotlinBundle</resource-bundle>
   <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
-              topic="com.intellij.openapi.roots.ModuleRootListener"/>
-    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
-              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
-    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
-              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-    <listener class="org.jetbrains.kotlin.idea.jvm.shared.compiler.KotlinCompilationStatusListener"
-              topic="com.intellij.openapi.compiler.CompilationStatusListener"/>
+      <listener class="org.jetbrains.kotlin.idea.jvm.shared.compiler.KotlinCompilationStatusListener"
+                topic="com.intellij.openapi.compiler.CompilationStatusListener"/>
   </projectListeners>
 </idea-plugin>

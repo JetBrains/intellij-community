@@ -43,11 +43,11 @@ private val VirtualFile.isUpToDate: Boolean
     return true
   }
 
-@Service
+@Service(Service.Level.PROJECT)
 @ApiStatus.Internal
 @VisibleForTesting
-class PackageDaemonTaskExecutor(private val cs: CoroutineScope) {
-  fun execute(vFile: VirtualFile, project: Project): Job {
+class PackageDaemonTaskExecutor(private val project: Project, private val cs: CoroutineScope) {
+  fun execute(vFile: VirtualFile): Job {
     return cs.launch {
       constrainedReadAction(ReadConstraint.inSmartMode(project)) readAction@{
         val fileIndex = ProjectFileIndex.getInstance(project)
@@ -104,7 +104,7 @@ class PyPackageDaemonListener(private val project: Project) : DaemonCodeAnalyzer
     for (fileEditor in fileEditors) {
       val vFile = fileEditor.file
       if (vFile.isUpToDate) continue
-      service<PackageDaemonTaskExecutor>().execute(vFile, project)
+      project.service<PackageDaemonTaskExecutor>().execute(vFile)
     }
   }
 

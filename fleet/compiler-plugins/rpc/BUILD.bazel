@@ -20,7 +20,6 @@ kt_compiler_plugin(
 )
 
 ### auto-generated section `build fleet.compiler.plugins.rpc` start
-
 create_kotlinc_options(
     name = "custom_rpc",
     x_context_parameters = True,
@@ -47,7 +46,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-compiler-embeddable-provided",
     ],
 )
@@ -65,6 +64,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":rpc",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:kotlin-compiler-embeddable-provided",
     ],
 )

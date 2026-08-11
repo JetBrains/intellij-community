@@ -9,6 +9,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -24,7 +25,7 @@ public final class JavaStaticMemberNameIndex extends StringStubIndexExtension<Ps
     return JavaStubIndexKeys.JVM_STATIC_MEMBERS_NAMES;
   }
 
-  public Collection<PsiMember> getStaticMembers(final String name, final Project project, final @NotNull GlobalSearchScope scope) {
+  public @Unmodifiable Collection<PsiMember> getStaticMembers(final String name, final Project project, final @NotNull GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), name, project, new JavaSourceFilterScope(scope), PsiMember.class);
   }
 }

@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.featureStatistics.fusCollectors.InspectionWidgetUsageCollector;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.lang.Language;
@@ -37,7 +38,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -60,10 +63,13 @@ import javax.swing.JProgressBar;
 import javax.swing.ListCellRenderer;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
+import java.awt.AWTEvent;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -78,6 +84,10 @@ final class TrafficLightPopup {
   private final ExtensionPointName<InspectionPopupLevelChangePolicy> EP_NAME = new ExtensionPointName<>("com.intellij.inspectionPopupLevelChangePolicy");
   private static final int DELTA_X = 6;
   private static final int DELTA_Y = 6;
+  // Extra margin around the popup and its anchor that still counts as "inside" for the hide logic.
+  // Must stay less than DELTA_Y so that a mouse location on the anchor never falls into the grown popup bounds,
+  // otherwise the safety triangle check would be skipped for the anchor -> popup movement.
+  private static final int SAFE_ZONE_SLACK = 4;
   private final Editor myEditor;
   private final AnAction compactViewAction;
   private final JPanel myContent = new JPanel(new GridBagLayout());
@@ -87,6 +97,10 @@ final class TrafficLightPopup {
 
   private JBPopup myPopup;
   private boolean insidePopup;
+  private RelativeRectangle myAnchor;
+  private Point myLastMouseLocation;
+  private Point mySafeZoneApex;
+  private long myHideRequestedAt;
 
   TrafficLightPopup(@NotNull Editor editor, @NotNull AnAction compactViewAction) {
     this.myEditor = editor;
@@ -114,7 +128,7 @@ final class TrafficLightPopup {
         if (!myContent.getBounds().contains(point) || point.x == 0 || point.y == 0) {
           insidePopup = false;
           if (canClose()) {
-            hidePopup();
+            scheduleHide();
           }
         }
       }
@@ -133,15 +147,75 @@ final class TrafficLightPopup {
     popupAlarm.cancelAndRequest(Registry.intValue("ide.tooltip.initialReshowDelay"), () -> showPopup(event, analyzerStatus));
   }
 
-  void scheduleHide() {
-    popupAlarm.cancelAndRequest(Registry.intValue("ide.tooltip.initialDelay.highlighter"), () -> {
-      if (canClose()) {
-        hidePopup();
-      }
-    });
+  void scheduleShow(@NotNull RelativeRectangle anchor, @NotNull AnalyzerStatus analyzerStatus) {
+    popupAlarm.cancelAndRequest(Registry.intValue("ide.tooltip.initialReshowDelay"), () -> showPopup(anchor, analyzerStatus));
   }
 
-  private void showPopup(@NotNull InputEvent event, @NotNull AnalyzerStatus analyzerStatus) {
+  void scheduleHide() {
+    mySafeZoneApex = myLastMouseLocation;
+    myHideRequestedAt = System.currentTimeMillis();
+    popupAlarm.cancelAndRequest(Registry.intValue("ide.tooltip.initialDelay.highlighter"), this::attemptHide);
+  }
+
+  private void attemptHide() {
+    if (!canClose()) {
+      return;
+    }
+    // While the mouse stays in the safe zone (over the popup or its anchor, or on its way from the anchor to the popup),
+    // postpone hiding instead of dismissing the popup in the middle of the movement.
+    // The dismiss delay limits how long a mouse parked in the safe zone can keep the popup on screen.
+    if (isMouseInSafeZone() && System.currentTimeMillis() - myHideRequestedAt < Registry.intValue("ide.tooltip.dismissDelay")) {
+      popupAlarm.cancelAndRequest(Registry.intValue("ide.tooltip.initialDelay.highlighter"), this::attemptHide);
+      return;
+    }
+    hidePopup();
+  }
+
+  private boolean isMouseInSafeZone() {
+    Point location = myLastMouseLocation;
+    if (location == null || myPopup == null || myPopup.isDisposed() || !myContent.isShowing()) {
+      return false;
+    }
+
+    int slack = JBUIScale.scale(SAFE_ZONE_SLACK);
+    Rectangle popupBounds = new Rectangle(myContent.getLocationOnScreen(), myContent.getSize());
+    popupBounds.grow(slack, slack);
+    if (popupBounds.contains(location)) {
+      return true;
+    }
+
+    RelativeRectangle anchor = myAnchor;
+    if (anchor != null && anchor.getComponent().isShowing()) {
+      Rectangle anchorBounds = anchor.getScreenRectangle();
+      anchorBounds.grow(slack, slack);
+      if (anchorBounds.contains(location)) {
+        return true;
+      }
+    }
+
+    // the "safety triangle": the mouse is moving from the point where it left the anchor towards the popup
+    Point apex = mySafeZoneApex;
+    return apex != null && !popupBounds.contains(apex) && ScreenUtil.isMovementTowards(apex, location, popupBounds);
+  }
+
+  private boolean trackMouseLocation(@NotNull AWTEvent e) {
+    int id = e.getID();
+    if (e instanceof MouseEvent mouseEvent &&
+        (id == MouseEvent.MOUSE_MOVED || id == MouseEvent.MOUSE_ENTERED || id == MouseEvent.MOUSE_EXITED)) {
+      Component component = mouseEvent.getComponent();
+      if (component != null && component.isShowing()) {
+        myLastMouseLocation = mouseEvent.getLocationOnScreen();
+      }
+    }
+    return false;
+  }
+
+  private void showPopup(@NotNull RelativeRectangle anchor, @NotNull AnalyzerStatus analyzerStatus) {
+    if (myPopup != null && !myPopup.isDisposed() && myPopup.isVisible() && isSameAnchor(anchor)) {
+      // the popup is already on screen at this anchor (e.g., kept alive by the safe zone);
+      // its content is kept up to date by updateVisiblePopup
+      return;
+    }
     hidePopup();
     if (analyzerStatus.isEmpty()) return; // do not show new popup
 
@@ -161,25 +235,44 @@ final class TrafficLightPopup {
 
     myPopup = myPopupBuilder.createPopup();
     myPopup.addListener(myPopupListener);
+    IdeEventQueue.getInstance().addDispatcher(this::trackMouseLocation, myPopup);
     myEditor.getComponent().addAncestorListener(myAncestorListener);
+    myAnchor = anchor;
 
-    JComponent owner = (JComponent)event.getComponent();
     Dimension size = myContent.getPreferredSize();
     size.width = Math.max(size.width, JBUIScale.scale(296));
 
-    RelativePoint point = new RelativePoint(owner,
-                                            new Point(owner.getWidth() - owner.getInsets().right + JBUIScale.scale(DELTA_X) - size.width,
-                                                      owner.getHeight() + JBUIScale.scale(DELTA_Y)));
-
     myPopup.setSize(size);
     InspectionWidgetUsageCollector.logPopupShown(myEditor.getProject());
-    myPopup.show(point);
+    myPopup.show(getPopupPoint(anchor, size));
+  }
+
+  private void showPopup(@NotNull InputEvent event, @NotNull AnalyzerStatus analyzerStatus) {
+    JComponent owner = (JComponent)event.getComponent();
+    showPopup(new RelativeRectangle(owner, new Rectangle(0, 0, owner.getWidth() - owner.getInsets().right, owner.getHeight())),
+              analyzerStatus);
+  }
+
+  private boolean isSameAnchor(@NotNull RelativeRectangle anchor) {
+    RelativeRectangle currentAnchor = myAnchor;
+    if (currentAnchor == null || !currentAnchor.getComponent().isShowing() || !anchor.getComponent().isShowing()) {
+      return false;
+    }
+    return currentAnchor.getScreenRectangle().equals(anchor.getScreenRectangle());
+  }
+
+  static @NotNull RelativePoint getPopupPoint(@NotNull RelativeRectangle anchor, @NotNull Dimension popupSize) {
+    Point anchorBottomRight = anchor.getMaxPoint().getPoint();
+    return new RelativePoint(anchor.getComponent(),
+                             new Point(anchorBottomRight.x + JBUIScale.scale(DELTA_X) - popupSize.width,
+                                       anchorBottomRight.y + JBUIScale.scale(DELTA_Y)));
   }
 
   void hidePopup() {
     if (myPopup != null && !myPopup.isDisposed()) {
       myPopup.cancel();
     }
+    insidePopup = false;
     myPopup = null;
   }
 

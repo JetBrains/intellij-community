@@ -21,12 +21,15 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import java.beans.PropertyChangeListener
 import java.util.EventListener
+import org.jetbrains.annotations.ApiStatus
 
 interface ReaderModeListener : EventListener {
   fun modeChanged(project: Project)
 }
 
+@ApiStatus.Internal
 class ReaderModeSettingsListener : ReaderModeListener {
+  @ApiStatus.Internal
   companion object {
     @Topic.ProjectLevel
     @JvmField

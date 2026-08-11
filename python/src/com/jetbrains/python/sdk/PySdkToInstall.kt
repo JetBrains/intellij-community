@@ -26,7 +26,7 @@ internal val LOGGER: Logger = Logger.getInstance(PySdkToInstall::class.java)
 
 @CalledInAny
 @Internal
-fun getSdksToInstall(): List<PySdkToInstall> {
+internal fun getSdksToInstall(): List<PySdkToInstall> {
   return PySdkToInstallManager.getAvailableVersionsToInstall().map {
     PySdkToInstall(it.value)
   }
@@ -36,7 +36,7 @@ fun getSdksToInstall(): List<PySdkToInstall> {
  * Generic PySdkToInstall. Compatible with all OS / CpuArch.
  */
 @Internal
-class PySdkToInstall(
+internal class PySdkToInstall(
   val installation: BinaryInstallation,
 ) : InstallablePythonSdk {
   override val name: String = installation.release.title

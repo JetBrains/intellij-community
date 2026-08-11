@@ -23,13 +23,15 @@ import com.jetbrains.python.remote.PyRemoteSourceItem;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import com.jetbrains.python.ui.targetPathEditor.ManualPathEntryDialog;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-class PyRemotePathEditor extends PythonPathEditor {
+@ApiStatus.Internal
+final class PyRemotePathEditor extends PythonPathEditor {
   private static final Logger LOG = Logger.getInstance(PyRemotePathEditor.class);
   private final RemoteSdkProperties myRemoteSdkData;
   private final @NotNull Project myProject;

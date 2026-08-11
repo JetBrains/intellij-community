@@ -30,6 +30,7 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
   protected final @NotNull ASTNode myNode;
   protected final @Nullable Wrap myWrap;
   protected final @Nullable Alignment myAlignment;
+  private final TextRange myTextRange;
 
   private List<Block> mySubBlocks;
   private Boolean myIncomplete;
@@ -39,11 +40,12 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
     myNode = node;
     myWrap = wrap;
     myAlignment = alignment;
+    myTextRange = node.getTextRange();
   }
 
   @Override
   public @NotNull TextRange getTextRange() {
-    return myNode.getTextRange();
+    return myTextRange;
   }
 
   @Override

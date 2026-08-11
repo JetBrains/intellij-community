@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
+@ApiStatus.Internal
 public final class Restarter {
   private static final String SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR = "IDEA_RESTART_VIA_EXIT_CODE";
 
@@ -43,7 +44,7 @@ public final class Restarter {
     return ourRestartSupported.get();
   }
 
-  private static final NullableLazyValue<Path> ourLauncherWithoutRemoteDevOverride = lazyNullable(() -> {
+  private static final NullableLazyValue<Path> ourLauncher = lazyNullable(() -> {
     var baseName = ApplicationNamesInfo.getInstance().getScriptName();
     var launcher = switch (OS.CURRENT) {
       case Windows -> PathManager.getBinDir().resolve(baseName + (Boolean.getBoolean("ide.native.launcher") ? "64.exe" : ".bat"));
@@ -54,16 +55,28 @@ public final class Restarter {
     return launcher != null && Files.exists(launcher) ? launcher : null;
   });
 
-  private static final NullableLazyValue<Path> ourLauncher = lazyNullable(() -> {
+  private static final NullableLazyValue<Path> ourBinLauncher = Boolean.getBoolean("ide.native.launcher") ? ourLauncher : lazyNullable(() -> {
+    var baseName = ApplicationNamesInfo.getInstance().getScriptName();
+    var launcher = switch (OS.CURRENT) {
+      case Windows -> PathManager.getBinDir().resolve(baseName + "64.exe");
+      case macOS -> PathManager.getHomeDir().resolve("MacOS").resolve(baseName);
+      case Linux -> PathManager.getBinDir().resolve(baseName);
+      default -> null;
+    };
+    return launcher != null && Files.exists(launcher) ? launcher : null;
+  });
+
+  // the RemDev starter binary is an implementation detail that should not be exposed externally
+  private static final NullableLazyValue<Path> ourLauncherWithRemDevOverride = lazyNullable(() -> {
     if (Boolean.getBoolean("ide.started.from.remote.dev.launcher")) {
-      var launcher = PathManager.getBinDir().resolve("remote-dev-server" + (OS.CURRENT == OS.Windows ? ".exe" : ""));
+      var launcher = PathManager.getBinDir().resolve(OS.CURRENT.getBinaryName("remote-dev-server"));
       if (Files.exists(launcher)) return launcher;
       Logger.getInstance(Restarter.class).error(
-        "RemDev starter property is set, but launcher file at " + launcher + " was not found? Will restart using default entry point"
+        "RemDev starter property is set, but launcher file at " + launcher + " was not found? Will restart using the default entry point"
       );
     }
 
-    var launcher = ourLauncherWithoutRemoteDevOverride.getValue();
+    var launcher = ourLauncher.getValue();
     if (launcher != null) return launcher;
 
     if (PlatformUtils.isJetBrainsClient()) {
@@ -101,7 +114,7 @@ public final class Restarter {
       }
     }
     else if (OS.CURRENT == OS.Windows) {
-      if (ourLauncher.getValue() == null) {
+      if (ourLauncherWithRemDevOverride.getValue() == null) {
         problem = "cannot find the launcher executable in " + PathManager.getBinDir();
       }
       else {
@@ -109,7 +122,7 @@ public final class Restarter {
       }
     }
     else if (OS.CURRENT == OS.macOS) {
-      if (ourLauncher.getValue() == null) {
+      if (ourLauncherWithRemDevOverride.getValue() == null) {
         problem = "cannot find the launcher executable in " + PathManager.getHomeDir().resolve("MacOS");
       }
       else {
@@ -117,7 +130,7 @@ public final class Restarter {
       }
     }
     else if (OS.CURRENT == OS.Linux) {
-      if (ourLauncher.getValue() == null) {
+      if (ourLauncherWithRemDevOverride.getValue() == null) {
         problem = "cannot find the launcher executable in " + PathManager.getBinDir();
       }
       else {
@@ -142,8 +155,7 @@ public final class Restarter {
     return Files.isExecutable(restarter) ? null : "not an executable file: " + restarter;
   }
 
-  @ApiStatus.Internal
-  public static void scheduleRestart(boolean elevate, @NotNull List<@NotNull String> @NotNull ... beforeRestart) throws IOException {
+  public static void scheduleRestart(boolean elevate, @SuppressWarnings("SSBasedInspection") @NotNull List<@NotNull String> @NotNull ... beforeRestart) throws IOException {
     var beforeRestartCommands = Stream.of(beforeRestart).filter(cmd -> !cmd.isEmpty()).toList();
     var exitCodeVariable = EnvironmentUtil.getValue(SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR);
     if (exitCodeVariable != null) {
@@ -172,13 +184,16 @@ public final class Restarter {
   }
 
   public static @Nullable Path getIdeStarter() {
-    // The RemDev starter binary is an implementation detail that should not be exposed externally
-    return ourLauncherWithoutRemoteDevOverride.getValue();
+    return ourLauncher.getValue();
+  }
+
+  public static @Nullable Path getBinStarter() {
+    return ourBinLauncher.getValue();
   }
 
   private static void restartOnWindows(boolean elevate, List<List<String>> beforeRestart, List<String> args) throws IOException {
-    var starter = ourLauncher.getValue();
-    if (starter == null) throw new IOException("Starter executable not found in " + PathManager.getBinDir());
+    var starter = ourLauncherWithRemDevOverride.getValue();
+    if (starter == null) throw new IOException("Starter executable wasn't found in " + PathManager.getBinDir());
     var command = prepareCommand("restarter.exe", beforeRestart);
     command.add(String.valueOf((elevate ? 2 : 1) + args.size()));
     if (elevate) {
@@ -190,8 +205,8 @@ public final class Restarter {
   }
 
   private static void restartOnMac(List<List<String>> beforeRestart, List<String> args) throws IOException {
-    var starter = ourLauncher.getValue();
-    if (starter == null) throw new IOException("Starter executable not found in: " + PathManager.getHomeDir());
+    var starter = ourLauncherWithRemDevOverride.getValue();
+    if (starter == null) throw new IOException("Starter executable wasn't found in: " + PathManager.getHomeDir());
     var command = prepareCommand("restarter", beforeRestart);
     command.add(String.valueOf(args.size() + 1));
     command.add(starter.toString());
@@ -200,8 +215,8 @@ public final class Restarter {
   }
 
   private static void restartOnLinux(List<List<String>> beforeRestart, List<String> args) throws IOException {
-    var starterScript = ourLauncher.getValue();
-    if (starterScript == null) throw new IOException("Starter script not found in " + PathManager.getBinDir());
+    var starterScript = ourLauncherWithRemDevOverride.getValue();
+    if (starterScript == null) throw new IOException("Starter script wasn't found in " + PathManager.getBinDir());
     var command = prepareCommand("restarter", beforeRestart);
     command.add(String.valueOf(args.size() + 1));
     command.add(starterScript.toString());
@@ -209,17 +224,14 @@ public final class Restarter {
     runRestarter(command);
   }
 
-  @ApiStatus.Internal
   public static void setCopyRestarterFiles() {
     copyRestarterFiles = true;
   }
 
-  @ApiStatus.Internal
   public static void setMainAppArgs(@NotNull List<String> args) {
     mainAppArgs = new ArrayList<>(args);
   }
 
-  @ApiStatus.Internal
   public static void setRestarterEnv(@NotNull Map<String, String> env) {
     restarterEnv = new HashMap<>(env);
   }
@@ -272,7 +284,7 @@ public final class Restarter {
       try {
         var lastUserActionTime = ReflectionUtil.getStaticFieldValue(Class.forName("sun.awt.X11.XBaseWindow"), long.class, "globalUserTime");
         if (lastUserActionTime == null) {
-          Logger.getInstance(Restarter.class).warn("Couldn't obtain last user action's timestamp");
+          Logger.getInstance(Restarter.class).warn("Couldn't get the last user action's timestamp");
         }
         else {
           // this doesn't initiate a "proper" startup sequence (by sending the 'new:' message to the root window),

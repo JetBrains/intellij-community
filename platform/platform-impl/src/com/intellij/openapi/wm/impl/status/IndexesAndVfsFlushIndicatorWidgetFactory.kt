@@ -4,7 +4,7 @@ package com.intellij.openapi.wm.impl.status
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.GentleFlusherBase
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.wm.IconWidgetPresentation
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidgetFactory
@@ -18,6 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.swing.Icon
+import kotlin.time.Duration.Companion.milliseconds
 
 internal class IndexesAndVfsFlushIndicatorWidgetFactory : StatusBarWidgetFactory, WidgetPresentationFactory {
   override fun getId(): String = "IndexesAndVfsFlushIndicator"
@@ -37,9 +38,12 @@ internal class IndexesAndVfsFlushIndicatorWidgetFactory : StatusBarWidgetFactory
 private class IndexesAndVfsFlushIndicatorWidget(private val context: WidgetPresentationDataContext) : IconWidgetPresentation {
   override fun icon(): Flow<Icon?> = flow {
     while (true) {
-      val hasSomethingToFlush = GentleFlusherBase.getRegisteredFlushers().any { it.hasSomethingToFlush() }
+      //TODO RC: Should ask FileBasedIndex.isDirty() also -- but there is no ready-to-use API like that.
+      //         Previously GentleIndexesFlusher used private indexes impl methods for it.
+      //         Now I don't sure we do really need the Widget at all => unsure does it worth to make FileBasedIndex.isDirty just for it
+      val hasSomethingToFlush = FSRecords.getInstance().connection().isDirty
       emit(if (hasSomethingToFlush) AnimatedIcon.FS() else AllIcons.Actions.Checked_selected)
-      delay(500)
+      delay(500.milliseconds)
     }
   }
 

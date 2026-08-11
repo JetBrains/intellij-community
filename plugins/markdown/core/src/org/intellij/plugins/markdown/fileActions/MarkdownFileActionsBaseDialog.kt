@@ -37,7 +37,7 @@ import java.io.File
 import javax.swing.JComponent
 
 @ApiStatus.Experimental
-internal abstract class MarkdownFileActionsBaseDialog(
+abstract class MarkdownFileActionsBaseDialog(
   protected val project: Project,
   protected val suggestedFilePath: String,
   protected val file: VirtualFile,
@@ -69,7 +69,7 @@ internal abstract class MarkdownFileActionsBaseDialog(
     border = JBUI.Borders.emptyLeft(3) // Reserve space for Html export provider, so there is no horizontal shift when it's shown
   }
 
-  override fun getPreferredFocusedComponent() = fileNameField
+  override fun getPreferredFocusedComponent(): JComponent = fileNameField
 
   override fun doOKAction() {
     val fileName = fileNameField.text.trim()
@@ -92,7 +92,8 @@ internal abstract class MarkdownFileActionsBaseDialog(
 
         writeFile(fileUrl, targetDirPath)
       }
-    } else {
+    }
+    else {
       writeFile(fileUrl, targetDirPath)
     }
 
@@ -198,7 +199,7 @@ internal abstract class MarkdownFileActionsBaseDialog(
   }
 
   companion object {
-    const val MAX_PATH_LENGTH = 70
+    const val MAX_PATH_LENGTH: Int = 70
     private const val RECENT_KEYS: @NonNls String = "ImportExportFile.TargetDir.RECENT_KEYS"
   }
 }

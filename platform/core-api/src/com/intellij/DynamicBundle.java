@@ -19,7 +19,6 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.xmlb.annotations.Attribute;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +46,7 @@ public class DynamicBundle extends AbstractBundle {
   private static final Logger LOG = Logger.getInstance(DynamicBundle.class);
 
   private static final ConcurrentMap<String, ResourceBundle> bundles = CollectionFactory.createConcurrentWeakValueMap();
+
   /**
    * Creates a new instance of the message bundle. It's usually stored in a private static final field, and static methods delegating
    * to its {@link #getMessage} and {@link #getLazyMessage} methods are added.
@@ -59,14 +59,9 @@ public class DynamicBundle extends AbstractBundle {
   }
 
   /**
-   * <h3>Obsolescence notice</h3>
-   * <p>
-   * It's better to prefer delegation to inheritance, and use {@link #DynamicBundle(Class, String)} instead.
-   * </p>
-   * <p/>
-   * Use this constructor in bundle classes which inherit from this class.
+   * @deprecated Do not subclass {@link DynamicBundle}, only create instances and delegate to them, use {@link #DynamicBundle(Class, String)} instead.
    */
-  @Obsolete
+  @Deprecated
   protected DynamicBundle(@NotNull String pathToBundle) {
     super(pathToBundle);
   }

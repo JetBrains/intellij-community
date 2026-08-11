@@ -1,0 +1,28 @@
+[package]
+name = "win_webview2_bridge"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "win_webview2_bridge"
+crate-type = ["cdylib"]
+
+[dependencies]
+jni = "0.21.1"
+webview2-com = "0.38"
+windows-core = "0.61"
+
+[dependencies.windows]
+version = "0.61"
+features = [
+  "Win32_Foundation",
+  "Win32_Graphics_Gdi",
+  "Win32_System_Com",
+  "Win32_System_LibraryLoader",
+  "Win32_System_Threading",
+  "Win32_UI_Shell",
+  "Win32_UI_HiDpi",
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_UI_WindowsAndMessaging",
+]

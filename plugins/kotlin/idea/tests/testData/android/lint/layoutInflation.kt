@@ -10,9 +10,9 @@ abstract class LayoutInflationTest : BaseAdapter() {
     lateinit var mInflater: LayoutInflater
 
     override fun getView(position: Int, convertView: View, parent: ViewGroup): View {
-        var view = <warning descr="[VARIABLE_WITH_REDUNDANT_INITIALIZER] Variable 'view' initializer is redundant">convertView</warning>
-        <warning descr="[UNUSED_VALUE] The value 'mInflater.inflate(R.layout.your_layout, null)' assigned to 'var view: View defined in LayoutInflationTest.getView' is never used">view =</warning> mInflater.inflate(R.layout.your_layout, null)
-        <warning descr="[UNUSED_VALUE] The value 'mInflater.inflate(R.layout.your_layout, null, true)' assigned to 'var view: View defined in LayoutInflationTest.getView' is never used">view =</warning> mInflater.inflate(R.layout.your_layout, null, true)
+        var view = <warning descr="[VARIABLE_WITH_REDUNDANT_INITIALIZER]">convertView</warning>
+        <warning descr="[UNUSED_VALUE]">view =</warning> mInflater.inflate(R.layout.your_layout, null)
+        <warning descr="[UNUSED_VALUE]">view =</warning> mInflater.inflate(R.layout.your_layout, null, true)
         view = mInflater.inflate(R.layout.your_layout, parent)
         view = WeirdInflater.inflate(view, null)
 

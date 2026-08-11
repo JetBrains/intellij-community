@@ -1,6 +1,6 @@
 // "Create property 'foo' as constructor parameter" "true"
-// K2_ERROR: Unresolved reference 'foo'.
-// K2_ERROR: Unresolved reference 'foo'.
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 class A {
     class B {

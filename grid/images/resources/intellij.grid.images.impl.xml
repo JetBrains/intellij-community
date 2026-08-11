@@ -1,8 +1,14 @@
 <idea-plugin visibility="internal">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.platform.images"/>
     <module name="intellij.grid.core.impl"/>
     <module name="intellij.grid.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.database.datagrid">

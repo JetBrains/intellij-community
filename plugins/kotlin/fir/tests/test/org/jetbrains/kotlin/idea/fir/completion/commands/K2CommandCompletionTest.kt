@@ -544,6 +544,74 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
+    fun testInlineProperty() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun bar() {
+                val a = "1"
+                println(a.<caret>)
+            }
+            """.trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        selectItem(myFixture, elements.first { element -> element.lookupString.contains("Inline Property", ignoreCase = true) })
+        myFixture.checkResult(
+            """
+            fun bar() {
+                println("1")
+            }
+            """.trimIndent()
+        )
+    }
+
+    fun testInlinePropertyOnDeclaration() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun bar() {
+                val a.<caret> = "1"
+                println(a)
+            }
+            """.trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        selectItem(myFixture, elements.first { element -> element.lookupString.contains("Inline Property", ignoreCase = true) })
+        myFixture.checkResult(
+            """
+            fun bar() {
+                println("1")
+            }
+            """.trimIndent()
+        )
+    }
+
+    fun testInlinePropertyAbstractAbsent() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            abstract class A {
+                abstract val a.<caret>: Int
+            }
+            """.trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        assertNull(elements.firstOrNull { element -> element.lookupString.contains("Inline Property", ignoreCase = true) })
+    }
+
+    fun testInlineMethodAbstractAbsent() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            abstract class A {
+                abstract fun foo.<caret>()
+            }
+            """.trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        assertNull(elements.firstOrNull { element -> element.lookupString.contains("Inline", ignoreCase = true) })
+    }
+
     fun testInlineMethodExpression() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(

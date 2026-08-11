@@ -1,5 +1,5 @@
 // "Join with initializer" "false"
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SuspiciousCollectionReassignmentInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.SuspiciousCollectionReassignmentInspection
 // ACTION: Replace overloaded operator with function call
 // ACTION: Replace with ordinary assignment
 // WITH_STDLIB

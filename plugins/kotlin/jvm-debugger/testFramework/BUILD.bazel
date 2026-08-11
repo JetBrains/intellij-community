@@ -3,7 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 ### skip generation section `test kotlin.jvm-debugger.testFramework`
 
 ### auto-generated section `build kotlin.jvm-debugger.testFramework` start
-
 jvm_library(
     name = "testFramework",
     srcs = glob(
@@ -35,12 +34,17 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "@lib//:junit4",
-        "@lib//:jb-jdi",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//java/debugger/jb-jdi:java-debugger-libraries-jb-jdi",
+        "//java/debugger/jb-jdi:java-debugger-libraries-jb-jdi_test_lib",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
         "@lib//:kotlinc-kotlin-jps-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//aether-dependency-resolver",
         "//aether-dependency-resolver:aether-dependency-resolver_test_lib",
         "//java/debugger/openapi:java-debugger",

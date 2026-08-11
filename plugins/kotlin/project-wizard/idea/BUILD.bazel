@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.projectWizard.idea` start
-
 jvm_library(
     name = "idea",
     srcs = glob(
@@ -27,7 +26,7 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
         "//platform/observable",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-jps-common",
         "//libraries/java-compatibility",
         "//platform/platform-impl:ide-impl",
@@ -66,6 +65,10 @@ jvm_library(
         "//platform/lang-api:lang",
         "//platform/statistics",
         "//platform/util:util-ui",
+        "//platform/workspace/jps",
+        "//platform/backend/observation",
+        "//platform/backend/workspace",
+        "//platform/workspace/storage",
     ],
 )
 
@@ -87,6 +90,7 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/observable:observable_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/java-compatibility:java-compatibility_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/indexing-api:indexing_test_lib",
@@ -124,6 +128,10 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//platform/util:util-ui_test_lib",
+        "//platform/workspace/jps:jps_test_lib",
+        "//platform/backend/observation:observation_test_lib",
+        "//platform/backend/workspace:workspace_test_lib",
+        "//platform/workspace/storage:storage_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.projectWizard.idea` end

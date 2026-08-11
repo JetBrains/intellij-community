@@ -77,4 +77,27 @@ public class LombokUtilsAllSetterTest {
     assertThat(result, is(Collections.singletonList("setISmyField")));
   }
 
+  @SuppressWarnings("NonAsciiCharacters")
+  @Test
+  public void testToAllSetterNames_NonBoolean_SpecialCharacter() {
+    makeResults("ß", false);
+
+    assertThat(result, is(Collections.singletonList("setß")));
+  }
+
+  @SuppressWarnings("NonAsciiCharacters")
+  @Test
+  public void testToAllSetterNames_NonBoolean_MultipleSpecialCharacters() {
+    makeResults("ßßß", false);
+
+    assertThat(result, is(Collections.singletonList("setßßß")));
+  }
+
+  @SuppressWarnings("NonAsciiCharacters")
+  @Test
+  public void testToAllSetterNames_NonBoolean_Cyrillic() {
+    makeResults("ы", false);
+
+    assertThat(result, is(Collections.singletonList("setЫ")));
+  }
 }

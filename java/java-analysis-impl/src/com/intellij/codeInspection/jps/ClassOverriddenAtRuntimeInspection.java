@@ -194,7 +194,7 @@ public final class ClassOverriddenAtRuntimeInspection extends AbstractBaseJavaLo
   }
 
   private record OverrideInfo(@NotNull String runtimeEntryName, @NotNull String compileEntryName) {
-    static OverrideInfo EMPTY = new OverrideInfo("", "");
+    static final @NotNull OverrideInfo EMPTY = new OverrideInfo("", "");
   }
 
   private static @Nullable String findTopLevelEntryName(@NotNull Module module,
@@ -221,7 +221,7 @@ public final class ClassOverriddenAtRuntimeInspection extends AbstractBaseJavaLo
 
   private static @NonNls @NotNull String entryName(@NotNull OrderEntry entry) {
     if (entry instanceof ModuleOrderEntry moe) return moe.getModuleName();
-    if (entry instanceof LibraryOrderEntry loe) return Objects.requireNonNullElse(loe.getLibraryName(), "");
+    if (entry instanceof LibraryOrderEntry loe) return Objects.requireNonNullElse(loe.getLibraryName(), loe.getPresentableName());
     return entry.getPresentableName();
   }
 
@@ -303,7 +303,7 @@ public final class ClassOverriddenAtRuntimeInspection extends AbstractBaseJavaLo
       });
     }
 
-    private boolean rearrange(ModifiableRootModel model) {
+    private boolean rearrange(@NotNull ModifiableRootModel model) {
       OrderEntry[] entries = model.getOrderEntries();
       int moveIdx = index(entries, myEntryToMove);
       int blockerIdx = index(entries, myShadowingEntry);

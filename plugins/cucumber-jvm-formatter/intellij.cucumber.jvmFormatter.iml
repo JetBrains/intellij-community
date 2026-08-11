@@ -11,6 +11,6 @@
     <orderEntry type="library" scope="PROVIDED" name="cucumber-core-2" level="project" />
     <orderEntry type="module" module-name="intellij.junit.rt" />
     <orderEntry type="module" module-name="intellij.java.rt" />
-    <orderEntry type="library" scope="PROVIDED" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="PROVIDED" />
   </component>
 </module>

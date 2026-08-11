@@ -3,7 +3,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
-import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.SEP
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
 import com.intellij.testFramework.TestDataPath
@@ -27,9 +27,9 @@ internal class UvWorkspaceExtrasInDependenciesTest {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule("pythonproject", contentRoot = ".", deps = listOf("sub-project-a", "sub-project-b"), sourceRoots = listOf(".", "src")),
-      ExpectedModule("extra-utils", contentRoot = "local-libs${SEP}extra-utils"),
-      ExpectedModule("sub-project-a", contentRoot = "sub-projects${SEP}sub-project-a", deps = listOf("extra-utils"), sourceRoots = listOf("sub-projects${SEP}sub-project-a${SEP}src")),
-      ExpectedModule("sub-project-b", contentRoot = "sub-projects${SEP}sub-project-b", deps = listOf("sub-project-a"), sourceRoots = listOf("sub-projects${SEP}sub-project-b${SEP}src")),
+      ExpectedModule("extra-utils", contentRoot = "local-libs" / "extra-utils"),
+      ExpectedModule("sub-project-a", contentRoot = "sub-projects" / "sub-project-a", deps = listOf("extra-utils"), sourceRoots = listOf("sub-projects" / "sub-project-a" / "src")),
+      ExpectedModule("sub-project-b", contentRoot = "sub-projects" / "sub-project-b", deps = listOf("sub-project-a"), sourceRoots = listOf("sub-projects" / "sub-project-b" / "src")),
     )
   }
 }

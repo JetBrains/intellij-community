@@ -42,6 +42,7 @@ public final class SoftWrapEngine {
   private final int mySoftWrapWidth;
   private final IncrementalCacheUpdateEvent myEvent;
   private final int myRelativeIndent;
+  private final boolean myAllowGridModeOptimizations;
 
   private LineWrapPositionStrategy myLineWrapPositionStrategy;
 
@@ -52,7 +53,8 @@ public final class SoftWrapEngine {
                         @NotNull IncrementalCacheUpdateEvent event,
                         @Nullable LineWrapPositionStrategy lineWrapStrategy,
                         int visibleWidth,
-                        int relativeIndent) {
+                        int relativeIndent,
+                        boolean allowGridModeOptimizations) {
     myEditor = editor;
     myDocument = editor.getElfDocument();
     myText = myDocument.getImmutableCharSequence();
@@ -65,6 +67,7 @@ public final class SoftWrapEngine {
     myEvent = event;
     myRelativeIndent = relativeIndent;
     myLineWrapPositionStrategy = lineWrapStrategy;
+    myAllowGridModeOptimizations = allowGridModeOptimizations;
   }
 
   public void generate() {
@@ -79,7 +82,9 @@ public final class SoftWrapEngine {
     var customWraps = myEditor.getCustomWrapModel().getWrapsInRange(startOffset, maxEndOffset);
 
     var grid = myEditor.getCharacterGrid();
-    if (grid != null && inlineInlays.isEmpty() && afterLineEndInlays.isEmpty() && customWraps.isEmpty()) {
+    if (grid != null && myAllowGridModeOptimizations
+        && inlineInlays.isEmpty() && afterLineEndInlays.isEmpty() && customWraps.isEmpty()
+        && !SoftWrapHelper.hasCollapsedOffsetsIn(myEditor.getFoldingModel(), startOffset, maxEndOffset)) {
       generateGridSoftWraps(grid, startOffset, minEndOffset, maxEndOffset);
       return;
     }
@@ -199,9 +204,8 @@ public final class SoftWrapEngine {
       if (position != -1) return position;
     }
 
-    int wrapOffset = myLineWrapPositionStrategy.calculateWrapPosition(myDocument, myEditor.getProject(),
-                                                                      minOffset - 1, maxOffset + 1, maxOffset + 1,
-                                                                      false, true);
+    int wrapOffset = myLineWrapPositionStrategy.calculateWrapPosition(myEditor, minOffset - 1, maxOffset + 1,
+                                                                      maxOffset + 1, false, true);
     if (wrapOffset < 0) return preferMinOffset ? minOffset : maxOffset;
     if (wrapOffset < minOffset) return minOffset;
     if (wrapOffset > maxOffset) return maxOffset;

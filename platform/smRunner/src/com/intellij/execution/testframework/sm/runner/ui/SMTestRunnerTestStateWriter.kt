@@ -41,30 +41,48 @@ internal object SMTestRunnerTestStateWriter {
     }
   }
 
-  private suspend fun writeTestState(project: Project, consoleProperties: TestConsoleProperties, proxy: SMTestProxy, url: String, configurationName: String?) {
-    val info = readAction {
-      if (project.isDisposed) return@readAction null
-
-      getStackTraceParser(consoleProperties, proxy, url, project)
-    } ?: return
-
-    TestStateStorage.getInstance(project).writeState(url, TestStateStorage.Record(proxy.magnitude, Date(),
-                                                                                  (configurationName?.hashCode() ?: 0).toLong(),
-                                                                                  info.failedLine, info.failedMethodName,
-                                                                                  info.errorMessage, info.topLocationLine))
+  private suspend fun writeTestState(
+    project: Project,
+    consoleProperties: TestConsoleProperties,
+    proxy: SMTestProxy,
+    url: String,
+    configurationName: String?,
+  ) {
+    writeTestStateEx(project, consoleProperties, proxy, url, configurationName) { block ->
+      readAction(block)
+    }
   }
 
-  private suspend fun writeTestStateSmart(project: Project, consoleProperties: TestConsoleProperties, proxy: SMTestProxy, url: String, configurationName: String?) {
-    val info = smartReadAction(project) {
-      if (project.isDisposed) return@smartReadAction null
+  private suspend fun writeTestStateSmart(
+    project: Project,
+    consoleProperties: TestConsoleProperties,
+    proxy: SMTestProxy,
+    url: String,
+    configurationName: String?,
+  ) {
+    writeTestStateEx(project, consoleProperties, proxy, url, configurationName) { block ->
+      smartReadAction(project, block)
+    }
+  }
 
-      getStackTraceParser(consoleProperties, proxy, url, project)
+  private suspend fun writeTestStateEx(
+    project: Project,
+    consoleProperties: TestConsoleProperties,
+    proxy: SMTestProxy,
+    url: String,
+    configurationName: String?,
+    raAction: suspend (() -> Pair<TestStateStorage, TestStackTraceParser>?) -> Pair<TestStateStorage, TestStackTraceParser>?,
+  ) {
+    val (storage, info) = raAction {
+      if (project.isDisposed) return@raAction null
+      // getService() under the read lock, after the isDisposed check
+      TestStateStorage.getInstance(project) to getStackTraceParser(consoleProperties, proxy, url, project)
     } ?: return
 
-    TestStateStorage.getInstance(project).writeState(url, TestStateStorage.Record(proxy.magnitude, Date(),
-                                                                                  (configurationName?.hashCode() ?: 0).toLong(),
-                                                                                  info.failedLine, info.failedMethodName,
-                                                                                  info.errorMessage, info.topLocationLine))
+    storage.writeState(url, TestStateStorage.Record(proxy.magnitude, Date(),
+                                                    (configurationName?.hashCode() ?: 0).toLong(),
+                                                    info.failedLine, info.failedMethodName,
+                                                    info.errorMessage, info.topLocationLine))
   }
 
   @RequiresReadLock

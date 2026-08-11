@@ -37,6 +37,7 @@ Sample usage to track changes in a thread.
 
 Note: changes are only reported for files (added/modified/deleted), not directories.
 """
+
 import sys
 from os.path import basename
 from _pydev_bundle import pydev_log, _pydev_saved_modules

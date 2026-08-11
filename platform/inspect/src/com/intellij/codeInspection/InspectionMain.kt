@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ModernApplicationStarter
 import java.util.concurrent.CompletableFuture
 import kotlin.system.exitProcess
 
-@Suppress("KotlinPrintToLogpoint")
 internal class InspectionMain : ModernApplicationStarter() {
   private lateinit var application: InspectionApplicationBase
 

@@ -1,13 +1,28 @@
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
+import org.jetbrains.idea.maven.fixtures.resolveReference
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenPropertyInActivationSectionTest : MavenDomTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenPropertyInActivationSectionTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun testResolvePropertyFromActivationSection() = runBlocking {
-    importProjectAsync(
+    maven.importProjectAsync(
       """
           <groupId>example</groupId>
           <artifactId>parent</artifactId>
@@ -36,7 +51,7 @@ class MavenPropertyInActivationSectionTest : MavenDomTestCase() {
           </properties>
         """.trimIndent())
 
-    assert(resolveReference(projectPom, "env.GLASSFISH_HOME_123", 1) != null)
-    assert(resolveReference(projectPom, "env.GLASSFISH_HOME_123", 2) == null)
+    assert(maven.resolveReference(maven.projectPom, "env.GLASSFISH_HOME_123", 1) != null)
+    assert(maven.resolveReference(maven.projectPom, "env.GLASSFISH_HOME_123", 2) == null)
   }
 }

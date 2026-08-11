@@ -20,6 +20,8 @@ import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.AbstractSquareStripeButton
+import com.intellij.openapi.wm.impl.getStripeToolbarButtonIconSize
+import com.intellij.openapi.wm.impl.getStripeToolbarButtonSize
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
@@ -37,7 +39,7 @@ import javax.swing.Icon
 internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
                                       override val side: ToolWindowAnchor,
                                       vararg moveTo: ToolWindowAnchor) :
-  AbstractMoreSquareStripeButton(ShowMoreToolWindowsAction(toolWindowToolbar)) {
+  AbstractMoreSquareStripeButton(ShowMoreToolWindowsAction(toolWindowToolbar), Supplier { getStripeToolbarButtonSize(true) }) {
 
   init {
     AccessibleContextUtil.setName(this, UIBundle.message("more.button.accessible.name"))
@@ -90,7 +92,7 @@ private fun createPresentation(): Presentation {
 private fun scaleIcon(): Icon {
   return loadIconCustomVersionOrScale(
     icon = AllIcons.Actions.MoreHorizontal as ScalableIcon,
-    size = JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSize()
+    size = getStripeToolbarButtonIconSize()
   )
 }
 
@@ -120,7 +122,7 @@ class ShowMoreToolWindowsAction(private val toolWindowToolbar: ToolWindowToolbar
     popup.show(RelativePoint(toolWindowToolbar, Point(x, moreSquareStripeButton.y)))
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 }
 
 internal abstract class AbstractMoreSquareStripeButton(action: AnAction, minimumSize: Supplier<Dimension>? = null) : AbstractSquareStripeButton(action, createPresentation(), minimumSize) {

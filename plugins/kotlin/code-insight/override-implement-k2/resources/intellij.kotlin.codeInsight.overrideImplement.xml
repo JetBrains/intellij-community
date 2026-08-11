@@ -1,0 +1,37 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.kdoc"/>
+    <module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.codeInsight.api"/>
+    <module name="intellij.kotlin.codeInsight.shared"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.impl.base"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.k2"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="kotlin.fir.frontend-independent"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.codeInsight.overrideImplement.OverrideImplementFacility"
+                        serviceImplementation="org.jetbrains.kotlin.idea.core.overrideImplement.OverrideImplementFacilityImpl"/>
+
+    <codeInsight.implementMethod language="kotlin" implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler"/>
+    <codeInsight.overrideMethod language="kotlin" implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.KtOverrideMembersHandler"/>
+  </extensions>
+</idea-plugin>

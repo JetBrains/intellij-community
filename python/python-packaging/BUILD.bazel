@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.packaging` start
-
 jvm_library(
     name = "packaging",
     srcs = glob(
@@ -21,7 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/platform-util-io:ide-util-io",
         "//platform/util",
         "//platform/core-api:core",
@@ -43,6 +42,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":packaging",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/util:util_test_lib",
         "//platform/core-api:core_test_lib",

@@ -5,6 +5,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -80,6 +81,19 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     return new DirectoryGroup(dir);
   }
 
+  /** @return a project base directory which actually contains {@code dir} */
+  protected @Nullable VirtualFile baseDirectoryFor(@NotNull VirtualFile dir) {
+    VirtualFile baseDir = BaseProjectDirectories.getInstance(myProject).getBaseDirectoryFor(dir);
+    if (baseDir != null && baseDir.isValid()) {
+      return baseDir;
+    }
+
+    VirtualFile guessedBaseDir = ProjectUtil.guessProjectDir(myProject);
+    return guessedBaseDir != null && guessedBaseDir.isValid() && VfsUtilCore.isAncestor(guessedBaseDir, dir, false)
+           ? guessedBaseDir
+           : null;
+  }
+
   @Override
   public int getRank() {
     return UsageGroupingRulesDefaultRanks.DIRECTORY_STRUCTURE.getAbsoluteRank();
@@ -122,7 +136,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
         String rel = relativePathText.startsWith("/") ? relativePathText.substring(1) : relativePathText;
 
         if (parentPathList.size() == relativePathList.size()) {
-          VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
+          VirtualFile baseDir = baseDirectoryFor(myDir);
           String relativePath = null;
           if (baseDir != null && baseDir.getParent() != null) {
             relativePath = VfsUtilCore.getRelativePath(myDir, baseDir.getParent(), File.separatorChar);
@@ -134,7 +148,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
       }
       else {
         if (myFlattenDirs || myDir.getParent() == null) {
-          VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
+          VirtualFile baseDir = baseDirectoryFor(myDir);
           String relativePath = baseDir == null ? null : VfsUtilCore.getRelativePath(myDir, baseDir, File.separatorChar);
           return relativePath == null ? myDir.getPresentableUrl() : relativePath;
         }

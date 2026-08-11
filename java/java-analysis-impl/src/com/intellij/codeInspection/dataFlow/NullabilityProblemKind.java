@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaDfaAnchor;
@@ -69,6 +70,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.JavaTypeNullabilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -395,13 +397,20 @@ public final class NullabilityProblemKind<T extends PsiElement> {
    */
   private static boolean assignableTypeParameter(@NotNull PsiType leftType, @Nullable PsiType rightType) {
     if (rightType == null) return false;
-    if (rightType.getNullability().nullability() == Nullability.NOT_NULL) return false;
+    TypeNullability rightNullability = rightType.getNullability();
+    if (rightNullability.nullability() == Nullability.NOT_NULL) return false;
     if (!(PsiUtil.resolveClassInClassTypeOnly(rightType) instanceof PsiTypeParameter tp)) return false;
     if (leftType instanceof PsiCapturedWildcardType captured) {
       leftType = captured.getLowerBound();
     }
-    return PsiUtil.resolveClassInClassTypeOnly(leftType) instanceof PsiTypeParameter leftTp && leftTp.isEquivalentTo(tp)
-      && rightType.getNullability().equals(leftType.getNullability());
+    if (!(PsiUtil.resolveClassInClassTypeOnly(leftType) instanceof PsiTypeParameter leftTp) || !leftTp.isEquivalentTo(tp)) {
+      return false;
+    }
+    TypeNullability leftNullability = leftType.getNullability();
+    if (rightNullability.equals(leftNullability)) return true;
+    return rightNullability.nullability() == Nullability.UNKNOWN &&
+           !rightNullability.equals(TypeNullability.UNKNOWN) &&
+           JavaTypeNullabilityUtil.getValueNullability(rightType).equals(leftNullability);
   }
 
   private static @Nullable NullabilityProblem<?> getArrayInitializerProblem(@NotNull PsiArrayInitializerExpression initializer,

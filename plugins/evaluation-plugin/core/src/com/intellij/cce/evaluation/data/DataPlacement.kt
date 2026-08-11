@@ -132,6 +132,22 @@ sealed interface DataPlacement<In, Out> {
     }
   }
 
+  data class ArtifactFiles(val propertyKey: String) : DataPlacement<List<ArtifactFile>, ArtifactFile> {
+    override val serialName: String = "artifact_files"
+
+    override fun dump(lookup: Lookup, t: List<ArtifactFile>): Lookup {
+      return lookup.copy(
+        additionalInfo = lookup.additionalInfo + Pair(propertyKey, gson.toJsonTree(t))
+      )
+    }
+
+    override fun restore(props: DataProps): List<ArtifactFile> {
+      val files = props.lookup.additionalInfo[propertyKey] ?: return emptyList()
+      val filesJson = files as? JsonElement ?: gson.toJsonTree(files)
+      return gson.fromJson(filesJson, Array<ArtifactFile>::class.java).toList()
+    }
+  }
+
   data class AdditionalCodeCommentRanges(val propertyKey: String) : DataPlacement<List<CodeCommentRange>, List<CodeCommentRange>> {
     override val serialName: String = "code_comment_range"
 
@@ -185,6 +201,7 @@ sealed interface DataPlacement<In, Out> {
         "latency" -> Latency
         "current_file_update" -> CurrentFileUpdate
         "file_updates" -> context?.deserialize(json, FileUpdates::class.java)
+        "artifact_files" -> context?.deserialize(json, ArtifactFiles::class.java)
         "colored_insights_placement" -> context?.deserialize(json, ColoredInsightsPlacement::class.java)
         else -> throw IllegalArgumentException("Unknown type: $type")
       }

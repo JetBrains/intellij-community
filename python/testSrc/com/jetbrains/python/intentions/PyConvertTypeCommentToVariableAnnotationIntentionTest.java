@@ -15,9 +15,15 @@
  */
 package com.jetbrains.python.intentions;
 
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 
+@Subsystems.CodeInsight
+@Components.Intentions
+@Layers.Functional
 public class PyConvertTypeCommentToVariableAnnotationIntentionTest extends PyIntentionTestCase {
   private void doPositiveTest() {
     doTest(PyPsiBundle.message("INTN.convert.type.comment.to.variable.annotation"), LanguageLevel.PYTHON36);

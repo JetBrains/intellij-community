@@ -18,7 +18,7 @@ interface LinkedListEntityBuilder : WorkspaceEntityBuilder<LinkedListEntity> {
 }
 
 internal object LinkedListEntityType : EntityType<LinkedListEntity, LinkedListEntityBuilder>() {
-  override val entityClass: Class<LinkedListEntity> get() = LinkedListEntity::class.java
+  override val entityImplClass: Class<*> get() = LinkedListEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = LinkedListEntityImpl.Builder::class.java
   operator fun invoke(
     myName: String,

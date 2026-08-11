@@ -26,6 +26,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.buildData" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" />
     <orderEntry type="library" name="kodein-di-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter" />

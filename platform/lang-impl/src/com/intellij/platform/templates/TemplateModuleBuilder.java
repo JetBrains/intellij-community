@@ -55,6 +55,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.velocity.exception.VelocityException;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,6 +88,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   private final ArchivedProjectTemplate myTemplate;
   private boolean myProjectMode;
 
+  @ApiStatus.Internal
   public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType<?> moduleType, List<WizardInputField<?>> additionalFields) {
     myTemplate = template;
     myType = moduleType != null ? NotNullLazyValue.createConstantValue(moduleType) : NotNullLazyValue.lazy(() -> template.getModuleType());

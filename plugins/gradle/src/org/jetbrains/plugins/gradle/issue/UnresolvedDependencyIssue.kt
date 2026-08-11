@@ -11,7 +11,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.pom.Navigatable
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.ApiStatus
@@ -34,8 +33,6 @@ abstract class UnresolvedDependencyIssue(
       else GradleBundle.message("gradle.build.issue.unresolved.dependency.for.owner.title", dependencyName, dependencyOwner)
     setTitle(title)
   }
-
-  override fun getNavigatable(project: Project): Navigatable? = null
 
   fun buildDescription(failureMessage: String?): @NlsSafe String {
     val issueDescription = StringBuilder()

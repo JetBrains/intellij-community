@@ -68,7 +68,10 @@ public class DefaultGridColumnLayout implements GridColumnLayout<GridRow, GridCo
 
   @Override
   public void columnsShown(ModelIndexSet<?> columnDataIndices) {
-    doLayout(columnDataIndices.asList());
+    List<? extends ModelIndex<?>> columns = columnDataIndices.asList();
+    if (!layoutInitialTransposedColumns(columns)) {
+      doLayout(columns);
+    }
   }
 
   @Override
@@ -94,16 +97,13 @@ public class DefaultGridColumnLayout implements GridColumnLayout<GridRow, GridCo
     Set<? extends ModelIndex<?>> columnsToResize = new HashSet<>(columnDataIndices);
     List<? extends ModelIndex<?>> visibleColumnDataIndices = (myResultView.isTransposed() ? myGrid.getVisibleRows() : myGrid.getVisibleColumns()).asList();
 
-    JComponent gridPanel = myGrid.getPanel().getComponent();
-    JScrollPane scrollPane = UIUtil.findComponentOfType(gridPanel, JScrollPane.class);
-    int availableWidth = scrollPane != null ? scrollPane.getViewportBorderBounds().width : gridPanel.getWidth();
+    int availableWidth = getAvailableWidth();
     if (availableWidth == 0) return false;
-    availableWidth = Math.max(availableWidth, 400);
 
     for (ModelIndex<?> columnDataIdx : visibleColumnDataIndices) {
       ResultViewColumn column = myResultView.getLayoutColumn(columnDataIdx);
       if (column == null) continue; // will never happen
-      if (columnsToResize.contains(columnDataIdx)) {
+      if (columnsToResize.contains(columnDataIdx) && !column.isWidthSetByUser()) {
         LayoutInfo layoutInfo = new LayoutInfo();
         layoutInfo.min = Math.max(MIN_COLUMN_WIDTH, computeHeaderWidth(column));
         layoutInfo.full = Math.max(layoutInfo.min, computeColumnWidth(column));
@@ -194,6 +194,46 @@ public class DefaultGridColumnLayout implements GridColumnLayout<GridRow, GridCo
     var res = headerComponent.getPreferredSize().width + column.getAdditionalWidth();
     cellRendererPane.removeAll();
     return res;
+  }
+
+  private boolean layoutInitialTransposedColumns(@NotNull List<? extends ModelIndex<?>> columnDataIndices) {
+    if (!myResultView.isTransposed() || columnDataIndices.size() <= 100 || columnDataIndices.size() != myGrid.getVisibleRows().size()) {
+      return false;
+    }
+
+    int availableWidth = getAvailableWidth();
+    if (availableWidth == 0) return false;
+
+    List<ResultViewColumn> columns = new ArrayList<>(columnDataIndices.size());
+    ResultViewColumn widestHeaderColumn = null;
+    int widestHeaderLength = -1;
+    for (ModelIndex<?> columnDataIdx : columnDataIndices) {
+      if (GridUtil.isInsertedRow(myGrid, cast(columnDataIdx))) return false;
+      ResultViewColumn column = myResultView.getLayoutColumn(columnDataIdx);
+      if (column == null) continue;
+
+      columns.add(column);
+      int headerLength = column.getHeaderValue().length();
+      if (headerLength > widestHeaderLength) {
+        widestHeaderLength = headerLength;
+        widestHeaderColumn = column;
+      }
+    }
+    if (widestHeaderColumn == null) return true;
+
+    int full = Math.max(MIN_COLUMN_WIDTH, Math.max(computeHeaderWidth(widestHeaderColumn), computeColumnWidth(widestHeaderColumn)));
+    int width = Math.min(full, (int)(availableWidth * GOLD));
+    for (ResultViewColumn column : columns) {
+      column.setColumnWidth(width);
+    }
+    return true;
+  }
+
+  private int getAvailableWidth() {
+    JComponent gridPanel = myGrid.getPanel().getComponent();
+    JScrollPane scrollPane = UIUtil.findComponentOfType(gridPanel, JScrollPane.class);
+    int availableWidth = scrollPane != null ? scrollPane.getViewportBorderBounds().width : gridPanel.getWidth();
+    return availableWidth == 0 ? 0 : Math.max(availableWidth, 400);
   }
 
   private void updateWidestCellValueCaches(ModelIndexSet<GridRow> rowIndices, ModelIndexSet<GridColumn> columnIndices) {

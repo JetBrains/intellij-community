@@ -10,11 +10,13 @@ import com.intellij.ui.JBColor;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsagePresentation;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
 import java.awt.Font;
 
+@ApiStatus.Internal
 public final class SliceTooComplexDFAUsage extends SliceUsage {
   public SliceTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent) {
     super(element, parent);

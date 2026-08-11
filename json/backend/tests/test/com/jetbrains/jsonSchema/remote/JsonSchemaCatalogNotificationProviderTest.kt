@@ -35,7 +35,7 @@ class JsonSchemaCatalogNotificationProviderTest : BasePlatformTestCase() {
   override fun tearDown() {
     try {
       JsonSchemaMappingsProjectConfiguration.getInstance(project).setState(TreeMap())
-      JsonSchemaCatalogProjectConfiguration.getInstance(project).setState(true, true, false)
+      JsonSchemaCatalogProjectConfiguration.getInstance(project).setState(true, true, false, true)
     }
     catch (e: Throwable) {
       addSuppressedException(e)

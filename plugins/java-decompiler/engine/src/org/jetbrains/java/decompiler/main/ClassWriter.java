@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.annotations.NotNull;
@@ -465,7 +465,7 @@ public class ClassWriter {
     int flags = node.type == ClassNode.CLASS_ROOT ? cl.getAccessFlags() : node.access;
     boolean isDeprecated = cl.hasAttribute(StructGeneralAttribute.ATTRIBUTE_DEPRECATED);
     boolean isSynthetic = (flags & CodeConstants.ACC_SYNTHETIC) != 0 || cl.hasAttribute(StructGeneralAttribute.ATTRIBUTE_SYNTHETIC);
-    boolean isEnum = DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM) && (flags & CodeConstants.ACC_ENUM) != 0;
+    boolean isEnum = DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM) && cl.hasModifier(CodeConstants.ACC_ENUM);
     boolean isInterface = (flags & CodeConstants.ACC_INTERFACE) != 0;
     boolean isAnnotation = (flags & CodeConstants.ACC_ANNOTATION) != 0;
 

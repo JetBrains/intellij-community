@@ -27,7 +27,7 @@ interface ExternalSystemModuleOptionsEntityBuilder : WorkspaceEntityBuilder<Exte
 
 internal object ExternalSystemModuleOptionsEntityType :
   EntityType<ExternalSystemModuleOptionsEntity, ExternalSystemModuleOptionsEntityBuilder>() {
-  override val entityClass: Class<ExternalSystemModuleOptionsEntity> get() = ExternalSystemModuleOptionsEntity::class.java
+  override val entityImplClass: Class<*> get() = ExternalSystemModuleOptionsEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ExternalSystemModuleOptionsEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,

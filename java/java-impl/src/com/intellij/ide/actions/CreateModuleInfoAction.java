@@ -53,7 +53,7 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
     DataContext ctx = e.getDataContext();
     IdeView view = LangDataKeys.IDE_VIEW.getData(ctx);
     PsiDirectory target = view != null && e.getProject() != null ? getTargetDirectory(ctx, view) : null;
-    if (target == null || !PsiUtil.isAvailable(JavaFeature.MODULES, target)) {
+    if (target == null || !PsiUtil.isAvailable(JavaFeature.MODULES, target) || CreateClassAction.isJavaFileActionSuppressed(ctx)) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {

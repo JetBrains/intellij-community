@@ -599,7 +599,7 @@ class ExceptionEvent(Event):
         @raise NotImplementedError: Not an in-page memory error.
         """
         if self.get_exception_code() != win32.EXCEPTION_IN_PAGE_ERROR:
-            msg = "This method is only meaningful " "for in-page memory error exceptions."
+            msg = "This method is only meaningful for in-page memory error exceptions."
             raise NotImplementedError(msg)
         return self.get_exception_information(2)
 
@@ -1123,7 +1123,7 @@ class RIPEvent(Event):
 
     eventMethod = "rip"
     eventName = "RIP event"
-    eventDescription = "An error has occured and the process " "can no longer be debugged."
+    eventDescription = "An error has occured and the process can no longer be debugged."
 
     def get_rip_error(self):
         """
@@ -1861,7 +1861,7 @@ class EventDispatcher(object):
                     returnValue = self.__eventHandler(event)
                 except Exception:
                     e = sys.exc_info()[1]
-                    msg = "Event handler pre-callback %r" " raised an exception: %s"
+                    msg = "Event handler pre-callback %r raised an exception: %s"
                     msg = msg % (self.__eventHandler, traceback.format_exc(e))
                     warnings.warn(msg, EventCallbackWarning)
                     returnValue = None

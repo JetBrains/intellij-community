@@ -15,10 +15,11 @@ private val communityPluginModelBuilderOptions = SourceCodeBasedPluginModelBuild
   modulesWithIncorrectlyPlacedModuleDescriptor = setOf(
     "intellij.android.device-explorer",
   ),
-  prefixesOfPathsIncludedFromLibrariesViaXiInclude = listOf(
-    "META-INF/analysis-api/analysis-api-fir.xml",
+  xiIncludeTargetsResidingInLibraries = listOf(
+    "META-INF/analysis-api/*",
+    "META-INF/extensions/*",
     "META-INF/wizard-template-impl.xml",
-    "META-INF/tips-",
+    "META-INF/tips-*",
   ),
   additionalPatternsOfDirectoriesContainingIncludedXmlFiles = listOf(
     "org/jetbrains/android/dom",
@@ -35,11 +36,7 @@ val communityPluginValidationOptions: PluginValidationOptions = PluginValidation
   skipServicesOverridesCheck = true,
   pluginsToOptionalDepends = existingOptionalDependsTagInCommunityPlugins,
   filesNamedLikeContentModuleDescriptorsButIncludedViaXiInclude = setOf(
-    "intellij.platform.project.xml",
-    "intellij.platform.ide.progress.xml",
-    "intellij.platform.syntax.psi.xml",
-    "intellij.vcs.git.xml",
-    "kotlin.plugin.k2.xml",
+    "kotlin.plugin.k2.xml", // KTIJ-39613
   ),
   referencedPluginIdsOfExternalPlugins = setOf(
     // These modules are defined in the Ultimate part.
@@ -49,11 +46,13 @@ val communityPluginValidationOptions: PluginValidationOptions = PluginValidation
     "com.intellij.modules.ultimate",
     "com.intellij.jetbrains.client",
     "com.intellij.modules.appcode.ide",
+    "com.intellij.modules.rustrover",
   ),
   componentImplementationClassesToIgnore = setOf(
     "com.intellij.designer.DesignerToolWindowManager",
     "com.intellij.designer.palette.PaletteToolWindowManager",
   ),
+  moduleLevelServicesToIgnore = existingModuleLevelServicesInCommunity,
 )
 
 class CommunityPluginModelTest {

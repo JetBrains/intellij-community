@@ -121,7 +121,8 @@ class AsyncDocumentFormattingSupportImpl(
     val forceSync = isForceSyncFormat(document)
     val isHeadless = ApplicationManager.getApplication().isHeadlessEnvironment
     val isIgnoreHeadless = SystemProperties.getBooleanProperty("intellij.async.formatting.ignoreHeadless", false)
-    return forceSync || (isHeadless && !isIgnoreHeadless)
+    val isStructured = currentThreadContext().isStructuredAsyncDocumentFormatting()
+    return forceSync || (isHeadless && !isIgnoreHeadless && !isStructured)
   }
 
   private fun isForceSyncFormat(document: Document): Boolean = document.getUserData(FORMAT_DOCUMENT_SYNCHRONOUSLY) == true

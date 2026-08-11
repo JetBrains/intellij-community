@@ -1,6 +1,6 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
-// K2_AFTER_ERROR: Multiple potential context arguments for 'p: String' in scope.
-// K2_AFTER_ERROR: Multiple potential context arguments for 'p: String' in scope.
+// K2_AFTER_ERROR: AMBIGUOUS_CONTEXT_ARGUMENT
+// K2_AFTER_ERROR: AMBIGUOUS_CONTEXT_ARGUMENT
 
 fun foo(<caret>p: String) {
     p.substring(1)
@@ -15,4 +15,12 @@ fun String.bar() {
     "boo".run {
         foo(this)
     }
+}
+
+fun test(string: String) = with(string) {
+    foo(string)
+}
+
+fun testContext(string: String) = context(string) {
+    foo(string)
 }

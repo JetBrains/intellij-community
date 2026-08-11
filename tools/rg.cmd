@@ -38,6 +38,12 @@ export TOOL_URL_MACOS_ARM64="https://github.com/BurntSushi/ripgrep/releases/down
 export TOOL_BINARY_UNIX="rg"
 export TOOL_BINARY_WINDOWS="rg.exe"
 
+# Prefer a locally installed ripgrep if available (skip downloading),
+# unless we are verifying all platform checksums.
+if [ "${TOOL_VERIFY_ALL_PLATFORMS:-}" != "1" ] && command -v rg >/dev/null 2>&1; then
+  exec rg "$@"
+fi
+
 # Invoke wrapper
 root="$(cd "$(dirname "$0")"; pwd)"
 exec "$root/tool-wrapper.sh" "$@"
@@ -76,6 +82,15 @@ set "TOOL_URL_MACOS_ARM64=https://github.com/BurntSushi/ripgrep/releases/downloa
 REM Binary path within extracted archive
 set "TOOL_BINARY_UNIX=rg"
 set "TOOL_BINARY_WINDOWS=rg.exe"
+
+REM Prefer a locally installed ripgrep if available (skip downloading),
+REM unless we are verifying all platform checksums.
+if not "%TOOL_VERIFY_ALL_PLATFORMS%"=="1" (
+  for /f "delims=" %%i in ('where rg.exe 2^>nul') do (
+    "%%i" %*
+    exit /B
+  )
+)
 
 REM Invoke wrapper
 call "%~dp0tool-wrapper.cmd" %*

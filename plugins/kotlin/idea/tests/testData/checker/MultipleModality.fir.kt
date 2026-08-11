@@ -1,9 +1,9 @@
-sealed <error descr="[REDUNDANT_MODIFIER] Modifier 'abstract' is redundant because 'sealed' is present">abstract</error> class First
+sealed <error descr="[REDUNDANT_MODIFIER]">abstract</error> class First
 
-<error descr="[REDUNDANT_MODIFIER] Modifier 'abstract' is redundant because 'sealed' is present">abstract</error> sealed class Second
+<error descr="[REDUNDANT_MODIFIER]">abstract</error> sealed class Second
 
 abstract class Base {
-    abstract <error descr="[REDUNDANT_MODIFIER] Modifier 'open' is redundant because 'abstract' is present">open</error> fun foo()
+    abstract <error descr="[REDUNDANT_MODIFIER]">open</error> fun foo()
 
-    <error descr="[REDUNDANT_MODIFIER] Modifier 'open' is redundant because 'abstract' is present">open</error> abstract val name: String
+    <error descr="[REDUNDANT_MODIFIER]">open</error> abstract val name: String
 }

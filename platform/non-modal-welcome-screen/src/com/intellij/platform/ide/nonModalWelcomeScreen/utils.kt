@@ -10,15 +10,17 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 const val NON_MODAL_WELCOME_SCREEN_SETTING_ID: String = "welcome.screen.non.modal.enabled"
 
-internal val isNonModalWelcomeScreenEnabled: Boolean
-  get() = AdvancedSettings.getBoolean(NON_MODAL_WELCOME_SCREEN_SETTING_ID)
+@get:Internal
+val isNonModalWelcomeScreenEnabled: Boolean
+  get() = AdvancedSettings.getBoolean(NON_MODAL_WELCOME_SCREEN_SETTING_ID) && !System.getProperty("idea.force.disable.non.modal.welcome.screen").toBoolean()
 
 @Internal
 suspend fun Project.isWelcomeExperienceProject(): Boolean {
   return ProjectFrameCapabilitiesService.getInstance().has(this, ProjectFrameCapability.WELCOME_EXPERIENCE)
 }
 
-internal fun Project.isWelcomeExperienceProjectSync(): Boolean {
+@Internal
+fun Project.isWelcomeExperienceProjectSync(): Boolean {
   @Suppress("DEPRECATION")
   return ProjectFrameCapabilitiesService.getInstanceSync().has(this, ProjectFrameCapability.WELCOME_EXPERIENCE)
 }

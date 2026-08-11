@@ -1,0 +1,134 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.python.sdk.tests` start
+jvm_library(
+    name = "tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.sdk.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
+)
+
+jvm_library(
+    name = "tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//python/python-sdk/backend",
+        "//python/python-sdk/backend:backend_test_lib",
+    ],
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":tests",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/progress/shared:ide-progress_test_lib",
+        "//platform/backend:backend_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/gson",
+        "//libraries/gson:gson_test_lib",
+        "//libraries/guava",
+        "//libraries/guava:guava_test_lib",
+        "//libraries/stream",
+        "//libraries/stream:stream_test_lib",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/analysis-impl",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//jps/model-api:model",
+        "//jps/model-api:model_test_lib",
+        "//jps/model-serialization",
+        "//jps/model-serialization:model-serialization_test_lib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//platform/platform-util-io:ide-util-io",
+        "//python/openapi:community",
+        "//python/openapi:community_test_lib",
+        "//python/python-psi-api:psi",
+        "//python/python-psi-api:psi_test_lib",
+        "//platform/projectModel-impl",
+        "//platform/projectModel-impl:projectModel-impl_test_lib",
+        "//platform/util/jdom",
+        "//platform/util/jdom:jdom_test_lib",
+        "//platform/ide-core",
+        "//platform/execution",
+        "//platform/execution:execution_test_lib",
+        "//platform/remote-core",
+        "//platform/remote-core:remote-core_test_lib",
+        "//libraries/jna",
+        "//libraries/jna:jna_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/caffeine",
+        "//libraries/caffeine:caffeine_test_lib",
+        "//libraries/jackson/jackson",
+        "//libraries/jackson/jackson:jackson_test_lib",
+        "//libraries/jackson/databind",
+        "//libraries/jackson/databind:databind_test_lib",
+        "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+        "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+        "//platform/progress/shared:ide-progress",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//platform/eel-provider",
+        "//platform/eel-provider:eel-provider_test_lib",
+        "//python/impl.helperLocator:community-helpersLocator",
+        "//python/impl.helperLocator:community-helpersLocator_test_lib",
+        "//python/common",
+        "//python/common:common_test_lib",
+        "//platform/workspace/jps",
+        "//platform/workspace/jps:jps_test_lib",
+        "//platform/workspace/storage",
+        "//platform/workspace/storage:storage_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//python/python-test-env/junit5",
+        "//python/python-test-env/junit5:junit5_test_lib",
+        "//python/junit5Tests-framework:community-junit5Tests-framework",
+        "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.sdk.tests` end
+
+### auto-generated section `iml intellij.python.sdk.tests` start
+exports_files(
+    [
+        "intellij.python.sdk.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.sdk.tests` end
+
+### auto-generated section `test intellij.python.sdk.tests` start
+jps_test(
+    name = "tests_test",
+    runtime_deps = [":tests_test_lib"],
+)
+### auto-generated section `test intellij.python.sdk.tests` end

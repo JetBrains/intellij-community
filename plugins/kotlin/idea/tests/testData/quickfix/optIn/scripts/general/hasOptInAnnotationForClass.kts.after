@@ -9,7 +9,7 @@
 // ACTION: Propagate 'B' opt-in requirement to 'someFun'
 // ACTION: Propagate 'B' opt-in requirement to containing class 'C'
 // RUNTIME_WITH_SCRIPT_RUNTIME
-// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@B' or '@OptIn(B::class)'
+// K2_ERROR: OPT_IN_USAGE_ERROR
 @RequiresOptIn
 annotation class A
 

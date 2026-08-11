@@ -5,6 +5,7 @@ import fleet.rpc.EndpointKind
 import fleet.rpc.client.IRpcClient
 import fleet.rpc.client.RpcInterceptor
 import fleet.rpc.client.rpcClient
+import fleet.rpc.core.ProtocolVersion
 import fleet.rpc.core.Transport
 import fleet.rpc.core.TransportMessage
 import fleet.util.UID
@@ -30,6 +31,7 @@ fun RequestDispatcher.directRpcClient(
       handleConnection(
         route = origin,
         endpoint = EndpointKind.Client,
+        protocolVersion = ProtocolVersion.current,
         send = dispatcherSend,
         receive = dispatcherReceive,
         presentableName = "directRpcClient",

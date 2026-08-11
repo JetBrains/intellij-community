@@ -149,7 +149,7 @@ object VcsLogFilterObject {
   fun fromHash(text: String): VcsLogHashFilter? {
     val hashes = mutableListOf<String>()
     for (word in StringUtil.split(text, HashSeparatorCharFilter, true, true)) {
-      if (!VcsLogUtil.HASH_REGEX.matcher(word).matches()) {
+      if (!VcsLogUtil.GIT_HASH_REGEX.matcher(word).matches()) {
         return null
       }
       hashes.add(word)

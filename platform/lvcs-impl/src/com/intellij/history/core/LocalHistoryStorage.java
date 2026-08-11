@@ -13,7 +13,10 @@ import java.nio.file.Path;
 
 @ApiStatus.Internal
 public final class LocalHistoryStorage extends AbstractStorage {
-  private static final StorageLockContext STORAGE_LOCK_CONTEXT = new StorageLockContext();
+  private static final StorageLockContext STORAGE_LOCK_CONTEXT = new StorageLockContext(
+    /* useReadWriteLock: */ false,
+    /* cacheChannels:    */ true
+  );
 
   public LocalHistoryStorage(@NotNull Path storageFilePath) throws IOException {
     super(storageFilePath, STORAGE_LOCK_CONTEXT);

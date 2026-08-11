@@ -1,5 +1,6 @@
 // "Change parameter 'code' type of primary constructor of class 'TestDelegate' to '() -> Logger'" "true"
 // WITH_STDLIB
+// K2_ERROR: RETURN_TYPE_MISMATCH
 import kotlin.reflect.KProperty
 
 object Test {

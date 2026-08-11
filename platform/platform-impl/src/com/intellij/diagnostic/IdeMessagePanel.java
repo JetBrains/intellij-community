@@ -3,8 +3,10 @@ package com.intellij.diagnostic;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsConfiguration;
@@ -13,11 +15,14 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
@@ -54,9 +59,15 @@ import java.awt.event.MouseEvent;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.notification.NotificationAction.createSimpleExpiring;
+
 /** Internal API. See a note in {@link MessagePool}. */
 @ApiStatus.Internal
 public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustomStatusBarWidget {
+  private static final Logger LOG = Logger.getInstance(IdeMessagePanel.class);
+
+  private static final boolean NOTIFICATIONS_ENABLED = !System.getProperty("idea.fatal.error.notification").equals("disabled");
+
   public static final String FATAL_ERROR = "FatalError";
 
   private static final String GROUP_ID = "IDE-errors";
@@ -73,6 +84,9 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
   private boolean isOpeningInProgress;
 
   private final IdeMessageAction action = new IdeMessageAction();
+  private final AtomicBoolean pluginUpdateScheduled = new AtomicBoolean(false);
+
+  private final MessagePoolAdvisor releaseExceptionsFilter = new IdeMessagePanelReleaseExceptionsFilter();
 
   private final ClickListener onClick = new ClickListener() {
     @Override
@@ -101,6 +115,14 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
 
     messagePool.addAdvisor(this);
 
+    var application = ApplicationManager.getApplication();
+    if (application != null && !application.isEAP() && !application.isInternal()) {
+      if (!ExceptionAutoReportUtil.INSTANCE.isAutoReportVisibleBlocking()) {
+        LOG.debug("Suppressing bundled exceptions in release build, automatic reporting is not available");
+        messagePool.addAdvisor(releaseExceptionsFilter);
+      }
+    }
+
     updateIconAndNotify();
   }
 
@@ -117,6 +139,7 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
   @Override
   public void dispose() {
     messagePool.removeAdvisor(this);
+    messagePool.removeAdvisor(releaseExceptionsFilter);
   }
 
   @Override
@@ -192,11 +215,42 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
 
   @Override
   public @Nullable Object afterEntryAdded(@NotNull AfterEntryAddedEvent e, @NotNull Continuation<? super @NotNull Unit> $completion) {
-    UIUtil.invokeLaterIfNeeded(() -> {
-      updateIconAndNotify();
-    });
+    var app = ApplicationManager.getApplication();
+    if (app == null) {
+      return MessagePoolAdvisor.super.afterEntryAdded(e, $completion);
+    }
+
+    var message = e.getMessage();
+    if (app.isInternal() || app.isEAP()
+        || NOTIFICATIONS_ENABLED
+        || showPluginError(message.getThrowable(), message.getMessage(), findPlugin(message.getThrowable()))) {
+      LOG.debug("Update error indicator");
+      UIUtil.invokeLaterIfNeeded(() -> {
+        updateIconAndNotify();
+      });
+    }
 
     return MessagePoolAdvisor.super.afterEntryAdded(e, $completion);
+  }
+
+  private static @Nullable IdeaPluginDescriptor findPlugin(Throwable throwable) {
+    return PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(throwable));
+  }
+
+  private boolean showPluginError(Throwable throwable, @Nullable String message, @Nullable IdeaPluginDescriptor plugin) {
+    var submitter = DefaultIdeaErrorLogger.findSubmitter(throwable, plugin);
+    if (plugin != null
+        && !isBuiltIn(plugin)
+        && !pluginUpdateScheduled.getAndSet(true)
+        && UpdateSettings.getInstance().isPluginsCheckNeeded()) {
+      UpdateCheckerFacade.getInstance().updateAndShowResult();  // push users to update plugins producing exceptions
+    }
+    return !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(new IdeaLoggingEvent(message, throwable));
+  }
+
+  static boolean isBuiltIn(@Nullable IdeaPluginDescriptor plugin) {
+    if (plugin == null) return true;
+    return plugin.isBundled() || PluginManagerCore.isUpdatedBundledPlugin(plugin);
   }
 
   @Override
@@ -250,7 +304,7 @@ public final class IdeMessagePanel implements MessagePoolAdvisor, IconLikeCustom
 
     var notification = new Notification(GROUP_ID, DiagnosticBundle.message("error.new.notification.title"), NotificationType.ERROR)
       .setIcon(AllIcons.Ide.FatalError)
-      .addAction(NotificationAction.createSimpleExpiring(DiagnosticBundle.message("error.new.notification.link"), () -> openErrorsDialog(null)));
+      .addAction(createSimpleExpiring(DiagnosticBundle.message("error.new.notification.link"), () -> openErrorsDialog(null)));
 
     var layoutData = BalloonLayoutData.createEmpty();
     layoutData.fadeoutTime = displayType == NotificationDisplayType.STICKY_BALLOON ? 300000 : 10000;

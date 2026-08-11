@@ -109,7 +109,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   @Override
-  public @Nullable PsiAnnotation findExternalAnnotation(final @NotNull PsiModifierListOwner listOwner, final @NotNull String annotationFQN) {
+  public @Nullable PsiAnnotation findExternalAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
     if (isNonCodeTypeAnnotation(annotationFQN)) return null;
     List<PsiAnnotation> result = findExternalAnnotations(listOwner, annotationFQN);
     return result.isEmpty() ? null : result.get(0);
@@ -198,18 +198,18 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   @Override
-  public boolean isExternalAnnotationWritable(@NotNull PsiModifierListOwner listOwner, final @NotNull String annotationFQN) {
+  public boolean isExternalAnnotationWritable(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
     // note that this method doesn't cache its result
     List<AnnotationData> map = doCollect(listOwner, true);
     return findByFQN(map, annotationFQN) != null;
   }
 
-  private static AnnotationData findByFQN(@NotNull List<AnnotationData> map, final @NotNull String annotationFQN) {
+  private static AnnotationData findByFQN(@NotNull List<AnnotationData> map, @NotNull String annotationFQN) {
     return ContainerUtil.find(map, data -> data.annotationClassFqName.equals(annotationFQN));
   }
 
   @Override
-  public @NotNull PsiAnnotation @NotNull [] findExternalAnnotations(final @NotNull PsiModifierListOwner listOwner) {
+  public @NotNull PsiAnnotation @NotNull [] findExternalAnnotations(@NotNull PsiModifierListOwner listOwner) {
     final List<AnnotationData> result = collectExternalAnnotations(listOwner);
     return result.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : StreamEx.of(result)
       .filter(data -> data.typePath == null)
@@ -380,7 +380,8 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     return findExternalAnnotationsFiles(((PsiClassOwner)containingFile).getPackageName(), virtualFile, f -> getExternalAnnotationsRoots(f));
   }
 
-  private <T> List<PsiFile> findExternalAnnotationsFiles(String packageName, @NotNull T key, @NotNull Function<? super T, ? extends List<VirtualFile>> rootGetter) {
+  private <T> List<PsiFile> findExternalAnnotationsFiles(String packageName, @NotNull T key, 
+                                                         @NotNull Function<? super T, ? extends List<VirtualFile>> rootGetter) {
     List<PsiFile> files = myExternalAnnotationsCache.get(key);
     if (files == NULL_LIST) return null;
 
@@ -576,13 +577,14 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     return annotation;
   }
 
-  private @NotNull PsiAnnotation createAnnotationFromText(final @NotNull String text) throws IncorrectOperationException {
+  private @NotNull PsiAnnotation createAnnotationFromText(@NotNull String text) throws IncorrectOperationException {
     final JavaParserUtil.ParserWrapper ANNOTATION = (builder, level) -> {
       new JavaParser(level).getDeclarationParser().parseAnnotation(builder);
     };
     // synchronize during interning in charTable
     synchronized (charTable) {
-      DummyHolder holder = DummyHolderFactory.createHolder(myPsiManager, new JavaDummyElement(text, ANNOTATION, LanguageLevel.HIGHEST), null, charTable);
+      DummyHolder holder = 
+        DummyHolderFactory.createHolder(myPsiManager, new JavaDummyElement(text, ANNOTATION, LanguageLevel.HIGHEST), null, charTable);
       PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
       if (!(element instanceof PsiAnnotation)) {
         throw new IncorrectOperationException("Incorrect annotation \"" + text + "\".");
@@ -649,7 +651,9 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
           }
         }
 
-        String argumentsString = myArguments.length() == 0 ? "" : myExternalAnnotationsManager == null ? myArguments.toString() : myExternalAnnotationsManager.intern(myArguments.toString());
+        String argumentsString = myArguments.length() == 0 ? "" : myExternalAnnotationsManager == null 
+                                                                  ? myArguments.toString() 
+                                                                  : myExternalAnnotationsManager.intern(myArguments.toString());
         AnnotationData data = new AnnotationData(myAnnotationFqn, argumentsString, myTypePath);
         myData.add(myExternalName, myExternalAnnotationsManager == null ? data : myExternalAnnotationsManager.internAnnotationData(data));
 

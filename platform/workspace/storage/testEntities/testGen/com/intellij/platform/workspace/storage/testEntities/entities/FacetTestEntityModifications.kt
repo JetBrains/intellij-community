@@ -19,7 +19,7 @@ interface FacetTestEntityBuilder : WorkspaceEntityBuilder<FacetTestEntity> {
 }
 
 internal object FacetTestEntityType : EntityType<FacetTestEntity, FacetTestEntityBuilder>() {
-  override val entityClass: Class<FacetTestEntity> get() = FacetTestEntity::class.java
+  override val entityImplClass: Class<*> get() = FacetTestEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = FacetTestEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,

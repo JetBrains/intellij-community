@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.keymap.visualStudio` start
-
 jvm_library(
     name = "keymap-visualStudio",
     srcs = glob(

@@ -67,7 +67,7 @@ import static com.intellij.openapi.options.newEditor.ConfigurablesListPanelKt.cr
 @ApiStatus.Internal
 public class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWTEventListener {
   private final UpdateQueue<Configurable> queue = DebouncedUpdates.<Configurable>forScope(coroutineScope, "SettingsModification", 1000)
-    .runLatest(it -> updateIfCurrent(it))
+    .runLatest(it -> ApplicationManager.getApplication().invokeLater(() -> updateIfCurrent(it), ModalityState.stateForComponent(this)))
     .cancelOnDispose(this);
   private final ConfigurableCardPanel myCardPanel = new ConfigurableCardPanel() {
     @Override
@@ -244,11 +244,9 @@ public class ConfigurableEditor extends AbstractEditor implements AnActionListen
   }
 
   final void updateIfCurrent(Configurable configurable) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (!isDisposed && this.configurable == configurable) {
-        updateCurrent(configurable, false);
-      }
-    }, ModalityState.stateForComponent(this));
+    if (!isDisposed && this.configurable == configurable) {
+      updateCurrent(configurable, false);
+    }
   }
 
   final @NotNull Promise<? super Object> select(final Configurable configurable) {

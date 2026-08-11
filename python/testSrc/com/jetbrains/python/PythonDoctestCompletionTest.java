@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -22,6 +25,8 @@ import com.jetbrains.python.fixtures.PyTestCase;
 /**
  * User : ktisha
  */
+@Subsystems.CodeCompletion
+@Layers.Functional
 public class PythonDoctestCompletionTest extends PyTestCase {
 
   private void doDoctestTest(String expected) {

@@ -3,12 +3,14 @@ package org.jetbrains.plugins.github.pullrequest.ui.review
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.codereview.review.CodeReviewSubmitPopupHandler
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.ide.plugins.newui.InstallButton
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBUI
 import icons.CollaborationToolsIcons
@@ -54,10 +56,23 @@ internal object GHPRSubmitReviewPopup : CodeReviewSubmitPopupHandler<GHPRSubmitR
         addActionListener { vm.submit(GHPullRequestReviewEvent.COMMENT) }
       }.let(::add)
     }
-    return HorizontalListPanel(ACTIONS_GAP).apply {
+    val buttonsPanel = HorizontalListPanel(ACTIONS_GAP).apply {
       buttons.forEach { add(it) }
     }
+    if (!vm.canDeleteWorktree) return buttonsPanel
+
+    val deleteWorktreeCheckBox = JBCheckBox(GithubBundle.message("pull.request.review.submit.delete.worktree"), vm.deleteWorktreeAfterSubmit.value).apply {
+      isOpaque = false
+      bindDisabledIn(cs, vm.isBusy)
+      addActionListener { vm.setDeleteWorktreeAfterSubmit(isSelected) }
+    }
+    return VerticalListPanel(DELETE_WORKTREE_GAP).apply {
+      add(deleteWorktreeCheckBox)
+      add(buttonsPanel)
+    }
   }
+
+  private const val DELETE_WORKTREE_GAP = 6
 
   override fun createTitleActionsComponentIn(cs: CoroutineScope, vm: GHPRSubmitReviewViewModel): JComponent {
     val defaultActions = super.createTitleActionsComponentIn(cs, vm)

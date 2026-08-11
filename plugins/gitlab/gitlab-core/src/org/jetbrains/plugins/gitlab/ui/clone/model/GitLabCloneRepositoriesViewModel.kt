@@ -91,8 +91,8 @@ internal class GitLabCloneRepositoriesViewModelImpl(
   override val shallowCloneVm = GitShallowCloneViewModel()
 
   override val accountDetailsProvider = GitLabAccountsDetailsProvider(cs, accountManager) { account ->
-    val token = accountManager.findCredentials(account) ?: return@GitLabAccountsDetailsProvider null
-    apiManager.getClient(account.server) { token }
+    val credentials = accountManager.findCredentials(account) ?: return@GitLabAccountsDetailsProvider null
+    apiManager.getClient(account.server, credentials.accessToken)
   }
 
   override fun selectItem(item: GitLabCloneListItem?) {

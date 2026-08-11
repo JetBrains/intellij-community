@@ -1,7 +1,16 @@
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.platform.searchEverywhere.frontend` start
+jps_test(
+    name = "frontend-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":frontend-tests_test_lib"],
+)
 
+### skip generation section `test intellij.platform.searchEverywhere.frontend.tests`
+
+### auto-generated section `build intellij.platform.searchEverywhere.frontend` start
 jvm_library(
     name = "frontend",
     srcs = glob(
@@ -24,7 +33,7 @@ jvm_library(
         "//platform/indexing-api:indexing",
         "//platform/projectModel-api:projectModel",
         "//platform/searchEverywhere/shared:searchEverywhere",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//platform/core-api:core",
@@ -71,6 +80,7 @@ jvm_library(
         "//platform/indexing-api:indexing_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/searchEverywhere/shared:searchEverywhere_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
@@ -105,3 +115,59 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.searchEverywhere.frontend` end
+
+### auto-generated section `build intellij.platform.searchEverywhere.frontend.tests` start
+jvm_library(
+    name = "frontend-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.searchEverywhere.frontend.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "frontend-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//platform/searchEverywhere/frontend",
+        "//platform/searchEverywhere/frontend:frontend_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [":frontend-tests"],
+    deps = [
+        # do not sort,
+        "//platform/searchEverywhere/shared:searchEverywhere",
+        "//platform/searchEverywhere/shared:searchEverywhere_test_lib",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "@lib//:kotlin-stdlib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/mockito",
+        "//libraries/mockito:mockito_test_lib",
+        "//platform/platform-api:ide",
+        "//platform/platform-api:ide_test_lib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.searchEverywhere.frontend.tests` end
+
+### auto-generated section `iml intellij.platform.searchEverywhere.frontend.tests` start
+exports_files(
+    [
+        "intellij.platform.searchEverywhere.frontend.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.searchEverywhere.frontend.tests` end

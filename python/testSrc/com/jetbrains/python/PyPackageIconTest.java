@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,6 +18,8 @@ import javax.swing.Icon;
 import java.util.Collections;
 import java.util.List;
 
+@Subsystems.IDE
+@Layers.Functional
 public class PyPackageIconTest extends PyTestCase {
   @Override
   public void setUp() throws Exception {

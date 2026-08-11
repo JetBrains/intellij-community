@@ -7,6 +7,7 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
+import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiModifierListStubImpl;
 import com.intellij.psi.stubs.LightStubElementFactory;
 import com.intellij.psi.stubs.StubElement;
@@ -15,14 +16,14 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaModifierListStubFactory implements LightStubElementFactory<PsiModifierListStubImpl, PsiModifierList> {
+public class JavaModifierListStubFactory implements LightStubElementFactory<PsiModifierListStub, PsiModifierList> {
   @Override
   public @NotNull PsiModifierListStubImpl createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     return new PsiModifierListStubImpl(parentStub, RecordUtil.packModifierList(tree, node));
   }
 
   @Override
-  public PsiModifierList createPsi(@NotNull PsiModifierListStubImpl stub) {
+  public PsiModifierList createPsi(@NotNull PsiModifierListStub stub) {
     return JavaStubElementType.getFileStub(stub).getPsiFactory().createModifierList(stub);
   }
   

@@ -15,7 +15,7 @@ fun getLsp4jPosition(document: Document, offset: Int): Position {
   if (document is DocumentWindow) {
     // It's very likely that the caller uses DocumentWindow not only when calling this function but also somewhere else.
     // The error helps to find the problematic place earlier.
-    fileLogger().error("DocumentWindow is not expected here. Make sure to use DocumentWindow.delegate when working with the LSP server.")
+    fileLogger().error("DocumentWindow is not expected here. Make sure to use DocumentWindow.delegate when working with LspClient.")
     return getLsp4jPosition(document.delegate, document.injectedToHost(offset))
   }
 
@@ -50,7 +50,7 @@ fun getOffsetInDocument(document: Document, position: Position): Int? {
     // (https://youtrack.jetbrains.com/issue/IDEA-332939#focus=Comments-27-8189497.0-0)
     // Secondly, we use this code with textDocument/foldingRange, that by spec may omit character.
     // We intermittently use `Int.MAX_VALUE` and expect to clamp it here to the EOL.
-    // See [com.intellij.platform.lsp.impl.folding.LspFoldingRangeCache.foldingRangeToLsp4jRange]
+    // See [com.intellij.platform.lsp.impl.features.folding.LspFoldingRangeCache.foldingRangeToLsp4jRange]
     val nextLineStartOffset = document.getLineStartOffset(line + 1)
     character = min(character, nextLineStartOffset - 1 - lineStartOffset)
   }

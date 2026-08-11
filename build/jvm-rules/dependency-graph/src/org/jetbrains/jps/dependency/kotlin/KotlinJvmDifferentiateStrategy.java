@@ -27,6 +27,7 @@ import org.jetbrains.jps.dependency.java.AnnotationGroup;
 import org.jetbrains.jps.dependency.java.AnnotationInstance;
 import org.jetbrains.jps.dependency.java.ClassNewUsage;
 import org.jetbrains.jps.dependency.java.ClassUsage;
+import org.jetbrains.jps.dependency.java.ElementAnnotation;
 import org.jetbrains.jps.dependency.java.JVMClassNode;
 import org.jetbrains.jps.dependency.java.JvmClass;
 import org.jetbrains.jps.dependency.java.JvmDifferentiateStrategyImpl;
@@ -70,6 +71,8 @@ import static org.jetbrains.jps.util.Iterators.unique;
  */
 public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
   private static final TypeRepr.ClassType JVM_OVERLOADS_ANNOTATION = new TypeRepr.ClassType("kotlin/jvm/JvmOverloads");
+  private static final TypeRepr.ClassType DSL_MARKER_ANNOTATION = new TypeRepr.ClassType("kotlin/DslMarker");
+  private static final TypeRepr.ClassType REQUIRES_OPT_IN_ANNOTATION = new TypeRepr.ClassType("kotlin/RequiresOptIn");
 
   private static final List<AnnotationGroup> ourTrackedAnnotations = List.of(
     AnnotationGroup.of(
@@ -127,6 +130,19 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
       Set.of(
         new TypeRepr.ClassType("kotlin/jvm/PurelyImplements")
       )
+    ),
+
+    AnnotationGroup.of(
+      "Kotlin inline-access annotations",
+      // @PublishedApi is the visibility contract that lets public-API inline functions reference an internal
+      // declaration: removing it breaks every inline function referencing the member (BINARY retention, so the
+      // toggle is visible in bytecode while the member's flags and signature stay identical)
+      EnumSet.of(AnnotationGroup.AnnTarget.type, AnnotationGroup.AnnTarget.field, AnnotationGroup.AnnTarget.method),
+      EnumSet.of(AnnotationGroup.AffectionKind.added, AnnotationGroup.AffectionKind.removed),
+      EnumSet.of(AnnotationGroup.AffectionScope.usages),
+      Set.of(
+        new TypeRepr.ClassType("kotlin/PublishedApi")
+      )
     )
   );
 
@@ -156,6 +172,22 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
         // calls to newly added class' constructors may shadow calls to functions named similarly
         debug(context, "Affecting lookup usages for added class ", addedClass.getName());
         affectClassLookupUsages(context, addedClass);
+
+        if (container != null && Attributes.getKind((KmClass)container) == ClassKind.COMPANION_OBJECT) {
+          // members of a newly added companion object become resolvable by their short names inside the outer class
+          // and its subclasses, where they can capture references currently bound to outer-scope declarations
+          Map<JvmNodeReferenceID, Iterable<JvmNodeReferenceID>> cache = new HashMap<>();
+          for (JvmClass outerClass : future.getNodes(new JvmNodeReferenceID(addedClass.getOuterFqName()), JvmClass.class)) {
+            for (KmFunction f : filter(container.getFunctions(), fun -> !KJvmUtils.isPrivate(fun))) {
+              debug(context, "Companion object added: affecting lookups of its member over the outer class scope ", f.getName());
+              affectMemberLookupUsages(context, outerClass, f.getName(), future, cache);
+            }
+            for (KmProperty p : filter(container.getProperties(), prop -> !KJvmUtils.isPrivate(prop))) {
+              debug(context, "Companion object added: affecting lookups of its member over the outer class scope ", p.getName());
+              affectMemberLookupUsages(context, outerClass, p.getName(), future, cache);
+            }
+          }
+        }
 
         if (!addedClass.isAnonymous() && !addedClass.isLocal() && !addedClass.isInnerClass()) {
           if (affectConflictingTypeAliasDeclarations(context, addedClass.getReferenceID(), present)) { // if there exists a type alias with the same fq name
@@ -237,6 +269,13 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
           affectMemberLookupUsages(context, removedClass, prop.getName(), present, cache);
         }
       }
+
+      if (container != null) {
+        for (KmTypeAlias alias : filter(container.getTypeAliases(), ta -> !KJvmUtils.isPrivate(ta))) {
+          debug(context, "Type alias in a removed class or file; affecting alias lookup usages ", alias.getName());
+          affectMemberLookupUsages(context, removedClass, alias.getName(), present, cache);
+        }
+      }
     }
     return true;
   }
@@ -245,6 +284,32 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
   public boolean processChangedClass(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Utils future, Utils present) {
     JvmClass changedClass = change.getPast();
     JvmClass.Diff diff = change.getDiff();
+    Map<JvmNodeReferenceID, Iterable<JvmNodeReferenceID>> presentCache = new HashMap<>();
+    Map<JvmNodeReferenceID, Iterable<JvmNodeReferenceID>> futureCache = new HashMap<>();
+
+    if (changedClass.isAnnotation() && find(flat(diff.annotations().added(), diff.annotations().removed()), a -> DSL_MARKER_ANNOTATION.equals(a.getAnnotationClass())) != null) {
+      // @DslMarker toggled on an annotation class: inside nested lambdas, outer implicit receivers whose types carry
+      // this annotation become (in)accessible (dsl scope violation) Affect dependents resolving method names against the marker-annotated receiver classes.
+      debug(context, "DslMarker annotation toggled on ", changedClass.getName(), " --- affecting member lookups over classes annotated with it");
+      TypeRepr.ClassType annoType = new TypeRepr.ClassType(changedClass.getName());
+      for (JvmClass receiver : filter(flat(map(context.getGraph().getDependingNodes(changedClass.getReferenceID()), dep -> present.getNodes(dep, JvmClass.class))), cls -> find(cls.getAnnotations(), a -> annoType.equals(a.getAnnotationClass())) != null)) {
+        for (JvmMethod m : filter(receiver.getMethods(), m -> !m.isPrivate() && !m.isConstructor() && !m.isStaticInitializer())) {
+          affectMemberLookupUsages(context, receiver, KJvmUtils.getMethodKotlinName(receiver, m), present, presentCache);
+        }
+      }
+    }
+
+    if (!changedClass.isPrivate()) {
+      for (ElementAnnotation ann : diff.annotations().added()) {
+        if (isOptInRequirementMarker(ann.getAnnotationClass(), future)) {
+          // an opt-in requirement marker gates every use of the class (see the method-level twin in processChangedMethod)
+          debug(context, "An opt-in requirement marker ", ann.getAnnotationClass().getJvmName(), " was added to the class; affecting class usages and lookups");
+          context.affectUsage(new ClassUsage(changedClass.getReferenceID()));
+          affectClassLookupUsages(context, changedClass);
+        }
+      }
+    }
+
     Iterable<JvmMethod> removedMethods = diff.methods().removed();
     Iterable<JvmField> addedNonPrivateFields = filter(diff.fields().added(), f -> !f.isPrivate());
     Iterable<JvmField> exposedFields = filter(map(diff.fields().changed(), ch -> ch.getDiff().accessExpanded()? ch.getPast() : null), Objects::nonNull);
@@ -334,7 +399,6 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
       }
     }
 
-    Map<JvmNodeReferenceID, Iterable<JvmNodeReferenceID>> cache = new HashMap<>();
     for (Difference.Change<KotlinMeta, KotlinMeta.Diff> metaChange : diff.metadata(KotlinMeta.class).changed()) {
       KotlinMeta.Diff metaDiff = metaChange.getDiff();
 
@@ -348,19 +412,48 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
         affectClassLookupUsages(context, changedClass);
       }
 
+      if (metaDiff.supertypesChanged() && !diff.superClassChanged() && diff.interfaces().unchanged()) {
+        // the supertype INSTANTIATION changed while the erased JVM hierarchy stayed identical (e.g. 'C : I<String>'
+        // -> 'C : I<String?>'): Kotlin consumers re-substitute supertype arguments when typing inherited members,
+        // and overriders' expected signatures shift; erasure-visible hierarchy changes ride their own rules
+        debug(context, "Kotlin supertype instantiation changed with identical erased hierarchy; affecting class usages and subclasses ", changedClass.getName());
+        context.affectUsage(new ClassUsage(changedClass.getReferenceID()));
+        affectClassLookupUsages(context, changedClass);
+        for (JvmClass sub : flat(map(future.allSubclasses(changedClass.getReferenceID()), id -> future.getNodes(id, JvmClass.class)))) {
+          affectNodeSources(context, sub.getReferenceID(), "Affecting subclass of a class with changed supertype instantiation: ", future);
+          context.affectUsage(new ClassUsage(sub.getReferenceID()));
+        }
+      }
+
+      if (metaDiff.valueClassAttributesChanged()) {
+        // class <-> value class or a changed underlying type re-erases/re-mangles every signature MENTIONING the
+        // type in dependents; member-level remove/add pairs cover only direct member callers
+        debug(context, "Value-class attributes changed; affecting all class usages ", changedClass.getName());
+        context.affectUsage(new ClassUsage(changedClass.getReferenceID()));
+        affectClassLookupUsages(context, changedClass);
+      }
+
+      if (metaDiff.funInterfaceFlagChanged()) {
+        // the 'fun' modifier toggled: SAM-conversion permission changes for Kotlin lambda sites while the
+        // JVM interface (still a SAM shape) stays byte-identical
+        debug(context, "'fun' modifier toggled on an interface; affecting class usages ", changedClass.getName());
+        context.affectUsage(new ClassUsage(changedClass.getReferenceID()));
+        affectClassLookupUsages(context, changedClass);
+      }
+
       KmDeclarationContainer container = metaChange.getPast().getDeclarationContainer();
 
       if (container != null && metaDiff.kindChanged() && metaChange.getPast().isTopLevelDeclarationContainer() != metaChange.getNow().isTopLevelDeclarationContainer()) {
         // => container members were top-level and became class members or vice versa
         debug(context, "Declaration container has changed its kind => affecting lookup usages of containing declarations ", changedClass.getName());
         for (KmFunction f : filter(container.getFunctions(), f -> !KJvmUtils.isPrivate(f))) {
-          affectMemberLookupUsages(context, changedClass, f.getName(), present, cache);
+          affectMemberLookupUsages(context, changedClass, f.getName(), present, presentCache);
         }
         for (KmProperty p : filter(container.getProperties(), p -> !KJvmUtils.isPrivate(p))) {
-          affectMemberLookupUsages(context, changedClass, p.getName(), present, cache);
+          affectMemberLookupUsages(context, changedClass, p.getName(), present, presentCache);
         }
         for (KmTypeAlias ta : filter(container.getTypeAliases(), ta -> !KJvmUtils.isPrivate(ta))) {
-          affectMemberLookupUsages(context, changedClass, ta.getName(), present, cache);
+          affectMemberLookupUsages(context, changedClass, ta.getName(), present, presentCache);
         }
       }
 
@@ -371,12 +464,15 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
         }
         if (isDeclarationImportable || Attributes.isInline(removedFunction)) {
           debug(context, "Removed function was either importable (a top-level one or a companion object member) or inlineable, affecting function usages ", removedFunction.getName());
-          affectMemberLookupUsages(context, changedClass, removedFunction.getName(), present, cache);
+          affectMemberLookupUsages(context, changedClass, removedFunction.getName(), present, presentCache);
         }
 
         JvmMethod method = getJvmMethod(change.getNow(), JvmExtensionsKt.getSignature(removedFunction));
         if (method != null) {
-          // a function in kotlin code was replaced with a property, but at the bytecode level corresponding methods are preserved
+          // a function in kotlin code was replaced with a property, but at the bytecode level corresponding methods are preserved:
+          // Kotlin call sites of the FUNCTION form hold an unchanged MethodUsage, yet must re-resolve against the property
+          debug(context, "Kotlin function was converted to a property; affecting function lookup usages ", removedFunction.getName());
+          affectMemberLookupUsages(context, changedClass, removedFunction.getName(), present, presentCache);
           for (JvmClass subClass : filter(flat(map(future.allSubclasses(changedClass.getReferenceID()), id -> future.getNodes(id, JvmClass.class))), KJvmUtils::isKotlinNode)) {
             if (find(subClass.getMethods(), m -> !m.isPrivate() && method.isSameByJavaRules(m)) != null) {
               affectNodeSources(context, subClass.getReferenceID(), "Kotlin function " + removedFunction.getName() + " has been removed. Affecting corresponding method in subclasses: ", future);
@@ -390,7 +486,7 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
           continue;
         }
         debug(context, "Removed or added function declares default values: ", changedClass.getName());
-        affectMemberLookupUsages(context, changedClass, func.getName(), future, cache);
+        affectMemberLookupUsages(context, changedClass, func.getName(), future, futureCache);
       }
 
       for (Difference.Change<KmFunction, KotlinMeta.KmFunctionsDiff> funChange : metaDiff.functions().changed()) {
@@ -399,7 +495,7 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
           continue;
         }
         KotlinMeta.KmFunctionsDiff funDiff = funChange.getDiff();
-        if (funDiff.accessRestricted() || funDiff.becameNullable() || funDiff.argsBecameNotNull() || funDiff.parameterArgumentsChanged()) {
+        if (funDiff.accessRestricted() || funDiff.becameNullable() || funDiff.argsBecameNotNull() || funDiff.parameterArgumentsChanged() || funDiff.returnTypeArgumentsChanged()) {
           debug(context, "One of function's parameters or return value has become non-nullable, or the function has become less accessible or type parameter's arguments changed ", changedKmFunction.getName());
           JvmMethod jvmMethod = getJvmMethod(changedClass, JvmExtensionsKt.getSignature(changedKmFunction));
           if (jvmMethod != null) {
@@ -414,12 +510,18 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
           if (KJvmUtils.isDeclaresDefaultValue(changedKmFunction)) {
             // additionally: functions with default parameters produce several methods in bytecode, so need to affect by lookup usage
             debug(context, "One of method's parameters or method's return value has become non-nullable; or function has become less accessible: ", changedKmFunction.getName());
-            affectMemberLookupUsages(context, changedClass, changedKmFunction.getName(), future, cache);
+            affectMemberLookupUsages(context, changedClass, changedKmFunction.getName(), future, futureCache);
           }
         }
         if (funDiff.receiverParameterChanged() || funDiff.hasDefaultDeclarationChanges()) {
           debug(context, "Function's receiver parameter changed or function has breaking changes in default value declarations: ", changedKmFunction.getName());
-          affectMemberLookupUsages(context, changedClass, changedKmFunction.getName(), future, cache);
+          affectMemberLookupUsages(context, changedClass, changedKmFunction.getName(), future, futureCache);
+        }
+        if (funDiff.conventionModifiersChanged() || !funDiff.parameterNames().unchanged() || funDiff.contractPresenceChanged()) {
+          // metadata-only deltas with byte-identical JVM methods: convention-form applicability (operator/infix),
+          // named-argument binding (parameter names) and call-site smart casts (contracts) all re-resolve by name
+          debug(context, "Function's operator/infix modifiers, parameter names or contract changed: ", changedKmFunction.getName());
+          affectMemberLookupUsages(context, changedClass, changedKmFunction.getName(), future, futureCache);
         }
       }
 
@@ -432,13 +534,22 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
       }
       
       for (Difference.Change<KmConstructor, KotlinMeta.KmConstructorsDiff> conChange : metaDiff.constructors().changed()) {
+        KotlinMeta.KmConstructorsDiff conDiff = conChange.getDiff();
+        if (conDiff.accessExpanded()) {
+          if (!KJvmUtils.isPrivate(Attributes.getVisibility(conChange.getNow()))) {
+            // the constructor becomes callable in scopes that could not call it before: `Foo(...)` invocations
+            // currently resolved to same-named functions may re-resolve to the constructor
+            debug(context, "Constructor has become more accessible: ", changedClass.getName());
+            affectClassLookupUsages(context, changedClass);
+          }
+          continue;
+        }
         KmConstructor changedCons = conChange.getPast();
         if (KJvmUtils.isPrivate(Attributes.getVisibility(changedCons))) {
           continue;
         }
-        KotlinMeta.KmConstructorsDiff conDiff = conChange.getDiff();
-        if (conDiff.argsBecameNotNull() || conDiff.accessRestricted() || conDiff.hasDefaultDeclarationChanges()) {
-          debug(context, "Constructor's args became non-nullable; or the constructor has become less accessible or has breaking changes in default value declarations: ", changedClass.getName());
+        if (conDiff.argsBecameNotNull() || conDiff.accessRestricted() || conDiff.hasDefaultDeclarationChanges() || !conDiff.parameterNames().unchanged()) {
+          debug(context, "Constructor's args became non-nullable; or the constructor has become less accessible, has breaking changes in default value declarations or renamed parameters: ", changedClass.getName());
           affectClassLookupUsages(context, changedClass);
         }
       }
@@ -447,16 +558,19 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
         if (KJvmUtils.isPrivate(removedProp)) {
           continue;
         }
-        if (KJvmUtils.isInlinable(removedProp)) {
-          debug(context, "Removed property was inlineable, affecting property usages ", removedProp.getName());
-          affectMemberLookupUsages(context, changedClass, removedProp.getName(), present, cache);
+        if (isDeclarationImportable || KJvmUtils.isInlinable(removedProp)) {
+          debug(context, "Removed property was a constant or had inlineable accessors or was importable (a top-level one or a companion object member), affecting property usages ", removedProp.getName());
+          affectMemberLookupUsages(context, changedClass, removedProp.getName(), present, presentCache);
         }
 
         List<JvmMethodSignature> propertyAccessors = Arrays.asList(JvmExtensionsKt.getGetterSignature(removedProp), JvmExtensionsKt.getSetterSignature(removedProp));
         List<JvmMethod> accessorMethods = collect(filter(map(propertyAccessors, acc -> acc != null? getJvmMethod(change.getNow(), acc) : null), m -> m != null && !m.isPrivate()), new ArrayList<>());
 
         if (!accessorMethods.isEmpty()) {
-          // property in kotlin code was replaced with a function(s), but at the bytecode level corresponding methods are preserved
+          // property in kotlin code was replaced with a function(s), but at the bytecode level corresponding methods are preserved:
+          // Kotlin call sites of the PROPERTY form hold unchanged accessor MethodUsages, yet must re-resolve against the function
+          debug(context, "Kotlin property was converted to a function; affecting property lookup usages ", removedProp.getName());
+          affectMemberLookupUsages(context, changedClass, removedProp.getName(), present, presentCache);
           for (JvmClass subClass : filter(flat(map(future.allSubclasses(changedClass.getReferenceID()), id -> future.getNodes(id, JvmClass.class))), KJvmUtils::isKotlinNode)) {
             if (find(subClass.getMethods(), m -> !m.isPrivate() && find(accessorMethods, m::isSameByJavaRules) != null) != null) {
               affectNodeSources(context, subClass.getReferenceID(), "Kotlin property " + removedProp.getName() + " has been removed. Affecting corresponding accessor method(s) in subclasses: ", future);
@@ -479,9 +593,14 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
         else if (propDiff.mutabilityChanged()) {
           affectLookupUsagesReason = "Property mutability has changed (val <=> var); affecting its lookup usages ";
         }
+        else if (propDiff.typeArgumentsChanged()) {
+          // invisible in the erased accessor descriptors and (for nullability) in the generic Signature attribute:
+          // Kotlin readers and writers re-type-check; top-level nullability keeps its precise accessor-level rules below
+          affectLookupUsagesReason = "Type arguments of the property type changed; affecting its lookup usages ";
+        }
         if (affectLookupUsagesReason != null) {
           debug(context, affectLookupUsagesReason, changedProp.getName());
-          affectMemberLookupUsages(context, changedClass, changedProp.getName(), future, cache);
+          affectMemberLookupUsages(context, changedClass, changedProp.getName(), future, futureCache);
         }
 
         if (!KJvmUtils.isPrivate(Attributes.getVisibility(changedProp.getGetter()))) {
@@ -508,13 +627,13 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
 
       for (KmTypeAlias alias : filter(metaDiff.typeAliases().removed(), ta -> !KJvmUtils.isPrivate(ta))) {
         debug(context, "A type alias declaration was removed; affecting lookup usages ", alias.getName());
-        affectMemberLookupUsages(context, changedClass, alias.getName(), future, cache);
+        affectMemberLookupUsages(context, changedClass, alias.getName(), future, futureCache);
       }
 
       boolean conflictsFound = false;
       for (KmTypeAlias alias : filter(metaDiff.typeAliases().added(), ta -> !KJvmUtils.isPrivate(ta))) {
         debug(context, "A type alias declaration was added; affecting lookup usages ", alias.getName());
-        affectMemberLookupUsages(context, changedClass, alias.getName(), future, cache);
+        affectMemberLookupUsages(context, changedClass, alias.getName(), future, futureCache);
 
         String scopeName = changedClass.getPackageName();
         JvmNodeReferenceID conflictingNodeId = new JvmNodeReferenceID(scopeName.isBlank() ? alias.getName() : scopeName + "." + alias.getName());
@@ -531,10 +650,12 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
 
       for (Difference.Change<KmTypeAlias, KotlinMeta.KmTypeAliasDiff> aChange : metaDiff.typeAliases().changed()) {
         KotlinMeta.KmTypeAliasDiff aDiff = aChange.getDiff();
-        if (aDiff.accessRestricted() || aDiff.underlyingTypeChanged()) {
+        if (aDiff.visibilityChanged() || aDiff.expandedTypeChanged() || aDiff.annotationsChanged()) {
+          // visibility widening lets the alias capture the name in importing scopes just like an added alias;
+          // an expanded-type change covers both direct RHS edits and alias-chain retargeting
           KmTypeAlias changedAlias = aChange.getPast();
-          debug(context, "A type alias declaration has access restricted or underlying type has changed; affecting lookup usages ", changedAlias.getName());
-          affectMemberLookupUsages(context, changedClass, changedAlias.getName(), future, cache);
+          debug(context, "A type alias declaration has changed its visibility, expanded type or annotations; affecting lookup usages ", changedAlias.getName());
+          affectMemberLookupUsages(context, changedClass, changedAlias.getName(), future, futureCache);
         }
       }
 
@@ -573,14 +694,57 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
       debug(context, "Function was inlineable, or has become inlineable or a body of inline method has changed; affecting method usages ", name);
       affectMemberLookupUsages(context, changedClass, name, future, null);
     }
+
+    if (!changedMethod.isPrivate()) {
+      for (ElementAnnotation ann : methodChange.getDiff().annotations().added()) {
+        if (isOptInRequirementMarker(ann.getAnnotationClass(), future)) {
+          // an opt-in requirement marker (an annotation itself annotated with @RequiresOptIn) gates every use site:
+          // callers without a corresponding @OptIn/propagated marker become errors or warnings
+          debug(context, "An opt-in requirement marker ", ann.getAnnotationClass().getJvmName(), " was added to the method; affecting method usages and lookups");
+          affectMemberUsages(context, changedClass.getReferenceID(), changedMethod, future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), changedMethod));
+          affectMemberLookupUsages(context, changedClass, KJvmUtils.getMethodKotlinName(changedClass, changedMethod), future, null);
+        }
+      }
+    }
     return super.processChangedMethod(context, clsChange, methodChange, future, present);
+  }
+
+  private static boolean isOptInRequirementMarker(TypeRepr.ClassType annotationType, Utils utils) {
+    for (JvmClass annotationClass : utils.getNodes(new JvmNodeReferenceID(annotationType.getJvmName()), JvmClass.class)) {
+      if (find(annotationClass.getAnnotations(), a -> REQUIRES_OPT_IN_ANNOTATION.equals(a.getAnnotationClass())) != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public boolean processRemovedMethod(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, JvmMethod removedMethod, Utils future, Utils present) {
+    if (!removedMethod.isPrivate() && !removedMethod.isSynthetic()) {
+      JvmClass changedClass = change.getPast();
+      String name = KJvmUtils.getMethodKotlinName(changedClass, removedMethod);
+      debug(context, "Affect usages of deleted method in Kotlin sources ", name);
+      affectMemberLookupUsages(context, changedClass, name, present, null);
+    }
+    return true;
+  }
+
+  @Override
+  public boolean processAddedField(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, JvmField addedField, Utils future, Utils present) {
+    if (!addedField.isPrivate() && !addedField.isSynthetic()) {
+      // a new member wins over a same-named extension property in Kotlin resolution => re-check dependents
+      // resolving the name against this class or its subclasses
+      debug(context, "Affect usages of added field in Kotlin sources ", addedField.getName());
+      affectMemberLookupUsages(context, change.getPast(), addedField.getName(), future, null);
+    }
+    return true;
   }
 
   @Override
   public boolean processRemovedField(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, JvmField removedField, Utils future, Utils present) {
-    if (!removedField.isPrivate() && removedField.isInlinable() && removedField.getValue() != null) {
-      debug(context, "Field had value and was (non-private) final; affecting usages in Kotlin sources ");
-      JvmClass changedClass = change.getPast();
+    JvmClass changedClass = change.getPast();
+    if (!removedField.isPrivate() && (removedField.isInlinable() && removedField.getValue() != null || removedField.getFlags().isEnum() || !KJvmUtils.isKotlinNode(changedClass))) {
+      debug(context, "Field had value and was (non-private) final or was a non-Kotlin produced field; affecting usages in Kotlin sources ");
       affectLookupUsages(
         context,
         flat(asIterable(changedClass.getReferenceID()), present.collectSubclassesWithoutField(changedClass.getReferenceID(), removedField)),

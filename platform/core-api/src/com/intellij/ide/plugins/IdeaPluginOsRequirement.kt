@@ -48,6 +48,14 @@ enum class IdeaPluginOsRequirement {
     fun fromModuleId(moduleId: PluginId): IdeaPluginOsRequirement? =
       directory[moduleId] ?: Unknown.takeIf { looksLikeOsModuleId(moduleId.idString) }
 
+    fun fromOs(os: OS): IdeaPluginOsRequirement? = when (os) {
+      OS.Windows -> Windows
+      OS.macOS -> Mac
+      OS.Linux -> Linux
+      OS.FreeBSD -> FreeBSD
+      OS.Other -> null
+    }
+
     private fun looksLikeOsModuleId(idString: String): Boolean = idString.startsWith(osModuleIdPrefix)
   }
 }

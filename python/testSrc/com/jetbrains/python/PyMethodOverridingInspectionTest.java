@@ -15,11 +15,16 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyMethodOverridingInspection;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyMethodOverridingInspectionTest extends PyInspectionTestCase {
   public void testArgsKwargsOverrideArg() {
     doTest();

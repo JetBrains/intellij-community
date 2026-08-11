@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.impl.run;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
@@ -33,7 +34,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 
-public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
+final class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private final Project myProject;
   private final PyPluginCommonOptionsPanel content;
   private JComponent labelAnchor;
@@ -43,7 +44,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   private static final Logger LOG = Logger.getInstance(PyPluginCommonOptionsForm.class);
 
-  public PyPluginCommonOptionsForm(PyCommonOptionsFormData data) {
+  PyPluginCommonOptionsForm(PyCommonOptionsFormData data) {
     // setting modules
     myProject = data.getProject();
     content = new PyPluginCommonOptionsPanel();
@@ -89,7 +90,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   @Override
-  public void subscribe() {
+  public void subscribe(@NotNull Disposable parentDisposable) {
   }
 
   private void addInterpreterComboBoxActionListener(ActionListener listener) {

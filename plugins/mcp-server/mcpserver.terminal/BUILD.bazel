@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.mcpserver.terminal` start
-
 jvm_library(
     name = "mcpserver.terminal",
     srcs = glob(
@@ -20,9 +19,10 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//plugins/mcp-server:mcpserver",
+        "//plugins/mcp-server/mcpserver.toolsets",
         "//platform/core-api:core",
         "//platform/platform-api:ide",
         "//platform/ide-core",
@@ -52,7 +52,9 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":mcpserver.terminal",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//plugins/mcp-server:mcpserver_test_lib",
+        "//plugins/mcp-server/mcpserver.toolsets:mcpserver.toolsets_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/platform-api:ide_test_lib",
         "//platform/ide-core:ide-core_test_lib",

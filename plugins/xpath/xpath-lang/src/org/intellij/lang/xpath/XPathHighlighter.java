@@ -131,7 +131,7 @@ public class XPathHighlighter extends SyntaxHighlighterBase implements DumbAware
   }
 
   @Override
-  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
+  public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(@NotNull IElementType tokenType) {
     return pack((myXPath2Syntax ? keys1_2 : keys1).get(tokenType));
   }
 }

@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.TerminalBundle;
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory;
+import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo;
+import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay;
 
 /**
  * @see org.jetbrains.plugins.terminal.action.RevealFileInTerminalAction
@@ -31,7 +33,8 @@ final class SelectInTerminal implements SelectInTarget, DumbAware {
   public void selectIn(SelectInContext context, boolean requestFocus) {
     Project project = context.getProject();
     VirtualFile selectedFile = context.getVirtualFile();
-    TerminalInternalUtilsKt.createTerminalTab(project, null, selectedFile.getPath(), null, null, null);
+    TerminalStartupFusInfo fusInfo = new TerminalStartupFusInfo(TerminalTabOpeningWay.SELECT_IN_TERMINAL);
+    TerminalInternalUtilsKt.createTerminalTab(project, null, selectedFile.getPath(), null, null, fusInfo);
   }
 
   @Override

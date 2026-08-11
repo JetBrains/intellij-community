@@ -67,9 +67,15 @@ open class AssignmentTracker {
     }
   }
 
+  @RequiresEdt
   open fun onEachAssignment() {}
+
+  @RequiresEdt
   open fun onEachUnassignment() {}
 
+  @RequiresEdt
   open fun onFirstAssignment() {}
+
+  @RequiresEdt
   open fun onLastUnassignment() {}
 }

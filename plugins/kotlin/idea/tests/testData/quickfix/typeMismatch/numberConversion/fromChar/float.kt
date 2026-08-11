@@ -1,6 +1,6 @@
 // "Convert expression to 'Float'" "true"
 // WITH_STDLIB
-// K2_ERROR: Argument type mismatch: actual type is 'Char', but 'Float' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 fun float(x: Float) {}
 
 fun test(c: Char) {

@@ -1,10 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.intentions
 
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.intellij.modcommand.ModCommand
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.fixtures.PyTestCase
 
+@Subsystems.CodeInsight
+@Components.Intentions
+@Layers.Functional
 class PyCopyStringLiteralToClipboardIntentionTest : PyTestCase() {
   fun `test simple literal`() {
     doTest("""x = "hello, <caret>world" """, "hello, world")

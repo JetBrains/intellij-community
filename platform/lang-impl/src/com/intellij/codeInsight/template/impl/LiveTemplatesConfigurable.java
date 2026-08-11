@@ -7,11 +7,13 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.ConfigurableName;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 
+@ApiStatus.Internal
 public final class LiveTemplatesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   static final String ID = "editing.templates";
   private TemplateListPanel myPanel;

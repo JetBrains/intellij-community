@@ -15,6 +15,7 @@ import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Font
@@ -25,6 +26,7 @@ import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 import javax.swing.UIManager
 
+@ApiStatus.Internal
 open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
                                  actionGroup: ActionGroup,
                                  dataContext: DataContext,

@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.kotlin.injection` start
-
 create_kotlinc_options(
     name = "custom_kotlin-injection",
     opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
@@ -29,8 +28,9 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-analysis-api",
+        "//plugins/kotlin/references",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//plugins/kotlin/injection/base:kotlin-base-injection",
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/psi",
@@ -59,6 +59,9 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-injection",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//plugins/kotlin/injection/base:kotlin-base-injection_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",
         "//plugins/kotlin/base/psi:psi_test_lib",

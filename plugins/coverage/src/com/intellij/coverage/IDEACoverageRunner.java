@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
+import com.intellij.coverage.analysis.AnalysisUtils;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.execution.target.TargetEnvironmentRequest;
@@ -13,8 +14,11 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
+import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
+import com.intellij.rt.coverage.instrumentation.UnloadedUtil;
+import com.intellij.rt.coverage.util.ClassNameUtil;
 import com.intellij.rt.coverage.util.CoverageReport;
 import com.intellij.rt.coverage.util.ProjectDataLoader;
 import com.intellij.util.ArrayUtil;
@@ -22,25 +26,93 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
+import org.objectweb.asm.ClassReader;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
+
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
 
 public final class IDEACoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance(IDEACoverageRunner.class);
   public static final String INNER_CLASS_REGEX = "(\\$.*)*";
   private static final String COVERAGE_AGENT_PATH_PROPERTY = "idea.coverage.agent.path";
+
+  @Override
+  public @NotNull List<Integer> collectSrcLinesForUntouchedFile(@NotNull Path classFile, @NotNull CoverageSuitesBundle suite) {
+    try {
+      var bytes = AnalysisUtils.loadClassBytes(classFile);
+      if (bytes == null) return List.of();
+      String className = ClassNameUtil.convertToFQName(new ClassReader(bytes).getClassName());
+      var classData = collectUncoveredClassCoverage(suite.getProject(), new ProjectData(), bytes, className, suite.isBranchCoverage());
+      if (classData == null || classData.getLines() == null) return List.of();
+
+      List<Integer> uncoveredLines = new ArrayList<>();
+      for (Object line : classData.getLines()) {
+        if (line instanceof LineData lineData) {
+          uncoveredLines.add(lineData.getLineNumber() - 1);
+        }
+      }
+      return uncoveredLines;
+    }
+    catch (Exception e) {
+      rethrowControlFlowException(e);
+      LOG.error("Fail to process class from: " + classFile, e);
+      return List.of();
+    }
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable ClassData getOrLoadCoverage(
+    Project project,
+    ProjectData projectData,
+    @NotNull Supplier<? extends @NotNull ProjectData> unloadedClassesProjectData,
+    @NotNull String className,
+    boolean isBranchCoverage,
+    @NotNull Supplier<byte[]> classBytes
+  ) {
+    setExcludeAnnotationsIfNeeded(project, projectData);
+    ClassData classData = projectData.getClassData(className);
+    final boolean classExists = classData != null && classData.getLines() != null;
+    if (classExists && classData.isFullyAnalysed()) return classData;
+    var bytes = classBytes.get();
+    if (bytes == null) return classData;
+    var fullClassData = collectUncoveredClassCoverage(project, unloadedClassesProjectData.get(), bytes, className, isBranchCoverage);
+    if (fullClassData == null) return classData;
+    if (classData == null) return fullClassData;
+    classData.merge(fullClassData);
+    return classData;
+  }
+
+  private static ClassData collectUncoveredClassCoverage(Project project,
+                                                         ProjectData unloaded,
+                                                         byte[] bytes,
+                                                         String className, boolean isBranchCoverage) {
+    setExcludeAnnotationsIfNeeded(project, unloaded);
+    UnloadedUtil.appendUnloadedClass(unloaded, className, bytes, isBranchCoverage);
+    ClassData fullClassData = unloaded.getClassData(className);
+    return fullClassData;
+  }
+
+  private static void setExcludeAnnotationsIfNeeded(Project project, ProjectData projectData) {
+    if (projectData.getAnnotationsToIgnore() != null) return;
+    setExcludeAnnotations(project, projectData);
+  }
 
   @Override
   public @NotNull CoverageLoadingResult loadCoverageData(

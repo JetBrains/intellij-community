@@ -39,7 +39,7 @@ public class NamingConventionBean {
   protected Pattern m_regexPattern;
 
   public boolean isValid(String name) {
-    final int length = name.length();
+    int length = name.length();
     if (length < m_minLength) {
       return false;
     }
@@ -49,7 +49,7 @@ public class NamingConventionBean {
     if (myPredefinedNames.contains(name)) {
       return true;
     }
-    final Matcher matcher = m_regexPattern.matcher(name);
+    Matcher matcher = m_regexPattern.matcher(name);
     return matcher.matches();
   }
 

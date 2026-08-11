@@ -9,8 +9,10 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 
 import java.awt.Component;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public final class NotLookupOrSearchCondition implements Condition<Project> {
   public static NotLookupOrSearchCondition INSTANCE = new NotLookupOrSearchCondition();
 

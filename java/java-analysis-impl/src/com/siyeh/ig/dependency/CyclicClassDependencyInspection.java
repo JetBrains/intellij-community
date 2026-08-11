@@ -26,11 +26,14 @@ import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.util.RefEntityAlphabeticalComparator;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UDeclarationKt;
 
 import java.util.Arrays;
@@ -65,6 +68,8 @@ public final class CyclicClassDependencyInspection extends BaseGlobalInspection 
     }
     final Set<RefClass> dependencies = DependencyUtils.calculateTransitiveDependenciesForClass(refClass);
     final Set<RefClass> dependents = DependencyUtils.calculateTransitiveDependentsForClass(refClass);
+    dependencies.removeIf(dependency -> { return isKotlinNestedObject(dependency, refClass); });
+    dependents.removeIf(dependent -> { return isKotlinNestedObject(refClass, dependent); });
     final VirtualFile vFile = refClass.getPointer().getVirtualFile();
     if (ignoreInSameFile) {
       final Predicate<RefClass> filter = aClass -> aClass.getPointer().getVirtualFile().equals(vFile);
@@ -99,5 +104,20 @@ public final class CyclicClassDependencyInspection extends BaseGlobalInspection 
       inspectionManager.createProblemDescriptor(anchor, errorString, (LocalQuickFix)null,
                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)
     };
+  }
+
+  private static boolean isKotlinNestedObject(@NotNull RefClass refClass, @NotNull RefClass parent) {
+    final UClass uClass = refClass.getUastElement();
+    if (uClass == null) return false;
+    final PsiClass psiClass = uClass.getJavaPsi();
+    PsiClass psiParentClass = null;
+    final UClass uParent = parent.getUastElement();
+    if (uParent != null) {
+      psiParentClass = uParent.getJavaPsi();
+    }
+    return psiClass.getContainingClass() != null
+           && psiClass.getLanguage().isKindOf("kotlin")
+           && ClassUtils.isSingleton(psiClass)
+           && (psiParentClass == null || psiClass.getContainingClass() == psiParentClass);
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -31,6 +32,7 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
     myState = state;
   }
 
+  @ApiStatus.Internal
   public void addListener(ModuleElementsEditorListener listener) {
     myDispatcher.addListener(listener);
   }
@@ -84,6 +86,7 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
 
   protected abstract JComponent createComponentImpl();
 
+  @ApiStatus.Internal
   public interface ModuleElementsEditorListener extends EventListener {
     void configurationChanged();
   }

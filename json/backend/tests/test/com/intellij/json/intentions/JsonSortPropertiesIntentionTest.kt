@@ -2,8 +2,8 @@
 package com.intellij.json.intentions
 
 import com.intellij.json.JsonBundle
-import com.intellij.json.JsonElementFactory.JsonLazyParsingIJ
 import com.intellij.json.JsonTestCase
+import com.intellij.json.syntax.JsonLazyParsing
 import org.junit.AssumptionViolatedException
 
 class JsonSortPropertiesIntentionTest : JsonTestCase() {
@@ -20,12 +20,12 @@ class JsonSortPropertiesIntentionTest : JsonTestCase() {
   }
 
   fun testSortMalformedJson() {
-    if (!JsonLazyParsingIJ) throw AssumptionViolatedException("lazy pasting is off")
+    if (!JsonLazyParsing) throw AssumptionViolatedException("lazy pasting is off")
     doTest()
   }
 
   fun testSortMalformedJson_non_lazy() {
-    if (JsonLazyParsingIJ) throw AssumptionViolatedException("Lazy pasting is on")
+    if (JsonLazyParsing) throw AssumptionViolatedException("Lazy pasting is on")
     doTest()
   }
 

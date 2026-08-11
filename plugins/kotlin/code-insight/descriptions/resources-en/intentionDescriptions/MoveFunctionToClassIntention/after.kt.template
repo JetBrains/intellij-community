@@ -1,0 +1,10 @@
+class Target(val i: Int) {
+    fun example() {
+        println(i)
+    }
+}
+
+fun caller(target: Target) {
+    target.example()
+}
+

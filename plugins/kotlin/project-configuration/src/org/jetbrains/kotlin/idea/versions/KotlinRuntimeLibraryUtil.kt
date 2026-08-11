@@ -18,9 +18,7 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
 import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
-import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.utils.JsMetadataVersion
 import org.jetbrains.kotlin.utils.PathUtil
 
 fun getLibraryRootsWithIncompatibleAbi(module: Module): Collection<BinaryVersionedFile<BinaryVersion>> {
@@ -28,7 +26,6 @@ fun getLibraryRootsWithIncompatibleAbi(module: Module): Collection<BinaryVersion
 
     val badRoots = when {
         platform.isJvm() -> getLibraryRootsWithIncompatibleAbiJvm(module)
-        platform.isJs() -> getLibraryRootsWithIncompatibleAbiJavaScript(module)
         // TODO: also check it for Native KT-34525
         else -> return emptyList()
     }
@@ -38,10 +35,6 @@ fun getLibraryRootsWithIncompatibleAbi(module: Module): Collection<BinaryVersion
 
 fun getLibraryRootsWithIncompatibleAbiJvm(module: Module): Collection<BinaryVersionedFile<MetadataVersion>> {
     return getLibraryRootsWithAbiIncompatibleVersion(module, MetadataVersion.INSTANCE, KotlinJvmMetadataVersionIndex.NAME)
-}
-
-fun getLibraryRootsWithIncompatibleAbiJavaScript(module: Module): Collection<BinaryVersionedFile<JsMetadataVersion>> {
-    return getLibraryRootsWithAbiIncompatibleVersion(module, JsMetadataVersion.INSTANCE, KotlinJsMetadataVersionIndex.NAME)
 }
 
 fun Project.forEachAllUsedLibraries(processor: (Library) -> Boolean) {

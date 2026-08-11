@@ -41,6 +41,7 @@ class PreferStartMatchMatcherWrapper(private val myDelegateMatcher: MinusculeMat
   }
 
   private companion object {
-    private const val START_MATCH_WEIGHT: Int = 10000
+    @ApiStatus.Internal
+    const val START_MATCH_WEIGHT: Int = 10000
   }
 }

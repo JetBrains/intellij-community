@@ -1,6 +1,5 @@
 package com.intellij.platform.lsp.impl.connector
 
-import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.process.BaseProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessOutputType
@@ -29,8 +28,7 @@ internal class Lsp4jServerConnectorSocket(private val lspClient: LspClientImpl) 
 
   init {
     if (socketInfo.startProcess) {
-      processHandler = (lspClient.descriptor as? LspProcessHandlerCreatingDescriptor)?.createProcessHandler()
-                       ?: lspClient.descriptor.startServerProcess()
+      processHandler = lspClient.descriptor.startServerProcess()
       processHandler.addProcessListener(object : LspServerProcessListenerBase(lspClient) {
         override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
           val text = event.text.trimEnd().takeIf { it.isNotEmpty() } ?: return
@@ -100,9 +98,8 @@ internal class Lsp4jServerConnectorSocket(private val lspClient: LspClientImpl) 
     if (::socket.isInitialized && !socket.isClosed)
       IOUtil.closeSafe(thisLogger(), socket) // outputStream and inputStream are automatically closed with socket
 
-    if (::processHandler.isInitialized && !processHandler.isProcessTerminated) {
-      lspClient.logInfo("Stopping LSP server process: $processHandler")
-      ExecutionManagerImpl.stopProcess(processHandler)
+    if (::processHandler.isInitialized) {
+      stopProcess(processHandler, lspClient)
     }
   }
 }

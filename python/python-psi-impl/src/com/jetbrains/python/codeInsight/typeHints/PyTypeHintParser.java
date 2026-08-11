@@ -3,7 +3,7 @@ package com.jetbrains.python.codeInsight.typeHints;
 
 import com.intellij.lang.SyntaxTreeBuilder;
 import com.intellij.psi.tree.IElementType;
-import com.jetbrains.python.documentation.doctest.PyDocstringTokenTypes;
+import com.jetbrains.python.documentation.doctest.PyDoctestTokenTypes;
 import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.PyParser;
@@ -20,14 +20,14 @@ class PyTypeHintParser extends PyParser {
       private final @NotNull StatementParsing myStatementParsing = new StatementParsing(this) {
         @Override
         protected @NotNull IElementType getReferenceType() {
-          return PyDocstringTokenTypes.DOC_REFERENCE;
+          return PyDoctestTokenTypes.DOC_REFERENCE;
         }
       };
 
       private final @NotNull ExpressionParsing myExpressionParsing = new ExpressionParsing(this) {
         @Override
         protected @NotNull IElementType getReferenceType() {
-          return PyDocstringTokenTypes.DOC_REFERENCE;
+          return PyDoctestTokenTypes.DOC_REFERENCE;
         }
       };
 

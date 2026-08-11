@@ -1,5 +1,5 @@
 // "Change type to 'Int'" "true"
-// K2_ERROR: Type of 'val x: Number' is not a subtype of overridden property 'val x: Int' defined in 'X'.
+// K2_ERROR: PROPERTY_TYPE_MISMATCH_ON_OVERRIDE
 interface X {
     val x: Int
 }

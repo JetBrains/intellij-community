@@ -74,6 +74,7 @@ class NativeDefinitionsLexerAdapter : FlexAdapter(NativeDefinitionsLexer(null as
 private val COMMENTS: TokenSet = TokenSet.create(NativeDefinitionsTypes.COMMENT)
 private val FILE = IFileElementType(NativeDefinitionsLanguage.INSTANCE)
 
+@Suppress("SplitModeApiUsage")
 class NativeDefinitionsParserDefinition : ParserDefinition {
     override fun getWhitespaceTokens(): TokenSet = TokenSet.WHITE_SPACE
     override fun getCommentTokens(): TokenSet = COMMENTS
@@ -86,10 +87,12 @@ class NativeDefinitionsParserDefinition : ParserDefinition {
     override fun createFile(viewProvider: FileViewProvider): PsiFile = NativeDefinitionsFile(viewProvider)
     override fun createElement(node: ASTNode): PsiElement = NativeDefinitionsTypes.Factory.createElement(node)
 
+    @Suppress("SplitModeApiUsage")
     override fun spaceExistenceTypeBetweenTokens(left: ASTNode?, right: ASTNode?): ParserDefinition.SpaceRequirements =
         ParserDefinition.SpaceRequirements.MAY
 }
 
+@Suppress("SplitModeApiUsage")
 class CLanguageInjector : LanguageInjector {
     private val cLanguage = Language.findLanguageByID("ObjectiveC")
 
@@ -105,7 +108,7 @@ class CLanguageInjector : LanguageInjector {
 
 object NativeDefinitionsSyntaxHighlighter : SyntaxHighlighterBase() {
 
-    override fun getTokenHighlights(tokenType: IElementType?): Array<TextAttributesKey> =
+    override fun getTokenHighlights(tokenType: IElementType): Array<out TextAttributesKey> =
         when (tokenType) {
             TokenType.BAD_CHARACTER -> BAD_CHAR_KEYS
             NativeDefinitionsTypes.COMMENT -> COMMENT_KEYS
@@ -189,6 +192,7 @@ object NativeDefinitionsSyntaxHighlighter : SyntaxHighlighterBase() {
     private val VALUE_KEYS = createKeys("Value", DefaultLanguageHighlighterColors.STRING)
 }
 
+@Suppress("SplitModeApiUsage")
 class NativeDefinitionsSyntaxHighlighterFactory : SyntaxHighlighterFactory() {
     override fun getSyntaxHighlighter(project: Project?, virtualFile: VirtualFile?): SyntaxHighlighter =
         NativeDefinitionsSyntaxHighlighter

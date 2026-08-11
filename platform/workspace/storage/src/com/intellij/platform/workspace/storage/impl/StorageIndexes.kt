@@ -70,27 +70,6 @@ internal sealed class AbstractStorageIndexes() {
   }
 */
 
-  // XXX: Hack to speed up module links assertion
-/*
-  private fun assertModuleSoftLinks(entityData: ModuleEntityData, expectedLinks: Set<PersistentEntityId<*>>) {
-    val actualRefs = HashSet<Any>(entityData.dependencies.size)
-    entityData.dependencies.forEach { dependency ->
-      when (dependency) {
-        is ModuleDependency -> {
-          assert(dependency.module in expectedLinks)
-          actualRefs += dependency.module
-        }
-        is LibraryDependency -> {
-          assert(dependency.library in expectedLinks)
-          actualRefs += dependency.library
-        }
-        else -> Unit
-      }
-    }
-    assert(actualRefs.size == expectedLinks.size)
-  }
-*/
-
   private fun assertSymbolicIdIndex(storage: AbstractEntityStorage) {
 
     var expectedSize = 0

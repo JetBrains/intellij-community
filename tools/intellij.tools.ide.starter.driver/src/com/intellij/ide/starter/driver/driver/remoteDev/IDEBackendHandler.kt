@@ -5,14 +5,12 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.waitNotNull
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.includeRuntimeModuleRepositoryInIde
-import com.intellij.ide.starter.config.useDockerContainer
 import com.intellij.ide.starter.config.useInstaller
 import com.intellij.ide.starter.driver.engine.BackgroundRun
 import com.intellij.ide.starter.driver.engine.DriverOptions
 import com.intellij.ide.starter.driver.engine.LocalDriverRunner
 import com.intellij.ide.starter.ide.IDERemDevTestContext
 import com.intellij.ide.starter.ide.IDETestContext
-import com.intellij.ide.starter.project.NoProject
 import com.intellij.ide.starter.runner.IDECommandLine
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.openapi.diagnostic.LogLevel
@@ -28,23 +26,15 @@ internal class IDEBackendHandler(
   companion object {
     internal fun Driver.remoteDevDirectLink(): String {
       return waitNotNull("Join link", 20.seconds) {
-        service(UnattendedModeManagerImpl::class).remoteDevDirectLink()
+        val service = runCatching { service(UnattendedModeManagerImpl::class).also {it.remoteDevDirectLink()} }
+          .getOrElse { service(UnattendedModeManagerImplFallback::class) }
+        service.remoteDevDirectLink()
       }
     }
   }
 
-  private fun buildBackendCommandLine(): (IDERunContext) -> IDECommandLine {
-    return { _: IDERunContext ->
-      val additionalArg = if (ConfigurationStorage.useDockerContainer()) {
-        listOf ("-l", "0.0.0.0") // tells backend to listen to the incoming rd connections on 0.0.0.0 so it is available outside of docker
-      } else emptyList()
-
-      if (ideRemDevTestContext.testCase.projectInfo == NoProject) IDECommandLine.Args(listOf("serverMode") + additionalArg)
-      else IDECommandLine.OpenTestCaseProject(ideRemDevTestContext, listOf("serverMode") + additionalArg)
-    }
-  }
-
   fun run(
+    commandLine: IDECommandLine,
     commands: Iterable<MarshallableCommand>,
     runTimeout: Duration,
     useStartupScript: Boolean,
@@ -61,7 +51,7 @@ internal class IDEBackendHandler(
 
     applyBackendVMOptionsPatch()
     return LocalDriverRunner().runIdeWithDriver(context = ideRemDevTestContext,
-                                                commandLine = buildBackendCommandLine(),
+                                                commandLine = commandLine,
                                                 commands = commands,
                                                 runTimeout = runTimeout,
                                                 useStartupScript = useStartupScript,
@@ -90,8 +80,16 @@ internal class IDEBackendHandler(
   }
 
   @Remote(value = "com.jetbrains.rdserver.unattendedHost.connection.UnattendedModeManagerImpl",
-          plugin = "com.jetbrains.remoteDevelopment")
+          plugin = "com.jetbrains.remoteDevelopment/intellij.platform.remoteController.backend")
   interface UnattendedModeManagerImpl {
     fun remoteDevDirectLink(): String?
   }
+
+  /**
+   * Needed for compatibility of 262 driver with older version of IDE.
+   * e.g. for update tests.
+   */
+  @Remote(value = "com.jetbrains.rdserver.unattendedHost.connection.UnattendedModeManagerImpl",
+          plugin = "com.jetbrains.remoteDevelopment")
+  interface UnattendedModeManagerImplFallback : UnattendedModeManagerImpl
 }

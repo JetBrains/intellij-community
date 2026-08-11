@@ -1,21 +1,21 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class DefaultTerminalRunnerFactory {
+/**
+ * Creates the default local terminal runner ({@link LocalTerminalDirectRunner}).
+ *
+ * @deprecated To get the runner actually used by the Classic Terminal (which may be customized, e.g., in Remote Development),
+ * use {@link TerminalToolWindowManager#getTerminalRunner()}.
+ */
+@Deprecated
+@Service
+public final class DefaultTerminalRunnerFactory {
   public @NotNull AbstractTerminalRunner<?> create(@NotNull Project project) {
     return new LocalTerminalDirectRunner(project);
-  }
-
-  /**
-   * @return the runner, that will run the terminal process locally on this machine
-   */
-  @ApiStatus.Experimental
-  public @NotNull AbstractTerminalRunner<?> createLocalRunner(@NotNull Project project) {
-    return create(project);
   }
 
   public static @NotNull DefaultTerminalRunnerFactory getInstance() {

@@ -30,7 +30,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.toList
@@ -41,6 +40,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.dto.WithGitLabNamespace
 import org.jetbrains.plugins.gitlab.api.request.findProject
 import org.jetbrains.plugins.gitlab.api.request.getMemberNamespacesForShare
+import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -89,10 +89,17 @@ internal class GitLabShareProjectDialogViewModel(
     }
 
     coroutineScope {
-      emitAll(serviceAsync<GitLabAccountManager>().getCredentialsState(this, account).map { token ->
-        if (token == null) null
-        else serviceAsync<GitLabApiManager>().getClient(account.server, token)
-      })
+      with(serviceAsync<GitLabAccountManager>()) {
+        getCredentialsFlow(account)
+          .map { Unit }
+          .withInitial(Unit)
+          .map { findCredentials(account) }
+          .collect { credentials ->
+            emit(
+              if (credentials == null) null
+              else serviceAsync<GitLabApiManager>().getClient(account.server, credentials.accessToken))
+          }
+      }
     }
   }.stateIn(cs, SharingStarted.Eagerly, null)
 
@@ -237,9 +244,9 @@ internal class GitLabShareProjectDialogViewModel(
       description.value,
     )
 
-  fun updateAccount(account: GitLabAccount, token: String) {
+  fun updateAccount(account: GitLabAccount, credentials: GitLabCredentials) {
     cs.launchNow {
-      accountManager.updateAccount(account, token)
+      accountManager.updateAccount(account, credentials)
     }
   }
 }

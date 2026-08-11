@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python.codeInsight.liveTemplates;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateActionContext;
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -31,6 +34,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyLiveTemplatesContextTest extends PyTestCase {
 
   @Override

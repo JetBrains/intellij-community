@@ -10,7 +10,6 @@ java_binary(
 )
 
 ### auto-generated section `build fleet.build.cli` start
-
 create_kotlinc_options(
     name = "custom_cli",
     opt_in = [

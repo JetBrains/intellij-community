@@ -1,8 +1,8 @@
 // WITH_STDLIB
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: COMMA_IN_WHEN_CONDITION_WITH_WHEN_GUARD
 
 // COMPILER_ARGUMENTS: -Xwhen-guards
-// K2_ERROR: Argument type mismatch: actual type is 'Int', but 'String & Int' was expected.
-// K2_ERROR: Use of comma in 'when' condition with guard statement is not allowed.
 
 private fun test(s: Any) {
     if (s is String || s is Int && s > 5) { println("1") }

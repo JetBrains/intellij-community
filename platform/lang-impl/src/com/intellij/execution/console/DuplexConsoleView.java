@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -116,6 +117,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     }
   }
 
+  @ApiStatus.Internal
   public void addSwitchListener(@NotNull DuplexConsoleListener listener, @NotNull Disposable parent) {
     myListeners.add(listener);
     Disposer.register(parent, () -> myListeners.remove(listener));

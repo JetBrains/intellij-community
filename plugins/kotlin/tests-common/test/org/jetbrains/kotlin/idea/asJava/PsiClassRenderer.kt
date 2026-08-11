@@ -24,12 +24,14 @@ import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.util.MethodSignature
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.kotlin.NON_EXISTENT_CLASS_NAME
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 
+@OptIn(KaExperimentalApi::class)
 open class PsiClassRenderer protected constructor(
     private val renderInner: Boolean,
     private val membersFilter: MembersFilter

@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.toml.grazie` start
-
 jvm_library(
     name = "grazie",
     srcs = glob(
@@ -18,6 +17,7 @@ jvm_library(
         ["src/main/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -46,6 +46,7 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//plugins/toml/core:core_test_lib",
         "//plugins/grazie/src:core_test_lib",
+        "//platform/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.toml.grazie` end

@@ -38,7 +38,7 @@ class DotEnvSyntaxHighlighter extends SyntaxHighlighterBase {
     }
 
     @Override
-    public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
+    public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(@NotNull IElementType tokenType) {
         if (tokenType.equals(DotEnvTypes.SEPARATOR)) {
             return SEPARATOR_KEYS;
         } else if (tokenType.equals(DotEnvTypes.KEY_CHARS)) {

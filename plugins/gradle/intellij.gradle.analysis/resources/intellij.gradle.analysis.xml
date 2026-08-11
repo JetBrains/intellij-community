@@ -1,11 +1,14 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="org.jetbrains.idea.gradle.dsl"/>
     <module name="intellij.gradle.java"/>
-    <module name="intellij.java.psi"/>
+    <plugin id="org.jetbrains.idea.gradle.dsl"/>
     <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.projectModel"/>
   </dependencies>
   <!-- endregion -->
 

@@ -1,10 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.rpc.util.toRpc
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.platform.debugger.impl.rpc.XBreakpointCustomPresentationDto
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDto
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDtoState
@@ -28,6 +30,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.withContext
 
+private val LOG = fileLogger()
+
 internal fun CustomizedBreakpointPresentation.toRpc(): XBreakpointCustomPresentationDto {
   return XBreakpointCustomPresentationDto(icon?.rpcId(), errorMessage, timestamp)
 }
@@ -49,7 +53,10 @@ internal suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
       // XBreakpointBase#getDescription depends on the current session
       // BreakpointWithHighlighter#getPropertyXMLDescriptions
       breakpointChangedFlow().combine(currentSessionFlow) { _, _ -> }.collectLatest {
-        send(getDtoState())
+        val state = runCatching { getDtoState() }.getOrHandleException { e ->
+          LOG.error("Failed to serialize breakpoint state ${breakpointId}; dropping the update", e)
+        } ?: return@collectLatest
+        send(state)
       }
     }.toRpc()
   )
@@ -61,6 +68,8 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
   return withContext(Dispatchers.Default) {
     val manager = XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl
     val completedRequestId = manager.requestCounter.getRequestId(breakpoint.breakpointId)
+    // TODO[IJPL-219504]: There are plenty of read action where heavy computations may occur,
+    //  consider making this state as small as possible and request the required fields lazily on the frontend side
     XBreakpointDtoState(
       displayText = XBreakpointUtil.getShortText(breakpoint),
       sourcePosition = sourcePosition?.toRpc(),

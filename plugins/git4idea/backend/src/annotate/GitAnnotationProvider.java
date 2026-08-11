@@ -59,6 +59,7 @@ import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryProvider;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
+import git4idea.index.GitIndexUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.StringScanner;
@@ -436,7 +437,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
       for (StringScanner s = new StringScanner(output); s.hasMoreData(); ) {
         // parse header line
         String commitHash = s.spaceToken();
-        if (commitHash.equals(GitRevisionNumber.NOT_COMMITTED_HASH)) {
+        if (GitIndexUtil.isNullHash(commitHash)) {
           commitHash = null;
         }
         String s0 = s.spaceToken();

@@ -6,10 +6,14 @@ import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContrib
 import com.intellij.openapi.application.readAction
 import com.intellij.platform.searchEverywhere.impl.SeItemEntity
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
+import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.computeCatchingOrNull
+import com.intellij.platform.searchEverywhere.providers.target.SeTargetItem
+import com.jetbrains.rhizomedb.DbContext
 import fleet.kernel.DurableRef
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Serializable data interface for search everywhere results
@@ -62,6 +66,10 @@ class SeItemDataFactory {
         val isSemanticElement = (contributor as? SemanticSearchEverywhereContributor)?.isElementSemantic(element) ?: false
         additionalInfo[SeItemDataKeys.IS_SEMANTIC] = isSemanticElement.toString()
       }
+
+      if (item is SeTargetItem && item.isExactMatch) {
+        additionalInfo[SeItemDataKeys.IS_EXACT_MATCH] = true.toString()
+      }
     }
 
     return SeItemDataImpl(uuid, providerId, item.weight(), item.presentation(), emptyList(), additionalInfo, entityRef)
@@ -80,12 +88,21 @@ class SeItemDataImpl internal constructor(
   private val itemRef: DurableRef<SeItemEntity>,
 ): SeItemData {
   val isCommand: Boolean get() = additionalInfo[SeItemDataKeys.IS_COMMAND]?.toBoolean() == true
-
   val isSemantic: Boolean get() = additionalInfo[SeItemDataKeys.IS_SEMANTIC]?.toBoolean() == true
+  val isExactMatch: Boolean get() = additionalInfo[SeItemDataKeys.IS_EXACT_MATCH]?.toBoolean() == true
 
-  override fun fetchItemIfExists(): SeItem? {
-    return itemRef.derefOrNull()?.findItemOrNull()
-  }
+  override fun fetchItemIfExists(): SeItem? =
+    try {
+      itemRef.derefOrNull()?.findItemOrNull()
+    }
+    catch (e: CancellationException) {
+      // `poison` is the Throwable the read tripped over; for the match-invalidation case it is a
+      // `fleet.kernel.rete.UnsatisfiedMatchException` ("match invalidated by rete"). It also serves
+      // as the discriminator: a non-poisoned context means this is a real cancellation -> rethrow.
+      val poison = DbContext.threadBoundOrNull?.poison ?: throw e
+      SeLog.warn("Couldn't fetch SE item ${providerId.value}/$uuid, DB context is poisoned: $poison")
+      null
+    }
 
   fun withUuidToReplace(uuidToReplace: List<String>): SeItemDataImpl {
     return SeItemDataImpl(uuid, providerId, weight, presentation, uuidToReplace, additionalInfo, itemRef)
@@ -112,6 +129,9 @@ val SeItemData.isCommand: Boolean get() = (this as SeItemDataImpl).isCommand
 
 @get:ApiStatus.Internal
 val SeItemData.isSemantic: Boolean get() = (this as SeItemDataImpl).isSemantic
+
+@get:ApiStatus.Internal
+val SeItemData.isExactMatch: Boolean get() = (this as SeItemDataImpl).isExactMatch
 
 @ApiStatus.Internal
 fun SeItemData.contentEquals(other: Any?): Boolean = (this as SeItemDataImpl).contentEquals(other)

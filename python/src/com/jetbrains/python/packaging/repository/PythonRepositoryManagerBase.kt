@@ -6,12 +6,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.cancelOnDispose
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
-import com.jetbrains.python.packaging.PyPackageVersion
-import com.jetbrains.python.packaging.PyPackageVersionNormalizer
+import com.jetbrains.python.onFailure
+import com.intellij.python.requirements.PyPackageVersion
+import com.intellij.python.requirements.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
+import com.jetbrains.python.packaging.management.ui.notify
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -21,7 +23,9 @@ import org.jetbrains.annotations.ApiStatus
 abstract class PythonRepositoryManagerBase : PythonRepositoryManager, Disposable.Default {
   protected val initializationJob: Job by lazy {
     PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT, start = CoroutineStart.LAZY) {
-      initCaches()
+      initCaches().onFailure {
+        it.notify(project)
+      }
     }.also {
       it.cancelOnDispose(this)
     }
@@ -30,11 +34,17 @@ abstract class PythonRepositoryManagerBase : PythonRepositoryManager, Disposable
   @ApiStatus.Internal
   suspend fun waitForInit() {
     if (shouldBeInitInstantly()) {
-      initCaches()
+      initCaches().onFailure {
+        it.notify(project)
+      }
     }
     else {
       initializationJob.join()
     }
+  }
+
+  override suspend fun awaitReady() {
+    waitForInit()
   }
 
   override suspend fun getLatestVersion(packageName: String, repository: PyPackageRepository?): PyPackageVersion? {
@@ -52,7 +62,7 @@ abstract class PythonRepositoryManagerBase : PythonRepositoryManager, Disposable
     val found = repositories.firstNotNullOfOrNull { it.findPackageSpecification(requirement) }
     if (found == null) {
       thisLogger().debug("Package specification not found for $requirement. Tried repositories: ${
-        repositories.joinToString(",") { "${it.name}: packages=${it.getSize()}" }
+        repositories.joinToString(",") { it.name }
       }")
       return found
     }

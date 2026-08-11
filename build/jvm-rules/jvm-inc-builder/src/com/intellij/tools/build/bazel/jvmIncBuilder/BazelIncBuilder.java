@@ -28,6 +28,7 @@ import org.jetbrains.jps.dependency.Graph;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.NodeSourcePathMapper;
+import org.jetbrains.jps.dependency.java.FileNode;
 import org.jetbrains.jps.dependency.java.JVMClassNode;
 import org.jetbrains.jps.util.Pair;
 import org.jetbrains.jps.util.SystemInfo;
@@ -531,9 +532,13 @@ public class BazelIncBuilder {
   private static Collection<String> deleteCompilerOutputs(
     DependencyGraph depGraph, Iterable<@NotNull NodeSource> sourcesToCompile, ZipOutputBuilder outBuilder, Collection<String> deletedPathsAcc
   ) {
-    for (Node<?, ?> node : filter(flat(map(sourcesToCompile, depGraph::getNodes)), n -> n instanceof JVMClassNode)) {
-      String outputPath = ((JVMClassNode<?, ?>) node).getOutFilePath();
-      if (outBuilder.deleteEntry(outputPath)) {
+    for (Node<?, ?> node : flat(map(sourcesToCompile, depGraph::getNodes))) {
+      // a FileNode name is either a resource output entry (registered by OutputSinkImpl for AP-generated resources)
+      // or a source path (per-source usage nodes) — the latter never matches a zip entry, so deleteEntry is a no-op for it
+      String outputPath =
+        node instanceof JVMClassNode clsNode? clsNode.getOutFilePath() :
+        node instanceof FileNode fNode? fNode.getName() : null;
+      if (outputPath != null && outBuilder.deleteEntry(outputPath)) {
         deletedPathsAcc.add(outputPath);
       }
     }

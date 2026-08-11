@@ -13,10 +13,10 @@ _MultiDict: TypeAlias = Any  # werkzeug is not part of typeshed
 @type_check_only
 class _Options(TypedDict, total=False):
     resources: dict[str, dict[str, Any]] | list[str] | str | None
-    origins: str | list[str] | None
+    origins: Iterable[str | Pattern[str]]
     methods: str | list[str] | None
     expose_headers: str | list[str] | None
-    allow_headers: str | list[str] | None
+    allow_headers: Iterable[str | Pattern[str]]
     supports_credentials: bool | None
     max_age: timedelta | int | str | None
     send_wildcard: bool | None

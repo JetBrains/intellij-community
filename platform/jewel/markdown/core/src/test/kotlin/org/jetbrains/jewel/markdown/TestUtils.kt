@@ -67,13 +67,13 @@ private fun MarkdownBlock.findDifferenceWith(expected: MarkdownBlock, indentSize
     return when (this) {
         is Paragraph -> diffParagraph(this, expected, indent)
         is BlockQuote -> children.findDifferences((expected as BlockQuote).children, indentSize)
-        is HtmlBlock -> diffHtmlBlock(this, expected, indent)
         is FencedCodeBlock -> diffFencedCodeBlock(this, expected, indent)
         is IndentedCodeBlock -> diffIndentedCodeBlock(this, expected, indent)
         is Heading -> diffHeading(this, expected, indent)
         is ListBlock -> diffList(this, expected, indentSize, indent)
         is ListItem -> children.findDifferences((expected as ListItem).children, indentSize)
         is ThematicBreak -> emptyList() // They can only differ in their node
+        is HtmlBlock -> diffHtmlBlock(this, expected, indent)
         is HtmlBlockWithAttributes -> diffHtmlBlockWithAttributes(this, expected, indent)
         else -> error("Unsupported MarkdownBlock: ${this.javaClass.name}")
     }

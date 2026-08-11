@@ -5,10 +5,8 @@ internal const val FRONTEND_PLATFORM_MODULE_BASE_NAME = "intellij.platform.front
 internal const val BACKEND_PLATFORM_MODULE_BASE_NAME = "intellij.platform.backend"
 internal const val MONOLITH_PLATFORM_MODULE_BASE_NAME = "intellij.platform.monolith"
 
-private val frontendPlatformModuleNames = moduleNameVariants(FRONTEND_PLATFORM_MODULE_BASE_NAME).toSet()
-private val backendPlatformModuleNames = moduleNameVariants(BACKEND_PLATFORM_MODULE_BASE_NAME).toSet()
-private val frontendModuleNameSuffixes = moduleNameVariants("frontend")
-private val backendModuleNameSuffixes = moduleNameVariants("backend")
+private val frontendPlatformModuleNames = moduleNameVariants(FRONTEND_PLATFORM_MODULE_BASE_NAME)
+private val backendPlatformModuleNames = moduleNameVariants(BACKEND_PLATFORM_MODULE_BASE_NAME)
 
 internal fun getExplicitPlatformDependencyName(moduleKind: SplitModeApiRestrictionsService.ModuleKind): String {
   return when (moduleKind) {
@@ -22,7 +20,7 @@ internal fun getExplicitPlatformDependencyName(moduleKind: SplitModeApiRestricti
   }
 }
 
-internal fun resolveDependencyKind(dependencyName: String): SplitModeApiRestrictionsService.ModuleKind? {
+internal fun recognizeExplicitDependencyKind(dependencyName: String): SplitModeApiRestrictionsService.ModuleKind? {
   if (isExplicitFrontendDependency(dependencyName)) {
     return SplitModeApiRestrictionsService.ModuleKind.FRONTEND
   }
@@ -32,8 +30,7 @@ internal fun resolveDependencyKind(dependencyName: String): SplitModeApiRestrict
   if (isExplicitMonolithDependency(dependencyName)) {
     return SplitModeApiRestrictionsService.ModuleKind.MONOLITH
   }
-
-  return guessDependencyKindByName(dependencyName)
+  return null
 }
 
 internal fun isExplicitFrontendDependency(dependencyName: String): Boolean {
@@ -49,30 +46,16 @@ internal fun isExplicitMonolithDependency(dependencyName: String): Boolean {
 }
 
 internal fun isFrontendDependency(dependencyName: String): Boolean {
-  return resolveDependencyKind(dependencyName) == SplitModeApiRestrictionsService.ModuleKind.FRONTEND
+  return recognizeExplicitDependencyKind(dependencyName) == SplitModeApiRestrictionsService.ModuleKind.FRONTEND
 }
 
 internal fun isBackendDependency(dependencyName: String): Boolean {
-  return resolveDependencyKind(dependencyName) == SplitModeApiRestrictionsService.ModuleKind.BACKEND
+  return recognizeExplicitDependencyKind(dependencyName) == SplitModeApiRestrictionsService.ModuleKind.BACKEND
 }
 
-private fun guessDependencyKindByName(dependencyName: String): SplitModeApiRestrictionsService.ModuleKind? {
-  return when {
-    endsWithAnyDotSuffix(dependencyName, frontendModuleNameSuffixes) -> SplitModeApiRestrictionsService.ModuleKind.FRONTEND
-    endsWithAnyDotSuffix(dependencyName, backendModuleNameSuffixes) -> SplitModeApiRestrictionsService.ModuleKind.BACKEND
-    else -> null
-  }
-}
-
-private fun moduleNameVariants(baseName: String): List<String> {
-  return listOf(
+private fun moduleNameVariants(baseName: String): Set<String> {
+  return setOf(
     baseName,
-    "$baseName.split",
-    "$baseName.main",
-    "$baseName.split.main",
+    "$baseName.split"
   )
-}
-
-private fun endsWithAnyDotSuffix(name: String, suffixes: List<String>): Boolean {
-  return suffixes.any { name.endsWith(".$it") }
 }

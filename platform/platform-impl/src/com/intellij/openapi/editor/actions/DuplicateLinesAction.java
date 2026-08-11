@@ -9,9 +9,11 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.DocumentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public final class DuplicateLinesAction extends EditorAction {
   public DuplicateLinesAction() {
     super(new Handler());

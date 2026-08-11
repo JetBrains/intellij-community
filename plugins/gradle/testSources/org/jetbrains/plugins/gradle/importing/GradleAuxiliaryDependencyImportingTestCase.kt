@@ -38,7 +38,10 @@ abstract class GradleAuxiliaryDependencyImportingTestCase : GradleImportingTestC
   override fun configureGradleVmOptions(options: MutableSet<String>) {
     super.configureGradleVmOptions(options)
     if (settings.forceDownloadSourcesFlagValue != null) {
-      options.add("-D$FORCE_ARGUMENT_PROPERTY_NAME=${settings.forceDownloadSourcesFlagValue}")
+      options.add("-D$FORCE_DOWNLOAD_SOURCES_ARGUMENT_PROPERTY_NAME=${settings.forceDownloadSourcesFlagValue}")
+    }
+    if (settings.forceDownloadJavadocsFlagValue != null) {
+      options.add("-D$FORCE_DOWNLOAD_JAVADOCS_ARGUMENT_PROPERTY_NAME=${settings.forceDownloadJavadocsFlagValue}")
     }
   }
 
@@ -82,6 +85,7 @@ abstract class GradleAuxiliaryDependencyImportingTestCase : GradleImportingTestC
     val pluginDownloadSourcesValue: Boolean?,
     val ideaDownloadSourcesValue: Boolean,
     val forceDownloadSourcesFlagValue: Boolean?,
+    val forceDownloadJavadocsFlagValue: Boolean?,
     val sourcesExpected: Boolean,
     val pluginDownloadJavadocValue: Boolean?,
     val javadocExpected: Boolean,
@@ -91,7 +95,8 @@ abstract class GradleAuxiliaryDependencyImportingTestCase : GradleImportingTestC
 
   companion object {
 
-    private const val FORCE_ARGUMENT_PROPERTY_NAME = "idea.gradle.download.sources.force"
+    private const val FORCE_DOWNLOAD_SOURCES_ARGUMENT_PROPERTY_NAME = "idea.gradle.download.sources.force"
+    private const val FORCE_DOWNLOAD_JAVADOCS_ARGUMENT_PROPERTY_NAME = "idea.gradle.download.javadocs.force"
     private const val DEPENDENCY_CACHE_PATH = "caches/modules-2/files-2.1/junit/junit/4.12/"
 
     private val testCaseMatrix: List<TestScenario> = listOf(
@@ -100,6 +105,7 @@ abstract class GradleAuxiliaryDependencyImportingTestCase : GradleImportingTestC
         pluginDownloadSourcesValue = true,
         ideaDownloadSourcesValue = true,
         forceDownloadSourcesFlagValue = true,
+        forceDownloadJavadocsFlagValue = null,
         sourcesExpected = true,
         pluginDownloadJavadocValue = false,
         javadocExpected = false
@@ -108,6 +114,7 @@ abstract class GradleAuxiliaryDependencyImportingTestCase : GradleImportingTestC
         pluginDownloadSourcesValue = true,
         ideaDownloadSourcesValue = true,
         forceDownloadSourcesFlagValue = false,
+        forceDownloadJavadocsFlagValue = null,
         sourcesExpected = false,
         pluginDownloadJavadocValue = false,
         javadocExpected = false
@@ -116,6 +123,7 @@ abstract class GradleAuxiliaryDependencyImportingTestCase : GradleImportingTestC
         pluginDownloadSourcesValue = true,
         ideaDownloadSourcesValue = false,
         forceDownloadSourcesFlagValue = null,
+        forceDownloadJavadocsFlagValue = null,
         sourcesExpected = true,
         pluginDownloadJavadocValue = false,
         javadocExpected = false
@@ -124,6 +132,7 @@ abstract class GradleAuxiliaryDependencyImportingTestCase : GradleImportingTestC
         pluginDownloadSourcesValue = false,
         ideaDownloadSourcesValue = true,
         forceDownloadSourcesFlagValue = null,
+        forceDownloadJavadocsFlagValue = null,
         sourcesExpected = false,
         pluginDownloadJavadocValue = false,
         javadocExpected = false
@@ -132,6 +141,7 @@ abstract class GradleAuxiliaryDependencyImportingTestCase : GradleImportingTestC
         pluginDownloadSourcesValue = false,
         ideaDownloadSourcesValue = true,
         forceDownloadSourcesFlagValue = true,
+        forceDownloadJavadocsFlagValue = null,
         sourcesExpected = true,
         pluginDownloadJavadocValue = false,
         javadocExpected = false
@@ -140,6 +150,7 @@ abstract class GradleAuxiliaryDependencyImportingTestCase : GradleImportingTestC
         pluginDownloadSourcesValue = null,
         ideaDownloadSourcesValue = true,
         forceDownloadSourcesFlagValue = null,
+        forceDownloadJavadocsFlagValue = null,
         sourcesExpected = true,
         pluginDownloadJavadocValue = false,
         javadocExpected = false
@@ -148,6 +159,7 @@ abstract class GradleAuxiliaryDependencyImportingTestCase : GradleImportingTestC
         pluginDownloadSourcesValue = null,
         ideaDownloadSourcesValue = false,
         forceDownloadSourcesFlagValue = null,
+        forceDownloadJavadocsFlagValue = null,
         sourcesExpected = false,
         pluginDownloadJavadocValue = false,
         javadocExpected = false
@@ -158,6 +170,7 @@ abstract class GradleAuxiliaryDependencyImportingTestCase : GradleImportingTestC
         pluginDownloadSourcesValue = true,
         ideaDownloadSourcesValue = true,
         forceDownloadSourcesFlagValue = true,
+        forceDownloadJavadocsFlagValue = null,
         sourcesExpected = true,
         pluginDownloadJavadocValue = true,
         javadocExpected = true
@@ -166,6 +179,7 @@ abstract class GradleAuxiliaryDependencyImportingTestCase : GradleImportingTestC
         pluginDownloadSourcesValue = true,
         ideaDownloadSourcesValue = true,
         forceDownloadSourcesFlagValue = false,
+        forceDownloadJavadocsFlagValue = null,
         sourcesExpected = false,
         pluginDownloadJavadocValue = true,
         javadocExpected = true
@@ -174,6 +188,7 @@ abstract class GradleAuxiliaryDependencyImportingTestCase : GradleImportingTestC
         pluginDownloadSourcesValue = true,
         ideaDownloadSourcesValue = false,
         forceDownloadSourcesFlagValue = null,
+        forceDownloadJavadocsFlagValue = null,
         sourcesExpected = true,
         pluginDownloadJavadocValue = true,
         javadocExpected = true
@@ -182,8 +197,27 @@ abstract class GradleAuxiliaryDependencyImportingTestCase : GradleImportingTestC
         pluginDownloadSourcesValue = false,
         ideaDownloadSourcesValue = false,
         forceDownloadSourcesFlagValue = false,
+        forceDownloadJavadocsFlagValue = null,
         sourcesExpected = false,
         pluginDownloadJavadocValue = true,
+        javadocExpected = true
+      ),
+      TestScenario(
+        pluginDownloadSourcesValue = true,
+        ideaDownloadSourcesValue = true,
+        forceDownloadSourcesFlagValue = false,
+        forceDownloadJavadocsFlagValue = false,
+        sourcesExpected = false,
+        pluginDownloadJavadocValue = true,
+        javadocExpected = false
+      ),
+      TestScenario(
+        pluginDownloadSourcesValue = true,
+        ideaDownloadSourcesValue = true,
+        forceDownloadSourcesFlagValue = false,
+        forceDownloadJavadocsFlagValue = true,
+        sourcesExpected = false,
+        pluginDownloadJavadocValue = false,
         javadocExpected = true
       )
     )

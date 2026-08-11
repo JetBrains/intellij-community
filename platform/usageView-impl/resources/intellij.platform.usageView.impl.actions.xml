@@ -1,0 +1,16 @@
+<idea-plugin>
+  <actions resource-bundle="messages.UsageViewBundle">
+    <action class="com.intellij.usages.impl.actions.ShowShortFilePathAction" id="UsageGrouping.ShortFilePath"/>
+    <action class="com.intellij.usages.impl.actions.GroupByModuleTypeAction" id="UsageGrouping.Module"/>
+    <action class="com.intellij.usages.impl.actions.GroupByScopeAction" id="UsageGrouping.Scope"/>
+    <action class="com.intellij.usages.impl.actions.GroupByDirectoryAction" id="UsageGrouping.Directory"/>
+    <action class="com.intellij.usages.impl.actions.GroupByUsageTypeAction" id="UsageGrouping.UsageType"/>
+    <action class="com.intellij.usages.impl.actions.FlattenModulesAction" id="UsageGrouping.FlattenModules"/>
+    <action class="com.intellij.usages.impl.UsageGroupingRuleProviderImpl$GroupByFileStructureAction" id="UsageGrouping.FileStructure"/>
+    <action class="com.intellij.usages.impl.actions.GroupByDirectoryStructureAction" id="UsageGrouping.DirectoryStructure"/>
+  </actions>
+  <actions>
+    <action id="UsageView.Rerun" class="com.intellij.usages.actions.RerunSearchAction" icon="AllIcons.Actions.Refresh" use-shortcut-of="Rerun"/>
+    <action id="UsageView.Remove" class="com.intellij.usages.actions.RemoveUsageAction" use-shortcut-of="$Cut"/>
+  </actions>
+</idea-plugin>

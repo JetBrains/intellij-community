@@ -28,7 +28,7 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
 import com.jetbrains.python.codeInsight.controlflow.getReachabilityForInspection
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix
-import com.jetbrains.python.inspections.PyInspectionVisitor.getContext
+import com.jetbrains.python.inspections.PyInspectionVisitor.Companion.getContext
 import com.jetbrains.python.psi.PsiReferenceEx
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyExceptPart
@@ -186,7 +186,7 @@ class PyUnusedImportsInspection : PyInspection() {
       val visibleName = importElement.getVisibleName()
       val owner = ScopeUtil.getScopeOwner(importElement)
       if (visibleName == null || owner == null) return
-      val allWrites: List<PsiElement> = ScopeUtil.getElementsOfAccessType(visibleName, owner, ReadWriteInstruction.ACCESS.WRITE)
+      val allWrites = ScopeUtil.getElementsOfAccessType(visibleName, owner, ReadWriteInstruction.ACCESS.WRITE)
       val hasWriteInsideGuard = allWrites.any { guard.isAncestor(it) }
       if (!hasWriteInsideGuard && !shouldSkipMissingWriteInsideGuard(guard, visibleName)) {
         myImportsInsideGuard.add(importElement)
@@ -272,7 +272,7 @@ class PyUnusedImportsInspection : PyInspection() {
         }
         if (element.getTextLength() > 0) {
           val fix = OptimizeImportsQuickFix()
-          registerProblem(element, PyPsiBundle.message("INSP.unused.imports.unused.import.statement"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, fix)
+          registerProblem(element, PyPsiBundle.problemMessage("INSP.unused.imports.unused.import.statement"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix)
         }
       }
     }
@@ -285,7 +285,7 @@ class PyUnusedImportsInspection : PyInspection() {
         val asElement = definer.asNameElement
         val toHighlight: PyElement? = asElement ?: definer.importReferenceExpression
         registerProblem(toHighlight,
-                        PyPsiBundle.message("INSP.unused.imports.try.except.import.error", definer.getVisibleName()),
+                        PyPsiBundle.problemMessage("INSP.unused.imports.try.except.import.error", definer.getVisibleName()),
                         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL)
       }
     }

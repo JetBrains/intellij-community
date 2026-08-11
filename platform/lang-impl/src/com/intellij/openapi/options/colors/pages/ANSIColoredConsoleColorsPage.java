@@ -32,6 +32,7 @@ import java.util.Map;
 /**
  * @author oleg, Roman.Chernyatchik
  */
+@ApiStatus.Internal
 public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayPrioritySortable, EditorCustomization {
   @SuppressWarnings("SpellCheckingInspection")
   private static final String DEMO_TEXT =

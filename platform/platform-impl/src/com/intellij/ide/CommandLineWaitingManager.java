@@ -27,6 +27,7 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 @Service(Service.Level.APP)
+@ApiStatus.Internal
 public final class CommandLineWaitingManager {
   private static final Logger LOG = Logger.getInstance(CommandLineWaitingManager.class);
   private static final String DO_NOT_SHOW_KEY = "command.line.waiting.do.not.show";

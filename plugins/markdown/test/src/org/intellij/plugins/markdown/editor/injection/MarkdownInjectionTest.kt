@@ -4,17 +4,22 @@ package org.intellij.plugins.markdown.editor.injection
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.injected.editor.DocumentWindow
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser.guessLanguageForInjection
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes.MARKDOWN_TEMPLATE_DATA
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.junit.jupiter.api.assertDoesNotThrow
 
 class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
   fun `test fence with injection empty`() {
@@ -92,13 +97,13 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
   fun `test fence in quotes`() {
     val content =
       """
-      > class C {
-      >
-      >   public static void main(String[] args) {
-      >
-      >   }
-      >
-      > }
+      class C {
+
+        public static void main(String[] args) {
+
+        }
+
+      }
       """.trimIndent()
     val text =
       """
@@ -111,7 +116,7 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       >
       > }
       > ```
-      """.trimIndent()
+    """.trimIndent()
     doTest(text, true)
     assertEquals(content, file.findElementAt(editor.caretModel.offset)!!.containingFile.text)
   }
@@ -119,13 +124,13 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
   fun `test fence in list`() {
     val content =
       """
-      |  class C {
+      |class C {
+      |
+      |  public static void main(String[] args) {
       |  
-      |    public static void main(String[] args) {
-      |    
-      |    }
-      |    
       |  }
+      |  
+      |}
       """.trimMargin()
     val text =
       """
@@ -227,6 +232,58 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
     setupEditorForInjectedLanguage()
     CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(project, editor, 1)
     assertNotNull(LookupManager.getActiveLookup(editor)) // and no exceptions!
+  }
+
+  fun `test code fence escaper accepts injected range starting at opening line break`() {
+    val text = "```java\n    String s = \"<h1>test</h1>\";\n```"
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
+    val relevantRange = codeFence.createLiteralTextEscaper().relevantTextRange.shiftRight(codeFence.textRange.startOffset)
+    val injectedRange = TextRange.create(
+      codeFence.textRange.startOffset + codeFence.text.indexOf('\n'),
+      codeFence.textRange.startOffset + codeFence.text.lastIndexOf('\n')
+    )
+
+    assertTrue(
+      "$injectedRange should be contained in relevant range $relevantRange",
+      relevantRange.contains(injectedRange)
+    )
+  }
+
+  fun `test typing after replacing code fence opening line break with enter does not corrupt injected psi`() {
+    configureFromFileText("test.md", "```java<selection>\n<caret></selection>String s = \"<h1>test</h1>\";\n```")
+
+    assertDoesNotThrow {
+      type('\n')
+      type("class C {}")
+    }
+  }
+
+  fun `test blank line in quoted fence is not a separate injection range`() {
+    val text = """
+      > ```shell
+      > pwd
+      >
+      > echo done
+      > ```
+    """.trimIndent()
+    configureFromFileText("test.md", text)
+
+    val contentStart = text.indexOf("pwd")
+    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, contentStart)
+    assertNotNull(injectedElement)
+    val injectedDocument = PsiDocumentManager.getInstance(project).getDocument(injectedElement!!.containingFile) as DocumentWindow
+
+    assertTrue(injectedDocument.hostRanges.all { editor.document.getText(TextRange.create(it)).isNotBlank() })
+    assertEquals(
+      """
+        pwd
+
+        echo done
+      """.trimIndent(),
+      injectedElement.containingFile.text
+    )
   }
 
   private fun doTest(text: String, shouldHaveInjection: Boolean) {

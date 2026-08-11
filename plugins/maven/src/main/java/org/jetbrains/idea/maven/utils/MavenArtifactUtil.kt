@@ -102,6 +102,10 @@ object MavenArtifactUtil {
       }
     }
 
+    if (groupId1.isNullOrEmpty() && groupId2.isNullOrEmpty()) {
+      return true
+    }
+
     return groupId1 == groupId2
   }
 

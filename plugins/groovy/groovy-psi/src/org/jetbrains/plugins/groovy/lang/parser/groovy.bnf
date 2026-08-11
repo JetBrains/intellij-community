@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 {
   generate = [
     psi = 'no'
@@ -116,6 +116,7 @@
     KW_CONTINUE = 'continue'
     KW_DEF = 'def'
     KW_VAR = 'var'
+    KW_VAL = 'val'
     KW_DEFAULT = 'default'
     KW_DO = 'do'
     KW_ELSE = 'else'
@@ -217,7 +218,7 @@ import ::= modifier_list mb_nl ('import') 'static'? qualified_name import_star? 
   consumeTokenMethod = 'consumeTokenFast'
 }
 private import_star ::= '.' '*'
-import_alias ::= 'as' mb_nl IDENTIFIER
+import_alias ::= 'as' (weak_keyword | IDENTIFIER)
 {
   pin = 1
 }
@@ -245,7 +246,7 @@ private modifier ::= 'abstract'
                    | 'synchronized' !'('
                    | 'transient'
                    | 'volatile'
-                   | 'sealed'
+                   | 'sealed' !(mb_nl ('(' | ';' | '='))
                    | 'non-sealed'
                    | def_modifier
                    | var_modifier
@@ -258,12 +259,12 @@ private modifier ::= 'abstract'
 private def_modifier ::= 'def' !'.' { consumeTokenMethod = 'consumeTokenFast' }
 
 /*
- * 'var' could be modifier or identifier
+ * 'var', 'val' and 'sealed' can be modifier or identifier
  */
-private var_modifier ::= 'var' &(weak_keyword | IDENTIFIER | modifier | type_element | tuple_var_declaration_tuple)  { consumeTokenMethod = 'consumeTokenFast' }
+private var_modifier ::= ('var' | 'val' | 'sealed') &(mb_nl (weak_keyword | IDENTIFIER | modifier | type_element | tuple_var_declaration_tuple))  { consumeTokenMethod = 'consumeTokenFast' }
 // endregion
 
-private weak_keyword_identifiers ::= 'var' | 'yield' | 'permits' | 'record' { consumeTokenMethod = 'consumeTokenFast' }
+private weak_keyword_identifiers ::= 'as' | 'permits' | 'record' | 'sealed' | 'trait' | 'var' | 'val' | 'yield' { consumeTokenMethod = 'consumeTokenFast' }
 
 private weak_keyword ::= weak_keyword_identifiers | clear_variants_and_fail
 
@@ -310,9 +311,9 @@ private type_definition_tail ::= class_type_definition
                                | record_type_definition
 private class_definition_header ::= <<classIdentifier>> type_parameter_list? nl_extends nl_implements nl_permits
 private interface_definition_header ::= <<classIdentifier>> type_parameter_list? nl_extends nl_non_empty_implements? nl_permits
-private trait_definition_header ::= IDENTIFIER type_parameter_list? nl_extends nl_implements nl_permits
+private trait_definition_header ::= (weak_keyword | IDENTIFIER) type_parameter_list? nl_extends nl_implements nl_permits
 private enum_definition_header ::= <<classIdentifier>> nl_non_empty_extends? nl_implements
-private annotation_definition_header ::= IDENTIFIER
+private annotation_definition_header ::= weak_keyword | IDENTIFIER
 private record_definition_header ::= <<classIdentifier>> type_parameter_list? method_parameter_list nl_implements
 
 left class_type_definition ::= 'class' class_definition_header mb_nl class_body <<popClassIdentifier>>
@@ -457,7 +458,7 @@ enum_constants ::= enum_constant ((mb_nl ',') mb_nl enum_constant)* [mb_nl ',']
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrEnumConstantListElementType'
 }
-enum_constant ::= annotation_modifier_list mb_nl IDENTIFIER call_argument_list? enum_constant_initializer?
+enum_constant ::= annotation_modifier_list mb_nl (weak_keyword | IDENTIFIER) call_argument_list? enum_constant_initializer?
 {
   pin = 3
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrEnumConstantElementType'
@@ -834,7 +835,7 @@ synchronized_statement ::= 'synchronized' '(' <<insideParentheses expression>> m
   pin = 2
 }
 
-labeled_statement ::= IDENTIFIER after_label
+labeled_statement ::= (weak_keyword | IDENTIFIER) after_label
 private after_label ::= ':' mb_nl statement
 {
   pin = 1
@@ -843,8 +844,8 @@ private after_label ::= ':' mb_nl statement
 
 return_statement ::= 'return' expression?
 
-break_statement ::= 'break' IDENTIFIER?
-continue_statement ::= 'continue' IDENTIFIER?
+break_statement ::= 'break' [weak_keyword | IDENTIFIER]
+continue_statement ::= 'continue' [weak_keyword | IDENTIFIER]
 yield_statement ::= <<insideSwitchExpression>> 'yield' expression { pin = 2 }
 
 throw_statement ::= 'throw' expression
@@ -1124,7 +1125,7 @@ private property_expression_identifiers ::= parenthesized_expression | lazy_bloc
 private priority1_4 ::= not_expression | cast_expression
 not_expression ::= ('~' | '!') mb_nl <<disableNlBeforeClosure>> expression { elementType = unary_expression }
 cast_expression ::= &cast_expression_start '(' <<annotated type_element>> ')' cast_operand
-private cast_expression_start ::= '(' non_empty_annotation_list? (IDENTIFIER | primitive_type) { consumeTokenMethod = 'consumeTokenFast' }
+private cast_expression_start ::= '(' non_empty_annotation_list? (weak_keyword | IDENTIFIER | primitive_type) { consumeTokenMethod = 'consumeTokenFast' }
 private cast_operand ::= !empty_parens <<castOperandCheck>> priority1_4
 
 private priority1_5 ::= index_expression | safe_index_expression | postfix_unary_expression
@@ -1293,7 +1294,7 @@ left map_argument_label ::= &':'
  elementType = argument_label
  consumeTokenMethod = 'consumeTokenFast'
 }
-left map_argument ::= ':' expression
+left map_argument ::= ':' mb_nl expression
 {
  pin = 1
  consumeTokenMethod = 'consumeTokenFast'
@@ -1301,7 +1302,7 @@ left map_argument ::= ':' expression
 }
 spread_list_argument ::= !<<isApplicationArguments>> '*' expression { consumeTokenMethod = 'consumeTokenFast' }
 named_argument ::= argument_label named_argument_tail
-private named_argument_tail ::= ':' (mb_nl expression)
+private named_argument_tail ::= ':' mb_nl expression
 {
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
@@ -1367,7 +1368,7 @@ private code_reference_dot ::= '.' !'*'
 private code_reference_part ::= code_reference_identifier [type_argument_list <<setRefHadTypeArguments>>]
 private code_reference_identifier ::= <<codeReferenceIdentifier code_reference_identifiers>>
 private code_reference_identifiers ::= IDENTIFIER | weak_keyword_identifiers | code_reference_identifiers_soft (<<isQualifiedName>> | &'.')
-private code_reference_identifiers_soft ::= 'def' | 'as' | 'in' | 'trait' | 'var' { consumeTokenMethod = 'consumeTokenFast' }
+private code_reference_identifiers_soft ::= 'def' | 'in' { consumeTokenMethod = 'consumeTokenFast' }
 
 // for the sake of showing 'type expected' message
 type_code_reference ::= <<annotated code_reference_base>> { elementType = '' name = 'type' }

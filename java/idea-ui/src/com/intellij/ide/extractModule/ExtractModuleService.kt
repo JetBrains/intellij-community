@@ -4,8 +4,8 @@ package com.intellij.ide.extractModule
 import com.intellij.CommonBundle
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
@@ -96,7 +96,7 @@ class ExtractModuleService(
   private val coroutineScope: CoroutineScope,
 ) {
   @RequiresEdt
-  fun analyzeDependenciesAndCreateModuleInBackground(
+  fun buildProjectAndExtractModule(
     directory: VirtualFile,
     module: Module,
     targetModuleCreator: TargetModuleCreator,
@@ -107,10 +107,18 @@ class ExtractModuleService(
       }
 
       coroutineScope.launch {
-        withBackgroundProgress(project, JavaUiBundle.message("progress.title.extract.module.from.package", directory.name)) {
-          analyzeDependenciesAndCreateModule(directory, module, targetModuleCreator)
-        }
+        analyzeDependenciesAndExtractModule(directory, module, targetModuleCreator)
       }
+    }
+  }
+
+  suspend fun analyzeDependenciesAndExtractModule(
+    directory: VirtualFile,
+    module: Module,
+    targetModuleCreator: TargetModuleCreator,
+  ) {
+    withBackgroundProgress(project, JavaUiBundle.message("progress.title.extract.module.from.package", directory.name)) {
+      analyzeDependenciesAndCreateModule(directory, module, targetModuleCreator)
     }
   }
 

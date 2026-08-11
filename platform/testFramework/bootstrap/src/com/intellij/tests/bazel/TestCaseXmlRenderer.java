@@ -11,6 +11,7 @@ import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 import org.junit.platform.launcher.listeners.LegacyReportingUtils;
 import org.opentest4j.AssertionFailedError;
+import org.opentest4j.MultipleFailuresError;
 import org.opentest4j.ValueWrapper;
 
 import javax.xml.stream.XMLStreamException;
@@ -35,6 +36,8 @@ class TestCaseXmlRenderer {
 
   private static final DecimalFormatSymbols DECIMAL_FORMAT_SYMBOLS =
     new DecimalFormatSymbols(Locale.ROOT);
+  private static final int LINE_DIFF_INPUT_CHAR_LIMIT = 1_000_000;
+  private static final int LINE_DIFF_MATRIX_CELL_LIMIT = 1_000_000;
   private final TestPlan testPlan;
 
   public TestCaseXmlRenderer(TestPlan testPlan) {
@@ -123,22 +126,27 @@ class TestCaseXmlRenderer {
 
     StringWriter stringWriter =  new StringWriter();
     PrintWriter printWriter = new PrintWriter(stringWriter);
-    if (throwable instanceof AssertionFailedError error) {
-      // Both fields are optional on AssertionFailedError; e.g. kotlin.test.fail(message) constructs
-      // one with neither set. Skip the expected/actual block when either is missing — the stack
-      // trace below still describes the failure.
-      ValueWrapper expectedWrapper = error.getExpected();
-      ValueWrapper actualWrapper = error.getActual();
-      if (expectedWrapper != null && actualWrapper != null) {
-        String expected = expectedWrapper.getStringRepresentation();
-        String actual = actualWrapper.getStringRepresentation();
-        printWriter.println("---- expected -------------------------------");
-        printWriter.print(expected);
-        printWriter.println("---- actual ---------------------------------");
-        printWriter.print(actual);
-        printWriter.println("---- diff -----------------------------------");
-        printWriter.println(computeLineDiff(expected, actual));
-        printWriter.println("---------------------------------------------");
+    List<Throwable> failures = throwable instanceof MultipleFailuresError multipleFailures
+                               ? multipleFailures.getFailures()
+                               : List.of(throwable);
+    for (Throwable failure : failures) {
+      if (failure instanceof AssertionFailedError error) {
+        // Both fields are optional on AssertionFailedError; e.g. kotlin.test.fail(message) constructs
+        // one with neither set. Skip the expected/actual block when either is missing — the stack
+        // trace below still describes the failure.
+        ValueWrapper expectedWrapper = error.getExpected();
+        ValueWrapper actualWrapper = error.getActual();
+        if (expectedWrapper != null && actualWrapper != null) {
+          String expected = expectedWrapper.getStringRepresentation();
+          String actual = actualWrapper.getStringRepresentation();
+          printWriter.println("---- expected -------------------------------");
+          printWriter.print(expected);
+          printWriter.println("---- actual ---------------------------------");
+          printWriter.print(actual);
+          printWriter.println("---- diff -----------------------------------");
+          printWriter.println(computeLineDiff(expected, actual));
+          printWriter.println("---------------------------------------------");
+        }
       }
     }
     throwable.printStackTrace(printWriter);
@@ -149,6 +157,7 @@ class TestCaseXmlRenderer {
   /**
    * Compares two strings line by line and returns a diff string similar to the Linux `diff` command.
    * Uses the Longest Common Subsequence (LCS) algorithm to determine additions and deletions.
+   * Returns an omission message instead of building the LCS matrix when the input is too large.
    * <p>
    * '<' indicates a line removed from the original text. '>' indicates a line added in the modified text.
    *
@@ -161,12 +170,21 @@ class TestCaseXmlRenderer {
       return "";
     }
 
+    long inputLength = (long)expected.length() + actual.length();
+    if (inputLength > LINE_DIFF_INPUT_CHAR_LIMIT) {
+      return "Line diff omitted because expected and actual are too large to compare safely (" + inputLength + " characters).";
+    }
+
     // Using split with -1 to ensure trailing empty lines are preserved, mirroring Kotlin's lines()
     String[] lines1 = expected.split("\\R", -1);
     String[] lines2 = actual.split("\\R", -1);
 
     int m = lines1.length;
     int n = lines2.length;
+    long matrixCells = ((long)m + 1) * (n + 1);
+    if (matrixCells > LINE_DIFF_MATRIX_CELL_LIMIT) {
+      return "Line diff omitted because expected and actual are too large to compare safely (" + m + " x " + n + " lines).";
+    }
 
     // Step 1: Build the LCS matrix
     int[][] dp = new int[m + 1][n + 1];

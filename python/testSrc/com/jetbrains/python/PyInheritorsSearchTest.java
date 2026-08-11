@@ -1,6 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -11,6 +15,9 @@ import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import java.util.Collection;
 
 
+@Subsystems.CodeInsight
+@Components.Navigation
+@Layers.Functional
 public class PyInheritorsSearchTest extends PyTestCase {
   public void testSimple() {
     setupProject();

@@ -204,7 +204,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     connection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
       clearAllIdentifierHighlighters()
     })
-    DocumentAfterCommitListener.listen(project, parentDisposable) { document ->
+    DocumentAfterCommitListener.listen(project, parentDisposable, coroutineScope) { document ->
       editorFactory.editors(document, project).forEach {
         updateHighlighted(project, it, coroutineScope)
         highlightSelection(project, it, executor)

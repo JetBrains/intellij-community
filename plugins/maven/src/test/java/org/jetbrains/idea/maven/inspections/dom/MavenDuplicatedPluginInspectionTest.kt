@@ -1,16 +1,31 @@
 package org.jetbrains.idea.maven.inspections.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.inspections.MavenDuplicatePluginInspection
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.checkHighlighting
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenDuplicatedPluginInspectionTest : MavenDomTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenDuplicatedPluginInspectionTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun testDuplicatedPlugin() = runBlocking {
-    fixture.enableInspections(MavenDuplicatePluginInspection::class.java)
+    maven.fixture.enableInspections(MavenDuplicatePluginInspection::class.java)
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>mavenParent</groupId>
                        <artifactId>childA</artifactId>
                        <version>1.0</version>
@@ -31,6 +46,6 @@ class MavenDuplicatedPluginInspectionTest : MavenDomTestCase() {
                        </build>
                        """.trimIndent())
 
-    checkHighlighting()
+    maven.checkHighlighting()
   }
 }

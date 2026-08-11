@@ -1,9 +1,22 @@
-<idea-plugin package="org.jetbrains.kotlin.tools.projectWizard.maven">
+<idea-plugin>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.maven"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.projectWizard.core"/>
     <module name="intellij.kotlin.projectWizard.idea"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <newProjectWizard.kotlin.buildSystem implementation="org.jetbrains.kotlin.tools.projectWizard.maven.MavenKotlinNewProjectWizard"/>

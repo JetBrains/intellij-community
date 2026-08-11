@@ -3,10 +3,12 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public interface FusAwareAction {
   @NotNull List<EventPair<?>> getAdditionalUsageData(@NotNull AnActionEvent event);
 }

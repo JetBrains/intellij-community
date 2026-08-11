@@ -47,3 +47,20 @@ suspend fun awaitExternalChangesAndIndexing(project: Project) {
     }
   }
 }
+
+suspend fun isProjectIndexing(project: Project): Boolean {
+  return project.serviceAsync<DumbService>().isDumb
+}
+
+const val INDEXING_PARTIAL_RESULT_REASON: String =
+  "Project indexing was in progress; results may be incomplete — retry once indexing completes."
+
+data class IndexingCheckResult<T>(val result: T, val partialResultReason: String?)
+
+suspend fun <T> checkIndexingInProgress(project: Project, block: suspend () -> T): IndexingCheckResult<T> {
+  val wasIndexingBefore = isProjectIndexing(project)
+  val result = block()
+  val isIndexingNow = isProjectIndexing(project)
+  val reason = if (wasIndexingBefore || isIndexingNow) INDEXING_PARTIAL_RESULT_REASON else null
+  return IndexingCheckResult(result, reason)
+}

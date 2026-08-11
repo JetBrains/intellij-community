@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Markdown Link Graph</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="ij-webview-root graph-root">
+<main class="shell">
+  <header class="toolbar">
+    <button id="refreshButton" type="button">Refresh</button>
+    <span id="stats" class="stats">Loading...</span>
+  </header>
+  <section id="content" class="content">
+    <section id="graph" class="graph" aria-label="Markdown link graph"></section>
+    <div id="splitter" class="splitter" role="separator" aria-label="Resize preview" aria-orientation="vertical" aria-controls="previewPanel" tabindex="0"></div>
+    <aside id="previewPanel" class="preview" aria-label="Markdown document preview" aria-hidden="true">
+      <header class="previewHeader">
+        <div id="previewTitle" class="previewTitle"></div>
+        <div id="previewPath" class="previewPath"></div>
+      </header>
+      <article id="previewBody" class="previewBody"></article>
+    </aside>
+  </section>
+</main>
+<script type="module" src="./src/main.ts"></script>
+</body>
+</html>

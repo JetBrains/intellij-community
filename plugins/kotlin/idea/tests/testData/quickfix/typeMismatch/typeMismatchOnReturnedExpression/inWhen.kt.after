@@ -1,5 +1,5 @@
 // "Change return type of enclosing function 'test' to 'Any?'" "true"
-// K2_ERROR: Return type mismatch: expected 'O', actual 'Any?'.
+// K2_ERROR: RETURN_TYPE_MISMATCH
 class O
 class P
 

@@ -1,0 +1,9 @@
+// WITH_STDLIB
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=name-mismatch
+// AFTER-WARNING: Variable 'item' is never used
+// AFTER-WARNING: Variable 'index' is never used
+fun foo() {
+    for ((index, item) in listOf("a", "b", "c").withIndex()) {<caret>
+
+    }
+}

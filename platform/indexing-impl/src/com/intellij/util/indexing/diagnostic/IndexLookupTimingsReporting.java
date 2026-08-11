@@ -880,9 +880,6 @@ public final class IndexLookupTimingsReporting {
 
 
     public IndexOperationAggregatesCollector() {
-      if (!isValid()) {
-        throw new AssertionError(getGroup() + " is not valid groupId");
-      }
     }
 
     @Override

@@ -9,8 +9,8 @@ public class SwitchWithPrimitive {
 
   public static int exhaustiveByPrimitives(RecordCharObj source) {
     switch (source) {
-      case RecordCharObj(char source1) -> System.out.println("1");
-      case <warning descr="Switch label 'RecordCharObj(int source1)' is unreachable">RecordCharObj(int source1)</warning> -> System.out.println("1");
+      case <warning descr="Switch label 'RecordCharObj(char source1)' is the only reachable in the whole switch">RecordCharObj(char source1)</warning> -> System.out.println("1");
+      case RecordCharObj(int source1) -> System.out.println("1");
     }
     return 1;
   }

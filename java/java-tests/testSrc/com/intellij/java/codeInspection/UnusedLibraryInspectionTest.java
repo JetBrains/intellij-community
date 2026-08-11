@@ -39,7 +39,7 @@ public class UnusedLibraryInspectionTest extends JavaInspectionTestCase {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       super.configureModule(module, model, contentEntry);
-      PsiTestUtil.addProjectLibrary(model, "JUnit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"));
+      PsiTestUtil.addProjectLibrary(model, "JUnit", IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4").getClassesPaths());
       if (getTestName(true).endsWith("Runtime")) {
         for (OrderEntry entry : model.getOrderEntries()) {
           if (entry instanceof LibraryOrderEntry && "JUnit".equals(((LibraryOrderEntry)entry).getLibraryName())) {

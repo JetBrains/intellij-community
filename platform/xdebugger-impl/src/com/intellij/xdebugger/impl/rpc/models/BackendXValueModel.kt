@@ -8,16 +8,19 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorDto
 import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorDto.FullValueEvaluatorLinkAttributes
+import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorId
 import com.intellij.platform.debugger.impl.rpc.XValueDto
 import com.intellij.platform.debugger.impl.rpc.XValueDtoWithPresentation
 import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.platform.debugger.impl.rpc.XValueMarkerDto
+import com.intellij.platform.debugger.impl.rpc.XValuePresentationDataDto
 import com.intellij.platform.debugger.impl.rpc.XValueSerializedPresentation
 import com.intellij.platform.debugger.impl.rpc.XValueTextProviderDto
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.deleteValueById
 import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.JBColor
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
@@ -35,6 +38,7 @@ import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.toRpc
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -42,10 +46,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.ApiStatus
@@ -106,23 +109,31 @@ class BackendXValueModel internal constructor(
     )
   }
 
-  fun computeTooltipPresentation(): Flow<XValueSerializedPresentation> {
-    return channelFlow {
-      val channelCs = this
-      xValue.computePresentation(
-        channelCs,
-        XValuePlace.TOOLTIP,
-        presentationHandler = {
-          trySend(it)
-        },
-        fullValueEvaluatorHandler = {
-          // ignore, take TREE into account only
-        },
-        hyperlinkHandler = {
-          // ignore, take TREE into account only
-        },
-      )
-    }.buffer(1)
+  suspend fun computeTooltipPresentation(): XValuePresentationDataDto {
+    val tooltipCs = cs.childScope("XValue tooltip presentation")
+    val presentation = MutableSharedFlow<XValueSerializedPresentation>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val fullValueEvaluator = MutableStateFlow<XFullValueEvaluator?>(null)
+    val additionalLinkFlow = MutableStateFlow<XDebuggerTreeNodeHyperlink?>(null)
+
+    xValue.computePresentation(
+      tooltipCs,
+      XValuePlace.TOOLTIP,
+      presentationHandler = {
+        presentation.tryEmit(it)
+      },
+      fullValueEvaluatorHandler = {
+        fullValueEvaluator.value = it
+      },
+      hyperlinkHandler = {
+        additionalLinkFlow.value = it
+      },
+    )
+
+    return XValuePresentationDataDto(
+      presentation.cancelScopeOnCompletion(tooltipCs).toRpc(),
+      fullValueEvaluator.map { it?.toRpc(tooltipCs) }.cancelScopeOnCompletion(tooltipCs).toRpc(),
+      additionalLinkFlow.map { it?.toRpc(tooltipCs) }.cancelScopeOnCompletion(tooltipCs).toRpc(),
+    )
   }
 
   fun setMarker(marker: ValueMarkup?) {
@@ -148,14 +159,22 @@ class BackendXValueModel internal constructor(
   }
 }
 
+private fun <T> Flow<T>.cancelScopeOnCompletion(cs: CoroutineScope): Flow<T> {
+  return onCompletion {
+    cs.cancel()
+  }
+}
+
 @ApiStatus.Internal
 suspend fun BackendXValueModel.toXValueDtoWithPresentation(): XValueDtoWithPresentation {
   val value = toXValueDto()
   return XValueDtoWithPresentation(
     value,
-    presentation.toRpc(),
-    fullValueEvaluator.map { it?.toRpc() }.toRpc(),
-    additionalLinkFlow.map { it?.toRpc(cs) }.toRpc(),
+    XValuePresentationDataDto(
+      presentation.toRpc(),
+      fullValueEvaluator.map { it?.toRpc(cs) }.toRpc(),
+      additionalLinkFlow.map { it?.toRpc(cs) }.toRpc(),
+    ),
   )
 }
 
@@ -185,7 +204,8 @@ suspend fun BackendXValueModel.toXValueDto(): XValueDto {
 }
 
 @ApiStatus.Internal
-suspend fun XFullValueEvaluator.toRpc(): XFullValueEvaluatorDto = XFullValueEvaluatorDto(
+suspend fun XFullValueEvaluator.toRpc(cs: CoroutineScope): XFullValueEvaluatorDto = XFullValueEvaluatorDto(
+  storeGlobally(cs),
   linkText,
   isEnabledFlow.toRpc(),
   isShowValuePopup,
@@ -193,6 +213,17 @@ suspend fun XFullValueEvaluator.toRpc(): XFullValueEvaluatorDto = XFullValueEval
     FullValueEvaluatorLinkAttributes(attributes.linkIcon?.rpcId(), attributes.linkTooltipText, attributes.shortcutSupplier?.get())
   }
 )
+
+@ApiStatus.Internal
+fun XFullValueEvaluatorId.findValue(): XFullValueEvaluator? {
+  return findValueById(this, type = XFullValueEvaluatorValueIdType)
+}
+
+private fun XFullValueEvaluator.storeGlobally(cs: CoroutineScope): XFullValueEvaluatorId {
+  return storeValueGlobally(cs, this, type = XFullValueEvaluatorValueIdType)
+}
+
+private object XFullValueEvaluatorValueIdType : BackendValueIdType<XFullValueEvaluatorId, XFullValueEvaluator>(::XFullValueEvaluatorId)
 
 private fun getTextProviderFlow(
   xValue: XValue,

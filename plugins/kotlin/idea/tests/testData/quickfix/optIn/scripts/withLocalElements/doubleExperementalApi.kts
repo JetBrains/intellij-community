@@ -9,7 +9,7 @@
 // ACTION: Opt in for 'Library' on 'bar'
 // ACTION: Opt in for 'Library' on statement
 // RUNTIME_WITH_SCRIPT_RUNTIME
-// K2_ERROR: This declaration needs opt-in. Its usage must be marked with '@Library' or '@OptIn(Library::class)'
+// K2_ERROR: OPT_IN_USAGE_ERROR
 @RequiresOptIn
 annotation class Library()
 

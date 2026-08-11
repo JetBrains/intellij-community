@@ -51,7 +51,7 @@ abstract class TraceExecutionTestCase : DebuggerTestCase() {
 
   override fun setUpModule() {
     super.setUpModule()
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_16)
+    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_24)
   }
 
   protected open fun replaceAdditionalInOutput(str: String): String {
@@ -142,6 +142,9 @@ abstract class TraceExecutionTestCase : DebuggerTestCase() {
   protected open fun getHelper(session: XDebugSession): TraceExecutionTestHelper {
     return ExecutionTestCaseHelper(this, session, getLibrarySupportProvider(), myPositionResolver, LOG)
   }
+
+  protected fun breakpointEngineHelper(session: XDebugSession): TraceExecutionTestHelper =
+    BreakpointBasedExecutionTestCaseHelper(this, session, getLibrarySupportProvider(), myPositionResolver, LOG)
 
   protected open fun getLibrarySupportProvider(): LibrarySupportProvider {
     return StandardLibrarySupportProvider()

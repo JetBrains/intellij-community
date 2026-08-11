@@ -20,7 +20,7 @@ class PreferencesRegistryBuilder(private val weigher: TextMateSelectorWeigher) {
     fillHighlightingBraces(preferences.highlightingPairs)
     fillSmartTypingBraces(preferences.smartTypingPairs)
     this.preferences.update {
-      it.add(preferences)
+      it.adding(preferences)
     }
   }
 
@@ -28,10 +28,10 @@ class PreferencesRegistryBuilder(private val weigher: TextMateSelectorWeigher) {
     if (highlightingPairs != null) {
       for (pair in highlightingPairs) {
         if (!pair.left.isEmpty()) {
-          leftHighlightingBraces.update { it.add(pair.left[0].code) }
+          leftHighlightingBraces.update { it.adding(pair.left[0].code) }
         }
         if (!pair.right.isEmpty()) {
-          rightHighlightingBraces.update { it.add(pair.right[pair.right.length - 1].code) }
+          rightHighlightingBraces.update { it.adding(pair.right[pair.right.length - 1].code) }
         }
       }
     }
@@ -41,10 +41,10 @@ class PreferencesRegistryBuilder(private val weigher: TextMateSelectorWeigher) {
     if (smartTypingPairs != null) {
       for (pair in smartTypingPairs) {
         if (!pair.left.isEmpty()) {
-          leftSmartTypingBraces.update { it.add(pair.left[pair.left.length - 1].code) }
+          leftSmartTypingBraces.update { it.adding(pair.left[pair.left.length - 1].code) }
         }
         if (!pair.right.isEmpty()) {
-          rightSmartTypingBraces.update { it.add(pair.right[pair.right.length - 1].code) }
+          rightSmartTypingBraces.update { it.adding(pair.right[pair.right.length - 1].code) }
         }
       }
     }

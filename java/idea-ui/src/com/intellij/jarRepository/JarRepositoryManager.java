@@ -54,6 +54,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -597,9 +598,9 @@ public final class JarRepositoryManager {
     return promise;
   }
 
-  private static @NotNull Collection<String> lookupVersionsImpl(String groupId,
-                                                                String artifactId,
-                                                                @NotNull ArtifactRepositoryManager manager) throws Exception {
+  private static @NotNull @Unmodifiable Collection<String> lookupVersionsImpl(String groupId,
+                                                                              String artifactId,
+                                                                              @NotNull ArtifactRepositoryManager manager) throws Exception {
     try {
       List<Version> versions = new ArrayList<>(manager.getAvailableVersions(groupId, artifactId, "[0,)", ArtifactKind.ARTIFACT));
       return ContainerUtil.map(versions.reversed(), Version::toString);
@@ -861,7 +862,7 @@ public final class JarRepositoryManager {
     }
 
     @Override
-    protected Collection<String> perform(ProgressIndicator progress, @NotNull ArtifactRepositoryManager manager) throws Exception {
+    protected @Unmodifiable Collection<String> perform(ProgressIndicator progress, @NotNull ArtifactRepositoryManager manager) throws Exception {
       var startTime = Instant.now();
 
       slf4jLogger.debug("VersionResolveJob({}:{}) #{} started", myDescription.getGroupId(), myDescription.getArtifactId(),
@@ -876,7 +877,7 @@ public final class JarRepositoryManager {
     }
 
     @Override
-    protected Collection<String> getDefaultResult() {
+    protected @Unmodifiable Collection<String> getDefaultResult() {
       return Collections.emptyList();
     }
   }

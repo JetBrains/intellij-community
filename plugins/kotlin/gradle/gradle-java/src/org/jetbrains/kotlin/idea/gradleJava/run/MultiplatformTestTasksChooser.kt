@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleJava.run
 
@@ -26,6 +26,23 @@ class MultiplatformTestTasksChooser : TestTasksChooser() {
             return contextWithLocationName(context, locationName)
         }
     }
+
+    private enum class PlatformTaskPriority {
+        ANDROID,
+        JVM,
+        JS,
+        WASM,
+        OTHER,
+    }
+
+    private fun ExternalSystemTestRunTask.platformTaskPriority(): PlatformTaskPriority =
+        when (kotlinPlatformId) {
+            KotlinPlatform.ANDROID.id -> PlatformTaskPriority.ANDROID
+            KotlinPlatform.JVM.id -> PlatformTaskPriority.JVM
+            KotlinPlatform.JS.id -> PlatformTaskPriority.JS
+            KotlinPlatform.WASM.id -> PlatformTaskPriority.WASM
+            else -> PlatformTaskPriority.OTHER
+        }
 
     fun multiplatformChooseTasks(
         project: Project,
@@ -76,6 +93,7 @@ class MultiplatformTestTasksChooser : TestTasksChooser() {
 
             module.externalSystemTestRunTasks()
                 .filter { taskFilter(it) }
+                .sortedBy { it.platformTaskPriority() }
                 .groupBy { it.targetName }
                 .forEach { (targetName, targetTasks) ->
                     val singleTask = targetTasks.size == 1

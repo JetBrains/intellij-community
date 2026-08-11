@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
-import com.intellij.analysis.problemsView.toolWindow.ProblemsViewToolWindowUtils;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -12,6 +11,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLocalVariable;
@@ -93,13 +94,13 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     }
     Consumer<Collection<TaintNode>> callback = toAnnotate -> {
       annotate(project, toAnnotate);
-      ToolWindow toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
+      ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROBLEMS_VIEW);
       if (toolWindow != null) toolWindow.hide();
     };
     PropagateAnnotationPanel panel =
       new PropagateAnnotationPanel(project, roots, callback, supportRefactoring);
     String title = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.title");
-    ToolWindow toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROBLEMS_VIEW);
     if (toolWindow == null) return;
     Content content = ContentFactory.getInstance().createContent(panel, title, true);
     panel.setContent(content);

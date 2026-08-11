@@ -427,12 +427,12 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
    */
   @Suppress("OVERRIDE_DEPRECATION")
   override fun suspendScanningAndIndexingThenRun(activityName: @ProgressText String, runnable: Runnable) {
-    pauseReason.update { it.add(activityName) }
+    pauseReason.update { it.adding(activityName) }
     try {
       DumbService.getInstance(project).suspendIndexingAndRun(activityName, runnable)
     }
     finally {
-      pauseReason.update { it.remove(activityName) }
+      pauseReason.update { it.removing(activityName) }
     }
   }
 
@@ -440,12 +440,12 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     activityName: @ProgressText String,
     activity: suspend CoroutineScope.() -> Unit,
   ) {
-    pauseReason.update { it.add(activityName) }
+    pauseReason.update { it.adding(activityName) }
     try {
       project.serviceAsync<DumbService>().suspendIndexingAndRun(activityName, activity)
     }
     finally {
-      pauseReason.update { it.remove(activityName) }
+      pauseReason.update { it.removing(activityName) }
     }
   }
 

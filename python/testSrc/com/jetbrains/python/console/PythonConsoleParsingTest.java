@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
+
 import com.intellij.lang.LanguageASTFactory;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
@@ -34,6 +37,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 @TestDataPath("$CONTENT_ROOT/../testData/ipython/")
+@Subsystems.PythonConsole
+@Layers.Functional
 public class PythonConsoleParsingTest extends ParsingTestCase {
   private LanguageLevel myLanguageLevel = LanguageLevel.getDefault();
 

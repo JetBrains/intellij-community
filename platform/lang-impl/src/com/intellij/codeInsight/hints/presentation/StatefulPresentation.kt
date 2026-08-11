@@ -9,11 +9,13 @@ import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Partially reimplementation of [DynamicDelegatePresentation], but with state
  * @param S state, immutable object, requires to implement meaningful equals
  */
+@ApiStatus.Internal
 abstract class StatefulPresentation<S: Any?>(
   state: S,
   val stateMark: StateMark<S>
@@ -118,6 +120,7 @@ abstract class StatefulPresentation<S: Any?>(
    * Used to provide type safe access to data
    * @param id must be different for any different types
    */
+  @ApiStatus.Internal
   data class StateMark<T: Any?>(val id: String) {
     @Suppress("UNCHECKED_CAST")
     fun cast(value: Any?, otherMark: StateMark<*>): T? {

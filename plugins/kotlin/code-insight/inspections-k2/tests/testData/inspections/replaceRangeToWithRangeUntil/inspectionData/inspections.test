@@ -1,0 +1,3 @@
+// INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.ReplaceRangeToWithRangeUntilInspection
+// K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.ReplaceRangeToWithRangeUntilInspection
+// LANGUAGE_VERSION: 2.0

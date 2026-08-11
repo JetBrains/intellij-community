@@ -30,7 +30,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
-import com.intellij.openapi.wm.ex.ProjectFrameActionExclusionService
+import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -116,7 +116,7 @@ open class RiderMainToolbarRootPaneManager(private val project: Project) : Simpl
   @RequiresBackgroundThread
   private fun correctedToolbarActions(panel: JPanel): Map<String, ActionGroup?> {
     val toolbarGroup = getToolbarGroup() ?: return emptyMap()
-    val excludedActionIds = service<ProjectFrameActionExclusionService>().getExcludedActionIds(panel.projectFrameTypeId(), ActionPlaces.MAIN_TOOLBAR)
+    val excludedActionIds = service<ProjectFrameTypeService>().getExcludedActionIds(panel.projectFrameTypeId(), ActionPlaces.MAIN_TOOLBAR)
 
     val leftGroup = sideGroup(toolbarGroup, excludedActionIds, ::isLeftSideAction)
     val rightGroup = sideGroup(toolbarGroup, excludedActionIds, ::isRightSideAction)

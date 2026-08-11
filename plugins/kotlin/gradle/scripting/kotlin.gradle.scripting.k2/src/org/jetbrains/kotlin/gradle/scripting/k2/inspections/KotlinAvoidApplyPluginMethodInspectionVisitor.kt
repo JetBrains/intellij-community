@@ -12,9 +12,10 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.findParentOfType
 import com.intellij.util.asSafely
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtBlockExpression

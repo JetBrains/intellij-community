@@ -1,0 +1,324 @@
+/* Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */
+.jbReactControlChrome,
+.jbReactControlChrome * {
+  box-sizing: border-box;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.jbReactControlChrome {
+  align-items: center;
+  background: var(--jb-bg-input);
+  border: 1px solid var(--jb-border-color);
+  border-radius: var(--jb-control-radius);
+  color: var(--jb-text-color);
+  display: inline-flex;
+  font-family: var(--jb-font-family);
+  font-size: var(--jb-font-size);
+  line-height: var(--jb-line-height);
+  min-height: var(--jb-control-height);
+  min-width: 0;
+  vertical-align: middle;
+}
+
+.jbReactControlChrome[data-compact="true"] {
+  min-height: var(--jb-control-height-compact);
+}
+
+.jbReactControlChrome:hover:not([data-disabled="true"]),
+.jbReactControlChrome:has(.jbReactSelectTrigger[data-popup-open]) {
+  border-color: var(--jb-border-color-strong);
+}
+
+.jbReactControlChrome:focus-within {
+  border-color: var(--jb-accent-color);
+  box-shadow: var(--jb-focus-ring);
+}
+
+.jbReactControlChrome[data-invalid="true"] {
+  border-color: var(--jb-danger-color);
+}
+
+.jbReactControlChrome[data-disabled="true"] {
+  color: var(--jb-text-disabled);
+  opacity: 0.72;
+}
+
+.jbReactControlChrome :where(button, [role="combobox"]):focus {
+  outline: none;
+}
+
+.jbReactMenuTrigger,
+.jbReactSelectTrigger {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: default;
+  display: inline-flex;
+  flex: 1 1 auto;
+  font: inherit;
+  gap: var(--jb-control-gap);
+  min-height: calc(var(--jb-control-height) - 2px);
+  min-width: 0;
+  outline: none;
+  padding: 0 var(--jb-control-padding-x);
+  text-align: left;
+}
+
+.jbReactControlChrome[data-compact="true"] .jbReactSelectTrigger {
+  min-height: calc(var(--jb-control-height-compact) - 2px);
+}
+
+.jbReactControlChrome[data-compact="true"] .jbReactMenuTrigger {
+  min-height: calc(var(--jb-control-height-compact) - 2px);
+}
+
+.jbReactMenuTriggerText,
+.jbReactSelectValue {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jbReactSelectValue[data-placeholder] {
+  color: var(--jb-text-secondary);
+}
+
+.jbReactMenuIcon,
+.jbReactMenuIndicator,
+.jbReactSelectIcon,
+.jbReactSelectIndicator,
+.jbReactSelectItemIndicator,
+.jbReactSelectScrollButton {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 auto;
+  justify-content: center;
+  line-height: 1;
+}
+
+.jbReactSelectIcon,
+.jbReactSelectIndicator {
+  color: var(--jb-text-muted);
+}
+
+.jbReactMenuIcon,
+.jbReactMenuIndicator {
+  color: var(--jb-text-muted);
+}
+
+.jbReactMenuPositioner,
+.jbReactPopoverPositioner,
+.jbReactSelectPositioner {
+  z-index: 20;
+}
+
+.jbReactMenuPopup,
+.jbReactPopoverPopup,
+.jbReactSelectPopup {
+  background: var(--jb-bg-panel);
+  border: 1px solid var(--jb-border-color-muted);
+  border-radius: var(--jb-control-radius);
+  box-shadow: var(--jb-popup-shadow);
+  color: var(--jb-text-color);
+  font-family: var(--jb-font-family);
+  font-size: var(--jb-font-size);
+  line-height: var(--jb-line-height);
+  max-height: min(var(--available-height), 320px);
+  min-width: max(var(--anchor-width), 160px);
+  overflow: hidden;
+  padding: var(--jb-space-xs);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.jbReactMenuPopup,
+.jbReactPopoverPopup {
+  min-width: 180px;
+}
+
+.jbReactSelectList {
+  display: grid;
+  gap: 1px;
+  max-height: inherit;
+  overflow: auto;
+  outline: none;
+}
+
+.jbReactMenuViewport {
+  display: grid;
+  gap: 1px;
+  outline: none;
+}
+
+.jbReactMenuItem,
+.jbReactSelectItem {
+  align-items: center;
+  border-radius: var(--jb-control-radius);
+  color: var(--jb-text-color);
+  cursor: default;
+  display: grid;
+  gap: var(--jb-control-gap);
+  grid-template-columns: 16px minmax(0, 1fr);
+  min-height: var(--jb-control-height-compact);
+  outline: none;
+  padding: 0 var(--jb-space-sm) 0 var(--jb-space-xs);
+  white-space: nowrap;
+}
+
+.jbReactMenuItem {
+  grid-template-columns: 16px minmax(0, 1fr) max-content;
+}
+
+.jbReactMenuItem[data-highlighted],
+.jbReactSelectItem[data-highlighted] {
+  background: var(--jb-bg-hover);
+}
+
+.jbReactMenuItem[data-checked],
+.jbReactSelectItem[data-selected] {
+  background: var(--jb-bg-selected-muted);
+}
+
+.jbReactMenuItem[data-disabled],
+.jbReactSelectItem[data-disabled] {
+  color: var(--jb-text-disabled);
+  opacity: 0.72;
+}
+
+.jbReactMenuItemIndicator,
+.jbReactSelectItemIndicator {
+  color: var(--jb-accent-color);
+  min-width: 16px;
+}
+
+.jbReactMenuItemText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jbReactMenuShortcut {
+  color: var(--jb-text-muted);
+  font-size: var(--jb-font-size-small);
+  margin-left: var(--jb-space-md);
+}
+
+.jbReactMenuSeparator,
+.jbReactSelectSeparator {
+  background: var(--jb-border-color-muted);
+  height: 1px;
+  margin: var(--jb-space-xs) 0;
+}
+
+.jbReactSelectScrollButton {
+  color: var(--jb-text-muted);
+  height: var(--jb-control-height-compact);
+}
+
+.jbReactSelectChevron--up {
+  transform: rotate(180deg);
+}
+
+.jbReactPopoverTrigger {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: default;
+  display: inline-flex;
+  font: inherit;
+  justify-content: center;
+  min-height: calc(var(--jb-control-height) - 2px);
+  min-width: calc(var(--jb-control-height) - 2px);
+  outline: none;
+  padding: 0 var(--jb-control-padding-x);
+}
+
+.jbReactControlChrome[data-compact="true"] .jbReactPopoverTrigger {
+  min-height: calc(var(--jb-control-height-compact) - 2px);
+  min-width: calc(var(--jb-control-height-compact) - 2px);
+}
+
+.jbReactPopoverPopup {
+  display: grid;
+  gap: var(--jb-space-sm);
+  max-width: 320px;
+}
+
+.jbReactPopoverPopup :where(h1, h2, h3, h4, h5, h6, p) {
+  margin: 0;
+}
+
+.jbReactPopoverPopup :where(h1, h2, h3, h4, h5, h6) {
+  font-size: var(--jb-font-size);
+  font-weight: var(--jb-font-weight-medium);
+  line-height: var(--jb-line-height);
+}
+
+.jbReactPopoverPopup :where(p) {
+  color: var(--jb-text-muted);
+  line-height: var(--jb-line-height-paragraph);
+}
+
+.jbReactPopoverPopup :where(button) {
+  font: inherit;
+}
+
+.jbReactTooltipTrigger {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: var(--jb-control-radius);
+  color: inherit;
+  cursor: default;
+  display: inline-flex;
+  font: inherit;
+  justify-content: center;
+  min-height: var(--jb-control-height-compact);
+  min-width: var(--jb-control-height-compact);
+  outline: none;
+  padding: 0 var(--jb-space-xs);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.jbReactTooltipTrigger:hover,
+.jbReactTooltipTrigger:focus-visible {
+  background: var(--jb-bg-hover);
+}
+
+.jbReactTooltipTrigger:focus-visible {
+  box-shadow: var(--jb-focus-ring);
+}
+
+.jbReactTooltipPositioner {
+  z-index: 20;
+}
+
+.jbReactTooltipPopup {
+  background: var(--jb-bg-panel);
+  border: 1px solid var(--jb-border-color-muted);
+  border-radius: var(--jb-control-radius);
+  box-shadow: var(--jb-popup-shadow);
+  color: var(--jb-text-color);
+  font-family: var(--jb-font-family);
+  font-size: var(--jb-font-size-small);
+  line-height: var(--jb-line-height);
+  max-width: 280px;
+  padding: var(--jb-space-xs) var(--jb-space-sm);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.jbReactTextInput,
+.jbReactComboboxInput {
+  -webkit-user-select: text;
+  user-select: text;
+}

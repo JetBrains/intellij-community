@@ -8,7 +8,7 @@ class ECKey(AsymmetricKey):
     DSS_CURVES: dict[str, type]
     CURVES_DSS: dict[property, str]
     REQUIRED_JSON_FIELDS: ClassVar[list[str]]
-    PUBLIC_KEY_FIELDS = REQUIRED_JSON_FIELDS
+    PUBLIC_KEY_FIELDS = REQUIRED_JSON_FIELDS  # pyrefly: ignore [unknown-name]
     PRIVATE_KEY_FIELDS: ClassVar[list[str]]
     PUBLIC_KEY_CLS: ClassVar[type]
     PRIVATE_KEY_CLS: ClassVar[type]

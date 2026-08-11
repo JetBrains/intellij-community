@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
@@ -200,6 +201,30 @@ public final class VfsUtil extends VfsUtilCore {
       virtualFile = fileSystem.refreshAndFindFileByPath(filePath);
     }
     return virtualFile;
+  }
+
+  /// Searches for the file specified by given URL.
+  /// If file is not yet cached in VFS return `null`
+  ///
+  /// If fileSystem is not [NewVirtualFileSystem], may load file into vfs
+  ///
+  /// @param url URL of the file to find by. In VFS format
+  /// @see VirtualFileManager#findFileByUrl
+  /// @see NewVirtualFileSystem#findFileByPathIfCached
+  /// @see VfsUtilCore#convertFromUrl
+  @ApiStatus.Experimental
+  public static @Nullable VirtualFile findFileByUrlIfCached(@NotNull String url) {
+    var schemeSeparatorIndex = url.indexOf(URLUtil.SCHEME_SEPARATOR);
+    if (schemeSeparatorIndex < 0) return null;
+
+    var fileSystem = VirtualFileManager.getInstance().getFileSystem(url.substring(0, schemeSeparatorIndex));
+    if (fileSystem == null) return null;
+
+    var path = url.substring(schemeSeparatorIndex + URLUtil.SCHEME_SEPARATOR.length());
+    if (fileSystem instanceof NewVirtualFileSystem newFileSystem) {
+      return newFileSystem.findFileByPathIfCached(path);
+    }
+    return fileSystem.findFileByPath(path);
   }
 
   @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})

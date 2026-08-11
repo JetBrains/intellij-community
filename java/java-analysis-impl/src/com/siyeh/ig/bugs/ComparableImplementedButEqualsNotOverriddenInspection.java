@@ -20,6 +20,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.CommentUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -33,6 +34,7 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 
 public final class ComparableImplementedButEqualsNotOverriddenInspection extends BaseInspection {
 
@@ -80,10 +82,10 @@ public final class ComparableImplementedButEqualsNotOverriddenInspection extends
 
   private static class AddNoteFix extends PsiUpdateModCommandQuickFix {
 
-    private static final Pattern PARAM_PATTERN = Pattern.compile("\\*[ \t]+@");
-    // Let's keep a doc comment in English. Otherwise it will be hard to suppress the warning based on the JavaDoc substring
+    private static final Pattern PARAM_PATTERN = Pattern.compile("\\n\\s*(?:\\*|///)?[ \\t]+@");
+    // Let's keep a doc comment in English. Otherwise it will be hard to suppress the warning based on the Javadoc substring
     // (see CompareToAndEqualsNotPairedVisitor#visitClass below).
-    private static final @NonNls String NOTE = " * Note: this class has a natural ordering that is inconsistent with equals.\n";
+    private static final @NonNls String NOTE = "Note: this class has a natural ordering that is inconsistent with equals.\n";
 
     @Override
     public @Nls @NotNull String getFamilyName() {
@@ -95,7 +97,8 @@ public final class ComparableImplementedButEqualsNotOverriddenInspection extends
       final PsiClass aClass = (PsiClass)startElement.getParent();
       final PsiDocComment comment = aClass.getDocComment();
       if (comment == null) {
-        final PsiDocComment newComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText("/**\n" + NOTE + "*/", aClass);
+        final PsiDocComment newComment = JavaPsiFacade.getElementFactory(project)
+          .createDocCommentFromText(CommentUtil.convertToDocComment(aClass.getContainingFile(), NOTE, false, true), aClass);
         aClass.addBefore(newComment, aClass.getFirstChild());
       }
       else {
@@ -103,8 +106,11 @@ public final class ComparableImplementedButEqualsNotOverriddenInspection extends
         final Matcher matcher = PARAM_PATTERN.matcher(text);
         final String newCommentText = matcher.find()
                                       ? text.substring(0, matcher.start()) + NOTE + text.substring(matcher.start())
-                                      : text.substring(0, text.length() - 2) + NOTE + "*/";
-        final PsiDocComment newComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText(newCommentText);
+                                      : text.substring(0, text.length() - (comment.isMarkdownComment() ? 0 : 2)) +
+                                        (comment.isMarkdownComment() ? "\n" : "") +
+                                        NOTE;
+        final PsiDocComment newComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText(
+          CommentUtil.convertToDocComment(comment, newCommentText));
         comment.replace(newComment);
       }
     }

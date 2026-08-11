@@ -4,54 +4,46 @@ import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.engine.GenerationProblem
-import com.intellij.workspaceModel.codegen.engine.ProblemLocation
-import com.intellij.workspaceModel.codegen.impl.engine.ProblemReporter
-import com.intellij.workspaceModel.codegen.impl.writer.classes.isEntityWithSymbolicId
-import com.intellij.workspaceModel.codegen.impl.writer.extensions.allRefsFields
+import com.intellij.workspaceModel.codegen.impl.dsl.GeneratorContext
+import com.intellij.workspaceModel.codegen.impl.writer.entityImplementation.isEntityWithSymbolicId
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.allSuperClasses
-import com.intellij.workspaceModel.codegen.impl.writer.extensions.getRefType
-import com.intellij.workspaceModel.codegen.impl.writer.extensions.isRefType
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.unwrapReferenceType
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.isReferenceType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.refsFields
 
-internal fun checkSuperTypes(objClass: ObjClass<*>, reporter: ProblemReporter) {
+internal fun GeneratorContext.checkSuperTypes(objClass: ObjClass<*>) {
   objClass.superTypes.filterIsInstance<ObjClass<*>>().forEach { superClass ->
     if (!superClass.openness.extendable) {
-      reporter.reportProblem(GenerationProblem("Class '${superClass.name}' cannot be extended", GenerationProblem.Level.ERROR,
-                                               ProblemLocation.Class(objClass)))
+      reportClassError("Class '${superClass.name}' cannot be extended", objClass)
     }
     else if (!superClass.openness.openHierarchy && superClass.module != objClass.module) {
-      reporter.reportProblem(GenerationProblem("Class '${superClass.name}' cannot be extended from other modules",
-                                               GenerationProblem.Level.ERROR, ProblemLocation.Class(objClass)))
+      reportClassError("Class '${superClass.name}' cannot be extended from other modules", objClass)
     }
   }
 }
 
-internal fun checkSymbolicId(objClass: ObjClass<*>, reporter: ProblemReporter) {
+internal fun GeneratorContext.checkSymbolicId(objClass: ObjClass<*>) {
   if (!objClass.isEntityWithSymbolicId) return
   if (objClass.openness == ObjClass.Openness.abstract) return
   if (objClass.fields.none { it.name == symbolicIdFieldName }) {
-    reporter.reportProblem(GenerationProblem("Class extends '${WorkspaceEntityWithSymbolicId.simpleName}' but " +
-                                             "doesn't override 'WorkspaceEntityWithSymbolicId.getSymbolicId' property",
-                                             GenerationProblem.Level.ERROR, ProblemLocation.Class(objClass)))
+    reportClassError("Class extends '${WorkspaceEntityWithSymbolicId.simpleName}' but " +
+                     "doesn't override 'WorkspaceEntityWithSymbolicId.getSymbolicId' property", objClass)
   }
 }
 
-internal fun checkProperty(objProperty: ObjProperty<*, *>, reporter: ProblemReporter) {
-  checkInheritance(objProperty, reporter)
-  checkAllImmutable(objProperty, reporter)
-  checkPropertyType(objProperty, reporter)
+internal fun GeneratorContext.checkProperty(objProperty: ObjProperty<*, *>) {
+  checkInheritance(objProperty)
+  checkImmutable(objProperty)
+  checkPropertyType(objProperty)
 }
 
-private fun checkAllImmutable(objProperty: ObjProperty<*, *>, reporter: ProblemReporter) {
+private fun GeneratorContext.checkImmutable(objProperty: ObjProperty<*, *>) {
   if (objProperty.mutable) {
-    reporter.reportProblem(GenerationProblem("An immutable interface can't contain mutable properties",
-                                             GenerationProblem.Level.ERROR,
-                                             ProblemLocation.Property(objProperty)))
+    reportPropertyError("An immutable interface can't contain mutable properties", objProperty)
   }
 }
 
-private fun checkPropertyType(objProperty: ObjProperty<*, *>, reporter: ProblemReporter) {
+private fun GeneratorContext.checkPropertyType(objProperty: ObjProperty<*, *>) {
   val errorMessage = when (val type = objProperty.valueType) {
     is ValueType.ObjRef<*> -> {
       if (type.child) "Child references should always be nullable"
@@ -61,7 +53,7 @@ private fun checkPropertyType(objProperty: ObjProperty<*, *>, reporter: ProblemR
     else -> checkType(type)
   }
   if (errorMessage != null) {
-    reporter.reportProblem(GenerationProblem(errorMessage, GenerationProblem.Level.ERROR, ProblemLocation.Property(objProperty)))
+    reportPropertyError(errorMessage, objProperty)
   }
 }
 
@@ -73,7 +65,7 @@ private fun checkType(type: ValueType<*>): String? = when (type) {
   }
 
   is ValueType.Set<*> -> {
-    if (type.elementType.isRefType()) {
+    if (type.elementType.isReferenceType()) {
       "Set of references isn't supported"
     }
     else checkType(type.elementType)
@@ -86,36 +78,33 @@ private fun checkType(type: ValueType<*>): String? = when (type) {
   else -> null
 }
 
-private fun checkInheritance(objProperty: ObjProperty<*, *>, reporter: ProblemReporter) {
+private fun GeneratorContext.checkInheritance(objProperty: ObjProperty<*, *>) {
   objProperty.receiver.allSuperClasses.mapNotNull { it.fieldsByName[objProperty.name] }.forEach { overriddenField ->
     if (!overriddenField.open) {
-      reporter.reportProblem(
-        GenerationProblem("Property '${overriddenField.receiver.name}::${overriddenField.name}' cannot be overridden",
-                          GenerationProblem.Level.ERROR, ProblemLocation.Property(objProperty)))
+      reportPropertyError("Property '${overriddenField.receiver.name}::${overriddenField.name}' cannot be overridden", objProperty)
     }
   }
 }
 
-internal fun checkExtensionFields(module: CompiledObjModule, reporter: ProblemReporter) {
+internal fun GeneratorContext.checkExtensionFields(module: CompiledObjModule) {
   module.extensions.forEach { extProperty ->
-    if (!extProperty.valueType.isRefType()) {
-      reporter.reportProblem(GenerationProblem("Extension property is supposed to be a reference to another entity only.",
-                                               GenerationProblem.Level.ERROR, ProblemLocation.Property(extProperty)))
+    if (!extProperty.valueType.isReferenceType()) {
+      reportPropertyError("Extension property is supposed to be a reference to another entity only.", extProperty)
     }
   }
 }
 
-fun checkReference(referenceField: ObjProperty<*, *>, reporter: ProblemReporter) {
-  fun fail(message: String) =
-    reporter.reportProblem(GenerationProblem(message, GenerationProblem.Level.ERROR, ProblemLocation.Property(referenceField)))
+// TODO
+fun GeneratorContext.checkReference(referenceField: ObjProperty<*, *>) {
+  fun fail(message: String) = reportPropertyError(message, referenceField)
 
   val receiver = referenceField.receiver
-  val referenceTarget = referenceField.valueType.getRefType().target
+  val referenceTarget = unwrapReferenceType(referenceField.valueType)!!.target
   val allExtensions = setOf(referenceTarget.module, receiver.module).flatMap { it.extensions }
 
   val otherReference =
-    referenceTarget.refsFields.filter { it.valueType.getRefType().target == receiver && it != referenceField } +
-    allExtensions.filter { it.valueType.getRefType().target == receiver && it.receiver == referenceTarget && it != referenceField }
+    referenceTarget.refsFields.filter { unwrapReferenceType(it.valueType)!!.target == receiver && it != referenceField } +
+    allExtensions.filter { unwrapReferenceType(it.valueType)!!.target == receiver && it.receiver == referenceTarget && it != referenceField }
   if (otherReference.isEmpty()) {
     fail("""
       |Reference should be declared at both entities. It exist at ${receiver.name}#${referenceField.name}, but is absent at ${referenceTarget.name}.
@@ -132,8 +121,8 @@ fun checkReference(referenceField: ObjProperty<*, *>, reporter: ProblemReporter)
     return
   }
   val referencedField = otherReference[0]
-  if (referenceField.valueType.getRefType().child == referencedField.valueType.getRefType().child) {
-    val (childStr, fix) = if (referenceField.valueType.getRefType().child) {
+  if (unwrapReferenceType(referenceField.valueType)!!.child == unwrapReferenceType(referencedField.valueType)!!.child) {
+    val (childStr, fix) = if (unwrapReferenceType(referenceField.valueType)!!.child) {
       "child" to "Probably @Parent annotation is missing from one of the properties."
     }
     else {
@@ -143,8 +132,8 @@ fun checkReference(referenceField: ObjProperty<*, *>, reporter: ProblemReporter)
   }
 }
 
-fun checkReferences(objClass: ObjClass<*>, reporter: ProblemReporter) {
-  for (referenceField in objClass.allRefsFields) {
-    checkReference(referenceField, reporter)
+fun GeneratorContext.checkReferences(objClass: ObjClass<*>) {
+  for (referenceField in getAllReferenceProperties(objClass)) {
+    this.checkReference(referenceField)
   }
 }

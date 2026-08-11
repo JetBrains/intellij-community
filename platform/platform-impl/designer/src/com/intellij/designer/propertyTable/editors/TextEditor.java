@@ -8,6 +8,7 @@ import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.awt.event.ActionListener;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public class TextEditor extends PropertyEditor {
   public final JBTextField myTextField = new JBTextField(); // public modifier for accessing from descendants from different jars
 

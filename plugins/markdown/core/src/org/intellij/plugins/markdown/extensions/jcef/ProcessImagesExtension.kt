@@ -24,8 +24,9 @@ internal class ProcessImagesExtension(
   override fun loadResource(resourceName: String): ResourceProvider.Resource? {
     val baseFileId = baseFile?.rpcId() ?: return null
     val projectId = project?.projectId() ?: return null
+    val fileAccessor = VirtualFileAccessor.tryGetInstance() ?: return null
     val content = runBlocking {
-      VirtualFileAccessor.getInstance().tryToLoadFileContent(resourceName, baseFileId, projectId)
+      fileAccessor.tryToLoadFileContent(resourceName, baseFileId, projectId)
     } ?: return null
 
     return ResourceProvider.Resource(content)

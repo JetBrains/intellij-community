@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.compilerReferenceIndex.tests` start
-
 jvm_library(
     name = "kotlin-compilerReferenceIndex-tests",
     srcs = glob(
@@ -13,8 +12,9 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
     ],
 )
 
@@ -31,15 +31,23 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.compilerReferenceIndex.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":kotlin-compilerReferenceIndex-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-compilerReferenceIndex-tests",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
-        "//plugins/kotlin/plugin/k2",
-        "//plugins/kotlin/plugin/k2:k2_test_lib",
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//plugins/kotlin/compiler-reference-index",
         "//plugins/kotlin/compiler-reference-index:compiler-reference-index_test_lib",
+        "//plugins/maven",
+        "//plugins/maven:maven_test_lib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "@lib//:kotlinx-coroutines-test",
         "//plugins/maven/testFramework",
         "//plugins/maven/testFramework:testFramework_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
@@ -53,7 +61,14 @@ jvm_library(
         "//java/testFramework:testFramework_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
         "//plugins/kotlin/tests-common:common-tests",
         "//plugins/kotlin/tests-common:common-tests_test_lib",
         "//plugins/kotlin/code-insight/line-markers",
@@ -80,7 +95,6 @@ exports_files(
 ### auto-generated section `iml intellij.kotlin.compilerReferenceIndex.tests` end
 
 ### auto-generated section `test intellij.kotlin.compilerReferenceIndex.tests` start
-
 jps_test(
     name = "kotlin-compilerReferenceIndex-tests_test",
     runtime_deps = [":kotlin-compilerReferenceIndex-tests_test_lib"],

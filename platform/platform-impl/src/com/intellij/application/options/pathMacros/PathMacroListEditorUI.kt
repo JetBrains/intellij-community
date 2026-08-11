@@ -6,10 +6,8 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-@ApiStatus.Internal
 internal class PathMacroListEditorUI(table: JComponent) {
 
   lateinit var ignoredVariables: JBTextField

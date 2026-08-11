@@ -2,7 +2,7 @@
 package com.intellij.python.community.impl.poetry.common
 
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
 import com.jetbrains.python.PyToolUIInfo
 import org.jetbrains.annotations.ApiStatus

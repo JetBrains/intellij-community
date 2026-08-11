@@ -97,12 +97,12 @@ class PluginSetLoadingTest {
     val resultState = PluginSetTestBuilder.fromPath(pluginsDirPath)
       .withDisabledPlugins("foo")
       .buildState()
-
-    val incompletePlugins = resultState.incompletePluginsForLogging
-    assertThat(incompletePlugins).hasSize(1)
-    val foo = incompletePlugins.single()
+    assertThat(resultState.incompletePluginsForLogging).isEmpty()
+    assertThat(resultState.pluginSet.resolvedPluginSet.candidateSet.plugins).hasSize(1)
+    val foo = resultState.pluginSet.resolvedPluginSet.candidateSet.plugins.single()
     assertThat(foo.version).isEqualTo("2.0")
     assertThat(foo.pluginId.idString).isEqualTo("foo")
+    assertThat(resultState.pluginSet.resolvedPluginSet.getExclusionReason(foo)).isInstanceOf(PluginIsMarkedDisabled::class.java)
   }
 
   @Test
@@ -258,7 +258,56 @@ class PluginSetLoadingTest {
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
     assertThat(loadingErrors).hasSizeGreaterThan(0)
-    assertThat(loadingErrors[0].htmlMessage.toString()).contains("conflicts with", "bar.module", "foo.module", "package prefix")
+    val fooImplicitNamespace = "foo_" + '$' + "implicit"
+    val barImplicitNamespace = "bar_" + '$' + "implicit"
+    assertThat(loadingErrors[0].htmlMessage.toString()).contains(
+      "conflicts with",
+      "bar.module",
+      "foo.module",
+      fooImplicitNamespace,
+      barImplicitNamespace,
+      "common.module",
+      "package prefix",
+    )
+  }
+
+  @Test
+  fun `private content modules with the same name do not conflict without package prefix`() {
+    plugin("json") {
+      content {
+        module("intellij.libraries.joni", loadingRule = ModuleLoadingRuleValue.REQUIRED) {}
+      }
+    }.installAt(pluginsDirPath)
+    plugin("textmate") {
+      content {
+        module("intellij.libraries.joni", loadingRule = ModuleLoadingRuleValue.REQUIRED) {}
+      }
+    }.installAt(pluginsDirPath)
+
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("json", "textmate")
+    assertThat(loadingErrors).isEmpty()
+  }
+
+  @Test
+  fun `unresolved content module descriptor does not declare package prefix`() {
+    val dataLoader = object : DataLoader {
+      override val emptyDescriptorIfCannotResolve: Boolean
+        get() = true
+
+      override fun load(path: String, pluginDescriptorSourceOnly: Boolean): ByteArray? = null
+      override fun toString(): String = "test"
+    }
+
+    val raw = ClassPathXmlPathResolver(javaClass.classLoader, isRunningFromSourcesWithoutDevBuild = true)
+      .resolveModuleFile(
+        readContext = PluginDescriptorLoadingContext().readContext,
+        dataLoader = dataLoader,
+        path = "intellij.missing.private.library.xml",
+      )
+      .build()
+
+    assertThat(raw.`package`).isNull()
   }
   
   @Test
@@ -438,7 +487,7 @@ class PluginSetLoadingTest {
     }.installAt(pluginsDirPath)
     val pluginSet = buildPluginSet()
     val core = pluginSet.getEnabledPlugin("com.intellij")
-    for (alias in IdeaPluginOsRequirement.getHostOsModuleIds() + productModeAliasesForCorePlugin()) {
+    for (alias in IdeaPluginOsRequirement.getHostOsModuleIds() + PluginCpuArchRequirement.getHostCpuArchModuleIds()) {
       assertThat(pluginSet.findEnabledPlugin(alias)).isSameAs(core)
     }
   }
@@ -557,7 +606,7 @@ class PluginSetLoadingTest {
     }
     val descriptor = pluginSet.getPlugin("disabled")
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
-    assertThat(descriptor).isNotMarkedEnabled()
+    assertThat(descriptor.isLoaded).isFalse()
   }
 
   @Test
@@ -652,6 +701,189 @@ class PluginSetLoadingTest {
     assertThat(loadingErrors).hasSize(1)
     val error = loadingErrors[0]
     assertThat(error.htmlMessage.toString()).contains("bar", "not compatible", "foo")
+  }
+
+  @Test
+  fun `on-demand content module without dependents is excluded`() {
+    plugin("foo") {
+      content {
+        module("foo.onDemand", loadingRule = ModuleLoadingRuleValue.ON_DEMAND) { packagePrefix = "foo.onDemand" }
+      }
+    }.installAt(pluginsDirPath)
+
+    val pluginSet = buildPluginSet()
+    val onDemandModule = pluginSet.getPlugin("foo").contentModules.single()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
+    assertThat(pluginSet).doesNotHaveEnabledModulesWithoutMainDescriptors()
+    assertThat(pluginSet.resolvedPluginSet.getExclusionReason(onDemandModule))
+      .isInstanceOf(OnDemandContentModuleHasNoDependentsLeft::class.java)
+  }
+
+  @Test
+  fun `on-demand dependency chain is retained by optional module`() {
+    plugin("foo") {
+      content {
+        module("foo.runtime", loadingRule = ModuleLoadingRuleValue.ON_DEMAND) { packagePrefix = "foo.runtime" }
+        module("foo.api", loadingRule = ModuleLoadingRuleValue.ON_DEMAND) {
+          packagePrefix = "foo.api"
+          dependencies {
+            module("foo.runtime")
+          }
+        }
+        module("foo.feature", loadingRule = ModuleLoadingRuleValue.OPTIONAL) {
+          packagePrefix = "foo.feature"
+          dependencies {
+            module("foo.api")
+          }
+        }
+      }
+    }.installAt(pluginsDirPath)
+
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors("foo.runtime", "foo.api", "foo.feature")
+  }
+
+  @Test
+  fun `on-demand content module does not implicitly depend on plugin main descriptor`() {
+    plugin("foo") {
+      content {
+        module("foo.runtime", loadingRule = ModuleLoadingRuleValue.ON_DEMAND) { packagePrefix = "foo.runtime" }
+        module("foo.feature", loadingRule = ModuleLoadingRuleValue.OPTIONAL) {
+          packagePrefix = "foo.feature"
+          dependencies {
+            module("foo.runtime")
+          }
+        }
+      }
+    }.installAt(pluginsDirPath)
+
+    val pluginSet = buildPluginSet()
+    val plugin = pluginSet.getPlugin("foo")
+    val modules = plugin.contentModules.associateBy { it.moduleId.name }
+    val onDemandModule = modules.getValue("foo.runtime")
+    val optionalModule = modules.getValue("foo.feature")
+    assertThat(pluginSet.resolvedPluginSet.getDirectResolvedDependencies(onDemandModule)).doesNotContain(plugin)
+    assertThat(pluginSet.resolvedPluginSet.getDirectResolvedDependencies(optionalModule)).contains(plugin)
+  }
+
+  @Test
+  fun `orphaned on-demand dependency chain is excluded`() {
+    plugin("foo") {
+      content {
+        module("foo.api", loadingRule = ModuleLoadingRuleValue.ON_DEMAND) {
+          packagePrefix = "foo.api"
+          dependencies {
+            module("foo.runtime")
+          }
+        }
+        module("foo.runtime", loadingRule = ModuleLoadingRuleValue.ON_DEMAND) { packagePrefix = "foo.runtime" }
+      }
+    }.installAt(pluginsDirPath)
+
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).doesNotHaveEnabledModulesWithoutMainDescriptors()
+  }
+
+  @Test
+  fun `virtual demand prevents exclusion before all dependents are registered`() {
+    plugin("foo") {
+      content {
+        module("foo.runtime", loadingRule = ModuleLoadingRuleValue.ON_DEMAND) { packagePrefix = "foo.runtime" }
+        module("foo.broken", loadingRule = ModuleLoadingRuleValue.OPTIONAL) {
+          packagePrefix = "foo.broken"
+          dependencies {
+            module("foo.runtime")
+            module("missing")
+          }
+        }
+        module("foo.feature", loadingRule = ModuleLoadingRuleValue.OPTIONAL) {
+          packagePrefix = "foo.feature"
+          dependencies {
+            module("foo.runtime")
+          }
+        }
+      }
+    }.installAt(pluginsDirPath)
+
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors("foo.runtime", "foo.feature")
+  }
+
+  @Test
+  fun `unused on-demand module does not participate in package prefix conflict`() {
+    plugin("a.live") {
+      content {
+        module("a.live.module", loadingRule = ModuleLoadingRuleValue.OPTIONAL) { packagePrefix = "shared.prefix" }
+      }
+    }.installAt(pluginsDirPath)
+    plugin("b.onDemand") {
+      content {
+        module("b.onDemand.module", loadingRule = ModuleLoadingRuleValue.ON_DEMAND) { packagePrefix = "shared.prefix" }
+      }
+    }.installAt(pluginsDirPath)
+
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("a.live", "b.onDemand")
+    assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors("a.live.module")
+    assertThat(loadingErrors).isEmpty()
+  }
+
+  @Test
+  fun `plugin dependency does not retain unrelated on-demand content module`() {
+    plugin("consumer") {
+      dependencies {
+        plugin("target")
+      }
+    }.installAt(pluginsDirPath)
+    plugin("target") {
+      content {
+        module("target.runtime", loadingRule = ModuleLoadingRuleValue.ON_DEMAND) { packagePrefix = "target.runtime" }
+      }
+    }.installAt(pluginsDirPath)
+
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("consumer", "target")
+    assertThat(pluginSet).doesNotHaveEnabledModulesWithoutMainDescriptors()
+  }
+
+  @Test
+  fun `deferred conflict pruning removes last demand from on-demand module`() {
+    plugin("a.consumer") {
+      content {
+        module("a.consumer.runtime", loadingRule = ModuleLoadingRuleValue.ON_DEMAND) { packagePrefix = "a.consumer.runtime" }
+        module("a.consumer.feature", loadingRule = ModuleLoadingRuleValue.OPTIONAL) {
+          packagePrefix = "shared.prefix"
+          dependencies {
+            module("a.consumer.runtime")
+          }
+        }
+      }
+    }.installAt(pluginsDirPath)
+    plugin("b.winner") {
+      content {
+        module("b.winner.module", loadingRule = ModuleLoadingRuleValue.OPTIONAL) { packagePrefix = "shared.prefix" }
+      }
+    }.installAt(pluginsDirPath)
+
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("a.consumer", "b.winner")
+    assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors("b.winner.module")
+  }
+
+  @Test
+  fun `depends declaration does not implicitly demand on-demand modules of the target`() {
+    plugin("provider") {
+      content {
+        module("provider.ondemand", loadingRule = ModuleLoadingRuleValue.ON_DEMAND) { }
+      }
+    }.installAt(pluginsDirPath)
+    plugin("consumer") {
+      depends("provider")
+    }.installAt(pluginsDirPath)
+
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("provider", "consumer")
+    assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors()
   }
 
   private fun writeDescriptor(id: String, @Language("xml") data: String) {

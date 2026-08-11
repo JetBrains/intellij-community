@@ -20,5 +20,41 @@
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="workspaceModel.update.under.wa" defaultValue="false" restartRequired="false"
                  description="Disable workspace model initial 2 attempts to execute updater without write action"/>
+    <applicationService serviceInterface="com.intellij.openapi.application.PathMacros" open="true"
+                        serviceImplementation="com.intellij.application.options.PathMacrosImpl"/>
+    <projectService serviceInterface="com.intellij.configurationStore.ProjectIdManager"
+                    serviceImplementation="com.intellij.configurationStore.ProjectIdManagerImpl"
+                    testServiceImplementation="com.intellij.configurationStore.MockProjectIdManager"/>
+    <bundledColorScheme id="IntelliJ Light" path="themes/Light.xml"/>
+    <bundledColorScheme id="Light" path="themes/expUI/expUI_lightScheme.xml"/>
+    <bundledColorScheme id="Dark" path="themes/expUI/expUI_darkScheme.xml"/>
+    <bundledColorScheme id="Darcula Contrast" path="themes/expUI/expUI_darculaContrastScheme.xml"/>
+    <bundledColorScheme id="High contrast" path="themes/islands/highContrastScheme.xml"/>
+    <bundledColorScheme id="Islands Dark" path="/themes/islands/IslandSchemeDark.xml"/>
+    <multiverse.codeInsightContextProvider implementation="com.intellij.multiverse.ProjectModelEntityContextProvider"/>
+    <projectService serviceInterface="com.intellij.openapi.module.ModulePointerManager"
+                    serviceImplementation="com.intellij.openapi.module.impl.ModulePointerManagerImpl"/>
+    <projectService serviceImplementation="com.intellij.openapi.module.impl.UnloadedModulesListStorage" preload="true"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.ProjectRootModificationTracker"
+                    serviceImplementation="com.intellij.openapi.roots.ProjectRootModificationTrackerImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl"/>
+    <workspace.bridgeInitializer
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeInitializer"/>
+    <workspace.bridgeInitializer
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridgeInitializer"/>
+    <projectService
+      serviceInterface="com.intellij.openapi.module.ModuleManager" open="true"
+      serviceImplementation="com.intellij.openapi.module.EmptyModuleManager"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.bundledColorScheme" beanClass="com.intellij.configurationStore.BundledSchemeEP" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.pathMacroExpandableProtocol" beanClass="com.intellij.application.options.PathMacroExpandableProtocolBean" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.bundledInspectionProfile" beanClass="com.intellij.configurationStore.BundledSchemeEP" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.streamProviderFactory" interface="com.intellij.configurationStore.StreamProviderFactory" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.projectStorePathCustomizer"
+                    interface="com.intellij.configurationStore.ProjectStorePathCustomizer"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.sdkFinder" interface="com.intellij.openapi.roots.impl.SdkFinder" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

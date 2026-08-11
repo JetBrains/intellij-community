@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Defines observation API for observable process with tasks.
  */
+@ApiStatus.Internal
 @ApiStatus.NonExtendable
 interface ObservableTaskOperationTrace: ObservableOperationTrace {
 

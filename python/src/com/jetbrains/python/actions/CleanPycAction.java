@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +26,8 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
-public class CleanPycAction extends AnAction {
+@ApiStatus.Internal
+final class CleanPycAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     var elements = e.getData(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY);
@@ -34,9 +36,10 @@ public class CleanPycAction extends AnAction {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {
         for (PsiElement element : elements) {
-          var dir = Path.of(((PsiDirectory)element).getVirtualFile().getName());
-          if (!Files.isDirectory(dir)) continue;
-          Files.walkFileTree(dir, new SimpleFileVisitor<>() {
+          var vfsDir = ((PsiDirectory)element).getVirtualFile();
+          var nioDir = vfsDir.getFileSystem().getNioPath(vfsDir);
+          if (nioDir == null || !Files.isDirectory(nioDir)) continue;
+          Files.walkFileTree(nioDir, new SimpleFileVisitor<>() {
             @Override
             public @NotNull FileVisitResult preVisitDirectory(@NotNull Path dir, @NotNull BasicFileAttributes attrs) throws IOException {
               if (PyNames.PYCACHE.equals(NioFiles.getFileName(dir))) {

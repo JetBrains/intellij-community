@@ -1,34 +1,83 @@
+a:com.intellij.concurrency.AsyncFutureFactory
+- a:createAsyncFutureResult():com.intellij.concurrency.AsyncFutureResult
+- s:getInstance():com.intellij.concurrency.AsyncFutureFactory
 com.intellij.concurrency.AsyncFutureResult
 - com.intellij.concurrency.AsyncFuture
 - a:set(java.lang.Object):V
 - a:setException(java.lang.Throwable):V
+f:com.intellij.concurrency.ConcurrentCollectionFactory
+- s:createConcurrentIdentitySet():java.util.Set
+- s:createConcurrentIntObjectMap():com.intellij.util.containers.ConcurrentIntObjectMap
+- s:createConcurrentIntObjectWeakValueMap():com.intellij.util.containers.ConcurrentIntObjectMap
+- s:createConcurrentLongObjectMap():com.intellij.util.containers.ConcurrentLongObjectMap
+- s:createConcurrentMap():java.util.concurrent.ConcurrentMap
+- s:createConcurrentSet():java.util.Set
 c:com.intellij.openapi.util.AsyncResult
+- com.intellij.openapi.util.ActionCallback
+- <init>():V
 - doWhenDone(com.intellij.util.Consumer):com.intellij.openapi.util.AsyncResult
+- getResult():java.lang.Object
+- getResultSync():java.lang.Object
 - getResultSync(J):java.lang.Object
 - setDone(java.lang.Object):com.intellij.openapi.util.AsyncResult
+f:com.intellij.openapi.util.SimpleTimer
+- s:getInstance():com.intellij.openapi.util.SimpleTimer
 com.intellij.openapi.util.SimpleTimerTask
 - a:cancel():V
 - a:isCancelled():Z
+f:com.intellij.util.MergeQuery
+- com.intellij.util.AbstractQuery
+a:com.intellij.util.concurrency.EdtExecutorService
+- java.util.concurrent.AbstractExecutorService
+- s:getInstance():com.intellij.util.concurrency.EdtExecutorService
+- s:getScheduledExecutorInstance():java.util.concurrent.ScheduledExecutorService
 com.intellij.util.concurrency.EdtScheduledExecutorService
 - java.util.concurrent.ScheduledExecutorService
 - s:getInstance():com.intellij.util.concurrency.EdtScheduledExecutorService
 - a:schedule(java.lang.Runnable,com.intellij.openapi.application.ModalityState,J,java.util.concurrent.TimeUnit):java.util.concurrent.ScheduledFuture
 c:com.intellij.util.concurrency.FutureResult
+- java.util.concurrent.Future
+- <init>():V
 - <init>(java.lang.Object):V
+- get():java.lang.Object
+- isDone():Z
+- reset():V
 - set(java.lang.Object):V
 - setException(java.lang.Throwable):V
 f:com.intellij.util.concurrency.LockToken
+- com.intellij.openapi.application.AccessToken
 - s:acquireLock(java.util.concurrent.locks.Lock):com.intellij.util.concurrency.LockToken
 f:com.intellij.util.concurrency.NonUrgentExecutor
+- java.util.concurrent.Executor
 - execute(java.lang.Runnable):V
+- s:getInstance():com.intellij.util.concurrency.NonUrgentExecutor
 f:com.intellij.util.concurrency.QueueProcessor
 - <init>(com.intellij.util.Consumer):V
 - add(java.lang.Object):V
 - addFirst(java.lang.Object):V
+- clear():V
+- s:createRunnableQueueProcessor():com.intellij.util.concurrency.QueueProcessor
 - s:createRunnableQueueProcessor(com.intellij.util.concurrency.QueueProcessor$ThreadToUse):com.intellij.util.concurrency.QueueProcessor
 - dismissLastTasks(I):V
+- isEmpty():Z
+e:com.intellij.util.concurrency.QueueProcessor$ThreadToUse
+- java.lang.Enum
+f:com.intellij.util.concurrency.SameThreadExecutor
+- java.util.concurrent.Executor
+a:com.intellij.util.concurrency.SwingWorker
+- <init>():V
+- get():java.lang.Object
+- start():V
 c:org.jetbrains.concurrency.AsyncPromise
+- org.jetbrains.concurrency.CancellablePromise
+- org.jetbrains.concurrency.Promise
+- <init>():V
+- cancel():V
 - cancel(Z):Z
+- get():java.lang.Object
+- getState():org.jetbrains.concurrency.Promise$State
+- isCancelled():Z
+- isDone():Z
 - onError(java.util.function.Consumer):org.jetbrains.concurrency.AsyncPromise
 - onProcessed(java.util.function.Consumer):org.jetbrains.concurrency.AsyncPromise
 - onSuccess(java.util.function.Consumer):org.jetbrains.concurrency.AsyncPromise
@@ -52,9 +101,11 @@ f:org.jetbrains.concurrency.Promises
 - sf:isPending(org.jetbrains.concurrency.Promise):Z
 - sf:isRejected(org.jetbrains.concurrency.Promise):Z
 - sf:rejectedCancellablePromise(java.lang.String):org.jetbrains.concurrency.CancellablePromise
+- sf:rejectedPromise():org.jetbrains.concurrency.Promise
 - sf:rejectedPromise(java.lang.String):org.jetbrains.concurrency.Promise
 - sf:rejectedPromise(java.lang.Throwable):org.jetbrains.concurrency.Promise
 - sf:resolvedCancellablePromise(java.lang.Object):org.jetbrains.concurrency.CancellablePromise
+- sf:resolvedPromise():org.jetbrains.concurrency.Promise
 - sf:resolvedPromise(java.lang.Object):org.jetbrains.concurrency.Promise
 - sf:runAsync(kotlin.jvm.functions.Function0):org.jetbrains.concurrency.Promise
 - sf:toPromise(com.intellij.openapi.util.ActionCallback):org.jetbrains.concurrency.Promise

@@ -119,8 +119,8 @@ public final class PyShadowingNamesInspection extends PyInspection {
                   .anyMatch(o -> o.ignoreShadowed(resolved))) {
                   return;
                 }
-                registerProblem(problemElement, PyPsiBundle.message("INSP.shadows.name.from.outer.scope", name),
-                                ProblemHighlightType.WEAK_WARNING, null,
+                registerProblem(problemElement, PyPsiBundle.problemMessage("INSP.shadows.name.from.outer.scope", name),
+                                ProblemHighlightType.WEAK_WARNING,
                                 LocalQuickFix.notNullElements(PythonUiService.getInstance().createPyRenameElementQuickFix(problemElement)));
                 return;
               }

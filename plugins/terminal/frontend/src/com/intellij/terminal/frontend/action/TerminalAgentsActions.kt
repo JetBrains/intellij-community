@@ -29,8 +29,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.agent.TerminalAgentsStateService
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentMode
-import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -85,7 +85,7 @@ internal class LaunchSelectedAgentAction : DumbAwareAction(), ActionRemoteBehavi
       project,
       agentKey,
       e.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER),
-      TerminalStartupFusInfo(TerminalOpeningWay.OPEN_NEW_TAB),
+      TerminalStartupFusInfo(TerminalTabOpeningWay.AI_AGENTS_BUTTON),
     )
   }
 
@@ -165,7 +165,7 @@ internal class TerminalAgentSelectAndLaunchAction(
       project,
       agent.terminalAgent.agentKey,
       e.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER),
-      TerminalStartupFusInfo(TerminalOpeningWay.AI_AGENTS_BUTTON)
+      TerminalStartupFusInfo(TerminalTabOpeningWay.AI_AGENTS_BUTTON)
     )
   }
 

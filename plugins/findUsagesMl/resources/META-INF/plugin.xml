@@ -14,7 +14,12 @@
     <module name="intellij.java.backend"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.commons.text"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.ml.logs"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
     <!-- endregion -->
   </dependencies>
   <!--suppress PluginXmlValidity -->

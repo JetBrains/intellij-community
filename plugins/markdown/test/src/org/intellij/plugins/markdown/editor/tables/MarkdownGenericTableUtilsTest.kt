@@ -5,6 +5,7 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.validateColumnAlignment
 import org.intellij.plugins.markdown.editor.tables.TableUtils.columnsIndices
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
+import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
 
 @Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownGenericTableUtilsTest: LightPlatformCodeInsightTestCase() {
@@ -48,7 +49,7 @@ class MarkdownGenericTableUtilsTest: LightPlatformCodeInsightTestCase() {
     configureFromFileText("some.md", content)
     val table = TableUtils.findTable(file, 0)!!
     for (columnIndex in table.columnsIndices) {
-      assertTrue("column $columnIndex should have valid alignment", table.validateColumnAlignment(columnIndex))
+      assertTrue("column $columnIndex should have valid alignment", table.validateColumnAlignment(columnIndex, TableStyle.ALIGNED))
     }
   }
 
@@ -61,9 +62,24 @@ class MarkdownGenericTableUtilsTest: LightPlatformCodeInsightTestCase() {
     """.trimIndent()
     configureFromFileText("some.md", content)
     val table = TableUtils.findTable(file, 0)!!
-    assertTrue("column 0 should still have valid alignment", table.validateColumnAlignment(0))
+    assertTrue("column 0 should still have valid alignment", table.validateColumnAlignment(0, TableStyle.ALIGNED))
     for (columnIndex in table.columnsIndices.drop(1)) {
-      assertFalse("column $columnIndex should have invalid alignment", table.validateColumnAlignment(columnIndex))
+      assertFalse("column $columnIndex should have invalid alignment", table.validateColumnAlignment(columnIndex, TableStyle.ALIGNED))
     }
+  }
+
+  fun `test build empty state respects table style`() {
+    assertEquals(
+      "|   |   |\n|---|---|\n|   |   |\n",
+      buildEmptyTable(contentRows = 1, columns = 2, cellWidth = 3, tableStyle = TableStyle.ALIGNED)
+    )
+    assertEquals(
+      "| | |\n| --- | --- |\n| | |\n",
+      buildEmptyTable(contentRows = 1, columns = 2, cellWidth = 3, tableStyle = TableStyle.COMPACT)
+    )
+    assertEquals(
+      "|||\n|---|---|\n|||\n",
+      buildEmptyTable(contentRows = 1, columns = 2, cellWidth = 3, tableStyle = TableStyle.TIGHT)
+    )
   }
 }

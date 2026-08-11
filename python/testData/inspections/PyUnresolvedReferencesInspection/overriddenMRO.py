@@ -19,4 +19,4 @@ class C(B):
 
 c = C()
 print(c.foo().lower())  # pass
-print(c.bar().<warning descr="Unresolved attribute reference 'lower' for class 'int'">lower</warning>())
+print(c.bar().<warning descr="Unresolved attribute reference 'lower' for class 'Literal[0]'">lower</warning>())

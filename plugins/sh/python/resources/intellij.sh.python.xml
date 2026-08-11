@@ -2,7 +2,10 @@
   <dependencies>
     <plugin id="com.intellij.modules.python"/>
     <module name="intellij.sh.core"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <runMarkerContributionAdditionalCondition implementation="com.intellij.sh.python.PythonFileMarkerContributionAdditionalCondition"/>

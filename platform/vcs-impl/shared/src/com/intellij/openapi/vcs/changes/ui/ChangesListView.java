@@ -358,8 +358,17 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
    * As expanding node with large child count is a slow operation (and result is not very useful).
    */
   public void expandSafe(@NotNull DefaultMutableTreeNode node) {
-    if (node.getChildCount() <= 10000) {
+    if (canExpandSafe(node)) {
       expandPath(TreeUtil.getPathFromRoot(node));
     }
+  }
+
+  /**
+   * Checks if the node can be safely and quickly expanded.
+   * 
+   * @see #expandSafe(DefaultMutableTreeNode) 
+   */
+  public static boolean canExpandSafe(@NotNull DefaultMutableTreeNode node) {
+    return node.getChildCount() <= 10000;
   }
 }

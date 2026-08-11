@@ -15,16 +15,19 @@
  */
 package com.intellij.uiDesigner.core;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import java.awt.Dimension;
 import java.awt.Insets;
-import java.util.Arrays;
 
-public final class EmptyPanelTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+public final class EmptyPanelTest {
+
+  @Test
   public void test1() {
     final GridLayoutManager layoutManager = new GridLayoutManager(2, 3, new Insets(0, 0, 0, 0), 0, 0);
     final JPanel panel = new JPanel(layoutManager);
@@ -35,11 +38,11 @@ public final class EmptyPanelTest extends TestCase {
     panel.setSize(90, 200);
     panel.doLayout(); // should not crash with exception
 
-    assertTrue(Arrays.equals(new int[]{0, 30, 60}, layoutManager.getXs()));
-    assertTrue(Arrays.equals(new int[]{30, 30, 30}, layoutManager.getWidths()));
+    assertArrayEquals(new int[]{0, 30, 60}, layoutManager.getXs());
+    assertArrayEquals(new int[]{30, 30, 30}, layoutManager.getWidths());
 
-    assertTrue(Arrays.equals(new int[]{0, 100}, layoutManager.getYs()));
-    assertTrue(Arrays.equals(new int[]{100, 100}, layoutManager.getHeights()));
+    assertArrayEquals(new int[]{0, 100}, layoutManager.getYs());
+    assertArrayEquals(new int[]{100, 100}, layoutManager.getHeights());
 
     // add component 
     final JButton button = new JButton();
@@ -58,10 +61,10 @@ public final class EmptyPanelTest extends TestCase {
     assertEquals(100, button.getWidth());
     assertEquals(40, panel.getHeight());
 
-    assertTrue(Arrays.equals(new int[]{0, 40}, layoutManager.getYs()));
-    assertTrue(Arrays.equals(new int[]{40, 0}, layoutManager.getHeights()));
+    assertArrayEquals(new int[]{0, 40}, layoutManager.getYs());
+    assertArrayEquals(new int[]{40, 0}, layoutManager.getHeights());
 
-    assertTrue(Arrays.equals(new int[]{0, 0, 100}, layoutManager.getXs()));
-    assertTrue(Arrays.equals(new int[]{0, 100, 0}, layoutManager.getWidths()));
+    assertArrayEquals(new int[]{0, 0, 100}, layoutManager.getXs());
+    assertArrayEquals(new int[]{0, 100, 0}, layoutManager.getWidths());
   }
 }

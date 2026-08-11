@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ReplaceCallWithUnaryOperatorIntention
+org.jetbrains.kotlin.idea.codeinsight.intentions.ReplaceCallWithUnaryOperatorIntention

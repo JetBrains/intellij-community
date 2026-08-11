@@ -1,0 +1,18 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/Gen.class
+  ppp/J.class
+End of files
+Compiling files:
+  java/annotations/typeUseAnnotationChangedInSignature/a/ppp/Gen.java
+  java/annotations/typeUseAnnotationChangedInSignature/a/ppp/J.java
+End of files
+Cleaning output files:
+  META-INF/java_annotations_typeUseAnnotationChangedInSignature-a.kotlin_module
+  use/UseKt.class
+End of files
+Compiling files:
+  java/annotations/typeUseAnnotationChangedInSignature/a/use/use.kt
+End of files
+------------------------------------------
+Exit code: OK

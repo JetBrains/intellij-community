@@ -2,11 +2,10 @@
 package com.intellij.platform.eel.impl.base
 
 import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.EelExecPosixApi
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.jetbrains.annotations.ApiStatus
-import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -14,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 @ApiStatus.Internal
 class EelExecApiEnvironmentVariableCache(
-  private val makeEnvironmentVariablesDeferred: (EelExecApi.EnvironmentVariablesOptions.Mode?) -> Deferred<Map<String, String>>,
+  private val makeEnvironmentVariablesDeferred: (EelExecApi.EnvironmentVariablesOptions.Mode) -> Deferred<Map<String, String>>,
 ) {
   /**
    * If the first feature is present, it is already completed successfully.
@@ -35,41 +34,65 @@ class EelExecApiEnvironmentVariableCache(
         }
   }
 
-  private val environmentVariablesCache = ConcurrentHashMap<Optional<EelExecApi.EnvironmentVariablesOptions.Mode>, EnvVarCache>()
+  private val environmentVariablesCache = ConcurrentHashMap<EelExecApi.EnvironmentVariablesOptions.Mode, EnvVarCache>()
 
   fun getDeferred(
-    mode: EelExecApi.EnvironmentVariablesOptions.Mode?,
+    mode: EelExecApi.EnvironmentVariablesOptions.Mode,
     opts: EelExecApi.EnvironmentVariablesOptions,
   ): EelExecApi.EnvironmentVariablesDeferred {
-    val cacheKey = Optional.ofNullable(mode)
     var newEnvVarCache: EnvVarCache
 
     do {
-      val envVarCache = environmentVariablesCache[cacheKey]
+      val envVarCache = environmentVariablesCache[mode]
       val successfullyUpdated: Boolean
 
       if (envVarCache == null) {
         newEnvVarCache = EnvVarCache(null to makeEnvironmentVariablesDeferred(mode))
-        successfullyUpdated = environmentVariablesCache.putIfAbsent(cacheKey, newEnvVarCache) == null
+        successfullyUpdated = environmentVariablesCache.putIfAbsent(mode, newEnvVarCache) == null
       }
       else {
-        if (opts.onlyActual && envVarCache.envVarsInProgress.isActive) {
-          return EelExecApi.EnvironmentVariablesDeferred(envVarCache.envVarsInProgress)
-        }
-
         val latestKnownEnvVars = envVarCache.latestKnownEnvVars
         if (!opts.onlyActual && latestKnownEnvVars != null) {
           return EelExecApi.EnvironmentVariablesDeferred(latestKnownEnvVars)
         }
 
-        newEnvVarCache = EnvVarCache(latestKnownEnvVars to makeEnvironmentVariablesDeferred(mode))
-        successfullyUpdated = environmentVariablesCache.replace(cacheKey, envVarCache, newEnvVarCache)
+        if (!envVarCache.envVarsInProgress.isCompleted) {
+          return EelExecApi.EnvironmentVariablesDeferred(envVarCache.envVarsInProgress)
+        }
+
+        // read again after checking isCompleted to avoid TOCTOU race
+        val latestKnownEnvVarsNew = envVarCache.latestKnownEnvVars
+        newEnvVarCache = EnvVarCache(latestKnownEnvVarsNew to makeEnvironmentVariablesDeferred(mode))
+        successfullyUpdated = environmentVariablesCache.replace(mode, envVarCache, newEnvVarCache)
       }
     }
     while (!successfullyUpdated)
 
     newEnvVarCache.envVarsInProgress.start()
     return EelExecApi.EnvironmentVariablesDeferred(newEnvVarCache.envVarsInProgress)
+  }
+
+  fun updateCache(
+    mode: EelExecApi.EnvironmentVariablesOptions.Mode,
+    envVars: Map<String, String>,
+  ) {
+    val completedDeferred = CompletableDeferred(envVars)
+    var newEnvVarCache: EnvVarCache
+
+    do {
+      val envVarCache = environmentVariablesCache[mode]
+      val successfullyUpdated: Boolean
+
+      if (envVarCache == null) {
+        newEnvVarCache = EnvVarCache(null to completedDeferred)
+        successfullyUpdated = environmentVariablesCache.putIfAbsent(mode, newEnvVarCache) == null
+      }
+      else {
+        newEnvVarCache = EnvVarCache(completedDeferred to envVarCache.envVarsInProgress)
+        successfullyUpdated = environmentVariablesCache.replace(mode, envVarCache, newEnvVarCache)
+      }
+    }
+    while (!successfullyUpdated)
   }
 
   fun clear() {

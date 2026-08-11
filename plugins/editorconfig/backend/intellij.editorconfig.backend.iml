@@ -61,7 +61,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
-    <orderEntry type="library" name="ec4j-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.ec4j.core" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.settings" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />

@@ -1,11 +1,30 @@
-<idea-plugin package="org.jetbrains.kotlin.onboarding.maven">
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.maven"/>
     <module name="intellij.kotlin.onboarding"/>
+    <module name="intellij.kotlin.projectConfiguration"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinx.datetime"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.maven"/>
-    <!-- endregion -->
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.feedback"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
+  <!-- endregion -->
 
   <resource-bundle>messages.MavenFeedbackBundle</resource-bundle>
 

@@ -1,6 +1,6 @@
 ---
 name: driver-ui-tests
-description: Guide for writing UI tests using IDE Starter and UI Driver frameworks. Use when creating or modifying UI tests or when user ask to implement test case from testops.
+description: Write IntelliJ UI tests with IDE Starter or UI Driver and TestOps cases.
 ---
 
 # Driver UI Tests Guide
@@ -107,6 +107,18 @@ ui.x { byClass("InstallButton") }.click()
 val detailPane = ui.x { byClass("PluginDetailsPageComponent") }
 detailPane.x { byClass("InstallButton") }.click()
 ```
+
+## Finding toolbar / title-bar actions
+
+Toolbar and tool-window title actions that show their text (`presentation.putClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR, true)`) render as **`ActionButtonWithText`**, not `ActionButton`. The SDK `actionButton(text)` helper searches `@class='ActionButton'` only, so it silently never matches them. Match by visible text across both variants:
+
+```kotlin
+// Matches both icon-only and text-bearing action buttons
+fun Finder.statusButton(text: String) =
+  x("//div[(@class='ActionButtonWithText' or @class='ActionButton') and @visible_text='$text']")
+```
+
+The visible text is itself a reliable assertion signal — you usually do not need to read the backing service/state.
 
 ## Keyboard Interactions
 
@@ -250,6 +262,38 @@ waitFor("text to appear", 10.seconds) {
 }
 ```
 
+## Reading IDE state via `@Remote`
+
+To read state from a service or model in the IDE under test, declare a `@Remote` interface and call it via `driver.service(...)` / `driver.utility(...)`.
+
+- **Plugin classes need the `plugin` field.** Without it the class resolves against the platform/core classloader → `DriverIllegalStateException: No such class '<fqn>' in plugin null`.
+  - Class in a plugin **content module**: `@Remote("<fqn>", plugin = "<plugin.id>/<content.module>")` (e.g. `com.intellij.figma/intellij.figma.core`).
+  - Class in the **main / embedded** plugin module: `@Remote("<fqn>", plugin = "<plugin.id>")`.
+- **Method dispatch resolves against the DECLARED `@Remote` class, not the runtime object.** A method declared on a sealed/abstract supertype ref is "not found" at runtime — declare it on the concrete subtype, or expose it via a top-level type. (The `jvm-class-name` injection also cannot resolve a nested `Foo$Bar` name → a cosmetic "Cannot resolve class" inspection error; prefer top-level types.)
+- Add the plugin module as a TEST dependency so the FQNs resolve for code-insight.
+
+```kotlin
+@Remote("com.example.MyAppService", plugin = "com.example.myplugin/com.example.myplugin.core")
+interface MyAppServiceRef {
+  fun getConfig(): MyConfigRef
+}
+// driver.service(MyAppServiceRef::class).getConfig()...
+```
+
+## Enabling a registry flag at startup
+
+Seed a registry key before the IDE starts with a `-D` VM option — `RegistryValue` falls back to `System.getProperty`. Required when a startup `ProjectActivity` or `ToolWindowFactory.shouldBeAvailable` reads the flag (setting it via the driver after start is too late):
+
+```kotlin
+context.applyVMOptionsPatch {
+  addSystemProperty("my.feature.enabled", "true")
+}
+```
+
+## Driving a real browser (Playwright)
+
+Playwright runs in the **test JVM**, alongside the driver-driven IDE (both on localhost) — useful when the IDE's client is a web app/plugin. `page.onConsoleMessage { ... }` captures the page **and its iframes** (a strong diagnostic). Put custom screenshots/files under `context.paths.testHome.resolve("log")` so they are collected as test artifacts. See `plugins/figma/integrationTests` for a full example.
+
 ## Running Tests from Terminal
 
 Driver tests require a fully built IDE. There are several ways to run them:
@@ -285,6 +329,13 @@ After test failure, check:
 - IDE log: `out/ide-tests/tests/{IDE-version}/{TestName}/{test-method}/log/idea.log`
 - Screenshots: `out/ide-tests/tests/{IDE-version}/{TestName}/{test-method}/log/screenshots/`
 - Exceptions: `out/ide-tests/tests/{IDE-version}/{TestName}/{test-method}/error/`
+
+### Inspect the LIVE UI hierarchy, not just the post-mortem file
+
+The `ui-hierarchy/ui.html` and `full-screen.png` written on failure are captured **after** `useDriverAndCloseIde` tears the IDE down — by then the session has ended and panels often revert to an empty/welcome state, so they can be misleading. Two better sources:
+
+- **Heartbeat screenshot** `log/screenshots/001_heartbeat/` — captured mid-run, shows the real state during the wait.
+- **Live UI hierarchy server** — while the IDE is up, the component tree is browsable at `http://localhost:<port>/api/remote-driver/` (the harness sets `-Dexpose.ui.hierarchy.url=true`; the port is logged at startup as `UI Hierarchy: http://localhost:<port>/api/remote-driver/`). To inspect interactively, **park the test** at the point of interest — temporarily raise a `waitFor` timeout (e.g. to `20.minutes`) — and `curl`/open that URL while the IDE stays alive. Each node exposes `class` (simple), `javaclass` (FQN, incl. `Outer$Inner` for inner classes), `visible_text`, and `accessiblename`; read these to build a reliable matcher instead of guessing from source.
 
 ### Common Issues
 

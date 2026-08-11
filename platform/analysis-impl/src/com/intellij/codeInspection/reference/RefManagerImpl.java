@@ -146,7 +146,7 @@ public class RefManagerImpl extends RefManager {
       final int setting = Registry.get("batch.inspections.number.of.threads").asInteger();
       final int threadsCount = (setting > 0) ? setting : Runtime.getRuntime().availableProcessors() - 1;
       myExecutor =
-        AppExecutorUtil.createBoundedApplicationPoolExecutor("Reference Graph Executor", Math.min(Math.max(threadsCount, 1), 10));
+        AppExecutorUtil.createBoundedApplicationPoolExecutor("Reference Graph Executor", Math.clamp(threadsCount, 1, 10));
       myTasksInFlight = new AtomicInteger();
       // unbounded queue because tasks are submitted under read action, so we mustn't block
       myTasks = new LinkedBlockingQueue<>();
@@ -298,19 +298,13 @@ public class RefManagerImpl extends RefManager {
       final String type = extension.getType(ref);
       if (type != null) return type;
     }
-    if (ref instanceof RefFile) {
-      return SmartRefElementPointer.FILE;
-    }
-    if (ref instanceof RefModule) {
-      return SmartRefElementPointer.MODULE;
-    }
-    if (ref instanceof RefProject) {
-      return SmartRefElementPointer.PROJECT;
-    }
-    if (ref instanceof RefDirectory) {
-      return SmartRefElementPointer.DIR;
-    }
-    return null;
+    return switch (ref) {
+      case RefFile _ -> SmartRefElementPointer.FILE;
+      case RefModule _ -> SmartRefElementPointer.MODULE;
+      case RefProject _ -> SmartRefElementPointer.PROJECT;
+      case RefDirectory _ -> SmartRefElementPointer.DIR;
+      default -> null;
+    };
   }
 
   @Override
@@ -327,47 +321,51 @@ public class RefManagerImpl extends RefManager {
 
     Element problem = new Element("problem");
 
-    if (refEntity instanceof RefDirectory dir) {
-      Element fileElement = new Element("file");
-      VirtualFile virtualFile = ((PsiDirectory)dir.getPsiElement()).getVirtualFile();
-      fileElement.addContent(virtualFile.getUrl());
-      problem.addContent(fileElement);
-    }
-    else if (refEntity instanceof RefElement refElement) {
-      final SmartPsiElementPointer<?> pointer = refElement.getPointer();
-      if (pointer == null) return null;
-      PsiFile psiFile = pointer.getContainingFile();
-      if (psiFile == null) return null;
-
-      Element fileElement = new Element("file");
-      final VirtualFile virtualFile = psiFile.getVirtualFile();
-      LOG.assertTrue(virtualFile != null);
-      fileElement.addContent(virtualFile.getUrl());
-      problem.addContent(fileElement);
-
-      int resultLine;
-      if (actualLine == -1) {
-        final Document document = PsiDocumentManager.getInstance(pointer.getProject()).getDocument(psiFile);
-        LOG.assertTrue(document != null);
-        final Segment range = pointer.getRange();
-        resultLine = range == null ? -1 : document.getLineNumber(range.getStartOffset()) + 1;
+    switch (refEntity) {
+      case RefDirectory dir -> {
+        Element fileElement = new Element("file");
+        VirtualFile virtualFile = ((PsiDirectory)dir.getPsiElement()).getVirtualFile();
+        fileElement.addContent(virtualFile.getUrl());
+        problem.addContent(fileElement);
       }
-      else {
-        resultLine = actualLine + 1;
+      case RefElement refElement -> {
+        final SmartPsiElementPointer<?> pointer = refElement.getPointer();
+        if (pointer == null) return null;
+        PsiFile psiFile = pointer.getContainingFile();
+        if (psiFile == null) return null;
+
+        Element fileElement = new Element("file");
+        final VirtualFile virtualFile = psiFile.getVirtualFile();
+        LOG.assertTrue(virtualFile != null);
+        fileElement.addContent(virtualFile.getUrl());
+        problem.addContent(fileElement);
+
+        int resultLine;
+        if (actualLine == -1) {
+          final Document document = PsiDocumentManager.getInstance(pointer.getProject()).getDocument(psiFile);
+          LOG.assertTrue(document != null);
+          final Segment range = pointer.getRange();
+          resultLine = range == null ? -1 : document.getLineNumber(range.getStartOffset()) + 1;
+        }
+        else {
+          resultLine = actualLine + 1;
+        }
+
+        Element lineElement = new Element("line");
+        lineElement.addContent(String.valueOf(resultLine));
+        problem.addContent(lineElement);
+
+        appendModule(problem, refElement.getModule());
       }
-
-      Element lineElement = new Element("line");
-      lineElement.addContent(String.valueOf(resultLine));
-      problem.addContent(lineElement);
-
-      appendModule(problem, refElement.getModule());
-    }
-    else if (refEntity instanceof RefModule refModule) {
-      final VirtualFile moduleFile = refModule.getModule().getModuleFile();
-      final Element fileElement = new Element("file");
-      fileElement.addContent(moduleFile != null ? moduleFile.getUrl() : refEntity.getName());
-      problem.addContent(fileElement);
-      appendModule(problem, refModule);
+      case RefModule refModule -> {
+        final VirtualFile moduleFile = refModule.getModule().getModuleFile();
+        final Element fileElement = new Element("file");
+        fileElement.addContent(moduleFile != null ? moduleFile.getUrl() : refEntity.getName());
+        problem.addContent(fileElement);
+        appendModule(problem, refModule);
+      }
+      default -> {
+      }
     }
 
     for (RefManagerExtension<?> extension : myExtensions.values()) {
@@ -543,7 +541,7 @@ public class RefManagerImpl extends RefManager {
       .inSmartMode(myProject)
       .wrapProgress(progressIndicator)
       .submit(myExecutor)
-      .onSuccess(x -> {
+      .onProcessed(_ -> {
         if (myTasksInFlight.decrementAndGet() == 0) myLatch.countDown();
       });
   }
@@ -590,7 +588,7 @@ public class RefManagerImpl extends RefManager {
 
     Map<VirtualFile, List<RefElement>> map = new HashMap<>();
     for (RefElement ref : getElements()) {
-      map.computeIfAbsent(((RefElementImpl)ref).getVirtualFile(), k -> new ArrayList<>()).add(ref);
+      map.computeIfAbsent(((RefElementImpl)ref).getVirtualFile(), _ -> new ArrayList<>()).add(ref);
     }
     for (List<RefElement> elementsInFile : map.values()) {
       if (elementsInFile.size() > 1) {
@@ -906,8 +904,8 @@ public class RefManagerImpl extends RefManager {
     for (RefManagerExtension<?> extension : myExtensions.values()) {
       if (!extension.belongsToScope(psiElement)) return false;
     }
-    Boolean inProject = ReadAction.computeBlocking(() -> psiElement.getManager().isInProject(psiElement));
-    return (inProject.booleanValue() || ScratchUtil.isScratch(containingFile.getVirtualFile())) &&
+    boolean inProject = ReadAction.computeBlocking(() -> psiElement.getManager().isInProject(psiElement));
+    return (inProject || ScratchUtil.isScratch(containingFile.getVirtualFile())) &&
            (ignoreScope || getScope() == null || getScope().contains(psiElement));
   }
 

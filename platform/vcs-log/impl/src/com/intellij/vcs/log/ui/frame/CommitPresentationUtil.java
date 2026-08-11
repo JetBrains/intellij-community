@@ -8,9 +8,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.LinkDescriptor;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.ui.FontUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,6 +25,10 @@ import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.VcsUser;
+import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.ui.table.links.CommitLinksProvider;
+import com.intellij.vcs.log.ui.table.links.NavigateToCommit;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -41,13 +45,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public final class CommitPresentationUtil {
-  private static final @NotNull Pattern HASH_PATTERN = Pattern.compile("[0-9a-f]{7,40}", Pattern.CASE_INSENSITIVE);
-
   private static final @NotNull @NlsSafe String GO_TO_HASH = "go-to-hash:";
   private static final @NotNull @NlsSafe String SHOW_HIDE_BRANCHES = "show-hide-branches";
   private static final @NlsSafe String ELLIPSIS = "...";
@@ -115,7 +116,7 @@ public final class CommitPresentationUtil {
 
   private static @NotNull Set<@NlsSafe String> findHashes(@NotNull @NlsSafe String text) {
     Set<String> result = new HashSet<>();
-    Matcher matcher = HASH_PATTERN.matcher(text);
+    Matcher matcher = VcsLogUtil.GIT_HASH_REGEX.matcher(text);
     while (matcher.find()) {
       result.add(matcher.group());
     }
@@ -123,7 +124,7 @@ public final class CommitPresentationUtil {
   }
 
   private static @NotNull @NlsSafe String replaceHashes(@NotNull @NlsSafe String s, @NotNull Set<@NlsSafe String> resolvedHashes) {
-    Matcher matcher = HASH_PATTERN.matcher(s);
+    Matcher matcher = VcsLogUtil.GIT_HASH_REGEX.matcher(s);
     StringBuilder result = new StringBuilder();
 
     while (matcher.find()) {
@@ -151,6 +152,7 @@ public final class CommitPresentationUtil {
   }
 
   private static @NotNull @NlsSafe String formatCommitText(@NotNull Project project,
+                                                           @NotNull CommitId commitId,
                                                            @NotNull @NlsSafe String fullMessage,
                                                            @NotNull Set<@NlsSafe String> resolvedHashes) {
     fullMessage = VcsUtil.trimCommitMessageToSaneSize(fullMessage);
@@ -193,7 +195,7 @@ public final class CommitPresentationUtil {
     }
 
     return "<b>" +
-           formatText(project, subject, font, Font.BOLD, convertor) +
+           formatSubjectWithPrefixLinks(project, commitId, subject, font, convertor) +
            "</b>" +
            formatText(project, description, font, font.getStyle(), convertor);
   }
@@ -213,6 +215,36 @@ public final class CommitPresentationUtil {
                                             int style,
                                             @NotNull Convertor<? super String, String> convertor) {
     return FontUtil.getHtmlWithFonts(escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(project, text, convertor)), style, font);
+  }
+
+  private static @NotNull String formatSubjectWithPrefixLinks(@NotNull Project project,
+                                                              @NotNull CommitId commitId,
+                                                              @NotNull @NlsSafe String subject,
+                                                              @NotNull Font font,
+                                                              @NotNull Convertor<? super String, String> convertor) {
+    StringBuilder result = new StringBuilder();
+    int offset = 0;
+    for (LinkDescriptor link : getCommitPrefixLinks(project, commitId)) {
+      if (!(link instanceof NavigateToCommit navigateToCommit)) continue;
+      int linkStart = navigateToCommit.getRange().getStartOffset();
+      int linkEnd = navigateToCommit.getRange().getEndOffset();
+      if (linkStart < offset || linkEnd > subject.length()) continue;
+
+      if (linkStart > offset) {
+        result.append(formatText(project, subject.substring(offset, linkStart), font, Font.BOLD, convertor));
+      }
+      result.append(HtmlChunk.link(GO_TO_HASH + navigateToCommit.getTarget(), subject.substring(linkStart, linkEnd)));
+      offset = linkEnd;
+    }
+    if (offset < subject.length()) {
+      result.append(formatText(project, subject.substring(offset), font, Font.BOLD, convertor));
+    }
+    return result.toString();
+  }
+
+  private static @NotNull List<LinkDescriptor> getCommitPrefixLinks(@NotNull Project project, @NotNull CommitId commitId) {
+    CommitLinksProvider provider = CommitLinksProvider.getServiceOrNull(project);
+    return provider == null ? Collections.emptyList() : provider.getLinks(commitId);
   }
 
   private static @NotNull @Nls String getAuthorAndCommitterText(@NotNull VcsUser author, long authorTime,
@@ -340,27 +372,28 @@ public final class CommitPresentationUtil {
                                                               @NotNull Set<? super String> unresolvedHashes) {
     String rawMessage = commit.getFullMessage();
     String hashAndAuthor = formatCommitHashAndAuthor(commit);
+    CommitId commitId = new CommitId(commit.getId(), commit.getRoot());
 
     Set<String> unresolvedHashesForCommit = findHashes(project, rawMessage);
     if (unresolvedHashesForCommit.isEmpty()) {
-      return new CommitPresentation(project, commit.getRoot(), rawMessage, hashAndAuthor, MultiMap.empty());
+      return new CommitPresentation(project, commitId, rawMessage, hashAndAuthor, MultiMap.empty());
     }
 
     unresolvedHashes.addAll(unresolvedHashesForCommit);
-    return new UnresolvedPresentation(project, commit.getRoot(), rawMessage, hashAndAuthor);
+    return new UnresolvedPresentation(project, commitId, rawMessage, hashAndAuthor);
   }
 
   private static class UnresolvedPresentation extends CommitPresentation {
     UnresolvedPresentation(@NotNull Project project,
-                           @NotNull VirtualFile root,
+                           @NotNull CommitId commitId,
                            @NotNull @NlsSafe String rawMessage,
                            @NotNull @Nls String hashAndAuthor) {
-      super(project, root, rawMessage, hashAndAuthor, MultiMap.empty());
+      super(project, commitId, rawMessage, hashAndAuthor, MultiMap.empty());
     }
 
     @Override
     public @NotNull CommitPresentation resolve(@NotNull MultiMap<String, CommitId> resolvedHashes) {
-      return new CommitPresentation(myProject, myRoot, myRawMessage, myHashAndAuthor, resolvedHashes);
+      return new CommitPresentation(myProject, myCommitId, myRawMessage, myHashAndAuthor, resolvedHashes);
     }
 
     @Override
@@ -373,23 +406,23 @@ public final class CommitPresentationUtil {
     protected final @NotNull Project myProject;
     protected final @NotNull @NlsSafe String myRawMessage;
     protected final @NotNull @Nls String myHashAndAuthor;
-    protected final @NotNull VirtualFile myRoot;
+    protected final @NotNull CommitId myCommitId;
     private final @NotNull MultiMap<@NlsSafe String, CommitId> myResolvedHashes;
 
     public CommitPresentation(@NotNull Project project,
-                              @NotNull VirtualFile root,
+                              @NotNull CommitId commitId,
                               @NotNull @NlsSafe String rawMessage,
                               @NotNull @Nls String hashAndAuthor,
                               @NotNull MultiMap<@NlsSafe String, CommitId> resolvedHashes) {
       myProject = project;
-      myRoot = root;
+      myCommitId = commitId;
       myRawMessage = rawMessage;
       myHashAndAuthor = hashAndAuthor;
       myResolvedHashes = resolvedHashes;
     }
 
     public @NotNull @NlsSafe String getText() {
-      return formatCommitText(myProject, myRawMessage, myResolvedHashes.keySet());
+      return formatCommitText(myProject, myCommitId, myRawMessage, myResolvedHashes.keySet());
     }
 
     public @NotNull @Nls String getHashAndAuthor() {
@@ -397,16 +430,25 @@ public final class CommitPresentationUtil {
     }
 
     public @Nullable CommitId parseTargetCommit(@NotNull HyperlinkEvent e) {
-      if (!e.getDescription().startsWith(GO_TO_HASH)) return null;
+      if (!isGoToHash(e)) return null;
       String hash = e.getDescription().substring(GO_TO_HASH.length());
       Collection<CommitId> ids = myResolvedHashes.get(hash);
-      if (ids.size() <= 1) return ContainerUtil.getFirstItem(ids);
+      if (ids.isEmpty()) return parsePrefixLinkTarget(hash);
       for (CommitId id : ids) {
-        if (myRoot.equals(id.getRoot())) {
+        if (myCommitId.getRoot().equals(id.getRoot())) {
           return id;
         }
       }
       return ContainerUtil.getFirstItem(ids);
+    }
+
+    private @Nullable CommitId parsePrefixLinkTarget(@NotNull String hash) {
+      for (LinkDescriptor link : getCommitPrefixLinks(myProject, myCommitId)) {
+        if (link instanceof NavigateToCommit navigateToCommit && hash.equals(navigateToCommit.getTarget())) {
+          return new CommitId(HashImpl.build(hash), myCommitId.getRoot());
+        }
+      }
+      return null;
     }
 
     public @NotNull CommitPresentation resolve(@NotNull MultiMap<String, CommitId> resolvedHashes) {

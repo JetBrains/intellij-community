@@ -651,14 +651,12 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       for (String annotationFqn : annotationFqns) {
         PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationFqn, GlobalSearchScope.allScope(project));
         if (annotationClass == null) continue;
-        AnnotatedElementsSearch.searchElements(annotationClass, GlobalSearchScope.allScope(project), types)
-          .asIterable()
-          .forEach((PsiModifierListOwner owner) -> {
-            R element = consumer.apply(owner, AnnotationUtil.findAnnotation(owner, annotationFqn));
-            if (element != null) {
-              result.add(element);
-            }
-          });
+        for (T owner : AnnotatedElementsSearch.searchElements(annotationClass, GlobalSearchScope.allScope(project), types).findAll()) {
+          R element = consumer.apply(owner, AnnotationUtil.findAnnotation(owner, annotationFqn));
+          if (element != null) {
+            result.add(element);
+          }
+        }
       }
       return result;
     }).executeSynchronously();

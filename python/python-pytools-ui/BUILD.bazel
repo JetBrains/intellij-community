@@ -1,6 +1,14 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.python.pytools.ui` start
+create_kotlinc_options(
+    name = "custom_pytools-ui",
+    opt_in = [
+        "kotlin.time.ExperimentalTime",
+        "com.jetbrains.python.PyInternalExecApi",
+    ],
+)
 
 jvm_library(
     name = "pytools-ui",
@@ -14,6 +22,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_pytools-ui",
     module_name = "intellij.python.pytools.ui",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -27,6 +36,8 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/core-api:core",
         "//platform/core-ui",
+        "//platform/eel",
+        "//platform/eel-provider",
         "//platform/ide-core",
         "//platform/platform-impl:ide-impl",
         "//platform/observable",
@@ -44,7 +55,7 @@ jvm_library(
         "//python/python-exec-service:community-execService",
         "//python/python-exec-service/execService.python",
         "//python/python-uv/backend",
-        "//python/python-sdk:sdk",
+        "//python/python-sdk/backend",
     ],
 )
 
@@ -55,6 +66,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_pytools-ui",
     module_name = "intellij.python.pytools.ui",
     visibility = ["//visibility:public"],
     runtime_deps = [
@@ -64,6 +76,8 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-ui:core-ui_test_lib",
+        "//platform/eel:eel_test_lib",
+        "//platform/eel-provider:eel-provider_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/observable:observable_test_lib",
@@ -81,7 +95,7 @@ jvm_library(
         "//python/python-exec-service:community-execService_test_lib",
         "//python/python-exec-service/execService.python:execService.python_test_lib",
         "//python/python-uv/backend:backend_test_lib",
-        "//python/python-sdk:sdk_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.pytools.ui` end

@@ -1,5 +1,5 @@
 // "Add '== true'" "true"
-// K2_ERROR: Assignment type mismatch: actual type is 'Boolean?', but 'Boolean' was expected.
+// K2_ERROR: ASSIGNMENT_TYPE_MISMATCH
 class Foo {
     fun bar() = true
 }

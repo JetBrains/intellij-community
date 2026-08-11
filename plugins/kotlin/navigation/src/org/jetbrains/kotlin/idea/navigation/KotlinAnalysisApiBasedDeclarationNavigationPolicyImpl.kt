@@ -2,12 +2,15 @@
 package org.jetbrains.kotlin.idea.navigation
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeprecationLevel
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -17,11 +20,14 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.allDirectDependencies
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.deprecation
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
@@ -53,27 +59,34 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
-import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 import org.jetbrains.kotlin.types.Variance
 
 @ApiStatus.Internal
 open class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclarationNavigationPolicy {
     override fun getNavigationElement(declaration: KtDeclaration): KtElement {
-        return CachedValuesManager.getProjectPsiDependentCache(declaration) { declaration ->
+        val ktFile = declaration.containingKtFile
+        if (!ktFile.isCompiled) return declaration
+
+        return CachedValuesManager.getProjectPsiDependentCache(declaration, ::calculateNavigationElement)
+    }
+
+    private fun calculateNavigationElement(declaration: KtDeclaration): KtElement =
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
             val ktFile = declaration.containingKtFile
-            if (!ktFile.isCompiled) return@getProjectPsiDependentCache declaration
             val project = ktFile.project
-            when (val module = ktFile.getKaModule(project, useSiteModule = null) ) {
-                is KaLibraryModule -> getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(
-                    module.librarySources ?: return@getProjectPsiDependentCache declaration,
-                    declaration,
-                    module
-                )
+            when (val module = ktFile.getKaModule(project, useSiteModule = null)) {
+                is KaLibraryModule -> {
+                    val library = module.librarySources ?: return@ThrowableComputable declaration
+                    getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(
+                        library,
+                        declaration,
+                        module
+                    )
+                }
 
                 else -> declaration
             }
-        }
-    }
+        })
 
     override fun getOriginalElement(declaration: KtDeclaration): KtElement {
         val ktFile = declaration.containingKtFile
@@ -126,9 +139,9 @@ open class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclara
             allowAnalysisFromWriteAction {
                 analyze(declaration) {
                     val symbol = declaration.symbol
-                    val deprecationStatus = symbol.deprecationStatus ?: return false
-                    val deprecationLevel = deprecationStatus.deprecationLevel
-                    !allowWarning || deprecationLevel != DeprecationLevelValue.WARNING
+                    val deprecationStatus = symbol.deprecation ?: return false
+                    val deprecationLevel = deprecationStatus.level
+                    !allowWarning || deprecationLevel != KaDeprecationLevel.WARNING
                 }
             }
         }

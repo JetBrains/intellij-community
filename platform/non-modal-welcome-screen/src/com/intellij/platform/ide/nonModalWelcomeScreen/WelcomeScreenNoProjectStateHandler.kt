@@ -17,8 +17,9 @@ internal class WelcomeScreenNoProjectStateHandler : NoProjectStateHandler {
       return null
     }
 
-    val provider = getWelcomeScreenProjectProvider()
-      ?.takeIf { isNonModalWelcomeScreenEnabled && ProjectManager.getInstanceIfCreated()?.openProjects.isNullOrEmpty() } ?: return null
+    if (!isNonModalWelcomeScreenEnabled || !ProjectManager.getInstanceIfCreated()?.openProjects.isNullOrEmpty()) return null
+    val provider = getWelcomeScreenProjectProvider() ?: return null
+
     return {
       WelcomeScreenProjectProvider.createOrOpenWelcomeScreenProject(provider)
     }

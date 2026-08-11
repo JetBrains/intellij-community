@@ -23,6 +23,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -97,6 +98,7 @@ public class FindUsagesAction extends AnAction {
     FindUsagesInFileAction.updateFindUsagesAction(event);
   }
 
+  @ApiStatus.Internal
   public static final class ShowSettingsAndFindUsages extends FindUsagesAction {
     @Override
     protected void startFindUsages(@NotNull PsiElement element) {

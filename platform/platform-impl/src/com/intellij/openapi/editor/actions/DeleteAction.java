@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class DeleteAction extends EditorAction {
@@ -23,6 +24,7 @@ public final class DeleteAction extends EditorAction {
     super(new Handler());
   }
 
+  @ApiStatus.Internal
   public static final class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
     public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {

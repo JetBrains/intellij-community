@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.util.CommentUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
@@ -40,6 +41,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/// Shared base for inspections that replace explicit simple getter or setter methods with Lombok `@Getter` or `@Setter` annotations.
+///
+/// Reports matching methods or whole classes when Lombok can generate the accessors, and the quick fix adds the Lombok annotation,
+/// removes the explicit methods, and moves their Javadocs to the corresponding fields.
 public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJavaInspectionBase {
 
   @Override
@@ -226,31 +231,30 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
         PsiDocComment fieldJavaDoc = field.getDocComment();
         List<String> methodJavaDocTokens =
           Arrays.stream(methodJavaDoc.getChildren()).filter(e -> e instanceof PsiDocToken).map(PsiElement::getText)
-            .filter(text -> !text.matches("\\s*\\*\\s*")).toList();
+            .filter(text -> !text.matches("\\s*(?:\\*|///)\\s*")).toList();
         methodJavaDocTokens = methodJavaDocTokens.subList(1, methodJavaDocTokens.size() - 1);
-        String javaDocMethodText = String.join("\n* ", methodJavaDocTokens);
+        String javaDocMethodText = String.join("\n", methodJavaDocTokens);
         PsiDocTag[] methodTags = methodJavaDoc.findTagsByName(getTagName());
+
         if (fieldJavaDoc == null) {
-          if (javaDocMethodText.isEmpty()) {
-            fieldJavaDoc = factory.createDocCommentFromText("/**\n*/");
-          }
-          else {
-            fieldJavaDoc =
-              factory.createDocCommentFromText("/**\n* -- " + getJavaDocMethodMarkup() + " --\n* " + javaDocMethodText + "\n*/");
-          }
+          fieldJavaDoc = javaDocMethodText.isEmpty()
+                         ? factory.createDocCommentFromText(CommentUtil.convertToDocComment(method.getContainingFile(), ""))
+                         : getNewJavadoc(factory, javaDocMethodText, methodJavaDoc);
           for (PsiDocTag methodTag : methodTags) {
             fieldJavaDoc.add(methodTag);
           }
           field.getParent().addBefore(fieldJavaDoc, field);
         }
         else {
+          boolean isMarkdown = fieldJavaDoc.isMarkdownComment();
+          int endOffset = isMarkdown ? 1 : 2;
           @NotNull PsiElement @NotNull [] fieldJavaDocChildren =
             Arrays.stream(fieldJavaDoc.getChildren()).filter(e -> e instanceof PsiDocToken).toArray(PsiElement[]::new);
-          @NotNull PsiElement fieldJavaDocChild = fieldJavaDocChildren[fieldJavaDocChildren.length - 2];
-          PsiDocComment newMethodJavaDoc =
-            factory.createDocCommentFromText("/**\n* -- " + getJavaDocMethodMarkup() + " --\n* " + javaDocMethodText + "\n*/");
+          @NotNull PsiElement fieldJavaDocChild = fieldJavaDocChildren[fieldJavaDocChildren.length - endOffset];
+          PsiDocComment newMethodJavaDoc = getNewJavadoc(factory, javaDocMethodText, fieldJavaDoc);
           PsiElement[] tokens = newMethodJavaDoc.getChildren();
-          for (int i = tokens.length - 2; 0 < i; i--) {
+
+          for (int i = tokens.length - endOffset; 0 < i; i--) {
             fieldJavaDoc.addAfter(tokens[i], fieldJavaDocChild);
           }
           for (PsiDocTag methodTag : methodTags) {
@@ -262,6 +266,18 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
       tracker.delete(method);
       tracker.insertCommentsBefore(field);
     }
+  }
+
+  /// Generate a new javadoc comment based on text and the original comment
+  private PsiDocComment getNewJavadoc(@NotNull PsiElementFactory factory,
+                                      @NotNull String javadocText,
+                                      @NotNull PsiDocComment originalComment) {
+    String fieldJavaDocText = " -- " + getJavaDocMethodMarkup() + " --\n " + javadocText + "\n";
+    if (originalComment.isMarkdownComment()) {
+      fieldJavaDocText = "\n" + fieldJavaDocText;
+    }
+    return
+      factory.createDocCommentFromText(CommentUtil.convertToDocComment(originalComment, fieldJavaDocText, false, false));
   }
 
   protected abstract @NotNull String getTagName();

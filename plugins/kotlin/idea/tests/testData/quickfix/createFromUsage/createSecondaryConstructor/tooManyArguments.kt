@@ -1,6 +1,6 @@
 // "Create secondary constructor" "true"
 // K2_ACTION: "Add secondary constructor to 'CtorPrimary'" "true"
-// K2_ERROR: Too many arguments for 'constructor(f1: Int, f2: Int?): CtorPrimary'.
+// K2_ERROR: TOO_MANY_ARGUMENTS
 
 class CtorPrimary(val f1: Int, val f2: Int?)
 

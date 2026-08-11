@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  Outer.class
+End of files
+Compiling files:
+  java/annotations/removeNestedAnnotationDefault/a/Outer.java
+End of files
+Cleaning output files:
+  Use.class
+End of files
+Compiling files:
+  java/annotations/removeNestedAnnotationDefault/a/Use.java
+End of files
+------------------------------------------
+Exit code: ERROR

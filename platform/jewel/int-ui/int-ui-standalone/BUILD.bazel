@@ -2,7 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.jewel.intUi.standalone` start
-
 create_kotlinc_options(
     name = "custom_jewel-intUi-standalone",
     opt_in = [
@@ -39,13 +38,13 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/skiko",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/jewel/ui",
         "//libraries/compose-foundation-desktop",
         "//libraries/compose-runtime-desktop",
         "//platform/jewel/foundation",
         "//libraries/jbr",
-        "@lib//:jna",
+        "//libraries/jna",
         "//platform/icons-api",
         "//platform/icons-impl",
     ],
@@ -66,11 +65,13 @@ jvm_library(
         ":jewel-intUi-standalone",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/skiko:skiko_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/jewel/ui:ui_test_lib",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
         "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
         "//platform/jewel/foundation:foundation_test_lib",
         "//libraries/jbr:jbr_test_lib",
+        "//libraries/jna:jna_test_lib",
         "//platform/icons-api:icons-api_test_lib",
         "//platform/icons-impl:icons-impl_test_lib",
     ],

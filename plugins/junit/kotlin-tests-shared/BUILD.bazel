@@ -2,7 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.junit.kotlin.tests.shared` start
-
 jvm_library(
     name = "kotlin-tests-shared",
     srcs = glob(
@@ -13,11 +12,12 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "//plugins/kotlin/plugin/common",
+        "//plugins/kotlin:kotlin-plugin-community-main",
         "//plugins/junit/testFramework",
         "//platform/testFramework/junit5",
         "//plugins/junit/java-tests",
     ],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -35,8 +35,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "//plugins/kotlin/plugin/common",
-        "//plugins/kotlin/plugin/common:common_test_lib",
         "//plugins/junit/testFramework",
         "//plugins/junit/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
@@ -44,7 +42,11 @@ jvm_library(
         "//plugins/junit/java-tests",
         "//plugins/junit/java-tests:java-tests_test_lib",
     ],
-    runtime_deps = [":kotlin-tests-shared"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-tests-shared",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -63,8 +65,6 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//platform/refactoring",
         "//platform/refactoring:refactoring_test_lib",
-        "//plugins/kotlin/plugin/common",
-        "//plugins/kotlin/plugin/common:common_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
         "//java/java-psi-api:psi",
@@ -91,6 +91,10 @@ jvm_library(
         "//java/java-syntax:syntax_test_lib",
         "//java/java-frontback-psi-api:frontback-psi",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.junit.kotlin.tests.shared` end
@@ -105,7 +109,6 @@ exports_files(
 ### auto-generated section `iml intellij.junit.kotlin.tests.shared` end
 
 ### auto-generated section `test intellij.junit.kotlin.tests.shared` start
-
 jps_test(
     name = "kotlin-tests-shared_test",
     runtime_deps = [":kotlin-tests-shared_test_lib"],

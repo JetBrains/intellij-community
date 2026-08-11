@@ -2,6 +2,8 @@
 package com.intellij.grazie.utils
 
 import ai.grazie.gec.model.problem.ProblemFix
+import ai.grazie.nlp.langs.LanguageISO
+import com.intellij.grazie.GrazieConfig
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginId
@@ -47,6 +49,11 @@ inline fun <R> catching(block: () -> R): Result<R> {
     return Result.failure(exception)
   }
 }
+
+internal fun getHunspellLanguages(state: GrazieConfig.State): Set<LanguageISO> = state.dictionaries.asSequence()
+  .mapNotNull { it.language() }
+  .mapNotNull { LanguageISO.parse(it) }
+  .toSet()
 
 /**
  * Same as [runBlockingModal] but without [ModalTaskOwner].

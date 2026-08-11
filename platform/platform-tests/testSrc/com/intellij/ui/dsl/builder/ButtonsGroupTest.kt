@@ -1,8 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.testFramework.TestApplicationManager
 import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.dsl.UiDslException
+import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 import javax.swing.JRadioButton
@@ -40,15 +41,20 @@ class ButtonsGroupTest {
   var enum1 = Enum1.VALUE1
   var enum2 = Enum2.VALUE1
 
+  @Before
+  fun before() {
+    TestApplicationManager.getInstance()
+  }
+
   @Test
   fun testInvalidGroups() {
-    assertThrows<UiDslException> {
+    assertThrows<IllegalStateException> {
       testButtonsGroup(1, 2)
     }
-    assertThrows<UiDslException> {
+    assertThrows<IllegalStateException> {
       testButtonsGroup("1", "2", ::int)
     }
-    assertThrows<UiDslException> {
+    assertThrows<IllegalStateException> {
       testButtonsGroup(null, null, ::int)
     }
   }

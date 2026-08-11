@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.idea.k2.refactoring.extractFunction
 
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ControlFlow
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.DuplicateInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractableCodeDescriptorWithConflictsResult
@@ -37,7 +39,7 @@ data class ExtractableCodeDescriptor(
 
     override val duplicates: List<DuplicateInfo<KaType>> by lazy { findDuplicates() }
 
-    private val isUnitReturn: Boolean = analyze(context) { returnType.isUnitType }
+    private val isUnitReturn: Boolean = analyze(context) { returnType.classId == KaStandardTypeClassIds.UNIT }
 
     override fun isUnitReturnType(): Boolean = isUnitReturn
 

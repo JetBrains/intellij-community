@@ -13,11 +13,11 @@ internal class MutableBoundedOpenMapImpl<Domain, V : Any>(val map: AtomicReferen
   override fun isEmpty() = map.load().size == 0
 
   override fun <T : V> set(k: Key<T, Domain>, v: T) {
-    map.updateAndFetch { map -> map.put(k, v) }
+    map.updateAndFetch { map -> map.putting(k, v) }
   }
 
   override fun remove(k: Key<out V, Domain>) {
-    map.updateAndFetch { map -> map.remove(k) }
+    map.updateAndFetch { map -> map.removing(k) }
   }
 
   override fun <T : V> assoc(k: Key<T, Domain>, v: T): BoundedOpenMap<Domain, V> {
@@ -35,7 +35,7 @@ internal class MutableBoundedOpenMapImpl<Domain, V : Any>(val map: AtomicReferen
   override fun <T : V> update(key: Key<T, Domain>, f: (T?) -> T): T {
     return map.updateAndFetch { map ->
       val v1 = f(map.get(key) as T?)
-      map.put(key, v1)
+      map.putting(key, v1)
     }.get(key) as T
   }
 
@@ -43,7 +43,7 @@ internal class MutableBoundedOpenMapImpl<Domain, V : Any>(val map: AtomicReferen
     return map.updateAndFetch { map ->
       val v = map.get(key)
       if (v == null) {
-        map.put(key, init())
+        map.putting(key, init())
       }
       else {
         map

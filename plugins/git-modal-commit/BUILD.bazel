@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.vcs.git.commit.modal` start
-
 jvm_library(
     name = "vcs-git-commit-modal",
     srcs = glob(

@@ -1,5 +1,5 @@
 // "Add non-null asserted (i!!) call" "true"
-// K2_ERROR: Argument type mismatch: actual type is 'Int?', but 'Int' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 fun test() {
     val i: Int? = 0
     val result: IntArray = intArrayOf(0)

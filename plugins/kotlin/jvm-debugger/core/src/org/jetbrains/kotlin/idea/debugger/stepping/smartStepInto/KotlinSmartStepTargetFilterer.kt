@@ -12,14 +12,20 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPrimitiveType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.asPsiType
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.arrayElementType
+import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.fileClasses.internalNameWithoutInnerClasses
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
@@ -135,7 +141,8 @@ class KotlinSmartStepTargetFilterer(
         return matchesBySignature(declaration, owner, signature, hasSimilarTargets)
     }
 
-    private fun KaSession.primaryConstructorMatches(declaration: KtClass, owner: String, name: String, signature: String): Boolean {
+    context(session: KaSession)
+    private fun primaryConstructorMatches(declaration: KtClass, owner: String, name: String, signature: String): Boolean {
         if (name != JVMNameUtil.CONSTRUCTOR_NAME || signature != "()V") return false
         val symbol = declaration.symbol as? KaClassSymbol ?: return false
         val internalClassName = symbol.getJvmInternalName()
@@ -289,7 +296,8 @@ private fun String.isSubClassOf(baseInternalName: String?): Boolean {
 }
 
 @OptIn(KaExperimentalApi::class)
-internal fun KaSession.getJvmSignature(symbol: KaCallableSymbol, isConstructor: Boolean): String? {
+context(session: KaSession)
+internal fun getJvmSignature(symbol: KaCallableSymbol, isConstructor: Boolean): String? {
     val element = symbol.psi ?: return null
     val contextReceivers = symbol.contextReceivers.mapNotNull { jvmName(it.type, element) }.joinToString("")
     val receiver = jvmName(symbol.receiverType, element) ?: ""
@@ -310,7 +318,8 @@ internal fun KaSession.getJvmSignature(symbol: KaCallableSymbol, isConstructor: 
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.jvmName(type: KaType?, element: PsiElement): String? {
+context(session: KaSession)
+private fun jvmName(type: KaType?, element: PsiElement): String? {
     if (type is KaTypeParameterType) return "Ljava/lang/Object;"
     if (type !is KaClassType) return null
     if (type.isArrayOrPrimitiveArray) {
@@ -324,7 +333,7 @@ private fun KaSession.jvmName(type: KaType?, element: PsiElement): String? {
             return psiType.kind.binaryName
         }
     }
-    if (type.isPrimitive) {
+    if (type.classId in KaStandardTypeClassIds.PRIMITIVES) {
         return if (psiType is PsiPrimitiveType) psiType.kind.binaryName
         else psiType.canonicalText.fqnToInternalName().internalNameToReferenceTypeName()
     }

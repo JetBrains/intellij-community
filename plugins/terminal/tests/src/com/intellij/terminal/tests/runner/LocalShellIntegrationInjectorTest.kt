@@ -2,7 +2,6 @@
 package com.intellij.terminal.tests.runner
 
 import com.intellij.idea.TestFor
-import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.util.system.OS
 import org.jetbrains.plugins.terminal.ShellStartupOptions
@@ -101,7 +100,7 @@ internal class LocalShellIntegrationInjectorTest {
 
     @JvmStatic
     fun ShellStartupOptions.Builder.useCurrentDirectoryAsWorkingDirectory(): ShellStartupOptions.Builder = also {
-      it.setFinalWorkingDirectoryEelPath(Path.of(".").absolute().normalize().asEelPath(LocalEelDescriptor))
+      it.setFinalWorkingDirectoryEelPath(Path.of(".").absolute().normalize().asEelPath())
     }
   }
 }

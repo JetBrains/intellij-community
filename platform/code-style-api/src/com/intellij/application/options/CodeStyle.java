@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.Strings;
@@ -114,7 +115,8 @@ public final class CodeStyle {
       }
       return localOrTempSettings;
     }
-    PsiFile topLevel = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(project);
+    PsiFile topLevel = Elf.getElf().runReadAction(() -> manager.getTopLevelFile(file));
     PsiFile settingsFile = getSettingsPsi(topLevel != null ? topLevel : file);
     if (settingsFile == null) {
       return getSettings(project);

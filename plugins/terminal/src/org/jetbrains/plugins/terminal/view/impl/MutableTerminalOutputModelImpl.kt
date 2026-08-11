@@ -4,17 +4,22 @@ package org.jetbrains.plugins.terminal.view.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.FrozenDocument
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.containers.DisposableWrapperList
+import com.intellij.util.diff.Diff
+import com.intellij.util.diff.FilesTooBigForDiffException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
+import org.jetbrains.plugins.terminal.session.impl.Osc8Hyperlink
 import org.jetbrains.plugins.terminal.session.impl.StyleRange
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputModelState
 import org.jetbrains.plugins.terminal.util.fireListenersAndLogAllExceptions
@@ -24,6 +29,7 @@ import org.jetbrains.plugins.terminal.view.TerminalLineIndex
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelSnapshot
+import org.jetbrains.plugins.terminal.view.TerminalOutputOsc8Hyperlink
 
 /**
  * [maxOutputLength] limits the length of the document. Zero means unlimited length.
@@ -37,6 +43,8 @@ class MutableTerminalOutputModelImpl(
   override var cursorOffset: TerminalOffset = TerminalOffset.ZERO
 
   private val highlightingsModel = HighlightingsModel()
+
+  private val osc8HyperlinksModel = Osc8HyperlinksModel()
 
   private val listeners = DisposableWrapperList<TerminalOutputModelListener>()
 
@@ -90,7 +98,12 @@ class MutableTerminalOutputModelImpl(
   override fun takeSnapshot(): TerminalOutputModelSnapshot =
     TerminalOutputModelSnapshotImpl((document as DocumentImpl).freeze(), trimmedCharsCount, trimmedLinesCount, cursorOffset)
 
-  override fun updateContent(absoluteLineIndex: Long, text: String, styles: List<StyleRange>) {
+  override fun updateContent(
+    absoluteLineIndex: Long,
+    text: String,
+    styles: List<StyleRange>,
+    osc8Hyperlinks: List<Osc8Hyperlink>,
+  ) {
     // If absolute line index is far in the past - in the already trimmed part of the output,
     // then it means that the terminal was cleared, and we should reset to the initial state.
     if (absoluteLineIndex < trimmedLinesCount) {
@@ -110,13 +123,13 @@ class MutableTerminalOutputModelImpl(
     ensureDocumentHasLine(startLine)
     changeDocumentContent {
       val startOffset = getStartOfLine(startLine)
-      doReplaceContentIgnoringEqualPrefixAndOrSuffix(startOffset, (endOffset - startOffset).toInt(), text, styles)
+      replaceTextAndUpdateStyles(startOffset, (endOffset - startOffset).toInt(), text, styles, osc8Hyperlinks)
     }
   }
 
   override fun replaceContent(offset: TerminalOffset, length: Int, text: String, newStyles: List<StyleRange>) {
-    changeDocumentContent(isTypeAhead) { 
-      doReplaceContentIgnoringEqualPrefixAndOrSuffix(offset, length, text, newStyles)
+    changeDocumentContent(isTypeAhead) {
+      replaceTextAndUpdateStyles(offset, length, text, newStyles, emptyList())
     }
   }
 
@@ -141,7 +154,7 @@ class MutableTerminalOutputModelImpl(
       val spaces = " ".repeat(spacesToAdd)
       changeDocumentContent {
         LOG.debug { "Added $spacesToAdd spaces to make the column valid" }
-        doReplaceContentIgnoringEqualPrefixAndOrSuffix(lineEndOffset, 0, spaces, emptyList())
+        replaceTextAndUpdateStyles(lineEndOffset, 0, spaces, emptyList(), emptyList())
       }
     }
 
@@ -167,7 +180,7 @@ class MutableTerminalOutputModelImpl(
         val newLinesToAdd = (lineIndex - lastLineIndex).toInt()
         val newLines = "\n".repeat(newLinesToAdd)
         LOG.debug { "Add $newLinesToAdd lines to make the line valid" }
-        doReplaceContentIgnoringEqualPrefixAndOrSuffix(endOffset, 0, newLines, emptyList())
+        replaceTextAndUpdateStyles(endOffset, 0, newLines, emptyList(), emptyList())
       }
     }
   }
@@ -179,57 +192,144 @@ class MutableTerminalOutputModelImpl(
     firstLineTrimmedCharsCount = 0
     document.replaceString(0, textLength, "")
     highlightingsModel.clear()
+    osc8HyperlinksModel.clear()
     // Report ZERO and not the actual old offset because listeners expect the offset to be consistent with the model.
     return ModelChange(TerminalOffset.ZERO, oldText, "")
   }
 
-  private fun doReplaceContentIgnoringEqualPrefixAndOrSuffix(startOffset: TerminalOffset, length: Int, newText: String, styles: List<StyleRange>): ModelChange {
-    val endOffset = startOffset + length.toLong()
-    val effectiveStartOffset = findFirstChangeOffset(startOffset, length, newText)
-    val skipPrefix = (effectiveStartOffset - startOffset).toInt()
-    val effectiveEndOffset = findLastChangeOffset(effectiveStartOffset, length - skipPrefix, newText, skipPrefix) + 1 // exclusive
-    val skipSuffix = (endOffset - effectiveEndOffset).toInt()
-    val effectiveLength = length - skipPrefix - skipSuffix
-    val effectiveNewText = newText.subSequence(skipPrefix, newText.length - skipSuffix)
-    val change = doReplaceContent(effectiveStartOffset, effectiveLength, effectiveNewText)
+  private fun replaceTextAndUpdateStyles(
+    startOffset: TerminalOffset,
+    length: Int,
+    newText: String,
+    styles: List<StyleRange>,
+    osc8Hyperlinks: List<Osc8Hyperlink>,
+  ): ModelChange {
+    val relativeStartOffset = startOffset.toRelative()
+    val oldText = document.immutableCharSequence.subSequence(relativeStartOffset, relativeStartOffset + length)
+    doReplaceText(relativeStartOffset, oldText, newText)
+    // The reported change covers only the characters that actually differ (ignoring the common prefix and suffix).
+    val change = computeChange(startOffset, oldText, newText)
     highlightingsModel.updateHighlightings(startOffset.toRelative(), length, newText.length, styles)
+    osc8HyperlinksModel.update(startOffset.toRelative(), length, newText.length, osc8Hyperlinks)
     return change
   }
 
-  private fun doReplaceContent(startOffset: TerminalOffset, length: Int, newText: CharSequence): ModelChange {
-    val relativeStartOffset = startOffset.toRelative()
-    val relativeEndOffset = relativeStartOffset + length
-    val oldText = document.immutableCharSequence.subSequence(relativeStartOffset, relativeEndOffset)
-    document.replaceString(relativeStartOffset, relativeEndOffset, newText)
-    return ModelChange(
-      startOffset,
-      oldText,
-      newText
-    )
+  /**
+   * Rewrites the document range that starts at [relativeStartOffset] and currently holds [oldText] into [newText].
+   * Can perform it in two ways:
+   * 1. Do a single replace in the document
+   * 2. Perform minimal set of edits to invalidate less text ranges in the document
+   *
+   * The second approach is used only if `terminal.minimal.document.edits` Registry is enabled
+   * and change happens in the area of the screen (for now, consider that screen is the last [VISIBLE_SCREEN_LINES]).
+   * TODO: Need to add information about screen start position to the output model.
+   *
+   * The single replace approach is faster, but it has a downside: it may invalidate a big range of the document.
+   * It leads to hyperlinks removal and blinking effect when they are applied again.
+   *
+   * The minimal edits approach tries to make several document edits and preserve as much content as possible,
+   * so hyperlinks whose text is not really changed, won't be invalidated.
+   * The approach of calculating mininal edits is based on a line diff (using [Diff] utility).
+   */
+  private fun doReplaceText(relativeStartOffset: Int, oldText: CharSequence, newText: String) {
+    LOG.trace {
+      "REPLACE relStart=$relativeStartOffset len=${oldText.length} docLen=${document.textLength} newLen=${newText.length} " +
+      "oldLines=${oldText.count { it == '\n' } + 1} newLines=${newText.count { it == '\n' } + 1}\n" +
+      "  OLD:\n${oldText.dumpLinesForTrace()}  NEW:\n${newText.dumpLinesForTrace()}"
+    }
+
+    // Use the minimal edits approach only if it is enabled in Registry
+    if (!Registry.`is`("terminal.minimal.document.edits")) {
+      document.replaceString(relativeStartOffset, relativeStartOffset + oldText.length, newText)
+      return
+    }
+
+    // Decide whether more performant single replace can be done (if replaced content is too long).
+    if (exceedsScreen(newText) || exceedsScreen(oldText)) {
+      LOG.trace { "  SINGLE REPLACE (update exceeds $VISIBLE_SCREEN_LINES lines)" }
+      document.replaceString(relativeStartOffset, relativeStartOffset + oldText.length, newText)
+      return
+    }
+
+    // Both old and new text fit the screen: use minimal edits approach
+    val oldLines = oldText.toString().split('\n')
+    val newLines = newText.split('\n')
+    val changes = try {
+      Diff.buildChanges(oldLines.toTypedArray(), newLines.toTypedArray())
+    }
+    catch (_: FilesTooBigForDiffException) {
+      document.replaceString(relativeStartOffset, relativeStartOffset + oldText.length, newText)
+      return
+    }
+    // A `null` change means the texts are identical: nothing to do.
+    val hunks = changes?.toList() ?: return
+
+    val oldLineStarts = lineStartOffsets(oldLines)
+    val newLineStarts = lineStartOffsets(newLines)
+    val oldEnd = oldText.length
+    val newEnd = newText.length
+
+    // Each [Diff.Change] hunk deletes `deleted` old lines at `line0` and inserts `inserted` new lines at `line1`.
+    // The lines between hunks are identical and left untouched (so their markers survive).
+    // Apply hunks bottom-up so offsets of not-yet-applied edits stay valid.
+    LOG.trace { "  DIFF: oldLines=${oldLines.size} newLines=${newLines.size} hunks=${hunks.size}" }
+    for (hunk in hunks.asReversed()) {
+      if (hunk.deleted == hunk.inserted) {
+        // A same-size hunk: replace each line on its own,
+        // so Document.replaceString's own common prefix/suffix trimming keeps RangeMarkers over the unchanged part of a line.
+        LOG.trace { "    edit: replace ${hunk.deleted} line(s) individually [oldLines ${hunk.line0}..<${hunk.line0 + hunk.deleted}]" }
+        for (k in hunk.deleted - 1 downTo 0) {
+          val oldLine = oldLines[hunk.line0 + k]
+          val newLine = newLines[hunk.line1 + k]
+          if (oldLine == newLine) continue
+          val start = relativeStartOffset + oldLineStarts[hunk.line0 + k]
+          document.replaceString(start, start + oldLine.length, newLine)
+        }
+      }
+      else {
+        // A hunk that changes the number of lines (insertion/deletion): replace it in one edit.
+        // The boundaries sit at the end of the identical line before the hunk and the start of the identical line after it.
+        val oldHunkStart = if (hunk.line0 > 0) oldLineStarts[hunk.line0 - 1] + oldLines[hunk.line0 - 1].length else 0
+        val oldHunkEnd = if (hunk.line0 + hunk.deleted < oldLines.size) oldLineStarts[hunk.line0 + hunk.deleted] else oldEnd
+        val newHunkStart = if (hunk.line1 > 0) newLineStarts[hunk.line1 - 1] + newLines[hunk.line1 - 1].length else 0
+        val newHunkEnd = if (hunk.line1 + hunk.inserted < newLines.size) newLineStarts[hunk.line1 + hunk.inserted] else newEnd
+        LOG.trace { "    edit: replace old [$oldHunkStart,$oldHunkEnd) (${oldHunkEnd - oldHunkStart} chars) with new [$newHunkStart,$newHunkEnd) (${newHunkEnd - newHunkStart} chars)" }
+        document.replaceString(relativeStartOffset + oldHunkStart,
+                               relativeStartOffset + oldHunkEnd,
+                               newText.subSequence(newHunkStart, newHunkEnd))
+      }
+    }
   }
 
-  private fun findFirstChangeOffset(startOffset: TerminalOffset, length: Int, newText: String): TerminalOffset {
-    val relativeStartOffset = startOffset.toRelative()
-    var srcIndex = relativeStartOffset
-    var dstIndex = 0
-    val text = document.immutableCharSequence
-    while (srcIndex < relativeStartOffset + length && dstIndex < newText.length && text[srcIndex] == newText[dstIndex]) {
-      ++srcIndex
-      ++dstIndex
+  private fun lineStartOffsets(lines: List<CharSequence>): IntArray {
+    val starts = IntArray(lines.size + 1)
+    for (i in lines.indices) {
+      starts[i + 1] = starts[i] + lines[i].length + 1
     }
-    return relativeOffset(srcIndex)
+    return starts
   }
 
-  private fun findLastChangeOffset(startOffset: TerminalOffset, length: Int, newText: String, newTextStart: Int): TerminalOffset {
-    val relativeStartOffset = startOffset.toRelative()
-    var srcIndex = relativeStartOffset + length - 1
-    var dstIndex = newText.length - 1
-    val text = document.immutableCharSequence
-    while (srcIndex >= relativeStartOffset && dstIndex >= newTextStart && text[srcIndex] == newText[dstIndex]) {
-      --srcIndex
-      --dstIndex
+  /**
+   * Whether [text] spans more than [VISIBLE_SCREEN_LINES] lines.
+   */
+  private fun exceedsScreen(text: CharSequence): Boolean {
+    var newlines = 0
+    for (i in text.indices) {
+      if (text[i] == '\n' && ++newlines >= VISIBLE_SCREEN_LINES) return true
     }
-    return relativeOffset(srcIndex)
+    return false
+  }
+
+  /** Computes the change to report to listeners: the range that differs, ignoring the common character prefix and suffix. */
+  private fun computeChange(startOffset: TerminalOffset, oldText: CharSequence, newText: CharSequence): ModelChange {
+    val maxCommon = minOf(oldText.length, newText.length)
+    var prefix = 0
+    while (prefix < maxCommon && oldText[prefix] == newText[prefix]) prefix++
+    var suffix = 0
+    while (suffix < maxCommon - prefix && oldText[oldText.length - 1 - suffix] == newText[newText.length - 1 - suffix]) suffix++
+    val oldCore = oldText.subSequence(prefix, oldText.length - suffix)
+    val newCore = newText.subSequence(prefix, newText.length - suffix)
+    return ModelChange(startOffset + prefix.toLong(), oldCore, newCore)
   }
 
   private fun ensureCorrectCursorOffset() {
@@ -257,6 +357,7 @@ class MutableTerminalOutputModelImpl(
     val futureFirstLineStart = document.getLineStartOffset(futureFirstLineNumber)
 
     highlightingsModel.removeBefore(removeUntilOffset)
+    osc8HyperlinksModel.removeBefore(removeUntilOffset)
 
     val trimmedPart = document.immutableCharSequence.subSequence(0, removeUntilOffset)
     document.deleteString(0, removeUntilOffset)
@@ -346,6 +447,11 @@ class MutableTerminalOutputModelImpl(
     return highlightingsModel.getHighlightingAt(documentOffset.toRelative())
   }
 
+  override fun getOsc8Hyperlinks(): List<TerminalOutputOsc8Hyperlink> {
+    // Like getHighlightings, links may be out of sync with the document while an update is in progress.
+    return if (contentUpdateInProgress) emptyList() else osc8HyperlinksModel.getHyperlinks()
+  }
+
   override fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener) {
     listeners.add(listener, parentDisposable)
   }
@@ -368,7 +474,8 @@ class MutableTerminalOutputModelImpl(
       trimmedCharsCount = trimmedCharsCount,
       firstLineTrimmedCharsCount = firstLineTrimmedCharsCount,
       cursorOffset = cursorOffset.toRelative(),
-      highlightings = highlightingsModel.dumpState()
+      highlightings = highlightingsModel.dumpState(),
+      osc8Hyperlinks = osc8HyperlinksModel.dumpState(),
     )
   }
 
@@ -380,10 +487,19 @@ class MutableTerminalOutputModelImpl(
       firstLineTrimmedCharsCount = state.firstLineTrimmedCharsCount
       document.setText(state.text)
       highlightingsModel.restoreFromState(state.highlightings)
+      osc8HyperlinksModel.restoreFromState(state.osc8Hyperlinks)
       updateCursorPosition(relativeOffset(state.cursorOffset))
 
       ModelChange(startOffset, oldText, state.text)  // the document is changed from right from the start
     }
+  }
+
+  companion object {
+    @VisibleForTesting
+    /**
+     * The assumed visible-screen height in logical lines.
+     */
+    const val VISIBLE_SCREEN_LINES: Int = 100
   }
 
   private inner class HighlightingsModel {
@@ -391,10 +507,14 @@ class MutableTerminalOutputModelImpl(
 
     /**
      * Contains sorted ranges of the text that are highlighted differently than default.
-     * Indexes of the ranges are absolute to support trimming the start of the list
-     * without reassigning indexes for the remaining ranges: [removeBefore].
+     * Offsets of the ranges are absolute to support trimming the start of the list
+     * without reassigning offsets for the remaining ranges: [removeBefore].
      */
-    private val styleRanges: MutableList<StyleRange> = ArrayDeque() // ArrayDeque is used here for fast removeAt(0).
+    private val styleRanges = AbsoluteOffsetRanges<StyleRange>(
+      startOffsetOf = { it.startOffset },
+      endOffsetOf = { it.endOffset },
+      withOffsets = { range, start, end -> range.copy(startOffset = start, endOffset = end) },
+    )
 
     /**
      * Contains sorted ranges of the highlightings that cover all document length.
@@ -403,11 +523,11 @@ class MutableTerminalOutputModelImpl(
     private var highlightingsSnapshot: TerminalOutputHighlightingsSnapshot? = null
 
     fun getHighlightingsSnapshot(): TerminalOutputHighlightingsSnapshot {
-      if (highlightingsSnapshot != null) {
-        return highlightingsSnapshot!!
+      highlightingsSnapshot?.let {
+        return it
       }
 
-      val documentRelativeHighlightings = styleRanges.map {
+      val documentRelativeHighlightings = styleRanges.asIterable().map {
         HighlightingInfo(
           startOffset = (it.startOffset - trimmedCharsCount).toInt(),
           endOffset = (it.endOffset - trimmedCharsCount).toInt(),
@@ -424,13 +544,7 @@ class MutableTerminalOutputModelImpl(
         return null
       }
       val absoluteOffset = documentOffset + trimmedCharsCount
-      val index = styleRanges.binarySearch {
-        when {
-          it.endOffset <= absoluteOffset -> -1
-          it.startOffset > absoluteOffset -> 1
-          else -> 0
-        }
-      }
+      val index = styleRanges.indexOfRangeAt(absoluteOffset)
       return if (index >= 0) {
         val range = styleRanges[index]
         HighlightingInfo(
@@ -443,16 +557,10 @@ class MutableTerminalOutputModelImpl(
     }
 
     fun removeBefore(documentOffset: Int) {
-      val absoluteOffset = documentOffset + trimmedCharsCount
-      val styleIndex = styleRanges.binarySearch { it.startOffset.compareTo(absoluteOffset) }
-      val removeUntilHighlightingIndex = if (styleIndex < 0) -styleIndex - 1 else styleIndex
-      repeat(removeUntilHighlightingIndex) {
-        styleRanges.removeAt(0)
-      }
-
+      styleRanges.removeBefore(documentOffset + trimmedCharsCount)
       highlightingsSnapshot = null
     }
-    
+
     fun clear() {
       styleRanges.clear()
       highlightingsSnapshot = null
@@ -460,88 +568,193 @@ class MutableTerminalOutputModelImpl(
 
     fun updateHighlightings(relativeStartOffset: Int, oldLength: Int, newLength: Int, styles: List<StyleRange>) {
       val absoluteStartOffset = relativeStartOffset + trimmedCharsCount
-      val absoluteEndOffset = absoluteStartOffset + oldLength
-      val lastUnaffectedIndexBefore = styleRanges.binarySearch { it.endOffset.compareTo(absoluteStartOffset) }.let { i ->
-        if (i >= 0) i else -i - 2
-      }
-      val firstUnaffectedIndexAfter = styleRanges.binarySearch { it.startOffset.compareTo(absoluteEndOffset) }.let { i ->
-        if (i >= 0) i else -i - 1
-      }
-      val shift = newLength - oldLength
-
-      shift(firstUnaffectedIndexAfter, shift)
-
-      updateAffectedRanges(
-        affectedIndexes = lastUnaffectedIndexBefore + 1 until firstUnaffectedIndexAfter,
-        affectedAbsoluteOffsets = absoluteStartOffset until absoluteEndOffset,
-        shift = shift,
-      )
-      
-      // We could've calculated it in updateAffectedRanges, but it's error-prone and fragile,
-      // it's much easier to just look it up.
-      val insertionIndex = styleRanges.binarySearch { it.startOffset.compareTo(absoluteEndOffset + shift) }.let { i ->
-        if (i >= 0) i else -i - 1
-      }
-      val absoluteStyles = styles.map { styleRange -> 
+      val absoluteStyles = styles.map { styleRange ->
         styleRange.copy(
           startOffset = styleRange.startOffset + absoluteStartOffset,
           endOffset = styleRange.endOffset + absoluteStartOffset,
         )
       }
-      styleRanges.addAll(insertionIndex, absoluteStyles)
-
+      styleRanges.replace(absoluteStartOffset, oldLength, newLength, absoluteStyles)
       highlightingsSnapshot = null
-    }
-
-    private fun shift(shiftFromIndex: Int, shift: Int) {
-      if (shift == 0) return
-      for (i in shiftFromIndex until styleRanges.size) {
-        val styleRange = styleRanges[i]
-        styleRanges[i] = styleRange.copy(
-          startOffset = styleRange.startOffset + shift,
-          endOffset = styleRange.endOffset + shift,
-        )
-      }
-    }
-
-    private fun updateAffectedRanges(affectedIndexes: IntRange, affectedAbsoluteOffsets: LongRange, shift: Int) {
-      if (affectedIndexes.isEmpty()) return // affectedAbsoluteOffsets might be empty in case of an insertion, but we still need to split then
-      val absoluteStartOffset = affectedAbsoluteOffsets.first
-      val absoluteEndOffset = affectedAbsoluteOffsets.last + 1
-      val affectedRanges = styleRanges.subList(affectedIndexes.first, affectedIndexes.last + 1)
-      val updatedRanges = mutableListOf<StyleRange>()
-      for (range in affectedRanges) {
-        when {
-          range.startOffset < absoluteStartOffset && range.endOffset <= absoluteEndOffset -> {
-            // the start of the range is retained, the end is trimmed
-            updatedRanges.add(range.copy(endOffset = absoluteStartOffset))
-          }
-          range.startOffset in affectedAbsoluteOffsets && range.endOffset > absoluteEndOffset -> {
-            // the start of the range is trimmed, the end is retained, the range is shifted
-            updatedRanges.add(range.copy(startOffset = absoluteEndOffset + shift, endOffset = range.endOffset + shift))
-          }
-          range.startOffset < absoluteStartOffset && range.endOffset > absoluteEndOffset -> {
-            // the range is split, both parts are trimmed, the right part is also shifted
-            updatedRanges.add(range.copy(endOffset = absoluteStartOffset))
-            updatedRanges.add(range.copy(startOffset = absoluteEndOffset + shift, endOffset = range.endOffset + shift))
-          }
-          // else the entire range is inside the removed range and therefore is removed
-        }
-      }
-      affectedRanges.clear()
-      affectedRanges.addAll(updatedRanges)
     }
 
     fun dumpState(): List<StyleRange> {
-      return styleRanges.toList()
+      return styleRanges.asIterable().toList()
     }
 
     fun restoreFromState(state: List<StyleRange>) {
-      styleRanges.clear()
-      styleRanges.addAll(state)
-
+      styleRanges.setAll(state)
       highlightingsSnapshot = null
     }
+  }
+
+  private inner class Osc8HyperlinksModel {
+    /**
+     * Sorted OSC8 hyperlinks with absolute offsets (see [HighlightingsModel.styleRanges]).
+     */
+    private val hyperlinks = AbsoluteOffsetRanges<Osc8Hyperlink>(
+      startOffsetOf = { it.startOffset },
+      endOffsetOf = { it.endOffset },
+      withOffsets = { link, start, end -> link.copy(startOffset = start, endOffset = end) },
+    )
+
+    fun clear() {
+      hyperlinks.clear()
+    }
+
+    fun removeBefore(documentOffset: Int) {
+      hyperlinks.removeBefore(documentOffset + trimmedCharsCount)
+    }
+
+    fun update(relativeStartOffset: Int, oldLength: Int, newLength: Int, newHyperlinks: List<Osc8Hyperlink>) {
+      val absoluteStartOffset = relativeStartOffset + trimmedCharsCount
+      val absoluteHyperlinks = newHyperlinks.map { link ->
+        link.copy(
+          startOffset = link.startOffset + absoluteStartOffset,
+          endOffset = link.endOffset + absoluteStartOffset,
+        )
+      }
+      hyperlinks.replace(absoluteStartOffset, oldLength, newLength, absoluteHyperlinks)
+    }
+
+    fun getHyperlinks(): List<TerminalOutputOsc8Hyperlink> = hyperlinks.asIterable().map {
+      TerminalOutputOsc8Hyperlink(
+        startOffset = TerminalOffset.of(it.startOffset),
+        endOffset = TerminalOffset.of(it.endOffset),
+        uri = it.uri,
+      )
+    }
+
+    fun dumpState(): List<Osc8Hyperlink> = hyperlinks.asIterable().toList()
+
+    fun restoreFromState(state: List<Osc8Hyperlink>) {
+      hyperlinks.setAll(state)
+    }
+  }
+}
+
+/**
+ * A sorted list of non-overlapping ranges keyed by absolute offsets (offsets from the very beginning
+ * of the output history, so they stay stable while the start of the output is trimmed).
+ *
+ * Encapsulates the insert/replace/trim/shift bookkeeping shared by the output-model highlightings and
+ * the OSC8 hyperlinks. [T] is the range payload; [startOffsetOf]/[endOffsetOf] read its absolute
+ * offsets and [withOffsets] produces a copy of it with new offsets.
+ */
+private class AbsoluteOffsetRanges<T>(
+  private val startOffsetOf: (T) -> Long,
+  private val endOffsetOf: (T) -> Long,
+  private val withOffsets: (T, Long, Long) -> T,
+) {
+  private val ranges: MutableList<T> = ArrayDeque() // ArrayDeque is used here for fast removeAt(0).
+
+  fun asIterable(): Iterable<T> = ranges
+
+  operator fun get(index: Int): T = ranges[index]
+
+  fun clear() {
+    ranges.clear()
+  }
+
+  fun setAll(newRanges: List<T>) {
+    ranges.clear()
+    ranges.addAll(newRanges)
+  }
+
+  /**
+   * Removes every range whose start is before [absoluteOffset].
+   *
+   * A range that straddles [absoluteOffset] (starts before it, ends after it) is removed entirely rather than
+   * clipped, so its still-visible suffix loses its decoration. This is intentional and shared by both terminal
+   * highlightings and OSC8 hyperlinks: when output-capacity trimming cuts mid-range, that range is dropped for
+   * both. If partially visible ranges should ever remain, clip here so both keep behaving the same.
+   */
+  fun removeBefore(absoluteOffset: Long) {
+    val index = ranges.binarySearch { startOffsetOf(it).compareTo(absoluteOffset) }
+    val removeUntil = if (index < 0) -index - 1 else index
+    repeat(removeUntil) {
+      ranges.removeAt(0)
+    }
+  }
+
+  /** Returns the index of the range covering [absoluteOffset], or a negative value if there is none. */
+  fun indexOfRangeAt(absoluteOffset: Long): Int {
+    return ranges.binarySearch {
+      when {
+        endOffsetOf(it) <= absoluteOffset -> -1
+        startOffsetOf(it) > absoluteOffset -> 1
+        else -> 0
+      }
+    }
+  }
+
+  /**
+   * Replaces the ranges within `[absoluteStartOffset, absoluteStartOffset + oldLength)` with
+   * [newRanges] (whose offsets are already absolute), shifting the ranges located after the replaced
+   * region by `newLength - oldLength`.
+   */
+  fun replace(absoluteStartOffset: Long, oldLength: Int, newLength: Int, newRanges: List<T>) {
+    val absoluteEndOffset = absoluteStartOffset + oldLength
+    val lastUnaffectedIndexBefore = ranges.binarySearch { endOffsetOf(it).compareTo(absoluteStartOffset) }.let { i ->
+      if (i >= 0) i else -i - 2
+    }
+    val firstUnaffectedIndexAfter = ranges.binarySearch { startOffsetOf(it).compareTo(absoluteEndOffset) }.let { i ->
+      if (i >= 0) i else -i - 1
+    }
+    val shift = newLength - oldLength
+
+    shift(firstUnaffectedIndexAfter, shift)
+
+    updateAffectedRanges(
+      affectedIndexes = lastUnaffectedIndexBefore + 1 until firstUnaffectedIndexAfter,
+      affectedAbsoluteOffsets = absoluteStartOffset until absoluteEndOffset,
+      shift = shift,
+    )
+
+    // We could've calculated it in updateAffectedRanges, but it's error-prone and fragile,
+    // it's much easier to just look it up.
+    val insertionIndex = ranges.binarySearch { startOffsetOf(it).compareTo(absoluteEndOffset + shift) }.let { i ->
+      if (i >= 0) i else -i - 1
+    }
+    ranges.addAll(insertionIndex, newRanges)
+  }
+
+  private fun shift(shiftFromIndex: Int, shift: Int) {
+    if (shift == 0) return
+    for (i in shiftFromIndex until ranges.size) {
+      val range = ranges[i]
+      ranges[i] = withOffsets(range, startOffsetOf(range) + shift, endOffsetOf(range) + shift)
+    }
+  }
+
+  private fun updateAffectedRanges(affectedIndexes: IntRange, affectedAbsoluteOffsets: LongRange, shift: Int) {
+    if (affectedIndexes.isEmpty()) return // affectedAbsoluteOffsets might be empty in case of an insertion, but we still need to split then
+    val absoluteStartOffset = affectedAbsoluteOffsets.first
+    val absoluteEndOffset = affectedAbsoluteOffsets.last + 1
+    val affectedRanges = ranges.subList(affectedIndexes.first, affectedIndexes.last + 1)
+    val updatedRanges = mutableListOf<T>()
+    for (range in affectedRanges) {
+      val start = startOffsetOf(range)
+      val end = endOffsetOf(range)
+      when {
+        start < absoluteStartOffset && end <= absoluteEndOffset -> {
+          // the start of the range is retained, the end is trimmed
+          updatedRanges.add(withOffsets(range, start, absoluteStartOffset))
+        }
+        start in affectedAbsoluteOffsets && end > absoluteEndOffset -> {
+          // the start of the range is trimmed, the end is retained, the range is shifted
+          updatedRanges.add(withOffsets(range, absoluteEndOffset + shift, end + shift))
+        }
+        start < absoluteStartOffset && end > absoluteEndOffset -> {
+          // the range is split, both parts are trimmed, the right part is also shifted
+          updatedRanges.add(withOffsets(range, start, absoluteStartOffset))
+          updatedRanges.add(withOffsets(range, absoluteEndOffset + shift, end + shift))
+        }
+        // else the entire range is inside the removed range and therefore is removed
+      }
+    }
+    affectedRanges.clear()
+    affectedRanges.addAll(updatedRanges)
   }
 }
 
@@ -635,3 +848,16 @@ private data class TerminalCursorOffsetChangeEventImpl(
 ) : TerminalCursorOffsetChangeEvent
 
 private val LOG = logger<MutableTerminalOutputModelImpl>()
+
+private fun CharSequence.dumpLinesForTrace(maxLines: Int = 200, maxLineLength: Int = 120): String {
+  val lines = split("\n")
+  return buildString {
+    for (i in lines.indices) {
+      if (i >= maxLines) {
+        append("    … (").append(lines.size - maxLines).append(" more lines)\n")
+        break
+      }
+      append("    [").append(i).append("] '").append(lines[i].take(maxLineLength)).append("'\n")
+    }
+  }
+}

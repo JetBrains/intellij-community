@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ import java.util.List;
  */
 public class CommonDataKeys {
 
-  public static final DataKey<Project> PROJECT = DataKey.create("project");
+  public static final DataKey<Project> PROJECT = DataKey.create(Names.PROJECT_KEY_NAME);
 
   /**
    * Returns currently focused editor instance.
@@ -30,7 +31,7 @@ public class CommonDataKeys {
    * @see #HOST_EDITOR
    * @see #EDITOR_EVEN_IF_INACTIVE
    */
-  public static final DataKey<Editor> EDITOR = DataKey.create("editor");
+  public static final DataKey<Editor> EDITOR = DataKey.create(Names.EDITOR_KEY_NAME);
 
   /**
    * Returns reference to host editor instance, in case {@link #EDITOR} key is referring to an injected editor.
@@ -124,4 +125,9 @@ public class CommonDataKeys {
    * @see com.intellij.model.psi.impl.TargetSymbolsDataRule
    */
   public static final DataKey<List<Symbol>> SYMBOLS = DataKey.create("symbols");
+  @ApiStatus.Internal
+  public interface Names {
+    String PROJECT_KEY_NAME = "project";
+    String EDITOR_KEY_NAME = "editor";
+  }
 }

@@ -14,6 +14,8 @@ import com.jetbrains.python.refactoring.classes.PyClassRefactoringTest;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import org.jetbrains.annotations.NotNull;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,6 +26,8 @@ import java.util.function.Consumer;
 /**
  * @author Dennis.Ushakov
  */
+@Subsystems.Refactoring
+@Layers.Functional
 public final class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
   public PyExtractSuperclassTest() {

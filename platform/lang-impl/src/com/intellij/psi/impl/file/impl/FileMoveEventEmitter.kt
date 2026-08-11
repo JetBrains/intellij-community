@@ -121,7 +121,7 @@ internal class FileMoveEventEmitter(
       }
       else {
         if (newElement is PsiDirectory ||
-            FileManagerImpl.areViewProvidersEquivalent(newViewProvider!!, (oldElements.first() as PsiFile).viewProvider)) {
+            FileManagerImpl.areViewProvidersEquivalent(newViewProvider!!, (oldElements.first() as PsiFile).viewProvider) == null) {
           firePlainMove(oldElements, oldParentDir, newParentDir)
         }
         else {

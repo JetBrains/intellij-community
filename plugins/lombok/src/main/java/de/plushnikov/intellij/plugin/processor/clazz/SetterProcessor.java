@@ -100,7 +100,9 @@ public final class SetterProcessor extends AbstractClassProcessor {
     }
   }
 
-  public Collection<PsiMethod> createFieldSetters(@NotNull PsiClass psiClass, @NotNull String methodModifier, @Nullable String nameHint) {
+  public Collection<PsiMethod> createFieldSetters(@NotNull PsiClass psiClass,
+                                                  @PsiModifier.ModifierConstant @NotNull String methodModifier,
+                                                  @Nullable String nameHint) {
     Collection<PsiMethod> result = new ArrayList<>();
 
     final Collection<PsiField> setterFields = filterSetterFields(psiClass);

@@ -6,7 +6,6 @@ import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeDe
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeList
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModelBase
-import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesContainer
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
 import com.intellij.collaboration.util.getOrNull
@@ -17,7 +16,6 @@ import com.intellij.vcsUtil.VcsFileUtil.relativePath
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -36,39 +34,42 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.viewedStateComputa
 @ApiStatus.Experimental
 interface GHPRChangeListViewModel :
   CodeReviewChangeListViewModel.WithDetails,
-  CodeReviewChangeListViewModel.WithGrouping,
-  CodeReviewChangeListViewModel.WithViewedState {
-
-  val isOnLatest: Boolean
+  CodeReviewChangeListViewModel.WithGrouping {
 
   companion object {
-    val DATA_KEY: DataKey<GHPRChangeListViewModel> = DataKey.create<GHPRChangeListViewModel>("GitHub.PullRequest.Details.Changes.List.ViewModel")
+    val DATA_KEY: DataKey<GHPRChangeListViewModel> = DataKey.create("GitHub.PullRequest.Details.Changes.List.ViewModel")
   }
 }
 
-internal class GHPRChangeListViewModelImpl(
+/**
+ * A change list of the cumulative pull request diff.
+ *
+ * The viewed state describes a file as a whole and is only reported for the cumulative diff, so a commit-scoped change
+ * list does not expose it at all - only this view model implements [CodeReviewChangeListViewModel.WithViewedState].
+ */
+@ApiStatus.Experimental
+interface GHPRCumulativeChangeListViewModel :
+  GHPRChangeListViewModel,
+  CodeReviewChangeListViewModel.WithViewedState
+
+internal abstract class GHPRChangeListViewModelBase(
   parentCs: CoroutineScope,
   override val project: Project,
   private val dataContext: GHPRDataContext,
-  private val dataProvider: GHPRDataProvider,
-  changes: CodeReviewChangesContainer,
+  protected val dataProvider: GHPRDataProvider,
   changeList: CodeReviewChangeList,
   private val openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
 ) : GHPRChangeListViewModel, CodeReviewChangeListViewModelBase(parentCs, changeList) {
   private val preferences = GithubPullRequestsProjectUISettings.getInstance(project)
-  private val repository: GitRepository get() = dataContext.repositoryDataService.remoteCoordinates.repository
+  protected val repository: GitRepository get() = dataContext.repositoryDataService.remoteCoordinates.repository
 
-  override val isOnLatest: Boolean = changeList.commitSha == null || changes.commits.size == 1
-
-  private val viewedStateData = dataProvider.viewedStateData
-
-  override val detailsByChange: StateFlow<Map<RefComparisonChange, CodeReviewChangeDetails>> =
-    if (isOnLatest) {
-      createDetailsByChangeFlow().stateIn(cs, SharingStarted.Eagerly, emptyMap())
-    }
-    else {
-      MutableStateFlow(emptyMap())
-    }
+  protected val unresolvedThreadsCountByChange: Flow<Map<RefComparisonChange, Int>> =
+    dataProvider.reviewData.threadsComputationFlow
+      .filter { !it.isInProgress }.map { it.getOrNull().orEmpty() }
+      .map { threads ->
+        val unresolvedThreadsByPath = threads.asSequence().filter { !it.isResolved }.groupingBy { it.path }.eachCount()
+        changes.associateWith { unresolvedThreadsByPath[relativePath(repository.root, it.filePath)] ?: 0 }
+      }
 
   override val grouping: StateFlow<Set<String>> = preferences.changesGroupingState
 
@@ -83,32 +84,53 @@ internal class GHPRChangeListViewModelImpl(
     DiffManager.getInstance().showDiff(project, requestChain, DiffDialogHints.DEFAULT)*/
   }
 
+  override fun setGrouping(grouping: Collection<String>) {
+    preferences.changesGrouping = grouping.toSet()
+  }
+}
+
+internal class GHPRCommitChangeListViewModelImpl(
+  parentCs: CoroutineScope,
+  project: Project,
+  dataContext: GHPRDataContext,
+  dataProvider: GHPRDataProvider,
+  changeList: CodeReviewChangeList,
+  openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
+) : GHPRChangeListViewModelBase(parentCs, project, dataContext, dataProvider, changeList, openPullRequestDiff) {
+  override val detailsByChange: StateFlow<Map<RefComparisonChange, CodeReviewChangeDetails>> =
+    unresolvedThreadsCountByChange.map { threadsCount ->
+      threadsCount.mapValues { (_, discussions) -> CodeReviewChangeDetails(isRead = true, discussions = discussions) }
+    }.stateIn(cs, SharingStarted.Eagerly, emptyMap())
+}
+
+internal class GHPRCumulativeChangeListViewModelImpl(
+  parentCs: CoroutineScope,
+  project: Project,
+  dataContext: GHPRDataContext,
+  dataProvider: GHPRDataProvider,
+  changeList: CodeReviewChangeList,
+  openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
+) : GHPRChangeListViewModelBase(parentCs, project, dataContext, dataProvider, changeList, openPullRequestDiff),
+    GHPRCumulativeChangeListViewModel {
+  private val viewedStateData = dataProvider.viewedStateData
+
+  override val detailsByChange: StateFlow<Map<RefComparisonChange, CodeReviewChangeDetails>> =
+    combine(
+      unresolvedThreadsCountByChange,
+      viewedStateData.viewedStateComputationState.filter { !it.isInProgress }.map { it.getOrNull().orEmpty() },
+    ) { threadsCount, viewedStateByPath ->
+      changes.associateWith { change ->
+        val isRead = viewedStateByPath[relativePath(repository.root, change.filePath)]?.isViewed() ?: true
+        CodeReviewChangeDetails(isRead, threadsCount[change] ?: 0)
+      }
+    }.stateIn(cs, SharingStarted.Eagerly, emptyMap())
+
   @RequiresEdt
   override fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean) {
     cs.launchNow {
       val paths = changes.map { relativePath(repository.root, it.filePath) }
       // TODO: handle error
       viewedStateData.updateViewedState(paths, viewed)
-    }
-  }
-
-  override fun setGrouping(grouping: Collection<String>) {
-    preferences.changesGrouping = grouping.toSet()
-  }
-
-  private fun createDetailsByChangeFlow(): Flow<Map<RefComparisonChange, CodeReviewChangeDetails>> {
-    val threadsFlow = dataProvider.reviewData.threadsComputationFlow
-      .filter { !it.isInProgress }.map { it.getOrNull().orEmpty() }
-    val viewedStateFlow = viewedStateData.viewedStateComputationState
-      .filter { !it.isInProgress }.map { it.getOrNull().orEmpty() }
-    return combine(threadsFlow, viewedStateFlow) { threads, viewedStateByPath ->
-      val unresolvedThreadsByPath = threads.asSequence().filter { !it.isResolved }.groupingBy { it.path }.eachCount()
-      changes.associateWith { change ->
-        val path = relativePath(repository.root, change.filePath)
-        val isRead = viewedStateByPath[path]?.isViewed() ?: true
-        val discussions = unresolvedThreadsByPath[path] ?: 0
-        CodeReviewChangeDetails(isRead, discussions)
-      }
     }
   }
 }

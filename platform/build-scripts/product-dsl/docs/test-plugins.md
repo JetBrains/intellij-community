@@ -171,9 +171,23 @@ For DSL test plugins, JPS dependency targets also support a test-descriptor fall
 
 Only **unresolvable** modules are auto-added to the test plugin content.
 
-**Note:** Content modules that belong to a plugin are **not** auto-added when their owning plugin or another graph source is resolvable for the test plugin scope (the module is already available). If neither the owning plugin nor another graph source is resolvable, the generator emits an error and skips auto-add unless the plugin ID is listed in `allowedMissingPluginIds` (either on the test plugin or on the module that triggered the dependency). **Exception:** library wrapper modules (`intellij.libraries.*`) are always auto-added as module dependencies, even if owned by a plugin.
+**Note:** Content modules that belong to a plugin are **not** auto-added when their owning plugin or another graph source is resolvable for the test plugin scope (the module is already available). If neither the owning plugin nor another graph source is resolvable, descriptor-backed modules are auto-added only when they have a single production owner and that owner embeds them; non-embedded or ambiguously owned plugin-owned modules still report an error and skip auto-add unless the plugin ID is listed in `allowedMissingPluginIds` (either on the test plugin or on the module that triggered the dependency). **Exception:** library wrapper modules (`intellij.libraries.*`) are always auto-added as module dependencies, even if owned by a plugin.
 
 For dependencies declared directly on the DSL test plugin main target, `RUNTIME`-scoped `.iml` dependencies on valid content modules are generated as explicit `<dependencies><module name="..."/>` entries, even if the module is owned by a resolvable bundled plugin. This lets test plugins request a specific content module in their own plugin classloader without duplicating that module in `<content>`. Compile-scope plugin-owned content still normalizes to the owning `<plugin id="..."/>` dependency, and plugin-owned content whose owner is not resolvable still reports the normal DSL test plugin dependency error unless another graph source makes the same module resolvable in the DSL test plugin scope.
+
+### Test-Only Content Modules Never Add a New `<plugin>` Dependency
+
+Content modules whose name ends with `.tests` are **test-only**: their JPS dependencies are test-runtime-only. When such
+a module is the *sole* reason a plugin would be pulled in, the generator drops that plugin from the generated test plugin
+descriptor instead of writing `<plugin id="..."/>` — otherwise a single test module drags in a whole plugin and duplicates
+its test roots (IJPL-241684). A `<plugin>` dependency already declared in the descriptor is always kept, and a plugin
+required by at least one non-`.tests` content module is written as usual.
+
+This suffix check (`isTestOnlyContentModule` in `TestPluginDependencyPlanner`) is the only place where the `.tests`
+*name* matters. The same *policy* — never introduce a new `<plugin>` gate — also applies to a `*.tests.xml` module
+descriptor's own `<dependencies>`, but there it is keyed on the descriptor being generated with test scope (its location
+under a test source root), not on the name suffix — see
+[dependency_generation.md](dependency_generation.md#testsxml-is-not-_testxml).
 
 ### Source of Truth and Transitive Closure
 

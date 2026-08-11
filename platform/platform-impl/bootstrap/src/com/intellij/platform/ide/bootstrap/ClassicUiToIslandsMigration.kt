@@ -22,6 +22,7 @@ import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
+import com.intellij.util.SlowOperations
 import com.intellij.util.system.OS
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +44,7 @@ internal object ClassicUiToIslandsMigration {
 
   val isEnabledFeature: Boolean by lazy {
     AppMode.isMonolith() && !java.lang.Boolean.getBoolean("idea.is.unit.test") && !ApplicationManagerEx.isInIntegrationTest()
-    // System.getProperty("disable.classic.ui.on.start.feature", "false").toBoolean()
+    && !java.lang.Boolean.getBoolean(SlowOperations.IDEA_PLUGIN_SANDBOX_MODE)
   }
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,7 +29,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -235,11 +234,13 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
                                                                           final @NotNull Module module,
                                                                           @Nullable LibraryOrderEntry currentRegisteredLibraryOrderEntry) {
     final Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
-    final String libraryName = libraryDependencyData.getInternalName();
     final LibraryData libraryDependencyDataTarget = libraryDependencyData.getTarget();
-    Map<OrderRootType, Collection<File>> files = LibraryDataService.prepareLibraryFiles(libraryDependencyDataTarget);
-    Set<String> excludedPaths = libraryDependencyDataTarget.getPaths(LibraryPathType.EXCLUDED);
-    LibraryDataService.registerPaths(libraryDependencyDataTarget.isUnresolved(), files, excludedPaths, libraryModel, libraryName);
+    if (libraryDependencyDataTarget.isUnresolved()) {
+      LibraryDataService.registerPaths(libraryModel, libraryDependencyDataTarget);
+    }
+    else {
+      LibraryDataService.syncPaths(libraryModel, libraryDependencyDataTarget);
+    }
     LibraryOrderEntry orderEntry = currentRegisteredLibraryOrderEntry;
     if (orderEntry == null) {
       orderEntry = findLibraryOrderEntry(moduleRootModel, library, libraryDependencyData.getScope());

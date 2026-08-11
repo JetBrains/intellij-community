@@ -25,6 +25,7 @@ import com.intellij.util.io.zip.JBZipEntry;
 import com.intellij.util.io.zip.JBZipFile;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 public final class WorkingContextManager {
   private static final Logger LOG = Logger.getInstance(WorkingContextManager.class);

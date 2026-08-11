@@ -20,7 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaFieldStubFactory implements LightStubElementFactory<PsiFieldStubImpl, PsiField> {
+public class JavaFieldStubFactory implements LightStubElementFactory<PsiFieldStub, PsiField> {
   private static final int INITIALIZER_LENGTH_LIMIT = 1000;
   
   @Override
@@ -62,7 +62,7 @@ public class JavaFieldStubFactory implements LightStubElementFactory<PsiFieldStu
   }
 
   @Override
-  public PsiField createPsi(@NotNull PsiFieldStubImpl stub) {
+  public PsiField createPsi(@NotNull PsiFieldStub stub) {
     return JavaStubElementType.getFileStub(stub).getPsiFactory().createField(stub);
   }
   

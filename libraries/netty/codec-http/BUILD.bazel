@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.netty.codec.http` start
-
 jvm_library(
     name = "libraries-netty-codec-http",
     srcs = glob(

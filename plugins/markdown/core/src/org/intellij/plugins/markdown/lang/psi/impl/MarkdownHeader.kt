@@ -8,10 +8,11 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
-import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.stubs.StubBuildCachedValuesManager.StubBuildCachedValueProvider
@@ -26,7 +27,6 @@ import org.intellij.plugins.markdown.lang.psi.util.children
 import org.intellij.plugins.markdown.lang.psi.util.childrenOfType
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElement
-import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElementType
 import org.intellij.plugins.markdown.structureView.MarkdownStructureColors
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -39,7 +39,7 @@ import javax.swing.Icon
 @Suppress("DEPRECATION")
 class MarkdownHeader: MarkdownHeaderImpl {
   constructor(node: ASTNode): super(node)
-  constructor(stub: MarkdownHeaderStubElement, type: MarkdownHeaderStubElementType): super(stub, type)
+  constructor(stub: MarkdownHeaderStubElement, type: IElementType): super(stub, type)
 
   val level
     get() = calculateHeaderLevel()
@@ -150,13 +150,10 @@ class MarkdownHeader: MarkdownHeaderImpl {
     }
   }
 
-  private fun buildRawAnchorText(includeStartingHash: Boolean = false): String? {
+  private fun buildRawAnchorText(): String? {
     val contentHolder = findContentHolder() ?: return null
     val children = contentHolder.children().dropWhile { it.hasType(MarkdownTokenTypeSets.WHITE_SPACES) }
     val text = buildString {
-      if (includeStartingHash) {
-        append("#")
-      }
       var count = 0
       for (child in children) {
         if (child.hasType(MarkdownTokenTypeSets.WHITE_SPACES)) {
@@ -206,11 +203,11 @@ class MarkdownHeader: MarkdownHeaderImpl {
       return sameHeaders.takeWhile { it != header }.count()
     }
 
-    private val HEADERS_LIST_PROVIDER = StubBuildCachedValueProvider<Iterable<MarkdownHeader>, com.intellij.psi.PsiFile>(
+    private val HEADERS_LIST_PROVIDER = StubBuildCachedValueProvider<Iterable<MarkdownHeader>, PsiFile>(
       "markdown.header.headersList"
     ) { file ->
       CachedValueProvider.Result.create(
-        SyntaxTraverser.psiTraverser(file).filterIsInstance<MarkdownHeader>(),
+        file.children.filterIsInstance<MarkdownHeader>(),
         PsiModificationTracker.MODIFICATION_COUNT
       )
     }
@@ -241,7 +238,7 @@ class MarkdownHeader: MarkdownHeaderImpl {
     private val OBTAIN_RAW_ANCHOR_PROVIDER = StubBuildCachedValueProvider<String?, MarkdownHeader>(
       "markdown.header.rawAnchorText"
     ) { header ->
-      CachedValueProvider.Result.create(header.buildRawAnchorText(false), PsiModificationTracker.MODIFICATION_COUNT)
+      CachedValueProvider.Result.create(header.buildRawAnchorText(), PsiModificationTracker.MODIFICATION_COUNT)
     }
 
     private val ENTITY_REGEX = Regex("""&(?:([a-zA-Z0-9]+)|#([0-9]{1,8})|#[xX]([a-fA-F0-9]{1,8}));""")

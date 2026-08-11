@@ -1,0 +1,8 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+
+    <inspection.basicVisitor class="org.jetbrains.kotlin.psi.KtVisitorVoid"/>
+    <inspection.basicVisitor class="org.jetbrains.kotlin.psi.KtVisitor"/>
+
+  </extensions>
+</idea-plugin>

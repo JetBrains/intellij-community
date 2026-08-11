@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 internal object CommitChunkCollector : CounterUsagesCollector() {
-  private val group = EventLogGroup("vcs.commit.chunk", 1)
+  private val group = EventLogGroup("vcs.commit.chunk", 2)
 
   override fun getGroup(): EventLogGroup = group
 

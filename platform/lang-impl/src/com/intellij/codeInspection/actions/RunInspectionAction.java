@@ -88,17 +88,17 @@ public final class RunInspectionAction extends GotoActionBase implements UiDataP
   }
 
   @Override
-  protected void gotoActionPerformed(final @NotNull AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
+  protected void gotoActionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    final PsiElement psiElement = e.getData(CommonDataKeys.PSI_ELEMENT);
-    final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
-    final VirtualFile[] virtualFiles = ObjectUtils.notNull(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY), VirtualFile.EMPTY_ARRAY);
+    PsiElement psiElement = e.getData(CommonDataKeys.PSI_ELEMENT);
+    PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
+    VirtualFile[] virtualFiles = ObjectUtils.notNull(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY), VirtualFile.EMPTY_ARRAY);
 
-    final GotoInspectionModel model = new GotoInspectionModel(project);
+    GotoInspectionModel model = new GotoInspectionModel(project);
     showNavigationPopup(e, model, new GotoActionCallback<>() {
       @Override
       protected ChooseByNameFilter<Object> createFilter(@NotNull ChooseByNamePopup popup) {
@@ -136,8 +136,8 @@ public final class RunInspectionAction extends GotoActionBase implements UiDataP
                                    @NotNull VirtualFile @NotNull [] virtualFiles,
                                    @Nullable PsiElement psiElement,
                                    @Nullable PsiFile psiFile) {
-    final PsiElement element = psiFile == null ? psiElement : psiFile;
-    final InspectionProfile currentProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
+    PsiElement element = psiFile == null ? psiElement : psiFile;
+    InspectionProfile currentProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
 
     record BaseAnalysisActionDialogInfo(
       @NotNull InspectionToolWrapper<?, ?> toolWrapper,
@@ -147,11 +147,11 @@ public final class RunInspectionAction extends GotoActionBase implements UiDataP
     }
 
     ReadAction.nonBlocking(() -> {
-      final InspectionToolWrapper<?, ?> toolWrapper = element != null
+      InspectionToolWrapper<?, ?> toolWrapper = element != null
                                                       ? currentProfile.getInspectionTool(shortName, element)
                                                       : currentProfile.getInspectionTool(shortName, project);
       LOGGER.assertTrue(toolWrapper != null, "Missed inspection: " + shortName);
-      final Module module = findModuleForFiles(project, virtualFiles);
+      Module module = findModuleForFiles(project, virtualFiles);
 
       AnalysisScope analysisScope = null;
       if (psiFile != null && virtualFiles.length == 1) {
@@ -159,7 +159,7 @@ public final class RunInspectionAction extends GotoActionBase implements UiDataP
       }
       else {
         if (virtualFiles.length == 1 && virtualFiles[0].isDirectory()) {
-          final PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(virtualFiles[0]);
+          PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(virtualFiles[0]);
           if (psiDirectory != null) {
             analysisScope = new AnalysisScope(psiDirectory, module);
           }
@@ -220,9 +220,9 @@ public final class RunInspectionAction extends GotoActionBase implements UiDataP
 
     @Override
     protected @NotNull JComponent getAdditionalActionSettings(@NotNull Project project) {
-      final JPanel panel = new JPanel(new GridBagLayout());
-      final boolean hasOptionsPanel = OptionPaneRenderer.hasSettings(myToolWrapper.getTool());
-      final GridBag constraints = new GridBag()
+      JPanel panel = new JPanel(new GridBagLayout());
+      boolean hasOptionsPanel = OptionPaneRenderer.hasSettings(myToolWrapper.getTool());
+      GridBag constraints = new GridBag()
         .setDefaultWeightX(1)
         .setDefaultWeightY(hasOptionsPanel ? 0 : 1)
         .setDefaultFill(GridBagConstraints.HORIZONTAL);
@@ -231,9 +231,9 @@ public final class RunInspectionAction extends GotoActionBase implements UiDataP
 
       // Add extension options panels
       for (RunInspectionDialogExtension extension : myExtensions) {
-        var pane = extension.getOptionsPane();
+        OptPane pane = extension.getOptionsPane();
         if (!pane.equals(OptPane.EMPTY)) {
-          var extensionPanel = OptionPaneRenderer.getInstance().render(
+          JComponent extensionPanel = OptionPaneRenderer.getInstance().render(
             extension.getOptionController(), pane, myDisposable, project);
           panel.add(extensionPanel, constraints.nextLine().insetTop(8));
         }
@@ -241,17 +241,17 @@ public final class RunInspectionAction extends GotoActionBase implements UiDataP
 
       if (hasOptionsPanel) {
         myUpdatedSettingsToolWrapper = copyToolWithSettings();
-        final JComponent optionsPanel =
+        JComponent optionsPanel =
           OptionPaneRenderer.createOptionsPanel(myUpdatedSettingsToolWrapper.getTool(), myDisposable, project);
         LOGGER.assertTrue(optionsPanel != null);
 
-        final var separator = new TitledSeparator(IdeBundle.message("goto.inspection.action.choose.inherit.settings.from"));
+        TitledSeparator separator = new TitledSeparator(IdeBundle.message("goto.inspection.action.choose.inherit.settings.from"));
         separator.setBorder(JBUI.Borders.empty());
         panel.add(separator, constraints.nextLine().insetTop(20));
 
         optionsPanel.setBorder(InspectionUiUtilKt.getBordersForOptions(optionsPanel));
-        final var scrollPane = InspectionUiUtilKt.addScrollPaneIfNecessary(optionsPanel);
-        final var preferredSize = scrollPane.getPreferredSize();
+        JComponent scrollPane = InspectionUiUtilKt.addScrollPaneIfNecessary(optionsPanel);
+        Dimension preferredSize = scrollPane.getPreferredSize();
         scrollPane.setPreferredSize(new Dimension(preferredSize.width, Math.min(preferredSize.height, 400)));
         panel.add(scrollPane, constraints.nextLine());
       }
@@ -260,17 +260,17 @@ public final class RunInspectionAction extends GotoActionBase implements UiDataP
     }
 
     private InspectionToolWrapper<?, ?> copyToolWithSettings() {
-      final Element options = new Element("copy");
+      Element options = new Element("copy");
       myToolWrapper.getTool().writeSettings(options);
-      final InspectionToolWrapper<?, ?> copiedTool = myToolWrapper.createCopy();
+      InspectionToolWrapper<?, ?> copiedTool = myToolWrapper.createCopy();
       copiedTool.getTool().readSettings(options);
       return copiedTool;
     }
 
     @Override
     public @NotNull AnalysisScope getScope(@NotNull AnalysisScope defaultScope) {
-      final AnalysisScope scope = super.getScope(defaultScope);
-      final GlobalSearchScope filterScope = myFileFilterPanel.getSearchScope();
+      AnalysisScope scope = super.getScope(defaultScope);
+      GlobalSearchScope filterScope = myFileFilterPanel.getSearchScope();
       if (filterScope == null) {
         return scope;
       }
@@ -288,9 +288,9 @@ public final class RunInspectionAction extends GotoActionBase implements UiDataP
 
     @Override
     protected Action @NotNull [] createActions() {
-      final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(myProject);
-      final List<Action> actions = new ArrayList<>();
-      final boolean hasFixAll = myToolWrapper.isCleanupTool();
+      InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(myProject);
+      List<Action> actions = new ArrayList<>();
+      boolean hasFixAll = myToolWrapper.isCleanupTool();
       actions.add(new AbstractAction(hasFixAll ? CodeInsightBundle.message("action.analyze.verb") : CommonBundle.getOkButtonText()) {
         {
           putValue(DEFAULT_ACTION, Boolean.TRUE);

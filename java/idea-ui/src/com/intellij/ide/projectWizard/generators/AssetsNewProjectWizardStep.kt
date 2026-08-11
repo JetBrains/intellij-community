@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
@@ -112,14 +112,12 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
 
   override fun setupProject(project: Project) {
     setupProjectSafe(project, UIBundle.message("error.project.wizard.new.project.sample.code", context.isCreatingNewProjectInt)) {
-      setupAssets(project)
-
-      val outputDirectory = resolveOutputDirectory()
-      val filesToOpen = resolveFilesToOpen(outputDirectory)
-
-      val filesToReformat = invokeAndWaitIfNeeded {
-        runWithModalProgressBlocking(project, UIBundle.message("label.project.wizard.new.assets.step.generate.sources.progress", project.name)) {
-          generateSources(outputDirectory)
+      val (filesToOpen, filesToReformat) = invokeAndWaitIfNeeded {
+        runWithModalProgressBlocking(project,
+                                     UIBundle.message("label.project.wizard.new.assets.step.generate.sources.progress", project.name)) {
+          setupAssets(project)
+          val outputDirectory = resolveOutputDirectory()
+          Pair(resolveFilesToOpen(outputDirectory), generateSources(outputDirectory))
         }
       }
 

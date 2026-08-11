@@ -1,5 +1,6 @@
 package org.intellij.plugins.markdown.reference;
 
+import com.intellij.markdown.backend.inspections.MarkdownUnresolvedFileReferenceInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
@@ -72,6 +73,27 @@ public class CommonLinkDestinationReferenceTest extends BasePlatformTestCase {
 
   public void testLinkBrack() {
     doTest();
+  }
+
+  public void testLinkText() {
+    PsiFile file = myFixture.getFile();
+    String fileText = file.getText();
+    assertSameReference(file, fileText.indexOf("[link]") + 1, fileText.indexOf("foo", fileText.indexOf("[link]")));
+    assertSameReference(file, fileText.indexOf("[linkBrack]") + 1, fileText.indexOf("foo", fileText.indexOf("[linkBrack]")));
+  }
+
+  public void testUnresolvedReferenceHighlighting() {
+    myFixture.enableInspections(new MarkdownUnresolvedFileReferenceInspection());
+    myFixture.configureByText("a.md", "[xxx](app/)");
+    myFixture.checkHighlighting();
+  }
+
+  private static void assertSameReference(PsiFile file, int linkTextOffset, int destinationOffset) {
+    PsiReference linkTextReference = file.findReferenceAt(linkTextOffset);
+    PsiReference destinationReference = file.findReferenceAt(destinationOffset);
+    assertNotNull(linkTextReference);
+    assertNotNull(destinationReference);
+    assertEquals(destinationReference.resolve(), linkTextReference.resolve());
   }
 
   public void testTrailingSlashUrl() {

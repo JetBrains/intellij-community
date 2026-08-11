@@ -1,9 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.completion.kotlin
+package com.intellij.gradle.completion.kotlin.tests.integration
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
@@ -40,6 +41,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertTrue
 
 
+@IJIgnore(issue = "KT-88180")
 @GradleProjectTestApplication
 @TestDataPath($$"$CONTENT_ROOT/testData")
 @TestRoot("completion/kotlin/tests/testData")
@@ -106,6 +108,33 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
             }
           """.trimIndent()
         )
+      }
+    }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource("false,true")
+  fun `test standard configuration is completed without quotes`(gradleVersion: GradleVersion, runInDumbMode: Boolean) =
+    test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE, runInDumbMode) {
+      val buildScriptFile = writeTextAndCommit(
+        "build.gradle.kts", """
+          dependencies {
+              impl<caret>
+          }
+        """.trimIndent()
+      )
+      runInEdtAndWait {
+        codeInsightFixture.configureFromExistingVirtualFile(buildScriptFile)
+        codeInsightFixture.completeBasic()
+        val implementationItem = codeInsightFixture.lookupElements
+          ?.firstOrNull { it.lookupString == "implementation" }
+        assertNotNull(implementationItem) { "Expected 'implementation' in the completion list" }
+        codeInsightFixture.lookup.currentItem = implementationItem
+        codeInsightFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR)
+        codeInsightFixture.checkResult("""
+          dependencies {
+              implementation(<caret>)
+          }
+        """.trimIndent())
       }
     }
 
@@ -809,6 +838,17 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
           "Expected no version completions for embeddedKotlin's second argument, but got: $lookupStrings"
         }
       }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test configuration names are not suggested for coordinate-like input`(gradleVersion: GradleVersion) {
+    test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE) {
+      // "junit-api" contains a coordinate separator, so configuration names that merely contain "api"
+      // (api, testApi, ...) must not be suggested; only dependency coordinates should appear.
+      val file = writeTextAndCommit("build.gradle.kts", "dependencies { junit-api<caret> }")
+      assertCompletionDoesntSuggest(file, listOf("api", "testApi", "apiDependenciesMetadata", "testApiDependenciesMetadata"))
     }
   }
 

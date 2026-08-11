@@ -9,7 +9,9 @@
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs.impl.shared"/>
   </dependencies>

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.highlighter
 
 import com.intellij.lang.annotation.AnnotationHolder
@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kRECORD
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kVAL
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kVAR
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
@@ -28,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 class GroovyKeywordAnnotator : Annotator {
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+    if (holder.isBatchMode()) return
     if (shouldBeErased(element)) {
       holder.newSilentAnnotation(HighlightSeverity.INFORMATION).enforcedTextAttributes(TextAttributes.ERASE_MARKER).create()
     }
@@ -56,7 +58,7 @@ fun shouldBeErased(element: PsiElement): Boolean {
     if (tokenType === GroovyTokenTypes.kTHIS && parent.qualifier == null) return false
     return true // don't highlight foo.def
   }
-  else if (parent !is GrModifierList && tokenType === kVAR) {
+  else if (parent !is GrModifierList && (tokenType === kVAR || tokenType === kVAL)) {
     return true
   }
   else if (parent !is GrRecordDefinition && tokenType === kRECORD) {

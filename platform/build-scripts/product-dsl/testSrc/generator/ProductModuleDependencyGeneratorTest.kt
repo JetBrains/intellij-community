@@ -12,6 +12,7 @@ import org.jetbrains.intellij.build.productLayout.moduleSet
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContextImpl
 import org.jetbrains.intellij.build.productLayout.pipeline.DiscoveryResult
 import org.jetbrains.intellij.build.productLayout.pipeline.Slots
+import org.jetbrains.intellij.build.productLayout.stats.SuppressionType
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -61,6 +62,71 @@ class ProductModuleDependencyGeneratorTest {
       assertThat(moduleResult.writtenDependencies)
         .describedAs("Self dependencies should not be written for product modules")
         .doesNotContain(ContentModuleName(moduleName))
+    }
+  }
+
+  @Test
+  fun `product module updateSuppressions does not preserve existing TEST scope dependency`(@TempDir tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+      val moduleName = "intellij.groovy.duplicates"
+      val testFramework = ContentModuleName("intellij.platform.testFramework")
+      val setup = pluginTestSetup(tempDir) {
+        contentModule(testFramework.value) {
+          descriptor = """<idea-plugin package="test.framework"/>"""
+        }
+
+        contentModule(moduleName) {
+          descriptor = """
+            <idea-plugin package="groovy.duplicates">
+              <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+              <dependencies>
+                <module name="${testFramework.value}"/>
+              </dependencies>
+              <!-- endregion -->
+            </idea-plugin>
+          """.trimIndent()
+          jpsDependency(testFramework.value, JpsJavaDependencyScope.TEST)
+        }
+      }
+
+      val model = testGenerationModel(
+        pluginGraph = setup.pluginGraph,
+        outputProvider = setup.jps.outputProvider,
+        fileUpdater = setup.strategy,
+        updateSuppressions = true,
+      ).copy(
+        discovery = DiscoveryResult(
+          moduleSetsByLabel = mapOf(
+            "community" to listOf(
+              moduleSet("groovy.deps.test", includeDependencies = true) {
+                module(moduleName)
+              }
+            )
+          ),
+          products = emptyList(),
+          testProductSpecs = emptyList(),
+          moduleSetSources = emptyMap(),
+        )
+      )
+
+      val ctx = ComputeContextImpl(model)
+      ctx.initSlot(Slots.PRODUCT_MODULE_DEPS)
+      val nodeCtx = ctx.forNode(ProductModuleDependencyGenerator.id)
+      ProductModuleDependencyGenerator.execute(nodeCtx)
+      ctx.finalizeNodeErrors(ProductModuleDependencyGenerator.id)
+
+      val output = ctx.get(Slots.PRODUCT_MODULE_DEPS)
+      val moduleResult = output.files.single { it.contentModuleName == ContentModuleName(moduleName) }
+      assertThat(moduleResult.writtenDependencies)
+        .describedAs("TEST scope dependency should not be written as a product module dependency")
+        .doesNotContain(testFramework)
+      assertThat(moduleResult.suppressionUsages)
+        .noneMatch {
+          it.type == SuppressionType.MODULE_DEP &&
+          it.sourceModule == ContentModuleName(moduleName) &&
+          it.suppressedDep == testFramework.value
+        }
+
     }
   }
 }

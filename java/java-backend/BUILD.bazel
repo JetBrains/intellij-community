@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.backend` start
-
 jvm_library(
     name = "backend",
     srcs = glob(
@@ -35,16 +34,15 @@ jvm_library(
         "//java/codeserver/core",
         "//java/codeserver/highlighting",
         "//java/java-indexing-impl:indexing-impl",
+        "//java/java-indexing-serializers:indexing-serializers",
         "//java/java-analysis-impl:analysis-impl",
         "//java/java-impl:impl",
         "//java/java-impl-refactorings:impl-refactorings",
-        "//java/compiler/impl",
         "//java/java-impl-inspections:impl-inspections",
         "//jvm/jvm-analysis-refactoring:analysis-refactoring",
         "//jvm/jvm-analysis-quickFix:analysis-quickFix",
         "//java/idea-ui:ui",
         "//uast/uast-java-ide:java-uast-ide",
-        "@community//build:dependency-graph",
     ],
     runtime_deps = [
         # do not sort,
@@ -67,17 +65,19 @@ jvm_library(
         "//java/codeserver/core",
         "//java/codeserver/highlighting",
         "//java/java-indexing-impl:indexing-impl",
+        "//java/java-indexing-serializers:indexing-serializers",
         "//java/java-analysis-impl:analysis-impl",
         "//java/java-impl:impl",
         "//java/java-impl-refactorings:impl-refactorings",
-        "//java/compiler/impl",
         "//java/java-impl-inspections:impl-inspections",
         "//jvm/jvm-analysis-refactoring:analysis-refactoring",
         "//jvm/jvm-analysis-quickFix:analysis-quickFix",
+        "//platform/testIntegration-ui",
         "//java/idea-ui:ui",
         "//uast/uast-java-ide:java-uast-ide",
-        "@community//build:dependency-graph",
         "//platform/backend",
+        "//platform/built-in-server:builtInServer-impl",
+        "//RegExpSupport:regexp",
     ],
 )
 
@@ -112,17 +112,19 @@ jvm_library(
         "//java/codeserver/core:core_test_lib",
         "//java/codeserver/highlighting:highlighting_test_lib",
         "//java/java-indexing-impl:indexing-impl_test_lib",
+        "//java/java-indexing-serializers:indexing-serializers_test_lib",
         "//java/java-analysis-impl:analysis-impl_test_lib",
         "//java/java-impl:impl_test_lib",
         "//java/java-impl-refactorings:impl-refactorings_test_lib",
-        "//java/compiler/impl:impl_test_lib",
         "//java/java-impl-inspections:impl-inspections_test_lib",
         "//jvm/jvm-analysis-refactoring:analysis-refactoring_test_lib",
         "//jvm/jvm-analysis-quickFix:analysis-quickFix_test_lib",
+        "//platform/testIntegration-ui:testIntegration-ui_test_lib",
         "//java/idea-ui:ui_test_lib",
         "//uast/uast-java-ide:java-uast-ide_test_lib",
-        "@community//build:dependency-graph_test_lib",
         "//platform/backend:backend_test_lib",
+        "//platform/built-in-server:builtInServer-impl_test_lib",
+        "//RegExpSupport:regexp_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.backend` end

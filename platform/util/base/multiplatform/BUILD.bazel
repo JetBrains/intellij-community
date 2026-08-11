@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.platform.util.base.multiplatform` start
-
 jvm_provided_library(
     name = "platform_multiplatformSupport_provided",
     lib = "//platform/multiplatformSupport",
@@ -25,7 +24,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/debug",
@@ -46,6 +45,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":multiplatform",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/coroutines/debug:debug_test_lib",
         "//platform/multiplatformSupport",

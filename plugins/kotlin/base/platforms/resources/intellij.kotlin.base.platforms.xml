@@ -1,0 +1,33 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.resources"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType"/>
+    <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.WasmJsLibraryType"/>
+    <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.WasmWasiLibraryType"/>
+
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProviderImpl"/>
+    <projectFileScanner implementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProviderImpl$LibraryKindScanner"/>
+  </extensions>
+
+</idea-plugin>

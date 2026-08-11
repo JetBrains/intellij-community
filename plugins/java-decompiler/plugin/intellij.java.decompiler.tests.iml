@@ -31,6 +31,7 @@
     <orderEntry type="module" module-name="intellij.platform.structureView" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.decompiler" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.frontback.psi" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.java.decompiler" />
 </module>

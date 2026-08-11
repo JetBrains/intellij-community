@@ -1,8 +1,34 @@
+load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build fleet.ktor.client.core` start
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_core",
+    module_name = "fleet.ktor.client.core",
+    visibility = ["//visibility:public"],
+    exports = [
+        "@kmp_deps//:io_ktor_ktor_client_core",
+        "@kmp_deps//:io_ktor_ktor_events",
+        "@kmp_deps//:io_ktor_ktor_http",
+        "@kmp_deps//:io_ktor_ktor_http_cio",
+        "@kmp_deps//:io_ktor_ktor_io",
+        "@kmp_deps//:io_ktor_ktor_serialization",
+        "@kmp_deps//:io_ktor_ktor_sse",
+        "@kmp_deps//:io_ktor_ktor_utils",
+        "@kmp_deps//:io_ktor_ktor_websocket_serialization",
+        "@kmp_deps//:io_ktor_ktor_websockets",
+    ],
+    deps = [
+        "@kmp_deps//:org_jetbrains_annotations",
+        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_io_core",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+    ],
+)
 
+### auto-generated section `build fleet.ktor.client.core` start
 create_kotlinc_options(
     name = "custom_core",
     x_consistent_data_class_copy_visibility = True,
@@ -50,7 +76,7 @@ jvm_library(
         "@lib//:fleet-io-ktor-websocket-serialization",
         "@lib//:fleet-io-ktor-websockets",
         "@lib//:fleet-io-ktor-http-cio",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "@lib//:kotlinx-coroutines-core",
         "@lib//:kotlinx-coroutines-slf4j",
@@ -84,7 +110,11 @@ jvm_library(
         "@lib//:fleet-io-ktor-websockets",
         "@lib//:fleet-io-ktor-http-cio",
     ],
-    runtime_deps = [":core"],
+    runtime_deps = [
+        # do not sort,
+        ":core",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+    ],
 )
 ### auto-generated section `build fleet.ktor.client.core` end
 

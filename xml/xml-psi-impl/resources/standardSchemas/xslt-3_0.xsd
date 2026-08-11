@@ -100,7 +100,7 @@ of problems processing the schema using various tools
 -->
 
   <xs:import namespace="http://www.w3.org/2001/XMLSchema"
-             schemaLocation="XMLSchema-1_1/XMLSchema.xsd"/>"/>
+             schemaLocation="XMLSchema-1_1/XMLSchema.xsd"/>
 
   <!-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
   <xs:annotation>

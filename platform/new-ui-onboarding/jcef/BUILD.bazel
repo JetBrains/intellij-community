@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.ide.newUiOnboarding.jcef` start
-
 jvm_library(
     name = "jcef",
     srcs = glob(
@@ -20,10 +19,11 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/core-api:core",
         "//platform/core-impl",
         "//platform/platform-api:ide",
+        "//platform/ide-core",
         "//platform/new-ui-onboarding",
         "//platform/ui.jcef",
         "//platform/util:util-ui",
@@ -42,9 +42,11 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":jcef",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
         "//platform/new-ui-onboarding:new-ui-onboarding_test_lib",
         "//platform/ui.jcef:ui.jcef_test_lib",
         "//platform/util:util-ui_test_lib",

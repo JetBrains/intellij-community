@@ -6,14 +6,14 @@ import com.intellij.psi.util.findTopmostParentOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
-import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
-import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.components.memberScope
-import org.jetbrains.kotlin.analysis.api.components.resolveCall
-import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
-import org.jetbrains.kotlin.analysis.api.components.withNullability
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
+import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -176,7 +176,7 @@ fun samConstructorCallsToBeConverted(functionCall: KtCallExpression): Collection
 
         val argumentExpression = arg.getArgumentExpression()
 
-        val signature = resolvedFunctionCall.argumentMapping[argumentExpression]
+        val signature = resolvedFunctionCall.valueArgumentMapping[argumentExpression]
             ?: return false
 
         val signatureReturnType = signature.symbol.returnType.withNullability(isMarkedNullable = false)

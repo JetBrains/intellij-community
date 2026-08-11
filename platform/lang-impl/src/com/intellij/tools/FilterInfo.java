@@ -5,10 +5,12 @@ package com.intellij.tools;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class FilterInfo implements JDOMExternalizable {
   private static final @NonNls String FILTER_NAME = "NAME";
   private static final @NonNls String FILTER_DESCRIPTION = "DESCRIPTION";

@@ -5,16 +5,21 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpres
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfo
 import com.intellij.codeInsight.template.postfix.templates.SurroundPostfixTemplateBase
-import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression.KotlinWithIfExpressionSurrounder
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
 import org.jetbrains.kotlin.psi.KtExpression
@@ -47,7 +52,7 @@ object KtPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
 
     override fun getNegatedExpression(element: PsiElement): KtExpression = (element as KtExpression).negate(true) {
         analyze(it) {
-            it.expressionType?.isBooleanType == true
+            it.expressionType?.classId == KaStandardTypeClassIds.BOOLEAN
         }
     }
 }
@@ -58,15 +63,15 @@ fun createBooleanExpressionSelector(): PostfixTemplateExpressionSelector =
 
 @ApiStatus.Internal
 fun createBooleanTypePredicate(): (KtExpression, KaType, KaSession) -> Boolean = { _: KtExpression, type: KaType, session: KaSession ->
-    with(session) {
-        type.isBooleanType
+    context(session) {
+        type.classId == KaStandardTypeClassIds.BOOLEAN
     }
 }
 
 @ApiStatus.Internal
 fun createNullableExpressionSelector(): PostfixTemplateExpressionSelector =
     createPostfixExpressionSelector { _: KtExpression, type, session ->
-        with(session) {
+        context(session) {
             type.isNullable
         }
     }
@@ -79,11 +84,11 @@ fun convertToTypePredicate(
     typePredicate?.let { predicate ->
         f@ { expression, session ->
             try {
-                with(session) {
+                context(session) {
                     expression.expressionType?.let { predicate.invoke(expression, it, session) } ?: false
                 }
             } catch (e: Exception) {
-                if (e is ControlFlowException) throw e
+                rethrowControlFlowException(e)
 
                 throw e
             }
@@ -126,7 +131,7 @@ private class KtExpressionPostfixTemplateSelector(
         return allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 analyze(element) {
-                    predicate?.invoke(element, this)
+                    predicate?.invoke(element, useSiteSession)
                 }
             }
         }

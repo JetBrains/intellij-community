@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.CheckReturnValue
 
 @NonExtendable
+@Deprecated("Use [MessageEventBuilder] instead.")
 interface FileMessageEventBuilder {
 
   @CheckReturnValue

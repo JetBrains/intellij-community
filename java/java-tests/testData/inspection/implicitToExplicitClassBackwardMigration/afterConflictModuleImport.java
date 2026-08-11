@@ -1,7 +1,7 @@
 import test.List; // comment
 
-public class beforeC<caret>onflictModuleImport {
-    public static void main(String[] args) {
+public class beforeConflictModuleImport {
+    public static void m<caret>ain(String[] args) {
         List a = null;
     }
 }

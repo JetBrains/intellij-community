@@ -3,8 +3,10 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public interface ParameterInfoListener {
   ExtensionPointName<ParameterInfoListener> EP_NAME = new ExtensionPointName<>("com.intellij.codeInsight.parameterInfo.listener");
 

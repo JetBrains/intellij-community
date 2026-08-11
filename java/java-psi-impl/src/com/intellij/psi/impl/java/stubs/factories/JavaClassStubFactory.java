@@ -23,7 +23,7 @@ import com.intellij.psi.util.JavaImplicitClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaClassStubFactory implements LightStubElementFactory<PsiClassStubImpl<PsiClass>, PsiClass> {
+public class JavaClassStubFactory implements LightStubElementFactory<PsiClassStub<PsiClass>, PsiClass> {
   @Override
   public @NotNull PsiClassStubImpl<PsiClass> createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     boolean isDeprecatedByComment = false;
@@ -124,7 +124,7 @@ public class JavaClassStubFactory implements LightStubElementFactory<PsiClassStu
   }
 
   @Override
-  public PsiClass createPsi(@NotNull PsiClassStubImpl<PsiClass> stub) {
+  public PsiClass createPsi(@NotNull PsiClassStub<PsiClass> stub) {
     return JavaStubElementType.getFileStub(stub).getPsiFactory().createClass(stub);
   }
   

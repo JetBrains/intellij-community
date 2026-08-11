@@ -8,8 +8,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.base.psi.AddLoopLabelUtil.getExistingLabelName
-import org.jetbrains.kotlin.idea.base.psi.AddLoopLabelUtil.getUniqueLabelName
+import org.jetbrains.kotlin.idea.base.psi.AddLabelUtil.getExistingLabelName
+import org.jetbrains.kotlin.idea.base.psi.AddLabelUtil.getUniqueLabelName
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction

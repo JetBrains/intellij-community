@@ -8,6 +8,7 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.util.List;
 import static com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES;
 import static com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES;
 
+@ApiStatus.Internal
 public abstract class BaseToolSelectComboBox<T extends Tool> extends ComboboxWithBrowseButton {
   public static final Object NONE_TOOL = ObjectUtils.sentinel("NONE_TOOL");
 

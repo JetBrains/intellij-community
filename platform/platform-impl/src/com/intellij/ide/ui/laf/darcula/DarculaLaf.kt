@@ -14,6 +14,7 @@ import javax.swing.JComponent
 import javax.swing.LookAndFeel
 import javax.swing.UIDefaults
 import javax.swing.plaf.basic.BasicLookAndFeel
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Do not use.
@@ -23,6 +24,7 @@ import javax.swing.plaf.basic.BasicLookAndFeel
 open class DarculaLaf : BasicLookAndFeel() {
   private var base: LookAndFeel? = null
 
+  @ApiStatus.Internal
   companion object {
     const val NAME: @NlsSafe String = "Darcula"
   }

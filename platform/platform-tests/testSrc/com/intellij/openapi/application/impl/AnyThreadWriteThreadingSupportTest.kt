@@ -2,6 +2,8 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.ide.IdeEventQueue
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadWriteActionSupport
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.sync.Semaphore
@@ -15,12 +17,14 @@ class AnyThreadWriteThreadingSupportTest {
   @RepeatedTest(1000)
   fun testInterruptedOrLockAcquired() = timeoutRunBlocking(2.seconds) {
     val lock = IdeEventQueue.getInstance().threadingSupport
+    val service = ApplicationManager.getApplication().getService(ReadWriteActionSupport::class.java)
+
 
     val readRun = AtomicBoolean(false)
     val readInterrupted = AtomicBoolean(false)
     val readThreadStarted = Semaphore(1, 1)
     val readThreadEnded = Semaphore(1, 1)
-    lock.runWriteAction {
+    service.runWriteAction {
       // Run background read action, it should block as we are in write action
       val rt = Thread({
         try {
@@ -46,7 +50,7 @@ class AnyThreadWriteThreadingSupportTest {
 
     // Test that write action is Ok now, no lock leaked
     val secondWriteRun = AtomicBoolean(false)
-    lock.runWriteAction {
+    service.runWriteAction {
       secondWriteRun.set(true)
     }
     assertTrue(readRun.get() != readInterrupted.get())

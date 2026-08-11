@@ -2,14 +2,27 @@
 
   <resource-bundle>messages.searchEverywhereMlTyposBundle</resource-bundle>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="tanvd.grazi"/>
     <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.grazie.core"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.ml.impl"/>
-    <!-- endregion -->
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
 

@@ -15,6 +15,10 @@
  */
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture.Highlight
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -22,11 +26,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture.Highlight
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.checkHighlighting
-import org.jetbrains.idea.maven.fixtures.importProjectAsync
-import org.jetbrains.idea.maven.fixtures.mavenDomFixture
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

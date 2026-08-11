@@ -10,25 +10,26 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.ui.RowIcon
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiversOwner
-import org.jetbrains.kotlin.analysis.api.components.containingSymbol
-import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
-import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KaContextReceiversRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverListRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaFunctionLikeBodyRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.fakeOverrideOriginal
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
@@ -40,7 +41,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirL
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.renderVerbose
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.withAllowedResolve
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.PreferAbstractForOverrideWeigher
-import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
+import org.jetbrains.kotlin.idea.completion.implCommon.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
 import org.jetbrains.kotlin.idea.core.overrideImplement.ContextParametersListRenderer
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
@@ -93,9 +94,7 @@ internal class OverrideKeywordHandler(
 
         for (member in members) {
             val symbolPointer = member.memberInfo.symbolPointer
-            val memberSymbol = with(session) {
-                symbolPointer.restoreSymbol()
-            }
+            val memberSymbol = symbolPointer.restoreSymbol()
             requireNotNull(memberSymbol) { "${symbolPointer::class} can't be restored" }
 
             if (declaration != null && !canCompleteDeclarationWithMember(declaration, memberSymbol)) continue
@@ -146,7 +145,7 @@ internal class OverrideKeywordHandler(
         project: Project,
     ): OverridesCompletionLookupElementDecorator {
         val symbolPointer = member.memberInfo.symbolPointer
-        val memberSymbol = with(session) { symbolPointer.restoreSymbol() }
+        val memberSymbol = symbolPointer.restoreSymbol()
         requireNotNull(memberSymbol) { "${symbolPointer::class} can't be restored" }
         check(memberSymbol is KaNamedSymbol)
 

@@ -1,8 +1,8 @@
 // "Change type to 'Int'" "true"
 // K2_ACTION: "Specify 'Int' type" "true"
 // ERROR: Null can not be a value of a non-null type Int
-// K2_ERROR: Type of 'val prop: Nothing?' is not a subtype of overridden property 'val prop: Int' defined in '<anonymous>'.
-// K2_AFTER_ERROR: Null cannot be a value of a non-null type 'Int'.
+// K2_AFTER_ERROR: NULL_FOR_NONNULL_TYPE
+// K2_ERROR: PROPERTY_TYPE_MISMATCH_ON_OVERRIDE
 interface Test<T> {
     val prop : T
 }

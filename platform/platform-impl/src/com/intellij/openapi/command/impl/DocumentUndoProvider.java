@@ -10,7 +10,6 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.impl.elf.ElfTheManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -62,9 +61,6 @@ public final class DocumentUndoProvider implements DocumentListener {
   }
 
   private static void handleBeforeDocumentChange(@NotNull UndoManagerImpl undoManager, @NotNull Document document) {
-    if (ElfTheManager.getInstance().isElfDocument(document)) {
-      return;
-    }
     if (undoManager.isActive() && isUndoable(undoManager, document) && undoManager.isUndoOrRedoInProgress() &&
         document.getUserData(UNDOING_EDITOR_CHANGE) != Boolean.TRUE) {
       throw new IllegalStateException("Do not change documents during undo as it will break undo sequence.");
@@ -92,9 +88,6 @@ public final class DocumentUndoProvider implements DocumentListener {
   }
 
   private static void handleDocumentChanged(@NotNull UndoManagerImpl undoManager, @NotNull Document document, @NotNull DocumentEvent e) {
-    if (ElfTheManager.getInstance().isElfDocument(document)) {
-      return;
-    }
     if (undoManager.isActive() && isUndoable(undoManager, document)) {
       registerUndoableAction(undoManager, e);
     }

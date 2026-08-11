@@ -13,6 +13,9 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryPro
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.projectModel.ProjectModelBundle;
+import com.intellij.ui.IconDeferrer;
+import com.intellij.util.LazyInitializer;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
@@ -25,6 +28,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   private final StructureConfigurableContext myContext;
   private final Project myProject;
   private final LibraryProjectStructureElement myProjectStructureElement;
+  private final LazyInitializer.LazyValue<Icon> myIcon;
   private boolean myPropertiesLoaded;
 
   protected LibraryConfigurable(final StructureLibraryTableModifiableModelProvider modelProvider,
@@ -37,6 +41,12 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
     myProject = context.getProject();
     myLibrary = library;
     myProjectStructureElement = new LibraryProjectStructureElement(context, myLibrary);
+    myIcon = LazyInitializer.create(() -> {
+      // the icon is initialized on the first access, but because it's on the EDT, even lazily we return a deferred icon
+      return IconDeferrer.getInstance().defer(PlatformIcons.LIBRARY_ICON, new Object(), (_) -> {
+        return LibraryPresentationManager.getInstance().getNamedLibraryIcon(myLibrary, myContext);
+      });
+    });
   }
 
   @Override
@@ -140,7 +150,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
 
   @Override
   public Icon getIcon(boolean open) {
-    return LibraryPresentationManager.getInstance().getNamedLibraryIcon(myLibrary, myContext);
+    return myIcon.get();
   }
 
   public void updateComponent() {

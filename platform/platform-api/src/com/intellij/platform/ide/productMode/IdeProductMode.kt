@@ -37,6 +37,15 @@ interface IdeProductMode {
     @JvmStatic
     val isMonolith: Boolean
       get() = getInstance().currentMode == ProductMode.MONOLITH
+
+    /**
+     * Returns `true` if this process is running in a light mode, becomes `false` once the process fully advances to the smart mode.
+     */
+    @JvmStatic
+    val isLight: Boolean
+      get() = getInstance().currentMode.let {
+        it == ProductMode.LIGHT || it == ProductMode.LIGHT_WITH_RD_CONNECTION
+      }
   }
 
   /**

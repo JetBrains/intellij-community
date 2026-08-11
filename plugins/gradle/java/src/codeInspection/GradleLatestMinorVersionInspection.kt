@@ -1,8 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.codeInspection
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.gradle.properties.GradleVersionQuickFix.Companion.DISTRIBUTION_URL_VERSION_REGEX
 import com.intellij.lang.properties.psi.Property
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtilRt
@@ -26,8 +27,7 @@ class GradleLatestMinorVersionInspection : LocalInspectionTool() {
         if (element.key != "distributionUrl") return
 
         // extract the current Gradle version from the wrapper properties file
-        val regex = "gradle-(.+)-bin\\.zip$".toRegex()
-        val group = regex.find(element.text)?.groups[1] ?: return
+        val group = DISTRIBUTION_URL_VERSION_REGEX.find(element.text)?.groups[2] ?: return
         val currentVersion = group.value
         val versionTextRange = TextRange(group.range.first, group.range.last + 1)
         val currentGradleVersion = try {
@@ -38,12 +38,12 @@ class GradleLatestMinorVersionInspection : LocalInspectionTool() {
         }
 
         if (GradleJvmSupportMatrix.isGradleDeprecatedByIdea(currentGradleVersion)) return
-        val latestMinorGradleVersion = GradleJvmSupportMatrix.getLatestMinorGradleVersion(currentGradleVersion.majorVersion)
+        val latestMinorGradleVersion = GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(currentGradleVersion.majorVersion)
         if (currentGradleVersion >= latestMinorGradleVersion) return
 
         holder.problem(element, GradleInspectionBundle.message("inspection.message.newer.gradle.minor.version.available.descriptor"))
           .range(versionTextRange)
-          .fix(GradleWrapperVersionFix(latestMinorGradleVersion, versionTextRange))
+          .fix(GradleWrapperVersionFix(latestMinorGradleVersion))
           .register()
       }
     }

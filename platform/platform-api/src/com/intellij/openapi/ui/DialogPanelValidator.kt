@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.containers.DisposableWrapperList
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.text.JTextComponent
@@ -16,7 +15,6 @@ import javax.swing.text.JTextComponent
 typealias ValidationStatus = Map<JComponent, ValidationInfo>
 typealias MutableValidationStatus = MutableMap<JComponent, ValidationInfo>
 
-@ApiStatus.Internal
 internal class DialogPanelValidator(private val panel: DialogPanel, parentDisposable: Disposable) {
 
   private val panels = DisposableWrapperList<DialogPanel>()

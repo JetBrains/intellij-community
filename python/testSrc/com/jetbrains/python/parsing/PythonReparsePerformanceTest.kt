@@ -7,6 +7,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyTestCase
 
 /**
@@ -16,6 +18,8 @@ import com.jetbrains.python.fixtures.PyTestCase
  * scattered across different function bodies, simulating real typing.
  */
 @PerformanceUnitTest
+@Subsystems.Parsing
+@Layers.Performance
 class PythonReparsePerformanceTest : PyTestCase() {
 
   fun testIncrementalReparsePerformance() = withRegistryValue(true) {

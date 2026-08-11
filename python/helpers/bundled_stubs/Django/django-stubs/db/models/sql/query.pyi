@@ -15,12 +15,12 @@ from django.utils.functional import cached_property
 from typing_extensions import override
 
 class JoinInfo(NamedTuple):
-    final_field: Field
+    final_field: Field[Any, Any]
     targets: tuple[Any, ...]
     opts: Any
     joins: list[str]
     path: list[Any]
-    transform_function: Callable[[Field, str], Expression]
+    transform_function: Callable[[Field[Any, Any], str], Expression]
 
 class RawQuery:
     high_mark: int | None
@@ -37,7 +37,7 @@ class RawQuery:
     def get_columns(self) -> list[str]: ...
     def __iter__(self) -> Iterator[Any]: ...
     @property
-    def params_type(self) -> type[dict | tuple] | None: ...
+    def params_type(self) -> type[dict[Any, Any] | tuple[Any, ...]] | None: ...
 
 class Query(BaseExpression):
     alias_prefix: str
@@ -56,7 +56,7 @@ class Query(BaseExpression):
     where: WhereNode
     filter_is_sticky: bool
     subquery: bool
-    group_by: None | Sequence[Combinable] | Sequence[str] | Literal[True]
+    group_by: Sequence[Combinable] | Sequence[str] | Literal[True] | None
     order_by: Sequence[_OrderByFieldName]
     distinct: bool
     distinct_fields: tuple[str, ...]
@@ -64,19 +64,19 @@ class Query(BaseExpression):
     select_for_update: bool
     select_for_update_nowait: bool
     select_for_update_skip_locked: bool
-    select_for_update_of: tuple
+    select_for_update_of: tuple[Any, ...]
     select_for_no_key_update: bool
     select_related: dict[str, Any] | bool
     max_depth: int
     join_class: type[Join]
-    values_select: tuple
+    values_select: tuple[Any, ...]
     selected: dict[str, int | str | Expression] | None
     annotation_select_mask: list[str] | None
     combinator: str | None
     combinator_all: bool
-    combined_queries: tuple
+    combined_queries: tuple[Any, ...]
     extra_select_mask: set[str] | None
-    extra_tables: tuple
+    extra_tables: tuple[Any, ...]
     extra_order_by: Sequence[_OrderByFieldName]
     deferred_loading: tuple[set[str] | frozenset[str], bool]
     high_mark: int | None
@@ -88,13 +88,13 @@ class Query(BaseExpression):
     def __init__(self, model: type[Model] | None, alias_cols: bool = True) -> None: ...
     @property
     @override
-    def output_field(self) -> Field: ...
+    def output_field(self) -> Field[Any, Any]: ...
     @property
     def has_select_fields(self) -> bool: ...
     @cached_property
     def base_table(self) -> str: ...
     def add_annotation(self, annotation: Any, alias: str, select: bool = True) -> None: ...
-    def sql_with_params(self) -> tuple[str, tuple]: ...
+    def sql_with_params(self) -> tuple[str, tuple[Any, ...]]: ...
     def __deepcopy__(self, memo: dict[int, Any]) -> Query: ...
     def get_compiler(
         self, using: str | None = None, connection: Any | None = None, elide_empty: bool = True
@@ -103,7 +103,7 @@ class Query(BaseExpression):
     def names_to_path(
         self, names: Sequence[str], opts: Any, allow_many: bool = True, fail_on_missing: bool = False
     ) -> tuple[list[Any], Any, tuple[Any, ...], Sequence[str]]: ...
-    def get_meta(self) -> Options: ...
+    def get_meta(self) -> Options[Any]: ...
     def clone(self) -> Query: ...
     def chain(self, klass: type[Query] | None = None) -> Query: ...
     def get_count(self, using: str) -> int: ...
@@ -165,8 +165,8 @@ class Query(BaseExpression):
         allow_many: bool = True,
     ) -> JoinInfo: ...
     def trim_joins(
-        self, targets: tuple[Field, ...], joins: list[str], path: list[PathInfo]
-    ) -> tuple[tuple[Field, ...], str, list[str]]: ...
+        self, targets: tuple[Field[Any, Any], ...], joins: list[str], path: list[PathInfo]
+    ) -> tuple[tuple[Field[Any, Any], ...], str, list[str]]: ...
     def resolve_ref(
         self, name: str, allow_joins: bool = True, reuse: set[str] | None = None, summarize: bool = False
     ) -> Expression: ...
@@ -216,7 +216,7 @@ class Query(BaseExpression):
     @property
     def extra_select(self) -> dict[str, Any]: ...
     def trim_start(self, names_with_path: list[tuple[str, list[PathInfo]]]) -> tuple[str, bool]: ...
-    def is_nullable(self, field: Field) -> bool: ...
+    def is_nullable(self, field: Field[Any, Any]) -> bool: ...
     def check_filterable(self, expression: Any) -> None: ...
     def build_lookup(self, lookups: Sequence[str], lhs: Expression | Query, rhs: Any) -> Lookup: ...
     def try_transform(self, lhs: Expression | Query, name: str, lookups: Sequence[str] | None = ...) -> Transform: ...
@@ -231,7 +231,7 @@ class JoinPromoter:
     negated: bool
     effective_connector: str
     num_children: int
-    votes: collections.Counter
+    votes: collections.Counter[str]
     def __init__(self, connector: str, num_children: int, negated: bool) -> None: ...
     def add_votes(self, votes: Iterable[str]) -> None: ...
     def update_join_types(self, query: Query) -> set[str]: ...

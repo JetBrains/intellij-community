@@ -101,7 +101,7 @@ kotlin {
   sourceSets {
     wasmJsMain {
       dependencies {
-        implementation(libs.kotlin.wrappers.browser)
+        implementation(jps.kotlin.wrappers.browser)
       }
     }
   }

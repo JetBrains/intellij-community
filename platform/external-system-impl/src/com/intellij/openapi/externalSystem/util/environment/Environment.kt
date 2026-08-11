@@ -12,12 +12,12 @@ interface Environment {
   companion object {
 
     @JvmStatic
-    fun getInstance() = service<Environment>()
+    fun getInstance(): Environment = service<Environment>()
 
     @JvmStatic
-    fun getProperty(name: String) = getInstance().property(name)
+    fun getProperty(name: String): String? = getInstance().property(name)
 
     @JvmStatic
-    fun getVariable(name: String) = getInstance().variable(name)
+    fun getVariable(name: String): String? = getInstance().variable(name)
   }
 }

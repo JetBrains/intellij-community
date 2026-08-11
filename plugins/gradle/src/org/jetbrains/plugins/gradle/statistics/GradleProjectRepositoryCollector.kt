@@ -17,10 +17,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
-@ApiStatus.Internal
 internal class GradleProjectRepositoryCollector : ProjectUsagesCollector() {
 
   private enum class Type {

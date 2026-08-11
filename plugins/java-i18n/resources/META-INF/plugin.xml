@@ -19,9 +19,33 @@
     <module name="intellij.java.frontback.psi"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
+    <module name="intellij.jsp.base"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.icu4j"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.stream"/>
+    <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.usageView.impl"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.xml.psi.impl"/>
     <!-- endregion -->
   </dependencies>
+  <content namespace="jetbrains"/>
 
   <description>
     Provides code inspections and corresponding quick fixes for internationalization in Java source code.
@@ -93,10 +117,6 @@
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.SuspiciousLocalesLanguagesInspection"
                      key="inspection.suspicious.locales.languages.display.name" bundle="messages.JavaI18nBundle"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ConvertToBasicLatin" bundle="messages.JavaI18nBundle" key="inspection.non.basic.latin.character.display.name"
-                     groupKey="group.names.internationalization.issues" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.intellij.codeInspection.i18n.ConvertToBasicLatinInspection" />
 
     <intentionAction>
       <language>JAVA</language>

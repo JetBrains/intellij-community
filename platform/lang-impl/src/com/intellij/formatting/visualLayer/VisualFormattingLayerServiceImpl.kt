@@ -106,7 +106,7 @@ class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
                                  formattedTextLineSet: LineSet,
                                  mismatch: FormattingChanges.WhitespaceMismatch,
                                  tabSize: Int): Sequence<VisualFormattingLayerElement?> = sequence {
-    val originalText = document.text
+    val originalText = document.immutableCharSequence
 
     val originalFirstLine = document.getLineNumber(mismatch.preFormatRange.startOffset)
     val replacementFirstLine = formattedTextLineSet.findLineIndex(mismatch.postFormatRange.startOffset)

@@ -2,12 +2,14 @@
 
 package org.jetbrains.kotlin.idea.references.impl
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.resolution.KaSingleOrMultiCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.symbols
@@ -26,8 +28,10 @@ import org.jetbrains.kotlin.psi.KtImportAlias
 import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
 import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtLoopExpression
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.lookupLocally as lookupLocallyImpl
 import org.jetbrains.kotlin.references.KotlinPsiReferenceProviderContributor
 import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
@@ -45,7 +49,10 @@ internal class KaBaseSimpleNameReference(
     override fun KaSession.resolveToSymbols(): Collection<KaSymbol> {
         // Resolved calls are preferable for navigation since they provide a more precise location.
         // For instance, it is the case for constructor calls
-        val symbolsFromCall = (element as? KtResolvableCall)?.tryResolveCall()
+        // A special handling for `KtOperationReferenceExpression` is required to preserve the legacy behavior.
+        // It could be adjusted in the future.
+        val symbolsFromCall = (element as? KtResolvableCall)?.takeUnless { it is KtOperationReferenceExpression }
+            ?.tryResolveCall()
             ?.calls
             ?.flatMap(KaSingleOrMultiCall::symbols)
             ?.takeUnless(List<KaSymbol>::isEmpty)
@@ -53,7 +60,8 @@ internal class KaBaseSimpleNameReference(
         return symbolsFromCall ?: element.tryResolveSymbols()?.symbols.orEmpty()
     }
 
-    override fun getResolvedToPsi(analysisSession: KaSession): Collection<PsiElement> = with(analysisSession) {
+    context(session: KaSession)
+    override fun getResolvedToPsi(): Collection<PsiElement> {
         if (expression is KtLabelReferenceExpression) {
             when (val loopJumpExpression = expression.parent?.parent) {
                 // continue/break expressions might reference only loops,
@@ -66,10 +74,12 @@ internal class KaBaseSimpleNameReference(
             }
         }
 
+        expression.lookupLocally()?.let { return listOf(it) }
+
         val referenceTargetSymbols = resolveToSymbols()
-        val psiOfReferenceTarget = super.getResolvedToPsi(analysisSession, referenceTargetSymbols)
+        val psiOfReferenceTarget = super.getResolvedToPsi(referenceTargetSymbols)
         if (psiOfReferenceTarget.isNotEmpty()) return psiOfReferenceTarget
-        referenceTargetSymbols.flatMap { symbol ->
+        return referenceTargetSymbols.flatMap { symbol ->
             when (symbol) {
                 is KaSyntheticJavaPropertySymbol ->
                     if (isRead) {
@@ -155,4 +165,15 @@ private fun KtExpression.doesBelongToLoop(loopExpression: KtExpression): Boolean
 
     // expression belongs to the loop when it is inside the loop body
     return structureBodies.firstOrNull { it.parent is KtLoopExpression }?.parent == loopExpression
+}
+
+private val isLocalLookupRegistryEnabled by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    Registry.`is`("kotlin.analysis.enableLocalLookupOptimization")
+}
+
+private fun KtSimpleNameExpression.lookupLocally(): PsiElement? {
+    if (!isLocalLookupRegistryEnabled) return null
+
+    @OptIn(KtExperimentalApi::class)
+    return lookupLocallyImpl()
 }

@@ -82,7 +82,6 @@ internal class MutableEntitiesBarrel private constructor(
     fillEmptyFamilies(unmodifiableEntityId)
 
     val entityFamily = entityFamilies[unmodifiableEntityId] ?: run {
-      GeneratedCodeCompatibilityChecker.checkCode(unmodifiableEntityId.findWorkspaceEntity())
       val emptyEntityFamily = MutableEntityFamily.createEmptyMutable<WorkspaceEntity>()
       entityFamilies[unmodifiableEntityId] = emptyEntityFamily
       emptyEntityFamily

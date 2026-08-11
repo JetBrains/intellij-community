@@ -16,12 +16,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class AnalysisActionUtils {
   private static AnalysisScope getFileScopeFromInspectionView(DataContext dataContext) {
     InspectionResultsView inspectionView = dataContext.getData(InspectionResultsView.DATA_KEY);

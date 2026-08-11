@@ -7,7 +7,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleScheme
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.ui.SimpleTextAttributes
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class VisualFormattingSchemesCombo(project: Project) : SchemesCombo<CodeStyleScheme>() {
   private val codeStyleSchemesModel = CodeStyleSchemesModel(project)
   override fun supportsProjectSchemes(): Boolean = true

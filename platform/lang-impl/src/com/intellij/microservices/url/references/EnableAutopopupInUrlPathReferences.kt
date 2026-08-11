@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.microservices.url.references
 
 import com.intellij.codeInsight.AutoPopupController
@@ -11,6 +13,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.util.parents
 import com.intellij.util.ThreeState
+import org.jetbrains.annotations.ApiStatus
 
 internal class EnableAutopopupInUrlPathReferences : CompletionConfidence() {
   override fun shouldSkipAutopopup(editor: Editor, contextElement: PsiElement, psiFile: PsiFile, offset: Int): ThreeState {

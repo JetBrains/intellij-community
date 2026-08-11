@@ -65,7 +65,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
           .createDataLanguageRootBlock(markupElement, markupElement.getLanguage(), mySettings, myXmlFormattingPolicy,
                                        myNode.getPsi().getContainingFile(), getDefaultMarkupIndent());
         PsiElement parent = markupElement.getParent();
-        if (!mergeFromMarkup) mergeFromMarkup = isScriptBlock(rootBlock);
+        if (!mergeFromMarkup) mergeFromMarkup = shouldMergeFromMarkup(rootBlock);
         if (parent instanceof PsiFile ||
             (rootBlock instanceof TemplateXmlBlock && ((TemplateXmlBlock)rootBlock).isTextContainingTemplateElements())) {
           for (Block block : rootBlock.getSubBlocks()) {
@@ -181,7 +181,17 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     return myBuilder;
   }
 
-  private static boolean isScriptBlock(Block block) {
+  /**
+   * In practice, returning `true` from this method sometimes leads to an invalid block structure.
+   * The same problem is observed in different template languages that use this class.
+   * To avoid changing the existing behavior, the method isn't removed all together, 
+   * but only its visibility is changed to protected to allow overriding it.
+   * <p>
+   * The primary user of this method will be the Scala Plugin Twirl Templates.
+   *
+   * @see <a href="https://youtrack.jetbrains.com/issue/SCL-25670/Play-Rewrite-Invalid-formatting-on-some-cases-with-script-element">SCL-25670</a>
+   */
+  protected boolean shouldMergeFromMarkup(Block block) {
     if (block instanceof TemplateXmlTagBlock) {
       return ((TemplateXmlTagBlock)block).isScriptBlock();
     }

@@ -32,6 +32,7 @@ import java.awt.event.ActionListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.function.Consumer
+import javax.accessibility.AccessibleContext
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JProgressBar
@@ -61,10 +62,7 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
   private var isDisposed = false
 
   init {
-    progressModel.addOnChangeAction { queueProgressUpdate() }
-    progressModel.addOnFinishAction { onFinish() }
     indicatorModel = progressModel
-
     progress = JProgressBar(SwingConstants.HORIZONTAL)
     progress.setOpaque(false)
     UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, progress)
@@ -74,6 +72,9 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
     processName = TextPanel()
     eastButtons = createEastButtons()
     component = createComponent()
+
+    progressModel.addOnChangeAction { queueProgressUpdate() }
+    progressModel.addOnFinishAction { onFinish() }
   }
 
   protected open fun createComponent(): JPanel {
@@ -228,6 +229,15 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
     for (button in eastButtons) {
       button.updateAction.run()
     }
+
+    val accessibleInfo = listOfNotNull(indicatorModel.title, indicatorModel.getText(), indicatorModel.getDetails())
+      .filter { it.isNotEmpty() }
+      .joinToString(". ")
+    val accessibleName =
+      if (accessibleInfo.isEmpty()) IdeBundle.message("progress.accessible.name")
+      else IdeBundle.message("progress.accessible.name.with.progress", accessibleInfo)
+    // Use client property instead of setAccessibleName to not spam screen readers with frequent events of name changed
+    progress.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, accessibleName)
   }
 
   protected open var textValue: @NlsContexts.DetailedDescription String?
@@ -360,6 +370,8 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
 
 private class StatusBarProgressButton : InplaceButton, WidgetEffectBoundsProvider {
   constructor(source: IconButton, listener: ActionListener) : super(source, listener)
+
+  override fun shouldPaintHover(): Boolean = super.shouldPaintHover() && !hasFocus()
 
   override fun getWidgetEffectBounds(): Rectangle {
     return Rectangle(size).also { it.grow(JBUI.scale(3), JBUI.scale(3)) }

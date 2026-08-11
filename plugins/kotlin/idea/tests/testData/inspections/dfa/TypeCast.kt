@@ -15,7 +15,7 @@ fun castNumber() {
     c <warning descr="Cast will always fail">as</warning> Float
 }
 fun castIntToFloat(c: Int) {
-    c <warning descr="[CAST_NEVER_SUCCEEDS] This cast can never succeed">as</warning> Float
+    c <warning descr="[CAST_NEVER_SUCCEEDS]">as</warning> Float
 }
 fun safeCast(b: Boolean) {
     val x : Any = if (b) "x" else 5

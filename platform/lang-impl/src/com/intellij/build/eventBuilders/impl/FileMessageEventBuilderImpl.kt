@@ -12,6 +12,7 @@ import com.intellij.build.events.impl.FileMessageEventImpl
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
+@Deprecated("Use [MessageEventBuilderImpl] instead.")
 class FileMessageEventBuilderImpl(
   private val message: @Message String,
   private val kind: MessageEvent.Kind,
@@ -45,5 +46,5 @@ class FileMessageEventBuilderImpl(
     apply { this.group = group }
 
   override fun build(): FileMessageEventImpl =
-    FileMessageEventImpl(id, parentId, time, message, hint, description, kind, group, filePosition)
+    FileMessageEventImpl(id, parentId, time, message, hint, description, kind, group, null, filePosition)
 }

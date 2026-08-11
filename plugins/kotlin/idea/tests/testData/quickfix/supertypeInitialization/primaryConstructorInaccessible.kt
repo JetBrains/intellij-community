@@ -1,6 +1,6 @@
 // "Add constructor parameters from Base(String)" "true"
-// K2_ERROR: Cannot access 'constructor(): Base': it is private in 'Base'.
-// K2_ERROR: This type has a constructor, so it must be initialized here.
+// K2_ERROR: INVISIBLE_REFERENCE
+// K2_ERROR: SUPERTYPE_NOT_INITIALIZED
 open class Base private constructor(p1: Int, val p2: Int) {
     private constructor() : this(0, 1)
     protected constructor(s: String) : this(s.length, 1)

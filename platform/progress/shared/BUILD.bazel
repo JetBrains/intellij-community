@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.ide.progress` start
-
 jvm_library(
     name = "ide-progress",
     srcs = glob(
@@ -20,7 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//platform/util/progress",
@@ -47,6 +46,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":ide-progress",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/util/progress:progress_test_lib",
         "//platform/util:util_test_lib",

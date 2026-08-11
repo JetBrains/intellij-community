@@ -1,9 +1,9 @@
 // "Change the signature of function 'delegate'" "true"
-// K2_ERROR: Cannot infer type for type parameter 'S'. Specify it explicitly.
-// K2_ERROR: Too many arguments for 'fun <S> delegate(subject: ??? (Unresolved qualified name: T)): ??? (Unresolved qualified name: T)'.
-// K2_ERROR: Unresolved reference 'T'.
-// K2_AFTER_ERROR: Cannot infer type for type parameter 'S'. Specify it explicitly.
-// K2_AFTER_ERROR: Unresolved reference 'T'.
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: TOO_MANY_ARGUMENTS
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_AFTER_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
 fun <T> call(subject: T) = delegate(subject, <caret>1)
 
 fun <S> delegate(subject: T) = subject

@@ -1,0 +1,3 @@
+package com.intellij.codeInspection.tests.kotlin
+
+class K2CyclicClassDependencyInspectionTest : KotlinCyclicClassDependencyInspectionTest()

@@ -64,22 +64,30 @@ private const val MAX_COUNT_TO_SHOW_HINT = 5
 internal class CommandCompletionService : Disposable.Default {
   internal fun filterLookupAfterChar(typed: Char, editor: Editor, file: PsiFile, lookup: LookupImpl): Boolean {
     if (lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) == true) return false
-    val factory = getFactory(file.language)?.takeIf { it.filterSuffix() == typed } ?: return false
+    val suffixProvider = getSuffixProvider(file.language)?.takeIf { it.filterSuffix() == typed } ?: return false
     val offset = editor.caretModel.offset
-    return offset > 0 && factory.suffix() == editor.document.immutableCharSequence[offset - 1]
+    return offset > 0 && suffixProvider.suffix() == editor.document.immutableCharSequence[offset - 1]
   }
 
   fun getFactory(language: Language): CommandCompletionFactory? {
     return EP_NAME.forLanguage(language)
   }
 
+  /**
+   * The suffixes of command completion, available even when the full [CommandCompletionFactory] is not,
+   * e.g. on the remote development frontend, where the lookup lives but the backend PSI does not.
+   */
+  fun getSuffixProvider(language: Language): CommandCompletionSuffixProvider? {
+    return getFactory(language) ?: SUFFIX_EP_NAME.forLanguage(language)
+  }
+
   fun addFilters(lookup: LookupImpl, nonWrittenFiles: Boolean, psiFile: PsiFile?, originalEditor: Editor) {
     val installed = lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY)
     if (installed == true && nonWrittenFiles) return
     val language = psiFile?.language ?: return
-    val completionFactory = getFactory(language)
-    val filterSuffix = completionFactory?.filterSuffix() ?: return
-    val fullSuffix = completionFactory.suffix() + filterSuffix.toString()
+    val suffixProvider = getSuffixProvider(language)
+    val filterSuffix = suffixProvider?.filterSuffix() ?: return
+    val fullSuffix = suffixProvider.suffix() + filterSuffix.toString()
     val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(originalEditor)
     if (!nonWrittenFiles) {
       val document = topLevelEditor.document
@@ -100,11 +108,27 @@ internal class CommandCompletionService : Disposable.Default {
         return
       }
     }
-    if (installed == true) return
+    installFilters(lookup, suffixProvider.supportFiltersWithDoublePrefix())
+  }
+
+  internal fun addRemoteReadOnlyFilters(lookup: LookupImpl) {
+    if (lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) == true) return
+    lookup.putUserData(INSTALLED_ADDITIONAL_MATCHER_KEY, true)
+    lookup.showIfMeaningless()
+    // in read-only editors only the plain single-suffix mode is supported, so no double-prefix filters here
+    lookup.arranger.additionalMatcher = CommandCompletionLookupItemMatcher(false)
+    lookup.arranger.prefixChanged(lookup)
+    lookup.requestResize()
+    lookup.refreshUi(false, true)
+    lookup.ensureSelectionVisible(true)
+  }
+
+  private fun installFilters(lookup: LookupImpl, filtersWithDoublePrefix: Boolean) {
+    if (lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) == true) return
     lookup.putUserData(INSTALLED_ADDITIONAL_MATCHER_KEY, true)
     lookup.showIfMeaningless() // stop hiding
     val showPostfixAsSeparateGroup = PostfixTemplatesSettings.getInstance().isShowAsSeparateGroup
-    if (completionFactory.supportFiltersWithDoublePrefix()) {
+    if (filtersWithDoublePrefix) {
       lookup.arranger.additionalMatcher = CommandCompletionLookupItemMatcher(showPostfixAsSeparateGroup)
     }
     else if (!showPostfixAsSeparateGroup) {
@@ -136,8 +160,8 @@ internal class CommandCompletionService : Disposable.Default {
     lookup.putUserData(INSTALLED_HINT_KEY, false)
     val psiFile = lookup.psiFile ?: return
     val completionService = lookup.project.service<CommandCompletionService>()
-    val completionFactory = completionService.getFactory(psiFile.language) ?: return
-    val fullSuffix = completionFactory.suffix() + completionFactory.filterSuffix().toString()
+    val suffixProvider = completionService.getSuffixProvider(psiFile.language) ?: return
+    val fullSuffix = suffixProvider.suffix() + suffixProvider.filterSuffix().toString()
     val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
     val index =
       if (nonWrittenFiles) 0 else findActualIndex(fullSuffix, topLevelEditor.document.immutableCharSequence, lookup.lookupOriginalStart)
@@ -153,7 +177,7 @@ internal class CommandCompletionService : Disposable.Default {
     val inlineElement = topLevelEditor.inlayModel.addInlineElement(
       endOffset,
       true,
-      EditorLineStripeTextRenderer("      " + CodeInsightBundle.message("command.completion.filter.hint", completionFactory.filterSuffix()))
+      EditorLineStripeTextRenderer("      " + CodeInsightBundle.message("command.completion.filter.hint", suffixProvider.filterSuffix()))
     ) ?: return
     Disposer.register(lookup, inlineElement)
     Disposer.register(lookup) { lookup.removeUserData(INSTALLED_HINT) }
@@ -190,6 +214,7 @@ internal class CommandCompletionService : Disposable.Default {
 }
 
 private val EP_NAME = LanguageExtension<CommandCompletionFactory>("com.intellij.codeInsight.completion.command.factory")
+private val SUFFIX_EP_NAME = LanguageExtension<CommandCompletionSuffixProvider>("com.intellij.codeInsight.completion.command.suffixProvider")
 
 private val INSTALLED_HINT: Key<Inlay<out HintRenderer>> = Key.create("completion.command.installed.hint")
 private val INSTALLED_HINT_KEY: Key<Boolean> = Key.create("completion.command.installed.hint")
@@ -218,13 +243,17 @@ internal class CommandCompletionListener : LookupManagerListener {
 
     val project = newLookup.project
 
-    val originalEditor = newLookup.editor.getUserData(ORIGINAL_EDITOR)
+    val originalEditor = NonWriteAccessCommandCompletionSupport.originalEditor(newLookup.editor)
 
     val nonWrittenFiles: Boolean
     val editor: Editor
     val psiFile: PsiFile
     if (originalEditor != null) {
       editor = originalEditor.first
+      if (NonWriteAccessCommandCompletionSupport.Frontend.isRemoteFrontendEditor(newLookup.editor)) {
+        project.service<CommandCompletionService>().addRemoteReadOnlyFilters(newLookup)
+        return
+      }
       psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) ?: return
       nonWrittenFiles = true
     }
@@ -396,7 +425,7 @@ internal class CommandCompletionCharFilter : CharFilter() {
       Disposer.dispose(installedHint)
     }
 
-    val originalEditor = lookup.editor.getUserData(ORIGINAL_EDITOR)
+    val originalEditor = NonWriteAccessCommandCompletionSupport.originalEditor(lookup.editor)
     if (originalEditor != null) {
       // we are in command inlay, accept all chars
       return Result.ADD_TO_PREFIX
@@ -404,18 +433,19 @@ internal class CommandCompletionCharFilter : CharFilter() {
 
     val psiFile = lookup.psiFile ?: return null
     val completionService = lookup.project.service<CommandCompletionService>()
-    val completionFactory = completionService.getFactory(psiFile.language) ?: return null
+    // the frontend has no CommandCompletionFactory, so only the suffixes are consulted here
+    val suffixProvider = completionService.getSuffixProvider(psiFile.language) ?: return null
 
     val editor = InjectedLanguageEditorUtil.getTopLevelEditor(lookup.editor)
     val offset = editor.caretModel.offset
     if (completionService.filterLookupAfterChar(c, editor, psiFile, lookup)) {
-      // filter suffix is typed (see CommandCompletionFactory.filterSuffix), accepting
+      // filter suffix is typed (see CommandCompletionSuffixProvider.filterSuffix), accepting
       completionService.addFiltersAndRefreshAfterChar(lookup)
       return Result.ADD_TO_PREFIX
     }
 
-    if (offset > 0 && completionFactory.filterSuffix() == c &&
-        editor.document.immutableCharSequence[offset - 1] == completionFactory.suffix() &&
+    if (offset > 0 && suffixProvider.filterSuffix() == c &&
+        editor.document.immutableCharSequence[offset - 1] == suffixProvider.suffix() &&
         lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) != true && !lookup.isFocused
     ) {
       return Result.ADD_TO_PREFIX
@@ -423,7 +453,7 @@ internal class CommandCompletionCharFilter : CharFilter() {
 
     val element = lookup.currentItem ?: return null
     if (c == ' ' &&
-        findCommandCompletionType(completionFactory, false, offset, editor) is InvocationCommandType.FullLine &&
+        findCommandCompletionType(suffixProvider, false, offset, editor) is InvocationCommandType.FullLine &&
         !lookup.isFocused &&
         lookup.items.any { it.isCommand() }
     ) {
@@ -431,6 +461,9 @@ internal class CommandCompletionCharFilter : CharFilter() {
     }
 
     if (element.isCommand()) {
+      if (element.lookupString == c.toString()) {
+        return Result.SELECT_ITEM_AND_FINISH_LOOKUP
+      }
       return Result.ADD_TO_PREFIX
     }
 
@@ -456,8 +489,7 @@ internal class CommandCompletionLookupCustomizer : LookupCustomizer {
         InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, topLevelEditor.caretModel.offset)
       }
     val language = element?.language ?: psiFile.language
-    val factory = service.getFactory(language)
-    if (factory != null) {
+    if (service.getSuffixProvider(language) != null) {
       lookupImpl.putUserDataIfAbsent(CUSTOM_DEFAULT_CHAR_FILTERS, true)
     }
   }

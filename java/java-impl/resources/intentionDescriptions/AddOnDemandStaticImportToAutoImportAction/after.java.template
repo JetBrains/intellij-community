@@ -1,4 +1,4 @@
-import static java.util.Objects.*<spot></spot>;
+import static java.util.Objects.*;
 
-Editor->General->Auto-import->Java->Include auto-import of static members in completion:
-<spot>java.util.Objects</spot>
+Editor | General | Auto Import | Java | Include auto-import of static members in completion:
+java.util.Objects

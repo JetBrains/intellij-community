@@ -2,10 +2,10 @@
 package com.jetbrains.performancePlugin
 
 import com.intellij.diagnostic.AbstractMessage
+import com.intellij.diagnostic.DialogAppender
 import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.MessagePoolAdvisor
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
@@ -16,7 +16,6 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import kotlin.io.path.exists
 
 private val LOG: Logger
   get() = Logger.getInstance("PerformancePlugin")
@@ -25,34 +24,50 @@ private const val ERRORS_DIR = "errors"
 private const val ERROR_DIR_PREFIX = "error-"
 private const val MESSAGE_FILE = "message.txt"
 private const val SYNTHETIC_TEST_NAME_FILE = "syntheticTestName.txt"
-private const val ACTIVE_TEST_NAME_FILE = "activeTestName.txt"
 private const val STACKTRACE_FILE = "stacktrace.txt"
 private const val PRODUCT_INFO_FILE = "product_info.txt"
-internal val activeTestNameFile: Path = Path.of(PathManager.getLogPath(), ACTIVE_TEST_NAME_FILE)
+
+internal fun errorReportingDir(): Path = LogDirHandler.currentLogDir().resolve(ERRORS_DIR)
 
 internal val toErrorDirReporter: MessagePoolAdvisor = object : MessagePoolAdvisor {
-  override suspend fun beforeEntryAdded(entryAddedEvent: MessagePoolAdvisor.BeforeEntryAddedEvent): Boolean {
-    try {
-      reportScriptError(entryAddedEvent.message)
-    }
-    catch (e: IOException) {
-      LOG.error(e)
-    }
-    finally {
-      entryAddedEvent.message.isRead = true
-    }
+  override suspend fun beforeEntryAdded(e: MessagePoolAdvisor.BeforeEntryAddedEvent): Boolean {
+    reportAndMark(e.message, errorReportingDir())
     return true
   }
 }
 
+// Drain both asynchronous error-reporting stages before reading the pool. Otherwise, an error logged just before
+// the log dir switches can still be mid-flight and get attributed to the new dir once its coroutine resumes.
+// See com.intellij.ide.starter.extended.report.ErrorReportingReusedE2ETest.
 internal suspend fun sweepExistingErrors() {
-  MessagePool.getInstance().getFatalErrors(false, true).forEach { message ->
-    toErrorDirReporter.beforeEntryAdded(MessagePoolAdvisor.BeforeEntryAddedEvent(message))
+  java.util.logging.Logger.getLogger("").handlers
+    .filterIsInstance<DialogAppender>()
+    .forEach { it.awaitPendingJobs() }
+  MessagePool.getInstance().awaitPendingJobs()
+  val scriptErrorsDir = errorReportingDir()
+
+  val messages = MessagePool.getInstance().getFatalErrors(false, true)
+  if (messages.isEmpty()) return
+
+  messages.forEach { message ->
+    reportAndMark(message, scriptErrorsDir)
+  }
+}
+
+private suspend fun reportAndMark(message: AbstractMessage, scriptErrorsDir: Path) {
+  try {
+    reportScriptError(message, scriptErrorsDir)
+  }
+  catch (e: IOException) {
+    LOG.error(e)
+  }
+  finally {
+    message.isRead = true
   }
 }
 
 @Throws(IOException::class)
-private suspend fun reportScriptError(errorMessage: AbstractMessage) {
+private suspend fun reportScriptError(errorMessage: AbstractMessage, scriptErrorsDir: Path) {
   withContext(Dispatchers.IO) {
     val throwable = errorMessage.throwable
     var cause: Throwable? = throwable
@@ -75,7 +90,6 @@ private suspend fun reportScriptError(errorMessage: AbstractMessage) {
       }
     }
 
-    val scriptErrorsDir = Path.of(PathManager.getLogPath(), ERRORS_DIR)
     Files.createDirectories(scriptErrorsDir)
     Files.walk(scriptErrorsDir).use { stream ->
       val finalCauseMessage = causeMessage
@@ -110,9 +124,6 @@ private suspend fun reportScriptError(errorMessage: AbstractMessage) {
 
       Files.writeString(errorDir.resolve(MESSAGE_FILE), causeMessage)
       Files.writeString(errorDir.resolve(SYNTHETIC_TEST_NAME_FILE), syntheticTestName ?: causeMessage)
-      if (activeTestNameFile.exists()) {
-        Files.copy(activeTestNameFile, errorDir.resolve(ACTIVE_TEST_NAME_FILE))
-      }
       Files.writeString(errorDir.resolve(STACKTRACE_FILE), errorMessage.throwableText)
       Files.writeString(errorDir.resolve(PRODUCT_INFO_FILE), buildString {
         appendLine("app.name=${namesInfo.productName}")

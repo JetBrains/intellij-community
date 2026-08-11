@@ -6,7 +6,9 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.InputValidatorEx
 import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ModuleNameValidator(project: Project) : InputValidatorEx {
   private val moduleModel = ModuleManager.getInstance(project)
 

@@ -4,7 +4,9 @@ package com.intellij.util
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.containers.nullize
 import com.intellij.util.lang.CompoundRuntimeException
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 fun throwIfNotEmpty(errors: List<Throwable?>?) {
   val exceptions = errors?.filterNotNull().nullize() ?: return
   val throwable = CompoundRuntimeException(exceptions)

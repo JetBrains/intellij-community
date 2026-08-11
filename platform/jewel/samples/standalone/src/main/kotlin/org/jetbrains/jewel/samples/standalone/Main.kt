@@ -32,6 +32,7 @@ import org.jetbrains.jewel.ui.ComponentStyling
 import org.jetbrains.jewel.window.DecoratedWindow
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 
+/** Entry point for the Jewel standalone sample application. */
 @ExperimentalLayoutApi
 public fun main() {
     JewelLogger.getInstance("StandaloneSample").info("Starting Jewel Standalone sample")

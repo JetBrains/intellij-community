@@ -12,7 +12,7 @@ import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import com.intellij.platform.workspace.jps.entities.modifyContentRootEntity
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
-import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.SEP
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -84,8 +84,8 @@ internal class PyProjectTomlRelocationTest {
 
     f.reloadProject()
     f.assertProjectStructure(
-      ExpectedModule("lib-a", contentRoot = "lib-a", sourceRoots = listOf("lib-a${SEP}src"), excludedFolders = listOf("lib-a${SEP}.venv")),
-      ExpectedModule("lib-b", contentRoot = "lib-b", sourceRoots = listOf("lib-b${SEP}tests"), excludedFolders = listOf("lib-b${SEP}.cache")),
+      ExpectedModule("lib-a", contentRoot = "lib-a", sourceRoots = listOf("lib-a" / "src"), excludedFolders = listOf("lib-a" / ".venv")),
+      ExpectedModule("lib-b", contentRoot = "lib-b", sourceRoots = listOf("lib-b" / "tests"), excludedFolders = listOf("lib-b" / ".cache")),
       ExpectedModule("root-py", type = PYTHON, contentRoot = "."),
     )
   }
@@ -105,7 +105,7 @@ internal class PyProjectTomlRelocationTest {
 
     f.reloadProject()
     f.assertProjectStructure(
-      ExpectedModule("child", contentRoot = "sub", sourceRoots = listOf("sub${SEP}src")),
+      ExpectedModule("child", contentRoot = "sub", sourceRoots = listOf("sub" / "src")),
       ExpectedModule("parent", contentRoot = "."),
     )
   }
@@ -151,7 +151,7 @@ internal class PyProjectTomlRelocationTest {
     // Second sync should relocate the roots to the child module
     f.reloadProject()
     f.assertProjectStructure(
-      ExpectedModule("child", contentRoot = "sub", sourceRoots = listOf("sub${SEP}templates", "sub${SEP}resources")),
+      ExpectedModule("child", contentRoot = "sub", sourceRoots = listOf("sub" / "templates", "sub" / "resources")),
       ExpectedModule("parent", contentRoot = "."),
     )
   }
@@ -191,7 +191,7 @@ internal class PyProjectTomlRelocationTest {
     // Second sync should relocate the exclude to the child module
     f.reloadProject()
     f.assertProjectStructure(
-      ExpectedModule("child", contentRoot = "sub", excludedFolders = listOf("sub${SEP}.venv")),
+      ExpectedModule("child", contentRoot = "sub", excludedFolders = listOf("sub" / ".venv")),
       ExpectedModule("parent", contentRoot = "."),
     )
   }

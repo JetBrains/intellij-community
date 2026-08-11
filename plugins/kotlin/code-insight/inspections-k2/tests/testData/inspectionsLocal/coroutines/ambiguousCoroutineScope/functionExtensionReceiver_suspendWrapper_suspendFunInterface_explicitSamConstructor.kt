@@ -1,0 +1,22 @@
+// WITH_COROUTINES
+// PROBLEM: Suspicious implicit 'CoroutineScope' receiver access in suspending context
+// FIX: Add explicit labeled receiver (does not change semantics)
+package test
+
+import kotlinx.coroutines.CoroutineScope
+
+fun interface CustomSuspendAction {
+    suspend fun customInvoke(): Unit
+}
+
+private suspend fun suspendWrapper(action: CustomSuspendAction) {
+    action.customInvoke()
+}
+
+fun CoroutineScope.doStuff() {}
+
+suspend fun CoroutineScope.test() {
+    suspendWrapper(CustomSuspendAction {
+        <caret>doStuff()
+    })
+}

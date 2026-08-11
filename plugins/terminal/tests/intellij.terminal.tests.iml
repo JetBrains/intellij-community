@@ -32,14 +32,18 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.tests" />
     <orderEntry type="module" module-name="intellij.terminal" />
     <orderEntry type="module" module-name="intellij.terminal.backend" />
     <orderEntry type="module" module-name="intellij.terminal.frontend" />
+    <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" scope="TEST" />
     <orderEntry type="module" module-name="intellij.terminal.completion" />
     <orderEntry type="module" module-name="intellij.terminal.sh" />
+    <orderEntry type="module" module-name="intellij.terminal.emulator" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
@@ -61,7 +65,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jediterm.ui" />
     <orderEntry type="module" module-name="intellij.libraries.pty4j" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
-    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel" scope="TEST" />
@@ -77,7 +81,10 @@
     <orderEntry type="library" scope="TEST" name="mockito-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.commons.lang3" scope="TEST" />
     <orderEntry type="module" module-name="intellij.terminal.completion.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.terminal.emulator.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
   </component>
 </module>

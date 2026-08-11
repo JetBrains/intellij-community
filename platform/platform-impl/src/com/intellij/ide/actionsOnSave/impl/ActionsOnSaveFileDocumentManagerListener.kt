@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSetFactory
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportProgress
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -86,6 +87,7 @@ class ActionsOnSaveFileDocumentManagerListener private constructor(private val p
    * [DocumentUpdatingActionOnSave.updateDocument] runs with cancelable background progress.
    */
   abstract class DocumentUpdatingActionOnSave : ActionOnSave() {
+    @ApiStatus.Internal
     final override fun processDocuments(project: Project, documents: Array<Document>) {}
 
     /**
@@ -130,6 +132,7 @@ class ActionsOnSaveFileDocumentManagerListener private constructor(private val p
     abstract suspend fun updateDocument(project: Project, document: Document)
   }
 
+  @ApiStatus.Internal
   override fun beforeDocumentSaving(document: Document) {
     if (!ActionsOnSaveManager.getInstance(project).runningSaveDocumentAction) {
       // There are hundreds of places in IntelliJ codebase where saveDocument() is called. IDE and plugins may decide to save some specific
@@ -148,6 +151,7 @@ class ActionsOnSaveFileDocumentManagerListener private constructor(private val p
     }
   }
 
+  @ApiStatus.Internal
   override fun beforeAllDocumentsSaving() {
     val documents = FileDocumentManager.getInstance().unsavedDocuments
     if (documents.isEmpty()) {
@@ -165,6 +169,7 @@ class ActionsOnSaveFileDocumentManagerListener private constructor(private val p
 
 @Service(Service.Level.PROJECT)
 class ActionsOnSaveManager private constructor(private val project: Project, private val coroutineScope: CoroutineScope) {
+  @ApiStatus.Internal
   companion object {
     fun getInstance(project: Project) = project.service<ActionsOnSaveManager>()
   }
@@ -281,10 +286,9 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
   ) {
     @Suppress("DialogTitleCapitalization") val progressTitle = IdeBundle.message("actions.on.save.background.progress")
     withBackgroundProgress(project, progressTitle) {
-      reportProgress(size = documentsToModStamps.size) { progressReporter ->
+      reportSequentialProgress(size = documentsToModStamps.size) { progressReporter ->
         for ((document, modStamp) in documentsToModStamps) {
-          // Not only does the `progressReporter.itemStep` call help with progress reporting,
-          // it also makes sure that the documents are processed one at a time, not in parallel.
+          // Documents are processed one at a time, not in parallel.
           // It's a safer path than parallel processing because there may be a lot of documents,
           // and Actions on Save may perform heavy operations or start external processes.
           progressReporter.itemStep {
@@ -388,6 +392,7 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
     return coroutineScope.coroutineContext.job.children.iterator().hasNext()
   }
 
+  /** Also consider `ActionOnSaveTestUtil.waitForActionsOnSaveToFinish` */
   @TestOnly
   @RequiresBackgroundThread(generateAssertion = true)
   fun waitForTasks() {

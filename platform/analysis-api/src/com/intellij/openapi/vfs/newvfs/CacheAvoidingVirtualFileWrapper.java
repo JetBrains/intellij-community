@@ -10,6 +10,8 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.util.containers.CollectionFactory;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +23,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
@@ -90,12 +94,34 @@ public final class CacheAvoidingVirtualFileWrapper extends VirtualFile implement
     NewVirtualFileSystem fileSystem = wrappedFile.getFileSystem();
     String[] childNames = fileSystem.list(wrappedFile);
     VirtualFile[] children = new VirtualFile[childNames.length];
+    Set<String> unresolvedChildren = null;
     for (int i = 0; i < childNames.length; i++) {
       String childName = childNames[i];
-      //TODO RC: what if the child is null? it could be if e.g. the file is invalid, doesn't exist, or doesn't belong to this file system...
-      children[i] = findChild(childName);
+      VirtualFile child = findChild(childName);
+      children[i] = child;
+
+      if (child == null) {//shit happens => sort out after the loop
+        if (unresolvedChildren == null) {
+          unresolvedChildren = CollectionFactory.createSmallMemoryFootprintSet(1);
+        }
+        unresolvedChildren.add(childName);
+      }
     }
-    return children;
+
+    if (unresolvedChildren == null) {
+      return children;
+    }
+    else {
+      //It could be the children were removed concurrently -- which is a perfectly legit scenario.
+      // But let's log details for a while, so we'll see what is going on:
+      LOG.warn(
+        "Suspicious scenario: [" + wrappedFile.getPath() + "].childNames=" + Arrays.toString(childNames) + ", " +
+        "but " + unresolvedChildren + " names was not resolved, (re-queried) childNames=" + Arrays.toString(fileSystem.list(wrappedFile))
+      );
+      return Arrays.stream(children)
+        .filter(child -> child != null)
+        .toArray(VirtualFile[]::new);
+    }
   }
 
   @Override

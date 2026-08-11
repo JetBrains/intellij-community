@@ -1,7 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.compilerReferenceIndex` start
-
 jvm_library(
     name = "compiler-reference-index",
     srcs = glob(
@@ -26,8 +25,10 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "//libraries/jetbrains/annotations",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "@lib//:kotlinc-kotlin-jps-common",
         "@lib//:kotlinc-kotlin-build-tools-api",
         "//platform/analysis-api:analysis",
@@ -50,6 +51,7 @@ jvm_library(
         "//java/java-frontback-psi-api:frontback-psi",
         "//platform/external-system-impl:externalSystem-impl",
         "//platform/util:util-ui",
+        "//platform/util/coroutines",
         "//plugins/gradle",
         "//plugins/kotlin/gradle/gradle",
         "//plugins/maven",
@@ -68,6 +70,10 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":compiler-reference-index",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
@@ -88,6 +94,7 @@ jvm_library(
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
         "//platform/external-system-impl:externalSystem-impl_test_lib",
         "//platform/util:util-ui_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
         "//plugins/gradle:gradle_test_lib",
         "//plugins/kotlin/gradle/gradle:gradle_test_lib",
         "//plugins/maven:maven_test_lib",

@@ -1,11 +1,17 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.gradle.java"/>
-    <module name="intellij.gradle.java.groovy"/>
-    <module name="intellij.java.psi"/>
-    <module name="intellij.properties.backend.psi"/>
     <module name="intellij.properties.psi"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.properties.backend.psi"/>
   </dependencies>
   <!-- endregion -->
 
@@ -20,17 +26,5 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleLatestMinorVersionInspection"
                      isInternal="false"/>
-
-    <localInspection language="UAST" groupPath="Gradle" shortName="RedundantKotlinStdLibDependency"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.redundant.kotlin.std.lib.dependency" groupKey="inspection.best.practices"
-                     groupBundle="messages.GradleInspectionBundle"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.gradle.java.properties.codeInspection.GradleRedundantKotlinStdLibInspection"
-                     isInternal="false"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="org.intellij.groovy">
-    <membersContributor implementation="com.intellij.gradle.java.properties.service.GradleExtensionsContributor"/>
   </extensions>
 </idea-plugin>

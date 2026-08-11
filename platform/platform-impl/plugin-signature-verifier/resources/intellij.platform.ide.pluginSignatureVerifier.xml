@@ -1,0 +1,18 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.zip.signer"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.plugins"/>
+    <module name="intellij.platform.ide.impl"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.ide.plugins.marketplace.PluginSignatureVerifier"
+                        serviceImplementation="com.intellij.platform.ide.pluginSignatureVerifier.PluginSignatureVerifierImpl"/>
+  </extensions>
+</idea-plugin>

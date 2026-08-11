@@ -1,8 +1,13 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.java.tests` start
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
 
+### auto-generated section `build intellij.java.tests` start
 jvm_library(
     name = "tests",
     srcs = glob(
@@ -61,6 +66,8 @@ jvm_library(
         "//platform/service-container",
         "//platform/searchEverywhere/testFramework",
         "//platform/forms_rt:java-guiForms-rt",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
     ],
 )
 
@@ -372,7 +379,8 @@ jvm_library(
         "//java/java-psi-impl:psi-impl_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
-        "@lib//:jet_check",
+        "//libraries/jetcheck",
+        "//libraries/jetcheck:jetcheck_test_lib",
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//java/testFramework/backend",
@@ -383,6 +391,10 @@ jvm_library(
         "//java/java-copyright:copyright_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
         "//platform/locking-impl",
         "//platform/locking-impl:locking-impl_test_lib",
         "//platform/smRunner:smRunner-tests",
@@ -393,6 +405,10 @@ jvm_library(
         "//java/java-features-trainer:featuresTrainer_test_lib",
         "//plugins/ide-features-trainer:featuresTrainer",
         "//plugins/ide-features-trainer:featuresTrainer_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.tests` end
@@ -407,7 +423,6 @@ exports_files(
 ### auto-generated section `iml intellij.java.tests` end
 
 ### auto-generated section `test intellij.java.tests` start
-
 jps_test(
     name = "tests_test",
     runtime_deps = [":tests_test_lib"],
@@ -415,7 +430,6 @@ jps_test(
 ### auto-generated section `test intellij.java.tests` end
 
 ### auto-generated section `build intellij.java.tests.main` start
-
 jvm_library(
     name = "tests-main",
     srcs = glob(

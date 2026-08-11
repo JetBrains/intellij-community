@@ -4,7 +4,6 @@ package com.intellij.ide.ui.laf.darcula.ui
 import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
@@ -17,7 +16,6 @@ import javax.swing.ListCellRenderer
 import javax.swing.border.Border
 import javax.swing.plaf.UIResource
 
-@ApiStatus.Internal
 internal class DarculaComboBoxRenderer : JLabel(), ListCellRenderer<Any>, ExperimentalUI.NewUIComboBoxRenderer, UIResource {
 
   private var selectionColor: Color? = null

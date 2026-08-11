@@ -1,18 +1,54 @@
-<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.runConfigurations.jvm">
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.base.scripting.shared"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.testFrameworkProvider"
+            interface="org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider"
+            dynamic="true"/>
+  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <configurationType implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.script.KotlinStandaloneScriptRunConfigurationType"/>
 
     <runConfigurationProducer
             implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.script.KotlinStandaloneScriptRunConfigurationProducer"/>
 
-    <javaMainMethodProvider implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.KotlinMainMethodProvider"/> 
+    <consoleFilterProvider implementation="org.jetbrains.kotlin.idea.run.KotlinConsoleFilterProvider"/>
+    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer" id="kotlinMain"/>
+    <configurationType implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationType"/>
+
+    <javaMainMethodProvider implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.KotlinMainMethodProvider"/>
   </extensions>
 </idea-plugin>

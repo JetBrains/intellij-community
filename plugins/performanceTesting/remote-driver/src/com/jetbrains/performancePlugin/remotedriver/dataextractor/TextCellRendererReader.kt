@@ -10,6 +10,8 @@ class TextCellRendererReader(private val componentSizeToSet: Dimension? = null) 
   override fun valueFrom(c: Component?): String? {
     return if (c != null) {
       c.size = componentSizeToSet ?: c.preferredSize
+      // re-layout the renderer to ensure that panel-based renderers are properly laid out
+      c.doLayout()
       TextParser.parseCellRenderer(c)
         .sortedWith(compareBy<TextData> { it.point.x }.thenComparing { it.point.y })
         .joinToString(" ") { it.text.trim() }

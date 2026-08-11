@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.tooling.serialization
 import com.amazon.ion.IonReader
 import com.amazon.ion.IonType
 import com.amazon.ion.IonWriter
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier
+import java.util.function.Supplier
 
 fun IonWriter.step(containerType: IonType, writeModel: Runnable) {
   stepIn(containerType)

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.screenmenu;
 
 import com.intellij.CommonBundle;
@@ -42,7 +42,7 @@ public class Menu extends MenuItem {
   private Runnable myOnOpen;
   private Runnable myOnClose; // we assume that can run it only on EDT (to change swing components)
   private Component myComponent;
-  private long myOpenTimeMs = 0; // used to collect statistic
+  private long myOpenTimeNs = 0; // used to collect statistic
   private volatile boolean myIsOpened = false;
 
   long[] myCachedPeers;
@@ -63,7 +63,10 @@ public class Menu extends MenuItem {
   public boolean isOpened() {
     return myIsOpened;
   }
-  public long getOpenTimeMs() { return myOpenTimeMs; }
+
+  public long getOpenTimeNs() {
+    return myOpenTimeNs;
+  }
 
   private Menu() { }
 
@@ -291,7 +294,7 @@ public class Menu extends MenuItem {
       return;
     }
 
-    myOpenTimeMs = System.currentTimeMillis();
+    myOpenTimeNs = System.nanoTime();
     if (USE_STUB) {
       // NOTE: must add stub item when the menu opens (otherwise AppKit considers it as empty, and we can't fill it later)
       MenuItem stub = new MenuItem();

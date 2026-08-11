@@ -12,8 +12,7 @@ Ensures modules do not depend directly on project libraries that are exported by
 - Config: `projectLibraryToModuleMap` built from JPS library modules.
 - JPS model: module dependency lists from `.iml` files.
 - Config: `libraryModuleFilter` for eligible library modules.
-- Suppression: `suppressLibraries` per content module in `suppressions.json`.
-- Mode: `updateSuppressions` (collects suppressions instead of applying fixes).
+- Mode: `updateSuppressions` (skips `.iml` fixes).
 
 ## Rules
 
@@ -23,17 +22,16 @@ Ensures modules do not depend directly on project libraries that are exported by
   - If a library maps to a library module and the filter allows it:
     - If the module does not already depend on the library module, replace the library dependency with a module dependency.
     - If the module already depends on the library module, remove the library dependency.
-- Apply fixes only for non-suppressed libraries; collect suppression usage for suppressed entries.
+- Apply fixes for all detected library-module replacements.
 
 ## Suppression and allowlists
 
-- `suppressLibraries` per content module skips replacements for those libraries.
-- `updateSuppressions` collects suppression usage without modifying `.iml` files.
+- No suppression is supported for library-module replacements.
+- `updateSuppressions` does not modify `.iml` files.
 
 ## Output
 
 - Updates `.iml` files via the file updater.
-- Publishes `Slots.LIBRARY_SUPPRESSIONS` (suppression usage).
 - Does not emit validation errors.
 
 ## Auto-fix

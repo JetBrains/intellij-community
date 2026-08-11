@@ -1,11 +1,27 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.groovy
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertDefaultResources
+import com.intellij.maven.testFramework.fixtures.assertDefaultTestResources
+import com.intellij.maven.testFramework.fixtures.assertExcludes
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.assertSources
+import com.intellij.maven.testFramework.fixtures.assertTestSources
+import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
+import com.intellij.maven.testFramework.fixtures.assertUnorderedPathsAreEqual
+import com.intellij.maven.testFramework.fixtures.createProjectSubDirs
+import com.intellij.maven.testFramework.fixtures.getModule
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.projectPath
+import com.intellij.maven.testFramework.fixtures.projectsTree
+import com.intellij.maven.testFramework.fixtures.repositoryPathCanonical
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.io.createFile
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
@@ -15,19 +31,32 @@ import org.jetbrains.idea.maven.project.MavenFolderResolver
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.nio.file.Path
 
-class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class GroovyImporterTest(mavenVersion: String, modelVersion: String) {
 
-  override fun setUp() {
-    super.setUp()
-    repositoryPath = dir.resolve("repo")
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+
+  @BeforeEach
+  fun before() {
+    maven.repositoryPath = maven.dir.resolve("repo")
   }
 
   @Test
   fun testConfiguringFacetWithoutLibrary() = runBlocking {
-      importProjectAsync(
+      maven.importProjectAsync(
           """
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -43,14 +72,14 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent()
       )
 
-      assertModules("project")
+      maven.assertModules("project")
 
-      assertUnorderedElementsAreEqual(GroovyConfigUtils.getInstance().getSDKLibrariesByModule(getModule("project")))
+      assertUnorderedElementsAreEqual(GroovyConfigUtils.getInstance().getSDKLibrariesByModule(maven.getModule("project")).asList())
   }
 
   @Test
   fun testConfiguringFacetWithLibrary() = runBlocking {
-      importProjectAsync(
+      maven.importProjectAsync(
           """
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -73,20 +102,20 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent()
       )
 
-      assertModules("project")
+      maven.assertModules("project")
 
-      val libraries = GroovyConfigUtils.getInstance().getSDKLibrariesByModule(getModule("project"))
-      assertTrue("unexpected groovy libs configuration: " + libraries.size, libraries.size > 0)
+      val libraries = GroovyConfigUtils.getInstance().getSDKLibrariesByModule(maven.getModule("project"))
+      assertTrue(libraries.size > 0, "unexpected groovy libs configuration: " + libraries.size)
       val library = libraries[0]
       assertUnorderedPathsAreEqual(
           listOf(*library.getUrls(OrderRootType.CLASSES)),
-          listOf("jar://$repositoryPathCanonical/org/codehaus/groovy/groovy-all-minimal/1.5.6/groovy-all-minimal-1.5.6.jar!/")
+          listOf("jar://${maven.repositoryPathCanonical}/org/codehaus/groovy/groovy-all-minimal/1.5.6/groovy-all-minimal-1.5.6.jar!/")
       )
   }
 
   @Test
   fun testAddingGroovySpecificSources() = runBlocking {
-      importProjectAsync(
+      maven.importProjectAsync(
           """
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -102,25 +131,25 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent()
       )
 
-      assertModules("project")
+      maven.assertModules("project")
 
-      assertSources(
+      maven.assertSources(
           "project",
           "src/main/groovy",
           "src/main/java"
       )
-      assertDefaultResources("project")
-      assertTestSources(
+      maven.assertDefaultResources("project")
+      maven.assertTestSources(
           "project",
           "src/test/groovy",
           "src/test/java"
       )
-      assertDefaultTestResources("project")
+      maven.assertDefaultTestResources("project")
   }
 
   @Test
   fun testAddingGroovySpecificSources2() = runBlocking {
-      importProjectAsync(
+      maven.importProjectAsync(
           """
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -136,25 +165,25 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent()
       )
 
-      assertModules("project")
+      maven.assertModules("project")
 
-      assertSources(
+      maven.assertSources(
           "project",
           "src/main/groovy",
           "src/main/java"
       )
-      assertDefaultResources("project")
-      assertTestSources(
+      maven.assertDefaultResources("project")
+      maven.assertTestSources(
           "project",
           "src/test/groovy",
           "src/test/java"
       )
-      assertDefaultTestResources("project")
+      maven.assertDefaultTestResources("project")
   }
 
   @Test
   fun testAddingGroovySpecificSources3GmavenPlus() = runBlocking {
-      importProjectAsync(
+      maven.importProjectAsync(
           """
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -170,30 +199,30 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent()
       )
 
-      assertModules("project")
+      maven.assertModules("project")
 
-      assertSources(
+      maven.assertSources(
           "project",
           "src/main/groovy",
           "src/main/java"
       )
-      assertDefaultResources("project")
-      assertTestSources(
+      maven.assertDefaultResources("project")
+      maven.assertTestSources(
           "project",
           "src/test/groovy",
           "src/test/java"
       )
-      assertDefaultTestResources("project")
+      maven.assertDefaultTestResources("project")
   }
 
   @Test
   fun testGroovyEclipsePlugin() = runBlocking {
-      val batchDir = repositoryPath.resolve("org/codehaus/groovy/groovy-eclipse-batch/2.1.3-01/")
+      val batchDir = maven.repositoryPath.resolve("org/codehaus/groovy/groovy-eclipse-batch/2.1.3-01/")
       batchDir.createDirectories()
       val batchJar = batchDir.resolve("groovy-eclipse-batch-2.1.3-01.jar")
       batchJar.createFile()
 
-      importProjectAsync(
+      maven.importProjectAsync(
           """
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version><dependencies>
                       <dependency>
@@ -237,22 +266,22 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent()
       )
 
-      assertModules("project")
+      maven.assertModules("project")
 
-      assertSources(
+      maven.assertSources(
           "project",
           "src/main/groovy",
           "src/main/java"
       )
-      assertDefaultResources("project")
-      assertTestSources(
+      maven.assertDefaultResources("project")
+      maven.assertTestSources(
           "project",
           "src/test/groovy",
           "src/test/java"
       )
-      assertDefaultTestResources("project")
+      maven.assertDefaultTestResources("project")
 
-      val compilerSettings = project.getService(
+      val compilerSettings = maven.project.getService(
           GreclipseIdeaCompilerSettings::class.java
       )
       assertEquals(
@@ -263,12 +292,12 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testGroovyEclipsePluginWhenOnlyCompilerDependency() = runBlocking {
-      val batchDir = repositoryPath.resolve("org/codehaus/groovy/groovy-eclipse-batch/2.1.3-01/")
+      val batchDir = maven.repositoryPath.resolve("org/codehaus/groovy/groovy-eclipse-batch/2.1.3-01/")
       batchDir.createDirectories()
       val batchJar = batchDir.resolve("groovy-eclipse-batch-2.1.3-01.jar")
       batchJar.createFile()
 
-      importProjectAsync(
+      maven.importProjectAsync(
           """
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version><build>
                       <pluginManagement>
@@ -306,22 +335,22 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent()
       )
 
-      assertModules("project")
+      maven.assertModules("project")
 
-      assertSources(
+      maven.assertSources(
           "project",
           "src/main/groovy",
           "src/main/java"
       )
-      assertDefaultResources("project")
-      assertTestSources(
+      maven.assertDefaultResources("project")
+      maven.assertTestSources(
           "project",
           "src/test/groovy",
           "src/test/java"
       )
-      assertDefaultTestResources("project")
+      maven.assertDefaultTestResources("project")
 
-      val compilerSettings = project.getService(GreclipseIdeaCompilerSettings::class.java)
+      val compilerSettings = maven.project.getService(GreclipseIdeaCompilerSettings::class.java)
       assertEquals(
           LocalFileSystem.getInstance().findFileByNioFile(batchJar)!!.toNioPath(),
           Path.of(compilerSettings.state!!.greclipsePath)
@@ -330,7 +359,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testAddingCustomGroovySpecificSources() = runBlocking {
-      importProjectAsync(
+      maven.importProjectAsync(
           """
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -380,27 +409,27 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent()
       )
 
-      assertModules("project")
+      maven.assertModules("project")
 
-      assertSources(
+      maven.assertSources(
           "project",
           "src/foo1",
           "src/foo2",
           "src/main/java"
       )
-      assertDefaultResources("project")
-      assertTestSources(
+      maven.assertDefaultResources("project")
+      maven.assertTestSources(
           "project",
           "src/test-foo1",
           "src/test-foo2",
           "src/test/java"
       )
-      assertDefaultTestResources("project")
+      maven.assertDefaultTestResources("project")
   }
 
   @Test
   fun testAddingCustomGroovySpecificSources2GmavenPlus() = runBlocking {
-      importProjectAsync(
+      maven.importProjectAsync(
           """
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -450,27 +479,27 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent()
       )
 
-      assertModules("project")
+      maven.assertModules("project")
 
-      assertSources(
+      maven.assertSources(
           "project",
           "src/foo1",
           "src/foo2",
           "src/main/java"
       )
-      assertDefaultResources("project")
-      assertTestSources(
+      maven.assertDefaultResources("project")
+      maven.assertTestSources(
           "project",
           "src/test-foo1",
           "src/test-foo2",
           "src/test/java"
       )
-      assertDefaultTestResources("project")
+      maven.assertDefaultTestResources("project")
   }
 
   @Test
   fun testAddingCustomGroovySpecificSourcesByRelativePath() = runBlocking {
-      importProjectAsync(
+      maven.importProjectAsync(
           """
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -514,21 +543,21 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent()
       )
 
-      assertModules("project")
+      maven.assertModules("project")
 
-      assertSources("project", "src/foo", "src/main/java")
-      assertTestSources("project", "src/test-foo", "src/test/java")
+      maven.assertSources("project", "src/foo", "src/main/java")
+      maven.assertTestSources("project", "src/test-foo", "src/test/java")
   }
 
   @Test
   fun testDoNotAddGroovySpecificGeneratedSources() = runBlocking {
-      createProjectSubDirs(
+      maven.createProjectSubDirs(
           "target/generated-sources/xxx/yyy",
           "target/generated-sources/groovy-stubs/main/foo",
           "target/generated-sources/groovy-stubs/test/bar"
       )
 
-      importProjectAsync(
+      maven.importProjectAsync(
           """
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -554,31 +583,31 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent()
       )
 
-      assertModules("project")
+      maven.assertModules("project")
 
-      assertSources(
+      maven.assertSources(
           "project",
           "src/main/groovy",
           "src/main/java",
           "target/generated-sources/xxx"
       )
-      assertTestSources("project", "src/test/groovy", "src/test/java")
+      maven.assertTestSources("project", "src/test/groovy", "src/test/java")
 
-      assertDefaultResources("project")
-      assertDefaultTestResources("project")
+      maven.assertDefaultResources("project")
+      maven.assertDefaultTestResources("project")
 
-      assertExcludes("project", "target")
+      maven.assertExcludes("project", "target")
   }
 
   @Test
   fun testDoNotAddCustomGroovySpecificGeneratedSources() = runBlocking {
-      createProjectSubDirs(
+      maven.createProjectSubDirs(
           "target/generated-sources/xxx/yyy",
           "target/generated-sources/foo/aaa",
           "target/generated-sources/bar/bbb"
       )
 
-      importProjectAsync(
+      maven.importProjectAsync(
           """
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -614,31 +643,31 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent()
       )
 
-      assertModules("project")
+      maven.assertModules("project")
 
-      assertSources(
+      maven.assertSources(
           "project",
           "src/main/groovy",
           "src/main/java",
           "target/generated-sources/xxx"
       )
-      assertTestSources("project", "src/test/groovy", "src/test/java")
+      maven.assertTestSources("project", "src/test/groovy", "src/test/java")
 
-      assertDefaultResources("project")
-      assertDefaultTestResources("project")
+      maven.assertDefaultResources("project")
+      maven.assertDefaultTestResources("project")
 
-      assertExcludes("project", "target")
+      maven.assertExcludes("project", "target")
   }
 
   @Test
   fun testDoNotAddCustomGroovySpecificGeneratedSourcesByRelativePath() = runBlocking {
-      createProjectSubDirs(
+      maven.createProjectSubDirs(
           "target/generated-sources/xxx/yyy",
           "target/generated-sources/foo/aaa",
           "target/generated-sources/bar/bbb"
       )
 
-      importProjectAsync(
+      maven.importProjectAsync(
           """
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -674,27 +703,27 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent()
       )
 
-      assertModules("project")
+      maven.assertModules("project")
 
-      assertSources(
+      maven.assertSources(
           "project",
           "src/main/groovy",
           "src/main/java",
           "target/generated-sources/xxx"
       )
-      assertTestSources(
+      maven.assertTestSources(
           "project",
           "src/test/groovy",
           "src/test/java"
       )
 
-      assertExcludes("project", "target")
+      maven.assertExcludes("project", "target")
   }
 
   @Test
   fun testUpdatingGroovySpecificGeneratedSourcesOnFoldersUpdate() = runBlocking {
       try {
-          importProjectAsync(
+          maven.importProjectAsync(
               """
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
@@ -722,42 +751,42 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
           edtWriteAction {
               val a = MavenRootModelAdapter(
                   MavenRootModelAdapterLegacyImpl(
-                      projectsTree.findProject(projectPom)!!,
-                      getModule("project"),
-                      ProjectDataManager.getInstance().createModifiableModelsProvider(project)
+                      maven.projectsTree.findProject(maven.projectPom)!!,
+                      maven.getModule("project"),
+                      ProjectDataManager.getInstance().createModifiableModelsProvider(maven.project)
                   )
               )
-              a.unregisterAll("$projectPath/target", true, true)
+              a.unregisterAll("${maven.projectPath}/target", true, true)
               a.rootModel.commit()
           }
 
-          assertSources("project", "src/main/groovy", "src/main/java")
-          assertTestSources("project", "src/test/groovy", "src/test/java")
+          maven.assertSources("project", "src/main/groovy", "src/main/java")
+          maven.assertTestSources("project", "src/test/groovy", "src/test/java")
 
-          assertExcludes("project")
+          maven.assertExcludes("project")
 
-          createProjectSubDirs(
+          maven.createProjectSubDirs(
               "target/generated-sources/xxx/yyy",
               "target/generated-sources/groovy-stubs/main/foo",
               "target/generated-sources/groovy-stubs/test/bar"
           )
 
-          val projectsManager = projectsManager
+          val projectsManager = maven.projectsManager
           MavenFolderResolver(projectsManager.project).resolveFoldersAndImport(projectsManager.projects)
 
-          assertSources(
+          maven.assertSources(
               "project",
               "src/main/groovy",
               "src/main/java",
               "target/generated-sources/xxx"
           )
-          assertTestSources(
+          maven.assertTestSources(
               "project",
               "src/test/groovy",
               "src/test/java"
           )
 
-          assertExcludes("project", "target")
+          maven.assertExcludes("project", "target")
       } finally {
           // do not lock files by maven process
           MavenServerManager.getInstance().closeAllConnectorsAndWait()
@@ -766,13 +795,13 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoNotAddGroovySpecificGeneratedSourcesForGMaven_1_2() = runBlocking {
-      createProjectSubDirs(
+      maven.createProjectSubDirs(
           "target/generated-sources/xxx/yyy",
           "target/generated-sources/groovy-stubs/main/foo",
           "target/generated-sources/groovy-stubs/test/bar"
       )
 
-      importProjectAsync(
+      maven.importProjectAsync(
           """
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -799,18 +828,18 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent()
       )
 
-      assertModules("project")
+      maven.assertModules("project")
 
-      assertSources(
+      maven.assertSources(
           "project",
           "src/main/groovy",
           "src/main/java",
           "target/generated-sources/xxx"
       )
-      assertDefaultResources("project")
-      assertTestSources("project", "src/test/groovy", "src/test/java")
-      assertDefaultTestResources("project")
+      maven.assertDefaultResources("project")
+      maven.assertTestSources("project", "src/test/groovy", "src/test/java")
+      maven.assertDefaultTestResources("project")
 
-      assertExcludes("project", "target")
+      maven.assertExcludes("project", "target")
   }
 }

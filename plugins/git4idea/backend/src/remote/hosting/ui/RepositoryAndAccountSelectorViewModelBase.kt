@@ -2,6 +2,7 @@
 package git4idea.remote.hosting.ui
 
 import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.auth.AccountManager
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.util.URIUtil
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
@@ -58,9 +60,12 @@ abstract class RepositoryAndAccountSelectorViewModelBase<M : HostedGitRepository
       else {
         emit(null)
         coroutineScope {
-          accountManager.getCredentialsState(this, it).collect { creds ->
-            emit(creds == null)
-          }
+          val account = it
+          accountManager.getCredentialsFlow(account)
+            .map { Unit }
+            .withInitial(Unit)
+            .map { accountManager.findCredentials(account) }
+            .collect { creds -> emit(creds == null) }
         }
       }
     }.stateIn(cs, SharingStarted.Eagerly, null)

@@ -21,12 +21,13 @@ import com.intellij.compose.ide.plugin.resources.vectorDrawable.rendering.use
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.observable.util.addComponentListener
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
@@ -48,7 +49,6 @@ import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import com.intellij.openapi.observable.util.addComponentListener
 import java.awt.image.BufferedImage
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
@@ -125,7 +125,7 @@ internal class ComposeResourcePreviewEditor(
       }
     }
     catch (e: Exception) {
-      if (Logger.shouldRethrow(e)) throw e
+      rethrowControlFlowException(e)
       RenderResult.Error(ComposeIdeBundle.message("compose.resource.preview.render.error.name", e.message ?: "Unknown Error"))
     }
 

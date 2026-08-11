@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -586,8 +586,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return selected;
   }
 
-  private @Nullable Settings showDialog(@NotNull GrIntroduceContext context) {
-
+  protected @Nullable Settings showDialog(@NotNull GrIntroduceContext context) {
     // Add occurrences highlighting
     ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
     HighlightManager highlightManager = null;

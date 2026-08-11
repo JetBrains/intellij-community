@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin" xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
   <id>org.jetbrains.kotlin</id>
   <name>Kotlin</name>
   <category>Languages</category>
@@ -15,14 +15,11 @@
   <!--suppress PluginXmlValidity -->
   <vendor url="https://www.jetbrains.com">JetBrains</vendor>
 
+  <module value="com.intellij.modules.kotlin"/>
   <dependencies>
     <!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->
-    <module name="intellij.java.backend"/>
-    <module name="intellij.platform.collaborationTools"/>
-    <module name="intellij.platform.scriptDebugger.ui"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.platform.debugger.impl.ui"/>
-    <!-- endregion -->
+    <plugin id="com.intellij.java"/>
+    <plugin id="com.intellij.modules.java-capable"/>
   </dependencies>
 
   <extensionPoints>
@@ -31,15 +28,211 @@
     </extensionPoint>
   </extensionPoints>
 
+  <!-- comes from the Kotlin compiler -->
+  <xi:include href="/META-INF/analysis-api/analysis-api-fir.xml"/>
 
-  <!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->
+  <xi:include href="/META-INF/file-types.xml"/>
+  <xi:include href="/META-INF/language.xml"/>
+  <xi:include href="/META-INF/jps.xml"/>
+  <xi:include href="/META-INF/caches.xml"/>
+  <xi:include href="/META-INF/kotlin-core.xml"/>
+  <xi:include href="/META-INF/scripting-v1.xml"/>
+
+  <xi:include href="/META-INF/command-completion-k2.xml">
+    <xi:fallback/>
+  </xi:include>
 
   <content namespace="jetbrains">
-    <module name="intellij.kotlin.base.resources" loading="embedded"/>
-    <module name="intellij.kotlin.codeInsight.shared" loading="embedded"/>
-    <module name="intellij.kotlin.jvm.debugger.base.util" loading="embedded"/>
-    <module name="intellij.kotlin.jvm.debugger.coroutines" loading="embedded"/>
-  </content>
+    <module name="intellij.kotlin.base.projectModel" loading="required"/>
+    <module name="intellij.kotlin.base.analysis.platform"/>
+    <module name="intellij.kotlin.base.externalSystem"/>
+    <module name="intellij.kotlin.analysis.platform"/>
+    <module name="intellij.kotlin.codeInsight.base"/>
+    <module name="intellij.kotlin.projectStructure"/>
+    <!--
+      Contains the VCS-backed diff browser for automatic project-configuration changes.
+      Keep it out of the Language Server plugin content: LS needs the configurator, not the VCS Changes UI implementation.
+    -->
+    <module name="intellij.kotlin.projectConfiguration.vcs"/>
+    <module name="intellij.kotlin.scripting"/>
 
-  <xi:include href="/kotlin.plugin.k2.xml"/>
+    <module name="intellij.kotlin.copyright"/>
+    <module name="intellij.kotlin.coverage"/>
+    <module name="intellij.kotlin.i18n"/>
+    <module name="intellij.kotlin.git"/>
+    <module name="intellij.kotlin.grazie"/>
+    <module name="intellij.kotlin.gradle.tooling"/>
+    <module name="intellij.kotlin.gradle.tooling.impl"/>
+    <module name="intellij.kotlin.lombok"/>
+    <module name="intellij.kotlin.maven"/>
+    <module name="intellij.kotlin.completion.ml"/>
+    <module name="intellij.kotlin.runConfigurations.junit"/>
+    <module name="intellij.kotlin.runConfigurations.testng"/>
+    <module name="intellij.kotlin.runConfigurations.jvm"/>
+
+    <module name="intellij.kotlin.gradle.gradle"/>
+    <module name="intellij.kotlin.gradle.codeInsight.common"/>
+    <module name="intellij.kotlin.gradle.codeInsight.groovy"/>
+    <module name="intellij.kotlin.gradle.codeInsight.toml"/>
+    <module name="kotlin.gradle.gradle-java"/>
+    <module name="intellij.kotlin.gradle.java"/>
+    <module name="kotlin.gradle.scripting.shared"/>
+    <module name="intellij.kotlin.gradle.scripting"/>
+
+    <module name="intellij.kotlin.onboarding"/>
+    <module name="intellij.kotlin.onboarding.gradle"/>
+    <module name="intellij.kotlin.onboarding.maven"/>
+
+    <module name="intellij.kotlin.projectWizard.cli"/>
+    <module name="intellij.kotlin.projectWizard.core"/>
+    <module name="intellij.kotlin.projectWizard.idea"/>
+    <module name="intellij.kotlin.projectWizard.gradle"/>
+    <module name="intellij.kotlin.projectWizard.maven"/>
+    <module name="intellij.kotlin.projectWizard.compose"/>
+
+    <module name="intellij.kotlin.featuresTrainer"/>
+
+    <module name="intellij.kotlin.jvm.decompiler"/>
+
+    <module name="kotlin.jvm.shared"/>
+    <module name="intellij.kotlin.jvm"/>
+
+    <module name="intellij.kotlin.base.scripting"/>
+    <module name="intellij.kotlin.base.scripting.main.kts"/>
+    <module name="intellij.kotlin.base.scripting.shared" loading="embedded"/>
+    <module name="intellij.kotlin.base.scripting.scratch.definition"/>
+
+    <module name="intellij.kotlin.codeInsight.fixes"/>
+    <module name="intellij.kotlin.codeInsight.intentions"/>
+    <module name="intellij.kotlin.codeInsight.inspections"/>
+    <module name="intellij.kotlin.codeInsight"/>
+    <module name="intellij.kotlin.codeInsight.liveTemplates"/>
+    <module name="intellij.kotlin.codeInsight.postfixTemplates"/>
+    <module name="intellij.kotlin.codeInsight.structuralSearch"/>
+
+    <module name="intellij.kotlin.completion.impl"/>
+
+    <module name="intellij.kotlin.jvm.debugger.evaluation"/>
+    <module name="kotlin.jvm-debugger.evaluation"/>
+
+    <module name="intellij.kotlin.searching"/>
+    <module name="intellij.kotlin.refactorings"/>
+    <module name="intellij.kotlin.refactorings.rename"/>
+
+    <module name="intellij.kotlin.navigation"/>
+    <module name="intellij.kotlin.codeInsight.lineMarkers"/>
+
+    <module name="intellij.kotlin.highlighting"/>
+    <module name="intellij.kotlin.highlighting.minimal" loading="embedded"/>
+    <module name="intellij.kotlin.formatter.minimal" loading="embedded"/>
+    <module name="intellij.kotlin.formatter" loading="embedded"/>
+
+    <module name="intellij.kotlin.compilerReferenceIndex"/>
+
+    <module name="intellij.kotlin.compilerPlugins.assignment.fixes"/>
+    <module name="intellij.kotlin.compilerPlugins.scripting"/>
+    <module name="intellij.kotlin.compilerPlugins.support.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.support.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.allopen.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.noarg.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.noarg.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.samWithReceiver.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.kapt"/>
+    <module name="intellij.kotlin.compilerPlugins.serialization"/>
+    <module name="intellij.kotlin.compilerPlugins.serialization.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.serialization.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.dataframe.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.lombok.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.lombok.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.assignment.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.assignment.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.powerAssert.gradle"/>
+
+    <module name="intellij.kotlin.injection"/>
+    <module name="kotlin.base.injection"/>
+
+    <module name="intellij.kotlin.j2k"/>
+    <module name="intellij.kotlin.internal"/>
+
+    <module name="intellij.kotlin.performanceExtendedPlugin"/>
+
+    <module name="intellij.kotlin.base.resources" loading="embedded"/>
+    <module name="intellij.kotlin.base.analysis" loading="embedded"/>
+    <module name="intellij.kotlin.base.analysis.utils" loading="embedded"/>
+    <module name="intellij.kotlin.base.codeInsight" loading="embedded"/>
+    <module name="intellij.kotlin.base.codeInsight.minimal" loading="embedded"/>
+    <module name="intellij.kotlin.codeInsight.api" loading="embedded"/>
+    <module name="intellij.kotlin.codeInsight.descriptions" loading="embedded"/>
+    <module name="intellij.kotlin.codeInsight.utils" loading="embedded"/>
+    <module name="intellij.kotlin.codeInsight.shared" loading="embedded"/>
+    <module name="intellij.kotlin.completion.api" loading="embedded"/>
+    <module name="intellij.kotlin.compilerPlugins.support.bundled" loading="embedded"/>
+    <module name="intellij.kotlin.compilerPlugins.support" loading="embedded"/>
+    <module name="intellij.kotlin.codeInsight.overrideImplement"/>
+    <module name="intellij.kotlin.projectConfiguration" loading="embedded"/>
+    <module name="intellij.kotlin.compilerPlugins.parcelize"/>
+    <module name="intellij.kotlin.spellchecker"/>
+    <module name="intellij.kotlin.uast.base"/>
+    <module name="intellij.kotlin.uast.idea.base"/>
+    <module name="intellij.kotlin.uast"/>
+    <module name="intellij.kotlin.uast.idea"/>
+    <module name="kotlin.fir"/>
+    <module name="kotlin.fir.frontend-independent" loading="embedded"/>
+    <module name="intellij.kotlin.searching.base" loading="embedded"/>
+    <module name="intellij.kotlin.refactorings.base" loading="embedded"/>
+    <module name="intellij.kotlin.jvm.debugger.base.util" loading="embedded"/>
+    <module name="intellij.kotlin.jvm.debugger.coroutines"/>
+    <module name="intellij.kotlin.jvm.debugger.core" loading="embedded"/>
+    <module name="intellij.kotlin.jvm.debugger.eval4j" loading="embedded"/>
+    <module name="intellij.kotlin.plugin.updater" loading="embedded"/>
+    <module name="intellij.kotlin.preferences" loading="embedded"/>
+    <module name="intellij.kotlin.references" loading="embedded"/>
+    <module name="intellij.kotlin.base.util" loading="embedded"/>
+    <module name="intellij.kotlin.base.compilerConfiguration" loading="embedded"/>
+    <module name="intellij.kotlin.base.plugin" loading="embedded"/>
+    <module name="intellij.kotlin.base.compilerConfiguration.ui" loading="embedded"/>
+    <module name="intellij.kotlin.native" loading="embedded"/>
+    <module name="intellij.kotlin.base.platforms" loading="embedded"/>
+    <module name="intellij.kotlin.base.jps" loading="embedded"/>
+    <module name="intellij.kotlin.base.kdoc" loading="embedded"/>
+    <module name="intellij.kotlin.base.indices" loading="embedded"/>
+    <module name="intellij.kotlin.base.psi" loading="embedded"/>
+    <module name="intellij.kotlin.base.projectStructure" loading="embedded"/>
+    <module name="intellij.kotlin.base.facet" loading="embedded"/>
+    <module name="intellij.kotlin.base.serialization" loading="embedded"/>
+    <module name="intellij.kotlin.ide" loading="embedded"/>
+    <module name="intellij.kotlin.migration"/>
+    <module name="intellij.kotlin.base.statistics" loading="embedded"/>
+    <module name="intellij.libraries.kotlin.tooling.core" loading="required"/>
+    <module name="intellij.libraries.kotlin.gradle.plugin.idea" loading="required"/>
+    <module name="intellij.libraries.kotlin.gradle.plugin.idea.proto" loading="required"/>
+    <module name="intellij.kotlin.codeInsight.vcs"/>
+    <module name="intellij.libraries.kotlinc.analysis.api" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.impl.base" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.k2" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.platform.interface" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.low.level.api.fir" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes" loading="embedded"/>
+
+    <!-- ultimate part -->
+    <module name="intellij.kotlin.ultimate.common.native" loading="optional"/>
+    <module name="intellij.kotlin.ultimate.native.debugger" loading="optional"/>
+    <module name="intellij.kotlin.ultimate.javascript.debugger" loading="optional"/>
+    <module name="intellij.kotlin.ultimate.javascript.nodeJs" loading="optional"/>
+    <module name="intellij.kotlin.ultimate.wasm.debugger" loading="optional"/>
+    <module name="intellij.kotlin.ultimate.native" loading="optional"/>
+    <module name="intellij.kotlin.ultimate.profiler" loading="optional"/>
+    <module name="intellij.kotlin.duplicate.scope" loading="optional"/>
+
+    <module name="intellij.debugger.jvm.advanced.kotlin" loading="optional"/>
+    <module name="intellij.debugger.logpoints.kotlin" loading="optional"/>
+  </content>
+  <content>
+    <module name="intellij.platform.commercial.verifier" loading="optional"/>
+    <module name="intellij.libraries.completion.ranking.kotlin" loading="required"/>
+    <!-- kotlin.jsr223 is included in kotlin plugin as well. To avoid conflicts, it's private and is not included in the common namespace -->
+    <module name="intellij.kotlin.jsr223" loading="embedded"/>
+  </content>
+  <!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->
 </idea-plugin>

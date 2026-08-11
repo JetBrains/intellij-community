@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
 import com.intellij.diagnostic.ThreadDumper
@@ -7,6 +7,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.text.Formats
 import com.intellij.util.application
+import com.intellij.util.text.nullize
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -83,9 +84,13 @@ suspend fun <Y> runTaskAndLogTime(
         delay(Duration.ofMinutes(5))
         val message = stackElement.logStack(progressName) ?: continue
         val prefix = "keep running ${message}... so far ${cookie.formatDuration()}"
-        val threadDump = ThreadDumper.dumpThreadsToString()
+        val threadDump = ThreadDumper.dumpForDebug()
         ConsoleLog.info("Printing a threadDump for diagnostic in case of process' hanging")
         ConsoleLog.info("... $prefix\n$threadDump")
+
+        AdditionalThreadDumpSupport.dumpThreads().nullize(nullizeSpaces = true)?.let {
+          ConsoleLog.info("Additional thread dump information:\n$it")
+        }
 
         try {
           val logFile = File(PathManager.getLogPath(), "too-long-wait-thread-dump-${System.currentTimeMillis()}.txt")

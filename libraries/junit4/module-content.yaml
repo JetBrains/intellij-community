@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.junit4.jar
+  modules:
+  - name: intellij.libraries.junit4
+    libraries:
+      JUnit4:
+      - name: $MAVEN_REPOSITORY$/junit/junit/4/junit-4.jar

@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.config.EventLogOptions;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +12,7 @@ import java.util.Map;
 import static com.intellij.internal.statistic.config.EventLogOptions.MACHINE_ID_SALT;
 import static com.intellij.internal.statistic.config.EventLogOptions.MACHINE_ID_SALT_REVISION;
 
+@ApiStatus.Internal
 public abstract class EventLogRecorderConfigOptionsListener implements EventLogConfigOptionsListener {
   private final String myRecorderId;
 

@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyClass;
@@ -9,6 +12,8 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 
 import java.util.Collections;
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyPsiFacadeTest extends PyTestCase {
   public void testCreateClassByQNameDoesntDependOnExistingImports() {
     myFixture.copyDirectoryToProject(getTestName(true), "");

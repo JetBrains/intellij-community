@@ -1,6 +1,6 @@
 // FIR_IDENTICAL
 // FIR_COMPARISON
-// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocksAndExtensions
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks
 
 fun foo() {
     <caret>

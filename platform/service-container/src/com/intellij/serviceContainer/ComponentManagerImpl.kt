@@ -1560,7 +1560,9 @@ internal fun doLoadClass(name: String, pluginDescriptor: PluginDescriptor, check
           if (module.packagePrefix == null && !module.moduleId.name.startsWith("intellij.libraries.")) {
             val pluginClassLoader = module.classLoader as? PluginAwareClassLoader ?: continue
             pluginClassLoader.loadClassInsideSelf(name)?.let {
-              assert(it.isAnnotationPresent(InternalIgnoreDependencyViolation::class.java))
+              assert(it.isAnnotationPresent(InternalIgnoreDependencyViolation::class.java)) {
+                "Can't load '$name': it belongs to a different module"
+              }
               return it
             }
           }
@@ -1598,6 +1600,9 @@ val servicePreloadingAllowListForNonCorePlugin: Set<String> = java.util.Set.of(
   "com.intellij.clouds.docker.gateway.host.DockerDevcontainerHostInitializer",
   "com.intellij.ui.jcef.JBCefStartup",
 
+  // VCS
+  "com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl",
+
   // Remote Development
   "com.intellij.cwm.plugin.driver.RemoteDriverHostService",
   "com.intellij.cwm.plugin.driver.RobotHostServiceImpl",
@@ -1614,7 +1619,6 @@ val servicePreloadingAllowListForNonCorePlugin: Set<String> = java.util.Set.of(
   "com.jetbrains.rdserver.daemon.BackendHighlighterRegistrationsHost",
   "com.jetbrains.rdserver.daemon.inlays.BackendCodeVisionHost.Settings",
   $$"com.jetbrains.rdserver.daemon.inlays.BackendCodeVisionHost$Settings",
-  "com.jetbrains.rdserver.debugger.BackendBreakpointHost",
   "com.jetbrains.rdserver.debugger.BackendConsoleInfoHost",
   "com.jetbrains.rdserver.debugger.BackendDebuggerHost",
   "com.jetbrains.rdserver.execution.BackendExternalSystemHost",

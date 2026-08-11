@@ -10,14 +10,18 @@ import com.intellij.psi.util.parentOfTypes
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.allSupertypes
+import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -32,7 +36,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.canBeProtected
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBePublic
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
-import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
+import org.jetbrains.kotlin.idea.codeinsight.utils.toCompilerVisibility
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.SpecialNames
@@ -258,9 +262,9 @@ internal object ChangeVisibilityFixFactories {
                 addIfNotNull(createFixToTargetVisibility(referencedSymbol, referencedDeclaration, Visibilities.Internal))
                 val visibilityModifierType = referencedDeclaration.visibilityModifierType() ?: KtTokens.PUBLIC_KEYWORD
                 if (inlineDeclaration is KtPropertyAccessor) {
-                    addIfNotNull(createFixToTargetVisibility(inlineSymbol, inlineDeclaration.property, visibilityModifierType.toVisibility()))
+                    addIfNotNull(createFixToTargetVisibility(inlineSymbol, inlineDeclaration.property, visibilityModifierType.toCompilerVisibility()))
                 } else {
-                    addIfNotNull(createFixToTargetVisibility(inlineSymbol, inlineDeclaration, visibilityModifierType.toVisibility()))
+                    addIfNotNull(createFixToTargetVisibility(inlineSymbol, inlineDeclaration, visibilityModifierType.toCompilerVisibility()))
                 }
                 if (visibilityModifierType != KtTokens.PUBLIC_KEYWORD) {
                     addIfNotNull(createFixToTargetVisibility(referencedSymbol, referencedDeclaration, Visibilities.Public))
@@ -308,7 +312,8 @@ internal object ChangeVisibilityFixFactories {
         return targetVisibilities.mapNotNull { createFixToTargetVisibility(reference, declaration, it) }
     }
 
-    private fun KaSession.createChangeVisibilityFixOnExposure(
+    context(session: KaSession)
+    private fun createChangeVisibilityFixOnExposure(
         element: PsiElement,
         elementVisibility: EffectiveVisibility,
         restrictingSymbol: KaSymbol,

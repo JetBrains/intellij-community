@@ -5,6 +5,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.application
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.psi.KtFile
 import java.nio.file.Paths
 import java.util.concurrent.Callable
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.readText
 
@@ -36,11 +38,12 @@ abstract class AbstractCompilerPluginDeclarationHighlighterTest : BasePlatformTe
                 val lines = CompilerPluginDeclarationHighlighter.highlightCode(testFileCode, ktFile, myFixture.editor.colorsScheme)
                 renderLines(lines)
             }
-        }).get()
+        }).get(2, TimeUnit.MINUTES)
 
         KotlinTestUtils.assertEqualsToFile(testFile.resolveSibling(testFile.nameWithoutExtension + ".res"), rendered)
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun renderLines(lines: List<CompilerPluginDeclarationHighlighter.CodeLine>): String = prettyPrint {
         printCollection(lines, separator = "\n") { line ->
             printCollection(line.tokens, separator = " ") { token ->

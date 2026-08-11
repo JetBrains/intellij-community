@@ -3,19 +3,33 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.configurationStore.deserializeState
 import com.intellij.configurationStore.jdomSerializer
-import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTrackerSettings
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.Companion.getInstance
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.testFramework.junit5.RunInEdt
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.intellij.testFramework.replaceService
-import junit.framework.TestCase
 import org.jdom.output.XMLOutputter
+import com.intellij.maven.testFramework.fixtures.mavenFixture
 import org.jetbrains.idea.maven.utils.MavenSettings
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import java.nio.file.Files
+import java.nio.file.Path
 
-class MavenSettingsTest : MavenTestCase() {
+@TestApplication
+@RunInEdt
+class MavenSettingsTest {
+  private val maven by mavenFixture()
+  private val disposable by disposableFixture()
+
+  @Test
   fun testCloningGeneralSettingsWithoutListeners() {
     val log: Array<String> = arrayOf<String>("")
 
@@ -27,26 +41,31 @@ class MavenSettingsTest : MavenTestCase() {
     })
 
     s.setMavenHomeType(MavenWrapper)
-    TestCase.assertEquals("changed ", log[0])
+    assertEquals("changed ", log[0])
 
     s.clone().setMavenHomeType(BundledMaven3)
-    TestCase.assertEquals("changed ", log[0])
+    assertEquals("changed ", log[0])
   }
 
+  @Test
   fun testImportingSettings() {
     val javaHome = System.getenv("JAVA_HOME")
     if (javaHome != null) {
-      allowAccessToDirsIfExists(System.getenv("JAVA_HOME"))
+      val javaHomePath = Path.of(javaHome)
+      if (Files.exists(javaHomePath)) {
+        VfsRootAccess.allowRootAccess(disposable, javaHomePath.toAbsolutePath().toString())
+      }
     }
 
     assertEquals(MavenImportingSettings(), MavenImportingSettings())
-    val importingConfigurable = MavenImportingConfigurable(project)
+    val importingConfigurable = MavenImportingConfigurable(maven.project)
     importingConfigurable.reset()
     assertFalse(importingConfigurable.isModified())
   }
 
+  @Test
   fun testNotModifiedAfterCreation() {
-    val s = MavenSettings(project)
+    val s = MavenSettings(maven.project)
     s.createComponent()
     s.reset()
     try {
@@ -69,10 +88,11 @@ class MavenSettingsTest : MavenTestCase() {
   }
 
   @Suppress("deprecation")
+  @Test
   fun testMavenSettingsMigration() {
-    Companion.replaceService<ExternalSystemProjectTrackerSettings>(project, ExternalSystemProjectTrackerSettings::class.java,
-                                                                   AutoImportProjectTrackerSettings(), Runnable {
-      val projectTrackerSettings = getInstance(project)
+    replaceService<ExternalSystemProjectTrackerSettings>(maven.project, ExternalSystemProjectTrackerSettings::class.java,
+                                                         AutoImportProjectTrackerSettings(), Runnable {
+      val projectTrackerSettings = getInstance(maven.project)
       val workspaceSettingsComponent = loadWorkspaceComponent(
         """
           <MavenImportPreferences>
@@ -82,15 +102,15 @@ class MavenSettingsTest : MavenTestCase() {
               </MavenImportingSettings>
             </option>
           </MavenImportPreferences>
-          
+
           """.trimIndent())
       assertFalse(workspaceSettingsComponent.settings.importingSettings.isImportAutomatically())
       assertEquals(ExternalSystemProjectTrackerSettings.AutoReloadType.ALL, projectTrackerSettings.autoReloadType)
-      TestCase.assertEquals("<MavenWorkspacePersistedSettings />", storeWorkspaceComponent(workspaceSettingsComponent))
+      assertEquals("<MavenWorkspacePersistedSettings />", storeWorkspaceComponent(workspaceSettingsComponent))
     })
-    replaceService<ExternalSystemProjectTrackerSettings>(project, ExternalSystemProjectTrackerSettings::class.java,
+    replaceService<ExternalSystemProjectTrackerSettings>(maven.project, ExternalSystemProjectTrackerSettings::class.java,
                                                                     AutoImportProjectTrackerSettings(), Runnable {
-      val projectTrackerSettings = getInstance(project)
+      val projectTrackerSettings = getInstance(maven.project)
       val workspaceSettingsComponent = loadWorkspaceComponent(
         """
           <MavenImportPreferences>
@@ -100,25 +120,25 @@ class MavenSettingsTest : MavenTestCase() {
               </MavenImportingSettings>
             </option>
           </MavenImportPreferences>
-          
+
           """.trimIndent())
       assertFalse(workspaceSettingsComponent.settings.importingSettings.isImportAutomatically())
       assertEquals(ExternalSystemProjectTrackerSettings.AutoReloadType.SELECTIVE, projectTrackerSettings.autoReloadType)
-      TestCase.assertEquals("<MavenWorkspacePersistedSettings />", storeWorkspaceComponent(workspaceSettingsComponent))
+      assertEquals("<MavenWorkspacePersistedSettings />", storeWorkspaceComponent(workspaceSettingsComponent))
     })
-    replaceService<ExternalSystemProjectTrackerSettings>(project, ExternalSystemProjectTrackerSettings::class.java,
+    replaceService<ExternalSystemProjectTrackerSettings>(maven.project, ExternalSystemProjectTrackerSettings::class.java,
                                                                     AutoImportProjectTrackerSettings(), Runnable {
-      val projectTrackerSettings = getInstance(project)
+      val projectTrackerSettings = getInstance(maven.project)
       val workspaceSettingsComponent = loadWorkspaceComponent("<MavenWorkspacePersistedSettings />")
       assertFalse(workspaceSettingsComponent.settings.importingSettings.isImportAutomatically())
       assertEquals(ExternalSystemProjectTrackerSettings.AutoReloadType.SELECTIVE, projectTrackerSettings.autoReloadType)
-      TestCase.assertEquals("<MavenWorkspacePersistedSettings />", storeWorkspaceComponent(workspaceSettingsComponent))
+      assertEquals("<MavenWorkspacePersistedSettings />", storeWorkspaceComponent(workspaceSettingsComponent))
     })
   }
 
   private fun loadWorkspaceComponent(rawWorkspaceSettingsComponent: CharSequence): MavenWorkspaceSettingsComponent {
     try {
-      val workspaceSettingsComponent = MavenWorkspaceSettingsComponent(project)
+      val workspaceSettingsComponent = MavenWorkspaceSettingsComponent(maven.project)
       val workspaceSettingsElement = JDOMUtil.load(rawWorkspaceSettingsComponent)
       val workspaceSettings = deserializeState<MavenWorkspacePersistedSettings>(workspaceSettingsElement,
                                                                                 MavenWorkspacePersistedSettings::class.java)

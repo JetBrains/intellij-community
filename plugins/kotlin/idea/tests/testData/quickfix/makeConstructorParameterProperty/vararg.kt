@@ -1,5 +1,5 @@
 // "Make constructor parameter a property" "true"
-// K2_ERROR: Unresolved reference 'dismissibleViewTypes'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 class SomeClass(vararg dismissibleViewTypes: Int) {
     fun someFun() {

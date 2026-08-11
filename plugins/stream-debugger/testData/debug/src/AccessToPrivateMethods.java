@@ -6,7 +6,7 @@ public class AccessToPrivateMethods {
   }
 
   private void test() {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     Stream.generate(() -> 1).limit(10).filter(x -> method(x)).mapToInt(x -> x * 2).count();
   }
 

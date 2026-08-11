@@ -6,7 +6,6 @@ import com.intellij.find.usages.api.Usage
 import com.intellij.find.usages.api.UsageSearchParameters
 import com.intellij.find.usages.api.UsageSearcher
 import com.intellij.model.Symbol
-import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.model.psi.PsiSymbolReferenceService
@@ -72,28 +71,26 @@ object PolySymbolUsageQueries {
             return listOf(PolySymbolPsiUsage(element.containingFile, nameIdentifier.textRange, true))
         }
 
-        if (element is PsiExternalReferenceHost) {
-          val declarations = PolySymbolDeclarationProvider.getAllEquivalentDeclarations(element, offsetInElement, symbol)
-          if (declarations.isNotEmpty()) {
-            return declarations
-              .map {
-                PolySymbolPsiUsage(it.declaringElement.containingFile,
-                                   it.rangeInDeclaringElement.shiftRight(it.declaringElement.startOffset),
-                                   true)
-              }
-          }
+        val declarations = PolySymbolDeclarationProvider.getAllEquivalentDeclarations(element, offsetInElement, symbol)
+        if (declarations.isNotEmpty()) {
+          return declarations
+            .map {
+              PolySymbolPsiUsage(it.declaringElement.containingFile,
+                                 it.rangeInDeclaringElement.shiftRight(it.declaringElement.startOffset),
+                                 true)
+            }
+        }
 
-          val foundReferences = getReferences(element, PolySymbolReferenceHints(symbol, offsetInElement))
-            .asSequence()
-            .filterIsInstance<PolySymbolReference>()
-            .filter { it.rangeInElement.containsOffset(offsetInElement) }
-            .filter { ref -> ref.resolvesTo(symbol) }
-            .map { PolySymbolPsiUsage(it.element.containingFile, it.absoluteRange, false) }
-            .toList()
+        val foundReferences = getReferences(element, PolySymbolReferenceHints(symbol, offsetInElement))
+          .asSequence()
+          .filterIsInstance<PolySymbolReference>()
+          .filter { it.rangeInElement.containsOffset(offsetInElement) }
+          .filter { ref -> ref.resolvesTo(symbol) }
+          .map { PolySymbolPsiUsage(it.element.containingFile, it.absoluteRange, false) }
+          .toList()
 
-          if (foundReferences.isNotEmpty()) {
-            return foundReferences
-          }
+        if (foundReferences.isNotEmpty()) {
+          return foundReferences
         }
 
         if (psiSource != null) {
@@ -112,7 +109,8 @@ object PolySymbolUsageQueries {
     }
 }
 
-internal class PolySymbolReferenceHints(private val symbol: Symbol? = null, private val offsetInElement: Int = -1) : PsiSymbolReferenceHints {
+internal class PolySymbolReferenceHints(private val symbol: Symbol? = null, private val offsetInElement: Int = -1) :
+  PsiSymbolReferenceHints {
   override fun getOffsetInElement(): Int {
     return offsetInElement
   }

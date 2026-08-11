@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.dataflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -46,21 +46,15 @@ public final class GroovyVariableCanBeFinalInspection extends GroovyLocalInspect
     if (!checkVariableDeclaredInsideScope(owner, variable)) return;
     if (checkVariableAssignedInsideClosureOrAnonymous(owner, variable)) return;
 
-    final boolean isParameterTooltip = variable instanceof GrParameter && (
-      ((GrParameter)variable).getDeclarationScope() instanceof GrMethod ||
-      ((GrParameter)variable).getDeclarationScope() instanceof GrClosableBlock
-    );
+    final boolean isParameter =
+      variable instanceof GrParameter parameter
+      && (parameter.getDeclarationScope() instanceof GrMethod || parameter.getDeclarationScope() instanceof GrClosableBlock);
 
-    final String tooltip = GroovyBundle.message(
-      isParameterTooltip ? "parameter.can.be.final.tooltip" : "variable.can.be.final.tooltip",
-      variable.getName()
-    );
+    final String message =
+      GroovyBundle.message(isParameter ? "parameter.can.be.final.tooltip" : "variable.can.be.final.tooltip", variable.getName());
 
-    problemsHolder.registerProblem(
-      variable.getNameIdentifierGroovy(),
-      tooltip,
-      new GrModifierFix(variable, PsiModifier.FINAL, true, ID_MODIFIER_LIST_PROVIDER)
-    );
+    GrModifierFix fix = new GrModifierFix(variable, PsiModifier.FINAL, true, ID_MODIFIER_LIST_PROVIDER);
+    problemsHolder.registerProblem(variable.getNameIdentifierGroovy(), message, fix);
   }
 
   private static boolean checkVariableAssignedInsideClosureOrAnonymous(@NotNull GrControlFlowOwner owner, @NotNull GrVariable variable) {

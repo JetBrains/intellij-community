@@ -5,11 +5,13 @@ package com.intellij.tasks.context;
 import com.intellij.openapi.command.undo.GlobalUndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.tasks.Task;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public abstract class LoadContextUndoableAction extends GlobalUndoableAction {
 
   protected final WorkingContextManager myManager;

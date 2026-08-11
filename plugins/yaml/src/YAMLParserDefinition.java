@@ -6,6 +6,8 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.syntax.parser.SyntaxTreeBuilder;
+import com.intellij.platform.syntax.psi.lexer.LexerAdapter;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -13,8 +15,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.yaml.lexer.YAMLFlexLexer;
-import org.jetbrains.yaml.parser.YAMLParser;
 import org.jetbrains.yaml.psi.impl.YAMLAliasImpl;
 import org.jetbrains.yaml.psi.impl.YAMLAnchorImpl;
 import org.jetbrains.yaml.psi.impl.YAMLArrayImpl;
@@ -31,23 +31,46 @@ import org.jetbrains.yaml.psi.impl.YAMLQuotedTextImpl;
 import org.jetbrains.yaml.psi.impl.YAMLScalarListImpl;
 import org.jetbrains.yaml.psi.impl.YAMLScalarTextImpl;
 import org.jetbrains.yaml.psi.impl.YAMLSequenceItemImpl;
+import com.intellij.yaml.syntax.YamlSyntaxDefinition;
 
+import static org.jetbrains.yaml.YamlElementTypeConverterKt.getYamlElementTypeConverter;
+import static org.jetbrains.yaml.YamlFileElementTypeKt.YAML_FILE;
+
+/**
+ * @deprecated Use {@link YamlSyntaxDefinition} instead.
+ */
+@Deprecated
 public class YAMLParserDefinition implements ParserDefinition {
-  public static final IFileElementType FILE = new IFileElementType(YAMLLanguage.INSTANCE);
 
+  /**
+   * @deprecated Use {@link YamlSyntaxDefinition#createLexer()} instead.
+   */
+  @Deprecated
   @Override
   public @NotNull Lexer createLexer(final Project project) {
-    return new YAMLFlexLexer();
+    return createLexer();
   }
 
+  /**
+   * @deprecated Use {@link YamlSyntaxDefinition#createLexer()} instead.
+   */
+  @Deprecated
+  public static @NotNull Lexer createLexer() {
+    return new LexerAdapter(YamlSyntaxDefinition.INSTANCE.createLexer(), getYamlElementTypeConverter());
+  }
+
+  /**
+   * @deprecated Should not be called directly. Use {@link YamlSyntaxDefinition#parse(SyntaxTreeBuilder)} instead.
+   */
+  @Deprecated
   @Override
   public @NotNull PsiParser createParser(final Project project) {
-    return new YAMLParser();
+    throw new UnsupportedOperationException("Should not be called directly");
   }
 
   @Override
   public @NotNull IFileElementType getFileNodeType() {
-    return FILE;
+    return YAML_FILE;
   }
 
   @Override

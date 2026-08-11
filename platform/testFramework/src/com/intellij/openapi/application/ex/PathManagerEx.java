@@ -332,18 +332,22 @@ public final class PathManagerEx {
     if (!root.isDirectory()) {
       String relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
       Map<String, String> mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping();
-      if (relevantJarsRoot != null && mapping != null && root.toPath().toAbsolutePath().startsWith(relevantJarsRoot)) {
-        // .../idea-compile-parts-v2/test/intellij.java.compiler.tests/$sha256.jar
-        String moduleName = root.getParentFile().getName();
-        if (mapping.containsKey(moduleName)) {
-          return getCommunityModules().contains(moduleName) ? FileSystemLocation.COMMUNITY : FileSystemLocation.ULTIMATE;
-        }
+      try {
+        if (relevantJarsRoot != null && mapping != null && FileUtil.isAncestor(new File(relevantJarsRoot).getCanonicalFile(), root.getCanonicalFile(), false)) {
+          // .../idea-compile-parts-v2/test/intellij.java.compiler.tests/$sha256.jar
+          String moduleName = root.getParentFile().getName();
+          if (mapping.containsKey(moduleName)) {
+            return getCommunityModules().contains(moduleName) ? FileSystemLocation.COMMUNITY : FileSystemLocation.ULTIMATE;
+          }
 
-        // .../out/bazel-out/jvm-fastbuild/bin/external/community+/java/compiler/compiler-tests_test_lib.jar
-        return ContainerUtil.exists(getCommunityModules(),
-                                    s -> Objects.equals(mapping.get("production/" + s), classRootPath) ||
-                                         Objects.equals(mapping.get("test/" + s), classRootPath))
-               ? FileSystemLocation.COMMUNITY : FileSystemLocation.ULTIMATE;
+          // .../out/bazel-out/jvm-fastbuild/bin/external/community+/java/compiler/compiler-tests_test_lib.jar
+          return ContainerUtil.exists(getCommunityModules(),
+                                      s -> Objects.equals(mapping.get("production/" + s), classRootPath) ||
+                                           Objects.equals(mapping.get("test/" + s), classRootPath))
+                 ? FileSystemLocation.COMMUNITY : FileSystemLocation.ULTIMATE;
+        }
+      }
+      catch (IOException _) {
       }
       //this means that clazz is located in a library; perhaps we should throw exception here
       return FileSystemLocation.ULTIMATE;

@@ -21,7 +21,6 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.inspections.quickfix.PyUpdatePropertySignatureQuickFix;
 import com.jetbrains.python.inspections.quickfix.RenameParameterQuickFix;
-import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyCallable;
@@ -45,14 +44,12 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.PyYieldExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyCallableParameter;
-import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -265,11 +262,12 @@ public final class PyPropertyDefinitionInspection extends PyInspection {
     private void checkForSelf(PyParameterList paramList) {
       PyParameter[] parameters = paramList.getParameters();
       final PyClass cls = PsiTreeUtil.getParentOfType(paramList, PyClass.class);
-      if (cls != null && cls.isSubclass("type", myTypeEvalContext)) return;
+      if (cls != null && cls.isSubclass(PyNames.FQN.TYPE, myTypeEvalContext)) {
+        return;
+      }
       if (parameters.length > 0 && !PyNames.CANONICAL_SELF.equals(parameters[0].getName())) {
         registerProblem(
-          parameters[0], PyPsiBundle.message("INSP.property.cannot.be.deleted", PyNames.CANONICAL_SELF), ProblemHighlightType.WEAK_WARNING,
-          null,
+          parameters[0], PyPsiBundle.problemMessage("INSP.property.cannot.be.deleted", PyNames.CANONICAL_SELF), ProblemHighlightType.WEAK_WARNING,
           new RenameParameterQuickFix(PyNames.CANONICAL_SELF));
       }
     }

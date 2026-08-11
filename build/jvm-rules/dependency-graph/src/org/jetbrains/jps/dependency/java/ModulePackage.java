@@ -21,7 +21,7 @@ public final class ModulePackage extends Proto implements DiffCapable<ModulePack
   private final Iterable<String> myModules;
 
   public ModulePackage(String name, Iterable<String> modules) {
-    super(JVMFlags.EMPTY, null, name, Collections.emptyList());
+    super(JVMFlags.EMPTY, null, name, Collections.emptyList(), Collections.emptyList());
     myModules = collect(map(modules, GraphElementInterner::intern), new ArrayList<>());
   }
 
@@ -72,6 +72,10 @@ public final class ModulePackage extends Proto implements DiffCapable<ModulePack
 
     public Specifier<String, ?> targetModules() {
       return Difference.diff(myPast.getModules(), getModules());
+    }
+
+    public boolean becameQualified() {
+      return !myPast.isQualified() && isQualified();
     }
   }
 

@@ -1,0 +1,3 @@
+class Holder {
+    @JvmSynthetic @JvmField var f: Int = 1
+}  // field gains ACC_SYNTHETIC -> invisible to javac source resolution

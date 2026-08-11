@@ -51,6 +51,7 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   // Intentionally not marked as @Nullable to avoid false positives. 
   // A recursive type is an exceptional case.
   protected final <T extends PyType> T clone(@Nullable PyType type) {
+    PyAnyType.validate(type);
     final @Nullable PyType result;
     if (cloned.containsKey(type)) {
       result = cloned.get(type);
@@ -94,15 +95,6 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   @Override
   public PyType visitPyParamSpecType(@NotNull PyParamSpecType paramSpecType) {
     return paramSpecType;
-  }
-
-  @Override
-  public PyType visitPyGenericType(@NotNull PyCollectionType genericType) {
-    return new PyCollectionTypeImpl(
-      genericType.getPyClass(),
-      genericType.isDefinition(),
-      ContainerUtil.map(genericType.getElementTypes(), type -> clone(type))
-    );
   }
 
   @Override
@@ -169,6 +161,11 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   }
 
   @Override
+  public PyType visitPyTypeFormType(@NotNull PyTypeFormType typeFormType) {
+    return typeFormType.substitute(clone(typeFormType.getRepresentedType()));
+  }
+
+  @Override
   public PyType visitPyConcatenateType(@NotNull PyConcatenateType concatenateType) {
     return new PyConcatenateType(
       ContainerUtil.map(concatenateType.getFirstTypes(), this::clone),
@@ -183,7 +180,14 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
 
   @Override
   public PyType visitPyClassType(@NotNull PyClassType classType) {
-    return classType;
+    if (!classType.isParameterized()) {
+      return classType;
+    }
+    return new PyCollectionTypeImpl(
+      classType.getPyClass(),
+      classType.isDefinition(),
+      ContainerUtil.map(classType.getTypeArguments(), type -> clone(type))
+    );
   }
 
   @Override
@@ -199,21 +203,26 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
 
   @Override
   public PyType visitPyCallableType(@NotNull PyCallableType callableType) {
-    PyCallableParameterVariadicType clonedParametersType = clone(callableType.getParametersType(myTypeEvalContext));
+    // Cloning a recursive type yields PyAnyType.unknown (see doClone), which is not a
+    // PyCallableParameterVariadicType. Use a safe cast so that case degrades to null params instead of a
+    // ClassCastException once `python.type.any` is enabled (it was null when disabled).
+    var parametersType = callableType.getParametersType(myTypeEvalContext);
+    final PyType clonedParams = parametersType != null ? clone(parametersType) : null;
+    final PyCallableParameterVariadicType clonedParametersType =
+      clonedParams instanceof PyCallableParameterVariadicType variadic ? variadic : null;
     var typeParameters = callableType.getTypeParameters(myTypeEvalContext);
     return new PyCallableTypeImpl(
       typeParameters != null ? ContainerUtil.map(typeParameters, this::clone) : null,
       clonedParametersType,
       clone(callableType.getReturnType(myTypeEvalContext)),
       callableType.getCallable(),
-      callableType.getModifier(),
-      callableType.getImplicitOffset()
+      callableType.getModifier()
     );
   }
 
   @Override
   public PyType visitPyOverloadType(@NotNull PyOverloadType overloadType) {
-    return new PyOverloadType(ContainerUtil.map(overloadType.getItems(), this::clone), overloadType.getImpl());
+    return new PyOverloadType(ContainerUtil.mapNotNull(overloadType.getItems(), this::clone), overloadType.getImpl());
   }
 
   @Override

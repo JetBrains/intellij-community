@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
@@ -53,7 +53,6 @@ import com.intellij.modcommand.PsiBasedModCommandAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColors
@@ -67,6 +66,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.ProjectTypeService
+import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Iconable.ICON_FLAG_VISIBILITY
 import com.intellij.openapi.util.Key
@@ -123,14 +123,14 @@ internal class DirectIntentionCommandProvider : CommandProvider {
       val intentionEditor = createCustomEditor(psiFile, editor, offset, context.isInjected) ?: return@runBlockingCancellable result
 
       val errorCache = originalEditor.getUserData(ERROR_CACHE)?.get()
-      val cachedErrorCommand = errorCache?.getCommands(psiFile.fileDocument, offset)
+      val cachedErrorCommand = errorCache?.getCommands(psiFile, offset)
       cachedErrorCommand?.let {
         result.addAll(it)
       }
       val asyncErrorHighlighting = if (cachedErrorCommand == null) asyncErrorHighlighting(psiFile, editor, offset) else null
 
       val inspectionCache = originalEditor.getUserData(INSPECTION_CACHE)?.get()
-      val cachedInspectionCommand = inspectionCache?.getCommands(psiFile.fileDocument, offset)
+      val cachedInspectionCommand = inspectionCache?.getCommands(psiFile, offset)
       cachedInspectionCommand?.let {
         result.addAll(it)
       }
@@ -147,7 +147,8 @@ internal class DirectIntentionCommandProvider : CommandProvider {
         originalEditor.putUserData(ERROR_CACHE, SoftReference(IntentionCache(
           commands = errors,
           offset = offset,
-          hashCode = psiFile.fileDocument.immutableCharSequence.hashCode()
+          hashCode = psiFile.fileDocument.immutableCharSequence.hashCode(),
+          rootModificationCount = ProjectRootModificationTracker.getInstance(psiFile.project).modificationCount,
         )))
       }
 
@@ -158,7 +159,8 @@ internal class DirectIntentionCommandProvider : CommandProvider {
         originalEditor.putUserData(INSPECTION_CACHE, SoftReference(IntentionCache(
           commands = inspections,
           offset = offset,
-          hashCode = psiFile.fileDocument.immutableCharSequence.hashCode()
+          hashCode = psiFile.fileDocument.immutableCharSequence.hashCode(),
+          rootModificationCount = ProjectRootModificationTracker.getInstance(psiFile.project).modificationCount,
         )))
       }
 
@@ -223,9 +225,15 @@ internal class DirectIntentionCommandProvider : CommandProvider {
     private val commands: List<CompletionCommand>,
     private val offset: Int,
     private val hashCode: Int,
+    private val rootModificationCount: Long,
   ) {
-    fun getCommands(document: Document, offset: Int): List<CompletionCommand>? {
-      if (document.immutableCharSequence.hashCode() == hashCode && offset == this.offset) return commands
+    fun getCommands(file: PsiFile, offset: Int): List<CompletionCommand>? {
+      val rootModificationCount = ProjectRootModificationTracker.getInstance(file.project).modificationCount
+      if (file.fileDocument.immutableCharSequence.hashCode() == hashCode &&
+          offset == this.offset
+          && rootModificationCount == this.rootModificationCount) {
+        return commands
+      }
       return null
     }
   }

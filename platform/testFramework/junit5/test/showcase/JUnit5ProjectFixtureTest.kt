@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
@@ -29,8 +30,19 @@ import kotlin.io.path.writeText
 class JUnit5ProjectFixtureTest {
 
   private companion object {
-    val blueprintProjectRoot: Path = PathManager.getHomeDirFor(JUnit5ProjectFixtureTest::class.java)!!
-      .resolve("platform/testFramework/junit5/test-resources/projectFixture/blueprintProject")
+    const val BLUEPRINT_PATH = "platform/testFramework/junit5/test-resources/projectFixture/blueprintProject"
+    val blueprintProjectRoot: Path by lazy {
+      val homeDir = PathManager.getHomeDirFor(JUnit5ProjectFixtureTest::class.java)!!
+
+      val pathWithoutCommunity = homeDir.resolve(BLUEPRINT_PATH)
+      if (pathWithoutCommunity.exists()) {
+        pathWithoutCommunity
+      }
+      else {
+        homeDir.resolve("community/$BLUEPRINT_PATH")
+      }
+    }
+
     val projectFromBlueprint = projectFixture(openAfterCreation = true, blueprintResourcePath = blueprintProjectRoot)
     val mainFileInBlueprintProject = projectFromBlueprint.fileOrDirInProjectFixture("src/Main.java")
     val sharedProject0 = projectFixture()

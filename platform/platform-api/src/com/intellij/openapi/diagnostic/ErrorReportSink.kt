@@ -42,15 +42,22 @@ interface ErrorReportSink {
 sealed interface UnhandledErrorReport
 
 @ApiStatus.Experimental
-class UnhandledExceptionReport(
+class UnhandledExceptionReport @ApiStatus.Internal constructor(
+  /**
+   * @since 2026.2.1
+   */
+  val exception: Throwable,
   val exceptionClass: Class<*>,
+
+  @Deprecated("Use exception directly instead")
   val stackTrace: List<StackTraceElement>,
 ) : UnhandledErrorReport {
-  constructor(t: Throwable) : this(t.javaClass, t.stackTrace.toList())
+  @ApiStatus.Internal
+  constructor(t: Throwable) : this(t, t.javaClass, t.stackTrace.toList())
 }
 
 @ApiStatus.Experimental
-class UnhandledFreezeReport(
+class UnhandledFreezeReport @ApiStatus.Internal constructor(
   val message: String?,
   val durationMs: Long,
   val attachments: Collection<Attachment>,

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.util.SmartList;
@@ -27,7 +27,7 @@ import java.util.function.Supplier;
 /**
  * A map where each key can be associated with multiple values.
  * <p>
- * Uses {@link java.util.HashMap} by defaults. A different map implementation can be passed using the {@link #MultiMap(Map)} constructor.
+ * Uses {@link HashMap} by defaults. A different map implementation can be passed using the {@link #MultiMap(Map)} constructor.
  * @see BidirectionalMultiMap
  */
 @Debug.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
@@ -109,7 +109,7 @@ public class MultiMap<K, V> implements Serializable {
   }
 
   /**
-   * Prohibits modification of collections for existing keys and returns view of this as a map.
+   * Prohibits modification of collections for existing keys and returns a view of this as a map.
    */
   public final @NotNull Map<K, Collection<V>> freezeValues() {
     if (isEmpty()) {

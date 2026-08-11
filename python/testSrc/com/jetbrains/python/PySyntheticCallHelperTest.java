@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -12,6 +15,7 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PySyntheticCallHelper;
 import com.jetbrains.python.psi.types.PyType;
@@ -21,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.function.Supplier;
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PySyntheticCallHelperTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "/types/syntheticCallHelper/";
 
@@ -30,7 +36,7 @@ public class PySyntheticCallHelperTest extends PyTestCase {
         pass
       """, () -> {
       PyFunction function = myFixture.findElementByText("foo", PyFunction.class);
-      return PySyntheticCallHelper.getCallType(function, null, List.of(PyBuiltinCache.getInstance(function).getNoneType()),
+      return PySyntheticCallHelper.getCallType(function, PyAnyType.getUnknown(), List.of(PyBuiltinCache.getInstance(function).getNoneType()),
                                                TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
     });
   }
@@ -187,7 +193,7 @@ public class PySyntheticCallHelperTest extends PyTestCase {
   }
 
   public void testGenericClassMethod() {
-    doTest("list[Any]", """
+    doTest("list[Unknown]", """
       class Clazz[T]:
         def foo(self) -> T:
           pass
@@ -234,7 +240,7 @@ public class PySyntheticCallHelperTest extends PyTestCase {
   }
 
   public void testGenericClassMethodInExternalFile() {
-    doMultiFileTest("list[Any]", """
+    doMultiFileTest("list[Unknown]", """
       from lib import Clazz
       instance = Clazz[list]()
       """, () -> {
@@ -248,7 +254,7 @@ public class PySyntheticCallHelperTest extends PyTestCase {
   }
 
   public void testGenericClassMethodWithOverloadsInExternalFile() {
-    doMultiFileTest("float | int | list[Any]", """
+    doMultiFileTest("float | int | list[Unknown]", """
       from lib import Clazz
       instance = Clazz[list]()
       """, () -> {

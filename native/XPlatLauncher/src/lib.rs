@@ -32,8 +32,8 @@ variant_size_differences
 use std::env;
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, bail, Context, Result};
-use log::{debug, warn, LevelFilter};
+use anyhow::{Context, Result, anyhow, bail};
+use log::{LevelFilter, debug, warn};
 use serde::Deserialize;
 
 #[cfg(target_os = "windows")]
@@ -210,12 +210,26 @@ fn set_dll_search_path(jre_home: &Path) -> Result<()> {
 
 #[cfg(target_os = "macos")]
 fn restore_working_directory() -> Result<()> {
-    let (cwd_res, pwd_var) = (env::current_dir(), env::var("PWD"));
+    use std::ffi::OsString;
+    use std::os::unix::ffi::OsStringExt;
+
+    let (cwd_res, pwd_var) = (env::current_dir(), env::var_os("PWD"));
     debug!("Adjusting current directory (current={:?} $PWD={:?})", cwd_res, pwd_var);
 
-    #[allow(clippy::cmp_owned)]
-    if let Ok(cwd) = cwd_res && cwd == PathBuf::from("/") && let Ok(pwd) = pwd_var {
-        env::set_current_dir(&pwd).with_context(|| format!("Cannot set current directory to '{pwd}'"))?;
+    if let Ok(cwd) = cwd_res && cwd == Path::new("/") && let Some(pwd) = pwd_var {
+        let mut path = PathBuf::from(&pwd);
+        if !path.is_dir() {
+            // trying to recover from botched 8-bit as UTF-8 representation
+            let recoded = String::from_utf8(pwd.clone().into_vec());
+            if let Ok(recoded) = recoded {
+                let recovered = recoded.chars().map(|c| c as u8).collect::<Vec<u8>>();
+                let path2 = PathBuf::from(OsString::from_vec(recovered));
+                if path2.is_dir() {
+                    path = path2;
+                }
+            }
+        }
+        env::set_current_dir(&path).with_context(|| format!("Cannot set the current directory to '{pwd:?}'"))?;
     }
 
     Ok(())

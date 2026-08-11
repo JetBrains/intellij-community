@@ -24,12 +24,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
 
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 class GotoRelatedSymbolAction : AnAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -80,6 +82,7 @@ class GotoRelatedSymbolAction : AnAction() {
     }
   }
 
+  @ApiStatus.Internal
   companion object {
     @TestOnly
     @JvmStatic

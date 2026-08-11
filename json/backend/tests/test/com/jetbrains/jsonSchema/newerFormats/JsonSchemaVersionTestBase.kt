@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.readText
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.replaceService
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase
 import com.jetbrains.jsonSchema.JsonSchemaTestProvider
@@ -26,6 +27,7 @@ abstract class JsonSchemaVersionTestBase : BasePlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
+    (myFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
     myFixture.enableInspections(JsonSchemaComplianceInspection::class.java)
   }
 

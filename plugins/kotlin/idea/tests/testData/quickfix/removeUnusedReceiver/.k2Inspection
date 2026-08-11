@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedReceiverParameterInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.UnusedReceiverParameterInspection

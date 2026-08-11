@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.core;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -10,7 +10,9 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
 
-public final class SpansTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public final class SpansTest {
   public static void setDefaults(Component component) {
     // GridLayoutManager use min and max component size for calc final size: com.intellij.uiDesigner.core.Util.adjustSize
     // sets min size < avg values in tests
@@ -23,6 +25,7 @@ public final class SpansTest extends TestCase {
    * button(can grow) | text field (want grow)
    * text field (want grow, span 2)
    */
+  @Test
   public void test1() {
     final GridLayoutManager layout = new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), 0, 0);
     final JPanel panel = new JPanel(layout);
@@ -64,6 +67,7 @@ public final class SpansTest extends TestCase {
    * button(can grow) | text field (can grow)
    * text field (want grow, span 2)
    */
+  @Test
   public void test2() {
     final JPanel panel = new JPanel(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), 0, 0));
 
@@ -102,6 +106,7 @@ public final class SpansTest extends TestCase {
   /**
    * button(can grow) | text field (want grow, span 2)
    */
+  @Test
   public void test3() {
     final JPanel panel = new JPanel(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), 0, 0));
 
@@ -134,6 +139,7 @@ public final class SpansTest extends TestCase {
    * button (can grow, span 2 )       | text field 1 (span 1)
    * text field 2 (want grow, span 2) | empty
    */
+  @Test
   public void test4() {
     final GridLayoutManager layoutManager = new GridLayoutManager(2, 3, new Insets(0, 0, 0, 0), 0, 0);
     final JPanel panel = new JPanel(layoutManager);

@@ -18,6 +18,13 @@ abstract class Condition(
   abstract val text: String
 
   /**
+   * Label used for the option in the "when to launch" selector. Unlike [text], it must not embed
+   * configurable parameter values when [provideEditor] returns an editor for them, since that editor
+   * is shown right next to this label and would otherwise duplicate the same value.
+   */
+  open val optionLabel: String get() = text
+
+  /**
    * May return null if condition is without configurable parameters.
    */
   abstract fun provideEditor(row: Row): Cell<*>?

@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.g
 import com.intellij.internal.statistic.eventLog.events.BaseEventId
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.JcpDataEventField
 import com.intellij.internal.statistic.eventLog.events.ListEventField
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
@@ -32,7 +33,7 @@ object EventsSchemeBuilder {
   )
 
   private val classValidationRules = setOf(
-    "class_name", "dialog_class", "quick_fix_class_name", "run_config_factory", "tip_info", "run_config_factory",
+    "class_name", "dialog_class", "quick_fix_class_name", "run_config_factory", "tip_info",
     "run_config_id", "facets_type", "registry_key"
   ).map { "{util#$it}" }
 
@@ -49,6 +50,9 @@ object EventsSchemeBuilder {
       EventFields.PluginInfoFromInstance, // todo extract marker trait for delegates
       EventFields.PluginInfoByDescriptor,
       -> pluginInfoFields
+      is JcpDataEventField -> throw IllegalMetadataSchemeStateException(
+        "JCP payload field must not be part of the events scheme (group=$groupId, event=$eventName, field=${field.name})"
+      )
       is ObjectEventField -> buildObjectEvenScheme(fieldName, field.fields, eventName, groupId)
       is ObjectListEventField -> buildObjectEvenScheme(fieldName, field.fields, eventName, groupId)
       is ListEventField<*> -> {
@@ -93,6 +97,7 @@ object EventsSchemeBuilder {
   private fun buildObjectEvenScheme(fieldName: String, fields: Array<out EventField<*>>, eventName: String, groupId: String): Set<FieldDescriptor> {
     val fieldsDescriptors = mutableSetOf<FieldDescriptor>()
     for (eventField in fields) {
+      if (eventField is JcpDataEventField) continue
       fieldsDescriptors.addAll(fieldSchema(eventField, fieldName + "." + eventField.name, eventName, groupId))
     }
     return fieldsDescriptors
@@ -134,15 +139,19 @@ object EventsSchemeBuilder {
     UsageCollectors.APPLICATION_EP_NAME.processWithPluginDescriptor { bean, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
       if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
-        recorders.add(bean.collector.group.recorder)
-        stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, PluginSchemeDescriptor(collectorPlugin)))
+        val collector = bean.getCollectorIfApplicable() ?: return@processWithPluginDescriptor
+
+        recorders.add(collector.group.recorder)
+        stateCollectors.add(FeatureUsageCollectorInfo(collector, PluginSchemeDescriptor(collectorPlugin)))
       }
     }
     UsageCollectors.PROJECT_EP_NAME.processWithPluginDescriptor { bean, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
       if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
-        recorders.add(bean.collector.group.recorder)
-        stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, PluginSchemeDescriptor(collectorPlugin)))
+        val collector = bean.getCollectorIfApplicable() ?: return@processWithPluginDescriptor
+
+        recorders.add(collector.group.recorder)
+        stateCollectors.add(FeatureUsageCollectorInfo(collector, PluginSchemeDescriptor(collectorPlugin)))
       }
     }
     result.addAll(collectGroupsFromExtensions("state", stateCollectors, descriptions, recorder))
@@ -257,6 +266,7 @@ object EventsSchemeBuilder {
   private fun buildFields(events: List<BaseEventId>, eventName: String, groupId: String): Set<FieldDescriptor> {
     return events.asSequence()
       .flatMap { it.getFields() }
+      .filterNot { it is JcpDataEventField }
       .flatMap { field -> fieldSchema(field, field.name, eventName, groupId) }
       .groupBy { it.path }
       .map { (name, values) ->

@@ -1,7 +1,7 @@
 // "Rename variable to 'firstName'" "false"
 // COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
-// K2_ERROR: Destructuring of type 'Person' requires operator function 'component3()'.
-// K2_AFTER_ERROR: Destructuring of type 'Person' requires operator function 'component3()'.
+// K2_AFTER_ERROR: COMPONENT_FUNCTION_MISSING
+// K2_ERROR: COMPONENT_FUNCTION_MISSING
 
 data class Person(val firstName: String, val lastName: String)
 

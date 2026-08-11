@@ -3,8 +3,12 @@ package com.jetbrains.python.quickFixes
 
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyQuickFixTestCase
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.inspections.PySuspiciousBooleanConditionInspection
 
+@Subsystems.QuickFixes
+@Layers.Functional
 class PySuspiciousBooleanConditionQuickFixTest : PyQuickFixTestCase() {
 
   fun testAddAwaitInIfCondition() {

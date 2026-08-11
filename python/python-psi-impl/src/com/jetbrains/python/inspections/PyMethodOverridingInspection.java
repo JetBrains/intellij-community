@@ -2,12 +2,16 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam;
+import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage;
 import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
@@ -66,16 +70,31 @@ public final class PyMethodOverridingInspection extends PyInspection {
       String methodSignature = containingClass.getName() + "." + function.getName() + "()";
       String baseClassName = baseClass != null ? baseClass.getName() : "";
 
+      // The method signature names `function`; the base class name names `baseClass` (when present).
+      CodifiedParam methodSignatureParam = CodifiedParam.ofReference(function, methodSignature);
+      Object baseClassParam = baseClass != null ? CodifiedParam.ofReference(baseClass, baseClassName) : baseClassName;
+
       PyCallableParameterListTypeImpl baseMethodInputSignature =
         new PyCallableParameterListTypeImpl(baseMethod.getParameters(myTypeEvalContext));
       PyCallableParameterListTypeImpl functionInputSignature =
         new PyCallableParameterListTypeImpl(function.getParameters(myTypeEvalContext));
 
       if (!PyTypeChecker.match(baseMethodInputSignature, functionInputSignature, myTypeEvalContext)) {
-        String msg = PyPsiBundle.message("INSP.signature.mismatch", methodSignature, baseClassName);
+        ProblemMessage msg = PyPsiBundle.problemMessage("INSP.signature.mismatch", methodSignatureParam, baseClassParam);
+        LocalQuickFix fix = PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchingMethods(function, baseMethod);
 
-        registerProblem(function.getParameterList(), msg,
-                        PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchingMethods(function, baseMethod));
+        // Keep the headline's clickable `B.f()`/`A` links: feed the rich tooltip HTML, not the escaped description.
+        String diff = PyTypeDiff.paramsDiffTooltip(baseMethod.getParameters(myTypeEvalContext),
+                                                   function.getParameters(myTypeEvalContext),
+                                                   PyInspectionMessages.tooltipHeadline(msg), myTypeEvalContext);
+        ProblemMessage problemMessage = new ProblemMessage(msg.description(), diff);
+        // The diff is the message tooltip; registerOverrideMismatch appends the breakdown below it on-the-fly.
+        if (fix != null) {
+          registerOverrideMismatch(function.getParameterList(), baseMethodInputSignature, functionInputSignature, problemMessage, fix);
+        }
+        else {
+          registerOverrideMismatch(function.getParameterList(), baseMethodInputSignature, functionInputSignature, problemMessage);
+        }
       }
 
       PyAnnotation annotation = function.getAnnotation();
@@ -88,9 +107,24 @@ public final class PyMethodOverridingInspection extends PyInspection {
       PyType overriddenReturnType = myTypeEvalContext.getReturnType(function);
 
       if (!PyTypeChecker.match(baseMethodReturnType, overriddenReturnType, myTypeEvalContext)) {
-        String msg = PyPsiBundle.message("INSP.overridden.method.return.type.mismatch", methodSignature, baseClassName);
-        registerProblem(returnExpression, msg);
+        ProblemMessage msg = PyPsiBundle.problemMessage("INSP.overridden.method.return.type.mismatch", methodSignatureParam, baseClassParam);
+        registerOverrideMismatch(returnExpression, baseMethodReturnType, overriddenReturnType, msg);
       }
+    }
+
+    /**
+     * Registers an override-incompatibility problem, attaching the breakdown ({@link PyTypeChecker#explainMismatch})
+     * as a separate on-the-fly HTML tooltip while keeping the one-line {@code message} as the flat description.
+     * Falls back to a plain problem when not on-the-fly or when the failure category is not instrumented.
+     */
+    private void registerOverrideMismatch(@Nullable PsiElement element,
+                                          @Nullable PyType expected,
+                                          @Nullable PyType actual,
+                                          @NotNull ProblemMessage message,
+                                          LocalQuickFix @NotNull ... fixes) {
+      registerProblemWithTooltip(element, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                 fixes,
+                                 () -> PyTypeCheckerInspectionProblemRegistrar.breakdownTooltip(message, expected, actual, myTypeEvalContext, element));
     }
   }
 }

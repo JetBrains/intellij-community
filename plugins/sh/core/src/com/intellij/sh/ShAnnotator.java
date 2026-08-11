@@ -29,6 +29,7 @@ import static com.intellij.sh.highlighter.ShHighlighterColors.VARIABLE_DECLARATI
 final class ShAnnotator implements Annotator, DumbAware {
   @Override
   public void annotate(@NotNull PsiElement o, @NotNull AnnotationHolder holder) {
+    if (holder.isBatchMode()) return;
     // todo comment in case of poor performance because of the issue with EditorGutterComponentImpl#updateSize()
     if (o instanceof ShGenericCommandDirective) {
       mark(o, holder, GENERIC_COMMAND);

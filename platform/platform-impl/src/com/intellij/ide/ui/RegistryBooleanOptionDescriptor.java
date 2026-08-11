@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
@@ -49,7 +50,7 @@ public class RegistryBooleanOptionDescriptor extends BooleanOptionDescription im
   }
 
   public static void suggestRestart(@Nullable JComponent parentComponent) {
-    ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
 
     String title = IdeBundle.message("dialog.title.restart.required");
     String message = IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect",

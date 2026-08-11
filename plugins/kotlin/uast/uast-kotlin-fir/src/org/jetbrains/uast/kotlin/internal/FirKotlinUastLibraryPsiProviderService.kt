@@ -19,13 +19,15 @@ interface FirKotlinUastLibraryPsiProviderService {
      * For example, for the property symbol and its access, with a context like
      * LHS or RHS of an assignment, either accessor would be appropriate, not both.
      */
-    fun KaSession.provide(
+    context(session: KaSession)
+    fun provide(
         symbol: KaSymbol,
         context: KtElement? = null,
     ): PsiElement?
 
     class Default : FirKotlinUastLibraryPsiProviderService {
-        override fun KaSession.provide(symbol: KaSymbol, context: KtElement?): PsiElement? = symbol.psi
+        context(session: KaSession)
+        override fun provide(symbol: KaSymbol, context: KtElement?): PsiElement? = symbol.psi
     }
 
     companion object {

@@ -7,31 +7,33 @@ import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.model.psi.PsiSymbolReferenceProvider
 import com.intellij.model.search.SearchRequest
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
-import org.intellij.plugins.markdown.lang.MarkdownElementTypes
+import com.intellij.psi.util.parentOfType
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkLabel
 import org.intellij.plugins.markdown.model.psi.labels.LinkLabelSymbol.Companion.isDeclaration
-import org.intellij.plugins.markdown.model.psi.labels.LinkLabelSymbol.Companion.isShortLink
 import org.intellij.plugins.markdown.util.isFootnoteLabelText
 
 internal class LinkLabelSymbolReferenceProvider: PsiSymbolReferenceProvider {
   override fun getReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Collection<PsiSymbolReference> {
-    if (element !is MarkdownLinkLabel || element.isDeclaration) {
+    if (element !is MarkdownLinkLabel || element.isDeclaration || element.isImageLabel) {
       return emptyList()
     }
-    if (element.isShortLink && !Registry.`is`("markdown.validate.short.links")) {
+    val elementText = element.text
+    val rangeInElement = element.labelTextRange
+    val text = rangeInElement.substring(elementText)
+    // Footnote reference labels are handled separately and are not link-label symbols.
+    if (isFootnoteLabelText(elementText)) {
       return emptyList()
     }
-    val text = element.text
-    // Footnote reference labels [^...] inside a full reference link [^a][^b] are not link definitions
-    if (isFootnoteLabelText(text) && element.parent?.node?.elementType == MarkdownElementTypes.FULL_REFERENCE_LINK) {
-      return emptyList()
-    }
-    val rangeInElement = TextRange(0, element.textLength)
-    val reference = LinkLabelSymbolReference(element, rangeInElement, text)
-    return listOf(reference)
+    return listOf(LinkLabelSymbolReference(element, rangeInElement, text))
   }
+
+  private val MarkdownLinkLabel.isImageLabel: Boolean
+    get() {
+      val image = parentOfType<MarkdownImage>() ?: return false
+      val altLabelStart = image.text.indexOf('[')
+      return altLabelStart >= 0 && textRange.startOffset == image.textRange.startOffset + altLabelStart
+    }
 
   override fun getSearchRequests(project: Project, target: Symbol): Collection<SearchRequest> {
     return emptyList()

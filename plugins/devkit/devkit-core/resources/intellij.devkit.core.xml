@@ -11,13 +11,53 @@
     <module name="intellij.java.ui"/>
     <module name="intellij.java.xml.dom.impl"/>
     <module name="intellij.json.backend"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.kotlinx.serialization.protobuf"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.libraries.protobuf"/>
+    <module name="intellij.libraries.snakeyaml"/>
+    <module name="intellij.libraries.stream"/>
     <module name="intellij.libraries.xerces"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.builtInServer"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.jps.build"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.markdown.utils"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.testRunner"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.usageView.impl"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.properties.backend"/>
     <module name="intellij.properties.backend.psi"/>
     <module name="intellij.spellchecker"/>
+    <module name="intellij.xml.analysis"/>
     <module name="intellij.xml.dom.impl"/>
     <module name="intellij.xml.impl"/>
     <module name="intellij.xml.parser"/>
@@ -148,22 +188,35 @@
 
     <registryKey defaultValue="false" description="Enables experimental new remote dev module in intellij repository"
                  key="devkit.new.remdev.module.action"/>
-    <registryKey key="devkit.remote.dev.split.mode.analysis.transitive.dependencies" defaultValue="true"
+    <registryKey key="devkit.split.mode.analysis.transitive.dependencies" defaultValue="true"
                  description="Enables transitive descriptor dependency analysis for DevKit split-mode inspections."/>
-    <registryKey key="devkit.remote.dev.split.mode.analysis.containing.plugins" defaultValue="false"
+    <registryKey key="devkit.split.mode.analysis.containing.plugins" defaultValue="false"
                  description="Enables containing plugin descriptor analysis for DevKit split-mode inspections."/>
-    <registryKey key="devkit.remote.dev.split.mode.inspections.skip.predefined" defaultValue="true"
+    <registryKey key="devkit.split.mode.inspections.skip.predefined" defaultValue="true"
                  description="Skips DevKit Split Mode inspections in modules and XML descriptors with predefined module kinds."/>
-    <registryKey key="devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin" defaultValue="false"
+    <registryKey key="devkit.split.mode.inspections.enable.in.implicit.module.kind" defaultValue="false"
                  description="Keeps XML split-mode inspections enabled in plugin.xml files that are indirectly frontend-only, backend-only, or mixed."/>
-    <registryKey key="devkit.remote.dev.split.mode.analysis.predefined.module.kinds.additional.file" defaultValue=""
-                 description="Optional filesystem path to a predefined split-mode module kinds JSON file loaded instead of the bundled DevKit data when the file exists."
+    <registryKey key="devkit.split.mode.report.implicit.module.kind" defaultValue="true"
+                 description="Enables reporting errors about modules that effectively work only on frontend or backend, but do not explicitly state that fact via platform dependency"/>
+    <registryKey key="devkit.split.mode.custom.icons" defaultValue="false"
+                 description="Enables deferred accurate split-mode icon resolution for DevKit descriptor and directory icons."/>
+    <registryKey key="devkit.split.mode.inlay.plugin.descriptor.kind" defaultValue="true"
+                 description="Shows inline split-mode compatibility hints for DevKit plugin descriptors."/>
+    <registryKey key="devkit.split.mode.run.jps.to.bazel.in.quick.fix" defaultValue="false"
+                 description="Automatically run JPS to Bazel conversion after applying a fix that touches runtime/compile dependencies"/>
+
+    <registryKey key="devkit.split.mode.analysis.api.restrictions.source" defaultValue="[bundled*|project|project-or-bundled]"
+                 description="Source of ApiRestrictions.json5 for DevKit split-mode inspections."
                  restartRequired="true"/>
-    <registryKey key="devkit.remote.dev.split.mode.qodana.analysis.scope.limiter.enabled" defaultValue="false"
+    <registryKey key="devkit.split.mode.analysis.predefined.module.kinds.source" defaultValue="[bundled*|project|project-or-bundled]"
+                 description="Source of PredefinedModuleKinds.json5 for DevKit split-mode inspections."
+                 restartRequired="true"/>
+    <registryKey key="devkit.split.mode.qodana.analysis.scope.source" defaultValue="[bundled|project*|project-or-bundled]"
+                 description="Source of SplitModeQodanaAnalysisScope.json for DevKit split-mode inspections."
+                 restartRequired="true"/>
+
+    <registryKey key="devkit.split.mode.qodana.analysis.scope.limiter.enabled" defaultValue="false"
                  description="Limits DevKit split-mode inspections to modules listed in the Qodana analysis scope file."/>
-    <registryKey key="devkit.remote.dev.split.mode.qodana.analysis.scope.additional.file" defaultValue=""
-                 description="Optional filesystem path to an additional split-mode Qodana analysis scope JSON file."
-                 restartRequired="true"/>
     <registryKey key="devkit.obsolete.new.file.actions.enabled" defaultValue="false"
                  description="Enables old-fashioned File-New actions for plugin modules"/>
 
@@ -198,6 +251,12 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.remotedev.SplitModeMixedDependenciesInspection"
                      key="inspection.split.mode.mixed.dependencies.display.name"/>
+    <localInspection language="XML" shortName="SplitModeImplicitModuleKind" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.remotedev.SplitModeImplicitModuleKindInspection"
+                     key="inspection.split.mode.implicit.module.kind.display.name"/>
     <localInspection language="XML" applyToDialects="false"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
@@ -210,6 +269,12 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlExtensionRegistrationInspection"
                      key="inspection.plugin.xml.extension.registration.display.name"/>
+    <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="false" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlReferencesModuleReachabilityInspection"
+                     key="inspection.plugin.xml.references.module.reachability.display.name"/>
 
     <localInspection language="JVM" shortName="ComponentNotRegistered"
                      projectType="INTELLIJ_PLUGIN"
@@ -311,6 +376,18 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UseHtmlChunkToolTipInspection"
                      key="inspection.use.html.chunk.tooltip.display.name"/>
+    <localInspection language="UAST" shortName="UseVirtualFileToVirtualFileUrlConversion"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UseVirtualFileToVirtualFileUrlConversionInspection"
+                     key="inspection.use.virtual.file.to.virtual.file.url.conversion.display.name"/>
+    <localInspection language="UAST" shortName="UseVirtualFileUrlToVirtualFileConversion"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UseVirtualFileUrlToVirtualFileConversionInspection"
+                     key="inspection.use.virtual.file.url.to.virtual.file.conversion.display.name"/>
     <localInspection language="UAST" shortName="UseDPIAwareInsets"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
@@ -764,6 +841,15 @@
                                     implementationClass="org.jetbrains.idea.devkit.references.DevKitRelatedPropertiesProvider"/>
     <codeInsight.lineMarkerProvider language="XML"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.DescriptorsIncludingContentModuleLineMarkerProvider"/>
+    <codeInsight.declarativeInlayProvider
+      providerId="devkit.plugin.descriptor.split.mode.kind"
+      bundle="messages.DevKitBundle"
+      nameKey="inlay.split.mode.module.kind.name"
+      descriptionKey="inlay.split.mode.module.kind.description"
+      group="OTHER_GROUP"
+      implementationClass="org.jetbrains.idea.devkit.navigation.DescriptorSplitModeInlayHintsProvider"
+      isEnabledByDefault="true"
+      language="XML"/>
     <psi.referenceContributor
       language="Properties"
       implementation="org.jetbrains.idea.devkit.references.MessageBundleReferenceContributor"/>
@@ -779,7 +865,8 @@
                      shortName="PluginKeysAreProhibitedInPlatformRegistry"
                      implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesInspection"/>
 
-    <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
+    <workspaceModel.customImlComponentNameContributor
+      implementation="org.jetbrains.idea.devkit.build.PluginBuildConfigurationImlComponentNameContributor"/>
     <backgroundPostStartupActivity
       implementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IntelliJSdkExternalAnnotationsUpdateStartupActivity"/>
     <java.externalAnnotation.locationProvider

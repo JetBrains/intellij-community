@@ -38,6 +38,7 @@ import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.defaultTabStyle
 import org.jetbrains.jewel.ui.theme.editorTabStyle
 
+/** Showcases the [TabStrip] component. */
 @Composable
 public fun Tabs(modifier: Modifier = Modifier) {
     Column(modifier) {

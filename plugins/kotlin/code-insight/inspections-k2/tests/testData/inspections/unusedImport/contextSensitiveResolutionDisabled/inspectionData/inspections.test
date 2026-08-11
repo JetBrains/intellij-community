@@ -1,0 +1,4 @@
+// INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.KotlinUnusedImportInspection
+// K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.KotlinUnusedImportInspection
+// RUNTIME_WITH_FULL_JDK
+// COMPILER_ARGUMENTS: -Xcontext-sensitive-resolution -XXLanguage:-ContextSensitiveResolutionUsingExpectedType

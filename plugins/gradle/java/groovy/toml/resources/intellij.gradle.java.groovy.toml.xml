@@ -5,7 +5,16 @@
     <module name="intellij.gradle.java.groovy"/>
     <module name="intellij.gradle.java.toml"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.uast"/>
+    <module name="intellij.platform.usageView"/>
     <module name="intellij.toml.core"/>
   </dependencies>
   <!-- endregion -->
@@ -13,9 +22,5 @@
   <extensions defaultExtensionNs="com.intellij">
     <gotoDeclarationHandler implementation="com.intellij.gradle.java.groovy.toml.service.GradleVersionCatalogTomlAwareGotoDeclarationHandler"/>
     <referencesSearch implementation="com.intellij.gradle.java.groovy.toml.service.GradleGroovyVersionCatalogReferencesSearcher"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
-    <dslInspectionProvider language="Groovy" implementationClass="com.intellij.gradle.java.groovy.toml.GroovyGradleDslInspectionProvider"/>
   </extensions>
 </idea-plugin>

@@ -12,7 +12,9 @@ import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.SystemInfoRt
 import org.jdom.Element
 import java.awt.event.MouseEvent
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 open class DefaultKeymapImpl(dataHolder: SchemeDataHolder<KeymapImpl>,
                              private val defaultKeymapManager: DefaultKeymap,
                              val plugin: PluginDescriptor) : KeymapImpl(dataHolder) {

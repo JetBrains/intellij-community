@@ -19,7 +19,7 @@ interface OoParentWithPidEntityBuilder : WorkspaceEntityBuilder<OoParentWithPidE
 }
 
 internal object OoParentWithPidEntityType : EntityType<OoParentWithPidEntity, OoParentWithPidEntityBuilder>() {
-  override val entityClass: Class<OoParentWithPidEntity> get() = OoParentWithPidEntity::class.java
+  override val entityImplClass: Class<*> get() = OoParentWithPidEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = OoParentWithPidEntityImpl.Builder::class.java
   operator fun invoke(
     parentProperty: String,

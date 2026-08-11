@@ -62,25 +62,29 @@ internal class GradleTomlDependenciesAutoPopupHandlerTest : GradleCodeInsightBas
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testAutoPopupOnQuoteDirectlyInLibrariesTable(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun testAutoPopupAfterThreeCharsDirectlyInLibrariesTable(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     codeInsightFixture.configureByText("gradle/libs.versions.toml", """
       [libraries]
       my-lib = <caret>
     """.trimIndent())
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered for a direct library value in [libraries] table" }
+    autoPopupTester.typeWithPauses("\"my")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed (IDEA-390474)" }
+    autoPopupTester.typeWithPauses("G")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters for a direct library value in [libraries] table" }
     assertEquals("myGroup:myArtifact:1.0", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testAutoPopupOnQuoteInModuleKey(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun testAutoPopupAfterThreeCharsInModuleKey(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     codeInsightFixture.configureByText("gradle/libs.versions.toml", """
       [libraries]
       my-lib = { module = <caret> }
     """.trimIndent())
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of library's module key" }
+    autoPopupTester.typeWithPauses("\"my")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed (IDEA-390474)" }
+    autoPopupTester.typeWithPauses("G")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside of library's module key" }
     assertEquals("myGroup:myArtifact", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 

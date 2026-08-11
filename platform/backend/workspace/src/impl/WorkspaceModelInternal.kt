@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NonNls
 public interface WorkspaceModelInternal: WorkspaceModel {
   public val entityStorage: VersionedEntityStorageImpl
 
+  public val unloadedEntitiesStorage: VersionedEntityStorageImpl
+
   /**
    * Returns a snapshot of the storage containing unloaded entities.
    * Unloaded entities must be ignored by almost all code in the IDE, so this property isn't supposed for general use.
@@ -112,4 +114,3 @@ public interface WorkspaceModelInternal: WorkspaceModel {
   @ApiStatus.Experimental
   public suspend fun awaitSynchronizationWithJpsModel()
 }
-

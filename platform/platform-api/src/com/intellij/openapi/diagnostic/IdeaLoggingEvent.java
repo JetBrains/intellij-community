@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.Collections;
 import java.util.List;
 
 public class IdeaLoggingEvent {
@@ -45,22 +44,7 @@ public class IdeaLoggingEvent {
     myAttachments = attachments;
     myData = data;
     myProblematicPluginInfo = problematicPluginInfo;
-    myPlugin = problematicPluginInfo instanceof ProblematicPluginInfoBasedOnDescriptor ? ((ProblematicPluginInfoBasedOnDescriptor)problematicPluginInfo).getPluginDescriptor() : null;
-  }
-
-  public IdeaLoggingEvent(
-    @Nullable String message,
-    @NotNull Throwable throwable,
-    @NotNull List<Attachment> attachments,
-    @Nullable IdeaPluginDescriptor plugin,
-    @Nullable Object data
-  ) {
-    myMessage = message;
-    myThrowable = throwable;
-    myAttachments = Collections.unmodifiableList(attachments);
-    myPlugin = plugin;
-    myProblematicPluginInfo = plugin != null ? new ProblematicPluginInfoBasedOnDescriptor(plugin) : null;
-    myData = data;
+    myPlugin = problematicPluginInfo instanceof ProblematicPluginInfoWithDescriptor ? ((ProblematicPluginInfoWithDescriptor)problematicPluginInfo).getPluginDescriptor() : null;
   }
 
   /** Returns a message passed to {@link Logger#error Logger.error(String, [...])} methods. */

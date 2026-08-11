@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -65,7 +66,7 @@ interface ScrambleTool {
 @ApiStatus.Internal
 class PluginScrambleRequest(
   @JvmField val currentDescriptor: PluginBuildDescriptor,
-  @JvmField val laidOutDescriptors: Collection<PluginBuildDescriptor>,
+  @JvmField val laidOutPlugins: Collection<PluginBuildResult>,
   @JvmField val platformLayout: PlatformLayout,
   @JvmField val platformContent: List<DistributionFileEntry>,
 )

@@ -81,7 +81,7 @@ object CodeReviewDetailsCommitsComponentFactory {
       horizontalAlignment = SwingConstants.RIGHT
       setDropDownLinkIcon()
       bindTextIn(scope, combine(changesVm.selectedCommit, changesVm.reviewCommits) { selectedCommit, commits ->
-        if (selectedCommit != null) {
+        if (selectedCommit != null && commits.isNotEmpty()) {
           val metrics = getFontMetrics(font)
           val commitHashWidth = calculateCommitHashWidth(metrics, commits, changesVm::commitHash)
           preferredSize = JBDimension(commitHashWidth, preferredSize.height, true)

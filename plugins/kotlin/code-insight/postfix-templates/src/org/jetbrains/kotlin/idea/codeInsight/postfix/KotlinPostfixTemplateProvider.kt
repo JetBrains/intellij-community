@@ -90,9 +90,13 @@ class KotlinPostfixTemplateProvider : PostfixTemplateProvider {
         if (originalFile !is KtBlockCodeFragment) {
             return copyFile
         }
-        val codeFragment = KtPsiFactory(originalFile.project, true)
-            .createBlockCodeFragment(originalFile.text, originalFile.context)
-        codeFragment.addImportsFromString(originalFile.importsToString())
+        val codeFragment = KtBlockCodeFragment(
+            project = originalFile.project,
+            name = "fragment.kt",
+            text = originalFile.text,
+            imports = originalFile.importsToString(),
+            context = originalFile.context
+        )
         codeFragment.setOriginalFile(originalFile)
         return codeFragment
     }

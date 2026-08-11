@@ -3,6 +3,7 @@ package training.ui
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import org.jetbrains.annotations.ApiStatus
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -12,7 +13,8 @@ import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
 
 @Service
-internal class UISettings {
+@ApiStatus.Internal
+class UISettings {
   //GENERAL UI SETTINGS
   val panelWidth: Int by lazy { JBUI.scale(460) }
 

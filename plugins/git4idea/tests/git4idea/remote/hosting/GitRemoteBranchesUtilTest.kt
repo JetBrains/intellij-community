@@ -1,38 +1,45 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remote.hosting
 
-import com.intellij.dvcs.repo.Repository
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.registerOrReplaceServiceInstance
+import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.branch.GitBranchesCollection
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
-import git4idea.remote.hosting.GitRemoteBranchesUtil.findOrCreateRemote
+import git4idea.push.GitSpecialRefRemoteBranch
 import git4idea.repo.GitBranchTrackInfo
-import git4idea.repo.GitHooksInfo
-import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRemote
+import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
-import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.mockStatic
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import java.net.URI
-import kotlin.jvm.java
 
+private const val SPECIAL_REF = "refs/pull/42/head"
+private const val CURRENT_REVISION = "1234567890abcdef1234567890abcdef12345678"
+private const val OTHER_REVISION = "fedcba0987654321fedcba0987654321fedcba09"
+
+@TestApplication
 class GitRemoteBranchesUtilTest {
+
+  @TestDisposable
+  private lateinit var testDisposable: Disposable
 
   @Test
   fun `test findRemote with matching remote`() {
@@ -53,8 +60,7 @@ class GitRemoteBranchesUtilTest {
     )
 
     val result = GitRemoteBranchesUtil.findRemote(mockRepository, hostedRemote)
-    assertNotNull("Matching remote should be found", result)
-    assertEquals("remote1", result?.name)
+    assertThat(result?.name).describedAs("Matching remote should be found").isEqualTo("remote1")
   }
 
   @Test
@@ -76,8 +82,7 @@ class GitRemoteBranchesUtilTest {
     )
 
     val result = GitRemoteBranchesUtil.findRemote(mockRepository, hostedRemote)
-    assertNotNull("Matching remote should be found", result)
-    assertEquals("remote1", result?.name)
+    assertThat(result?.name).describedAs("Matching remote should be found").isEqualTo("remote1")
   }
 
   @Test
@@ -99,7 +104,7 @@ class GitRemoteBranchesUtilTest {
     )
 
     val result = GitRemoteBranchesUtil.findRemote(mockRepository, hostedRemote)
-    assertNull("No matching remote should be found", result)
+    assertThat(result).describedAs("No matching remote should be found").isNull()
   }
 
   @Test
@@ -121,7 +126,7 @@ class GitRemoteBranchesUtilTest {
     )
 
     val result = GitRemoteBranchesUtil.findRemote(mockRepository, hostedRemote)
-    assertNull("No matching remote should be found", result)
+    assertThat(result).describedAs("No matching remote should be found").isNull()
   }
 
   @Test
@@ -143,7 +148,7 @@ class GitRemoteBranchesUtilTest {
     )
 
     val result = GitRemoteBranchesUtil.findRemote(mockRepository, hostedRemote)
-    assertNull("No matching remote should be found", result)
+    assertThat(result).describedAs("No matching remote should be found").isNull()
   }
 
   @Test
@@ -165,8 +170,7 @@ class GitRemoteBranchesUtilTest {
     )
 
     val result = GitRemoteBranchesUtil.findRemote(mockRepository, hostedRemote)
-    assertNotNull("Matching remote should be found", result)
-    assertEquals("remote1", result?.name)
+    assertThat(result?.name).describedAs("Matching remote should be found").isEqualTo("remote1")
   }
 
   @Test
@@ -188,8 +192,7 @@ class GitRemoteBranchesUtilTest {
     )
 
     val result = GitRemoteBranchesUtil.findRemote(mockRepository, hostedRemote)
-    assertNotNull("Matching remote should be found", result)
-    assertEquals("remote1", result?.name)
+    assertThat(result?.name).describedAs("Matching remote should be found").isEqualTo("remote1")
   }
 
   @Test
@@ -211,8 +214,7 @@ class GitRemoteBranchesUtilTest {
     )
 
     val result = GitRemoteBranchesUtil.findRemote(mockRepository, hostedRemote)
-    assertNotNull("Matching remote should be found", result)
-    assertEquals("remote1", result?.name)
+    assertThat(result?.name).describedAs("Matching remote should be found").isEqualTo("remote1")
   }
 
   @Test
@@ -234,40 +236,28 @@ class GitRemoteBranchesUtilTest {
     )
 
     val result = GitRemoteBranchesUtil.findRemote(mockRepository, hostedRemote)
-    assertNull("Matching remote should not be found", result)
+    assertThat(result).describedAs("Matching remote should not be found").isNull()
   }
 
   @Test
-  fun `test isRemoteBranchCheckedOut with matching remote branch`() {
+  @Timeout(30)
+  fun `test testRemoteBranchCheckedOut with matching remote branch`(): Unit = timeoutRunBlocking {
     val mockRepository = mock(GitRepository::class.java)
 
     val remote = gitRemoteTest("origin", "https://example.com/org/repo.git")
     val trackedRemoteBranch = GitStandardRemoteBranch(remote, "main")
     val trackInfo = GitBranchTrackInfo(GitLocalBranch("main"), trackedRemoteBranch, false)
 
-    val repositoryInfo = GitRepoInfo(
-      GitLocalBranch("main"),
-      "curRev",
-      Repository.State.NORMAL,
-      listOf(remote),
-      emptyMap(),
-      emptyMap(),
-      listOf(trackInfo),
-      emptyList(),
-      GitHooksInfo(false, false),
-      false
-    )
-
-    `when`(mockRepository.info).thenReturn(repositoryInfo)
     `when`(mockRepository.currentBranchName).thenReturn("main")
     `when`(mockRepository.branchTrackInfos).thenReturn(listOf(trackInfo))
 
-    val result = GitRemoteBranchesUtil.isRemoteBranchCheckedOut(mockRepository, trackedRemoteBranch)
-    assertTrue("Remote branch should be checked out", result)
+    val result = GitRemoteBranchesUtil.testRemoteBranchCheckedOut(mockRepository, trackedRemoteBranch)
+    assertThat(result).describedAs("Remote branch should be checked out").isTrue()
   }
 
   @Test
-  fun `test isRemoteBranchCheckedOut returns false when current branch doesn't match tracked local branch`() {
+  @Timeout(30)
+  fun `test testRemoteBranchCheckedOut returns false when current branch doesn't match tracked local branch`(): Unit = timeoutRunBlocking {
     val mockRepository = mock(GitRepository::class.java)
 
     val remote = gitRemoteTest("origin", "https://example.com/org/repo.git")
@@ -277,8 +267,55 @@ class GitRemoteBranchesUtilTest {
     `when`(mockRepository.currentBranchName).thenReturn("feature")
     `when`(mockRepository.branchTrackInfos).thenReturn(listOf(trackInfo))
 
-    val result = GitRemoteBranchesUtil.isRemoteBranchCheckedOut(mockRepository, trackedRemoteBranch)
-    assertFalse("Remote branch should not be considered checked out", result)
+    val result = GitRemoteBranchesUtil.testRemoteBranchCheckedOut(mockRepository, trackedRemoteBranch)
+    assertThat(result).describedAs("Remote branch should not be considered checked out").isFalse()
+  }
+
+  @Test
+  @Timeout(30)
+  fun `test testRemoteBranchCheckedOut with special ref resolved to the current revision`(): Unit = timeoutRunBlocking {
+    val mockRepository = mock(GitRepository::class.java)
+    val specialRefBranch = GitSpecialRefRemoteBranch(SPECIAL_REF, gitRemoteTest("origin", "https://example.com/org/repo.git"))
+
+    `when`(mockRepository.currentRevision).thenReturn(CURRENT_REVISION)
+    registerGitMock {
+      `when`(it.resolveReference(mockRepository, SPECIAL_REF)).thenReturn(HashImpl.build(CURRENT_REVISION))
+    }
+
+    val result = GitRemoteBranchesUtil.testRemoteBranchCheckedOut(mockRepository, specialRefBranch)
+    assertThat(result).describedAs("Special ref resolved to the current revision should be checked out").isTrue()
+  }
+
+  @Test
+  @Timeout(30)
+  fun `test testRemoteBranchCheckedOut with special ref resolved to another revision`(): Unit = timeoutRunBlocking {
+    val mockRepository = mock(GitRepository::class.java)
+    val specialRefBranch = GitSpecialRefRemoteBranch(SPECIAL_REF, gitRemoteTest("origin", "https://example.com/org/repo.git"))
+
+    `when`(mockRepository.currentRevision).thenReturn(CURRENT_REVISION)
+    val mockGit = registerGitMock {
+      `when`(it.resolveReference(mockRepository, SPECIAL_REF)).thenReturn(HashImpl.build(OTHER_REVISION))
+    }
+
+    val result = GitRemoteBranchesUtil.testRemoteBranchCheckedOut(mockRepository, specialRefBranch)
+    assertThat(result).describedAs("Special ref resolved to another revision should not be checked out").isFalse()
+    verify(mockGit).resolveReference(mockRepository, SPECIAL_REF)
+  }
+
+  @Test
+  @Timeout(30)
+  fun `test testRemoteBranchCheckedOut with unresolvable special ref`(): Unit = timeoutRunBlocking {
+    val mockRepository = mock(GitRepository::class.java)
+    val specialRefBranch = GitSpecialRefRemoteBranch(SPECIAL_REF, gitRemoteTest("origin", "https://example.com/org/repo.git"))
+
+    `when`(mockRepository.currentRevision).thenReturn(CURRENT_REVISION)
+    val mockGit = registerGitMock {
+      `when`(it.resolveReference(mockRepository, SPECIAL_REF)).thenReturn(null)
+    }
+
+    val result = GitRemoteBranchesUtil.testRemoteBranchCheckedOut(mockRepository, specialRefBranch)
+    assertThat(result).describedAs("Unresolvable special ref should not be checked out").isFalse()
+    verify(mockGit).resolveReference(mockRepository, SPECIAL_REF)
   }
 
   @Test
@@ -305,14 +342,14 @@ class GitRemoteBranchesUtilTest {
     )
 
     val result = GitRemoteBranchesUtil.findRemoteBranch(mockRepositoryInfo, hostedBranch)
-    assertNotNull("Remote branch should be found", result)
+    assertThat(result).describedAs("Remote branch should be found").isNotNull()
   }
 
   @Test
-  fun `test findOrCreateRemote returns existing remote and does not call addRemote`() = runBlocking {
+  @Timeout(30)
+  fun `test findOrCreateRemote returns existing remote and does not call addRemote`(): Unit = timeoutRunBlocking {
     val mockRepository = mock(GitRepository::class.java)
     val mockRepositoryInfo = mock(GitRepoInfo::class.java)
-    val mockGit = mock(Git::class.java)
 
     val existingRemote = gitRemoteTest("origin", "https://example.com/org/repo.git")
 
@@ -328,22 +365,20 @@ class GitRemoteBranchesUtilTest {
     `when`(mockRepositoryInfo.remotes).thenReturn(listOf(existingRemote))
     `when`(mockRepository.remotes).thenReturn(listOf(existingRemote))
 
-    mockStatic(Git::class.java).use { gitStatic ->
-      gitStatic.`when`<Git> { Git.getInstance() }.thenReturn(mockGit)
+    val mockGit = registerGitMock()
 
-      val result = mockGit.findOrCreateRemote(mockRepository, hostedRemote)
+    val result = GitRemoteBranchesUtil.findOrCreateRemote(mockRepository, hostedRemote)
 
-      assertEquals("Should return existing remote", existingRemote, result)
-      verify(mockGit, never()).addRemote(any(), anyString(), anyString())
-      verify(mockRepository, never()).update()
-    }
+    assertThat(result).describedAs("Should return existing remote").isEqualTo(existingRemote)
+    verify(mockGit, never()).addRemote(any(), anyString(), anyString())
+    verify(mockRepository, never()).update()
   }
 
   @Test
-  fun `test findOrCreateRemote creates http remote when http is preferred`() = runBlocking {
+  @Timeout(30)
+  fun `test findOrCreateRemote creates http remote when http is preferred`(): Unit = timeoutRunBlocking {
     val mockRepository = mock(GitRepository::class.java)
     val mockRepositoryInfo = mock(GitRepoInfo::class.java)
-    val mockGit = mock(Git::class.java)
 
     val originHttpRemote = gitRemoteTest("origin", "https://example.com/another/repo.git")
 
@@ -360,30 +395,28 @@ class GitRemoteBranchesUtilTest {
     val remotesState = mutableListOf<GitRemote>()
     remotesState.add(originHttpRemote)
     `when`(mockRepository.remotes).thenAnswer { remotesState.toList() }
-    `when`(mockGit.addRemote(eq(mockRepository), anyString(), anyString())).thenAnswer { invocation ->
-      val name = invocation.getArgument<String>(1)
-      val url = invocation.getArgument<String>(2)
-      remotesState += gitRemoteTest(name, url)
-      mock(GitCommandResult::class.java)
+
+    val mockGit = registerGitMock { git ->
+      `when`(git.addRemote(eq(mockRepository), anyString(), anyString())).thenAnswer { invocation ->
+        val name = invocation.getArgument<String>(1)
+        val url = invocation.getArgument<String>(2)
+        remotesState += gitRemoteTest(name, url)
+        mock(GitCommandResult::class.java)
+      }
     }
 
-    mockStatic(Git::class.java).use { gitStatic ->
-      gitStatic.`when`<Git> { Git.getInstance() }.thenReturn(mockGit)
+    val result = GitRemoteBranchesUtil.findOrCreateRemote(mockRepository, hostedRemote)
 
-      val result = mockGit.findOrCreateRemote(mockRepository, hostedRemote)
-
-      assertNotNull("Remote should be created", result)
-      assertEquals("upstream", result?.name)
-      verify(mockGit).addRemote(mockRepository, "upstream", "https://example.com/org/repo.git")
-      verify(mockRepository).update()
-    }
+    assertThat(result?.name).describedAs("Remote should be created").isEqualTo("upstream")
+    verify(mockGit).addRemote(mockRepository, "upstream", "https://example.com/org/repo.git")
+    verify(mockRepository).update()
   }
 
   @Test
-  fun `test findOrCreateRemote creates ssh remote when http is not preferred`() = runBlocking {
+  @Timeout(30)
+  fun `test findOrCreateRemote creates ssh remote when http is not preferred`(): Unit = timeoutRunBlocking {
     val mockRepository = mock(GitRepository::class.java)
     val mockRepositoryInfo = mock(GitRepoInfo::class.java)
-    val mockGit = mock(Git::class.java)
 
     val originSshRemote = gitRemoteTest("origin", "git@example.com:another/repo.git")
 
@@ -400,30 +433,28 @@ class GitRemoteBranchesUtilTest {
     val remotesState = mutableListOf<GitRemote>()
     remotesState.add(originSshRemote)
     `when`(mockRepository.remotes).thenAnswer { remotesState.toList() }
-    `when`(mockGit.addRemote(eq(mockRepository), anyString(), anyString())).thenAnswer { invocation ->
-      val name = invocation.getArgument<String>(1)
-      val url = invocation.getArgument<String>(2)
-      remotesState += gitRemoteTest(name, url)
-      mock(GitCommandResult::class.java)
+
+    val mockGit = registerGitMock { git ->
+      `when`(git.addRemote(eq(mockRepository), anyString(), anyString())).thenAnswer { invocation ->
+        val name = invocation.getArgument<String>(1)
+        val url = invocation.getArgument<String>(2)
+        remotesState += gitRemoteTest(name, url)
+        mock(GitCommandResult::class.java)
+      }
     }
 
-    mockStatic(Git::class.java).use { gitStatic ->
-      gitStatic.`when`<Git> { Git.getInstance() }.thenReturn(mockGit)
+    val result = GitRemoteBranchesUtil.findOrCreateRemote(mockRepository, hostedRemote)
 
-      val result = mockGit.findOrCreateRemote(mockRepository, hostedRemote)
-
-      assertNotNull("Remote should be created", result)
-      assertEquals("upstream", result?.name)
-      verify(mockGit).addRemote(mockRepository, "upstream", "git@example.com:org/repo.git")
-      verify(mockRepository).update()
-    }
+    assertThat(result?.name).describedAs("Remote should be created").isEqualTo("upstream")
+    verify(mockGit).addRemote(mockRepository, "upstream", "git@example.com:org/repo.git")
+    verify(mockRepository).update()
   }
 
   @Test
-  fun `test findOrCreateRemote returns null when no url is available`() = runBlocking {
+  @Timeout(30)
+  fun `test findOrCreateRemote returns null when no url is available`(): Unit = timeoutRunBlocking {
     val mockRepository = mock(GitRepository::class.java)
     val mockRepositoryInfo = mock(GitRepoInfo::class.java)
-    val mockGit = mock(Git::class.java)
 
     val hostedRemote = HostedGitRepositoryRemote(
       name = "upstream",
@@ -437,17 +468,26 @@ class GitRemoteBranchesUtilTest {
     `when`(mockRepositoryInfo.remotes).thenReturn(emptyList())
     `when`(mockRepository.remotes).thenReturn(emptyList())
 
-    mockStatic(Git::class.java).use { gitStatic ->
-      gitStatic.`when`<Git> { Git.getInstance() }.thenReturn(mockGit)
+    val mockGit = registerGitMock()
 
-      val result = mockGit.findOrCreateRemote(mockRepository, hostedRemote)
+    val result = GitRemoteBranchesUtil.findOrCreateRemote(mockRepository, hostedRemote)
 
-      assertNull("Should return null when there is no URL to create remote", result)
-      verify(mockGit, never()).addRemote(any(), anyString(), anyString())
-      verify(mockRepository, never()).update()
-    }
+    assertThat(result).describedAs("Should return null when there is no URL to create remote").isNull()
+    verify(mockGit, never()).addRemote(any(), anyString(), anyString())
+    verify(mockRepository, never()).update()
   }
 
   private fun gitRemoteTest(name: String, element: String): GitRemote =
     GitRemote(name = name, urls = listOf(element), pushUrls = listOf(element), fetchRefSpecs = listOf(), pushRefSpecs = listOf())
+
+  /**
+   * [GitRemoteBranchesUtil] reaches for [Git] via [Git.getInstance] on a background dispatcher, so the mock has to be registered as an
+   * application service: a Mockito static mock is confined to the thread that created it and would not be visible there.
+   */
+  private fun registerGitMock(setUp: (Git) -> Unit = {}): Git {
+    val mockGit = mock(Git::class.java)
+    setUp(mockGit)
+    ApplicationManager.getApplication().registerOrReplaceServiceInstance(Git::class.java, mockGit, testDisposable)
+    return mockGit
+  }
 }

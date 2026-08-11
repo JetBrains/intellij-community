@@ -19,10 +19,12 @@ import com.intellij.util.ui.tree.WideSelectionTreeUI;
 
 import javax.swing.JComponent;
 import javax.swing.plaf.ComponentUI;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public class DarculaTreeUI extends WideSelectionTreeUI {
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {

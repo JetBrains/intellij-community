@@ -22,10 +22,8 @@ import com.intellij.tools.ide.util.common.logOutput
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
@@ -47,10 +45,10 @@ internal class IDEFrontendHandler(
 
   fun runInBackground(
     launchName: String,
-    joinLink: String,
+    commandLine: IDECommandLine,
     runTimeout: Duration,
     configure: IDERunContext.() -> Unit = {},
-  ): Pair<Deferred<IDEStartResult>, IDEHandle> {
+  ): Triple<Deferred<IDEStartResult>, IDEHandle, IDERunContext> {
     frontendContext.ide.vmOptions.let {
       //setup xDisplay
       it.addDisplayIfNecessary()
@@ -66,16 +64,15 @@ internal class IDEFrontendHandler(
       }
     }
     val process = CompletableDeferred<IDEHandle>()
+    val runContext = CompletableDeferred<IDERunContext>()
     EventsBus.subscribeOnce(process) { event: IdeLaunchEvent ->
+      runContext.complete(event.runContext)
       process.complete(event.ideProcess)
     }
     val result = scopeForProcesses.async {
       try {
-        val thinClientCommand =
-          if (frontendContext.ide.vmOptions.data().contains("-Djava.awt.headless=true")) "thinClient-headless" else "thinClient"
-
         frontendContext.runIdeSuspending(
-          commandLine = IDECommandLine.Args(listOf(thinClientCommand, joinLink)),
+          commandLine = commandLine,
           commands = CommandChain(),
           runTimeout = runTimeout,
           launchName = launchName,
@@ -84,12 +81,11 @@ internal class IDEFrontendHandler(
                 && System.getenv("DISPLAY") == null && frontendContext.ide.vmOptions.environmentVariables["DISPLAY"] != null && SystemInfo.isLinux
                 && !frontendContext.ide.vmOptions.hasHeadlessMode()) {
               // It means the ide will be started on a new display, so we need to add win manager
-              val fluxboxJob = this@async.launch(Dispatchers.IO) {
-                XorgWindowManagerHandler.startFluxBox(this@runIdeSuspending)
-              }
-              EventsBus.subscribeOnce(fluxboxJob) { event: IdeAfterLaunchEvent ->
-                if (event.runContext === this@runIdeSuspending) {
-                  fluxboxJob.cancelAndJoin()
+              XorgWindowManagerHandler.startFluxBox(this@runIdeSuspending, this@async)?.let { fluxboxJob ->
+                EventsBus.subscribeOnce(fluxboxJob) { event: IdeAfterLaunchEvent ->
+                  if (event.runContext === this@runIdeSuspending) {
+                    fluxboxJob.cancelAndJoin()
+                  }
                 }
               }
             }
@@ -108,6 +104,10 @@ internal class IDEFrontendHandler(
       }
     }
 
-    return Pair(result, runBlocking(CoroutineName("Awaiting for Frontend Process")) { withTimeout(2.minutes) { process.await() } })
+    return runBlocking(CoroutineName("Awaiting for Frontend Process")) {
+      withTimeout(2.minutes) {
+        Triple(result, process.await(), runContext.await())
+      }
+    }
   }
 }

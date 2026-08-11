@@ -16,7 +16,7 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.documentation.docstrings.DocStringParser;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
-import com.jetbrains.python.documentation.doctest.PyDocstringFile;
+import com.jetbrains.python.documentation.doctest.PyDoctestFile;
 import com.jetbrains.python.inspections.quickfix.DocstringQuickFix;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyFile;
@@ -41,7 +41,7 @@ public final class PyGenerateDocstringIntention extends PyBaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
-    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDocstringFile) return false;
+    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDoctestFile) return false;
     PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(psiFile, editor.getCaretModel().getOffset());
     if (elementAt == null) {
       return false;

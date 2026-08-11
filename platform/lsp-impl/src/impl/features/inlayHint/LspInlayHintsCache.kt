@@ -4,7 +4,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspInlayHintSupport
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.aggregatePerDocumentResults
-import com.intellij.platform.lsp.impl.features.LspFeaturesRefreshing
+import com.intellij.platform.lsp.impl.features.inlayCommon.LspInlayApplier
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
 import org.eclipse.lsp4j.InlayHint
 import org.eclipse.lsp4j.InlayHintParams
@@ -33,6 +33,7 @@ internal class LspInlayHintsCache(private val lspClient: LspClientImpl) : LspHig
   }
 
   override suspend fun onResponseReceived(file: VirtualFile) {
-    LspFeaturesRefreshing.refreshInlayHints(lspClient.project, file, this)
+    // Apply directly to the editor InlayModel out-of-band instead of restarting the daemon.
+    LspInlayApplier.getInstance(lspClient.project).scheduleRefresh(file)
   }
 }

@@ -20,14 +20,22 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData;
+import com.jetbrains.python.sdk.flavors.PyFlavorData;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
+
+@Subsystems.Interpreters
+@Layers.Functional
 public class PySdkFlavorTest extends PyTestCase {
   public void testPython27VersionString() {
     testVersionAndFlavor("Python 2.7.6\n", "Python 2.7.6", LanguageLevel.PYTHON27);
@@ -44,8 +52,9 @@ public class PySdkFlavorTest extends PyTestCase {
   private void testVersionAndFlavor(
     @NotNull String versionOutput, @NotNull String expectedVersionString, @NotNull LanguageLevel expectedLanguageLevel
   ) {
-    final PythonSdkFlavor<?> flavor = UnixPythonSdkFlavor.getInstance();
-    final Sdk mockSdk = createMockSdk(flavor, versionOutput);
+    final PythonSdkFlavor<PyFlavorData.Empty> flavor = UnixPythonSdkFlavor.getInstance();
+    final PyFlavorAndData<?, ?> flavorAndData = new PyFlavorAndData<>(PyFlavorData.Empty.INSTANCE, flavor);
+    final Sdk mockSdk = createMockSdk(flavorAndData, versionOutput);
     assertEquals(expectedVersionString, mockSdk.getVersionString());
     assertEquals(expectedLanguageLevel, flavor.getLanguageLevel(mockSdk));
   }
@@ -54,13 +63,13 @@ public class PySdkFlavorTest extends PyTestCase {
   // TODO: Add tests for MayaPy and IronPython SDK flavors
 
   @NotNull
-  private Sdk createMockSdk(@NotNull PythonSdkFlavor flavor, @NotNull String versionOutput) {
+  private Sdk createMockSdk(@NotNull PyFlavorAndData<?, ?> flavorAndData, @NotNull String versionOutput) {
     final String versionString = PythonSdkFlavor.getVersionStringFromOutput(versionOutput);
     final Sdk sdk = ProjectJdkTable.getInstance().createSdk("Test", PythonSdkType.getInstance());
     SdkModificator sdkModificator = sdk.getSdkModificator();
     sdkModificator.setHomePath("/path/to/sdk");
     sdkModificator.setVersionString(versionString);
-    sdkModificator.setSdkAdditionalData(new PythonSdkAdditionalData(flavor));
+    sdkModificator.setSdkAdditionalData(new PythonSdkAdditionalData(flavorAndData, Path.of("/workingDir")));
     ApplicationManager.getApplication().runWriteAction(() -> {
       sdkModificator.commitChanges();
     });

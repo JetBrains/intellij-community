@@ -27,13 +27,25 @@ class PluginRepositoryAuthServiceTest {
   private val fooDomain = "foo.bar"
   private val fooUrl = "https://foo.bar/foo?a=b&c=d"
   private val barUrl = "https://bar.baz/baz/zaz"
+  private val missingClockSystemClassName = "kotlinx/datetime/Clock" + '$' + "System"
 
   private val unescapedUrl = "https://buildserver.labs.intellij.net/guestAuth/repository/download/Documentation_Stardust/lastSuccessful/updatePlugins.xml?branch=master-internal &build=IU-221.3427.103"
 
   private inner class FakeUrlMatchingContributor(private val myDomain: String,
-                                                 private val contributorHeaders: Map<String, String> = headers): PluginRepositoryAuthProvider {
+                                                  private val contributorHeaders: Map<String, String> = headers): PluginRepositoryAuthProvider {
     override fun canHandle(url: String): Boolean = (url.contains(myDomain))
-    override fun getAuthHeaders(url: String): Map<String, String>  = contributorHeaders
+    override fun getAuthHeaders(url: String): Map<String, String> = contributorHeaders
+  }
+
+  private inner class BrokenContributor(private val failOnCanHandle: Boolean): PluginRepositoryAuthProvider {
+    override fun canHandle(url: String): Boolean {
+      if (failOnCanHandle) throw NoClassDefFoundError(missingClockSystemClassName)
+      return true
+    }
+
+    override fun getAuthHeaders(url: String): Map<String, String> {
+      throw NoClassDefFoundError(missingClockSystemClassName)
+    }
   }
 
   @Test
@@ -71,6 +83,20 @@ class PluginRepositoryAuthServiceTest {
     authService.getAllCustomHeaders(fooUrl)
     authService.getAllCustomHeaders(barUrl)
     assertEquals(headers, authService.getAllCustomHeaders(fooUrl))
+  }
+
+  @Test
+  fun `getAllCustomHeaders skips provider when canHandle fails with linkage error`() {
+    val authService = PluginRepositoryAuthService()
+    setupContributors(BrokenContributor(failOnCanHandle = true), FakeUrlMatchingContributor(fooDomain))
+    assertEquals(headers, authService.getAllCustomHeaders(fooUrl))
+  }
+
+  @Test
+  fun `getAllCustomHeaders returns empty headers when getAuthHeaders fails with linkage error`() {
+    val authService = PluginRepositoryAuthService()
+    setupContributors(BrokenContributor(failOnCanHandle = false))
+    assertEquals(emptyMap(), authService.getAllCustomHeaders(fooUrl))
   }
 
   private fun setupContributors(vararg contributor: PluginRepositoryAuthProvider) {

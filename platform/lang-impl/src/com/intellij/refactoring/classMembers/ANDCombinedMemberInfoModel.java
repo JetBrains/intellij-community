@@ -3,8 +3,10 @@
 package com.intellij.refactoring.classMembers;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class ANDCombinedMemberInfoModel<T extends PsiElement, M extends MemberInfoBase<T>> implements MemberInfoModel<T, M> {
   private final MemberInfoModel<T, M> myModel1;
   private final MemberInfoModel<T, M> myModel2;
