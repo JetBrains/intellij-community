@@ -14,6 +14,7 @@ import com.intellij.conversion.ConversionResult
 import com.intellij.conversion.ConversionService
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
@@ -1268,6 +1269,8 @@ private fun handleListenerError(e: Throwable, listener: ProjectManagerListener) 
 }
 
 private fun fireProjectClosing(project: Project) {
+  MessagePool.clearErrors() // clear all collected exceptions, just in case they hold any project references
+
   LOG.debug("enter: fireProjectClosing()")
   try {
     closePublisher.projectClosing(project)
