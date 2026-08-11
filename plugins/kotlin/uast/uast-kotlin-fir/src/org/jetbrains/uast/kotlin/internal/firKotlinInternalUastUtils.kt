@@ -214,7 +214,6 @@ private fun KaDeclarationSymbol.isReified(): Boolean = when (this) {
     else -> typeParameters.any { it.isReified }
 }
 
-context(_: KaSession)
 private fun KaCallableSymbol.isInline(): Boolean = when (this) {
     is KaNamedFunctionSymbol -> isInline
     is KaPropertySymbol -> getter?.isInline == true || setter?.isInline == true
