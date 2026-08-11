@@ -4637,6 +4637,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
                 runTest("../../shared/tests/testData/newJ2k/newJavaFeatures/patternMatching/instanceofLocalVariable.java");
             }
 
+            @TestMetadata("instanceofNested.java")
+            public void testInstanceofNested() throws Exception {
+                runTest("../../shared/tests/testData/newJ2k/newJavaFeatures/patternMatching/instanceofNested.java");
+            }
+
             @TestMetadata("instanceofParameter.java")
             public void testInstanceofParameter() throws Exception {
                 runTest("../../shared/tests/testData/newJ2k/newJavaFeatures/patternMatching/instanceofParameter.java");
