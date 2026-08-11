@@ -8,6 +8,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -26,7 +27,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 @ApiStatus.Internal
-public class OpenLogAction extends DumbAwareAction {
+public class OpenLogAction
+  extends DumbAwareAction
+  implements ActionRemoteBehaviorSpecification.Duplicated {
+
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
