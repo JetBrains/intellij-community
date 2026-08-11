@@ -5,6 +5,7 @@ import com.intellij.dvcs.repo.Repository.State
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import git4idea.GitLocalBranch
 import git4idea.GitUtil
@@ -216,6 +217,7 @@ abstract class GitRepositoryReaderNewTest(private val usingReftable: Boolean) {
   }
 
   @Test
+  @RegistryKey(key = "git.read.branches.from.disk", value = "true")
   fun `test current branch is known even if deleted`(): Unit = with(context) {
     assumeTrue(!usingReftable && Registry.`is`("git.read.branches.from.disk"))
 
