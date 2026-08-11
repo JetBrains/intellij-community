@@ -1650,6 +1650,8 @@ class PyCodeInsightTestCaseAssertionParserAndInlinerTest {
  * `computeAssertions` correctly renders and matches assertions against real highlighting and real
  * type inference (as opposed to the parser/inliner unit tests above, which fabricate their own data).
  */
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyCodeInsightTestCaseComputeAssertionsTest : PyCodeInsightTestCase() {
 
   @Test

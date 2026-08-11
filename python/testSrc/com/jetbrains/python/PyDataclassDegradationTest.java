@@ -4,6 +4,8 @@ package com.jetbrains.python;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.codeInsight.PyDataclassParametersProvider;
 import com.jetbrains.python.codeInsight.PyDataclassesKt;
 import com.jetbrains.python.codeInsight.PyDataclassParameters;
@@ -19,6 +21,8 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
  * classpath. These tests assert the graceful-degradation contract for that configuration — Pydantic classes must remain
  * usable via their generic {@code dataclass_transform} shape rather than the (unavailable) Pydantic-specific handling.
  */
+@Subsystems.Typing
+@Layers.Functional
 public class PyDataclassDegradationTest extends PyTestCase {
 
   @Override

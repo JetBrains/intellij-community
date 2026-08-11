@@ -2,6 +2,8 @@
 package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.types.PyTypeFormType
@@ -12,6 +14,8 @@ import org.junit.jupiter.api.Test
  * Type and type-checker tests for the PEP 747 `typing.TypeForm` special form.
  */
 @TestFor(issues = ["PY-89043"], classes = [PyTypeFormType::class])
+@Subsystems.Typing
+@Layers.Functional
 class PyTypeFormTypeTest : PyCodeInsightTestCase() {
 
   @Nested

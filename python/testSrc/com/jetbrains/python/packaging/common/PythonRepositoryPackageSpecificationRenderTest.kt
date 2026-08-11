@@ -4,11 +4,15 @@ package com.jetbrains.python.packaging.common
 import com.intellij.python.requirements.pyRequirement
 import com.intellij.python.requirements.pyRequirementVersionSpec
 import com.intellij.testFramework.junit5.TestApplication
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
+@Subsystems.Packaging
+@Layers.Functional
 @TestApplication
 class PythonRepositoryPackageSpecificationRenderTest {
   private val repository = PyPackageRepository()

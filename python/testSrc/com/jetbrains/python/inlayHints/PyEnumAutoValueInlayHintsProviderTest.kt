@@ -4,10 +4,14 @@ package com.jetbrains.python.inlayHints
 import com.intellij.idea.TestFor
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyLightProjectDescriptor
 import com.jetbrains.python.psi.LanguageLevel
 
 @TestFor(issues = ["PY-85836"])
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyEnumAutoValueInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
 
   fun `test consecutive auto values`() = doTest("""

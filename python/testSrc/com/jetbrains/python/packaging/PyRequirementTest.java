@@ -8,6 +8,8 @@ import com.intellij.python.requirements.PyPackageVersion;
 import com.intellij.python.requirements.PyRequirementImpl;
 import com.intellij.python.requirements.parser.PyRequirementParser;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec;
@@ -32,6 +34,8 @@ import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.S
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
+@Subsystems.PackagingRequirements
+@Layers.Functional
 public class PyRequirementTest extends PyTestCase {
   // REQUIREMENT
   // TODO: name normalization
