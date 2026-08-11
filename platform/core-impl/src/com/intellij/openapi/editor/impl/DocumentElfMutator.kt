@@ -210,7 +210,7 @@ internal abstract class DocumentElfMutator(
     snapshotBefore: DocumentSnapshot,
     patch: DocumentTextPatch,
   ): DocumentSnapshot {
-    return updateAndGet { latest -> patched(snapshotBefore, latest, patch) }
+    return updateAndGet { latest -> mergeAndPatch(snapshotBefore, latest, patch) }
   }
 
   private fun revertChange(change: ElfTextChange) {

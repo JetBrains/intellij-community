@@ -15,8 +15,8 @@ internal class DocumentTextImpl private constructor(
   private val chars: ImmutableCharSequence,
   private val modStamp: Long,
   private val modSequence: Int,
-  private var lineSet: LineSet?,                  // non-volatile intentionally, see getLineSet()
-  private var textString: SoftReference<String>?, // non-volatile intentionally, see string()
+  private var lineSet: LineSet?,                    // non-volatile intentionally, see getLineSet()
+  private var cachedString: SoftReference<String>?, // non-volatile intentionally, see string()
 ) : DocumentText {
 
   constructor(chars: CharSequence) : this(
@@ -24,7 +24,7 @@ internal class DocumentTextImpl private constructor(
     modStamp = DocumentModStamp.next(),
     modSequence = 0,
     lineSet = null,
-    textString = null,
+    cachedString = null,
   )
 
   override fun chars(): ImmutableCharSequence {
@@ -33,7 +33,7 @@ internal class DocumentTextImpl private constructor(
 
   override fun cachedChars(): CharSequence {
     // TODO: use it in EditorPainter because String.charAt may improve performance during painting
-    val string = textString?.get()
+    val string = cachedString?.get()
     if (string != null) {
       return string
     }
@@ -48,17 +48,14 @@ internal class DocumentTextImpl private constructor(
   /**
    * Lazy cache read/assigned without synchronization. Safe because [String] is a final-field immutable (JLS 17.5):
    * a racy reader sees either no value (and recomputes) or a fully constructed [String].
-   *
-   * Unlike [lineSet], [textString] is usually not performance-critical, so it could be a `volatile` field with a
-   * double-checked approach. It is kept non-volatile only to stay consistent with the similar [lineSet] field.
    */
   override fun string(): String {
-    var string = textString?.get()
+    var string = cachedString?.get()
     if (string != null) {
       return string
     }
     string = chars.toString()
-    textString = SoftReference(string)
+    cachedString = SoftReference(string)
     return string
   }
 
@@ -123,7 +120,7 @@ internal class DocumentTextImpl private constructor(
     if (modStamp == newModStamp && modSequence == newModSequence) {
       return this
     }
-    return DocumentTextImpl(chars, newModStamp, newModSequence, lineSet, textString)
+    return DocumentTextImpl(chars, newModStamp, newModSequence, lineSet, cachedString)
   }
 
   override fun withClearedLineFlags(
@@ -169,7 +166,7 @@ internal class DocumentTextImpl private constructor(
       metadata.modStamp(),
       metadata.modSequence(),
       this.lineSet,
-      this.textString,
+      this.cachedString,
     )
   }
 
@@ -218,7 +215,7 @@ internal class DocumentTextImpl private constructor(
     if (this.lineSet === newLineSet) {
       return this
     }
-    return DocumentTextImpl(chars, modStamp, modSequence, newLineSet, textString)
+    return DocumentTextImpl(chars, modStamp, modSequence, newLineSet, cachedString)
   }
 
   /**
@@ -276,13 +273,13 @@ internal class DocumentTextImpl private constructor(
     val mq = modSequence
     val ch = presentation(chars)
     val ls = presentation(lineSet)
-    val st = presentation(textString)
-    return "DocumentSnapshot" + id + '{' +
+    val cs = presentation(cachedString)
+    return "DocumentText" + id + '{' +
            "modStamp=" + ms +
            ", modSequence=" + mq +
            ", chars=" + ch +
            ", lineSet=" + ls +
-           ", string=" + st +
+           ", string=" + cs +
            '}'
   }
 

@@ -7,12 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 
 /**
- * Immutable self-consistent snapshot of document content (text + metadata).
- *
- * Metadata: [modStamp], [modSequence], [isLineModified].
- * The rest -- text.
- *
- * Metadata is used to track the "timeline" of the text.
+ * Document chars + lineSet + modStamp
  */
 @ApiStatus.Internal
 interface DocumentText {

@@ -24,9 +24,9 @@ internal open class SimpleTextPatch(
            "startOffset=${startOffset()}" +
            ", endOffset=${endOffset()}" +
            ", newFragment.length=${newFragment().length}" +
-           if (originStartOffset() == startOffset()) "" else ", originStartOffset=${originStartOffset()}" +
-           if (originEndOffset() == endOffset()) "" else ", originEndOffset=${originEndOffset()}" +
-           if (moveOffset() == startOffset()) "" else ", moveOffset=${moveOffset()}" +
+           (if (originStartOffset() == startOffset()) "" else ", originStartOffset=${originStartOffset()}") +
+           (if (originEndOffset() == endOffset()) "" else ", originEndOffset=${originEndOffset()}") +
+           (if (moveOffset() == startOffset()) "" else ", moveOffset=${moveOffset()}") +
            ", newModStamp=${newModStamp()}" +
            ", clearLineFlags=${clearLineFlags()}" +
            ")"

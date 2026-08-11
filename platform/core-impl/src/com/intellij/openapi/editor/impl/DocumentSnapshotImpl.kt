@@ -23,19 +23,24 @@ internal class DocumentSnapshotImpl(
   override fun dumpState(): String {
     val dump = StringBuilder()
     dump.append("intervals:\n")
-    val lineCount: Int = text().lineCount()
+    val lineCount: Int = text.lineCount()
     for (line in 0..<lineCount) {
       dump
         .append(line)
         .append(": ")
-        .append(text().lineStartOffset(line))
+        .append(text.lineStartOffset(line))
         .append("-")
-        .append(text().lineEndOffset(line))
+        .append(text.lineEndOffset(line))
         .append(", ")
     }
     if (lineCount > 0) {
       dump.setLength(dump.length - 2)
     }
     return dump.toString()
+  }
+
+  override fun toString(): String {
+    val id = Integer.toHexString(System.identityHashCode(this))
+    return "DocumentSnapshot@$id{text=$text}"
   }
 }

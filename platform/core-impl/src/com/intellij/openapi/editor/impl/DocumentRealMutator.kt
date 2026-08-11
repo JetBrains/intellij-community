@@ -117,7 +117,7 @@ internal abstract class DocumentRealMutator(
     snapshotBefore: DocumentSnapshot,
     patch: DocumentTextPatch,
   ): DocumentSnapshot {
-    return updateAndGet { latest -> patched(snapshotBefore, latest, patch) }
+    return updateAndGet { latest -> mergeAndPatch(snapshotBefore, latest, patch) }
   }
 
   private fun applyElfTextChange(elfChange: ElfTextChange) {

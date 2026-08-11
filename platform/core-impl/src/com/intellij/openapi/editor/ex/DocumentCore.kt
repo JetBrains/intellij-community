@@ -60,7 +60,7 @@ interface DocumentCore {
   /**
    * Returns frozen document based on current [snapshot].
    *
-   * It is a bridge between internal [DocumentText] and public [DocumentEx]
+   * It is a bridge between internal [DocumentSnapshot] and public [DocumentEx]
    */
   @Contract(pure = true)
   fun frozen(): DocumentEx

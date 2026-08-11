@@ -32,11 +32,19 @@ internal abstract class DocumentMutatorImpl(
   protected abstract fun updateAndGet(update: UnaryOperator<DocumentSnapshot>): DocumentSnapshot
 
   override fun setModStamp(newModStamp: Long, incrementModSequence: Boolean) {
-    updateAndGet { it.withText(it.text().withModStamp(newModStamp, incrementModSequence)) }
+    updateAndGet { snapshot ->
+      val text = snapshot.text()
+      val newText = text.withModStamp(newModStamp, incrementModSequence)
+      snapshot.withText(newText)
+    }
   }
 
   override fun clearLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray) {
-    updateAndGet { it.withText(it.text().withClearedLineFlags(startLine, endLine, exceptLines)) }
+    updateAndGet { snapshot ->
+      val text = snapshot.text()
+      val newText = text.withClearedLineFlags(startLine, endLine, exceptLines)
+      snapshot.withText(newText)
+    }
   }
 
   override fun insertString(
@@ -298,7 +306,7 @@ internal abstract class DocumentMutatorImpl(
     textChangeInProgress = true
     try {
       snapshotAfterChange = dispatcher.withFiringTextUpdate(changeEvent) {
-        updateAndGet { latest -> patched(snapshotBefore, latest, patch) }
+        updateAndGet { latest -> mergeAndPatch(snapshotBefore, latest, patch) }
       }
     } finally {
       textChangeInProgress = false
@@ -312,7 +320,7 @@ internal abstract class DocumentMutatorImpl(
    * modStamp or other metadata could be changed during before-change listeners,
    * so the metadata of [latest] is merged into the text the change is based on.
    */
-  protected fun patched(
+  protected fun mergeAndPatch(
     snapshotBefore: DocumentSnapshot,
     latest: DocumentSnapshot,
     patch: DocumentTextPatch,
