@@ -35,9 +35,13 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
   /**
    * Attaches the block of the latest commits, which was read from the VCS, to the existing log structure.
    *
-   * @param savedLog     currently available part of the log.
+   * @param savedLog     the previously computed log, as currently displayed/cached; some of its commits may need
+   *                     to be replaced with fresher data from {@code firstBlock}, or removed entirely if they are
+   *                     no longer reachable from any ref.
    * @param previousRefs references saved from the previous refresh.
-   * @param firstBlock   the first n commits read from the VCS.
+   * @param firstBlock   the freshly re-read head of the log from the VCS (the most recent commits, newest first);
+   *                     overlaps with the head of {@code savedLog} and may contain updated versions of commits
+   *                     already present there (e.g. with changed parents), as well as genuinely new commits.
    * @param newRefs      all references (branches) of the repository.
    * @return Total saved log with new commits properly attached to it + number of new commits attached to the log.
    */
@@ -57,19 +61,41 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
 
       int unsafeBlockSize = Math.max(redCommitsAndSavedRedIndex.first, newCommitsAndSavedGreenIndex.first);
 
-      StopWatch filteringWatch = StopWatch.start("VcsLogJoiner.addCommits.filtering");
-      List<Commit> unsafePartSavedLog = new ArrayList<>();
-      for (Commit commit : savedLog.subList(0, unsafeBlockSize)) {
-        if (!removeCommits.contains(commit.getId())) {
-          unsafePartSavedLog.add(commit);
-        }
-      }
-      filteringWatch.report(LOG);
+      List<Commit> unsafePartSavedLog = buildUnsafePartSavedLog(savedLog, unsafeBlockSize, removeCommits, firstBlock);
 
       unsafePartSavedLog = new NewCommitIntegrator<>(unsafePartSavedLog, allNewsCommits).getResultList();
 
       return Pair.create(ContainerUtil.concat(unsafePartSavedLog, savedLog.subList(unsafeBlockSize, savedLog.size())),
                          unsafePartSavedLog.size() - unsafeBlockSize);
+    }
+    finally {
+      stopWatch.report(LOG);
+    }
+  }
+
+  /**
+   * Builds the "unsafe" prefix of the log to be rebuilt: drops removed (red) commits from {@code savedLog},
+   * and for any commit that was re-fetched in {@code firstBlock}, replaces the stale saved copy with the
+   * up-to-date one (so its current parents, not the parents from the previous refresh, are used downstream).
+   */
+  private @NotNull List<Commit> buildUnsafePartSavedLog(@NotNull List<? extends Commit> savedLog,
+                                                         int unsafeBlockSize,
+                                                         @NotNull Set<CommitId> removeCommits,
+                                                         @NotNull List<? extends Commit> firstBlock) {
+    StopWatch stopWatch = StopWatch.start("VcsLogJoiner.buildUnsafePartSavedLog");
+    try {
+      Map<CommitId, Commit> recentCommitsById = new HashMap<>();
+      for (Commit commit : firstBlock) {
+        recentCommitsById.put(commit.getId(), commit);
+      }
+
+      List<Commit> unsafePartSavedLog = new ArrayList<>();
+      for (Commit commit : savedLog.subList(0, unsafeBlockSize)) {
+        if (!removeCommits.contains(commit.getId())) {
+          unsafePartSavedLog.add(recentCommitsById.getOrDefault(commit.getId(), commit));
+        }
+      }
+      return unsafePartSavedLog;
     }
     finally {
       stopWatch.report(LOG);
@@ -155,11 +181,13 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
       Set<CommitId> startRedCommits = new HashSet<>(previousRefs);
       startRedCommits.removeAll(newRefs);
       Set<CommitId> startGreenNodes = new HashSet<>(newRefs);
+      Map<CommitId, List<CommitId>> recentCommitParents = new HashMap<>();
       for (Commit commit : firstBlock) {
+        recentCommitParents.put(commit.getId(), commit.getParents());
         startGreenNodes.add(commit.getId());
         startGreenNodes.addAll(commit.getParents());
       }
-      RedGreenSorter<CommitId, Commit> sorter = new RedGreenSorter<>(startRedCommits, startGreenNodes, savedLog);
+      RedGreenSorter<CommitId, Commit> sorter = new RedGreenSorter<>(startRedCommits, startGreenNodes, savedLog, recentCommitParents);
       int saveRegIndex = sorter.getFirstSaveIndex();
 
       return new Pair<>(saveRegIndex, sorter.getAllRedCommit());
@@ -175,11 +203,14 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
     private final Set<CommitId> allRedCommit = new HashSet<>();
 
     private final List<? extends Commit> savedLog;
+    private final Map<CommitId, List<CommitId>> recentCommitParents;
 
-    private RedGreenSorter(Set<? super CommitId> startRedNodes, Set<? super CommitId> startGreenNodes, List<? extends Commit> savedLog) {
+    private RedGreenSorter(Set<? super CommitId> startRedNodes, Set<? super CommitId> startGreenNodes, List<? extends Commit> savedLog,
+                           Map<CommitId, List<CommitId>> recentCommitParents) {
       this.currentRed = startRedNodes;
       this.currentGreen = startGreenNodes;
       this.savedLog = savedLog;
+      this.recentCommitParents = recentCommitParents;
     }
 
     private void markRealRedNode(@NotNull CommitId node) {
@@ -197,7 +228,20 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
           boolean isGreen = currentGreen.contains(commit.getId());
           if (isGreen) {
             currentRed.remove(commit.getId());
-            currentGreen.addAll(commit.getParents());
+            // For a commit that was re-fetched in firstBlock, its updated parents are already
+            // in currentGreen (seeded when the sorter was built). Propagating its parents from
+            // savedLog here would incorrectly resurrect parents that were dropped in the update;
+            // instead, only such dropped parents become (tentative) red candidates.
+            // updatedParents can legitimately be empty (e.g. the commit was re-fetched as an orphan/root) -
+            // in that case every old parent counts as dropped and becomes a red candidate below.
+            List<CommitId> updatedParents = recentCommitParents.get(commit.getId());
+            if (updatedParents == null) {
+              currentGreen.addAll(commit.getParents());
+            } else {
+              Set<CommitId> droppedParents = new HashSet<>(commit.getParents());
+              droppedParents.removeAll(new HashSet<>(updatedParents));
+              currentRed.addAll(droppedParents);
+            }
           }
           else {
             markRealRedNode(commit.getId());
