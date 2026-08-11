@@ -1,16 +1,21 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.ex.DocumentAspect
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Key
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.text.ImmutableCharSequence
+import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
@@ -235,6 +240,65 @@ internal class DocumentAspectTest {
     assertNotNull(kept) // this text survives, so this aspects survive
     assertSame(changed.aspect(KEY_1), kept)
     assertNull(merged.aspect(KEY_2)) // metadata aspects correspond to its discarded text
+  }
+
+  @Test
+  fun `updateSnapshotAndGet attaches an aspect visible through the document snapshot`() {
+    val document = DocumentImpl("abc")
+    val aspect = TestAspect()
+    val updated = document.core.mutator().updateSnapshotAndGet { it.withAspect(KEY_1, aspect) }
+    assertSame(aspect, updated.aspect(KEY_1))
+    assertSame(updated, document.core.snapshot()) // the returned snapshot is the published one
+  }
+
+  @Test
+  fun `updateSnapshotAndGet detaches an aspect`() {
+    val document = DocumentImpl("abc")
+    document.core.mutator().updateSnapshotAndGet { it.withAspect(KEY_1, TestAspect()) }
+    document.core.mutator().updateSnapshotAndGet { it.withAspect(KEY_1, null) }
+    assertNull(document.core.snapshot().aspect(KEY_1))
+  }
+
+  @Test
+  fun `updateSnapshotAndGet rejects a change of the characters`() {
+    val document = DocumentImpl("abc")
+    val mutator = document.core.mutator()
+    val patch = DocumentTextPatch.simple(
+      startOffset = 0,
+      endOffset = 0,
+      newFragment = "x",
+      newModStamp = document.core.snapshot().text().modStamp() + 1,
+      clearLineFlags = false,
+    )
+    val snapshotBefore = document.core.snapshot()
+    // a text change published this way would fire no DocumentListener
+    assertFailsWith<IllegalArgumentException> {
+      mutator.updateSnapshotAndGet { it.withPatch(patch) }
+    }
+    assertSame(snapshotBefore, document.core.snapshot()) // nothing was published
+    assertEquals("abc", document.text)
+  }
+
+  @Test
+  fun `attached aspect is rebuilt by a document text change`() = runOnEdt {
+    val document = DocumentImpl("abc")
+    document.core.mutator().updateSnapshotAndGet { it.withAspect(KEY_1, TestAspect()) }
+    val textBefore = document.core.snapshot().text()
+    WriteCommandAction.runWriteCommandAction(null) {
+      document.insertString(1, "XY")
+    }
+    assertEquals("aXYbc", document.text)
+    val rebuilt = document.core.snapshot().aspect(KEY_1)!!
+    assertEquals(1, rebuilt.rebuildCount)
+    assertSame(textBefore, rebuilt.oldText)
+    assertSame(document.core.snapshot().text(), rebuilt.newText)
+    assertEquals("aXYbc", rebuilt.newText!!.string())
+  }
+
+  private fun runOnEdt(action: () -> Unit) {
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      action()
+    }
   }
 
   private fun snapshot(text: String): DocumentSnapshot {

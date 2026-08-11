@@ -10,14 +10,12 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ReadOnlyFragmentModificationException
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.ex.DocumentAspect
 import com.intellij.openapi.editor.ex.DocumentMutator
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.util.text.ImmutableCharSequence
 import java.util.function.UnaryOperator
@@ -41,8 +39,14 @@ internal abstract class DocumentMutatorImpl(
     updateAndGet { it.withClearedLineFlags(startLine, endLine, exceptLines) }
   }
 
-  override fun <A : DocumentAspect> setAspect(key: Key<A>, aspect: A?) {
-    updateAndGet { it.withAspect(key, aspect) }
+  override fun updateSnapshotAndGet(updateFunc: UnaryOperator<DocumentSnapshot>): DocumentSnapshot {
+    return updateAndGet { snapshot ->
+      val updated = updateFunc.apply(snapshot)
+      if (snapshot.text().chars() !== updated.text().chars()) {
+        throw IllegalArgumentException("text change is not allowed because it bypasses DocumentListener")
+      }
+      updated
+    }
   }
 
   override fun insertString(
