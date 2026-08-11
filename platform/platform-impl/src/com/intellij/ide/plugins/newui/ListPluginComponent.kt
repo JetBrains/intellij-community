@@ -296,14 +296,11 @@ class ListPluginComponent(
         myLayout.addButtonComponent(myInstallButton!!)
 
         myInstallButton!!.addActionListener {
-          val pluginUpdateSourceApplier = PluginUpdateSourceApplier(myPlugin)
-          pluginUpdateSourceApplier.applyPluginUpdateSourceId()
           PluginModelAsyncOperationsExecutor.performAutoInstall(myCoroutineScope,
                                                                 myModelFacade,
                                                                 myPlugin,
                                                                 myCustomizer,
-                                                                this,
-                                                                pluginUpdateSourceApplier)
+                                                                this)
         }
         myInstallButton!!.setEnabled(showInstall, IdeBundle.message("plugin.status.installed"))
 
@@ -762,8 +759,6 @@ class ListPluginComponent(
   }
 
   private fun updatePlugin(descriptorForActions: PluginUiModel, updateDescriptor: PluginUiModel) {
-    val pluginUpdateSourceApplier = PluginUpdateSourceApplier(updateDescriptor)
-    pluginUpdateSourceApplier.applyPluginUpdateSourceId()
     PluginModelAsyncOperationsExecutor.updatePlugin(
       myCoroutineScope,
       myModelFacade,
@@ -772,7 +767,7 @@ class ListPluginComponent(
       myCustomizer,
       ModalityState.stateForComponent(myUpdateButton!!),
       this,
-      pluginUpdateSourceApplier,
+      updateDescriptor,
     )
   }
 

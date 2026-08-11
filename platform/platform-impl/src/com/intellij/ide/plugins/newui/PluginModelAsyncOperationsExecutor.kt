@@ -30,21 +30,23 @@ internal object PluginModelAsyncOperationsExecutor {
     descriptor: PluginUiModel,
     customizer: PluginManagerCustomizer?,
     component: JComponent,
-    pluginUpdateSourceApplier: PluginUpdateSourceApplier,
   ) {
     cs.launch(Dispatchers.IO) {
-      val stateForComponent = ModalityState.stateForComponent(component)
-      val customizationModel = customizer?.getInstallButonCustomizationModel(modelFacade, descriptor, stateForComponent)
-      withContext(Dispatchers.EDT + stateForComponent.asContextElement()) {
-        val customAction = customizationModel?.mainAction
-        if (customAction != null) {
-          customAction()
-          return@withContext
+      val pluginUpdateSourceApplier = PluginUpdateSourceApplier.createApplier(descriptor, modelFacade)
+      pluginUpdateSourceApplier.runWithRevertOnException {
+        val stateForComponent = ModalityState.stateForComponent(component)
+        val customizationModel = customizer?.getInstallButonCustomizationModel(modelFacade, descriptor, stateForComponent)
+        withContext(Dispatchers.EDT + stateForComponent.asContextElement()) {
+          val customAction = customizationModel?.mainAction
+          if (customAction != null) {
+            customAction()
+            return@withContext
+          }
+          val result = modelFacade.installOrUpdatePlugin(component, descriptor, null, stateForComponent)
+          pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
         }
-        val result = modelFacade.installOrUpdatePlugin(component, descriptor, null, stateForComponent)
-        pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
       }
-    }.invokeOnCompletion (pluginUpdateSourceApplier::revertIfNeeded)
+    }
   }
 
   suspend fun performMarketplaceSearch(
@@ -116,20 +118,23 @@ internal object PluginModelAsyncOperationsExecutor {
     pluginManagerCustomizer: PluginManagerCustomizer?,
     modalityState: ModalityState,
     component: JComponent?,
-    pluginUpdateSourceApplier: PluginUpdateSourceApplier,
+    pluginDescriptorForPluginUpdateSourceApplier: PluginUiModel,
   ) {
     cs.launch(Dispatchers.IO) {
-      val model = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(modelFacade, plugin, updateDescriptor, modalityState)
-      withContext(Dispatchers.EDT + modalityState.asContextElement()) {
-        if (model != null) {
-          model.action()
-        }
-        else {
-          val result = modelFacade.installOrUpdatePlugin(component, plugin, updateDescriptor, modalityState)
-          pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
+      val pluginUpdateSourceApplier = PluginUpdateSourceApplier.createApplier(pluginDescriptorForPluginUpdateSourceApplier, modelFacade)
+      pluginUpdateSourceApplier.runWithRevertOnException {
+        val model = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(modelFacade, plugin, updateDescriptor, modalityState)
+        withContext(Dispatchers.EDT + modalityState.asContextElement()) {
+          if (model != null) {
+            model.action()
+          }
+          else {
+            val result = modelFacade.installOrUpdatePlugin(component, plugin, updateDescriptor, modalityState)
+            pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
+          }
         }
       }
-    }.invokeOnCompletion(pluginUpdateSourceApplier::revertIfNeeded)
+    }
   }
 
   fun loadPopupMenuActions(

@@ -3,39 +3,50 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.marketplace.InstallPluginResult
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
+import com.intellij.openapi.updateSettings.impl.createRepository
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 
-internal class PluginUpdateSourceApplier(private val pluginModel: PluginUiModel) {
-  private val initialUpdateSource: PluginUpdateSourceId? =
-    PluginUpdateSourceService.getInstance().getPluginUpdateSourceId(pluginModel.pluginId)
+internal class PluginUpdateSourceApplier private constructor(
+  private val pluginModel: PluginUiModel,
+  private val modelFacade: PluginModelFacade,
+  private val initialUpdateSource: PluginUpdateSourceId?,
+) {
 
-  fun applyPluginUpdateSourceId() {
-    PluginUpdateSourceService.getInstance().setPluginUpdateSourceId(pluginModel)
+  companion object {
+    suspend fun createApplier(pluginModel: PluginUiModel, modelFacade: PluginModelFacade): PluginUpdateSourceApplier {
+      // Case when pluginUpdateSource was edited in settings, then plugin was updated but failed is ignored for now,
+      // because in future pluginUpdateSource won't be updated on update. For uninstalled plugin one can't edit pluginUpdateSource
+      val initialUpdateSource = modelFacade.getPluginUpdateSource(pluginModel.pluginId)
+      return PluginUpdateSourceApplier(pluginModel, modelFacade, initialUpdateSource)
+    }
   }
 
-  private fun revertApplyingPluginUpdateSourceId() {
-    if (initialUpdateSource == null) {
-      PluginUpdateSourceService.getInstance().erasePluginUpdateSourceId(pluginModel.pluginId)
+  suspend fun runWithRevertOnException(block: suspend () -> Unit) {
+    modelFacade.persistPluginUpdateSource(pluginModel.pluginId, createRepository(pluginModel))
+    try {
+      block.invoke()
     }
-    else {
-      PluginUpdateSourceService.getInstance().setPluginUpdateSourceId(pluginModel.pluginId, initialUpdateSource)
+    catch (ex: Exception) {
+      withContext(NonCancellable) {
+        revertApplyingPluginUpdateSourceId()
+      }
+      throw ex
     }
   }
 
-  fun applyPluginUpdateSourcesBasedOnResult(result: InstallPluginResult?) {
+  private suspend fun revertApplyingPluginUpdateSourceId() {
+    modelFacade.persistPluginUpdateSource(pluginModel.pluginId, initialUpdateSource)
+  }
+
+  suspend fun applyPluginUpdateSourcesBasedOnResult(result: InstallPluginResult?) {
     if (result == null || !result.success) {
       revertApplyingPluginUpdateSourceId()
     }
     else {
       result.dependentPluginUpdateSourceIds.filter { it.key != pluginModel.pluginId }.forEach { (id, sourceId) ->
-        PluginUpdateSourceService.getInstance().setPluginUpdateSourceId(id, sourceId)
+        modelFacade.persistPluginUpdateSource(id, sourceId)
       }
-    }
-  }
-
-  fun revertIfNeeded(cause: Throwable?) {
-    if (cause != null) {
-      revertApplyingPluginUpdateSourceId()
     }
   }
 }
