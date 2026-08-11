@@ -64,6 +64,7 @@ import com.intellij.util.Consumer
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.toArray
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -288,7 +289,16 @@ object UniversalFileChooser {
         add(splitter, BorderLayout.CENTER)
       }
       else {
+        val description = descriptor.description?.takeIf { it.isNotBlank() }
         val topPanel = panel {
+          if (description != null) {
+            row {
+              cell(JBLabel(description).apply {
+                foreground = UIUtil.getContextHelpForeground()
+              }).align(AlignX.FILL)
+            }
+            separator()
+          }
           row {
             cell(topToolbar.component).align(AlignX.LEFT)
           }
