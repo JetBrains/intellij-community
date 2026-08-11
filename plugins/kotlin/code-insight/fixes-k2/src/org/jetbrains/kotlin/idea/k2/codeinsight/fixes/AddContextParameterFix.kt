@@ -22,8 +22,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 sealed class AddContextParameterFix(
     element: KtElement,
-    private val contextParameter: ContextParameter,
-    private val targetFunctionPointer: SmartPsiElementPointer<KtNamedFunction>? = null,
+    private val contextParameters: List<ContextParameter>,
 ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtElement>(element) {
 
     /** Parameter to add. [name] = `null` produces an anonymous `_: Type` entry. */
@@ -38,16 +37,35 @@ sealed class AddContextParameterFix(
 
     override fun invoke(context: ActionContext, element: KtElement, updater: ModPsiUpdater) {
         val targetFunction = targetFunction(element, updater) ?: return
-
         val psiFactory = KtPsiFactory(context.project)
+
+        var firstAddedParameter: KtParameter? = null
+        for (contextParameter in contextParameters) {
+            val addedParameter = addContextParameter(targetFunction, contextParameter, psiFactory) ?: continue
+            shortenReferences(addedParameter)
+            if (firstAddedParameter == null) {
+                firstAddedParameter = addedParameter
+            }
+        }
+        if (updatesCaret) {
+            updater.select(firstAddedParameter?.nameIdentifier ?: return)
+        }
+    }
+
+    /** Adds [contextParameter] to [targetFunction], or returns `null` if it is already present or cannot be added. */
+    private fun addContextParameter(
+        targetFunction: KtNamedFunction,
+        contextParameter: ContextParameter,
+        psiFactory: KtPsiFactory,
+    ): KtParameter? {
         val contextClause = targetFunction.modifierList?.contextParameterList
 
         if (contextClause != null && contextClause.contextParameters.any { it.isDuplicateOf(contextParameter) }) {
-            return
+            return null
         }
 
-        val addedParameter: KtParameter = if (contextClause != null) {
-            val rParen = contextClause.node.findChildByType(KtTokens.RPAR)?.psi ?: return
+        return if (contextClause != null) {
+            val rParen = contextClause.node.findChildByType(KtTokens.RPAR)?.psi ?: return null
             val hasTrailingComma = PsiTreeUtil.skipWhitespacesAndCommentsBackward(rParen)
                 ?.node?.elementType == KtTokens.COMMA
             if (!hasTrailingComma) {
@@ -58,13 +76,13 @@ sealed class AddContextParameterFix(
             val template = psiFactory.createFunction(
                 "context(${contextParameter.render()})\nfun stub() {}"
             )
-            val funKeyword = targetFunction.funKeyword ?: return
+            val funKeyword = targetFunction.funKeyword ?: return null
             val targetModifierList = targetFunction.modifierList
-            val templateModifierList = template.modifierList ?: return
+            val templateModifierList = template.modifierList ?: return null
             val inserted = if (targetModifierList == null) {
                 (targetFunction.addBefore(templateModifierList, funKeyword) as? KtModifierList)?.contextParameterList
             } else {
-                val newContextClause = templateModifierList.contextParameterList ?: return
+                val newContextClause = templateModifierList.contextParameterList ?: return null
                 // insert before the first modifier keyword
                 val insertPoint = targetModifierList.getModifier(KtTokens.MODIFIER_KEYWORDS)
                 if (insertPoint != null) {
@@ -72,12 +90,8 @@ sealed class AddContextParameterFix(
                 } else {
                     targetModifierList.add(newContextClause)
                 } as? KtContextParameterList
-            } ?: return
-            inserted.contextParameters.firstOrNull() ?: return
-        }
-        shortenReferences(addedParameter)
-        if (updatesCaret) {
-            updater.select(addedParameter.nameIdentifier ?: return)
+            } ?: return null
+            inserted.contextParameters.firstOrNull()
         }
     }
 
@@ -93,8 +107,8 @@ sealed class AddContextParameterFix(
 
     class ForEnclosingFunction(
         element: KtElement,
-        contextParameter: ContextParameter,
-    ) : AddContextParameterFix(element, contextParameter) {
+        contextParameters: List<ContextParameter>,
+    ) : AddContextParameterFix(element, contextParameters) {
 
         override fun targetFunction(element: KtElement, updater: ModPsiUpdater): KtNamedFunction? =
             element.getStrictParentOfType<KtNamedFunction>()
@@ -106,7 +120,7 @@ sealed class AddContextParameterFix(
         element: KtElement,
         contextParameter: ContextParameter,
         private val targetFunctionPointer: SmartPsiElementPointer<KtNamedFunction>,
-    ) : AddContextParameterFix(element, contextParameter) {
+    ) : AddContextParameterFix(element, listOf(contextParameter)) {
 
         override val updatesCaret: Boolean get() = false
 

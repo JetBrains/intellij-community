@@ -14,9 +14,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 internal class SurroundCallWithContextFix(
     element: KtExpression,
     private val wrapper: Wrapper,
-    private val candidateName: String?,
-    private val type: String,
-    private val typeFqName: String
+    private val arguments: List<ContextArgument>,
 ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtExpression>(element) {
 
     enum class Wrapper(val keyword: String) {
@@ -28,32 +26,38 @@ internal class SurroundCallWithContextFix(
         val expressionText = buildString {
             append(wrapper.keyword)
             append('(')
-            if (candidateName != null) {
-                append(candidateName)
-            } else {
-                append("TODO(\"Provide $type\") as $typeFqName")
-            }
+            arguments.joinTo(this) { it.renderExpression() }
             append(')')
             append("{ ${element.text} }")
         }
         val newExpression = psiFactory.createExpression(expressionText)
         shortenReferences(newExpression)
-        val replace = element.replace(newExpression) as? KtCallExpression
+        val replaced = element.replace(newExpression) as? KtCallExpression ?: return
 
-        if (candidateName == null && replace != null) {
-            val valueArgument = replace.valueArguments.firstOrNull()
-            val insertedExpression = valueArgument?.getArgumentExpression() ?: return
-            updater.moveCaretTo(insertedExpression)
-            updater.templateBuilder().field(insertedExpression, insertedExpression.text)
+        val todoExpressions = replaced.valueArguments.zip(arguments)
+            .mapNotNull { (valueArgument, argument) ->
+                if (argument.candidateName == null) valueArgument.getArgumentExpression() else null
+            }
+        val firstTodo = todoExpressions.firstOrNull() ?: return
+        updater.moveCaretTo(firstTodo)
+        val templateBuilder = updater.templateBuilder()
+        for (todoExpression in todoExpressions) {
+            templateBuilder.field(todoExpression, todoExpression.text)
         }
     }
 
     override fun getActionPresentation(context: ActionContext, element: KtExpression): Presentation =
         Presentation.of(
-            if (candidateName != null)
-                KotlinBundle.message("fix.surround.call.with.0.argument.1", wrapper.keyword, candidateName)
-            else
-                KotlinBundle.message("fix.surround.call.with.0.todo.argument", wrapper.keyword)
+            when {
+                arguments.size != 1 -> familyName
+                else -> {
+                    val candidateName = arguments.single().candidateName
+                    if (candidateName != null)
+                        KotlinBundle.message("fix.surround.call.with.0.argument.1", wrapper.keyword, candidateName)
+                    else
+                        KotlinBundle.message("fix.surround.call.with.0.todo.argument", wrapper.keyword)
+                }
+            }
         )
 
     override fun getFamilyName(): String =
