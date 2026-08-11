@@ -21,7 +21,6 @@
 
   "allow": [
     ["./plugins/air/scripts/bt.cmd"],
-    ["./.agents/skills/parallels-vm-ui-tests/scripts/vm.sh"],
     ["./tests.cmd"],
     ["./community/tests.cmd"],
     ["./bazel.cmd", "build"],
