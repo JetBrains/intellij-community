@@ -9,7 +9,9 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.emptySubstitutor
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.applyMarking
@@ -107,8 +109,8 @@ internal class K2PushDownProcessor(
             } else {
                 targetClasses.forEach { targetClass ->
                     val substitutor = createInheritanceTypeSubstitutor(
-                        subClass = targetClass.symbol as KaClassSymbol,
-                        superClass = sourceClass.symbol as KaClassSymbol,
+                        subClass = targetClass.classSymbol ?: return@forEach,
+                        superClass = sourceClass.classSymbol ?: return@forEach,
                     ) ?: emptySubstitutor
                     processTargetClass(targetClass, substitutor, actionsContext)
                 }
