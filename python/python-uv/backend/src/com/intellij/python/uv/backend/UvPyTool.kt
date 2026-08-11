@@ -8,6 +8,10 @@ import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+/** The `uvx` executable (uv's tool runner, `uv tool run`), installed alongside `uv`. */
+@ApiStatus.Internal
+const val UVX_EXECUTABLE: String = "uvx"
+
 /**
  * [uv](https://docs.astral.sh/uv/) — an extremely fast Python package and project manager written in
  * Rust by Astral. It resolves and installs dependencies, creates and manages virtual environments,

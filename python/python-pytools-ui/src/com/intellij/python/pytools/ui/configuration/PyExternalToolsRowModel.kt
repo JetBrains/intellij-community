@@ -139,7 +139,7 @@ internal sealed interface PathFieldValue {
 internal suspend fun detect(project: Project, tool: PyTool, customPath: Path?, knownPath: Path? = null): PathFieldValue {
   if (customPath != null) return PathFieldValue.Custom(customPath)
   if (knownPath != null) return PathFieldValue.AutoDetected(knownPath)
-  val auto = tool.findExecutableInPath(project.getEelDescriptor().toEelApi())
+  val auto = findExecutableInPath(project.getEelDescriptor().toEelApi(), tool.packageName.name)
   return if (auto != null) PathFieldValue.AutoDetected(auto) else PathFieldValue.NotFound
 }
 
