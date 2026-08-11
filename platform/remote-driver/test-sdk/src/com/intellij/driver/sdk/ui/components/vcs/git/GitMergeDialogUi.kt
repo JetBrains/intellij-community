@@ -10,6 +10,7 @@ import com.intellij.driver.sdk.ui.components.elements.list
 import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitFor
+import kotlin.time.Duration.Companion.seconds
 
 fun Finder.gitMergeDialog(action: GitMergeDialogUi.() -> Unit = {}): GitMergeDialogUi {
   return x(GitMergeDialogUi::class.java) { byClass("MyDialog") and contains(byTitle("Merge")) }.apply(action)
@@ -41,7 +42,14 @@ class GitMergeDialogUi(data: ComponentData) : DialogUiComponent(data) {
   }
 
   fun deselectAllOptions() {
-    getActiveOptions().forEach { it.x { byAccessibleName("Remove option") }.click() }
+    // Option chips are removed asynchronously, so remove them one by one and re-query until none is left,
+    // otherwise a subsequent option selection may still see the stale (incompatible) options as active
+    waitFor("All merge options are deselected", timeout = 15.seconds) {
+      val activeOptions = getActiveOptions()
+      if (activeOptions.isEmpty()) return@waitFor true
+      activeOptions.first().x { byAccessibleName("Remove option") }.click()
+      false
+    }
   }
 
   fun getActiveOptionTexts(): List<String> {
