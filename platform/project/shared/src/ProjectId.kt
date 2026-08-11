@@ -93,6 +93,19 @@ fun setNewProjectId(project: Project, newProjectId: ProjectId) {
 }
 
 /**
+ * Registers [aliasId] as an additional identifier under which [ProjectId.findProject] resolves [project],
+ * without changing the project's canonical id ([projectIdOrNull] stays as it was).
+ *
+ * Has to be called by Remote Development implementation only: after the peers reconcile a project's
+ * identity (see [setNewProjectId]), an id captured in a long-running closure before the reconciliation
+ * still has to resolve. The alias lives until the project is unregistered.
+ */
+@ApiStatus.Internal
+fun registerProjectIdAlias(project: Project, aliasId: ProjectId) {
+  ProjectIdsStorage.getInstance().registerAlias(project, aliasId)
+}
+
+/**
  * Provides the [ProjectId] for the given [Project].
  * This [ProjectId] can be used for RPC calls between frontend and backend.
  *

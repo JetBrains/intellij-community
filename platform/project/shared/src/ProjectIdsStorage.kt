@@ -22,9 +22,19 @@ import java.util.concurrent.ConcurrentHashMap
 internal class ProjectIdsStorage(cs: CoroutineScope) {
   private val idsToProject = ConcurrentHashMap<ProjectId, Project>()
 
+  /**
+   * Additional ids resolving to a project via [findProject], without changing the project's canonical id.
+   *
+   * Needed by Remote Development: when the peers reconcile a project's identity (one side adopts the
+   * other's id), an id captured in a long-running closure before the reconciliation would otherwise
+   * resolve to nothing.
+   */
+  private val aliasesToProject = ConcurrentHashMap<ProjectId, Project>()
+
   init {
     cs.awaitCancellationAndInvoke {
       idsToProject.clear()
+      aliasesToProject.clear()
     }
   }
 
@@ -41,6 +51,11 @@ internal class ProjectIdsStorage(cs: CoroutineScope) {
     if (currentId != null) {
       idsToProject.remove(currentId)
     }
+    aliasesToProject.entries.removeIf { it.value == project }
+  }
+
+  fun registerAlias(project: Project, aliasId: ProjectId) {
+    aliasesToProject[aliasId] = project
   }
 
   fun getProjectId(project: Project): ProjectId? {
@@ -48,7 +63,7 @@ internal class ProjectIdsStorage(cs: CoroutineScope) {
   }
 
   fun findProject(projectId: ProjectId): Project? {
-    return idsToProject[projectId]
+    return idsToProject[projectId] ?: aliasesToProject[projectId]
   }
 
   /**
