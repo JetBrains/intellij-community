@@ -1376,6 +1376,13 @@ object PyCallExpressionHelper {
   }
 
   private fun isParamSpecOrConcatenate(parameter: PyCallableParameter, context: TypeEvalContext): Boolean {
+    // A ParamSpec or a Concatenate is always spelled out in an annotation or in a type comment, so there is no need to evaluate
+    // the type of a parameter that has neither. Asking for it would make the mapping of the arguments of a call depend on the type
+    // guessed for an unannotated parameter, which is in turn guessed from the arguments of that very call (PY-91387).
+    val psiParameter = parameter.parameter
+    if (psiParameter is PyNamedParameter && psiParameter.annotationValue == null && psiParameter.typeCommentAnnotation == null) {
+      return false
+    }
     val type = parameter.getType(context)
     return type is PyParamSpecType || type is PyConcatenateType
   }

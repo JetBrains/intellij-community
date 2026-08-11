@@ -3,7 +3,6 @@ package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
@@ -39,7 +38,6 @@ public class PyTypeTest extends PyTestCase {
 
   public void testParameterFromUsages() {
     RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
-    Registry.get("python.use.better.control.flow.type.inference").setValue(true);
     final String text = """
       def foo(bar):
           expr = bar
@@ -51,6 +49,52 @@ public class PyTypeTest extends PyTestCase {
     final PyExpression expr = parseExpr(text);
     assertNotNull(expr);
     doTest("UnsafeUnion[Union[Literal[3], str], Unknown]", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
+  }
+
+  // PY-91387
+  public void testMutuallyRecursiveFunctionsWithUnannotatedParameters() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    final String text = """
+      def _comma_texts_first_val(self, kind, source_name):
+          _decode_kind(self, kind, source_name)
+
+      def _split_comma_texts(self, commatexts, kind, source_name):
+          _split_comma_texts_int(self, commatexts, kind, source_name)
+
+      def _split_comma_texts_int(self, commatexts, kind, source_name):
+          _comma_texts_first_val(self, kind, source_name)
+          _split_comma_texts_rest(self, None, kind, source_name)
+
+      def _split_comma_texts_rest(self, after_comma_text, kind, source_name):
+          _split_comma_texts_int(self, after_comma_text, kind, source_name)
+
+      def _decode_enc(self, kind, rhscont, sourcename):
+          _split_comma_texts(self, rhscont, kind, sourcename)
+
+      def _decode_kind(self, kind, sourcename):
+          _decode_enc(self, kind, None, sourcename)
+          expr = kind
+      """;
+    final PyExpression expr = parseExpr(text);
+    assertNotNull(expr);
+    doTest("Unknown", expr, TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile()));
+    doTest("Unknown", expr, TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()));
+    doTest("Unknown", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
+  }
+
+  // PY-91387
+  public void testSelfRecursiveFunctionWithUnannotatedParameter() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    final String text = """
+      def f(x):
+          f(x)
+          expr = x
+      """;
+    final PyExpression expr = parseExpr(text);
+    assertNotNull(expr);
+    doTest("Unknown", expr, TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile()));
+    doTest("Unknown", expr, TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()));
+    doTest("Unknown", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
   }
 
   // TODO: enable this test when properties will be calculated with TypeEvalContext
