@@ -88,7 +88,7 @@ interface ExecutorContext {
   }
 
   fun echo(fileName: String, content: String) {
-    Files.write(child(fileName), content.toByteArray(StandardCharsets.UTF_8), StandardOpenOption.APPEND, StandardOpenOption.CREATE)
+    append(child(fileName), content)
   }
 
   fun overwrite(fileName: String, content: String) {
@@ -96,10 +96,12 @@ interface ExecutorContext {
   }
 
   fun overwrite(file: Path, content: String) {
+    file.parent?.createDirectories()
     Files.write(file, content.toByteArray(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
   }
 
   fun append(file: Path, content: String) {
+    file.parent?.createDirectories()
     Files.write(file, content.toByteArray(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND)
   }
 

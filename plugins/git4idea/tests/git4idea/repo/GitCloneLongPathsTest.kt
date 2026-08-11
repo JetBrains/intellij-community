@@ -1,20 +1,28 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.testFramework.junit5.TestApplication
 import git4idea.commands.Git
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.makeCommit
-import org.junit.Assume
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.EnabledOnOs
+import org.junit.jupiter.api.condition.OS
 import kotlin.io.path.Path
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 
-class GitCloneLongPathsTest : GitSingleRepoTest() {
+@TestApplication
+internal class GitCloneLongPathsTest {
+  private val contextFixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = contextFixture.get()
 
-  fun `test clone repo with long paths`() {
-    Assume.assumeTrue(SystemInfo.isWindows)
-
+  @Test
+  @EnabledOnOs(OS.WINDOWS)
+  fun `test clone repo with long paths`(): Unit = with(context) {
     git("config core.longpaths true")
     val path = Path("a".repeat(100), "b".repeat(100), "c".repeat(100), "test.txt") // 260+
     makeCommit(path.pathString)
@@ -25,6 +33,6 @@ class GitCloneLongPathsTest : GitSingleRepoTest() {
                                               "file://${repo.root.path}",
                                               cloned.name)
 
-    assertTrue(cloneResult.success())
+    assertThat(cloneResult.success()).isTrue()
   }
 }
