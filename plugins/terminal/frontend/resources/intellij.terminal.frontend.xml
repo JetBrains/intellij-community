@@ -280,6 +280,8 @@
               topic="com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener"/>
     <listener class="com.intellij.terminal.frontend.toolwindow.impl.ExperimentalTerminalMigrationNotifier"
               topic="com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener"/>
+    <listener class="com.intellij.terminal.frontend.toolwindow.impl.ClassicTerminalMigrationNotifier"
+              topic="com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener"/>
   </projectListeners>
   <applicationListeners>
     <listener class="com.intellij.terminal.frontend.toolwindow.impl.TerminalProcessesClosingNotifierInstaller"
