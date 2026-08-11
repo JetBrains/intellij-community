@@ -31,8 +31,8 @@ fun PluginInitializationContext.computeTargetState(
       val logger = logger<PluginManagerCore>()
       logger.error("Fatal plugin initialization error", e)
       logger.error("[plugins] candidate subset:\n${candidateSubset.plugins.joinToString { it.shortLogDescription }}")
-      logger.error("[plugins] excluded from candidate subset:\n${excludedFromCandidateSubset.entries.joinToString { 
-        "${it.key.shortLogDescription}: ${PluginInitializationDiagnosticUtils.getLogMessageForRootExclusionReason(it.value)}" 
+      logger.error("[plugins] excluded from candidate subset:\n${excludedFromCandidateSubset.entries.joinToString(separator = "\n") { 
+        "  ${it.key.shortLogDescription}: ${PluginInitializationDiagnosticUtils.getLogMessageForRootExclusionReason(it.value)}" 
       }}")
       throw e
     }
