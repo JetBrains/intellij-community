@@ -42,7 +42,7 @@ fun runIdeFrontendLocally(product: Product, frontendProcessLifespanScope: Corout
       ideDebugOptions = IdeDebugOptions(debugPort, debugSuspendOnStart = true, bindToHost = ""),
       platformPrefix = IdeConstants.JETBRAINS_CLIENT_PREFIX,
       productMode = ProductMode.FRONTEND,
-      ideaArguments = listOf("thinClient", "debug://localhost:5990#newUi=true"),
+      ideaArguments = listOf("thinClient", "debug://localhost:5990#newUi=true&remoteId=Split%20Mode"),
       javaArguments = listOf(
         "-Dintellij.platform.root.module=${product.frontendRootProductModule}",
         "-Dintellij.platform.runtime.repository.path=${paths.outputRootFolder.toPath().resolve("module-descriptors.jar")}",
