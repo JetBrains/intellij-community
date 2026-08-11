@@ -32,8 +32,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
 import java.lang.management.ThreadInfo
 import java.nio.file.Files
 import java.nio.file.Path
@@ -144,10 +142,12 @@ internal class IdeaFreezeReporter : PerformanceListener {
     try {
       Files.createDirectories(dir)
       Files.writeString(dir.resolve(MESSAGE_FILE_NAME), event.message)
-      ObjectOutputStream(Files.newOutputStream(dir.resolve(THROWABLE_FILE_NAME))).use { it.writeObject(event.throwable) }
+      // Store only the common stacktrace as plain text (avoid unsafe Java binary (de)serialization of the throwable).
+      Files.writeString(dir.resolve(THROWABLE_FILE_NAME), serializeStackTrace(event.throwable.stackTrace))
       saveAppInfo(dir.resolve(APP_INFO_FILE_NAME), false)
     }
-    catch (_: IOException) {
+    catch (e: IOException) {
+      LOG.infoWithDebug("Error on dumping threads", e)
     }
   }
 
@@ -467,7 +467,31 @@ private val EP_NAME = ExtensionPointName<FreezeProfiler>("com.intellij.diagnosti
 private const val REPORT_PREFIX = "report"
 private const val DUMP_PREFIX = "dump"
 private const val MESSAGE_FILE_NAME = ".message"
-private const val THROWABLE_FILE_NAME = ".throwable"
+private const val THROWABLE_FILE_NAME = ".throwable-stack"
+
+private const val STACK_FRAME_FIELD_SEPARATOR = "\t"
+
+/**
+ * Serializes the freeze common stacktrace as plain text, one frame per line, so that the `.throwable-stack` report file does not rely on
+ * unsafe Java binary serialization. Each frame keeps its class, method, file and line so it can be reconstructed losslessly.
+ */
+@ApiStatus.Internal
+fun serializeStackTrace(stackTrace: Array<StackTraceElement>): String =
+  stackTrace.joinToString("\n") { frame ->
+    listOf(frame.className, frame.methodName, frame.fileName ?: "", frame.lineNumber.toString())
+      .joinToString(STACK_FRAME_FIELD_SEPARATOR)
+  }
+
+@ApiStatus.Internal
+fun deserializeStackTrace(text: String): List<StackTraceElement> =
+  text.lineSequence()
+    .filter { it.isNotBlank() }
+    .mapNotNull { line ->
+      val fields = line.split(STACK_FRAME_FIELD_SEPARATOR)
+      if (fields.size < 4) return@mapNotNull null
+      StackTraceElement(fields[0], fields[1], fields[2].ifEmpty { null }, fields[3].toIntOrNull() ?: -1)
+    }
+    .toList()
 
 internal const val APP_INFO_FILE_NAME: String = ".appinfo"
 
@@ -551,10 +575,10 @@ internal class UnfinishedFreezeReportService(val coroutineScope: CoroutineScope)
         }
         THROWABLE_FILE_NAME == name -> {
           try {
-            withContext(Dispatchers.IO) {
-              ObjectInputStream(Files.newInputStream(file)).use { inputStream ->
-                throwable = inputStream.readObject() as Throwable
-              }
+            val stacktraceCommonPart = deserializeStackTrace(readText())
+            if (stacktraceCommonPart.isNotEmpty()) {
+              // Always rebuild a fresh Freeze from the stored common stacktrace text.
+              throwable = Freeze(null, stacktraceCommonPart)
             }
           }
           catch (_: Exception) {
