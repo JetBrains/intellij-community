@@ -54,6 +54,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"alt button1",              "EditorCreateRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
       {"alt shift LEFT",           "Diff.PrevChange", "PreviousEditorTab"},
       {"alt shift RIGHT",          "Diff.NextChange", "NextEditorTab"},
+      {"alt shift button1",        "EditorAddOrRemoveCaret", "Terminal.CreateRectangularSelectionOnMouseDrag"},
       {"button1 doubleClick",      "Git.Log.Branches.Change.Branch.Filter", "Console.TableResult.GotoReferencedResult", "Git.WorkingTrees.Open"},
       {"button2",                  "EditorPasteFromX11", "GotoDeclaration", "EditorCreateRectangularSelectionOnMouseDrag"},
       {"control 1",                "FileChooser.GotoHome", "GotoBookmark1", "DuplicatesForm.SendToLeft"},
@@ -646,7 +647,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "Table-selectLastRowExtendSelection",
     "Vcs.CombinedDiff.CaretToPrevBlock",
     "Vcs.CombinedDiff.CaretToNextBlock",
-    "Terminal.PasteFromHistory"
+    "Terminal.PasteFromHistory",
+    "Terminal.CreateRectangularSelectionOnMouseDrag"
   );
 
   private static final Set<String> DEFAULT_CONFLICT_SAFE_GROUPS = Set.of(
