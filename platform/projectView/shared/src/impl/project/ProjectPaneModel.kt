@@ -30,11 +30,15 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 @ApiStatus.Internal
 class ProjectPaneModel(project: Project) : TreeStructureBasedProjectViewPaneModel(project) {
+  companion object {
+    val ID: ProjectViewPaneId = projectViewPaneId(ProjectViewPane.ID)
+  }
+
   private val hasSeveralTopLevelModuleNodes = AtomicBoolean(false)
 
   override val psi: ProjectViewPsiExtractor<TreeStructureProjectViewNode> = DefaultTreeStructurePsiExtractor(project)
 
-  override suspend fun id(): ProjectViewPaneId = projectViewPaneId(ProjectViewPane.ID)
+  override suspend fun id(): ProjectViewPaneId = ID
 
   override suspend fun presentableName(): @NlsSafe String = ProjectViewBundle.message("project.view.pane.project.title")
 

@@ -79,6 +79,7 @@ import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeModelAdapter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -100,13 +101,14 @@ import java.util.function.BiFunction;
 
 import static java.util.Collections.emptySet;
 
-final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implements InvokerSupplier {
+@ApiStatus.Internal
+public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implements InvokerSupplier {
   private static final Logger LOG = Logger.getInstance(ScopeViewTreeModel.class);
   private volatile Comparator<? super NodeDescriptor<?>> comparator;
   private final ProjectFileTreeModel model;
   private final ProjectNode root;
 
-  ScopeViewTreeModel(@NotNull Project project, @NotNull ViewSettings settings) {
+  public ScopeViewTreeModel(@NotNull Project project, @NotNull ViewSettings settings) {
     model = new ProjectFileTreeModel(project);
     model.addTreeModelListener(new TreeModelAdapter() {
       @Override
@@ -169,7 +171,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     applyViewSettings();
   }
 
-  void setStructureProvider(TreeStructureProvider provider) {
+  public void setStructureProvider(TreeStructureProvider provider) {
     model.onValidThread(() -> {
       if (root.provider == null && provider == null) return;
       root.provider = provider;
@@ -177,7 +179,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     });
   }
 
-  void setNodeDecorator(ProjectViewNodeDecorator decorator) {
+  public void setNodeDecorator(ProjectViewNodeDecorator decorator) {
     model.onValidThread(() -> {
       if (root.decorator == null && decorator == null) return;
       root.decorator = decorator;

@@ -5,9 +5,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.impl.project.ProjectPaneModel
 import com.intellij.platform.projectView.pane.ProjectViewPaneModel
 import com.intellij.platform.projectView.pane.ProjectViewPaneProvider
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 internal class LightProjectPaneProvider : ProjectViewPaneProvider {
-  override suspend fun createPanes(project: Project): List<ProjectViewPaneModel> {
-    return listOf(ProjectPaneModel(project))
+  override fun createPanes(project: Project): Flow<List<ProjectViewPaneModel>> {
+    return flowOf(listOf(ProjectPaneModel(project)))
   }
 }

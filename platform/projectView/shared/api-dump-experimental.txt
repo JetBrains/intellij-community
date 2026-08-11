@@ -4,7 +4,7 @@
 - f:cut(com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
 - f:delete(com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
 - f:paste(com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
-*f:com.intellij.platform.projectView.impl.DefaultTreeStructurePsiExtractor
+*c:com.intellij.platform.projectView.impl.DefaultTreeStructurePsiExtractor
 - com.intellij.platform.projectView.impl.ProjectViewPsiExtractor
 - <init>(com.intellij.openapi.project.Project):V
 - extractLibraryGroups(java.util.List):java.util.List
@@ -13,9 +13,11 @@
 - extractNamedLibraryElements(java.util.List):java.util.List
 - extractProject(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):com.intellij.openapi.project.Project
 - extractPsiDirectories(java.util.List):java.util.List
+- p:extractPsiElements(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):java.util.List
 - extractPsiElements(java.util.List):java.util.List
 - extractSingleModule(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):com.intellij.openapi.module.Module
 - extractUnloadedModules(java.util.List):java.util.List
+- p:extractValueFromLegacyUserObject(java.lang.Object):java.lang.Object
 *:com.intellij.platform.projectView.impl.ProjectViewNodeUpdateOptionsBuilder
 - a:getDeep():Z
 - a:setDeep(Z):V
@@ -72,6 +74,7 @@
 - pa:createUpdater(kotlin.coroutines.Continuation):java.lang.Object
 - describe(com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder,kotlin.coroutines.Continuation):java.lang.Object
 - findNodeForSelectIn(com.intellij.platform.projectView.pane.SelectInRequest,kotlin.coroutines.Continuation):java.lang.Object
+- p:flushExternalUpdates(kotlin.coroutines.Continuation):java.lang.Object
 - getCutCopyPasteDeleteHandler():com.intellij.platform.projectView.pane.ProjectViewPaneCutCopyPasteDeleteHandler
 - getDataContext(java.util.List):com.intellij.openapi.actionSystem.DataContext
 - getDndHandler():com.intellij.platform.projectView.pane.ProjectViewPaneDnDHandler

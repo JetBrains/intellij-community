@@ -184,6 +184,17 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
     treeState.awaitPendingUpdates()
   }
 
+  /**
+   * Flushes update queues that belong to the implementation and are therefore invisible to
+   * [awaitPendingUpdates], which only knows about the [ProjectViewUpdaterProgressReporter] epochs.
+   *
+   * Called before every [awaitPendingUpdates], including the implicit ones done by "Select In" and
+   * "Autoscroll from Source", so that whatever the queue is holding has become an update by the time
+   * the tree is searched.
+   */
+  @ApiStatus.OverrideOnly
+  protected open suspend fun flushExternalUpdates() { }
+
   protected fun updateSettings() {
     currentTreeState.load()?.scheduleUpdateSettings()
   }
@@ -501,6 +512,9 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
 
     suspend fun awaitPendingUpdates() {
       awaitOrThrowIfFinished {
+        // Phase 0: let the implementation flush any queue of its own, so that its pending changes have reached
+        // the updater (and thus the epochs below) before we start waiting for them.
+        flushExternalUpdates()
         // Phase 1: wait for the updater to turn every already-queued event into updateNode calls.
         val eventTarget = submittedEventEpoch.value
         processedEventEpoch.first { it >= eventTarget }

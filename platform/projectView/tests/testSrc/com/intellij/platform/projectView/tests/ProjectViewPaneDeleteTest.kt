@@ -2,6 +2,7 @@
 package com.intellij.platform.projectView.tests
 
 import com.intellij.ide.util.DeleteHandler
+import com.intellij.platform.projectView.impl.project.ProjectPaneModel
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.TestApplication
@@ -47,7 +48,7 @@ internal class ProjectViewPaneDeleteTest : AbstractProjectViewPaneTest() {
     srcRoot.get()
     // Otherwise the delete handler shows its confirmation dialog and the test would hang on it.
     DeleteHandler.overrideNeedsConfirmationInTests(false, disposable.get())
-    withProjectViewPane(project.get()) { pane ->
+    withProjectViewPane(project.get(), ProjectPaneModel.ID) { pane ->
       val world = pane.expand("pvDelete", "src", "sub", "World.txt")
 
       pane.requestDelete(world)

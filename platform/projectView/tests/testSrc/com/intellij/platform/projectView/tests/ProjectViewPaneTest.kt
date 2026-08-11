@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.tests
 
+import com.intellij.platform.projectView.impl.project.ProjectPaneModel
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
@@ -42,7 +43,7 @@ internal class ProjectViewPaneTest : AbstractProjectViewPaneTest() {
   @Test
   fun `project pane tree and subtree assert tests`() = timeoutRunBlocking(60.seconds) {
     srcRoot.get() // materialize the project + module + source root before opening the pane
-    withProjectViewPane(project.get()) { pane ->
+    withProjectViewPane(project.get(), ProjectPaneModel.ID) { pane ->
       pane.assertTree(
         """
         pvExample

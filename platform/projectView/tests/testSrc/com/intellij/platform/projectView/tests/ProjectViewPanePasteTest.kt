@@ -6,6 +6,7 @@ import com.intellij.ide.PsiCopyPasteManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
+import com.intellij.platform.projectView.impl.project.ProjectPaneModel
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
@@ -53,7 +54,7 @@ internal class ProjectViewPanePasteTest : AbstractProjectViewPaneTest() {
     srcRoot.get()
     val project = project.get()
     try {
-      withProjectViewPane(project) { pane ->
+      withProjectViewPane(project, ProjectPaneModel.ID) { pane ->
         val hello = pane.expand("pvPaste", "src", "Hello.txt")
         val sub = pane.expand("pvPaste", "src", "sub")
 

@@ -34,10 +34,10 @@ internal class ProjectViewRpcImpl : ProjectViewRpc {
     return BackendProjectViewPaneService.getInstance(projectId.findProject()).getPaneRequestChannel(paneId)
   }
 
-  override suspend fun getPaneDescriptors(
+  override suspend fun getPaneDescriptorsFlow(
     projectId: ProjectId,
-  ): List<ProjectViewPaneDescriptorImpl> {
-    return BackendProjectViewPaneService.getInstance(projectId.findProject()).getPaneDescriptors()
+  ): Flow<List<ProjectViewPaneDescriptorImpl>> {
+    return BackendProjectViewPaneService.getInstance(projectId.findProject()).getPaneDescriptorsFlow()
   }
 
   override suspend fun getPaneStateFlow(

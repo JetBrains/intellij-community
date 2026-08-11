@@ -46,6 +46,7 @@ import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,7 +60,9 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jdom.Element
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.coroutines.resume
@@ -120,10 +123,24 @@ internal class ProjectViewToolWindowServiceImpl(
       launch(CoroutineName("Pane management")) {
         val managementScope = this
         val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
+        val activeJobs = CopyOnWriteArraySet<ManagePaneJob>()
         aggregator.getPaneDescriptorsFlow().collect { paneDescriptors ->
           defaultSelection = paneDescriptors.firstOrNull { it.isDefault }?.id ?: defaultSelectedPaneId()
+          val actualIds = paneDescriptors.map { it.id }.toSet()
+          for ((existingDescriptor, existingJob) in activeJobs) {
+            if (existingDescriptor.id !in actualIds) {
+              LOG.debug { "The pane ${existingDescriptor.id} is gone, cancelling its job" }
+              existingJob.cancel(CancellationException("The descriptor is no longer present: $existingDescriptor"))
+            }
+          }
           for (descriptor in paneDescriptors) {
-            managementScope.launch(CoroutineName("Manage PV pane ${descriptor.id}")) {
+            if (activeJobs.any { it.descriptor == descriptor }) continue // the pane ID is already managed, and the descriptor is the same
+            // Now there are two possibilities: either it's a new pane (no such ID in activeJobs), or the descriptor has changed.
+            // In the second case, it's important that we don't cancel the old job too early,
+            // because it would cause content selection changes and therefore UI flickering.
+            // The new content is created first, then it's replaced in a single EDT event,
+            // and then the old content is disposed, which will cancel the old job automatically.
+            val job = managementScope.launch(CoroutineName("Manage PV pane ${descriptor.id}")) {
               try {
                 LOG.debug { "Initializing pane ${descriptor.id}, descriptor = $descriptor" }
                 val pane = withContext(Dispatchers.UI) {
@@ -141,6 +158,11 @@ internal class ProjectViewToolWindowServiceImpl(
                 panes.remove(descriptor.id)
               }
             }
+            val newJob = ManagePaneJob(descriptor, job)
+            activeJobs += newJob
+            job.invokeOnCompletion {
+              activeJobs -= newJob
+            }
           }
         }
       }
@@ -149,6 +171,11 @@ internal class ProjectViewToolWindowServiceImpl(
       }
     }
   }
+  
+  private data class ManagePaneJob(
+    val descriptor: ProjectViewPaneDescriptorImpl,
+    val job: Job,
+  )
 
   private fun currentPaneChanged(
     oldPane: FrontendProjectViewPane?,

@@ -5,6 +5,7 @@ import com.intellij.ide.CopyPasteManagerEx
 import com.intellij.ide.PsiCopyPasteManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.platform.projectView.impl.project.ProjectPaneModel
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
@@ -46,7 +47,7 @@ internal class ProjectViewPaneCopyPasteTest : AbstractProjectViewPaneTest() {
   fun `copy puts the selected file into the clipboard`() = timeoutRunBlocking(60.seconds) {
     srcRoot.get()
     withClipboardCleanUp {
-      withProjectViewPane(project.get()) { pane ->
+      withProjectViewPane(project.get(), ProjectPaneModel.ID) { pane ->
         val hello = pane.expand("pvCopyPaste", "src", "Hello.txt")
 
         pane.requestCopy(hello)
@@ -62,7 +63,7 @@ internal class ProjectViewPaneCopyPasteTest : AbstractProjectViewPaneTest() {
   fun `cut puts the selected file into the clipboard and marks it as cut`() = timeoutRunBlocking(60.seconds) {
     srcRoot.get()
     withClipboardCleanUp {
-      withProjectViewPane(project.get()) { pane ->
+      withProjectViewPane(project.get(), ProjectPaneModel.ID) { pane ->
         val hello = pane.expand("pvCopyPaste", "src", "Hello.txt")
 
         pane.requestCut(hello)

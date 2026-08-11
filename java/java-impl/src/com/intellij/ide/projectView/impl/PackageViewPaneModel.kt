@@ -39,11 +39,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.PlatformUtils
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import java.util.Collections
 
 internal class PackageViewPaneModelProvider : ProjectViewPaneProvider {
-  override suspend fun createPanes(project: Project): List<ProjectViewPaneModel> {
-    return listOf(PackageViewPaneModel(project))
+  override fun createPanes(project: Project): Flow<List<ProjectViewPaneModel>> {
+    return flowOf(listOf(PackageViewPaneModel(project)))
   }
 }
 

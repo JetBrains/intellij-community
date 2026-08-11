@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.tests
 
-import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.frontend.impl.FrontendProjectViewPaneTreeModel
 import com.intellij.platform.projectView.frontend.impl.Node
 import com.intellij.platform.projectView.pane.FrontendProjectViewPaneAggregator
+import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -45,14 +45,14 @@ import kotlin.io.path.exists
  */
 internal suspend fun <T> withProjectViewPane(
   project: Project,
-  paneIdString: String = ProjectViewPane.ID,
+  paneId: ProjectViewPaneId,
   block: suspend (ProjectViewPaneTester) -> T,
 ): T = coroutineScope {
   val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
   val descriptors = aggregator.getPaneDescriptorsFlow().first { descriptors ->
-    descriptors.any { it.id.idString == paneIdString }
+    descriptors.any { it.id == paneId }
   }
-  val descriptor = descriptors.first { it.id.idString == paneIdString }
+  val descriptor = descriptors.first { it.id == paneId }
   val model = FrontendProjectViewPaneTreeModel(project, descriptor)
 
   // Harness-owned progress signal, bumped once per applied event, so the tester can await population.

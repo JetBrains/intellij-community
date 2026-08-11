@@ -17,6 +17,7 @@ import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
+import com.intellij.ide.scopeView.ScopeViewPane
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
@@ -92,8 +93,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -111,12 +114,12 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.coroutines.resume
 
 internal class LegacyBackendProjectViewPaneProvider : ProjectViewPaneProvider {
-  override suspend fun createPanes(project: Project): List<ProjectViewPaneModel> {
-    return project.service<LegacyBackendProjectViewPaneService>().createPanes()
+  override fun createPanes(project: Project): Flow<List<ProjectViewPaneModel>> = flow {
+    emit(project.service<LegacyBackendProjectViewPaneService>().createPanes())
   }
 }
 
-private val PANES_WITH_NEW_IMPLEMENTATIONS = setOf(ProjectViewPane.ID, "PackagesPane")
+private val PANES_WITH_NEW_IMPLEMENTATIONS = setOf(ProjectViewPane.ID, "PackagesPane", ScopeViewPane.ID)
 
 @Service(Service.Level.PROJECT)
 private class LegacyBackendProjectViewPaneService(

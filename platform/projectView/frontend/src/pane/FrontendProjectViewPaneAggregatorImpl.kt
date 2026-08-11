@@ -11,6 +11,7 @@ import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.pane.FrontendProjectViewPaneAggregator
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
+import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
@@ -20,7 +21,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.concurrent.atomics.AtomicBoolean
@@ -35,26 +37,38 @@ internal class FrontendProjectViewPaneAggregatorImpl(
 
   private suspend fun backendService(): ProjectViewRpc = ProjectViewRpc.getInstance()
   
-  private val paneDescriptors = MutableStateFlow<Collection<ProjectViewPaneDescriptorImpl>>(emptyList())
-  
+  // null means "not loaded yet", as opposed to "loaded, but there are no panes"
+  private val frontendDescriptors = MutableStateFlow<Map<ProjectViewPaneId, ProjectViewPaneDescriptorImpl>?>(null)
+  private val backendDescriptors = MutableStateFlow<Map<ProjectViewPaneId, ProjectViewPaneDescriptorImpl>?>(null)
+
   private val isBackendLoaded = AtomicBoolean(false)
 
   init {
-    coroutineScope.launch(CoroutineName("PV pane descriptors fetching")) {
-      val frontendDescriptors = frontendService().getPaneDescriptors().associateBy { it.id }
-      if (!AppMode.isMonolith()) { // in the monolith mode, the backend is immediately available, no point loading light panes
-        paneDescriptors.value = frontendDescriptors.values
+    coroutineScope.launch(CoroutineName("PV frontend pane descriptors fetching")) {
+      frontendService().getPaneDescriptorsFlow().collect { descriptors ->
+        LOG.info("Loaded the frontend PV pane descriptors: ${descriptors.joinToString { it.id.idString }}")
+        frontendDescriptors.value = descriptors.associateBy { it.id }
       }
-      LOG.info("Loaded the frontend PV pane descriptors: ${frontendDescriptors.values.joinToString { it.id.idString }}")
-      val backendDescriptors = backendService().getPaneDescriptors(project.projectId()).associateBy { it.id }
-      LOG.info("Loaded the backend PV pane descriptors: ${backendDescriptors.values.joinToString { it.id.idString }}")
-      paneDescriptors.value = (frontendDescriptors + backendDescriptors).values
-      isBackendLoaded.store(true)
+    }
+    coroutineScope.launch(CoroutineName("PV backend pane descriptors fetching")) {
+      backendService().getPaneDescriptorsFlow(project.projectId()).collect { descriptors ->
+        LOG.info("Loaded the backend PV pane descriptors: ${descriptors.joinToString { it.id.idString }}")
+        backendDescriptors.value = descriptors.associateBy { it.id }
+        isBackendLoaded.store(true)
+      }
     }
   }
 
   override suspend fun getPaneDescriptorsFlow(): Flow<Collection<ProjectViewPaneDescriptorImpl>> {
-    return paneDescriptors.asStateFlow()
+    return combine(frontendDescriptors, backendDescriptors) { frontend, backend ->
+      when {
+        // The backend wins on ID collisions: that's how a light frontend pane is replaced by the real one.
+        backend != null -> (frontend.orEmpty() + backend).values
+        // In the monolith mode, the backend is immediately available, no point showing light panes.
+        frontend != null && !AppMode.isMonolith() -> frontend.values
+        else -> emptyList()
+      }
+    }.distinctUntilChanged()
   }
 
   override suspend fun getPaneStateFlow(paneDescriptor: ProjectViewPaneDescriptorImpl): Flow<ProjectViewPaneStateEvent> {

@@ -4,6 +4,7 @@ package com.intellij.platform.projectView.pane
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
@@ -15,17 +16,20 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
@@ -34,16 +38,24 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
-import kotlin.concurrent.atomics.AtomicReference
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import java.util.concurrent.CancellationException
+import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
 interface ProjectViewPaneProvider {
-  suspend fun createPanes(project: Project): List<ProjectViewPaneModel>
+  /**
+   * Returns the panes this provider contributes, as a flow, because the set of panes may change at runtime
+   * (the Scope panes, for example, come and go as the user edits the scope list).
+   *
+   * A provider is expected to keep emitting the same [ProjectViewPaneModel] instances for panes that haven't
+   * changed: [ProjectViewPaneService] uses instance identity to tell an unchanged pane from a new one, and only
+   * the new ones are started (and only the vanished ones are stopped). Consequently, a pane whose descriptor
+   * changes must be emitted as a *new* instance, or the change won't be noticed.
+   */
+  fun createPanes(project: Project): Flow<List<ProjectViewPaneModel>>
 }
 
-@OptIn(ExperimentalAtomicApi::class)
 @ApiStatus.Internal
 abstract class ProjectViewPaneService(
   private val project: Project,
@@ -51,67 +63,114 @@ abstract class ProjectViewPaneService(
   private val getProviders: () -> List<ProjectViewPaneProvider>,
   private val debugName: String = "ProjectViewPaneService",
 ) {
-  
+
   protected abstract val isFrontend: Boolean
 
-  private val managers = AtomicReference<Map<ProjectViewPaneId, ProjectViewPaneManager>?>(null)
-  
-  private val managersDeferred = coroutineScope.async(CoroutineName("$debugName: pane computation")) {
-    val result = hashMapOf<ProjectViewPaneId, ProjectViewPaneManager>()
-    for (provider in getProviders()) {
-      for (pane in provider.createPanes(project)) {
-        val manager = createProjectViewPaneManager(pane)
-        result[manager.id] = manager
-      }
-    }
-    managers.store(result)
-    result
-  }
+  /** `null` until the first set of panes has been computed, to tell "not ready yet" from "no panes at all". */
+  private val managers = MutableStateFlow<Map<ProjectViewPaneId, ProjectViewPaneManager>?>(null)
 
-  private suspend fun createProjectViewPaneManager(pane: ProjectViewPaneModel): ProjectViewPaneManager {
+  private suspend fun describe(pane: ProjectViewPaneModel): ProjectViewPaneDescriptorImpl {
     val builder = ProjectViewPaneDescriptorBuilderImpl()
     builder.isFrontend = isFrontend
     val descriptor = pane.describe(builder)
-    return ProjectViewPaneManager(pane, descriptor as ProjectViewPaneDescriptorImpl)
+    return descriptor as ProjectViewPaneDescriptorImpl
   }
 
   init {
     coroutineScope.launch(CoroutineName("$debugName: pane management")) {
-      val panes = managersDeferred.await()
       supervisorScope {
-        for (pane in panes.values) {
-          launch(CoroutineName("$debugName: pane ${pane.id}")) {
-            pane.manage()
-          }
-        }
+        managePanes(this)
       }
     }
   }
 
-  suspend fun getPaneRequestChannel(paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest> {
-    return managersDeferred.await()[paneId]?.getRequestChannel() ?: Channel<ProjectViewPaneRequest>(capacity = 0).also { it.close() }
+  private suspend fun managePanes(managementScope: CoroutineScope) {
+    val paneFlows = getProviders().map { provider -> provider.createPanes(project) }
+    if (paneFlows.isEmpty()) {
+      managers.value = emptyMap() // combine() of nothing never emits, and everyone else waits for the first value
+      return
+    }
+    val jobs = CopyOnWriteArraySet<ManagerJob>()
+    combine(paneFlows) { panesByProvider -> panesByProvider.flatMap { it } }.collect { panes ->
+      val newPanesByDescriptor = panes.associateBy { describe(it) }
+      val currentManagersById = hashMapOf<ProjectViewPaneId, ProjectViewPaneManager>()
+      for ((manager, job) in jobs) {
+        if (manager.descriptor in newPanesByDescriptor) {
+          currentManagersById[manager.id] = manager // still current
+        }
+        else {
+          LOG.debug { "The descriptor is gone, cancelling the pane job: ${manager.descriptor}" }
+          job.cancel(CancellationException("The descriptor is no longer present"))
+        }
+      }
+      val dedupIds = hashSetOf<ProjectViewPaneId>()
+      for ((descriptor, pane) in newPanesByDescriptor) {
+        val id = descriptor.id
+        if (id in dedupIds) {
+          LOG.error("Duplicate Project View pane ID $id, only the first pane with this ID will be used")
+          continue
+        }
+        dedupIds += id
+        if (jobs.any { it.manager.descriptor == descriptor }) {
+          LOG.debug { "Not launching a new job for the descriptor, because there's already a job: $descriptor" }
+          continue
+        }
+        val manager = ProjectViewPaneManager(pane, descriptor)
+        currentManagersById[manager.id] = manager
+        val job = managementScope.launch(CoroutineName("$debugName: pane $id")) {
+          manager.manage()
+        }
+        val managerJob = ManagerJob(manager, job)
+        jobs += managerJob
+        job.invokeOnCompletion { 
+          jobs -= managerJob
+        }
+      }
+      managers.value = currentManagersById.toMap()
+    }
+  }
+  
+  private data class ManagerJob(
+    val manager: ProjectViewPaneManager,
+    val job: Job,
+  )
+
+  /**
+   * Waits until the first set of panes has been computed, then returns the manager of the given pane
+   * from the *current* set, so that panes added after the initial computation are found too.
+   */
+  private suspend fun awaitManager(paneId: ProjectViewPaneId): ProjectViewPaneManager? {
+    managers.first { it != null }
+    return managers.value?.get(paneId)
   }
 
-  suspend fun getPaneDescriptors(): List<ProjectViewPaneDescriptorImpl> {
-    return managersDeferred.await().values.toList().map { it.descriptor }
+  suspend fun getPaneRequestChannel(paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest> {
+    return awaitManager(paneId)?.getRequestChannel() ?: Channel<ProjectViewPaneRequest>(capacity = 0).also { it.close() }
+  }
+
+  fun getPaneDescriptorsFlow(): Flow<List<ProjectViewPaneDescriptorImpl>> {
+    return managers
+      .filterNotNull()
+      .map { managers -> managers.values.map { it.descriptor } }
+      .distinctUntilChanged()
   }
 
   suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent> {
-    return managersDeferred.await()[paneId]?.getPaneStateFlow() ?: emptyFlow()
+    return awaitManager(paneId)?.getPaneStateFlow() ?: emptyFlow()
   }
-  
+
   fun getPane(paneId: ProjectViewPaneId): ProjectViewPaneModel? {
-    return managers.load()?.get(paneId)?.pane
+    return managers.value?.get(paneId)?.pane
   }
 
   suspend fun findNodeForOpenedFile(paneId: ProjectViewPaneId, editorChoice: EditorChoice, isInvokedManually: Boolean): ProjectViewNodePath? {
-    val managers = managers.load() ?: return null
+    val managers = managers.value ?: return null
     val pane = managers[paneId]?.pane ?: return null
     return pane.findNodeForSelectIn(SelectByEditorImpl(editorChoice, isInvokedManually))
   }
 
   suspend fun findNodeForSelectIn(selectInRequestDTO: SelectInRequestDTO): ProjectViewNodePath? {
-    val managers = managers.load() ?: return null
+    val managers = managers.value ?: return null
     val manager = managers.values.firstOrNull { pane ->
       pane.descriptor.selectInTargetDescriptors.any { selectInTargetDescriptor ->
         selectInTargetDescriptor.id == selectInRequestDTO.targetId

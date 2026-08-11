@@ -32,7 +32,7 @@ import kotlinx.coroutines.sync.withPermit
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-sealed interface TreeStructureProjectViewNode {
+interface TreeStructureProjectViewNode {
   val elementDescriptor: NodeDescriptor<*>
 }
 

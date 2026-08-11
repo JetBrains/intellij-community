@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneOptionImpl
@@ -54,19 +55,27 @@ abstract class TreeStructureBasedProjectViewPaneModel(project: Project) : TreeBa
   }
 
   override suspend fun navigate(nodeId: Long, options: ProjectViewPaneNavigateOptions) {
-    val node = suspendingState?.getNodeById(nodeId) ?: return
-    val navigatable = node.userObject.elementDescriptor as? Navigatable? ?: return
-    val navigationRequest = readAction { navigatable.navigationRequest() } ?: return
-    NavigationService.getInstance(project).navigate(
-      request = navigationRequest,
-      options = NavigationOptions.defaultOptions()
-        .requestFocus(options.requestFocus),
-    )
+    navigateToTreeStructureNode(project, suspendingState?.getNodeById(nodeId), options)
   }
 
   override fun createSelectNodeVisitorProvider(): ProjectViewSelectNodeVisitorProvider<TreeStructureProjectViewNode> {
     return TreeStructureSelectNodeVisitorProvider()
   }
+}
+
+/** Navigates to the legacy node descriptor behind a [TreeStructureProjectViewNode], if it's navigatable. */
+internal suspend fun navigateToTreeStructureNode(
+  project: Project,
+  node: BackendProjectViewNodeModel<TreeStructureProjectViewNode>?,
+  options: ProjectViewPaneNavigateOptions,
+) {
+  val navigatable = node?.userObject?.elementDescriptor as? Navigatable? ?: return
+  val navigationRequest = readAction { navigatable.navigationRequest() } ?: return
+  NavigationService.getInstance(project).navigate(
+    request = navigationRequest,
+    options = NavigationOptions.defaultOptions()
+      .requestFocus(options.requestFocus),
+  )
 }
 
 @ApiStatus.Experimental

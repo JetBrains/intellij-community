@@ -29,7 +29,7 @@ open class DefaultTreeStructurePsiExtractor(private val project: Project) : Proj
 
   protected open fun extractPsiElements(node: BackendProjectViewNodeModel<TreeStructureProjectViewNode>): List<PsiElement> {
     val userObject = node.legacyUserObject
-    val value = extractValueFromNode(userObject)
+    val value = extractValueFromLegacyUserObject(userObject)
     return extractPsiElementsFromNodeOrUserObject(project, userObject, value)
   }
 
@@ -38,7 +38,7 @@ open class DefaultTreeStructurePsiExtractor(private val project: Project) : Proj
       project,
       nodes.map { it.legacyUserObject as Any }.toTypedArray(),
     ) { node ->
-      val value = extractValueFromNode(node)
+      val value = extractValueFromLegacyUserObject(node)
       extractPsiElementsFromNodeOrUserObject(project, node, value)
     }.toList()
   }
@@ -84,7 +84,7 @@ open class DefaultTreeStructurePsiExtractor(private val project: Project) : Proj
   }
 
   private fun extractValuesFromUserObject(userObject: Any): List<Any> {
-    val value = extractValueFromNode(userObject)
+    val value = extractValueFromLegacyUserObject(userObject)
     if (value is Array<*>) {
       return value.filterNotNull()
     }
@@ -92,6 +92,8 @@ open class DefaultTreeStructurePsiExtractor(private val project: Project) : Proj
       return listOfNotNull(value)
     }
   }
+
+  protected open fun extractValueFromLegacyUserObject(userObject: Any?): Any? = extractValueFromNode(userObject)
 }
 
 private val BackendProjectViewNodeModel<TreeStructureProjectViewNode>.legacyUserObject: NodeDescriptor<*>

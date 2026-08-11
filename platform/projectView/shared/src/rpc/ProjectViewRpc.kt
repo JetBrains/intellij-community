@@ -22,7 +22,7 @@ import org.jetbrains.annotations.ApiStatus
 interface ProjectViewRpc : RemoteApi<Unit> {
   suspend fun getPaneRequestChannel(projectId: ProjectId, paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest>
   
-  suspend fun getPaneDescriptors(projectId: ProjectId): List<ProjectViewPaneDescriptorImpl>
+  suspend fun getPaneDescriptorsFlow(projectId: ProjectId): Flow<List<ProjectViewPaneDescriptorImpl>>
 
   suspend fun getPaneStateFlow(projectId: ProjectId, paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEventDTO>
 

@@ -63,7 +63,7 @@ public final class NamedScopeFilter implements VirtualFileFilter {
     return !(scope instanceof NonProjectFilesScope || scope == getAllScope());
   }
 
-  static @NotNull List<NamedScopeFilter> list(NamedScopesHolder... holders) {
+  public static @NotNull List<NamedScopeFilter> list(NamedScopesHolder... holders) {
     List<NamedScopeFilter> list = new ArrayList<>();
     NamedScope scratchesScope = null;
     for (NamedScopesHolder holder : holders) {
