@@ -299,6 +299,15 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 data class ReposTrinity(val projectRepo: GitRepository, val parent: Path, val bro: Path)
 
 /**
+ * Writes an executable Git hook into `<gitDir>/hooks/<hookName>`.
+ */
+internal fun installHook(gitDir: Path, hookName: String, hookContent: String) {
+  val hookFile = gitDir.resolve("hooks/$hookName").toFile()
+  hookFile.writeText(hookContent)
+  hookFile.setExecutable(true, false)
+}
+
+/**
  * Clones the given source repository into a bare parent.git and adds the remote origin.
  */
 internal fun prepareRemoteRepo(
