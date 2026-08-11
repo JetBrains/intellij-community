@@ -2961,7 +2961,7 @@ interface UastResolveApiFixtureTestBase {
     }
 
     fun checkResolveTopLevelInlineReifiedPropertyFromLibrary(myFixture: JavaCodeInsightTestFixture, isK2: Boolean) {
-        val propertyNames = setOf("reifiedVal", "reifiedVar", "nonReifiedVal", "nonReifiedVar")
+        val propertyNames = setOf("reifiedVal", "reifiedVar", "reified var", "nonReifiedVal", "nonReifiedVar", "non reified var")
 
         fun getterName(name: String): String = "get" + name.replaceFirstChar { it.uppercase() }
         fun setterName(name: String): String = "set" + name.replaceFirstChar { it.uppercase() }
@@ -2977,10 +2977,18 @@ interface UastResolveApiFixtureTestBase {
                     get() = "test"
                     set(value) {}
 
+                inline var <reified T : Any> T.`reified var`: String
+                    get() = "test"
+                    set(value) {}
+
                 inline val <T : Any> T.nonReifiedVal: String
                     get() = "test"
 
                 inline var <T : Any> T.nonReifiedVar: String
+                    get() = "test"
+                    set(value) {}
+
+                inline var <T : Any> T.`non reified var`: String
                     get() = "test"
                     set(value) {}
             """.trimIndent()
@@ -2989,16 +2997,24 @@ interface UastResolveApiFixtureTestBase {
             "main.kt", """
                 import test.pkg.reifiedVal
                 import test.pkg.reifiedVar
+                import test.pkg.`reified var`
                 import test.pkg.nonReifiedVal
                 import test.pkg.nonReifiedVar
+                import test.pkg.`non reified var`
 
                 fun test() {
                     val propVal = Any().reifiedVal
                     val ref = Any::reifiedVal
                     Any().reifiedVar = "new"
+                    val reifiedVarPropVal = Any().`reified var`
+                    val refReifiedVar = Any::`reified var`
+                    Any().`reified var` = "new"
                     val nonReifiedPropVal = Any().nonReifiedVal
                     val refNonReified = Any::nonReifiedVal
                     Any().nonReifiedVar = "new"
+                    val nonReifiedEscapedVar = Any().`non reified var`
+                    val refNonReifiedEscapedVar = Any::`non reified var`
+                    Any().`non reified var` = "new"
                 }
             """.trimIndent()
         )
