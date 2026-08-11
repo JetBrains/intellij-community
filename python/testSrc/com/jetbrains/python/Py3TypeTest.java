@@ -10,12 +10,15 @@ import com.jetbrains.python.inspections.PyTypeCheckerInspectionTest;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyCallableTypeImpl;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyNarrowedType;
+import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions;
 import com.jetbrains.python.psi.types.PyTypeVarType;
 import com.jetbrains.python.psi.types.PyTypeVarTypeImpl;
+import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -165,6 +168,32 @@ public class Py3TypeTest extends PyTestCase {
     assertExpressionType("dict[str, Any]", expr);
     PyExpression dict = myFixture.findElementByText("{'foo': self.foo}", PyExpression.class);
     assertExpressionType("dict[str, Any]", dict);
+  }
+
+
+  @TestFor(issues = "PY-90122")
+  public void testLoopFixedPointAnalysisThreshold() {
+    myFixture.configureByText(PythonFileType.INSTANCE, """
+      def input_data_valid(levels: int):
+          data = ["foo"]
+          for _ in range(levels):
+              data = [data for _ in range(levels)]
+          expr = data
+      """);
+    PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+    TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    PyType type = context.getType(expr);
+
+    int[] classTypeCount = new int[]{0};
+    PyRecursiveTypeVisitor.traverse(type, context, new PyRecursiveTypeVisitor.PyTypeTraverser() {
+      @Override
+      public PyRecursiveTypeVisitor.@NotNull Traversal visitPyClassType(@NotNull PyClassType classType) {
+        classTypeCount[0]++;
+        return PyRecursiveTypeVisitor.Traversal.CONTINUE;
+      }
+    });
+    assertInstanceOf(type, PyUnionType.class);
+    assertTrue("%d class types in the resulting union type".formatted(classTypeCount[0]), classTypeCount[0] < 100);
   }
 
   @TestFor(issues = "PY-54336")
