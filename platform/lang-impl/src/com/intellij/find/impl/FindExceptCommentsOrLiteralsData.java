@@ -50,15 +50,15 @@ record FindExceptCommentsOrLiteralsData(@NotNull VirtualFile myFile,
   static @NotNull FindExceptCommentsOrLiteralsData create(@NotNull VirtualFile file,
                                                           @NotNull FindModel model,
                                                           @NotNull CharSequence text,
-                                                          @NotNull FindManagerBase manager) {
+                                                          @NotNull CommentsAndLiteralsSearcher commentsAndLiteralsSearcher) {
     Int2IntSortedMap skipRangesSet = new Int2IntRBTreeMap(IntComparators.OPPOSITE_COMPARATOR);
 
     if (model.isExceptComments() || model.isExceptCommentsAndStringLiterals()) {
-      addRanges(file, model, text, skipRangesSet, SearchContext.IN_COMMENTS, manager);
+      addRanges(file, model, text, skipRangesSet, SearchContext.IN_COMMENTS, commentsAndLiteralsSearcher);
     }
 
     if (model.isExceptStringLiterals() || model.isExceptCommentsAndStringLiterals()) {
-      addRanges(file, model, text, skipRangesSet, SearchContext.IN_STRING_LITERALS, manager);
+      addRanges(file, model, text, skipRangesSet, SearchContext.IN_STRING_LITERALS, commentsAndLiteralsSearcher);
     }
 
     return new FindExceptCommentsOrLiteralsData(file, model.clone(), ImmutableCharSequence.asImmutable(text), skipRangesSet);
@@ -68,27 +68,19 @@ record FindExceptCommentsOrLiteralsData(@NotNull VirtualFile myFile,
    * Adds every occurrence lying in {@code searchContext} to {@code result}.
    * <p>
    * The model is cloned because the search context has to be flipped to the one being excluded, and the caller's model
-   * must keep its own. Direction is forced forward: the loop walks the file from the start, and which way the user
-   * happens to be searching does not change the set of ranges.
+   * must keep its own. Direction is forced forward: the collector walks the file once from the start, and which way the
+   * user happens to be searching does not change the set of ranges.
    */
   private static void addRanges(@NotNull VirtualFile file,
                                 @NotNull FindModel model,
                                 @NotNull CharSequence text,
                                 @NotNull Int2IntSortedMap result,
                                 @NotNull SearchContext searchContext,
-                                @NotNull FindManagerBase manager) {
+                                @NotNull CommentsAndLiteralsSearcher searcher) {
     FindModel clonedModel = model.clone();
     clonedModel.setSearchContext(searchContext);
     clonedModel.setForward(true);
-    int offset = 0;
-
-    while (true) {
-      FindResult customResult = manager.findStringLoop(text, offset, clonedModel, file, null);
-      if (!customResult.isStringFound()) break;
-      result.put(customResult.getStartOffset(), customResult.getEndOffset());
-      offset = Math.max(customResult.getEndOffset(), offset + 1); // avoid loop for zero size reg exps matches
-      if (offset >= text.length()) break;
-    }
+    searcher.collectOccurrences(text, clonedModel, file, result);
   }
 
   /**

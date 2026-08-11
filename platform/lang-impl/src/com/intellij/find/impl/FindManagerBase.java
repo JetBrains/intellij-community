@@ -97,7 +97,7 @@ public abstract class FindManagerBase extends FindManager {
     return findStringLoop(text, offset, model, file, getFindContextPredicate(model, file, text));
   }
 
-  FindResult findStringLoop(@NotNull CharSequence text,
+  private FindResult findStringLoop(@NotNull CharSequence text,
                                     int offset,
                                     @NotNull FindModel model,
                                     @Nullable VirtualFile file,
@@ -232,7 +232,7 @@ public abstract class FindManagerBase extends FindManager {
     SoftReference<FindExceptCommentsOrLiteralsData> currentThreadDataRef = data.get();
     FindExceptCommentsOrLiteralsData currentThreadData = currentThreadDataRef == null ? null : currentThreadDataRef.get();
     if (currentThreadData == null || !currentThreadData.isAcceptableFor(model, file, text)) {
-      currentThreadData = FindExceptCommentsOrLiteralsData.create(file, model, text, this);
+      currentThreadData = FindExceptCommentsOrLiteralsData.create(file, model, text, myCommentsAndLiteralsSearcher);
       data.set(new SoftReference<>(currentThreadData));
     }
     return currentThreadData;
@@ -244,7 +244,7 @@ public abstract class FindManagerBase extends FindManager {
 
 
 
-  private static boolean isWholeWord(@NotNull CharSequence text, int startOffset, int endOffset) {
+  static boolean isWholeWord(@NotNull CharSequence text, int startOffset, int endOffset) {
     boolean isWordStart;
 
     if (startOffset != 0) {

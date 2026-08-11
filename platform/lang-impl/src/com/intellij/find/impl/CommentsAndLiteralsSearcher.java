@@ -31,7 +31,9 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.usages.ChunkExtractor;
 import com.intellij.usages.impl.SyntaxHighlighterOverEditorHighlighter;
 import com.intellij.util.containers.SmartHashSet;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
+import it.unimi.dsi.fastutil.ints.Int2IntSortedMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -312,6 +314,28 @@ final class CommentsAndLiteralsSearcher {
     }
 
     return syntaxHighlighter;
+  }
+
+  /**
+   * Collects every occurrence inside comments or string literals into {@code result}, as {@code start -> end}.
+   * One lexer pass over the whole file, as opposed to one pass per occurrence.
+   */
+  void collectOccurrences(@NotNull CharSequence text,
+                          @NotNull FindModel model,
+                          @NotNull VirtualFile file,
+                          @NotNull Int2IntSortedMap result) {
+    CommentsLiteralsSearchData data = getSearchData(text, model, file);
+    if (data == null) return;
+
+    char[] textArray = CharArrayUtil.fromSequenceWithoutCopying(text);
+    boolean wholeWordsOnly = model.isWholeWordsOnly();
+    processOccurrences(text, textArray, 0, model, data, (start, end, _) -> {
+      // findStringLoop applies this filter for the one-occurrence-at-a-time callers; keep the collected set the same
+      if (!wholeWordsOnly || FindManagerBase.isWholeWord(text, start, end)) {
+        result.put(start, end);
+      }
+      return true;
+    });
   }
 
   /**
