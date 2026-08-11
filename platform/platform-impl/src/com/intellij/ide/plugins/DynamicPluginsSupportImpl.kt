@@ -78,7 +78,7 @@ internal class DynamicPluginsSupportImpl(
       withContext(Dispatchers.Default) {
         if (LOG.isDebugEnabled) {
           LOG.debug("validating dynamic reconfiguration to $targetState")
-          PluginInitializationDiagnosticUtils.logExclusionTree(LOG, targetState.resolvedPluginSet)
+          PluginInitializationDiagnosticUtils.logExclusionTree(LOG, targetState)
         }
         reportSequentialProgress { reporter ->
           val target = targetState.resolvedPluginSet
@@ -99,7 +99,7 @@ internal class DynamicPluginsSupportImpl(
           val current = getCurrentlyLoadedPluginSet()
           val target = targetState.resolvedPluginSet
           LOG.info("performing dynamic reconfiguration to $targetState")
-          PluginInitializationDiagnosticUtils.logExclusionTree(LOG, target)
+          PluginInitializationDiagnosticUtils.logExclusionTree(LOG, targetState)
           val sequence = buildTransitionSequence(current, target).also {
             LOG.info(it.getExplanationLogMessage())
           }

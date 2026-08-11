@@ -10,7 +10,8 @@ import org.jetbrains.annotations.ApiStatus
 object PluginInitializationDiagnosticUtils {
   fun getLogMessageForRootExclusionReason(reason: DescriptorExclusionReason): String = reason.logMessage()
 
-  fun logExclusionTree(logger: Logger, resolvedPluginSet: ResolvedPluginSet) {
+  fun logExclusionTree(logger: Logger, pluginSet: PluginSet) {
+    val resolvedPluginSet = pluginSet.resolvedPluginSet
     val exclusionChildren = LinkedHashMap<IdeaPluginDescriptorImpl, ArrayList<IdeaPluginDescriptorImpl>>()
     val roots = LinkedHashSet<IdeaPluginDescriptorImpl>()
     for (plugin in resolvedPluginSet.candidateSet.plugins) {

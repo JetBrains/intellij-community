@@ -467,7 +467,7 @@ object PluginManagerCore {
     val candidateSubset = resolvedPluginSet.candidateSet
 
     initStagesActivity = initStagesActivity?.endAndStart("log exclusion tree")
-    PluginInitializationDiagnosticUtils.logExclusionTree(logger, resolvedPluginSet)
+    PluginInitializationDiagnosticUtils.logExclusionTree(logger, pluginSet)
 
     initStagesActivity = initStagesActivity?.endAndStart("error collection")
     val incompletePlugins = HashMap<PluginId, PluginMainDescriptor>()
