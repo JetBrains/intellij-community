@@ -17,6 +17,7 @@ import com.intellij.devkit.uiDsl.sandbox.components.JProgressBarPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JRadioButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JSpinnerPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JTextFieldPanel
+import com.intellij.devkit.uiDsl.sandbox.components.OnOffButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.SearchTextFieldPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ShimmerLabelPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ThreeStateCheckBoxPanel
@@ -80,7 +81,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.treeView.NodeRenderer
 import com.intellij.internal.Module
 import com.intellij.internal.showSources
-import com.intellij.internal.ui.sandbox.components.OnOffButtonPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel

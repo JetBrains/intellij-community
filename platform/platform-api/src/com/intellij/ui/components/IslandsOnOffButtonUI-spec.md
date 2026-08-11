@@ -162,4 +162,4 @@ Registered programmatically by `IslandsUICustomization.applyMissingKeys()` whene
 - `community/platform/platform-resources/src/themes/islands/ManyIslandsLight.theme.json` — token aliases
 - `community/platform/platform-resources/src/themes/islands/ManyIslandsDark.theme.json` — token aliases
 - `community/platform/platform-resources/src/themes/metadata/IntelliJPlatform.themeMetadata.json` — 11 new keys (`since: 2026.2`)
-- `community/platform/platform-impl/internal/src/com/intellij/internal/ui/sandbox/components/OnOffButtonPanel.kt` — updated sandbox demo
+- `community/plugins/devkit/intellij.devkit.uiDsl/src/sandbox/components/OnOffButtonPanel.kt` — updated sandbox demo
