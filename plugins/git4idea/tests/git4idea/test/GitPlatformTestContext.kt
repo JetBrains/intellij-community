@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
+import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
@@ -133,6 +134,9 @@ fun GitPlatformTestContext.tryCommit(changes: Collection<Change>, commitMessage:
   updateChangeListManager()
   return exceptions
 }
+
+fun GitPlatformTestContext.createFile(parent: VirtualFile, fileName: String, content: String = Math.random().toString()): VirtualFile =
+  VcsTestUtil.createFile(project, parent, fileName, content)!!
 
 fun GitPlatformTestContext.assertNoChanges() {
   changeListManager.assertNoChanges()
