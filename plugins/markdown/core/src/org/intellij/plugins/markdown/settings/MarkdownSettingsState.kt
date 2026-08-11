@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 class MarkdownSettingsState: BaseState() {
   var areInjectionsEnabled by property(true)
   var showProblemsInCodeBlocks by property(false)
+  var isStripTrailingSpacesOnSave: Boolean by property(false)
 
   @get:XMap
   var enabledExtensions by map<String, Boolean>()

@@ -24,6 +24,10 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
     get() = state.showProblemsInCodeBlocks
     set(value) { state.showProblemsInCodeBlocks = value }
 
+  var isStripTrailingSpacesOnSave: Boolean
+    get() = state.isStripTrailingSpacesOnSave
+    set(value) { state.isStripTrailingSpacesOnSave = value }
+
   var splitLayout: TextEditorWithPreview.Layout
     get() = state.splitLayout
     set(value) { state.splitLayout = value }

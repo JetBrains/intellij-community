@@ -123,6 +123,10 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
           .bindSelected(settings::showProblemsInCodeBlocks)
       }
       row {
+        checkBox(MarkdownBundle.message("markdown.settings.strip.trailing.spaces"))
+          .bindSelected(settings::isStripTrailingSpacesOnSave)
+      }
+      row {
         checkBox(MarkdownBundle.message("markdown.settings.group.documents.in.project.tree"))
           .bindSelected(settings::isFileGroupingEnabled)
           .onApply { ProjectView.getInstance(project).refresh(ProjectViewUpdateCause.SETTINGS) }

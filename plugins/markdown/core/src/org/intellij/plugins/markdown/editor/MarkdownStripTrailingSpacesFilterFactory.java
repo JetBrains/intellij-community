@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.StripTrailingSpacesFilterFactory;
 import com.intellij.openapi.editor.impl.PsiBasedStripTrailingSpacesFilter;
 import com.intellij.openapi.project.Project;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
+import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +18,10 @@ public final class MarkdownStripTrailingSpacesFilterFactory extends StripTrailin
   public @NotNull StripTrailingSpacesFilter createFilter(@Nullable Project project, @NotNull Document document) {
     Language documentLanguage = PsiBasedStripTrailingSpacesFilter.getDocumentLanguage(document);
     if (documentLanguage != null && documentLanguage.is(MarkdownLanguage.INSTANCE)) {
-      return StripTrailingSpacesFilter.NOT_ALLOWED;
+      if (project == null) return StripTrailingSpacesFilter.NOT_ALLOWED;
+      return MarkdownSettings.getInstance(project).isStripTrailingSpacesOnSave()
+             ? StripTrailingSpacesFilter.ALL_LINES
+             : StripTrailingSpacesFilter.NOT_ALLOWED;
     }
     return StripTrailingSpacesFilter.ALL_LINES;
   }
