@@ -347,7 +347,9 @@ object UniversalFileChooser {
         override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
         override fun update(e: AnActionEvent) {
-          e.presentation.isVisible = fileViews.any { it.contributor.getDesktopPath() != null }
+          // Use the cached Desktop path resolved on Dispatchers.IO in FileView.init to avoid calling
+          // read-lock-forbidden native lookups from the EDT (see IJPL-252593).
+          e.presentation.isVisible = fileViews.any { it.desktopPath != null }
           e.presentation.isEnabled = true
         }
 
@@ -649,17 +651,21 @@ object UniversalFileChooser {
     }
 
     private fun navigateToDesktop() {
-      val targetView = getActiveFileView()?.takeIf { it.contributor.getDesktopPath() != null }
-                       ?: fileViews.firstOrNull { it.contributor.getDesktopPath() != null }
+      val targetView = getActiveFileView()?.takeIf { it.desktopPath != null }
+                       ?: fileViews.firstOrNull { it.desktopPath != null }
                        ?: return
       targetView.topComponent.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
       scope.launch {
         withContext(Dispatchers.IO) {
-          targetView.contributor.getDesktopPath()?.let { desktopPath ->
+          val desktopPath = targetView.desktopPath ?: targetView.contributor.getDesktopPath()
+          if (desktopPath != null) {
             runOnEdt {
               targetView.topComponent.cursor = Cursor.getDefaultCursor()
               navigateToFile(desktopPath)
             }
+          }
+          else {
+            runOnEdt { targetView.topComponent.cursor = Cursor.getDefaultCursor() }
           }
         }
       }
@@ -709,8 +715,21 @@ object UniversalFileChooser {
       @Volatile
       var isMountActionInProgress: Boolean = false
 
+      /**
+       * Cached Desktop directory path for the contributor.
+       */
+      @Volatile
+      var desktopPath: Path? = null
+        private set
+
       init {
         val descriptorCopy = FileChooserDescriptor(descriptor)
+
+        // Resolve the Desktop directory eagerly on a background thread so that EDT action updates
+        // never call into the read-lock-forbidden native lookup.
+        scope.launch(Dispatchers.IO) {
+          desktopPath = runCatching { contributor.getDesktopPath() }.getOrNull()
+        }
 
         tree.isRootVisible = false
         tree.showsRootHandles = true
