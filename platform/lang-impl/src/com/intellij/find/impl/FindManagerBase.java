@@ -8,23 +8,10 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.FindSettings;
 import com.intellij.find.findUsages.FindUsagesManager;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.LanguageUtil;
-import com.intellij.lang.ParserDefinition;
-import com.intellij.lexer.LayeredLexer;
-import com.intellij.lexer.Lexer;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -33,15 +20,7 @@ import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.StringPattern;
-import com.intellij.psi.CustomHighlighterTokenType;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.usages.ChunkExtractor;
-import com.intellij.usages.impl.SyntaxHighlighterOverEditorHighlighter;
 import com.intellij.util.containers.IntObjectMap;
-import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.StringSearcher;
@@ -54,8 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
-import java.util.Collections;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -63,23 +40,21 @@ import java.util.regex.Pattern;
 
 public abstract class FindManagerBase extends FindManager {
   private static final Logger LOG = Logger.getInstance(FindManagerBase.class);
-  private static final Key<ThreadLocal<SoftReference<CommentsLiteralsSearchData>>> ourCommentsLiteralsSearchDataKey =
-    KeyWithDefaultValue.create("comments.literals.search.data", () -> new ThreadLocal<>());
   private static final Key<ThreadLocal<SoftReference<FindExceptCommentsOrLiteralsData>>> ourExceptCommentsOrLiteralsDataKey =
     KeyWithDefaultValue.create("except.comments.literals.search.data", () -> new ThreadLocal<>());
   private static final IntObjectMap<Boolean> ourReportedPatterns = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
-  private static final FindResultImpl NOT_FOUND_RESULT = new FindResultImpl();
-  /** How many characters of text the comments/literals walk may cover between two cancellation checks. */
-  private static final int CANCELLATION_CHECK_INTERVAL = 8 * 1024;
+  static final FindResultImpl NOT_FOUND_RESULT = new FindResultImpl();
 
   protected final FindUsagesManager myFindUsagesManager;
   protected final @NotNull FindModel myFindInProjectModel = new FindModel();
   protected final @NotNull FindModel myFindInFileModel = new FindModel();
   @NotNull protected final Project myProject;
+  private final @NotNull CommentsAndLiteralsSearcher myCommentsAndLiteralsSearcher;
 
   public FindManagerBase(@NotNull Project project) {
     myProject = project;
     myFindUsagesManager = new FindUsagesManager(project);
+    myCommentsAndLiteralsSearcher = new CommentsAndLiteralsSearcher(project);
 
     FindSettings findSettings = FindSettings.getInstance();
     findSettings.initModelBySetings(myFindInProjectModel);
@@ -93,7 +68,7 @@ public abstract class FindManagerBase extends FindManager {
 
   static void clearPreviousFindData(FindModel model) {
     synchronized (model) {
-      model.putUserData(ourCommentsLiteralsSearchDataKey, null);
+      CommentsAndLiteralsSearcher.clearPreviousFindData(model);
       model.putUserData(ourExceptCommentsOrLiteralsDataKey, null);
     }
   }
@@ -179,7 +154,7 @@ public abstract class FindManagerBase extends FindManager {
 
     if (model.isInCommentsOnly() || model.isInStringLiteralsOnly()) {
       if (file == null) return NOT_FOUND_RESULT;
-      return findInCommentsAndLiterals(text, textArray, offset, model, file);
+      return myCommentsAndLiteralsSearcher.findInCommentsAndLiterals(text, textArray, offset, model, file);
     }
 
     if (model.isRegularExpressions()) {
@@ -273,217 +248,7 @@ public abstract class FindManagerBase extends FindManager {
     return new StringSearcher(model.getStringToFind(), model.isCaseSensitive(), model.isForward());
   }
 
-  private @NotNull FindResult findInCommentsAndLiterals(@NotNull CharSequence text,
-                                                        char[] textArray,
-                                                        int offset,
-                                                        @NotNull FindModel model,
-                                                        @NotNull VirtualFile file) {
-    ThreadLocal<SoftReference<FindManagerBase.CommentsLiteralsSearchData>> data;
-    synchronized (model) {
-      data = model.getUserData(ourCommentsLiteralsSearchDataKey);
-      assert data != null;
-    }
 
-    FileType ftype = file.getFileType();
-    Language lang = LanguageUtil.getLanguageForPsi(myProject, file, ftype);
-
-    SoftReference<FindManagerBase.CommentsLiteralsSearchData> currentThreadDataRef = data.get();
-    FindManagerBase.CommentsLiteralsSearchData currentThreadData = currentThreadDataRef == null ? null : currentThreadDataRef.get();
-    if (currentThreadData == null || !Comparing.equal(currentThreadData.lastFile, file) || !currentThreadData.model.equals(model)) {
-      SyntaxHighlighter highlighter = getHighlighter(file, lang);
-
-      if (highlighter == null) {
-        // no syntax highlighter -> no search
-        return NOT_FOUND_RESULT;
-      }
-
-      TokenSet tokensOfInterest = TokenSet.EMPTY;
-      Set<Language> relevantLanguages;
-      if (lang != null) {
-        final Language finalLang = lang;
-        relevantLanguages = ReadAction.computeBlocking(() -> {
-          Set<Language> result = new SmartHashSet<>();
-          FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(file);
-          if (viewProvider != null) {
-            result.addAll(viewProvider.getLanguages());
-          }
-
-          if (result.isEmpty()) {
-            result.add(finalLang);
-          }
-          return result;
-        });
-
-        for (Language relevantLanguage : relevantLanguages) {
-          tokensOfInterest = addTokenTypesForLanguage(model, relevantLanguage, tokensOfInterest);
-        }
-      }
-      else {
-        relevantLanguages = Collections.emptySet();
-        if (ftype instanceof AbstractFileType) {
-          if (model.isInCommentsOnly()) {
-            tokensOfInterest = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
-          }
-          if (model.isInStringLiteralsOnly()) {
-            tokensOfInterest = TokenSet.orSet(tokensOfInterest, TokenSet
-              .create(CustomHighlighterTokenType.STRING, CustomHighlighterTokenType.SINGLE_QUOTED_STRING));
-          }
-        }
-      }
-
-      Matcher matcher = model.isRegularExpressions() ? compileRegExp(model, "") : null;
-      StringSearcher searcher = matcher != null ? null : new StringSearcher(model.getStringToFind(), model.isCaseSensitive(), true);
-      LayeredLexer.ourDisableLayersFlag.set(Boolean.TRUE);
-
-      try {
-        SyntaxHighlighterOverEditorHighlighter highlighterAdapter = ReadAction.computeBlocking(() -> {
-          return new SyntaxHighlighterOverEditorHighlighter(highlighter, file, myProject);
-        });
-        currentThreadData = new FindManagerBase.CommentsLiteralsSearchData(
-          file,
-          relevantLanguages,
-          highlighterAdapter,
-          tokensOfInterest,
-          searcher,
-          matcher,
-          model.clone()
-        );
-        currentThreadData.highlighter.restart(text);
-      }
-      finally {
-        LayeredLexer.ourDisableLayersFlag.remove();
-      }
-
-      data.set(new SoftReference<>(currentThreadData));
-    }
-
-    int initialStartOffset = model.isForward() && currentThreadData.startOffset < offset ? currentThreadData.startOffset : 0;
-    currentThreadData.highlighter.resetPosition(initialStartOffset);
-    final Lexer lexer = currentThreadData.highlighter.getHighlightingLexer();
-
-    IElementType tokenType;
-    TokenSet tokens = currentThreadData.tokensOfInterest;
-
-    int lastGoodOffset = 0;
-    boolean scanningForward = model.isForward();
-    FindResultImpl prevFindResult = NOT_FOUND_RESULT;
-
-    // Budget the cancellation checks in characters rather than in loop iterations: a merging lexer collapses a run of
-    // same-type tokens into one, so a megabyte of comment or character data can arrive as a single token and an
-    // iteration counter would let it pass unchecked.
-    int nextCancellationCheckAt = 0;
-    while ((tokenType = lexer.getTokenType()) != null) {
-      if (lexer.getTokenEnd() >= nextCancellationCheckAt) {
-        ProgressManager.checkCanceled();
-        nextCancellationCheckAt = lexer.getTokenEnd() + CANCELLATION_CHECK_INTERVAL;
-      }
-
-      if (lexer.getState() == 0) lastGoodOffset = lexer.getTokenStart();
-
-      final TextAttributesKey[] keys = currentThreadData.highlighter.getTokenHighlights(tokenType);
-
-      if (tokens.contains(tokenType) ||
-          model.isInStringLiteralsOnly() && ChunkExtractor.isHighlightedAsString(keys) ||
-          model.isInCommentsOnly() && ChunkExtractor.isHighlightedAsComment(keys)
-      ) {
-        int start = lexer.getTokenStart();
-        int end = lexer.getTokenEnd();
-        if (model.isInStringLiteralsOnly()) { // skip literal quotes itself from matching
-          char c = text.charAt(start);
-          if (c == '"' || c == '\'') {
-            while (start < end && c == text.charAt(start)) {
-              ++start;
-              if (c == text.charAt(end - 1) && start < end) --end;
-            }
-          }
-        }
-
-        final int tokenContentStart = start;
-
-        while (true) {
-          if (start >= nextCancellationCheckAt) {
-            ProgressManager.checkCanceled();
-            nextCancellationCheckAt = start + CANCELLATION_CHECK_INTERVAL;
-          }
-
-          FindResultImpl findResult = null;
-
-          if (currentThreadData.searcher != null) {
-            int matchStart = currentThreadData.searcher.scan(text, textArray, start, end);
-
-            if (matchStart != -1 && matchStart >= start) {
-              final int matchEnd = matchStart + model.getStringToFind().length();
-              if (matchStart >= offset || !scanningForward) {
-                findResult = new FindResultImpl(matchStart, matchEnd);
-              }
-              else {
-                start = matchEnd;
-                continue;
-              }
-            }
-          }
-          else if (start <= end) {
-            currentThreadData.matcher.reset(StringPattern.newBombedCharSequence(text.subSequence(tokenContentStart, end)));
-            currentThreadData.matcher.region(start - tokenContentStart, end - tokenContentStart);
-            currentThreadData.matcher.useTransparentBounds(true);
-            if (currentThreadData.matcher.find()) {
-              final int matchEnd = tokenContentStart + currentThreadData.matcher.end();
-              int matchStart = tokenContentStart + currentThreadData.matcher.start();
-              if (matchStart >= offset || !scanningForward) {
-                findResult = new FindResultImpl(matchStart, matchEnd);
-              }
-              else {
-                int diff = 0;
-                if (start == end || start == matchEnd) {
-                  diff = 1;
-                }
-                start = matchEnd + diff;
-                continue;
-              }
-            }
-          }
-
-          if (findResult != null) {
-            if (scanningForward) {
-              currentThreadData.startOffset = lastGoodOffset;
-              return findResult;
-            }
-            else {
-
-              if (findResult.getEndOffset() >= offset) return prevFindResult;
-              prevFindResult = findResult;
-              start = findResult.getEndOffset();
-              continue;
-            }
-          }
-          break;
-        }
-      }
-      else {
-        Language tokenLang = tokenType.getLanguage();
-        if (tokenLang != lang && tokenLang != Language.ANY && !currentThreadData.relevantLanguages.contains(tokenLang)) {
-          tokens = addTokenTypesForLanguage(model, tokenLang, tokens);
-          currentThreadData.tokensOfInterest = tokens;
-          currentThreadData.relevantLanguages.add(tokenLang);
-        }
-      }
-
-      lexer.advance();
-    }
-
-    return prevFindResult;
-  }
-
-  private static @NotNull TokenSet addTokenTypesForLanguage(@NotNull FindModel model,
-                                                            @NotNull Language lang,
-                                                            @NotNull TokenSet tokensOfInterest) {
-    ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-    if (definition != null) {
-      tokensOfInterest = TokenSet.orSet(tokensOfInterest, model.isInCommentsOnly() ? definition.getCommentTokens() : TokenSet.EMPTY);
-      tokensOfInterest = TokenSet.orSet(tokensOfInterest, model.isInStringLiteralsOnly() ? definition.getStringLiteralElements() : TokenSet.EMPTY);
-    }
-    return tokensOfInterest;
-  }
 
   private static boolean isWholeWord(@NotNull CharSequence text, int startOffset, int endOffset) {
     boolean isWordStart;
@@ -516,7 +281,7 @@ public abstract class FindManagerBase extends FindManager {
     return isWordStart && isWordEnd;
   }
 
-  private static @Nullable Matcher compileRegExp(@NotNull FindModel model, @NotNull CharSequence text) {
+  static @Nullable Matcher compileRegExp(@NotNull FindModel model, @NotNull CharSequence text) {
     Pattern pattern = model.compileRegExp();
     return pattern == null ? null : pattern.matcher(StringPattern.newBombedCharSequence(text));
   }
@@ -578,47 +343,12 @@ public abstract class FindManagerBase extends FindManager {
     return matcher;
   }
 
-  private static @Nullable SyntaxHighlighter getHighlighter(VirtualFile file, @Nullable Language lang) {
-    SyntaxHighlighter syntaxHighlighter = lang != null ? SyntaxHighlighterFactory.getSyntaxHighlighter(lang, null, file) : null;
-    if (lang == null || syntaxHighlighter instanceof PlainSyntaxHighlighter) {
-      syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(file.getFileType(), null, file);
-    }
-
-    return syntaxHighlighter;
-  }
 
   private static @NotNull MalformedReplacementStringException createMalformedReplacementException(@NotNull Exception e) {
     String message = FindBundle.message("find.replace.invalid.replacement.string", e.getMessage());
     return new MalformedReplacementStringException(message, e);
   }
 
-  private static final class CommentsLiteralsSearchData {
-    @NotNull final VirtualFile lastFile;
-    int startOffset;
-    @NotNull final SyntaxHighlighterOverEditorHighlighter highlighter;
-
-    @NotNull TokenSet tokensOfInterest;
-    @Nullable final StringSearcher searcher;
-    @Nullable final Matcher matcher;
-    @NotNull final Set<Language> relevantLanguages;
-    @NotNull final FindModel model;
-
-    CommentsLiteralsSearchData(@NotNull VirtualFile lastFile,
-                               @NotNull Set<Language> relevantLanguages,
-                               @NotNull SyntaxHighlighterOverEditorHighlighter highlighter,
-                               @NotNull TokenSet tokensOfInterest,
-                               @Nullable StringSearcher searcher,
-                               @Nullable Matcher matcher,
-                               @NotNull FindModel model) {
-      this.lastFile = lastFile;
-      this.highlighter = highlighter;
-      this.tokensOfInterest = tokensOfInterest;
-      this.searcher = searcher;
-      this.matcher = matcher;
-      this.relevantLanguages = relevantLanguages;
-      this.model = model;
-    }
-  }
 
   private record FindExceptCommentsOrLiteralsData(@NotNull VirtualFile myFile,
                                                   @NotNull FindModel myFindModel,
