@@ -107,6 +107,16 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
       GroovyBundle.message("introduce.variable.declare.final.label")
     ));
     panel.add(myCbIsFinal);
+    String type = myTypeComboBox.getSelectedType().getCanonicalText();
+    if (PsiModifier.FINAL.equals(type) || GrModifier.VAL.equals(type)) {
+      myCbIsFinal.setEnabled(false);
+    }
+
+    myTypeComboBox.addItemListener(e -> {
+      String item = myTypeComboBox.getSelectedType().getCanonicalText();
+      boolean enabled = !PsiModifier.FINAL.equals(item) && !GrModifier.VAL.equals(item);
+      myCbIsFinal.setEnabled(enabled);
+    });
     myCbReplaceAllOccurrences = new JCheckBox(UIUtil.replaceMnemonicAmpersand(
       GroovyBundle.message("introduce.variable.replace.all.occurrences")
     ));
