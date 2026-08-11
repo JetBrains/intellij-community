@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import kotlinx.coroutines.CoroutineScope
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
@@ -35,7 +36,7 @@ internal class BazelCompilationContextTest {
     val state = BazelModuleOutputProviderState(
       modules = project.modules,
       projectHome = tempDir,
-      bazelOutputRoot = tempDir,
+      bazelOutputRootResolver = { tempDir },
       bazelTargetsLoader = {
         loadCounter.incrementAndGet()
         BazelTargetsInfo.TargetsFile(
@@ -87,6 +88,65 @@ internal class BazelCompilationContextTest {
     assertThat(baseProvider.useTestCompilationOutput).isFalse()
     assertThat(productionProvider.useTestCompilationOutput).isFalse()
     assertThat(testProvider.useTestCompilationOutput).isTrue()
+  }
+
+  @Test
+  fun `Bazel output root is resolved only when a library path is needed`(@TempDir tempDir: Path) {
+    val moduleName = "intellij.test.module"
+    val module = mock(JpsModule::class.java)
+    `when`(module.name).thenReturn(moduleName)
+
+    val resolveCounter = AtomicInteger()
+    val state = BazelModuleOutputProviderState(
+      modules = listOf(module),
+      projectHome = tempDir,
+      bazelOutputRootResolver = {
+        resolveCounter.incrementAndGet()
+        it.resolve("output-base")
+      },
+      bazelTargetsLoader = {
+        BazelTargetsInfo.TargetsFile(
+          modules = mapOf(
+            moduleName to BazelTargetsInfo.TargetsFileModuleDescription(
+              productionTargets = emptyList(),
+              productionJars = emptyList(),
+              testTargets = emptyList(),
+              testJars = emptyList(),
+              exports = emptyList(),
+              moduleLibraries = emptyMap(),
+            ),
+          ),
+          projectLibraries = emptyMap(),
+        )
+      },
+    )
+
+    // everything a dev build touches to lay out module outputs must work without an output base: under a copied
+    // classpath there is no `bazel-out` to derive one from, and under runfiles every path comes from a label
+    state.bazelTargetsMap
+    state.findRequiredModule(moduleName)
+    assertThat(resolveCounter.get()).isEqualTo(0)
+
+    assertThat(state.bazelOutputRoot).isEqualTo(tempDir.resolve("output-base"))
+    assertThat(state.bazelOutputRoot).isEqualTo(tempDir.resolve("output-base"))
+    assertThat(resolveCounter.get()).isEqualTo(1)
+  }
+
+  @Test
+  fun `Bazel output root is derived from the project convenience symlink`(@TempDir tempDir: Path) {
+    val outputBase = Files.createDirectories(tempDir.resolve("output-base"))
+    val bazelOut = Files.createDirectories(outputBase.resolve("execroot/_main/bazel-out"))
+    val projectHome = Files.createDirectories(tempDir.resolve("project"))
+    Files.createSymbolicLink(Files.createDirectories(projectHome.resolve("out")).resolve("bazel-out"), bazelOut)
+
+    assertThat(resolveBazelOutputRootFromProject(projectHome)).isEqualTo(outputBase.toRealPath())
+  }
+
+  @Test
+  fun `a missing convenience symlink points at bazel-build-all`(@TempDir tempDir: Path) {
+    assertThatThrownBy { resolveBazelOutputRootFromProject(tempDir) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("./bazel-build-all.cmd")
   }
 
   private fun testCompilationContext(project: JpsProject, tempDir: Path, options: BuildOptions): CompilationContext {

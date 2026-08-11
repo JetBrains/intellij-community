@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.openapi.application.PathManager
+import com.intellij.platform.bazel.runfiles.BazelRunfiles
 import com.intellij.util.io.URLUtil
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +27,7 @@ import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
+import java.io.IOException
 import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.inputStream
@@ -39,7 +41,6 @@ class BazelCompilationContext(
   @JvmField val outputProviderState: BazelModuleOutputProviderState = BazelModuleOutputProviderState(
     modules = delegate.project.modules,
     projectHome = computeProjectHomeForModuleOutputs(delegate.paths.projectHome),
-    bazelOutputRoot = requireNotNull(bazelOutputRoot) { "Bazel output root is not available" },
   ),
 ) : CompilationContext {
   override val outputProvider: ModuleOutputProvider by lazy {
@@ -172,6 +173,17 @@ class BazelTargetsInfo {
 @Internal
 fun isRunningFromBazelOut(): Boolean = bazelOutputRoot != null
 
+/**
+ * Whether a dev build must be assembled from Bazel outputs.
+ *
+ * [isRunningFromBazelOut] alone cannot answer this: it reads the path of the jar this class was loaded from, and
+ * that path stops pointing into `bazel-out` as soon as anything copies the jar - the AIR UI test daemon localizes
+ * its stable classpath tier onto guest-local storage. The runfiles environment survives such a copy, so it counts
+ * too; the two predicates used to disagree and the dev build silently took the JPS branch.
+ */
+@Internal
+fun isDevBuildBazelBacked(): Boolean = isRunningFromBazelOut() || BazelRunfiles.isRunningFromBazel
+
 internal val bazelOutputRoot: Path? by lazy {
   val url = BazelCompilationContext::class.java.getResource("${BazelCompilationContext::class.java.simpleName}.class")
             ?: error("Unable to get '${BazelCompilationContext::class.java.simpleName}.class' file from resources")
@@ -188,23 +200,56 @@ internal val bazelOutputRoot: Path? by lazy {
   }
 
   // resolving all symlinks should lead to the bazel output directory
-  val realPath = path.toRealPath()
-  val execRootIndex = realPath.indexOfFirst { it.pathString == "execroot" }
-  if (execRootIndex <= 0) {
-    error("Unable to find 'execroot' directory in the path: $realPath. class output: url=$url, path=$path")
+  val outputRoot = cutBazelOutputRoot(path.toRealPath()) {
+    "Unable to find 'execroot' directory in the path: $it. class output: url=$url, path=$path"
   }
-
-  val outputRoot = realPath.root.resolve(realPath.subpath(0, execRootIndex))
   Span.current().addEvent("Bazel output root: $outputRoot")
   return@lazy outputRoot
+}
+
+/**
+ * The Bazel output base for a build that is not resolving its inputs through runfiles.
+ *
+ * Prefers the jar-derived [bazelOutputRoot] and otherwise falls back to [resolveBazelOutputRootFromProject], so
+ * that a build whose own jars were copied out of `bazel-out` can still locate library jars.
+ */
+@Internal
+fun resolveBazelOutputRoot(projectHome: Path): Path = bazelOutputRoot ?: resolveBazelOutputRootFromProject(projectHome)
+
+/**
+ * Reads `<projectHome>/out/bazel-out`, the convenience symlink Bazel maintains for this project
+ * (`--symlink_prefix=out/`), which points at `<output base>/execroot/_main/bazel-out`. Derived from the project
+ * rather than from the running jar, so copying the jar cannot break it.
+ */
+@Internal
+fun resolveBazelOutputRootFromProject(projectHome: Path): Path {
+  val convenienceSymlink = projectHome.resolve("out/bazel-out")
+  val realPath = try {
+    convenienceSymlink.toRealPath()
+  }
+  catch (e: IOException) {
+    throw IllegalStateException(
+      "Cannot determine the Bazel output root: '$convenienceSymlink' does not exist. Locally please run ./bazel-build-all.cmd", e
+    )
+  }
+  return cutBazelOutputRoot(realPath) {
+    "Unable to find 'execroot' directory in the path: $it (resolved from $convenienceSymlink)"
+  }
+}
+
+/** Everything above `execroot` in a resolved Bazel path is the output base. */
+private inline fun cutBazelOutputRoot(realPath: Path, message: (Path) -> String): Path {
+  val execRootIndex = realPath.indexOfFirst { it.pathString == "execroot" }
+  check(execRootIndex > 0) { message(realPath) }
+  return realPath.root.resolve(realPath.subpath(0, execRootIndex))
 }
 
 val CompilationContextImpl.asBazelIfNeeded: CompilationContext
   get() = toBazelIfNeeded(scope = null)
 
-fun CompilationContextImpl.toBazelIfNeeded(scope: CoroutineScope?): CompilationContext {
+fun CompilationContextImpl.toBazelIfNeeded(scope: CoroutineScope?, isBazelBacked: Boolean = isRunningFromBazelOut()): CompilationContext {
   return when {
-    isRunningFromBazelOut() -> BazelCompilationContext(delegate = this, scope = scope)
+    isBazelBacked -> BazelCompilationContext(delegate = this, scope = scope)
     else -> this
   }
 }

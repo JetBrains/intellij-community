@@ -17,10 +17,23 @@ import kotlin.io.path.isRegularFile
 class BazelModuleOutputProviderState(
   modules: List<JpsModule>,
   @JvmField val projectHome: Path,
-  @JvmField val bazelOutputRoot: Path,
+  bazelOutputRootResolver: (Path) -> Path = ::resolveBazelOutputRoot,
   bazelTargetsLoader: (Path) -> BazelTargetsInfo.TargetsFile = BazelTargetsInfo::loadBazelTargetsJson,
 ) {
   private val index = ModuleOutputProviderIndex(modules)
+
+  /**
+   * Demanded only to locate library jars outside of a Bazel run - under runfiles every path comes from a label.
+   * Resolving it lazily is what lets a build whose own jars were copied out of `bazel-out` still use Bazel outputs.
+   */
+  private val lazyBazelOutputRoot = lazy { bazelOutputRootResolver(projectHome) }
+
+  val bazelOutputRoot: Path
+    get() = lazyBazelOutputRoot.value
+
+  /** For diagnostics only - reporting must not be what forces [bazelOutputRoot] to resolve. */
+  internal val resolvedBazelOutputRoot: Path?
+    get() = if (lazyBazelOutputRoot.isInitialized()) lazyBazelOutputRoot.value else null
 
   val modules: List<JpsModule>
     get() = index.modules
@@ -53,7 +66,7 @@ internal class BazelModuleOutputProvider(
     state = BazelModuleOutputProviderState(
       modules = modules,
       projectHome = projectHome,
-      bazelOutputRoot = bazelOutputRoot,
+      bazelOutputRootResolver = { bazelOutputRoot },
     ),
     scope = scope,
     useTestCompilationOutput = useTestCompilationOutput,
@@ -160,7 +173,7 @@ internal class BazelModuleOutputProvider(
 
   override fun getModuleImlFile(module: JpsModule): Path = state.getModuleImlFile(module)
 
-  override fun toString(): String = "BazelModuleOutputProvider(projectHome=${state.projectHome}, bazelOutputRoot=${state.bazelOutputRoot})"
+  override fun toString(): String = "BazelModuleOutputProvider(projectHome=${state.projectHome}, bazelOutputRoot=${state.resolvedBazelOutputRoot ?: "<not resolved>"})"
 }
 
 /**
