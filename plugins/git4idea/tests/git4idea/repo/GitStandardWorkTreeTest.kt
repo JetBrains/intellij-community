@@ -1,25 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
-import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.testFramework.junit5.TestApplication
 import git4idea.branch.GitBranchUtil
+import git4idea.test.GitPlatformTestContext
 import git4idea.test.cd
 import git4idea.test.git
 import git4idea.test.initRepo
 import git4idea.test.last
 import git4idea.test.tac
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
 
-class GitStandardWorkTreeTest : GitWorkTreeBaseTest() {
-  override fun initMainRepo() : Path {
+@TestApplication
+internal class GitStandardWorkTreeTest : GitWorkTreeBaseTest() {
+
+  override fun GitPlatformTestContext.initMainRepo(): Path {
     val mainDir = testNioRoot.resolve("main")
     Files.createDirectories(mainDir)
     initRepo(project, mainDir, true)
     return mainDir
   }
 
-  fun `test local branches`() {
+  @Test
+  fun `test local branches`(): Unit = with(context) {
     cd(myMainRoot)
     val masterHead = last()
     git("checkout -b feature")
@@ -28,14 +34,16 @@ class GitStandardWorkTreeTest : GitWorkTreeBaseTest() {
     myRepo.update()
 
     val branches = myRepo.branches
-    val expectedBranches = listOf("master", "feature", "project") // 'project' is created automatically by `git worktree add`
-    assertSameElements("Local branches are identified incorrectly",
-        branches.localBranches.map { it.name }, expectedBranches)
+    // 'project' is created automatically by `git worktree add`
+    assertThat(branches.localBranches.map { it.name })
+      .describedAs("Local branches are identified incorrectly")
+      .containsExactlyInAnyOrder("master", "feature", "project")
     assertBranchHash(masterHead, branches, "master")
     assertBranchHash(featureHead, branches, "feature")
   }
 
-  fun `test remote branches`() {
+  @Test
+  fun `test remote branches`(): Unit = with(context) {
     setUpRemote()
 
     val masterHead = last()
@@ -46,35 +54,37 @@ class GitStandardWorkTreeTest : GitWorkTreeBaseTest() {
     myRepo.update()
 
     val branches = myRepo.branches
-    assertSameElements("Remote branches are identified incorrectly",
-                       branches.remoteBranches.map { it.nameForLocalOperations },
-                       listOf("origin/master", "origin/feature"))
+    assertThat(branches.remoteBranches.map { it.nameForLocalOperations })
+      .describedAs("Remote branches are identified incorrectly")
+      .containsExactlyInAnyOrder("origin/master", "origin/feature")
     assertBranchHash(masterHead, branches, "origin/master")
     assertBranchHash(featureHead, branches, "origin/feature")
   }
 
-  fun `test HEAD`() {
+  @Test
+  fun `test HEAD`(): Unit = with(context) {
     cd(myRepo)
     git("checkout -b feature")
     val featureHead = tac("f.txt")
     myRepo.update()
 
-    assertEquals("Incorrect current branch", "feature", myRepo.currentBranchName)
-    assertEquals("Incorrect current revision", featureHead, myRepo.currentRevision)
+    assertThat(myRepo.currentBranchName).describedAs("Incorrect current branch").isEqualTo("feature")
+    assertThat(myRepo.currentRevision).describedAs("Incorrect current revision").isEqualTo(featureHead)
   }
 
-  fun `test tracked branch`() {
+  @Test
+  fun `test tracked branch`(): Unit = with(context) {
     setUpRemote()
 
     myRepo.update()
 
     val masterBranch = myRepo.branches.findLocalBranch("master")!!
     val trackInfo = GitBranchUtil.getTrackInfoForBranch(myRepo, masterBranch)!!
-    assertEquals("origin/master", trackInfo.remoteBranch.nameForLocalOperations)
+    assertThat(trackInfo.remoteBranch.nameForLocalOperations).isEqualTo("origin/master")
   }
 
-  private fun setUpRemote(): String {
-    cd(testRoot)
+  private fun GitPlatformTestContext.setUpRemote(): String {
+    cd(testNioRoot)
     git("clone --bare $myMainRoot parent.git")
     cd(myMainRoot)
     val parentPath = testNioRoot.resolve("parent.git").toString()
