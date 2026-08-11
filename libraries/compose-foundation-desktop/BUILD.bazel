@@ -17,12 +17,16 @@ jvm_library(
         # do not sort,
         "//libraries/compose-runtime-desktop",
         "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
+        "@lib//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-desktop",
+        "@lib//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-compose-desktop",
     ],
     runtime_deps = [
         # do not sort,
         "//libraries/skiko",
         "//libraries/compose-runtime-desktop",
         "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
+        "@lib//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-desktop",
+        "@lib//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-compose-desktop",
     ],
 )
 
@@ -40,6 +44,8 @@ jvm_library(
         "//libraries/compose-runtime-desktop",
         "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
         "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
+        "@lib//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-desktop",
+        "@lib//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-compose-desktop",
     ],
     runtime_deps = [
         # do not sort,

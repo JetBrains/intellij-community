@@ -19,6 +19,7 @@ create_kotlinc_options(
         "androidx.compose.foundation.ExperimentalFoundationApi",
         "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
         "org.jetbrains.jewel.foundation.InternalJewelApi",
+        "androidx.compose.runtime.tooling.ComposeToolingApi",
     ],
     x_context_parameters = True,
     x_explicit_api_mode = "strict",
