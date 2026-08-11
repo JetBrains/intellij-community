@@ -21,6 +21,7 @@
 
   "allow": [
     ["./plugins/air/scripts/bt.cmd"],
+    ["./platform/daemon/devex/latest-nighly-build-number.sh"],
     ["./tests.cmd"],
     ["./community/tests.cmd"],
     ["./bazel.cmd", "build"],
