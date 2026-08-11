@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.ex.DocumentMagicCore
 import com.intellij.openapi.editor.ex.DocumentMutator
 import com.intellij.openapi.editor.ex.RangeMarkerStorage
 import com.intellij.openapi.editor.ex.DocumentSettings
-import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.DocumentSnapshot
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.concurrent.Volatile
 
@@ -52,7 +52,7 @@ internal class DocumentMagicCoreImpl private constructor(
   @Volatile private var frozenElf: FrozenDocument? = null
   @Volatile private var frozenReal: FrozenDocument? = null
 
-  override fun snapshot(): DocumentText {
+  override fun snapshot(): DocumentSnapshot {
     val snapshot = this.snapshot
     if (!snapshot.isDirty) {
       // it is a performance optimization for frequent path in hot method,
@@ -127,7 +127,7 @@ internal class DocumentMagicCoreImpl private constructor(
   }
 
   private fun getFrozen(isElf: Boolean): FrozenDocument {
-    var snapshot: DocumentText
+    var snapshot: DocumentSnapshot
     var frozen: FrozenDocument?
     if (isElf) {
       snapshot = this.snapshot.elf
@@ -171,7 +171,7 @@ internal class DocumentMagicCoreImpl private constructor(
   }
 
   private inner class DocumentElfCore : DocumentCore {
-    override fun snapshot(): DocumentText {
+    override fun snapshot(): DocumentSnapshot {
       // TODO: hot method, optimize with cachedElf field
       return this@DocumentMagicCoreImpl.snapshot.elf
     }
@@ -206,7 +206,7 @@ internal class DocumentMagicCoreImpl private constructor(
   }
 
   private inner class DocumentRealCore : DocumentCore {
-    override fun snapshot(): DocumentText {
+    override fun snapshot(): DocumentSnapshot {
       return this@DocumentMagicCoreImpl.snapshot.real
     }
 
@@ -241,40 +241,40 @@ internal class DocumentMagicCoreImpl private constructor(
 
   private inner class LiveElf : CharSequence {
     override val length: Int
-      get() = this@DocumentMagicCoreImpl.snapshot.elf.length()
+      get() = this@DocumentMagicCoreImpl.snapshot.elf.text().length()
 
     override fun get(index: Int): Char {
-      return this@DocumentMagicCoreImpl.snapshot.elf.chars()[index]
+      return this@DocumentMagicCoreImpl.snapshot.elf.text().chars()[index]
     }
 
     override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
-      return this@DocumentMagicCoreImpl.snapshot.elf.chars().subSequence(startIndex, endIndex)
+      return this@DocumentMagicCoreImpl.snapshot.elf.text().chars().subSequence(startIndex, endIndex)
     }
 
     override fun toString(): String {
-      return this@DocumentMagicCoreImpl.snapshot.elf.string()
+      return this@DocumentMagicCoreImpl.snapshot.elf.text().string()
     }
   }
 
   private inner class LiveReal : CharSequence {
     override val length: Int
-      get() = this@DocumentMagicCoreImpl.snapshot.real.length()
+      get() = this@DocumentMagicCoreImpl.snapshot.real.text().length()
 
     override fun get(index: Int): Char {
-      return this@DocumentMagicCoreImpl.snapshot.real.chars()[index]
+      return this@DocumentMagicCoreImpl.snapshot.real.text().chars()[index]
     }
 
     override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
-      return this@DocumentMagicCoreImpl.snapshot.real.chars().subSequence(startIndex, endIndex)
+      return this@DocumentMagicCoreImpl.snapshot.real.text().chars().subSequence(startIndex, endIndex)
     }
 
     override fun toString(): String {
-      return this@DocumentMagicCoreImpl.snapshot.real.string()
+      return this@DocumentMagicCoreImpl.snapshot.real.text().string()
     }
   }
 
   private inner class DocumentRealMutatorImpl : DocumentRealMutator(settingsReal, dispatcher, guardedBlocks) {
-    override fun getSnapshot(): DocumentText {
+    override fun getSnapshot(): DocumentSnapshot {
       return this@DocumentMagicCoreImpl.snapshot.real
     }
 
@@ -296,7 +296,7 @@ internal class DocumentMagicCoreImpl private constructor(
   }
 
   private inner class DocumentElfMutatorImpl : DocumentElfMutator(settingsElf, dispatcher, guardedBlocks) {
-    override fun getSnapshot(): DocumentText {
+    override fun getSnapshot(): DocumentSnapshot {
       return this@DocumentMagicCoreImpl.snapshot.elf
     }
 
@@ -324,7 +324,7 @@ internal class DocumentMagicCoreImpl private constructor(
     fun createCore(chars: CharSequence, acceptSlashR: Boolean, forUseInNonAWTThread: Boolean): DocumentCore {
       val settingsReal = DocumentSettingsImpl(!forUseInNonAWTThread, acceptSlashR, chars)
       val settingsElf = DocumentElfSettingsImpl(settingsReal)
-      val snapshot = SnapshotSnapshot.newClean(DocumentTextImpl(chars))
+      val snapshot = SnapshotSnapshot.newClean(DocumentSnapshotImpl(DocumentTextImpl(chars)))
       return DocumentMagicCoreImpl(snapshot, settingsElf, settingsReal)
     }
 

@@ -112,9 +112,6 @@ interface DocumentText {
   @Contract(pure = true)
   fun lineIterator(): LineIterator
 
-  @Contract(pure = true)
-  fun dumpState(): String
-
   /**
    * Returns snapshot with specified `newModStamp`.
    *
@@ -145,5 +142,5 @@ interface DocumentText {
    * `[patch.startOffset, patch.endOffset)` with [DocumentTextPatch.newFragment].
    */
   @Contract(pure = true)
-  fun withText(patch: DocumentTextPatch): DocumentText
+  fun withPatch(patch: DocumentTextPatch): DocumentText
 }

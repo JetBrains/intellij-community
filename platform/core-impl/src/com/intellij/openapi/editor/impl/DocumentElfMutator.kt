@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentSettings
-import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.util.DocumentEventUtil
@@ -79,7 +79,7 @@ internal abstract class DocumentElfMutator(
             syncPatch(
               change.changeEvent,
               snapshotBefore,
-              change.snapshotAfter.chars(),
+              change.snapshotAfter.text().chars(),
               DocumentModStamp.next(),
               false, // TODO: why false?
             ),
@@ -161,7 +161,7 @@ internal abstract class DocumentElfMutator(
     )
   }
 
-  final override fun updateAndGet(update: UnaryOperator<DocumentText>): DocumentText {
+  final override fun updateAndGet(update: UnaryOperator<DocumentSnapshot>): DocumentSnapshot {
     while (true) {
       val expect = getSnapshotSnapshot()
       val newElf = update.apply(expect.elf)
@@ -174,12 +174,12 @@ internal abstract class DocumentElfMutator(
   }
 
   final override fun changeText(
-    snapshotBefore: DocumentText,
+    snapshotBefore: DocumentSnapshot,
     changeEvent: DocumentEvent,
     patch: DocumentTextPatch,
-  ): DocumentText {
+  ): DocumentSnapshot {
     assertNotNestedModification()
-    val snapshotAfter: DocumentText
+    val snapshotAfter: DocumentSnapshot
     textChangeInProgress = true
     try {
       snapshotAfter = dispatcher.withFiringElfTextUpdate(revertingChangeEvent, changeEvent) {
@@ -207,14 +207,10 @@ internal abstract class DocumentElfMutator(
   }
 
   private fun updateText(
-    snapshotBefore: DocumentText,
+    snapshotBefore: DocumentSnapshot,
     patch: DocumentTextPatch,
-  ): DocumentText {
-    return updateAndGet { latest ->
-      // modStamp or other metadata could be changed during before-change listeners, should merge it into final snapshot
-      val merged = snapshotBefore.withMetadata(latest)
-      merged.withText(patch)
-    }
+  ): DocumentSnapshot {
+    return updateAndGet { latest -> patched(snapshotBefore, latest, patch) }
   }
 
   private fun revertChange(change: ElfTextChange) {
@@ -223,18 +219,19 @@ internal abstract class DocumentElfMutator(
     // whose nested-modification guard rejects elf text changes from listeners, and elf metadata cannot change either —
     // setModStamp/clearLineFlags are unsupported for elf, and updateText merges the latest metadata at CAS time anyway.
     val currentSnapshot = getSnapshot()
+    val currentText = currentSnapshot.text()
     val initialStartOffset = if (eventToRevert is DocumentEventImpl) eventToRevert.initialStartOffset else eventToRevert.offset
     val changeEvent = DocumentEventImpl(
       eventToRevert.document,
       eventToRevert.offset,
       eventToRevert.newFragment,
       eventToRevert.oldFragment,
-      currentSnapshot.modStamp(),
+      currentText.modStamp(),
       eventToRevert.isWholeTextReplaced,
       initialStartOffset,
       eventToRevert.newLength,
       getRevertMoveOffset(eventToRevert),
-      currentSnapshot.length(),
+      currentText.length(),
     )
     revertingChangeEvent = eventToRevert
     try {
@@ -244,7 +241,7 @@ internal abstract class DocumentElfMutator(
         syncPatch(
           changeEvent,
           currentSnapshot,
-          change.snapshotBefore.chars(),
+          change.snapshotBefore.text().chars(),
           DocumentModStamp.next(),
           change.patch.clearLineFlags(),
         ),
@@ -261,7 +258,7 @@ internal abstract class DocumentElfMutator(
    */
   private fun syncPatch(
     changeEvent: DocumentEvent,
-    snapshotBefore: DocumentText,
+    snapshotBefore: DocumentSnapshot,
     wholeText: ImmutableCharSequence,
     newModStamp: Long,
     clearLineFlags: Boolean,
@@ -279,7 +276,7 @@ internal abstract class DocumentElfMutator(
     if (changeEvent.isWholeTextReplaced) {
       return DocumentTextPatch.complex(
         startOffset = 0,
-        endOffset = snapshotBefore.length(),
+        endOffset = snapshotBefore.text().length(),
         newFragment = wholeText,
         newModStamp = newModStamp,
         clearLineFlags = true,

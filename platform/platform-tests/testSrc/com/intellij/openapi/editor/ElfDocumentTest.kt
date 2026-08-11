@@ -1271,7 +1271,7 @@ class ElfDocumentTest {
   }
 
   private fun getSnapshot(document: DocumentImpl): DocumentText {
-    return document.core.snapshot()
+    return document.core.snapshot().text()
   }
 
   private fun withElfScope(action: () -> Unit) {

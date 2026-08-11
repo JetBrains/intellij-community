@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.util.DocumentEventUtil
@@ -120,7 +120,8 @@ internal abstract class ElfRealSync(
     return rebasedChanges
   }
 
-  private fun rebaseElfTextChange(change: ElfTextChange, real: DocumentText, realSpans: List<RealSpan>): ElfTextChange? {
+  private fun rebaseElfTextChange(change: ElfTextChange, real: DocumentSnapshot, realSpans: List<RealSpan>): ElfTextChange? {
+    val realText = real.text()
     val changeEvent = change.changeEvent
     if (DocumentEventUtil.isMoveInsertion(changeEvent) || DocumentEventUtil.isMoveDeletion(changeEvent)) {
       // TODO: Rebase move insertion/deletion as one paired move. Rebasing either half independently can corrupt move offsets/text.
@@ -131,10 +132,10 @@ internal abstract class ElfRealSync(
       return null
     }
     val endOffset = startOffset + changeEvent.oldLength
-    if (startOffset < 0 || endOffset > real.length()) {
+    if (startOffset < 0 || endOffset > realText.length()) {
       return null
     }
-    if (!matchesOldFragment(real.chars(), startOffset, changeEvent.oldFragment)) {
+    if (!matchesOldFragment(realText.chars(), startOffset, changeEvent.oldFragment)) {
       return null
     }
     val initialStartOffset = if (changeEvent is DocumentEventImpl) {
@@ -148,12 +149,12 @@ internal abstract class ElfRealSync(
       startOffset,
       changeEvent.oldFragment,
       changeEvent.newFragment,
-      real.modStamp(),
+      realText.modStamp(),
       changeEvent.isWholeTextReplaced,
       initialStartOffset,
       initialOldLength,
       startOffset,
-      real.length(),
+      realText.length(),
     )
     return ElfTextChange(
       real,
@@ -175,8 +176,9 @@ internal abstract class ElfRealSync(
     )
   }
 
-  private fun computeSnapshotAfter(change: ElfTextChange): DocumentText {
-    return change.snapshotBefore.withText(change.patch)
+  private fun computeSnapshotAfter(change: ElfTextChange): DocumentSnapshot {
+    val snapshotBefore = change.snapshotBefore
+    return snapshotBefore.withText(snapshotBefore.text().withPatch(change.patch))
   }
 
   private fun matchesOldFragment(wholeText: CharSequence, startOffset: Int, oldFragment: CharSequence): Boolean {
@@ -269,8 +271,8 @@ internal abstract class ElfRealSync(
   }
 
   private fun checkTextConsistency(expect: SnapshotSnapshot) {
-    val real = expect.real.chars()
-    val elf = expect.elf.chars()
+    val real = expect.real.text().chars()
+    val elf = expect.elf.text().chars()
     check(real === elf || real.hashCode() == elf.hashCode()) {
       "inconsistent text detected, which leads to text change without notification to listeners"
     }

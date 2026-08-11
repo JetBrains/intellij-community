@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentMutator
 import com.intellij.openapi.editor.ex.DocumentSettings
-import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -28,15 +28,15 @@ internal abstract class DocumentMutatorImpl(
 ) : DocumentMutator {
   @Volatile private var textChangeInProgress = false
 
-  protected abstract fun getSnapshot(): DocumentText
-  protected abstract fun updateAndGet(update: UnaryOperator<DocumentText>): DocumentText
+  protected abstract fun getSnapshot(): DocumentSnapshot
+  protected abstract fun updateAndGet(update: UnaryOperator<DocumentSnapshot>): DocumentSnapshot
 
   override fun setModStamp(newModStamp: Long, incrementModSequence: Boolean) {
-    updateAndGet { it.withModStamp(newModStamp, incrementModSequence) }
+    updateAndGet { it.withText(it.text().withModStamp(newModStamp, incrementModSequence)) }
   }
 
   override fun clearLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray) {
-    updateAndGet { it.withClearedLineFlags(startLine, endLine, exceptLines) }
+    updateAndGet { it.withText(it.text().withClearedLineFlags(startLine, endLine, exceptLines)) }
   }
 
   override fun insertString(
@@ -45,7 +45,7 @@ internal abstract class DocumentMutatorImpl(
     insertString: CharSequence,
   ) {
     val snapshot = getSnapshot()
-    assertBounds(insertOffset, snapshot.length())
+    assertBounds(insertOffset, snapshot.text().length())
     assertWriteAccess(hostDocument)
     assertValidSeparators(insertString)
     if (insertString.isEmpty()) {
@@ -88,7 +88,7 @@ internal abstract class DocumentMutatorImpl(
       hostDocument,
       snapshot,
       0,
-      snapshot.length(),
+      snapshot.text().length(),
       0,
       newWholeText,
       newModStamp,
@@ -106,7 +106,7 @@ internal abstract class DocumentMutatorImpl(
           hostDocument,
           snapshot,
           0,
-          snapshot.length(),
+          snapshot.text().length(),
           0,
           newWholeText,
           DocumentModStamp.next(),
@@ -132,7 +132,7 @@ internal abstract class DocumentMutatorImpl(
     assert(!srcRange.containsOffset(dstOffset)) {
       "Can't perform text move from range [$srcStartOffset; $srcEndOffset) to offset $dstOffset"
     }
-    val replacement = snapshot.string(srcRange)
+    val replacement = snapshot.text().string(srcRange)
     val shift = if (dstOffset < srcStartOffset) srcEndOffset - srcStartOffset else 0
     // a pair of insert/remove modifications
     val newSnapshot = replaceString(
@@ -183,16 +183,16 @@ internal abstract class DocumentMutatorImpl(
 
   private fun deleteString(
     hostDocument: Document,
-    snapshot: DocumentText,
+    snapshot: DocumentSnapshot,
     startOffset: Int,
     endOffset: Int,
-  ): DocumentText {
+  ): DocumentSnapshot {
     assertBounds(snapshot, startOffset, endOffset)
     assertWriteAccess(hostDocument)
     if (startOffset == endOffset) {
       return snapshot
     }
-    val oldText: ImmutableCharSequence = snapshot.chars()
+    val oldText: ImmutableCharSequence = snapshot.text().chars()
     val oldString: CharSequence = oldText.subtext(startOffset, endOffset)
     return changeText(
       hostDocument,
@@ -214,7 +214,7 @@ internal abstract class DocumentMutatorImpl(
 
   private fun replaceString(
     hostDocument: Document,
-    snapshot: DocumentText,
+    snapshot: DocumentSnapshot,
     startOffset: Int,
     endOffset: Int,
     moveOffset: Int,
@@ -222,7 +222,7 @@ internal abstract class DocumentMutatorImpl(
     newModStamp: Long,
     wholeText: Boolean,
     clearLineFlags: Boolean,
-  ): DocumentText {
+  ): DocumentSnapshot {
     assertBounds(snapshot, startOffset, endOffset)
     assertWriteAccess(hostDocument)
     assertValidSeparators(s)
@@ -233,7 +233,7 @@ internal abstract class DocumentMutatorImpl(
       )
     }
     val replacement = OptimizedTextReplacement(
-      snapshot.chars(),
+      snapshot.text().chars(),
       startOffset,
       endOffset,
       moveOffset,
@@ -259,27 +259,28 @@ internal abstract class DocumentMutatorImpl(
 
   private fun changeText(
     hostDocument: Document,
-    snapshotBefore: DocumentText,
+    snapshotBefore: DocumentSnapshot,
     patch: DocumentTextPatch,
     startOffset: Int,
     endOffset: Int,
     oldFragment: CharSequence,
     newFragment: CharSequence,
     wholeTextReplaced: Boolean,
-  ): DocumentText {
+  ): DocumentSnapshot {
+    val textBefore = snapshotBefore.text()
     val changeEvent: DocumentEvent = DocumentEventImpl(
       hostDocument,
       startOffset,
       oldFragment,
       newFragment,
-      snapshotBefore.modStamp(),
+      textBefore.modStamp(),
       wholeTextReplaced,
       patch.originStartOffset(),
       patch.originEndOffset() - patch.originStartOffset(),
       patch.moveOffset(),
-      snapshotBefore.length(),
+      textBefore.length(),
     )
-    assertChangeAllowed(changeEvent, endOffset, snapshotBefore.length())
+    assertChangeAllowed(changeEvent, endOffset, textBefore.length())
     val snapshotAfter = changeText(snapshotBefore, changeEvent, patch)
     if (newFragment.length > oldFragment.length) {
       return trimToSize(hostDocument, snapshotAfter)
@@ -288,21 +289,16 @@ internal abstract class DocumentMutatorImpl(
   }
 
   protected open fun changeText(
-    snapshotBefore: DocumentText,
+    snapshotBefore: DocumentSnapshot,
     changeEvent: DocumentEvent,
     patch: DocumentTextPatch,
-  ): DocumentText {
+  ): DocumentSnapshot {
     assertNotNestedModification()
-    val snapshotAfterChange: DocumentText
+    val snapshotAfterChange: DocumentSnapshot
     textChangeInProgress = true
     try {
       snapshotAfterChange = dispatcher.withFiringTextUpdate(changeEvent) {
-        updateAndGet { latest ->
-          // modStamp or other metadata could be changed during fireBeforeTextChange,
-          // should merge it into final snapshot
-          val merged = snapshotBefore.withMetadata(latest)
-          merged.withText(patch)
-        }
+        updateAndGet { latest -> patched(snapshotBefore, latest, patch) }
       }
     } finally {
       textChangeInProgress = false
@@ -310,10 +306,29 @@ internal abstract class DocumentMutatorImpl(
     return snapshotAfterChange
   }
 
-  private fun trimToSize(hostDocument: Document, snapshot: DocumentText): DocumentText {
+  /**
+   * Returns [latest] carrying the text of [snapshotBefore] updated by [patch].
+   *
+   * modStamp or other metadata could be changed during before-change listeners,
+   * so the metadata of [latest] is merged into the text the change is based on.
+   */
+  protected fun patched(
+    snapshotBefore: DocumentSnapshot,
+    latest: DocumentSnapshot,
+    patch: DocumentTextPatch,
+  ): DocumentSnapshot {
+    val merged = snapshotBefore.text().withMetadata(latest.text())
+    return latest.withText(merged.withPatch(patch))
+  }
+
+  private fun trimToSize(hostDocument: Document, snapshot: DocumentSnapshot): DocumentSnapshot {
     val bufferSize = settings.cycleBufferSize()
-    if (bufferSize > 0 && snapshot.length() > bufferSize) {
-      return deleteString(hostDocument, snapshot, 0, snapshot.length() - bufferSize)
+    if (bufferSize <= 0) {
+      return snapshot
+    }
+    val length = snapshot.text().length()
+    if (length > bufferSize) {
+      return deleteString(hostDocument, snapshot, 0, length - bufferSize)
     }
     return snapshot
   }
@@ -405,8 +420,8 @@ internal abstract class DocumentMutatorImpl(
   }
 
   @Suppress("ConvertTwoComparisonsToRangeCheck")
-  private fun assertBounds(snapshot: DocumentText, startOffset: Int, endOffset: Int) {
-    val textLength = snapshot.length()
+  private fun assertBounds(snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int) {
+    val textLength = snapshot.text().length()
     if (startOffset < 0 || startOffset > textLength) {
       throw IndexOutOfBoundsException("Wrong startOffset: $startOffset; documentLength: $textLength")
     }

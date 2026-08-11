@@ -11,7 +11,7 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertSame
 
 @TestApplication
-internal class DocumentSnapshotTest {
+internal class DocumentTextTest {
 
   @Test
   fun `withMetadata of the same snapshot is a no-op`() {
@@ -32,7 +32,7 @@ internal class DocumentSnapshotTest {
   @Test
   fun `withMetadata with a different text keeps this text and takes the other metadata`() {
     val base = snapshot("a\nb")
-    val changed = base.withText(
+    val changed = base.withPatch(
       DocumentTextPatch.simple(
         startOffset = 3,
         endOffset = 3,
@@ -53,6 +53,6 @@ internal class DocumentSnapshotTest {
   }
 
   private fun snapshot(text: String): DocumentText {
-    return DocumentImpl(text).core.snapshot()
+    return DocumentImpl(text).core.snapshot().text()
   }
 }

@@ -20,7 +20,7 @@ interface DocumentCore {
    * field read, without extra indirection, allocation, or synchronization
    */
   @Contract(pure = true)
-  fun snapshot(): DocumentText
+  fun snapshot(): DocumentSnapshot
 
   /**
    * Returns a live character sequence backed by the current document [snapshot]

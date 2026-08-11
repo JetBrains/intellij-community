@@ -118,25 +118,6 @@ internal class DocumentTextImpl private constructor(
     return getLineSet().createIterator()
   }
 
-  override fun dumpState(): String {
-    val dump = StringBuilder()
-    dump.append("intervals:\n")
-    val lineCount: Int = lineCount()
-    for (line in 0..<lineCount) {
-      dump
-        .append(line)
-        .append(": ")
-        .append(lineStartOffset(line))
-        .append("-")
-        .append(lineEndOffset(line))
-        .append(", ")
-    }
-    if (lineCount > 0) {
-      dump.setLength(dump.length - 2)
-    }
-    return dump.toString()
-  }
-
   override fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentText {
     val newModSequence = if (incrementModSeq) nextModSequence() else modSequence
     if (modStamp == newModStamp && modSequence == newModSequence) {
@@ -192,7 +173,7 @@ internal class DocumentTextImpl private constructor(
     )
   }
 
-  override fun withText(patch: DocumentTextPatch): DocumentTextImpl {
+  override fun withPatch(patch: DocumentTextPatch): DocumentTextImpl {
     val startOffset = patch.startOffset()
     val endOffset = patch.endOffset()
     val newFragment = patch.newFragment()

@@ -69,9 +69,9 @@ public final class DocumentInternalUtil {
     return column;
   }
 
-  public static @NotNull DocumentText getDocumentSnapshot(@NotNull Document document) {
+  public static @NotNull DocumentText getDocumentText(@NotNull Document document) {
     if (document instanceof DocumentImpl) {
-      return ((DocumentImpl)document).getCore().snapshot();
+      return ((DocumentImpl)document).getCore().snapshot().text();
     }
     return new DocumentTextImpl(document.getImmutableCharSequence());
   }
