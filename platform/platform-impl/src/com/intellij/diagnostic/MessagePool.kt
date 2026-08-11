@@ -130,6 +130,8 @@ object MessagePool {
   }
 
   private suspend fun doAddMessage(message: AbstractMessage) {
+    if (myErrors.lastOrNull() == message) return // already added
+
     val beforeEvent = BeforeEntryAddedEvent(message)
     for (listener in myAdvisors) {
       if (!listener.beforeEntryAdded(beforeEvent)) {

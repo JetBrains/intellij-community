@@ -13,9 +13,12 @@ import org.jetbrains.annotations.Nullable;
 public class PluginUtilImpl implements PluginUtil {
   @Override
   public @Nullable PluginId findPluginId(@NotNull Throwable t) {
-    // freezes have precomputed guilty plugin
-    if (t instanceof PluginCauseException) return ((PluginCauseException)t).getProblematicPluginId();
     if (t instanceof RemoteSerializedThrowable) return ((RemoteSerializedThrowable)t).getPluginId();
+
+    if (t instanceof PluginCauseException) { // freezes may have precomputed guilty plugin
+      PluginId problematicPluginId = ((PluginCauseException)t).getProblematicPluginId();
+      if (problematicPluginId != null) return problematicPluginId;
+    }
 
     PluginSet pluginSet = PluginManagerCore.getPluginSetOrNull();
     Pair<PluginId, IdeaPluginDescriptorImpl> pair = PluginUtils.findPlugin(t, pluginSet);

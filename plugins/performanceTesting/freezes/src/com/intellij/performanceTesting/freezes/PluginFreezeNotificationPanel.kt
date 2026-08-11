@@ -15,7 +15,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.UnhandledReportSinkService
 import com.intellij.openapi.diagnostic.UnhandledReportSinkService.PluginFreezeReportData
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.IntelliJProjectUtil
@@ -35,33 +35,33 @@ import java.util.Collections
 import java.util.function.Function
 import javax.swing.JComponent
 
+private val LOG = fileLogger()
+
 internal class PluginFreezeNotifier : FreezeNotifier {
   override fun notifyFreeze(event: LogMessage, currentDumps: Collection<ThreadDump>, reportDir: Path, durationMs: Long) {
     val freezeWatcher = PluginFreezeWatcher.getInstance()
 
     val freezeReason = freezeWatcher.getFreezeReason()
-    if (freezeReason != null) return // still have previous reason shown to user
+    if (freezeReason != null) {
+      LOG.info("Still have previous reason shown to user, ignoring new one")
+      return
+    }
 
     countFreezes()
 
-    for (dump in currentDumps) {
-      val reason = freezeWatcher.dumpedThreads(event, dump, durationMs)
-      if (reason != null) {
-        LifecycleUsageTriggerCollector.pluginFreezeDetected(reason.pluginId, durationMs, reason.reportToUser)
-        thisLogger().warn("Identified UI freeze in plugin ${reason.pluginId} for $durationMs ms")
-        if (reason.reportToUser) {
-          updateUi()
-        }
-
-        UnhandledReportSinkService.getInstance()?.report(PluginFreezeReportData(
-          reason.pluginId,
-          reason.event.message,
-          durationMs,
-          reason.event.allAttachments,
-          currentDumps
-        ))
-        break
+    val reason = freezeWatcher.processFreeze(event, durationMs)
+    if (reason != null) {
+      if (reason.reportToUser) {
+        updateUi()
       }
+
+      UnhandledReportSinkService.getInstance()?.report(PluginFreezeReportData(
+        reason.pluginId,
+        reason.event.message,
+        durationMs,
+        reason.event.allAttachments,
+        currentDumps
+      ))
     }
   }
 
@@ -75,12 +75,12 @@ internal class PluginFreezeNotifier : FreezeNotifier {
     val props = PropertiesComponent.getInstance()
     val currentCount = props.getInt(FREEZE_COUNT_KEY, 0)
     if (currentCount > FREEZE_THRESHOLD) {
-      thisLogger().debug("Freeze count exceeded threshold, do not count further")
+      LOG.debug("Freeze count exceeded threshold, do not count further")
       return
     }
 
     props.setValue(FREEZE_COUNT_KEY, currentCount + 1, 0)
-    thisLogger().debug("Freeze detected, incrementing freeze count for promo")
+    LOG.debug("Freeze detected, incrementing freeze count for promo")
   }
 }
 

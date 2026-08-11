@@ -3,9 +3,9 @@ package com.intellij.performanceTesting.freezes
 
 import com.intellij.diagnostic.FreezeAnalysis
 import com.intellij.diagnostic.LogMessage
-import com.intellij.diagnostic.ThreadDump
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginUtil
 import com.intellij.ide.plugins.PluginUtils
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
@@ -34,8 +34,8 @@ internal class PluginFreezeWatcher {
     currentFreeze = null
   }
 
-  fun dumpedThreads(event: LogMessage, dump: ThreadDump, durationMs: Long): FreezeReason? {
-    val frozenPlugin = analyzeFreezeCausingPlugin(dump.rawDump)?.plugin ?: return null
+  fun processFreeze(event: LogMessage, durationMs: Long): FreezeReason? {
+    val frozenPlugin = PluginUtil.getInstance().findPluginId(event.throwable) ?: return null
     val pluginDescriptor = PluginManagerCore.getPlugin(frozenPlugin) ?: return null
 
     if (!isWorthReportingToUser(pluginDescriptor, frozenPlugin)) {

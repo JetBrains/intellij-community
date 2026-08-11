@@ -18,6 +18,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
@@ -84,9 +85,23 @@ internal class IdeaFreezeReporter : PerformanceListener {
     }
 
     internal fun analyzeFreeze(dump: String): FreezeAnalysis.Result? {
+      // analysis requires Performance Testing plugin present
       return FREEZE_ANALYSIS_EP.computeSafeIfAny {
         it.analyzeFreeze(dump)
       }
+    }
+
+    internal fun analyzeFreeze(attachments: List<Attachment>): PluginId? {
+      val dumps = attachments
+        .filter { it.name.startsWith(DUMP_PREFIX) }
+
+      val bestAttachment = when {
+        dumps.size < MIN_DUMPS_COUNT_FOR_ANALYSIS -> null
+        dumps.size == MIN_DUMPS_COUNT_FOR_ANALYSIS -> dumps[0]
+        else -> dumps[dumps.size / 2]
+      }
+
+      return bestAttachment?.let { analyzeFreeze(bestAttachment.displayText) }?.plugin
     }
 
     internal fun checkProfilerCrash(crashContent: String) {
@@ -236,14 +251,15 @@ internal class IdeaFreezeReporter : PerformanceListener {
       LOG.debug("Reporting freeze to MessagePool")
       reportToIndicator(loggingEvent) // always put freezes to MessagePool
 
+      val reason = PluginUtil.getInstance().findPluginId(loggingEvent.throwable)
+      if (reason != null) {
+        LifecycleUsageTriggerCollector.pluginFreezeDetected(reason, durationMs, false)
+        thisLogger().warn("Identified UI freeze in plugin ${reason} for $durationMs ms")
+      }
+
       val isAutoReportEnabled = ExceptionAutoReportUtil.isAutoReportEnabled()
       if (isAutoReportEnabled && ExceptionAutoReportUtil.isAutoReportableException(loggingEvent)) {
         LOG.debug("UI freeze will be automatically reported, do not show to user")
-
-        val reason = PluginUtil.getInstance().findPluginId(loggingEvent.throwable)
-        if (reason != null) {
-          LifecycleUsageTriggerCollector.pluginFreezeDetected(reason, durationMs, false)
-        }
 
         telemetry.freezeQueued(durationMs)
         return // do not show freeze notifications, reported automatically
@@ -351,19 +367,6 @@ ${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}S
     val pluginId = analyzeFreeze(attachments)
 
     return LogMessage(Freeze(pluginId, IdeaLogger.ourLastActionId, commonStack), message, attachments + report)
-  }
-
-  private fun analyzeFreeze(attachments: List<Attachment>): PluginId? {
-    val dumps = attachments
-      .filter { it.name.startsWith(DUMP_PREFIX) }
-
-    val bestAttachment = when {
-      dumps.size < MIN_DUMPS_COUNT_FOR_ANALYSIS -> null
-      dumps.size == MIN_DUMPS_COUNT_FOR_ANALYSIS -> dumps[0]
-      else -> dumps[dumps.size / 2]
-    }
-
-    return bestAttachment?.let { analyzeFreeze(bestAttachment.displayText) }?.plugin
   }
 }
 
@@ -557,7 +560,7 @@ internal class UnfinishedFreezeReportService(val coroutineScope: CoroutineScope)
     val attachments = ArrayList<Attachment>()
     var message: String? = null
     var appInfo: String? = null
-    var throwable: Throwable? = null
+    var stacktraceCommonPart: List<StackTraceElement> = emptyList()
     val dumps = ArrayList<String>()
 
     for (file in files) {
@@ -576,11 +579,7 @@ internal class UnfinishedFreezeReportService(val coroutineScope: CoroutineScope)
         }
         THROWABLE_FILE_NAME == name -> {
           try {
-            val stacktraceCommonPart = deserializeStackTrace(readText())
-            if (stacktraceCommonPart.isNotEmpty()) {
-              // Always rebuild a fresh Freeze from the stored common stacktrace text.
-              throwable = Freeze(null, null, stacktraceCommonPart)
-            }
+            stacktraceCommonPart = deserializeStackTrace(readText())
           }
           catch (_: Exception) {
           }
@@ -599,9 +598,24 @@ internal class UnfinishedFreezeReportService(val coroutineScope: CoroutineScope)
 
     addDumpsAttachments(dumps, { it }, attachments)
     EP_NAME.forEachExtensionSafe { attachments.addAll(it.getAttachments(dir)) }
+
+    var throwable: Throwable? = null
+    if (stacktraceCommonPart.isNotEmpty()) {
+      // reanalyze dumps
+      val pluginId = IdeaFreezeReporter.analyzeFreeze(attachments)
+      if (pluginId != null) {
+        LOG.warn("Identified a deadlock with '$pluginId' plugin in ${dir.name}")
+      }
+
+      // Always rebuild a fresh Freeze from the stored common stacktrace text
+      throwable = Freeze(pluginId, null, stacktraceCommonPart)
+    }
+
     if (message != null && throwable != null && !attachments.isEmpty()) {
       val event = LogMessage(throwable, message, attachments)
       event.appInfo = appInfo
+
+      LOG.info("Reporting deadlock ${dir.name} to user")
       reportToIndicator(event)
     }
   }
