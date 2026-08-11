@@ -202,7 +202,10 @@ interface ThreadingSupport {
   fun isWriteActionPending(): Boolean
 
   /**
-   * Checks if the current thread runs with _Write_ lock
+   * Checks if the current thread runs with _Write_ lock.
+   *
+   * A nested _Read_ action started from inside a _Write_ action does not revoke write access: this still
+   * returns `true` for its duration, since the _Write_ lock remains held by the thread.
    */
   @Contract(pure = true)
   fun isWriteAccessAllowed(): Boolean
