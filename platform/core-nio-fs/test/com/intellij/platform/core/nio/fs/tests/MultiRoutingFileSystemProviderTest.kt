@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.core.nio.fs
+package com.intellij.platform.core.nio.fs.tests
 
+import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
+import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
+import com.intellij.platform.core.nio.fs.MultiRoutingFsPath
 import com.intellij.util.containers.forEachGuaranteed
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
