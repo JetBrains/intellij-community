@@ -154,6 +154,9 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       return project
     }
 
+    /**
+     * Do not use this method. It should be private. Use [ProjectUtil.openOrImport] or [ProjectUtil.openOrImportAsync]
+     */
     @Internal
     fun doOpenProject(file: Path, originalOptions: OpenProjectTask): Project? {
       LOG.info("Opening (sync) $file")
@@ -228,7 +231,11 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       return project
     }
 
-    suspend fun openProjectAsync(file: Path, originalOptions: OpenProjectTask = OpenProjectTask()): Project? {
+    /**
+     * Do not use this method. It should be private. Use [ProjectUtil.openOrImportAsync]
+     */
+    @Internal
+    suspend fun openProjectAsync(file: Path, originalOptions: OpenProjectTask): Project? {
       LOG.info("Opening (async) $file")
 
       val isDirectory = Files.isDirectory(file)
