@@ -200,7 +200,7 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     editor = SettingsEditor(
       frameDisposable, project, groups, configurable, filter,
       true,  // useLeaveState: auto-reset unmodified configurables when navigating back
-      ISettingsTreeViewFactory { f, g -> SettingsTreeView(f, g) },
+      ISettingsTreeViewFactory { f, g -> treeViewFactory(f, g) },
       spotlightPainterFactory,
       createModeAction(),
     )
@@ -288,6 +288,40 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
   /** Called when settings are canceled (Cancel button, ESC, or the X button). Override to react to cancel. */
   protected open fun afterCancel() {
     exitActionType = ExitActionType.CANCEL
+  }
+
+  /**
+   * Runs the same validation-aware cancel as the Cancel button — asks [editor] to discard
+   * changes and, if it agrees, marks the exit as canceled and closes the window. Exposed so
+   * subclasses can reuse it before navigating away from Settings entirely (e.g. Rider's
+   * "Manage Layers" button, added via [createAdditionalLeftSideActions]).
+   *
+   * @return `true` if the window was actually canceled and closed.
+   */
+  protected fun performCancel(e: AWTEvent?): Boolean {
+    if (!editor.cancel(e)) return false
+    afterCancel()
+    close()
+    return true
+  }
+
+  /**
+   * Extra [Action]s shown as buttons on the left side of the button panel, after Help. Override
+   * to add product-specific navigation the platform doesn't know about — e.g. Rider's
+   * "Manage Layers" button, which lived in the button row of the old modal dialog.
+   */
+  @ApiStatus.Internal
+  protected open fun createAdditionalLeftSideActions(): List<Action> = emptyList()
+
+  /**
+   * Creates the [SettingsTreeView] used by [editor]. Mirrors [SettingsDialog.treeViewFactory] —
+   * override to supply a custom tree view (e.g. Rider's `RiderSettingsTreeView`, which paints a
+   * per-configurable scope icon in the tree: a layers icon for ReSharper settings layers, a
+   * project icon otherwise).
+   */
+  @ApiStatus.Internal
+  protected open fun treeViewFactory(filter: SettingsFilter, groups: MutableList<out ConfigurableGroup>): SettingsTreeView {
+    return SettingsTreeView(filter, groups)
   }
 
   // ── Lifecycle subscriptions ───────────────────────────────────────────────────
@@ -487,10 +521,7 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     val cancelButton = DialogWrapper.createJButtonForAction(
       object : AbstractAction(CommonBundle.getCancelButtonText()) {
         override fun actionPerformed(e: ActionEvent) {
-          if (editor.cancel(e)) {
-            afterCancel()
-            close()
-          }
+          performCancel(e)
         }
       }, null)
 
@@ -534,7 +565,10 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
       applyButton?.let { rightButtons.add(it) }
     }
 
-    val leftButtons = listOf(createHelpButton())
+    val leftButtons = listOf(createHelpButton()) +
+                      createAdditionalLeftSideActions().map { action ->
+                        DialogWrapper.createJButtonForAction(action, null)
+                      }
 
     val lrPanel = NonOpaquePanel(GridBagLayout())
     val bag = GridBag().setDefaultInsets(JBInsets.emptyInsets())
