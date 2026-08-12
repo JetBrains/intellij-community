@@ -17,22 +17,25 @@ import org.jetbrains.annotations.Contract
 interface DocumentAspect {
 
   /**
-   * Returns the state of this aspect consistent with the text produced by applying [patch] to [beforeText].
+   * Returns the state of this aspect consistent with [after], the text produced by applying [diff] to [before].
    *
    * The method runs on the writer thread inside the document mutation producing the next [DocumentSnapshot],
    * so implementations must:
    * - be fast: this call is on the critical path of every document change;
    * - not throw: an exception aborts the text change halfway through;
-   * - compute the new state only from [beforeText] (the snapshot before the change) and [patch]:
-   *   the snapshot holding the result does not exist yet;
+   * - tolerate being called more than once per change: the mutation publishes its snapshot with a
+   *   compare-and-set, and a lost race re-applies the whole update, rebuilding the aspects again;
+   * - compute the new state only from [before], [after] and [diff]: the snapshot holding the result
+   *   does not exist yet, so an aspect cannot observe the other aspects of the document;
    * - return an aspect of the same type as `this`: the result stays associated with the same key.
    *
    * [DocumentTextPatch.originStartOffset]/[DocumentTextPatch.originEndOffset] expose the requested range before
    * prefix/suffix trimming, so an implementation can distinguish a narrowed change from an untrimmed one.
    */
   @Contract(pure = true)
-  fun withText(
-    beforeText: DocumentSnapshot,
-    patch: DocumentTextPatch,
+  fun withTextChange(
+    before: DocumentText,
+    after: DocumentText,
+    diff: DocumentTextPatch,
   ): DocumentAspect
 }

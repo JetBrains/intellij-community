@@ -27,7 +27,7 @@ internal class CancelSelection : TerminalEscapeHandler {
   override fun isEnabled(e: AnActionEvent): Boolean = e.terminalEditor?.selectionModel?.hasSelection() == true
 
   override fun execute(e: AnActionEvent) {
-    e.terminalEditor?.selectionModel?.removeSelection()
+    e.terminalEditor?.selectionModel?.removeSelection(true)
   }
 }
 

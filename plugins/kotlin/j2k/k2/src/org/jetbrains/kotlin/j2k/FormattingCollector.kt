@@ -14,7 +14,6 @@ import com.intellij.psi.javadoc.PsiDocComment
 import org.jetbrains.kotlin.idea.j2k.IdeaDocCommentConverter
 import org.jetbrains.kotlin.j2k.tree.JKComment
 import org.jetbrains.kotlin.j2k.tree.JKFormattingOwner
-import org.jetbrains.kotlin.j2k.tree.isASingleLineComment
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class FormattingCollector {
@@ -47,10 +46,9 @@ class FormattingCollector {
         if (this in commentCache) return commentCache.getValue(this)
         if (this !is PsiComment) return null
 
-        val token = if (this is PsiDocComment && !text.isASingleLineComment()) {
+        val token = if (this is PsiDocComment && !text.startsWith("////")) {
             JKComment(IdeaDocCommentConverter.convertDocComment(this))
         } else {
-            // In some cases a single line comment, e.g. `////`, is parsed as PsiDocComment
             JKComment(text, indent())
         }
 

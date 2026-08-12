@@ -7,7 +7,6 @@ import com.intellij.remoteDev.tests.LambdaBackendContext
 import com.intellij.remoteDev.tests.LambdaFrontendContext
 import com.intellij.remoteDev.tests.LambdaIdeContext
 import com.intellij.remoteDev.tests.impl.utils.SerializedLambdaWithIdeContextHelper
-import com.intellij.remoteDev.tests.impl.utils.getTimeoutHonouringDebug
 import com.intellij.remoteDev.tests.impl.utils.runLogged
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdSerialized
@@ -17,7 +16,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 class IdeWithLambda(internal val backgroundRun: BackgroundRun, val rdSession: LambdaRdTestSession, val backendIdeWithLambda: IdeWithLambda?) {
   init {

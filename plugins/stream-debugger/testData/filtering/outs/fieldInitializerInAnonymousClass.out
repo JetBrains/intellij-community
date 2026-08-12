@@ -1,0 +1,19 @@
+LineBreakpoint created at FieldInitializerInAnonymousClass.java:7
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! FieldInitializerInAnonymousClass
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Stopped at FieldInitializerInAnonymousClass.java:7
+=== before of (bytecode offset 23) ===
+  [0] traceable Stream.of(1,2) -> map -> count
+=== after of (bytecode offset 26) ===
+  [0] traceable Stream.of(1,2) -> map -> count
+=== before map (bytecode offset 31) ===
+  [0] traceable Stream.of(1,2) -> map -> count
+=== after map (bytecode offset 36) ===
+  [0] traceable Stream.of(1,2) -> map -> count
+=== before count (bytecode offset 36) ===
+  [0] traceable Stream.of(1,2) -> map -> count
+Resuming FieldInitializerInAnonymousClass.java:7
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
+2

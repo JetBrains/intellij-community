@@ -1,25 +1,71 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.diagnostic.Activity
 import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.ide.plugins.PluginSetConstraintsResolver.CandidateState.Candidate
 import com.intellij.ide.plugins.PluginSetConstraintsResolver.CandidateState.Excluded
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.OutboundSemiGraph
 import org.jetbrains.annotations.ApiStatus
+import java.util.IdentityHashMap
 
 @ApiStatus.Internal
+fun PluginInitializationContext.computeTargetState(
+  discoveryResult: PluginsDiscoveryResult,
+  isStartupInit: Boolean,
+  parentActivity: Activity?,
+): PluginSet {
+  var initStagesActivity = parentActivity?.startChild("select candidate subset")
+  val excludedFromCandidateSubset = IdentityHashMap<PluginMainDescriptor, DescriptorExclusionReason>()
+  val candidateSubset = selectCandidateSubset(discoveryResult, excludedFromCandidateSubset)
+
+  if (isStartupInit) {
+    try {
+      initStagesActivity = initStagesActivity?.endAndStart("startup configuration")
+      runConfigurationDuringStartup(candidateSubset)
+    }
+    catch (e: Exception) {
+      val logger = logger<PluginManagerCore>()
+      logger.error("Fatal plugin initialization error", e)
+      logger.error("[plugins] candidate subset:\n${candidateSubset.plugins.joinToString { it.shortLogDescription }}")
+      logger.error("[plugins] excluded from candidate subset:\n${excludedFromCandidateSubset.entries.joinToString(separator = "\n") { 
+        "  ${it.key.shortLogDescription}: ${PluginInitializationDiagnosticUtils.getLogMessageForRootExclusionReason(it.value)}" 
+      }}")
+      throw e
+    }
+  }
+
+  initStagesActivity = initStagesActivity?.endAndStart("resolve constraints")
+  val resolvedPluginSet = resolveConstraints(candidateSubset)
+
+  initStagesActivity = initStagesActivity?.endAndStart("adapt plugin set")
+  val pluginSet = PluginSet(
+    input = PluginSubsystemInput(this, discoveryResult),
+    excludedFromCandidateSubset = excludedFromCandidateSubset,
+    resolvedPluginSet = resolvedPluginSet,
+  )
+  initStagesActivity?.end()
+
+  return pluginSet
+}
+
+/**
+ * @see [computeTargetState]
+ */
+@ApiStatus.Internal
 fun PluginInitializationContext.resolveConstraints(
-  pluginSet: UnambiguousPluginSet,
+  candidateSubset: UnambiguousPluginSet,
 ): ResolvedPluginSet {
-  val resolver = PluginSetConstraintsResolver(this, pluginSet)
+  val resolver = PluginSetConstraintsResolver(this, candidateSubset)
   return resolver.resolveConstraints()
 }
 
 private class PluginSetConstraintsResolver(
   private val initContext: PluginInitializationContext,
-  private val pluginSet: UnambiguousPluginSet,
+  private val candidateSet: UnambiguousPluginSet,
 ) {
   private sealed class CandidateState {
     class Excluded(val reason: DescriptorExclusionReason) : CandidateState()
@@ -42,7 +88,7 @@ private class PluginSetConstraintsResolver(
   private val onDemandModuleActiveDependentCounts = HashMap<ContentModuleDescriptor, Int>()
 
   init {
-    val allDescriptors = pluginSet.sequenceAllDescriptors().toList()
+    val allDescriptors = candidateSet.sequenceAllDescriptors().toList()
     candidates = LinkedHashMap(allDescriptors.size)
     for (descriptor in allDescriptors) {
       candidates[descriptor] = Candidate()
@@ -54,6 +100,7 @@ private class PluginSetConstraintsResolver(
 
   fun resolveConstraints(): ResolvedPluginSet {
     applyEnvironmentConfiguredExclusions()
+    excludeIncompatibleAndDisabledPlugins()
     applyProductRulesImposedExclusions()
 
     val constraintBuilders = listOf(
@@ -132,15 +179,9 @@ private class PluginSetConstraintsResolver(
     }
   }
 
-  private fun applyProductRulesImposedExclusions() {
-    for ((module, reason) in initContext.provideModuleExclusionsImposedByProductRules(pluginSet)) {
-      exclude(ProductRulesImposedExclusion(module, reason))
-    }
-  }
-
   private fun applyEnvironmentConfiguredExclusions() {
     for ((moduleId, envConfig) in initContext.environmentConfiguredModules) {
-      val module = pluginSet.resolveContentModuleId(moduleId) ?: run {
+      val module = candidateSet.resolveContentModuleId(moduleId) ?: run {
         if (envConfig.unavailabilityReason == null) {
           PluginManagerCore.logger.info("Environment-configured module is not found: ${moduleId.displayName}") // TODO ideally this should be an exception
         }
@@ -149,6 +190,29 @@ private class PluginSetConstraintsResolver(
       if (envConfig.unavailabilityReason != null) {
         exclude(ExcludedByEnvironmentConfiguration(module, envConfig.unavailabilityReason))
       }
+    }
+  }
+
+  private fun excludeIncompatibleAndDisabledPlugins() {
+    for (candidate in candidates.keys) {
+      if (candidate !is PluginMainDescriptor) {
+        continue
+      }
+      val incompatibility = initContext.validatePluginIsCompatible(candidate)
+      if (incompatibility != null) {
+        exclude(incompatibility)
+        continue
+      }
+      if (initContext.isPluginDisabled(candidate.pluginId) && !candidate.isEssential()) {
+        exclude(PluginIsMarkedDisabled(candidate))
+        continue
+      }
+    }
+  }
+
+  private fun applyProductRulesImposedExclusions() {
+    for ((module, reason) in initContext.provideModuleExclusionsImposedByProductRules(candidateSet)) {
+      exclude(ProductRulesImposedExclusion(module, reason))
     }
   }
 
@@ -189,7 +253,7 @@ private class PluginSetConstraintsResolver(
 
   private fun sequenceAllStrictDependenciesOfCandidateIncludingCompatibility(candidate: IdeaPluginDescriptorImpl): Sequence<DependencyRef> {
     return PluginDependencyAnalysis.sequenceStrictDependencies(candidate) +
-           initContext.provideCompatibilityDependencies(candidate, pluginSet)
+           initContext.provideCompatibilityDependencies(candidate, candidateSet)
   }
 
   /**
@@ -223,7 +287,7 @@ private class PluginSetConstraintsResolver(
       return false
     }
     for (dependencyRef in sequenceAllStrictDependenciesOfCandidateIncludingCompatibility(candidate)) {
-      val target = pluginSet.resolveReference(dependencyRef)
+      val target = candidateSet.resolveReference(dependencyRef)
       if (target == null) {
         exclude(DependencyIsNotResolved(candidate, dependencyRef))
         return
@@ -307,8 +371,8 @@ private class PluginSetConstraintsResolver(
     // TODO: does not handle implicitly added dependencies. Is it a big problem?
     PluginDependencyAnalysis.getRequiredTransitiveModules(
       initContext = initContext,
-      plugins = initContext.essentialPlugins.mapNotNull { pluginSet.resolvePluginId(it) },
-      ambiguousPluginSet = pluginSet.asAmbiguousPluginSet(),
+      plugins = initContext.essentialPlugins.mapNotNull { candidateSet.resolvePluginId(it) },
+      ambiguousPluginSet = candidateSet.asAmbiguousPluginSet(),
       null
     )
   }
@@ -328,7 +392,7 @@ private class PluginSetConstraintsResolver(
 
   private fun rememberIncompatibleWithViolations(candidate: IdeaPluginDescriptorImpl) {
     for (incompatiblePluginId in candidate.incompatiblePlugins) {
-      val target = pluginSet.resolvePluginId(incompatiblePluginId)
+      val target = candidateSet.resolvePluginId(incompatiblePluginId)
       if (target != null && target.getState() is Candidate) {
         incompatibleWithEdges.add(candidate to target)
       }
@@ -404,7 +468,7 @@ private class PluginSetConstraintsResolver(
     // preserves all keys for 'unknown descriptor' check
     val exclusions = candidates.mapValuesTo(HashMap(candidates.size)) { (it.value as? Excluded)?.reason }
     val resolvedPluginSet = ResolvedPluginSetImpl(
-      candidateSet = pluginSet,
+      candidateSet = candidateSet,
       initContext = initContext,
       sortedResolvedDescriptors = LinkedHashSet(sortedCandidates),
       runtimeModuleGroupGraph = runtimeModuleGroupGraph,
@@ -428,12 +492,12 @@ private class PluginSetConstraintsResolver(
   ): Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>> {
     val remainingCandidatesView = object : PluginInitializationContext.RemainingCandidatesView {
       override fun resolvePluginId(id: PluginId): PluginModuleDescriptor? {
-        return pluginSet.resolvePluginId(id)
+        return candidateSet.resolvePluginId(id)
           ?.takeIf { it in remainingCandidatesDependencies }
       }
 
       override fun resolveContentModuleId(id: PluginModuleId): ContentModuleDescriptor? {
-        return pluginSet.resolveContentModuleId(id)
+        return candidateSet.resolveContentModuleId(id)
           ?.takeIf { it in remainingCandidatesDependencies }
       }
     }
@@ -467,7 +531,7 @@ private class PluginSetConstraintsResolver(
     contributeDependencies: (List<IdeaPluginDescriptorImpl>) -> Unit
   ) {
     fun contributeContentModulesFromTarget(targetId: PluginId) {
-      val target = pluginSet.resolvePluginId(targetId)
+      val target = candidateSet.resolvePluginId(targetId)
                    ?: return
       assert(target in remainingCandidates) {
         "dependency target is excluded, but the descriptor is still a candidate:\ncandidate=$descriptor\ntarget=$target"

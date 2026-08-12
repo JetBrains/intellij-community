@@ -3,6 +3,7 @@ package com.intellij.ui.components.panels;
 
 import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
@@ -128,6 +129,8 @@ public class Wrapper extends JPanel implements NullableComponent {
 
   @Override
   public Dimension getPreferredSize() {
+    ThreadingAssertions.softAssertAwtOperationsThread();
+
     Dimension size = super.getPreferredSize();
     if (myHorizontalSizeReferent != null && myHorizontalSizeReferent.isShowing()) {
       size.width = Math.max(size.width, myHorizontalSizeReferent.getPreferredSize().width);

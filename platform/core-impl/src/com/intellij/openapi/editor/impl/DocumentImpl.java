@@ -96,7 +96,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public @NotNull CharSequence getImmutableCharSequence() {
-    return impl.snapshot().text();
+    return impl.snapshot().text().chars();
   }
 
   @Override
@@ -106,47 +106,47 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public @NotNull String getText() {
-    return impl.snapshot().string();
+    return impl.snapshot().text().string();
   }
 
   @Override
   public @NotNull String getText(@NotNull TextRange range) {
-    return impl.snapshot().string(range);
+    return impl.snapshot().text().string(range);
   }
 
   @Override
   public int getTextLength() {
-    return impl.snapshot().textLength();
+    return impl.snapshot().text().length();
   }
 
   @Override
   public int getLineCount() {
-    return impl.snapshot().lineCount();
+    return impl.snapshot().text().lineCount();
   }
 
   @Override
   public int getLineNumber(int offset) {
-    return impl.snapshot().lineNumber(offset);
+    return impl.snapshot().text().lineNumber(offset);
   }
 
   @Override
   public int getLineStartOffset(int line) {
-    return impl.snapshot().lineStartOffset(line);
+    return impl.snapshot().text().lineStartOffset(line);
   }
 
   @Override
   public int getLineEndOffset(int line) {
-    return impl.snapshot().lineEndOffset(line);
+    return impl.snapshot().text().lineEndOffset(line);
   }
 
   @Override
   public int getLineSeparatorLength(int line) {
-    return impl.snapshot().lineSeparatorLength(line);
+    return impl.snapshot().text().lineSeparatorLength(line);
   }
 
   @Override
   public @NotNull LineIterator createLineIterator() {
-    return impl.snapshot().lineIterator();
+    return impl.snapshot().text().lineIterator();
   }
 
   @Override
@@ -186,12 +186,12 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public int getModificationSequence() {
-    return impl.snapshot().modSequence();
+    return impl.snapshot().text().modSequence();
   }
 
   @Override
   public long getModificationStamp() {
-    return impl.snapshot().modStamp();
+    return impl.snapshot().text().modStamp();
   }
 
   @Override
@@ -201,7 +201,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public boolean isLineModified(int line) {
-    return impl.snapshot().isLineModified(line);
+    return impl.snapshot().text().isLineModified(line);
   }
 
   @Override

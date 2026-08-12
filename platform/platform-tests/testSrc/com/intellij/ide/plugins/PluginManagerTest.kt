@@ -289,8 +289,8 @@ class PluginManagerTest {
       val optional = object : TestIdeaPluginDescriptor() {
         override fun getDependencies(): List<IdeaPluginDependency> = listOf(PluginDependency(module.moduleId, true))
       }
-      assertThat(PluginManagerCore.getUnfulfilledOsRequirement(required)).isEqualTo(module.takeIf { !module.isHostOs() })
-      assertThat(PluginManagerCore.getUnfulfilledOsRequirement(optional)).isEqualTo(null)
+      assertThat(PluginCompatibilityUtils.getUnfulfilledOsRequirement(required)).isEqualTo(module.takeIf { !module.isHostOs() })
+      assertThat(PluginCompatibilityUtils.getUnfulfilledOsRequirement(optional)).isEqualTo(null)
     }
   }
 
@@ -302,7 +302,7 @@ class PluginManagerTest {
       override fun getPluginId(): PluginId = PluginId.getId("test.plugin")
     }
     fun assertInferred(version: String?, expected: IdeaPluginOsRequirement?) {
-      assertThat(PluginManagerCore.getUnfulfilledOsRequirement(descriptor(version)))
+      assertThat(PluginCompatibilityUtils.getUnfulfilledOsRequirement(descriptor(version)))
         .isEqualTo(expected?.takeIf { !it.isHostOs() })
     }
 
@@ -327,7 +327,7 @@ class PluginManagerTest {
       override fun getPluginId(): PluginId = PluginId.getId("test.plugin")
     }
     fun assertInferred(version: String?, expected: PluginCpuArchRequirement?) {
-      assertThat(PluginManagerCore.getUnfulfilledCpuArchRequirement(descriptor(version)))
+      assertThat(PluginCompatibilityUtils.getUnfulfilledCpuArchRequirement(descriptor(version)))
         .isEqualTo(expected?.takeIf { !it.isHostArch() })
     }
 
@@ -375,7 +375,7 @@ class PluginManagerTest {
       Assert.assertNotNull(checkCompatibility(ideVersion, sinceBuild, untilBuild))
     }
 
-    private fun checkCompatibility(ideVersion: String?, sinceBuild: String?, untilBuild: String?): PluginNonLoadReason? {
+    private fun checkCompatibility(ideVersion: String?, sinceBuild: String?, untilBuild: String?): PluginIncompatibilityReason? {
       val desc = object : TestIdeaPluginDescriptor() {
         override fun getPluginId(): PluginId = PluginId.getId("test")
         override fun getName(): @NlsSafe String? = pluginId.idString
@@ -384,7 +384,7 @@ class PluginManagerTest {
         override fun getVersion(): @NlsSafe String? = null
         override fun getDependencies(): List<IdeaPluginDependency> = listOf()
       }
-      return PluginManagerCore.checkBuildNumberCompatibility(desc, BuildNumber.fromString(ideVersion)!!)
+      return PluginCompatibilityUtils.checkBuildNumberCompatibility(desc, BuildNumber.fromString(ideVersion)!!)
     }
 
     private fun checkCompatibility(platformId: String): Boolean {
@@ -401,7 +401,7 @@ class PluginManagerTest {
           }
         )
       }
-      return PluginManagerCore.checkBuildNumberCompatibility(desc, BuildNumber.fromString("145")!!) == null
+      return PluginCompatibilityUtils.checkBuildNumberCompatibility(desc, BuildNumber.fromString("145")!!) == null
     }
 
     private fun assertCompatible(ideVersion: String?, sinceBuild: String?, untilBuild: String?) {
@@ -465,10 +465,12 @@ class PluginManagerTest {
       }
       loadingContext.close()
       val discoveredPlugins = PluginsDiscoveryResult.build(
-        listOf(DiscoveredPluginsList(plugins, if (isBundled) PluginsSourceContext.Bundled else PluginsSourceContext.Custom))
+        discoveredPluginLists = listOf(
+          DiscoveredPluginsList(plugins, if (isBundled) PluginsSourceContext.Bundled else PluginsSourceContext.Custom)
+        ),
+        descriptorLoadingErrors = loadingContext.copyDescriptorLoadingErrors(),
       )
       return PluginManagerCore.initializePlugins(
-        descriptorLoadingErrors = loadingContext.copyDescriptorLoadingErrors(),
         initContext = initContext,
         discoveredPlugins = discoveredPlugins,
         coreLoader = PluginManagerTest::class.java.getClassLoader(),

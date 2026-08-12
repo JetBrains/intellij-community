@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.ui.actions.styling;
 
 import com.intellij.psi.tree.IElementType;
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes;
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,7 +11,7 @@ public class ToggleBoldAction extends BaseToggleStateAction {
 
   @Override
   protected @NotNull String getBoundString(@NotNull CharSequence text, int selectionStart, int selectionEnd) {
-    return "**";
+    return MarkdownCodeInsightSettings.getInstance().getState().getEmphasisStyle().getBoldMarker();
   }
 
   @Override

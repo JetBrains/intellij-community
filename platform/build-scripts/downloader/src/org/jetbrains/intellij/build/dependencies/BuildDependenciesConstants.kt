@@ -14,8 +14,9 @@ object BuildDependenciesConstants {
   const val DOWNLOAD_CACHE_DIR_PROPERTY: String = "intellij.build.download.cache.dir"
 
   /**
-   * Points to a versioned manifest of checksum-pinned Bazel runfiles which are authoritative for
-   * build-dependency downloads. The value is either an absolute path or a Bazel rlocation path.
+   * Points to the versioned manifests of Bazel runfiles which are authoritative for build-dependency
+   * downloads. The value is one or more comma-separated entries - one per Bazel repository holding a
+   * part of the set - each an absolute path or a Bazel rlocation path.
    */
   const val PRELOADED_DOWNLOADS_MANIFEST_PROPERTY: String = "intellij.build.download.preloaded.manifest"
 

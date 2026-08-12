@@ -49,10 +49,11 @@ import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.collectAllPluginClasspathDirs
 import org.jetbrains.intellij.build.impl.collectCoScrambleEntries
 import org.jetbrains.intellij.build.impl.copyDistFiles
-import org.jetbrains.intellij.build.impl.createCompilationContext
+import org.jetbrains.intellij.build.impl.createDevBuildCompilationContext
 import org.jetbrains.intellij.build.impl.createIdeaPropertyFile
 import org.jetbrains.intellij.build.impl.createPlatformLayout
 import org.jetbrains.intellij.build.impl.getOsDistributionBuilder
+import org.jetbrains.intellij.build.impl.isDevBuildBazelBacked
 import org.jetbrains.intellij.build.impl.layoutPlatformDistribution
 import org.jetbrains.intellij.build.impl.moduleRepository.generateRuntimeModuleRepositoryForDevBuild
 import org.jetbrains.intellij.build.impl.normalizeCompilationContextForBuild
@@ -537,16 +538,14 @@ private suspend fun createBuildContextFromProject(
 
   val buildPaths = createDevBuildPaths(projectDir = request.projectDir, buildDir = buildDir, logDir = options.logDir!!)
   val compilationContext = normalizeCompilationContextForBuild(
-    context = createCompilationContext(
+    context = createDevBuildCompilationContext(
       projectHome = request.projectDir,
       buildOutputRootEvaluator = { _ -> buildDir },
-      setupTracer = false,
-      // will be enabled later in [com.intellij.platform.ide.bootstrap.enableJstack] instead
-      enableCoroutinesDump = false,
       options = options,
       customBuildPaths = buildPaths,
     ),
     scope = scope,
+    isBazelBacked = isDevBuildBazelBacked(),
   )
   val productProperties = createProductProperties(
     productConfiguration = productConfiguration,
@@ -602,6 +601,9 @@ internal fun configureDevModeBuildOptions(options: BuildOptions, request: BuildR
   options.buildNumber = buildOptionsTemplate.buildNumber
   options.isInDevelopmentMode = buildOptionsTemplate.isInDevelopmentMode
   options.isTestBuild = buildOptionsTemplate.isTestBuild
+  // A dev assembly can contain uncommitted changes, so HEAD does not identify its contents.
+  // Avoid coupling assembly to the mutable checkout solely for production provenance metadata.
+  options.storeGitRevision = false
   // a dev run directory is disposable and never patched in place, so it can share bytes with the caches it is assembled from
   options.linkImmutableCacheEntries = true
 }

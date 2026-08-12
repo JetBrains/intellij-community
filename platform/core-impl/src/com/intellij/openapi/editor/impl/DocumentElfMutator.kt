@@ -79,7 +79,7 @@ internal abstract class DocumentElfMutator(
             syncPatch(
               change.changeEvent,
               snapshotBefore,
-              change.snapshotAfter.text(),
+              change.snapshotAfter.text().chars(),
               DocumentModStamp.next(),
               false, // TODO: why false?
             ),
@@ -100,6 +100,11 @@ internal abstract class DocumentElfMutator(
   final override fun clearLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray) {
     assertIsInElfScope()
     throw UnsupportedOperationException("ElfDocument does not support clearLineFlags yet")
+  }
+
+  final override fun updateSnapshotAndGet(updateFunc: UnaryOperator<DocumentSnapshot>): DocumentSnapshot {
+    assertIsInElfScope()
+    throw UnsupportedOperationException("ElfDocument does not support updateSnapshotAndGet yet")
   }
 
   final override fun insertString(
@@ -210,11 +215,7 @@ internal abstract class DocumentElfMutator(
     snapshotBefore: DocumentSnapshot,
     patch: DocumentTextPatch,
   ): DocumentSnapshot {
-    return updateAndGet { latest ->
-      // modStamp or other metadata could be changed during before-change listeners, should merge it into final snapshot
-      val merged = snapshotBefore.withMetadata(latest)
-      merged.withText(patch)
-    }
+    return updateAndGet { latest -> mergeAndPatch(snapshotBefore, latest, patch) }
   }
 
   private fun revertChange(change: ElfTextChange) {
@@ -223,18 +224,19 @@ internal abstract class DocumentElfMutator(
     // whose nested-modification guard rejects elf text changes from listeners, and elf metadata cannot change either —
     // setModStamp/clearLineFlags are unsupported for elf, and updateText merges the latest metadata at CAS time anyway.
     val currentSnapshot = getSnapshot()
+    val currentText = currentSnapshot.text()
     val initialStartOffset = if (eventToRevert is DocumentEventImpl) eventToRevert.initialStartOffset else eventToRevert.offset
     val changeEvent = DocumentEventImpl(
       eventToRevert.document,
       eventToRevert.offset,
       eventToRevert.newFragment,
       eventToRevert.oldFragment,
-      currentSnapshot.modStamp(),
+      currentText.modStamp(),
       eventToRevert.isWholeTextReplaced,
       initialStartOffset,
       eventToRevert.newLength,
       getRevertMoveOffset(eventToRevert),
-      currentSnapshot.textLength(),
+      currentText.length(),
     )
     revertingChangeEvent = eventToRevert
     try {
@@ -244,7 +246,7 @@ internal abstract class DocumentElfMutator(
         syncPatch(
           changeEvent,
           currentSnapshot,
-          change.snapshotBefore.text(),
+          change.snapshotBefore.text().chars(),
           DocumentModStamp.next(),
           change.patch.clearLineFlags(),
         ),
@@ -279,7 +281,7 @@ internal abstract class DocumentElfMutator(
     if (changeEvent.isWholeTextReplaced) {
       return DocumentTextPatch.complex(
         startOffset = 0,
-        endOffset = snapshotBefore.textLength(),
+        endOffset = snapshotBefore.text().length(),
         newFragment = wholeText,
         newModStamp = newModStamp,
         clearLineFlags = true,

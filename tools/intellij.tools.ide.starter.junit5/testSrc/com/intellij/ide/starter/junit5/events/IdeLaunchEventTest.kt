@@ -1,5 +1,6 @@
 package com.intellij.ide.starter.junit5.events
 
+import com.intellij.ide.starter.data.TestCases
 import com.intellij.ide.starter.junit5.config.KillOutdatedProcessesAfterEach
 import com.intellij.ide.starter.junit5.hyphenateWithClass
 import com.intellij.ide.starter.models.IdeInfo
@@ -16,7 +17,6 @@ import com.intellij.tools.ide.performanceTesting.commands.exitApp
 import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.starter.bus.events.Event
 import com.intellij.tools.ide.starter.product.idea.ultimate.IdeaUltimate
-import examples.data.TestCases
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.timing.eventually
 import io.kotest.matchers.collections.shouldHaveSize

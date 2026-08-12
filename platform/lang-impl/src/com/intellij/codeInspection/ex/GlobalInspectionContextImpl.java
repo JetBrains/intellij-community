@@ -1084,7 +1084,15 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         }
       }
     };
-    ProgressManager.getInstance().run(task.toModalIfNeeded(modal));
+    if (!modal && ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      // ProgressManager#run cannot be used from inside a write action: in tests and headless mode it runs the task synchronously, which
+      // from a write action means inline on the calling thread while it holds the lock (see ApplicationEx#runProcessWithProgressSynchronously),
+      // and findProblems below must not run under a lock. Dispatch to a background thread explicitly instead — this is what
+      // ProgressManager#run does for a non-modal task outside of tests anyway, so production behaviour is unchanged
+      ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(task);
+    } else {
+      ProgressManager.getInstance().run(task.toModalIfNeeded(modal));
+    }
   }
 
   @RequiresBackgroundThread

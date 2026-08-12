@@ -4,142 +4,30 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.ex.DocumentAspect
 import com.intellij.openapi.editor.ex.DocumentAspectList
 import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentTextPatch
-import com.intellij.openapi.editor.ex.LineIterator
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.TextRange
-import com.intellij.util.text.CharArrayUtil
-import com.intellij.util.text.ImmutableCharSequence
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.ints.IntList
-import java.lang.ref.SoftReference
 
 internal class DocumentSnapshotImpl private constructor(
-  private val text: ImmutableCharSequence,
-  private val modStamp: Long,
-  private val modSequence: Int,
-  private var lineSet: LineSet?,                  // non-volatile intentionally, see getLineSet()
-  private var textString: SoftReference<String>?, // non-volatile intentionally, see string()
+  private val text: DocumentText,
   private val aspects: DocumentAspectList,
 ) : DocumentSnapshot {
 
-  constructor(chars: CharSequence) : this(
-    text = CharArrayUtil.createImmutableCharSequence(chars),
-    modStamp = DocumentModStamp.next(),
-    modSequence = 0,
-    lineSet = null,
-    textString = null,
+  constructor(text: DocumentText) : this(
+    text = text,
     aspects = DocumentAspectList.empty(),
   )
 
-  override fun text(): ImmutableCharSequence {
+  override fun text(): DocumentText {
     return text
   }
 
-  override fun charSequence(): CharSequence {
-    // TODO: use it in EditorPainter because String.charAt may improve performance during painting
-    val string = textString?.get()
-    if (string != null) {
-      return string
-    }
-    return text
+  override fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentSnapshot {
+    return withMetadataText(text.withModStamp(newModStamp, incrementModSeq))
   }
 
-  override fun string(range: TextRange): String {
-    val textInRange = text.subSequence(range.startOffset, range.endOffset)
-    return textInRange.toString()
-  }
-
-  /**
-   * Lazy cache read/assigned without synchronization. Safe because [String] is a final-field immutable (JLS 17.5):
-   * a racy reader sees either no value (and recomputes) or a fully constructed [String].
-   *
-   * Unlike [lineSet], [textString] is usually not performance-critical, so it could be a `volatile` field with a
-   * double-checked approach. It is kept non-volatile only to stay consistent with the similar [lineSet] field.
-   */
-  override fun string(): String {
-    var string = textString?.get()
-    if (string != null) {
-      return string
-    }
-    string = text.toString()
-    textString = SoftReference(string)
-    return string
-  }
-
-  override fun textLength(): Int {
-    // TODO: hot method, optimize
-    //  the length is constant, create a field textLength?
-    return text.length
-  }
-
-  override fun modStamp(): Long {
-    return modStamp
-  }
-
-  override fun modSequence(): Int {
-    return modSequence
-  }
-
-  override fun lineCount(): Int {
-    val lineCount = getLineSet().lineCount
-    assert(lineCount >= 0)
-    return lineCount
-  }
-
-  override fun lineNumber(offset: Int): Int {
-    return getLineSet().findLineIndex(offset)
-  }
-
-  override fun lineStartOffset(line: Int): Int {
-    if (line == 0) {
-      return 0 // otherwise, it would crash for the zero-length text
-    }
-    return getLineSet().getLineStart(line)
-  }
-
-  override fun lineEndOffset(line: Int): Int {
-    if (line == 0 && textLength() == 0) {
-      return 0
-    }
-    val lineSet = getLineSet()
-    val result = lineSet.getLineEnd(line) - lineSet.getSeparatorLength(line)
-    assert(result >= 0)
-    return result
-  }
-
-  override fun lineSeparatorLength(line: Int): Int {
-    val separatorLength = getLineSet().getSeparatorLength(line)
-    assert(separatorLength >= 0)
-    return separatorLength
-  }
-
-  override fun isLineModified(line: Int): Boolean {
-    val lineSet = this.lineSet
-    return lineSet != null && lineSet.isModified(line)
-  }
-
-  override fun lineIterator(): LineIterator {
-    return getLineSet().createIterator()
-  }
-
-  override fun dumpState(): String {
-    val dump = StringBuilder()
-    dump.append("intervals:\n")
-    val lineCount: Int = lineCount()
-    for (line in 0..<lineCount) {
-      dump
-        .append(line)
-        .append(": ")
-        .append(lineStartOffset(line))
-        .append("-")
-        .append(lineEndOffset(line))
-        .append(", ")
-    }
-    if (lineCount > 0) {
-      dump.setLength(dump.length - 2)
-    }
-    return dump.toString()
+  override fun withClearedLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray): DocumentSnapshot {
+    return withMetadataText(text.withClearedLineFlags(startLine, endLine, exceptLines))
   }
 
   override fun <A : DocumentAspect> aspect(key: Key<A>): A? {
@@ -156,192 +44,70 @@ internal class DocumentSnapshotImpl private constructor(
     if (newAspects === aspects) {
       return this
     }
-    return DocumentSnapshotImpl(
-      text,
-      modStamp,
-      modSequence,
-      lineSet,
-      textString,
-      newAspects,
-    )
-  }
-
-  override fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentSnapshot {
-    val newModSequence = if (incrementModSeq) nextModSequence() else modSequence
-    if (modStamp == newModStamp && modSequence == newModSequence) {
-      return this
-    }
-    return DocumentSnapshotImpl(text, newModStamp, newModSequence, lineSet, textString, aspects)
-  }
-
-  override fun withClearedLineFlags(
-    startLine: Int,
-    endLine: Int,
-    exceptLines: IntArray,
-  ): DocumentSnapshotImpl {
-    if (this.lineSet == null) {
-      // there were no text changes if line set is not created yet
-      return this
-    }
-    var lineSet = getLineSet()
-    val modifiedLines: IntList
-    if (exceptLines.isEmpty()) {
-      modifiedLines = EMPTY_INDICES
-    } else {
-      modifiedLines = IntArrayList(exceptLines.size)
-      for (line in exceptLines) {
-        // TODO: why line < 0 || line >= lineSet.lineCount
-        //  silently ignored not IndexOutOfBoundsException?
-        if (0 <= line && line < lineSet.lineCount) {
-          if (lineSet.isModified(line)) {
-            modifiedLines.add(line)
-          }
-        }
-      }
-    }
-    lineSet = lineSet.clearModificationFlags(startLine, endLine)
-    lineSet = lineSet.setModified(modifiedLines)
-    return withLineSet(lineSet)
+    return DocumentSnapshotImpl(text, newAspects)
   }
 
   override fun withMetadata(metadata: DocumentSnapshot): DocumentSnapshot {
     if (this === metadata) {
       return this
     }
-    if (this.text === metadata.text()) {
+    val metadataText = metadata.text()
+    val newText = text.withMetadata(metadataText)
+    if (newText === metadataText) {
+      // the texts share the characters, so aspects follow the newest snapshot
       return metadata
     }
-    // discard metadata.text, see doc [com.intellij.openapi.editor.ex.DocumentMutator]
-    return DocumentSnapshotImpl(
-      this.text,
-      metadata.modStamp(),
-      metadata.modSequence(),
-      this.lineSet,
-      this.textString,
-      this.aspects,
-    )
+    // metadata.text is discarded, so are its aspects,
+    // see the reconciliation note in [com.intellij.openapi.editor.ex.DocumentMutator]
+    return DocumentSnapshotImpl(newText, aspects)
   }
 
-  override fun withText(patch: DocumentTextPatch): DocumentSnapshotImpl {
-    val startOffset = patch.startOffset()
-    val endOffset = patch.endOffset()
-    val newFragment = patch.newFragment()
-    val oldFragmentLength = endOffset - startOffset
-    val newFragmentLength = newFragment.length
-    val diff = newFragmentLength - oldFragmentLength
-    val oldText = text
-    val oldTextLength = oldText.length
-    val newText = updateText(startOffset, endOffset, oldTextLength, newFragment)
-    val newTextLength = newText.length
-    assert((oldTextLength + diff) == newTextLength) {
-      "prevTextLength = " + oldTextLength +
-      "; newFragmentLength = " + newFragmentLength +
-      "; oldFragmentLength = " + oldFragmentLength +
-      "; nextTextLength = " + newTextLength
-    }
-    val oldLineSet = getLineSet()
-    var newLineSet = oldLineSet.update(
-      oldText,
-      startOffset,
-      endOffset,
-      newFragment,
-    )
-    assert(newTextLength == newLineSet.length) {
-      "nextTextLength = " + newTextLength +
-      "; nextLineSet.getLength() = " + newLineSet.length
-    }
-    if (patch.clearLineFlags()) {
-      newLineSet = newLineSet.clearModificationFlags(0, Int.MAX_VALUE)
-    }
-    val newModSequence = nextModSequence()
+  override fun withPatch(patch: DocumentTextPatch): DocumentSnapshot {
+    val newText = text.withPatch(patch)
     val newAspects = aspects.transform {
-      it.withText(this, patch)
+      it.withTextChange(text, newText, patch)
     }
-    return DocumentSnapshotImpl(
-      newText,
-      patch.newModStamp(),
-      newModSequence,
-      newLineSet,
-      null,
-      newAspects,
-    )
-  }
-
-  private fun withLineSet(newLineSet: LineSet?): DocumentSnapshotImpl {
-    if (this.lineSet === newLineSet) {
-      return this
-    }
-    return DocumentSnapshotImpl(text, modStamp, modSequence, newLineSet, textString, aspects)
+    return DocumentSnapshotImpl(newText, newAspects)
   }
 
   /**
-   * Lazy cache read/assigned without synchronization. Safe because [LineSet] is a final-field immutable (JLS 17.5):
-   * a racy reader sees either `null` (and recomputes) or a fully constructed instance.
+   * Returns a snapshot carrying [newText], or `this` when nothing changed.
    *
-   * Performance-critical: [lineSet] backs the very frequently called [lineStartOffset]/[lineEndOffset],
-   * so the field is intentionally non-volatile to avoid per-read volatile overhead on this hot path.
+   * [newText] must hold the same characters as the current one: the aspects are carried over as they are,
+   * a change of the characters has to go through [withPatch], which rebuilds them.
    */
-  private fun getLineSet(): LineSet {
-    var lineSet = this.lineSet
-    if (lineSet != null) {
-      return lineSet
+  private fun withMetadataText(newText: DocumentText): DocumentSnapshot {
+    if (newText === text) {
+      return this
     }
-    lineSet = LineSet.createLineSet(text)
-    this.lineSet = lineSet
-    return lineSet
+    assert(newText.chars() === text.chars()) {
+      "a metadata-only update must keep the characters, use withPatch to change them"
+    }
+    return DocumentSnapshotImpl(newText, aspects)
   }
 
-  private fun updateText(
-    startOffset: Int,
-    endOffset: Int,
-    oldTextLength: Int,
-    newFragment: CharSequence,
-  ): ImmutableCharSequence {
-    val canUseNewFragment = startOffset == 0 && endOffset == oldTextLength && newFragment is ImmutableCharSequence
-    if (canUseNewFragment) {
-      return newFragment
+  override fun dumpState(): String {
+    val dump = StringBuilder()
+    dump.append("intervals:\n")
+    val lineCount: Int = text.lineCount()
+    for (line in 0..<lineCount) {
+      dump
+        .append(line)
+        .append(": ")
+        .append(text.lineStartOffset(line))
+        .append("-")
+        .append(text.lineEndOffset(line))
+        .append(", ")
     }
-    return text.replace(startOffset, endOffset, newFragment)
-  }
-
-  private fun nextModSequence(): Int {
-    return modSequence + 1
-  }
-
-  private fun presentation(obj: Any?): String {
-    if (obj == null) {
-      return "null"
+    if (lineCount > 0) {
+      dump.setLength(dump.length - 2)
     }
-    if (obj is SoftReference<*>) {
-      return if (obj.get() == null) {
-        "<null>"
-      } else {
-        "<not-null>"
-      }
-    }
-    val hex = Integer.toHexString(System.identityHashCode(obj))
-    return "@$hex"
+    return dump.toString()
   }
 
   override fun toString(): String {
-    val id = presentation(this)
-    val ms = modStamp
-    val mq = modSequence
-    val tx = presentation(text)
-    val ls = presentation(lineSet)
-    val st = presentation(textString)
-    val ap = presentation(aspects)
-    return "DocumentSnapshot" + id + '{' +
-           "modStamp=" + ms +
-           ", modSequence=" + mq +
-           ", text=" + tx +
-           ", lineSet=" + ls +
-           ", string=" + st +
-           ", aspects=" + ap +
-           '}'
-  }
-
-  companion object {
-    private val EMPTY_INDICES: IntList = IntArrayList(0)
+    val id = Integer.toHexString(System.identityHashCode(this))
+    val aspectsId = Integer.toHexString(System.identityHashCode(aspects))
+    return "DocumentSnapshot@$id{text=$text, aspects=@$aspectsId}"
   }
 }

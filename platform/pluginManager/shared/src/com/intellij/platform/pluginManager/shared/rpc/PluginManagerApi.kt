@@ -66,7 +66,8 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun updateCustomRepositories(addedRepositoryUrls: List<String>, removedRepositoryUrls: List<String>, ): List<String>
   suspend fun setPluginsAutoUpdateEnabled(enabled: Boolean)
   suspend fun getPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSourceId?
-  suspend fun setPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?)
+  suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?)
+  suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?)
   suspend fun isPluginUpdateSourceVisibleInUI(): Boolean
 
   companion object {

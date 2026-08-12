@@ -121,6 +121,7 @@ internal abstract class ElfRealSync(
   }
 
   private fun rebaseElfTextChange(change: ElfTextChange, real: DocumentSnapshot, realSpans: List<RealSpan>): ElfTextChange? {
+    val realText = real.text()
     val changeEvent = change.changeEvent
     if (DocumentEventUtil.isMoveInsertion(changeEvent) || DocumentEventUtil.isMoveDeletion(changeEvent)) {
       // TODO: Rebase move insertion/deletion as one paired move. Rebasing either half independently can corrupt move offsets/text.
@@ -131,10 +132,10 @@ internal abstract class ElfRealSync(
       return null
     }
     val endOffset = startOffset + changeEvent.oldLength
-    if (startOffset < 0 || endOffset > real.textLength()) {
+    if (startOffset < 0 || endOffset > realText.length()) {
       return null
     }
-    if (!matchesOldFragment(real.text(), startOffset, changeEvent.oldFragment)) {
+    if (!matchesOldFragment(realText.chars(), startOffset, changeEvent.oldFragment)) {
       return null
     }
     val initialStartOffset = if (changeEvent is DocumentEventImpl) {
@@ -148,12 +149,12 @@ internal abstract class ElfRealSync(
       startOffset,
       changeEvent.oldFragment,
       changeEvent.newFragment,
-      real.modStamp(),
+      realText.modStamp(),
       changeEvent.isWholeTextReplaced,
       initialStartOffset,
       initialOldLength,
       startOffset,
-      real.textLength(),
+      realText.length(),
     )
     return ElfTextChange(
       real,
@@ -176,7 +177,7 @@ internal abstract class ElfRealSync(
   }
 
   private fun computeSnapshotAfter(change: ElfTextChange): DocumentSnapshot {
-    return change.snapshotBefore.withText(change.patch)
+    return change.snapshotBefore.withPatch(change.patch)
   }
 
   private fun matchesOldFragment(wholeText: CharSequence, startOffset: Int, oldFragment: CharSequence): Boolean {
@@ -269,8 +270,8 @@ internal abstract class ElfRealSync(
   }
 
   private fun checkTextConsistency(expect: SnapshotSnapshot) {
-    val real = expect.real.text()
-    val elf = expect.elf.text()
+    val real = expect.real.text().chars()
+    val elf = expect.elf.text().chars()
     check(real === elf || real.hashCode() == elf.hashCode()) {
       "inconsistent text detected, which leads to text change without notification to listeners"
     }

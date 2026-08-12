@@ -520,7 +520,7 @@ internal class PyExternalToolsTable(
   /** Start (or restart) the path-detection + `--version` probe for [item]. */
   private fun probeRow(item: ToolRow, isCustomEdit: Boolean = false) {
     val scope = scope ?: return
-    item.probeVersion(scope, isCustomEdit, ::refreshRow)
+    item.probeVersion(scope, project, isCustomEdit, onUpdated = ::refreshRow)
   }
 
   /** Fire a single-row table update so the renderer picks up freshly-probed state. */

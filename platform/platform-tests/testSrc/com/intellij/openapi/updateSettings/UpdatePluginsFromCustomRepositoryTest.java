@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginDescriptorLoadUtilsKt;
+import com.intellij.ide.plugins.PluginNode;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.PluginUpdateCandidateDecision;
@@ -22,9 +23,44 @@ import static com.intellij.openapi.updateSettings.impl.PluginUpdateCandidateDeci
 import static com.intellij.openapi.updateSettings.impl.PluginUpdateCandidateDecision.AcceptUpdateToLowerVersionForBrokenOrIncompatiblePlugin;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCase {
+  @Test
+  public void testRestartedUpdateKeepsPendingDescriptor() throws Exception {
+    Path descriptorPath = Path.of(
+      PlatformTestUtil.getPlatformTestDataPath(),
+      "updates/customRepositories/onlyCompatiblePluginsAreChecked/plugin1.xml"
+    );
+    IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoadUtilsKt.readDescriptorFromBytesForTest(
+      descriptorPath, false, Files.readAllBytes(descriptorPath), PluginId.getId("UpdatePluginsFromCustomRepositoryTest")
+    );
+    InstalledPluginsState state = new InstalledPluginsState();
+
+    state.onPluginInstall(descriptor, true, true);
+
+    assertSame(descriptor, state.getUpdatedPluginDescriptors().iterator().next());
+  }
+
+  @Test
+  public void testLaterRestartedUpdateReplacesPendingDescriptor() {
+    PluginId id = PluginId.getId("pending.update");
+    PluginNode first = new PluginNode(id);
+    first.setVersion("2.0");
+    PluginNode second = new PluginNode(id);
+    second.setVersion("3.0");
+    Path firstArchive = Path.of("first.zip");
+    Path secondArchive = Path.of("second.zip");
+    InstalledPluginsState state = new InstalledPluginsState();
+
+    state.onPluginInstall(first, true, true, firstArchive);
+    state.onPluginInstall(second, true, true, secondArchive);
+
+    assertSame(second, state.getUpdatedPluginDescriptors().iterator().next());
+    assertSame(secondArchive, state.getUpdatedPluginArchive(id));
+  }
+
   @Test
   public void testOnlyCompatiblePluginsAreChecked() throws Exception {
     Map<PluginId, PluginDownloader> toUpdate = new LinkedHashMap<>();

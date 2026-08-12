@@ -2,11 +2,13 @@
 package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.engine.JavaDebugProcess
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.impl.ClassLoadingUtils
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
+import com.intellij.debugger.streams.filtering.filterTraceableStreams
 import com.intellij.debugger.streams.core.trace.CollectionTreeBuilder
 import com.intellij.debugger.streams.core.trace.DebuggerCommandLauncher
 import com.intellij.debugger.streams.core.trace.StreamTracer
@@ -22,7 +24,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.PsiElement
 import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XSourcePosition
+import com.sun.jdi.event.ExceptionEvent
 
 abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
   override fun getXValueInterpreter(project: Project): XValueInterpreter = interpreter
@@ -64,6 +69,24 @@ abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
       getXValueInterpreter(session.project),
       TraceResultInterpreterImpl(support.interpreterFactory)
     )
+  }
+
+  override suspend fun filterTraceableStreams(
+    session: XDebugSession,
+    chains: List<StreamChain>,
+    position: XSourcePosition,
+    contextElement: PsiElement,
+  ): List<StreamChain> {
+    if (chains.isEmpty()) return chains
+    val suspendContext = session.suspendContext as? SuspendContextImpl ?: return chains
+    // Tracing resumes execution. Once an exception has been thrown, the control flow no longer
+    // goes where the tracer expects it to, so nothing is traceable here.
+    if (suspendContext.eventSet?.any { it is ExceptionEvent } == true) return emptyList()
+    return withDebugContext(suspendContext) {
+      // The location of the suspended thread always matches `position`.
+      val location = suspendContext.location ?: return@withDebugContext chains
+      filterTraceableStreams(chains, position, contextElement, location.method(), location.codeIndex())
+    }
   }
 
   private fun isSupportedVm(vm: VirtualMachineProxyImpl): Boolean = vm.canForceEarlyReturn() && vm.canGetMethodReturnValues()

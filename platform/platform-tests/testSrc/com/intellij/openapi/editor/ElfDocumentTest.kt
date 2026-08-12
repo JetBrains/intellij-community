@@ -17,7 +17,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener
 import com.intellij.openapi.editor.ex.DocumentEx
-import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.ElfCandidate
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -1270,8 +1270,8 @@ class ElfDocumentTest {
     assertSame(doc1.core.snapshot(), doc2.core.snapshot())
   }
 
-  private fun getSnapshot(document: DocumentImpl): DocumentSnapshot {
-    return document.core.snapshot()
+  private fun getSnapshot(document: DocumentImpl): DocumentText {
+    return document.core.snapshot().text()
   }
 
   private fun withElfScope(action: () -> Unit) {

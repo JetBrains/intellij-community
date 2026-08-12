@@ -63,6 +63,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.toArray
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.CoroutineScope
@@ -434,12 +435,12 @@ object ProjectUtil {
       val processor = computed ?: ProjectAttachProcessor.getProcessor(project, null, null)
       val exitCode = Messages.showDialog(
         project?.let { processor?.getDescription(it) } ?: IdeBundle.message("prompt.open.project.or.attach"),
-        IdeBundle.message("prompt.open.project.or.attach.title"), arrayOf(
-        IdeBundle.message("prompt.open.project.or.attach.button.this.window"),
-        IdeBundle.message("prompt.open.project.or.attach.button.new.window"),
-        project?.let { processor?.getActionText(it) } ?: IdeBundle.message("prompt.open.project.or.attach.button.attach"),
-        CommonBundle.getCancelButtonText()
-      ),
+        IdeBundle.message("prompt.open.project.or.attach.title"), listOfNotNull(
+          IdeBundle.message("prompt.open.project.or.attach.button.this.window"),
+          IdeBundle.message("prompt.open.project.or.attach.button.new.window"),
+          if (processor == null) null else project?.let { processor.getActionText(it) } ?: IdeBundle.message("prompt.open.project.or.attach.button.attach"),
+          CommonBundle.getCancelButtonText()
+      ).toArray(emptyArray<String>()),
         processor?.defaultOptionIndex(project) ?: 0,
         Messages.getQuestionIcon(),
         ProjectNewWindowDoNotAskOption())

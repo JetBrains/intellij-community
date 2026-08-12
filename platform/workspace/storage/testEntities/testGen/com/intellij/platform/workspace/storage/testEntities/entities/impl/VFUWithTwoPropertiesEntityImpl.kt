@@ -7,14 +7,12 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.VFUWithTwoPropertiesEntity
@@ -56,30 +54,7 @@ internal class VFUWithTwoPropertiesEntityImpl(private val dataSource: VFUWithTwo
     ModifiableWorkspaceEntityBase<VFUWithTwoPropertiesEntity, VFUWithTwoPropertiesEntityData>(result), VFUWithTwoPropertiesEntityBuilder {
     internal constructor() : this(VFUWithTwoPropertiesEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity VFUWithTwoPropertiesEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-      index(this, "fileProperty", this.fileProperty)
-      index(this, "secondFileProperty", this.secondFileProperty)
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization()
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -107,6 +82,11 @@ internal class VFUWithTwoPropertiesEntityImpl(private val dataSource: VFUWithTwo
       if (this.fileProperty != dataSource.fileProperty) this.fileProperty = dataSource.fileProperty
       if (this.secondFileProperty != dataSource.secondFileProperty) this.secondFileProperty = dataSource.secondFileProperty
       updateChildToParentReferences(parents)
+    }
+
+    override fun index() {
+      index(this, "fileProperty", this.fileProperty)
+      index(this, "secondFileProperty", this.secondFileProperty)
     }
 
     override var entitySource: EntitySource
@@ -154,22 +134,9 @@ internal class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPr
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
   internal fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
   internal fun isSecondFilePropertyInitialized(): Boolean = ::secondFileProperty.isInitialized
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<VFUWithTwoPropertiesEntity> {
-    val modifiable = VFUWithTwoPropertiesEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): VFUWithTwoPropertiesEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = VFUWithTwoPropertiesEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
+  override fun newInstance(): VFUWithTwoPropertiesEntity = VFUWithTwoPropertiesEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<VFUWithTwoPropertiesEntity, *> =
+    VFUWithTwoPropertiesEntityImpl.Builder(null)
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.VFUWithTwoPropertiesEntity") as EntityMetadata

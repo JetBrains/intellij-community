@@ -45,7 +45,7 @@ abstract class ProjectManagerEx : ProjectManager() {
     @Suppress("UnsafeOpenServiceCast")
     fun getInstanceEx(): ProjectManagerEx = getInstance() as ProjectManagerEx
 
-    suspend fun getInstanceExAsync(): ProjectManagerEx = ApplicationManager.getApplication().serviceAsync()
+    suspend fun getInstanceExAsync(): ProjectManagerEx = serviceAsync<ProjectManager>() as ProjectManagerEx
 
     @JvmStatic
     @Suppress("UnsafeOpenServiceCast")

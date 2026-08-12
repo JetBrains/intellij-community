@@ -7,10 +7,10 @@ import com.intellij.ide.starter.ide.InstalledIde
 import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.models.IdeInfoType
 import com.intellij.ide.starter.models.TestCase
+import com.intellij.ide.starter.path.FrontendIDEDataPaths
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.plugins.PluginInstalledState
-import com.intellij.ide.starter.project.NoProject
 import com.intellij.ide.starter.runner.events.TestContextInitializationStartedEvent
 import com.intellij.ide.starter.telemetry.computeWithSpan
 import com.intellij.ide.starter.utils.PortUtil
@@ -24,6 +24,16 @@ import java.nio.file.Path
 import kotlin.io.path.div
 
 typealias IDEDataPathsProvider = (testName: String, testDirectory: Path, useInMemoryFileSystem: Boolean) -> IDEDataPaths
+
+internal fun IDEDataPathsProvider.asFrontendDataPathsProvider(): IDEDataPathsProvider = { testName, testDirectory, useInMemoryFileSystem ->
+  when (val paths = this(testName, testDirectory, useInMemoryFileSystem)) {
+    is FrontendIDEDataPaths -> paths
+    // Converting rather than calling `createPaths` once more: the second call would wipe and re-create `testHome`
+    // right after the first one, and both instances would own the very same in-memory root (its path is derived from
+    // the test name), so collecting the discarded one could delete the directories of the live one.
+    else -> paths.asFrontendDataPaths()
+  }
+}
 
 interface TestContainer {
   companion object {
@@ -112,17 +122,9 @@ interface TestContainer {
   }
 
   /**
-   * Creates a context from the `existingContext` one. The difference from the [newContext] method is that the project is not set up, but
-   * re-used from the `existingContext`
-   */
-  fun createFromExisting(testName: String, testCase: TestCase<*>, preserveSystemDir: Boolean = false, existingContext: IDETestContext): IDETestContext =
-    newContext(testName, testCase, preserveSystemDir, if (testCase.projectInfo is NoProject) null else existingContext.resolvedProjectHome)
-
-  /**
    * Starting point to run your test.
    * @param preserveSystemDir Only for local runs when you know that having "dirty" system folder is ok and want to speed up test execution.
-   * @param baseContext - optional base context. If passed, some set up steps for the new context are omitted and we are re-using base context information.
-   *                      For example - project unpacking
+   * @param projectHome optional project home. If passed, some setup steps for the new context are omitted and project unpacking is reused.
    */
   fun newContext(
     testName: String, testCase: TestCase<*>, preserveSystemDir: Boolean = false, projectHome: Path?,

@@ -2,8 +2,8 @@
 package org.intellij.plugins.markdown.actions
 
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 
 @Suppress("unused")
 class MarkdownStylingActionsConsistencyTest {
@@ -135,7 +135,7 @@ class MarkdownStylingActionsConsistencyTest {
 
   class BoldActionConsistency: BaseTest("org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction", "**")
 
-  class ItalicActionConsistency: BaseTest("org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction", "_")
+  class ItalicActionConsistency: BaseTest("org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction", "*")
 
   class StrikethroughActionConsistency: BaseTest(
     "org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction",

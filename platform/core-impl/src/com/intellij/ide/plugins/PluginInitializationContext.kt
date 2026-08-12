@@ -111,28 +111,28 @@ interface PluginInitializationContext {
   /**
    * Only is called once during the startup initialization
    */
-  fun runConfigurationDuringStartup(totalPluginSet: AmbiguousPluginSet)
+  fun runConfigurationDuringStartup(candidateSubset: UnambiguousPluginSet)
 
   companion object
 }
 
 @ApiStatus.Internal
-fun PluginInitializationContext.validatePluginIsCompatible(plugin: PluginMainDescriptor): PluginNonLoadReason? {
+fun PluginInitializationContext.validatePluginIsCompatible(plugin: PluginMainDescriptor): DescriptorExclusionReason? {
   if (plugin.isBundled) {
     return null
   }
-  if (AppMode.isDisableNonBundledPlugins()) {
-    return NonBundledPluginsAreExplicitlyDisabled(plugin)
+  if (AppMode.isDisableNonBundledPlugins()) { // TODO: move this out of here
+    return ProductRulesImposedExclusion(plugin, NonBundledPluginsLoadingIsDisabled)
   }
-  PluginManagerCore.checkBuildNumberCompatibility(plugin, productBuildNumber)?.let {
-    return it
+  PluginCompatibilityUtils.checkBuildNumberCompatibility(plugin, productBuildNumber)?.let {
+    return PluginIsIncompatibleWithProduct(plugin, it)
   }
   // "Show broken plugins in Settings | Plugins so that users can uninstall them and resolve 'Plugin Error' (IDEA-232675)"
   if (isPluginBroken(plugin.pluginId, plugin.version)) {
-    return PluginIsMarkedBroken(plugin)
+    return PluginIsIncompatibleWithProduct(plugin, PluginIncompatibilityReason.PluginIsMarkedBroken())
   }
   if (requirePlatformAliasDependencyForLegacyPlugins && PluginCompatibilityUtils.isLegacyPluginWithoutPlatformAliasDependencies(plugin)) {
-    return PluginIsCompatibleOnlyWithIntelliJIDEA(plugin)
+    return ProductRulesImposedExclusion(plugin, LegacyPluginIsCompatibleOnlyWithIntelliJIDEA)
   }
   return null
 }

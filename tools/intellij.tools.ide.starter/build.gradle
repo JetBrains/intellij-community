@@ -70,6 +70,11 @@ dependencies {
   implementation('com.github.oshi:oshi-core:6.9.2')
   implementation('org.apache.commons:commons-compress:1.27.1')
   implementation('commons-io:commons-io:2.18.0')
+
+  testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+  testImplementation 'io.kotest:kotest-assertions-core-jvm:5.5.4'
+  testImplementation 'org.mockito:mockito-core:5.7.0'
+  testImplementation 'org.mockito:mockito-junit-jupiter:5.7.0'
 }
 
 configurations {

@@ -1,12 +1,12 @@
 package com.intellij.ide.starter.junit5
 
+import com.intellij.ide.starter.data.TestCases
 import com.intellij.ide.starter.junit5.config.KillOutdatedProcessesAfterEach
 import com.intellij.ide.starter.process.ProcessKiller
 import com.intellij.ide.starter.project.NoProject
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.tools.ide.starter.bus.EventsBus
-import examples.data.TestCases
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope

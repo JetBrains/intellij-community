@@ -1,0 +1,21 @@
+LineBreakpoint created at TwoIdenticalChainsSameLine.java:7
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! TwoIdenticalChainsSameLine
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Stopped at TwoIdenticalChainsSameLine.java:7
+=== before stream (bytecode offset 25) ===
+  [0] traceable arr.stream() -> map -> toList
+  [1] traceable arr.stream() -> map -> toList
+=== after toList (bytecode offset 45) ===
+  [0] filtered  arr.stream() -> map -> toList
+  [1] traceable arr.stream() -> map -> toList
+=== before stream#1 (bytecode offset 51) ===
+  [0] filtered  arr.stream() -> map -> toList
+  [1] traceable arr.stream() -> map -> toList
+=== after toList#1 (bytecode offset 71) ===
+  [0] filtered  arr.stream() -> map -> toList
+  [1] filtered  arr.stream() -> map -> toList
+Resuming TwoIdenticalChainsSameLine.java:7
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
+10

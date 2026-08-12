@@ -31,6 +31,7 @@ class CurrentTestMethodProviderTest {
     CurrentTestMethodProvider().executionStarted(testIdentifier)
 
     CurrentTestMethod.get()?.testClass shouldBe SampleTestClass::class.java
+    CurrentTestMethod.get()?.id shouldBe uniqueId
   }
 
   private class SampleTestClass {

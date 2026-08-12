@@ -118,7 +118,11 @@ class PluginSetTestBuilder private constructor(
   fun discoverPlugins(): Pair<PluginDescriptorLoadingContext, PluginsDiscoveryResult> {
     val loadingContext = PluginDescriptorLoadingContext(getBuildNumberForDefaultDescriptorVersion = { productBuildNumber })
     val pluginList = DiscoveredPluginsList(pluginDescriptorLoader(loadingContext), PluginsSourceContext.Custom)
-    return loadingContext to PluginsDiscoveryResult.build(listOf(pluginList))
+    val discoveryResult = PluginsDiscoveryResult.build(
+      discoveredPluginLists = listOf(pluginList),
+      descriptorLoadingErrors = loadingContext.copyDescriptorLoadingErrors(),
+    )
+    return loadingContext to discoveryResult
   }
 
   fun buildState(configureClassLoaders: Boolean = true): PluginManagerState {
@@ -127,9 +131,11 @@ class PluginSetTestBuilder private constructor(
     val pluginList = PluginInitContextFactory.withCustomFactoryInUnitTests(TestPluginInitContextFactory(initContext)) { // FIXME this should not exist
       DiscoveredPluginsList(pluginDescriptorLoader(loadingContext), PluginsSourceContext.Custom)
     }
-    val discoveredPlugins = PluginsDiscoveryResult.build(listOf(pluginList))
-    return PluginManagerCore.initializePlugins(
+    val discoveredPlugins = PluginsDiscoveryResult.build(
+      discoveredPluginLists = listOf(pluginList),
       descriptorLoadingErrors = loadingContext.copyDescriptorLoadingErrors(),
+    )
+    return PluginManagerCore.initializePlugins(
       initContext = initContext,
       discoveredPlugins = discoveredPlugins,
       coreLoader = customCoreLoader ?: UrlClassLoader.build().get(),

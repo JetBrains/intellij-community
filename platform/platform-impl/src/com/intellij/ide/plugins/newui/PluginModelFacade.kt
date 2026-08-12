@@ -132,8 +132,12 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     return UiPluginManager.getInstance().getPluginUpdateSource(pluginModel.sessionId, pluginId)
   }
 
-  suspend fun setPluginUpdateSource(pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
-    UiPluginManager.getInstance().setPluginUpdateSource(pluginModel.sessionId, pluginId, pluginUpdateSource)
+  suspend fun setPendingPluginUpdateSourceInSession(pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
+    UiPluginManager.getInstance().setPendingPluginUpdateSourceInSession(pluginModel.sessionId, pluginId, pluginUpdateSource)
+  }
+
+  suspend fun persistPluginUpdateSource(pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?){
+    UiPluginManager.getInstance().persistPluginUpdateSource(pluginModel.sessionId, pluginId, pluginUpdateSource)
   }
 
   fun getModel(): MyPluginModel = pluginModel

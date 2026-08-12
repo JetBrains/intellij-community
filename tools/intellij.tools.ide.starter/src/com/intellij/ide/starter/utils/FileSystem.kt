@@ -10,6 +10,7 @@ import com.intellij.util.ThreeState
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.Compressor.Tar.Compression
 import com.intellij.util.io.Decompressor
+import com.intellij.util.io.createDirectories
 import com.intellij.util.io.zip.JBZipEntry
 import com.intellij.util.io.zip.JBZipFile
 import com.intellij.util.system.OS
@@ -27,9 +28,9 @@ import java.time.Duration
 import java.time.Instant
 import java.util.zip.GZIPOutputStream
 import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.div
+import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.fileSize
 import kotlin.io.path.inputStream
@@ -44,6 +45,15 @@ import kotlin.time.Duration.Companion.minutes
 
 // TODO: https://youtrack.jetbrains.com/issue/AT-3187/Support-archives-unpacking-on-remote-machines-in-com.intellij.ide.starter.utils.FileSystem
 object FileSystem {
+  fun Path.createDirectoriesIfNotExist(): Path {
+    if (exists()) {
+      logOutput("Reports dir '${this.fileName}' is already created")
+      return this
+    }
+    logOutput("Creating reports dir '${this.fileName}'")
+    return createDirectories()
+  }
+
   fun String.cleanPathFromSlashes(replaceWith: String = ""): String = this
     .replace("\"", replaceWith)
     .replace("/", replaceWith)
@@ -60,10 +70,11 @@ object FileSystem {
     }
   }
 
-  fun countFiles(path: Path): Long = Files.walk(path).use { it.count() }
-
-  fun hasAtLeastFiles(path: Path, minCount: Long): Boolean =
-    Files.walk(path).use { stream ->
+  fun hasAtLeastFiles(path: Path, minCount: Long): Boolean {
+    // Files.walk() does not follow a symbolic link at the root without FileVisitOption.FOLLOW_LINKS, so a path that
+    // is itself a symlink (e.g. a shared reused-IDE system directory) would otherwise count as a single entry.
+    val realPath = if (Files.isSymbolicLink(path)) path.toRealPath() else path
+    Files.walk(realPath).use { stream ->
       val iterator = stream.iterator()
       var seen = 0L
       while (iterator.hasNext()) {
@@ -72,6 +83,7 @@ object FileSystem {
       }
       return false
     }
+  }
 
   fun compressToZip(sourceToCompress: Path, outputArchive: Path) {
     if (sourceToCompress.extension == "zip") {

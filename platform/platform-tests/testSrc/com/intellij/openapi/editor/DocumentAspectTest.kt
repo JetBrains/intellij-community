@@ -1,15 +1,21 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.ex.DocumentAspect
 import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Key
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.text.ImmutableCharSequence
+import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
@@ -92,7 +98,15 @@ internal class DocumentAspectTest {
     val snapshot = snapshot("abc")
     assertSame(snapshot, snapshot.withAspect(KEY_1, null))
     val withAspect = snapshot.withAspect(KEY_2, TestAspect())
-    assertSame(withAspect, withAspect.withAspect(KEY_1, null))
+    assertSame(withAspect, withAspect.withAspect(KEY_1, null)) // KEY_1 sorts before the attached KEY_2
+  }
+
+  @Test
+  fun `a key ordered after the attached ones is absent`() {
+    // the lookup runs off the end of the sorted keys, unlike `removing an absent aspect is a no-op`
+    val snapshot = snapshot("abc").withAspect(KEY_1, TestAspect())
+    assertNull(snapshot.aspect(KEY_UNAFFECTED)) // KEY_UNAFFECTED sorts after the attached KEY_1
+    assertSame(snapshot, snapshot.withAspect(KEY_UNAFFECTED, null))
   }
 
   @Test
@@ -102,12 +116,13 @@ internal class DocumentAspectTest {
     val after = insertString(before, offset = 1, fragment = "XY")
     val rebuilt = after.aspect(KEY_1)!!
     assertEquals(1, rebuilt.rebuildCount)
-    assertSame(before, rebuilt.oldSnapshot)
+    assertSame(before.text(), rebuilt.oldText)
+    assertSame(after.text(), rebuilt.newText) // the aspect sees the very text its snapshot carries
     assertEquals("aXYbc", rebuilt.newWholeText.toString())
     assertEquals(1, rebuilt.startOffset)
     assertEquals(1, rebuilt.endOffset)
     assertEquals("XY", rebuilt.newFragment.toString())
-    assertEquals(before.modStamp() + 1, rebuilt.newModStamp)
+    assertEquals(before.text().modStamp() + 1, rebuilt.newModStamp)
     assertSame(aspect, before.aspect(KEY_1)) // the old snapshot keeps the old aspect
   }
 
@@ -117,6 +132,7 @@ internal class DocumentAspectTest {
     val after = replaceString(before, startOffset = 1, endOffset = 3, fragment = "ZZZ")
     val rebuilt = after.aspect(KEY_1)!!
     assertEquals("aZZZdef", rebuilt.newWholeText.toString())
+    assertEquals("aZZZdef", rebuilt.newText!!.string())
     assertEquals(1, rebuilt.startOffset)
     assertEquals(3, rebuilt.endOffset)
     assertEquals("ZZZ", rebuilt.newFragment.toString())
@@ -125,12 +141,12 @@ internal class DocumentAspectTest {
   @Test
   fun `aspect receives origin range of a narrowed change`() {
     val before = snapshot("abcdef").withAspect(KEY_1, TestAspect())
-    val after = before.withText(
+    val after = before.withPatch(
       DocumentTextPatch.complex(
         startOffset = 2,
         endOffset = 3,
         newFragment = "Z",
-        newModStamp = before.modStamp() + 1,
+        newModStamp = before.text().modStamp() + 1,
         clearLineFlags = false,
         originStartOffset = 1,
         originEndOffset = 4,
@@ -181,9 +197,7 @@ internal class DocumentAspectTest {
   @Test
   fun `aspect survives modStamp update`() {
     val aspect = TestAspect()
-    val snapshot = snapshot("abc")
-      .withAspect(KEY_1, aspect)
-      .withModStamp(42L, true)
+    val snapshot = withModStamp(snapshot("abc").withAspect(KEY_1, aspect))
     assertSame(aspect, snapshot.aspect(KEY_1))
     assertEquals(0, aspect.rebuildCount)
   }
@@ -200,29 +214,99 @@ internal class DocumentAspectTest {
   fun `withMetadata with same text takes aspects of metadata`() {
     val base = snapshot("abc")
     val withAspect = base.withAspect(KEY_1, TestAspect())
-    val metadata = base.withModStamp(42L, true) // shares the text instance with `withAspect`
+    val metadata = withModStamp(base) // shares the text characters with `withAspect`
     val merged = withAspect.withMetadata(metadata)
-    assertEquals(42L, merged.modStamp())
+    assertEquals(MOD_STAMP, merged.text().modStamp())
     assertNull(merged.aspect(KEY_1)) // aspects follow the newest snapshot whose text survives
+  }
+
+  @Test
+  fun `withMetadata with same text yields the metadata snapshot itself`() {
+    val base = snapshot("abc")
+    val withAspect = base.withAspect(KEY_1, TestAspect())
+    val metadata = withModStamp(base)
+    // unlike the other `with*` methods, withMetadata does not return `this` when nothing else changes
+    assertSame(metadata, withAspect.withMetadata(metadata))
   }
 
   @Test
   fun `withMetadata with different text keeps aspects of this snapshot`() {
     val before = snapshot("abc").withAspect(KEY_1, TestAspect())
     val changed = insertString(before, offset = 0, fragment = "x")
-    val metadata = snapshot("abc")
-      .withAspect(KEY_2, TestAspect())
-      .withModStamp(42L, true)
+    val metadata = withModStamp(snapshot("abc").withAspect(KEY_2, TestAspect()))
     val merged = changed.withMetadata(metadata)
-    assertEquals(42L, merged.modStamp())
+    assertEquals(MOD_STAMP, merged.text().modStamp())
     val kept = merged.aspect(KEY_1)
     assertNotNull(kept) // this text survives, so this aspects survive
     assertSame(changed.aspect(KEY_1), kept)
     assertNull(merged.aspect(KEY_2)) // metadata aspects correspond to its discarded text
   }
 
+  @Test
+  fun `updateSnapshotAndGet attaches an aspect visible through the document snapshot`() {
+    val document = DocumentImpl("abc")
+    val aspect = TestAspect()
+    val updated = document.core.mutator().updateSnapshotAndGet { it.withAspect(KEY_1, aspect) }
+    assertSame(aspect, updated.aspect(KEY_1))
+    assertSame(updated, document.core.snapshot()) // the returned snapshot is the published one
+  }
+
+  @Test
+  fun `updateSnapshotAndGet detaches an aspect`() {
+    val document = DocumentImpl("abc")
+    document.core.mutator().updateSnapshotAndGet { it.withAspect(KEY_1, TestAspect()) }
+    document.core.mutator().updateSnapshotAndGet { it.withAspect(KEY_1, null) }
+    assertNull(document.core.snapshot().aspect(KEY_1))
+  }
+
+  @Test
+  fun `updateSnapshotAndGet rejects a change of the characters`() {
+    val document = DocumentImpl("abc")
+    val mutator = document.core.mutator()
+    val patch = DocumentTextPatch.simple(
+      startOffset = 0,
+      endOffset = 0,
+      newFragment = "x",
+      newModStamp = document.core.snapshot().text().modStamp() + 1,
+      clearLineFlags = false,
+    )
+    val snapshotBefore = document.core.snapshot()
+    // a text change published this way would fire no DocumentListener
+    assertFailsWith<IllegalArgumentException> {
+      mutator.updateSnapshotAndGet { it.withPatch(patch) }
+    }
+    assertSame(snapshotBefore, document.core.snapshot()) // nothing was published
+    assertEquals("abc", document.text)
+  }
+
+  @Test
+  fun `attached aspect is rebuilt by a document text change`() = runOnEdt {
+    val document = DocumentImpl("abc")
+    document.core.mutator().updateSnapshotAndGet { it.withAspect(KEY_1, TestAspect()) }
+    val textBefore = document.core.snapshot().text()
+    WriteCommandAction.runWriteCommandAction(null) {
+      document.insertString(1, "XY")
+    }
+    assertEquals("aXYbc", document.text)
+    val rebuilt = document.core.snapshot().aspect(KEY_1)!!
+    assertEquals(1, rebuilt.rebuildCount)
+    assertSame(textBefore, rebuilt.oldText)
+    assertSame(document.core.snapshot().text(), rebuilt.newText)
+    assertEquals("aXYbc", rebuilt.newText!!.string())
+  }
+
+  private fun runOnEdt(action: () -> Unit) {
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      action()
+    }
+  }
+
   private fun snapshot(text: String): DocumentSnapshot {
     return DocumentImpl(text).core.snapshot()
+  }
+
+  private fun withModStamp(snapshot: DocumentSnapshot): DocumentSnapshot {
+    return snapshot.withModStamp(MOD_STAMP, true)
   }
 
   private fun insertString(snapshot: DocumentSnapshot, offset: Int, fragment: String): DocumentSnapshot {
@@ -230,12 +314,12 @@ internal class DocumentAspectTest {
   }
 
   private fun replaceString(snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int, fragment: String): DocumentSnapshot {
-    return snapshot.withText(
+    return snapshot.withPatch(
       DocumentTextPatch.complex(
         startOffset = startOffset,
         endOffset = endOffset,
         newFragment = fragment,
-        newModStamp = snapshot.modStamp() + 1,
+        newModStamp = snapshot.text().modStamp() + 1,
         clearLineFlags = false,
         originStartOffset = startOffset,
         originEndOffset = endOffset,
@@ -245,7 +329,8 @@ internal class DocumentAspectTest {
 
   private class TestAspect(
     val rebuildCount: Int = 0,
-    val oldSnapshot: DocumentSnapshot? = null,
+    val oldText: DocumentText? = null,
+    val newText: DocumentText? = null,
     val newWholeText: ImmutableCharSequence? = null,
     val startOffset: Int = -1,
     val endOffset: Int = -1,
@@ -254,35 +339,40 @@ internal class DocumentAspectTest {
     val originStartOffset: Int = -1,
     val originEndOffset: Int = -1,
   ) : DocumentAspect {
-    override fun withText(
-      beforeText: DocumentSnapshot,
-      patch: DocumentTextPatch,
+    override fun withTextChange(
+      before: DocumentText,
+      after: DocumentText,
+      diff: DocumentTextPatch,
     ): DocumentAspect {
-      val newWholeText = beforeText.text().replace(patch.startOffset(), patch.endOffset(), patch.newFragment())
+      val newWholeText = before.chars().replace(diff.startOffset(), diff.endOffset(), diff.newFragment())
       return TestAspect(
         rebuildCount + 1,
-        beforeText,
+        before,
+        after,
         newWholeText,
-        patch.startOffset(),
-        patch.endOffset(),
-        patch.newFragment(),
-        patch.newModStamp(),
-        patch.originStartOffset(),
-        patch.originEndOffset(),
+        diff.startOffset(),
+        diff.endOffset(),
+        diff.newFragment(),
+        diff.newModStamp(),
+        diff.originStartOffset(),
+        diff.originEndOffset(),
       )
     }
   }
 
   private class UnaffectedAspect : DocumentAspect {
-    override fun withText(
-      beforeText: DocumentSnapshot,
-      patch: DocumentTextPatch,
+    override fun withTextChange(
+      before: DocumentText,
+      after: DocumentText,
+      diff: DocumentTextPatch,
     ): DocumentAspect {
       return this
     }
   }
 
   companion object {
+    private const val MOD_STAMP: Long = 42L
+
     // Key index = creation order, and the aspect list is sorted by it:
     // KEY_UNAFFECTED_LOW sorts before KEY_1..KEY_3, KEY_UNAFFECTED sorts after them
     private val KEY_UNAFFECTED_LOW: Key<UnaffectedAspect> = Key.create("test.document.aspect.unaffected.low")

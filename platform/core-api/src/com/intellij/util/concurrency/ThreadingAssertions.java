@@ -6,16 +6,22 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.openapi.util.UtilThreadingAssertions;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus.Internal;
-import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.EventQueue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+
+import static com.intellij.util.SlowOperations.assertNonCancelableSlowOperationsAreAllowed;
 
 /**
  * This class contains various threading assertions.
@@ -25,6 +31,13 @@ import java.util.function.Consumer;
  */
 public final class ThreadingAssertions {
 
+  static {
+    UtilThreadingAssertions.init(
+      () -> assertNonCancelableSlowOperationsAreAllowed(),
+      () -> softAssertAwtOperationsThread()
+    );
+  }
+
   private ThreadingAssertions() { }
 
   private static @NotNull Logger getLogger() {
@@ -32,6 +45,8 @@ public final class ThreadingAssertions {
   }
 
   private static final String DOCUMENTATION_URL = "https://jb.gg/ij-platform-threading";
+
+  private static final Set<String> REPORTED_AWT_THREAD_VIOLATIONS = ConcurrentHashMap.newKeySet();
 
   @Internal
   @VisibleForTesting
@@ -68,6 +83,10 @@ public final class ThreadingAssertions {
   public static final String MUST_NOT_EXECUTE_IN_EDT =
     "Access from Event Dispatch Thread (EDT) is not allowed";
 
+  private static final String AWT_ACCESS_MUST_EXECUTE_IN_EDT =
+    "Access to UI components is allowed from Event Dispatch Thread (EDT) only. " +
+    "Swing is not thread-safe: touching UI components from a background thread may cause a deadlock";
+
   /**
    * Asserts that the current thread is the event dispatch thread.
    *
@@ -80,11 +99,36 @@ public final class ThreadingAssertions {
   }
 
   /**
+   * Asserts that the current thread is the Event Dispatch Thread (EDT), which is the only thread allowed
+   * to access AWT/Swing components.
+   * <p>
+   * Swing is not thread-safe: creating or touching UI components from a background thread may corrupt their
+   * state or cause a deadlock, since a background thread and the EDT can end up waiting for each other to
+   * release the locks each of them holds.
+   * <p>
+   * Unlike {@link #assertEventDispatchThread()}, this assertion is a no-op in a headless environment, where
+   * there is no UI to protect.
+   *
+   * @see com.intellij.util.concurrency.annotations.RequiresEdt
+   */
+  public static void softAssertAwtOperationsThread() {
+    if (!EDT.isCurrentThreadEdt()) {
+      Application application = ApplicationManager.getApplication();
+      if (application == null || application.isHeadlessEnvironment()) return; // does not make sense in headless
+
+      if (!EDT.isDisableEdtChecks()
+          && Registry.is("ide.awt.operations.thread.assertion", false)
+          && REPORTED_AWT_THREAD_VIOLATIONS.add(ExceptionUtil.currentStackTrace())) {
+        getLogger().error(createThreadRequirementException(AWT_ACCESS_MUST_EXECUTE_IN_EDT));
+      }
+    }
+  }
+
+  /**
    * Asserts that the current thread is the event dispatch thread <b>without throwing</b> an exception.
    *
    * @see com.intellij.util.concurrency.annotations.RequiresEdt
    */
-  @Obsolete
   public static void softAssertEventDispatchThread() {
     if (!EDT.isCurrentThreadEdt() && !EDT.isDisableEdtChecks()) {
       getLogger().error(createThreadRequirementException(MUST_EXECUTE_IN_EDT));
@@ -107,7 +151,6 @@ public final class ThreadingAssertions {
    *
    * @see com.intellij.util.concurrency.annotations.RequiresBackgroundThread
    */
-  @Obsolete
   public static void softAssertBackgroundThread() {
     if (EDT.isCurrentThreadEdt() && !EDT.isDisableEdtChecks()) {
       getLogger().error(createThreadRequirementException(MUST_NOT_EXECUTE_IN_EDT));
@@ -151,7 +194,6 @@ public final class ThreadingAssertions {
    *
    * @see com.intellij.util.concurrency.annotations.RequiresReadLock
    */
-  @Obsolete
   public static void softAssertReadAccess() {
     Application application = ApplicationManager.getApplication();
     if (application != null) {
@@ -183,7 +225,6 @@ public final class ThreadingAssertions {
    *
    * @see com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
    */
-  @Obsolete
   public static void softAssertNoReadAccess() {
     Application application = ApplicationManager.getApplication();
     if (application != null && application.isReadAccessAllowed()) {
@@ -289,6 +330,7 @@ public final class ThreadingAssertions {
   private static @NotNull String getThreadDetails() {
     Thread current = Thread.currentThread();
     Thread edt = EDT.getEventDispatchThreadOrNull();
+    //noinspection SwingIsEventDispatchThread
     return "Current thread: " + describe(current) + " (EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() + ")\n" +
            "SystemEventQueueThread: " + (edt == current ? "(same)" : describe(edt));
   }

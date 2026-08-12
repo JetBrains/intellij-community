@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ex.MessagesEx
@@ -59,6 +60,7 @@ import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
+import org.jetbrains.kotlin.idea.util.isJavaFileType
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.ConversionResult
 import org.jetbrains.kotlin.j2k.ExternalCodeProcessing
@@ -132,12 +134,7 @@ open class JavaToKotlinAction : AnAction() {
         val virtualFilesAndDirectories = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return emptyList()
         val project = e.project ?: return emptyList()
         val psiManager = PsiManager.getInstance(project)
-        return getAllFilesRecursively(virtualFilesAndDirectories)
-            .asSequence()
-            .mapNotNull { psiManager.findFile(it) as? PsiJavaFile }
-            .filter { it.fileType == JavaFileType.INSTANCE } // skip .jsp files
-            .filter { it.isWritable }
-            .toList()
+        return getAllFilesRecursively(virtualFilesAndDirectories).mapNotNull { findWritableJavaFile(it, psiManager) }
     }
 
     private fun showNothingToConvertErrorMessage(project: Project) {
@@ -403,6 +400,18 @@ object JavaToKotlinActionHandler {
     )
 }
 
+private const val MAX_SCANNED_FILE_COUNT = 10_000
+
+private fun findWritableJavaFile(file: VirtualFile, psiManager: PsiManager): PsiJavaFile? {
+    if (!file.isWritable || !file.isJavaFileType()) return null
+    return (psiManager.findFile(file) as? PsiJavaFile)?.takeIf { it.fileType == JavaFileType.INSTANCE } // skip .jsp files
+}
+
+private fun isWritablePackageDirectory(file: VirtualFile, project: Project): Boolean {
+    val directory = file.toPsiDirectory(project) ?: return false
+    return PsiDirectoryFactory.getInstance(project).isPackage(directory) && file.isWritable
+}
+
 private fun isBuiltInActionEnabled(e: AnActionEvent): Boolean {
     if (KotlinPlatformUtils.isCidr) return false
     val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return false
@@ -410,23 +419,31 @@ private fun isBuiltInActionEnabled(e: AnActionEvent): Boolean {
     if (project.isDisposed) return false
     if (e.getData(PlatformCoreDataKeys.MODULE) == null) return false
 
-    fun isWritableJavaFile(file: VirtualFile): Boolean {
-        val psiManager = PsiManager.getInstance(project)
-        return file.extension == JavaFileType.DEFAULT_EXTENSION && psiManager.findFile(file) is PsiJavaFile && file.isWritable
+    // Directories are not considered in the project view popup to avoid cluttering it.
+    val scanDirectories = e.place != PROJECT_VIEW_POPUP
+    val psiManager = PsiManager.getInstance(project)
+
+    val fileIndex = ProjectFileIndex.getInstance(project)
+    var remainingFiles = MAX_SCANNED_FILE_COUNT
+
+    for (file in files) {
+        if (file.isDirectory) {
+            if (!scanDirectories || !isWritablePackageDirectory(file, project)) continue
+
+            var javaFileFound = false
+            fileIndex.iterateContentUnderDirectory(file) { child ->
+                javaFileFound = findWritableJavaFile(child, psiManager) != null
+                !javaFileFound && --remainingFiles > 0
+            }
+
+            // Once the limit is reached, stay enabled rather than keep walking: actionPerformed reports the empty result.
+            if (javaFileFound || remainingFiles <= 0) return true
+        } else if (findWritableJavaFile(file, psiManager) != null) {
+            return true
+        }
     }
 
-    fun isWritablePackageDirectory(file: VirtualFile): Boolean {
-        val directory = file.toPsiDirectory(project) ?: return false
-        if (!PsiDirectoryFactory.getInstance(project).isPackage(directory) || !file.isWritable) return false
-
-        return file.children.any { it.isDirectory || it.extension == JavaFileType.DEFAULT_EXTENSION }
-    }
-
-    // If a package is selected, we consider that it may contain Java files,
-    // but don't actually check, because this check is recursive and potentially expensive: KTIJ-12688.
-    //
-    // This logic is disabled for the project view popup to avoid cluttering it.
-    return e.place != PROJECT_VIEW_POPUP && files.any(::isWritablePackageDirectory) || files.any(::isWritableJavaFile)
+    return false
 }
 
 suspend inline fun <T> withCommandOnEdt(project: Project, crossinline action: suspend () -> T): T {

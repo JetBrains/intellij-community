@@ -45,7 +45,7 @@ class OpenProjectTaskBuilder {
       return options
     }
 
-    return options.copy(beforeInit = { project ->
+    return options.copy(beforeInitTasks = options.beforeInitTasks + { project ->
       if (!runPostStartUpActivities) {
         project.putUserData(ProjectImpl.RUN_START_UP_ACTIVITIES, false)
       }

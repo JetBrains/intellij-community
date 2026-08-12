@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -114,7 +113,6 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
-import java.awt.event.KeyEvent
 import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -141,7 +139,7 @@ class TerminalViewImpl(
   private val terminalSearchController: TerminalSearchController
 
   @VisibleForTesting
-  val outputEditor: EditorEx
+  val outputEditor: EditorImpl
   private val alternateBufferEditor: EditorEx
 
   @VisibleForTesting
@@ -368,7 +366,6 @@ class TerminalViewImpl(
     listenPanelSizeChanges()
     listenAlternateBufferSwitch()
     listenApplicationTitleChanges()
-    listenKeyEvents()
 
     refreshVfsOnFocusChange(
       component = terminalPanel,
@@ -558,18 +555,6 @@ class TerminalViewImpl(
         title.change {
           @Suppress("HardCodedStringLiteral")
           applicationTitle = state.windowTitle
-        }
-      }
-    }
-  }
-
-  /** Logic that can be performed asynchronously with typing */
-  private fun listenKeyEvents() {
-    coroutineScope.launch(Dispatchers.UI + CoroutineName("Key events listener")) {
-      keyEventsFlow.collect { e ->
-        if (e.awtEvent.id == KeyEvent.KEY_TYPED) {
-          outputEditor.selectionModel.let { if (it.hasSelection()) it.removeSelection() }
-          alternateBufferEditor.selectionModel.let { if (it.hasSelection()) it.removeSelection() }
         }
       }
     }

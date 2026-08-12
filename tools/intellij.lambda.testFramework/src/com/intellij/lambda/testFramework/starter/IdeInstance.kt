@@ -76,7 +76,6 @@ object IdeInstance {
       _ide = testContext.runIdeWithLambda(configure = {
         IdeStartConfig.current.configureRunContext(this)
         // Artifacts will be published after each test by invoking IdeInstance.publishArtifacts
-        this.artifactsPublishingEnabled = false
       })
 
       return ide
@@ -106,10 +105,5 @@ object IdeInstance {
     else {
       LOG.info("IDE wasn't started. Skipping killing it.")
     }
-  }
-
-  fun publishArtifacts(): Unit = synchronized(this) {
-    runContext.frontendContext.publishArtifacts(publish = true)
-    runContext.backendContext?.publishArtifacts(publish = true)
   }
 }

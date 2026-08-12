@@ -5,14 +5,12 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.impl.BatchBuildProcessLogger
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.BuildDiagnosticCollector;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ConfigurationState;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ElementSnapshotDeltaImpl;
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.FormsCompiler;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.OutputSinkImpl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.PostponedDiagnosticSink;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ResourcesSnapshotDelta;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.RunnerRegistry;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.SnapshotDeltaImpl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.Utils;
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.forms.FormBinding;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.AsyncLibraryGraphLoader;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.DeltaView;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
@@ -42,7 +40,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -185,16 +182,6 @@ public class BazelIncBuilder {
                     srcSnapshotDelta.markRecompileAll();
                     context.report(Message.create(null, Message.Kind.WARNING, e));
                   }
-                }
-              }
-            }
-
-            // for all modified forms ensure sources bound to forms are marked for recompilation
-            if (!srcSnapshotDelta.isRecompileAll()) {
-              Iterator<@NotNull NodeSource> modifiedForms = filter(srcSnapshotDelta.getModified(), FormBinding::isForm).iterator();
-              if (modifiedForms.hasNext()) {
-                for (NodeSource source : FormsCompiler.findBoundSources(storageManager, collect(modifiedForms, new ArrayList<>()))) {
-                  srcSnapshotDelta.markRecompile(source);
                 }
               }
             }

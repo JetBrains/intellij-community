@@ -1,15 +1,12 @@
 package com.intellij.python.pytools
 
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelOsFamily
-import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
-import com.intellij.platform.eel.where
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinaryToExec
@@ -24,6 +21,8 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PythonInterpreter
+import com.jetbrains.python.sdk.ToolCommandExecutor
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.moduleIfExists
 import com.jetbrains.python.sdk.pythonInterpreter
@@ -51,13 +50,14 @@ suspend fun PyTool.getExecutableWithBaseArgs(
   workingDir: Path? = null,
 ): PyResult<Pair<BinaryToExec, List<String>>> {
   val state = getState(moduleOrProject.project)
+  val eelApi = moduleOrProject.project.getEelDescriptor().toEelApi()
 
   val toolBinaryPath = when (state.discoveryMode) {
     ExecutableDiscoveryMode.INTERPRETER -> {
       val pyRichSdk = moduleOrProject.moduleIfExists?.pythonSdk?.pythonInterpreter()
-      pyRichSdk?.let { findExecutableInSdk(it, executableName) } ?: findExecutableInPath(state, executableName)
+      pyRichSdk?.let { findExecutableInSdk(it, executableName) } ?: findExecutableInPath(eelApi, state, executableName)
     }
-    ExecutableDiscoveryMode.PATH -> findExecutableInPath(state, executableName)
+    ExecutableDiscoveryMode.PATH -> findExecutableInPath(eelApi, state, executableName)
     ExecutableDiscoveryMode.UVX -> null
   }
 
@@ -69,14 +69,15 @@ suspend fun PyTool.getExecutableWithBaseArgs(
     BinOnEel(toolBinaryPath, workDir = workDir).let { PyResult.success(it to emptyList()) }
   }
   else {
-    val uvxPath = localEel.exec.where("uvx")
+    // uvx (installed with uv) may live in a per-user dir off PATH, so detect it like any other tool.
+    val uvxPath = findExecutableInPath(eelApi, "uvx")
                   ?: return PyResult.localizedError(message("uvx.is.not.installed"))
 
     // `uvx <pkg>` only works when the package's entry point matches its name. When the executable
     // differs (e.g. pyright → pyright-langserver) uvx needs `--from <pkg> <executable>`.
     val uvxArgs = if (executableName == packageName.name) listOf(executableName)
                   else listOf("--from", packageName.name, executableName)
-    BinOnEel(uvxPath.asNioPath(), workDir = workDir).let { PyResult.success(it to uvxArgs) }
+    BinOnEel(uvxPath, workDir = workDir).let { PyResult.success(it to uvxArgs) }
   }
 }
 
@@ -137,13 +138,21 @@ fun PyTool.findExecutableInSdk(pythonInterpreter: PythonInterpreter, executableN
   }
 }
 
-private fun PyTool.findExecutableInPath(state: PyToolsState.ToolEntry, executableName: String = packageName.name): Path? {
-  return state.customToolBinaryPath ?: findExecutableInPath(executableName)
-}
-
-fun PyTool.findExecutableInPath(
+private suspend fun PyTool.findExecutableInPath(
+  eelApi: EelApi,
+  state: PyToolsState.ToolEntry,
   executableName: String = packageName.name,
-): Path? = PathEnvironmentVariableUtil.findFirst(executableName)
+): Path? = state.customToolBinaryPath ?: findExecutableInPath(eelApi, executableName)
+
+/**
+ * Resolve [executableName] in the environment [eelApi] describes: on `PATH` and in the well-known per-user
+ * install directories tool installers use (pip's user scripts dir, uv/pipx's `~/.local/bin`, …). Detection
+ * goes through [ToolCommandExecutor] so it matches how the executable was installed — a plain `PATH` lookup
+ * misses those per-user dirs, which are frequently not on `PATH` on Windows (PY-91493). Not tied to a
+ * [PyTool]: also used to find `uv`/`uvx`, which have no tool entry.
+ */
+suspend fun findExecutableInPath(eelApi: EelApi, executableName: String): Path? =
+  ToolCommandExecutor(executableName).detectToolExecutable(eelApi.toFileSystem()) { true }?.path
 
 /**
  * Installs this tool's executable into the environment described by [eel], using the first available

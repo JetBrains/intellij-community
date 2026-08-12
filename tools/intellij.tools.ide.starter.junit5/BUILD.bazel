@@ -214,6 +214,8 @@ jvm_library(
         "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
         "//platform/testFramework/teamCity",
         "//platform/testFramework/teamCity:teamCity_test_lib",
+        "//tools/intellij.tools.ide.starter/testSrc:tools-ide-starter-tests",
+        "//tools/intellij.tools.ide.starter/testSrc:tools-ide-starter-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.tools.ide.starter.junit5.tests` end

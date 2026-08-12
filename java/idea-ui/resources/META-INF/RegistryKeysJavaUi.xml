@@ -1,0 +1,9 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="load.maven.dependencies.timeout" defaultValue="120"
+                 description="How long (in minutes) idea will wait for results of synchronized maven dependencies resolution"/>
+    <registryKey key="jar.http.downloader.enabled" defaultValue="false"
+                 description="Enabled maven-less library roots resolver for JPS (for internal JetBrains use only)"/>
+  </extensions>
+</idea-plugin>

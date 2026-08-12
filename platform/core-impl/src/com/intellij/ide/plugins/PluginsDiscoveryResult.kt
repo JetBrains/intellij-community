@@ -6,10 +6,18 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface PluginsDiscoveryResult {
   val pluginLists: List<DiscoveredPluginsList>
+  val descriptorLoadingErrors: List<PluginDescriptorLoadingError>
 
   companion object {
-    fun build(discoveredPluginLists: List<DiscoveredPluginsList>): PluginsDiscoveryResult = object : PluginsDiscoveryResult {
-      override val pluginLists: List<DiscoveredPluginsList> = discoveredPluginLists
+    fun build(
+      discoveredPluginLists: List<DiscoveredPluginsList>,
+      descriptorLoadingErrors: List<PluginDescriptorLoadingError> = emptyList(),
+    ): PluginsDiscoveryResult {
+      val errors = descriptorLoadingErrors
+      return object : PluginsDiscoveryResult {
+        override val pluginLists: List<DiscoveredPluginsList> = discoveredPluginLists
+        override val descriptorLoadingErrors: List<PluginDescriptorLoadingError> = errors
+      }
     }
   }
 }

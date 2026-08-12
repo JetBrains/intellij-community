@@ -135,7 +135,6 @@ internal class McpSessionHandler(
 
   private val sessionAwaiter = CompletableDeferred<ServerSession>()
   private val sessionRoots = AtomicReference<Set<String>?>(null)
-  private val resolvedSessionProject = AtomicReference<Project?>(null)
 
   /**
    * Serializes concurrent [updateTools] invocations (the initial explicit call from [McpServerService],
@@ -177,7 +176,6 @@ internal class McpSessionHandler(
       logger.trace { "Tools update could not resolve a target project: ${t.message}" }
       null
     }
-    resolvedSessionProject.set(resolvedProject)
     val projectKnownUpfront = !projectPathFromInitialRequest.isNullOrBlank() || resolvedProject != null
 
     val newState = AppliedToolsState(tools = newTools, projectKnownUpfront = projectKnownUpfront)
@@ -254,7 +252,6 @@ internal class McpSessionHandler(
             "Roots for session ${session.sessionId} cleared"
           }
           sessionRoots.set(null)
-          resolvedSessionProject.set(null)
         }
         session.setNotificationHandler<RootsListChangedNotification>(Method.Defined.NotificationsRootsListChanged) {
           sessionScope.async {

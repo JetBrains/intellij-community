@@ -97,12 +97,12 @@ class PluginSetLoadingTest {
     val resultState = PluginSetTestBuilder.fromPath(pluginsDirPath)
       .withDisabledPlugins("foo")
       .buildState()
-
-    val incompletePlugins = resultState.incompletePluginsForLogging
-    assertThat(incompletePlugins).hasSize(1)
-    val foo = incompletePlugins.single()
+    assertThat(resultState.incompletePluginsForLogging).isEmpty()
+    assertThat(resultState.pluginSet.resolvedPluginSet.candidateSet.plugins).hasSize(1)
+    val foo = resultState.pluginSet.resolvedPluginSet.candidateSet.plugins.single()
     assertThat(foo.version).isEqualTo("2.0")
     assertThat(foo.pluginId.idString).isEqualTo("foo")
+    assertThat(resultState.pluginSet.resolvedPluginSet.getExclusionReason(foo)).isInstanceOf(PluginIsMarkedDisabled::class.java)
   }
 
   @Test

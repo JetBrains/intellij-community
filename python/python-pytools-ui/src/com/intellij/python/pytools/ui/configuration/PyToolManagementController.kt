@@ -11,21 +11,23 @@ import com.intellij.python.pytools.statistics.PyToolUsagesCollector
 import com.intellij.python.pytools.statistics.PyToolActionSource
 import com.intellij.python.pytools.Version
 import com.intellij.python.pytools.ui.PyToolsUiBundle
+import com.intellij.python.uv.backend.UVX_EXECUTABLE
 import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.uv.backend.setUvExecutableLocal
 import com.intellij.python.pytools.PyToolManager
 import com.intellij.python.pytools.PyToolManagerProvider
+import com.intellij.python.pytools.findExecutableInPath
 import com.intellij.python.pytools.performToolInstallation
 import com.intellij.python.pytools.performToolUpgrade
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.intellij.python.requirements.PyPackageVersionComparator
-import com.jetbrains.python.sdk.uv.impl.hasUvExecutableLocal
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.nio.file.Path
 
 /**
  * Backs the External Tools page's tool actions: the install / upgrade actions invoked from the Path
@@ -94,7 +96,10 @@ internal class PyToolManagementController(
   fun onShown(scope: CoroutineScope) {
     this.scope = scope
     scope.launch {
-      uvAvailable.set(hasUvExecutableLocal())
+      // Detect uvx in the project's environment (e.g. inside WSL), not on the local host, so the uvx
+      // chain marker and the install-uv footer reflect the actual interpreter target (PY-91503). Detect
+      // via findExecutableInPath so a pip-installed uvx in a per-user dir off PATH is still found.
+      uvAvailable.set(findExecutableInPath(project.getEelDescriptor().toEelApi(), UVX_EXECUTABLE) != null)
       withContext(Dispatchers.Main) { onStateChanged() }
       refreshOutdated()
     }
@@ -211,7 +216,7 @@ internal class PyToolManagementController(
     toolRow: ToolRow,
     progressTitleKey: String,
     errorTitleKey: String,
-    action: suspend () -> PyResult<*>,
+    action: suspend () -> PyResult<Path>,
     onSuccess: () -> Unit = {},
     /**
      * Fires once after the post-action `--version` re-probe publishes a version (or skips if
@@ -244,12 +249,14 @@ internal class PyToolManagementController(
       refreshRow(toolRow)
       throw e
     }
-    val failure = result as? Result.Failure<*>
-    if (failure != null) {
-      toolRow.actionInProgress = false
-      refreshRow(toolRow)
-      Messages.showErrorDialog(project, failure.error.toString(), errorTitle)
-      return
+    val installedPath = when (result) {
+      is Result.Success -> result.result
+      is Result.Failure -> {
+        toolRow.actionInProgress = false
+        refreshRow(toolRow)
+        Messages.showErrorDialog(project, result.error.toString(), errorTitle)
+        return
+      }
     }
     onSuccess()
     // Invalidate the cached probe so the freshly installed/upgraded binary's version is re-fetched.
@@ -264,7 +271,9 @@ internal class PyToolManagementController(
     }
     var probeCallbacks = 0
     var versionResolvedFired = false
-    toolRow.probeVersion(activeScope) { updatedRow ->
+    // Seed the probe with the path the installer just reported, so the row reflects the freshly
+    // installed tool immediately even when its dir is not on PATH (PY-91493).
+    toolRow.probeVersion(activeScope, project, knownPath = installedPath) { updatedRow ->
       probeCallbacks++
       if (!versionResolvedFired && updatedRow.version != null) {
         versionResolvedFired = true

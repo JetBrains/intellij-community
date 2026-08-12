@@ -6,7 +6,6 @@ import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.workspaceModel.test.api.SimpleEntity
@@ -34,27 +33,7 @@ return emptyList()
 }
 internal class Builder(result: SimpleEntityData?): ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(result), SimpleEntityBuilder{
 internal constructor(): this(SimpleEntityData())
-override fun applyToBuilder(builder: MutableEntityStorage){
-if (this.diff != null){
-if (existsInBuilder(builder)){
-this.diff = builder
-return
-}
-else{
-error("Entity SimpleEntity is already created in a different builder")
-}
-}
-this.diff = builder
-addToBuilder()
-this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-this.currentEntityData = null
-// Process linked entities that are connected without a builder
-processLinkedEntities(builder)
-checkInitialization()
-}
-private fun checkInitialization(){
+override fun checkInitialization(){
 val _diff = diff
 if (!getEntityData().isEntitySourceInitialized()){
 error("Field WorkspaceEntity#entitySource should be initialized")
@@ -94,21 +73,8 @@ override fun getEntityClass(): Class<SimpleEntity> = SimpleEntity::class.java
 internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>(){
 lateinit var name: String
 internal fun isNameInitialized(): Boolean = ::name.isInitialized
-override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SimpleEntity>{
-val modifiable = SimpleEntityImpl.Builder(null)
-modifiable.diff = diff
-modifiable.id = createEntityId()
-return modifiable
-}
-override fun createEntity(snapshot: EntityStorageInstrumentation): SimpleEntity{
-val entityId = createEntityId()
-return snapshot.initializeEntity(entityId){
-val entity = SimpleEntityImpl(this)
-entity.snapshot = snapshot
-entity.id = entityId
-entity
-}
-}
+override fun newInstance(): SimpleEntity = SimpleEntityImpl(this)
+override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<SimpleEntity, *> = SimpleEntityImpl.Builder(null)
 override fun getMetadata(): EntityMetadata{
 return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.SimpleEntity") as EntityMetadata
 }

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
-import org.jetbrains.yaml.lexer.YAMLGrammarCharUtil;
+import org.jetbrains.yaml.YamlGrammarCharUtil;
 import org.jetbrains.yaml.psi.YAMLBlockScalar;
 import org.jetbrains.yaml.psi.YAMLScalarText;
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
@@ -111,7 +111,7 @@ public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScala
       }
 
       if (currentLength > YAMLScalarImpl.MAX_SCALAR_LENGTH_PREDEFINED &&
-          input.charAt(i) == ' ' && i + 1 < input.length() && YAMLGrammarCharUtil.isNonSpaceChar(input.charAt(i + 1))) {
+          input.charAt(i) == ' ' && i + 1 < input.length() && YamlGrammarCharUtil.isNonSpaceChar(input.charAt(i + 1))) {
         result.add(Pair.create(TextRange.from(i, 1), "\n" + indentString));
         currentLength = 0;
         continue;

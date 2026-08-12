@@ -137,6 +137,45 @@ class BuildDependenciesDownloaderTest {
   }
 
   @Test
+  fun `several manifests are one inventory, each resolved against its own directory`() = runBlocking(Dispatchers.Default) {
+    // one manifest per Bazel repository: a dependency set is split so that bumping one pinned version
+    // refetches only its own artifact
+    withPreloadedTestRoot { communityRoot, cache, manifestRoot ->
+      val first = manifestRoot.resolve("first")
+      val second = manifestRoot.resolve("second")
+      Files.createDirectories(first)
+      Files.createDirectories(second)
+      Files.writeString(first.resolve("one.bin"), "one")
+      Files.writeString(second.resolve("two.bin"), "two")
+      writeManifest(first, "one.bin", "7".repeat(64), "https://example.invalid/one.bin")
+      writeManifest(second, "two.bin", "8".repeat(64), "https://example.invalid/two.bin")
+      System.setProperty(
+        BuildDependenciesConstants.PRELOADED_DOWNLOADS_MANIFEST_PROPERTY,
+        "${first.resolve("preloaded-downloads-v1.tsv")},${second.resolve("preloaded-downloads-v1.tsv")}",
+      )
+
+      val one = downloadFileToCacheLocation("https://example.invalid/one.bin", communityRoot)
+      val two = downloadFileToCacheLocation("https://example.invalid/two.bin", communityRoot)
+      Assert.assertTrue(one.startsWith(cache))
+      Assert.assertEquals("one", Files.readString(one))
+      Assert.assertEquals("two", Files.readString(two))
+
+      // an undeclared URL is still an error, and the merged inventory is the thing it is measured against
+      val undeclared = Assert.assertThrows(IllegalStateException::class.java) {
+        runBlocking { downloadFileToCacheLocation("http://127.0.0.1:9/three.bin", communityRoot) }
+      }
+      Assert.assertTrue(undeclared.message, undeclared.message!!.contains("not declared in authoritative"))
+
+      // two repositories claiming one URL would make the winner depend on flag order
+      writeManifest(second, "two.bin", "8".repeat(64), "https://example.invalid/one.bin")
+      val conflict = Assert.assertThrows(IllegalStateException::class.java) {
+        runBlocking { downloadFileToCacheLocation("https://example.invalid/one.bin", communityRoot) }
+      }
+      Assert.assertTrue(conflict.message, conflict.message!!.contains("redeclares URL"))
+    }
+  }
+
+  @Test
   fun `extraction reads a preloaded archive without writing anywhere near it`() = runBlocking(Dispatchers.Default) {
     withPreloadedTestRoot { communityRoot, cache, manifestRoot ->
       val url = "https://example.invalid/preloaded.zip"

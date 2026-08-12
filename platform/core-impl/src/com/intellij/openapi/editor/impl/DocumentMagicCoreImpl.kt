@@ -241,35 +241,35 @@ internal class DocumentMagicCoreImpl private constructor(
 
   private inner class LiveElf : CharSequence {
     override val length: Int
-      get() = this@DocumentMagicCoreImpl.snapshot.elf.textLength()
+      get() = this@DocumentMagicCoreImpl.snapshot.elf.text().length()
 
     override fun get(index: Int): Char {
-      return this@DocumentMagicCoreImpl.snapshot.elf.text()[index]
+      return this@DocumentMagicCoreImpl.snapshot.elf.text().chars()[index]
     }
 
     override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
-      return this@DocumentMagicCoreImpl.snapshot.elf.text().subSequence(startIndex, endIndex)
+      return this@DocumentMagicCoreImpl.snapshot.elf.text().chars().subSequence(startIndex, endIndex)
     }
 
     override fun toString(): String {
-      return this@DocumentMagicCoreImpl.snapshot.elf.string()
+      return this@DocumentMagicCoreImpl.snapshot.elf.text().string()
     }
   }
 
   private inner class LiveReal : CharSequence {
     override val length: Int
-      get() = this@DocumentMagicCoreImpl.snapshot.real.textLength()
+      get() = this@DocumentMagicCoreImpl.snapshot.real.text().length()
 
     override fun get(index: Int): Char {
-      return this@DocumentMagicCoreImpl.snapshot.real.text()[index]
+      return this@DocumentMagicCoreImpl.snapshot.real.text().chars()[index]
     }
 
     override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
-      return this@DocumentMagicCoreImpl.snapshot.real.text().subSequence(startIndex, endIndex)
+      return this@DocumentMagicCoreImpl.snapshot.real.text().chars().subSequence(startIndex, endIndex)
     }
 
     override fun toString(): String {
-      return this@DocumentMagicCoreImpl.snapshot.real.string()
+      return this@DocumentMagicCoreImpl.snapshot.real.text().string()
     }
   }
 
@@ -324,7 +324,7 @@ internal class DocumentMagicCoreImpl private constructor(
     fun createCore(chars: CharSequence, acceptSlashR: Boolean, forUseInNonAWTThread: Boolean): DocumentCore {
       val settingsReal = DocumentSettingsImpl(!forUseInNonAWTThread, acceptSlashR, chars)
       val settingsElf = DocumentElfSettingsImpl(settingsReal)
-      val snapshot = SnapshotSnapshot.newClean(DocumentSnapshotImpl(chars))
+      val snapshot = SnapshotSnapshot.newClean(DocumentSnapshotImpl(DocumentTextImpl(chars)))
       return DocumentMagicCoreImpl(snapshot, settingsElf, settingsReal)
     }
 

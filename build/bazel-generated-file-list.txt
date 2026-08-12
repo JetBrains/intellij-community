@@ -1598,6 +1598,7 @@ plugins/stream-debugger
 plugins/stream-debugger/backend
 plugins/stream-debugger/core
 plugins/stream-debugger/java
+plugins/stream-debugger/java/frontend
 plugins/stream-debugger/rt
 plugins/stream-debugger/rt/gatherers
 plugins/stream-debugger/shared
@@ -1659,6 +1660,7 @@ plugins/xpath
 plugins/xpath/xslt-rt
 plugins/yaml
 plugins/yaml/backend
+plugins/yaml/syntax
 python
 python/IntelliLang-python
 python/aliasProvider
@@ -1786,6 +1788,7 @@ tools/intellij.tools.ide.starter.product.rider
 tools/intellij.tools.ide.starter.product.rubymine
 tools/intellij.tools.ide.starter.product.rustrover
 tools/intellij.tools.ide.starter.product.webstorm
+tools/intellij.tools.ide.starter/testSrc
 tools/intellij.tools.ide.util.common
 tools/launcher-generator
 tools/reproducibleBuilds.diff

@@ -33,12 +33,69 @@ load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
 _PRELOADED_DOWNLOADS_MANIFEST = "preloaded-downloads-v1.tsv"
 _PRELOADED_DOWNLOADS_MANIFEST_HEADER = "intellij-build-downloads\t1"
 
+def write_downloads_repo(repository_ctx, files):
+    """Fetches every declared file and materializes the repository the build sees.
+
+    `files` is a list of `struct(name, url, sha256)`. An empty `sha256` downloads unpinned, which
+    only makes sense for a repository whose URLs are derived from versions the checkout owns: such
+    a repository is refetched exactly when its artifact changed, so there is no cached copy a
+    checksum could have spared us. The manifest records the hash Bazel observed either way, so the
+    runtime keeps its content-addressed lookup.
+
+    Returns whether every file was checksum-pinned before the download - which is what makes the
+    result reproducible, and the repository shareable through the repo contents cache.
+    """
+    downloads = []
+    for f in files:
+        downloads.append(repository_ctx.download(
+            url = f.url,
+            output = f.name,
+            sha256 = f.sha256,
+            block = False,
+            auth = get_auth(repository_ctx, [f.url]),
+        ))
+
+    pinned = True
+    rows = []
+    for index, download in enumerate(downloads):
+        f = files[index]
+        if not f.sha256:
+            pinned = False
+        rows.append("%s\t%s\t%s" % (f.name, download.wait().sha256, f.url))
+
+    repository_ctx.file(
+        _PRELOADED_DOWNLOADS_MANIFEST,
+        _PRELOADED_DOWNLOADS_MANIFEST_HEADER + "\n" + "\n".join(rows) + "\n",
+    )
+    names = [f.name for f in files]
+    repository_ctx.file(
+        "BUILD",
+        """
+package(default_visibility = ["//visibility:public"])
+exports_files([
+{exported}
+])
+filegroup(
+    name = "files",
+    srcs = [
+{artifacts}
+    ],
+)
+""".format(
+            exported = ",\n".join(["  \"%s\"" % name for name in names + [_PRELOADED_DOWNLOADS_MANIFEST]]),
+            artifacts = "\n".join(["        \"%s\"," % name for name in names]),
+        ),
+    )
+    return pinned
+
 def test_deps_repository(repository_name):
     files = []
 
     def download_file(name, url, sha256):
         if not name or name.startswith("/") or "\\" in name:
             fail("test_deps_repository requires a non-empty repository-relative name, got: " + name)
+        if name == "files" or name == _PRELOADED_DOWNLOADS_MANIFEST:
+            fail("test_deps_repository reserves the name '%s' for the repository it generates" % name)
         for part in name.split("/"):
             if not part or part == "." or part == "..":
                 fail("test_deps_repository requires a normalized repository-relative name, got: " + name)
@@ -59,38 +116,7 @@ def test_deps_repository(repository_name):
         files.append(struct(name = name, url = url, sha256 = sha256))
 
     def _impl(repository_ctx):
-        # Download all declared files in parallel
-        downloads = []
-        for f in files:
-            if not f.sha256:
-                fail("test_deps_repository requires a non-empty sha256 for " + f.name)
-            downloads.append(repository_ctx.download(
-                url = f.url,
-                output = f.name,
-                sha256 = f.sha256,
-                block = False,
-                auth = get_auth(repository_ctx, [f.url]),
-            ))
-        for d in downloads:
-            d.wait()
-
-        exported_files = [f.name for f in files] + [_PRELOADED_DOWNLOADS_MANIFEST]
-        repository_ctx.file(
-            _PRELOADED_DOWNLOADS_MANIFEST,
-            _PRELOADED_DOWNLOADS_MANIFEST_HEADER + "\n" + "\n".join([
-                "%s\t%s\t%s" % (f.name, f.sha256, f.url)
-                for f in files
-            ]) + "\n",
-        )
-        repository_ctx.file(
-            "BUILD",
-            """
-package(default_visibility = ["//visibility:public"])
-exports_files([
-{files}
-])
-""".format(files = ",\n".join(["  \"%s\"" % name for name in exported_files])),
-        )
+        write_downloads_repo(repository_ctx, files)
         return repository_ctx.repo_metadata(reproducible = True)
 
     def make_repository_rule():

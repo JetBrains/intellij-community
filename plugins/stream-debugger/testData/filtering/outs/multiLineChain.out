@@ -1,0 +1,20 @@
+LineBreakpoint created at MultiLineChain.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! MultiLineChain
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Stopped at MultiLineChain.java:6
+=== before of (bytecode offset 15) ===
+  [0] traceable IntStream.of(1,2,3) -> map -> filter -> sum
+=== after of (bytecode offset 18) ===
+  [0] traceable IntStream.of(1,2,3) -> map -> filter -> sum
+=== before map (bytecode offset 23) ===
+  [0] traceable IntStream.of(1,2,3) -> map -> filter -> sum
+=== after map (bytecode offset 28) ===
+  [0] filtered  IntStream.of(1,2,3) -> map -> filter -> sum
+=== before filter (bytecode offset 33) ===
+  [0] filtered  IntStream.of(1,2,3) -> map -> filter -> sum
+=== before sum (bytecode offset 38) ===
+  [0] filtered  IntStream.of(1,2,3) -> map -> filter -> sum
+Resuming MultiLineChain.java:6
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

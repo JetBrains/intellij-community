@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
-import com.intellij.openapi.editor.ex.DocumentSnapshot;
+import com.intellij.openapi.editor.ex.DocumentText;
 import kotlinx.collections.immutable.ExtensionsKt;
 import kotlinx.collections.immutable.PersistentList;
 import org.jetbrains.annotations.NotNull;
@@ -13,12 +13,12 @@ import java.util.Objects;
 final class LogicalLines {
   private static final int BATCH_PREFETCH_SIZE = 32; // optimization for sequential reading
 
-  final DocumentSnapshot document;
+  final DocumentText document;
   final PersistentList<LogicalColumns> lines; // index: lineNumber, value: cachedColumns
   final int tabSize;
 
   LogicalLines(
-    DocumentSnapshot document,
+    DocumentText document,
     PersistentList<LogicalColumns> lines,
     int tabSize
   ) {
@@ -71,7 +71,7 @@ final class LogicalLines {
   }
 
   @NotNull LogicalLines withInvalidatedLines(
-    @NotNull DocumentSnapshot newDocument,
+    @NotNull DocumentText newDocument,
     int startLine,
     int oldEndLine,
     int newEndLine,

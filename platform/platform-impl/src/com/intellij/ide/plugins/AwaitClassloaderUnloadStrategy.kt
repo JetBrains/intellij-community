@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -27,7 +28,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.util.MemoryDumpHelper
-import com.intellij.util.SystemProperties
 import com.intellij.util.application
 import com.intellij.util.containers.WeakList
 import com.intellij.util.ref.GCWatcher
@@ -198,7 +198,10 @@ private suspend fun awaitClassLoadersGetGarbageCollected(classloaders: WeakList<
 private fun saveMemorySnapshot(pluginId: PluginId) {
   val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
   val snapshotFileName = "unload-${pluginId.asSanitizedPathElement()}-$snapshotDate.hprof"
-  val snapshotPath = System.getProperty("memory.snapshots.path", SystemProperties.getUserHome()) + "/" + snapshotFileName
+  val snapshotPath = Paths.get(
+    System.getProperty(PathManager.PROPERTY_LOG_PATH, PathManager.getLogDir().toString()),
+    snapshotFileName,
+  ).toString()
 
   MemoryDumpHelper.captureMemoryDump(snapshotPath)
 

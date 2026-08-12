@@ -16,6 +16,7 @@ import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.MethodInvocator;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBSwingUtilities;
@@ -182,6 +183,8 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   @Override
   public void setView(Component view) {
+    ThreadingAssertions.softAssertAwtOperationsThread();
+
     super.setView(view);
     updateBorder(view);
   }

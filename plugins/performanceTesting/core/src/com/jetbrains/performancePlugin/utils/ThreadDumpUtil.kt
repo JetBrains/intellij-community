@@ -4,8 +4,8 @@ package com.jetbrains.performancePlugin.utils
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.diagnostic.dumpCoroutines
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
+import com.jetbrains.performancePlugin.LogDirHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -95,7 +95,7 @@ suspend fun dumpIdeThreads(threadDumpFile: Path) {
 }
 
 private fun getDumpFolder(folderName: String): Path =
-  PathManager.getLogDir().resolve(folderName)
+  LogDirHandler.currentLogDir().resolve(folderName)
 
 @OptIn(ExperimentalTime::class)
 private fun Path.getDumpFile(

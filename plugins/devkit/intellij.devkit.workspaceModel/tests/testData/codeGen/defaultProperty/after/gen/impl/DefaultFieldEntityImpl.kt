@@ -5,7 +5,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -17,7 +16,6 @@ import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceL
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.workspaceModel.test.api.DefaultFieldEntity
@@ -54,27 +52,7 @@ return emptyList()
 }
 internal class Builder(result: DefaultFieldEntityData?): ModifiableWorkspaceEntityBase<DefaultFieldEntity, DefaultFieldEntityData>(result), DefaultFieldEntityBuilder{
 internal constructor(): this(DefaultFieldEntityData())
-override fun applyToBuilder(builder: MutableEntityStorage){
-if (this.diff != null){
-if (existsInBuilder(builder)){
-this.diff = builder
-return
-}
-else{
-error("Entity DefaultFieldEntity is already created in a different builder")
-}
-}
-this.diff = builder
-addToBuilder()
-this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-this.currentEntityData = null
-// Process linked entities that are connected without a builder
-processLinkedEntities(builder)
-checkInitialization()
-}
-private fun checkInitialization(){
+override fun checkInitialization(){
 val _diff = diff
 if (!getEntityData().isEntitySourceInitialized()){
 error("Field WorkspaceEntity#entitySource should be initialized")
@@ -204,21 +182,8 @@ var defaultSet: MutableSet<String> = emptySet<String>().toMutableWorkspaceSet()
 var defaultList: MutableList<String> = emptyList<String>().toMutableWorkspaceList()
 var defaultMap: Map<String, String> = emptyMap<String, String>()
 internal fun isDataInitialized(): Boolean = ::data.isInitialized
-override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<DefaultFieldEntity>{
-val modifiable = DefaultFieldEntityImpl.Builder(null)
-modifiable.diff = diff
-modifiable.id = createEntityId()
-return modifiable
-}
-override fun createEntity(snapshot: EntityStorageInstrumentation): DefaultFieldEntity{
-val entityId = createEntityId()
-return snapshot.initializeEntity(entityId){
-val entity = DefaultFieldEntityImpl(this)
-entity.snapshot = snapshot
-entity.id = entityId
-entity
-}
-}
+override fun newInstance(): DefaultFieldEntity = DefaultFieldEntityImpl(this)
+override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<DefaultFieldEntity, *> = DefaultFieldEntityImpl.Builder(null)
 override fun getMetadata(): EntityMetadata{
 return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.DefaultFieldEntity") as EntityMetadata
 }

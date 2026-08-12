@@ -2,119 +2,50 @@
 package com.intellij.openapi.editor.ex
 
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.TextRange
-import com.intellij.util.text.ImmutableCharSequence
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 
 /**
- * Immutable self-consistent snapshot of document content (text + metadata).
+ * Immutable self-consistent snapshot of the whole document state.
  *
- * Metadata: [modStamp], [modSequence], [isLineModified].
- * The rest -- text.
+ * A snapshot owns the document [text] and the state derived from it that has to stay consistent with the
+ * text across every change -- the aspects. A document core publishes a new snapshot atomically, so a reader
+ * observes the text and everything derived from it from the same document version.
  *
- * Metadata is used to track the "timeline" of the text.
+ * A `with*` method returns `this` when it changes nothing, and callers depend on that: a no-op update leaves
+ * the core's snapshot field pointing at the same instance, and caches keyed by snapshot identity, such as the
+ * frozen document of [DocumentCore.frozen], keep hitting. [withMetadata] is the exception -- when the
+ * characters survive it yields the newest snapshot, which is the other one rather than `this`.
+ *
+ * @see DocumentCore.snapshot
+ * @see DocumentAspect
  */
 @ApiStatus.Internal
 interface DocumentSnapshot {
 
   /**
-   * @see DocumentEx.getImmutableCharSequence
+   * Returns the text of this snapshot
    */
   @Contract(pure = true)
-  fun text(): ImmutableCharSequence
+  fun text(): DocumentText
 
   /**
-   * Same characters as [text], but returns an already-cached [String] (faster `charAt`) when available.
-   * Unlike [string], never forces [String] materialization.
-   */
-  @Contract(pure = true)
-  fun charSequence(): CharSequence
-
-  /**
-   * @see DocumentEx.getText
-   */
-  @Contract(pure = true)
-  fun string(range: TextRange): String
-
-  /**
-   * Pure in visible effects, but discouraged: materializing a [String] copies the whole text (O(n)).
-   * Prefer [text] or [charSequence] when a [CharSequence] is enough.
+   * Returns snapshot with specified `newModStamp`. The aspects are kept, the characters do not change.
    *
-   * @see DocumentEx.getText
+   * @param incrementModSeq whether [DocumentText.modSequence] should be incremented
+   * @see DocumentText.withModStamp
    */
   @Contract(pure = true)
-  fun string(): String
+  fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentSnapshot
 
   /**
-   * @see DocumentEx.getTextLength
-   */
-  @Contract(pure = true)
-  fun textLength(): Int
-
-  /**
-   * Part of the document metadata tracking text timeline
+   * Returns snapshot with cleared specified line flags. The aspects are kept, the characters do not change.
    *
-   * @see DocumentEx.getModificationStamp
+   * @param endLine is exclusive. Two special values `0` and `Int.MAX_VALUE` ignoring range checks
+   * @see DocumentText.withClearedLineFlags
    */
   @Contract(pure = true)
-  fun modStamp(): Long
-
-  /**
-   * Part of the document metadata tracking text timeline.
-   * Always increases from snapshot to snapshot if text is changed.
-   *
-   * @see DocumentEx.getModificationSequence
-   */
-  @Contract(pure = true)
-  fun modSequence(): Int
-
-  /**
-   * @see DocumentEx.getLineCount
-   */
-  @Contract(pure = true)
-  fun lineCount(): Int
-
-  /**
-   * @see DocumentEx.getLineNumber
-   */
-  @Contract(pure = true)
-  fun lineNumber(offset: Int): Int
-
-  /**
-   * @see DocumentEx.getLineStartOffset
-   */
-  @Contract(pure = true)
-  fun lineStartOffset(line: Int): Int
-
-  /**
-   * @see DocumentEx.getLineEndOffset
-   */
-  @Contract(pure = true)
-  fun lineEndOffset(line: Int): Int
-
-  /**
-   * @see DocumentEx.getLineSeparatorLength
-   */
-  @Contract(pure = true)
-  fun lineSeparatorLength(line: Int): Int
-
-  /**
-   * Part of the document metadata tracking text timeline
-   *
-   * @see DocumentEx.isLineModified
-   */
-  @Contract(pure = true)
-  fun isLineModified(line: Int): Boolean
-
-  /**
-   * @see DocumentEx.createLineIterator
-   */
-  @Contract(pure = true)
-  fun lineIterator(): LineIterator
-
-  @Contract(pure = true)
-  fun dumpState(): String
+  fun withClearedLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray): DocumentSnapshot
 
   /**
    * Returns the aspect associated with [key], or `null` if there is none.
@@ -135,41 +66,35 @@ interface DocumentSnapshot {
   fun <A : DocumentAspect> withAspect(key: Key<A>, aspect: A?): DocumentSnapshot
 
   /**
-   * Returns snapshot with specified `newModStamp`.
-   *
-   * @param incrementModSeq whether [modSequence] should be incremented
-   */
-  @Contract(pure = true)
-  fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentSnapshot
-
-  /**
-   * Returns snapshot with cleared specified line flags.
-   *
-   * @param endLine is exclusive. Two special values `0` and `Int.MAX_VALUE` ignoring range checks
-   */
-  @Contract(pure = true)
-  fun withClearedLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray): DocumentSnapshot
-
-  /**
-   * Returns snapshot with the same text and metadata from the other snapshot.
+   * Returns snapshot with the text of this snapshot and the text metadata taken from the other snapshot.
    * This method is used to preserve the semantics of metadata being a tracker of text timeline.
    *
    * Aspects follow the newest snapshot whose text survives:
-   * - if [metadata] has the same text as this snapshot, the result takes [metadata]'s aspects --
+   * - if [metadata] has the same characters as this snapshot, the result takes [metadata]'s aspects --
    *   the latest document state, including aspects attached during before-change listeners
    *   (aspect updates never change the text instance);
    * - otherwise this snapshot's aspects are kept, because [metadata]'s aspects
    *   correspond to its discarded text
    *
    * @param metadata latest version of the document
+   * @see DocumentText.withMetadata
    */
   @Contract(pure = true)
   fun withMetadata(metadata: DocumentSnapshot): DocumentSnapshot
 
   /**
-   * Returns snapshot with [patch] applied: the result's text is this snapshot's text after replacing
-   * `[patch.startOffset, patch.endOffset)` with [DocumentTextPatch.newFragment].
+   * Returns snapshot with [patch] applied: the text is this snapshot's text after the replacement described
+   * by [patch], and every aspect is rebuilt against the same patch to stay consistent with the new text.
+   *
+   * @see DocumentText.withPatch
+   * @see DocumentAspect.withTextChange
    */
   @Contract(pure = true)
-  fun withText(patch: DocumentTextPatch): DocumentSnapshot
+  fun withPatch(patch: DocumentTextPatch): DocumentSnapshot
+
+  /**
+   * Returns a human-readable dump of the snapshot state, used for diagnostics only
+   */
+  @Contract(pure = true)
+  fun dumpState(): String
 }

@@ -130,8 +130,8 @@ object DynamicPlugins {
         return@validator "plugin $id was expected to be loaded but is not found in the target plugin state"
       }
       if (state.isExcluded(plugin)) {
-        return@validator "${plugin.shortLogDescription} was expected to be loaded but was excluded (disabled plugins may appear as unresolved):\n" + // FIXME IJPL-246161
-                         "${PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(state, emptyMap(), plugin)}"
+        return@validator "${plugin.shortLogDescription} was expected to be loaded but was excluded:\n" +
+                         "${PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(state, plugin)}"
       }
     }
     for (id in expectNotToLoad) {
@@ -431,21 +431,10 @@ object DynamicPlugins {
     }
 
     val newDiscoveryResult = PluginsDiscoveryResult.build(
-      newPluginLists
+      discoveredPluginLists = newPluginLists,
+      descriptorLoadingErrors = currentSet.input.discoveryResult.descriptorLoadingErrors,
     )
 
-    val incompletePlugins = mutableMapOf<PluginId, PluginMainDescriptor> ()
-    val pluginsToLoad = newInitContext.selectPluginsToLoad(newDiscoveryResult) { plugin, reason ->
-      incompletePlugins[plugin.pluginId] = plugin
-    }
-    val resolvedSet = newInitContext.resolveConstraints(pluginsToLoad)
-    val newState = PluginManagerCore.adaptResolvedPluginSetAsOldPluginSet(
-      PluginSubsystemInput(newInitContext, newDiscoveryResult),
-      resolvedSet,
-    ) {
-      // TODO handle later, not important right now
-    }
-
-    return newState.first
+    return newInitContext.computeTargetState(newDiscoveryResult, isStartupInit = false, parentActivity = null)
   }
 }

@@ -187,7 +187,7 @@ object ProjectUtils {
       langSupport.getLearningProjectPath(contentRoot)
     ) ?: error("Copied Learn project folder is null")
 
-    val task = openProjectTask.copy(beforeInit = {
+    val task = openProjectTask.copy(beforeInitTasks = openProjectTask.beforeInitTasks + {
       NOTIFICATIONS_SILENT_MODE.set(it, true)
     })
     invokeLater {

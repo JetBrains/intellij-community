@@ -1,5 +1,5 @@
 <!--suppress PluginXmlRegistrationCheck -->
-<idea-plugin  visibility="public">
+<idea-plugin  visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.java-capable"/>
@@ -64,6 +64,8 @@
     <module name="intellij.xml.psi"/>
   </dependencies>
   <!-- endregion -->
+
+  <xi:include href="/META-INF/RegistryKeysCompilerImpl.xml"/>
 
   <projectListeners>
     <listener class="com.intellij.compiler.server.impl.BuildProcessPreloadedStateClearer"

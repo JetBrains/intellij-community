@@ -19,7 +19,6 @@ class VenvViewModel<P : PathHolder>(
 ) : PythonToolViewModel {
   val backProperty: ObservableMutableProperty<ValidatedPath.Folder<P>?> = propertyGraph.property(null)
   val inheritSitePackages: GraphProperty<Boolean> = propertyGraph.property(false)
-  val makeAvailableForAllProjects: GraphProperty<Boolean> = propertyGraph.property(false)
 
   val venvValidator: FolderValidator<P> = FolderValidator(
     fileSystem = fileSystem,

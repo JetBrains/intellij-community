@@ -16,6 +16,7 @@ import org.apache.maven.model.Scm
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.AggregatorPomSpec
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DirSource
@@ -82,6 +83,27 @@ private val FLEET_MODULES_ALLOWED_FOR_PUBLICATION = setOf(
 )
 
 /**
+ * Compile-only (`PROVIDED`) module dependencies which nevertheless must be declared in the generated `pom.xml`.
+ *
+ * A `PROVIDED` edge is normally omitted from the pom: it is needed for compilation only, and the runtime environment is expected to
+ * supply the classes. That assumption doesn't hold for modules which are also consumed as plain Maven artifacts outside an IDE
+ * distribution — there is nobody to "provide" the library.
+ *
+ * `intellij.platform.buildScripts.downloader` is such a module: it is published as
+ * `com.jetbrains.intellij.platform:build-scripts-downloader` and consumed by `platform/jps-bootstrap/pom.xml` and by
+ * `platform/build-scripts/bazel` (jps-to-bazel), where [org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader] unpacks
+ * `.zst` archives with `ZstdInputStreamNoFinalizer`.
+ *
+ * The JPS edge must stay `PROVIDED`: `intellij.libraries.zstd.jni` is a private content module of the Big Data Tools plugin, and a
+ * non-provided edge would both add it to the generated dependencies of the downloader content module descriptor and pack the
+ * multi-platform native library into `dist.all/lib` of every product, see IJPL-125.
+ * See `com.intellij.platform.buildScripts.testFramework.pluginModel.compileOnlyDependenciesInCommunity`.
+ */
+private val COMPILE_ONLY_DEPENDENCIES_TO_PUBLISH: Map<String, Set<String>> = mapOf(
+  "intellij.platform.buildScripts.downloader" to setOf("intellij.libraries.zstd.jni"),
+)
+
+/**
  * Generates Maven artifacts for IDE and plugin modules. Artifacts aren't generated for modules which depend on non-repository libraries.
  *
  * @see [org.jetbrains.intellij.build.ProductProperties.mavenArtifacts]
@@ -118,7 +140,16 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
   }
 
   companion object {
-    internal fun scopedDependencies(module: JpsModule): Map<JpsDependencyElement, DependencyScope> {
+    /**
+     * @param compileOnlyDependenciesToPublish names of `PROVIDED` module dependencies of [module] which must be declared in the generated
+     * pom anyway, see [COMPILE_ONLY_DEPENDENCIES_TO_PUBLISH]. Empty by default, so that [IntellijModulesPublication] keeps skipping
+     * compile-only edges — library wrapper modules aren't published as artifacts, and pulling them into that traversal would produce
+     * "jar is not found" warnings only.
+     */
+    internal fun scopedDependencies(
+      module: JpsModule,
+      compileOnlyDependenciesToPublish: Set<String> = emptySet(),
+    ): Map<JpsDependencyElement, DependencyScope> {
       val result = LinkedHashMap<JpsDependencyElement, DependencyScope>()
       val javaExtensionService = JpsJavaExtensionService.getInstance()
       for (dependency in module.dependenciesList.dependencies) {
@@ -130,14 +161,23 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
           JpsJavaDependencyScope.RUNTIME -> DependencyScope.RUNTIME
 
           JpsJavaDependencyScope.PROVIDED ->
-            //'provided' scope is used only for compilation, and it shouldn't be exported
-            continue
+            //'provided' scope is used only for compilation, and it shouldn't be exported,
+            // unless the module is consumed as a standalone Maven artifact, where nothing provides the library
+            if (dependency is JpsModuleDependency && compileOnlyDependenciesToPublish.contains(dependency.moduleReference.moduleName)) {
+              DependencyScope.RUNTIME
+            }
+            else {
+              continue
+            }
           JpsJavaDependencyScope.TEST ->
             continue
         }
       }
       return result
     }
+
+    @TestOnly
+    internal fun compileOnlyDependenciesToPublish(): Map<String, Set<String>> = COMPILE_ONLY_DEPENDENCIES_TO_PUBLISH
 
     fun isOptionalDependency(library: JpsLibrary?): Boolean {
       //todo: this is a temporary workaround until these libraries are published to Maven repository;
@@ -278,7 +318,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
     }
   }
 
-  private fun generateMavenArtifactData(moduleNames: Collection<String>, ignoreNonMavenizable: Boolean): Map<JpsModule, MavenArtifactData> {
+  internal fun generateMavenArtifactData(moduleNames: Collection<String>, ignoreNonMavenizable: Boolean): Map<JpsModule, MavenArtifactData> {
     val results = HashMap<JpsModule, MavenArtifactData>()
     val nonMavenizableModulesSet = HashSet<JpsModule>()
     val computationInProgressSet = HashSet<JpsModule>()
@@ -326,7 +366,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
     var mavenizable = true
     computationInProgress.add(module)
     val dependencies = ArrayList<MavenArtifactDependency>()
-    for ((dependency, scope) in scopedDependencies(module)) {
+    for ((dependency, scope) in scopedDependencies(module, COMPILE_ONLY_DEPENDENCIES_TO_PUBLISH[module.name].orEmpty())) {
       if (dependency is JpsModuleDependency) {
         val depModule = dependency.module
         if (depModule == null || shouldSkipModule(depModule.name, true)) {

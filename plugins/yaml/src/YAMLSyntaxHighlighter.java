@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.yaml.lexer.YAMLFlexLexer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,6 +43,6 @@ public final class YAMLSyntaxHighlighter extends SyntaxHighlighterBase implement
 
   @Override
   public @NotNull Lexer getHighlightingLexer() {
-    return new YAMLFlexLexer();
+    return YAMLParserDefinition.createLexer();
   }
 }

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.codeInsight.AnnotationTargetUtil
-import com.intellij.codeInsight.Nullability as PsiNullability
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.diagnostic.Logger
@@ -72,6 +71,7 @@ import com.intellij.psi.PsiNewExpression
 import com.intellij.psi.PsiPackageStatement
 import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiParenthesizedExpression
+import com.intellij.psi.PsiPatternVariable
 import com.intellij.psi.PsiPolyadicExpression
 import com.intellij.psi.PsiPostfixExpression
 import com.intellij.psi.PsiPrefixExpression
@@ -127,9 +127,6 @@ import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.j2k.content
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.j2k.Nullability.Nullable
-import org.jetbrains.kotlin.j2k.ReferenceSearcher
-import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.j2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.j2k.symbols.JKFieldSymbol
 import org.jetbrains.kotlin.j2k.symbols.JKMethodSymbol
@@ -280,6 +277,8 @@ import org.jetbrains.kotlin.j2k.types.asTypeElement
 import org.jetbrains.kotlin.j2k.types.isKotlinFunctionalType
 import org.jetbrains.kotlin.j2k.types.updateNullability
 import org.jetbrains.kotlin.j2k.types.updateNullabilityRecursively
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -293,6 +292,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComme
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import com.intellij.codeInsight.Nullability as PsiNullability
 
 class JavaToJKTreeBuilder internal constructor(
     private val symbolProvider: JKSymbolProvider,
@@ -395,8 +395,7 @@ class JavaToJKTreeBuilder internal constructor(
             val patternVariable = pattern?.patternVariable
 
             if (patternVariable != null) {
-                val variable = (operand as? PsiReferenceExpression)?.let(semanticResolver::resolveReference) as? PsiVariable
-                val name = variable?.name ?: patternVariable.name
+                val name = smartCastSubject()?.name ?: patternVariable.name
                 val typeElementForPattern =
                     with(declarationMapper) { JKTypeElement(type, psiTypeElement.annotationList()) }
                 // Executed for the side effect of binding the symbol to a valid target
@@ -407,6 +406,20 @@ class JavaToJKTreeBuilder internal constructor(
             }
 
             return expr
+        }
+
+        // A pattern variable is rendered as the smart-cast subject, so nested patterns must follow the substitution
+        // transitively: in `o instanceof A a` / `a instanceof B b`, both `a` and `b` are rendered as `o`.
+        private fun PsiInstanceOfExpression.smartCastSubject(): PsiVariable? {
+            var instanceOf: PsiInstanceOfExpression? = this
+            var subject: PsiVariable? = null
+            while (instanceOf != null) {
+                val variable = (instanceOf.operand as? PsiReferenceExpression)
+                    ?.let(semanticResolver::resolveReference) as? PsiVariable ?: break
+                subject = variable
+                instanceOf = (variable as? PsiPatternVariable)?.parent?.parent as? PsiInstanceOfExpression
+            }
+            return subject
         }
 
         private fun PsiThisExpression.toJK(): JKThisExpression {

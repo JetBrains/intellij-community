@@ -28,7 +28,7 @@ public class FrozenDocument implements DocumentEx {
   public @NotNull FrozenDocument applyEvent(@NotNull DocumentEvent event, int newStamp) {
     int originStartOffset = event instanceof DocumentEventImpl ? ((DocumentEventImpl)event).getInitialStartOffset() : event.getOffset();
     int originOldLength = event instanceof DocumentEventImpl ? ((DocumentEventImpl)event).getInitialOldLength() : event.getOldLength();
-    DocumentSnapshot newSnapshot = mySnapshot.withText(DocumentTextPatch.complex(
+    DocumentSnapshot newSnapshot = mySnapshot.withPatch(DocumentTextPatch.complex(
       event.getOffset(),
       event.getOffset() + event.getOldLength(),
       event.getNewFragment(),
@@ -47,7 +47,7 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public @NotNull LineIterator createLineIterator() {
-    return mySnapshot.lineIterator();
+    return mySnapshot.text().lineIterator();
   }
 
   @Override
@@ -92,12 +92,12 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public @NotNull String getText() {
-    return mySnapshot.string();
+    return mySnapshot.text().string();
   }
 
   @Override
   public @NotNull String getText(@NotNull TextRange range) {
-    return mySnapshot.string(range);
+    return mySnapshot.text().string(range);
   }
 
   @Override
@@ -107,27 +107,27 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public @NotNull CharSequence getImmutableCharSequence() {
-    return mySnapshot.text();
+    return mySnapshot.text().chars();
   }
 
   @Override
   public int getLineCount() {
-    return mySnapshot.lineCount();
+    return mySnapshot.text().lineCount();
   }
 
   @Override
   public int getLineNumber(int offset) {
-    return mySnapshot.lineNumber(offset);
+    return mySnapshot.text().lineNumber(offset);
   }
 
   @Override
   public int getLineStartOffset(int line) {
-    return mySnapshot.lineStartOffset(line);
+    return mySnapshot.text().lineStartOffset(line);
   }
 
   @Override
   public int getLineEndOffset(int line) {
-    return mySnapshot.lineEndOffset(line);
+    return mySnapshot.text().lineEndOffset(line);
   }
 
   @Override
@@ -152,7 +152,7 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public long getModificationStamp() {
-    return mySnapshot.modStamp();
+    return mySnapshot.text().modStamp();
   }
 
   @Override
@@ -202,7 +202,7 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public int getLineSeparatorLength(int line) {
-    return mySnapshot.lineSeparatorLength(line);
+    return mySnapshot.text().lineSeparatorLength(line);
   }
 
   @Override

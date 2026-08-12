@@ -3,9 +3,9 @@ package com.intellij.ide.starter.driver.engine
 import com.intellij.driver.client.impl.DriverImpl
 import com.intellij.driver.client.impl.JmxHost
 import com.intellij.driver.sdk.getOpenProjects
-import com.intellij.driver.sdk.waitForIndicators
 import com.intellij.driver.sdk.ui.components.elements.isDialogOpened
 import com.intellij.driver.sdk.ui.ui
+import com.intellij.driver.sdk.waitForIndicators
 import com.intellij.ide.starter.coroutine.CommonScope.scopeForProcesses
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.isRemDevContext
@@ -54,7 +54,9 @@ class LocalDriverRunner : DriverRunner {
       logUiHierarchy = !context.isRemDevContext())
     val currentStep = Allure.getLifecycle().currentTestCaseOrStep
     val process = CompletableDeferred<IDEHandle>()
+    val runContext = CompletableDeferred<IDERunContext>()
     EventsBus.subscribeOnce(process) { event: IdeLaunchEvent ->
+      runContext.complete(event.runContext)
       process.complete(event.ideProcess)
     }
     val runResult = scopeForProcesses.async {
@@ -78,13 +80,22 @@ class LocalDriverRunner : DriverRunner {
         throw e
       }
     }
-    return runBlocking { BackgroundRun(runResult, driver, process.await()) }
+    @Suppress("RAW_RUN_BLOCKING")
+    return runBlocking {
+      val processAwaited = process.await()
+      val runContextAwaited = runContext.await()
+      BackgroundRun(
+        startResult = runResult,
+        driverWithoutAwaitedConnection = driver,
+        process = processAwaited,
+        runContext = runContextAwaited)
+    }
   }
 
   private fun IDERunContext.provideDriverProperties(driverOptions: DriverOptions) {
     addVMOptionsPatch {
-      for (entry in driverOptions.systemProperties) {
-        addSystemProperty(entry.key, entry.value)
+      for ((key, value) in driverOptions.systemProperties) {
+        addSystemProperty(key, value)
       }
     }
   }

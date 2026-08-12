@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.ex
 
 import com.intellij.openapi.editor.Document
 import org.jetbrains.annotations.ApiStatus
+import java.util.function.UnaryOperator
 
 /**
  * This interface is responsible for the document write path.
@@ -35,6 +36,12 @@ import org.jetbrains.annotations.ApiStatus
  * 6) text = 'ab'   // t1 gets nested modification exception
  * ```
  * cases (5) and (6) are T_O_D_O to be fixed
+ *
+ * A change is computed against the snapshot captured at the start of the operation, but published against the
+ * snapshot found at CAS time. The two are reconciled by [DocumentSnapshot.withMetadata]: the metadata of the
+ * latest snapshot is taken, its text is discarded, and the change is applied to the text the operation started
+ * from. That is how a losing text mutation is overridden in cases (1) and (2), while a metadata-only update
+ * that raced the change -- a modification stamp set from another thread, say -- still survives.
  */
 @ApiStatus.Internal
 interface DocumentMutator {
@@ -117,4 +124,21 @@ interface DocumentMutator {
     newModStamp: Long,
     wholeTextReplaced: Boolean,
   )
+
+  /**
+   * Atomically replaces the current snapshot with the result of [updateFunc] and returns it.
+   *
+   * The general escape hatch for snapshot state that has no dedicated method here, an aspect above all:
+   * `updateSnapshotAndGet { it.withAspect(key, aspect) }`.
+   *
+   * [updateFunc] must keep the characters of the snapshot it is given: a text change published this way
+   * would fire no [com.intellij.openapi.editor.event.DocumentListener], leaving every listener-backed model
+   * stale, so it is rejected with an [IllegalArgumentException]. Use the text methods of this interface instead.
+   *
+   * [updateFunc] must also be side-effect free: publishing goes through a compare-and-set, so a lost race
+   * re-applies it against the newly found snapshot.
+   *
+   * @see DocumentSnapshot.withAspect
+   */
+  fun updateSnapshotAndGet(updateFunc: UnaryOperator<DocumentSnapshot>): DocumentSnapshot
 }

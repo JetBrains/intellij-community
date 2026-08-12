@@ -9,8 +9,11 @@ compile and runtime dependencies.
   <li>Extension points referenced from <code>&lt;extensions&gt;</code> entries.</li>
   <li>Implementation and interface classes referenced from plugin descriptor attributes and tags
     (excluding registrations, which are handled by <code>PluginXmlRegistrationCheckInspection</code>).</li>
-  <li>Action and group IDs referenced by other actions and groups (e.g. <code>use-shortcut-of</code>,
-    <code>relative-to-action</code>, group children).</li>
+  <li>Action and group IDs referenced by other actions and groups (e.g. <code>add-to-group</code>'s
+    <code>group-id</code>, <code>&lt;reference&gt;</code>, group children).
+    Positioning-only attributes (<code>relative-to-action</code>, <code>use-shortcut-of</code>) are not checked,
+    because the runtime degrades gracefully: an unresolvable anchor falls back to the end of the group,
+    and a missing shortcut base action only leaves the action without a shortcut.</li>
   <li>Resource bundle references (e.g. <code>resource-bundle</code>, action <code>bundle</code>).</li>
 </ul>
 

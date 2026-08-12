@@ -48,7 +48,7 @@ internal class IDEFrontendHandler(
     commandLine: IDECommandLine,
     runTimeout: Duration,
     configure: IDERunContext.() -> Unit = {},
-  ): Pair<Deferred<IDEStartResult>, IDEHandle> {
+  ): Triple<Deferred<IDEStartResult>, IDEHandle, IDERunContext> {
     frontendContext.ide.vmOptions.let {
       //setup xDisplay
       it.addDisplayIfNecessary()
@@ -64,7 +64,9 @@ internal class IDEFrontendHandler(
       }
     }
     val process = CompletableDeferred<IDEHandle>()
+    val runContext = CompletableDeferred<IDERunContext>()
     EventsBus.subscribeOnce(process) { event: IdeLaunchEvent ->
+      runContext.complete(event.runContext)
       process.complete(event.ideProcess)
     }
     val result = scopeForProcesses.async {
@@ -102,6 +104,10 @@ internal class IDEFrontendHandler(
       }
     }
 
-    return Pair(result, runBlocking(CoroutineName("Awaiting for Frontend Process")) { withTimeout(2.minutes) { process.await() } })
+    return runBlocking(CoroutineName("Awaiting for Frontend Process")) {
+      withTimeout(2.minutes) {
+        Triple(result, process.await(), runContext.await())
+      }
+    }
   }
 }

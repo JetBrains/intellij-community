@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
  * @see SyntaxTreeBuilder.Marker.setCustomEdgeTokenBinders
  */
 @ApiStatus.OverrideOnly
-interface WhitespacesAndCommentsBinder {
+fun interface WhitespacesAndCommentsBinder {
   /**
    * Provides an ability for the processor to get a text of any of given tokens.
    */

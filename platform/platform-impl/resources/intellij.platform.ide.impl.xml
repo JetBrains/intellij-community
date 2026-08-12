@@ -300,6 +300,8 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabSupport"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.inspectionPopupLevelChangePolicy" interface="com.intellij.openapi.editor.impl.InspectionPopupLevelChangePolicy" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.editorMouseActionsOverrider"
+                    interface="com.intellij.openapi.editor.impl.EditorMouseActionsOverrider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.protocolHandler" interface="com.intellij.ide.ProtocolHandler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.protocolNavigationCommandProcessor" interface="com.intellij.ide.protocolHandler.ProtocolNavigationCommandProcessor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.recoveryAction" interface="com.intellij.ide.actions.cache.RecoveryAction" dynamic="true"/>

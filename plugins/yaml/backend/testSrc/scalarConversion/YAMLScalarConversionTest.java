@@ -11,7 +11,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.yaml.YAMLParserDefinition;
 import org.jetbrains.yaml.psi.YAMLScalar;
 import org.jetbrains.yaml.psi.impl.YAMLPlainTextImpl;
 
@@ -24,12 +23,6 @@ public class YAMLScalarConversionTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/backend/testData/org/jetbrains/yaml/scalarConversion/data/";
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    new YAMLParserDefinition();
   }
 
   public void testSimple() {

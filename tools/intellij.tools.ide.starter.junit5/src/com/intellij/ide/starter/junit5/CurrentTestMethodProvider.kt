@@ -28,6 +28,7 @@ open class CurrentTestMethodProvider : TestExecutionListener {
         name = methodSource.methodName,
         displayName = testIdentifier.displayName,
         testClass = methodSource.javaClass,
+        id = testIdentifier.uniqueId,
       )
     )
   }

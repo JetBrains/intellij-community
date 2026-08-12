@@ -207,7 +207,6 @@ internal suspend fun <P : PathHolder> PythonSelectableInterpreter<P>.setupSdk(
   moduleOrProject: ModuleOrProject,
   fileSystem: FileSystem<P>,
   targetPanelExtension: TargetPanelExtension?,
-  isAssociateWithModule: Boolean,
 ): PyResult<Sdk> {
   when (this) {
     is ExistingSelectableInterpreter -> return PyResult.success(sdkWrapper.sdk)
@@ -217,7 +216,7 @@ internal suspend fun <P : PathHolder> PythonSelectableInterpreter<P>.setupSdk(
   val homePath = this@setupSdk.homePath!!
 
   // Do our best to guess the flavor
-  return createSdkGuessingTypeByPath(homePath, fileSystem, moduleOrProject, targetPanelExtension, isAssociateWithModule)
+  return createSdkGuessingTypeByPath(homePath, fileSystem, moduleOrProject, targetPanelExtension)
 }
 
 

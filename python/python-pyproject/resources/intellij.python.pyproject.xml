@@ -53,6 +53,8 @@
     <!-- Navigation for uv workspace members, Poetry packages and path dependencies (PY-90384). -->
     <psi.referenceContributor language="TOML"
                               implementation="com.intellij.python.pyproject.psi.PyProjectTomlPathReferenceContributor"/>
+    <applicationService serviceImplementation="com.intellij.python.pyproject.model.internal.pyProject.PyProjectServiceImpl"
+                        serviceInterface="com.jetbrains.python.project.impl.PyProjectService"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

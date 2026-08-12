@@ -3,12 +3,12 @@ package com.intellij.debugger.streams.core.statistics
 
 import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
 import com.intellij.debugger.streams.core.trace.StreamTracer
+import com.intellij.debugger.streams.shared.TraceEntryPoint
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 
 internal object StreamDebuggerStatisticsCollector : CounterUsagesCollector() {
   private enum class StreamTraceResult {
@@ -18,7 +18,7 @@ internal object StreamDebuggerStatisticsCollector : CounterUsagesCollector() {
     INTERNAL_ERROR,
   }
 
-  private val GROUP = EventLogGroup("debugger.streams", 1)
+  private val GROUP = EventLogGroup("debugger.streams", 2)
 
   // We want to record type of the stream (stream api, streamex, kotlin sequence)
   // The type of the stream can be inferred from the library support provider class
@@ -27,6 +27,10 @@ internal object StreamDebuggerStatisticsCollector : CounterUsagesCollector() {
   private val TRACER = EventFields.Class("tracer")
   private val RESULT = EventFields.Enum("result", StreamTraceResult::class.java)
   private val TRACE_FINISHED = GROUP.registerVarargEvent("stream.trace.finished", LIBRARY_SUPPORT_PROVIDER, TRACER, RESULT)
+
+  // Records which entry point requested the trace: the toolbar action or the editor inlay hint.
+  private val ENTRY_POINT = EventFields.Enum("entry_point", TraceEntryPoint::class.java)
+  private val TRACE_STARTED = GROUP.registerEvent("stream.trace.started", ENTRY_POINT)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -44,6 +48,11 @@ internal object StreamDebuggerStatisticsCollector : CounterUsagesCollector() {
       RESULT.with(result),
     )
     TRACE_FINISHED.log(project, events)
+  }
+
+  @JvmStatic
+  fun logTraceStarted(project: Project, entryPoint: TraceEntryPoint) {
+    TRACE_STARTED.log(project, entryPoint)
   }
 
   private fun getTraceResult(result: StreamTracer.Result): StreamTraceResult {

@@ -13,7 +13,6 @@ import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.idea.AppMode
 import com.intellij.internal.performanceTests.ProjectInitializationDiagnostic
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -358,7 +357,7 @@ private fun registerOnFinishRunnables(future: CompletableFuture<*>, mustExitOnFa
  */
 private fun storeFailureToFile(errorMessage: Throwable) {
   try {
-    val failureCauseFile = Path.of(PathManager.getLogPath()).resolve("failure_cause.txt")
+    val failureCauseFile = LogDirHandler.currentLogDir().resolve("failure_cause.txt")
     Files.writeString(failureCauseFile, errorMessage.message + "\n" + errorMessage.stackTraceToString())
   }
   catch (e: Exception) {

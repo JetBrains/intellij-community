@@ -30,6 +30,7 @@
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.syntax.psi"/>
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
     <!-- endregion -->
@@ -39,5 +40,6 @@
     <module name="intellij.yaml" loading="embedded"/>
     <module name="intellij.yaml.frontend.split"/><!-- should be marked as 'required in frontend mode' when IJPL-177060 is fixed -->
     <module name="intellij.yaml.helm"/>
+    <module name="intellij.yaml.syntax" loading="embedded"/>
   </content>
 </idea-plugin>

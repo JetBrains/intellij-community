@@ -55,10 +55,10 @@ data class OpenProjectTask @Internal constructor(
   val isProjectCreatedWithWizard: Boolean,
   @TestOnly
   val preloadServices: Boolean,
-  val beforeInit: ((Project) -> Unit)?,
+  val beforeInitTasks: List<((Project) -> Unit)>,
   /** Ignored if a project is explicitly set. */
-  val beforeOpen: (suspend (Project) -> Boolean)?,
-  val preparedToOpen: (suspend (Module) -> Unit)?,
+  val beforeOpenTasks: List<(suspend (Project) -> Boolean)>,
+  val preparedToOpenTasks: List<(suspend (Module) -> Unit)>,
   val preventIprLookup: Boolean,
   val processorChooser: ((List<Any>) -> Any)?,
   val implOptions: Any?,
@@ -78,10 +78,29 @@ data class OpenProjectTask @Internal constructor(
    * hold back what it knows about; this reports work that outlives project open itself.
    *
    * This property is deliberately not a primary-constructor parameter: adding one changes the generated data-class ABI.
-  */
+   */
   @get:Internal
   val opensFileAfterProjectOpen: Boolean
     get() = (implOptions as? OpenProjectTaskImplOptions)?.opensFileAfterProjectOpen == true
+
+  val beforeInit: ((Project) -> Unit)?
+    get() = if (beforeInitTasks.isEmpty()) null
+    else { project ->
+      beforeInitTasks.forEach { task -> task(project) }
+    }
+
+  val beforeOpen: (suspend (Project) -> Boolean)?
+    get() = if (beforeOpenTasks.isEmpty()) null
+    else { project ->
+      // iteration will stop on the first "false" result
+      beforeOpenTasks.all { task -> task(project) }
+    }
+
+  val preparedToOpen: (suspend (Module) -> Unit)?
+    get() = if (preparedToOpenTasks.isEmpty()) null
+    else { module ->
+      preparedToOpenTasks.forEach { task -> task(module) }
+    }
 
   /**
    * Compatibility bridge for plugins compiled against builds where [opensFileAfterProjectOpen] was a primary-constructor parameter.
@@ -134,9 +153,9 @@ data class OpenProjectTask @Internal constructor(
     projectFrameTypeId = projectFrameTypeId,
     isProjectCreatedWithWizard = isProjectCreatedWithWizard,
     preloadServices = preloadServices,
-    beforeInit = beforeInit,
-    beforeOpen = beforeOpen,
-    preparedToOpen = preparedToOpen,
+    beforeInitTasks = if (beforeInit != null) listOf(beforeInit) else emptyList(),
+    beforeOpenTasks = if (beforeOpen != null) listOf(beforeOpen) else emptyList(),
+    preparedToOpenTasks = if (preparedToOpen != null) listOf(preparedToOpen) else emptyList(),
     preventIprLookup = preventIprLookup,
     processorChooser = processorChooser,
     implOptions = implOptions.withOpensFileAfterProjectOpen(opensFileAfterProjectOpen),
@@ -173,11 +192,11 @@ data class OpenProjectTask @Internal constructor(
     isProjectCreatedWithWizard = false,
 
     preloadServices = true,
-    beforeInit = null,
+    beforeInitTasks = emptyList(),
 
-    beforeOpen = null,
+    beforeOpenTasks = emptyList(),
     preventIprLookup = false,
-    preparedToOpen = null,
+    preparedToOpenTasks = emptyList(),
     processorChooser = null,
 
     implOptions = OpenProjectTaskImplOptions(delegate = null, opensFileAfterProjectOpen = false),
@@ -280,7 +299,8 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
       createModule = false
     }
 
-  @PublishedApi internal fun build(builder: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
+  @PublishedApi
+  internal fun build(builder: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
     builder()
     if (project != null && createModule) {
       thisLogger().warn("Project is explicitly set (name=${project?.name}), but createModule is true")

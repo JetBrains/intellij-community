@@ -5,6 +5,7 @@ import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LafIconLookup;
@@ -48,6 +49,8 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
 
   @Override
   public void installUI(JComponent c) {
+    ThreadingAssertions.softAssertAwtOperationsThread();
+
     super.installUI(c);
     if (ComponentUtil.getParentOfType(CellRendererPane.class, c) != null) {
       c.setBorder(null);

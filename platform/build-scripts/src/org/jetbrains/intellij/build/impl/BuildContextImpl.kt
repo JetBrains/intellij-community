@@ -118,9 +118,13 @@ suspend fun createCompilationContext(
 }
 
 @Internal
-fun normalizeCompilationContextForBuild(context: CompilationContext, scope: CoroutineScope?): CompilationContext {
+fun normalizeCompilationContextForBuild(
+  context: CompilationContext,
+  scope: CoroutineScope?,
+  isBazelBacked: Boolean = isRunningFromBazelOut(),
+): CompilationContext {
   val bazelAwareContext = when (context) {
-    is CompilationContextImpl -> context.toBazelIfNeeded(scope)
+    is CompilationContextImpl -> context.toBazelIfNeeded(scope, isBazelBacked)
     else -> context
   }
   return if (bazelAwareContext.options.unpackCompiledClassesArchives) {

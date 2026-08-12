@@ -5,11 +5,9 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.properties.BundleNameEvaluator
 import com.intellij.lang.properties.PropertiesReferenceManager
 import com.intellij.lang.properties.ResourceBundleReference
-import com.intellij.lang.xml.XMLLanguage
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -20,20 +18,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.JavaProjectModelModificationService
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
+import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.xml.XmlFile
-import com.intellij.psi.xml.XmlTag
+import com.intellij.util.Processor
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomUtil
@@ -41,18 +36,18 @@ import com.intellij.util.xml.GenericAttributeValue
 import com.intellij.util.xml.GenericDomValue
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
-import com.intellij.xml.util.XmlUtil
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.DevKitBundle.message
-import org.jetbrains.idea.devkit.dom.ContentDescriptor
+import org.jetbrains.idea.devkit.dom.ActionOrGroup
+import org.jetbrains.idea.devkit.dom.AddToGroup
 import org.jetbrains.idea.devkit.dom.ContentDescriptor.ModuleDescriptor.ModuleLoadingRule
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex
+import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex
 import org.jetbrains.idea.devkit.dom.processing.isClassRegistration
-import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.references.ActionOrGroupIdReference
 import org.jetbrains.idea.devkit.util.DescriptorUtil
@@ -69,7 +64,8 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
         val epTag = extensionPoint.xmlTag
         val epFqn = extensionPoint.effectiveQualifiedName
         if (!isEpReachableFromModuleByFqn(epFqn, element, module) &&
-            !isInSiblingModuleOfSamePlugin(element, epTag, module)) {
+            !isInSiblingModuleOfSamePlugin(element, epTag, module) &&
+            !isReachableViaDeclaredPluginDependency(element) { extensionPointDeclarationFiles(it, epFqn) }) {
           holder.reportUnreachableClassProblem(
             element, epTag, epFqn, module,
             "inspection.plugin.xml.references.module.reachability.extension.point"
@@ -79,17 +75,19 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
 
       is GenericDomValue<*> -> {
         val module = element.module ?: return
-        val value = element.value
-        if (value is PsiClass) {
+        if (hasPsiClassValueType(element)) {
           if (isClassRegistration(element)) return // handled by ComponentModuleRegistrationChecker
-          val qualifiedName = value.qualifiedName
-          if (!isClassReachableFromModuleByFqn(qualifiedName, element, module) &&
-              !isInSiblingModuleReachableViaMainPluginClassloader(element, value, module)) {
-            val referencedClassName = qualifiedName ?: value.name ?: ""
-            holder.reportUnreachableClassProblem(
-              element, value, referencedClassName, module,
-              "inspection.plugin.xml.references.module.reachability.class"
-            )
+          val value = element.value as? PsiClass
+          if (value != null) {
+            val qualifiedName = value.qualifiedName
+            if (!isClassReachableFromModuleByFqn(qualifiedName, element, module) &&
+                !isInSiblingModuleReachableViaMainPluginClassloader(element, value, module)) {
+              val referencedClassName = qualifiedName ?: value.name ?: ""
+              holder.reportUnreachableClassProblem(
+                element, value, referencedClassName, module,
+                "inspection.plugin.xml.references.module.reachability.class"
+              )
+            }
           }
         }
 
@@ -98,10 +96,12 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
         for (ref in referencesElement.references) {
           when (ref) {
             is ActionOrGroupIdReference -> {
+              if (isPositioningOnlyReference(element)) continue
               val target = ref.resolve() ?: continue
               if (!isReachableFromModule(element, target, module) &&
                   !isActionOrGroupReachableFromModuleById(ref.canonicalText, element, module) &&
-                  !isInSiblingModuleOfSamePlugin(element, target, module)) {
+                  !isInSiblingModuleOfSamePlugin(element, target, module) &&
+                  !isReachableViaDeclaredPluginDependency(element) { actionOrGroupRegistrationFiles(it, ref.canonicalText) }) {
                 holder.reportUnreachableClassProblem(
                   element, target, ref.canonicalText, module,
                   "inspection.plugin.xml.references.module.reachability.action.or.group"
@@ -124,6 +124,29 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
         }
       }
     }
+  }
+
+  /**
+   * A positioning-only reference degrades gracefully at runtime, so it needs no reachability: an unresolvable
+   * `relative-to-action` anchor silently falls back to the end of the group, and a missing `use-shortcut-of`
+   * base action only leaves the action without a shortcut.
+   */
+  private fun isPositioningOnlyReference(element: GenericDomValue<*>): Boolean {
+    return when (val parent = element.parent) {
+      is AddToGroup -> element == parent.relativeToAction
+      is ActionOrGroup -> element == parent.useShortcutOf
+      else -> false
+    }
+  }
+
+  /**
+   * Checked before forcing [GenericDomValue.getValue]: conversion of a non-class value may be arbitrarily
+   * expensive (a `language` attribute enumerates every `Language` inheritor in the project), and only class
+   * values matter here.
+   */
+  private fun hasPsiClassValueType(element: GenericDomValue<*>): Boolean {
+    val parameter = DomUtil.getGenericValueParameter(element.domElementType) ?: return false
+    return PsiClass::class.java.isAssignableFrom(parameter)
   }
 
   private fun isEpReachableFromModuleByFqn(fqn: String, element: DomElement, module: Module): Boolean {
@@ -169,6 +192,191 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
            isLoadedByMainPluginClassloader(targetModule)
   }
 
+  /**
+   * Checked last, for names resolved through global registries (extension points, actions, groups): a descriptor
+   * declaring `<dependencies><plugin id="..."/>` loads only when that plugin is present, so whatever the plugin's
+   * own merged descriptor registers exists by construction — no JPS edge models this guarantee, and none is needed,
+   * since registries resolve ids without classloaders. The declared id may be a plugin alias declared by several
+   * descriptors; each of them must then carry a registration of the referenced name — its own declaration counts,
+   * not only the one the reference resolved to — or a product satisfying the gate without it would leave the
+   * reference dangling. The two walks approximate in opposite directions: a registration counts only for roots
+   * merging the whole carrier descriptor, while the alias counts for every root reached through any production
+   * include edge — build-time descriptor pre-merge may hand a sub-selecting includer the alias without the
+   * registration. A registration in a content module also counts for the root including it when the module loads
+   * unconditionally with that root; a provider that is itself a content-module descriptor defers to every plugin
+   * including it (see [loadGuaranteedRoots]). A `<dependencies><module>` gate is honored the same way,
+   * with the named module's descriptor file as the sole provider. Gates close transitively over provider
+   * requirements: a name required by every provider of a satisfied gate is enabled with it, so registrations of a
+   * plugin no gate provider can load without count too (see [closeOverProviderRequirements]). A content-module
+   * descriptor — a gate provider or the referencing descriptor itself — additionally enables whatever every plugin
+   * packaging it requires, since the module loads only inside one of them (see [namesEnabledWhenLoaded]).
+   * A registration in a `<depends config-file="...">`
+   * sub-descriptor counts when the referencing descriptor also gates on the depends target
+   * (see [gatedCarrierRoots]). The walk sees project sources only: a library-provided descriptor
+   * qualifies neither as a provider nor as a carrier.
+   */
+  private fun isReachableViaDeclaredPluginDependency(element: DomElement, registrationFiles: (Project) -> Collection<VirtualFile>): Boolean {
+    val descriptorFile = DomUtil.getFile(element)
+    val project = descriptorFile.project
+    if (!isInProductionRoots(descriptorFile.virtualFile, project)) return false
+    val declaredGates = namesEnabledWhenLoaded(descriptorFile)
+    if (declaredGates.pluginIds.isEmpty() && declaredGates.moduleNames.isEmpty()) return false
+    val gates = closeOverProviderRequirements(declaredGates, project)
+    val registrationDescriptors = productionDescriptorFiles(registrationFiles(project), project)
+    val carriers = gatedCarrierRoots(DescriptorUpGraph.crawl(registrationDescriptors), registrationDescriptors, gates.pluginIds)
+    if (carriers.isEmpty()) return false
+    return gates.pluginIds.any { it.isNotBlank() && everyPluginGateProviderIsLoadGuaranteed(it, carriers, project) } ||
+           gates.moduleNames.any { it.isNotBlank() && everyModuleGateProviderIsLoadGuaranteed(it, carriers, project) }
+  }
+
+  private fun productionDescriptorFiles(files: Collection<VirtualFile>, project: Project): List<XmlFile> {
+    val psiManager = PsiManager.getInstance(project)
+    return files
+      .filter { isInProductionRoots(it, project) }
+      .mapNotNull { psiManager.findFile(it) as? XmlFile }
+  }
+
+  /**
+   * The roots whose own load merges the whole descriptor of a registration file, expanded through gated `<depends>`
+   * edges: a carrier loaded as a `<depends config-file="...">` sub-descriptor — optional or not — is present whenever
+   * the declaring descriptor is loaded and the depends target plugin is enabled. When the referencing descriptor
+   * itself gates on that target ([gatePluginIds]), every root merging the declaring descriptor guarantees the carrier,
+   * so those roots carry the registration too.
+   */
+  private fun gatedCarrierRoots(graph: DescriptorUpGraph, registrationFiles: Collection<XmlFile>, gatePluginIds: Set<String>): Set<XmlFile> {
+    val carrierRoots = graph.mergeRoots(registrationFiles, IncludeEdgeFilter.WHOLE_DESCRIPTOR_ONLY)
+    if (gatePluginIds.isEmpty()) return carrierRoots
+    val expanded = HashSet(carrierRoots)
+    val queue = ArrayDeque(carrierRoots)
+    while (queue.isNotEmpty()) {
+      graph.dependsEdgesOf(queue.removeFirst())
+        .filter { it.dependsPluginId != null && it.dependsPluginId in gatePluginIds }
+        .flatMap { graph.mergeRoots(it.declaring, IncludeEdgeFilter.WHOLE_DESCRIPTOR_ONLY) }
+        .forEach { if (expanded.add(it)) queue.add(it) }
+    }
+    return expanded
+  }
+
+  /**
+   * The providers of a `<dependencies><plugin id="..."/>` gate: every production descriptor declaring the id as its
+   * plugin id or an alias, expanded through every production include edge — build-time descriptor pre-merge may hand
+   * a sub-selecting includer the alias without the registration. Every provider must be load-guaranteed, or a product
+   * satisfying the gate through the others would leave the reference dangling.
+   */
+  private fun everyPluginGateProviderIsLoadGuaranteed(gate: String, carriers: Set<XmlFile>, project: Project): Boolean {
+    val declaringFiles = productionDescriptorFiles(PluginIdModuleIndex.getFiles(project, gate), project)
+    if (declaringFiles.isEmpty()) return false
+    val graph = DescriptorUpGraph.crawl(declaringFiles + carriers)
+    val providers = graph.mergeRoots(declaringFiles, IncludeEdgeFilter.ANY_EDGE)
+    return providers.isNotEmpty() && loadGuaranteedRoots(graph, carriers, providers).containsAll(providers)
+  }
+
+  /**
+   * The providers of a `<dependencies><module name="..."/>` gate: the declaring descriptor loads only when the named
+   * content module is loaded, so whatever that module's descriptor registers — or every plugin packaging it
+   * guarantees — exists by construction. The providers are the descriptor files themselves, without merge-root
+   * expansion.
+   */
+  private fun everyModuleGateProviderIsLoadGuaranteed(gate: String, carriers: Set<XmlFile>, project: Project): Boolean {
+    val providers = moduleGateProviders(project, gate)
+    if (providers.isEmpty()) return false
+    val graph = DescriptorUpGraph.crawl(providers + carriers)
+    return loadGuaranteedRoots(graph, carriers, providers.toSet()).containsAll(providers)
+  }
+
+  /**
+   * The gate name maps to the descriptor file the way the runtime locates it: dots for slashes, plus `.xml`, inside
+   * the module the name denotes — `foo.bar` in module `foo.bar`, `foo/bar` in module `foo`. A same-named file in any
+   * other module belongs to a different module name and never loads as the gate module.
+   */
+  private fun moduleGateProviders(project: Project, gate: String): List<XmlFile> {
+    val psiManager = PsiManager.getInstance(project)
+    return FilenameIndex.getVirtualFilesByName(gate.replace('/', '.') + ".xml", GlobalSearchScope.projectScope(project))
+      .filter { isInProductionRoots(it, project) }
+      .mapNotNull { psiManager.findFile(it) as? XmlFile }
+      .filter { DescriptorUtil.getIdeaPlugin(it) != null && isDescriptorOfDenotedJpsModule(it, gate) }
+  }
+
+  /**
+   * Names enabled whenever the declared gates are satisfied, closed transitively: an enabled name means some
+   * provider of it is loaded, so a name required by every provider of an enabled name is enabled too — a reference
+   * gated on plugin A resolves through registrations of plugin B when no provider of A can load without B.
+   * Intersection over providers keeps the closure sound when an id or alias has several declarers; a name with no
+   * project-source providers is not expanded. A provider loaded only as a content module also requires whatever
+   * every plugin packaging it requires, since it loads only inside one of them (see [namesEnabledWhenLoaded]).
+   */
+  private fun closeOverProviderRequirements(gates: DeclaredDependencyNames, project: Project): DeclaredDependencyNames {
+    val pluginIds = LinkedHashSet(gates.pluginIds)
+    val moduleNames = LinkedHashSet(gates.moduleNames)
+    val pluginQueue = ArrayDeque(pluginIds.filter { it.isNotBlank() })
+    val moduleQueue = ArrayDeque(moduleNames.filter { it.isNotBlank() })
+    while (pluginQueue.isNotEmpty() || moduleQueue.isNotEmpty()) {
+      val providers =
+        if (pluginQueue.isNotEmpty()) productionDescriptorFiles(PluginIdModuleIndex.getFiles(project, pluginQueue.removeFirst()), project)
+        else moduleGateProviders(project, moduleQueue.removeFirst())
+      val required = providers.map { namesEnabledWhenLoaded(it) }.reduceOrNull(DeclaredDependencyNames::intersect) ?: continue
+      required.pluginIds.forEach { if (it.isNotBlank() && pluginIds.add(it)) pluginQueue.add(it) }
+      required.moduleNames.forEach { if (it.isNotBlank() && moduleNames.add(it)) moduleQueue.add(it) }
+    }
+    return DeclaredDependencyNames(moduleNames, pluginIds)
+  }
+
+  /**
+   * The descriptors whose load guarantees the referenced registration, decided for [providers] and every descriptor
+   * their guarantee depends on. A descriptor qualifies when the registration is in its own merged descriptor
+   * ([carriers]), or when a carrier is a content module loading unconditionally with it — the `<content>` entries
+   * for the carrier in its merged descriptor are nonempty and all say `loading="required"` or `embedded`; optional
+   * and on-demand modules may stay unloaded while the gate is satisfied, so a descriptor without entries guarantees
+   * nothing. A descriptor that is itself a content-module descriptor loads only inside some plugin that packaged it,
+   * so it qualifies once every production descriptor including it qualifies, whichever one the running product
+   * chose — iterated to the least fixpoint, so descriptors vouching only for each other never qualify.
+   */
+  private fun loadGuaranteedRoots(graph: DescriptorUpGraph, carriers: Set<XmlFile>, providers: Set<XmlFile>): Set<XmlFile> {
+    val includingPluginRoots = HashMap<XmlFile, Set<XmlFile>>()
+    val queue = ArrayDeque(providers + carriers)
+    while (queue.isNotEmpty()) {
+      val file = queue.removeFirst()
+      if (file in includingPluginRoots) continue
+      val roots = graph.contentIncludersOf(file).flatMapTo(HashSet()) { graph.mergeRoots(it, IncludeEdgeFilter.ANY_EDGE) }
+      includingPluginRoots[file] = roots
+      queue.addAll(roots)
+    }
+    val entriesByCarrier = HashMap<XmlFile, List<ContentModuleEntryEdge>>()
+    fun loadsUnconditionallyWith(provider: XmlFile, carrier: XmlFile): Boolean {
+      val entries = entriesByCarrier
+        .getOrPut(carrier) { contentModuleEntriesFor(carrier, graph.contentIncludersOf(carrier)) }
+        .filter { provider in graph.mergeRoots(it.entryFile, IncludeEdgeFilter.WHOLE_DESCRIPTOR_ONLY) }
+      return entries.isNotEmpty() && entries.all { it.loading == ModuleLoadingRule.REQUIRED || it.loading == ModuleLoadingRule.EMBEDDED }
+    }
+    val guaranteed = includingPluginRoots.keys.filterTo(HashSet()) { file ->
+      file in carriers || carriers.any { loadsUnconditionallyWith(file, it) }
+    }
+    var changed = true
+    while (changed) {
+      changed = false
+      includingPluginRoots.forEach { (file, roots) ->
+        if (file !in guaranteed && roots.isNotEmpty() && roots.all(guaranteed::contains)) {
+          guaranteed.add(file)
+          changed = true
+        }
+      }
+    }
+    return guaranteed
+  }
+
+  private fun extensionPointDeclarationFiles(project: Project, fqn: String): Collection<VirtualFile> {
+    return ExtensionPointIndex.getFiles(GlobalSearchScope.projectScope(project), fqn)
+  }
+
+  private fun actionOrGroupRegistrationFiles(project: Project, id: String): Collection<VirtualFile> {
+    val files = HashSet<VirtualFile>()
+    IdeaPluginRegistrationIndex.processActionOrGroup(project, id, GlobalSearchScope.projectScope(project), Processor { registration: ActionOrGroup ->
+      files.add(DomUtil.getFile(registration).virtualFile)
+      true
+    })
+    return files
+  }
+
   private fun isActionOrGroupReachableFromModuleById(id: String, element: DomElement, module: Module): Boolean {
     return !IdeaPluginRegistrationIndex.processActionOrGroup(module.project, id, moduleRuntimeScope(element, module)) { false }
   }
@@ -182,15 +390,6 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
   private fun moduleRuntimeScope(element: DomElement, module: Module): GlobalSearchScope {
     val includeTests = isInTestRoots(DomUtil.getFile(element).virtualFile, module.project)
     return GlobalSearchScope.moduleRuntimeScope(module, includeTests)
-  }
-
-  private fun isInTestRoots(file: VirtualFile?, project: Project): Boolean {
-    return file != null && ProjectFileIndex.getInstance(project).isInTestSourceContent(file)
-  }
-
-  private fun isInProductionRoots(file: VirtualFile?, project: Project): Boolean {
-    val fileIndex = ProjectFileIndex.getInstance(project)
-    return file != null && fileIndex.isInSourceContent(file) && !fileIndex.isInTestSourceContent(file)
   }
 
   private fun DomElementAnnotationHolder.reportUnreachableClassProblem(
@@ -343,99 +542,4 @@ private class AddModuleDependencyFix(
       }
     }
   }
-}
-
-/**
- * A module without an own content-module descriptor is packaged into the plugin's main jar, so its classes come from
- * the main classloader. A declared content module shares it only when every `<content>` entry including it says
- * `loading="embedded"`; any other loading mode means an own classloader. Zero found entries answer `false`: an
- * unindexed or slash-named sub-descriptor inclusion (`intellij.foo/backend`) must not silently widen the exemption.
- */
-internal fun isLoadedByMainPluginClassloader(module: Module): Boolean {
-  return mainClassloaderRelation(module) == MainClassloaderRelation.MAIN
-}
-
-/**
- * A module whose classes resolve main-classloader classes at runtime: it is loaded by the main classloader itself,
- * or it is an optional content module — those receive the main descriptor as an implicit runtime dependency, so the
- * main classloader becomes a parent of theirs. Required and on-demand modules get no such parent, except in the
- * core plugin, whose main classes come from the core loader that every module classloader sees.
- */
-internal fun seesMainPluginClassloader(module: Module): Boolean {
-  return mainClassloaderRelation(module) != MainClassloaderRelation.SEPARATE
-}
-
-private enum class MainClassloaderRelation {
-  MAIN, IMPLICIT_PARENT, SEPARATE
-}
-
-/**
- * Aggregated over every `<content>` entry that includes the module, so products that package it must agree.
- * Cached because the entry lookup falls back to scanning all production XML files when the index has no hits.
- */
-private fun mainClassloaderRelation(module: Module): MainClassloaderRelation {
-  val project = module.project
-  return CachedValuesManager.getManager(project).getCachedValue(module) {
-    CachedValueProvider.Result.create(
-      computeMainClassloaderRelation(module),
-      ProjectRootModificationTracker.getInstance(project),
-      PsiManager.getInstance(project).modificationTracker.forLanguage(XMLLanguage.INSTANCE),
-    )
-  }
-}
-
-private fun computeMainClassloaderRelation(module: Module): MainClassloaderRelation {
-  val contentModuleDescriptor = PluginModuleType.getContentModuleDescriptorXml(module) ?: return MainClassloaderRelation.MAIN
-  val entries = SplitModeInspectionUtil.findDependingContentModuleEntriesInFile(contentModuleDescriptor).toList()
-  return when {
-    entries.isEmpty() -> MainClassloaderRelation.SEPARATE
-    entries.all { it.loading.value == ModuleLoadingRule.EMBEDDED } -> MainClassloaderRelation.MAIN
-    entries.all { resolvesMainClassloaderClasses(it) } -> MainClassloaderRelation.IMPLICIT_PARENT
-    else -> MainClassloaderRelation.SEPARATE
-  }
-}
-
-/**
- * Whether a `<content>` entry gives the module a classloader that resolves main-classloader classes: optional
- * modules (absent `loading` means optional) receive the main descriptor as an implicit runtime dependency, and
- * every content module of the core plugin gets the core loader — which is what loads the core plugin's main classes.
- */
-private fun resolvesMainClassloaderClasses(entry: ContentDescriptor.ModuleDescriptor): Boolean {
-  val loading = entry.loading.value
-  if (loading == null || loading == ModuleLoadingRule.EMBEDDED || loading == ModuleLoadingRule.OPTIONAL) return true
-  return isPartOfCorePluginDescriptor(DomUtil.getFile(entry), HashSet())
-}
-
-/**
- * The entry's file may be an id-less fragment of the effective descriptor, so the owning plugin id is resolved
- * through the include graph: a file declaring an id answers directly; a fragment belongs to the core plugin only
- * when every production descriptor xi-including it does; a root without an own id may still take the id from a
- * fragment it includes (product descriptors include the id-carrying PlatformLangPlugin.xml). Only whole-descriptor
- * includes count either way: a sub-selecting `xpointer` carries neither the `<content>` entries nor the `<id>`.
- */
-private fun isPartOfCorePluginDescriptor(file: XmlFile, currentPath: MutableSet<XmlFile>): Boolean {
-  if (!currentPath.add(file)) return false
-  try {
-    DescriptorUtil.getIdeaPlugin(file)?.pluginId?.let { return it == PluginManagerCore.CORE_PLUGIN_ID }
-    val includers = findProductionXIncludeEdges(file).filter { it.mergesWholeDescriptor }.map { it.includer }
-    if (includers.isNotEmpty()) return includers.all { isPartOfCorePluginDescriptor(it, currentPath) }
-    return resolveEffectivePluginId(file, HashSet()) == PluginManagerCore.CORE_PLUGIN_ID
-  }
-  finally {
-    currentPath.remove(file)
-  }
-}
-
-private fun resolveEffectivePluginId(file: XmlFile, visited: MutableSet<XmlFile>): String? {
-  if (!visited.add(file)) return null
-  DescriptorUtil.getIdeaPlugin(file)?.pluginId?.let { return it }
-  val rootTag = file.rootTag ?: return null
-  return PsiTreeUtil.getChildrenOfTypeAsList(rootTag, XmlTag::class.java)
-    .filter { it.namespace == XmlUtil.XINCLUDE_URI && it.localName == "include" && mergesWholeDescriptor(it) }
-    .firstNotNullOfOrNull { includeTag -> resolveXIncludeTargetFile(includeTag)?.let { resolveEffectivePluginId(it, visited) } }
-}
-
-private fun resolveXIncludeTargetFile(includeTag: XmlTag): XmlFile? {
-  val href = includeTag.getAttribute("href")?.valueElement ?: return null
-  return href.references.maxByOrNull { it.rangeInElement.startOffset }?.resolve() as? XmlFile
 }

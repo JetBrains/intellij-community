@@ -186,6 +186,7 @@ class WorkspaceModelJsonDumpSerializer {
     }
   }
 
+  @OptIn(WorkspaceEntityInternalApi::class)
   fun entityAsJson(entity: WorkspaceEntity): JsonObject {
     if (entity is ModuleEntity) {
       return moduleEntityAsJson(entity)
@@ -194,6 +195,7 @@ class WorkspaceModelJsonDumpSerializer {
     return entityBaseAsJson(entityBase)
   }
 
+  @OptIn(WorkspaceEntityInternalApi::class)
   private fun moduleEntityAsJson(entity: ModuleEntity): JsonObject {
     entity as WorkspaceEntityBase
     val entityMetadata = entity.getData().getMetadata()
@@ -223,6 +225,7 @@ class WorkspaceModelJsonDumpSerializer {
     }
   }
 
+  @OptIn(WorkspaceEntityInternalApi::class)
   private fun entityBaseAsJson(entity: WorkspaceEntityBase): JsonObject {
     val entityMetadata = entity.getData().getMetadata()
 

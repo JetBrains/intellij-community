@@ -77,7 +77,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import sun.awt.AppContext
 import sun.awt.PeerEvent
 import sun.awt.SunToolkit
 import java.awt.AWTEvent
@@ -994,8 +993,6 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   fun getReturnedEventCount(): Long = eventsReturned.get()
 
-  fun getPostedSystemEventCount(): Long = (AppContext.getAppContext()?.get("jb.postedSystemEventCount") as? AtomicLong)?.get() ?: -1
-
   fun flushNativeEventQueue() {
     SunToolkit.flushPendingEvents()
   }
@@ -1375,11 +1372,24 @@ private fun abracadabraDaberBoreh(eventQueue: IdeEventQueue) {
   // - replace `PostEventQueue` value in `AppContext` with this new `PostEventQueue`
   // After that, the control flow goes like this:
   //   PostEventQueue.flush() -> IdeEventQueue.postEvent() -> we intercepted the event and incremented counters.
-  val aClass = Class.forName("sun.awt.PostEventQueue")
-  val constructor = MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
-    .findConstructor(aClass, MethodType.methodType(Void.TYPE, EventQueue::class.java))
+  val postEventClass = Class.forName("sun.awt.PostEventQueue")
+  val constructor = MethodHandles.privateLookupIn(postEventClass, MethodHandles.lookup())
+    .findConstructor(postEventClass, MethodType.methodType(Void.TYPE, EventQueue::class.java))
   val postEventQueue = constructor.invoke(eventQueue)
-  AppContext.getAppContext().put("PostEventQueue", postEventQueue)
+  try {
+    // JDK < 27
+    val appContextClass = Class.forName("sun.awt.AppContext")
+    val appContext = appContextClass.getMethod("getAppContext").invoke(null)
+    appContextClass.getMethod("put", Any::class.java, Any::class.java).invoke(appContext, "PostEventQueue", postEventQueue)
+  } catch (e: ReflectiveOperationException) {
+    // JDK >= 27
+    // `sun.awt.AppContext` is removed starting JDK 27, try to use other way of replacing `PostEventQueue`
+    // TODO: Change the order of attempts when JDK >= 27 becomes the happy path
+    val sunToolkitClass = Class.forName("sun.awt.SunToolkit")
+    MethodHandles.privateLookupIn(sunToolkitClass, MethodHandles.lookup())
+      .findStaticSetter(sunToolkitClass, "postEventQueue", postEventClass)
+      .invoke(postEventQueue)
+  }
 }
 
 /**

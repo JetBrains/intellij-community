@@ -122,9 +122,11 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         projectName = dummyProjectName,
         runConfigurators = false,
         runConversionBeforeOpen = false,
-        beforeOpen = { project ->
-          project.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
-          options.beforeOpen?.invoke(project) ?: true
+        beforeOpenTasks = options.beforeOpenTasks.toMutableList().apply {
+          addFirst { project ->
+            project.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
+            true
+          }
         }
       ).let {
         // both callers of this go on to `openFileFromCommandLine`, which is what releases the hold this asks for
@@ -160,8 +162,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         val options = runUnderModalProgressIfIsEdt {
           createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null).copy(
             projectName = originalOptions.projectName,
-            beforeOpen = {
-              it.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
+            beforeOpenTasks = originalOptions.beforeOpenTasks + { project ->
+              project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
               true
             }
           )
@@ -236,8 +238,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           projectIdentityFile = file,
           options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null).copy(
             projectName = originalOptions.projectName,
-            beforeOpen = {
-              it.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
+            beforeOpenTasks = originalOptions.beforeOpenTasks + { project ->
+              project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
               true
             }
           ),
@@ -367,11 +369,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmStatic
     suspend fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask {
       return OpenProjectTask {
-        runConfigurators = true
-        isNewProject = !ProjectUtil.isValidProjectPath(projectDir)
-        this.projectToClose = projectToClose
-        useDefaultProjectAsTemplate = true
-        projectRootDir = projectDir
+        configureToOpenDotIdeaOrCreateNewIfNotExists(projectDir, projectToClose)
       }
     }
 
@@ -381,6 +379,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       isNewProject = !ProjectUtil.isValidProjectPath(projectDir)
       this.projectToClose = projectToClose
       useDefaultProjectAsTemplate = true
+      projectRootDir = projectDir
     }
   }
 
@@ -473,7 +472,8 @@ private fun endStartupEmptyStatePresentationHold(project: Project) {
   fileEditorManager.mainSplitters.endStartupEmptyStatePresentationHold()
 }
 
-internal suspend fun attachToProjectAsync(
+@Internal
+suspend fun attachToProjectAsync(
   projectToClose: Project,
   projectDir: Path,
   processor: ProjectAttachProcessor? = null,
@@ -484,17 +484,18 @@ internal suspend fun attachToProjectAsync(
     return false
   }
   if (processor != null) {
-    return attachImpl(processor, projectToClose, projectDir, callback, beforeOpen)
+    return attachSafe(processor, projectToClose, projectDir, callback, beforeOpen)
   }
   for (attachProcessor in ProjectAttachProcessor.EP_NAME.lazySequence()) {
-    if (attachImpl(attachProcessor, projectToClose, projectDir, callback, beforeOpen)) {
+    if (attachSafe(attachProcessor, projectToClose, projectDir, callback, beforeOpen)) {
       return true
     }
   }
   return false
 }
 
-private suspend fun attachImpl(
+@Internal
+suspend fun attachSafe(
   attachProcessor: ProjectAttachProcessor,
   projectToClose: Project,
   projectDir: Path,

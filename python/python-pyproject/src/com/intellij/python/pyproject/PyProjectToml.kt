@@ -5,13 +5,15 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.jetbrains.python.Result
-import com.jetbrains.python.sdk.findAmongRoots
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
+import com.jetbrains.python.project.resolveFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.tuweni.toml.Toml
@@ -266,7 +268,9 @@ data class PyProjectToml(
      * Returns null if not found.
      */
     suspend fun findPyProjectTomlFile(module: Module): PyProjectTomlFile? {
-      return findAmongRoots(module, PY_PROJECT_TOML)?.let { PyProjectTomlFile(it) }
+      return module.asPyProject()?.resolveFile(PY_PROJECT_TOML)
+        ?.let { LocalFileSystem.getInstance().findFileByNioFile(it) }
+        ?.let { PyProjectTomlFile(it) }
     }
 
     suspend fun findInRoot(moduleBasePath: Path): Path? = withContext(Dispatchers.IO) {

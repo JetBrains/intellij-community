@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<idea-plugin visibility="public">
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.java-capable"/>
@@ -43,6 +43,8 @@
     <module name="intellij.xml.psi"/>
   </dependencies>
   <!-- endregion -->
+
+  <xi:include href="/META-INF/RegistryKeysRefactorings.xml"/>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.refactoring.moveClassHandler"

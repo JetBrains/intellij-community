@@ -535,29 +535,30 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun updatePlugin() {
-    val pluginUpdateSourceApplier = PluginUpdateSourceApplier(updateDescriptor ?: descriptorForActions!!)
     coroutineScope.launch {
-      val modalityState = ModalityState.stateForComponent(updateButton!!)
-      val customizedAction = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(pluginModel,
-                                                                                        descriptorForActions!!,
-                                                                                        updateDescriptor,
-                                                                                        modalityState)?.action
+      val pluginUpdateSourceApplier = PluginUpdateSourceApplier.createApplier(updateDescriptor ?: descriptorForActions!!, pluginModel)
+      pluginUpdateSourceApplier.runWithRevertOnException {
+        val modalityState = ModalityState.stateForComponent(updateButton!!)
+        val customizedAction = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(pluginModel,
+                                                                                          descriptorForActions!!,
+                                                                                          updateDescriptor,
+                                                                                          modalityState)?.action
 
-      withContext(Dispatchers.EDT + ModalityState.stateForComponent(this@PluginDetailsPageComponent).asContextElement()) {
-        if (customizedAction != null) {
-          customizedAction()
-        }
-        else {
-          pluginUpdateSourceApplier.applyPluginUpdateSourceId()
-          val result = pluginModel.installOrUpdatePlugin(
-            this@PluginDetailsPageComponent,
-            descriptorForActions!!, updateDescriptor,
-            modalityState,
-          )
-          pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
+        withContext(Dispatchers.EDT + ModalityState.stateForComponent(this@PluginDetailsPageComponent).asContextElement()) {
+          if (customizedAction != null) {
+            customizedAction()
+          }
+          else {
+            val result = pluginModel.installOrUpdatePlugin(
+              this@PluginDetailsPageComponent,
+              descriptorForActions!!, updateDescriptor,
+              modalityState,
+            )
+            pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
+          }
         }
       }
-    }.invokeOnCompletion(pluginUpdateSourceApplier::revertIfNeeded)
+    }
   }
 
   private fun createScrollPane(component: JComponent): JBScrollPane {
@@ -874,7 +875,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
           link.text = pluginUpdateSource.getPresentableName()
           link.selectedItem = pluginUpdateSource
           coroutineScope.launch(Dispatchers.IO) {
-            pluginModel.setPluginUpdateSource(pluginToHandle.pluginId, pluginUpdateSource)
+            pluginModel.setPendingPluginUpdateSourceInSession(pluginToHandle.pluginId, pluginUpdateSource)
           }
         }
       }
@@ -1744,13 +1745,14 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun installOrUpdatePlugin() {
-    val pluginUpdateSourceApplier = PluginUpdateSourceApplier(plugin!!)
     coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
-      pluginUpdateSourceApplier.applyPluginUpdateSourceId()
-      val modalityState = ModalityState.stateForComponent(installButton!!.getComponent())
-      val result = pluginModel.installOrUpdatePlugin(this@PluginDetailsPageComponent, plugin!!, null, modalityState)
-      pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
-    }.invokeOnCompletion(pluginUpdateSourceApplier::revertIfNeeded)
+      val pluginUpdateSourceApplier = PluginUpdateSourceApplier.createApplier(plugin!!, pluginModel)
+      pluginUpdateSourceApplier.runWithRevertOnException {
+        val modalityState = ModalityState.stateForComponent(installButton!!.getComponent())
+        val result = pluginModel.installOrUpdatePlugin(this@PluginDetailsPageComponent, plugin!!, null, modalityState)
+        pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
+      }
+    }
   }
 
   private fun updateEnableForNameAndIcon() {

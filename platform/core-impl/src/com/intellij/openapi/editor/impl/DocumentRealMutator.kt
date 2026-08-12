@@ -117,12 +117,7 @@ internal abstract class DocumentRealMutator(
     snapshotBefore: DocumentSnapshot,
     patch: DocumentTextPatch,
   ): DocumentSnapshot {
-    return updateAndGet { latest ->
-      // modStamp or other metadata could be changed during before-change listeners,
-      // should merge it into final snapshot
-      val merged = snapshotBefore.withMetadata(latest)
-      merged.withText(patch)
-    }
+    return updateAndGet { latest -> mergeAndPatch(snapshotBefore, latest, patch) }
   }
 
   private fun applyElfTextChange(elfChange: ElfTextChange) {

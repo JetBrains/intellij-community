@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
+import com.intellij.diagnostic.RemoteSerializedThrowable;
 import com.intellij.openapi.extensions.PluginId;
 import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
@@ -12,6 +13,10 @@ import org.jetbrains.annotations.Nullable;
 public class PluginUtilImpl implements PluginUtil {
   @Override
   public @Nullable PluginId findPluginId(@NotNull Throwable t) {
+    // freezes have precomputed guilty plugin
+    if (t instanceof PluginCauseException) return ((PluginCauseException)t).getProblematicPluginId();
+    if (t instanceof RemoteSerializedThrowable) return ((RemoteSerializedThrowable)t).getPluginId();
+
     PluginSet pluginSet = PluginManagerCore.getPluginSetOrNull();
     Pair<PluginId, IdeaPluginDescriptorImpl> pair = PluginUtils.findPlugin(t, pluginSet);
     return pair == null ? null : pair.getFirst();

@@ -110,7 +110,9 @@ def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags
     normalized_runtime_deps = [_normalize_runtime_dep(d) for d in runtime_deps]
     all_runtime_deps = depset(TEST_FRAMEWORK_DEPS + normalized_runtime_deps).to_list()
 
-    all_data = list(data)
+    # only what this macro contributes: the caller's `data` is concatenated at the end, so it may be
+    # a select() - a target whose data depends on the platform, as the macOS-only dev-launch sets do
+    all_data = []
     all_tags = list(tags)
     all_env = dict(env)
 
@@ -153,7 +155,7 @@ def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags
         # which is also a reasonable tests timeout for current state of things
         size = "enormous",
         tags = all_tags,
-        data = all_data,
+        data = data + all_data,
         env = all_env,
         use_testrunner = False,
         **kwargs

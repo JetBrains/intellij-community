@@ -789,6 +789,40 @@ async def nosupAssertFalse(b):
     );
   }
 
+  // PY-83726
+  public void testInspectionSuppressInElseBlock() {
+    doTestByText("""
+      import typing as _tp
+
+      def foo(v: _tp.Literal["foo", "bar"]):
+          if v == "foo":
+              raise Exception()
+          elif v == "bar":
+              raise Exception()
+          else:
+              # noinspection PyUnreachableCode
+              return False
+                   """);
+  }
+
+  // PY-83726
+  public void testInspectionSuppressInMatchCaseBlock() {
+    doTestByText("""
+      def foo(error: ArithmeticError):
+          match error:
+              case OverflowError():
+                  return "foo"
+
+              case ArithmeticError():
+                  return "bar"
+
+              case _:
+                  # noinspection PyUnreachableCode
+                  err: str = f"Expected ArithmeticError, got {type(error).__name__}: {error}"
+                  raise TypeError(err)
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

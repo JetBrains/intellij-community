@@ -51,7 +51,17 @@ class ProductPluginInitContext(
       }
     }
   }
-  private val disabledPlugins: Set<PluginId> get() = disabledPluginsOverride ?: DisabledPluginsState.getDisabledIds()
+
+  private val disabledPlugins: Set<PluginId> get() {
+    if (disabledPluginsOverride != null) {
+      return disabledPluginsOverride
+    }
+    if (explicitPluginSubsetToLoad != null) {
+      return emptySet()
+    }
+    return DisabledPluginsState.getDisabledIds()
+  }
+
   private val expiredPlugins: Set<PluginId> get() = expiredPluginsOverride ?: ExpiredPluginsState.expiredPluginIds
   private val brokenPluginVersions: Map<PluginId, Set<String>> get() = brokenPluginVersionsOverride ?: getBrokenPluginVersions()
 
@@ -114,8 +124,11 @@ class ProductPluginInitContext(
   override fun shouldIncludeContentModulesForDependsEdgeTarget(resolvedTarget: PluginMainDescriptor): Boolean =
     defaultShouldIncludeContentModulesForDependsEdgeTarget(resolvedTarget)
 
-  override fun runConfigurationDuringStartup(totalPluginSet: AmbiguousPluginSet) {
-    thirdPartyPluginsWithoutConsentCheckResult = checkThirdPartyPluginsPrivacyConsent(totalPluginSet)
+  override fun runConfigurationDuringStartup(candidateSubset: UnambiguousPluginSet) {
+    if (checkEssentialPlugins && candidateSubset.resolvePluginId(CORE_ID) == null) {
+      throw EssentialPluginMissingException(listOf("$CORE_ID (platform prefix: ${System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)})"))
+    }
+    thirdPartyPluginsWithoutConsentCheckResult = checkThirdPartyPluginsPrivacyConsent(candidateSubset)
     thirdPartyPluginsWithoutConsentCheckResult?.let { result ->
       if (result.privacyNoteAccepted != null) {
         ThirdPartyPluginsPrivacyConsentState.setState(result.privacyNoteAccepted)
@@ -137,8 +150,8 @@ class ProductPluginInitContext(
    *
    * Invoked only during startup initialization.
    */
-  private fun checkThirdPartyPluginsPrivacyConsent(pluginSet: AmbiguousPluginSet): ThirdPartyPluginsWithoutConsentCheckResult? {
-    val aliens = ThirdPartyPluginsWithoutConsentFile.consumeAliensFile().mapNotNull { pluginSet.resolvePluginId(it).firstOrNull()?.getMainDescriptor() }
+  private fun checkThirdPartyPluginsPrivacyConsent(candidateSubset: UnambiguousPluginSet): ThirdPartyPluginsWithoutConsentCheckResult? {
+    val aliens = ThirdPartyPluginsWithoutConsentFile.consumeAliensFile().mapNotNull { candidateSubset.resolvePluginId(it)?.getMainDescriptor() }
     if (aliens.isEmpty()) {
       return null
     }
@@ -389,11 +402,11 @@ class ProductPluginInitContext(
         for (expiredPluginId in expiredPlugins) {
           val plugin = pluginSet.resolvePluginId(expiredPluginId)
                        ?: continue
-          yield(plugin to PluginHasExpiredLicense())
+          yield(plugin to PluginHasExpiredLicense)
         }
         thirdPartyPluginsWithoutConsentCheckResult?.let {
           for (plugin in it.pluginsToExcludeFromLoading) {
-            yield(plugin to ThirdPartyPrivacyNoticeIsNotAccepted())
+            yield(plugin to ThirdPartyPrivacyNoticeIsNotAccepted)
           }
         }
       }
@@ -405,15 +418,6 @@ class ProductPluginInitContext(
     }
   }
 }
-
-@ApiStatus.Internal
-sealed interface IntellijImposedModuleExclusionReason : ProductRulesImposedExclusionReason
-
-@ApiStatus.Internal
-class PluginHasExpiredLicense : IntellijImposedModuleExclusionReason
-
-@ApiStatus.Internal
-class ThirdPartyPrivacyNoticeIsNotAccepted : IntellijImposedModuleExclusionReason
 
 // alias in most cases points to Core plugin, so we cannot use computed dependencies to check
 private fun doesDependOnPluginAlias(plugin: IdeaPluginDescriptorImpl, aliasId: PluginId): Boolean {

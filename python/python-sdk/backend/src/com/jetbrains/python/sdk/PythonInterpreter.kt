@@ -9,6 +9,7 @@ import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.frameActivationCache.CacheKeys
 import com.jetbrains.python.frameActivationCache.getOrComputeOnFrameActivation
+import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.impl.enrichLocalPythonSdkWithHomeInfo
 import com.jetbrains.python.sdk.impl.pythonEnvironmentCache
@@ -118,3 +119,11 @@ suspend fun Sdk.pythonInterpreterAsync(forceRefresh: Boolean = false): PythonInt
 }
 
 private val PY_SDK_LANG_LEVEL_CACHE_KEY = CacheKeys<PyResult<LanguageLevel>>("PythonSdkLang")
+
+/**
+ * Get [PythonInterpreter] if [PyProject] has it
+ */
+@ApiStatus.Internal
+suspend fun PyProject.getInterpreter(): PythonInterpreter? =
+  @Suppress("UsagesOfObsoleteApi") // Temporary hack
+  residesOnModule.findPythonSdk()?.pythonInterpreterAsync()

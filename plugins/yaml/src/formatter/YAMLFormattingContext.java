@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLFileType;
 import org.jetbrains.yaml.YAMLLanguage;
-import org.jetbrains.yaml.YAMLParserDefinition;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLSequence;
@@ -41,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
+
+import static org.jetbrains.yaml.YamlFileElementTypeKt.YAML_FILE;
 
 class YAMLFormattingContext {
   private static final Indent DIRECT_NORMAL_INDENT = Indent.getNormalIndent(true);
@@ -276,7 +277,7 @@ class YAMLFormattingContext {
       }
       return DIRECT_NORMAL_INDENT;
     }
-    else if (nodeType == YAMLParserDefinition.FILE) {
+    else if (nodeType == YAML_FILE) {
       return SAME_AS_PARENT_INDENT;
     }
     else if (YAMLElementTypes.SCALAR_VALUES.contains(nodeType)) {

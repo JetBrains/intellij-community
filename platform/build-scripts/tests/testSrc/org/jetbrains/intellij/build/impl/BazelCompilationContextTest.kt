@@ -35,7 +35,7 @@ internal class BazelCompilationContextTest {
     val state = BazelModuleOutputProviderState(
       modules = project.modules,
       projectHome = tempDir,
-      bazelOutputRoot = tempDir,
+      bazelOutputRootResolver = { tempDir },
       bazelTargetsLoader = {
         loadCounter.incrementAndGet()
         BazelTargetsInfo.TargetsFile(
@@ -87,6 +87,50 @@ internal class BazelCompilationContextTest {
     assertThat(baseProvider.useTestCompilationOutput).isFalse()
     assertThat(productionProvider.useTestCompilationOutput).isFalse()
     assertThat(testProvider.useTestCompilationOutput).isTrue()
+  }
+
+  @Test
+  fun `Bazel output root is resolved only when a library path is needed`(@TempDir tempDir: Path) {
+    val moduleName = "intellij.test.module"
+    val module = mock(JpsModule::class.java)
+    `when`(module.name).thenReturn(moduleName)
+
+    val resolveCounter = AtomicInteger()
+    val state = BazelModuleOutputProviderState(
+      modules = listOf(module),
+      projectHome = tempDir,
+      bazelOutputRootResolver = {
+        resolveCounter.incrementAndGet()
+        tempDir.resolve("output-base")
+      },
+      bazelTargetsLoader = {
+        BazelTargetsInfo.TargetsFile(
+          modules = mapOf(
+            moduleName to BazelTargetsInfo.TargetsFileModuleDescription(
+              productionTargets = emptyList(),
+              productionJars = emptyList(),
+              testTargets = emptyList(),
+              testJars = emptyList(),
+              exports = emptyList(),
+              moduleLibraries = emptyMap(),
+            ),
+          ),
+          projectLibraries = emptyMap(),
+        )
+      },
+    )
+
+    // everything a dev build touches to lay out module outputs must work without an output base: under a copied
+    // classpath there is no `bazel-out` to derive one from, and under runfiles every path comes from a label
+    state.bazelTargetsMap
+    state.findRequiredModule(moduleName)
+    assertThat(BazelModuleOutputProvider(state, scope = null, useTestCompilationOutput = false).toString())
+      .contains("bazelOutputRoot=<not resolved>")
+    assertThat(resolveCounter.get()).isEqualTo(0)
+
+    assertThat(state.bazelOutputRoot).isEqualTo(tempDir.resolve("output-base"))
+    assertThat(state.bazelOutputRoot).isEqualTo(tempDir.resolve("output-base"))
+    assertThat(resolveCounter.get()).isEqualTo(1)
   }
 
   private fun testCompilationContext(project: JpsProject, tempDir: Path, options: BuildOptions): CompilationContext {
