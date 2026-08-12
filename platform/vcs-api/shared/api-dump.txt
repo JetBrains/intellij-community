@@ -16,8 +16,10 @@ f:com.intellij.openapi.vcs.VcsApplicationSettings
 - <init>():V
 - s:getInstance():com.intellij.openapi.vcs.VcsApplicationSettings
 - getState():com.intellij.openapi.vcs.VcsApplicationSettings
+- isCreateChangeListsAutomatically():Z
 - loadState(com.intellij.openapi.vcs.VcsApplicationSettings):V
 - noStateLoaded():V
+- setCreateChangeListsAutomatically(Z):V
 f:com.intellij.openapi.vcs.VcsConfiguration
 - com.intellij.openapi.components.PersistentStateComponent
 - ADD_EXTERNAL_FILES_SILENTLY:Z

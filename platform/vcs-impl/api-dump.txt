@@ -2095,6 +2095,7 @@ c:com.intellij.openapi.vcs.changes.ui.ChangeListChooser
 - setChangeLists(java.util.Collection):V
 - setDefaultSelection(com.intellij.openapi.vcs.changes.ChangeList):V
 - setSuggestedName(java.lang.String):V
+- setSuggestedName(java.lang.String,java.lang.String,Z):V
 - setSuggestedName(java.lang.String,Z):V
 f:com.intellij.openapi.vcs.changes.ui.ChangeListChooserPanel
 - javax.swing.JPanel

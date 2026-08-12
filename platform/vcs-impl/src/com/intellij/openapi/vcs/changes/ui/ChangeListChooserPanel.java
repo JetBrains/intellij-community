@@ -150,7 +150,7 @@ public final class ChangeListChooserPanel extends JPanel {
       myNewNameSuggested = true;
       myExistingListsCombo.insertItemAt(LocalChangeList.createEmptyChangeList(myProject, name), 0);
       if (StringUtil.isEmptyOrSpaces(myLastTypedDescription)) {
-        myLastTypedDescription = comment;
+        setChangeListDescription(comment);
       }
       if (VcsConfiguration.getInstance(myProject).PRESELECT_EXISTING_CHANGELIST) {
         selectActiveChangeListIfExist();
