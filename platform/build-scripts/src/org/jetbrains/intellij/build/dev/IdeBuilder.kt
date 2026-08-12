@@ -61,6 +61,7 @@ import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
+import org.jetbrains.intellij.build.jarCache.NonCachingJarCacheManager
 import org.jetbrains.intellij.build.normalizeCompiledClassesOptions
 import org.jetbrains.intellij.build.productLayout.discovery.ProductConfiguration
 import org.jetbrains.intellij.build.readSearchableOptionIndex
@@ -105,7 +106,13 @@ data class BuildRequest(
   /** For a standalone frontend distribution where `platformPrefix` is "JetBrainsClient", specifies the platform prefix of its base IDE. */
   @JvmField val baseIdePlatformPrefixForFrontend: String? = null,
   @JvmField val devRootDir: Path = System.getProperty("idea.dev.root.dir")?.let { Path.of(it).normalize().toAbsolutePath() } ?: projectDir.resolve("out/dev-run"),
-  @JvmField val jarCacheDir: Path = devRootDir.resolve("jar-cache"),
+  /**
+   * Where composed jars are cached between assemblies, or `null` to compose every jar afresh.
+   * A Bazel action passes `null`: its own declared output is the cache, so a local disk cache would only add a second copy
+   * of every jar and a directory that parallel assemblies mutate while [org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager.cleanup]
+   * prunes it.
+   */
+  @JvmField val jarCacheDir: Path? = devRootDir.resolve("jar-cache"),
   @JvmField val classesOutputDirectory: Path? = null,
   @JvmField val keepHttpClient: Boolean = true,
   @JvmField val platformClassPathConsumer: ((mainClass: String, classPath: Set<Path>, runDir: Path) -> Unit)? = null,
@@ -757,13 +764,15 @@ internal fun createDevBuildContext(
         licenseServerHost = null,
       )
     },
-    jarCacheManager = LocalDiskJarCacheManager(
-      cacheDir = request.jarCacheDir,
-      classesOutputDirectory = compilationContext.classesOutputDirectory,
-      linkCacheEntries = compilationContext.options.linkImmutableCacheEntries,
-      maxAccessTimeAge = compilationContext.options.jarCacheMaxAccessAge,
-      cleanupInterval = 1.hours,
-    ),
+    jarCacheManager = request.jarCacheDir?.let {
+      LocalDiskJarCacheManager(
+        cacheDir = it,
+        classesOutputDirectory = compilationContext.classesOutputDirectory,
+        linkCacheEntries = compilationContext.options.linkImmutableCacheEntries,
+        maxAccessTimeAge = compilationContext.options.jarCacheMaxAccessAge,
+        cleanupInterval = 1.hours,
+      )
+    } ?: NonCachingJarCacheManager,
   )
 }
 

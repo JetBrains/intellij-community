@@ -8,14 +8,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProductInProcess
+import org.jetbrains.intellij.build.dev.materializeProjectModelTree
+import java.nio.file.DirectoryNotEmptyException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.relativeTo
 import kotlin.system.exitProcess
 
 /**
@@ -28,12 +32,28 @@ import kotlin.system.exitProcess
  * so that a caller (a Bazel action, a CI step) fully controls the result.
  *
  * This entry point is product-agnostic: the product is selected by `--platform-prefix`.
+ *
+ * It also runs where there is no checkout to read: `--project-manifest` builds the project model tree out of declared
+ * files, `--preloaded-manifest` supplies the archives a build would otherwise download, and the jar cache is off unless
+ * `--jar-cache-dir` names one. That is what an `intellij_dev_dist` Bazel action passes.
  */
 @OptIn(ExperimentalPathApi::class)
 fun main(args: Array<String>) {
   val options = parseArgs(args)
 
-  val projectDir = options.requiredPath("--project-dir") { System.getenv("BUILD_WORKSPACE_DIRECTORY") }
+  val outputDir = options.requiredPath("--output-dir")
+  val scratchDir = options.optionalPath("--scratch-dir") ?: Path.of("${outputDir.invariantSeparatorsPathString}.scratch")
+  // Either the caller points at a checkout, or it hands over a manifest of the project-model files it declares and gets a
+  // checkout-shaped tree built out of them. A Bazel action cannot do the former: the checkout is not an input of anything,
+  // so reading it would make the action's result depend on files Bazel does not track.
+  val projectManifest = options.optionalPath("--project-manifest")
+  val projectDir = if (projectManifest == null) {
+    options.requiredPath("--project-dir") { System.getenv("BUILD_WORKSPACE_DIRECTORY") }
+  }
+  else {
+    require(options.optional("--project-dir") == null) { "--project-dir and --project-manifest are mutually exclusive" }
+    materializeProjectModelTree(manifest = projectManifest, target = scratchDir.resolve("project"))
+  }
   // `BuildPaths.COMMUNITY_ROOT` and `ULTIMATE_HOME` are lazily initialized singletons that guess the repository root by walking up from
   // a set of candidate locations (see `IdeaProjectLoaderUtil.collectHomeSources`). Inside a Bazel action none of those candidates work:
   // there is no `BUILD_WORKSPACE_DIRECTORY`, the working directory is an execroot, and the jar location is in the output base -
@@ -41,8 +61,6 @@ fun main(args: Array<String>) {
   // so it must be set before any code touches those singletons.
   System.setProperty("intellij.build.ultimate.home.path", projectDir.invariantSeparatorsPathString)
 
-  val outputDir = options.requiredPath("--output-dir")
-  val scratchDir = options.optionalPath("--scratch-dir") ?: Path.of("${outputDir.invariantSeparatorsPathString}.scratch")
   val ideConfigFile = options.requiredPath("--ide-config")
   val platformPrefix = options.optional("--platform-prefix") ?: "idea"
   val additionalModules = options.list("--additional-module")
@@ -52,10 +70,15 @@ fun main(args: Array<String>) {
   }
   // a dev run directory is disposable and may share bytes with the jar cache, but a Bazel output must own its bytes
   val linkCacheEntries = options.optionalBoolean("--link-cache-entries") ?: false
+  // Unlike a dev run directory, which is rebuilt in place over and over and reuses a jar cache shared with every other
+  // product, an assembly here is produced once per change by a caller that caches the whole result. A local disk cache would
+  // only add a second copy of every jar, and a directory that concurrent assemblies mutate while its cleanup prunes it.
+  val jarCacheDir = options.optionalPath("--jar-cache-dir")
   val generateRuntimeModuleRepository = options.optionalBoolean("--generate-runtime-module-repository") ?: false
   // the output directory must be empty (see `BuildRequest.runDirOverride`). A Bazel action always gets an empty declared
   // directory, so this is for a standalone caller re-running the assembler into a path it already used.
   val cleanOutput = options.optionalBoolean("--clean-output") ?: false
+  configurePreloadedDownloads(options)
   options.checkNoUnknownOptions()
 
   if (cleanOutput && Files.exists(outputDir)) {
@@ -82,14 +105,21 @@ fun main(args: Array<String>) {
         scratchDir = scratchDir,
         buildDateInSeconds = buildDateInSeconds,
         linkImmutableCacheEntries = linkCacheEntries,
+        jarCacheDir = jarCacheDir,
       )
     )
 
     withContext(Dispatchers.IO) {
-      ideConfigFile.parent?.createDirectories()
+      dropEmptyTempDir(runDir)
+      val ideConfigDir = ideConfigFile.parent
+      ideConfigDir?.createDirectories()
+      // Relative whenever the config file sits above the distribution, so that the pair can be moved as a unit - a Bazel
+      // artifact is read from a different path than it was written to. Same rule as `formatCoreClasspath`, and
+      // `PreBuiltDevMain.readIdeConfig` resolves the result the same way `PreBuiltDevMain.readClasspath` does.
+      val homePath = if (ideConfigDir != null && runDir.startsWith(ideConfigDir)) runDir.relativeTo(ideConfigDir) else runDir
       // read back by `PreBuiltDevMain.readIdeConfig` as a `java.util.Properties` file -
       // invariant separators keep Windows paths free of `Properties` backslash escapes
-      Files.writeString(ideConfigFile, "home.path=${runDir.invariantSeparatorsPathString}\nmain.class.name=$mainClassName\n")
+      Files.writeString(ideConfigFile, "home.path=${homePath.invariantSeparatorsPathString}\nmain.class.name=$mainClassName\n")
     }
     runDir
   }
@@ -97,6 +127,40 @@ fun main(args: Array<String>) {
   println("Dev distribution assembled into $runDir (main class: $mainClassName, config: $ideConfigFile)")
   // the build uses thread pools and Netty/Ktor selectors that may outlive the last coroutine
   exitProcess(0)
+}
+
+/**
+ * Points the downloader at archives the caller has already fetched, instead of letting it reach the network.
+ *
+ * The manifests are named as absolute paths, which [org.jetbrains.intellij.build.dependencies.PreloadedDownloads] takes
+ * verbatim; only a relative name is resolved against the runfiles tree. That is what lets the archives be plain inputs of
+ * a Bazel action rather than runfiles of the assembler binary.
+ */
+private fun configurePreloadedDownloads(options: Options) {
+  val manifests = options.pathList("--preloaded-manifest")
+  if (manifests.isNotEmpty()) {
+    System.setProperty(
+      BuildDependenciesConstants.PRELOADED_DOWNLOADS_MANIFEST_PROPERTY,
+      manifests.joinToString(separator = ",") { it.invariantSeparatorsPathString },
+    )
+  }
+  if (options.optionalBoolean("--preloaded-only") == true) {
+    require(manifests.isNotEmpty()) { "--preloaded-only forbids downloading, but no --preloaded-manifest declares anything" }
+    System.setProperty(BuildDependenciesConstants.PRELOADED_DOWNLOADS_ONLY_PROPERTY, "true")
+  }
+}
+
+/**
+ * Removes the empty `temp` directory the build leaves in its output directory even though the scratch is rooted elsewhere.
+ * It is a stray write into what a caller declared as its distribution; a non-empty one is left alone, as that would be a
+ * real finding rather than a leftover.
+ */
+private fun dropEmptyTempDir(runDir: Path) {
+  try {
+    Files.deleteIfExists(runDir.resolve("temp"))
+  }
+  catch (_: DirectoryNotEmptyException) {
+  }
 }
 
 private fun parseOs(value: String): OsFamily {
@@ -129,6 +193,8 @@ private class Options(private val values: Map<String, List<String>>) {
   }
 
   fun optionalPath(name: String): Path? = optional(name)?.let { toAbsolutePath(it) }
+
+  fun pathList(name: String): List<Path> = list(name).map { toAbsolutePath(it) }
 
   fun requiredPath(name: String, fallback: () -> String? = { null }): Path {
     val value = optional(name) ?: fallback() ?: error("$name is required (no value and no fallback available)")

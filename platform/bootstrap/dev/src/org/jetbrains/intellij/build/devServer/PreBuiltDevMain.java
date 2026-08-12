@@ -82,10 +82,14 @@ public final class PreBuiltDevMain {
     try (var stream = Files.newInputStream(path)) {
       properties.load(stream);
     }
-    return new IdeConfig(
-      Path.of(properties.getProperty("home.path")),
-      properties.getProperty("main.class.name")
-    );
+    // A relative home is resolved against the config file, so that a config written next to a distribution keeps naming it
+    // after both have been moved - a build artifact is read from a different path than it was written to. Same rule as
+    // the classpath entries above.
+    Path homePath = Path.of(properties.getProperty("home.path"));
+    if (!homePath.isAbsolute()) {
+      homePath = path.toAbsolutePath().getParent().resolve(homePath);
+    }
+    return new IdeConfig(homePath, properties.getProperty("main.class.name"));
   }
 
   record IdeConfig(Path homePath, String mainClassName) {
