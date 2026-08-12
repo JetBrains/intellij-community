@@ -4,7 +4,15 @@ package com.intellij.platform.workspace.storage.testEntities.entities.currentVer
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 
-// In this test we can deserialize cache
+/**
+ * In this test we can deserialize cache
+ * 
+ * currentVersion:
+ * - computableInt, someKey, symbolicId, names, value, computableString
+ * 
+ * cacheVersion:
+ * - someKey, computableString, names, symbolicId, value, computableInt
+ */
 interface ChangedComputablePropsOrderEntity: WorkspaceEntityWithSymbolicId {
   val computableInt: Int
     get() = someKey + value

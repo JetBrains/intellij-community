@@ -229,7 +229,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
 
     configureFormatting(ultimateSourceRoot)
 
-    val isTestModule = ultimateSourceRoot.rootTypeId == JAVA_TEST_ROOT_ENTITY_TYPE_ID
+    val isTestModule = ultimateModuleEntity.name == WorkspaceModelGenerator.WORKSPACE_TESTS_MODULE
     val libraries = LibrariesRequiredForWorkspace.getRelatedLibraries(ultimateModuleEntity.name)
 
     val testProjectModule = project.modules[0]

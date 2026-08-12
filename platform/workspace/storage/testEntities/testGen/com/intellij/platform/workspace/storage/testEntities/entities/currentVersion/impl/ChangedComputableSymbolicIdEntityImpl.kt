@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(EntityStorageInstrumentationApi::class)
 
-package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.impl
+package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
@@ -15,14 +15,16 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedComputableSymbolicId
+import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedComputableSymbolicIdEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedComputableSymbolicIdEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChangedComputablePropEntityImpl(private val dataSource: ChangedComputablePropEntityData) : ChangedComputablePropEntity,
-                                                                                                          WorkspaceEntityBase(dataSource) {
+internal class ChangedComputableSymbolicIdEntityImpl(private val dataSource: ChangedComputableSymbolicIdEntityData) :
+  ChangedComputableSymbolicIdEntity, WorkspaceEntityBase(dataSource) {
+  override val symbolicId: ChangedComputableSymbolicId = super.symbolicId
 
   override val text: String
     get() {
@@ -39,10 +41,10 @@ internal class ChangedComputablePropEntityImpl(private val dataSource: ChangedCo
     return emptyList()
   }
 
-  internal class Builder(result: ChangedComputablePropEntityData?) :
-    ModifiableWorkspaceEntityBase<ChangedComputablePropEntity, ChangedComputablePropEntityData>(result),
-    ChangedComputablePropEntityBuilder {
-    internal constructor() : this(ChangedComputablePropEntityData())
+  internal class Builder(result: ChangedComputableSymbolicIdEntityData?) :
+    ModifiableWorkspaceEntityBase<ChangedComputableSymbolicIdEntity, ChangedComputableSymbolicIdEntityData>(result),
+    ChangedComputableSymbolicIdEntityBuilder {
+    internal constructor() : this(ChangedComputableSymbolicIdEntityData())
 
     override fun checkInitialization() {
       val _diff = diff
@@ -50,7 +52,7 @@ internal class ChangedComputablePropEntityImpl(private val dataSource: ChangedCo
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
       if (!getEntityData().isTextInitialized()) {
-        error("Field ChangedComputablePropEntity#text should be initialized")
+        error("Field ChangedComputableSymbolicIdEntity#text should be initialized")
       }
     }
 
@@ -60,7 +62,7 @@ internal class ChangedComputablePropEntityImpl(private val dataSource: ChangedCo
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as ChangedComputablePropEntity
+      dataSource as ChangedComputableSymbolicIdEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.text != dataSource.text) this.text = dataSource.text
       updateChildToParentReferences(parents)
@@ -81,28 +83,28 @@ internal class ChangedComputablePropEntityImpl(private val dataSource: ChangedCo
         changedProperty.add("text")
       }
 
-    override fun getEntityClass(): Class<ChangedComputablePropEntity> = ChangedComputablePropEntity::class.java
+    override fun getEntityClass(): Class<ChangedComputableSymbolicIdEntity> = ChangedComputableSymbolicIdEntity::class.java
   }
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChangedComputablePropEntityData : WorkspaceEntityData<ChangedComputablePropEntity>() {
+internal class ChangedComputableSymbolicIdEntityData : WorkspaceEntityData<ChangedComputableSymbolicIdEntity>() {
   lateinit var text: String
   internal fun isTextInitialized(): Boolean = ::text.isInitialized
-  override fun newInstance(): ChangedComputablePropEntity = ChangedComputablePropEntityImpl(this)
-  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<ChangedComputablePropEntity, *> =
-    ChangedComputablePropEntityImpl.Builder(null)
+  override fun newInstance(): ChangedComputableSymbolicIdEntity = ChangedComputableSymbolicIdEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<ChangedComputableSymbolicIdEntity, *> =
+    ChangedComputableSymbolicIdEntityImpl.Builder(null)
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedComputableSymbolicIdEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return ChangedComputablePropEntity::class.java
+    return ChangedComputableSymbolicIdEntity::class.java
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return ChangedComputablePropEntity(text, entitySource)
+    return ChangedComputableSymbolicIdEntity(text, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
@@ -113,7 +115,7 @@ internal class ChangedComputablePropEntityData : WorkspaceEntityData<ChangedComp
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-    other as ChangedComputablePropEntityData
+    other as ChangedComputableSymbolicIdEntityData
     if (this.entitySource != other.entitySource) return false
     if (this.text != other.text) return false
     return true
@@ -122,7 +124,7 @@ internal class ChangedComputablePropEntityData : WorkspaceEntityData<ChangedComp
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-    other as ChangedComputablePropEntityData
+    other as ChangedComputableSymbolicIdEntityData
     if (this.text != other.text) return false
     return true
   }

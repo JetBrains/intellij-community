@@ -3267,16 +3267,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                         entityFqName = "com.intellij.platform.workspace.jps.entities.FacetEntity",
                                                                                                                         isChild = true,
                                                                                                                         isNullable = false),
-                                                                          withDefault = false),
-                                                      OwnPropertyMetadata(isComputable = true,
-                                                                          isKey = false,
-                                                                          isOpen = false,
-                                                                          name = "sourceRoots",
-                                                                          valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
-                                                                            ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                                    typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                                      fqName = "com.intellij.platform.workspace.jps.entities.SourceRootEntity"))),
-                                                                                                                          primitive = primitiveTypeListNotNullable),
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
@@ -3739,7 +3729,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryRootTypeId", metadataHash = -389178127)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity", metadataHash = 290215019)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity", metadataHash = 1350823518)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleEntity", metadataHash = 1711991145)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleEntity", metadataHash = 1886794103)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleTypeId", metadataHash = 56899897)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleDependencyItem", metadataHash = -622238916)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.InheritedSdkDependency", metadataHash = 820358211)
