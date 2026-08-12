@@ -14,9 +14,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>
-                <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-              </args>
+              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -44,5 +42,6 @@
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="fleet.rhizomedb" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.backend" />
   </component>
 </module>

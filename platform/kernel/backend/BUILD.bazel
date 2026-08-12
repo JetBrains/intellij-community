@@ -27,11 +27,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//platform/kernel/shared:kernel",
-        "//platform/kernel/rpc.backend",
-    ],
+    exports = ["//platform/kernel/shared:kernel"],
     runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
@@ -61,8 +57,6 @@ jvm_library(
         # do not sort,
         "//platform/kernel/shared:kernel",
         "//platform/kernel/shared:kernel_test_lib",
-        "//platform/kernel/rpc.backend",
-        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
     ],
     runtime_deps = [
         # do not sort,

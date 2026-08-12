@@ -35,6 +35,7 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.platform.kernel.backend" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.backend" />
     <orderEntry type="module" module-name="intellij.platform.find" />
     <orderEntry type="module" module-name="intellij.platform.project" />
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" />

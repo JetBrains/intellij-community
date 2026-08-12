@@ -32,6 +32,7 @@ jvm_library(
         "//platform/util/concurrency",
         "//platform/core-api:core",
         "//fleet/rhizomedb",
+        "//platform/kernel/rpc.backend",
     ],
 )
 
@@ -59,6 +60,7 @@ jvm_library(
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/core-api:core_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.managed.cache.backend` end

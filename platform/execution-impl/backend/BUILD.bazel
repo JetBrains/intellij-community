@@ -33,6 +33,7 @@ jvm_library(
         "//platform/execution",
         "//platform/util/coroutines",
         "//fleet/rhizomedb",
+        "//platform/kernel/rpc.backend",
     ],
 )
 
@@ -61,6 +62,7 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.execution.impl.backend` end

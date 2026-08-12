@@ -42,6 +42,7 @@
     <orderEntry type="module" module-name="intellij.libraries.markdown" />
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.kernel.backend" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.backend" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />

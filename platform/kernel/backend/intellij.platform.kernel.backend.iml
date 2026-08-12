@@ -31,7 +31,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.kernel" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.rpc.backend" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.backend" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="fleet.rhizomedb" />
   </component>
