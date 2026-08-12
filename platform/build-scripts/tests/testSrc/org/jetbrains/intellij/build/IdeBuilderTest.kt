@@ -11,6 +11,7 @@ import org.jetbrains.intellij.build.dev.copyWithDevBuildOverrides
 import org.jetbrains.intellij.build.dev.createDevBuildPaths
 import org.jetbrains.intellij.build.dev.formatCoreClasspath
 import org.jetbrains.intellij.build.dev.prepareOverriddenRunDir
+import org.jetbrains.intellij.build.dev.prepareScratchDir
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.lang.reflect.Method
@@ -169,6 +170,23 @@ class IdeBuilderTest {
     )
 
     assertThat(options.buildDateInSeconds).isEqualTo(requestedBuildDateInSeconds)
+  }
+
+  @Test
+  fun buildProductClearsThrowawayScratchDataButKeepsTheLog() {
+    val scratchDir = tempDir.resolve("scratch")
+    val staleTempFile = Files.createDirectories(scratchDir.resolve("temp/native")).resolve("libsqliteij.jnilib")
+    val staleArtifact = Files.createDirectories(scratchDir.resolve("artifacts")).resolve("dist.zip")
+    val logFile = Files.createDirectories(scratchDir.resolve("log")).resolve("debug.log")
+    Files.writeString(staleTempFile, "extracted by the previous build")
+    Files.writeString(staleArtifact, "built by the previous build")
+    Files.writeString(logFile, "the previous build")
+
+    runBlocking { prepareScratchDir(scratchDir) }
+
+    assertThat(scratchDir.resolve("temp")).doesNotExist()
+    assertThat(scratchDir.resolve("artifacts")).doesNotExist()
+    assertThat(logFile).exists()
   }
 
   @Test

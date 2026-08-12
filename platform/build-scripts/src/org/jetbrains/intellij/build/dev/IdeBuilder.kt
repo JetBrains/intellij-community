@@ -139,6 +139,7 @@ data class BuildRequest(
   /**
    * If set, `temp`, `artifacts` and `log` are rooted here instead of in the run directory.
    * A `TreeArtifact` must contain only the assembled distribution - build scratch (`temp` alone is ~200 MB) is not part of the output.
+   * `temp` and `artifacts` are cleared at the start of every build, as they were while they lived in the run directory; `log` is kept.
    */
   @JvmField val scratchDir: Path? = null,
 
@@ -198,6 +199,7 @@ internal suspend fun buildProductFromProject(
 
 internal suspend fun buildProduct(request: BuildRequest, createBuildContext: suspend CoroutineScope.(buildDir: Path) -> BuildContext): Path {
   val buildDir = request.runDirOverride?.let { prepareOverriddenRunDir(it) } ?: prepareDevRunDir(request)
+  request.scratchDir?.let { prepareScratchDir(it) }
 
   val runDir = buildDir
   var contextToClose: BuildContext? = null
@@ -448,6 +450,20 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
     contextToClose?.messages?.close()
   }
   return runDir
+}
+
+/**
+ * Clears the throwaway parts of a caller-supplied scratch directory ([BuildRequest.scratchDir]).
+ *
+ * While `temp` and `artifacts` lived in the run directory, [prepareDevRunDir] wiped them on every build. Rooted outside it they have
+ * no such owner, and code that extracts a file into `temp` fails on the second build with `FileAlreadyExistsException`.
+ * `log` is kept, exactly as [prepareDevRunDir] keeps it.
+ */
+internal suspend fun prepareScratchDir(scratchDir: Path) {
+  withContext(Dispatchers.IO) {
+    NioFiles.deleteRecursively(scratchDir.resolve("temp"))
+    NioFiles.deleteRecursively(scratchDir.resolve("artifacts"))
+  }
 }
 
 /**
