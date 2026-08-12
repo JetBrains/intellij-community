@@ -24,6 +24,8 @@ object ClassicTerminalMigration {
           options.terminalEngine = TerminalEngine.REWORKED
           PropertiesComponent.getInstance().setValue(SWITCHED_FROM_CLASSIC_TERMINAL_PROPERTY, true)
           thisLogger().info("Switched terminal engine to Reworked")
+
+          ClassicTerminalColorsMigration.migrateCustomizedColors()
         }
       }
     }
