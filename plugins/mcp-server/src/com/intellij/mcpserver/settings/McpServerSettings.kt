@@ -24,6 +24,7 @@ interface McpServerSettings {
   var mcpServerPort: Int
   var enableMcpServer: Boolean
   var enableBraveMode: Boolean
+  var enableTerminalAnsiHighlighting: Boolean
 }
 
 
@@ -49,9 +50,16 @@ internal class McpServerSettingsImpl : McpServerSettings, SimplePersistentStateC
       state.enableBraveMode = value
     }
 
+  override var enableTerminalAnsiHighlighting: Boolean
+    get() = state.enableTerminalAnsiHighlighting
+    set(value) {
+      state.enableTerminalAnsiHighlighting = value
+    }
+
   internal class MyState : BaseState() {
     var enableBraveMode: Boolean by property(false)
     var enableMcpServer: Boolean by property(false)
+    var enableTerminalAnsiHighlighting: Boolean by property(false)
     var mcpServerPort: Int by property(DEFAULT_MCP_PORT)
   }
 }

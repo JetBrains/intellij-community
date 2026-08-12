@@ -217,6 +217,11 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
             .comment(McpServerBundle.message("settings.terminal.promotion.comment", McpServerBundle.ideDisplayName()))
             .bindSelected(showMcpServerTerminalPromotionProperty())
         }
+        row {
+          checkBox(McpServerBundle.message("settings.terminal.ansi.highlighting.flag"))
+            .comment(McpServerBundle.message("settings.terminal.ansi.highlighting.flag.comment"))
+            .bindSelected(showMcpServerTerminalAnsiHighlightingProperty())
+        }
       }
     }
 
@@ -373,6 +378,15 @@ fun showMcpServerTerminalPromotionProperty(): MutableProperty<Boolean> {
         McpServerTerminalPromotionDismissalState.dismiss()
       }
     },
+  )
+}
+
+@ApiStatus.Internal
+fun showMcpServerTerminalAnsiHighlightingProperty(): MutableProperty<Boolean> {
+  val settings = McpServerSettings.getInstance()
+  return MutableProperty(
+    getter = { settings.enableTerminalAnsiHighlighting },
+    setter = { value -> settings.enableTerminalAnsiHighlighting = value },
   )
 }
 

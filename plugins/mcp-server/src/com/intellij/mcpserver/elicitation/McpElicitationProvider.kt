@@ -107,15 +107,17 @@ data class ElicitationForm internal constructor(
  * provider emits Markdown or ANSI, depending on the client). Not serialized.
  */
 sealed interface ElicitationMessagePart {
+  val text: String
+
   /** Plain text, shown as is. Put newlines here. */
-  data class Text(val text: String) : ElicitationMessagePart
+  data class Text(override val text: String) : ElicitationMessagePart
 
   /** Source code, syntax-highlighted for [language]. */
-  data class Code(val text: String, val language: Language) : ElicitationMessagePart
+  data class Code(override val text: String, val language: Language) : ElicitationMessagePart
 
   /** Styled text: font [styles] and an optional [color]. */
   data class Styled(
-    val text: String,
+    override val text: String,
     val styles: Set<FontStyle> = emptySet(),
     val color: TextColor? = null,
   ) : ElicitationMessagePart
