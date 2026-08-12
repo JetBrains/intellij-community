@@ -388,7 +388,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       final String name = refExpr.getReferencedName();
       if (name != null && scopeOwner != null) {
         final Scope scope = ControlFlowCache.getScope(scopeOwner);
-        boolean useCfg = scope.declaresName(name) && !scope.isGlobal(name) && !scope.isNonlocal(name) ||
+        boolean useCfg = !scope.getNamedElements(name, false).isEmpty() && !scope.isGlobal(name) && !scope.isNonlocal(name) ||
                          ScopeUtil.getElementsOfAccessType(name, scopeOwner, ReadWriteInstruction.ACCESS.ASSERTTYPE).iterator().hasNext() ||
                          ScopeUtil.getElementsOfAccessType(name, scopeOwner, ReadWriteInstruction.ACCESS.READWRITE).iterator().hasNext();
         if (useCfg) {

@@ -211,7 +211,9 @@ public class PyReferenceImpl extends PyReferenceBase {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(realContext);
     if (typeEvalContext.maySwitchToAST(realContext) && owner != null && !(owner instanceof PyClass)) {
       final Scope scope = ControlFlowCache.getScope(owner);
-      if (scope.declaresName(referencedName) && !scope.isGlobal(referencedName) && !scope.isNonlocal(referencedName)) {
+      if (!scope.getNamedElements(referencedName, false).isEmpty() &&
+          !scope.isGlobal(referencedName) &&
+          !scope.isNonlocal(referencedName)) {
         final List<Instruction> defs =
           PyDefUseUtil.getLatestDefs(owner, referencedName, realContext, false, true, typeEvalContext).defs();
         if (!defs.isEmpty() && ContainerUtil.and(defs, i -> i.getElement() instanceof PyTargetExpression)) {

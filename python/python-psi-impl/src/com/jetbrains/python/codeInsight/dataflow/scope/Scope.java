@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -52,13 +53,11 @@ public interface Scope {
 
   boolean containsDeclaration(String name);
 
-  /** Cheap O(1) check whether this scope itself declares a (non-import) named element {@code name}. */
-  boolean declaresName(@NotNull String name);
-
   @NotNull
   List<PyImportedNameDefiner> getImportedNameDefiners();
 
   @NotNull
+  @Unmodifiable
   Collection<PsiNamedElement> getNamedElements(String name, boolean includeNestedGlobals);
 
   @NotNull
