@@ -3,13 +3,12 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
 public final class MoveCaretDownAction extends EditorAction {
   public MoveCaretDownAction() {
     super(new MoveCaretUpOrDownHandler(MoveCaretUpOrDownHandler.Direction.DOWN));
-    getTemplatePresentation().setRWLockRequired(Registry.is("actions.update.and.perform.arrow.actions.with.rw.lock"));
+    getTemplatePresentation().setRWLockRequired(LockFreeEditorActions.needLockForArrowActions());
   }
 }

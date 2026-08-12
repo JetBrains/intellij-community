@@ -10,6 +10,6 @@ import org.jetbrains.annotations.ApiStatus;
 public final class MoveCaretRightAction extends EditorAction {
   public MoveCaretRightAction() {
     super(new MoveCaretLeftOrRightHandler(MoveCaretLeftOrRightHandler.Direction.RIGHT));
-    getTemplatePresentation().setRWLockRequired(Registry.is("actions.update.and.perform.arrow.actions.with.rw.lock"));
+    getTemplatePresentation().setRWLockRequired(LockFreeEditorActions.needLockForArrowActions());
   }
 }
