@@ -1,9 +1,10 @@
 <idea-plugin>
   <id>com.intellij.platform.ui.webview</id>
-  <name>WebView Runtime (Experimental)</name>
+  <name>WebView Runtime (Deprecated)</name>
   <vendor>JetBrains</vendor>
   <category>Other Tools</category>
   <description><![CDATA[
+    Plugin moved to https://github.com/nerzhulart/intellij-webview
     Provides an embedded WebView panel for IntelliJ-based IDEs, making it possible to build rich local IDE UI with the standard web stack.
     <ul>
       <li>Supports HTML, CSS, JavaScript, TypeScript, and framework-based UI such as React, Preact, Svelte, Lit, or plain Web Components.</li>

@@ -1,9 +1,10 @@
 <idea-plugin allow-bundled-update="true">
   <id>org.intellij.plugins.markdown.webview.preview</id>
-  <name>Markdown WebView Preview (Experimental)</name>
+  <name>Markdown WebView Preview (Deprecated)</name>
   <vendor>JetBrains</vendor>
   <category>Languages</category>
   <description><![CDATA[
+    Plugin moved to https://github.com/nerzhulart/intellij-webview
     Provides a Markdown preview powered by an embedded WebView panel.
     <ul>
       <li>Renders Markdown content in the same kind of browser surface used by WebView-based IDE UI.</li>

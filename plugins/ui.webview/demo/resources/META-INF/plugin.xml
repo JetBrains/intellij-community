@@ -1,8 +1,9 @@
 <idea-plugin>
   <id>com.intellij.platform.ui.webview.demo</id>
-  <name>WebView Demo (Experimental)</name>
+  <name>WebView Demo (Deprecated)</name>
   <vendor>JetBrains</vendor>
   <description><![CDATA[
+    Plugin moved to https://github.com/nerzhulart/intellij-webview
     Provides a WebView Demo tool window with sample IDE panels built as local web UI.
     <ul>
       <li>Shows how HTML, CSS, TypeScript, and frontend frameworks can be embedded into IntelliJ-based IDEs.</li>
