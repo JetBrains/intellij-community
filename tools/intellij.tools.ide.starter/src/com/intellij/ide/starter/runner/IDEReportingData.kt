@@ -44,16 +44,23 @@ class IDEReportingData internal constructor(
       else -> artifactName
     }
 
-    /** Each path segment of [testMethodName] is bounded, and the final segment is prefixed with its first execution [index]. */
+    /**
+     * Builds a class-name directory and an indexed display-name directory.
+     *
+     * The first slash in [testMethodName] is the class/display boundary. Parameterized display names may contain more slashes
+     * (for example, Rust source paths), but those are test metadata and must not create nested artifact directories.
+     */
     private fun dirNameOf(testMethodName: String, index: Int): String {
       val indexPrefix = "${index}_"
-      val segments = testMethodName.split('/')
+      val segments = testMethodName.split('/', limit = 2)
       return segments.mapIndexed { segmentIndex, segment ->
-        val prefix = if (segmentIndex == segments.lastIndex) indexPrefix else ""
-        val pathSafeSegment = when (segment) {
+        val isIndexedSegment = segmentIndex == segments.lastIndex
+        val prefix = if (isIndexedSegment) indexPrefix else ""
+        val singlePathSegment = if (isIndexedSegment) segment.replace('/', '-') else segment
+        val pathSafeSegment = when (singlePathSegment) {
           "." -> "%2E"
           ".." -> "%2E%2E"
-          else -> segment
+          else -> singlePathSegment
         }
         prefix + pathSafeSegment.truncateWithStableHash(MAX_TEST_METHOD_DIR_NAME_LENGTH_IN_BYTES - prefix.length)
       }.joinToString("/")

@@ -36,7 +36,7 @@ class IDEReportingDataTest {
   }
 
   @Test
-  fun `slashes inside long parameterized display names do not leave oversized parent dirs`() {
+  fun `slashes inside long parameterized display names stay in one bounded directory`() {
     val longParameterDescription = "test-case-ide-info-".repeat(20)
     val reportingData = IDEReportingData(
       providedTestName = "qodana-test",
@@ -48,7 +48,8 @@ class IDEReportingDataTest {
 
     parameterDirName.toByteArray(Charsets.UTF_8).size shouldBe MAX_DIR_NAME_LENGTH_IN_BYTES
     HASH_SUFFIX.containsMatchIn(parameterDirName) shouldBe true
-    relativeLogsDir.getName(2).toString() shouldBe "1_lambda-id"
+    relativeLogsDir.nameCount shouldBe 3
+    relativeLogsDir.getName(2).toString() shouldBe "log"
   }
 
   @Test
@@ -61,7 +62,7 @@ class IDEReportingDataTest {
 
     reportingData.logsDir.normalize().startsWith(testHome.normalize()) shouldBe true
     testHome.relativize(reportingData.logsDir) shouldBe
-      Path.of("traversal-test", "%2E%2E", "%2E%2E", "%2E%2E", "1_outside", "log")
+      Path.of("traversal-test", "1_..-..-..-outside", "log")
   }
 
   /** A reused IDE process registers the reporting data of a method again on every switch back to it. */
