@@ -37,8 +37,6 @@ class InlineCompletionLogsContainer() {
 
   private val forceFullLogs: AtomicBoolean = AtomicBoolean(false)
 
-  private var project: Project? = null
-
   fun forceFullLogs() {
     forceFullLogs.set(true)
   }
@@ -87,10 +85,6 @@ class InlineCompletionLogsContainer() {
     }
   }
 
-  fun addProject(project: Project?) {
-    this.project = project
-  }
-
   /**
    * Use to add log to log container.
    * If you have to launch expensive computation and don't want to pause your main execution (especially if you are on EDT) use [addAsync].
@@ -119,8 +113,11 @@ class InlineCompletionLogsContainer() {
    * Cancel all [asyncAdds] and send current log container.
    * Await for this function completion before exit from the inline completion request and process next typings or next requests.
    * Should be very fast.
+   *
+   * [project] is passed explicitly instead of being stored in a field: this container lives in the editor user data and is captured
+   * by async logging jobs running on an application-level scope, so it must not retain a project (LLM-17026).
    */
-  fun logCurrent(extraLogger: CustomRequestIdLogger? = null) {
+  fun logCurrent(project: Project?, extraLogger: CustomRequestIdLogger? = null) {
     cancelAsyncAdds()
 
     val shouldSendFullLogs = getShouldSendFullLogs()
