@@ -221,8 +221,10 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
         |-
         | -failed
         |  Selection failed
-        |  Task '--unknown-option' not found in root project 'project'.
       """.trimMargin())
+        .assertExecutionTreeNode("Selection failed") {
+          assertThat(it).contains("Task '--unknown-option' not found in root project 'project'.")
+        }
     } else {
       executeAndWait("--unknown-option help")
         .assertExecutionTree("""
