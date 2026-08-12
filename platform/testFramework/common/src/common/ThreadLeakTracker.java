@@ -133,6 +133,7 @@ public final class ThreadLeakTracker {
       "Reference Handler",
       "Rider.Backend", // ignore process + io threads because backend follows application lifecycle and can be started during the test
       "Rider.LightweightBackend", // same as Rider.Backend, but for the lightweight backend process
+      "RiderStub", // same as Rider.Backend, but for the single-file backend host, whose command line has no "Rider.Backend" in it
       "RMI GC Daemon",
       "RMI TCP ",
       "Save classpath indexes for file loader",
