@@ -78,7 +78,8 @@ internal class ToolWindowHorizontalToolbar(paneId: String, anchor: ToolWindowAnc
   }
 
   override fun getBorderColor(): Color {
-    return JBColor.namedColor("ColorPalette.main-window-border", super.getBorderColor())
+    return JBColor.namedColor("ColorPalette.main-window-border",
+                              JBUI.CurrentTheme.ToolWindow.stripeSeparatorColor(false))
   }
 }
 

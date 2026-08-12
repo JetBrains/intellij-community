@@ -217,7 +217,7 @@
     "tool-window-border-inline": "layer-0-border-inline",
     "main-window-bg": "layer-1-bg",
     "main-window-bg-alt": "gray-40",
-    "main-window-border": "layer-2-border",
+    "main-window-border": "layer-1-border",
 
     "control-bg": "dialog-bg",
     "control-bg-disabled": "dialog-bg",
