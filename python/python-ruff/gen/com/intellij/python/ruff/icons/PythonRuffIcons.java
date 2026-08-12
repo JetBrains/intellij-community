@@ -13,5 +13,5 @@ public final class PythonRuffIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, PythonRuffIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 100x100 */ public static final @NotNull Icon Ruff = load("icons/ruff.svg", 19919750, 2);
+  /** 16x16 */ public static final @NotNull Icon Ruff = load("icons/ruff.svg", 333063621, 2);
 }

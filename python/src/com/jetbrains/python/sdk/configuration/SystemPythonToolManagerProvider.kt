@@ -9,7 +9,7 @@ import com.intellij.python.pytools.InstalledInfo
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.PyToolManager
 import com.intellij.python.pytools.PyToolManagerProvider
-import com.intellij.python.pytools.configuration.ConfigurablePyTool
+import com.intellij.python.pytools.configuration.ExternalPyTool
 import com.intellij.python.pytools.getToolVersion
 import com.intellij.python.requirements.PyPackageVersionNormalizer
 import com.jetbrains.python.errorProcessing.PyResult
@@ -59,7 +59,7 @@ private class SystemPythonToolManager(
    * back to the installed one (i.e. reported as up to date).
    */
   override suspend fun list(): Map<PyTool, InstalledInfo> {
-    return PyTool.EP_NAME.extensionList.filter { it is ConfigurablePyTool }.mapNotNull { tool ->
+    return PyTool.EP_NAME.extensionList.filter { it is ExternalPyTool }.mapNotNull { tool ->
       val name = tool.packageName.name
       // Resolve on PATH and in the per-user scripts dirs the pip helper installs into (e.g.
       // %APPDATA%\Python\Scripts on Windows), which are frequently not on PATH (PY-91493).

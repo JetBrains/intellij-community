@@ -5,7 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.lsp.PyLspTool
-import com.intellij.python.pytools.configuration.ConfigurablePyTool
+import com.intellij.python.pytools.configuration.ExternalPyTool
 import com.intellij.python.pytools.ui.pyLspToolFeaturesSummary
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
@@ -16,7 +16,7 @@ import javax.swing.Icon
  * Microsoft, providing type checking and language-server features such as completions and hovers.
  */
 @ApiStatus.Internal
-class PyrightPyTool : PyLspTool<PyrightConfiguration>(), ConfigurablePyTool {
+class PyrightPyTool : PyLspTool<PyrightConfiguration>(), ExternalPyTool {
   override val presentableName: String = "Pyright"
   override val description: String get() = PyrightBundle.message("pyright.tool.description")
   override val packageName: PyPackageName = PyPackageName.from("pyright")

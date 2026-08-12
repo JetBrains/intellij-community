@@ -5,6 +5,8 @@ jvm_library(
     name = "black",
     srcs = glob(
         [
+            "gen/**/*.kt",
+            "gen/**/*.java",
             "src/**/*.kt",
             "src/**/*.java",
             "src/**/*.form",

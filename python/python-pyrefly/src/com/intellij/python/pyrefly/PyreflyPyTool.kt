@@ -14,7 +14,7 @@ import com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.isActiveOn
 import com.intellij.python.pytools.lsp.PyLspTool
-import com.intellij.python.pytools.configuration.ConfigurablePyTool
+import com.intellij.python.pytools.configuration.ExternalPyTool
 import com.intellij.python.pytools.ui.pyLspToolFeaturesSummary
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
@@ -25,7 +25,7 @@ import javax.swing.Icon
  * checking and IDE features through a language server.
  */
 @ApiStatus.Internal
-class PyreflyPyTool : PyLspTool<PyreflyConfiguration>(), ConfigurablePyTool {
+class PyreflyPyTool : PyLspTool<PyreflyConfiguration>(), ExternalPyTool {
   override val presentableName: String = "Pyrefly"
   override val description: String get() = PyreflyBundle.message("pyrefly.tool.description")
   override val packageName: PyPackageName = PyPackageName.from("pyrefly")

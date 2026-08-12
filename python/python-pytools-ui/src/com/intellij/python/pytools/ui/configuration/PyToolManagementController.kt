@@ -3,6 +3,7 @@ package com.intellij.python.pytools.ui.configuration
 
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.Messages
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
@@ -21,6 +22,8 @@ import com.intellij.python.pytools.performToolInstallation
 import com.intellij.python.pytools.performToolUpgrade
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.installPackages
 import com.intellij.python.requirements.PyPackageVersionComparator
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -86,9 +89,6 @@ internal class PyToolManagementController(
   /** Whether the upgrade icon should be offered for [toolRow] — i.e. a newer version is known. */
   fun isUpgradeAvailable(toolRow: ToolRow): Boolean = toolRow.uvPackageName() in outdatedVersions
 
-  /** Latest version [toolRow]'s tool can be upgraded to, when known. */
-  fun latestVersionFor(toolRow: ToolRow): String? = outdatedVersions[toolRow.uvPackageName()]
-
   /**
    * Called by the configurable from within `launchOnShow`'s coroutine. Stores [scope] for
    * click-driven actions, detects uv availability (for the footer/uvx), and loads outdated tools.
@@ -131,6 +131,41 @@ internal class PyToolManagementController(
       }
     },
   )
+
+  /**
+   * Install [toolRow]'s tool package **into a specific project [sdk]** (as opposed to the PATH / uv
+   * install offered by [installTool]). Installs into the SDK's own backend (pip / uv / conda /
+   * poetry / …) under a **modal progress** dialog — matching the Path column's install/upgrade UX —
+   * with no separate "confirm package installation" prompt (this page's `Install` click is itself
+   * the explicit action). On success the row's per-SDK availability is re-probed so the freshly
+   * installed environment's line flips from "Not installed" to the resolved binary path; a failure
+   * is surfaced via an error dialog.
+   */
+  fun installIntoSdk(toolRow: ToolRow, sdk: Sdk, source: PyToolActionSource) {
+    val packageName = toolRow.uvPackageName()
+    val title = PyToolsUiBundle.message("settings.external.tools.install.progress", packageName)
+    val errorTitle = PyToolsUiBundle.message("settings.external.tools.install.error.title", packageName)
+    val result = runWithModalProgressBlocking(project, title) {
+      PythonPackageManager.forSdk(project, sdk).installPackages(packageName)
+    }
+    when (result) {
+      is Result.Failure -> {
+        Messages.showErrorDialog(project, result.error.toString(), errorTitle)
+        return
+      }
+      is Result.Success -> PyToolUsagesCollector.Helper.logToolInstalled(project, toolRow.tool, source)
+    }
+    // Re-probe every project SDK for this tool so the freshly installed one shows its path.
+    val activeScope = scope ?: return
+    activeScope.launch {
+      val snapshot = withContext(Dispatchers.IO) { snapshotProjectSdks(project) }
+      val avail = withContext(Dispatchers.IO) { toolRow.tool.detectInSdks(snapshot) }
+      withContext(Dispatchers.Main) {
+        toolRow.sdkAvailability = avail
+        refreshRow(toolRow)
+      }
+    }
+  }
 
   /**
    * Bring [toolRow]'s tool up to the latest version via `uv tool install --reinstall`. We
