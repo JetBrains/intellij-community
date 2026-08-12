@@ -90,40 +90,78 @@ internal fun initializeNamedColors(theme: UIThemeBean, warn: (String, Throwable?
   val colorMap = HashMap<String, Color>(rawColorMap.size)
   theme.colorMap.map = colorMap
   for ((key, value) in rawColorMap) {
-    if (value is AwtColorValue) {
-      colorMap.put(key, value.color)
-      continue
-    }
-
-    val colorName = (value as NamedColorValue).name
-    when (val color = rawColorMap.get(colorName)) {
-      null -> {
-        warn("Color $colorName is not mapped for key $key", null)
-        colorMap.put(key, Gray.TRANSPARENT)
+    when (value) {
+      is AwtColorValue -> {
+        colorMap.put(key, value.color)
       }
-      is AwtColorValue -> colorMap.put(key, color.color)
+
       is NamedColorValue -> {
-        if (colorName == color.name) {
-          warn("Can't handle value $color for key '$key'", null)
-        }
-        else {
-          namedNamedValues.add(key to color.name)
+        val colorName = value.name
+        when (val color = rawColorMap.get(colorName)) {
+          null -> {
+            warn("Color $colorName is not mapped for key $key", null)
+            colorMap.put(key, Gray.TRANSPARENT)
+          }
+          is AwtColorValue -> colorMap.put(key, color.color)
+          is NamedColorValue -> {
+            if (colorName == color.name) {
+              warn("Can't handle value $color for key '$key'", null)
+            }
+            else {
+              namedNamedValues.add(key to color.name)
+            }
+          }
         }
       }
     }
   }
 
   for (colorInfo in namedNamedValues) {
-    val color = colorMap.get(colorInfo.second)
+    val color = resolveColorByChain(key = colorInfo.first, name = colorInfo.second,
+                                    rawColorMap = rawColorMap, colorMap = colorMap, warn = warn)
     if (color != null) {
       colorMap.put(colorInfo.first, color)
-    }
-    else {
-      warn("Can't handle value ${colorInfo.second} for key '${colorInfo.first}'", null)
     }
   }
 
   initColorOnSelectionMap(colorMap, theme)
+}
+
+/**
+ * Returns the color [name] refers to, following the chain of named references of any length.
+ * Returns null and warns about [key] if the chain is broken or cyclic.
+ */
+private fun resolveColorByChain(
+  key: String,
+  name: String,
+  rawColorMap: Map<String, ColorValue>,
+  colorMap: Map<String, Color>,
+  warn: (String, Throwable?) -> Unit,
+): Color? {
+  var currentName = name
+  // a chain cannot be longer than the number of colors unless it is cyclic
+  repeat(rawColorMap.size) {
+    val color = colorMap.get(currentName)
+    if (color != null) {
+      return color
+    }
+
+    when (val value = rawColorMap.get(currentName)) {
+      null -> {
+        warn("Can't calculate color $name for key '$key': $currentName is not mapped", null)
+        return null
+      }
+      is AwtColorValue -> {
+        return value.color
+      }
+      is NamedColorValue -> {
+        currentName = value.name
+      }
+    }
+  }
+
+  warn("Can't calculate color $name for key '$key' because of a cyclic reference", null)
+  return null
 }
 
 private fun initColorOnSelectionMap(colorMap: Map<String, Color>, theme: UIThemeBean) {
