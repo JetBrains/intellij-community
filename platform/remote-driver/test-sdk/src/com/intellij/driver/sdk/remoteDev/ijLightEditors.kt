@@ -4,13 +4,13 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
 import com.intellij.driver.client.utility
-import com.intellij.driver.sdk.Editor
 import com.intellij.driver.sdk.FileEditorManager
 import com.intellij.driver.sdk.Project
 import com.intellij.driver.sdk.VirtualFile
+import com.intellij.driver.sdk.findCurrentEditorFile
 import com.intellij.driver.sdk.openEditor
 import com.intellij.driver.sdk.singleProject
-import com.intellij.driver.sdk.waitFor
+import com.intellij.driver.sdk.waitNotNull
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
 
@@ -25,24 +25,15 @@ fun Driver.isLightSession(): Boolean = utility<IdeProductMode>().isLight()
  * service is unavailable before a backend connects, and [Project.getBasePath] points to a synthetic directory.
  */
 internal fun Driver.openFileInLightSession(relativePath: String, project: Project, isTextEditor: Boolean): VirtualFile {
-  val fileToOpen = waitFor(
+  val fileToOpen = waitNotNull(
     message = "File is in the frontend VFS: $relativePath",
     errorMessage = { "Fail to find file $relativePath" },
     timeout = 10.seconds,
-    getter = { lightProjectFile(relativePath, project) },
-    checker = { it != null }
-  ) ?: error("File $relativePath not found")
+    getter = { lightProjectFile(relativePath, project) }
+  )
 
-  // Startup may select the README after this file opens, so retry the open until our file remains selected.
-  return waitFor(message = "File is the current editor: $relativePath",
-                 errorMessage = { "Current editor is ${it?.getPath()}" },
-                 timeout = 30.seconds,
-                 getter = {
-                   openEditor(fileToOpen, project)
-                   if (isTextEditor) service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
-                   else service<FileEditorManager>(project).getCurrentFile()
-                 },
-                 checker = { it != null && Path.of(it.getPath()).endsWith(Path.of(relativePath)) })!!
+  openEditor(fileToOpen, project)
+  return findCurrentEditorFile(relativePath = relativePath, project = project, isTextEditor = isTextEditor)!!
 }
 
 /**
@@ -73,10 +64,6 @@ private const val FILE_PROTOCOL_PREFIX = "file://"
 private interface IjLightUpgradeService {
   fun lightProjectPath(project: Project): String?
 }
-
-/** Returns the selected text editor, or `null` when another editor type is selected. */
-fun Driver.selectedTextEditor(project: Project = singleProject()): Editor? =
-  service<FileEditorManager>(project).getSelectedTextEditor()
 
 /** The files of all currently open editors, in no particular order. */
 fun Driver.openEditorFiles(project: Project = singleProject()): List<VirtualFile> =

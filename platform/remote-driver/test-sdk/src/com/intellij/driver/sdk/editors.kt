@@ -269,3 +269,7 @@ fun Driver.findOpenFile(relativePath: String, project: Project = singleProject()
   else {
     findCurrentEditorFile(relativePath = relativePath, project = project, isTextEditor = isTextEditor)
   }
+
+/** Returns the selected text editor, or `null` when another editor type is selected. */
+fun Driver.selectedTextEditor(project: Project = singleProject()): Editor? =
+  service<FileEditorManager>(project).getSelectedTextEditor()
