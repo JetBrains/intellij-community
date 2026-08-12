@@ -297,6 +297,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TooManyListenersException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntFunction;
@@ -469,6 +470,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final SingleEdtTaskScheduler mouseSelectionStateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
   private Runnable mouseSelectionStateResetRunnable;
   private final SingleEdtTaskScheduler errorStripeDelayedRepaintAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
+  // cached, because a burst of highlighter changes requests the repaint once per change
+  private final Runnable errorStripeDelayedRepaintTask = this::invokeDelayedErrorStripeRepaint;
 
   private int myDragOnGutterSelectionStartLine = -1;
   private RangeMarker myDraggedRange;
@@ -538,7 +541,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * (see {@link TextRangeScalarUtil} for how to unpack).
    * -1 means repaint is not needed.
    * */
-  private volatile long myErrorStripeNeedsRepaintRange = -1;
+  private final AtomicLong myErrorStripeNeedsRepaintRange = new AtomicLong(-1);
 
   private final List<EditorPopupHandler> myPopupHandlers = new ArrayList<>();
 
@@ -994,11 +997,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void queueErrorStipeRepaintRequest(int start, int end) {
-    long range = myErrorStripeNeedsRepaintRange;
     long requested = TextRangeScalarUtil.toScalarRange(start, end);
     // merge existing request with the new
-    myErrorStripeNeedsRepaintRange = TextRangeScalarUtil.union(range == -1 ? requested : range, requested);
-    errorStripeDelayedRepaintAlarm.cancelAndRequest(50, ()->invokeDelayedErrorStripeRepaint()); // in case nobody called repaint
+    myErrorStripeNeedsRepaintRange.accumulateAndGet(requested,
+                                                    (existing, added) -> existing == -1 ? added
+                                                                                        : TextRangeScalarUtil.union(existing, added));
+    // Throttle rather than debounce: the range above is what the repaint reads when it fires, so re-arming the alarm
+    // carries no extra information and only pushes the repaint out. A burst of highlighter changes - highlighting every
+    // match of a search over a big file adds tens of thousands - would otherwise cancel and relaunch a coroutine per
+    // change, and a burst spread over several events would keep the stripe blank for as long as it lasts, because every
+    // change pushes the repaint out by another delay.
+    errorStripeDelayedRepaintAlarm.request(50, errorStripeDelayedRepaintTask); // in case nobody called repaint
   }
 
   private void errorStripeMarkerChanged(@NotNull RangeHighlighterEx highlighter) {
@@ -2254,11 +2263,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @RequiresEdt
   void invokeDelayedErrorStripeRepaint() {
-    long range = myErrorStripeNeedsRepaintRange;
+    // Cancel before taking the range, not after: from here on a concurrent queueErrorStipeRepaintRequest (highlighters
+    // can be changed in BGT) sees no pending request and arms a fresh alarm, so a range merged in after the getAndSet
+    // below cannot be dropped. The worst case is one alarm that fires and finds nothing to repaint.
+    errorStripeDelayedRepaintAlarm.cancel();
+    long range = myErrorStripeNeedsRepaintRange.getAndSet(-1);
     if (range != -1) {
-      errorStripeDelayedRepaintAlarm.cancel();
       myMarkupModel.repaint(TextRangeScalarUtil.startOffset(range), TextRangeScalarUtil.endOffset(range));
-      myErrorStripeNeedsRepaintRange = -1;
     }
   }
 
@@ -2267,7 +2278,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Document document = e.getDocument();
     if (document.isInBulkUpdate()) return;
 
-    if (myErrorStripeNeedsRepaintRange != -1) {
+    if (myErrorStripeNeedsRepaintRange.get() != -1) {
       queueErrorStipeRepaintRequest(e.getOffset(), e.getOffset() + e.getNewLength());
       invokeDelayedErrorStripeRepaint();
     }
