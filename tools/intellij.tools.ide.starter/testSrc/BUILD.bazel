@@ -73,6 +73,8 @@ jvm_library(
         "//tools/intellij.tools.ide.starter.product.goland:ide-starter-product-goland_test_lib",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
+        "//platform/testFramework/teamCity",
+        "//platform/testFramework/teamCity:teamCity_test_lib",
     ],
 )
 ### auto-generated section `build intellij.tools.ide.starter.tests` end

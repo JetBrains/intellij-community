@@ -14,8 +14,7 @@ import com.intellij.ide.starter.plugins.PluginInstalledState
 import com.intellij.ide.starter.runner.events.TestContextInitializationStartedEvent
 import com.intellij.ide.starter.telemetry.computeWithSpan
 import com.intellij.ide.starter.utils.PortUtil
-import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.testFramework.teamCity.TeamCityReporter.SyntheticTestKind
+import com.intellij.ide.starter.utils.ReportingPathUtils
 import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.util.common.logOutput
 import kotlinx.coroutines.Dispatchers
@@ -23,10 +22,10 @@ import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import kotlin.io.path.div
 
-typealias IDEDataPathsProvider = (testName: String, testDirectory: Path, useInMemoryFileSystem: Boolean) -> IDEDataPaths
+typealias IDEDataPathsProvider = (testDirectoryName: String, testDirectory: Path, useInMemoryFileSystem: Boolean) -> IDEDataPaths
 
-internal fun IDEDataPathsProvider.asFrontendDataPathsProvider(): IDEDataPathsProvider = { testName, testDirectory, useInMemoryFileSystem ->
-  when (val paths = this(testName, testDirectory, useInMemoryFileSystem)) {
+internal fun IDEDataPathsProvider.asFrontendDataPathsProvider(): IDEDataPathsProvider = { testDirectoryName, testDirectory, useInMemoryFileSystem ->
+  when (val paths = this(testDirectoryName, testDirectory, useInMemoryFileSystem)) {
     is FrontendIDEDataPaths -> paths
     // Converting rather than calling `createPaths` once more: the second call would wipe and re-create `testHome`
     // right after the first one, and both instances would own the very same in-memory root (its path is derived from
@@ -128,11 +127,10 @@ interface TestContainer {
    */
   fun newContext(
     testName: String, testCase: TestCase<*>, preserveSystemDir: Boolean = false, projectHome: Path?,
-    ideDataPathsProvider: IDEDataPathsProvider = { testName, testDirectory, useInMemoryFileSystem ->
-      IDEDataPaths.createPaths<IDEDataPaths>(testName, testDirectory, useInMemoryFileSystem)
+    ideDataPathsProvider: IDEDataPathsProvider = { testDirectoryName, testDirectory, useInMemoryFileSystem ->
+      IDEDataPaths.createPaths<IDEDataPaths>(testDirectoryName, testDirectory, useInMemoryFileSystem)
     },
   ): IDETestContext {
-    checkTestNameLength(testName)
     EventsBus.postAndWaitProcessing(TestContextInitializationStartedEvent())
     logOutput("Resolving IDE build for $testName...")
     val (buildNumber, ide) = @Suppress("SSBasedInspection")
@@ -147,8 +145,9 @@ interface TestContainer {
             (ide.productCode == "IU" && testCase.ideInfo.productCode == "IC" && ide.isMajorBuildVersionAtLeast(253))
     ) { "Product code ${ide.productCode} must be the same as ${testCase.ideInfo.productCode}. IDE: $ide . TestCase: $testCase" }
 
+    val testDirectoryName = ReportingPathUtils.testDirectoryName(testName)
     val testDirectory = run {
-      val commonPath = (GlobalPaths.instance.testsDirectory / "${testCase.ideInfo.productCode}-$buildNumber") / testName
+      val commonPath = (GlobalPaths.instance.testsDirectory / "${testCase.ideInfo.productCode}-$buildNumber") / testDirectoryName
       if (testCase.ideInfo.isFrontend) {
         commonPath / "frontend"
       }
@@ -157,7 +156,7 @@ interface TestContainer {
       }
     }
 
-    val paths = ideDataPathsProvider(testName, testDirectory, testCase.useInMemoryFileSystem)
+    val paths = ideDataPathsProvider(testDirectoryName, testDirectory, testCase.useInMemoryFileSystem)
     logOutput("Using IDE paths for '$testName': $paths")
     logOutput("IDE to run for '$testName': $ide")
 
@@ -175,17 +174,5 @@ interface TestContainer {
     EventsBus.postAndWaitProcessing(TestContextInitializedEvent(this, preparedContext))
 
     return preparedContext
-  }
-
-  private fun checkTestNameLength(testName: String) {
-    val testNameLengthLimit = 100
-    if (testName.length > testNameLengthLimit && (SystemInfoRt.isWindows || !CIServer.instance.isBuildRunningOnCI)) {
-      CIServer.instance.reportTestFailure(
-        testName = "Test name exceeds $testNameLengthLimit characters: $testName",
-        message = "Test name '$testName' is ${testName.length} characters long, which exceeds the $testNameLengthLimit-character limit.",
-        details = "Long test names may cause path length issues on windows (https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation)",
-        kind = SyntheticTestKind.TEST_INFRA_EXCEPTION,
-      )
-    }
   }
 }

@@ -13,9 +13,6 @@ import com.intellij.util.system.OS
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.nio.file.Path
-import java.security.MessageDigest
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.div
 import kotlin.io.path.exists
@@ -24,52 +21,6 @@ import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.seconds
 
 const val beforeKillScreenshotName: String = "screenshotBeforeKill.jpg"
-
-// TeamCity may append "-2147483647.zip", so 240 bytes keep the resulting file name within Linux's 255-byte limit.
-private const val MAX_ARTIFACT_NAME_LENGTH_IN_BYTES = 240
-private const val ARTIFACT_NAME_HASH_LENGTH = 12
-private const val HEX_DIGITS = "0123456789abcdef"
-
-fun formatArtifactName(artifactType: String, testName: String): String {
-  val testNameFormatted = testName.replace("/", "-").replace(" ", "")
-  val time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
-  return "$artifactType-$testNameFormatted-$time".truncateWithStableHash(MAX_ARTIFACT_NAME_LENGTH_IN_BYTES)
-}
-
-internal fun String.truncateWithStableHash(maxLengthInBytes: Int): String {
-  require(maxLengthInBytes > ARTIFACT_NAME_HASH_LENGTH) {
-    "Maximum length must leave room for the hash suffix"
-  }
-
-  val bytes = toByteArray(Charsets.UTF_8)
-  if (bytes.size <= maxLengthInBytes) return this
-
-  val hash = MessageDigest.getInstance("SHA-256").digest(bytes).toHexPrefix()
-  val prefix = utf8Prefix(maxLengthInBytes - ARTIFACT_NAME_HASH_LENGTH - 1)
-  return "$prefix-$hash"
-}
-
-private fun String.utf8Prefix(maxLengthInBytes: Int): String {
-  var endIndex = 0
-  var byteCount = 0
-  while (endIndex < length) {
-    val codePointLength = Character.charCount(codePointAt(endIndex))
-    val nextEndIndex = endIndex + codePointLength
-    val codePointByteCount = substring(endIndex, nextEndIndex).toByteArray(Charsets.UTF_8).size
-    if (byteCount + codePointByteCount > maxLengthInBytes) break
-    byteCount += codePointByteCount
-    endIndex = nextEndIndex
-  }
-  return substring(0, endIndex)
-}
-
-private fun ByteArray.toHexPrefix(): String = buildString(ARTIFACT_NAME_HASH_LENGTH) {
-  repeat(ARTIFACT_NAME_HASH_LENGTH / 2) { index ->
-    val value = this@toHexPrefix[index].toInt() and 0xff
-    append(HEX_DIGITS[value ushr 4])
-    append(HEX_DIGITS[value and 0x0f])
-  }
-}
 
 fun getThrowableText(t: Throwable): String {
   val writer = StringWriter()

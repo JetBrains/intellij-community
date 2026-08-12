@@ -1,14 +1,16 @@
 package com.intellij.ide.starter
 
 import com.intellij.ide.starter.runner.IDEReportingData
+import com.intellij.ide.starter.utils.ReportingPathUtils
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 
 private const val LONG_NAME_PREFIX = "reused-ide-process-reports-into-a-dir-of-its-own-per-test-method"
-private const val MAX_DIR_NAME_LENGTH_IN_BYTES = 60
-private val HASH_SUFFIX = Regex("-[0-9a-f]{12}$")
+private const val MAX_DIR_NAME_LENGTH_IN_BYTES = 50
+private val HASH_SUFFIX = Regex("-[0-9a-f]{6}$")
 
 private fun longMethodName(distinguishedBy: String): String = "$LONG_NAME_PREFIX-$distinguishedBy"
 
@@ -63,6 +65,47 @@ class IDEReportingDataTest {
     reportingData.logsDir.normalize().startsWith(testHome.normalize()) shouldBe true
     testHome.relativize(reportingData.logsDir) shouldBe
       Path.of("traversal-test", "1_..-..-..-outside", "log")
+  }
+
+  @Test
+  fun `an overlong reporting directory is reported instead of replacing the method name with a hash`() {
+    val home = testHomeWithAbsoluteLength(190)
+
+    val reported = failuresReportedWhile {
+      IDEReportingData(
+        providedTestName = "rust-rover-completion-test",
+        testMethod = testMethodData(
+          "RustRoverCompletionTest/[6] FileParameters(fileToOpen=crates/bevy_pbr/src/render/light.rs, line=683, column=62)",
+          index = 6,
+        ),
+        testHome = home,
+      )
+    }
+
+    reported.first().message shouldContain "${ReportingPathUtils.PATH_LENGTH_LIMIT}-character limit"
+  }
+
+  @Test
+  fun `a reporting directory is accepted when its complete path fits`() {
+    val home = testHomeWithAbsoluteLength(210)
+    val reportingData = reportingDataWithLaunchName("short-launch", home)
+
+    reportingData.logsDir shouldBe home.resolve("short-launch/log")
+  }
+
+  @Test
+  fun `an impossibly deep reporting root is reported by the path it made too long`() {
+    val home = testHomeWithAbsoluteLength(220)
+
+    val reported = failuresReportedWhile {
+      IDEReportingData(
+        providedTestName = "rust-rover-completion-test",
+        testMethod = testMethodData("RustRoverCompletionTest/completion", index = 1),
+        testHome = home,
+      )
+    }
+
+    reported.first().message shouldContain home.toString()
   }
 
   /** A reused IDE process registers the reporting data of a method again on every switch back to it. */
@@ -125,7 +168,6 @@ class IDEReportingDataTest {
   @Test
   fun `a provided test name matching the method name is not repeated in the reported test name`() {
     val providedTestName = "test-metadata-scheme-generation-dev-server"
-    val testClassName = "metadata-scheme-generation-dev-server-aggregator-test"
     val reportingData = IDEReportingData(
       providedTestName = providedTestName,
       testMethod = testMethodData("MetadataSchemeGenerationDevServerAggregatorTest/testMetadataSchemeGenerationDevServer", index = 1),
@@ -133,7 +175,8 @@ class IDEReportingDataTest {
     )
 
     reportingData.humanReadableTestName shouldBe "MetadataSchemeGenerationDevServerAggregatorTest/testMetadataSchemeGenerationDevServer"
-    reportingData.artifactPath shouldBe "$providedTestName/$testClassName/1-test-metadata-scheme-generation-dev-server"
+    reportingData.artifactPath shouldBe
+      "$providedTestName/metadata-scheme-generation-dev-server-aggre-f68c38/1-test-metadata-scheme-generation-dev-server"
   }
 
   @Test
@@ -187,11 +230,21 @@ class IDEReportingDataTest {
     return home.relativize(logsDir).getName(0).toString()
   }
 
-  private fun reportingDataWithLaunchName(launchName: String): IDEReportingData = IDEReportingData(
+  private fun reportingDataWithLaunchName(
+    launchName: String,
+    home: Path = testHome,
+  ): IDEReportingData = IDEReportingData(
     providedTestName = "ide-reporting-data-test",
     launchName = launchName,
-    testHome = testHome,
+    testHome = home,
   )
+
+  private fun testHomeWithAbsoluteLength(targetLength: Int): Path {
+    val root = testHome.toAbsolutePath().normalize()
+    val paddingLength = targetLength - root.toString().length - 1
+    require(paddingLength > 0)
+    return root.resolve("x".repeat(paddingLength))
+  }
 
   private fun testMethodData(name: String, index: Int): IDEReportingData.TestMethodData =
     IDEReportingData.TestMethodData(

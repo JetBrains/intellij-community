@@ -4,10 +4,10 @@ import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.isRemDevContext
 import com.intellij.ide.starter.report.DetailsOnCI
 import com.intellij.ide.starter.report.ErrorReporter
-import com.intellij.ide.starter.utils.FileSystem.createDirectoriesIfNotExist
-import com.intellij.ide.starter.utils.formatArtifactName
+import com.intellij.ide.starter.utils.ReportingPathUtils
+import com.intellij.ide.starter.utils.ReportingPathUtils.dirName
+import com.intellij.ide.starter.utils.ReportingPathUtils.checkPathLength
 import com.intellij.ide.starter.utils.hyphenateTestName
-import com.intellij.ide.starter.utils.truncateWithStableHash
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
@@ -35,9 +35,6 @@ class IDEReportingData internal constructor(
   )
 
   companion object {
-    private const val MAX_TEST_METHOD_DIR_NAME_LENGTH_IN_BYTES = 60
-    private const val MAX_LAUNCH_DIR_NAME_LENGTH_IN_BYTES = 60
-
     internal fun artifactNameWithIdeRole(testContext: IDETestContext, artifactName: String): String = when {
       testContext.testCase.ideInfo.isFrontend -> "$artifactName-frontend"
       testContext.isRemDevContext() -> "$artifactName-backend"
@@ -62,7 +59,7 @@ class IDEReportingData internal constructor(
           ".." -> "%2E%2E"
           else -> singlePathSegment
         }
-        prefix + pathSafeSegment.truncateWithStableHash(MAX_TEST_METHOD_DIR_NAME_LENGTH_IN_BYTES - prefix.length)
+        dirName(pathSafeSegment, prefix)
       }.joinToString("/")
     }
   }
@@ -79,15 +76,18 @@ class IDEReportingData internal constructor(
    */
   private val launchDir: Path = listOfNotNull(
     testMethodArtifactDirName,
-    launchName?.truncateWithStableHash(MAX_LAUNCH_DIR_NAME_LENGTH_IN_BYTES),
+    launchName?.let { dirName(it) },
     "frontend".takeIf { isFrontend },
   ).fold(testRoot) { path, segment -> path.resolve(segment) }
 
-  val reportsDir: Path = launchDir.resolve("reports").createDirectoriesIfNotExist()
-  val snapshotsDir: Path = launchDir.resolve("snapshots").createDirectoriesIfNotExist()
-  val logsDir: Path = launchDir.resolve("log").createDirectoriesIfNotExist()
+  val reportsDir: Path = createReportingDirectory("reports")
+  val snapshotsDir: Path = createReportingDirectory("snapshots")
+  val logsDir: Path = createReportingDirectory("log")
 
   val jbrDiagnostic: Path = logsDir.resolve("jbrDiagnostic")
+
+  private fun createReportingDirectory(name: String): Path =
+    checkPathLength(launchDir.resolve(name)).createDirectories()
 
   /** The CI-safe path the artifacts of this launch are published under. */
   val artifactPath: String = run {
@@ -146,7 +146,7 @@ class IDEReportingData internal constructor(
     testContext.publishArtifact(
       source = source,
       artifactPath = artifactPath,
-      artifactName = formatArtifactName(
+      artifactName = ReportingPathUtils.formatArtifactName(
         artifactNameWithIdeRole(testContext, artifactName),
         artifactPath,
       ),

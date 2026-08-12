@@ -34,7 +34,6 @@ import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.containers.ConcurrentList
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -47,6 +46,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.bufferedReader
+import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 import kotlin.io.path.name
@@ -89,9 +89,6 @@ data class IDERunContext(
 
   private fun multipleReportingDirsError(): Nothing =
     error("There have been several reporting dirs. You need either to choose the last one or perform your action for all reporting dirs.")
-
-  private fun jvmCrashLogDirectory() = lastIdeReportingData.logsDir.resolve("jvm-crash").createDirectories()
-  private fun heapDumpOnOomDirectory() = lastIdeReportingData.logsDir.resolve("heap-dump").createDirectories()
 
   private val patchesForVMOptions: ConcurrentList<VMOptions.() -> Unit> = ContainerUtil.createConcurrentList()
 
@@ -146,8 +143,8 @@ data class IDERunContext(
       if (!testContext.isRemDevContext()) {
         takeScreenshotsPeriodically()
       }
-      withJvmCrashLogDirectory(jvmCrashLogDirectory())
-      withHeapDumpOnOutOfMemoryDirectory(heapDumpOnOomDirectory())
+      withJvmCrashLogDirectory(lastIdeReportingData.logsDir.resolve("jvm-crash").createDirectories())
+      withHeapDumpOnOutOfMemoryDirectory(lastIdeReportingData.logsDir.resolve("heap-dump").createDirectories())
       withGCLogs(lastIdeReportingData.reportsDir.resolve("gcLog.log"))
       setOpenTelemetryMaxFilesNumber()
 

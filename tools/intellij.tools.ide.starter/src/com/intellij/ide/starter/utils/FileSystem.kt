@@ -3,7 +3,6 @@ package com.intellij.ide.starter.utils
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.ThreeState
@@ -57,18 +56,6 @@ object FileSystem {
   fun String.cleanPathFromSlashes(replaceWith: String = ""): String = this
     .replace("\"", replaceWith)
     .replace("/", replaceWith)
-
-  fun validatePath(path: Path, additionalString: String = "") {
-    if (SystemInfo.isWindows) {
-      val pathToValidate = when (additionalString.isNotEmpty()) {
-        true -> path.resolve(additionalString).toString()
-        false -> path.toString()
-      }
-      check(pathToValidate.length < 260) {
-        "$pathToValidate >= 260 symbols on Windows may lead to unexpected problems"
-      }
-    }
-  }
 
   fun hasAtLeastFiles(path: Path, minCount: Long): Boolean {
     // Files.walk() does not follow a symbolic link at the root without FileVisitOption.FOLLOW_LINKS, so a path that

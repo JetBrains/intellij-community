@@ -42,6 +42,7 @@
     <orderEntry type="module" module-name="intellij.tools.ide.starter.product.idea.ultimate" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.product.goland" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinTestAssertionsCoreJvm" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.teamCity" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.tools.ide.starter" />
 </module>
