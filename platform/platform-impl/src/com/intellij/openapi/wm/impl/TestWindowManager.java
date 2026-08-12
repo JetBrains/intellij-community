@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import kotlin.Pair;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.Deferred;
 import kotlinx.coroutines.flow.StateFlow;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +40,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static kotlinx.coroutines.CompletableDeferredKt.CompletableDeferred;
 
 @ApiStatus.Internal
 public final class TestWindowManager extends WindowManagerEx {
@@ -66,6 +69,11 @@ public final class TestWindowManager extends WindowManagerEx {
   @Override
   public IdeFrame getIdeFrame(final Project project) {
     return null;
+  }
+
+  @Override
+  public @NotNull Deferred<@Nullable IdeFrame> getIdeFrameDeferred(@NotNull Project project) {
+    return CompletableDeferred(null);
   }
 
   @Override

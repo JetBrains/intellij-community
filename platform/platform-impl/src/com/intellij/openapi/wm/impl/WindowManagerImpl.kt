@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.openapi.project.impl.getOrCreateIdeFrameDeferred
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFocusManager
@@ -37,6 +38,7 @@ import com.intellij.ui.ScreenUtil
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.sun.jna.platform.WindowUtils
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jdom.Element
@@ -284,6 +286,10 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       }
     }
     return null
+  }
+
+  override fun getIdeFrameDeferred(project: Project): Deferred<IdeFrame?> {
+    return project.getOrCreateIdeFrameDeferred()
   }
 
   @Internal
