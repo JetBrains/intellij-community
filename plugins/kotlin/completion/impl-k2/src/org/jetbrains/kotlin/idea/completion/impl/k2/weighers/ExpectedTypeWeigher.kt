@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
+import org.jetbrains.kotlin.idea.codeinsight.utils.isNullableAnyType
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -41,54 +42,63 @@ internal object ExpectedTypeWeigher {
 
     context(_: KaSession)
     fun addWeight(context: WeighingContext, lookupElement: LookupElement, symbol: KaSymbol?) {
-        // In case of flexible types, we choose the upper bound here to be more lenient for weighing purposes
-        val expectedType = context.expectedType?.upperBoundIfFlexible()
-
         // The expected type was already set elsewhere, we prefer these results
         if (lookupElement.matchesExpectedType != null) return
 
+        // In case of flexible types, we choose the upper bound here to be more lenient for weighing purposes
+        val expectedType = context.expectedType?.upperBoundIfFlexible()
+
         lookupElement.matchesExpectedType = when {
-            symbol != null -> if (expectedType != null) {
-                // If the symbol is a Typealias, we want to use the original symbol for matching the expected type
-                val expandedSymbol = (symbol as? KaTypeAliasSymbol)?.expandedType?.expandedSymbol ?: symbol
-                matchesExpectedType(expandedSymbol, expectedType)
-            } else MatchesExpectedType.NON_TYPABLE
+            symbol != null -> symbol.matchesExpectedType(expectedType)
             lookupElement.`object` is NamedArgumentLookupObject -> MatchesExpectedType.MATCHES
-            lookupElement.`object` is KeywordLookupObject && expectedType != null -> {
-                @OptIn(KaExperimentalApi::class)
-                val actualType = when (lookupElement.lookupString) {
-                    KtTokens.NULL_KEYWORD.value -> typeCreator.classType(KaStandardTypeClassIds.NOTHING) {
-                            isMarkedNullable = true
-                        }
-
-                    KtTokens.TRUE_KEYWORD.value,
-                    KtTokens.FALSE_KEYWORD.value -> typeCreator.classType(KaStandardTypeClassIds.BOOLEAN)
-
-                    else -> null
-                } ?: return
-
-                MatchesExpectedType.matches(actualType, expectedType)
-            }
-
+            lookupElement.`object` is KeywordLookupObject -> keywordMatchesExpectedType(lookupElement.lookupString, expectedType)
             else -> null
         }
     }
 
     context(_: KaSession)
-    private fun matchesExpectedType(
-        symbol: KaSymbol,
-        expectedType: KaType,
-    ) = when {
-        symbol is KaEnumEntrySymbol && expectedType.isEnum() && symbol.returnType.isSubtypeOf(expectedType) ->
-            MatchesExpectedType.MATCHES_PREFERRED
+    private fun KaSymbol.matchesExpectedType(expectedType: KaType?): MatchesExpectedType {
+        if (expectedType == null) return MatchesExpectedType.NON_TYPABLE
 
-        symbol is KaClassSymbol && expectedType.expandedSymbol?.let { symbol == it || symbol.isSubClassOf(it) } == true ->
-            MatchesExpectedType.MATCHES
+        // If the symbol is a Typealias, we want to use the original symbol for matching the expected type
+        val expandedSymbol = (this as? KaTypeAliasSymbol)?.expandedType?.expandedSymbol ?: this
+        return when {
+            expandedSymbol is KaEnumEntrySymbol && expectedType.isEnum() && expandedSymbol.returnType.isSubtypeOf(expectedType) ->
+                MatchesExpectedType.MATCHES_PREFERRED
 
-        symbol !is KaCallableSymbol -> MatchesExpectedType.NON_TYPABLE
+            expandedSymbol is KaClassSymbol && expectedType.expandedSymbol?.let { expandedSymbol == it || expandedSymbol.isSubClassOf(it) } == true ->
+                MatchesExpectedType.MATCHES
 
-        expectedType.classId == KaStandardTypeClassIds.UNIT -> MatchesExpectedType.MATCHES
-        else -> MatchesExpectedType.matches(symbol.returnType, expectedType)
+            expandedSymbol !is KaCallableSymbol -> MatchesExpectedType.NON_TYPABLE
+
+            expectedType.classId == KaStandardTypeClassIds.UNIT -> MatchesExpectedType.MATCHES
+            else -> MatchesExpectedType.matches(expandedSymbol.returnType, expectedType)
+        }
+    }
+
+    context(_: KaSession)
+    private fun keywordMatchesExpectedType(keyword: String, expectedType: KaType?): MatchesExpectedType? {
+        if (expectedType == null) return null
+
+        if (keyword == KtTokens.NULL_KEYWORD.value && expectedType.isNullableAnyType()) {
+            return MatchesExpectedType.MATCHES_PREFERRED
+        }
+
+        val actualType = keywordType(keyword) ?: return null
+        return MatchesExpectedType.matches(actualType, expectedType)
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession)
+    private fun keywordType(keyword: String): KaType? = when (keyword) {
+        KtTokens.NULL_KEYWORD.value -> typeCreator.classType(KaStandardTypeClassIds.NOTHING) {
+            isMarkedNullable = true
+        }
+
+        KtTokens.TRUE_KEYWORD.value,
+        KtTokens.FALSE_KEYWORD.value -> typeCreator.classType(KaStandardTypeClassIds.BOOLEAN)
+
+        else -> null
     }
 
     internal var LookupElement.matchesExpectedType by UserDataProperty(Key<MatchesExpectedType>("MATCHES_EXPECTED_TYPE"))
