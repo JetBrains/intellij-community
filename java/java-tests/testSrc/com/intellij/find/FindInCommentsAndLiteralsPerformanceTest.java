@@ -2,6 +2,9 @@
 package com.intellij.find;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.find.impl.livePreview.LivePreviewController;
+import com.intellij.find.impl.livePreview.SearchResults;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PerformanceUnitTest;
@@ -152,5 +155,44 @@ public class FindInCommentsAndLiteralsPerformanceTest extends DaemonAnalyzerTest
 
     assertEquals(occurrences, found);
     return millis;
+  }
+
+  /**
+   * The editor's find bar reruns the whole find-all pass on every keystroke, so what has to stay cheap is the update and
+   * not just one {@link FindManager#findString} call. It runs each of them against a fresh {@link FindModel} - which is
+   * what {@link com.intellij.find.impl.livePreview.LivePreviewController#updateInBackground} gives it, and what makes
+   * everything the search caches be collected again per update.
+   */
+  private void benchmarkLivePreviewUpdate(String name, FindModel.SearchContext context, int expectedMatches) {
+    configureByText(XmlFileType.INSTANCE, oneHugeLiteral());
+
+    SearchResults searchResults = new SearchResults(getEditor(), getProject());
+    LivePreviewController controller = new LivePreviewController(searchResults, null, getTestRootDisposable());
+    FindModel findModel = FindManagerTestUtils.configureFindModel("needle");
+    findModel.setSearchContext(context);
+
+    controller.on();
+    Benchmark.newBenchmark(name, () -> {
+      for (int i = 0; i < 3; i++) {
+        controller.updateInBackground(findModel, false);
+        assertEquals(expectedMatches, searchResults.getMatchesCount());
+      }
+    }).start();
+  }
+
+  /**
+   * The worst case for the {@code EXCEPT_*} skip ranges: every occurrence but the last is inside the literal, so the pass
+   * walks past all {@value #OCCURRENCES} of them to hand out the single match it can keep -- only
+   * {@code <tail>needle</tail>} is outside the literal.
+   */
+  public void testLivePreviewUpdateWhenAllOccurrencesShareOneToken() {
+    benchmarkLivePreviewUpdate("live preview update except literals, all occurrences in one token",
+                               FindModel.SearchContext.EXCEPT_STRING_LITERALS, 1);
+  }
+
+  /** The update IJPL-252883 was reported for: the profile it came with has one of these holding a thread for 6.3 s. */
+  public void testLivePreviewUpdateInLiteralsWhenAllOccurrencesShareOneToken() {
+    benchmarkLivePreviewUpdate("live preview update in literals, all occurrences in one token",
+                               FindModel.SearchContext.IN_STRING_LITERALS, OCCURRENCES);
   }
 }
