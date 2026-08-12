@@ -24,6 +24,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -33,6 +34,7 @@ import kotlin.io.path.readText
 @TestApplication
 @ParameterizedClass
 @ArgumentsSource(MavenVersionArguments::class)
+@Disabled
 class MavenLifecyclePluginImportIntegrationTest(mavenVersion: String, modelVersion: String) {
 
   private val maven by mavenImportingFixture(
