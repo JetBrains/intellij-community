@@ -50,6 +50,8 @@ def _intellij_dev_dist_impl(ctx):
     # it - the assembler clears it at the start of every build, and `bazel clean` disposes of it.
     args.add("--scratch-dir=" + home.path + ".scratch")
     args.add("--platform-prefix=" + ctx.attr.platform_prefix)
+    if ctx.attr.target_os:
+        args.add("--os=" + ctx.attr.target_os)
     args.add_all(ctx.attr.additional_modules, format_each = "--additional-module=%s")
     args.add_all(ctx.files.preloaded_manifests, format_each = "--preloaded-manifest=%s")
     if ctx.attr.preloaded_only:
@@ -97,6 +99,14 @@ intellij_dev_dist = rule(
         "platform_prefix": attr.string(
             doc = "Selects the product, as `-Didea.platform.prefix` does for a dev launch (e.g. 'idea', 'GoLand').",
             mandatory = True,
+        ),
+        "target_os": attr.string(
+            doc = "The OS the distribution is for. Empty means the host's, which is what a dev launch wants. " +
+                  "Naming another one cross-assembles: the assembler already takes `--os`, and the per-platform " +
+                  "archive repositories are declared for every platform rather than only the host's, so the " +
+                  "caller has only to hand [preloaded_downloads] that platform's set instead of a host `select`.",
+            default = "",
+            values = ["", "linux", "macos", "windows"],
         ),
         "additional_modules": attr.string_list(
             doc = "Plugin modules included on top of the product's own, as `-Dadditional.modules` does for a dev launch.",
