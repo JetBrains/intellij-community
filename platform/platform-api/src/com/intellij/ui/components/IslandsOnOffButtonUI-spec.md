@@ -154,12 +154,3 @@ Registered programmatically by `IslandsUICustomization.applyMissingKeys()` whene
 6. **Enlarged preferred size** — 34×32px (26×16 track + 4px padding per side) to accommodate focus ring without clipping.
 7. **No text** in paint path — the Islands UI ignores `onText`/`offText` entirely.
 8. **Sandbox panel** — `OnOffButtonPanel` shows all state combinations (enabled/disabled × on/off) with state labels.
-
-### Files modified
-
-- `community/platform/platform-impl/src/com/intellij/ide/ui/laf/darcula/ui/IslandsOnOffButtonUI.kt` — UI delegate
-- `community/platform/platform-impl/src/com/intellij/openapi/application/impl/islands/IslandsUICustomization.kt` — programmatic UI delegate registration
-- `community/platform/platform-resources/src/themes/islands/ManyIslandsLight.theme.json` — token aliases
-- `community/platform/platform-resources/src/themes/islands/ManyIslandsDark.theme.json` — token aliases
-- `community/platform/platform-resources/src/themes/metadata/IntelliJPlatform.themeMetadata.json` — 11 new keys (`since: 2026.2`)
-- `community/plugins/devkit/intellij.devkit.uiDsl/src/sandbox/components/OnOffButtonPanel.kt` — updated sandbox demo

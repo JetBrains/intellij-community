@@ -7994,8 +7994,6 @@ c:com.intellij.ui.components.OnOffButton
 - javax.swing.JToggleButton
 - <init>():V
 - getIpad():java.awt.Insets
-- getOffText():java.lang.String
-- getOnText():java.lang.String
 - getUIClassID():java.lang.String
 - setIpad(java.awt.Insets):V
 - setOffText(java.lang.String):V

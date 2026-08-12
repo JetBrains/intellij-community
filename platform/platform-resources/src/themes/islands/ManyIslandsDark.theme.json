@@ -865,6 +865,7 @@
     },
 
     "OnePixelDivider.background": "dialog-border",
+    "OnOffButtonUI": "com.intellij.ide.ui.laf.darcula.ui.IslandsOnOffButtonUI",
 
     "PasswordField": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorderNew"

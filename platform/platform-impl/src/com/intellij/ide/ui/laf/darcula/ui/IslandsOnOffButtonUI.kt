@@ -14,10 +14,9 @@ import java.awt.geom.Area
 import java.awt.geom.Ellipse2D
 import java.awt.geom.Path2D
 import java.awt.geom.RoundRectangle2D
-import kotlin.math.max
-import javax.swing.AbstractButton
 import javax.swing.JComponent
 import javax.swing.plaf.basic.BasicToggleButtonUI
+import kotlin.math.max
 
 /**
  * Islands-themed on/off toggle UI delegate.
@@ -54,8 +53,6 @@ internal class IslandsOnOffButtonUI : BasicToggleButtonUI() {
     @Suppress("UNUSED_PARAMETER")
     @JvmStatic
     fun createUI(c: JComponent): IslandsOnOffButtonUI {
-      c.alignmentY = 0.5f
-      (c as? AbstractButton)?.isRolloverEnabled = true
       return IslandsOnOffButtonUI()
     }
   }
@@ -70,6 +67,11 @@ internal class IslandsOnOffButtonUI : BasicToggleButtonUI() {
     val stroke = JBUIScale.scale(2f)
     val safe = JBUIScale.scale(1f)
     return (gap + stroke + safe).toInt()
+  }
+
+  override fun installUI(c: JComponent) {
+    super.installUI(c)
+    c.alignmentY = 0.5f
   }
 
   override fun getPreferredSize(c: JComponent): Dimension {

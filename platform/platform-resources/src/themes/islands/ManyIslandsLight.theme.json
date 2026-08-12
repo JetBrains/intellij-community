@@ -1198,6 +1198,7 @@
     "Window.undecorated.border" : "1,1,1,1,#5A5D6B",
 
     "OnePixelDivider.background": "dialog-border",
+    "OnOffButtonUI": "com.intellij.ide.ui.laf.darcula.ui.IslandsOnOffButtonUI",
 
     "TitlePane": {
       "background": "dialog-bg",

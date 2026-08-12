@@ -423,6 +423,7 @@
     "DragAndDrop.borderColor": "Blue6",
     "TipOfTheDay.Image.borderColor": "Gray3",
     "OnePixelDivider.background": "BorderDark",
+    "OnOffButtonUI": "com.intellij.ide.ui.laf.darcula.ui.IslandsOnOffButtonUI",
     "Plugins.SectionHeader.background": "Gray1.5",
     "Debugger.EvaluateExpression.background": "Gray3",
     "NewUiOnboarding.Dialog.background": "PanelBackground",
