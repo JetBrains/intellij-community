@@ -8,15 +8,13 @@ import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.pagecache.impl.Throttler
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.ArrayDeque
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Handler
@@ -27,12 +25,12 @@ import java.util.logging.LogRecord
 class DialogAppender : Handler() {
   private val MAX_EARLY_LOGGING_EVENTS = 20
 
-  private val context = DiagnosticDispatchers.Default + CoroutineName("DialogAppender")
+  @Suppress("RAW_SCOPE_CREATION") // DialogAppender is a process-wide root logger handler.
+  private val coroutineScope = CoroutineScope(SupervisorJob() + DiagnosticDispatchers.Default + CoroutineName("DialogAppender"))
 
   private var earlyEventCounter = 0
   private val earlyEvents = ArrayDeque<Pair<String?, Throwable>>()
   private var loggerBroken = AtomicBoolean(false)
-  private val pendingJobs = CopyOnWriteArrayList<Job>()
 
   override fun publish(event: LogRecord) {
     if (event.level.intValue() < Level.SEVERE.intValue() || loggerBroken.get()) return
@@ -67,14 +65,10 @@ class DialogAppender : Handler() {
     }
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
   private fun queueEvent(message: String?, throwable: Throwable) {
-    val job = GlobalScope.launch(context, start = CoroutineStart.LAZY) {
+    coroutineScope.launch {
       processEvent(message, throwable)
     }
-    pendingJobs.add(job)
-    job.invokeOnCompletion { pendingJobs.remove(job) }
-    job.start()
   }
 
   private val oomReportsThrottler = Throttler(100, SECONDS)
@@ -111,7 +105,7 @@ class DialogAppender : Handler() {
   suspend fun awaitPendingJobs() {
     val currentPendingJobs = synchronized(this) {
       processEarlyEventsIfNeeded()
-      pendingJobs.toList()
+      coroutineScope.coroutineContext.job.children.toList()
     }
     currentPendingJobs.joinAll()
   }
