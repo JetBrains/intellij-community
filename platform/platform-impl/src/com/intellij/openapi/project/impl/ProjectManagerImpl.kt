@@ -1103,7 +1103,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       return null
     }
 
-    if (options.runConfigurators && (options.isNewProject || project.serviceAsync<ModuleManager>().modules.isEmpty())
+    if (options.runConfigurators == true && (options.isNewProject || project.serviceAsync<ModuleManager>().modules.isEmpty())
         || isLoadedFromCacheButHasNoModules(project)
     ) {
       val module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(

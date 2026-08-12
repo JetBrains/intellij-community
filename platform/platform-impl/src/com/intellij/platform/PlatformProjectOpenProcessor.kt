@@ -162,15 +162,14 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       LOG.info("Opening (sync) $file")
 
       if (originalOptions.createModule && Files.isDirectory(file)) {
-        val options = runUnderModalProgressIfIsEdt {
-          createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null).copy(
-            projectName = originalOptions.projectName,
-            beforeOpenTasks = originalOptions.beforeOpenTasks + { project ->
-              project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
-              true
-            }
-          )
-        }
+        val options = originalOptions.copy(
+          runConfigurators = originalOptions.runConfigurators ?: true,
+          projectRootDir = originalOptions.projectRootDir ?: file,
+          beforeOpenTasks = originalOptions.beforeOpenTasks + { project ->
+            project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
+            true
+          }
+        )
         return ProjectManagerEx.getInstanceEx().openProject(file, options)
       }
 
@@ -240,11 +239,20 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
       val isDirectory = Files.isDirectory(file)
       if (originalOptions.createModule && isDirectory) {
-        // todo: originalOptions should not be dropped
+        // todo: this is a shortcut to bypass all the "normal" logic and let project be imported via directory configurators only.
+        //  createModule is a rather new thing. Moreover, it is @Internal. It has no external usages yet, and  only a few internal usages.
+        //  Effectively, this condition means: if we reached PlatformProjectOpenProcessor with a directory, then use directory configurators
+        //   (except a very few very special cases: opening a directory (usually as a temp project) and opening a temp project)
+        //   (We also have bazel plugin which sets createModule to false, but at the same time it explicitly sets runConfigurators=true)
+        //  Earlier we had `createOptionsToOpenDotIdeaOrCreateNewIfNotExists` instead of `originalOptions.copy`, and it worked as follows:
+        //   if we reach this place with a directory - then forget originalOptions, and try to open the folder as exisitng .idea project
+        //   or create a new .idea project here and import it via directory condifurators.
+        //  Now we try to not reject existing originalOptions and capture the intent (most notably - runConfigurators flag) on the callers side.
         return ProjectManagerEx.getInstanceEx().openProjectAsync(
           projectIdentityFile = file,
-          options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null).copy(
-            projectName = originalOptions.projectName,
+          options = originalOptions.copy(
+            runConfigurators = originalOptions.runConfigurators ?: true,
+            projectRootDir = originalOptions.projectRootDir ?: file,
             beforeOpenTasks = originalOptions.beforeOpenTasks + { project ->
               project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
               true

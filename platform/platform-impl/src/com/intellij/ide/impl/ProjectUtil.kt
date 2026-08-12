@@ -82,6 +82,7 @@ import java.awt.Window
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.isDirectory
 
 private data class ProjectOpenOptionsImpl(val originalOpenProjectTask: OpenProjectTask) : ProjectOpenProcessor.ProjectOpenOptions {
   override val forceOpenInNewFrame: Boolean
@@ -139,12 +140,23 @@ object ProjectUtil {
     return ProjectManager.getInstance().closeAndDispose(project)
   }
 
+  private suspend fun guessTheBestOpenProjectTaskForPath(path: Path): OpenProjectTask {
+    if (path.isDirectory()) {
+      return createOptionsToOpenDotIdeaOrCreateNewIfNotExists(path, null)
+    } else {
+      return OpenProjectTask()
+    }
+  }
+
   @JvmStatic
   fun openOrImport(path: Path, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    return openOrImport(path, OpenProjectTask {
-      this.projectToClose = projectToClose
-      this.forceOpenInNewFrame = forceOpenInNewFrame
-    })
+    @Suppress("DEPRECATION")
+    return runUnderModalProgressIfIsEdt {
+      openOrImportAsync(path, guessTheBestOpenProjectTaskForPath(path).copy(
+        projectToClose = projectToClose,
+        forceOpenInNewFrame = forceOpenInNewFrame
+      ))
+    }
   }
 
   /**
@@ -156,25 +168,43 @@ object ProjectUtil {
    */
   @JvmStatic
   fun openOrImport(path: String, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    @Suppress("DEPRECATION")
-    return runUnderModalProgressIfIsEdt {
-      openOrImportAsync(Path.of(path), OpenProjectTask {
-        this.projectToClose = projectToClose
-        this.forceOpenInNewFrame = forceOpenInNewFrame
-      })
-    }
+    return openOrImport(Path.of(path), projectToClose, forceOpenInNewFrame)
   }
 
+  /**
+   * Opens or imports [file], which may be either a regular file or a directory.
+   *
+   * See [openOrImportAsync] for the distinction between omitted [options] and an explicit [OpenProjectTask].
+   */
   @JvmStatic
   @JvmOverloads
-  fun openOrImport(file: Path, options: OpenProjectTask = OpenProjectTask()): Project? {
+  fun openOrImport(file: Path, options: OpenProjectTask? = null): Project? {
     @Suppress("DEPRECATION")
     return runUnderModalProgressIfIsEdt {
       openOrImportAsync(file, options)
     }
   }
 
-  suspend fun openOrImportAsync(file: Path, options: OpenProjectTask = OpenProjectTask()): Project? {
+  /**
+   * Opens or imports [file], which may be either a regular file or a directory.
+   *
+   * If [options] is `null`, open options are inferred from [file]. For a directory, this keeps the legacy open-or-create behavior:
+   * an existing `.idea` project is opened, otherwise a directory project is opened with directory configurators enabled.
+   *
+   * If [options] is not `null`, it is treated as the caller's exact intent. Options that are not set explicitly
+   * (e.g. null-ed [OpenProjectTask.runConfigurators] or [OpenProjectTask.projectRootDir]) may be altered by specific
+   * [ProjectOpenProcessor] that handles this operation.
+   *
+   * Callers that need an explicit task with the same open-or-create setup as the inferred path can use
+   * [createOptionsToOpenDotIdeaOrCreateNewIfNotExists]. Callers that want to open a directory literally should set
+   * [OpenProjectTask.runConfigurators] to `false` and configure related flags explicitly.
+   */
+  suspend fun openOrImportAsync(file: Path, options: OpenProjectTask? = null): Project? {
+    val actualOptions = options ?: guessTheBestOpenProjectTaskForPath(file)
+    return doOpenOrImportAsync(file, actualOptions)
+  }
+
+  private suspend fun doOpenOrImportAsync(file: Path, options: OpenProjectTask): Project? {
     if (!options.forceOpenInNewFrame) {
       findAndFocusExistingProjectForPath(file)?.let {
         LOG.info("Reusing already opened project $file")

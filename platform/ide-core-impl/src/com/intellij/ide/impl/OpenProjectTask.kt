@@ -48,7 +48,7 @@ data class OpenProjectTask @Internal constructor(
    *  but no serialized modules were found, configurators will be run regardless of [runConfigurators] value.
    *  See com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
    */
-  val runConfigurators: Boolean,
+  val runConfigurators: Boolean?,
   val runConversionBeforeOpen: Boolean,
   val projectWorkspaceId: String?,
   @JvmField @Internal val projectFrameTypeId: String?,
@@ -120,7 +120,7 @@ data class OpenProjectTask @Internal constructor(
     column: Int,
     opensFileAfterProjectOpen: Boolean,
     isRefreshVfsNeeded: Boolean,
-    runConfigurators: Boolean,
+    runConfigurators: Boolean?,
     runConversionBeforeOpen: Boolean,
     projectWorkspaceId: String?,
     projectFrameTypeId: String?,
@@ -185,7 +185,7 @@ data class OpenProjectTask @Internal constructor(
     column = -1,
     isRefreshVfsNeeded = true,
 
-    runConfigurators = false,
+    runConfigurators = null,
     runConversionBeforeOpen = true,
     projectWorkspaceId = null,
     projectFrameTypeId = null,
@@ -249,7 +249,7 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
    *  but no serialized modules were found, configurators will be run regardless of [runConfigurators] value.
    *  See com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
    */
-  var runConfigurators: Boolean = false
+  var runConfigurators: Boolean? = null
   var preloadServices: Boolean = true
 
   var isProjectCreatedWithWizard: Boolean = false
