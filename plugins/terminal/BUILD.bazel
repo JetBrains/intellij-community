@@ -1,5 +1,14 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
+# Checkout directories that plugin layouts copy into a distribution verbatim (`withResource*`). They are
+# resolved against the module content root and exist in no jar, so a dev assembly that materializes its own
+# project tree has to declare them. Consumed through `ULTIMATE_EXTRA_PROJECT_FILES`.
+filegroup(
+    name = "dev_dist_resources",
+    srcs = glob(["resources/shell-integrations/**"]),
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `build intellij.terminal` start
 jvm_provided_library(
     name = "libraries_opentelemetry_provided",
@@ -184,12 +193,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.terminal` end
-
-# Checkout directories that plugin layouts copy into a distribution verbatim (`withResource*`). They are
-# resolved against the module content root and exist in no jar, so a dev assembly that materializes its own
-# project tree has to declare them. Consumed through `ULTIMATE_EXTRA_PROJECT_FILES`.
-filegroup(
-    name = "dev_dist_resources",
-    srcs = glob(["resources/shell-integrations/**"]),
-    visibility = ["//visibility:public"],
-)
