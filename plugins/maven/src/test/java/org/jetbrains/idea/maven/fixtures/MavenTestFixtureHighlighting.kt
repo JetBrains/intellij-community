@@ -69,7 +69,7 @@ fun MavenDomTestFixture.assertHighlighting(highlightingInfos: Collection<Highlig
   }
 }
 
-internal suspend fun MavenDomTestFixture.assertHighlighted(file: VirtualFile, vararg expected: HighlightPointer) {
+suspend fun MavenDomTestFixture.assertHighlighted(file: VirtualFile, vararg expected: HighlightPointer) {
   val editor = getEditor(file)
   val psiFile = getTestPsiFile(file)
   withContext(Dispatchers.EDT) {
@@ -95,7 +95,7 @@ internal suspend fun MavenDomTestFixture.assertHighlighted(file: VirtualFile, va
   assertUnorderedElementsAreEqual(actual, *expected)
 }
 
-internal class HighlightPointer(var element: PsiElement?, var text: String?) {
+class HighlightPointer(var element: PsiElement?, var text: String?) {
   override fun equals(o: Any?): Boolean {
     if (this === o) return true
     if (o == null || javaClass != o.javaClass) return false
@@ -121,4 +121,3 @@ internal class HighlightPointer(var element: PsiElement?, var text: String?) {
            '}'
   }
 }
-
