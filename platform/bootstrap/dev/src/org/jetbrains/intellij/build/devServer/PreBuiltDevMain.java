@@ -41,6 +41,10 @@ public final class PreBuiltDevMain {
       throw new IllegalStateException("System property '" + DevIdeConfig.CONFIG_PATH_PROPERTY + "' is not set");
     }
     DevIdeConfig.Content ideConfig = DevIdeConfig.read(configFile);
+    if (ideConfig.mainClassName() == null) {
+      // Only a launcher needs it - a test harness brings its own entry point - so it is checked here rather than when read.
+      throw new IllegalStateException("'" + DevIdeConfig.MAIN_CLASS_NAME_KEY + "' is missing from " + configFile);
+    }
 
     Map<String, String> properties = readProperties(lookup, classLoader, ideConfig.homePath());
     List<Path> classpath = readClasspath(ideConfig.homePath());

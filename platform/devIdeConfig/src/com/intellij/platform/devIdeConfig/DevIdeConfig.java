@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 
 /**
@@ -65,6 +66,11 @@ public final class DevIdeConfig {
     String platformPrefix,
     Collection<String> additionalModules
   ) throws IOException {
+    // A `null` here would be written as the four characters "null" and read back as a product named that, which is a
+    // worse outcome than refusing to write the file.
+    Objects.requireNonNull(mainClassName, MAIN_CLASS_NAME_KEY);
+    Objects.requireNonNull(platformPrefix, PLATFORM_PREFIX_KEY);
+
     Path configDir = configFile.toAbsolutePath().getParent();
     Path absoluteHome = home.toAbsolutePath();
     Path homePath = configDir != null && absoluteHome.startsWith(configDir) ? configDir.relativize(absoluteHome) : absoluteHome;
