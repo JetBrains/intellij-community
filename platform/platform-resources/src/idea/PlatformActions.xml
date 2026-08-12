@@ -1328,11 +1328,6 @@
     <group id="ToolWindowContextMenu"/>
     <group id="ToolWindowTabContextMenu"/>
 
-    <action id="MoveToolWindowTabToEditorAction" class="com.intellij.openapi.wm.impl.tabInEditor.MoveToolWindowTabToEditorAction"
-            icon="AllIcons.Actions.OpenNewTab">
-      <add-to-group group-id="ToolWindowTabContextMenu"/>
-    </action>
-
     <group id="SearchEverywhereActions">
       <reference ref="SearchEverywhere.NextTab"/>
       <reference ref="SearchEverywhere.PrevTab"/>

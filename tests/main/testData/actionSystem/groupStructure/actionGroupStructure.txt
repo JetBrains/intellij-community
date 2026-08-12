@@ -1,6 +1,6 @@
 # Golden action-group structure: child id sequences observed via getChildActionsOrStubs.
 # Regenerate: (cd community && ./tests.cmd --module intellij.idea.community.main.tests --test com.intellij.openapi.actionSystem.CommunityActionGroupStructureTest -Dpass.actions.golden.regenerate=true)
-# Risky group ids not registered in this run (0 of 319):
+# Risky group ids not registered in this run (0 of 320):
 [tree MainMenu]
   FileMenu
     FileOpenGroup
@@ -1263,7 +1263,6 @@
       HideSideWindows
       HideBottomWindows
       HideAllWindows
-      MoveToolWindowTabToEditorAction
       PinToolwindowTab
       JumpToLastWindow
       MaximizeToolWindow
@@ -1409,7 +1408,6 @@
   HideSideWindows
   HideBottomWindows
   HideAllWindows
-  MoveToolWindowTabToEditorAction
   PinToolwindowTab
   JumpToLastWindow
   MaximizeToolWindow
@@ -3099,7 +3097,9 @@
 [group ToolWindowContextMenu]
   Documentation.KeepTab
   PyConsoleRenameAction
+[group ToolWindowTabContextMenu]
   Terminal.RenameSession
+  MoveToolWindowTabToEditorAction
   Terminal.MoveToEditor
 [group ToolWindowsGroup]
 [group ToolbarFindGroup]

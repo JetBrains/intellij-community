@@ -267,6 +267,7 @@ TextEditorWithPreview.SplitGroup
 TextViewerEditorPopupMenu
 ToggleFullScreenGroup
 ToolWindowContextMenu
+ToolWindowTabContextMenu
 ToolWindowsGroup
 ToolbarFindGroup
 ToolbarPopupActions
