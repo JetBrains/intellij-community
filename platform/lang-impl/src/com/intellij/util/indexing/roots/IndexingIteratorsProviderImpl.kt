@@ -145,7 +145,7 @@ internal fun processModuleRoot(
   val root = fileSet.root
   customData as ModuleRelatedRootData
 
-  return if (!includeNestedRoots && isNestedRootOfModuleContent(root, customData.module, WorkspaceFileIndexEx.getInstance(project))) {
+  return if (!includeNestedRoots && isNestedRootOfModuleIndexableContent(root, customData.module, WorkspaceFileIndexEx.getInstance(project))) {
     null
   }
   else {
@@ -169,7 +169,7 @@ internal fun processLibrary(libraryName: String, fileSet: WorkspaceFileSet): Pai
   return origin to iterator
 }
 
-private fun isNestedRootOfModuleContent(
+private fun isNestedRootOfModuleIndexableContent(
   root: VirtualFile,
   module: Module,
   workspaceFileIndex: WorkspaceFileIndexEx,
@@ -182,7 +182,7 @@ private fun isNestedRootOfModuleContent(
     parent,
     honorExclusion = false,
     includeContentSets = true,
-    includeContentNonIndexableSets = true,
+    includeContentNonIndexableSets = false,
     includeExternalSets = false,
     includeExternalSourceSets = false,
     includeExternalNonIndexableSets = false,
