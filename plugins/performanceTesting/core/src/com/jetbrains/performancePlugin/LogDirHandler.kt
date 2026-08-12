@@ -13,17 +13,11 @@ import com.intellij.openapi.diagnostic.RollingFileHandler
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import java.util.logging.Handler
 import java.util.logging.Level
 import java.util.logging.LogRecord
 import java.util.logging.Logger.getLogger
-import kotlin.io.path.exists
-import kotlin.io.path.extension
-import kotlin.io.path.nameWithoutExtension
 
 /** Caps buffering if a log switch stalls. */
 private const val MAX_BUFFERED_RECORDS = 200_000
@@ -70,7 +64,6 @@ class LogDirHandler : Disposable {
         handlersOfThePreviousLogDir = writingElsewhere
 
         onRotate.run()
-        rollExistingLog(newLogFile)
 
         val newHandlers = createHandlers(newLogFile, detachedHandlers.hadAttachmentHandler, onRotate)
         newHandlers.forEach(rootLogger::addHandler)
@@ -110,6 +103,7 @@ class LogDirHandler : Disposable {
       count = JulLogger.LOG_FILE_COUNT,
       append = false,
       onRotate = onRotate,
+      rollOnOpen = true,
     ).apply {
       formatter = IdeaLogRecordFormatter()
       level = Level.FINEST
@@ -119,30 +113,6 @@ class LogDirHandler : Disposable {
       if (withAttachmentHandler) add(AttachmentHandler(logFile))
     }
   }
-
-  /** Preserves an existing target log before the new non-appending handler opens it. */
-  private fun rollExistingLog(logFile: Path) {
-    if (!logFile.exists()) return
-
-    val count = JulLogger.LOG_FILE_COUNT
-    try {
-      Files.deleteIfExists(logFileWithIndex(logFile, count))
-      for (index in count - 1 downTo 1) {
-        val rolled = logFileWithIndex(logFile, index)
-        if (rolled.exists()) {
-          Files.move(rolled, logFileWithIndex(logFile, index + 1), StandardCopyOption.ATOMIC_MOVE)
-        }
-      }
-      Files.move(logFile, logFileWithIndex(logFile, 1), StandardCopyOption.ATOMIC_MOVE)
-    }
-    catch (e: IOException) {
-      // Fall back to the previous overwrite behavior if rolling fails.
-      logger<LogDirHandler>().warn("Failed to roll $logFile, its content will be overwritten", e)
-    }
-  }
-
-  private fun logFileWithIndex(logFile: Path, index: Int): Path =
-    logFile.resolveSibling("${logFile.nameWithoutExtension}.$index.${logFile.extension}")
 
   override fun dispose() {
     synchronized(java.util.logging.Logger.getLogger("")) {

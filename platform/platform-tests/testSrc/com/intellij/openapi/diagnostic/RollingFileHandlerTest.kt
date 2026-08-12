@@ -70,4 +70,22 @@ class RollingFileHandlerTest {
       NioFiles.setReadOnly(logDir, false)
     }
   }
+
+  @Test fun rollsExistingLogOnOpen() {
+    val logName = "RollingFileHandlerTest.log"
+    val logFile = tempDir.newFile(logName).toPath()
+    val logPath1 = logFile.resolveSibling(logName.replace(".log", ".1.log"))
+    val logPath2 = logFile.resolveSibling(logName.replace(".log", ".2.log"))
+    Files.writeString(logFile, "current")
+    Files.writeString(logPath1, "previous")
+    Files.writeString(logPath2, "oldest")
+
+    val handler = RollingFileHandler(logPath = logFile, limit = 100, count = 2, append = false, rollOnOpen = true)
+    handler.formatter = msgOnlyFormatter
+    handler.publish(LogRecord(Level.INFO, "new"))
+
+    assertEquals("new", Files.readString(logFile))
+    assertEquals("current", Files.readString(logPath1))
+    assertEquals("previous", Files.readString(logPath2))
+  }
 }

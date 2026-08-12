@@ -21,7 +21,8 @@ class RollingFileHandler @JvmOverloads constructor(
   val limit: Long,
   val count: Int,
   val append: Boolean,
-  private val onRotate: Runnable? = null
+  private val onRotate: Runnable? = null,
+  rollOnOpen: Boolean = false,
 ) : StreamHandler() {
   @Volatile private lateinit var meter: MeteredOutputStream
   private var rotateFailed: Boolean = false
@@ -54,7 +55,9 @@ class RollingFileHandler @JvmOverloads constructor(
 
   init {
     encoding = StandardCharsets.UTF_8.name()
+    val rollError = if (rollOnOpen && Files.exists(logPath)) rollExistingLog() else null
     open(append)
+    rollError?.let(::logRotateFailed)
   }
 
   private fun open(append: Boolean) {
@@ -81,13 +84,7 @@ class RollingFileHandler @JvmOverloads constructor(
     onRotate?.run()
 
     try {
-      Files.deleteIfExists(logPathWithIndex(count))
-      for (i in count-1 downTo 1) {
-        val path = logPathWithIndex(i)
-        if (Files.exists(path)) {
-          Files.move(path, logPathWithIndex(i+1), StandardCopyOption.ATOMIC_MOVE)
-        }
-      }
+      rollPreviousLogs()
     }
     catch (e: IOException) {
       logRotateFailed(e)
@@ -112,6 +109,27 @@ class RollingFileHandler @JvmOverloads constructor(
     }
     else {
       logRotateFailed(e)
+    }
+  }
+
+  private fun rollExistingLog(): IOException? {
+    return try {
+      rollPreviousLogs()
+      Files.move(logPath, logPathWithIndex(1), StandardCopyOption.ATOMIC_MOVE)
+      null
+    }
+    catch (e: IOException) {
+      e
+    }
+  }
+
+  private fun rollPreviousLogs() {
+    Files.deleteIfExists(logPathWithIndex(count))
+    for (i in count-1 downTo 1) {
+      val path = logPathWithIndex(i)
+      if (Files.exists(path)) {
+        Files.move(path, logPathWithIndex(i+1), StandardCopyOption.ATOMIC_MOVE)
+      }
     }
   }
 
