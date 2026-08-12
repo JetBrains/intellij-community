@@ -18,9 +18,9 @@ internal class DocumentCoreImpl private constructor(
   @Volatile private var snapshot: DocumentSnapshot, // mutable via SNAPSHOT_UPDATER
   private val settings: DocumentSettings,
   private val dispatcher: DocumentEventDispatcherImpl,
-  private val rangeMarkers: RangeMarkerStorage,
+  private val rangeMarkers: RangeMarkerStorageImpl,
 ) : DocumentCore {
-  private val guardedBlocks: GuardedBlocks = GuardedBlocksImpl(rangeMarkers as RangeMarkerStorageImpl)
+  private val guardedBlocks: GuardedBlocks = GuardedBlocksImpl(rangeMarkers)
   private val live: CharSequence = LiveCharSequence()
   private val mutator: DocumentMutator = MutatorImpl()
   @Volatile private var frozen: FrozenDocument? = null
