@@ -72,8 +72,11 @@ class InlineCompletionLogsContainer() {
   private val asyncAdds = ConcurrentLinkedQueue<Job>()
 
   private suspend fun awaitAllAlreadyRunningAsyncAdds() {
-    while (currentCoroutineContext().isActive) {
-      val job = asyncAdds.poll() ?: return
+    // A snapshot on purpose: wait only for the adds that are already running, and never remove a job here.
+    // If this coroutine is canceled inside `join`, the job must stay visible to [cancelAsyncAdds], otherwise it keeps running
+    // on the application-level scope and retains everything its block captured (LLM-17026).
+    for (job in asyncAdds.toList()) {
+      if (!currentCoroutineContext().isActive) return
       job.join()
     }
   }
@@ -107,6 +110,9 @@ class InlineCompletionLogsContainer() {
       block().forEach { add(it) }
     }
     asyncAdds.add(job)
+    // [asyncAdds] is a registry of *pending* jobs: a finished job is useless for [cancelAsyncAdds], and only the producer may
+    // remove one, never an awaiter (see [awaitAllAlreadyRunningAsyncAdds]).
+    job.invokeOnCompletion { asyncAdds.remove(job) }
   }
 
   /**

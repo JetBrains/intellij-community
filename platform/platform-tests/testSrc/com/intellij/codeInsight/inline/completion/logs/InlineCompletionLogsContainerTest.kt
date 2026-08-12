@@ -10,6 +10,11 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.common.timeoutRunBlocking
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -192,6 +197,40 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
 
     assertNotNull("The project must still be reported in the FUS event", logs.first().event.data["project"])
     LeakHunter.checkLeak(logsContainer, Project::class.java)
+  }
+
+  /**
+   * A canceled awaiter must not drop a still running async add from the cancellation registry:
+   * [InlineCompletionLogsContainer.logCurrent] must still be able to cancel it, otherwise the add keeps running on the
+   * application-level scope and retains everything its block captured. See LLM-17026.
+   */
+  @Test
+  fun testCanceledAwaitDoesNotStrandAsyncAdd(): Unit = timeoutRunBlocking {
+    val logsContainer = InlineCompletionLogsContainer()
+    logsContainer.mockRandom(1f)
+    val started = CompletableDeferred<Unit>()
+    val blockCanceled = CompletableDeferred<Unit>()
+    logsContainer.addAsync {
+      started.complete(Unit)
+      try {
+        awaitCancellation()
+      }
+      finally {
+        blockCanceled.complete(Unit)
+      }
+    }
+    started.await()
+
+    try {
+      // `Dispatchers.Unconfined` runs the awaiter eagerly on this thread up to its first real suspension,
+      // so it is guaranteed to be inside `join` by the time `launch` returns.
+      val awaiter = launch(Dispatchers.Unconfined) { logsContainer.awaitAndGetCurrentLogs() }
+      awaiter.cancelAndJoin()
+    }
+    finally {
+      logsContainer.logCurrent(project = null)
+    }
+    blockCanceled.await()
   }
 
   private fun withEap(isEAP: Boolean, action: () -> Unit) {
