@@ -16,6 +16,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.wayland.WaylandUtilKt;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
@@ -70,7 +71,7 @@ public class JBPopupMenu extends JPopupMenu {
     enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_WHEEL_EVENT_MASK);
     myLayout = new MyLayout(this);
     setLayout(myLayout);
-    setLightWeightPopupEnabled(false);
+    setLightWeightPopupEnabled(StartupUiUtil.isOhosToolkit());
     setOpaque(false);
   }
 
