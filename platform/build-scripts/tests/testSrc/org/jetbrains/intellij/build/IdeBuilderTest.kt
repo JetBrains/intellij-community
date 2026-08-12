@@ -5,6 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.configureDevModeBuildOptions
+import org.jetbrains.intellij.build.dev.createDevBuildPaths
 import org.jetbrains.intellij.build.dev.formatCoreClasspath
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -82,6 +83,112 @@ class IdeBuilderTest {
     )
 
     assertThat(options.storeGitRevision).isFalse()
+  }
+
+  @Test
+  fun createProjectDevBuildOptionsUsesRequestBuildDateOverride() {
+    val buildDateInSeconds = 1_700_000_000L
+    val options = createProjectDevBuildOptions(
+      request = createBuildRequest(buildDateInSeconds = buildDateInSeconds),
+      buildDir = tempDir.resolve("dev-build"),
+      buildOptionsTemplate = BuildOptions(),
+    )
+
+    assertThat(options.buildDateInSeconds).isEqualTo(buildDateInSeconds)
+  }
+
+  @Test
+  fun createProjectDevBuildOptionsFallsBackToDevModeBuildDate() {
+    val options = createProjectDevBuildOptions(
+      request = createBuildRequest(),
+      buildDir = tempDir.resolve("dev-build"),
+      buildOptionsTemplate = BuildOptions(),
+    )
+
+    assertThat(options.buildDateInSeconds).isEqualTo(getDevModeOrTestBuildDateInSeconds())
+  }
+
+  @Test
+  fun configureDevModeBuildOptionsLinksImmutableCacheEntriesByDefault() {
+    val options = BuildOptions().apply {
+      linkImmutableCacheEntries = false
+    }
+
+    configureDevModeBuildOptions(
+      options = options,
+      request = createBuildRequest(),
+      buildOptionsTemplate = BuildOptions(),
+    )
+
+    assertThat(options.linkImmutableCacheEntries).isTrue()
+  }
+
+  @Test
+  fun configureDevModeBuildOptionsKeepsImmutableCacheEntryLinkingDisabledOnRequest() {
+    val options = BuildOptions().apply {
+      linkImmutableCacheEntries = true
+    }
+
+    configureDevModeBuildOptions(
+      options = options,
+      request = createBuildRequest(linkImmutableCacheEntries = false),
+      buildOptionsTemplate = BuildOptions(),
+    )
+
+    assertThat(options.linkImmutableCacheEntries).isFalse()
+  }
+
+  @Test
+  fun createProjectDevBuildOptionsPutsLogDirUnderScratchDir() {
+    val scratchDir = tempDir.resolve("scratch")
+    val options = createProjectDevBuildOptions(
+      request = createBuildRequest(scratchDir = scratchDir),
+      buildDir = tempDir.resolve("dev-build"),
+      buildOptionsTemplate = BuildOptions(),
+    )
+
+    assertThat(options.logDir).isEqualTo(scratchDir.resolve("log"))
+  }
+
+  @Test
+  fun createProjectDevBuildOptionsPutsLogDirUnderBuildDirWithoutScratchDir() {
+    val buildDir = tempDir.resolve("dev-build")
+    val options = createProjectDevBuildOptions(
+      request = createBuildRequest(),
+      buildDir = buildDir,
+      buildOptionsTemplate = BuildOptions(),
+    )
+
+    assertThat(options.logDir).isEqualTo(buildDir.resolve("log"))
+  }
+
+  @Test
+  fun createDevBuildPathsKeepsScratchDataOutOfTheDistributionDirectory() {
+    val buildDir = tempDir.resolve("dist")
+    val scratchDir = tempDir.resolve("scratch")
+
+    val paths = createDevBuildPaths(
+      projectDir = COMMUNITY_ROOT.communityRoot,
+      buildDir = buildDir,
+      logDir = scratchDir.resolve("log"),
+      scratchDir = scratchDir,
+    )
+
+    assertThat(paths.tempDir).isEqualTo(scratchDir.resolve("temp"))
+    assertThat(paths.artifactDir).isEqualTo(scratchDir.resolve("artifacts"))
+    assertThat(paths.buildOutputDir).isEqualTo(buildDir)
+    assertThat(paths.distAllDir).isEqualTo(buildDir)
+    assertThat(Files.exists(buildDir)).isFalse()
+  }
+
+  @Test
+  fun createDevBuildPathsRootsScratchDataInBuildDirByDefault() {
+    val buildDir = tempDir.resolve("dev-build")
+
+    val paths = createDevBuildPaths(projectDir = COMMUNITY_ROOT.communityRoot, buildDir = buildDir, logDir = buildDir.resolve("log"))
+
+    assertThat(paths.tempDir).isEqualTo(buildDir.resolve("temp"))
+    assertThat(paths.artifactDir).isEqualTo(buildDir.resolve("artifacts"))
   }
 
   @Test
@@ -220,12 +327,20 @@ class IdeBuilderTest {
     assertThat(formatCoreClasspath(emptyList(), tempDir.resolve("run"))).isEmpty()
   }
 
-  private fun createBuildRequest(classesOutputDirectory: Path? = null): BuildRequest {
+  private fun createBuildRequest(
+    classesOutputDirectory: Path? = null,
+    scratchDir: Path? = null,
+    buildDateInSeconds: Long? = null,
+    linkImmutableCacheEntries: Boolean = true,
+  ): BuildRequest {
     return BuildRequest(
       platformPrefix = "idea",
       additionalModules = emptyList(),
       projectDir = COMMUNITY_ROOT.communityRoot,
       classesOutputDirectory = classesOutputDirectory,
+      scratchDir = scratchDir,
+      buildDateInSeconds = buildDateInSeconds,
+      linkImmutableCacheEntries = linkImmutableCacheEntries,
     )
   }
 

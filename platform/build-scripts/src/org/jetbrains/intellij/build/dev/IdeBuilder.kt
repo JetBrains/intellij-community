@@ -126,7 +126,33 @@ data class BuildRequest(
   @JvmField val os: OsFamily = OsFamily.currentOs,
 
   @JvmField val isBootClassPathCorrect: Boolean = false,
-  @JvmField val devRunDirPrefix: String = System.getProperty("idea.dev.build.dir.prefix") ?: ""
+  @JvmField val devRunDirPrefix: String = System.getProperty("idea.dev.build.dir.prefix") ?: "",
+
+  /**
+   * If set, used verbatim as the run directory, skipping both the name derived from [platformPrefix] and [additionalModules]
+   * and the wipe of stale content.
+   * A Bazel action writes into a directory whose name `declare_directory` fixes at analysis time, and that directory is handed over empty.
+   */
+  @JvmField val runDirOverride: Path? = null,
+
+  /**
+   * If set, `temp`, `artifacts` and `log` are rooted here instead of in the run directory.
+   * A `TreeArtifact` must contain only the assembled distribution - build scratch (`temp` alone is ~200 MB) is not part of the output.
+   */
+  @JvmField val scratchDir: Path? = null,
+
+  /**
+   * Build date stamped into the distribution, in seconds since the epoch; `null` means [getDevModeOrTestBuildDateInSeconds].
+   * Wall clock is not an action input, so a Bazel action pins the date to keep its output reproducible.
+   */
+  // `Long` is `java.lang.Long` in this file
+  @JvmField val buildDateInSeconds: kotlin.Long? = null,
+
+  /**
+   * If `true`, the distribution may hard-link immutable jar cache entries instead of copying them.
+   * A dev run directory is disposable and can share bytes with the caches it is assembled from, but a Bazel output must own its bytes.
+   */
+  @JvmField val linkImmutableCacheEntries: Boolean = true,
 ) {
   override fun toString(): String {
     return buildString {
@@ -169,60 +195,12 @@ internal suspend fun buildProductFromProject(
   }
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 internal suspend fun buildProduct(request: BuildRequest, createBuildContext: suspend CoroutineScope.(buildDir: Path) -> BuildContext): Path {
-  val rootDir = withContext(Dispatchers.IO) {
-    val rootDir = request.devRootDir
-    // if symlinked to RAM disk, use a real path for performance reasons and avoid any issues in ant/other code
-    if (Files.exists(rootDir)) {
-      // toRealPath must be called only on an existing file
-      rootDir.toRealPath()
+  val buildDir = request.runDirOverride?.let { runDirOverride ->
+    withContext(Dispatchers.IO) {
+      Files.createDirectories(runDirOverride)
     }
-    else {
-      rootDir
-    }
-  }
-
-  val classifier = computeAdditionalModulesFingerprint(request.additionalModules)
-  val productDirNameWithoutClassifier = when (request.platformPrefix) {
-    "Idea" -> "idea-community"
-    "JetBrainsClient" -> "${request.baseIdePlatformPrefixForFrontend ?: ""}${request.platformPrefix}"
-    else -> request.platformPrefix
-  }
-  val productDirSuffix = when {
-    System.getProperty("intellij.build.minimal").toBoolean() -> "-ij-void"
-    request.scrambleTool != null -> "-scrambled"
-    else -> ""
-  }
-  // Keep the product-identifying head (dev-run prefix + product name + suffix) intact, and spend the remaining
-  // path-length budget on the classifier, truncating it from the front so its discriminative xxh3 hash tail survives.
-  // Truncating the whole string with `takeLast` used to drop the product prefix from the front whenever
-  // `prefix + classifier` exceeded the limit, so different products could collide into the same `out/dev-run` directory.
-  val productDirNameHead = request.devRunDirPrefix + productDirNameWithoutClassifier + productDirSuffix
-  val classifierBudget = (maxWindowsPathLengthForIDERootToBeAbleToRunRiderBackend - productDirNameHead.length).coerceAtLeast(0)
-  val productDirName = productDirNameHead + classifier.takeLast(classifierBudget)
-
-  val buildDir = withContext(Dispatchers.IO.limitedParallelism(4)) {
-    val buildDir = rootDir.resolve(productDirName)
-    // on start, delete everything to avoid stale data
-    val files = try {
-      Files.newDirectoryStream(buildDir).toList()
-    }
-    catch (_: NoSuchFileException) {
-      Files.createDirectories(buildDir)
-      return@withContext buildDir
-    }
-
-    for (child in files) {
-      val fileName = child.fileName.toString()
-      if (fileName != "log" && fileName != "bin") {
-        launch {
-          NioFiles.deleteRecursively(child)
-        }
-      }
-    }
-    buildDir
-  }
+  } ?: prepareDevRunDir(request)
 
   val runDir = buildDir
   var contextToClose: BuildContext? = null
@@ -475,6 +453,62 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
   return runDir
 }
 
+/** Derives the run directory name from the request and clears stale content from it. */
+private suspend fun prepareDevRunDir(request: BuildRequest): Path {
+  val rootDir = withContext(Dispatchers.IO) {
+    val rootDir = request.devRootDir
+    // if symlinked to RAM disk, use a real path for performance reasons and avoid any issues in ant/other code
+    if (Files.exists(rootDir)) {
+      // toRealPath must be called only on an existing file
+      rootDir.toRealPath()
+    }
+    else {
+      rootDir
+    }
+  }
+
+  val classifier = computeAdditionalModulesFingerprint(request.additionalModules)
+  val productDirNameWithoutClassifier = when (request.platformPrefix) {
+    "Idea" -> "idea-community"
+    "JetBrainsClient" -> "${request.baseIdePlatformPrefixForFrontend ?: ""}${request.platformPrefix}"
+    else -> request.platformPrefix
+  }
+  val productDirSuffix = when {
+    System.getProperty("intellij.build.minimal").toBoolean() -> "-ij-void"
+    request.scrambleTool != null -> "-scrambled"
+    else -> ""
+  }
+  // Keep the product-identifying head (dev-run prefix + product name + suffix) intact, and spend the remaining
+  // path-length budget on the classifier, truncating it from the front so its discriminative xxh3 hash tail survives.
+  // Truncating the whole string with `takeLast` used to drop the product prefix from the front whenever
+  // `prefix + classifier` exceeded the limit, so different products could collide into the same `out/dev-run` directory.
+  val productDirNameHead = request.devRunDirPrefix + productDirNameWithoutClassifier + productDirSuffix
+  val classifierBudget = (maxWindowsPathLengthForIDERootToBeAbleToRunRiderBackend - productDirNameHead.length).coerceAtLeast(0)
+  val productDirName = productDirNameHead + classifier.takeLast(classifierBudget)
+
+  return withContext(Dispatchers.IO.limitedParallelism(4)) {
+    val buildDir = rootDir.resolve(productDirName)
+    // on start, delete everything to avoid stale data
+    val files = try {
+      Files.newDirectoryStream(buildDir).toList()
+    }
+    catch (_: NoSuchFileException) {
+      Files.createDirectories(buildDir)
+      return@withContext buildDir
+    }
+
+    for (child in files) {
+      val fileName = child.fileName.toString()
+      if (fileName != "log" && fileName != "bin") {
+        launch {
+          NioFiles.deleteRecursively(child)
+        }
+      }
+    }
+    buildDir
+  }
+}
+
 // paths are written relative to the IDE home dir to keep the built IDE relocatable;
 // entries outside of the home dir (e.g., jar cache payload) stay absolute - a `..`-prefixed path would break relocation
 internal fun formatCoreClasspath(classPath: Collection<Path>, runDir: Path): String {
@@ -546,7 +580,12 @@ private suspend fun createBuildContextFromProject(
 ): BuildContext {
   val options = createProjectDevBuildOptions(request = request, buildDir = buildDir, buildOptionsTemplate = buildOptionsTemplate)
 
-  val buildPaths = createDevBuildPaths(projectDir = request.projectDir, buildDir = buildDir, logDir = options.logDir!!)
+  val buildPaths = createDevBuildPaths(
+    projectDir = request.projectDir,
+    buildDir = buildDir,
+    logDir = options.logDir!!,
+    scratchDir = request.scratchDir ?: buildDir,
+  )
   val compilationContext = normalizeCompilationContextForBuild(
     context = createDevBuildCompilationContext(
       projectHome = request.projectDir,
@@ -579,7 +618,7 @@ internal fun createProjectDevBuildOptions(request: BuildRequest, buildDir: Path,
     defaultClassesOutputDirectory = classesOutputDirectory,
   ).copy(
     jarCacheDir = request.jarCacheDir,
-    buildDateInSeconds = getDevModeOrTestBuildDateInSeconds(),
+    buildDateInSeconds = request.buildDateInSeconds ?: getDevModeOrTestBuildDateInSeconds(),
     printFreeSpace = false,
     validateImplicitPlatformModule = false,
     skipDependencySetup = true,
@@ -588,7 +627,7 @@ internal fun createProjectDevBuildOptions(request: BuildRequest, buildDir: Path,
     cleanOutDir = false,
     outRootDir = buildDir,
     compilationLogEnabled = false,
-    logDir = buildDir.resolve("log"),
+    logDir = (request.scratchDir ?: buildDir).resolve("log"),
     isUnpackedDist = request.isUnpackedDist,
   )
   configureDevModeBuildOptions(options = options, request = request, buildOptionsTemplate = buildOptionsTemplate)
@@ -614,12 +653,13 @@ internal fun configureDevModeBuildOptions(options: BuildOptions, request: BuildR
   // A dev assembly can contain uncommitted changes, so HEAD does not identify its contents.
   // Avoid coupling assembly to the mutable checkout solely for production provenance metadata.
   options.storeGitRevision = false
-  // a dev run directory is disposable and never patched in place, so it can share bytes with the caches it is assembled from
-  options.linkImmutableCacheEntries = true
+  // a dev run directory is disposable and never patched in place, so by default it can share bytes with the caches it is assembled from
+  options.linkImmutableCacheEntries = request.linkImmutableCacheEntries
 }
 
-internal fun createDevBuildPaths(projectDir: Path, buildDir: Path, logDir: Path): BuildPaths {
-  val tempDir = buildDir.resolve("temp")
+/** [scratchDir] holds throwaway build data (`temp`, `artifacts`); it is separate from [buildDir] when the latter must contain only the distribution. */
+internal fun createDevBuildPaths(projectDir: Path, buildDir: Path, logDir: Path, scratchDir: Path = buildDir): BuildPaths {
+  val tempDir = scratchDir.resolve("temp")
   Files.createDirectories(tempDir)
 
   return BuildPaths(
@@ -628,7 +668,7 @@ internal fun createDevBuildPaths(projectDir: Path, buildDir: Path, logDir: Path)
     logDir = logDir,
     projectHome = projectDir,
     tempDir = tempDir,
-    artifactDir = buildDir.resolve("artifacts"),
+    artifactDir = scratchDir.resolve("artifacts"),
     searchableOptionDir = projectDir.resolve("out/dev-data/searchable-options"),
   ).also {
     it.distAllDir = buildDir

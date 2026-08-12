@@ -68,12 +68,17 @@ private fun createBuildContextFromExistingContext(
     cleanOutDir = false,
     outRootDir = buildDir,
     compilationLogEnabled = false,
-    logDir = buildDir.resolve("log"),
+    logDir = (request.scratchDir ?: buildDir).resolve("log"),
     isUnpackedDist = request.isUnpackedDist,
   )
   configureDevModeBuildOptions(options = options, request = request, buildOptionsTemplate = baseContext.options)
 
-  val buildPaths = createDevBuildPaths(projectDir = request.projectDir, buildDir = buildDir, logDir = options.logDir!!)
+  val buildPaths = createDevBuildPaths(
+    projectDir = request.projectDir,
+    buildDir = buildDir,
+    logDir = options.logDir!!,
+    scratchDir = request.scratchDir ?: buildDir,
+  )
   val messages = BuildMessagesImpl.create()
   messages.setDebugLogPath(buildPaths.logDir.resolve("debug.log"))
   BuildMessagesHandler.initLoggingIfNeeded(messages)
