@@ -15,6 +15,7 @@ import org.jetbrains.jps.dependency.java.JvmClass;
 import org.jetbrains.jps.dependency.java.JvmField;
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
+import org.jetbrains.jps.dependency.java.Utils;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.junit.Test;
 
@@ -27,6 +28,8 @@ import static org.jetbrains.jps.util.Iterators.collect;
 import static org.jetbrains.jps.util.Iterators.flat;
 import static org.jetbrains.jps.util.Iterators.map;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class DependencyGraphTest {
 
@@ -83,6 +86,37 @@ public class DependencyGraphTest {
     }
   }
 
+  @Test
+  public void testIsSameOrInheritorOfTransitiveHierarchy() throws IOException {
+    try (DependencyGraph graph = new DependencyGraphImpl(new MemoryMapletFactory())) {
+      NodeSource src = createSource("module-a/src");
+
+      JvmField protectedField = createField(Opcodes.ACC_PROTECTED, "state", "I");
+      JvmClass grand = createClass("a", "pkgA/A", "java/lang/Object", List.of(), List.of(protectedField));
+      JvmClass parent = createClass("a", "pkgB/B", "pkgA/A", List.of(), List.of());
+      JvmClass child = createClass("a", "pkgC/C", "pkgB/B", List.of(), List.of());
+
+      Delta delta = graph.createDelta(List.of(src), List.of(), false);
+      delta.associate(grand, List.of(src));
+      delta.associate(parent, List.of(src));
+      delta.associate(child, List.of(src));
+      graph.integrate(
+        graph.differentiate(delta, DifferentiateParametersBuilder.withDefaultSettings())
+      );
+
+      Utils utils = new Utils(graph, __ -> true);
+
+      assertTrue(utils.isSameOrInheritorOf(child, child));
+      assertTrue(utils.isSameOrInheritorOf(child, parent));
+      // the walk must reach classes beyond the direct supertype: C extends B extends A
+      assertTrue(utils.isSameOrInheritorOf(child, grand));
+      assertFalse(utils.isSameOrInheritorOf(grand, child));
+
+      // a protected member of A is visible in the transitive subclass C residing in another package
+      assertTrue(utils.isVisibleIn(grand, protectedField, child));
+    }
+  }
+
   private static @NotNull Iterable<String> getAllDirectSubclasses(DependencyGraph graph, String classFqName) {
     BackDependencyIndex subclassIndex = graph.getIndex(SubclassesIndex.NAME);
     return map(
@@ -111,7 +145,11 @@ public class DependencyGraphTest {
   }
 
   private static JvmField createField(String name, String descriptor) {
-    return new JvmField(new JVMFlags(Opcodes.ACC_PUBLIC), "", name, descriptor, List.of(), List.of(), null);
+    return createField(Opcodes.ACC_PUBLIC, name, descriptor);
+  }
+
+  private static JvmField createField(int access, String name, String descriptor) {
+    return new JvmField(new JVMFlags(access), "", name, descriptor, List.of(), List.of(), null);
   }
 
   private static NodeSource createSource(String path) {

@@ -144,7 +144,7 @@ public final class JavacProtoUtil {
       msgBuilder.addAllImportStatement(imports);
     }
     if (!staticImports.isEmpty()) {
-      msgBuilder.addAllStaticImport(imports);
+      msgBuilder.addAllStaticImport(staticImports);
     }
     final JavacRemoteProto.Message.Response.Builder builder = JavacRemoteProto.Message.Response.newBuilder();
     builder.setResponseType(JavacRemoteProto.Message.Response.Type.CLASS_DATA).setClassData(msgBuilder.build());
