@@ -10,7 +10,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
 
@@ -26,7 +25,7 @@ class BuildOutputParserDispatcherImpl(
   internal val reader = BuildOutputReplayableLineReaderImpl(linesBufferSize, pushBackBufferSize)
 
   @OptIn(DelicateCoroutinesApi::class)
-  private val coroutineScope = GlobalScope.childScope(BuildOutputParserDispatcherImpl::class.java.name)
+  private val coroutineScope = GlobalScope.childScope(BuildOutputParserDispatcherImpl::class.java.name + Dispatchers.IO)
 
   private val parserAction = coroutineScope.launch {
     try {
@@ -45,10 +44,7 @@ class BuildOutputParserDispatcherImpl(
         for (parser in parsers) {
           val readerWrapper = BuildOutputInstantReaderWrapper(reader, parentEventId)
           try {
-            val isLineParsed = withContext(Dispatchers.IO) {
-              parser.parse(line, readerWrapper, ::messageConsumer)
-            }
-            if (isLineParsed) break
+            if (parser.parse(line, readerWrapper, ::messageConsumer)) break
           }
           catch (exception: Exception) {
             rethrowControlFlowException(exception)
