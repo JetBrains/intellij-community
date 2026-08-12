@@ -1783,6 +1783,7 @@ tools/intellij.lambda.testFramework/plugin
 tools/intellij.tools.ide.metrics.benchmark
 tools/intellij.tools.ide.metrics.collector
 tools/intellij.tools.ide.metrics.collector.starter
+tools/intellij.tools.ide.metrics.statistics
 tools/intellij.tools.ide.starter
 tools/intellij.tools.ide.starter.bazel
 tools/intellij.tools.ide.starter.build.server
