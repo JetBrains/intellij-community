@@ -127,7 +127,7 @@ public final class TestDataGuessByExistingFilesUtil {
   }
 
   public static @NotNull String getTestName(@NotNull String methodName) {
-    return StringUtil.trimStart(methodName, "test");
+    return StringUtil.trimStart(methodName, "test").trim();
   }
 
   private static @NotNull TestDataDescriptor buildDescriptorFromExistingTestData(@NotNull PsiMethod method, @Nullable String testDataPath) {
