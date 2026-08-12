@@ -595,14 +595,15 @@ class TerminalViewImpl(
 
     editor.putUserData(TerminalOutputModel.KEY, model)
 
-    // Document modifications can change the scroll position.
-    // Mark them with the corresponding flag to indicate that this change is not caused by the explicit user action.
+    // TerminalOutputPsiFile keeps a manual snapshot of the document text, which PSI-based
+    // features such as command completion read. Resolve it once here and refresh that snapshot on every
+    // content change so those features see the current output.
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(model.document) as? TerminalOutputPsiFile
     model.addListener(parentDisposable, object : TerminalOutputModelListener {
       override fun afterContentChanged(event: TerminalContentChangeEvent) {
         // Repaint the whole screen to update all changed highlightings.
         repaintEditorScreen(editor)
-        psiFile?.charsSequence = model.document.immutableCharSequence  // must be the snapshot
+        psiFile?.charsSequence = model.document.immutableCharSequence
       }
     })
 
