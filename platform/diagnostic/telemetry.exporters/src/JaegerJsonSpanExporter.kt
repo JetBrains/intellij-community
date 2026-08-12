@@ -64,6 +64,16 @@ class JaegerJsonSpanExporter(
   @Suppress("DuplicatedCode")
   override suspend fun export(spans: Collection<SpanData>) {
     lock.withReentrantLock {
+      // A batch already in flight when the exporter shut down still arrives here, and the file it would be
+      // written to is gone. Writing anyway is not a no-op: a closed generator has handed its output buffer
+      // back to the recycler, so the first write fails with a NullPointerException out of `System.arraycopy`,
+      // which `BatchSpanProcessor` logs as an error and a test run reports as a failure of whatever was
+      // running at the time. Dropping the batch is what the rest of this class already does — see `flush`
+      // and `reset`.
+      if (writer.isClosed) {
+        return@withReentrantLock
+      }
+
       for (span in spans) {
         writer.writeStartObject()
         writer.writeStringProperty("traceID", span.traceId)
