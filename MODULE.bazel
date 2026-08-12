@@ -129,7 +129,6 @@ DEV_LAUNCH_HOST_PLATFORMS = [
 ]
 
 dev_launch_deps_community = use_extension("@community//build:dev_launch_dependencies.bzl", "dev_launch_deps_community")
-
 use_repo(
     dev_launch_deps_community,
     "dev_launch_libghostty",
