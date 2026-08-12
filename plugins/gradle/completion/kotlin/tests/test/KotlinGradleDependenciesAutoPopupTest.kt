@@ -79,18 +79,19 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
     assertion: () -> Unit,
   ) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", fileContent)
-    fixture.configureFromExistingVirtualFile(file)
+    codeInsightFixture.configureFromExistingVirtualFile(file)
     // make sure that IDEA is ready for completion
-    fixture.doHighlighting()
+    codeInsightFixture.doHighlighting()
     runInEdtAndWait {
-      val lookupElements = fixture.completeBasic()
+      val lookupElements = codeInsightFixture.completeBasic()
       assertNotNull(lookupElements) { "Autocompletion was not expected: fixture.completeBasic() returned null" }
       val expectedElement = lookupElements.find { it.lookupString == itemToComplete }
       assertNotNull(expectedElement) { "`$itemToComplete` should be suggested. " +
-                                       "\nActual lookup: ${fixture.lookupElementStrings}}" }
-      fixture.lookup.currentItem = expectedElement
-      fixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
-      assertTrue(fixture.file.text != fileContent.replace("<caret>", "")) {
+                                       "\nActual lookup: ${codeInsightFixture.lookupElementStrings}}"
+      }
+      codeInsightFixture.lookup.currentItem = expectedElement
+      codeInsightFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
+      assertTrue(codeInsightFixture.file.text != fileContent.replace("<caret>", "")) {
         "File should be changed after completion"
       }
     }

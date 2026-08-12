@@ -165,8 +165,6 @@ jvm_library(
         "//jps/model-api:model",
         "//jps/model-api:model_test_lib",
         "//platform/ide-core",
-        "//plugins/groovy:groovy-tests",
-        "//plugins/groovy:groovy-tests_test_lib",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-tests",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
         "//java/java-runtime:rt",

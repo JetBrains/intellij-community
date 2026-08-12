@@ -96,11 +96,11 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
         """.trimIndent()
       )
       runInEdtAndWait {
-        fixture.configureFromExistingVirtualFile(buildScriptFile)
-        fixture.completeBasic()
-        fixture.assertPreferredCompletionItems(0, "customSourceSetAnnotationProcessor", "customSourceSetApi")
-        fixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
-        fixture.checkResult(
+        codeInsightFixture.configureFromExistingVirtualFile(buildScriptFile)
+        codeInsightFixture.completeBasic()
+        codeInsightFixture.assertPreferredCompletionItems(0, "customSourceSetAnnotationProcessor", "customSourceSetApi")
+        codeInsightFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
+        codeInsightFixture.checkResult(
           """
             val customSourceSet by sourceSets.registering {}
             dependencies {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle
 
 import com.intellij.openapi.application.runReadAction
@@ -171,7 +171,7 @@ fun AbstractGradleCodeInsightTest.verifyFindUsages(gradleVersion: GradleVersion,
             caretOffset != 0
         }
         runInEdtAndWait {
-            val elementAtCaret = fixture.elementAtCaret
+            val elementAtCaret = codeInsightFixture.elementAtCaret
             val usagesPsi = ReferencesSearch.search(elementAtCaret).findAll()
             val projectDir = project.guessProjectDir() ?: error("project dir is not found")
             val usages = usagesPsi.map {

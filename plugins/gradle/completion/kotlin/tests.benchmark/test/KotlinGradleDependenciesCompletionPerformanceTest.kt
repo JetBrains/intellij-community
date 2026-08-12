@@ -96,12 +96,12 @@ internal class KotlinGradleDependenciesCompletionPerformanceTest : AbstractGradl
     test(gradleVersion, COMPLETION_FIXTURE) {
       val file = writeTextAndCommit("build.gradle.kts", "dependencies { $input }")
       invokeAndWaitIfNeeded {
-        fixture.configureFromExistingVirtualFile(file)
+        codeInsightFixture.configureFromExistingVirtualFile(file)
         val repeatSize = 10
         Benchmark
           .newBenchmark("completionPerformance") {
             repeat(repeatSize) {
-              val lookup = fixture.complete(CompletionType.BASIC)
+              val lookup = codeInsightFixture.complete(CompletionType.BASIC)
               assertLookupIsValid(lookup, expectedElements)
               // Hide the lookup to not affect the next iteration. If it is shown and the completion is called at least twice,
               // the results will include suggestions from the ignored contributors.
@@ -121,7 +121,7 @@ internal class KotlinGradleDependenciesCompletionPerformanceTest : AbstractGradl
     testInfo.testClass.get().name + "." + testInfo.testMethod.get().name
 
   private fun removeRangeMarkers() {
-    val documentEx = this.fixture.editor.document.asSafely<DocumentEx>()
+    val documentEx = this.codeInsightFixture.editor.document.asSafely<DocumentEx>()
     val rangeMarkers = ArrayList<RangeMarker>()
     documentEx?.processRangeMarkers { rangeMarkers.add(it) }
     rangeMarkers.forEach { marker -> documentEx?.removeRangeMarker(marker as RangeMarkerEx) }

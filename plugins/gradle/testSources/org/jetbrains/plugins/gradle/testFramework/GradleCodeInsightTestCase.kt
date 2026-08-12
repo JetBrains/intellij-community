@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
 import com.intellij.codeInsight.lookup.LookupElement
@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
 import com.intellij.psi.PsiElement
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.jetbrains.plugins.groovy.util.ExpressionTest
@@ -15,6 +16,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 
 @GradleProjectTestApplication
 abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), ExpressionTest {
+
+  override fun getFixture(): JavaCodeInsightTestFixture = codeInsightFixture
 
   fun testBuildscript(context: String, expression: String, test: () -> Unit) {
     if (context.isEmpty()) {

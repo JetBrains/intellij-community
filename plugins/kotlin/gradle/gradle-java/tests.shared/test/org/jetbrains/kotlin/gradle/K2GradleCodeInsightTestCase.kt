@@ -162,9 +162,9 @@ abstract class K2GradleCodeInsightTestCase : AbstractKotlinGradleCodeInsightBase
         maskExtensions<HighlightVisitor>(
             HighlightVisitor.EP_HIGHLIGHT_VISITOR,
             emptyList(),
-            fixture.projectDisposable,
+            codeInsightFixture.projectDisposable,
             false,
-            fixture.getProject()
+            codeInsightFixture.getProject()
         )
     }
 

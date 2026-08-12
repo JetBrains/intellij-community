@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.versionCatalog
 
 import com.intellij.openapi.actionSystem.IdeActions
@@ -63,10 +63,10 @@ class KotlinGradleVersionCatalogRenameTest : AbstractGradleCodeInsightTest() {
             val mainFile = mainTestDataPsiFile.virtualFile
             val newName = getDirectiveValue(mainFile, "## RENAME_TO: ")
             val usagePath = getDirectiveValue(mainFile, "## FILE_TO_CHECK: ")
-            fixture.configureFromExistingVirtualFile(mainFile)
+            codeInsightFixture.configureFromExistingVirtualFile(mainFile)
             runInEdtAndWait {
                 TestDialogManager.setTestDialog(TestDialog.OK)
-                fixture.renameElementAtCaret(newName)
+                codeInsightFixture.renameElementAtCaret(newName)
 
                 openUsageAndAssertRenamed(usagePath)
                 assertUsageNavigatesToDeclaration(mainFile, newName)
@@ -75,13 +75,13 @@ class KotlinGradleVersionCatalogRenameTest : AbstractGradleCodeInsightTest() {
     }
 
     private fun openUsageAndAssertRenamed(usagePath: String) {
-        fixture.openFileInEditor(getFile(usagePath))
+        codeInsightFixture.openFileInEditor(getFile(usagePath))
         val expectedResult = getFile("$usagePath.after").readText()
-        fixture.checkResult(expectedResult, true)
+        codeInsightFixture.checkResult(expectedResult, true)
     }
 
     private fun assertUsageNavigatesToDeclaration(expectedDeclarationFile: @NlsSafe VirtualFile, expectedElementName: String) {
-        fixture.performEditorAction(IdeActions.ACTION_GOTO_DECLARATION)
+        codeInsightFixture.performEditorAction(IdeActions.ACTION_GOTO_DECLARATION)
         val afterNavigationPath = document.getVirtualFile().path
         assertEquals(expectedDeclarationFile.path, afterNavigationPath) {
             "After renaming the declaration element, navigation from its usage should lead to the declaration file."
@@ -102,7 +102,7 @@ class KotlinGradleVersionCatalogRenameTest : AbstractGradleCodeInsightTest() {
 
     private fun assertOpenedFileHasText(expectedText: String, messageSupplier: () -> String) {
         try {
-            fixture.checkResult(expectedText)
+            codeInsightFixture.checkResult(expectedText)
         } catch (e: FileComparisonFailedError) {
             fail(e)
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.versionCatalog
 
 import com.intellij.openapi.actionSystem.IdeActions
@@ -78,7 +78,7 @@ class KotlinGradleVersionCatalogNavigationTest : AbstractGradleCodeInsightTest()
     private fun verifyNavigationFromCaretToExpected(gradleVersion: GradleVersion) {
         test(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE) {
             codeInsightFixture.configureFromExistingVirtualFile(mainTestDataPsiFile.virtualFile)
-            fixture.performEditorAction(IdeActions.ACTION_GOTO_DECLARATION)
+            codeInsightFixture.performEditorAction(IdeActions.ACTION_GOTO_DECLARATION)
             val text = document.text
             assertTrue(text.startsWith("# EXPECTED"), "Actual text:\n\n$text")
         }
