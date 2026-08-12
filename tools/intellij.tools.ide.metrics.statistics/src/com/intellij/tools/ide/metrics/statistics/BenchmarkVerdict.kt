@@ -67,7 +67,7 @@ data class BenchmarkVerdict(val direction: BenchmarkDirection, val severity: Ben
   fun isSubstantialDegradation(): Boolean = isSubstantial() && isDegradation()
   fun isSevereDegradation(): Boolean = isSevere() && isDegradation()
 
-  override fun equals(other: Any?): Boolean = if (other !is BenchmarkVerdict) false else other.score == this.score
+  override fun equals(other: Any?): Boolean = other is BenchmarkVerdict && other.score == this.score
   override fun compareTo(other: BenchmarkVerdict): Int = score.compareTo(other.score)
   override fun hashCode(): Int = score.hashCode()
   override fun toString(): String = "$direction/$severity"

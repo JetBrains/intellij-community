@@ -13,6 +13,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.round
+import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 
@@ -47,7 +48,7 @@ object Perfolizer {
 
   fun List<Double>.whichMax(start: Int, length: Int): Int {
     require(this.isNotEmpty()) { "List must not be empty" }
-    require(start in 0 until this.size) { "Start index must be in range [0, ${this.size - 1}]" }
+    require(start in indices) { "Start index must be in range [0, ${this.size - 1}]" }
     require(length in 1..(this.size - start)) { "Length must be in range [1, ${this.size - start}]" }
 
     var maxValue = this[start]
@@ -63,7 +64,7 @@ object Perfolizer {
 
   fun List<Double>.whichMin(start: Int, length: Int): Int {
     require(this.isNotEmpty()) { "List must not be empty" }
-    require(start in 0 until this.size) { "Start index must be in range [0, ${this.size - 1}]" }
+    require(start in indices) { "Start index must be in range [0, ${this.size - 1}]" }
     require(length in 1..(this.size - start)) { "Length must be in range [1, ${this.size - start}]" }
 
     var minValue = this[start]
@@ -169,8 +170,8 @@ object Perfolizer {
 
     fun binomialCoefficient(n: Int, k: Int): Long {
       val maxN = 65
-      if (n < 0 || n > maxN) throw IllegalArgumentException("n=$n")
-      if (k < 0 || k > n) return 0
+      if (n !in 0..maxN) throw IllegalArgumentException("n=$n")
+      if (k !in 0..n) return 0
 
       val pascalTriangle = Array(maxN + 1) { LongArray(maxN + 1) }
       for (i in 0..maxN) {
@@ -182,7 +183,7 @@ object Perfolizer {
 
     fun binomialCoefficientApprox(n: Int, k: Int): Double {
       if (n <= 0) throw IllegalArgumentException("n")
-      if (k < 0 || k > n) return 0.0
+      if (k !in 0..n) return 0.0
 
       fun logFactorial(m: Int) = GammaFunction.logValue((m + 1).toDouble())
 
@@ -193,7 +194,7 @@ object Perfolizer {
   data class MannWhitneyTestResult(val n: Int, val m: Int, val u: Double, val pValue: Double)
 
   object MannWhitneyTest {
-    private const val SmallN = 32
+    private const val SMALL_N = 32
 
     // TODO: Migrate to the Löffler's implementation, https://aakinshin.net/posts/mw-loeffler/
     private fun pValueForSmallN(n: Int, m: Int, u: Int): Double {
@@ -236,7 +237,7 @@ object Perfolizer {
       }
 
       val denominator = MathHelper.binomialCoefficientApprox(n + m, m)
-      var p: Double = 0.0
+      var p = 0.0
       if (q <= n * m / 2) {
         for (i in 0..q) p += w[n][m][i]
       }
@@ -265,7 +266,7 @@ object Perfolizer {
       // All the approximations suck, we use only the exact algorithms
       // Edgeworth approximation is a backup plan if we increase the sample size, see https://aakinshin.net/posts/mw-edgeworth2/
       // Ties are ignored, see https://aakinshin.net/posts/mw-confusing-tie-correction/
-      val pValue = if (n <= SmallN && m <= SmallN) {
+      val pValue = if (n <= SMALL_N && m <= SMALL_N) {
         1 - pValueForSmallN(n, m, floor(u + 1e-9).toInt() - 1)
       }
       else {
@@ -667,7 +668,6 @@ object Perfolizer {
   object QuantileRespectfulDensityHistogramBuilder {
 
     fun build(sample: Sample, binCount: Int): DensityHistogram {
-      requireNotNull(sample) { "Sample cannot be null" }
       require(binCount > 1) { "Bin count should be more than 1" }
 
       val probabilities = (0..binCount).map { it * 1.0 / binCount }.toList()
@@ -695,29 +695,28 @@ object Perfolizer {
    * https://aakinshin.net/posts/lowland-multimodality-detection/
    */
   object LowlandModalityDetector {
-    private const val defaultSensitivity = 0.5
-    private const val defaultPrecision = 0.01
+    private const val DEFAULT_SENSITIVITY = 0.5
+    private const val DEFAULT_PRECISION = 0.01
 
-    private var sensitivity = defaultSensitivity
-    private var precision = defaultPrecision
+    private var sensitivity = DEFAULT_SENSITIVITY
+    private var precision = DEFAULT_PRECISION
 
     init {
       assert(sensitivity in 0.0..1.0) { "Sensitivity should be in range [0, 1]" }
       assert(precision in 0.0..1.0) { "Precision should be in range [0, 1)" }
     }
 
-    fun LowlandModalityDetector(sensitivity: Double = defaultSensitivity, precision: Double = defaultPrecision) {
+    fun lowlandModalityDetector(sensitivity: Double = DEFAULT_SENSITIVITY, precision: Double = DEFAULT_PRECISION) {
       this.sensitivity = sensitivity
       this.precision = precision
     }
 
     // TODO: add jittering, see https://aakinshin.net/posts/discrete-sample-jittering2/
     fun detectModes(sample: Sample): ModalityData {
-      requireNotNull(sample) { "Sample cannot be null" }
       if (sample.values.maxOrNull()!! - sample.values.minOrNull()!! < 1e-9)
         throw IllegalArgumentException("Sample should contain at least two different elements")
 
-      val desiredBinCount = Math.round(1 / precision).toInt()
+      val desiredBinCount = (1 / precision).roundToInt()
       val histogram = QuantileRespectfulDensityHistogramBuilder.build(sample, desiredBinCount)
       val binCount = histogram.bins.count()
       val bins = histogram.bins
@@ -746,7 +745,7 @@ object Perfolizer {
         if (modeValues.isEmpty())
           throw IllegalStateException("Can't find any values in [$left, $right]")
 
-        val modeSample = modeWeights.let { Sample(modeValues, it) }
+        val modeSample = Sample(modeValues, modeWeights)
         return RangedMode(location, left, right, modeSample)
       }
 
@@ -957,7 +956,7 @@ object Perfolizer {
           historySample = Sample(relevantPairs.map { it.first }, relevantPairs.map { it.second })
         }
       }
-      catch (e: Exception) {
+      catch (_: Exception) {
         // TODO
       }
 
