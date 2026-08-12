@@ -123,6 +123,14 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
   private fun Panel.generalSettings(): Row {
     return group {
       row {
+        checkBox(GrazieBundle.message("grazie.settings.auto.update.languages.label"))
+          .bindSelected(
+            getter = { GrazieConfig.get().autoUpdateLanguages },
+            setter = { GrazieConfig.update { state -> state.copy(autoUpdateLanguages = it) } }
+          )
+      }
+
+      row {
         checkBox(GrazieBundle.message("grazie.settings.auto.apply.fixes.label")).bindSelected(::autoFix)
       }
 

@@ -2,12 +2,18 @@
 package com.intellij.grazie.ide.notification
 
 import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
 internal class GrazieNotificationComponent : ProjectActivity {
   override suspend fun execute(project: Project) {
-    if (GrazieConfig.get().hasMissedLanguages()) {
+    val state = GrazieConfig.get()
+    if (!state.hasMissedLanguages()) return
+
+    if (state.autoUpdateLanguages) {
+      GrazieRemote.downloadMissing(project)
+    } else {
       GrazieToastNotifications.showMissedLanguages(project)
     }
   }

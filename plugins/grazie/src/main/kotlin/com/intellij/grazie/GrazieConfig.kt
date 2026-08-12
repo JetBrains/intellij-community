@@ -103,6 +103,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     @Property val parametersPerDomain: Map<TextStyleDomain, Map<Language, Map<String, String>>> = TreeMap(),
     @Property val useOxfordSpelling: Boolean = false,
     @Property val autoFix: Boolean = false,
+    @Property val autoUpdateLanguages: Boolean = false,
     // Ex. Grazie Cloud
     @Property val explicitlyChosenProcessing: Processing? = null,
   ) : VersionedState<Version, State> {
