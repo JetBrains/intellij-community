@@ -11,11 +11,15 @@ class MutualTlsCertificates(
   val clientCertificatePem: String,
   val clientPrivateKeyPem: String,
 ) {
+  /**
+   * The PEM blocks that IJent expects to read from its stdin before it binds the TCP socket, in the exact order it reads them.
+   */
+  fun serverBootstrapPem(): String =
+    serverCertificatePem + serverPrivateKeyPem + certificateAuthorityPem
+
   fun writeTLSData(stream: OutputStream) {
     stream.writer().use { writer ->
-      writer.write(serverCertificatePem)
-      writer.write(serverPrivateKeyPem)
-      writer.write(certificateAuthorityPem)
+      writer.write(serverBootstrapPem())
       writer.flush()
     }
   }
