@@ -19,7 +19,7 @@ public class CompletionTest extends CodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/plugins/tasks/tasks-tests/testData/jira/jql/completion";
+    return "/plugins/tasks/tests/base/testData/jira/jql/completion";
   }
 
   private String getTestFilePath() {

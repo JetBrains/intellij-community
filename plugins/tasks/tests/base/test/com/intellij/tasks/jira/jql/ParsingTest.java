@@ -76,6 +76,6 @@ public class ParsingTest extends ParsingTestCase {
   @Override
   protected String getTestDataPath() {
     // trailing slash will be inserted in superclass constructor
-    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/plugins/tasks/tasks-tests/testData/jira/jql";
+    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/plugins/tasks/tests/base/testData/jira/jql";
   }
 }

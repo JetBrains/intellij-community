@@ -42,6 +42,9 @@
     <orderEntry type="module" module-name="intellij.kotlin.onboarding.gradle.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.svn.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tasks.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tasks.tests.integration" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tasks.tests.live" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tasks.tests.vcs" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.dom.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.langInjection.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.tests" scope="TEST" />

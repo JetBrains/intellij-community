@@ -37,7 +37,7 @@ public class EditorsContextTest extends FileEditorManagerTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/plugins/tasks/tasks-tests/testData/context";
+    return "/plugins/tasks/tests/base/testData/context";
   }
 
   @Override

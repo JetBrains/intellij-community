@@ -2034,7 +2034,10 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-core/libraries/intellij.tasks.core.libraries.commonsDiscovery.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-core/libraries/intellij.tasks.core.libraries.commonsDiscovery.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-java/intellij.tasks.java.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-java/intellij.tasks.java.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-core/jira/intellij.tasks.jira.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-core/jira/intellij.tasks.jira.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-tests/intellij.tasks.tests.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-tests/intellij.tasks.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tests/base/intellij.tasks.tests.iml" filepath="$PROJECT_DIR$/plugins/tasks/tests/base/intellij.tasks.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tests/integration/intellij.tasks.tests.integration.iml" filepath="$PROJECT_DIR$/plugins/tasks/tests/integration/intellij.tasks.tests.integration.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tests/live/intellij.tasks.tests.live.iml" filepath="$PROJECT_DIR$/plugins/tasks/tests/live/intellij.tasks.tests.live.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tests/vcs/intellij.tasks.tests.vcs.iml" filepath="$PROJECT_DIR$/plugins/tasks/tests/vcs/intellij.tasks.tests.vcs.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-core/trac/intellij.tasks.trac.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-core/trac/intellij.tasks.trac.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/terminal/intellij.terminal.iml" filepath="$PROJECT_DIR$/plugins/terminal/intellij.terminal.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/terminal/backend/intellij.terminal.backend.iml" filepath="$PROJECT_DIR$/plugins/terminal/backend/intellij.terminal.backend.iml" />

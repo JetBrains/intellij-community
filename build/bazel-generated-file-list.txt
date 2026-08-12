@@ -1626,7 +1626,10 @@ plugins/tasks/tasks-core/jira
 plugins/tasks/tasks-core/libraries
 plugins/tasks/tasks-core/trac
 plugins/tasks/tasks-java
-plugins/tasks/tasks-tests
+plugins/tasks/tests/base
+plugins/tasks/tests/integration
+plugins/tasks/tests/live
+plugins/tasks/tests/vcs
 plugins/terminal
 plugins/terminal/backend
 plugins/terminal/cloud
