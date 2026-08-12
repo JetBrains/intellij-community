@@ -19,6 +19,21 @@ class MarkdownIncorrectTableFormattingInspectionQuickFixTest: LightPlatformCodeI
   private val reformatIntentionFixText
     get() = MarkdownBundle.message("markdown.reformat.table.intention.text")
 
+  private val fixCellAlignmentIntentionText
+    get() = MarkdownBundle.message("markdown.fix.cell.alignment.intention.text")
+
+  @Test
+  fun `reformat intention is available without inspection`() {
+    myFixture.configureByText("some.md", "| first | second |\n|---|---|")
+    assertNotNull(myFixture.availableIntentions.find { it.text == reformatIntentionFixText })
+  }
+
+  @Test
+  fun `fix cell alignment intention is available without inspection`() {
+    myFixture.configureByText("some.md", "| first |\n|------:|\n| some  <caret>|")
+    assertNotNull(myFixture.availableIntentions.find { it.text == fixCellAlignmentIntentionText })
+  }
+
   @Test
   fun `works with incorrectly formatted cell`() {
     // language=Markdown

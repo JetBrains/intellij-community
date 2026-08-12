@@ -131,6 +131,19 @@
 
     <intentionAction>
       <language>Markdown</language>
+      <className>org.intellij.plugins.markdown.editor.tables.intentions.ReformatTableIntention</className>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <language>Markdown</language>
+      <className>org.intellij.plugins.markdown.editor.tables.intentions.FixCellAlignmentIntention</className>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>Markdown</language>
       <className>org.intellij.plugins.markdown.editor.tables.intentions.MarkdownInsertTableColumnIntention$InsertBefore</className>
       <bundleName>messages.MarkdownBundle</bundleName>
       <categoryKey>markdown.intention.category</categoryKey>

@@ -16,14 +16,14 @@ import org.jetbrains.annotations.Nls
        storages = [(Storage("markdown.xml"))])
 class MarkdownCodeInsightSettings: SimplePersistentStateComponent<MarkdownCodeInsightSettings.State>(State()) {
   class State: BaseState() {
-    var reformatTablesOnType: Boolean by property(true)
+    var reformatTablesOnType: Boolean by property(false)
     var insertHtmlLineBreakInsideTables: Boolean by property(true)
     var insertNewTableRowOnShiftEnter: Boolean by property(true)
     var useTableCellNavigation: Boolean by property(true)
     var adjustListIndentation: Boolean by property(true)
     var smartEnterAndBackspace: Boolean by property(true)
     var renumberListsOnType: Boolean by property(false)
-    var listNumberingType by enum(ListNumberingType.SEQUENTIAL)
+    var listNumberingType: ListNumberingType by enum(ListNumberingType.SEQUENTIAL)
     var enableFileDrop: Boolean by property(true)
   }
 
