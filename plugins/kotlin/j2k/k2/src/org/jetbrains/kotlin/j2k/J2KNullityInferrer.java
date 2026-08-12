@@ -477,6 +477,12 @@ public class J2KNullityInferrer {
         return nullableTypes.contains(unwrappedType);
     }
 
+    private boolean isNotNullTypeOrElement(@Nullable PsiType type) {
+        if (isNotNull(type)) return true;
+        return type instanceof PsiClassReferenceType classReferenceType
+               && notNullElements.contains(classReferenceType.getReference());
+    }
+
     private static @NotNull PsiType unwrap(@NotNull PsiType type) {
         if (type instanceof PsiCapturedWildcardType capturedWildcardType) {
             return unwrap(capturedWildcardType.getWildcard());
@@ -680,6 +686,21 @@ public class J2KNullityInferrer {
                 }
             }
             return expression.getType();
+        }
+
+        private static @Nullable PsiType getReceiverTypeArgument(@NotNull PsiCall call, @Nullable PsiType declaredType) {
+            if (!(declaredType instanceof PsiClassType classType) || !(classType.resolve() instanceof PsiTypeParameter typeParameter)) {
+                return null;
+            }
+            if (!(call instanceof PsiMethodCallExpression methodCall)) return null;
+            PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
+            if (qualifier == null) return null;
+            if (!(getReferenceType(qualifier) instanceof PsiClassType qualifierType)) return null;
+            if (!(typeParameter.getOwner() instanceof PsiClass ownerClass) || qualifierType.resolve() != ownerClass) return null;
+
+            int index = ArrayUtil.indexOf(ownerClass.getTypeParameters(), typeParameter);
+            PsiType[] typeArguments = qualifierType.getParameters();
+            return index >= 0 && index < typeArguments.length ? typeArguments[index] : null;
         }
 
         private void unifyGenericNullabilityWithPsiContext(@Nullable PsiType type1, @Nullable PsiType type2) {
@@ -920,12 +941,14 @@ public class J2KNullityInferrer {
 
             PsiType variableType = variable.getType();
             PsiType parameterType = resolvedToParam.getType();
+            PsiType receiverTypeArgument = getReceiverTypeArgument(call, parameterType);
 
-            unifyGenericNullability(variableType, parameterType);
+            unifyGenericNullability(variableType, receiverTypeArgument == null ? parameterType : receiverTypeArgument);
 
             if (!updateRawNullability) return false;
 
             if (isNotNull(resolvedToParam) ||
+                isNotNullTypeOrElement(receiverTypeArgument) ||
                 (variableType instanceof PsiArrayType && !isVarArgs(variable) && isVarArgs(resolvedToParam))) {
                 // In the case of varargs in Kotlin, the spread operator needs to be applied to a not-null array
                 registerNotNullAnnotation(variable);
@@ -989,7 +1012,7 @@ public class J2KNullityInferrer {
             PsiType fieldType = field.getType();
             if (fieldType instanceof PsiPrimitiveType) return;
 
-            org.jetbrains.kotlin.j2k.Nullability extensionNullability = J2KNullabilityInferenceExtension.getNullability(field);
+            org.jetbrains.kotlin.j2k.Nullability extensionNullability = getNullability(field);
             if (extensionNullability != null) {
                 applyExtensionNullability(field, extensionNullability);
                 return;
