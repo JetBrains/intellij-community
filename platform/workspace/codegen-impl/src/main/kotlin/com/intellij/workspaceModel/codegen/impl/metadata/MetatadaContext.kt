@@ -32,7 +32,13 @@ import com.intellij.workspaceModel.codegen.impl.writer.getAllPropertiesWithOwnEx
  * old method is [com.intellij.workspaceModel.codegen.impl.metadata.old.metadataStorageImplCode]
  */
 fun GeneratorContext.metadataImpl(targetModule: CompiledObjModule, allModules: List<CompiledObjModule>): String {
-  val metadataContext = MetadataContextImpl(this)
+  val metadataContext: MetadataContext = if (!testModeEnabled) {
+    MetadataContextImpl(this)
+  }
+  else {
+    MetadataContextImplForTest(this)
+  }
+
   return metadataContext.metadata(targetModule, allModules)
 }
 
@@ -40,18 +46,21 @@ interface MetadataContext : GeneratorContext {
   fun buildPrimitiveValueType(valueType: ValueType<*>, isNullable: Boolean): String
 
   fun buildJvmClassValueType(valueTypeJvmClass: ValueType.JvmClass<*>, isNullable: Boolean): String
-  
+
   fun reportError(message: String)
+
+  fun metadata(targetModule: CompiledObjModule, allModules: List<CompiledObjModule>): String
 }
 
-private class MetadataContextImpl(private val parentContext: GeneratorContext) : MetadataContext, GeneratorContext by parentContext {
+private open class MetadataContextImpl(private val parentContext: GeneratorContext) : MetadataContext, GeneratorContext by parentContext {
+  // fqns are in double quotes
   private val fqnsForInitializeMetadata: MutableSet<String> = linkedSetOf()
   private val fqnsForInitializeHash: MutableSet<String> = linkedSetOf()
   private val primitiveTypesMetadata = linkedSetOf<PrimitiveMetadata>()
-  private val typeFqnToMetadata = mutableMapOf<String, String>()
+  protected val typeFqnToMetadata = mutableMapOf<String, String>()
   private var anyObjClassForErrorReporting: ObjClass<*>? = null
 
-  override fun reportError(message: String) {
+  final override fun reportError(message: String) {
     val objClass = anyObjClassForErrorReporting ?: error("""
         Metadata generation encountered an error: $message. 
         Note: there are no entities to specify problem location.
@@ -63,13 +72,13 @@ private class MetadataContextImpl(private val parentContext: GeneratorContext) :
     ))
   }
 
-  override fun buildPrimitiveValueType(valueType: ValueType<*>, isNullable: Boolean): String {
+  final override fun buildPrimitiveValueType(valueType: ValueType<*>, isNullable: Boolean): String {
     val primitiveMetadata = PrimitiveMetadata(valueType.javaPrimitiveType, isNullable)
     primitiveTypesMetadata.add(primitiveMetadata)
     return primitiveMetadata.getVariableName()
   }
 
-  override fun buildJvmClassValueType(valueTypeJvmClass: ValueType.JvmClass<*>, isNullable: Boolean): String {
+  final override fun buildJvmClassValueType(valueTypeJvmClass: ValueType.JvmClass<*>, isNullable: Boolean): String {
     return getCustomTypeConstructor(isNullable, getClassMetadata(valueTypeJvmClass))
   }
 
@@ -90,21 +99,25 @@ private class MetadataContextImpl(private val parentContext: GeneratorContext) :
     }
   }
 
+  protected open fun computeMetadataHash(typeFqn: String): Int? {
+    val metadata = typeFqnToMetadata[typeFqn] ?: run {
+      reportError("Metadata hash generation failed for $typeFqn: no metadata found")
+      return null
+    }
+    return metadata.hashCode()
+  }
+
   private fun CodeContext.initializeMetadataHash() {
     section("override fun initializeMetadataHash()") {
       for (typeFqn in fqnsForInitializeHash) {
-        // TODO: we need special hash for tests!
-        val metadataHash = typeFqnToMetadata[typeFqn]?.hashCode() ?: run {
-          reportError("Metadata hash generation failed for $typeFqn")
-          continue
-        }
+        val metadataHash = computeMetadataHash(typeFqn) ?: continue
         +"${MetadataStorage.addMetadataHash}(typeFqn = $typeFqn, metadataHash = $metadataHash)"
       }
     }
   }
 
   // TODO: this just follows old logic, could be better
-  fun metadata(targetModule: CompiledObjModule, allModules: List<CompiledObjModule>): String {
+  final override fun metadata(targetModule: CompiledObjModule, allModules: List<CompiledObjModule>): String {
     val types = allModules.flatMap { it.types }
     types.firstOrNull()?.let { anyObjClassForErrorReporting = it }
     val abstractClasses = allModules.flatMap { it.abstractTypes }
@@ -139,7 +152,7 @@ private class MetadataContextImpl(private val parentContext: GeneratorContext) :
       fqnsForInitializeMetadata.add(name)
     }
   }
-  
+
   private fun processEntity(entity: ObjClass<*>) {
     val name = getFullName(entity)
     val metadata = entityMetadata(entity)
@@ -209,14 +222,14 @@ private class MetadataContextImpl(private val parentContext: GeneratorContext) :
     getOrComputeMetadata(valueTypeFinalClass) { name ->
       getClassMetadataConstructor(name,
                                   supertypes = getSuperClasses(valueTypeFinalClass),
-                                  properties = valueTypeFinalClass.properties.map { buildPropertyMetadata(it) })
+                                  properties = valueTypeFinalClass.properties.mapNotNull { buildPropertyMetadata(it) })
     }
 
   private fun objectMetadata(valueTypeObject: ValueType.Object<*>): String =
     getOrComputeMetadata(valueTypeObject) { name ->
       getObjectMetadataConstructor(name,
                                    supertypes = getSuperClasses(valueTypeObject),
-                                   properties = valueTypeObject.properties.map { buildPropertyMetadata(it) })
+                                   properties = valueTypeObject.properties.mapNotNull { buildPropertyMetadata(it) })
     }
 
   private fun enumMetadata(valueTypeEnum: ValueType.Enum<*>): String =
@@ -224,7 +237,7 @@ private class MetadataContextImpl(private val parentContext: GeneratorContext) :
       getEnumClassMetadataConstructor(name,
                                       supertypes = getSuperClasses(valueTypeEnum),
                                       values = allWithDoubleQuotesAndEscapedDollar(valueTypeEnum.values),
-                                      properties = valueTypeEnum.properties.map { buildPropertyMetadata(it) })
+                                      properties = valueTypeEnum.properties.mapNotNull { buildPropertyMetadata(it) })
     }
 
   private fun entityMetadata(objClass: ObjClass<*>): String {
@@ -235,17 +248,30 @@ private class MetadataContextImpl(private val parentContext: GeneratorContext) :
       fqName = name,
       entityDataFqName = getJavaFullName(objClass.javaDataName, objClass.module.implPackage),
       supertypes = objClass.allSuperClasses.map { getFullName(it) },
-      properties = getAllPropertiesWithOwnExtensions(objClass).map { buildPropertyMetadata(it) },
+      properties = getAllPropertiesWithOwnExtensions(objClass).mapNotNull { buildPropertyMetadata(it) },
       extProperties = objClass.module.extensions
         .filter {
           val unwrapped = unwrapReferenceType(it.valueType)
           // isEntityRef == true && unwrapped == null should be impossible
           it.valueType.isEntityRef(it) && unwrapped != null && unwrapped.target == objClass
         }
-        .map { buildPropertyMetadata(it) },
+        .mapNotNull { buildPropertyMetadata(it) },
       isAbstract = objClass.isAbstract
     )
     typeFqnToMetadata[name] = newMetadata
     return newMetadata
+  }
+}
+
+private class MetadataContextImplForTest(parentContext: GeneratorContext) : MetadataContextImpl(parentContext) {
+  private val cachePackage: String = "cacheVersion"
+  private val currentPackage: String = "currentVersion"
+
+  override fun computeMetadataHash(typeFqn: String): Int? {
+    val metadata = typeFqnToMetadata[typeFqn] ?: run {
+      reportError("Metadata hash generation failed for $typeFqn: no metadata found")
+      return null
+    }
+    return metadata.replace(cachePackage, currentPackage).hashCode()
   }
 }

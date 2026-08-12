@@ -17,8 +17,10 @@ import com.intellij.workspaceModel.codegen.impl.writer.extensions.isComputable
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isEntityRef
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.unwrapReferenceType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.withDefault
+import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdFieldName
 
-fun MetadataContext.buildPropertyMetadata(obj: TypeProperty<*>): String {
+fun MetadataContext.buildPropertyMetadata(obj: TypeProperty<*>): String? {
+  if (obj is ObjProperty<*,*> && obj.isComputable && obj.name != symbolicIdFieldName) return null
   return when (obj) {
     is OwnProperty<*, *> -> {
       buildOwnPropertyMetadata(obj)
@@ -33,7 +35,7 @@ fun MetadataContext.buildPropertyMetadata(obj: TypeProperty<*>): String {
       buildClassPropertyMetadata(obj)
     }
     else -> {
-
+      reportError("Unknown property type for ${obj.name}: ${obj.javaClass.name}")
       ""
     }
   }
