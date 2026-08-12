@@ -8,6 +8,6 @@ data class BenchmarkAnalysisResult(
   val change: Perfolizer.Collation,
   val canRetry: Boolean
 ) {
-  fun withMuteReasons(additionalMuteReasons: List<String>) =
+  fun withMuteReasons(additionalMuteReasons: List<String>): BenchmarkAnalysisResult =
     BenchmarkAnalysisResult(history, current, verdict, muteReasons + additionalMuteReasons, change, canRetry)
 }

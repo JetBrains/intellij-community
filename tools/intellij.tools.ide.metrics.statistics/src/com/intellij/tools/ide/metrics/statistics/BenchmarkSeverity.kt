@@ -23,12 +23,12 @@ enum class BenchmarkSeverity(val score: Int) {
   SEVERE(3);
 
   companion object {
-    fun create(score: Int) = entries.firstOrNull { it.score == score }
-                             ?: throw IllegalArgumentException("Invalid value for score: $score")
+    fun create(score: Int): BenchmarkSeverity = entries.firstOrNull { it.score == score }
+                                                                                          ?: throw IllegalArgumentException("Invalid value for score: $score")
   }
 
   /**
    * True if we are quite confident that the performance changes are real
    */
-  fun isSubstantial() = this.score >= MODERATE.score
+  fun isSubstantial(): Boolean = this.score >= MODERATE.score
 }

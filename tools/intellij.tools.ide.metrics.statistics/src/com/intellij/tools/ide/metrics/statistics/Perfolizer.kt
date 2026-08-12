@@ -41,8 +41,8 @@ object Perfolizer {
       return ((value + base - 1) / base) * base
     }
 
-    fun roundDown(value: Double) = roundDown(value.toLong())
-    fun roundUp(value: Double) = roundUp(value.toLong())
+    fun roundDown(value: Double): Long = roundDown(value.toLong())
+    fun roundUp(value: Double): Long = roundUp(value.toLong())
   }
 
   fun List<Double>.whichMax(start: Int, length: Int): Int {
@@ -77,8 +77,8 @@ object Perfolizer {
     return minIndex
   }
 
-  fun List<Double>.whichMax() = this.whichMax(0, size)
-  fun List<Double>.whichMin() = this.whichMin(0, size)
+  fun List<Double>.whichMax(): Int = this.whichMax(0, size)
+  fun List<Double>.whichMin(): Int = this.whichMin(0, size)
 
   fun round(value: Double, precision: Int): Double {
     val factor = 10.0.pow(precision)
@@ -88,7 +88,7 @@ object Perfolizer {
   class Sample(val values: List<Double>, weights: List<Double>) {
     constructor(values: List<Double>) : this(values, List(values.size) { 1.0 })
 
-    val size get() = values.size
+    val size: Int get() = values.size
 
     /**
      * Kish's effective sample size
@@ -97,8 +97,8 @@ object Perfolizer {
      * * L. Kish “Survey sampling” (1965) // Publisher: John Wiley & Sons, Inc., New York, London. ISBN: 0-471-10949-5.
      * * Andrey Akinshin “Weighted quantile estimators” (2023) https://arxiv.org/abs/2304.07265
      */
-    val weightedSize = weights.sum().pow(2) / weights.sumOf { it * it }
-    val indices get() = values.indices
+    val weightedSize: Double = weights.sum().pow(2) / weights.sumOf { it * it }
+    val indices: IntRange get() = values.indices
 
     val weights: List<Double>
     val sortedValues: List<Double>
@@ -164,8 +164,8 @@ object Perfolizer {
       return if (x > 0.0) (z + 1.0) / 2 else (1.0 - z) / 2
     }
 
-    fun clamp(value: Int, min: Int, max: Int) = value.coerceAtLeast(min).coerceAtMost(max)
-    fun clamp(value: Double, min: Int, max: Int) = value.coerceAtLeast(min.toDouble()).coerceAtMost(max.toDouble())
+    fun clamp(value: Int, min: Int, max: Int): Int = value.coerceAtLeast(min).coerceAtMost(max)
+    fun clamp(value: Double, min: Int, max: Int): Double = value.coerceAtLeast(min.toDouble()).coerceAtMost(max.toDouble())
 
     fun binomialCoefficient(n: Int, k: Int): Long {
       val maxN = 65
@@ -286,7 +286,7 @@ object Perfolizer {
 
   data class ConfidenceInterval(val estimation: Double, val lower: Double, val upper: Double) {
     companion object {
-      val NaN = ConfidenceInterval(Double.NaN, Double.NaN, Double.NaN)
+      val NaN: ConfidenceInterval = ConfidenceInterval(Double.NaN, Double.NaN, Double.NaN)
     }
   }
 
@@ -476,7 +476,7 @@ object Perfolizer {
    * * Frank E Harrell, C E Davis “A new distribution-free quantile estimator” (1982) Biometrika. Vol. 69. No 3. Pp. 635–640. DOI: 10.1093/biomet/69.3.635
    */
   object HarrellDavisQuantileEstimator {
-    fun quantiles(sample: Sample, p: List<Double>) = p.map { this.quantile(sample, it) }.toList()
+    fun quantiles(sample: Sample, p: List<Double>): List<Double> = p.map { this.quantile(sample, it) }.toList()
 
     fun quantile(sample: Sample, p: Double): Double {
       data class Item(val value: Double, val weight: Double)
@@ -540,9 +540,9 @@ object Perfolizer {
       return result
     }
 
-    fun quantiles(sample: Sample, ps: List<Double>) = ps.map { p -> quantile(sample, p) }
+    fun quantiles(sample: Sample, ps: List<Double>): List<Double> = ps.map { p -> quantile(sample, p) }
 
-    fun median(x: Sample) = quantile(x, 0.5)
+    fun median(x: Sample): Double = quantile(x, 0.5)
   }
 
   object CdfEstimator {
@@ -647,18 +647,18 @@ object Perfolizer {
 
   // https://aakinshin.net/posts/scale-measure-for-discrete-case/
   object DefenstiveScaleCorrector {
-    fun scale(originalScale: Double, resolution: Double) = sqrt(originalScale.pow(2) + resolution.pow(2))
+    fun scale(originalScale: Double, resolution: Double): Double = sqrt(originalScale.pow(2) + resolution.pow(2))
   }
 
 
   class DensityHistogramBin(val lower: Double, val upper: Double, val height: Double) {
-    val middle = (lower + upper) / 2
-    override fun toString() = "[$lower .. $upper] / H=$height"
+    val middle: Double = (lower + upper) / 2
+    override fun toString(): String = "[$lower .. $upper] / H=$height"
   }
 
   class DensityHistogram(val bins: List<DensityHistogramBin>) {
-    val globalLower = bins.first().lower
-    val globalUpper = bins.last().upper
+    val globalLower: Double = bins.first().lower
+    val globalUpper: Double = bins.last().upper
   }
 
   /**
@@ -688,7 +688,7 @@ object Perfolizer {
 
   class RangedMode(val location: Double, val left: Double, val right: Double, val sample: Sample)
   class ModalityData(val modes: List<RangedMode>, val histogram: DensityHistogram) {
-    val modality = modes.size
+    val modality: Int = modes.size
   }
 
   /**
@@ -825,18 +825,18 @@ object Perfolizer {
                          val pValue6: Double,
                          val pValue9: Double) {
     companion object {
-      val NaN = PValueBunch(Double.NaN, Double.NaN, Double.NaN, Double.NaN)
+      val NaN: PValueBunch = PValueBunch(Double.NaN, Double.NaN, Double.NaN, Double.NaN)
 
-      fun createSingle(value: Double) = PValueBunch(value, Double.NaN, Double.NaN, Double.NaN)
+      fun createSingle(value: Double): PValueBunch = PValueBunch(value, Double.NaN, Double.NaN, Double.NaN)
     }
 
-    fun isAnyLessThan(other: PValueBunch) =
+    fun isAnyLessThan(other: PValueBunch): Boolean =
       pValue0 < other.pValue0 ||
       pValue3 < other.pValue3 ||
       pValue6 < other.pValue6 ||
       pValue9 < other.pValue9
 
-    fun isAllLessThan(other: PValueBunch) =
+    fun isAllLessThan(other: PValueBunch): Boolean =
       (pValue0 < other.pValue0 || other.pValue0.isNaN()) &&
       (pValue3 < other.pValue3 || other.pValue3.isNaN()) &&
       (pValue6 < other.pValue6 || other.pValue6.isNaN()) &&
@@ -851,14 +851,14 @@ object Perfolizer {
     val greater: PValueBunch,
     val lesser: PValueBunch) {
 
-    fun isAbove(threshold: Collation) =
+    fun isAbove(threshold: Collation): Boolean =
       shift.absoluteValue > threshold.shift &&
       ratio.absoluteValue > threshold.ratio &&
       effectSize.absoluteValue > threshold.effectSize &&
       (greater.isAllLessThan(threshold.greater) || lesser.isAllLessThan(threshold.lesser))
 
     companion object {
-      val NaN = Collation(Double.NaN, Double.NaN, Double.NaN, PValueBunch.NaN, PValueBunch.NaN)
+      val NaN: Collation = Collation(Double.NaN, Double.NaN, Double.NaN, PValueBunch.NaN, PValueBunch.NaN)
     }
   }
 

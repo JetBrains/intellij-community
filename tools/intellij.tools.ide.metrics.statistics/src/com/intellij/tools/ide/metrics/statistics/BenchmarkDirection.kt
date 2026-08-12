@@ -6,10 +6,10 @@ enum class BenchmarkDirection(val sign: Int) {
   SLOWER(1);
 
   companion object {
-    fun create(sign: Int) = BenchmarkDirection.entries.firstOrNull { it.sign == sign }
-                            ?: throw IllegalArgumentException("Invalid value for sign: $sign")
+    fun create(sign: Int): BenchmarkDirection = BenchmarkDirection.entries.firstOrNull { it.sign == sign }
+                                                                                          ?: throw IllegalArgumentException("Invalid value for sign: $sign")
   }
 
-  fun isAcceleration() = this == FASTER
-  fun isDegradation() = this == SLOWER
+  fun isAcceleration(): Boolean = this == FASTER
+  fun isDegradation(): Boolean = this == SLOWER
 }

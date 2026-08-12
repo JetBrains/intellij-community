@@ -6,7 +6,7 @@ import kotlin.math.round
 import kotlin.math.roundToInt
 
 open class CompareInterval(val min: Double, val max: Double) {
-  val middle get() = (max - min) / 2
+  val middle: Double get() = (max - min) / 2
 
   companion object {
     private fun calcPercentile(sortedValues: List<Double>, percentile: Int): Double {
@@ -35,13 +35,13 @@ open class CompareInterval(val min: Double, val max: Double) {
 
 class RatioInterval(min: Double, max: Double) : CompareInterval(min, max) {
   companion object {
-    fun calc(a: List<Double>, b: List<Double>) = calc(a, b) { pa, pb -> pb / pa }?.let { RatioInterval(it.min, it.max) }
+    fun calc(a: List<Double>, b: List<Double>): RatioInterval? = calc(a, b) { pa, pb -> pb / pa }?.let { RatioInterval(it.min, it.max) }
   }
 }
 
 class ShiftInterval(min: Double, max: Double) : CompareInterval(min, max) {
   companion object {
-    fun calc(a: List<Double>, b: List<Double>) = calc(a, b) { pa, pb -> pb - pa }?.let { ShiftInterval(it.min, it.max) }
+    fun calc(a: List<Double>, b: List<Double>): ShiftInterval? = calc(a, b) { pa, pb -> pb - pa }?.let { ShiftInterval(it.min, it.max) }
   }
 }
 
