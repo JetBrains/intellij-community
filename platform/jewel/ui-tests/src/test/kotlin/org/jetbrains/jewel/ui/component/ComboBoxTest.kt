@@ -2,12 +2,18 @@
 package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertHeightIsEqualTo
@@ -21,8 +27,10 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.size
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
+import org.jetbrains.jewel.ui.component.interactions.performKeyPress
 import org.junit.Rule
 import org.junit.Test
 
@@ -34,6 +42,38 @@ class ComboBoxTest {
 
     private val comboBox: SemanticsNodeInteraction
         get() = composeRule.onNodeWithTag("ComboBox")
+
+    @Test
+    fun `escape closes popup without propagating to parent`() {
+        var receivedEscape = false
+        composeRule.setContent {
+            IntUiTheme {
+                Box(
+                    modifier =
+                        Modifier.onKeyEvent {
+                            if (it.type == KeyEventType.KeyDown && it.key == Key.Escape) {
+                                receivedEscape = true
+                            }
+                            false
+                        }
+                ) {
+                    ComboBox(
+                        labelText = "Just a label",
+                        modifier = Modifier.testTag("ComboBox"),
+                        popupContent = { Text("Popup content") },
+                    )
+                }
+            }
+        }
+
+        comboBox.performClick()
+        popupMenu.assertIsDisplayed()
+
+        comboBox.performKeyPress(Key.Escape, rule = composeRule)
+
+        popupMenu.assertDoesNotExist()
+        assertFalse(receivedEscape)
+    }
 
     @Test
     fun `popup width can be bigger than combo box width when nothing is set`() {

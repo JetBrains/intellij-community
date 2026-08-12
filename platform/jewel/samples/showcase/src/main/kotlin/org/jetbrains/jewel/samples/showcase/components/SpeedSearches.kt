@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -18,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,6 +37,8 @@ import org.jetbrains.jewel.foundation.lazy.tree.rememberTreeState
 import org.jetbrains.jewel.foundation.search.filter
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.util.JewelLogger
+import org.jetbrains.jewel.ui.Orientation
+import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.GroupHeader
 import org.jetbrains.jewel.ui.component.InlineWarningBanner
 import org.jetbrains.jewel.ui.component.SimpleListItem
@@ -41,6 +46,7 @@ import org.jetbrains.jewel.ui.component.SpeedSearchArea
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.VerticalScrollbar
 import org.jetbrains.jewel.ui.component.rememberSpeedSearchState
+import org.jetbrains.jewel.ui.component.search.SpeedSearchableComboBox
 import org.jetbrains.jewel.ui.component.search.SpeedSearchableLazyColumn
 import org.jetbrains.jewel.ui.component.search.SpeedSearchableTree
 import org.jetbrains.jewel.ui.component.search.highlightSpeedSearchMatches
@@ -62,8 +68,15 @@ internal fun SpeedSearches(modifier: Modifier = Modifier) {
                 Modifier.widthIn(max = 200.dp).weight(1f, fill = false).semantics { isTraversalGroup = true },
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                GroupHeader(text = "Combo box", modifier = Modifier.fillMaxWidth())
+                SpeedSearchComboBoxExample()
+
+                Spacer(Modifier.height(8.dp))
+                Divider(Orientation.Horizontal, Modifier.fillMaxWidth())
+                Spacer(Modifier.height(8.dp))
+
                 GroupHeader(text = "Tree", modifier = Modifier.fillMaxWidth())
-                SpeedSearchTreeExample()
+                SpeedSearchTreeExample(Modifier.weight(1f))
             }
 
             Column(
@@ -82,6 +95,20 @@ internal fun SpeedSearches(modifier: Modifier = Modifier) {
                 SpeedSearchListWithFiltering()
             }
         }
+    }
+}
+
+@Composable
+private fun SpeedSearchComboBoxExample(modifier: Modifier = Modifier) {
+    var selectedIndex by remember { mutableIntStateOf(0) }
+
+    SpeedSearchArea(modifier) {
+        SpeedSearchableComboBox(
+            items = TEST_LIST,
+            selectedIndex = selectedIndex,
+            onSelectedItemChange = { selectedIndex = it },
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 

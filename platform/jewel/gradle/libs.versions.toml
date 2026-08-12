@@ -22,6 +22,7 @@ ktfmtGradlePlugin = "0.23.0"
 metalava = "1.0.0-alpha13"
 jsoup = "1.21.2"
 mockk = "1.14.5"
+spectre = "0.5.0"
 
 [libraries]
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertJ"}
@@ -52,6 +53,8 @@ ktor-client-java = { module = "io.ktor:ktor-client-java", version = "3.0.3" }
 metalava = { module = "com.android.tools.metalava:metalava", version.ref = "metalava" }
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+spectre-core = { module = "dev.sebastiano.spectre:spectre-core", version.ref = "spectre" }
+spectre-testing = { module = "dev.sebastiano.spectre:spectre-testing", version.ref = "spectre" }
 
 # Plugin libraries for build-logic's convention plugins to use to resolve the types/tasks coming from these plugins
 detekt-gradlePlugin = { module = "dev.detekt:detekt-gradle-plugin", version.ref = "detekt" }
