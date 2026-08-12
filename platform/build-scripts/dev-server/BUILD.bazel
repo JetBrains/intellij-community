@@ -1,3 +1,4 @@
+load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.buildScripts.devBuildServer` start
@@ -90,3 +91,12 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.buildScripts.devBuildServer` end
+
+# Assembles a dev distribution into a directory given by the caller.
+# This base binary carries no product `ProductProperties` and no jar runfiles - a per-product wrapper adds them.
+java_binary(
+    name = "dev-dist-assembler",
+    main_class = "org.jetbrains.intellij.build.devServer.DevDistMain",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":buildScripts-devBuildServer"],
+)
