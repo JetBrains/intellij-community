@@ -74,7 +74,6 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     holder.requestId = event.request.requestId
 
     val container = InlineCompletionLogsContainer.create(event.request.editor)
-    container.addProject(event.request.editor.project)
     container.add(REQUEST_ID with event.request.requestId)
     container.add(COMPLETION_ID with event.request.requestId.toString())
     container.add(REQUEST_EVENT with event.request.event.javaClass)
@@ -179,7 +178,8 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
         }
       }
     }
-    container.logCurrent(CustomRequestIdLogger.remove(editor)) // see doc of this function, it's very fast, and we should wait for its completion
+    // see doc of this function, it's very fast, and we should wait for its completion
+    container.logCurrent(editor.project, CustomRequestIdLogger.remove(editor))
 
     // `SELECTED` case is handled in the afterInsert case
     if (event.finishType != InlineCompletionUsageTracker.ShownEvents.FinishType.SELECTED) {

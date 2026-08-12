@@ -5,7 +5,9 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEapSupport
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Phase
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.openapi.project.Project
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.common.timeoutRunBlocking
 import org.junit.Test
@@ -39,7 +41,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
       logsContainer.add(TestPhasedLogs.fullTestField with 1337)
 
       val logs = FUCollectorTestCase.collectLogEvents(recorder = "ML", parentDisposable = testRootDisposable, escapeChars = true) {
-        logsContainer.logCurrent()
+        logsContainer.logCurrent(project = null)
       }
 
       // expect both logs
@@ -67,7 +69,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
       logsContainer.add(TestPhasedLogs.fullTestField with 1337)
 
       val logs = FUCollectorTestCase.collectLogEvents(recorder = "ML", parentDisposable = testRootDisposable, escapeChars = true) {
-        logsContainer.logCurrent()
+        logsContainer.logCurrent(project = null)
       }
 
       // expect both logs
@@ -96,7 +98,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
       logsContainer.add(TestPhasedLogs.fullTestField with 1337)
 
       val logs = FUCollectorTestCase.collectLogEvents(recorder = "ML", parentDisposable = testRootDisposable, escapeChars = true) {
-        logsContainer.logCurrent()
+        logsContainer.logCurrent(project = null)
       }
 
       // expect both logs
@@ -157,7 +159,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
       logsContainer.add(TestPhasedLogs.basicTestField with 99)
 
       val logs = FUCollectorTestCase.collectLogEvents(recorder = "ML", parentDisposable = testRootDisposable, escapeChars = true) {
-        logsContainer.logCurrent()
+        logsContainer.logCurrent(project = null)
       }
 
       assertMaps(
@@ -168,6 +170,28 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
         ),
         logs.first().event.data
       )
+  }
+
+  /**
+   * The container lives in the editor user data and is captured by async logging jobs running on an application-level scope,
+   * so it must never hold a strong reference to a project: the project is passed to [InlineCompletionLogsContainer.logCurrent]
+   * instead. See LLM-17026.
+   */
+  @Test
+  fun testContainerDoesNotRetainProject() {
+    val logsContainer = InlineCompletionLogsContainer()
+    logsContainer.mockRandom(1f)
+    // Only a primitive field and no `addAsync` on purpose: `DebugReflectionUtil.isTrivial` treats only primitives, strings and
+    // arrays as trivial, so an `EventFields.Class` value would make LeakHunter walk the statics of the logged class, and a job
+    // left in `asyncAdds` would open a path into the application-level scope.
+    logsContainer.add(TestPhasedLogs.basicTestField with 42)
+
+    val logs = FUCollectorTestCase.collectLogEvents(recorder = "ML", parentDisposable = testRootDisposable, escapeChars = true) {
+      logsContainer.logCurrent(project)
+    }
+
+    assertNotNull("The project must still be reported in the FUS event", logs.first().event.data["project"])
+    LeakHunter.checkLeak(logsContainer, Project::class.java)
   }
 
   private fun withEap(isEAP: Boolean, action: () -> Unit) {
