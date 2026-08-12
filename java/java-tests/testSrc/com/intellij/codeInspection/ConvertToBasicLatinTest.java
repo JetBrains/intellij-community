@@ -38,6 +38,7 @@ public class ConvertToBasicLatinTest extends LightJavaCodeInsightFixtureTestCase
   public void testStringTemplate6() { doTest(); }
   public void testPlainComment() { doTest(); }
   public void testDocComment() { doTest(); }
+  public void testDocCommentEntities() { doTest(); }
   public void testDocTag() { doTest(); }
   public void testUnclosedStringLiteral() { doTest(); }
   public void testUnclosedPlainComment() { doTest(); }

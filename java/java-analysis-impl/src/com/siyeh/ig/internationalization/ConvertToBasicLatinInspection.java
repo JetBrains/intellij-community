@@ -3,13 +3,13 @@ package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.ide.highlighter.DTDFileType;
+import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiComment;
@@ -17,14 +17,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiFragment;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.ResourceUtil;
 import com.intellij.util.io.IOUtil;
 import com.intellij.xml.util.XmlUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -32,14 +34,15 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final Logger LOG = Logger.getInstance(ConvertToBasicLatinInspection.class);
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -129,13 +132,21 @@ public final class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalIn
   }
 
   private static class DocCommentHandler extends Handler {
+    /**
+     * The HTML 4 character entity sets, bundled with {@code intellij.xml.psi.impl}. They are plain
+     * {@code <!ENTITY name "&#NNN;">} declaration lists without external entity references, so they can be parsed
+     * standalone - unlike {@code xhtml1-transitional.dtd}, which only pulls them in as external parameter entities and
+     * therefore needs the whole XML resolve stack plus VFS access to the containing jar.
+     */
+    private static final String[] ENTITY_SETS = {"xhtml-lat1.ent", "xhtml-symbol.ent", "xhtml-special.ent"};
+
     private static Int2ObjectMap<String> ourEntities;
 
     @Override
     @NotNull
     PsiElement buildReplacement(@NotNull Project project, @NotNull PsiElement element) {
       loadEntities(project);
-      return ourEntities != null ? super.buildReplacement(project, element) : element;
+      return super.buildReplacement(project, element);
     }
 
     @Override
@@ -156,50 +167,52 @@ public final class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalIn
       return factory.createCommentFromText(newText, element.getParent());
     }
 
+    /**
+     * Collects the {@code character -> entity name} mapping. Never leaves {@link #ourEntities} unset: when the entity
+     * sets cannot be read or DTD support is not available (e.g. in the language server, which does not load the XML
+     * language), the map stays empty and {@link #convert} falls back to numeric character references.
+     */
     private static void loadEntities(@NotNull Project project) {
       if (ourEntities != null) return;
 
-      XmlFile file;
-      try {
-        String url = ExternalResourceManager.getInstance().getResourceLocation(XmlUtil.HTML4_LOOSE_URI, project);
-        if (url == null) {
-          Logger.getInstance(ConvertToBasicLatinInspection.class).error("Namespace not found: " + XmlUtil.HTML4_LOOSE_URI);
-          return;
-        }
-        VirtualFile vFile = VfsUtil.findFileByURL(new URL(url));
-        if (vFile == null) {
-          Logger.getInstance(ConvertToBasicLatinInspection.class).error("Resource not found: " + url);
-          ourEntities = new Int2ObjectOpenHashMap<>();
-          return;
-        }
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
-        if (!(psiFile instanceof XmlFile)) {
-          Logger.getInstance(ConvertToBasicLatinInspection.class).error("Unexpected resource: " + psiFile);
-          return;
-        }
-        file = (XmlFile)psiFile;
-      }
-      catch (MalformedURLException e) {
-        Logger.getInstance(ConvertToBasicLatinInspection.class).error(e);
-        return;
-      }
-
       Int2ObjectMap<String> entities = new Int2ObjectOpenHashMap<>();
       Pattern pattern = Pattern.compile("&#(\\d+);");
-      XmlUtil.processXmlElements(file, element -> {
-        if (element instanceof XmlEntityDecl entity) {
-          Matcher m = pattern.matcher(entity.getValueElement().getValue());
-          if (m.matches()) {
-            char i = (char)Integer.parseInt(m.group(1));
-            if (!isBasicLatin(i)) {
-              entities.put(i, entity.getName());
+      PsiFileFactory factory = PsiFileFactory.getInstance(project);
+      for (String name : ENTITY_SETS) {
+        String text = loadEntitySet(name);
+        if (text == null) continue;
+        PsiFile psiFile = factory.createFileFromText(name, DTDFileType.INSTANCE, text);
+        if (!(psiFile instanceof XmlFile file)) {
+          LOG.warn("DTD support is not available, falling back to numeric character references: " + psiFile);
+          break;
+        }
+        XmlUtil.processXmlElements(file, element -> {
+          if (element instanceof XmlEntityDecl entity) {
+            XmlAttributeValue value = entity.getValueElement();
+            if (value == null) return true;
+            Matcher m = pattern.matcher(value.getValue());
+            if (m.matches()) {
+              char i = (char)Integer.parseInt(m.group(1));
+              if (!isBasicLatin(i)) {
+                entities.put(i, entity.getName());
+              }
             }
           }
-        }
-        return true;
-      }, true);
+          return true;
+        }, true);
+      }
 
       ourEntities = entities;
+    }
+
+    private static @Nullable String loadEntitySet(@NotNull String name) {
+      String path = StringUtil.trimStart(ExternalResourceManagerEx.STANDARD_SCHEMAS, "/") + name;
+      byte[] bytes = ResourceUtil.getResourceAsBytesSafely(path, ExternalResourceManagerEx.class.getClassLoader());
+      if (bytes == null) {
+        LOG.warn("Resource not found: " + path);
+        return null;
+      }
+      return new String(bytes, StandardCharsets.UTF_8);
     }
   }
 

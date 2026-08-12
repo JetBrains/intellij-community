@@ -12,9 +12,6 @@
     <extensionPoint name="psi.batchReferenceProcessingSuppressor"
                     interface="com.intellij.psi.impl.PsiFileEx$BatchReferenceProcessingSuppressor"
                     dynamic="true"/>
-    <extensionPoint name="lang.ast.factory" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.lang.ASTFactory"/>
-    </extensionPoint>
     <extensionPoint name="controlFlowProvider" interface="com.intellij.codeInsight.controlflow.ControlFlowProvider" dynamic="true"/>
     <extensionPoint name="lang.tokenSeparatorGenerator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.TokenSeparatorGenerator"/>
