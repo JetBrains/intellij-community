@@ -22,6 +22,7 @@ import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.Badge
 import com.intellij.ui.components.JBList
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManagerEvent
@@ -283,7 +284,7 @@ internal class GitWorkingTreesContentPreloader(val project: Project) : ChangesVi
       isCloseable = true
       displayName = GitBundle.message("toolwindow.working.trees.tab.name")
       if (GitWorkingTreesNewBadgeUtil.shouldShowBadgeNew()) {
-        icon = AllIcons.General.New_badge
+        icon = Badge.new
         putUserData(ToolWindow.SHOW_CONTENT_ICON, true)
         putUserData(ToolWindowContentUi.NOT_SELECTED_TAB_ICON_TRANSPARENT, false)
         putUserData(Content.TAB_LABEL_ORIENTATION_KEY, ComponentOrientation.RIGHT_TO_LEFT)
