@@ -206,18 +206,18 @@ fun CodeInsightTestFixture.assertInjectedLanguage(langId: String?, vararg fragme
 }
 
 /**
- * Asserts that the injection host containing each of [referenceTexts] has a reference of type [referenceClass].
+ * Asserts that the injection host containing each of [fragmentTexts] has a reference of type [referenceClass].
  *
- * Each reference text is looked up in the document of the currently opened editor, and the host is taken at the offset in the middle of the
+ * Each fragment text is looked up in the document of the currently opened editor, and the host is taken at the offset in the middle of the
  * first occurrence: either the element there or its parent.
  */
-fun CodeInsightTestFixture.assertInjectedReference(referenceClass: Class<*>, vararg referenceTexts: String) {
+fun CodeInsightTestFixture.assertInjectedReference(referenceClass: Class<*>, vararg fragmentTexts: String) {
   runReadActionBlocking {
     val provider = file.viewProvider
     val documentText = editor.document.text
 
-    for (refText in referenceTexts) {
-      val pos = documentText.indexOf(refText) + refText.length / 2
+    for (fragmentText in fragmentTexts) {
+      val pos = documentText.indexOf(fragmentText) + fragmentText.length / 2
 
       val element = provider.findElementAt(pos)
       requireNotNull(element) { "There should be element at $pos" }
@@ -230,6 +230,34 @@ fun CodeInsightTestFixture.assertInjectedReference(referenceClass: Class<*>, var
 
       val reference = references.find { referenceClass.isInstance(it) }
       requireNotNull(reference) { "There should be reference of type ${referenceClass} in element" }
+    }
+  }
+}
+
+/**
+ * Asserts that no injection host containing any of [fragmentTexts] has references. Offsets are resolved as in [assertInjectedReference].
+ *
+ * Texts that do not resolve to an injection host at all are skipped, at least one [fragmentTexts] entry has to be provided.
+ */
+fun CodeInsightTestFixture.assertNoInjectedReference(vararg fragmentTexts: String) {
+  runReadActionBlocking {
+    if (fragmentTexts.isEmpty()) {
+      fail("At least one fragment text should be provided")
+    }
+
+    val provider = file.viewProvider
+    val documentText = editor.document.text
+
+    for (fragmentText in fragmentTexts) {
+      val pos = documentText.indexOf(fragmentText) + fragmentText.length / 2
+
+      val element = provider.findElementAt(pos)
+      requireNotNull(element) { "There should be element at $pos" }
+
+      val host = element as? PsiLanguageInjectionHost ?: element.parent as? PsiLanguageInjectionHost ?: continue
+
+      val references = host.references
+      assertTrue("There should be no references in element", references.isEmpty())
     }
   }
 }
