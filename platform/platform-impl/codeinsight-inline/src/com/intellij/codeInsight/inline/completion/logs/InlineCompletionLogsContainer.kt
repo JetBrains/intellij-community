@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
@@ -70,6 +71,7 @@ class InlineCompletionLogsContainer() {
   }
 
   private val asyncAdds = ConcurrentLinkedQueue<Job>()
+  private val asyncAddsClosed = AtomicBoolean(false)
 
   private suspend fun awaitAllAlreadyRunningAsyncAdds() {
     // A snapshot on purpose: wait only for the adds that are already running, and never remove a job here.
@@ -82,6 +84,8 @@ class InlineCompletionLogsContainer() {
   }
 
   private fun cancelAsyncAdds() {
+    // Close first, so a concurrent addAsync either stays visible in the queue or cancels itself before it can start.
+    asyncAddsClosed.set(true)
     while (true) {
       val job = asyncAdds.poll() ?: break
       job.cancel()
@@ -104,15 +108,25 @@ class InlineCompletionLogsContainer() {
 
   /**
    * Use [add] if there is no special need to use async variant. See [add] documentation for more info.
+   * Calls made after [logCurrent] are ignored because the container has already been finalized.
    */
   fun addAsync(block: suspend () -> List<EventPair<*>>) {
-    val job = InlineCompletionLogsScopeProvider.getInstance().cs.launch {
+    if (asyncAddsClosed.get()) return
+
+    // Start lazily so every running job is already visible to cancelAsyncAdds.
+    val job = InlineCompletionLogsScopeProvider.getInstance().cs.launch(start = CoroutineStart.LAZY) {
       block().forEach { add(it) }
     }
     asyncAdds.add(job)
     // [asyncAdds] is a registry of *pending* jobs: a finished job is useless for [cancelAsyncAdds], and only the producer may
     // remove one, never an awaiter (see [awaitAllAlreadyRunningAsyncAdds]).
     job.invokeOnCompletion { asyncAdds.remove(job) }
+    if (asyncAddsClosed.get()) {
+      job.cancel()
+    }
+    else {
+      job.start()
+    }
   }
 
   /**
