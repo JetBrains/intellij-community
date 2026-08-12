@@ -276,9 +276,14 @@ public final class ShellEnvironmentReader {
     if (exitCode != null) return exitCode;
 
     LOG.warn("shell env loader is timed out");
-    OSProcessUtil.terminateProcessGracefully(process);
-    exitCode = waitFor(process, 1000L);
-    if (exitCode != null) return exitCode;
+    try {
+      OSProcessUtil.terminateProcessGracefully(process);
+      exitCode = waitFor(process, 1000L);
+      if (exitCode != null) return exitCode;
+    }
+    catch (UnsupportedOperationException _) {
+      // ignore, try force-kill if graceful shutdown is not supported
+    }
     OSProcessUtil.killProcessTree(process);
     exitCode = waitFor(process, 1000L);
     if (exitCode != null) return exitCode;
