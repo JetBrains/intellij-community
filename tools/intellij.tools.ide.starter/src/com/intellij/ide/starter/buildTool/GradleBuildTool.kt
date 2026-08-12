@@ -69,8 +69,7 @@ open class GradleBuildTool(testContext: IDETestContext) : BuildTool(BuildToolTyp
           CoroutineScope(Dispatchers.Default).launch {
             getProcessesIdByProcessName(GRADLE_DAEMON_NAME).filter { !existingProcesses.contains(it) }.forEach {
               existingProcesses.add(it)
-              event.runContext.startCollectThreadDumpsLoop({ event.runContext.lastIdeReportingData.logsDir },
-                                                           event.ideProcess,
+              event.runContext.startCollectThreadDumpsLoop(event.ideProcess,
                                                            testContext.ide.resolveAndDownloadTheSameJDKOrFallback(),
                                                            testContext.ide.installationPath,
                                                            it,

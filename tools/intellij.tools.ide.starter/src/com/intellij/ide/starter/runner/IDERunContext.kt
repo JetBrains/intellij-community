@@ -22,8 +22,8 @@ import com.intellij.ide.starter.profiler.ProfilerType
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.ide.starter.screenRecorder.IDEScreenRecorder
-import com.intellij.ide.starter.utils.FileSystem.createDirectoriesIfNotExist
 import com.intellij.ide.starter.utils.FileSystem.listDirectoryEntriesQuietly
+import com.intellij.ide.starter.utils.ReportingPathUtils.requirePathFits
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.startProfileNativeThreads
 import com.intellij.ide.starter.utils.stopProfileNativeThreads
@@ -274,21 +274,22 @@ data class IDERunContext(
   }
 
   suspend fun startCollectThreadDumpsLoop(
-    logsDir: () -> Path,
     process: IDEHandle,
     jdkHome: Path,
     workDir: Path,
     collectingProcessId: Long,
     processName: String,
   ) {
-    fun monitoringThreadDumpDir() = logsDir().resolve("monitoring-thread-dumps-${processName}").createDirectoriesIfNotExist()
-
     var cnt = 0
     while (process.isAlive) {
       delay(ConfigurationStorage.monitoringDumpsIntervalSeconds().seconds)
       if (!process.isAlive) break
 
-      val dumpFile = monitoringThreadDumpDir().resolve("threadDump-${++cnt}-${getCurrentTimestamp()}.txt")
+      val dumpFile = lastIdeReportingData.logsDir
+        .resolve("monitoring-thread-dumps-${processName}")
+        .resolve("threadDump-${++cnt}-${getCurrentTimestamp()}.txt")
+      requirePathFits(dumpFile).parent.createDirectories()
+
       logOutput("Dumping threads to $dumpFile")
       catchAll { collectJavaThreadDumpSuspendable(jdkHome, workDir, collectingProcessId, dumpFile) }
     }

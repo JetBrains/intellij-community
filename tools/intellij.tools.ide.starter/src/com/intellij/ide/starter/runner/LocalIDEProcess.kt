@@ -93,8 +93,7 @@ class LocalIDEProcess : IDEProcess {
               }
               getIdeProcessIdWithRetry(process.toProcessInfo(), runContext)?.let {
                 ideProcessId = it
-                startCollectThreadDumpsLoop({ lastIdeReportingData.logsDir },
-                                            IDEProcessHandle(process),
+                startCollectThreadDumpsLoop(IDEProcessHandle(process),
                                             jdkHome,
                                             startConfig.workDir,
                                             it,

@@ -44,15 +44,6 @@ import kotlin.time.Duration.Companion.minutes
 
 // TODO: https://youtrack.jetbrains.com/issue/AT-3187/Support-archives-unpacking-on-remote-machines-in-com.intellij.ide.starter.utils.FileSystem
 object FileSystem {
-  fun Path.createDirectoriesIfNotExist(): Path {
-    if (exists()) {
-      logOutput("Reports dir '${this.fileName}' is already created")
-      return this
-    }
-    logOutput("Creating reports dir '${this.fileName}'")
-    return createDirectories()
-  }
-
   fun String.cleanPathFromSlashes(replaceWith: String = ""): String = this
     .replace("\"", replaceWith)
     .replace("/", replaceWith)
