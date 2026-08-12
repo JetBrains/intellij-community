@@ -13,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.OutputStream;
 import java.nio.file.Path;
 
+import static com.intellij.openapi.diagnostic.LoggerKt.rethrowControlFlowException;
+
 public final class OSProcessUtil {
   private static final Logger LOG = Logger.getInstance(OSProcessUtil.class);
 
@@ -129,6 +131,7 @@ public final class OSProcessUtil {
           LocalProcessService.getInstance().sendWinProcessCtrlC(pid, processOutputStream);
         }
         catch (Exception e) {
+          rethrowControlFlowException(e);
           throw new UnsupportedOperationException("Failed to terminate process", e);
         }
       }
