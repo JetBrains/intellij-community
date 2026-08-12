@@ -222,7 +222,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:diogen-analysis",
+        "//platform/diagnostic/freezeAnalyzer",
+        "//platform/diagnostic/freezeAnalyzer:freezeAnalyzer_test_lib",
         "//platform/remote-driver/model",
         "//platform/remote-driver/model:model_test_lib",
         "//platform/analysis-api:analysis",

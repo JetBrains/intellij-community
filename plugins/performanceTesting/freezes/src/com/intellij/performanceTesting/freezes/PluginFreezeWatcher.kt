@@ -12,11 +12,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.diagnostic.freezeAnalyzer.FreezeAnalyzer
 import com.intellij.util.application
-import org.jetbrains.diogen.analysis.freeze.FreezeAnalyzer
-import org.jetbrains.diogen.analysis.freeze.ThreadDumpParser
-import org.jetbrains.diogen.analysis.model.XStackFrame
-import org.jetbrains.diogen.analysis.model.parseFrame
 
 @Service(Service.Level.APP)
 internal class PluginFreezeWatcher {
@@ -70,35 +67,13 @@ internal class PluginFreezeAnalysis : FreezeAnalysis {
 }
 
 private fun analyzeFreezeCausingPlugin(dump: String): FreezeAnalysis.Result? {
-  val freezeCause = FreezeAnalyzer.analyzeFreeze(ThreadDumpParser.parse(dump))
-  val cause = freezeCause.cause ?: return null
-  val topCallable = FreezeAnalyzer.selectCallable(cause) ?: return null
-
-  val lines = cause.lines
-  val startIndex = lines.indexOfFirst { line ->
-    line.toString().trim().removePrefix("at ").startsWith(topCallable)
-  }
-  if (startIndex < 0) return null
-
-  for (i in startIndex until lines.size) {
-    val element = parseStackTraceElement(lines[i]) ?: continue
+  val freezeCause = FreezeAnalyzer.analyzeFreezeCause(dump) ?: return null
+  for (element in freezeCause.stackFrames) {
     val descriptor = PluginUtils.getPluginDescriptorOrPlatformByClassName(element.className) ?: continue
     if (descriptor.pluginId == PluginManagerCore.CORE_ID) continue
-    return FreezeAnalysis.Result(descriptor.pluginId, topCallable)
+    return FreezeAnalysis.Result(descriptor.pluginId, freezeCause.topCallable)
   }
-  return FreezeAnalysis.Result(null, topCallable)
-}
-
-private fun parseStackTraceElement(stackTrace: CharSequence): StackTraceElement? {
-  val frame = parseFrame(stackTrace.toString().trim(), false) as? XStackFrame.Callable ?: return null
-  val methodSeparator = frame.name.lastIndexOf('.')
-  if (methodSeparator <= 0 || methodSeparator == frame.name.lastIndex) return null
-  return StackTraceElement(
-    frame.name.substring(0, methodSeparator),
-    frame.name.substring(methodSeparator + 1),
-    frame.source?.fileName,
-    frame.source?.line ?: -1,
-  )
+  return FreezeAnalysis.Result(null, freezeCause.topCallable)
 }
 
 internal data class FreezeReason(
