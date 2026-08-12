@@ -2,11 +2,11 @@ package com.intellij.searchEverywhereMl.ranking.core
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchAdapter
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
@@ -16,8 +16,8 @@ import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import java.util.concurrent.CompletableFuture
-import javax.swing.SwingUtilities
 
+private const val SEARCH_TIMEOUT_MS = 10_000L
 
 abstract class SearchEverywhereLoggingTestCase : LightPlatformTestCase() {
   fun MockSearchEverywhereProvider.runSearchAndCollectLogEvents(testProcedure: SearchEverywhereUI.() -> Unit): List<LogEvent> {
@@ -31,8 +31,11 @@ abstract class SearchEverywhereLoggingTestCase : LightPlatformTestCase() {
         val searchEverywhereUI = this.provide(project)
         disposables.add(searchEverywhereUI)
 
-        SearchEverywhereMlService.getInstance()?.onSessionStarted(project, searchEverywhereUI.selectedTabID, searchEverywhereUI.mixedListInfo)
-        PlatformTestUtil.waitForAlarm(10)  // wait for rebuild list (session started)
+        searchEverywhereUI.runAndWaitForSearch("") {
+          SearchEverywhereMlService.getInstance()?.onSessionStarted(project,
+                                                                    searchEverywhereUI.selectedTabID,
+                                                                    searchEverywhereUI.mixedListInfo)
+        }
 
         testProcedure(searchEverywhereUI)
       }
@@ -47,23 +50,41 @@ abstract class SearchEverywhereLoggingTestCase : LightPlatformTestCase() {
       // We are going to add a listener to search finished, so that every character
       // is typed right after the list of results gets updated.
       // Otherwise, we'd typed all characters pretty much at once.
-      val future = CompletableFuture<Unit>()
-      searchEverywhereUI.addSearchListener(object : SearchAdapter() {
-        override fun searchFinished(items: MutableList<Any>) {
-          future.complete(Unit)
-          SwingUtilities.invokeLater { searchEverywhereUI.removeSearchListener(this) }
+      val expectedPattern = searchEverywhereUI.searchField.text + character
+      searchEverywhereUI.runAndWaitForSearch(expectedPattern) {
+        searchEverywhereUI.searchField.text = expectedPattern
+      }
+    }
+  }
+
+  private fun SearchEverywhereUI.runAndWaitForSearch(expectedPattern: String, action: () -> Unit) {
+    val searchFinished = CompletableFuture<Unit>()
+    var expectedSearchStarted = false
+    val listener = object : SearchAdapter() {
+      override fun searchStarted(pattern: String,
+                                 contributors: MutableCollection<out SearchEverywhereContributor<*>>) {
+        expectedSearchStarted = pattern == expectedPattern
+      }
+
+      override fun searchFinished(items: MutableList<Any>) {
+        if (expectedSearchStarted) {
+          searchFinished.complete(Unit)
         }
-      })
+      }
+    }
 
-      searchEverywhereUI.searchField.text += character
+    addSearchListener(listener)
+    try {
+      action()
       try {
-        PlatformTestUtil.waitForFuture(future)
+        PlatformTestUtil.waitForFuture(searchFinished, SEARCH_TIMEOUT_MS)
       }
-      catch (ex: AssertionError) {
-        thisLogger().debug("Exception was thrown while waiting for typing feedback")
-        thisLogger().debug(ex)
-
+      catch (error: AssertionError) {
+        throw AssertionError("Search did not finish for query '$expectedPattern' within $SEARCH_TIMEOUT_MS ms", error)
       }
+    }
+    finally {
+      removeSearchListener(listener)
     }
   }
 }
