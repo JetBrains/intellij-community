@@ -11,7 +11,6 @@ import com.intellij.openapi.components.service
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalFirstIdeSessionMoment
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -27,7 +26,6 @@ import java.util.concurrent.atomic.AtomicReference
 class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalStorage.State> {
   private val enterKeyPressedTimes = AtomicInteger()
 
-  private val completionFeedbackNotificationShown = AtomicBoolean()
   private val completionPopupShownTimes = AtomicInteger()
   private val completionItemChosenTimes = AtomicInteger()
 
@@ -35,7 +33,6 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
 
   override fun getState(): State = State(
     enterKeyPressedTimes.get(),
-    completionFeedbackNotificationShown.get(),
     completionPopupShownTimes.get(),
     completionItemChosenTimes.get(),
     firstIdeSessionMoment.get(),
@@ -43,7 +40,6 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
 
   override fun loadState(state: State) {
     enterKeyPressedTimes.set(state.enterKeyPressedTimes)
-    completionFeedbackNotificationShown.set(state.completionFeedbackNotificationShown)
     completionPopupShownTimes.set(state.completionPopupShownTimes)
     completionItemChosenTimes.set(state.completionItemChosenTimes)
     firstIdeSessionMoment.set(state.firstIdeSessionMoment)
@@ -51,10 +47,6 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
 
   fun recordEnterKeyPressed() {
     enterKeyPressedTimes.incrementAndGet()
-  }
-
-  fun recordCompletionFeedbackNotificationShown() {
-    completionFeedbackNotificationShown.set(true)
   }
 
   fun recordCompletionPopupShown() {
@@ -72,7 +64,6 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
   @Serializable
   data class State(
     val enterKeyPressedTimes: Int = 0,
-    val completionFeedbackNotificationShown: Boolean = false,
     val completionPopupShownTimes: Int = 0,
     val completionItemChosenTimes: Int = 0,
     val firstIdeSessionMoment: TerminalFirstIdeSessionMoment? = null,
