@@ -18,7 +18,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
@@ -37,8 +36,8 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
   fun assertInjectedLangAtCaret(lang: String?) {
     val injectedElement = injectedElement
     if (lang != null) {
-      TestCase.assertNotNull("injection of '$lang' expected", injectedElement)
-      TestCase.assertEquals(lang, injectedElement!!.language.id)
+      requireNotNull(injectedElement) { "injection of '$lang' expected" }
+      TestCase.assertEquals(lang, injectedElement.language.id)
     }
     else {
       TestCase.assertNull(injectedElement)
@@ -140,8 +139,8 @@ fun CodeInsightTestFixture.assertInjectedLanguage(langId: String?, vararg fragme
       val injectedElement = injectedLanguageManager.findInjectedElementAt(file, pos)
 
       if (langId != null) {
-        assertNotNull("There should be injected element at $pos with text '$text'", injectedElement)
-        assertEquals("Injected Language don't match", langId, injectedElement!!.language.id)
+        requireNotNull(injectedElement) { "There should be injected element at $pos with text '$text'" }
+        assertEquals("Injected Language don't match", langId, injectedElement.language.id)
       }
       else {
         assertNull("There should be no injected element at $pos with text '$text'", injectedElement)
@@ -159,16 +158,16 @@ fun CodeInsightTestFixture.assertInjectedReference(referenceClass: Class<*>, var
       val pos = documentText.indexOf(refText) + refText.length / 2
 
       val element = provider.findElementAt(pos)
-      assertNotNull("There should be element at $pos", element)
+      requireNotNull(element) { "There should be element at $pos" }
 
-      val host = element as? PsiLanguageInjectionHost ?: element!!.parent as? PsiLanguageInjectionHost
-      assertNotNull("There should be injection host at $pos", host)
+      val host = element as? PsiLanguageInjectionHost ?: element.parent as? PsiLanguageInjectionHost
+      requireNotNull(host) { "There should be injection host at $pos" }
 
-      val references = host!!.references
+      val references = host.references
       assertTrue("There should be references in element", references.isNotEmpty())
 
       val reference = references.find { referenceClass.isInstance(it) }
-      assertNotNull("There should be reference of type ${referenceClass} in element", reference)
+      requireNotNull(reference) { "There should be reference of type ${referenceClass} in element" }
     }
   }
 }
