@@ -239,7 +239,8 @@ private suspend fun navigateToSourceImpl(
       if (inEditorDataContext) {
         descriptor.isUseCurrentWindow = true
         val fileNavigator = serviceAsync<FileNavigator>()
-        if (fileNavigator is FileNavigatorImpl && fileNavigator.navigateInRequestedEditorAsync(descriptor, dataContext)) {
+        if (fileNavigator is FileNavigatorImpl &&
+            fileNavigator.navigateInRequestedEditorAsync(descriptor, dataContext, options.requestFocus)) {
           return
         }
       }

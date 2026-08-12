@@ -1254,17 +1254,20 @@ internal fun focusEditorOnComposite(
   val currentSelectedComposite = currentWindow?.selectedComposite
   // while the editor was loading, the user switched to another editor - don't steal focus
   if (currentSelectedComposite === composite || forceFocus) {
-    val preferredFocusedComponent = composite.preferredFocusedComponent
-    if (preferredFocusedComponent == null) {
-      LOG.warn("Cannot focus editor (splitters=$splitters, composite=$composite, reason=preferredFocusedComponent is null)")
+    // Ignore the last focused component of the composite tracked by FocusWatcher;
+    // prefer focusing on the editor component instead.
+    // Otherwise, the focus may get trapped in a subcomponent, such as the Find / Replace text field.
+    val focusComponent = composite.selectedEditor?.preferredFocusedComponent ?: composite.focusComponent
+    if (focusComponent == null) {
+      LOG.warn("Cannot focus editor (splitters=$splitters, composite=$composite, reason=focusComponent is null)")
       return false
     }
     else {
       if (toFront) {
-        IdeFocusManager.getGlobalInstance().requestFocusInProject(preferredFocusedComponent, composite.project)
+        IdeFocusManager.getGlobalInstance().requestFocusInProject(focusComponent, composite.project)
       }
       else {
-        preferredFocusedComponent.requestFocusInWindow()
+        focusComponent.requestFocusInWindow()
       }
 
       return true
