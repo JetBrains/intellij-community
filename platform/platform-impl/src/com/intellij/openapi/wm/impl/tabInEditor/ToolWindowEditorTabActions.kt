@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.tabInEditor
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -12,7 +13,7 @@ import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.toolWindow.InternalDecoratorImpl
 
-internal class MoveToolWindowTabToEditorAction : DumbAwareAction() {
+internal class MoveToolWindowTabToEditorAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -47,7 +48,7 @@ internal class MoveToolWindowTabToEditorAction : DumbAwareAction() {
   }
 }
 
-internal class MoveToolWindowTabFromEditorToToolWindowAction : DumbAwareAction() {
+internal class MoveToolWindowTabFromEditorToToolWindowAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
