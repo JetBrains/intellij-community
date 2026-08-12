@@ -1301,7 +1301,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           FileAttributes attributes = fs.getAttributes(file);
           // due to timestamps rounding in FS, the timestamp of the file can differ from the resolvedTimeStamp just set
           long newTimestamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
-          //TODO RC: why we ever read attribute.length here -- (how) could it be (file.length != count)?
+          //TODO RC: why we even read attribute.length here -- (how) could it be (file.length != count)?
           long newLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
 
           executeTouch(file, false, event.getModificationStamp(), newLength, newTimestamp);
@@ -2865,7 +2865,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return vfsPeer.getName(fileId);
   }
 
-  @TestOnly
+  @VisibleForTesting
   public void cleanPersistedContent(int fileId) {
     doCleanPersistedContent(fileId);
   }
