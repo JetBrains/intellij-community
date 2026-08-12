@@ -579,7 +579,7 @@ internal open class IconsClassGenerator(
           result.append(' ').append(' ')
         }
       }
-      result.append(line).append('\n')
+      result.append(line.trimEnd()).append('\n')
     }
   }
 
