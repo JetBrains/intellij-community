@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.idea.IJIgnore
 import com.intellij.maven.testFramework.fixtures.MavenDomTestFixtureIndices
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
@@ -22,6 +23,7 @@ import java.util.stream.Collectors
 @TestApplication
 @ParameterizedClass
 @ArgumentsSource(MavenVersionArguments::class)
+@IJIgnore(issue = "IDEA-392699")
 class MavenPluginIndexTest(mavenVersion: String, modelVersion: String) {
 
   private val maven by mavenDomFixture(
