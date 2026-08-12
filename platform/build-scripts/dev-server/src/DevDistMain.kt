@@ -8,6 +8,7 @@ import com.intellij.platform.devIdeConfig.DevIdeConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dev.BuildRequest
@@ -35,6 +36,9 @@ import kotlin.system.exitProcess
  * It also runs where there is no checkout to read: `--project-manifest` builds the project model tree out of declared
  * files, `--preloaded-manifest` supplies the archives a build would otherwise download, and the jar cache is off unless
  * `--jar-cache-dir` names one. That is what an `intellij_dev_dist` Bazel action passes.
+ *
+ * A distribution meant for a test lane also passes `--pack-test-sources`, which is what lets `--additional-module` name
+ * a plugin whose content comes from test compilation output.
  */
 @OptIn(ExperimentalPathApi::class)
 fun main(args: Array<String>) {
@@ -74,6 +78,12 @@ fun main(args: Array<String>) {
   // only add a second copy of every jar, and a directory that concurrent assemblies mutate while its cleanup prunes it.
   val jarCacheDir = options.optionalPath("--jar-cache-dir")
   val generateRuntimeModuleRepository = options.optionalBoolean("--generate-runtime-module-repository") ?: false
+  // A test-only plugin - a lambda test plugin, a fixture plugin - is packed from test compilation output, which
+  // `BazelModuleOutputProvider` serves only when this is on. It is a property rather than a `BuildRequest` field because
+  // `BuildOptions` already owns the knob and reads it when it is constructed, inside the build.
+  if (options.optionalBoolean("--pack-test-sources") == true) {
+    System.setProperty(BuildOptions.USE_TEST_COMPILATION_OUTPUT_PROPERTY, "true")
+  }
   // the output directory must be empty (see `BuildRequest.runDirOverride`). A Bazel action always gets an empty declared
   // directory, so this is for a standalone caller re-running the assembler into a path it already used.
   val cleanOutput = options.optionalBoolean("--clean-output") ?: false

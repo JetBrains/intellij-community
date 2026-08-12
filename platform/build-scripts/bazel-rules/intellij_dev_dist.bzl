@@ -54,6 +54,8 @@ def _intellij_dev_dist_impl(ctx):
     args.add_all(ctx.files.preloaded_manifests, format_each = "--preloaded-manifest=%s")
     if ctx.attr.preloaded_only:
         args.add("--preloaded-only")
+    if ctx.attr.pack_test_sources:
+        args.add("--pack-test-sources")
 
     ctx.actions.run(
         inputs = depset(project_files + [manifest] + ctx.files.preloaded_downloads + ctx.files.preloaded_manifests),
@@ -126,6 +128,13 @@ intellij_dev_dist = rule(
         "preloaded_only": attr.bool(
             doc = "Makes [preloaded_manifests] the complete inventory, so an undeclared URL fails instead of " +
                   "reaching the network. Set from a `select` over the platforms where the set was measured.",
+            default = False,
+        ),
+        "pack_test_sources": attr.bool(
+            doc = "Lets [additional_modules] name a plugin whose content is test compilation output - a lambda test " +
+                  "plugin, a fixture plugin. Such a distribution needs an [assembler] carrying the test jars as " +
+                  "runfiles too, which is a different binary: putting them on the shared one would make every " +
+                  "product distribution compile the repository's test targets.",
             default = False,
         ),
     },
