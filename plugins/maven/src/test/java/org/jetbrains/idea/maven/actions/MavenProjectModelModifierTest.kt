@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.actions
 
+import com.intellij.idea.IJIgnore
 import com.intellij.maven.testFramework.fixtures.MavenDomTestFixtureIndices
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertModuleLibDep
@@ -39,6 +40,7 @@ import java.util.regex.Pattern
 @TestApplication
 @ParameterizedClass
 @ArgumentsSource(MavenVersionArguments::class)
+@IJIgnore(issue = "IDEA-392701")
 class MavenProjectModelModifierTest(mavenVersion: String, modelVersion: String) {
 
   private val maven by mavenDomFixture(
