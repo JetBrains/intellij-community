@@ -1,5 +1,4 @@
 // COMPILER_ARGUMENTS: -Xwhen-guards
-// Issue about misplaced comments: KTIJ-32066
 
 fun test(a: Any, b: Boolean) {
     /* c1 */
