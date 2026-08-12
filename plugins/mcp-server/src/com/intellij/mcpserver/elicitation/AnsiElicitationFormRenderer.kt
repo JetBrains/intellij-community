@@ -21,6 +21,13 @@ import java.awt.Font as AwtFont
 
 
 /**
+ * [ElicitationFormRenderer] emitting ANSI escapes, for clients that show the message as terminal text.
+ */
+object AnsiElicitationFormRenderer : ElicitationFormRenderer {
+  override fun render(parts: List<ElicitationMessagePart>, project: Project?): String = renderToAnsi(parts, project)
+}
+
+/**
  * Renders message [parts] into one ANSI string for a terminal.
  * Parts are joined with no separator, so put line breaks inside [ElicitationMessagePart.Text].
  * [ElicitationMessagePart.Code] is syntax-highlighted; [ElicitationMessagePart.Styled] gets emphasis.
