@@ -2,11 +2,10 @@
 package com.intellij.platform.scopes
 
 import com.intellij.ide.rpc.DataContextId
+import com.intellij.ide.rpc.awaitWithLocalFallback
 import com.intellij.ide.util.scopeChooser.ScopesFilterConditionType
-import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
-import com.intellij.platform.runtime.product.ProductMode
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -34,12 +33,7 @@ interface ScopeModelApi : RemoteApi<Unit> {
 
     @JvmStatic
     suspend fun getInstance(): ScopeModelApi {
-      LiteRemoteApiProviderService.tryResolve(remoteApiDescriptor<ScopeModelApi>())?.let { return it }
-      // Null is not "no backend": a connected frontend also resolves null until its protocol client
-      // is up. Only a strictly-Light session uses the local implementation; everything else awaits
-      // the connection (IJPL-252054).
-      return if (IdeProductMode.getInstance().currentMode == ProductMode.LIGHT) localInstance
-             else LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<ScopeModelApi>())
+      return LiteRemoteApiProviderService.awaitWithLocalFallback(remoteApiDescriptor<ScopeModelApi>()) { localInstance }
     }
   }
 }

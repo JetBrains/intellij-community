@@ -2,16 +2,15 @@
 package com.intellij.platform.find
 
 import com.intellij.find.FindModel
+import com.intellij.ide.rpc.awaitWithLocalFallback
 import com.intellij.ide.ui.SerializableTextChunk
 import com.intellij.ide.ui.colors.ColorId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
-import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.usageView.UsageInfo
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -55,12 +54,7 @@ interface FindInFilesApi : RemoteApi<Unit> {
 
     @JvmStatic
     suspend fun getInstance(): FindInFilesApi {
-      LiteRemoteApiProviderService.tryResolve(remoteApiDescriptor<FindInFilesApi>())?.let { return it }
-      // Null is not "no backend": a connected frontend also resolves null until its protocol client
-      // is up. Only a strictly-Light session uses the local implementation; everything else awaits
-      // the connection (IJPL-252054).
-      return if (IdeProductMode.getInstance().currentMode == ProductMode.LIGHT) localInstance
-             else LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<FindInFilesApi>())
+      return LiteRemoteApiProviderService.awaitWithLocalFallback(remoteApiDescriptor<FindInFilesApi>()) { localInstance }
     }
   }
 }

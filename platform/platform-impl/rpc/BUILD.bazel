@@ -29,6 +29,9 @@ jvm_library(
         "//fleet/rpc",
         "//fleet/openmap",
         "//platform/ide-core",
+        "//platform/kernel/rpc.lite",
+        "//platform/platform-api:ide",
+        "//platform/runtime/product",
     ],
 )
 
@@ -61,6 +64,9 @@ jvm_library(
         "//fleet/rpc:rpc_test_lib",
         "//fleet/openmap:openmap_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/runtime/product:product_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.rpc` end
