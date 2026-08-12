@@ -1,5 +1,6 @@
 package com.intellij.terminal.tests.reworked.frontend
 
+import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.platform.eel.EelDescriptor
@@ -13,6 +14,7 @@ import com.intellij.terminal.frontend.view.impl.TerminalKeyEncodingManager
 import com.intellij.terminal.frontend.view.impl.TerminalKeyEventsHandlerImpl
 import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModel
 import com.intellij.terminal.frontend.view.impl.TimedKeyEvent
+import com.intellij.terminal.frontend.view.impl.createTerminalKeyEventDispatcherForTests
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAhead
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -351,6 +353,54 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
         assertThat(awaitWrittenString(fixture.session)).isEqualTo("x")
       }
     }
+
+  // The dispatcher decides which key events reach the handler at all.
+
+  @Test
+  fun `dispatcher ignores one key typed event, not every following one`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      createFixture().use { fixture ->
+        val dispatcher = createDispatcher(fixture)
+        val events = "abc".map { character -> typedKeyEvent(fixture.editor.contentComponent, character) }
+        // Only the last two are expected to reach the session: the first key typed event pairs with a key
+        // pressed event that happened before the terminal was focused, and is dropped by design.
+        fixture.session.enqueueResult(KeyEventProcessingResultDto.StringResult("b", shouldScrollToBottom = false))
+        fixture.session.enqueueResult(KeyEventProcessingResultDto.StringResult("c", shouldScrollToBottom = false))
+
+        events.forEach { event -> dispatcher.dispatch(event.original) }
+
+        assertThat(fixture.session.processedEvents).containsExactly(events[1].original, events[2].original)
+        assertThat(awaitWrittenString(fixture.session)).isEqualTo("b")
+        assertThat(awaitWrittenString(fixture.session)).isEqualTo("c")
+      }
+    }
+
+  @Test
+  fun `dispatcher delivers the key typed event of a preceding key pressed event`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      createFixture().use { fixture ->
+        val dispatcher = createDispatcher(fixture)
+        val pressed = pressedKeyEvent(fixture.editor.contentComponent, KeyEvent.VK_A, 'a')
+        val typed = typedKeyEvent(fixture.editor.contentComponent, 'a')
+        fixture.session.enqueueResult(KeyEventProcessingResultDto.Unhandled)
+        fixture.session.enqueueResult(KeyEventProcessingResultDto.StringResult("a", shouldScrollToBottom = false))
+
+        dispatcher.dispatch(pressed.original)
+        dispatcher.dispatch(typed.original)
+
+        assertThat(fixture.session.processedEvents).containsExactly(pressed.original, typed.original)
+        assertThat(awaitWrittenString(fixture.session)).isEqualTo("a")
+      }
+    }
+
+  private fun createDispatcher(fixture: Fixture): IdeEventQueue.EventDispatcher {
+    return createTerminalKeyEventDispatcherForTests(
+      editor = fixture.editor,
+      settings = JBTerminalSystemSettingsProvider(),
+      eventsHandler = fixture.handler,
+      disposable = testRootDisposable,
+    )
+  }
 
   private fun createFixture(
     completeSessionImmediately: Boolean = true,

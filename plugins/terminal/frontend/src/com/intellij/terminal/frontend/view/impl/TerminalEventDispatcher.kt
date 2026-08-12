@@ -106,6 +106,11 @@ private class TerminalEventDispatcher(
         eventsHandler.handleKeyEvent(e)
       }
       else {
+        // One key typed event, not every one: it pairs with the one key pressed event that was handled
+        // elsewhere, and the next key typed event has a key pressed event of its own. With a physical
+        // keyboard the following key released event cleared this anyway; a synthetic stream of key typed
+        // events alone (the remote driver's input-events robot) used to be swallowed whole.
+        ignoreNextKeyTypedEvent = false
         LOG.trace { "Key event skipped (key typed ignored): ${e.original}" }
       }
     }
@@ -284,6 +289,22 @@ private class TerminalKeyListener(
     }
   }
 }
+
+/**
+ * The [IdeEventQueue.EventDispatcher] [setupKeyEventsHandling] installs, in the state it is in right after
+ * registration — including the pending "ignore the next key typed event".
+ *
+ * Exposed for tests only, and as the platform interface rather than the class: the behaviour worth pinning
+ * from outside is which key events reach the terminal, not how the dispatcher is wired to the editor.
+ */
+@ApiStatus.Internal
+@VisibleForTesting
+fun createTerminalKeyEventDispatcherForTests(
+  editor: EditorEx,
+  settings: JBTerminalSystemSettingsProviderBase,
+  eventsHandler: TerminalKeyEventsHandler,
+  disposable: Disposable,
+): IdeEventQueue.EventDispatcher = TerminalEventDispatcher(editor, settings, eventsHandler, disposable)
 
 @ApiStatus.Internal
 @VisibleForTesting
