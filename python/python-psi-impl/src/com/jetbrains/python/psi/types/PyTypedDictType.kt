@@ -137,15 +137,19 @@ class PyTypedDictType private constructor(
   override fun equals(other: Any?): Boolean {
     if (other === this) return true
     if (other == null || javaClass != other.javaClass) return false
-    if (!super.equals(other)) return false
 
     other as PyTypedDictType
-    return declaration == other.declaration && substitutedTypeArguments == other.substitutedTypeArguments
+    // Cheapest checks first
+    if (declaration != other.declaration) return false
+    if (!super.equals(other)) return false
+    return substitutedTypeArguments == other.substitutedTypeArguments
   }
 
-  override fun hashCode(): Int {
-    return Objects.hash(super.hashCode(), declaration, substitutedTypeArguments)
-  }
+  override fun hashCode(): Int = cachedHashCode
+
+  private val cachedHashCode: Int by lazy(LazyThreadSafetyMode.PUBLICATION) { computeHashCode() }
+
+  private fun computeHashCode(): Int = Objects.hash(super.hashCode(), declaration, substitutedTypeArguments)
 
   override val declarationElement: PyQualifiedNameOwner = declaration
 
