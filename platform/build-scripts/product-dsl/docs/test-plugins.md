@@ -296,5 +296,5 @@ CommunityModuleSets.platformTestFrameworksIjent()
 
 - [dsl-api-reference.md](dsl-api-reference.md#testplugin----define-test-plugin) - `testPlugin {}` DSL reference
 - [validation-rules.md](validation-rules.md#rule-5-plugin-dependency-validation) - Validation rules
-- `.claude/rules/product-dsl.md` - Debug flags for generator runs (use `--log` tags)
+- [AGENTS.md](../AGENTS.md) - Debug flags for generator runs (use `--log` tags)
 - [programmatic-content.md](programmatic-content.md) - Content specification guide
