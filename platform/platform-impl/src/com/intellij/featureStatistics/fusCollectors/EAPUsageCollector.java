@@ -26,6 +26,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.internal.statistic.eventLog.StatisticsFileEventLoggerKt.isFreeLicenseCodeSet;
+
 /**
  * @author Eugene Zhuravlev
  */
@@ -68,7 +70,7 @@ public final class EAPUsageCollector extends ApplicationUsagesCollector {
           else if (!StringUtil.isEmpty(facade.getLicensedToMessage())) {
             result.add(newLicencingMetric(LicenceType.license, facade));
           }
-          else if (!isLicenseRequired()) {
+          else if (!isLicenseRequired() && isFreeLicenseCodeSet()) {
             result.add(newLicencingMetric(LicenceType.noLicenseNeeded, facade));
           }
         }
