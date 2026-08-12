@@ -17,6 +17,7 @@ import com.intellij.mcpserver.project
 import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.checkIndexingInProgress
+import com.intellij.mcpserver.util.projectDirectories
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.mcpserver.util.resolveInProject
@@ -202,6 +203,7 @@ suspend fun searchInFiles(
   val project = currentCoroutineContext().project
   val projectDir = project.projectDirectory
   val pathScope = buildPathScope(projectDir, paths)
+  val projectDirectories = project.projectDirectories()
   val directoryFilterPath = resolveDirectoryFilter(project, pathScope)
   val fileFilterText = pathScope?.fileFilter
 
@@ -223,9 +225,7 @@ suspend fun searchInFiles(
   val timedOut = withTimeoutOrNull(Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE.milliseconds) {
     val processor = Processor<UsageInfo> { usageInfo ->
       val file = usageInfo.virtualFile ?: return@Processor true
-      val filePath = file.toNioPathOrNull() ?: return@Processor true
-      if (!filePath.startsWith(projectDir)) return@Processor true
-      val relativePath = projectDir.relativize(filePath)
+      val relativePath = relativizeInProject(projectDirectories, projectDir, file) ?: return@Processor true
       if (pathScope != null && !pathScope.matches(relativePath)) return@Processor true
       synchronized(usageLock) {
         if (usages.size >= effectiveLimit) return@Processor false
@@ -270,6 +270,20 @@ suspend fun searchInFiles(
 }
 
 /**
+ * The path a hit is matched and reported by, or `null` when the file is not part of the project.
+ */
+private fun relativizeInProject(projectDirectories: List<Path>, projectDir: Path, file: VirtualFile): Path? {
+  val filePath = file.toNioPathOrNull() ?: return null
+  if (projectDirectories.none { filePath.startsWith(it) }) return null
+  return try {
+    projectDir.relativize(filePath)
+  }
+  catch (_: IllegalArgumentException) {
+    filePath
+  }
+}
+
+/**
  * Converts usage hits into [SearchItem]s with match coordinates.
  */
 private suspend fun mapUsagesToItems(usages: List<UsageInfo>, projectDir: Path): List<SearchItem> {
@@ -310,6 +324,7 @@ suspend fun searchFiles(
   val project = currentCoroutineContext().project
   val projectDir = project.projectDirectory
   val pathScope = buildPathScope(projectDir, paths)
+  val projectDirectories = project.projectDirectories()
   val normalizedPattern = normalizeGlobPattern(q, projectDir)
   val matcher = createPathMatcher(normalizedPattern)
   val fileIndex = project.serviceAsync<ProjectRootManager>().fileIndex
@@ -325,9 +340,7 @@ suspend fun searchFiles(
    */
   fun processCandidate(file: VirtualFile): Boolean {
     if (file.isDirectory) return true
-    val filePath = file.toNioPathOrNull() ?: return true
-    if (!filePath.startsWith(projectDir)) return true
-    val relativePath = projectDir.relativize(filePath)
+    val relativePath = relativizeInProject(projectDirectories, projectDir, file) ?: return true
     if (!matcher.matches(toGlobPath(relativePath))) return true
     if (pathScope != null && !pathScope.matches(relativePath)) return true
     val relativePathString = relativePath.pathString

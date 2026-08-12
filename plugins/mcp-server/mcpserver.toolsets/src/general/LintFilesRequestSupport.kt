@@ -3,6 +3,7 @@ package com.intellij.mcpserver.toolsets.general
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.util.projectDirectory
+import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
@@ -44,9 +45,9 @@ fun prepareRequestedLintFiles(project: Project, files: List<String>): List<Reque
   val requestedFiles = LinkedHashMap<String, RequestedLintFile>()
   for (rawPath in files) {
     val filePath = rawPath.trim().ifEmpty { mcpFail("files must not contain blank paths") }
-    val resolvedPath = resolveExistingRegularFileInProject(pathInProject = filePath, projectDirectory = projectDir)
+    val resolvedPath = resolveExistingRegularFileInProject(project = project, pathInProject = filePath)
 
-    val relativePath = projectDir.relativize(resolvedPath).toString()
+    val relativePath = projectDir.relativizeIfPossible(resolvedPath)
     requestedFiles.putIfAbsent(relativePath, RequestedLintFile(filePath, relativePath, resolvedPath))
   }
   return requestedFiles.values.toList()

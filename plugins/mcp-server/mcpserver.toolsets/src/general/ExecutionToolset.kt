@@ -19,7 +19,6 @@ import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.toolsets.util.RunPoint
 import com.intellij.mcpserver.toolsets.util.collectRunPoints
 import com.intellij.mcpserver.toolsets.util.executeRunConfiguration
-import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -61,7 +60,7 @@ class ExecutionToolset : McpToolset {
     if (filePath != null) {
       currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.discovering.run.points", filePath))
 
-      val resolvedPath = resolveExistingRegularFileInProject(pathInProject = filePath, projectDirectory = project.projectDirectory)
+      val resolvedPath = resolveExistingRegularFileInProject(project = project, pathInProject = filePath)
 
       val runPoints = readAction {
         val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)

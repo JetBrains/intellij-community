@@ -10,7 +10,6 @@ import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.reportToolActivity
-import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
@@ -97,8 +96,7 @@ private suspend fun prepareRequestedFormattingFiles(
   }
 
   val requestedFiles = LinkedHashMap<Path, String>()
-  val projectDirectory = project.projectDirectory
-  files.forEach { addRequestedFormattingFile(requestedFiles, projectDirectory, it) }
+  files.forEach { addRequestedFormattingFile(requestedFiles, project, it) }
 
   val localFileSystem = LocalFileSystem.getInstance()
   val psiManager = PsiManager.getInstance(project)
@@ -111,11 +109,11 @@ private suspend fun prepareRequestedFormattingFiles(
   }
 }
 
-private fun addRequestedFormattingFile(requestedFiles: MutableMap<Path, String>, projectDirectory: Path, rawPath: String?) {
+private fun addRequestedFormattingFile(requestedFiles: MutableMap<Path, String>, project: Project, rawPath: String?) {
   if (rawPath == null) return
 
   val path = rawPath.trim().ifEmpty { mcpFail("files must not contain blank paths") }
-  val resolvedPath = resolveExistingRegularFileInProject(pathInProject = path, projectDirectory = projectDirectory)
+  val resolvedPath = resolveExistingRegularFileInProject(project = project, pathInProject = path)
   requestedFiles.putIfAbsent(resolvedPath, path)
 }
 
