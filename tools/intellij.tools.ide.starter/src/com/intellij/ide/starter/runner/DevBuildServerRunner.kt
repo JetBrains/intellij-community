@@ -9,6 +9,15 @@ import java.nio.file.Path
 interface DevBuildServerRunner {
   fun isDevBuildSupported(): Boolean
 
+  /**
+   * Whether the directory [startDevBuild] returns is this runner's to delete.
+   *
+   * A runner that assembles the IDE owns its output; a runner that resolves an already-built distribution does not, and
+   * deleting it would take a build artifact away from the build system that produced it.
+   */
+  val ownsInstallationDirectory: Boolean
+    get() = true
+
   suspend fun readVmOptions(installationDirectory: Path): List<String>
 
   /** Returns `null` when the product doesn't declare [command] as a custom command. */

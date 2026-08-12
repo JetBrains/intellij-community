@@ -45,6 +45,7 @@ jvm_library(
         "//platform/util/zip",
         "//libraries/kotlinx/serialization/protobuf",
         "//platform/buildData",
+        "//platform/devIdeConfig",
     ],
 )
 
@@ -83,6 +84,7 @@ jvm_library(
         "//platform/util/zip:zip_test_lib",
         "//libraries/kotlinx/serialization/protobuf:protobuf_test_lib",
         "//platform/buildData:buildData_test_lib",
+        "//platform/devIdeConfig:devIdeConfig_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.devBuildServer` end

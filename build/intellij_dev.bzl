@@ -65,6 +65,27 @@ INTELLIJ_ADD_OPENS = [
     "jdk.jdi/com.sun.tools.jdi",
 ]
 
+# Names the prepared distribution for whoever consumes one - `PreBuiltDevMain` when it is a launcher, the IDE Starter's
+# prebuilt dev-build runner when it is a test. Keep in sync with `DevIdeConfig.CONFIG_PATH_PROPERTY`, which is where the
+# reading side of this contract lives.
+DEV_IDE_CONFIG_PATH_PROPERTY = "idea.ide.config.path"
+
+def intellij_dev_dist_config(name, dist, visibility = None):
+    """A single-file label for an `intellij_dev_dist` target's config file, for `$(rlocationpath ...)`.
+
+    That expansion takes a label naming exactly one file, which a dist target - two outputs, one of them declared rather
+    than predeclared - is not. Its `ide_config` output group is how it gets one.
+
+    A consumer declares both this and the dist itself in `data`, and they must stay siblings in the runfiles tree: the
+    config names the home relatively, so that the pair survives being read from a different path than it was written to.
+    """
+    native.filegroup(
+        name = name,
+        srcs = [dist],
+        output_group = "ide_config",
+        visibility = visibility,
+    )
+
 DEFAULT_JVM_FLAGS = [
     "--enable-native-access=ALL-UNNAMED",
     "-ea",
@@ -167,14 +188,7 @@ def intellij_dev_prebuilt_binary(
     """
     ide_config = name + "_ide_config"
 
-    # `$(rlocationpath ...)` needs a label naming exactly one file, and `dist` is two outputs whose config file, being
-    # declared rather than predeclared, has no label of its own. Its output group does.
-    native.filegroup(
-        name = ide_config,
-        srcs = [dist],
-        output_group = "ide_config",
-        visibility = ["//visibility:private"],
-    )
+    intellij_dev_dist_config(name = ide_config, dist = dist, visibility = ["//visibility:private"])
 
     java_binary(
         name = name,
@@ -185,7 +199,7 @@ def intellij_dev_prebuilt_binary(
         # being read from a different path than it was written to.
         data = [dist, ide_config],
         jvm_flags = _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_path) + [
-            "-Didea.ide.config.path=$(rlocationpath %s)" % ide_config,
+            "-D%s=$(rlocationpath %s)" % (DEV_IDE_CONFIG_PATH_PROPERTY, ide_config),
             # Not a build-time input: `AppMode.getDevIdeaProjectDir` and the webview native bridge read it at runtime,
             # and a dev launch has it only because `DevMainImpl` sets it from the project root it just built against.
             "-Didea.dev.project.root=$${BUILD_WORKSPACE_DIRECTORY}",

@@ -4,6 +4,7 @@
 
 package org.jetbrains.intellij.build.devServer
 
+import com.intellij.platform.devIdeConfig.DevIdeConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -16,15 +17,13 @@ import java.nio.file.DirectoryNotEmptyException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.relativeTo
 import kotlin.system.exitProcess
 
 /**
- * Assembles a dev distribution into a caller-specified output directory and writes the config file that
- * `PreBuiltDevMain` consumes (`home.path` / `main.class.name`).
+ * Assembles a dev distribution into a caller-specified output directory and writes the [DevIdeConfig] file that a
+ * launcher (`PreBuiltDevMain`) or a test harness consumes.
  *
  * Unlike `DevMainImpl`, which builds and launches in the same process from an IDE run configuration, this entry point only builds:
  * the run directory is given from the outside ([BuildRequest.runDirOverride]), the build scratch is kept out of it
@@ -111,15 +110,10 @@ fun main(args: Array<String>) {
 
     withContext(Dispatchers.IO) {
       dropEmptyTempDir(runDir)
-      val ideConfigDir = ideConfigFile.parent
-      ideConfigDir?.createDirectories()
-      // Relative whenever the config file sits above the distribution, so that the pair can be moved as a unit - a Bazel
-      // artifact is read from a different path than it was written to. Same rule as `formatCoreClasspath`, and
-      // `PreBuiltDevMain.readIdeConfig` resolves the result the same way `PreBuiltDevMain.readClasspath` does.
-      val homePath = if (ideConfigDir != null && runDir.startsWith(ideConfigDir)) runDir.relativeTo(ideConfigDir) else runDir
-      // read back by `PreBuiltDevMain.readIdeConfig` as a `java.util.Properties` file -
-      // invariant separators keep Windows paths free of `Properties` backslash escapes
-      Files.writeString(ideConfigFile, "home.path=${homePath.invariantSeparatorsPathString}\nmain.class.name=$mainClassName\n")
+      // What the distribution is, not just where it is: a consumer that needs a different product or a plugin module
+      // this assembly did not build in is looking at the wrong distribution, and `DevIdeConfig` is where it can find
+      // that out. The relative-home rule and the file format live there too, with the readers.
+      DevIdeConfig.write(ideConfigFile, runDir, mainClassName, platformPrefix, additionalModules)
     }
     runDir
   }

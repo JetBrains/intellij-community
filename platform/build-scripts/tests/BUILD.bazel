@@ -35,6 +35,8 @@ jvm_library(
     runtime_deps = [":tests"],
     deps = [
         # do not sort,
+        "//platform/devIdeConfig",
+        "//platform/devIdeConfig:devIdeConfig_test_lib",
         "//platform/runtime/product",
         "//platform/runtime/product:product_test_lib",
         "//libraries/junit4",

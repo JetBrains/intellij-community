@@ -1405,6 +1405,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-impl/ui/intellij.platform.debugger.impl.ui.iml" filepath="$PROJECT_DIR$/platform/xdebugger-impl/ui/intellij.platform.debugger.impl.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-impl/ui/intellij.platform.debugger.impl.ui.tests.iml" filepath="$PROJECT_DIR$/platform/xdebugger-impl/ui/intellij.platform.debugger.impl.ui.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-testFramework/intellij.platform.debugger.testFramework.iml" filepath="$PROJECT_DIR$/platform/xdebugger-testFramework/intellij.platform.debugger.testFramework.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/devIdeConfig/intellij.platform.devIdeConfig.iml" filepath="$PROJECT_DIR$/platform/devIdeConfig/intellij.platform.devIdeConfig.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/diagnostic/intellij.platform.diagnostic.iml" filepath="$PROJECT_DIR$/platform/diagnostic/intellij.platform.diagnostic.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/diagnostic/freezeAnalyzer/intellij.platform.diagnostic.freezeAnalyzer.iml" filepath="$PROJECT_DIR$/platform/diagnostic/freezeAnalyzer/intellij.platform.diagnostic.freezeAnalyzer.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/diagnostic/startUpPerformanceReporter/intellij.platform.diagnostic.startUpPerformanceReporter.iml" filepath="$PROJECT_DIR$/platform/diagnostic/startUpPerformanceReporter/intellij.platform.diagnostic.startUpPerformanceReporter.iml" />
