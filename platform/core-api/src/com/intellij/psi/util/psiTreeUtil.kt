@@ -78,6 +78,10 @@ inline fun <reified T : PsiElement> PsiElement.parentOfType(withSelf: Boolean = 
   return PsiTreeUtil.getParentOfType(this, T::class.java, !withSelf)
 }
 
+inline fun <reified T : PsiElement> PsiElement.childOfType(withSelf: Boolean = false): T? {
+  return PsiTreeUtil.findChildOfType(this, T::class.java, !withSelf)
+}
+
 @Deprecated("Use parentOfTypes()", ReplaceWith("parentOfTypes(*classes)"))
 fun <T : PsiElement> PsiElement.parentOfType(vararg classes: KClass<out T>): T? {
   return parentOfTypes(*classes)

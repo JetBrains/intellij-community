@@ -981,6 +981,60 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       foo(1, "hello", name=42)
       #               ^^^^^^^ WARNING Expected type 'str', got 'Literal[42]' instead
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90614"])
+    fun `dict variable mismatch with Unpack TypedDict kwargs warned once across overloads`() = test("""
+      from typing import TypedDict, Unpack, overload
+      
+      class EmptyKwargs(TypedDict):
+          pass
+      
+      @overload
+      def foo(*, a: int, **kwargs: Unpack[EmptyKwargs]) -> None: ...
+      @overload
+      def foo(*, b: str, **kwargs: Unpack[EmptyKwargs]) -> None: ...
+      def foo(**kwargs) -> None: ...
+      
+      dict_var = {}
+      foo(**dict_var)
+      #     ^^^^^^^^ WARNING Expected type 'EmptyKwargs', got 'dict[Unknown, Unknown]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90614"])
+    fun `unpacked parenthesized dict literal keys are checked`() = test("""
+      from typing import TypedDict, Unpack
+      
+      class FieldKwargs(TypedDict):
+          description: str
+      
+      def foo(**kwargs: Unpack[FieldKwargs]) -> None: ...
+      
+      foo(**((({"description": "foo"}))))
+      foo(**((({"description": "foo", "unknown": "foo"}))))
+      #                               ^^^^^^^^^^^^^^^^ WARNING Extra key 'unknown' for TypedDict 'FieldKwargs'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-91511"])
+    fun `unpacked dict literal keys checked against the overload with matching parameter`() = test("""
+      from typing import TypedDict, Unpack, overload
+      
+      class EmptyKwargs(TypedDict):
+          pass
+      
+      @overload
+      def foo(*, description: str) -> None: ...
+      @overload
+      def foo(**kwargs: Unpack[EmptyKwargs]) -> None: ...
+      def foo(**kwargs) -> None: ...
+      
+      foo(**{"unknown": "foo"})
+      #      ^^^^^^^^^^^^^^^^ WARNING Extra key 'unknown' for TypedDict 'EmptyKwargs'
+      foo(**{"description": "foo"})
+      #      ^^^^^^^^^^^^^^^^^^^^ WARNING Extra key 'description' for TypedDict 'EmptyKwargs' FIXME
+      """.trimIndent())
   }
 
   @Test
