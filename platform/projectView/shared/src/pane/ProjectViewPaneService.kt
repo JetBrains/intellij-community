@@ -92,13 +92,11 @@ abstract class ProjectViewPaneService(
     }
     val jobs = CopyOnWriteArraySet<ManagerJob>()
     combine(paneFlows) { panesByProvider -> panesByProvider.flatMap { it } }.collect { panes ->
+      // The order is important, as within a given provider panes can be pre-ordered with the equal order() (for example, scope panes).
       val newPanesByDescriptor = panes.associateBy { describe(it) }
-      val currentManagersById = hashMapOf<ProjectViewPaneId, ProjectViewPaneManager>()
+      val currentManagersById = mutableMapOf<ProjectViewPaneId, ProjectViewPaneManager>()
       for ((manager, job) in jobs) {
-        if (manager.descriptor in newPanesByDescriptor) {
-          currentManagersById[manager.id] = manager // still current
-        }
-        else {
+        if (manager.descriptor !in newPanesByDescriptor) {
           LOG.debug { "The descriptor is gone, cancelling the pane job: ${manager.descriptor}" }
           job.cancel(CancellationException("The descriptor is no longer present"))
         }
@@ -111,8 +109,10 @@ abstract class ProjectViewPaneService(
           continue
         }
         dedupIds += id
-        if (jobs.any { it.manager.descriptor == descriptor }) {
+        val existingManagerJob = jobs.find { it.manager.descriptor == descriptor }
+        if (existingManagerJob != null) {
           LOG.debug { "Not launching a new job for the descriptor, because there's already a job: $descriptor" }
+          currentManagersById[id] = existingManagerJob.manager
           continue
         }
         val manager = ProjectViewPaneManager(pane, descriptor)

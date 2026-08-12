@@ -100,6 +100,12 @@ internal class ProjectViewToolWindowServiceImpl(
   override val currentPaneDescriptor: ProjectViewPaneDescriptorImpl?
     get() = currentPaneMutableFlow.value?.descriptor
 
+  private val orderedDescriptors = MutableStateFlow<List<ProjectViewPaneDescriptorImpl>>(emptyList())
+  
+  private fun descriptorOrder(): Map<ProjectViewPaneDescriptorImpl, Int> {
+    return orderedDescriptors.value.withIndex().associate { it.value to it.index }
+  }
+
   override fun getActionSupport(): ProjectViewActionSupport = optionService
 
   @RequiresEdt
@@ -115,9 +121,13 @@ internal class ProjectViewToolWindowServiceImpl(
     supervisorScope {
       launch(Dispatchers.UI + CoroutineName("Current pane listener")) {
         toolWindow.contentManager.addContentManagerListener(currentPaneListener)
-        // It's important to use the right scope here, or else the current scope (withContext) would be blocked.
         awaitCancellationAndInvoke {
           toolWindow.contentManager.removeContentManagerListener(currentPaneListener)
+        }
+      }
+      launch(Dispatchers.UI + CoroutineName("Content ordering")) {
+        orderedDescriptors.collectLatest { 
+          ensureContentsOrdered(toolWindow)
         }
       }
       launch(CoroutineName("Pane management")) {
@@ -125,6 +135,7 @@ internal class ProjectViewToolWindowServiceImpl(
         val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
         val activeJobs = CopyOnWriteArraySet<ManagePaneJob>()
         aggregator.getPaneDescriptorsFlow().collect { paneDescriptors ->
+          orderedDescriptors.value = paneDescriptors
           defaultSelection = paneDescriptors.firstOrNull { it.isDefault }?.id ?: defaultSelectedPaneId()
           val actualIds = paneDescriptors.map { it.id }.toSet()
           for ((existingDescriptor, existingJob) in activeJobs) {
@@ -134,7 +145,11 @@ internal class ProjectViewToolWindowServiceImpl(
             }
           }
           for (descriptor in paneDescriptors) {
-            if (activeJobs.any { it.descriptor == descriptor }) continue // the pane ID is already managed, and the descriptor is the same
+            val existingJob = activeJobs.find { it.descriptor == descriptor }
+            if (existingJob != null) {
+              LOG.debug { "The pane descriptor is already managed, skipping: $descriptor" }
+              continue
+            }
             // Now there are two possibilities: either it's a new pane (no such ID in activeJobs), or the descriptor has changed.
             // In the second case, it's important that we don't cancel the old job too early,
             // because it would cause content selection changes and therefore UI flickering.
@@ -146,9 +161,10 @@ internal class ProjectViewToolWindowServiceImpl(
                 val pane = withContext(Dispatchers.UI) {
                   TreeBasedFrontendProjectViewPane(project, descriptor)
                 }
-                panes[descriptor.id] = pane
+                val paneManager = PaneContentManager(toolWindow, pane)
                 LOG.debug { "Created pane ${descriptor.id}" }
-                managePane(toolWindow, pane)
+                panes[descriptor.id] = pane
+                paneManager.managePane()
               }
               catch (e: Throwable) {
                 rethrowControlFlowException(e)
@@ -176,6 +192,45 @@ internal class ProjectViewToolWindowServiceImpl(
     val descriptor: ProjectViewPaneDescriptorImpl,
     val job: Job,
   )
+  
+  @RequiresEdt
+  private fun ensureContentsOrdered(toolWindow: ToolWindow) {
+    val order = descriptorOrder() // take a snapshot as it's updated concurrently
+    val contentManager = toolWindow.contentManager
+    val currentDescriptorOrder = (0 until contentManager.contentCount).mapNotNull { i ->
+      // A null safety chain because we're only interested in descriptors that are still valid and present.
+      // Other stuff (contents not representing panes, descriptors that are about to be removed) is not relevant.
+      contentManager.getContent(i)?.let { content ->
+        content.getUserData(PANE_KEY)?.descriptor?.let { descriptor ->
+          order[descriptor]
+        }
+      }
+    }
+    if (currentDescriptorOrder.isSorted()) return
+    val contentsBeforeSelected = mutableListOf<Content>()
+    val contentsAfterSelected = mutableListOf<Content>()
+    val selectedContent = contentManager.selectedContent
+    var isAfterSelected = false
+    for (content in contentManager.contents) {
+      if (content == selectedContent) {
+        isAfterSelected = true // don't remove the selected content itself
+      }
+      else if (isAfterSelected) {
+        contentsAfterSelected += content
+        contentManager.removeContent(content, false)
+      }
+      else {
+        contentsBeforeSelected += content
+        contentManager.removeContent(content, false)
+      }
+    }
+    for ((index, content) in contentsBeforeSelected.withIndex()) {
+      contentManager.addContent(content, index)
+    }
+    for (content in contentsAfterSelected) {
+      contentManager.addContent(content, contentManager.contentCount)
+    }
+  }
 
   private fun currentPaneChanged(
     oldPane: FrontendProjectViewPane?,
@@ -196,176 +251,6 @@ internal class ProjectViewToolWindowServiceImpl(
     for (action in group.getChildActionsOrStubs()) {
       menuActionGroup.addAction(action).setAsSecondary(true)
     }
-  }
-
-  suspend fun managePane(toolWindow: ToolWindow, pane: FrontendProjectViewPane) {
-    coroutineScope {
-      val mainScope = this
-      withTimeoutOrNull(15.seconds) { // in case something went wrong with loading the state
-        stateInitJob.await()
-      }
-      LOG.debug { "The saved state has been loaded for ${pane.id}" }
-      launch(Dispatchers.UI + CoroutineName("Manage TW content for PV pane ${pane.id}")) {
-        pane.component.launchOnShow("Pane ${pane.id} service state saving/restoring") {
-          try {
-            val paneState = persistentState.getPaneState(pane.id)
-            if (paneState != null) {
-              pane.restoreStateFrom(paneState)
-            }
-            LOG.debug { "Applied the loaded state for ${pane.id}" }
-            awaitCancellation()
-          }
-          finally {
-            val paneElement = Element("pane")
-            paneElement.setAttribute("pane", pane.id.idString)
-            pane.saveStateTo(paneElement)
-            persistentState.putPaneState(pane.id, paneElement)
-            LOG.debug { "Saved the last state for ${pane.id}" }
-          }
-        }
-        val selectedPaneId = persistentState.getSelectedPaneState() ?: defaultSelection
-        val mustSelectThisPane = selectedPaneId == pane.id
-        if (!mustSelectThisPane) {
-          withTimeoutOrNull(5.seconds) { // at this point the state is already received, and panes are added very quickly
-            paneSelectJob.await()
-          }
-        }
-        val content = addOrReplaceContent(toolWindow, pane)
-        // This is just a nice way to cancel this whole thing from anywhere.
-        // Currently used by addOrReplaceContent  to replace the previous pane with the same ID.
-        mainScope.coroutineContext.job.cancelOnDispose(content)
-        if (mustSelectThisPane) {
-          paneSelectJob.complete(Unit)
-        }
-        LOG.debug { "The content has been created for ${pane.id}" }
-        try {
-          awaitCancellation()
-        }
-        finally {
-          removeContent(toolWindow, content)
-        }
-      }
-      LOG.debug { "Obtaining the pane aggregator to manage the pane ${pane.id}" }
-      val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
-      launch(CoroutineName("Pane ${pane.id} state updates")) {
-        currentPaneMutableFlow.collectLatest { currentPane ->
-          if (currentPane == pane) {
-            LOG.debug { "The pane ${pane.id} is selected, starting to collect its updates"}
-            try {
-              aggregator.getPaneStateFlow(pane.descriptor).collect { event ->
-                try {
-                  LOG.trace { "Update pane state for ${pane.id}: $event" }
-                  pane.applyStateChange(event)
-                }
-                catch (e: Exception) {
-                  rethrowControlFlowException(e)
-                  LOG.error(
-                    "An error has occurred when updating the pane ${pane.id} state, the state might be inconsistent. " +
-                    "The problematic event was $event",
-                    e
-                  )
-                }
-              }
-            }
-            catch (e: Exception) {
-              rethrowControlFlowException(e)
-              LOG.error("An error has occurred when requesting the state flow of the pane ${pane.id} state. ", e)
-            }
-            finally {
-              LOG.debug { "The pane ${pane.id} has finished collecting its updates"}
-            }
-          }
-        }
-      }
-      launch(CoroutineName("Pane ${pane.id} requests to the backend")) {
-        LOG.debug { "Sending pane requests for ${pane.id}" }
-        try {
-          val outChannel = aggregator.getPaneRequestChannel(pane.descriptor)
-          for (request in pane.requestChannel) {
-            try {
-              LOG.trace { "Sent request for pane ${pane.id}: $request" }
-              outChannel.send(request)
-            }
-            catch (e: Exception) {
-              rethrowControlFlowException(e)
-              LOG.error(
-                "An error has occurred when trying to send a request to the backend. " +
-                "The problematic request was $request",
-                e
-              )
-            }
-          }
-        }
-        finally {
-          LOG.debug { "Finished sending pane requests for ${pane.id}" }
-        }
-      }
-      LOG.debug { "Managing pane ${pane.id}" }
-      pane.manage()
-    }
-  }
-
-  @RequiresEdt
-  private fun addOrReplaceContent(
-    toolWindow: ToolWindow,
-    newPane: FrontendProjectViewPane,
-  ): Content {
-    val contentManager = toolWindow.contentManager
-    var wasSelected = false
-    findOldContentAndPane(contentManager, newPane.id)?.let { (oldContent, oldPane) ->
-      wasSelected = contentManager.isSelected(oldContent)
-      // This has to be done now so the content is removed and added in a single EDT event.
-      // The old pane's job will be canceled when the content is disposed.
-      LOG.debug { "Replacing the pane with ID = ${newPane.id}: old descriptor = ${oldPane.descriptor}, new descriptor = ${newPane.descriptor}" }
-      contentManager.removeContent(oldContent, true)
-    }
-
-    val newContent = ContentFactory.getInstance().createContent(
-      /* component = */ newPane.component,
-      /* displayName = */ newPane.displayName,
-      /* isLockable = */ false
-    )
-    newContent.putUserData(PANE_KEY, newPane)
-    val bisectIndex = (0 until contentManager.contentCount).toList().binarySearch { i ->
-      val existingContent = contentManager.getContent(i)
-      val existingPane = existingContent?.getUserData(PANE_KEY) ?: return@binarySearch 1 // non-pane contents last (not really supported)
-      val compareOrder = existingPane.order.compareTo(newPane.order)
-      if (compareOrder == 0) {
-        existingPane.id.compareTo(newPane.id)
-      }
-      else {
-        compareOrder
-      }
-    }
-    val index = if (bisectIndex >= 0) {
-      LOG.warn("We have two panes with the same order and ID, shouldn't be possible: " +
-               "$newPane and ${contentManager.getContent(bisectIndex)?.getUserData(PANE_KEY)}")
-      bisectIndex + 1 // add after the dup pane
-    }
-    else {
-      -bisectIndex - 1
-    }
-    contentManager.addContent(newContent, index)
-
-    if (wasSelected) {
-      LOG.debug { "The previous pane with ID = ${newPane.id} was selected, therefore selecting the new one with the same ID" }
-      contentManager.setSelectedContent(newContent)
-    }
-    return newContent
-  }
-
-  private fun findOldContentAndPane(contentManager: ContentManager, id: ProjectViewPaneId): Pair<Content, FrontendProjectViewPane>? {
-    for (i in 0 until contentManager.contentCount) {
-      val content = contentManager.getContent(i) ?: continue
-      val pane = content.getUserData(PANE_KEY) ?: continue
-      if (pane.id == id) return Pair(content, pane)
-    }
-    return null
-  }
-
-  @RequiresEdt
-  private fun removeContent(toolWindow: ToolWindow, content: Content) {
-    toolWindow.contentManager.removeContent(content, true)
   }
 
   override suspend fun show(requestFocus: Boolean) {
@@ -436,6 +321,190 @@ internal class ProjectViewToolWindowServiceImpl(
   override fun loadState(state: Element) {
     persistentState.readStateFrom(state)
     stateInitJob.complete(Unit)
+  }
+
+  private inner class PaneContentManager(
+    private val toolWindow: ToolWindow,
+    private val pane: TreeBasedFrontendProjectViewPane,
+  ) {
+    suspend fun managePane() {
+      coroutineScope {
+        val mainScope = this
+        withTimeoutOrNull(15.seconds) { // in case something went wrong with loading the state
+          stateInitJob.await()
+        }
+        LOG.debug { "The saved state has been loaded for ${pane.id}" }
+        launch(Dispatchers.UI + CoroutineName("Manage TW content for PV pane ${pane.id}")) {
+          pane.component.launchOnShow("Pane ${pane.id} service state saving/restoring") {
+            try {
+              val paneState = persistentState.getPaneState(pane.id)
+              if (paneState != null) {
+                pane.restoreStateFrom(paneState)
+              }
+              LOG.debug { "Applied the loaded state for ${pane.id}" }
+              awaitCancellation()
+            }
+            finally {
+              val paneElement = Element("pane")
+              paneElement.setAttribute("pane", pane.id.idString)
+              pane.saveStateTo(paneElement)
+              persistentState.putPaneState(pane.id, paneElement)
+              LOG.debug { "Saved the last state for ${pane.id}" }
+            }
+          }
+          val selectedPaneId = persistentState.getSelectedPaneState() ?: defaultSelection
+          val mustSelectThisPane = selectedPaneId == pane.id
+          if (!mustSelectThisPane) {
+            withTimeoutOrNull(5.seconds) { // at this point the state is already received, and panes are added very quickly
+              paneSelectJob.await()
+            }
+          }
+          val content = addOrReplaceContent() ?: return@launch // failure to add means the job is canceled
+          // This is just a nice way to cancel this whole thing from anywhere.
+          // Currently used by addOrReplaceContent  to replace the previous pane with the same ID.
+          mainScope.coroutineContext.job.cancelOnDispose(content)
+          if (mustSelectThisPane) {
+            paneSelectJob.complete(Unit)
+          }
+          LOG.debug { "The content has been created for ${pane.id}" }
+          try {
+            awaitCancellation()
+          }
+          finally {
+            removeContent(content)
+          }
+        }
+        LOG.debug { "Obtaining the pane aggregator to manage the pane ${pane.id}" }
+        val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
+        launch(CoroutineName("Pane ${pane.id} state updates")) {
+          currentPaneMutableFlow.collectLatest { currentPane ->
+            if (currentPane == pane) {
+              LOG.debug { "The pane ${pane.id} is selected, starting to collect its updates"}
+              try {
+                aggregator.getPaneStateFlow(pane.descriptor).collect { event ->
+                  try {
+                    LOG.trace { "Update pane state for ${pane.id}: $event" }
+                    pane.applyStateChange(event)
+                  }
+                  catch (e: Exception) {
+                    rethrowControlFlowException(e)
+                    LOG.error(
+                      "An error has occurred when updating the pane ${pane.id} state, the state might be inconsistent. " +
+                      "The problematic event was $event",
+                      e
+                    )
+                  }
+                }
+              }
+              catch (e: Exception) {
+                rethrowControlFlowException(e)
+                LOG.error("An error has occurred when requesting the state flow of the pane ${pane.id} state. ", e)
+              }
+              finally {
+                LOG.debug { "The pane ${pane.id} has finished collecting its updates"}
+              }
+            }
+          }
+        }
+        launch(CoroutineName("Pane ${pane.id} requests to the backend")) {
+          LOG.debug { "Sending pane requests for ${pane.id}" }
+          try {
+            val outChannel = aggregator.getPaneRequestChannel(pane.descriptor)
+            for (request in pane.requestChannel) {
+              try {
+                LOG.trace { "Sent request for pane ${pane.id}: $request" }
+                outChannel.send(request)
+              }
+              catch (e: Exception) {
+                rethrowControlFlowException(e)
+                LOG.error(
+                  "An error has occurred when trying to send a request to the backend. " +
+                  "The problematic request was $request",
+                  e
+                )
+              }
+            }
+          }
+          finally {
+            LOG.debug { "Finished sending pane requests for ${pane.id}" }
+          }
+        }
+        LOG.debug { "Managing pane ${pane.id}" }
+        pane.manage()
+      }
+    }
+
+    @RequiresEdt
+    private fun addOrReplaceContent(): Content? {
+      ensureContentsOrdered(toolWindow)
+
+      val contentManager = toolWindow.contentManager
+      var wasSelected = false
+      findOldContentAndPane(contentManager, pane.id)?.let { (oldContent, oldPane) ->
+        wasSelected = contentManager.isSelected(oldContent)
+        // This has to be done now so the content is removed and added in a single EDT event.
+        // The old pane's job will be canceled when the content is disposed.
+        LOG.debug { "Replacing the pane with ID = ${pane.id}: old descriptor = ${oldPane.descriptor}, new descriptor = ${pane.descriptor}" }
+        contentManager.removeContent(oldContent, true)
+      }
+
+      val newContent = ContentFactory.getInstance().createContent(
+        /* component = */ pane.component,
+        /* displayName = */ pane.displayName,
+        /* isLockable = */ false
+      )
+      newContent.putUserData(PANE_KEY, pane)
+      val index = findSuitableIndex() ?: return null
+      contentManager.addContent(newContent, index)
+
+      if (wasSelected) {
+        LOG.debug { "The previous pane with ID = ${pane.id} was selected, therefore selecting the new one with the same ID" }
+        contentManager.setSelectedContent(newContent)
+      }
+      return newContent
+    }
+
+    private fun findSuitableIndex(): Int? {
+      val contentManager = toolWindow.contentManager
+      val order = descriptorOrder()
+      // We update the order before launching the managing job.
+      // So no order can only mean the order was updated again, the descriptor is no longer there, and our job is being canceled.
+      // Returning null early here to avoid UI flickering because the content will be immediately removed.
+      val ourOrder = order[pane.descriptor] ?: return null
+      val bisectIndex = (0 until contentManager.contentCount).toList().binarySearch { i ->
+            val existingContent = contentManager.getContent(i)
+            // Any null here means the content doesn't belong to the ordered sequence for any reason.
+            // The most likely scenario is that it's about to be removed (its job is being canceled).
+            // Or it could be a content added externally.
+            // In either case, we keep such contents last as we're not interested in them.
+            val existingDescriptor = existingContent?.getUserData(PANE_KEY)?.descriptor ?: return@binarySearch 1
+            val existingOrder = order[existingDescriptor] ?: return@binarySearch 1
+            existingOrder.compareTo(ourOrder)
+      }
+      val index = if (bisectIndex >= 0) {
+            LOG.warn("We have two panes with the same order (=$ourOrder), shouldn't be possible: " +
+                     "$pane and ${contentManager.getContent(bisectIndex)?.getUserData(PANE_KEY)}")
+            bisectIndex + 1 // add after the dup pane
+      }
+      else {
+            -bisectIndex - 1
+      }
+      return index
+    }
+
+    private fun findOldContentAndPane(contentManager: ContentManager, id: ProjectViewPaneId): Pair<Content, FrontendProjectViewPane>? {
+      for (i in 0 until contentManager.contentCount) {
+        val content = contentManager.getContent(i) ?: continue
+        val pane = content.getUserData(PANE_KEY) ?: continue
+        if (pane.id == id) return Pair(content, pane)
+      }
+      return null
+    }
+
+    @RequiresEdt
+    private fun removeContent(content: Content) {
+      toolWindow.contentManager.removeContent(content, true)
+    }
   }
 }
 

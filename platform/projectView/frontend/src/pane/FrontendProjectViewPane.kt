@@ -22,8 +22,6 @@ interface FrontendProjectViewPane {
 
   val component: JComponent
 
-  val order: Int
-
   val requestChannel: ReceiveChannel<ProjectViewPaneRequest>
 
   var isCurrent: Boolean

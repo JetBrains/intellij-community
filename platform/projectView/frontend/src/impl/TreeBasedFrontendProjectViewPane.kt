@@ -105,9 +105,6 @@ internal class TreeBasedFrontendProjectViewPane(
   override val displayName: @NlsSafe String
     get() = paneTreeModel.descriptor.presentableName
 
-  override val order: Int
-    get() = paneTreeModel.descriptor.order
-
   override val selectInTargets: Collection<SelectInTarget>
     get() = paneTreeModel.selectInTargets
 

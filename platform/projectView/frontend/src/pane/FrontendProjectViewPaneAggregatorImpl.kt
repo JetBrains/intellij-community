@@ -59,7 +59,7 @@ internal class FrontendProjectViewPaneAggregatorImpl(
     }
   }
 
-  override suspend fun getPaneDescriptorsFlow(): Flow<Collection<ProjectViewPaneDescriptorImpl>> {
+  override suspend fun getPaneDescriptorsFlow(): Flow<List<ProjectViewPaneDescriptorImpl>> {
     return combine(frontendDescriptors, backendDescriptors) { frontend, backend ->
       when {
         // The backend wins on ID collisions: that's how a light frontend pane is replaced by the real one.
@@ -67,7 +67,7 @@ internal class FrontendProjectViewPaneAggregatorImpl(
         // In the monolith mode, the backend is immediately available, no point showing light panes.
         frontend != null && !AppMode.isMonolith() -> frontend.values
         else -> emptyList()
-      }
+      }.sortedBy { it.order }
     }.distinctUntilChanged()
   }
 
