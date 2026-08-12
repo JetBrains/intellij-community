@@ -7,33 +7,26 @@ import com.intellij.openapi.extensions.forEachExtensionSafeInline
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder
 import com.intellij.util.indexing.roots.origin.IndexingUrlSourceRootHolder
-import com.intellij.util.indexing.roots.origin.LibraryOriginImpl
 import com.intellij.util.indexing.roots.origin.MutableIndexingUrlRootHolder
 import com.intellij.util.indexing.roots.origin.MutableIndexingUrlSourceRootHolder
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetExclusionCondition
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import java.util.NavigableMap
 import java.util.TreeMap
@@ -252,56 +245,6 @@ private class RootData<E : WorkspaceEntity> {
   }
 }
 
-internal fun processModuleRoot(fileSet: WorkspaceFileSetWithCustomData<*>, project: Project, includeNestedRoots: Boolean = false): IndexableFilesIterator? {
-  val customData = fileSet.data
-  val root = fileSet.root
-  customData as ModuleRelatedRootData
-
-  return if (!includeNestedRoots && isNestedRootOfModuleContent(root, customData.module, WorkspaceFileIndexEx.getInstance(project))) {
-    null
-  } else {
-    ModuleFilesIteratorImpl(customData.module, root, fileSet.recursive, true)
-  }
-}
-
-internal fun processLibraryEntity(entity: LibraryEntity, fileSet: WorkspaceFileSet): Pair<LibraryOrigin, IndexableFilesIterator> {
-  val sourceRoot = fileSet.kind == WorkspaceFileKind.EXTERNAL_SOURCE
-  val origin = if (sourceRoot) {
-    LibraryOriginImpl(emptyList(), listOf(fileSet.root))
-  }
-  else {
-    LibraryOriginImpl(listOf(fileSet.root), emptyList())
-  }
-  val iterator = GenericDependencyIterator.forLibraryEntity(origin, entity.name, fileSet.root, sourceRoot)
-  return origin to iterator
-}
-
-private fun isNestedRootOfModuleContent(root: VirtualFile, module: Module, workspaceFileIndex: WorkspaceFileIndexEx): Boolean {
-  val parent = root.getParent()
-  if (parent == null) {
-    return false
-  }
-  val fileInfo = workspaceFileIndex.getFileInfo(
-    parent,
-    honorExclusion = false,
-    includeContentSets = true,
-    includeContentNonIndexableSets = true,
-    includeExternalSets = false,
-    includeExternalSourceSets = false,
-    includeExternalNonIndexableSets = false,
-    includeCustomKindSets = false
-  )
-  return fileInfo.findFileSet { fileSet -> hasRecursiveRootFromModuleContent(fileSet, module) } != null
-}
-
-private fun hasRecursiveRootFromModuleContent(fileSet: WorkspaceFileSetWithCustomData<*>, module: Module): Boolean {
-  return fileSet.recursive && isInContent(fileSet, module)
-}
-
-private fun isInContent(fileSet: WorkspaceFileSetWithCustomData<*>, module: Module): Boolean {
-  val data = fileSet.data
-  return data is ModuleRelatedRootData && module == data.module
-}
 
 private class MyWorkspaceFileSetRegistrar<E : WorkspaceEntity>(contributor: WorkspaceFileIndexContributor<E>,
                                                                ignoreModuleRoots: Boolean) : WorkspaceFileSetRegistrar {

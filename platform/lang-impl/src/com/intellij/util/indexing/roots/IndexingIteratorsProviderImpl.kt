@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.module.Module
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -18,8 +19,10 @@ import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusSer
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder
 import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
+import com.intellij.util.indexing.roots.origin.LibraryOriginImpl
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
@@ -131,4 +134,71 @@ class IndexingIteratorsProviderImpl(
     }
     return iterators
   }
+}
+
+internal fun processModuleRoot(
+  fileSet: WorkspaceFileSetWithCustomData<*>,
+  project: Project,
+  includeNestedRoots: Boolean = false,
+): IndexableFilesIterator? {
+  val customData = fileSet.data
+  val root = fileSet.root
+  customData as ModuleRelatedRootData
+
+  return if (!includeNestedRoots && isNestedRootOfModuleIndexableContent(root, customData.module, WorkspaceFileIndexEx.getInstance(project))) {
+    null
+  }
+  else {
+    ModuleFilesIteratorImpl(customData.module, root, fileSet.recursive, true)
+  }
+}
+
+internal fun processLibraryEntity(entity: LibraryEntity, fileSet: WorkspaceFileSet): Pair<LibraryOrigin, IndexableFilesIterator> {
+  return processLibrary(entity.name, fileSet)
+}
+
+internal fun processLibrary(libraryName: String, fileSet: WorkspaceFileSet): Pair<LibraryOrigin, IndexableFilesIterator> {
+  val sourceRoot = fileSet.kind == WorkspaceFileKind.EXTERNAL_SOURCE
+  val origin = if (sourceRoot) {
+    LibraryOriginImpl(emptyList(), listOf(fileSet.root))
+  }
+  else {
+    LibraryOriginImpl(listOf(fileSet.root), emptyList())
+  }
+  val iterator = GenericDependencyIterator.forLibraryEntity(origin, libraryName, fileSet.root, sourceRoot)
+  return origin to iterator
+}
+
+private fun isNestedRootOfModuleIndexableContent(
+  root: VirtualFile,
+  module: Module,
+  workspaceFileIndex: WorkspaceFileIndexEx,
+): Boolean {
+  val parent = root.getParent()
+  if (parent == null) {
+    return false
+  }
+  val fileInfo = workspaceFileIndex.getFileInfo(
+    parent,
+    honorExclusion = false,
+    includeContentSets = true,
+    includeContentNonIndexableSets = false,
+    includeExternalSets = false,
+    includeExternalSourceSets = false,
+    includeExternalNonIndexableSets = false,
+    includeCustomKindSets = false
+  )
+  return fileInfo.findFileSet { fileSet -> hasRecursiveRootFromModuleContent(fileSet, module) } != null
+}
+
+private fun hasRecursiveRootFromModuleContent(
+  fileSet: WorkspaceFileSetWithCustomData<*>,
+  module: Module,
+): Boolean {
+  return fileSet.recursive && isInContent(fileSet, module)
+}
+
+private fun isInContent(fileSet: WorkspaceFileSetWithCustomData<*>, module: Module): Boolean {
+  val data = fileSet.data
+  return data is ModuleRelatedRootData && module == data.module
 }
