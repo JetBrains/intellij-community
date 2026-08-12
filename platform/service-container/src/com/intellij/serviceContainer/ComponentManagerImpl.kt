@@ -101,9 +101,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.picocontainer.ComponentAdapter
-import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
+import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
 import java.util.concurrent.ConcurrentHashMap
@@ -115,8 +114,6 @@ import kotlin.coroutines.EmptyCoroutineContext
 internal val LOG: Logger by lazy(LazyThreadSafetyMode.PUBLICATION) {
   logger<ComponentManagerImpl>()
 }
-
-private val methodLookup: MethodHandles.Lookup = MethodHandles.lookup()
 
 @JvmField
 @Internal
@@ -139,16 +136,38 @@ private val defaultSupportedSignaturesOfLightServiceConstructors: List<MethodTyp
   componentManagerMethodType,
 )
 
+/**
+ * Finds the declared constructor matching [type]'s parameter list, or `null` if none matches.
+ *
+ * Unlike [java.lang.invoke.MethodHandles.Lookup.findConstructor], this does not throw (and thus does not fill in a stack
+ * trace) when a signature is absent, which is the common case while probing the prioritized list of supported signatures.
+ * The [constructors] array is expected to come from a single [Class.getDeclaredConstructors] call so it is scanned once
+ * per instantiation instead of once per probed signature.
+ */
 @Internal
-fun MethodHandles.Lookup.findConstructorOrNull(clazz: Class<*>, type: MethodType): MethodHandle? {
-  return try {
-    findConstructor(clazz, type)
+fun Array<Constructor<*>>.findConstructorOrNull(type: MethodType): Constructor<*>? {
+  val parameterTypes = type.parameterArray()
+  for (constructor in this) {
+    if (constructor.parameterCount == parameterTypes.size && constructor.parameterTypes.contentEquals(parameterTypes)) {
+      return constructor
+    }
   }
-  catch (_: NoSuchMethodException) {
-    return null
+  return null
+}
+
+/**
+ * Instantiates via this constructor, unwrapping [InvocationTargetException] so a throwable raised by the constructor body
+ * (e.g. [ProcessCanceledException] or an [ExtensionNotApplicableException]) propagates directly, matching the behavior of
+ * the previously used `MethodHandle.invoke`.
+ */
+@Internal
+fun Constructor<*>.newInstanceOrThrow(vararg args: Any?): Any {
+  isAccessible = true
+  try {
+    return newInstance(*args)
   }
-  catch (_: IllegalAccessException) {
-    return null
+  catch (e: InvocationTargetException) {
+    throw e.cause ?: e
   }
 }
 
@@ -960,18 +979,18 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  protected open fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+  protected open fun <T : Any> findConstructorAndInstantiateClass(constructors: Array<Constructor<*>>, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
-    return (lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
-            ?: lookup.findConstructorOrNull(aClass, coroutineScopeMethodType)?.invoke(instanceCoroutineScope(aClass))
-            ?: lookup.findConstructorOrNull(aClass, applicationMethodType)?.invoke(this)
+    return (constructors.findConstructorOrNull(emptyConstructorMethodType)?.newInstanceOrThrow()
+            ?: constructors.findConstructorOrNull(coroutineScopeMethodType)?.newInstanceOrThrow(instanceCoroutineScope(aClass))
+            ?: constructors.findConstructorOrNull(applicationMethodType)?.newInstanceOrThrow(this)
             ?: throw RuntimeException("Cannot find suitable constructor for class ${aClass.name}, " +
                                       "expected (), (CoroutineScope), (Application), or (Application, CoroutineScope)")) as T
   }
 
   private fun <T : Any> doInstantiateClass(aClass: Class<T>, pluginId: PluginId): T {
     try {
-      return findConstructorAndInstantiateClass(MethodHandles.privateLookupIn(aClass, methodLookup), aClass)
+      return findConstructorAndInstantiateClass(aClass.declaredConstructors, aClass)
     }
     catch (e: CancellationException) {
       throw e

@@ -22,11 +22,12 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.emptyConstructorMethodType
 import com.intellij.serviceContainer.findConstructorOrNull
+import com.intellij.serviceContainer.newInstanceOrThrow
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
+import java.lang.reflect.Constructor
 
 private val moduleMethodType = MethodType.methodType(Void.TYPE, Module::class.java)
 
@@ -45,11 +46,11 @@ class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImp
   @TestOnly
   fun getModuleName(): @NlsSafe String = module!!.name
 
-  override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+  override fun <T : Any> findConstructorAndInstantiateClass(constructors: Array<Constructor<*>>, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
-    return (lookup.findConstructorOrNull(aClass, moduleMethodType)?.invoke(module)
-            ?: lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
-            ?: RuntimeException("Cannot find suitable constructor, expected (Module) or ()")) as T
+    return (constructors.findConstructorOrNull(moduleMethodType)?.newInstanceOrThrow(module)
+            ?: constructors.findConstructorOrNull(emptyConstructorMethodType)?.newInstanceOrThrow()
+            ?: throw RuntimeException("Cannot find suitable constructor, expected (Module) or ()")) as T
   }
 
   override val supportedSignaturesOfLightServiceConstructors: List<MethodType>

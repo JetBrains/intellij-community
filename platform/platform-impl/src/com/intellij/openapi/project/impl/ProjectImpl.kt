@@ -43,6 +43,7 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.coroutineScopeMethodType
 import com.intellij.serviceContainer.emptyConstructorMethodType
 import com.intellij.serviceContainer.findConstructorOrNull
+import com.intellij.serviceContainer.newInstanceOrThrow
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.TimedReference
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -58,8 +59,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
-import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
+import java.lang.reflect.Constructor
 import java.nio.file.ClosedFileSystemException
 import java.nio.file.Path
 import java.time.LocalDateTime
@@ -153,11 +154,11 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
 
   @Suppress("UNCHECKED_CAST")
   // see ConfigurableEP - prefer constructor that accepts our instance
-  final override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T = (
-    lookup.findConstructorOrNull(aClass, projectMethodType)?.invoke(this)
-    ?: lookup.findConstructorOrNull(aClass, projectAndScopeMethodType)?.invoke(this, instanceCoroutineScope(aClass))
-    ?: lookup.findConstructorOrNull(aClass, coroutineScopeMethodType)?.invoke(instanceCoroutineScope(aClass))
-    ?: lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
+  final override fun <T : Any> findConstructorAndInstantiateClass(constructors: Array<Constructor<*>>, aClass: Class<T>): T = (
+    constructors.findConstructorOrNull(projectMethodType)?.newInstanceOrThrow(this)
+    ?: constructors.findConstructorOrNull(projectAndScopeMethodType)?.newInstanceOrThrow(this, instanceCoroutineScope(aClass))
+    ?: constructors.findConstructorOrNull(coroutineScopeMethodType)?.newInstanceOrThrow(instanceCoroutineScope(aClass))
+    ?: constructors.findConstructorOrNull(emptyConstructorMethodType)?.newInstanceOrThrow()
     ?: throw RuntimeException("Cannot find a suitable constructor, expected (Project), (Project, CoroutineScope), (CoroutineScope), or ()")
   ) as T
 

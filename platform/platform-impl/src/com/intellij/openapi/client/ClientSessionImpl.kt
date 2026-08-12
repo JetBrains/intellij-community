@@ -25,6 +25,7 @@ import com.intellij.platform.kernel.util.kernelCoroutineContext
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.findConstructorOrNull
+import com.intellij.serviceContainer.newInstanceOrThrow
 import com.intellij.util.SystemProperties
 import com.intellij.util.messages.MessageBus
 import kotlinx.collections.immutable.persistentListOf
@@ -34,8 +35,8 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.plus
 import org.jetbrains.annotations.ApiStatus
-import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
+import java.lang.reflect.Constructor
 
 private val LOG: Logger
   get() = logger<ClientSessionImpl>()
@@ -65,10 +66,10 @@ abstract class ClientSessionImpl(
     registerServiceInstance(ClientSession::class.java, this, fakeCorePluginDescriptor)
   }
 
-  override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+  override fun <T : Any> findConstructorAndInstantiateClass(constructors: Array<Constructor<*>>, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
-    return (lookup.findConstructorOrNull(aClass, sessionConstructorMethodType)?.invoke(this) as T?)
-           ?: super.findConstructorAndInstantiateClass(lookup, aClass)
+    return (constructors.findConstructorOrNull(sessionConstructorMethodType)?.newInstanceOrThrow(this) as T?)
+           ?: super.findConstructorAndInstantiateClass(constructors, aClass)
   }
 
   override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = persistentListOf(
@@ -219,11 +220,11 @@ open class ClientProjectSessionImpl(
                                                                                        componentManager = project,
                                                                                        project = project)
 
-  override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+  override fun <T : Any> findConstructorAndInstantiateClass(constructors: Array<Constructor<*>>, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
-    return ((lookup.findConstructorOrNull(aClass, projectMethodType)?.invoke(project)
-            ?: lookup.findConstructorOrNull(aClass, projectSessionConstructorMethodType)?.invoke(this) ) as T?)
-           ?: super.findConstructorAndInstantiateClass(lookup, aClass)
+    return ((constructors.findConstructorOrNull(projectMethodType)?.newInstanceOrThrow(project)
+            ?: constructors.findConstructorOrNull(projectSessionConstructorMethodType)?.newInstanceOrThrow(this) ) as T?)
+           ?: super.findConstructorAndInstantiateClass(constructors, aClass)
   }
 
   override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = persistentListOf(
