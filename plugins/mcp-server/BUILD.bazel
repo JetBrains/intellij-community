@@ -19,7 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:mcpserver-night-config-toml",
+        "//libraries/night-config-toml",
         "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
@@ -87,6 +87,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":mcpserver",
+        "//libraries/night-config-toml:night-config-toml_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",

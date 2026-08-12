@@ -1,0 +1,41 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.commons.pool2` start
+jvm_library(
+    name = "pool2",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.commons.pool2",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-commons-pool2-commons-pool2"],
+    runtime_deps = ["@lib//:libraries-commons-pool2-commons-pool2"],
+)
+
+jvm_library(
+    name = "pool2_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.commons.pool2",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-commons-pool2-commons-pool2"],
+    runtime_deps = [":pool2"],
+)
+### auto-generated section `build intellij.libraries.commons.pool2` end
+
+### auto-generated section `iml intellij.libraries.commons.pool2` start
+exports_files(
+    [
+        "intellij.libraries.commons.pool2.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.commons.pool2` end

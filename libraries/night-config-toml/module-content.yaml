@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.night.config.toml.jar
+  modules:
+  - name: intellij.libraries.night.config.toml
+    libraries:
+      night-config-toml:
+      - name: $MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3/toml-3.jar
+      - name: $MAVEN_REPOSITORY$/com/electronwill/night-config/core/3/core-3.jar

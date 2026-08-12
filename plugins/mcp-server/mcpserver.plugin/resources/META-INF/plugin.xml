@@ -26,4 +26,8 @@
     <module name="intellij.mcpserver.terminal.frontend"/>
     <module name="intellij.mcpserver.frontend" required-if-available="intellij.platform.frontend"/>
   </content>
+
+  <content>
+    <module name="intellij.libraries.night.config.toml" loading="required"/>
+  </content>
 </idea-plugin>

@@ -1,0 +1,41 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.protobuf.kotlin` start
+jvm_library(
+    name = "protobuf-kotlin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.protobuf.kotlin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-protobuf-kotlin-google-protobuf-kotlin"],
+    runtime_deps = ["@lib//:libraries-protobuf-kotlin-google-protobuf-kotlin"],
+)
+
+jvm_library(
+    name = "protobuf-kotlin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.protobuf.kotlin",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-protobuf-kotlin-google-protobuf-kotlin"],
+    runtime_deps = [":protobuf-kotlin"],
+)
+### auto-generated section `build intellij.libraries.protobuf.kotlin` end
+
+### auto-generated section `iml intellij.libraries.protobuf.kotlin` start
+exports_files(
+    [
+        "intellij.libraries.protobuf.kotlin.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.protobuf.kotlin` end

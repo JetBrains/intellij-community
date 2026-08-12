@@ -120,6 +120,7 @@ object CoreModuleSets {
 
     embeddedModule("intellij.libraries.oro.matcher")
     embeddedModule("intellij.libraries.protobuf")
+    embeddedModule("intellij.libraries.protobuf.kotlin")
     embeddedModule("intellij.libraries.proxy.vole")
     embeddedModule("intellij.libraries.rhino")
     embeddedModule("intellij.libraries.semver")

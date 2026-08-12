@@ -15,6 +15,7 @@
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.night.config.toml"/>
     <module name="intellij.libraries.opentelemetry"/>
     <module name="intellij.mcpserver.stdio"/>
     <module name="intellij.platform.analysis"/>

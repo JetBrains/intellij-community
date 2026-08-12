@@ -12,6 +12,7 @@
   <content namespace="jetbrains">
     <module name="intellij.java.aetherDependencyResolver" loading="required"/>
     <module name="intellij.libraries.maven.resolver.provider" loading="embedded"/>
+    <module name="intellij.libraries.maven.resolver.transport" loading="embedded"/>
     <module name="intellij.libraries.plexus.utils" loading="embedded"/>
     <module name="intellij.repository.search.common"/>
     <module name="intellij.repository.search.completion"/>

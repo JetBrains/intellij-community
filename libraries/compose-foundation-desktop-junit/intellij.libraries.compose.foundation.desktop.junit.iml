@@ -50,6 +50,7 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.12.0-rc01/ui-test-desktop-1.12.0-rc01.jar!/" />
         </CLASSES>
         <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.12.0-rc01/ui-test-junit4-desktop-1.12.0-rc01-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.12.0-rc01/ui-test-desktop-1.12.0-rc01-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>

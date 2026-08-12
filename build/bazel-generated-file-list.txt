@@ -408,6 +408,7 @@ libraries/commons/imaging
 libraries/commons/io
 libraries/commons/lang3
 libraries/commons/logging
+libraries/commons/pool2
 libraries/commons/text
 libraries/completion-ranking-cpp
 libraries/completion-ranking-go
@@ -553,12 +554,14 @@ libraries/lucene.common
 libraries/lz4
 libraries/markdown
 libraries/maven-resolver-provider
+libraries/maven-resolver-transport
 libraries/microba
 libraries/miglayout-swing
 libraries/misc/plugin
 libraries/mockito
 libraries/mockk
 libraries/mockk/jvm
+libraries/monte-screen-recorder
 libraries/mvstore
 libraries/netty/buffer
 libraries/netty/codec-compression
@@ -566,6 +569,7 @@ libraries/netty/codec-http
 libraries/netty/codec-protobuf
 libraries/netty/handler-proxy
 libraries/netty/tcnative-boringssl
+libraries/night-config-toml
 libraries/objenesis
 libraries/opencsv
 libraries/opentelemetry
@@ -580,6 +584,7 @@ libraries/oro-matcher
 libraries/oshi-core
 libraries/plexus-utils
 libraries/protobuf
+libraries/protobuf-kotlin
 libraries/proxy-vole
 libraries/pty4j
 libraries/rd/core

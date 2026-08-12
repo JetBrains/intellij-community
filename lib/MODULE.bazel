@@ -4817,48 +4817,6 @@ http_file(
 )
 
 http_file(
-    name = "org_apache_maven_resolver-maven-resolver-connector-basic-1_9_22_http",
-    downloaded_file_path = "maven-resolver-connector-basic-1.9.22.jar",
-    sha256 = "4ab68bdec97eec318b2a3bd27e7c954e316f890df92d544b68afd0bf666c9588",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-connector-basic/1.9.22/maven-resolver-connector-basic-1.9.22.jar",
-)
-
-http_file(
-    name = "org_apache_maven_resolver-maven-resolver-connector-basic-1_9_22-sources_http",
-    downloaded_file_path = "maven-resolver-connector-basic-1.9.22-sources.jar",
-    sha256 = "ea721d5c21e6dbf776b96ebd358684d23d6d40f0098c9f2a198fef908f196cd5",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-connector-basic/1.9.22/maven-resolver-connector-basic-1.9.22-sources.jar",
-)
-
-http_file(
-    name = "org_apache_maven_resolver-maven-resolver-transport-file-1_9_22_http",
-    downloaded_file_path = "maven-resolver-transport-file-1.9.22.jar",
-    sha256 = "4f2a857d8b832494bae9ef6d7db7bb8409378b28aabd3615f03faebe42a4ad1d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-file/1.9.22/maven-resolver-transport-file-1.9.22.jar",
-)
-
-http_file(
-    name = "org_apache_maven_resolver-maven-resolver-transport-file-1_9_22-sources_http",
-    downloaded_file_path = "maven-resolver-transport-file-1.9.22-sources.jar",
-    sha256 = "c9ca6a5e320bdc9991b6cbfd63da342667f3f400042e79a0f4464a532beaa0fb",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-file/1.9.22/maven-resolver-transport-file-1.9.22-sources.jar",
-)
-
-http_file(
-    name = "org_apache_maven_resolver-maven-resolver-transport-http-1_9_22_http",
-    downloaded_file_path = "maven-resolver-transport-http-1.9.22.jar",
-    sha256 = "1cf2a88c984e0eae8b3f13e1eec904eedead2f076d1f3c1d5cb5103a21538bd1",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-http/1.9.22/maven-resolver-transport-http-1.9.22.jar",
-)
-
-http_file(
-    name = "org_apache_maven_resolver-maven-resolver-transport-http-1_9_22-sources_http",
-    downloaded_file_path = "maven-resolver-transport-http-1.9.22-sources.jar",
-    sha256 = "ae823fcbec14f1ba9082e81007d652f9ec695f5cf929d9a32bcd2b1ce1f9f928",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-http/1.9.22/maven-resolver-transport-http-1.9.22-sources.jar",
-)
-
-http_file(
     name = "org_jacoco-org_jacoco_ant-0_8_15_http",
     downloaded_file_path = "org.jacoco.ant-0.8.15.jar",
     sha256 = "54fb6af97c95352d7deeb49113d7ad63f190eaa8cc9ae8e068fdb2f2a6de009e",
@@ -10249,6 +10207,48 @@ http_file(
 )
 
 http_file(
+    name = "org_apache_maven_resolver-maven-resolver-connector-basic-1_9_22_http",
+    downloaded_file_path = "maven-resolver-connector-basic-1.9.22.jar",
+    sha256 = "4ab68bdec97eec318b2a3bd27e7c954e316f890df92d544b68afd0bf666c9588",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-connector-basic/1.9.22/maven-resolver-connector-basic-1.9.22.jar",
+)
+
+http_file(
+    name = "org_apache_maven_resolver-maven-resolver-connector-basic-1_9_22-sources_http",
+    downloaded_file_path = "maven-resolver-connector-basic-1.9.22-sources.jar",
+    sha256 = "ea721d5c21e6dbf776b96ebd358684d23d6d40f0098c9f2a198fef908f196cd5",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-connector-basic/1.9.22/maven-resolver-connector-basic-1.9.22-sources.jar",
+)
+
+http_file(
+    name = "org_apache_maven_resolver-maven-resolver-transport-file-1_9_22_http",
+    downloaded_file_path = "maven-resolver-transport-file-1.9.22.jar",
+    sha256 = "4f2a857d8b832494bae9ef6d7db7bb8409378b28aabd3615f03faebe42a4ad1d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-file/1.9.22/maven-resolver-transport-file-1.9.22.jar",
+)
+
+http_file(
+    name = "org_apache_maven_resolver-maven-resolver-transport-file-1_9_22-sources_http",
+    downloaded_file_path = "maven-resolver-transport-file-1.9.22-sources.jar",
+    sha256 = "c9ca6a5e320bdc9991b6cbfd63da342667f3f400042e79a0f4464a532beaa0fb",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-file/1.9.22/maven-resolver-transport-file-1.9.22-sources.jar",
+)
+
+http_file(
+    name = "org_apache_maven_resolver-maven-resolver-transport-http-1_9_22_http",
+    downloaded_file_path = "maven-resolver-transport-http-1.9.22.jar",
+    sha256 = "1cf2a88c984e0eae8b3f13e1eec904eedead2f076d1f3c1d5cb5103a21538bd1",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-http/1.9.22/maven-resolver-transport-http-1.9.22.jar",
+)
+
+http_file(
+    name = "org_apache_maven_resolver-maven-resolver-transport-http-1_9_22-sources_http",
+    downloaded_file_path = "maven-resolver-transport-http-1.9.22-sources.jar",
+    sha256 = "ae823fcbec14f1ba9082e81007d652f9ec695f5cf929d9a32bcd2b1ce1f9f928",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-http/1.9.22/maven-resolver-transport-http-1.9.22-sources.jar",
+)
+
+http_file(
     name = "com_miglayout-miglayout-swing-11_4_2_http",
     downloaded_file_path = "miglayout-swing-11.4.2.jar",
     sha256 = "036b8532021092afcc7159d3756086a5fbe19f6014ac8474817d55d1289af756",
@@ -10414,6 +10414,20 @@ http_file(
     downloaded_file_path = "mockk-core-jvm-1.14.5-sources.jar",
     sha256 = "f2ff944144a5048770574271c6cd874fb8c8726ed0449b8507afd93b4b170249",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk-core-jvm/1.14.5/mockk-core-jvm-1.14.5-sources.jar",
+)
+
+http_file(
+    name = "com_github_stephenc_monte-monte-screen-recorder-0_7_7_0_http",
+    downloaded_file_path = "monte-screen-recorder-0.7.7.0.jar",
+    sha256 = "91b98aeb78b6198c39babacee37ef29df6f2083e4f6ea7f35ea4f27b8a8410bc",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/stephenc/monte/monte-screen-recorder/0.7.7.0/monte-screen-recorder-0.7.7.0.jar",
+)
+
+http_file(
+    name = "com_github_stephenc_monte-monte-screen-recorder-0_7_7_0-sources_http",
+    downloaded_file_path = "monte-screen-recorder-0.7.7.0-sources.jar",
+    sha256 = "d8f7cac72c7137f50bda58a0b09536ff9e3e0d034a7e6b862ae53ee0e5859825",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/stephenc/monte/monte-screen-recorder/0.7.7.0/monte-screen-recorder-0.7.7.0-sources.jar",
 )
 
 http_file(
@@ -10673,6 +10687,34 @@ http_file(
     downloaded_file_path = "netty-tcnative-classes-2.0.78.Final-sources.jar",
     sha256 = "2aa2d71acfa2ae5d4602e65aa88cef64f2b6234244c8ff012a7a94430305b5d8",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-tcnative-classes/2.0.78.Final/netty-tcnative-classes-2.0.78.Final-sources.jar",
+)
+
+http_file(
+    name = "com_electronwill_night-config-toml-3_8_4_http",
+    downloaded_file_path = "toml-3.8.4.jar",
+    sha256 = "127bf8b025c341139145c55bc897f3188057eec19940f99d3eae624399e88f2a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/toml/3.8.4/toml-3.8.4.jar",
+)
+
+http_file(
+    name = "com_electronwill_night-config-core-3_8_4_http",
+    downloaded_file_path = "core-3.8.4.jar",
+    sha256 = "2d9532aa851742a6e2f3cb472a6a5b3c0e7e8b9da287c7d20a2963466f4aebb4",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/core/3.8.4/core-3.8.4.jar",
+)
+
+http_file(
+    name = "com_electronwill_night-config-toml-3_8_4-sources_http",
+    downloaded_file_path = "toml-3.8.4-sources.jar",
+    sha256 = "ceeb3a90bde39a54a3ccb599b1cea25aaa6468bd036a98e50ddb6579d7d999b2",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/toml/3.8.4/toml-3.8.4-sources.jar",
+)
+
+http_file(
+    name = "com_electronwill_night-config-core-3_8_4-sources_http",
+    downloaded_file_path = "core-3.8.4-sources.jar",
+    sha256 = "f189eb4a6195c3a4719ace91c586d703702cbbf21b646bf5207c9699231eeac3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/core/3.8.4/core-3.8.4-sources.jar",
 )
 
 http_file(
@@ -10939,6 +10981,20 @@ http_file(
     downloaded_file_path = "plexus-utils-3.6.1-sources.jar",
     sha256 = "f9b0daa4d3728acf62a90f07136b56790b677dd42644d169855b9f9ec410a27d",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-utils/3.6.1/plexus-utils-3.6.1-sources.jar",
+)
+
+http_file(
+    name = "com_google_protobuf-protobuf-kotlin-3_25_5_http",
+    downloaded_file_path = "protobuf-kotlin-3.25.5.jar",
+    sha256 = "3e47fdf6c1e01878274de4a6015d521a609835e2334545ca7478c6eddc88898d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-kotlin/3.25.5/protobuf-kotlin-3.25.5.jar",
+)
+
+http_file(
+    name = "com_google_protobuf-protobuf-kotlin-3_25_5-sources_http",
+    downloaded_file_path = "protobuf-kotlin-3.25.5-sources.jar",
+    sha256 = "209c78ddbc5005409a9c7242785eda38433bd58debedd493e5286e4b5ad8cee0",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-kotlin/3.25.5/protobuf-kotlin-3.25.5-sources.jar",
 )
 
 http_file(
@@ -14785,34 +14841,6 @@ http_file(
 )
 
 http_file(
-    name = "com_electronwill_night-config-toml-3_8_4_http",
-    downloaded_file_path = "toml-3.8.4.jar",
-    sha256 = "127bf8b025c341139145c55bc897f3188057eec19940f99d3eae624399e88f2a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/toml/3.8.4/toml-3.8.4.jar",
-)
-
-http_file(
-    name = "com_electronwill_night-config-core-3_8_4_http",
-    downloaded_file_path = "core-3.8.4.jar",
-    sha256 = "2d9532aa851742a6e2f3cb472a6a5b3c0e7e8b9da287c7d20a2963466f4aebb4",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/core/3.8.4/core-3.8.4.jar",
-)
-
-http_file(
-    name = "com_electronwill_night-config-toml-3_8_4-sources_http",
-    downloaded_file_path = "toml-3.8.4-sources.jar",
-    sha256 = "ceeb3a90bde39a54a3ccb599b1cea25aaa6468bd036a98e50ddb6579d7d999b2",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/toml/3.8.4/toml-3.8.4-sources.jar",
-)
-
-http_file(
-    name = "com_electronwill_night-config-core-3_8_4-sources_http",
-    downloaded_file_path = "core-3.8.4-sources.jar",
-    sha256 = "f189eb4a6195c3a4719ace91c586d703702cbbf21b646bf5207c9699231eeac3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/core/3.8.4/core-3.8.4-sources.jar",
-)
-
-http_file(
     name = "com_github_marschall-memoryfilesystem-2_8_2_http",
     downloaded_file_path = "memoryfilesystem-2.8.2.jar",
     sha256 = "8b94840d71ad0caa36b3309425b2d23084bc8788ce84d71f2d805b0fc84d1f5a",
@@ -16196,20 +16224,6 @@ http_file(
     downloaded_file_path = "tips-webstorm-241.72.jar",
     sha256 = "ad5067f70be670b07a22f6e403d51486370ae9d3e22fc8930b0abfdb3c02fae9",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/intellij/documentation/tips-webstorm/241.72/tips-webstorm-241.72.jar",
-)
-
-http_file(
-    name = "com_github_stephenc_monte-monte-screen-recorder-0_7_7_0_http",
-    downloaded_file_path = "monte-screen-recorder-0.7.7.0.jar",
-    sha256 = "91b98aeb78b6198c39babacee37ef29df6f2083e4f6ea7f35ea4f27b8a8410bc",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/stephenc/monte/monte-screen-recorder/0.7.7.0/monte-screen-recorder-0.7.7.0.jar",
-)
-
-http_file(
-    name = "com_github_stephenc_monte-monte-screen-recorder-0_7_7_0-sources_http",
-    downloaded_file_path = "monte-screen-recorder-0.7.7.0-sources.jar",
-    sha256 = "d8f7cac72c7137f50bda58a0b09536ff9e3e0d034a7e6b862ae53ee0e5859825",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/stephenc/monte/monte-screen-recorder/0.7.7.0/monte-screen-recorder-0.7.7.0-sources.jar",
 )
 
 http_file(

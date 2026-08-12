@@ -1007,6 +1007,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/commons/io/intellij.libraries.commons.io.iml" filepath="$PROJECT_DIR$/libraries/commons/io/intellij.libraries.commons.io.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/commons/lang3/intellij.libraries.commons.lang3.iml" filepath="$PROJECT_DIR$/libraries/commons/lang3/intellij.libraries.commons.lang3.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/commons/logging/intellij.libraries.commons.logging.iml" filepath="$PROJECT_DIR$/libraries/commons/logging/intellij.libraries.commons.logging.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/commons/pool2/intellij.libraries.commons.pool2.iml" filepath="$PROJECT_DIR$/libraries/commons/pool2/intellij.libraries.commons.pool2.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/commons/text/intellij.libraries.commons.text.iml" filepath="$PROJECT_DIR$/libraries/commons/text/intellij.libraries.commons.text.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/completion-ranking-cpp/intellij.libraries.completion.ranking.cpp.iml" filepath="$PROJECT_DIR$/libraries/completion-ranking-cpp/intellij.libraries.completion.ranking.cpp.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/completion-ranking-go/intellij.libraries.completion.ranking.go.iml" filepath="$PROJECT_DIR$/libraries/completion-ranking-go/intellij.libraries.completion.ranking.go.iml" />
@@ -1152,12 +1153,14 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/lz4/intellij.libraries.lz4.iml" filepath="$PROJECT_DIR$/libraries/lz4/intellij.libraries.lz4.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/markdown/intellij.libraries.markdown.iml" filepath="$PROJECT_DIR$/libraries/markdown/intellij.libraries.markdown.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/maven-resolver-provider/intellij.libraries.maven.resolver.provider.iml" filepath="$PROJECT_DIR$/libraries/maven-resolver-provider/intellij.libraries.maven.resolver.provider.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/maven-resolver-transport/intellij.libraries.maven.resolver.transport.iml" filepath="$PROJECT_DIR$/libraries/maven-resolver-transport/intellij.libraries.maven.resolver.transport.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/microba/intellij.libraries.microba.iml" filepath="$PROJECT_DIR$/libraries/microba/intellij.libraries.microba.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/miglayout-swing/intellij.libraries.miglayout.swing.iml" filepath="$PROJECT_DIR$/libraries/miglayout-swing/intellij.libraries.miglayout.swing.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/misc/plugin/intellij.libraries.misc.plugin.iml" filepath="$PROJECT_DIR$/libraries/misc/plugin/intellij.libraries.misc.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/mockito/intellij.libraries.mockito.iml" filepath="$PROJECT_DIR$/libraries/mockito/intellij.libraries.mockito.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/mockk/intellij.libraries.mockk.iml" filepath="$PROJECT_DIR$/libraries/mockk/intellij.libraries.mockk.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/mockk/jvm/intellij.libraries.mockk.jvm.iml" filepath="$PROJECT_DIR$/libraries/mockk/jvm/intellij.libraries.mockk.jvm.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/monte-screen-recorder/intellij.libraries.monte.screen.recorder.iml" filepath="$PROJECT_DIR$/libraries/monte-screen-recorder/intellij.libraries.monte.screen.recorder.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/mvstore/intellij.libraries.mvstore.iml" filepath="$PROJECT_DIR$/libraries/mvstore/intellij.libraries.mvstore.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/netty/buffer/intellij.libraries.netty.buffer.iml" filepath="$PROJECT_DIR$/libraries/netty/buffer/intellij.libraries.netty.buffer.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/netty/codec-compression/intellij.libraries.netty.codec.compression.iml" filepath="$PROJECT_DIR$/libraries/netty/codec-compression/intellij.libraries.netty.codec.compression.iml" />
@@ -1165,6 +1168,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/netty/codec-protobuf/intellij.libraries.netty.codec.protobuf.iml" filepath="$PROJECT_DIR$/libraries/netty/codec-protobuf/intellij.libraries.netty.codec.protobuf.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/netty/handler-proxy/intellij.libraries.netty.handler.proxy.iml" filepath="$PROJECT_DIR$/libraries/netty/handler-proxy/intellij.libraries.netty.handler.proxy.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/netty/tcnative-boringssl/intellij.libraries.netty.tcnative.boringssl.iml" filepath="$PROJECT_DIR$/libraries/netty/tcnative-boringssl/intellij.libraries.netty.tcnative.boringssl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/night-config-toml/intellij.libraries.night.config.toml.iml" filepath="$PROJECT_DIR$/libraries/night-config-toml/intellij.libraries.night.config.toml.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/objenesis/intellij.libraries.objenesis.iml" filepath="$PROJECT_DIR$/libraries/objenesis/intellij.libraries.objenesis.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/opencsv/intellij.libraries.opencsv.iml" filepath="$PROJECT_DIR$/libraries/opencsv/intellij.libraries.opencsv.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/opentelemetry/intellij.libraries.opentelemetry.iml" filepath="$PROJECT_DIR$/libraries/opentelemetry/intellij.libraries.opentelemetry.iml" />
@@ -1179,6 +1183,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/oshi-core/intellij.libraries.oshi.core.iml" filepath="$PROJECT_DIR$/libraries/oshi-core/intellij.libraries.oshi.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/plexus-utils/intellij.libraries.plexus.utils.iml" filepath="$PROJECT_DIR$/libraries/plexus-utils/intellij.libraries.plexus.utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/protobuf/intellij.libraries.protobuf.iml" filepath="$PROJECT_DIR$/libraries/protobuf/intellij.libraries.protobuf.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/protobuf-kotlin/intellij.libraries.protobuf.kotlin.iml" filepath="$PROJECT_DIR$/libraries/protobuf-kotlin/intellij.libraries.protobuf.kotlin.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/proxy-vole/intellij.libraries.proxy.vole.iml" filepath="$PROJECT_DIR$/libraries/proxy-vole/intellij.libraries.proxy.vole.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/pty4j/intellij.libraries.pty4j.iml" filepath="$PROJECT_DIR$/libraries/pty4j/intellij.libraries.pty4j.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/rd/core/intellij.libraries.rd.core.iml" filepath="$PROJECT_DIR$/libraries/rd/core/intellij.libraries.rd.core.iml" />
