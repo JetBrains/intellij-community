@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.childOfType
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ast.PyAstFunction
@@ -125,8 +126,6 @@ import com.jetbrains.python.psi.types.isNoneType
 import com.jetbrains.python.psi.types.isObject
 import com.jetbrains.python.pyi.PyiUtil.isOverload
 import org.jetbrains.annotations.PropertyKey
-import java.util.Objects
-import java.util.function.Supplier
 import kotlin.math.min
 
 open class PyTypeCheckerInspection : PyInspection() {
@@ -145,6 +144,8 @@ open class PyTypeCheckerInspection : PyInspection() {
 
   open class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
     override val holder = super.holder!!
+
+    private val typedDictProblemReporter = TypedDictProblemReporter()
 
     // TODO: Visit decorators with arguments
     override fun visitPyCallExpression(node: PyCallExpression) {
@@ -707,9 +708,9 @@ open class PyTypeCheckerInspection : PyInspection() {
     private fun reportTypedDictProblems(expectedType: PyTypedDictType, expression: PyExpression) {
       val result = TypeCheckingResult()
       checkExpression(expectedType, expression, myTypeEvalContext, result)
-      result.valueTypeErrors.forEach { error: ValueTypeError? ->
-        val actualExpression = error!!.actualExpression ?: return@forEach
-        PyTypeCheckerProblemReporter.report(
+      result.valueTypeErrors.forEach { error ->
+        val actualExpression = error.actualExpression ?: return@forEach
+        typedDictProblemReporter.report(
           holder,
           PyTypeCheckerSuppressionCode.BAD_TYPED_DICT,
           actualExpression,
@@ -717,19 +718,19 @@ open class PyTypeCheckerInspection : PyInspection() {
           effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         )
       }
-      result.extraKeys.forEach { error: ExtraKeyError? ->
-        PyTypeCheckerProblemReporter.report(
+      result.extraKeys.forEach { error ->
+        typedDictProblemReporter.report(
           holder,
           PyTypeCheckerSuppressionCode.BAD_TYPED_DICT_KEY,
-          Objects.requireNonNullElse<PyExpression?>(error!!.actualExpression, expression),
+          error.actualExpression ?: expression,
           PyPsiBundle.problemMessage("INSP.type.checker.typed.dict.extra.key", error.key, error.expectedTypedDictName)
         )
       }
-      result.missingKeys.forEach { error: MissingKeysError? ->
-        PyTypeCheckerProblemReporter.report(
+      result.missingKeys.forEach { error ->
+        typedDictProblemReporter.report(
           holder,
           PyTypeCheckerSuppressionCode.BAD_TYPED_DICT,
-          if (error!!.actualExpression != null) error.actualExpression else expression,
+          error.actualExpression ?: expression,
           PyPsiBundle.problemMessage(
             "INSP.type.checker.typed.dict.missing.keys", error.expectedTypedDictName,
             error.missingKeys.size,
@@ -743,11 +744,6 @@ open class PyTypeCheckerInspection : PyInspection() {
       expectedType: PyUnpackedTypedDictType,
       expression: PyExpression,
     ) {
-      var expression: PyExpression? = expression
-      if (expression is PyStarArgument) {
-        expression = PsiTreeUtil.findChildOfType(expression, PyExpression::class.java)
-      }
-      if (expression == null) return
       val argumentType = myTypeEvalContext.getType(expression)
       val typedDictType = expectedType.typedDictType
       if (isDictExpression(expression, myTypeEvalContext)) {
@@ -755,7 +751,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         return
       }
       if (!match(typedDictType, argumentType, myTypeEvalContext)) {
-        PyTypeCheckerProblemReporter.report(
+        typedDictProblemReporter.report(
           holder,
           PyTypeCheckerSuppressionCode.BAD_ARGUMENT_TYPE,
           expression,
@@ -1425,23 +1421,24 @@ open class PyTypeCheckerInspection : PyInspection() {
       argument: PyExpression?,
       substitutions: GenericSubstitutions,
     ): Boolean {
-      var argument = argument
-      argument = peelArgument(argument)
+      val peeledArgument = peelArgument(argument)
+      val expression = when (argument) {
+        is PyStarArgument -> peelArgument(argument.childOfType<PyExpression>())
+        else -> peeledArgument
+      }
 
-      if (argument != null) {
-        if (isDictExpression(argument, myTypeEvalContext) &&
-            parameterType is PyTypedDictType
-        ) {
-          reportTypedDictProblems(parameterType, argument)
+      if (expression != null) {
+        if (isDictExpression(expression, myTypeEvalContext) && parameterType is PyTypedDictType) {
+          reportTypedDictProblems(parameterType, expression)
           return true
         }
-        else if (parameterType is PyUnpackedTypedDictType) {
-          reportUnpackedTypedDictProblems(parameterType, argument)
+        if (parameterType is PyUnpackedTypedDictType) {
+          reportUnpackedTypedDictProblems(parameterType, expression)
           return true
         }
       }
 
-      return matchesExpectedType(parameterType, argumentType, argument, substitutions)
+      return matchesExpectedType(parameterType, argumentType, peeledArgument, substitutions)
              && !matchingProtocolDefinitions(parameterType, argumentType, myTypeEvalContext)
     }
 
@@ -1512,6 +1509,22 @@ open class PyTypeCheckerInspection : PyInspection() {
             (System.nanoTime() - startTime) / 1000000
           )
         )
+      }
+    }
+  }
+
+  internal class TypedDictProblemReporter {
+    private val reportedKeys = mutableSetOf<Pair<PsiElement, String>>()
+
+    fun report(
+      holder: ProblemsHolder,
+      code: PyTypeCheckerSuppressionCode,
+      element: PsiElement,
+      message: PyInspectionMessages.ProblemMessage,
+      type: ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+    ) {
+      if (reportedKeys.add(element to message.description)) {
+        PyTypeCheckerProblemReporter.report(holder, code, element, message, type)
       }
     }
   }
