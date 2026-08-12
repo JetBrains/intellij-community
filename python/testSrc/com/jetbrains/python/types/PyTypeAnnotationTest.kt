@@ -3358,6 +3358,44 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-81560"])
+  fun `class that never declared type parameters is not generic`() = test("""
+    class MyList(list): ...
+    x = MyList[int]()
+    #          ^^^ WARNING Class 'MyList' is not generic
+    """)
+
+  @Test
+  @TestFor(issues = ["PY-81560"])
+  // A base is parameterized by what its type carries, not by how it is spelled: an alias standing for `Base[int, float]`
+  // binds the parameters just as the subscription does.
+  fun `class parameterized through an alias is already parameterized`() = test("""
+    from typing import Generic, TypeVar
+
+    T = TypeVar("T")
+    T1 = TypeVar("T1")
+
+    class Base(Generic[T, T1]): ...
+    Alias = Base[int, float]
+    class Foo(Alias): ...
+    foo = Foo[int]()
+    #         ^^^ WARNING Class 'Foo' is already parameterized
+    """)
+
+  @Test
+  @TestFor(issues = ["PY-81560"])
+  fun `class whose base parameter is left to its default is not generic`() = test("""
+    from typing import Generic, TypeVar
+
+    DefaultStrT = TypeVar("DefaultStrT", default=str)
+
+    class Base(Generic[DefaultStrT]): ...
+    class Foo(Base): ...
+    foo = Foo[int]()
+    #         ^^^ WARNING Class 'Foo' is not generic
+    """)
+
+  @Test
   @TestFor(issues = ["PY-76894"])
   fun `raw Concatenate usage`() = test("""
     from typing import ParamSpec, Concatenate, Any, TypeVar, Callable, TypeAlias

@@ -108,15 +108,12 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-91533"])
-    // Subscripting the declaration of a TypedDict without type parameters is not valid Python: it neither looks an item up
-    // (that needs a value) nor parameterizes anything. The arguments are reported by PyTypeHintsInspection and the expression
-    // still denotes the class, which is what pyright and pyrefly report as well.
     fun `subscripting a non-generic TypedDict declaration`() = test("""
       from typing import TypedDict
       class Movie(TypedDict):
           name: str
       expr = Movie["name"]
-      # │          ^^^^^^ WARNING Class 'Movie' is already parameterized
+      # │          ^^^^^^ WARNING Class 'Movie' is not generic
       # └ TYPE type[Movie]
       """)
 

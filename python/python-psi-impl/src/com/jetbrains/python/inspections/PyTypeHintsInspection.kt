@@ -1387,14 +1387,27 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
+    /** `Base[int]` as well as an alias standing for it. A TypedDict keeps its arguments apart from the inherited ones. */
+    private fun isParameterizedBase(expression: PyExpression): Boolean {
+      val type = Ref.deref(PyTypingTypeProvider.getType(expression, myTypeEvalContext))
+      return if (type is PyTypedDictType) type.substitutedTypeArguments.isNotEmpty()
+      else type is PyClassType && type.isParameterized
+    }
+
     private fun checkGenericClassParameterization(node: PySubscriptionExpression, declaration: PyClass) {
       val genericDefinitionType = PyTypeChecker.findGenericDefinitionType(declaration, myTypeEvalContext)
       if (genericDefinitionType == null) {
         if (PyTypingTypeProvider.isGeneric(declaration, myTypeEvalContext) &&
             declaration.findMethodByName(PyNames.CLASS_GETITEM, false, myTypeEvalContext) == null) {
+          // Without a base carrying arguments — `class Foo(dict)`, `class Movie(TypedDict)` — nothing was ever declared to
+          // parameterize, and "already parameterized" would point at the parameters of the base.
+          val messageKey =
+            if (declaration.superClassExpressions.any { isParameterizedBase(it) })
+              "INSP.type.hints.type.arguments.class.is.already.parameterized"
+            else
+              "INSP.type.hints.type.arguments.class.is.not.generic"
           registerProblem(node.indexExpression,
-                          PyPsiBundle.problemMessage("INSP.type.hints.type.arguments.class.is.already.parameterized",
-                                                     CodifiedParam.ofReference(declaration)))
+                          PyPsiBundle.problemMessage(messageKey, CodifiedParam.ofReference(declaration)))
         }
         return
       }
