@@ -188,6 +188,14 @@ internal class InputEventsRobot(
 
     moveMouse(window, clickPoint)
 
+    // The clicks of one multi-click go out back to back, and the inter-event slowdown applies once, after
+    // the whole gesture. Pausing between them makes a double-click stop being one: `ClickListener` derives
+    // the count from the *timestamps* of consecutive presses rather than from `MouseEvent.getClickCount()`,
+    // and resets it to 1 as soon as they are further apart than `UIUtil.getMultiClickInterval()` — 500 ms by
+    // default, and whatever the desktop says otherwise. At the 400 ms this robot sets to let the UI keep up,
+    // a double-click arrived as two single clicks: the tree row selected, and
+    // `EditSourceOnDoubleClickHandler` never fired. `java.awt.Robot` never showed this because it delivers
+    // the two clicks milliseconds apart.
     for (i in 1..clickCount) {
       postInputEvent(MouseEvent(window, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), keyboardModifiers or buttonDownMask or buttonLegacyMask,
                                 clickPoint.x, clickPoint.y, i, awtBtn == MouseEvent.BUTTON3, awtBtn))
@@ -195,8 +203,8 @@ internal class InputEventsRobot(
                                 clickPoint.x, clickPoint.y, i, false, awtBtn))
       postInputEvent(MouseEvent(window, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), keyboardModifiers or buttonLegacyMask,
                                 clickPoint.x, clickPoint.y, i, false, awtBtn))
-      pauseBetweenEvents()
     }
+    pauseBetweenEvents()
   }
 
   private fun postKeyEvents(keyCode: Int, modifiers: Int = 0) {
