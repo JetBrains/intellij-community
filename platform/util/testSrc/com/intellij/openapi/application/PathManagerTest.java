@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.Contract;
 import org.junit.After;
 import org.junit.Before;
@@ -14,6 +15,7 @@ import org.junit.Test;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
@@ -104,6 +106,22 @@ public class PathManagerTest {
     assertTrue(FileUtil.pathsEqual(PathManager.getBinPath() + "/../license", substituteVars("../license")));
 
     assertEquals("//", substituteVars("/${unknown_property_ignore_the_error}/"));
+  }
+
+  @Test
+  public void testDefaultCommonDataPath() {
+    String vendorName = System.getProperty("idea.vendor.name", "JetBrains");
+
+    assertEquals("C:\\Users\\test\\AppData\\Roaming\\" + vendorName,
+                 PathManager.getDefaultCommonDataPathFor(OS.Windows, "C:\\Users\\test", Map.of()));
+    assertEquals("C:\\Data\\" + vendorName,
+                 PathManager.getDefaultCommonDataPathFor(OS.Windows, "C:\\Users\\test", Map.of("APPDATA", "C:\\Data")));
+    assertEquals("/Users/test/Library/Application Support/" + vendorName,
+                 PathManager.getDefaultCommonDataPathFor(OS.macOS, "/Users/test", Map.of()));
+    assertEquals("/home/test/.local/share/" + vendorName,
+                 PathManager.getDefaultCommonDataPathFor(OS.Linux, "/home/test", Map.of()));
+    assertEquals("/var/data/" + vendorName,
+                 PathManager.getDefaultCommonDataPathFor(OS.Linux, "/home/test", Map.of("XDG_DATA_HOME", "/var/data")));
   }
 
   @Contract("null -> null")
