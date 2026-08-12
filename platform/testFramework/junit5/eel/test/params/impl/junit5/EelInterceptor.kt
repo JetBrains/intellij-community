@@ -2,7 +2,6 @@
 package com.intellij.platform.testFramework.junit5.eel.params.impl.junit5
 
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
-import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelSource
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
 import com.intellij.platform.testFramework.junit5.eel.params.impl.providers.getIjentTestProviders
@@ -31,10 +30,6 @@ internal class EelInterceptor : InvocationInterceptor, BeforeAllCallback, Before
     val ExtensionContext.atLeastOneRemoteEelRequired: Boolean
       get() =
         OS.current() !in findAnnotation(testClass.get(), TestApplicationWithEel::class.java).get().osesMayNotHaveRemoteEels
-
-    val ReflectiveInvocationContext<Method>.eelHolderArgs: List<EelHolder>
-      get() =
-        arguments.filterIsInstance<EelHolder>()
 
     val eelForFixturesProvider = EelForFixturesProvider { invocationContext ->
       invocationContext.eelHolderArgs.firstOrNull()?.eel
@@ -73,7 +68,11 @@ internal class EelInterceptor : InvocationInterceptor, BeforeAllCallback, Before
     }
   }
 
-  override fun <T : Any> interceptTestClassConstructor(invocation: InvocationInterceptor.Invocation<T>, invocationContext: ReflectiveInvocationContext<Constructor<T>>, extensionContext: ExtensionContext): T {
+  override fun <T : Any> interceptTestClassConstructor(
+    invocation: InvocationInterceptor.Invocation<T>,
+    invocationContext: ReflectiveInvocationContext<Constructor<T>>,
+    extensionContext: ExtensionContext,
+  ): T {
     createEelManager(invocationContext, extensionContext)
     return super.interceptTestClassConstructor(invocation, invocationContext, extensionContext)
   }

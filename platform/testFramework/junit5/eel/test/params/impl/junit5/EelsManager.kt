@@ -35,7 +35,7 @@ internal class EelsManager private constructor(private val eelHolders: List<EelH
   java.lang.AutoCloseable {
   // Autocloseable things might be closed by JUnit, hence need not be closed two times
   private var closed = false
-  private val closeAfterTest: MutableList<Closeable> = mutableListOf<Closeable>()
+  private val closeAfterTest: MutableList<Closeable> = mutableListOf()
   private val scope: ParentOfIjentScopes = ParentOfIjentScopes(
     ApplicationManager.getApplication().service<EelTestService>().scope.childScope("Eel test child scope")
   )
@@ -57,6 +57,7 @@ internal class EelsManager private constructor(private val eelHolders: List<EelH
         if (testContext.store.get(REMOTE_EEL_EXECUTED) == null && extensionContext.atLeastOneRemoteEelRequired) {
 
           val advice = buildString {
+            @Suppress("OPT_IN_USAGE")
             if (com.intellij.util.system.OS.CURRENT == com.intellij.util.system.OS.Windows) {
               append("Install WSL2. ")
             }
