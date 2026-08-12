@@ -5,11 +5,13 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.configureDevModeBuildOptions
+import org.jetbrains.intellij.build.dev.formatCoreClasspath
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.lang.reflect.Method
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 class IdeBuilderTest {
   @TempDir
@@ -174,6 +176,48 @@ class IdeBuilderTest {
 
     assertThat(getProductionClassesOutputDirectory(classesOutputDirectory)).isEqualTo(classesOutputDirectory.resolve("production"))
     assertThat(getTestClassesOutputDirectory(classesOutputDirectory)).isEqualTo(classesOutputDirectory.resolve("test"))
+  }
+
+  @Test
+  fun formatCoreClasspathWritesEntriesUnderRunDirAsRelativePaths() {
+    val runDir = tempDir.resolve("run")
+
+    assertThat(formatCoreClasspath(listOf(runDir.resolve("lib/util.jar")), runDir)).isEqualTo("lib/util.jar")
+  }
+
+  @Test
+  fun formatCoreClasspathUsesForwardSlashesRegardlessOfOs() {
+    val runDir = tempDir.resolve("run")
+    val classPathString = formatCoreClasspath(listOf(runDir.resolve("lib").resolve("modules").resolve("util.jar")), runDir)
+
+    assertThat(classPathString).isEqualTo("lib/modules/util.jar")
+    assertThat(classPathString).doesNotContain("\\")
+  }
+
+  @Test
+  fun formatCoreClasspathKeepsEntriesOutsideRunDirAbsolute() {
+    val runDir = tempDir.resolve("run")
+    val jarCacheEntry = tempDir.resolve("jar-cache").resolve("payload.jar")
+
+    assertThat(formatCoreClasspath(listOf(jarCacheEntry), runDir)).isEqualTo(jarCacheEntry.invariantSeparatorsPathString)
+  }
+
+  @Test
+  fun formatCoreClasspathJoinsEntriesByNewlineInInputOrder() {
+    val runDir = tempDir.resolve("run")
+    val outsideEntry = tempDir.resolve("jar-cache").resolve("payload.jar")
+
+    val classPathString = formatCoreClasspath(
+      listOf(runDir.resolve("lib").resolve("app.jar"), outsideEntry, runDir.resolve("lib").resolve("util.jar")),
+      runDir,
+    )
+
+    assertThat(classPathString).isEqualTo("lib/app.jar\n${outsideEntry.invariantSeparatorsPathString}\nlib/util.jar")
+  }
+
+  @Test
+  fun formatCoreClasspathOfEmptyClassPathIsEmpty() {
+    assertThat(formatCoreClasspath(emptyList(), tempDir.resolve("run"))).isEmpty()
   }
 
   private fun createBuildRequest(classesOutputDirectory: Path? = null): BuildRequest {

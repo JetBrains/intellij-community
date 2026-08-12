@@ -84,7 +84,9 @@ import kotlin.Unit
 import kotlin.also
 import kotlin.checkNotNull
 import kotlin.io.path.createDirectories
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.moveTo
+import kotlin.io.path.relativeTo
 import kotlin.let
 import kotlin.text.StringBuilder
 import kotlin.text.buildString
@@ -371,7 +373,7 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
         val classPath = platformClasspath + coreClasspathFromPlugins
 
         if (request.writeCoreClasspath) {
-          val classPathString = classPath.joinToString(separator = "\n")
+          val classPathString = formatCoreClasspath(classPath = classPath, runDir = runDir)
           launch(Dispatchers.IO) {
             Files.writeString(runDir.resolve("core-classpath.txt"), classPathString)
           }
@@ -471,6 +473,14 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
     contextToClose?.messages?.close()
   }
   return runDir
+}
+
+// paths are written relative to the IDE home dir to keep the built IDE relocatable;
+// entries outside of the home dir (e.g., jar cache payload) stay absolute - a `..`-prefixed path would break relocation
+internal fun formatCoreClasspath(classPath: Collection<Path>, runDir: Path): String {
+  return classPath.joinToString(separator = "\n") {
+    if (it.startsWith(runDir)) it.relativeTo(runDir).invariantSeparatorsPathString else it.invariantSeparatorsPathString
+  }
 }
 
 private suspend fun getSearchableOptionSet(context: CompilationContext): SearchableOptionSetDescriptor? {

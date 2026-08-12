@@ -58,7 +58,8 @@ public final class PreBuiltDevMain {
     for (String line : Files.readAllLines(ideHomePath.resolve("core-classpath.txt"))) {
       String cleanedLine = line.trim();
       if (!cleanedLine.isEmpty()) {
-        classpath.add(Path.of(cleanedLine));
+        Path path = Path.of(cleanedLine);
+        classpath.add(path.isAbsolute() ? path : ideHomePath.resolve(path));
       }
     }
     return classpath;

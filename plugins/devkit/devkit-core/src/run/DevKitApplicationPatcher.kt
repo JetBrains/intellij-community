@@ -17,8 +17,6 @@ import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.idea.devkit.requestHandlers.passDataAboutBuiltInServer
-import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
@@ -121,24 +119,6 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       vmParameters.addProperty(PathManager.PROPERTY_PLUGINS_PATH, "${dir}/config/plugins")
       vmParameters.addProperty(PathManager.PROPERTY_SYSTEM_PATH, "${dir}/system")
       vmParameters.addProperty(PathManager.PROPERTY_LOG_PATH, "${dir}/system/log")
-    }
-
-    val runDir = workingDirectory.resolve("out/dev-run/${productClassifier}")
-    if (vmParameters.getPropertyValue("idea.dev.skip.build").toBoolean()) {
-      // todo broken for now, if this mode will be needed, proper binary maybe implemented
-      vmParameters.addProperty(PathManager.PROPERTY_HOME_PATH, runDir.invariantSeparatorsPathString)
-      val files = try {
-        Files.readAllLines(runDir.resolve("core-classpath.txt"))
-      }
-      catch (_: NoSuchFileException) {
-        null
-      }
-
-      if (files != null) {
-        javaParameters.classPath.clear()
-        javaParameters.classPath.addAll(files)
-        javaParameters.mainClass = "com.intellij.idea.Main"
-      }
     }
 
     vmParameters.addProperty("idea.vendor.name", "JetBrains")

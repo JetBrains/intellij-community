@@ -52,7 +52,11 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
       moduleRepository.computeModuleClasspath(RuntimeModuleId.legacyJpsModule("intellij.platform.runtime.loader")).map { it.pathString }
     }
     else {
-      Files.readAllLines(coreClassPathFile)
+      // entries are relative to the IDE home dir, unless they point outside of it
+      Files.readAllLines(coreClassPathFile).map { line ->
+        val path = Path.of(line)
+        (if (path.isAbsolute) path else installationDirectory.resolve(path)).pathString
+      }
     }
   }
 
