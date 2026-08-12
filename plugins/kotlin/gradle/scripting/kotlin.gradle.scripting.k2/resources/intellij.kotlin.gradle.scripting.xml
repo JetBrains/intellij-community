@@ -62,10 +62,11 @@
     <codeInsight.declarativeInlayProvider language="kotlin"
                                           implementationClass="org.jetbrains.kotlin.gradle.scripting.k2.GradleVersionCatalogVersionInlayHintsProvider"
                                           isEnabledByDefault="true"
-                                          group="VALUES_GROUP"
+                                          group="OTHER_GROUP"
                                           providerId="gradle.version.catalog.version"
                                           bundle="messages.KotlinGradleScriptingBundle"
-                                          nameKey="inlay.hints.version.catalog.dependencies.name"/>
+                                          nameKey="inlay.hints.version.catalog.dependencies.name"
+                                          descriptionKey="inlay.hints.version.catalog.dependencies.description"/>
 
     <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslSyncListener"/>
 
