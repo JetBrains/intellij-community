@@ -91,6 +91,7 @@ fun testNameFixture(lowerCaseFirstLetter: Boolean = true): TestFixture<String> =
 @JvmOverloads
 @TestOnly
 fun tempPathFixture(root: Path? = null, prefix: String = "IJ", subdirName: String? = null): TestFixture<Path> = testFixture {
+  val prefix = (prefix + "_" + it.testName.filter { c -> c.isLetterOrDigit() }).take(50)
   var tempDir = withContext(Dispatchers.IO) {
     if (root == null) {
       it.eel?.fs?.createTemporaryDirectory(CreateTemporaryEntryOptions.Builder().prefix(prefix).build())?.getOrThrow()?.asNioPath()
