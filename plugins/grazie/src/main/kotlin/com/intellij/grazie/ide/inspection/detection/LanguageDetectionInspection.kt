@@ -32,7 +32,7 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
         BatchLangDetector.updateContext(file, context)
 
         val state = GrazieConfig.get()
-        val languages = context.getToNotify((state.detectionContext.disabled + state.availableLanguages.map { it.toLanguage() }).toSet())
+        val languages = context.getToNotify((state.detectionContext.disabled + state.enabledLanguages.map { it.toLanguage() }).toSet())
         LanguageDetectionProblemDescriptor.create(holder.manager, holder.isOnTheFly, session.file, languages)
           ?.let { holder.registerProblem(it) }
       }
