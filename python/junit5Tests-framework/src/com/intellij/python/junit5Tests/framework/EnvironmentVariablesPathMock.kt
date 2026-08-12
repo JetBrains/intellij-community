@@ -1,13 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.framework
 
 import com.intellij.util.EnvironmentUtil
-import io.mockk.every
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
 import uk.org.webcompere.systemstubs.environment.EnvironmentVariables
 import java.io.File
 import java.nio.file.Path
+import java.util.function.Supplier
 import kotlin.io.path.pathString
 
 /**
@@ -19,22 +17,30 @@ import kotlin.io.path.pathString
  */
 fun EnvironmentVariables.mockPathAndAdd(vararg pathsToAdd: Path) {
   // TODO: Use native calls to `SetEnvironmentVariable` and `setenv(3)` to change env for children processes (they inherit parent envs).
-  val (pathKey, paths) = variables.entries.find { it.key.isPath }?.toPair()
-                         ?: Pair(PATH, "")
+  val oldVars = HashMap(variables)
+  val pathKey = variables.keys.firstOrNull { it.isPath } ?: PATH
+  val paths = variables[pathKey] ?: ""
+
   val newPathVal = (paths.split(File.pathSeparator) + pathsToAdd.map { it.pathString }).joinToString(File.pathSeparator)
   set(pathKey, newPathVal) // Mock System.env
-  mockkStatic(EnvironmentUtil::class) // Mock EnvironmentUtil
-  every { EnvironmentUtil.getValue(any()) }.coAnswers {
-    if ((it.invocation.args[0] as String).isPath) newPathVal else it.invocation.originalCall.invoke() as String
-  }
+  val currentEnvs = HashMap(variables)
+  currentEnvs[pathKey] = newPathVal
+  currentEnvs[PATH] = newPathVal
+  EnvironmentUtil.setEnvironmentLoader(MyMap(new = currentEnvs, old = oldVars))
 }
 
 /**
  * See [mockPathAndAdd]
  */
 fun EnvironmentVariables.unMockPath() {
-  unmockkStatic(EnvironmentUtil::class)
+  val original = HashMap((EnvironmentUtil.getEnvironmentMap() as MyMap).old)
+  EnvironmentUtil.setEnvironmentLoader { original }
 }
 
 private const val PATH = "PATH"
 private val String.isPath: Boolean get() = uppercase() == PATH
+
+private class MyMap(private val new: Map<String, String>, val old: Map<String, String>) : Supplier<Map<String, String>>,
+                                                                                          Map<String, String> by new {
+  override fun get(): Map<String, String> = this
+}
