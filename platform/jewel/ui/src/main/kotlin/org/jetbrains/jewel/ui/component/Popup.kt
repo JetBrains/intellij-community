@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.Popup as ComposePopup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import java.awt.Shape
 import org.jetbrains.jewel.foundation.JewelFlags
 
 /**
@@ -89,10 +90,10 @@ public fun Popup(
  *   consume the event.
  * @param onKeyEvent Callback invoked for key events after they are dispatched to children. Return `true` to consume the
  *   event.
- * @param windowShape An optional factory that produces the [java.awt.Shape] used to clip the native popup window. The
- *   lambda receives the window's measured size in AWT logical units and **must** return a shape in the same coordinate
- *   system. Only applied by JDialogRenderer when `useCustomPopupRenderer = true` and the panel is not transparent (be
- *   it by enabling `compose.interop.blending` or setting the alpha channel of the panel's background to 0); all other
+ * @param windowShape An optional factory that produces the [Shape] used to clip the native popup window. The lambda
+ *   receives the window's measured size in AWT logical units and **must** return a shape in the same coordinate system.
+ *   Only applied by JDialogRenderer when `useCustomPopupRenderer = true` and the panel is not transparent (be it by
+ *   enabling `compose.interop.blending` or setting the alpha channel of the panel's background to 0); all other
  *   renderers ignore it. When null, window clipping falls back to the `cornerSize`-based rounded corners (via JBR) if
  *   the platform supports it.
  * @param content The composable content to be displayed inside the popup.
@@ -104,7 +105,7 @@ public fun Popup(
     properties: PopupProperties = PopupProperties(),
     onPreviewKeyEvent: ((KeyEvent) -> Boolean)? = null,
     onKeyEvent: ((KeyEvent) -> Boolean)? = null,
-    windowShape: ((IntSize) -> java.awt.Shape)? = null,
+    windowShape: ((IntSize) -> Shape)? = null,
     content: @Composable () -> Unit,
 ) {
     Popup(
@@ -184,10 +185,10 @@ public fun Popup(
  *   consume the event.
  * @param onKeyEvent Callback invoked for key events after they are dispatched to children. Return `true` to consume the
  *   event.
- * @param windowShape An optional factory that produces the [java.awt.Shape] used to clip the native popup window. The
- *   lambda receives the window's measured size in AWT logical units and must return a shape in the same coordinate
- *   system. Only applied by JDialogRenderer when `useCustomPopupRenderer = true` and the panel is not transparent (be
- *   it by enabling `compose.interop.blending` or setting the alpha channel of the panel's background to 0); all other
+ * @param windowShape An optional factory that produces the [Shape] used to clip the native popup window. The lambda
+ *   receives the window's measured size in AWT logical units and must return a shape in the same coordinate system.
+ *   Only applied by `JDialogRenderer` when `useCustomPopupRenderer = true` and the panel is not transparent (be it by
+ *   enabling `compose.interop.blending` or setting the alpha channel of the panel's background to 0); all other
  *   renderers ignore it. When null, window clipping falls back to the `cornerSize`-based rounded corners (via JBR) if
  *   the platform supports it.
  * @param content The composable content to be displayed inside the popup.
@@ -200,7 +201,7 @@ public fun Popup(
     properties: PopupProperties = PopupProperties(),
     onPreviewKeyEvent: ((KeyEvent) -> Boolean)? = null,
     onKeyEvent: ((KeyEvent) -> Boolean)? = null,
-    windowShape: ((IntSize) -> java.awt.Shape)? = null,
+    windowShape: ((IntSize) -> Shape)? = null,
     content: @Composable () -> Unit,
 ) {
     DisableSelection {
@@ -236,6 +237,11 @@ public fun Popup(
  * [JewelFlags.useCustomPopupRenderer] flag to use it.
  */
 public interface PopupRenderer {
+    /**
+     * Compatibility overload without native window-shape support. Implement the shaped overload instead.
+     *
+     * Parameters match the shaped overload.
+     */
     @Deprecated(message = "Please use the overload with windowShape.")
     @Composable
     public fun Popup(
@@ -249,7 +255,17 @@ public interface PopupRenderer {
     )
 
     /**
-     * Renders the popup with optional [windowShape] support. Falls back to the deprecated overload if not overridden.
+     * Renders a popup, optionally clipping its native window to [windowShape]. Only native-window renderers apply the
+     * shape; the default fallback delegates to the deprecated overload and drops it.
+     *
+     * @param popupPositionProvider Determines the popup position.
+     * @param properties Popup focus and dismissal behavior.
+     * @param onDismissRequest Callback invoked when dismissal is requested.
+     * @param onPreviewKeyEvent Preview key handler; return `true` to consume an event.
+     * @param onKeyEvent Key handler; return `true` to consume an event.
+     * @param cornerSize Popup corner size.
+     * @param windowShape Native shape factory in AWT logical units, or `null` for the default shape.
+     * @param content Popup content.
      */
     @Composable
     public fun Popup(
@@ -259,9 +275,10 @@ public interface PopupRenderer {
         onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
         onKeyEvent: ((KeyEvent) -> Boolean)?,
         cornerSize: CornerSize,
-        windowShape: ((IntSize) -> java.awt.Shape)? = null,
+        windowShape: ((IntSize) -> Shape)? = null,
         content: @Composable () -> Unit,
     ) {
+        @Suppress("DEPRECATION")
         Popup(
             popupPositionProvider = popupPositionProvider,
             properties = properties,
@@ -287,7 +304,14 @@ public val LocalPopupRenderer: ProvidableCompositionLocal<PopupRenderer> = stati
 }
 
 private object DefaultPopupRenderer : PopupRenderer {
-    @Suppress("OVERRIDE_DEPRECATION")
+    @Deprecated(
+        "Please use the overload with windowShape.",
+        ReplaceWith(
+            "Popup(popupPositionProvider, properties, onDismissRequest, onPreviewKeyEvent, onKeyEvent, cornerSize, " +
+                "windowShape = null, content)",
+            "org.jetbrains.jewel.ui.component.DefaultPopupRenderer.Popup",
+        ),
+    )
     @Composable
     override fun Popup(
         popupPositionProvider: PopupPositionProvider,
@@ -298,6 +322,31 @@ private object DefaultPopupRenderer : PopupRenderer {
         cornerSize: CornerSize,
         content: @Composable () -> Unit,
     ) {
+        Popup(
+            popupPositionProvider = popupPositionProvider,
+            properties = properties,
+            onDismissRequest = onDismissRequest,
+            onPreviewKeyEvent = onPreviewKeyEvent,
+            onKeyEvent = onKeyEvent,
+            cornerSize = cornerSize,
+            windowShape = null,
+            content = content,
+        )
+    }
+
+    @Composable
+    override fun Popup(
+        popupPositionProvider: PopupPositionProvider,
+        properties: PopupProperties,
+        onDismissRequest: (() -> Unit)?,
+        onPreviewKeyEvent: ((KeyEvent) -> Boolean)?,
+        onKeyEvent: ((KeyEvent) -> Boolean)?,
+        cornerSize: CornerSize,
+        windowShape: ((IntSize) -> Shape)?,
+        content: @Composable () -> Unit,
+    ) {
+        // Compose popups are rendered in the owner window and do not support native window shapes, so
+        // windowShape is ignored.
         ComposePopup(
             popupPositionProvider = popupPositionProvider,
             onDismissRequest = onDismissRequest,
