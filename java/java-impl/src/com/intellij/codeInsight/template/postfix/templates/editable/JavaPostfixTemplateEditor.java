@@ -11,6 +11,7 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -86,10 +87,12 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
     if (project == null) {
       return EditorFactory.getInstance().createDocument("");
     }
-    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
-    final JavaCodeFragment fragment = factory.createCodeBlockCodeFragment("", null, true);
-    DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(fragment, false);
-    return PsiDocumentManager.getInstance(project).getDocument(fragment);
+    return ReadAction.computeBlocking(() -> {
+      final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
+      final JavaCodeFragment fragment = factory.createCodeBlockCodeFragment("", null, true);
+      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(fragment, false);
+      return PsiDocumentManager.getInstance(project).getDocument(fragment);
+    });
   }
 
   @Override
