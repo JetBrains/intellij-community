@@ -9,6 +9,7 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.findFileInModuleLibraryDependencies
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.isModuleNameLikeFilename
+import org.jetbrains.intellij.build.readFileFromModuleOutput
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.jps.model.module.JpsModule
 
@@ -72,10 +73,15 @@ internal fun generateXIncludes(
       error("Module '${include.contentModuleName.value}' not found (referenced in xi:include for '$resourcePath')")
     }
 
+    // Sources, then libraries, then the module's own output - the same order `resolveXIncludeBytes` uses. The
+    // output is not a mere fallback: a build assembling from Bazel outputs has no checkout to read sources from,
+    // and the file it wants is the one that module compiled into its jar.
     val data = findFileInModuleSources(module, resourcePath)?.let { JDOMUtil.load(it) }
                ?: findFileInModuleLibraryDependencies(module = module, relativePath = resourcePath, outputProvider = outputProvider)
                  ?.let { JDOMUtil.load(it) }
-               ?: error("Resource '$resourcePath' not found in module '${module.name}' sources or libraries (referenced in xi:include)")
+               ?: readFileFromModuleOutput(module = module, relativePath = resourcePath, outputProvider = outputProvider)
+                 ?.let { JDOMUtil.load(it) }
+               ?: error("Resource '$resourcePath' not found in module '${module.name}' sources, libraries or output (referenced in xi:include)")
 
     if (inlineXmlIncludes && !include.optional) {
       resolveIncludes(data, ModuleScopedXIncludeResolver(module, outputProvider))

@@ -238,12 +238,22 @@ def preloaded_downloads_only_flag(platforms):
     measured by assembling on macOS says nothing about the archives a Windows assembly reaches for. Off
     those platforms the target keeps advisory manifests rather than failing on the first one.
     """
-    flag = ["-D%s=true" % _ONLY_PROPERTY]
+    return _only_select(platforms, ["-D%s=true" % _ONLY_PROPERTY], [])
+
+def preloaded_downloads_only_bool(platforms):
+    """[preloaded_downloads_only_flag] for a consumer that takes a boolean rather than a JVM flag.
+
+    A rule attribute cannot be given a flag list, and the assembler behind `intellij_dev_dist` sets the property
+    itself rather than receiving it on its command line.
+    """
+    return _only_select(platforms, True, False)
+
+def _only_select(platforms, value, default):
     for platform in platforms:
         if platform not in HOST_PLATFORMS:
             fail("'%s' is not one of %s" % (platform, HOST_PLATFORMS))
-    branches = {Label("//build:host_" + platform): flag for platform in platforms}
-    branches["//conditions:default"] = []
+    branches = {Label("//build:host_" + platform): value for platform in platforms}
+    branches["//conditions:default"] = default
     return select(branches)
 
 # What a dev-mode assembly downloads, of the groups community owns.

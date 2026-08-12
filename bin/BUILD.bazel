@@ -1,0 +1,6 @@
+# `CompilationContextImpl` asserts this file exists under the community root before it will treat a directory as
+# IntelliJ Community sources, so a dev assembly that materializes its own project tree has to declare it.
+exports_files(
+    ["idea.properties"],
+    visibility = ["//visibility:public"],
+)

@@ -855,8 +855,15 @@ internal suspend fun layoutDistribution(
 }
 
 private fun layoutResourcePaths(layout: BaseLayout, targetDirectory: Path, overwrite: Boolean, outputProvider: ModuleOutputProvider) {
+  val missing = ArrayList<String>()
   for (resourceData in layout.resourcePaths) {
     val source = basePath(resourceData.moduleName, outputProvider).resolve(resourceData.resourcePath).normalize()
+    if (!Files.exists(source)) {
+      // All of them, not just the first: these name checkout paths, and a build assembling from a materialized
+      // project tree has to declare every one of them, so discovering them one failed build at a time is a trap.
+      missing.add("'${resourceData.resourcePath}' of module '${resourceData.moduleName}' (expected at $source)")
+      continue
+    }
     var target = targetDirectory.resolve(resourceData.relativeOutputPath).normalize()
     if (resourceData.packToZip) {
       if (Files.isDirectory(source)) {
@@ -890,6 +897,10 @@ private fun layoutResourcePaths(layout: BaseLayout, targetDirectory: Path, overw
         }
       }
     }
+  }
+
+  check(missing.isEmpty()) {
+    "Resource paths of layout '$layout' do not exist:\n  " + missing.joinToString(separator = "\n  ")
   }
 }
 

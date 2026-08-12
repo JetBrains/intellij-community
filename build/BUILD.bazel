@@ -13,9 +13,13 @@ jps_library_derivation_test_suite(name = "jps_library_derivation_test")
 dev_launch_dependencies_test_suite(name = "dev_launch_dependencies_test")
 
 # The pinned build-dependency versions, for tests that gate shared dev-launch dependency sets
-# against version bumps.
+# against version bumps, and for a dev assembly that reads them out of a materialized project tree
+# rather than a checkout (see `DependenciesProperties`).
 exports_files(
-    ["dependencies/dependencies.properties"],
+    [
+        "dependencies/dependencies.properties",
+        "dependencies/runtime.properties",
+    ],
     visibility = ["//visibility:public"],
 )
 

@@ -1,6 +1,13 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
 
+# The `--add-opens` inventory a distribution's vmoptions are generated from, read off disk by
+# `getCommandLineArgumentsForOpenPackages` - so a dev assembly with no checkout has to declare it.
+exports_files(
+    ["resources/META-INF/OpenedPackages.txt"],
+    visibility = ["//visibility:public"],
+)
+
 jps_test(
     name = "ide-impl-tests_test",
     timeout = "moderate",

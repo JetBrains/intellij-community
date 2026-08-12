@@ -126,6 +126,41 @@ suspend fun findFileInModuleDependenciesRecursive(
   return null
 }
 
+/**
+ * The bytes of [relativePath] in [module]'s own output, or `null` if it has none.
+ *
+ * [findUnprocessedDescriptorContent] is the usual way to read a module's output and should be preferred. This
+ * exists for XML generation, which runs inside a non-suspending `buildString` builder and would otherwise have
+ * to fall back to reading the checkout - which is not there when the build assembles from Bazel outputs alone.
+ */
+@Internal
+fun readFileFromModuleOutput(module: JpsModule, relativePath: String, outputProvider: ModuleOutputProvider): ByteArray? {
+  for (output in outputProvider.getModuleOutputRoots(module)) {
+    val attributes = try {
+      Files.readAttributes(output, BasicFileAttributes::class.java)
+    }
+    catch (_: FileSystemException) {
+      continue
+    }
+
+    if (attributes.isDirectory) {
+      val file = output.resolve(relativePath)
+      if (Files.exists(file)) {
+        return Files.readAllBytes(file)
+      }
+    }
+    else if (attributes.isRegularFile && output.toString().endsWith(".jar")) {
+      ImmutableZipFile.load(output).use { zipFile ->
+        zipFile.getData(relativePath)?.let { return it }
+      }
+    }
+    else {
+      throw IllegalStateException("Module '${module.name}' output is neither directory, nor jar $output")
+    }
+  }
+  return null
+}
+
 @Internal
 fun hasModuleOutputPath(module: JpsModule, relativePath: String, outputProvider: ModuleOutputProvider): Boolean {
   return outputProvider.getModuleOutputRoots(module).any { output ->

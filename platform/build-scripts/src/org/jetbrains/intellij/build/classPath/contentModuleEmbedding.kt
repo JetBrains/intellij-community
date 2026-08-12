@@ -134,8 +134,18 @@ fun deprecatedResolveDescriptorForEmbeddedProduct(
       loadXmlFromEmbeddedProductSpec(productModulesContentSpec, context)
     }
     else {
-      val file = context.findFileInModuleSources(clientModuleName, relativePath) ?: error("File not found: $relativePath in module $clientModuleName")
-      JDOMUtil.load(file)
+      // Sources first, then the module's own output: a build assembling from Bazel outputs has no checkout to read
+      // sources from, and the descriptor it wants is the one that module compiled into its jar.
+      val file = context.findFileInModuleSources(clientModuleName, relativePath)
+      if (file == null) {
+        val module = context.outputProvider.findRequiredModule(clientModuleName)
+        val content = findUnprocessedDescriptorContent(module = module, path = relativePath, outputProvider = context.outputProvider)
+                      ?: error("File not found: $relativePath in module $clientModuleName sources or output")
+        JDOMUtil.load(content)
+      }
+      else {
+        JDOMUtil.load(file)
+      }
     }
     val pluginLayout = PluginLayout.pluginAuto(clientModuleName) {}
     val descriptorContainer = platformLayout.descriptorCacheContainer.forPlugin(getEmbeddedProductTempPluginDir(context, clientModuleName))
