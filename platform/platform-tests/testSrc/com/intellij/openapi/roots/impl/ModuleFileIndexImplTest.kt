@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
@@ -52,12 +53,43 @@ internal class ModuleFileIndexImplTest {
   }
 
   @Test
+  fun `iterateContent visits non-indexable content`(): Unit = runBlocking {
+    val nonIndexableRoot = tempDir.newVirtualDirectory("non-indexable")
+    val nonIndexableFile = tempDir.newVirtualFile("non-indexable/non-indexable.txt")
+    val indexableRoot = tempDir.newVirtualDirectory("non-indexable/indexable")
+    val indexableFile = tempDir.newVirtualFile("non-indexable/indexable/indexable.txt")
+    addFileSets(indexableRoots = listOf(indexableRoot), nonIndexableRoots = listOf(nonIndexableRoot))
+
+    val result = iterateContent()
+
+    assertThat(result.completed).isTrue()
+    assertThat(result.files).containsExactlyInAnyOrder(nonIndexableRoot, nonIndexableFile, indexableRoot, indexableFile)
+  }
+
+  @Test
   fun `iterateIndexableContent skips non-indexable content and visits nested indexable content`(): Unit = runBlocking {
     val nonIndexableRoot = tempDir.newVirtualDirectory("non-indexable")
     val nonIndexableFile = tempDir.newVirtualFile("non-indexable/non-indexable.txt")
     val indexableRoot = tempDir.newVirtualDirectory("non-indexable/indexable")
     val indexableFile = tempDir.newVirtualFile("non-indexable/indexable/indexable.txt")
     addFileSets(indexableRoots = listOf(indexableRoot), nonIndexableRoots = listOf(nonIndexableRoot))
+
+    val result = iterateIndexableContent()
+
+    assertThat(result.completed).isTrue()
+    assertThat(result.files).containsExactlyInAnyOrder(indexableRoot, indexableFile)
+  }
+
+  @Test
+  fun `iterateIndexableContent visits indexable content under an excluded root`(): Unit = runBlocking {
+    val excludedRoot = tempDir.newVirtualDirectory("excluded")
+    tempDir.newVirtualFile("excluded/excluded.txt")
+    val indexableRoot = tempDir.newVirtualDirectory("excluded/indexable")
+    val indexableFile = tempDir.newVirtualFile("excluded/indexable/indexable.txt")
+    workspaceModel.update { storage ->
+      storage.addEntity(ExcludeUrlEntity(excludedRoot.toVirtualFileUrl(virtualFileUrlManager), NonPersistentEntitySource))
+    }
+    addFileSets(indexableRoots = listOf(indexableRoot), nonIndexableRoots = emptyList())
 
     val result = iterateIndexableContent()
 
@@ -108,6 +140,42 @@ internal class ModuleFileIndexImplTest {
   }
 
   @Test
+  fun `iterateIndexableContent skips non-indexable non-recursive root while visiting indexable content`(): Unit = runBlocking {
+    val indexableRoot = tempDir.newVirtualDirectory("indexable")
+    val indexableFile = tempDir.newVirtualFile("indexable/indexable.txt")
+    val nonIndexableRoot = tempDir.newVirtualDirectory("non-indexable")
+    val nonIndexableFile = tempDir.newVirtualFile("non-indexable/non-indexable.txt")
+    addFileSets(indexableRoots = listOf(indexableRoot), nonIndexableRoots = emptyList())
+    workspaceModel.update { storage ->
+      storage.addEntity(NonIndexableTestEntity(nonIndexableRoot.toVirtualFileUrl(virtualFileUrlManager), NonPersistentEntitySource))
+    }
+
+    val result = iterateIndexableContent()
+
+    assertThat(result.completed).isTrue()
+    assertThat(result.files).containsExactlyInAnyOrder(indexableRoot, indexableFile)
+    assertThat(result.files).doesNotContain(nonIndexableRoot, nonIndexableFile)
+  }
+
+  @Test
+  fun `iterateIndexableContent skips non-indexable non-recursive roots`(): Unit = runBlocking {
+    val nonIndexableRoot = tempDir.newVirtualDirectory("non-indexable")
+    val nonIndexableFile = tempDir.newVirtualFile("non-indexable/non-indexable.txt")
+    addFileSets(indexableRoots = emptyList(), nonIndexableRoots = listOf(nonIndexableRoot))
+    workspaceModel.update { storage ->
+      storage.addEntity(NonIndexableTestEntity(nonIndexableRoot.toVirtualFileUrl(virtualFileUrlManager), NonPersistentEntitySource))
+    }
+
+    val indexableResult = iterateIndexableContent()
+    val contentResult = iterateContent()
+
+    assertThat(indexableResult.completed).isTrue()
+    assertThat(indexableResult.files).isEmpty()
+    assertThat(contentResult.completed).isTrue()
+    assertThat(contentResult.files).containsExactlyInAnyOrder(nonIndexableRoot, nonIndexableFile)
+  }
+
+  @Test
   fun `iterateIndexableContent returns false when processing is stopped`(): Unit = runBlocking {
     val root = tempDir.newVirtualDirectory("root")
     tempDir.newVirtualFile("root/file.txt")
@@ -129,6 +197,21 @@ internal class ModuleFileIndexImplTest {
         )
       )
     }
+  }
+
+  private fun iterateContent(
+    filter: VirtualFileFilter? = null,
+    processor: (VirtualFile) -> Boolean = { true },
+  ): IterationResult {
+    val files = mutableListOf<VirtualFile>()
+    val completed = ModuleRootManager.getInstance(module).fileIndex.iterateContent(
+      ContentIterator { file ->
+        files.add(file)
+        processor(file)
+      },
+      filter,
+    )
+    return IterationResult(completed, files)
   }
 
   private fun iterateIndexableContent(

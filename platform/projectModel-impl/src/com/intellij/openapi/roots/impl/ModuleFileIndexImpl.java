@@ -60,7 +60,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   @Override
   public boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter) {
     Pair<Collection<VirtualFile>, Collection<VirtualFile>> rootsPair = ReadAction.nonBlocking(
-      () -> collectContentRoots(false)
+      () -> collectContentRoots(true)
     ).executeSynchronously();
     if (rootsPair == null) return false; // project is disposed
     return iterateProvidedRootsOfContent(processor, filter, rootsPair.getFirst(), rootsPair.getSecond());
@@ -69,7 +69,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   @Override
   public boolean iterateIndexableContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter) {
     Pair<Collection<VirtualFile>, Collection<VirtualFile>> rootsPair = ReadAction.nonBlocking(
-      () -> collectContentRoots(true)
+      () -> collectContentRoots(false)
     ).executeSynchronously();
     if (rootsPair == null) return false; // project is disposed
 
