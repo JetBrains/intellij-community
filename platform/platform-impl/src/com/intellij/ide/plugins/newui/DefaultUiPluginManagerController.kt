@@ -992,7 +992,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     session.pluginUpdateSourceStates[pluginId] = PluginUpdateSourceState(pluginUpdateSource)
   }
 
-  override suspend fun isPluginUpdateSourceVisibleInUI(): Boolean {
+  override fun isPluginUpdateSourceVisibleInUI(): Boolean {
     return PluginUpdateSourceService.isPluginUpdateSourceShownInUI()
   }
 

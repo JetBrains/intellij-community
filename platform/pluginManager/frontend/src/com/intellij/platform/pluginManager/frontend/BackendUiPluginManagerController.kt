@@ -351,8 +351,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     PluginManagerApi.getInstance().persistPluginUpdateSource(sessionId, pluginId, pluginUpdateSource)
   }
 
-  override suspend fun isPluginUpdateSourceVisibleInUI(): Boolean {
-    return PluginManagerApi.getInstance().isPluginUpdateSourceVisibleInUI()
+  override fun isPluginUpdateSourceVisibleInUI(): Boolean {
+    return awaitForResult {  PluginManagerApi.getInstance().isPluginUpdateSourceVisibleInUI() }
   }
 
   override suspend fun getAllPluginUpdateSources(): List<PluginUpdateSourceId> {

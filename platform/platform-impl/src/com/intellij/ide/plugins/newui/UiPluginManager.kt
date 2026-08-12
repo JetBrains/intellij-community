@@ -304,7 +304,7 @@ class UiPluginManager {
     getController().persistPluginUpdateSource(sessionId, pluginId, pluginUpdateSource)
   }
 
-  suspend fun isPluginUpdateSourceVisibleInUI(): Boolean {
+  fun isPluginUpdateSourceVisibleInUI(): Boolean {
     return getController().isPluginUpdateSourceVisibleInUI()
   }
 
