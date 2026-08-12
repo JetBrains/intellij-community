@@ -901,6 +901,7 @@ internal class LocalDiskJarCacheCleanupTest {
     return LocalDiskJarCacheManager(
       cacheDir = cacheDir,
       classesOutputDirectory = tempDir.resolve("classes"),
+      linkCacheEntries = true,
       maxAccessTimeAge = maxAccessTimeAge,
       metadataTouchInterval = metadataTouchInterval,
       cleanupInterval = cleanupInterval,

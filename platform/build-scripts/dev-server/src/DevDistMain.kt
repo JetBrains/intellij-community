@@ -12,7 +12,9 @@ import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProductInProcess
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteRecursively
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.system.exitProcess
 
@@ -27,6 +29,7 @@ import kotlin.system.exitProcess
  *
  * This entry point is product-agnostic: the product is selected by `--platform-prefix`.
  */
+@OptIn(ExperimentalPathApi::class)
 fun main(args: Array<String>) {
   val options = parseArgs(args)
 
@@ -50,7 +53,14 @@ fun main(args: Array<String>) {
   // a dev run directory is disposable and may share bytes with the jar cache, but a Bazel output must own its bytes
   val linkCacheEntries = options.optionalBoolean("--link-cache-entries") ?: false
   val generateRuntimeModuleRepository = options.optionalBoolean("--generate-runtime-module-repository") ?: false
+  // the output directory must be empty (see `BuildRequest.runDirOverride`). A Bazel action always gets an empty declared
+  // directory, so this is for a standalone caller re-running the assembler into a path it already used.
+  val cleanOutput = options.optionalBoolean("--clean-output") ?: false
   options.checkNoUnknownOptions()
+
+  if (cleanOutput && Files.exists(outputDir)) {
+    outputDir.deleteRecursively()
+  }
 
   lateinit var mainClassName: String
 

@@ -19,9 +19,15 @@ private val keyLocks = StripedMutex(256)
 // Bump this version when build scripts semantics affecting cache contents change.
 private const val CACHE_VERSION = 1
 
+/**
+ * @param linkCacheEntries if `true`, a cached payload may be hardlinked into the layout instead of copied.
+ * Deliberately has no default: only the caller knows whether its output is disposable enough to share bytes with the cache -
+ * see [org.jetbrains.intellij.build.BuildOptions.linkImmutableCacheEntries].
+ */
 class LocalDiskJarCacheManager(
   cacheDir: Path,
   private val classesOutputDirectory: Path,
+  private val linkCacheEntries: Boolean,
   private val maxAccessTimeAge: Duration = 3.days,
   metadataTouchInterval: Duration = metadataTouchMinInterval,
   private val cleanupInterval: Duration = defaultCleanupEveryDuration,
@@ -92,6 +98,7 @@ class LocalDiskJarCacheManager(
       cleanupCandidateIndex = cleanupCandidateIndex,
       deleteInvalidEntry = false,
       failOnCacheIoErrors = false,
+      linkCacheEntries = linkCacheEntries,
     )
     if (optimisticCacheResult != null) {
       return optimisticCacheResult
@@ -111,6 +118,7 @@ class LocalDiskJarCacheManager(
         cleanupCandidateIndex = cleanupCandidateIndex,
         deleteInvalidEntry = true,
         failOnCacheIoErrors = true,
+        linkCacheEntries = linkCacheEntries,
       ) ?: produceAndCache(
         paths = paths,
         producer = producer,
@@ -120,6 +128,7 @@ class LocalDiskJarCacheManager(
         tempFilePrefix = tempFilePrefix,
         metadataTouchTracker = metadataTouchTracker,
         cleanupCandidateIndex = cleanupCandidateIndex,
+        linkCacheEntries = linkCacheEntries,
       )
     }
   }

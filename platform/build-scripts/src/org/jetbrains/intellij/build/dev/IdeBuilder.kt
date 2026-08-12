@@ -130,7 +130,8 @@ data class BuildRequest(
 
   /**
    * If set, used verbatim as the run directory, skipping both the name derived from [platformPrefix] and [additionalModules]
-   * and the wipe of stale content.
+   * and the wipe of stale content. Must therefore be absent or empty - nothing clears it, and assembling on top of a previous
+   * distribution would produce a directory that is neither the old one nor the new one.
    * A Bazel action writes into a directory whose name `declare_directory` fixes at analysis time, and that directory is handed over empty.
    */
   @JvmField val runDirOverride: Path? = null,
@@ -196,11 +197,7 @@ internal suspend fun buildProductFromProject(
 }
 
 internal suspend fun buildProduct(request: BuildRequest, createBuildContext: suspend CoroutineScope.(buildDir: Path) -> BuildContext): Path {
-  val buildDir = request.runDirOverride?.let { runDirOverride ->
-    withContext(Dispatchers.IO) {
-      Files.createDirectories(runDirOverride)
-    }
-  } ?: prepareDevRunDir(request)
+  val buildDir = request.runDirOverride?.let { prepareOverriddenRunDir(it) } ?: prepareDevRunDir(request)
 
   val runDir = buildDir
   var contextToClose: BuildContext? = null
@@ -453,6 +450,29 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
   return runDir
 }
 
+/**
+ * Prepares a caller-owned run directory ([BuildRequest.runDirOverride]).
+ *
+ * Unlike [prepareDevRunDir] this never deletes anything: a caller that names the directory itself owns its lifecycle, and a
+ * silent wipe of a mistyped path would be worse than a failure. It only insists that the directory starts out empty.
+ */
+internal suspend fun prepareOverriddenRunDir(runDir: Path): Path {
+  return withContext(Dispatchers.IO) {
+    val staleEntries = try {
+      Files.newDirectoryStream(runDir).use { stream -> stream.take(5).map { it.fileName.toString() } }
+    }
+    catch (_: NoSuchFileException) {
+      emptyList()
+    }
+
+    check(staleEntries.isEmpty()) {
+      "a run directory override must be empty, but $runDir already contains ${staleEntries.joinToString()};" +
+      " delete it first (the standalone assembler has --clean-output for that)"
+    }
+    Files.createDirectories(runDir)
+  }
+}
+
 /** Derives the run directory name from the request and clears stale content from it. */
 private suspend fun prepareDevRunDir(request: BuildRequest): Path {
   val rootDir = withContext(Dispatchers.IO) {
@@ -616,9 +636,34 @@ internal fun createProjectDevBuildOptions(request: BuildRequest, buildDir: Path,
     classOutDir = classesOutputDirectory.toString(),
   ).normalizeCompiledClassesOptions(
     defaultClassesOutputDirectory = classesOutputDirectory,
-  ).copy(
+  ).copyWithDevBuildOverrides(
+    request = request,
+    buildDir = buildDir,
+    defaultBuildDateInSeconds = getDevModeOrTestBuildDateInSeconds(),
+  )
+  configureDevModeBuildOptions(options = options, request = request, buildOptionsTemplate = buildOptionsTemplate)
+  return options
+}
+
+/**
+ * The build option overrides that every dev assembly applies, whichever context it is built from - a project model
+ * ([createProjectDevBuildOptions]) or an enclosing build
+ * ([org.jetbrains.intellij.build.productRunner.createDevModeProductRunner]).
+ *
+ * One owner, because the two used to carry their own copy of this list and one of them silently dropped
+ * [BuildRequest.buildDateInSeconds]: [BuildOptions.buildDateInSeconds] is a `val`, so the mutating
+ * [configureDevModeBuildOptions] cannot set it and every caller has to.
+ * [defaultBuildDateInSeconds] is what a request without an override gets - the dev-mode date for a standalone assembly,
+ * the enclosing build's own date for one nested in a real build.
+ */
+internal fun BuildOptions.copyWithDevBuildOverrides(
+  request: BuildRequest,
+  buildDir: Path,
+  defaultBuildDateInSeconds: kotlin.Long,
+): BuildOptions {
+  return copy(
     jarCacheDir = request.jarCacheDir,
-    buildDateInSeconds = request.buildDateInSeconds ?: getDevModeOrTestBuildDateInSeconds(),
+    buildDateInSeconds = request.buildDateInSeconds ?: defaultBuildDateInSeconds,
     printFreeSpace = false,
     validateImplicitPlatformModule = false,
     skipDependencySetup = true,
@@ -630,8 +675,6 @@ internal fun createProjectDevBuildOptions(request: BuildRequest, buildDir: Path,
     logDir = (request.scratchDir ?: buildDir).resolve("log"),
     isUnpackedDist = request.isUnpackedDist,
   )
-  configureDevModeBuildOptions(options = options, request = request, buildOptionsTemplate = buildOptionsTemplate)
-  return options
 }
 
 internal fun configureDevModeBuildOptions(options: BuildOptions, request: BuildRequest, buildOptionsTemplate: BuildOptions) {
@@ -701,6 +744,7 @@ internal fun createDevBuildContext(
     jarCacheManager = LocalDiskJarCacheManager(
       cacheDir = request.jarCacheDir,
       classesOutputDirectory = compilationContext.classesOutputDirectory,
+      linkCacheEntries = compilationContext.options.linkImmutableCacheEntries,
       maxAccessTimeAge = compilationContext.options.jarCacheMaxAccessAge,
       cleanupInterval = 1.hours,
     ),

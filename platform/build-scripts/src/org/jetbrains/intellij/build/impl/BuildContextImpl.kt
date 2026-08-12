@@ -147,6 +147,7 @@ fun createBuildContext(
     LocalDiskJarCacheManager(
       cacheDir = it,
       classesOutputDirectory = normalizedCompilationContext.classesOutputDirectory,
+      linkCacheEntries = normalizedCompilationContext.options.linkImmutableCacheEntries,
       maxAccessTimeAge = normalizedCompilationContext.options.jarCacheMaxAccessAge,
     )
   } ?: NonCachingJarCacheManager

@@ -15,11 +15,13 @@ import org.jetbrains.intellij.build.InMemoryContentSource
 import org.jetbrains.intellij.build.Source
 import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.getProductionClassesOutputDirectory
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.ZipEntry
@@ -245,6 +247,7 @@ internal class LocalDiskJarCacheManagerTest {
       val manager = LocalDiskJarCacheManager(
         cacheDir = cacheDir,
         classesOutputDirectory = tempDir.resolve("classes"),
+        linkCacheEntries = true,
         maxAccessTimeAge = 30.days,
       )
       val produceCalls = AtomicInteger()
@@ -910,7 +913,7 @@ internal class LocalDiskJarCacheManagerTest {
   }
 
   @Test
-  fun `cache hit copies payload to target when cache is not target`() {
+  fun `cache hit materializes payload into target when cache is not target`() {
     runBlocking {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
@@ -984,6 +987,92 @@ internal class LocalDiskJarCacheManagerTest {
   }
 
   @Test
+  fun `cache miss copies payload into target when linking is disabled`() {
+    runBlocking {
+      val cacheDir = tempDir.resolve("cache")
+      val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days, linkCacheEntries = false)
+      val produceCalls = AtomicInteger()
+      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = false)
+
+      val target = tempDir.resolve("out/first.jar")
+      val result = manager.computeIfAbsent(
+        sources = createSources(),
+        targetFile = target,
+        nativeFiles = null,
+        span = Span.getInvalid(),
+        producer = builder,
+      )
+
+      assertThat(result).isEqualTo(target)
+      assertThat(produceCalls.get()).isEqualTo(1)
+      assertTargetOwnsItsBytes(target = target, payloadFile = findSingleEntryPaths(cacheDir).payloadFile)
+    }
+  }
+
+  @Test
+  fun `cache hit copies payload into target when linking is disabled`() {
+    runBlocking {
+      val cacheDir = tempDir.resolve("cache")
+      val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days, linkCacheEntries = false)
+      val produceCalls = AtomicInteger()
+      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = false)
+      val sources = createSources()
+
+      manager.computeIfAbsent(
+        sources = sources,
+        targetFile = tempDir.resolve("out/first.jar"),
+        nativeFiles = null,
+        span = Span.getInvalid(),
+        producer = builder,
+      )
+      val hitTarget = tempDir.resolve("out2/first.jar")
+      val hitResult = manager.computeIfAbsent(
+        sources = sources,
+        targetFile = hitTarget,
+        nativeFiles = null,
+        span = Span.getInvalid(),
+        producer = builder,
+      )
+
+      assertThat(hitResult).isEqualTo(hitTarget)
+      assertThat(produceCalls.get()).isEqualTo(1)
+      assertTargetOwnsItsBytes(target = hitTarget, payloadFile = findSingleEntryPaths(cacheDir).payloadFile)
+    }
+  }
+
+  @Test
+  fun `cache hit hardlinks payload into target when linking is enabled`() {
+    runBlocking {
+      val cacheDir = tempDir.resolve("cache")
+      val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days, linkCacheEntries = true)
+      val builder = TestSourceBuilder(produceCalls = AtomicInteger(), useCacheAsTargetFile = false)
+      val sources = createSources()
+
+      manager.computeIfAbsent(
+        sources = sources,
+        targetFile = tempDir.resolve("out/first.jar"),
+        nativeFiles = null,
+        span = Span.getInvalid(),
+        producer = builder,
+      )
+      val hitTarget = tempDir.resolve("out2/first.jar")
+      manager.computeIfAbsent(
+        sources = sources,
+        targetFile = hitTarget,
+        nativeFiles = null,
+        span = Span.getInvalid(),
+        producer = builder,
+      )
+
+      val payloadKey = fileKey(findSingleEntryPaths(cacheDir).payloadFile)
+      val targetKey = fileKey(hitTarget)
+      // a filesystem that reports no file key (Windows) cannot answer the question this test asks
+      assumeTrue(payloadKey != null && targetKey != null, "filesystem does not report file keys")
+      assertThat(targetKey).isEqualTo(payloadKey)
+    }
+  }
+
+  @Test
   fun `cache file name includes target file name`() {
     runBlocking {
       val cacheDir = tempDir.resolve("cache")
@@ -1035,14 +1124,35 @@ internal class LocalDiskJarCacheManagerTest {
     cacheDir: Path,
     maxAccessTimeAge: Duration,
     metadataTouchInterval: Duration = 15.minutes,
+    linkCacheEntries: Boolean = true,
   ): LocalDiskJarCacheManager {
     return LocalDiskJarCacheManager(
       cacheDir = cacheDir,
       classesOutputDirectory = tempDir.resolve("classes"),
+      linkCacheEntries = linkCacheEntries,
       maxAccessTimeAge = maxAccessTimeAge,
       metadataTouchInterval = metadataTouchInterval,
     )
   }
+
+  /**
+   * A hardlinked target and its payload are one file on disk, so the target has bytes of its own only when the two have
+   * different file keys - on Unix a file key is `(device, inode)`, exactly what `stat -f '%i'` compares.
+   * The write is the portable half of the check: it runs everywhere, including filesystems that report no file key at all.
+   */
+  private fun assertTargetOwnsItsBytes(target: Path, payloadFile: Path) {
+    assertThat(Files.readString(target)).isEqualTo("payload")
+    val targetKey = fileKey(target)
+    val payloadKey = fileKey(payloadFile)
+    if (targetKey != null && payloadKey != null) {
+      assertThat(targetKey).isNotEqualTo(payloadKey)
+    }
+
+    Files.writeString(target, "patched")
+    assertThat(Files.readString(payloadFile)).isEqualTo("payload")
+  }
+
+  private fun fileKey(file: Path): Any? = Files.readAttributes(file, BasicFileAttributes::class.java).fileKey()
 
   private fun createSources(): List<Source> {
     return listOf(InMemoryContentSource("a.txt", "hello".encodeToByteArray()))

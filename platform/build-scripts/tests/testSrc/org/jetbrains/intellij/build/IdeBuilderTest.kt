@@ -1,12 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.configureDevModeBuildOptions
+import org.jetbrains.intellij.build.dev.copyWithDevBuildOverrides
 import org.jetbrains.intellij.build.dev.createDevBuildPaths
 import org.jetbrains.intellij.build.dev.formatCoreClasspath
+import org.jetbrains.intellij.build.dev.prepareOverriddenRunDir
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.lang.reflect.Method
@@ -136,6 +140,62 @@ class IdeBuilderTest {
     )
 
     assertThat(options.linkImmutableCacheEntries).isFalse()
+  }
+
+  // `createDevModeProductRunner` builds its options from an enclosing real build instead of from the project model.
+  // It used to carry its own copy of the override list, and that copy silently dropped the request's build date.
+  @Test
+  fun copyWithDevBuildOverridesKeepsTheEnclosingBuildDateWhenTheRequestHasNone() {
+    val enclosingBuildDateInSeconds = 1_600_000_000L
+
+    val options = BuildOptions(buildDateInSeconds = enclosingBuildDateInSeconds).copyWithDevBuildOverrides(
+      request = createBuildRequest(),
+      buildDir = tempDir.resolve("dev-build"),
+      defaultBuildDateInSeconds = enclosingBuildDateInSeconds,
+    )
+
+    assertThat(options.buildDateInSeconds).isEqualTo(enclosingBuildDateInSeconds)
+  }
+
+  @Test
+  fun copyWithDevBuildOverridesAppliesTheRequestBuildDateOverTheEnclosingOne() {
+    val enclosingBuildDateInSeconds = 1_600_000_000L
+    val requestedBuildDateInSeconds = 1_700_000_000L
+
+    val options = BuildOptions(buildDateInSeconds = enclosingBuildDateInSeconds).copyWithDevBuildOverrides(
+      request = createBuildRequest(buildDateInSeconds = requestedBuildDateInSeconds),
+      buildDir = tempDir.resolve("dev-build"),
+      defaultBuildDateInSeconds = enclosingBuildDateInSeconds,
+    )
+
+    assertThat(options.buildDateInSeconds).isEqualTo(requestedBuildDateInSeconds)
+  }
+
+  @Test
+  fun prepareOverriddenRunDirCreatesAnAbsentDirectory() {
+    val runDir = tempDir.resolve("dist")
+
+    val result = runBlocking { prepareOverriddenRunDir(runDir) }
+
+    assertThat(result).isEqualTo(runDir)
+    assertThat(Files.isDirectory(runDir)).isTrue()
+  }
+
+  @Test
+  fun prepareOverriddenRunDirAcceptsAnEmptyDirectory() {
+    val runDir = Files.createDirectories(tempDir.resolve("dist"))
+
+    assertThat(runBlocking { prepareOverriddenRunDir(runDir) }).isEqualTo(runDir)
+  }
+
+  @Test
+  fun prepareOverriddenRunDirRejectsStaleContent() {
+    val runDir = Files.createDirectories(tempDir.resolve("dist"))
+    Files.writeString(runDir.resolve("core-classpath.txt"), "lib/stale.jar")
+
+    assertThatThrownBy { runBlocking { prepareOverriddenRunDir(runDir) } }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("core-classpath.txt")
   }
 
   @Test
