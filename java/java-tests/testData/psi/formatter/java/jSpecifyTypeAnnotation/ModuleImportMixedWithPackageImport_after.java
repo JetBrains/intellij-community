@@ -1,7 +1,6 @@
 package org.example;
 
 import org.jspecify.annotations.Nullable;
-
 import module org.jspecify;
 
 public class Formatter {

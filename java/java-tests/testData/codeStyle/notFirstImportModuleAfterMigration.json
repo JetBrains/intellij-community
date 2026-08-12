@@ -131,7 +131,7 @@
       "insert_inner_class_imports": false,
       "insert_override_annotation": true,
       "keep_blank_lines_before_right_brace": 2,
-      "keep_blank_lines_between_imports": true,
+      "keep_blank_lines_between_imports": false,
       "keep_blank_lines_between_package_declaration_and_header": 2,
       "keep_blank_lines_in_code": 2,
       "keep_blank_lines_in_declarations": 2,

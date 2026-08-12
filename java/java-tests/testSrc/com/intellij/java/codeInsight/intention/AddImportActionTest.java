@@ -417,7 +417,6 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
         
         
         import p1.*;
-        
         import p3.*;
         import p3.Conflict;
         
