@@ -31,9 +31,7 @@ open class BackgroundRun(
       runCatching {
         waitFor("Driver is connected", 3.minutes) {
           if (!process.isAlive) {
-            val message = "Couldn't wait for the driver to connect, it has already exited pid[${process.id}]"
-            logError(message)
-            throw IllegalStateException(message)
+            throwIdeStartFailure(startResult, process.id)
           }
           driverWithoutAwaitedConnection.isConnected
         }
@@ -204,4 +202,15 @@ open class BackgroundRun(
       )
     }
   }
+}
+
+internal fun throwIdeStartFailure(startResult: Deferred<IDEStartResult>, processId: String): Nothing {
+  // Need to wait for startResult as it carries JVM startup failures with captured stderr, so propagate it rather than reporting a generic Driver connection error.
+  @Suppress("TestOnlyProblems")
+  val result = timeoutRunBlocking(5.minutes) {
+    startResult.await()
+  }
+  val message = "Couldn't wait for the driver to connect: IDE process pid[$processId] exited with code ${result.exitCode ?: "<unknown>"}"
+  logError(message)
+  throw IllegalStateException(message)
 }
