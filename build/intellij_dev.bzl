@@ -1,6 +1,7 @@
 """Macros for IntelliJ-based IDE development builds."""
 
 load("@rules_java//java:defs.bzl", "java_binary")
+load(":dev_launch_dependencies.bzl", "preloaded_downloads_data", "preloaded_downloads_flag", "preloaded_downloads_manifest_data")
 
 INTELLIJ_ADD_OPENS = [
     "java.base/java.io",
@@ -68,7 +69,19 @@ DEFAULT_JVM_FLAGS = [
     "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
 ]
 
-def intellij_dev_binary(name, visibility, data, jvm_flags, env, platform_prefix, bazel_targets_json, config_path, system_path, additional_modules, program_args):
+def intellij_dev_binary(
+        name,
+        visibility,
+        data,
+        jvm_flags,
+        env,
+        platform_prefix,
+        bazel_targets_json,
+        config_path,
+        system_path,
+        additional_modules,
+        program_args,
+        preloaded_download_repos):
     all_jvm_flags = DEFAULT_JVM_FLAGS + jvm_flags
 
     if platform_prefix:
@@ -94,12 +107,22 @@ def intellij_dev_binary(name, visibility, data, jvm_flags, env, platform_prefix,
     if additional_modules:
         all_jvm_flags = all_jvm_flags + ["-Dadditional.modules=\"" + additional_modules + "\""]
 
+    # The archives the assembly would otherwise download at launch, as runfiles for the host platform,
+    # with their manifests. Not `preloaded.only`: a dev launch of any product reaches for archives no
+    # shared set enumerates - a Go debugger, a .NET SDK, notebook front-end resources - and those must
+    # keep downloading. See PreloadedDownloads.
+    all_jvm_flags = all_jvm_flags + preloaded_downloads_flag(preloaded_download_repos)
+    preloaded_data = (
+        preloaded_downloads_data(preloaded_download_repos) +
+        preloaded_downloads_manifest_data(preloaded_download_repos)
+    )
+
     java_binary(
         name = name,
         visibility = visibility,
         runtime_deps = ["@community//platform/bootstrap/dev"],
         main_class = "org.jetbrains.intellij.build.devServer.DevMainKt",
-        data = data + [bazel_targets_json],
+        data = data + [bazel_targets_json] + preloaded_data,
         jvm_flags = all_jvm_flags,
         env = env,
         add_opens = INTELLIJ_ADD_OPENS,

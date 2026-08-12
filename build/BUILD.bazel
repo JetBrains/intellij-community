@@ -4,10 +4,13 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
 load("//build:intellij_dev_community.bzl", "intellij_dev_binary_community")
 load("//build:jps_to_bazel_targets_json.bzl", "jps_to_bazel_targets_json")
+load(":dev_launch_dependencies_test.bzl", "dev_launch_dependencies_test_suite")
 load(":jps_library_derivation_pipeline_test.bzl", "jps_library_derivation_pipeline_test_suite")
 load(":jps_library_derivation_test.bzl", "jps_library_derivation_test_suite")
 
 jps_library_derivation_test_suite(name = "jps_library_derivation_test")
+
+dev_launch_dependencies_test_suite(name = "dev_launch_dependencies_test")
 
 # The pinned build-dependency versions, for tests that gate shared dev-launch dependency sets
 # against version bumps.
@@ -39,6 +42,8 @@ jps_to_bazel_targets_json(
     config_setting(
         name = "host_%s" % name,
         constraint_values = constraints,
+        # the select axis for every per-platform dependency set, in this repository and in ultimate
+        visibility = ["//visibility:public"],
     )
     for name, constraints in {
         "darwin_aarch64": [

@@ -24,8 +24,8 @@ data class PreloadedDownload(
 )
 
 /**
- * The authoritative inventories of build dependencies Bazel has fetched (`preloaded-downloads-v1.tsv`,
- * written by `write_downloads_repo`), and the single place that reads them.
+ * The inventories of build dependencies Bazel has fetched (`preloaded-downloads-v1.tsv`, written by
+ * `write_downloads_repo`), and the single place that reads them.
  *
  * A manifest is an immutable Bazel output, so a parsed one is reused for as long as its bytes stay
  * the same instead of being re-read and re-validated per lookup.
@@ -55,16 +55,22 @@ object PreloadedDownloads {
   }
 
   /**
-   * The declared dependency for [url], or `null` when no manifest is configured at all (an ordinary
-   * build, which is free to download). Under a manifest, an undeclared URL is an error rather than a
-   * cache miss: the manifest is the complete inventory.
+   * The declared dependency for [url], or `null` when nothing declares it - either because no manifest
+   * is configured at all, or because the configured manifests do not name this URL. The caller then
+   * downloads, as it would without any of this.
+   *
+   * Under [BuildDependenciesConstants.PRELOADED_DOWNLOADS_ONLY_PROPERTY] the manifests are instead the
+   * complete inventory, and an undeclared URL is an error before any network or cache lookup.
    */
   internal fun findByUrl(url: String): PreloadedDownload? {
     val entries = readConfiguredManifest() ?: return null
-    return checkNotNull(entries.values.firstOrNull { it.url == url }) {
-      "Build dependency '$url' is not declared in authoritative preloaded downloads manifest " +
-      "'${System.getProperty(BuildDependenciesConstants.PRELOADED_DOWNLOADS_MANIFEST_PROPERTY)}'"
+    val declared = entries.values.firstOrNull { it.url == url }
+    check(declared != null || System.getProperty(BuildDependenciesConstants.PRELOADED_DOWNLOADS_ONLY_PROPERTY)?.toBoolean() != true) {
+      "Build dependency '$url' is not declared in preloaded downloads manifest " +
+      "'${System.getProperty(BuildDependenciesConstants.PRELOADED_DOWNLOADS_MANIFEST_PROPERTY)}', and " +
+      "'${BuildDependenciesConstants.PRELOADED_DOWNLOADS_ONLY_PROPERTY}' forbids downloading it"
     }
+    return declared
   }
 
   /**

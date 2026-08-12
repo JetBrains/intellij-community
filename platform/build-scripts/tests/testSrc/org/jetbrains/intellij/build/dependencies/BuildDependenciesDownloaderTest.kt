@@ -104,8 +104,8 @@ class BuildDependenciesDownloaderTest {
   }
 
   @Test
-  fun `preloaded manifest rejects undeclared URL before network or cache lookup`() = runBlocking(Dispatchers.Default) {
-    withPreloadedTestRoot { communityRoot, _, manifestRoot ->
+  fun `preloaded-only rejects an undeclared URL before network or cache lookup`() = runBlocking(Dispatchers.Default) {
+    withPreloadedTestRoot(preloadedOnly = true) { communityRoot, _, manifestRoot ->
       Files.writeString(manifestRoot.resolve("declared.bin"), "declared")
       writeManifest(manifestRoot, "declared.bin", "3".repeat(64), "https://example.invalid/declared.bin")
 
@@ -114,7 +114,38 @@ class BuildDependenciesDownloaderTest {
           downloadFileToCacheLocation("http://127.0.0.1:9/not-declared.bin", communityRoot)
         }
       }
-      Assert.assertTrue(error.message, error.message!!.contains("not declared in authoritative"))
+      Assert.assertTrue(error.message, error.message!!.contains(BuildDependenciesConstants.PRELOADED_DOWNLOADS_ONLY_PROPERTY))
+    }
+  }
+
+  @Test
+  fun `a manifest supplies what it declares and leaves the rest to the network`() = runBlocking(Dispatchers.Default) {
+    // a dev-mode launch of any product reaches for archives no shared set enumerates - a Go debugger, a
+    // .NET SDK, notebook front-end resources - so an undeclared URL is a download, not a failure
+    withPreloadedTestRoot { communityRoot, cache, manifestRoot ->
+      Files.writeString(manifestRoot.resolve("declared.bin"), "declared")
+      writeManifest(manifestRoot, "declared.bin", "3".repeat(64), "https://example.invalid/declared.bin")
+
+      val content = "served-${System.nanoTime()}"
+      val path = "/undeclared-${System.nanoTime()}.bin"
+      val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
+      server.createContext(path) { exchange ->
+        val response = content.toByteArray()
+        exchange.sendResponseHeaders(200, response.size.toLong())
+        exchange.responseBody.use { it.write(response) }
+      }
+      server.start()
+      try {
+        val declared = downloadFileToCacheLocation("https://example.invalid/declared.bin", communityRoot)
+        Assert.assertEquals("declared", Files.readString(declared))
+
+        val downloaded = downloadFileToCacheLocation("http://127.0.0.1:${server.address.port}$path", communityRoot)
+        Assert.assertTrue("$downloaded must be under $cache", downloaded.startsWith(cache))
+        Assert.assertEquals(content, Files.readString(downloaded))
+      }
+      finally {
+        server.stop(0)
+      }
     }
   }
 
@@ -140,7 +171,7 @@ class BuildDependenciesDownloaderTest {
   fun `several manifests are one inventory, each resolved against its own directory`() = runBlocking(Dispatchers.Default) {
     // one manifest per Bazel repository: a dependency set is split so that bumping one pinned version
     // refetches only its own artifact
-    withPreloadedTestRoot { communityRoot, cache, manifestRoot ->
+    withPreloadedTestRoot(preloadedOnly = true) { communityRoot, cache, manifestRoot ->
       val first = manifestRoot.resolve("first")
       val second = manifestRoot.resolve("second")
       Files.createDirectories(first)
@@ -164,7 +195,7 @@ class BuildDependenciesDownloaderTest {
       val undeclared = Assert.assertThrows(IllegalStateException::class.java) {
         runBlocking { downloadFileToCacheLocation("http://127.0.0.1:9/three.bin", communityRoot) }
       }
-      Assert.assertTrue(undeclared.message, undeclared.message!!.contains("not declared in authoritative"))
+      Assert.assertTrue(undeclared.message, undeclared.message!!.contains(BuildDependenciesConstants.PRELOADED_DOWNLOADS_ONLY_PROPERTY))
 
       // two repositories claiming one URL would make the winner depend on flag order
       writeManifest(second, "two.bin", "8".repeat(64), "https://example.invalid/one.bin")
@@ -271,6 +302,7 @@ class BuildDependenciesDownloaderTest {
   }
 
   private suspend fun withPreloadedTestRoot(
+    preloadedOnly: Boolean = false,
     action: suspend (BuildDependenciesCommunityRoot, Path, Path) -> Unit,
   ) {
     val root = Files.createTempDirectory("preloaded-downloads-test")
@@ -283,14 +315,17 @@ class BuildDependenciesDownloaderTest {
     val manifest = manifestRoot.resolve("preloaded-downloads-v1.tsv")
     val oldCache = System.getProperty(BuildDependenciesConstants.DOWNLOAD_CACHE_DIR_PROPERTY)
     val oldManifest = System.getProperty(BuildDependenciesConstants.PRELOADED_DOWNLOADS_MANIFEST_PROPERTY)
+    val oldPreloadedOnly = System.getProperty(BuildDependenciesConstants.PRELOADED_DOWNLOADS_ONLY_PROPERTY)
     System.setProperty(BuildDependenciesConstants.DOWNLOAD_CACHE_DIR_PROPERTY, cache.toString())
     System.setProperty(BuildDependenciesConstants.PRELOADED_DOWNLOADS_MANIFEST_PROPERTY, manifest.toString())
+    restoreProperty(BuildDependenciesConstants.PRELOADED_DOWNLOADS_ONLY_PROPERTY, if (preloadedOnly) "true" else null)
     try {
       action(BuildDependenciesCommunityRoot(community), cache, manifestRoot)
     }
     finally {
       restoreProperty(BuildDependenciesConstants.DOWNLOAD_CACHE_DIR_PROPERTY, oldCache)
       restoreProperty(BuildDependenciesConstants.PRELOADED_DOWNLOADS_MANIFEST_PROPERTY, oldManifest)
+      restoreProperty(BuildDependenciesConstants.PRELOADED_DOWNLOADS_ONLY_PROPERTY, oldPreloadedOnly)
       BuildDependenciesUtil.deleteFileOrFolder(root)
     }
   }

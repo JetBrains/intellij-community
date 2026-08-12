@@ -114,6 +114,37 @@ REMOTE_JBR25_REPOS = ["remotejbr25_" + platform for platform in [
 
 [register_toolchains("@" + repo + "_toolchain_config_repo//:all") for repo in REMOTE_JBR25_REPOS]
 
+# The build dependencies a dev-mode assembly - and IDE Starter - downloads at launch time are Bazel
+# inputs, so a sandboxed or read-only-checkout run never downloads. The extension derives their URLs
+# from the pinned versions the checkout already owns; one repository per version key, and per platform
+# only where the artifact is, so a bump refetches only what it changed. MODULE files cannot load(), so
+# the platform list is repeated here - Bazel reports any drift from HOST_PLATFORMS.
+DEV_LAUNCH_HOST_PLATFORMS = [
+    "darwin_aarch64",
+    "darwin_x64",
+    "linux_aarch64",
+    "linux_x64",
+    "windows_aarch64",
+    "windows_x64",
+]
+
+dev_launch_deps_community = use_extension("@community//build:dev_launch_dependencies.bzl", "dev_launch_deps_community")
+
+use_repo(
+    dev_launch_deps_community,
+    "dev_launch_libghostty",
+    "dev_launch_libwebp",
+    "dev_launch_maven",
+)
+
+[use_repo(
+    dev_launch_deps_community,
+    "dev_launch_%s_%s" % (platform, group),
+) for platform in DEV_LAUNCH_HOST_PLATFORMS for group in [
+    "jbr",
+    "jcef",
+]]
+
 # Use custom remote_java_tools_windows with vc_redist .dll files due to https://github.com/bazelbuild/rules_java/issues/316
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
