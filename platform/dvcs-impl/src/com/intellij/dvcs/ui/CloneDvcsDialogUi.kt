@@ -7,6 +7,7 @@ import com.intellij.dvcs.ui.DvcsBundle.message
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.TextFieldWithAutoCompletion
@@ -48,7 +49,7 @@ internal class CloneDvcsDialogUi(project: Project, rememberedInputs: DvcsRemembe
       cell(repositoryUrlCombobox).align(AlignX.FILL).resizableColumn()
       cell(testButton)
     }
-    row(message("clone.destination.directory.label")) {
+    row(VcsBundle.message("clone.dialog.directory.to.clone.label.text")) {
       cell(directoryField).align(AlignX.FILL)
     }
   }.withPreferredWidth(500)

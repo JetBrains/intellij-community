@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.util.coroutines.childScope
@@ -164,7 +165,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
           .resizableColumn()
           .align(Align.FILL)
       }.resizableRow()
-      row(CollaborationToolsBundle.message("clone.dialog.directory.to.clone.label.text")) {
+      row(VcsBundle.message("clone.dialog.directory.to.clone.label.text")) {
         cell(directoryField)
           .align(AlignX.FILL)
           .validationOnApply {
