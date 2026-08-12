@@ -1738,7 +1738,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       """
       map('foo', lambda c: 42)
       #   │      ^^^^^^^^^^^^ WARNING Expected type 'Iterable[_T1]', got '(c: Unknown) -> Literal[42]' instead
-      #   ^^^^^ WARNING Expected type '(_T1) -> Unknown' (matched generic type '(_T1) -> _S'), got 'Literal["foo"]' instead
+      #   ^^^^^ WARNING Expected type '(_T1) -> _S', got 'Literal["foo"]' instead
       """,
     )
   }

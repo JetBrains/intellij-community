@@ -623,7 +623,7 @@ object PyTypeChecker {
   }
 
   private fun match(expected: PySelfType, actual: PyType?, context: MatchContext): Boolean {
-    if (actual == null) return true
+    if (actual.isAnyOrUnknown) return true
     val selfType = context.mySubstitutions.selfType
     if (selfType != null && selfType !is PySelfType) {
       val substitution = if (expected.isDefinition)

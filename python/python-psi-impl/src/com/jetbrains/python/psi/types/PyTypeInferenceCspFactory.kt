@@ -55,13 +55,7 @@ object PyTypeInferenceCspFactory {
     val callableType = argsMapping.callableType
     val si = if (callSiteExpression == null) null else SubstitutionsIdentifier(callSiteExpression, callableType)
     val solution = enterCsp(si, context)
-    if (solution != null) return solution
-    val receiver = callSite.getReceiver(callableType?.callable)
-    if (receiver != null) {
-      val receiverType = context.getType(receiver)
-      return PyTypeChecker.unifyReceiver(receiverType, context)
-    }
-    return GenericSubstitutions()
+    return solution ?: GenericSubstitutions()
   }
 
   @JvmStatic

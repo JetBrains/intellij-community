@@ -826,7 +826,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       
           def foo(self):
               # __iter__ is defined in EnumMeta, thus, for definitions only
-              return set(self) # WARNING Expected type 'Iterable[Unknown]' (matched generic type 'Iterable[_T]'), got 'Self@Color' instead
+              return set(self) # WARNING Expected type 'Iterable[_T]', got 'Self@Color' instead
       """)
 
     @Test
