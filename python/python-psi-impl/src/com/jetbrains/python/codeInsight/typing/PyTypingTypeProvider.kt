@@ -530,8 +530,14 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         results.putAll(superSubstitutions)
       }
       // TODO Share this logic with PyTypeChecker.collectTypeSubstitutions
-      val superTypeParameters = collectTypeParameters(superClassType.pyClass, context)
-      val superTypeArguments = if (superClassType is PyClassType && superClassType.isParameterized) superClassType.typeArguments else mutableListOf<PyType?>()
+      // A TypedDict keeps its parameters and arguments apart from those of `dict`, so the standard pair describes `dict` here.
+      // Only a specialized base is read that way: an unspecialized one leaves its parameters open rather than binding them to Any.
+      val specializedTypedDictBase = (superClassType as? PyTypedDictType)?.takeIf { it.substitutedTypeArguments.isNotEmpty() }
+      val superTypeParameters = specializedTypedDictBase?.declaredTypeParameters
+                                ?: collectTypeParameters(superClassType.pyClass, context)
+      val superTypeArguments = specializedTypedDictBase?.substitutedTypeArguments
+                               ?: if (superClassType is PyClassType && superClassType.isParameterized) superClassType.typeArguments
+                               else mutableListOf<PyType?>()
       val mapping =
         PyTypeParameterMapping.mapByShape(
           superTypeParameters, superTypeArguments, PyTypeParameterMapping.Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY,
