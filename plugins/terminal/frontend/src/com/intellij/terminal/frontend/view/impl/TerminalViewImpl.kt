@@ -595,9 +595,9 @@ class TerminalViewImpl(
 
     editor.putUserData(TerminalOutputModel.KEY, model)
 
-    // TerminalOutputPsiFile keeps a manual snapshot of the document text, which PSI-based
-    // features such as command completion read. Resolve it once here and refresh that snapshot on every
-    // content change so those features see the current output.
+    // Resolve and cache the PSI file here, not inside the listener below: getPsiFile may require a read lock,
+    // which can be acquired at this point but not in afterContentChanged — that listener runs on the
+    // strict UI output dispatcher (see TerminalSessionController), where taking a lock is prohibited.
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(model.document) as? TerminalOutputPsiFile
     model.addListener(parentDisposable, object : TerminalOutputModelListener {
       override fun afterContentChanged(event: TerminalContentChangeEvent) {

@@ -4,7 +4,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.TypingEvent
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
@@ -70,7 +70,7 @@ class TerminalInlineCompletionController(
   fun install() {
     InlineCompletion.install(editor, coroutineScope)
     lastTypedCommandText = getCurrentTypedCommandText()
-    coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
+    coroutineScope.awaitCancellationAndInvoke(Dispatchers.UI) {
       InlineCompletion.remove(editor)
     }
   }
@@ -235,7 +235,7 @@ class TerminalInlineCompletionController(
 
   private fun addPendingEvent(event: PendingInputEvent) {
     pendingEvents.addLast(event)
-    event.timeoutJob = coroutineScope.launch(Dispatchers.EDT) {
+    event.timeoutJob = coroutineScope.launch(Dispatchers.UI) {
       delay(1.seconds)
       if (pendingEvents.any { it === event }) {
         cancelCompletionAndClearSession()
