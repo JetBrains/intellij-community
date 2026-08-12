@@ -25,6 +25,12 @@ import java.util.concurrent.TimeUnit
 val LICENSE_CODE_KEY: Key<Char> = Key("LICENSE_CODE")
 
 @ApiStatus.Internal
+const val FREE_LICENSE_CODE: Char = 'N'
+
+@ApiStatus.Internal
+fun isFreeLicenseCodeSet(): Boolean = ApplicationManager.getApplication().getUserData(LICENSE_CODE_KEY) == FREE_LICENSE_CODE
+
+@ApiStatus.Internal
 open class StatisticsFileEventLogger(
   private val recorderId: String,
   private val sessionId: String,
