@@ -284,6 +284,15 @@ private fun getTypedDictTypeForClass(
 ): PyTypedDictType? {
   if (!cls.isTypingTypedDictInheritor(context)) return null
 
+  val forms = Ref.deref(PyUtil.getParameterizedCachedValue(cls, context) { evalContext ->
+    val definition = createTypedDictTypeForClass(cls, evalContext)
+    Ref.create(definition?.let { it to it.toInstance() })
+  }) ?: return null
+  return if (isDefinition) forms.first else forms.second
+}
+
+private fun createTypedDictTypeForClass(cls: PyClass, context: TypeEvalContext): PyTypedDictType? {
+
   val typedDictAncestors = typedDictAncestors(cls, context)
     .filterIsInstance<PyTypedDictType>()
 
@@ -309,7 +318,7 @@ private fun getTypedDictTypeForClass(
     cls.name ?: return null,
     { collectFields(cls, context) },
     PyBuiltinCache.getInstance(cls).dictType?.pyClass ?: return null,
-    isDefinition,
+    true,
     cls,
     closed,
     extraItemsTypeProvider,

@@ -261,6 +261,36 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-85440", "PY-91571"])
+    // The repro PY-85440 is filed with, where the reference to the TypedDict being declared needs no quotes.
+    fun `item type referring to the TypedDict being declared`() = test("""
+      from typing import TypedDict
+
+      class Category(TypedDict):
+          name: str
+          sub: list[Category]
+
+      def f(cat: Category):
+          expr = cat["sub"]
+      #   └ TYPE list[Category]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `item type referring to the TypedDict being declared under future annotations`() = test("""
+      from __future__ import annotations
+      from typing import TypedDict
+
+      class Category(TypedDict):
+          name: str
+          sub: list[Category]
+
+      def f(cat: Category):
+          expr = cat["sub"]
+      #   └ TYPE list[Category]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
     fun `recursive item type inside a container`() = test("""
       from typing import TypedDict
 

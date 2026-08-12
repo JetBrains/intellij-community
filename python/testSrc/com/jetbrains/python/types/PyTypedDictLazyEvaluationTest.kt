@@ -77,6 +77,40 @@ class PyTypedDictLazyEvaluationTest : PyTestCase() {
     assertNull("Asking for the extra items type must not evaluate the declared items", context.getKnownType(name))
   }
 
+  fun testOneTypeInstancePerDeclaration() {
+    val references = (0 until 20).joinToString("\n\n") { "def f$it(m: Movie):\n    pass" }
+    val file = configure("""
+      from typing import TypedDict
+
+
+      class Movie(TypedDict):
+          name: str
+
+
+      $references
+      """.trimIndent())
+    val context = TypeEvalContext.codeAnalysis(myFixture.project, file)
+
+    val types = (0 until 20).map { parameterTypeOf(file, "f$it", context) }
+    assertOneElement(types.distinctBy { System.identityHashCode(it) })
+  }
+
+  fun testTheSameNestedDeclarationIsNotRebuiltPerPath() {
+    val file = configure(hierarchy() + """
+
+      def f(t: T0):
+          first = t["f0"]
+          second = t["f1"]
+      """.trimIndent())
+    val context = TypeEvalContext.codeAnalysis(myFixture.project, file)
+
+    val itemTypes = parameterTypeOf(file, "f", context).fields.values
+
+    // Every item of T0 is a T1, and T1 is one type, not one per item: this is the DAG the eager implementation used to expand
+    // into a tree of its own instances.
+    assertOneElement(itemTypes.map { System.identityHashCode(it.type) }.distinct())
+  }
+
   fun testItemsAreEvaluatedOnce() {
     val file = configure("""
       from typing import TypedDict
