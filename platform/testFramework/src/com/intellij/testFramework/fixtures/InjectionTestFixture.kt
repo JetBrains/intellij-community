@@ -31,7 +31,7 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
 
   val injectedElement: PsiElement?
     get() {
-      return injectedLanguageManager.findInjectedElementAt(topLevelFile ?: return null, topLevelCaretPosition)
+      return injectedLanguageManager.findInjectedElementAt(topLevelFile, topLevelCaretPosition)
     }
 
   fun assertInjectedLangAtCaret(lang: String?) {
@@ -118,7 +118,7 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
     get() = topLevelEditor.caretModel.offset
 
   val topLevelEditor: Editor
-    get() = (FileEditorManager.getInstance(javaFixture.project).getSelectedEditor(topLevelFile!!.virtualFile) as TextEditor).editor
+    get() = (FileEditorManager.getInstance(javaFixture.project).getSelectedEditor(topLevelFile.virtualFile) as TextEditor).editor
 }
 
 data class InjectionAssertionData(val text: String, val injectedLanguage: String? = null) {
