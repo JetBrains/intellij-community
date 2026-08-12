@@ -20,9 +20,6 @@
     <extensionPoint name="diagnostic.freezeProfiler" interface="com.intellij.diagnostic.FreezeProfiler" dynamic="true"/>
     <extensionPoint name="inlineCompletionLineRendererCustomization"
                     interface="com.intellij.codeInsight.inline.completion.render.InlineCompletionInlayRenderer" dynamic="true"/>
-    <extensionPoint name="lang.treePatcher" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.psi.templateLanguages.TreePatcher"/>
-    </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.psi.PsiManager"
