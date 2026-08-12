@@ -347,6 +347,14 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     editor.addOptionsListener(colleague)
   }
 
+  /**
+   * Whether to show the Apply button. Override to suppress it for a product where a separate
+   * mid-session-commit action doesn't make sense — e.g. Rider, which instead commits via its
+   * OK/Save button (see [createOkButton]).
+   */
+  @ApiStatus.Internal
+  protected open fun isApplyButtonVisible(): Boolean = true
+
   // ── Lifecycle subscriptions ───────────────────────────────────────────────────
 
   private fun setupLifecycleSubscriptions() {
@@ -548,7 +556,7 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
       }, null)
 
     val rawApplyAction = editor.getApplyAction()
-    val applyButton = if (rawApplyAction != null) {
+    val applyButton = if (isApplyButtonVisible() && rawApplyAction != null) {
       val wrappedApply = object : AbstractAction() {
         init {
           putValue(Action.NAME, rawApplyAction.getValue(Action.NAME))
