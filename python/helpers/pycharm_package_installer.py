@@ -398,19 +398,10 @@ class Installer:
                 return self.display_post_message_fish_and_add_to_path(version)
 
             return self.display_post_message_unix(version)
-        except:
+        except Exception:
             pass
 
     def display_post_message_windows_and_add_to_path(self, version: str) -> None:
-        path = self.get_windows_path_var()
-
-        if not path or str(self.bin_dir) not in path:
-            current_path = os.environ.get('PATH', '')
-            new_path = "{current_path};{new_path}".format(current_path=current_path, new_path=self.bin_dir)
-            os.environ['PATH'] = new_path
-            subprocess.run("setx PATH {new_path}".format(new_path=new_path), shell=True)
-            subprocess.run('$env:Path = "{package_path};$env:Path"'.format(package_path=self.bin_dir), shell=True)
-
         self._write(
             POST_MESSAGE.format(
                 package=self._name,
@@ -418,16 +409,35 @@ class Installer:
                 test_command="{package} --version".format(package=self._name),
             )
         )
+        self._add_to_windows_path()
 
-    def get_windows_path_var(self) -> Optional[str]:
+    def _add_to_windows_path(self) -> None:
+        if self._path is not None:
+            return
+
+        import ctypes
         import winreg
 
+        def normalize(value):
+            return os.path.normcase(os.path.normpath(os.path.expandvars(value)))
+
+        bin_dir = str(self.bin_dir)
         with winreg.ConnectRegistry(
                 None, winreg.HKEY_CURRENT_USER
-        ) as root, winreg.OpenKey(root, "Environment", 0, winreg.KEY_ALL_ACCESS) as key:
-            path, _ = winreg.QueryValueEx(key, "PATH")
+        ) as root, winreg.OpenKey(root, "Environment", 0, winreg.KEY_READ | winreg.KEY_WRITE) as key:
+            try:
+                path, kind = winreg.QueryValueEx(key, "PATH")
+            except OSError:
+                path, kind = "", winreg.REG_EXPAND_SZ
 
-            return path
+            entries = [entry for entry in path.split(os.pathsep) if entry]
+            if any(normalize(entry) == normalize(bin_dir) for entry in entries):
+                return
+
+            winreg.SetValueEx(key, "PATH", 0, kind, os.pathsep.join(entries + [bin_dir]))
+
+        os.environ["PATH"] = os.pathsep.join([os.environ.get("PATH", ""), bin_dir])
+        ctypes.windll.user32.SendMessageTimeoutW(0xFFFF, 0x1A, 0, "Environment", 0x0002, 5000, None)
 
     def display_post_message_fish_and_add_to_path(self, version: str) -> None:
         fish_user_paths = subprocess.check_output(
