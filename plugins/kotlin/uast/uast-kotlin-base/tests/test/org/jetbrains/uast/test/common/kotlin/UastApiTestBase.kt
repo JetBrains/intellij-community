@@ -824,9 +824,6 @@ interface UastApiTestBase {
                     is ULambdaExpression -> { // return@forEach
                         TestCase.assertTrue(returnTarget in lambdas)
                     }
-                    is ULabeledExpression -> { // return@l
-                        TestCase.assertTrue(returnTarget in labels)
-                    }
                     else -> TestCase.fail("Unexpected return target: $returnTarget")
                 }
                 return super.visitReturnExpression(node)

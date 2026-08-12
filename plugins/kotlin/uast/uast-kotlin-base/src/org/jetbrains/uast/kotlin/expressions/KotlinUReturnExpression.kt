@@ -45,5 +45,10 @@ class KotlinUReturnExpression(
                                             parent.methodIdentifier?.name == label
                                     )
                         }
+            }.let { target ->
+                when(target) {
+                    is ULabeledExpression -> target.expression
+                    else -> target
+                }
             }
 }
