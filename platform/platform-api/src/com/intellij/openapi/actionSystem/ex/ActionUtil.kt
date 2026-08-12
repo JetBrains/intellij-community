@@ -127,13 +127,6 @@ object ActionUtil {
   @JvmField
   val HIDE_DISABLED_CHILDREN: Key<Boolean> = Key.create("HIDE_DISABLED_CHILDREN")
 
-  /**
-   * Do not add the "Nothing here" filler item when a popup menu group has no visible children
-   */
-  @ApiStatus.Internal
-  @JvmField
-  val HIDE_EMPTY_POPUP_MENU: Key<Boolean> = Key.create("HIDE_EMPTY_POPUP_MENU")
-
   /** Avoid updating child actions to check if the group is non-empty */
   @JvmField
   val ALWAYS_VISIBLE_GROUP: Key<Boolean> = Key.create("ALWAYS_VISIBLE_GROUP")

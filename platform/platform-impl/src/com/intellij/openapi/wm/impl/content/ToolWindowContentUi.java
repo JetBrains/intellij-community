@@ -102,7 +102,8 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
   @ApiStatus.Internal public static final String HEADER_ICON = "HeaderIcon";
 
   /**
-   * Enables separate context menus for tool window tabs, empty content areas, and the tool window itself.
+   * Enables separate actions for tool window tabs context menu and tool window kebub context menu,
+   * removes empty space context menu.
    */
   @ApiStatus.Internal
   public static final Key<Boolean> CLEANED_TOOL_WINDOW_CONTEXT_MENUS = Key.create("CleanedToolWindowContextMenus");
@@ -669,6 +670,10 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
   }
 
   public void showContextMenu(Component comp, int x, int y, ActionGroup toolWindowGroup, @Nullable Content selectedContent) {
+    if (selectedContent == null && toolWindowGroup == null) {
+      return;
+    }
+
     DefaultActionGroup group = new DefaultActionGroup();
 
     // group `ToolWindowContextMenu` defines actions which should be added to both tab and empty space context menus
@@ -681,20 +686,10 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     if (selectedContent != null) {
       initContentActionGroup(group, selectedContent);
     }
-    else {
-      // group `ToolWindowEmptySpaceContextMenu` defines actions for the empty space context menu only
-      ActionGroup emptySpaceGroup =
-        ObjectUtils.tryCast(ActionManager.getInstance().getAction("ToolWindowEmptySpaceContextMenu"), ActionGroup.class);
-      if (emptySpaceGroup != null) {
-        group.add(emptySpaceGroup);
-      }
-    }
 
     if (toolWindowGroup != null && !ClientProperty.isTrue(window.getComponent(), CLEANED_TOOL_WINDOW_CONTEXT_MENUS)) {
       group.add(toolWindowGroup);
     }
-
-    group.getTemplatePresentation().putClientProperty(ActionUtil.HIDE_EMPTY_POPUP_MENU, true);
 
     JPopupMenu popup = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group).getComponent();
     popup.addPopupMenuListener(new PopupMenuListener() {

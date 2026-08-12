@@ -1327,7 +1327,6 @@
     </group>
     <group id="ToolWindowContextMenu"/>
     <group id="ToolWindowTabContextMenu"/>
-    <group id="ToolWindowEmptySpaceContextMenu"/>
 
     <action id="MoveToolWindowTabToEditorAction" class="com.intellij.openapi.wm.impl.tabInEditor.MoveToolWindowTabToEditorAction"
             icon="AllIcons.Actions.OpenNewTab">
