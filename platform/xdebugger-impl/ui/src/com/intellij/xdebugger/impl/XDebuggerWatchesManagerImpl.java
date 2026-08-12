@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.EDT;
@@ -200,6 +201,19 @@ public final class XDebuggerWatchesManagerImpl implements XDebuggerWatchesManage
   }
 
   private class MyDocumentListener implements DocumentListener {
+    @Override
+    public void beforeDocumentChange(final @NotNull DocumentEvent e) {
+      if (IdeProductMode.isFrontend()) {
+        var isDocumentReload = e.getOffset() == 0 && e.getOldLength() == e.getDocument().getTextLength();
+        if (isDocumentReload) {
+          // In RemDev, document text is set to empty and reloaded.
+          // We should not consider this change as an update.
+          // Inlines will be later recreated from fileContentLoaded.
+          getDocumentInlines(e.getDocument()).forEach(InlineWatch::disposeMarker);
+        }
+      }
+    }
+
     @Override
     public void documentChanged(final @NotNull DocumentEvent e) {
       final Document document = e.getDocument();
