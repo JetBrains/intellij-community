@@ -25,13 +25,12 @@ private const val MAX_BUFFERED_RECORDS = 200_000
 @Service(Service.Level.APP)
 class LogDirHandler : Disposable {
   companion object {
-    /** Returns the active log directory, including runtime switches that [PathManager.getLogDir] does not follow. */
+    @Volatile
+    private var runtimeLogDir: Path? = null
+
+    /** Returns the reporting log directory, including runtime switches but excluding per-process startup customization. */
     @JvmStatic
-    fun currentLogDir(): Path =
-      System.getProperty(PathManager.PROPERTY_LOG_PATH)
-        ?.takeIf { it.isNotBlank() }
-        ?.let { Path.of(it).toAbsolutePath().normalize() }
-      ?: PathManager.getLogDir()
+    fun currentLogDir(): Path = runtimeLogDir ?: PathManager.getOriginalLogDir()
   }
 
   /** Detached handlers stay open until the next switch so late publishers do not lose records. */
@@ -75,6 +74,7 @@ class LogDirHandler : Disposable {
     }
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking { sweepExistingErrors() }
+    runtimeLogDir = logDirFullPath
     System.setProperty(PROPERTY_LOG_PATH, logDirFullPath.toString())
     if (recordsDropped > 0) {
       logger<LogDirHandler>().error(
@@ -119,6 +119,7 @@ class LogDirHandler : Disposable {
       handlersOfThePreviousLogDir.forEach { it.close() }
       handlersOfThePreviousLogDir = emptyList()
     }
+    runtimeLogDir = null
   }
 }
 

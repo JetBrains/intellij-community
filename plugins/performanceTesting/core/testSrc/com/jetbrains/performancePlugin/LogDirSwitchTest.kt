@@ -124,6 +124,11 @@ internal class LogDirSwitchTest {
   }
 
   @Test
+  fun artifactsUseTheOriginalLogDirBeforeTheFirstSwitch() {
+    assertEquals(PathManager.getOriginalLogDir(), LogDirHandler.currentLogDir())
+  }
+
+  @Test
   fun recordsLoggedReentrantlyWhileTheTransitionBufferIsDrainedAreForwarded() {
     val transitionBuffer = TransitionBufferHandler()
     val forwardedMessages = mutableListOf<String>()
