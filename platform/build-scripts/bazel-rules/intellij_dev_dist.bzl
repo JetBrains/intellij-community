@@ -70,6 +70,10 @@ def _intellij_dev_dist_impl(ctx):
     return [
         DefaultInfo(files = depset([home, ide_config])),
         IntellijDevDistInfo(home = home, ide_config = ide_config),
+        # A launcher needs the config file's runfiles path, and `$(rlocationpath ...)` takes a label naming exactly one
+        # file - which this target is not, and which a `declare_file` output cannot be. These groups are how a
+        # `filegroup(output_group = ...)` gets a single-file label to hand it.
+        OutputGroupInfo(ide_config = depset([ide_config]), home = depset([home])),
     ]
 
 intellij_dev_dist = rule(

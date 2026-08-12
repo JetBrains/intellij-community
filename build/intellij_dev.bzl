@@ -75,6 +75,26 @@ DEFAULT_JVM_FLAGS = [
     "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
 ]
 
+def _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_path):
+    """The flags an IDE needs to run, independent of how it was assembled.
+
+    `$${...}` is a literal `${...}` the java stub expands at launch; `BUILD_WORKSPACE_DIRECTORY` is set by `bazel run`,
+    so a launcher started any other way must export it itself.
+    """
+    all_jvm_flags = DEFAULT_JVM_FLAGS + jvm_flags
+
+    if platform_prefix:
+        all_jvm_flags = all_jvm_flags + ["-Didea.platform.prefix=" + platform_prefix]
+
+    # Use provided paths or defaults based on target name
+    effective_config_path = config_path if config_path else "$${BUILD_WORKSPACE_DIRECTORY}/out/dev-data/" + name + "/config"
+    effective_system_path = system_path if system_path else "$${BUILD_WORKSPACE_DIRECTORY}/out/dev-data/" + name + "/system"
+
+    return all_jvm_flags + [
+        "-Didea.config.path=" + effective_config_path,
+        "-Didea.system.path=" + effective_system_path,
+    ]
+
 def intellij_dev_binary(
         name,
         visibility,
@@ -89,18 +109,7 @@ def intellij_dev_binary(
         program_args,
         preloaded_download_repos,
         preloaded_downloads_exhaustive_on):
-    all_jvm_flags = DEFAULT_JVM_FLAGS + jvm_flags
-
-    if platform_prefix:
-        all_jvm_flags = all_jvm_flags + ["-Didea.platform.prefix=" + platform_prefix]
-
-    # Use provided paths or defaults based on target name
-    effective_config_path = config_path if config_path else "$${BUILD_WORKSPACE_DIRECTORY}/out/dev-data/" + name + "/config"
-    effective_system_path = system_path if system_path else "$${BUILD_WORKSPACE_DIRECTORY}/out/dev-data/" + name + "/system"
-
-    all_jvm_flags = all_jvm_flags + [
-        "-Didea.config.path=" + effective_config_path,
-        "-Didea.system.path=" + effective_system_path,
+    all_jvm_flags = _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_path) + [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % bazel_targets_json,
     ]
 
@@ -134,6 +143,53 @@ def intellij_dev_binary(
         main_class = "org.jetbrains.intellij.build.devServer.DevMainKt",
         data = data + [bazel_targets_json] + preloaded_data,
         jvm_flags = all_jvm_flags,
+        env = env,
+        add_opens = INTELLIJ_ADD_OPENS,
+        args = program_args,
+    )
+
+def intellij_dev_prebuilt_binary(
+        name,
+        dist,
+        platform_prefix = None,
+        jvm_flags = [],
+        env = {},
+        config_path = None,
+        system_path = None,
+        program_args = [],
+        visibility = None):
+    """Launches an already-assembled `intellij_dev_dist` distribution, instead of assembling one first.
+
+    The counterpart of [intellij_dev_binary]: same runtime vocabulary, but the layout was computed once by the dist's
+    action rather than on every `bazel run`. So none of the build's inputs appear here - no module jars, no
+    `bazel-targets.json`, no preloaded downloads, and no `additional.modules`, which the distribution was assembled with
+    and therefore already contains. What is left is the distribution itself, and nothing in it is product-specific.
+    """
+    ide_config = name + "_ide_config"
+
+    # `$(rlocationpath ...)` needs a label naming exactly one file, and `dist` is two outputs whose config file, being
+    # declared rather than predeclared, has no label of its own. Its output group does.
+    native.filegroup(
+        name = ide_config,
+        srcs = [dist],
+        output_group = "ide_config",
+        visibility = ["//visibility:private"],
+    )
+
+    java_binary(
+        name = name,
+        visibility = visibility,
+        runtime_deps = ["@community//platform/bootstrap/dev"],
+        main_class = "org.jetbrains.intellij.build.devServer.PreBuiltDevMain",
+        # Both outputs, and they must stay siblings: the config names the home relatively, so that the pair survives
+        # being read from a different path than it was written to.
+        data = [dist, ide_config],
+        jvm_flags = _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_path) + [
+            "-Didea.ide.config.path=$(rlocationpath %s)" % ide_config,
+            # Not a build-time input: `AppMode.getDevIdeaProjectDir` and the webview native bridge read it at runtime,
+            # and a dev launch has it only because `DevMainImpl` sets it from the project root it just built against.
+            "-Didea.dev.project.root=$${BUILD_WORKSPACE_DIRECTORY}",
+        ],
         env = env,
         add_opens = INTELLIJ_ADD_OPENS,
         args = program_args,

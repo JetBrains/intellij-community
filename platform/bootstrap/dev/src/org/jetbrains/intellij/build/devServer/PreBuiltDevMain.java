@@ -22,11 +22,14 @@ import java.util.Properties;
  * Separates IDE runtime phase from the build phase, which is useful for containerized
  * environments where the build happens on the host system and the IDE runs inside a container.
  * <p>
- * Reads configuration from a file specified by the "idea.ide.config.path" system property.
+ * Reads configuration from a file specified by the "idea.ide.config.path" system property. The value is either a path or,
+ * under Bazel, a runfiles-relative one - see {@link #resolveIdeConfigPath}.
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 @ApiStatus.Internal
 public final class PreBuiltDevMain {
+  private static final String IDE_CONFIG_PATH_PROPERTY = "idea.ide.config.path";
+
   public static void main(String[] args) throws Throwable {
     MethodHandles.Lookup lookup = MethodHandles.lookup();
 
@@ -35,7 +38,7 @@ public final class PreBuiltDevMain {
       return;
     }
 
-    IdeConfig ideConfig = readIdeConfig(Path.of(System.getProperty("idea.ide.config.path")));
+    IdeConfig ideConfig = readIdeConfig(resolveIdeConfigPath(System.getProperty(IDE_CONFIG_PATH_PROPERTY)));
 
     Map<String, String> properties = readProperties(lookup, classLoader, ideConfig.homePath);
     List<Path> classpath = readClasspath(ideConfig.homePath);
@@ -47,7 +50,11 @@ public final class PreBuiltDevMain {
     System.setProperty("idea.vendor.name", "JetBrains");
     System.setProperty("idea.use.dev.build.server", "true");
     System.setProperty("idea.home.path", ideConfig.homePath.toAbsolutePath().toString());
-    properties.forEach((key, value) -> System.setProperty(key, value));
+    properties.forEach((key, value) -> {
+      if (!isCallerOwnedProperty(key) || System.getProperty(key) == null) {
+        System.setProperty(key, value);
+      }
+    });
 
     //noinspection ConfusingArgumentToVarargsMethod
     lookup.findStatic(mainClass, "main", MethodType.methodType(void.class, String[].class)).invoke(args);
@@ -75,6 +82,66 @@ public final class PreBuiltDevMain {
       lookup.findStatic(buildServer, "getIdeSystemProperties", MethodType.methodType(Map.class, Path.class));
     //noinspection unchecked
     return (Map<String, String>)getIdeSystemProperties.invoke(ideHomePath);
+  }
+
+  /**
+   * Properties a launcher passes on the command line win over the distribution's own, for the same keys
+   * {@code DevMainImpl.buildDevMain} protects: the product selector and the toolkit name are decisions of whoever starts the
+   * IDE, and the toolkit name in particular is rewritten by the JBR on startup and must not be set again afterwards.
+   */
+  private static boolean isCallerOwnedProperty(String name) {
+    return name.regionMatches(true, 0, "rider.", 0, "rider.".length()) ||
+           name.regionMatches(true, 0, "resharper.", 0, "resharper.".length()) ||
+           name.equals("idea.platform.prefix") ||
+           name.equals("idea.suppressed.plugins.set.selector") ||
+           name.equals("awt.toolkit.name");
+  }
+
+  /**
+   * A Bazel launcher cannot know where its runfiles will be, so it names the config file by its runfiles-relative path
+   * (`$(rlocationpath ...)`) and the value is resolved here - the same contract as
+   * {@code intellij.build.bazel.targets.json.file}. Resolution is hand-rolled rather than delegated to
+   * {@code BazelRunfiles} because this class must not pull Kotlin into the boot classloader.
+   * <p>
+   * An absolute path, or one that resolves against the working directory, is taken verbatim: that is the containerized
+   * case this launcher was written for, where there is no runfiles tree at all.
+   */
+  private static Path resolveIdeConfigPath(String value) throws IOException {
+    if (value == null || value.isBlank()) {
+      throw new IllegalStateException("System property '" + IDE_CONFIG_PATH_PROPERTY + "' is not set");
+    }
+
+    Path asGiven = Path.of(value);
+    if (asGiven.isAbsolute() || Files.exists(asGiven)) {
+      return asGiven;
+    }
+
+    for (String variable : new String[]{"JAVA_RUNFILES", "RUNFILES_DIR"}) {
+      String runfilesDir = System.getenv(variable);
+      if (runfilesDir != null && !runfilesDir.isEmpty()) {
+        Path candidate = Path.of(runfilesDir).resolve(value);
+        if (Files.exists(candidate)) {
+          return candidate;
+        }
+      }
+    }
+
+    // Windows has no runfiles tree, only this manifest of `<runfiles-relative path> <absolute path>` lines.
+    String manifest = System.getenv("RUNFILES_MANIFEST_FILE");
+    if (manifest != null && !manifest.isEmpty()) {
+      for (String line : Files.readAllLines(Path.of(manifest))) {
+        int separator = line.indexOf(' ');
+        if (separator == value.length() && line.startsWith(value)) {
+          return Path.of(line.substring(separator + 1));
+        }
+      }
+    }
+
+    throw new IllegalStateException(
+      IDE_CONFIG_PATH_PROPERTY + "='" + value + "' names neither an existing file nor a runfile" +
+      " (JAVA_RUNFILES=" + System.getenv("JAVA_RUNFILES") +
+      ", RUNFILES_DIR=" + System.getenv("RUNFILES_DIR") +
+      ", RUNFILES_MANIFEST_FILE=" + manifest + ")");
   }
 
   private static IdeConfig readIdeConfig(Path path) throws Exception {
