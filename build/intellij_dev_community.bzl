@@ -30,6 +30,10 @@ def _intellij_dev_binary_community_impl(
         additional_modules = additional_modules,
         program_args = program_args,
         preloaded_download_repos = COMMUNITY_DEV_LAUNCH_REPOS,
+        # Unmeasured on every platform: `@community//build:idea_community` does not assemble from the
+        # ultimate checkout (`Cannot find module 'intellij.rd.ide.model.generated'`), so nothing has
+        # established what its whole download set is.
+        preloaded_downloads_exhaustive_on = [],
     )
 
 intellij_dev_binary_community = macro(

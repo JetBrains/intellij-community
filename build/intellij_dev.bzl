@@ -1,7 +1,13 @@
 """Macros for IntelliJ-based IDE development builds."""
 
 load("@rules_java//java:defs.bzl", "java_binary")
-load(":dev_launch_dependencies.bzl", "preloaded_downloads_data", "preloaded_downloads_flag", "preloaded_downloads_manifest_data")
+load(
+    ":dev_launch_dependencies.bzl",
+    "preloaded_downloads_data",
+    "preloaded_downloads_flag",
+    "preloaded_downloads_manifest_data",
+    "preloaded_downloads_only_flag",
+)
 
 INTELLIJ_ADD_OPENS = [
     "java.base/java.io",
@@ -81,7 +87,8 @@ def intellij_dev_binary(
         system_path,
         additional_modules,
         program_args,
-        preloaded_download_repos):
+        preloaded_download_repos,
+        preloaded_downloads_exhaustive_on):
     all_jvm_flags = DEFAULT_JVM_FLAGS + jvm_flags
 
     if platform_prefix:
@@ -108,10 +115,13 @@ def intellij_dev_binary(
         all_jvm_flags = all_jvm_flags + ["-Dadditional.modules=\"" + additional_modules + "\""]
 
     # The archives the assembly would otherwise download at launch, as runfiles for the host platform,
-    # with their manifests. Not `preloaded.only`: a dev launch of any product reaches for archives no
-    # shared set enumerates - a Go debugger, a .NET SDK, notebook front-end resources - and those must
-    # keep downloading. See PreloadedDownloads.
+    # with their manifests. `preloaded_downloads_exhaustive_on` names the platforms where the declared set
+    # was measured to be this product's whole set, so an undeclared URL is an error rather than a
+    # download; a product that fetches its own archives - the CIDR toolchains, a locally overridden
+    # front-end - has none. See PreloadedDownloads and the caller that decides.
     all_jvm_flags = all_jvm_flags + preloaded_downloads_flag(preloaded_download_repos)
+    if preloaded_downloads_exhaustive_on:
+        all_jvm_flags = all_jvm_flags + preloaded_downloads_only_flag(preloaded_downloads_exhaustive_on)
     preloaded_data = (
         preloaded_downloads_data(preloaded_download_repos) +
         preloaded_downloads_manifest_data(preloaded_download_repos)

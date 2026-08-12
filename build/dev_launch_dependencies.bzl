@@ -228,15 +228,23 @@ def preloaded_downloads_flag(repo_set, platforms = None):
     """
     return _select_by_platform(repo_set, platforms, _manifest_flag)
 
-def preloaded_downloads_only_flag():
+def preloaded_downloads_only_flag(platforms):
     """Makes the configured manifests the complete inventory, so an undeclared URL fails.
 
-    For a target that must not reach the network: a sandboxed test, or a worker running off a read-only
-    share of the checkout. An ordinary dev launch wants the opposite and does not pass this, because no
-    shared set can enumerate what every product asks for. Needs no `select`: it constrains the manifests
-    a target was given, and where there are none it has nothing to forbid.
+    For a target that must not reach the network - a sandboxed test, a worker on a read-only share of the
+    checkout - or one whose whole download set has been measured.
+
+    [platforms] is where that holds, and it is mandatory because the answer is per platform: a set
+    measured by assembling on macOS says nothing about the archives a Windows assembly reaches for. Off
+    those platforms the target keeps advisory manifests rather than failing on the first one.
     """
-    return ["-D%s=true" % _ONLY_PROPERTY]
+    flag = ["-D%s=true" % _ONLY_PROPERTY]
+    for platform in platforms:
+        if platform not in HOST_PLATFORMS:
+            fail("'%s' is not one of %s" % (platform, HOST_PLATFORMS))
+    branches = {Label("//build:host_" + platform): flag for platform in platforms}
+    branches["//conditions:default"] = []
+    return select(branches)
 
 # What a dev-mode assembly downloads, of the groups community owns.
 COMMUNITY_DEV_LAUNCH_REPOS = merge_repo_sets(
