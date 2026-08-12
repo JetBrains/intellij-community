@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices
 
+import com.intellij.idea.IJIgnore
 import com.intellij.maven.testFramework.fixtures.MavenIndicesTestFixture
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
@@ -20,6 +21,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @TestApplication
 @ParameterizedClass
 @ArgumentsSource(MavenVersionArguments::class)
+@IJIgnore(issue = "IDEA-392698")
 class MavenArtifactSearcherTest(mavenVersion: String, modelVersion: String) {
 
   private val maven by mavenImportingFixture(
