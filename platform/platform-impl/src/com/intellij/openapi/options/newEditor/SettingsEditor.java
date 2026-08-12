@@ -856,6 +856,18 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     return ConfigurableVisitor.getId(configurable);
   }
 
+  /**
+   * The currently selected {@link Configurable}, if any. {@link OptionsEditorColleague}s are
+   * only notified of selection <i>changes</i> (see {@link OptionsEditorContext#fireSelected}), so
+   * a colleague registered after the initial page was already selected — e.g. a button built
+   * while constructing the button panel, after the tree already made its first selection — needs
+   * this to synchronize with that initial state instead of waiting for the next navigation.
+   */
+  @ApiStatus.Internal
+  public @Nullable Configurable getSelectedConfigurable() {
+    return editor.getConfigurable();
+  }
+
   private void updateController(@Nullable Configurable configurable) {
     Project project = treeView.findConfigurableProject(configurable);
     myBanner.setProjectText(project != null ? getProjectText(project) : null);

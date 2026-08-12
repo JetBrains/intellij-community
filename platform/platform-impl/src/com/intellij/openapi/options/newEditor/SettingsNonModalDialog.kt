@@ -348,6 +348,15 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
   }
 
   /**
+   * The Configurable currently selected in the tree, if any. [tryAddOptionsListener] only
+   * notifies of selection *changes* from here on, so a colleague built (like the button in
+   * [createOkButton]) after the tree already made its first selection needs this to
+   * synchronize with that initial page instead of waiting for the next navigation.
+   */
+  @ApiStatus.Internal
+  protected fun getCurrentConfigurable(): Configurable? = editor.selectedConfigurable
+
+  /**
    * Whether to show the Apply button. Override to suppress it for a product where a separate
    * mid-session-commit action doesn't make sense — e.g. Rider, which instead commits via its
    * OK/Save button (see [createOkButton]).
