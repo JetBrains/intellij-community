@@ -1427,6 +1427,9 @@ private fun removeBazelEnvironmentVariables(environment: MutableMap<String, Stri
   "TEST_TMPDIR",
 ).forEach { environment.remove(it) }
 
+/**
+ * Cannot be called concurrently, e.g., from coroutines
+ */
 private inline fun <T> blockWithDefaultFlowId(
   name: String,
   crossinline operation: (Span) -> T,
