@@ -46,6 +46,9 @@ public class OnOffButton extends JToggleButton {
     setOpaque(false);
   }
 
+  /**
+   * This method is no longer supported for the Islands themes
+   */
   @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public @NlsContexts.Button String getOnText() {
@@ -60,6 +63,9 @@ public class OnOffButton extends JToggleButton {
     myOnText = onText;
   }
 
+  /**
+   * This method is no longer supported for the Islands themes
+   */
   @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public @NlsContexts.Button String getOffText() {

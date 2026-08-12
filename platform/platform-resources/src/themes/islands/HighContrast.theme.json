@@ -306,8 +306,6 @@
       "newNotification.hoverBackground": "#450073"
     },
 
-    "OnOffButtonUI": "com.intellij.ide.ui.laf.darcula.ui.IslandsOnOffButtonUI",
-
     "OptionButton" : {
       "default.separatorColor": "#000000",
       "separatorColor": "#FFFFFF"
