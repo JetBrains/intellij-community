@@ -34,8 +34,6 @@ import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.event.InvocationEvent
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
@@ -147,7 +145,7 @@ object TestOnlyThreading {
     if (application == null) {
       return action.run()
     }
-    if (application.isWriteIntentLockAcquired) {
+    if (application.isWriteIntentLockAcquired && !application.isWriteAccessAllowed) {
       return getGlobalThreadingSupport().releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action::run)
     } else {
       return action.run()

@@ -235,6 +235,20 @@ class SuspendingWriteActionTest {
   }
 
   @Test
+  fun `write-intent lock is not released inside write action`(): Unit = timeoutRunBlocking {
+    edtWriteAction {
+      assertTrue { application.isWriteAccessAllowed }
+      assertTrue { application.isWriteIntentLockAcquired }
+      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+        assertTrue { application.isWriteAccessAllowed }
+        assertTrue { application.isWriteIntentLockAcquired }
+      }
+      assertTrue { application.isWriteAccessAllowed }
+      assertTrue { application.isWriteIntentLockAcquired }
+    }
+  }
+
+  @Test
   fun `release of WI inside suspending write action does not lead to broken IDE state`(): Unit = timeoutRunBlocking {
     readAction {  } // init internal structures
     edtWriteAction {
