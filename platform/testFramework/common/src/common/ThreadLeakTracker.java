@@ -110,6 +110,10 @@ public final class ThreadLeakTracker {
       JVMResponsivenessMonitor.MONITOR_THREAD_NAME,
       "Keep-Alive-SocketCleaner", // Thread[Keep-Alive-SocketCleaner,8,InnocuousThreadGroup], JBR-11
       "Keep-Alive-Timer",
+      // com.intellij.remoteDev.tests.LambdaTestsConstants#protocolName - the rd wire to a lambda-framework IDE.
+      // That IDE is shared by every test class of a launch, so its sender and receiver outlive any one of them;
+      // the first class to run would otherwise report them as its own leak. Same case as "FrontendToBackend".
+      "LambdaTestProtocol",
       "LocalEventBusServerThread", // com.intellij.tools.ide.starter.bus.shared.server.LocalEventBusServer
       "main",
       "Monitor Ctrl-Break",
