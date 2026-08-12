@@ -448,7 +448,7 @@
     <action id="HideAllWindows" class="com.intellij.ide.actions.HideAllToolWindowsAction"/>
     <action id="MoveToolWindowTabToEditorAction" class="com.intellij.openapi.wm.impl.tabInEditor.MoveToolWindowTabToEditorAction"
             icon="AllIcons.Actions.OpenNewTab"/>
-    <action id="MoveToolWindowTabFromEditorToToolWindowAction" class="com.intellij.openapi.wm.impl.tabInEditor.MoveToolWindowTabToEditorAction"
+    <action id="MoveToolWindowTabFromEditorToToolWindowAction" class="com.intellij.openapi.wm.impl.tabInEditor.MoveToolWindowTabFromEditorToToolWindowAction"
             icon="AllIcons.General.OpenInToolWindow"/>
     <action id="PinToolwindowTab" class="com.intellij.ui.content.tabs.PinToolwindowTabAction" use-shortcut-of="PinActiveTab"/>
     <action id="JumpToLastWindow" class="com.intellij.ide.actions.JumpToLastWindowAction"/>
