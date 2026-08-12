@@ -15,6 +15,7 @@ import org.jetbrains.plugins.terminal.block.ui.updateFrontendSettingsAndSync
 object ClassicTerminalMigration {
   private const val SWITCHED_FROM_CLASSIC_TERMINAL_PROPERTY = "terminal.switched.from.classic"
   private const val ENGINE_SWITCH_NOTIFICATION_SHOWN_PROPERTY = "terminal.classic.engine.switch.notification.shown"
+  private const val SWITCH_BACK_FEEDBACK_NOTIFICATION_SHOWN_PROPERTY = "terminal.classic.switch.back.feedback.notification.shown"
 
   fun migrateTerminalEngineOnce(options: TerminalOptionsProvider) {
     RunOnceUtil.runOnceForApp("TerminalOptionsProvider.ClassicTerminalEngineMigration.2026.3") {
@@ -34,9 +35,24 @@ object ClassicTerminalMigration {
            && TerminalOptionsProvider.instance.terminalEngine == TerminalEngine.REWORKED
            && properties.getBoolean(SWITCHED_FROM_CLASSIC_TERMINAL_PROPERTY, false)
            && !properties.getBoolean(ENGINE_SWITCH_NOTIFICATION_SHOWN_PROPERTY, false)
+           && !properties.getBoolean(SWITCH_BACK_FEEDBACK_NOTIFICATION_SHOWN_PROPERTY, false)
   }
 
   fun setEngineChangeNotificationShown() {
     PropertiesComponent.getInstance().setValue(ENGINE_SWITCH_NOTIFICATION_SHOWN_PROPERTY, true)
+  }
+
+  fun wasSwitchedFromClassicTerminal(): Boolean {
+    return PropertiesComponent.getInstance().getBoolean(SWITCHED_FROM_CLASSIC_TERMINAL_PROPERTY, false)
+  }
+
+  fun shouldShowSwitchBackFeedbackNotification(): Boolean {
+    val properties = PropertiesComponent.getInstance()
+    return wasSwitchedFromClassicTerminal()
+           && !properties.getBoolean(SWITCH_BACK_FEEDBACK_NOTIFICATION_SHOWN_PROPERTY, false)
+  }
+
+  fun setSwitchBackFeedbackNotificationShown() {
+    PropertiesComponent.getInstance().setValue(SWITCH_BACK_FEEDBACK_NOTIFICATION_SHOWN_PROPERTY, true)
   }
 }

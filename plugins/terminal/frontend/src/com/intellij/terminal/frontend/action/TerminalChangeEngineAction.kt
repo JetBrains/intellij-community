@@ -13,6 +13,7 @@ import org.jetbrains.plugins.terminal.ExperimentalTerminalMigration
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
+import com.intellij.terminal.frontend.toolwindow.impl.migration.askForFeedbackIfSwitchedBackToClassicTerminal
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
 
@@ -29,6 +30,7 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
     if (state) {
       val project = e.project ?: return
       askForFeedbackIfReworkedTerminalDisabled(project, TerminalOptionsProvider.instance.terminalEngine, engine)
+      askForFeedbackIfSwitchedBackToClassicTerminal(project, TerminalOptionsProvider.instance.terminalEngine, engine)
       TerminalOptionsProvider.instance.terminalEngine = engine
       // Call save manually, because otherwise this change will be synced to backend only at some time later.
       saveSettingsForRemoteDevelopment(e.coroutineScope, application)

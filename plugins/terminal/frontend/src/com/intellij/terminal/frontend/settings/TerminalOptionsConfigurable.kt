@@ -110,6 +110,7 @@ import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode.ALWAYS
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode.ONLY_PARAMETERS
+import com.intellij.terminal.frontend.toolwindow.impl.migration.askForFeedbackIfSwitchedBackToClassicTerminal
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
@@ -176,7 +177,12 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .label(message("settings.terminal.engine"))
             .bindItem(
               getter = { optionsProvider.terminalEngine },
-              setter = { optionsProvider.terminalEngine = it!! }
+              setter = {
+                val oldEngine = optionsProvider.terminalEngine
+                val newEngine = it!!
+                optionsProvider.terminalEngine = newEngine
+                askForFeedbackIfSwitchedBackToClassicTerminal(project, oldEngine, newEngine)
+              }
             )
             .component
         }

@@ -103,6 +103,8 @@
       implementation="com.intellij.terminal.frontend.view.notification.TerminalEnvironmentChangedTopicListener"/>
     <editorAutoClosingHandler implementation="com.intellij.terminal.frontend.editor.TerminalViewEditorAutoClosingHandler"/>
     <backgroundPostStartupActivity implementation="com.intellij.terminal.frontend.toolwindow.impl.TerminalProcessesClosingNotifierInstaller"/>
+
+    <feedback.idleFeedbackSurvey implementation="com.intellij.terminal.frontend.toolwindow.impl.migration.ClassicTerminalFeedbackSurvey"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
