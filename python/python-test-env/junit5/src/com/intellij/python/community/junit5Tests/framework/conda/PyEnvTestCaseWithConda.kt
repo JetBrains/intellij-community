@@ -20,6 +20,9 @@ class PyEnvTestExample {
   
   @Test
   fun testSdk(@PythonSdk sdk: Sdk) { ... }
+
+  @Test // This is a base conda path!
+  fun testSdk(@PythonBinaryPath pythonExe: PythonBinary) { ... }
 }
  * ```
  */
