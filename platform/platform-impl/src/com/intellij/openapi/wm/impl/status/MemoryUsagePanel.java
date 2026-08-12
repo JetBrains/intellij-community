@@ -94,15 +94,15 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
   // These three methods are purely for internal ABI compatibility, as some plugins use them.
 
   public void addMouseListener(MouseListener l) {
-    myComponent.get().addMouseListener(l);
+    getComponent().addMouseListener(l);
   }
 
   public MouseListener[] getMouseListeners() {
-    return myComponent.get().getMouseListeners();
+    return getComponent().getMouseListeners();
   }
 
   public void removeMouseListener(MouseListener l) {
-    myComponent.get().removeMouseListener(l);
+    getComponent().removeMouseListener(l);
   }
 
   private final class MemoryUsagePanelImpl extends TextPanel implements WidgetEffectBoundsProvider {
