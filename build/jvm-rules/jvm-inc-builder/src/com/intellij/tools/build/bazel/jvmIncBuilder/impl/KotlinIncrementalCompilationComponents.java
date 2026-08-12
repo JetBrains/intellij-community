@@ -5,15 +5,14 @@ import org.jetbrains.kotlin.com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.cli.jvm.compiler.PsiBasedProjectFileSearchScope;
 import org.jetbrains.kotlin.cli.jvm.compiler.VfsBasedProjectEnvironment;
-import org.jetbrains.kotlin.cli.jvm.compiler.legacy.pipeline.ProjectFileSearchScopeProvider;
+import org.jetbrains.kotlin.cli.jvm.compiler.legacy.pipeline.IncrementalCompilationComponentsWithCustomScope;
 import org.jetbrains.kotlin.fir.session.environment.AbstractProjectFileSearchScope;
 import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCache;
-import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCompilationComponents;
 import org.jetbrains.kotlin.modules.TargetId;
 
 import java.util.Set;
 
-public class KotlinIncrementalCompilationComponents implements IncrementalCompilationComponents, ProjectFileSearchScopeProvider {
+public class KotlinIncrementalCompilationComponents implements IncrementalCompilationComponentsWithCustomScope {
   private final String moduleName;
   private final IncrementalCache cache;
   private final VirtualFile myOutputRoot;
