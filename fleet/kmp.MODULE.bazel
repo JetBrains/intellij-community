@@ -34,10 +34,6 @@ kmp_extension.configure(
         "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kt/experimental",
     ],
     substitutions = {
-        "androidx.compose.runtime:runtime": "org.jetbrains.compose.runtime:runtime:1.11.0-0-fleet-SNAPSHOT",
-        "androidx.compose.runtime:runtime-saveable": "org.jetbrains.compose.runtime:runtime-saveable:1.11.0-0-fleet-SNAPSHOT",
-        "androidx.compose.runtime:runtime-saveable-wasm-js": "org.jetbrains.compose.runtime:runtime-saveable-wasm-js:1.11.0-0-fleet-SNAPSHOT",
-        "androidx.compose.runtime:runtime-wasm-js": "org.jetbrains.compose.runtime:runtime-wasm-js:1.11.0-0-fleet-SNAPSHOT",
         "org.jetbrains.kotlinx:kotlinx-coroutines-core": "org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core:1.10.2-intellij-2",
         "org.jetbrains.kotlinx:kotlinx-coroutines-core-wasm-js": "org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core-wasm-js:1.10.2-intellij-2",
         "org.jetbrains.kotlinx:kotlinx-coroutines-debug": "org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-debug:1.10.2-intellij-2",
