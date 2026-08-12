@@ -444,7 +444,7 @@ object ProjectUtil {
         processor?.defaultOptionIndex(project) ?: 0,
         Messages.getQuestionIcon(),
         ProjectNewWindowDoNotAskOption())
-      mode = if (exitCode == 0) GeneralSettings.OPEN_PROJECT_SAME_WINDOW else if (exitCode == 1) GeneralSettings.OPEN_PROJECT_NEW_WINDOW else if (exitCode == 2) GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH else -1
+      mode = if (exitCode == 0) GeneralSettings.OPEN_PROJECT_SAME_WINDOW else if (exitCode == 1) GeneralSettings.OPEN_PROJECT_NEW_WINDOW else if (exitCode == 2 && processor != null) GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH else -1
       if (mode != -1) {
         LifecycleUsageTriggerCollector.onProjectFrameSelected(mode)
       }
