@@ -104,7 +104,9 @@ class DialogAppender : Handler() {
   @ApiStatus.Internal
   suspend fun awaitPendingJobs() {
     val currentPendingJobs = synchronized(this) {
-      processEarlyEventsIfNeeded()
+      if (LoadingState.APP_READY.isOccurred) {
+        processEarlyEventsIfNeeded()
+      }
       coroutineScope.coroutineContext.job.children.toList()
     }
     currentPendingJobs.joinAll()
