@@ -4,7 +4,7 @@ package com.intellij.testFramework.fixtures
 import com.intellij.codeInsight.intention.impl.QuickEditAction
 import com.intellij.codeInsight.intention.impl.QuickEditHandler
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -67,7 +67,7 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
   }
 
   fun assertInjected(vararg expectedInjections: InjectionAssertionData) {
-    runReadAction {
+    runReadActionBlocking {
       val expected = expectedInjections.toCollection(LinkedList())
       val foundInjections = getAllInjections().toCollection(LinkedList())
 
@@ -82,7 +82,7 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
   }
 
   fun assertNotInjected(vararg notExpectedInjections: InjectionAssertionData) {
-    runReadAction {
+    runReadActionBlocking {
       val notExpected = notExpectedInjections.toCollection(LinkedList())
       val foundInjections = getAllInjections().toCollection(LinkedList())
 
@@ -128,7 +128,7 @@ data class InjectionAssertionData(val text: String, val injectedLanguage: String
 fun injectionForHost(text: String): InjectionAssertionData = InjectionAssertionData(text)
 
 fun CodeInsightTestFixture.assertInjectedLanguage(langId: String?, vararg fragmentTexts: String) {
-  runReadAction {
+  runReadActionBlocking {
     val injectedLanguageManager = InjectedLanguageManager.getInstance(project)
     val doc = editor.document
 
@@ -151,7 +151,7 @@ fun CodeInsightTestFixture.assertInjectedLanguage(langId: String?, vararg fragme
 }
 
 fun CodeInsightTestFixture.assertInjectedReference(referenceClass: Class<*>, vararg referenceTexts: String) {
-  runReadAction {
+  runReadActionBlocking {
     val provider = file.viewProvider
     val documentText = editor.document.text
 
