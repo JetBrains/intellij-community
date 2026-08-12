@@ -360,6 +360,9 @@ private fun createUpdateFromSourcesCommandLine(
   }
   vmProperties.add("-Dintellij.build.output.root=${deployDir.invariantSeparatorsPathString}")
   vmProperties.add("-DdistOutputRelativePath=${deployDir.relativize(builtDistPath).invariantSeparatorsPathString}")
+  // the Rider backend binaries take gigabytes and are usually not needed in a locally updated IDEA installation (IJPL-201660)
+  vmProperties.add("-Dintellij.clion.radler.skip.packaging=true")
+  // must be added last, so the user-provided options override the defaults above
   vmProperties.addAll(ParametersListUtil.parse(additionalVmOptionsForBuildScripts ?: ""))
 
   val commandLine = GeneralCommandLine()
