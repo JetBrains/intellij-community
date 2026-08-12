@@ -62,14 +62,16 @@ class LocalDriverRunner : DriverRunner {
     val runResult = scopeForProcesses.async {
       Allure.getLifecycle().setCurrentTestCase(currentStep.orElse(UUID.randomUUID().toString()))
       try {
-        context.runIdeSuspending(commandLine,
-                                 commands,
-                                 runTimeout,
-                                 useStartupScript,
-                                 launchName,
-                                 expectedKill,
-                                 expectedExitCode,
-                                 collectNativeThreads) {
+        context.runIdeSuspending(
+          commandLine = commandLine,
+          commands = commands,
+          runTimeout = runTimeout,
+          useStartupScript = useStartupScript,
+          launchName = launchName,
+          expectedKill = expectedKill,
+          expectedExitCode = expectedExitCode,
+          collectNativeThreads = collectNativeThreads,
+        ) {
           provideDriverProperties(driverOptions)
           configure()
         }
