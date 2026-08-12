@@ -79,7 +79,6 @@ object Perfolizer {
   }
 
   fun List<Double>.whichMax(): Int = this.whichMax(0, size)
-  fun List<Double>.whichMin(): Int = this.whichMin(0, size)
 
   fun round(value: Double, precision: Int): Double {
     val factor = 10.0.pow(precision)
@@ -695,28 +694,15 @@ object Perfolizer {
    * https://aakinshin.net/posts/lowland-multimodality-detection/
    */
   object LowlandModalityDetector {
-    private const val DEFAULT_SENSITIVITY = 0.5
-    private const val DEFAULT_PRECISION = 0.01
-
-    private var sensitivity = DEFAULT_SENSITIVITY
-    private var precision = DEFAULT_PRECISION
-
-    init {
-      assert(sensitivity in 0.0..1.0) { "Sensitivity should be in range [0, 1]" }
-      assert(precision in 0.0..1.0) { "Precision should be in range [0, 1)" }
-    }
-
-    fun lowlandModalityDetector(sensitivity: Double = DEFAULT_SENSITIVITY, precision: Double = DEFAULT_PRECISION) {
-      this.sensitivity = sensitivity
-      this.precision = precision
-    }
+    private const val SENSITIVITY = 0.5
+    private const val PRECISION = 0.01
 
     // TODO: add jittering, see https://aakinshin.net/posts/discrete-sample-jittering2/
     fun detectModes(sample: Sample): ModalityData {
       if (sample.values.maxOrNull()!! - sample.values.minOrNull()!! < 1e-9)
         throw IllegalArgumentException("Sample should contain at least two different elements")
 
-      val desiredBinCount = (1 / precision).roundToInt()
+      val desiredBinCount = (1 / PRECISION).roundToInt()
       val histogram = QuantileRespectfulDensityHistogramBuilder.build(sample, desiredBinCount)
       val binCount = histogram.bins.count()
       val bins = histogram.bins
@@ -772,7 +758,7 @@ object Perfolizer {
             val totalBinCount = right - left + 1
             val totalBinArea = totalBinCount * binArea
             val binProportion = totalBinArea / totalArea
-            if (binProportion < sensitivity) {
+            if (binProportion < SENSITIVITY) {
               modeLocations.add(bins[peak0].middle)
               cutPoints.add(bins[binHeights.whichMin(peak1, peak2 - peak1)].middle)
 
