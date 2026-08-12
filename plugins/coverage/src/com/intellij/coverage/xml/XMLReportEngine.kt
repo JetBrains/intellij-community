@@ -46,9 +46,9 @@ class XMLReportEngine : CoverageEngine() {
 
   override fun createCoverageViewExtension(
     project: Project,
-    suiteBundle: CoverageSuitesBundle?,
+    suiteBundle: CoverageSuitesBundle,
   ): JavaCoverageViewExtension {
-    return object : JavaCoverageViewExtension(XMLReportAnnotator.getInstance(project), project, suiteBundle) {
+    return object : JavaCoverageViewExtension(suiteBundle.getAnnotator(project) as XMLReportAnnotator, project, suiteBundle) {
       override fun isBranchInfoAvailable(coverageRunner: CoverageRunner?, branchCoverage: Boolean) = true
     }
   }

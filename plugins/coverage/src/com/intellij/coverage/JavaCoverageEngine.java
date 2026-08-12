@@ -730,7 +730,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   @Override
   public CoverageViewExtension createCoverageViewExtension(Project project,
                                                            CoverageSuitesBundle suiteBundle) {
-    return new JavaCoverageViewExtension((JavaCoverageAnnotator)getCoverageAnnotator(project), project, suiteBundle);
+    return new JavaCoverageViewExtension((JavaCoverageAnnotator)suiteBundle.getAnnotator(project), project, suiteBundle);
   }
 
   public static boolean isSourceMapNeeded(RunConfigurationBase<?> configuration) {

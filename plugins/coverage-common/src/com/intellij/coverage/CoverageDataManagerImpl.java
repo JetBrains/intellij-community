@@ -247,7 +247,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     if (!myActiveBundles.containsKey(suite.getCoverageEngine())) return;
     fireBeforeSuiteChosen();
     CoverageDataAnnotationsManager.getInstance(myProject).clearAnnotations();
-    suite.getCoverageEngine().getCoverageAnnotator(myProject).onSuiteChosen(suite);
+    suite.getAnnotator(myProject).onSuiteChosen(suite);
     renewCoverageData(suite);
   }
 
@@ -265,7 +265,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       ExternalCoverageWatchManager.getInstance(myProject).clearWatches();
     }
     CoverageDataAnnotationsManager.getInstance(myProject).clearAnnotations();
-    suite.getCoverageEngine().getCoverageAnnotator(myProject).onSuiteChosen(suite);
+    suite.getAnnotator(myProject).onSuiteChosen(suite);
     suite.setCoverageData(null);
     triggerPresentationUpdate();
   }

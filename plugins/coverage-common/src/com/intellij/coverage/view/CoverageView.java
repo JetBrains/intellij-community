@@ -253,7 +253,7 @@ public class CoverageView extends BorderLayoutPanel implements UiDataProvider, D
   }
 
   private @Nullable ModifiedFilesFilter getModifiedFilesFilter() {
-    CoverageAnnotator annotator = mySuitesBundle.getCoverageEngine().getCoverageAnnotator(myProject);
+    CoverageAnnotator annotator = mySuitesBundle.getAnnotator(myProject);
     return annotator.getModifiedFilesFilter();
   }
 
