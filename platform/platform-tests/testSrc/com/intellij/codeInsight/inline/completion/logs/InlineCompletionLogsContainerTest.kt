@@ -233,6 +233,26 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
     blockCanceled.await()
   }
 
+  /**
+   * Once the container has been finalized, a late async add must not start: there is no later [InlineCompletionLogsContainer.logCurrent]
+   * call that could cancel it or send its result.
+   */
+  @Test
+  fun testAsyncAddAfterLogCurrentDoesNotStart(): Unit = timeoutRunBlocking {
+    val logsContainer = InlineCompletionLogsContainer()
+    logsContainer.mockRandom(1f)
+    logsContainer.logCurrent(project = null)
+    val started = CompletableDeferred<Unit>()
+
+    logsContainer.addAsync {
+      started.complete(Unit)
+      listOf(TestPhasedLogs.basicTestField with 42)
+    }
+    logsContainer.awaitAndGetCurrentLogs()
+
+    assertFalse("An async add submitted after logCurrent must not start", started.isCompleted)
+  }
+
   private fun withEap(isEAP: Boolean, action: () -> Unit) {
     try {
       InlineCompletionEapSupport.getInstance().setMockEap(isEAP)
