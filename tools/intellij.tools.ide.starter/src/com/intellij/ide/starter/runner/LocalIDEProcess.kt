@@ -5,6 +5,7 @@ import com.intellij.ide.starter.ci.teamcity.TeamCityCIServer
 import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.process.ProcessInfo.Companion.toProcessInfo
+import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ExecTimeoutException
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.process.getIdeProcessIdWithRetry
@@ -30,7 +31,10 @@ import kotlinx.coroutines.runInterruptible
 import java.io.Closeable
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.io.path.writeText
 import kotlin.time.measureTimedValue
+
+private const val IDE_PROCESS_STDERR_FILE_NAME = "ide-process-stderr.log"
 
 class LocalIDEProcess : IDEProcess {
   override suspend fun run(runContext: IDERunContext): IDEStartResult {
@@ -155,6 +159,7 @@ class LocalIDEProcess : IDEProcess {
       }
       catch (exception: Throwable) {
         isRunSuccessful = false
+        saveProcessStderr(stderr)
         throw Exception(getErrorMessage(exception, ciFailureDetails(lastIdeReportingData)), exception)
       }
       finally {
@@ -181,6 +186,16 @@ class LocalIDEProcess : IDEProcess {
           }
         }
       }
+    }
+  }
+
+  private fun IDERunContext.saveProcessStderr(stderr: ExecOutputRedirect) {
+    if (stderr !is ExecOutputRedirect.ToStdOutAndTail) return
+    val content = stderr.read().takeIf { it.isNotBlank() } ?: return
+    runCatching {
+      lastIdeReportingData.logsDir.resolve(IDE_PROCESS_STDERR_FILE_NAME).writeText(content)
+    }.onFailure {
+      logError("Failed to save IDE process stderr", it)
     }
   }
 }

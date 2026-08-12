@@ -199,7 +199,7 @@ data class IDERunContext(
       ExecOutputRedirect.DelegatedWithPrefix(prefix, stdOut)
     }
     else {
-      ExecOutputRedirect.ToStdOut(prefix)
+      ExecOutputRedirect.ToStdOutAndTail(prefix)
     }
   }
 
