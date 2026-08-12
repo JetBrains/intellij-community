@@ -53,6 +53,7 @@ internal class PostfixDescriptionPanel : Disposable {
             .resizableColumn()
             .align(Align.FILL)
             .component
+          Disposer.register(this@PostfixDescriptionPanel, descriptionPane)
         }
       }
 
