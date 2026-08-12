@@ -52,7 +52,7 @@ object PyStringLiteralUtil : PyStringLiteralCoreUtil() {
    */
   @JvmStatic
   fun getContentRange(text: String): TextRange {
-    LOG.assertTrue(isStringLiteralToken(text), "Text of a single string literal node expected")
+    LOG.assertTrue(isStringLiteralToken(text), "Text of a single string literal node expected, got >>>$text<<<")
     var startOffset = getPrefixLength(text)
     var delimiterLength = 1
     val afterPrefix = text.substring(startOffset)
