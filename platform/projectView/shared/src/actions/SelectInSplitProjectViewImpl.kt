@@ -91,13 +91,19 @@ private sealed class SelectTask {
   protected abstract val project: Project
   abstract suspend fun select()
 
-  protected suspend fun selectNodePath(nodePath: ProjectViewNodePath, requestFocus: Boolean) {
+  protected suspend fun selectNodePath(
+    nodePath: ProjectViewNodePath,
+    requestFocus: Boolean,
+    invokedManually: Boolean,
+  ) {
     // The nodes should be already loaded at this moment.
     // But due to the world being completely async, they might take a few instants to actually arrive to the tree.
     // Or it might not even arrive at all, for example, if it was removed at a very unlucky moment.
     withTimeoutOrNull(5.seconds) {
-      LOG.debug { "${if (requestFocus) "Activating" else "Showing"} the Project View tool window" }
-      ProjectViewToolWindowService.getInstance(project).show(requestFocus = requestFocus)
+      if (invokedManually) { // if invoked automatically with Always Select Opened File, we must not show the TW if it's hidden
+        LOG.debug { "${if (requestFocus) "Activating" else "Showing"} the Project View tool window" }
+        ProjectViewToolWindowService.getInstance(project).show(requestFocus = requestFocus)
+      }
       LOG.debug { "Selecting the node $nodePath" }
       ProjectViewToolWindowService.getInstance(project).selectNode(nodePath)
       LOG.debug { "Selected the node $nodePath" }
@@ -132,7 +138,7 @@ private data class SelectOpenedFileTask(
         }
         LOG.debug { "Found the node to select: $nodePath" }
         if (nodePath != null) {
-          selectNodePath(nodePath, requestFocus = invokedManually)
+          selectNodePath(nodePath, requestFocus = invokedManually, invokedManually = invokedManually)
           break
         }
       }
@@ -182,7 +188,7 @@ private data class SelectInTask(
     }
     LOG.debug { "Found the node to select: $nodePath" }
     if (nodePath != null) {
-      selectNodePath(nodePath, requestFocus = requestFocus)
+      selectNodePath(nodePath, requestFocus = requestFocus, invokedManually = true)
     }
   }
 
