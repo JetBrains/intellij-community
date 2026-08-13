@@ -5,6 +5,8 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.python.junit5Tests.framework.mockPathAndAdd
 import com.intellij.python.junit5Tests.framework.unMockPath
 import com.intellij.util.EnvironmentUtil
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import org.hamcrest.CoreMatchers
 import org.hamcrest.MatcherAssert
 import org.junit.jupiter.api.AfterEach
@@ -42,6 +44,11 @@ class EnvironmentVariablesPathMockTest {
   @AfterEach
   fun tearDown() {
     environment.unMockPath()
+    assert(PathEnvironmentVariableUtil.getPathVariableValue() != null)
+    @OptIn(LowLevelLocalMachineAccess::class) // "Path" in wrong case is Win-only problem
+    if (OS.CURRENT == OS.Windows) {
+      assert(EnvironmentUtil.getEnvironmentMap()["pAth"] != null)
+    }
   }
 
   @Test

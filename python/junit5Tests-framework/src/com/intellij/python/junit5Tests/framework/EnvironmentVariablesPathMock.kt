@@ -17,7 +17,7 @@ import kotlin.io.path.pathString
  */
 fun EnvironmentVariables.mockPathAndAdd(vararg pathsToAdd: Path) {
   // TODO: Use native calls to `SetEnvironmentVariable` and `setenv(3)` to change env for children processes (they inherit parent envs).
-  val oldVars = HashMap(variables)
+  val oldVars = EnvironmentUtil.getEnvironmentMap()
   val pathKey = variables.keys.firstOrNull { it.isPath } ?: PATH
   val paths = variables[pathKey] ?: ""
 
@@ -33,7 +33,7 @@ fun EnvironmentVariables.mockPathAndAdd(vararg pathsToAdd: Path) {
  * See [mockPathAndAdd]
  */
 fun EnvironmentVariables.unMockPath() {
-  val original = HashMap((EnvironmentUtil.getEnvironmentMap() as MyMap).old)
+  val original = (EnvironmentUtil.getEnvironmentMap() as MyMap).old
   EnvironmentUtil.setEnvironmentLoader { original }
 }
 
