@@ -69,6 +69,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.Nls
 import java.awt.CardLayout
 import java.awt.Color
 import java.awt.Component
@@ -637,6 +638,10 @@ internal class BuildTreeView(
     private var myDurationWidth = 0
     private var myDurationLeftInset = 0
     private var myDurationRightInset = 0
+
+    override fun getIconToolTipText(): @Nls String? {
+      return null;
+    }
 
     override fun customizeCellRenderer(
       tree: JTree,
