@@ -25,7 +25,25 @@ interface DbSource {
   val latest: DB
   val debugName: String
 
-  class ContextElement(val dbSource: DbSource) : ThreadContextElement<DbContext<*>?> {
+  /**
+   * Binds this coroutine's [dbSource] view to whatever thread it resumes on.
+   *
+   * [ambient] decides what happens when that thread has already claimed what it reads. An element a
+   * caller installed deliberately — `withContext(KernelContextElement(t))` — always binds, because
+   * being ignored there is indistinguishable from the call not being written, and against another
+   * transactor it would silently read the wrong database. An element that merely rode in on an
+   * inherited scope must not take the thread out of a region that claimed it.
+   *
+   * A claim is a context with **no** [DbContext.dbSource]. The three places that claim a thread —
+   * a frame's read scope, an explicit [com.jetbrains.rhizomedb.asOf], and the read-tracking pass in
+   * `RhizomeDbDataSource.observe` — all bind one, and nothing else does. That is the same
+   * discriminator [restoreThreadContext] already uses to decide what it may re-bump, so the two
+   * directions now agree instead of keying off different things.
+   */
+  class ContextElement(
+    val dbSource: DbSource,
+    val ambient: Boolean = false,
+  ) : ThreadContextElement<DbContext<*>?> {
     override val key: CoroutineContext.Key<*> = ContextElement
 
     companion object : CoroutineContext.Key<ContextElement>
@@ -33,11 +51,9 @@ interface DbSource {
     override fun updateThreadContext(context: CoroutineContext): DbContext<*>? {
       // resuming
       val oldState = DbContext.threadBoundOrNull
-      // An explicitly pinned view wins over this coroutine's ambient source: the thread has fixed
-      // what it reads for a bounded region, and rebinding to `latest` here would silently take the
-      // resumed work out of that view. Symmetric with restoreThreadContext below, which for the
-      // same reason only re-bumps a displaced context that HAS a DbSource.
-      if (oldState?.pinned == true) return oldState
+      // A source-derived context is refreshed even here: it belongs to a source rather than to a
+      // region, and leaving it would serve a stale db — or another source's db entirely.
+      if (ambient && oldState != null && oldState.dbSource == null) return oldState
       runCatching { dbSource.latest }
         .onSuccess { latest ->
           val ctx = DbContext<DB>(latest, dbSource)

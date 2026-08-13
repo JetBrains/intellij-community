@@ -339,7 +339,13 @@ suspend fun <T> withTransactor(
     defaultPart = defaultPart,
     logBufferSize = logBufferSize,
   ).use { transactor ->
-    withContext(transactor + DbSource.ContextElement(transactor.dbSource)) {
+    // Ambient: this element covers the whole coroutine tree under the kernel, so it reaches
+    // code that never asked for it — the continuations inside a Compose frame, say. It serves
+    // threads that have no view of their own and steps aside for a region that claimed one.
+    // A deliberate `withContext(KernelContextElement(t))` deeper in constructs a different
+    // element and still wins, which is what keeps reading the live db possible from inside a
+    // frame.
+    withContext(transactor + DbSource.ContextElement(transactor.dbSource, ambient = true)) {
       body(transactor)
     }
   }

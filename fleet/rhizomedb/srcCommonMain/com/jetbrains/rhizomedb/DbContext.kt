@@ -16,16 +16,16 @@ import kotlin.jvm.JvmStatic
 class DbContext<out QQ : Q>(
   @PublishedApi
   internal var privateValue: Any,
-  val dbSource: Any?,
   /**
-   * This context pins what the calling thread reads, and an ambient [fleet.kernel.DbSource.ContextElement]
-   * must not replace it when a coroutine resumes on this thread.
+   * The source this context came from, or `null` when a region bound it explicitly.
    *
-   * Set by an explicit read scope that owns the thread's view for a bounded region — a Compose
-   * frame's read scope, for instance, where rebinding to the source's latest would silently take
-   * the resumed work out of the frame it was sequenced with.
+   * The null is load-bearing rather than merely missing information: it is how a thread somebody
+   * claimed is told apart from one a source populated. An ambient
+   * [fleet.kernel.DbSource.ContextElement] will not replace a claimed context when a coroutine
+   * resumes on the thread, and `restoreThreadContext` will not re-bump one to `latest` when a
+   * coroutine leaves it.
    */
-  val pinned: Boolean = false,
+  val dbSource: Any?,
   //var stack: Throwable? = getStack()
 ) {
   val impl: QQ
