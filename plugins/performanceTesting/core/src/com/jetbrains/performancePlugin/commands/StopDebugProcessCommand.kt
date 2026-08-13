@@ -2,9 +2,6 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.execution.impl.ExecutionManagerImpl
-import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.execution.ui.RunContentManager
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.xdebugger.XDebuggerManager
@@ -25,13 +22,10 @@ class StopDebugProcessCommand(text: String, line: Int) : PlaybackCommandCoroutin
     if (debugSessions.isEmpty()) throw IllegalStateException("Debug process was not started")
     if (debugSessions.size > 1) throw IllegalStateException("Currently running ${debugSessions.size} debug processes")
 
-    var selectedContent: RunContentDescriptor? = null
-    edtWriteAction {
-      selectedContent = RunContentManager.getInstance(context.project).getSelectedContent()
-      ExecutionManagerImpl.stopProcess(selectedContent)
-    }
+    val processHandler = debugSessions.single().debugProcess.processHandler
+    ExecutionManagerImpl.stopProcess(processHandler)
     withTimeout(1.minutes) {
-      while (selectedContent == null || selectedContent?.processHandler?.isProcessTerminated == false) {
+      while (!processHandler.isProcessTerminated) {
         delay(500.milliseconds)
       }
     }
