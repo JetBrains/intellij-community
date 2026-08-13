@@ -48,6 +48,7 @@ import com.jetbrains.performancePlugin.profilers.Profiler.Companion.getCurrentPr
 import com.jetbrains.performancePlugin.profilers.ProfilersController
 import com.jetbrains.performancePlugin.utils.ReporterCommandAsTelemetrySpan
 import io.opentelemetry.context.Context
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -63,7 +64,6 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
 private val LOG: Logger
@@ -78,14 +78,6 @@ private fun getTestFile(): Path {
   return file
 }
 
-private val PROJECT_CONTENTS_WARMUP_POLL = 500.milliseconds
-
-/**
- * How many consecutive polls a readable but *empty* project directory has to be observed before it counts as ready.
- * The mount is demonstrably serving at that point, so a legitimately empty directory must not burn the whole timeout.
- */
-private const val PROJECT_CONTENTS_WARMUP_EMPTY_CONFIRMATIONS = 3
-
 /** Outcome of a host-side `readdir` of the project directory. */
 private enum class ProjectDirState {
   UNREADABLE,
@@ -98,7 +90,9 @@ private fun probeProjectDir(path: Path): ProjectDirState {
   val attributes = try {
     Files.readAttributes(path, BasicFileAttributes::class.java)
   }
-  catch (_: NoSuchFileException) {
+  // Keep this qualified: unqualified `NoSuchFileException` resolves to `kotlin.io.NoSuchFileException` (`kotlin.io` is
+  // a default import), which `Files` never throws, so a missing directory would be reported as UNREADABLE instead.
+  catch (_: java.nio.file.NoSuchFileException) {
     return ProjectDirState.MISSING
   }
   if (!attributes.isDirectory) return ProjectDirState.MISSING
@@ -108,49 +102,43 @@ private fun probeProjectDir(path: Path): ProjectDirState {
 }
 
 /**
- * Wait until [projectPath]'s contents are actually readable over the (possibly remote) EEL/IJent
- * filesystem, so that the command-line project-open detection that runs right after does not race a
- * still-mounting `\\wsl.localhost\...` (WSL) or container (Docker) FS.
+ * Reads [projectPath] once over the (possibly remote) EEL/IJent filesystem, so that the command-line project-open
+ * detection that runs right after does not race a still-mounting `\\wsl.localhost\...` (WSL) or container (Docker) FS
+ * and fall back to a LightEdit frame.
+ *
+ * A host-side listing is used because that is exactly what the platform reads. Single attempt, no retries and no
+ * timeout: on a correctly provisioned target the mount answers right away, and when it does not, this only logs -
+ * normal open behavior still applies. The logged state is the diagnostic for a run that ends up in LightEdit anyway:
+ * `MISSING` means the project was never provisioned into the target, so waiting would not have helped either.
  *
  * IJPL-250122
  */
-private suspend fun awaitProjectContentsVisible(projectPath: Path) {
-  val timeoutMs = SystemProperties.getIntProperty("performance.eel.project.markers.warmup.timeout.ms", 120_000).toLong()
-  LOG.info("Project contents warmup: path='$projectPath'" +
-           ", routedToEelBackend=${EelNioFsBackend.instance?.resolveDescriptor(projectPath) != null}" +
-           ", fs=${projectPath.fileSystem.javaClass.name}, timeoutMs=$timeoutMs")
-
+private suspend fun warmUpProjectContents(projectPath: Path) {
   val start = System.currentTimeMillis()
-  var lastFailure: String? = null
-
+  var failure: Throwable? = null
   val state = withContext(Dispatchers.IO) {
     try {
       probeProjectDir(projectPath)
     }
-    catch (t: Throwable) {
-      lastFailure = "$t"
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      failure = e
       ProjectDirState.UNREADABLE
     }
   }
 
-  val elapsed = System.currentTimeMillis() - start
-
+  val details = "state=$state, elapsedMs=${System.currentTimeMillis() - start}, path='$projectPath'" +
+                ", routedToEelBackend=${EelNioFsBackend.instance?.resolveDescriptor(projectPath) != null}" +
+                ", fs=${projectPath.fileSystem.javaClass.name}"
   if (state == ProjectDirState.NON_EMPTY) {
-    LOG.info("Project contents warmup result=READY ($state) / $elapsed ms" +
-             "; path='$projectPath'; command-line project detection can win the race")
-    return
+    LOG.info("Project contents warmup: $details")
   }
-
-  if (elapsed >= timeoutMs) {
-    LOG.warn("Project contents warmup result=TIMEOUT / $elapsed ms (limit $timeoutMs ms)" +
-             "; path='$projectPath'; lastState=$state" +
-             (lastFailure?.let { "; lastFailure=$it" } ?: "") +
-             (if (state == ProjectDirState.MISSING)
-               "; the target never provided this directory - the project was not provisioned into the target" +
-               " (mount or copy), so raising the timeout will not help"
-             else "") +
-             "; project open may still fall back to LightEdit")
-    return
+  else {
+    LOG.warn("Project contents warmup: $details" +
+             (if (state == ProjectDirState.MISSING) "; the project was not provisioned into the target (mount or copy)" else "") +
+             "; project open may fall back to LightEdit", failure)
   }
 }
 
@@ -316,7 +304,7 @@ class ProjectLoaded : ApplicationInitializedListener {
         }
         // Warm the EEL/IJent remote FS mount BEFORE re-evaluating the flags, so detection does not race a
         // still-mounting WSL/Docker FS and fall back to a LightEdit frame (IJPL-250122).
-        awaitProjectContentsVisible(projectPath)
+        warmUpProjectContents(projectPath)
         // Re-evaluate AppMode flags: the first setFlags call in Main.kt runs before EPs are loaded,
         // so MultiRoutingFileSystemBackend (Docker/WSL) isn't registered yet and mayHappenToBeAFile
         // can't resolve remote paths, incorrectly setting isLightEdit=true.
