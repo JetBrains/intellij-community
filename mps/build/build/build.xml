@@ -76,7 +76,17 @@
   <!-- Remove IdeaApplicationInfo.xml and IdeaPlugin.xml. These will be provided during MPS build later -->
   <target name="repackage-app-jar" description="Remove IDEA specific descriptors">
     <jar destfile="${target.dist}/lib/stripped.jar" zip64Mode="as-needed">
-      <zipfileset src="${target.dist}/lib/intellij.idea.community.customization.jar" excludes="idea/IdeaApplicationInfo.xml,META-INF/IdeaPlugin.xml" />
+      <zipfileset src="${target.dist}/lib/intellij.idea.community.customization.jar" excludes="
+        idea/IdeaApplicationInfo.xml,
+        META-INF/IdeaPlugin.xml,
+        META-INF/tips-intellij-idea-community.xml,
+        META-INF/community-customization.xml,
+        tips/**,
+        localization/**,
+        lafs/**,
+        idea_community_logo*.png,
+        idea-ce*.svg"
+      />
     </jar>
     <move file="${target.dist}/lib/stripped.jar" tofile="${target.dist}/lib/intellij.idea.community.customization.jar"/>
   </target>
