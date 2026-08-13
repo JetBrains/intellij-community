@@ -97,7 +97,16 @@ class VfsRefreshLoadingFilesToVfsTest {
   }
 
   @Test
-  fun `new dir under content root is loaded into vfs after refresh`(): Unit = runBlocking {
+  @RegistryKey(CHILDREN_PRELOADING_REGISTRY_KEY, "true")
+  fun `new dir under content root is preloaded by transient scanner`() =
+    testNewDirUnderContentRootIsLoadedIntoVfsAfterRefresh()
+
+  @Test
+  @RegistryKey(CHILDREN_PRELOADING_REGISTRY_KEY, "false")
+  fun `new dir under content root is preloaded by NIO scanner`() =
+    testNewDirUnderContentRootIsLoadedIntoVfsAfterRefresh()
+
+  private fun testNewDirUnderContentRootIsLoadedIntoVfsAfterRefresh(): Unit = runBlocking {
     stageFlatContentLayout()
 
     withOpenedProject { project, rootVirtualFile ->
@@ -278,6 +287,7 @@ class VfsRefreshLoadingFilesToVfsTest {
   )
 
   companion object {
+    private const val CHILDREN_PRELOADING_REGISTRY_KEY = "vfs.refresh.use.transient.files.for.children.preloading"
     private const val SUBDIR_COUNT = 10
     private const val FILES_PER_SUBDIR = 20
   }

@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.text.Strings;
@@ -12,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.BatchingFileSystem;
 import com.intellij.util.keyFMap.KeyFMap;
-import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,10 +20,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Objects;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
@@ -57,7 +52,7 @@ import static com.intellij.util.containers.CollectionFactory.createFilePathMap;
  */
 @ApiStatus.Internal
 @VisibleForTesting
-public final class TransientVirtualFileImpl extends VirtualFile implements CacheAvoidingVirtualFile {
+public final class TransientVirtualFileImpl extends VirtualFile implements CacheAvoidingVirtualFile, VirtualFileWithAttributes {
   private static final Logger LOG = Logger.getInstance(TransientVirtualFileImpl.class);
 
   /**
@@ -87,11 +82,11 @@ public final class TransientVirtualFileImpl extends VirtualFile implements Cache
     this.parent = parent;
   }
 
-  private TransientVirtualFileImpl(@NotNull String name,
-                                   @NotNull String path,
-                                   @NotNull NewVirtualFileSystem fileSystem,
-                                   @NotNull VirtualFile parent,
-                                   @NotNull FileAttributes attributes) {
+  TransientVirtualFileImpl(@NotNull String name,
+                           @NotNull String path,
+                           @NotNull NewVirtualFileSystem fileSystem,
+                           @NotNull VirtualFile parent,
+                           @NotNull FileAttributes attributes) {
     this(name, path, fileSystem, parent);
     this.cachedAttributes = attributes;
   }
@@ -358,6 +353,11 @@ public final class TransientVirtualFileImpl extends VirtualFile implements Cache
   public boolean isUserDataEmpty() {
     logUnsupportedIfNeeded(LOG_USER_DATA_HOLDER_ACCESS);
     return super.isUserDataEmpty();
+  }
+
+  @Override
+  public @Nullable FileAttributes getAttributes() {
+    return fetchAttributes();
   }
 
   private static void logUnsupportedIfNeeded(boolean logUserDataHolderAccess) {
