@@ -12,6 +12,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper.CANCEL_EXIT_CODE
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsConfiguration.getInstance
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -76,7 +79,18 @@ internal class GitRewordService(private val project: Project, private val cs: Co
         operationResult.notifyRewordSuccess(editAgain = {
           repository.project.service<GitRewordService>().launchRewordForHeads(listOf(repository))
         }.takeIf { isHead })
-        ChangeListManagerImpl.getInstanceImpl(project).replaceCommitMessage(commit.fullMessage, newMessage)
+
+        VcsConfiguration.getInstance(project).replaceMessage(commit.fullMessage, newMessage)
+
+        with(ChangeListManager.getInstance(project)) {
+          if (areChangeListsEnabled()) {
+            for (changeList in getChangeLists()) {
+              if (commit.fullMessage == changeList.getComment()) {
+                editComment(changeList.getName(), newMessage)
+              }
+            }
+          }
+        }
       }
     }
   }

@@ -649,7 +649,6 @@ f:com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 - removeChangeList(java.lang.String):V
 - removeChangeListListener(com.intellij.openapi.vcs.changes.ChangeListListener):V
 - reopenFiles(java.util.List):V
-- replaceCommitMessage(java.lang.String,java.lang.String):V
 - scheduleAutomaticEmptyChangeListDeletion(com.intellij.openapi.vcs.changes.LocalChangeList):V
 - scheduleAutomaticEmptyChangeListDeletion(com.intellij.openapi.vcs.changes.LocalChangeList,Z):V
 - setDefaultChangeList(com.intellij.openapi.vcs.changes.LocalChangeList):V

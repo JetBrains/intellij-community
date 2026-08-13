@@ -1606,16 +1606,4 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     boolean unversionedInUpdateMode = myComposite.getUnversionedFileHolder().isInUpdatingMode();
     return new ChangeListManagerState.FileHoldersState(unversionedInUpdateMode, ignoredInUpdateMode);
   }
-
-  public void replaceCommitMessage(@NotNull String oldMessage, @NotNull String newMessage) {
-    VcsConfiguration.getInstance(project).replaceMessage(oldMessage, newMessage);
-
-    if (areChangeListsEnabled()) {
-      for (LocalChangeList changeList : getChangeLists()) {
-        if (oldMessage.equals(changeList.getComment())) {
-          editComment(changeList.getName(), newMessage);
-        }
-      }
-    }
-  }
 }
