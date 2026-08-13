@@ -14,6 +14,7 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.workspaceModel.ide.ProjectRootEntity
 import kotlinx.coroutines.CoroutineScope
@@ -67,11 +68,12 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
 
     synchronized(lock) {
       oldRoots = virtualFilesTree.getRoots()
-      oldPossibleRoots.forEach {
-        if(!change.storageAfter.getVirtualFileUrlIndex().findEntitiesByUrl(
-            it.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
-        ).iterator().hasNext()) {
-          virtualFilesTree.remove(it)
+      oldPossibleRoots.forEach { dir ->
+        val stillARoot = change.storageAfter.getVirtualFileUrlIndex()
+          .findEntitiesByUrl(dir.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager()))
+          .any { baseDirectoryOf(it) == dir }
+        if (!stillARoot) {
+          virtualFilesTree.remove(dir)
         }
       }
       newPossibleRoots.forEach { virtualFilesTree.add(it) }
@@ -91,9 +93,15 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
     return url.virtualFile?.takeIf { it.isDirectory }
   }
 
+  protected open fun baseDirectoryOf(entity: WorkspaceEntity): VirtualFile? = when (entity) {
+    is ProjectRootEntity -> entity.root.virtualFile
+    is ContentRootEntity -> entity.getBaseDirectory()
+    else -> null
+  }
+
   protected open fun collectRoots(snapshot: ImmutableEntityStorage): Sequence<VirtualFile> {
-    return snapshot.entities(ProjectRootEntity::class.java).mapNotNull { it.root.virtualFile } +
-           snapshot.entities(ContentRootEntity::class.java).mapNotNull { it.getBaseDirectory() }
+    return snapshot.entities(ProjectRootEntity::class.java).mapNotNull { baseDirectoryOf(it) } +
+           snapshot.entities(ContentRootEntity::class.java).mapNotNull { baseDirectoryOf(it) }
   }
 
   protected open fun processChange(change: VersionedStorageChange, oldRoots: HashSet<VirtualFile>, newRoots: HashSet<VirtualFile>) {

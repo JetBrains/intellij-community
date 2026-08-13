@@ -178,6 +178,8 @@ f:com.intellij.ide.nls.NlsMessages
 - s:formatNarrowAndList(java.util.Collection):java.lang.String
 - s:formatOrList(java.util.Collection):java.lang.String
 - s:joiningAnd():java.util.stream.Collector
+c:com.intellij.ide.project.impl.BaseProjectDirectoriesImpl
+- p:baseDirectoryOf(com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.openapi.vfs.VirtualFile
 com.intellij.ide.script.IdeScriptEngine
 - a:eval(java.lang.String):java.lang.Object
 - a:getBinding(java.lang.String):java.lang.Object
