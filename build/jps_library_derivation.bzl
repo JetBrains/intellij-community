@@ -334,8 +334,8 @@ def derive_library_targets(
     # Cooperative Kotlin development mode: when set, Maven libraries with filenames
     # ending in -<version>.jar are treated as snapshots and redirected to repo//snapshots:.
     # Mirrors dependency.kt:120-123 (isKotlinDevVersionAsSnapshotOutsideOfTree).
-    # Only checked for project-level libraries (not module-level), matching the Kotlin
-    # generator behavior where module-level libs don't trigger this path.
+    # Applied to both project-level and module-level libraries, matching the Kotlin
+    # generator, which handles the snapshot redirect for every JpsLibraryDependency.
     kotlin_dev_snapshot_version = ctx.getenv("JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT")
 
     # Repo for project-level Maven libraries:
@@ -403,9 +403,10 @@ def derive_library_targets(
         for module_lib in iml_data.parsed_iml.module_libraries:
             maven_urls = [u for u in module_lib.jar_urls if "$MAVEN_REPOSITORY$" in u]
             is_snapshot_outside_of_tree = is_snapshot_version(maven_urls)
+            is_kotlin_dev_version_as_snapshot_outside_of_tree = is_kotlin_dev_version_as_snapshot(maven_urls, kotlin_dev_snapshot_version)
             for url in module_lib.jar_urls:
                 if "$MAVEN_REPOSITORY$" in url:
-                    target = maven_url_to_jar_target(url, module_repo, is_snapshot_outside_of_tree)
+                    target = maven_url_to_jar_target(url, module_repo, is_snapshot_outside_of_tree or is_kotlin_dev_version_as_snapshot_outside_of_tree)
                     targets[target] = True
                 elif "$PROJECT_DIR$" in url:
                     rel_path = _extract_project_relative_path(url)
