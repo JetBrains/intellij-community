@@ -97,6 +97,37 @@ class TracePiiFilteringEventLoggerTest {
     assertEquals(1, item["type"])
   }
 
+  /**
+   * The raw field types are recognised by type, so redaction does not depend on the validation rule, which cannot
+   * even be resolved here: `CustomValidationRule.getRuleId` needs the rule extensions of a running application.
+   */
+  @Test
+  fun `filters raw field types`() {
+    val group = EventLogGroup("trace.event.log", 1, "TRACE")
+    group.registerVarargEvent(
+      "raw.recorded",
+      TraceRawField("prompt", TraceRawFieldKind.TEXT),
+      TraceRawFileField("content"),
+      EventFields.Int("count"),
+    )
+    val provider = RecorderOptionProvider(
+      mapOf(TracePiiRegexRedactor.TRACE_PII_REGEXES_JSON_OPTION to """["sk_live_[a-z]+"]""")
+    )
+    val filter = TraceLlmPiiDataFilter.createFilter(provider)
+
+    val input = mapOf<String, Any>(
+      "prompt" to "deploy with sk_live_abcdefghijklmnopqrstuvwx",
+      "content" to "val key = \"sk_live_abcdefghijklmnopqrstuvwx\"",
+      "count" to 1,
+    )
+
+    val filtered = filter(group, "raw.recorded", input)
+
+    assertEquals("deploy with [REDACTED]", filtered["prompt"])
+    assertEquals("val key = \"[REDACTED]\"", filtered["content"])
+    assertEquals(1, filtered["count"])
+  }
+
   @Test
   fun `uses regex rules from TRACE recorder option`() {
     val provider = RecorderOptionProvider(

@@ -61,10 +61,7 @@ internal class TracePiiFilteringEventLogger(
 }
 
 internal object TraceLlmPiiDataFilter {
-  private val LLM_PARAMETERS_RULES = listOf(
-    "util#llm_code_parameters",
-    "util#llm_text_parameters",
-  )
+  private val RAW_RULE_MARKERS: List<String> = TraceRawValidationRule.RULE_IDS.map { ruleId -> "util#$ruleId" }
   private val llmFieldPathsResolver = TraceLlmFieldPathsResolver()
 
   fun createFilter(recorderOptionsProvider: RecorderOptionProvider?): (EventLogGroup, String, Map<String, Any>) -> Map<String, Any> {
@@ -251,12 +248,12 @@ internal object TraceLlmPiiDataFilter {
       val fieldPath = if (parentPath == null) field.name else "$parentPath.${field.name}"
       when (field) {
         is PrimitiveEventField<*> -> {
-          if (shouldBePiiFiltered(field.validationRule)) {
+          if (shouldBePiiFiltered(field)) {
             result.add(fieldPath)
           }
         }
         is ListEventField<*> -> {
-          if (shouldBePiiFiltered(field.validationRule)) {
+          if (shouldBePiiFiltered(field)) {
             result.add(fieldPath)
           }
         }
@@ -275,10 +272,17 @@ internal object TraceLlmPiiDataFilter {
       }
     }
 
-    private fun shouldBePiiFiltered(validationRules: List<String>): Boolean {
-      return validationRules.any { rule ->
-        LLM_PARAMETERS_RULES.any { ruleName -> rule.contains(ruleName) }
+    private fun shouldBePiiFiltered(field: EventField<*>): Boolean {
+      if (field is TraceRawField || field is TraceRawFileField) {
+        return true
       }
+      // A field can also be declared raw without the dedicated type, by naming an accept-all rule directly.
+      val validationRules = when (field) {
+        is PrimitiveEventField<*> -> field.validationRule
+        is ListEventField<*> -> field.validationRule
+        else -> return false
+      }
+      return validationRules.any { rule -> RAW_RULE_MARKERS.any { marker -> rule.contains(marker) } }
     }
   }
 }
