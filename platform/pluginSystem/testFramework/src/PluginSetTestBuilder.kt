@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.PluginDescriptorLoadingContext
 import com.intellij.ide.plugins.PluginInitContextFactory
 import com.intellij.ide.plugins.PluginInitializationContext
 import com.intellij.ide.plugins.PluginInitializationContext.RemainingCandidatesView
+import com.intellij.ide.plugins.PluginInitializationDiagnosticUtils
 import com.intellij.ide.plugins.PluginLoadingErrorReportingPolicy
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
@@ -141,7 +142,9 @@ class PluginSetTestBuilder private constructor(
       coreLoader = customCoreLoader ?: UrlClassLoader.build().get(),
       parentActivity = null,
       configureClassLoaders = configureClassLoaders,
-    )
+    ).also {
+      PluginInitializationDiagnosticUtils.logExclusionTree(PluginManagerCore.logger, it)
+    }
   }
 
   fun buildManagerState(configureClassLoaders: Boolean = true): PluginManagerState {

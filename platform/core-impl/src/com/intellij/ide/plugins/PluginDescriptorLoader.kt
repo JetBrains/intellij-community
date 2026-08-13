@@ -491,6 +491,7 @@ internal fun CoroutineScope.scheduleLoading(
     this@scheduleLoading.launch {
       // logging is not as a part of a plugin set job for performance reasons
       val logger = logDeferred?.await() ?: LOG
+      PluginInitializationDiagnosticUtils.logExclusionTree(logger, pluginSet)
       PluginInitializationDiagnosticUtils.logPluginLists(
         logger = logger,
         initContext = initContext,

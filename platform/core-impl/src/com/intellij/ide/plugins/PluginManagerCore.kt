@@ -462,9 +462,6 @@ object PluginManagerCore {
     var initStagesActivity = parentActivity?.startChild("computeTargetState") // no safe end() call, because if it fails, it won't matter
     val pluginSet = initContext.computeTargetState(discoveredPlugins, isStartupInit = true, parentActivity = initStagesActivity)
 
-    initStagesActivity = initStagesActivity?.endAndStart("log exclusion tree")
-    PluginInitializationDiagnosticUtils.logExclusionTree(logger, pluginSet)
-
     if (configureClassLoaders) {
       initStagesActivity = initStagesActivity?.endAndStart("ClassLoaderConfigurator")
       ClassLoaderConfigurator(pluginSet, coreLoader).configure()
