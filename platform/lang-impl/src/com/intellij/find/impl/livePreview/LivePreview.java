@@ -33,6 +33,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usages.impl.UsagePreviewPanel;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.ApiStatus;
@@ -68,6 +69,14 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
    * change touch only the occurrences it can actually affect, instead of asking every match on screen.
    */
   private final Set<RangeHighlighter> myInSelectionHighlighters = new HashSet<>();
+  /**
+   * Coalesces the in-selection refresh, which several listeners ask for in a row over one gesture and only the last
+   * result of which is ever painted. One mouse-moved event of a drag selection asks for it five times: the drag sets
+   * the selection, {@link SearchResults#caretPositionChanged} then collapses it onto the occurrence under the caret and
+   * clears it again, each of which is a selection change, and the cursor it moved is reported twice over.
+   */
+  private final SingleEdtTaskScheduler myInSelectionUpdateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
+  private boolean myInSelectionUpdatePending;
   private RangeHighlighter myCursorHighlighter;
   private VisibleAreaListener myVisibleAreaListener;
   private Delegate myDelegate;
@@ -77,7 +86,33 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
 
   @Override
   public void selectionChanged(@NotNull SelectionEvent e) {
+    requestInSelectionUpdate();
+  }
+
+  /**
+   * Asks for the in-selection highlighting to be brought up to date once the gesture that changed the selection is over,
+   * rather than once per change it makes along the way.
+   */
+  private void requestInSelectionUpdate() {
+    myInSelectionUpdatePending = true;
+    // Throttled, not debounced: a gesture that keeps changing the selection must still be caught up with promptly.
+    myInSelectionUpdateAlarm.request(0, this::applyPendingInSelectionUpdate);
+  }
+
+  private void applyPendingInSelectionUpdate() {
+    if (!myInSelectionUpdatePending) return;
+    myInSelectionUpdatePending = false;
     updateInSelectionHighlighters();
+  }
+
+  /**
+   * Applies a pending {@link #requestInSelectionUpdate} right now, for when the highlighting has to be up to date
+   * before the end of the event it was requested in. Kept separate from the task the alarm runs, which must not cancel
+   * the job it is itself running under.
+   */
+  private void flushInSelectionUpdate() {
+    myInSelectionUpdateAlarm.cancel();
+    applyPendingInSelectionUpdate();
   }
 
   public static void processNotFound() {
@@ -120,6 +155,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
 
   private void dumpState() {
     if (ApplicationManager.getApplication().isUnitTestMode() && ourTestOutput != null) {
+      flushInSelectionUpdate(); // the dump is of the markup model, so everything owed to it has to be in place first
       dumpEditorMarkupAndSelection(ourTestOutput);
     }
   }
@@ -212,7 +248,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
 
   @Override
   public void cursorMoved() {
-    updateInSelectionHighlighters();
+    requestInSelectionUpdate();
     updateCursorHighlighting();
   }
 
@@ -270,6 +306,9 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   public void dispose() {
     hideBalloon();
 
+    myInSelectionUpdatePending = false;
+    myInSelectionUpdateAlarm.dispose();
+
     dropHighlighters();
 
     if (myCursorHighlighter != null) {
@@ -283,11 +322,14 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   }
 
   private void highlightUsages() {
+    // Only the in-selection tail is deferred: addNewHighlighters marks the highlighters it reused and
+    // clearUnusedHighlighters drops the ones it did not, so those two have to stay together and stay synchronous, or a
+    // chunk appended in between would be taken for a leftover of the previous search and removed.
     List<RangeHighlighter> newHighlighters = isBelowMatchesLimit()
                                              ? addNewHighlighters(mySearchResults.getOccurrences()) : Collections.emptyList();
     clearUnusedHighlighters();
     myHighlighters.addAll(newHighlighters);
-    updateInSelectionHighlighters();
+    requestInSelectionUpdate();
   }
 
   private boolean isBelowMatchesLimit() {
