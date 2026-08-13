@@ -570,7 +570,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
             iterateScopes(dataHolder, scopes, vcsIndicator);
           }, vcsIndicator);
         }
-        catch (ProcessCanceledException ignore) {
+        catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException ignore) {
         }
         boolean wasCancelled = vcsIndicator.isCanceled();
 
@@ -623,7 +623,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
         return !wasCancelled;
       }
-      catch (ProcessCanceledException e) {
+      catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException e) {
         // OK, we're finishing all the stuff now.
       }
       catch (Exception | AssertionError ex) {
