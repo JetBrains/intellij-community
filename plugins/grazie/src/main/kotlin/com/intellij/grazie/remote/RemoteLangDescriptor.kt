@@ -50,4 +50,10 @@ interface RemoteLangDescriptor {
    */
   val checksum: String
     get() = ""
+
+  /**
+   * The checksum of the bundle content after unpacking [storageDescriptor].
+   */
+  val contentChecksum: String
+    get() = checksum
 }

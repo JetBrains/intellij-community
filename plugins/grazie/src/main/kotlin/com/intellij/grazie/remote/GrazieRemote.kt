@@ -6,15 +6,16 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.jlanguage.Lang
-import com.intellij.grazie.remote.GrazieRemote.downloadAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.DigestUtil
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Files
 import java.nio.file.Path
 import java.security.DigestInputStream
+import java.security.MessageDigest
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 
@@ -93,8 +94,25 @@ object GrazieRemote {
 
   @ApiStatus.Internal
   fun checksum(path: Path): String {
-    val digest = path.inputStream().use {
-      val digest = DigestUtil.md5()
+    if (Files.isDirectory(path)) return directoryChecksum(path)
+    val digest = DigestUtil.md5()
+    updateDigest(path, digest)
+    return DigestUtil.digestToHash(digest)
+  }
+
+  private fun directoryChecksum(path: Path): String {
+    val digest = DigestUtil.md5()
+    Files.walk(path).use { files ->
+      files
+        .filter { Files.isRegularFile(it) }
+        .sorted()
+        .forEach { file -> updateDigest(file, digest) }
+    }
+    return DigestUtil.digestToHash(digest)
+  }
+
+  private fun updateDigest(path: Path, digest: MessageDigest) {
+    path.inputStream().use {
       DigestInputStream(it, digest).use { stream ->
         val buffer = ByteArray(1024 * 8)
         var bytesRead = 0
@@ -102,8 +120,6 @@ object GrazieRemote {
           bytesRead = stream.read(buffer)
         }
       }
-      return@use digest
     }
-    return DigestUtil.digestToHash(digest)
   }
 }
