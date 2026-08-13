@@ -23,7 +23,6 @@ import com.intellij.rt.execution.junit.RepeatCount;
 import javax.swing.JTextField;
 import java.awt.BorderLayout;
 import java.util.List;
-import java.util.Locale;
 import java.util.function.Supplier;
 
 import static com.intellij.execution.junit.JUnitConfiguration.FORK_NONE;
@@ -82,10 +81,11 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     VariantTagFragment<JUnitConfiguration, String> repeat =
       VariantTagFragment.createFragment("repeat", JUnitBundle.message("repeat.name"), group,
                                         () -> RepeatCount.REPEAT_TYPES,
-                                        configuration -> configuration.getRepeatMode(),
+                                        configuration -> JUnitConfigurationModel.normalizeRepeatMode(configuration.getRepeatMode()),
                                         (configuration, mode) -> configuration.setRepeatMode(mode),
-                                        configuration -> !RepeatCount.ONCE.equals(configuration.getRepeatMode()));
-    repeat.setVariantNameProvider(s -> JUnitBundle.message("junit.configuration.repeat.mode." + s.replace(' ', '.').toLowerCase(Locale.ENGLISH)));
+                                        configuration -> !RepeatCount.ONCE.equals(
+                                          JUnitConfigurationModel.normalizeRepeatMode(configuration.getRepeatMode())));
+    repeat.setVariantNameProvider(JUnitConfigurationModel::getRepeatModeName);
     fragments.add(repeat);
 
     LabeledComponent<JTextField> countField =
@@ -114,13 +114,14 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
       }
     });
 
-    Supplier<String[]> variantsProvider = () -> JUnitConfigurable.getForkModel(testKind.getTestKind(), repeat.getSelectedVariant());
+    Supplier<String[]> variantsProvider = () -> JUnitConfigurationModel.getForkModel(testKind.getTestKind(), repeat.getSelectedVariant());
     VariantTagFragment<JUnitConfiguration, String> forkMode =
       VariantTagFragment.createFragment("forkMode", JUnitBundle.message("fork.mode.name"), group, variantsProvider,
-                                        configuration -> configuration.getForkMode(),
+                                        configuration -> JUnitConfigurationModel.normalizeForkMode(configuration.getForkMode()),
                                         (configuration, s) -> configuration.setForkMode(s),
-                                        configuration -> !FORK_NONE.equals(configuration.getForkMode()));
-    forkMode.setVariantNameProvider(s -> JUnitBundle.message("junit.configuration.fork.mode." + s.toLowerCase(Locale.ENGLISH)));
+                                        configuration -> !FORK_NONE.equals(
+                                          JUnitConfigurationModel.normalizeForkMode(configuration.getForkMode())));
+    forkMode.setVariantNameProvider(JUnitConfigurationModel::getForkModeName);
     fragments.add(forkMode);
 
     SettingsEditorFragment<JUnitConfiguration, ?> asyncStackTraceForExceptions =
@@ -132,8 +133,8 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     testKind.addSettingsEditorListener(
       editor -> {
         int selectedType = testKind.getTestKind();
-        forkMode.setSelectedVariant(JUnitConfigurable.updateForkMethod(selectedType, forkMode.getSelectedVariant(),
-                                                                       repeat.getSelectedVariant()));
+        forkMode.setSelectedVariant(JUnitConfigurationModel.updateForkMethod(selectedType, forkMode.getSelectedVariant(),
+                                                                            repeat.getSelectedVariant()));
         scopeFragment.setRemovable(selectedType == JUnitConfigurationModel.PATTERN ||
                                    selectedType == JUnitConfigurationModel.ALL_IN_PACKAGE ||
                                    selectedType == JUnitConfigurationModel.TAGS ||

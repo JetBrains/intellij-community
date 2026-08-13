@@ -5,7 +5,6 @@ package com.intellij.execution.junit2.configuration;
 import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.application.ClassEditorField;
-import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestObject;
@@ -16,16 +15,14 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.RepeatCount;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NonNls;
@@ -52,6 +49,11 @@ public class JUnitConfigurationModel {
   public static final int TAGS = 7;
   public static final int BY_SOURCE_POSITION = 8;
   public static final int BY_SOURCE_CHANGES = 9;
+
+  private static final String[] FORK_MODE_ALL =
+    {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD, JUnitConfiguration.FORK_KLASS};
+  private static final String[] FORK_MODE = {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD};
+  private static final String[] FORK_MODE_NONE = {JUnitConfiguration.FORK_NONE};
 
   private static final List<String> ourTestObjects;
 
@@ -99,19 +101,18 @@ public class JUnitConfigurationModel {
      myJUnitDocuments[i] = doc;
   }
 
-  public void apply(final Module module, final JUnitConfiguration configuration, @Nullable ClassEditorField classField) {
+  public void apply(final JUnitConfiguration configuration, @NotNull ClassEditorField classField) {
     final boolean shouldUpdateName = configuration.isGeneratedName();
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-359592")) {
-      applyTo(configuration.getPersistentData(), module, classField);
+      applyTo(configuration.getPersistentData(), classField);
     }
     if (shouldUpdateName && !JavaExecutionUtil.isNewName(configuration.getName())) {
       configuration.setGeneratedName();
     }
   }
 
-  private void applyTo(final JUnitConfiguration.Data data, final Module module, @Nullable ClassEditorField classField) {
+  private void applyTo(final JUnitConfiguration.Data data, @NotNull ClassEditorField classField) {
     final String testObject = getTestObject();
-    final String className = getJUnitTextValue(CLASS);
     data.TEST_OBJECT = testObject;
     if (!JUnitConfiguration.TEST_PACKAGE.equals(testObject) &&
         !JUnitConfiguration.TEST_PATTERN.equals(testObject) &&
@@ -119,38 +120,13 @@ public class JUnitConfigurationModel {
         !JUnitConfiguration.TEST_CATEGORY.equals(testObject) &&
         !JUnitConfiguration.BY_SOURCE_CHANGES.equals(testObject)) {
       data.METHOD_NAME = getJUnitTextValue(METHOD);
-      if (classField != null) {
-        String jvmName = classField.getClassName();
-        if (jvmName != null) {
-          data.MAIN_CLASS_NAME = jvmName;
-          data.PACKAGE_NAME = StringUtil.getPackageName(jvmName);
-        }
-        else {
-          data.MAIN_CLASS_NAME = className;
-        }
-        return;
+      String jvmName = classField.getClassName();
+      if (jvmName != null) {
+        data.MAIN_CLASS_NAME = jvmName;
+        data.PACKAGE_NAME = StringUtil.getPackageName(jvmName);
       }
-      if (!className.equals(replaceRuntimeClassName(data.getMainClassName()))) {
-        try {
-          final PsiClass testClass;
-          if (!myProject.isDefault() && !StringUtil.isEmptyOrSpaces(className)) {
-            JavaRunConfigurationModule configurationModule = new JavaRunConfigurationModule(myProject, true);
-            configurationModule.setModule(module);
-            testClass = configurationModule.findClass(className);
-          }
-          else {
-            testClass = null;
-          }
-          if (testClass != null && testClass.isValid()) {
-            data.setMainClass(testClass);
-          }
-          else {
-            data.MAIN_CLASS_NAME = className;
-          }
-        }
-        catch (ProcessCanceledException | IndexNotReadyException e) {
-          data.MAIN_CLASS_NAME = className;
-        }
+      else {
+        data.MAIN_CLASS_NAME = getJUnitTextValue(CLASS);
       }
     }
     else if (!JUnitConfiguration.BY_SOURCE_CHANGES.equals(testObject)) {
@@ -251,26 +227,81 @@ public class JUnitConfigurationModel {
     };
   }
 
+  /**
+   * Both this and {@link #getForkModeName} are also called for values that came from the run configuration XML, which
+   * {@link JUnitConfiguration#readExternal} does not validate. An unrecognized value is presented as-is rather than
+   * rejected, so that a stale or hand-edited configuration cannot break the whole settings editor.
+   */
   public static @NotNull @NlsContexts.Label String getRepeatModeName(@NotNull @NonNls String value) {
-    return JUnitBundle.message(switch (value) {
+    String key = switch (value) {
       case RepeatCount.ONCE -> "junit.configuration.repeat.mode.once";
       case RepeatCount.N -> "junit.configuration.repeat.mode.n.times";
       case RepeatCount.UNTIL_FAILURE -> "junit.configuration.repeat.mode.until.failure";
       case RepeatCount.UNTIL_SUCCESS -> "junit.configuration.repeat.mode.until.success";
       case RepeatCount.UNLIMITED -> "junit.configuration.repeat.mode.until.stopped";
-      default -> throw new IllegalArgumentException(value);
-    });
-
+      default -> null;
+    };
+    //noinspection HardCodedStringLiteral
+    return key == null ? value : JUnitBundle.message(key);
   }
 
   public static @NotNull @NlsContexts.Label String getForkModeName(@NotNull @NonNls String value) {
-    return JUnitBundle.message(switch (value) {
+    String key = switch (value) {
       case JUnitConfiguration.FORK_NONE -> "junit.configuration.fork.mode.none";
       case JUnitConfiguration.FORK_METHOD -> "junit.configuration.fork.mode.method";
       case JUnitConfiguration.FORK_KLASS -> "junit.configuration.fork.mode.class";
       case JUnitConfiguration.FORK_REPEAT -> "junit.configuration.fork.mode.repeat";
-      default -> throw new IllegalArgumentException(value);
-    });
+      default -> null;
+    };
+    //noinspection HardCodedStringLiteral
+    return key == null ? value : JUnitBundle.message(key);
+  }
+
+  /**
+   * Clamps a persisted {@code repeat_mode} to a variant the settings editor can offer, see {@link #normalizeForkMode}.
+   */
+  public static @NotNull String normalizeRepeatMode(@Nullable String value) {
+    return value != null && ArrayUtil.contains(value, RepeatCount.REPEAT_TYPES) ? value : RepeatCount.ONCE;
+  }
+
+  /**
+   * Clamps a persisted {@code fork_mode} to a variant the settings editor can offer. Unlike {@link #getForkModeName},
+   * which only has to present an unrecognized value, the editor writes back whatever variant it holds - so without
+   * clamping, merely opening and confirming the dialog would re-persist a value that
+   * {@link JUnitConfiguration#readExternal} had accepted verbatim.
+   * <p>
+   * {@link JUnitConfiguration#FORK_REPEAT} is deliberately not accepted here: it is a run-time translation of
+   * {@code method}/{@code class} (see {@code TestMethod#getForkMode}) and is never persisted.
+   */
+  public static @NotNull String normalizeForkMode(@Nullable String value) {
+    return value != null && ArrayUtil.contains(value, FORK_MODE_ALL) ? value : JUnitConfiguration.FORK_NONE;
+  }
+
+  static @NotNull String updateForkMethod(int selectedType, String forkMethod, Object repeat) {
+    if (forkMethod == null) {
+      forkMethod = JUnitConfiguration.FORK_NONE;
+    }
+    else if (selectedType == CLASS && JUnitConfiguration.FORK_KLASS.equals(forkMethod) && RepeatCount.ONCE.equals(repeat)) {
+      forkMethod = JUnitConfiguration.FORK_METHOD;
+    }
+    return forkMethod;
+  }
+
+  static String @NotNull [] getForkModel(int selectedType, Object repeat) {
+    if (selectedType != CLASS && selectedType != METHOD && selectedType != BY_SOURCE_POSITION) {
+      return FORK_MODE_ALL;
+    }
+
+    boolean isMethod = selectedType == METHOD || selectedType == BY_SOURCE_POSITION;
+    boolean once = RepeatCount.ONCE.equals(repeat);
+    String[] model = FORK_MODE;
+    if (once && isMethod) {
+      model = FORK_MODE_NONE;
+    }
+    else if (!once && !isMethod) {
+      model = FORK_MODE_ALL;
+    }
+    return model;
   }
 
   public void reloadTestKindModel(@NotNull JComboBox<Integer> comboBox, @Nullable Module module, @Nullable Runnable onDone) {
