@@ -16,17 +16,27 @@ import org.jetbrains.annotations.ApiStatus
 object AgentTelemetryFusValues {
   const val UNKNOWN: String = "unknown"
 
+  // The mode ids the agents each surface launches actually report. `brave`, `danger-full-access`, `full-access`,
+  // `manual` and `workspace-write` come from the agents AIR launches (junie, Codex, codex-acp, claude and Codex again);
+  // an id missing here collapses into UNKNOWN, which merges every unlisted permission level into one bucket.
   val allowedModes: List<String> = listOf(
     "accept-edits", "acceptEdits", "agent", "agent-full-access",
     "ask", "auto", "auto-approve", "autoEdit", "autopilot",
-    "build", "bypass", "bypassPermissions", "chat",
-    "code", "debug", "default", "dontAsk",
-    "orchestrator", "plan", "read-only", "yolo",
+    "brave", "build", "bypass", "bypassPermissions", "chat",
+    "code", "danger-full-access", "debug", "default", "dontAsk",
+    "full-access", "manual", "orchestrator", "plan", "read-only",
+    "workspace-write", "yolo",
     UNKNOWN,
   )
 
+  /**
+   * `auto` and `off` are not levels but choices about levels: `auto` means the run pinned none and left the agent to
+   * decide, `off` that reasoning was switched off. They are listed because collapsing them into [UNKNOWN] would make
+   * "the user chose nothing" indistinguishable from "the surface could not tell", and `auto` is the default of every
+   * AIR launch, so that one value would otherwise be most of the column.
+   */
   val allowedReasoningLevels: List<String> = listOf(
-    "minimal", "low", "medium", "high", "xhigh", "max", "ultra", UNKNOWN,
+    "auto", "off", "minimal", "low", "medium", "high", "xhigh", "max", "ultra", UNKNOWN,
   )
 
   private val modelStartPattern = """
