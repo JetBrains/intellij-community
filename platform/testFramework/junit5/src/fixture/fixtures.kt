@@ -46,6 +46,7 @@ import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.pom.PomManager
 import com.intellij.project.stateStore
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiDocumentManager
@@ -214,6 +215,10 @@ fun projectFixture(
 
     newProject
   }
+
+  // Keep command-triggered postponed formatting deterministic while full background service preloading is disabled.
+  PomManager.getModel(project)
+
   // Wait until components fully loaded. Otherwise, we might start loading then when a project is already disposed when a test is too fast.
   RunManager.getInstanceAsync(project)
   initialized(project) {
