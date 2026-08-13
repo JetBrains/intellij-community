@@ -722,26 +722,24 @@ object PluginManagerCore {
     resolvedPluginSet: ResolvedPluginSet,
     essentialPlugins: Set<PluginId>,
   ) {
-    var missing: MutableList<Pair<PluginId, DescriptorExclusionReason?>>? = null
+    var missingIds: ArrayList<String>? = null
+    var diagnosticMessage: StringBuilder? = null
     for (id in essentialPlugins) {
       val module = resolvedPluginSet.candidateSet.resolvePluginId(id)
       if (module != null && resolvedPluginSet.isResolved(module)) {
         continue
       }
-      if (missing == null) {
-        missing = ArrayList()
-      }
+      missingIds = missingIds ?: ArrayList()
+      missingIds.add(id.idString)
       val reason = module?.let { resolvedPluginSet.getExclusionReason(it) }
-      missing.add(id to reason)
-    }
-    if (missing != null) {
-      val exclusionTraces = missing.mapNotNull { (_, reason) ->
-        reason?.let { PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(resolvedPluginSet, reason.descriptor) }
+      if (reason != null) {
+        diagnosticMessage = diagnosticMessage ?: StringBuilder("Exclusion traces:")
+        diagnosticMessage.appendLine()
+        diagnosticMessage.append(PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(resolvedPluginSet, module))
       }
-      val diagnostic = if (exclusionTraces.isNotEmpty()) {
-        "Exclusion traces:\n${exclusionTraces.joinToString("\n")}"
-      } else null
-      throw EssentialPluginMissingException(missing.map { it.first.idString }, diagnostic)
+    }
+    if (missingIds != null) {
+      throw EssentialPluginMissingException(missingIds, diagnosticMessage?.toString())
     }
   }
 
