@@ -1170,7 +1170,7 @@ class DynamicPluginsTest {
   }
 
   @Test
-  fun `we do not try to load an implementation-details plugin when it wants to enable an implementation-details module `() {
+  fun `implementation-detail plugin participates in dynamic loading as a regular plugin`() {
     val barPluginPath = plugin("bar") {}.installAt(pluginsDir)
     val fooPluginPath = plugin("foo") {
       implementationDetail = true
