@@ -32,7 +32,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.refactoring.PreviewableRefactoringActionHandler;
-import com.intellij.refactoring.introduceVariable.IntroduceEmptyVariableHandlerImpl;
+import com.intellij.refactoring.introduceVariable.JavaIntroduceEmptyVariableHandlerBase;
 import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
@@ -58,10 +58,18 @@ public final class IntroduceVariableIntentionAction extends BaseRefactoringInten
       return false;
     }
 
+    if (JavaIntroduceEmptyVariableHandlerBase.getInstance() == null) {
+      return false;
+    }
+
     if (getTypeOfUnfilledParameter(editor, element) != null) return true;
 
     final PsiExpression expression = detectExpressionStatement(element);
     if (expression == null) {
+      return false;
+    }
+
+    if (getIntroduceVariableHandler() == null) {
       return false;
     }
 
@@ -84,11 +92,15 @@ public final class IntroduceVariableIntentionAction extends BaseRefactoringInten
     PsiElement element = getElement(editor, psiFile);
     if (element == null) return IntentionPreviewInfo.EMPTY;
     PsiType type = getTypeOfUnfilledParameter(editor, element);
-    if (type != null) return new IntroduceEmptyVariableHandlerImpl().generatePreview(editor, element.getContainingFile(), type);
+    if (type != null) {
+      JavaIntroduceEmptyVariableHandlerBase emptyVariableHandler = JavaIntroduceEmptyVariableHandlerBase.getInstance();
+      return emptyVariableHandler == null
+             ? IntentionPreviewInfo.EMPTY
+             : emptyVariableHandler.generatePreview(editor, element.getContainingFile(), type);
+    }
     final PsiExpression expression = detectExpressionStatement(element);
     if (expression == null) return IntentionPreviewInfo.EMPTY;
-    RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
-    JavaIntroduceVariableHandlerBase handler = (JavaIntroduceVariableHandlerBase)supportProvider.getIntroduceVariableHandler();
+    JavaIntroduceVariableHandlerBase handler = getIntroduceVariableHandler();
     if (handler instanceof PreviewableRefactoringActionHandler previewableRefactoringActionHandler) {
       return previewableRefactoringActionHandler.generatePreview(project, expression);
     }
@@ -99,16 +111,23 @@ public final class IntroduceVariableIntentionAction extends BaseRefactoringInten
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiType type = getTypeOfUnfilledParameter(editor, element);
     if (type != null) {
-      new IntroduceEmptyVariableHandlerImpl().invoke(editor, element.getContainingFile(), type);
+      JavaIntroduceEmptyVariableHandlerBase emptyVariableHandler = JavaIntroduceEmptyVariableHandlerBase.getInstance();
+      if (emptyVariableHandler != null) {
+        emptyVariableHandler.invoke(editor, element.getContainingFile(), type);
+      }
       return;
     }
 
     final PsiExpression expression = detectExpressionStatement(element);
     if (expression == null) return;
-    RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
-    JavaIntroduceVariableHandlerBase handler = (JavaIntroduceVariableHandlerBase)supportProvider.getIntroduceVariableHandler();
+    JavaIntroduceVariableHandlerBase handler = getIntroduceVariableHandler();
     assert handler != null;
     handler.invoke(project, editor, expression);
+  }
+
+  private static @Nullable JavaIntroduceVariableHandlerBase getIntroduceVariableHandler() {
+    RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
+    return supportProvider == null ? null : (JavaIntroduceVariableHandlerBase)supportProvider.getIntroduceVariableHandler();
   }
 
   @Override
@@ -117,7 +136,7 @@ public final class IntroduceVariableIntentionAction extends BaseRefactoringInten
   }
 
   @Override
-  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  public @NotNull PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return currentFile;
   }
 

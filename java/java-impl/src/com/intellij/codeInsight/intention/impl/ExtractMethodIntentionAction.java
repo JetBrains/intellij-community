@@ -9,19 +9,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
-import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
-import com.intellij.refactoring.extractMethod.PrepareFailedException;
+import com.intellij.refactoring.extractMethod.ExtractMethodIntentionService;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 
@@ -46,22 +41,15 @@ public final class ExtractMethodIntentionAction implements IntentionAction, Icon
     }
     SelectionModel model = editor.getSelectionModel();
     if (!model.hasSelection()) return false;
-    PsiElement[] elements = ExtractMethodHandler.getElements(project, editor, psiFile);
-    if (elements == null || elements.length == 0) return false;
-    if (PsiTreeUtil.getParentOfType(elements[0], PsiClass.class) == null) return false;
-    ExtractMethodProcessor processor = ExtractMethodHandler.getProcessor(project, elements, psiFile, false);
-    if (processor == null) return false;
-    try {
-      return processor.prepare(null);
-    }
-    catch (PrepareFailedException e) {
-      return false;
-    }
+    ExtractMethodIntentionService support = ExtractMethodIntentionService.getInstance();
+    return support != null && support.isAvailable(project, editor, psiFile);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
-    new ExtractMethodHandler().invoke(project, editor, psiFile, null);
+    ExtractMethodIntentionService extractMethodIntentionService = ExtractMethodIntentionService.getInstance();
+    if (extractMethodIntentionService == null) return;
+    extractMethodIntentionService.extractMethod(project, editor, psiFile);
   }
 
   @Override
@@ -70,7 +58,7 @@ public final class ExtractMethodIntentionAction implements IntentionAction, Icon
   }
 
   @Override
-  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  public @NotNull PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return currentFile;
   }
 

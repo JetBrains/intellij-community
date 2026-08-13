@@ -1,16 +1,13 @@
+
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.functional;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
-import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.JavaPsiFacade;
@@ -41,24 +38,19 @@ import com.intellij.refactoring.extractMethod.ControlFlowWrapper;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
-import com.intellij.refactoring.util.duplicates.Match;
-import com.intellij.refactoring.util.duplicates.MatchProvider;
-import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
+import com.intellij.refactoring.util.duplicates.MethodDuplicatesService;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 public final class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntentionAction {
   private static final Logger LOG = Logger.getInstance(ExtractToMethodReferenceIntention.class);
@@ -75,6 +67,7 @@ public final class ExtractToMethodReferenceIntention extends BaseElementAtCaretI
 
   @Override
   public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
+    if (MethodDuplicatesService.getInstance() == null) return false;
     final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class, false);
     if (lambdaExpression != null) {
       PsiElement body = lambdaExpression.getBody();
@@ -109,7 +102,8 @@ public final class ExtractToMethodReferenceIntention extends BaseElementAtCaretI
         wrapper.prepareAndCheckExitStatements(toExtract, body);
         PsiVariable[] outputVariables = wrapper.getOutputVariables();
         List<PsiVariable> inputVariables = wrapper.getInputVariables(body, toExtract, outputVariables);
-        return ContainerUtil.and(inputVariables, variable -> variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() == lambdaExpression);
+        return ContainerUtil.and(inputVariables, variable -> variable instanceof PsiParameter &&
+                                                             ((PsiParameter)variable).getDeclarationScope() == lambdaExpression);
       }
       catch (PrepareFailedException | ControlFlowWrapper.ExitStatementsNotSameException ignored) {
       }
@@ -191,8 +185,9 @@ public final class ExtractToMethodReferenceIntention extends BaseElementAtCaretI
             if (super.performRefactoring()) {
               ApplicationManager.getApplication().invokeLater(() -> {
                 PsiMethod restored = pointer.getElement();
-                if (restored != null) {
-                  processMethodsDuplicates(restored);
+                MethodDuplicatesService methodDuplicatesService = MethodDuplicatesService.getInstance();
+                if (restored != null && methodDuplicatesService != null) {
+                  methodDuplicatesService.replaceMethodDuplicates(restored);
                 }
               });
               return true;
@@ -204,27 +199,6 @@ public final class ExtractToMethodReferenceIntention extends BaseElementAtCaretI
         renamer.performInplaceRefactoring(nameSuggestions);
       }
     });
-  }
-
-  private static void processMethodsDuplicates(PsiMethod method) {
-    Project project = method.getProject();
-    final Callable<@Nullable MatchProvider> runnable = () -> {
-      if (!method.isValid()) return null;
-      PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) return null;
-
-      final List<Match> duplicates = MethodDuplicatesHandler.hasDuplicates(containingClass, method);
-      duplicates.removeIf(match -> PsiTreeUtil.isAncestor(method, match.getMatchStart(), false));
-      return duplicates.isEmpty() ? null : MatchProvider.create(method, duplicates);
-    };
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.nonBlocking(runnable)
-        .finishOnUiThread(ModalityState.nonModal(), matchProvider -> {
-          MethodDuplicatesHandler.replaceDuplicate(project, ContainerUtil.createMaybeSingletonList(matchProvider));
-        })
-        .expireWhen(() -> !method.isValid())
-        .submit(AppExecutorUtil.getAppExecutorService()),
-      JavaRefactoringBundle.message("replace.method.code.duplicates.title"), true, project);
   }
 
   private static String getUniqueMethodName(PsiClass targetClass,

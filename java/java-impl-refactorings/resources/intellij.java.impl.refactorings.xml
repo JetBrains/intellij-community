@@ -83,6 +83,20 @@
       serviceInterface="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableService"
       serviceImplementation="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableServiceImpl"
       overrides="true"/>
+
+    <!-- Entry points for intentions declared in intellij.java.impl, which cannot depend on this module -->
+    <applicationService
+      serviceInterface="com.intellij.refactoring.introduceVariable.JavaIntroduceEmptyVariableHandlerBase"
+      serviceImplementation="com.intellij.refactoring.introduceVariable.IntroduceEmptyVariableHandlerImpl"/>
+    <applicationService
+      serviceInterface="com.intellij.refactoring.extractMethod.ExtractMethodIntentionService"
+      serviceImplementation="com.intellij.refactoring.extractMethod.ExtractMethodIntentionServiceImpl"/>
+    <applicationService
+      serviceInterface="com.intellij.refactoring.replaceConstructorWithBuilder.ReplaceConstructorWithBuilderService"
+      serviceImplementation="com.intellij.refactoring.replaceConstructorWithBuilder.ReplaceConstructorWithBuilderServiceImpl"/>
+    <applicationService
+      serviceInterface="com.intellij.refactoring.util.duplicates.MethodDuplicatesService"
+      serviceImplementation="com.intellij.refactoring.util.duplicates.MethodDuplicatesServiceImpl"/>
     <applicationService
       serviceInterface="com.intellij.refactoring.introduceField.JavaIntroduceFieldService"
       serviceImplementation="com.intellij.refactoring.introduceField.JavaIntroduceFieldServiceImpl"

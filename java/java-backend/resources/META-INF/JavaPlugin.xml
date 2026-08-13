@@ -6,12 +6,9 @@
 
   <xi:include href="/META-INF/RegistryKeys.xml"/>
 
-  <xi:include href="/META-INF/Intentions.xml"/>
-
   <xi:include href="/META-INF/JavaActions.xml"/>
 
   <xi:include href="/META-INF/GlobalInspections.xml"/>
-  <xi:include href="/META-INF/IntentionPowerPack.xml"/>
   <xi:include href="/META-INF/InspectionGadgets.xml"/>
   <xi:include href="/META-INF/Inspections.xml"/>
 

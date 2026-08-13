@@ -33,7 +33,7 @@ public final class ReplaceConstructorWithBuilderAction extends PsiElementBaseInt
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    return getConstructor(element) != null;
+    return getConstructor(element) != null && ReplaceConstructorWithBuilderService.getInstance() != null;
   }
 
   @Override
@@ -42,9 +42,13 @@ public final class ReplaceConstructorWithBuilderAction extends PsiElementBaseInt
     if (constructor == null) {
       return;
     }
+    ReplaceConstructorWithBuilderService constructorWithBuilderService = ReplaceConstructorWithBuilderService.getInstance();
+    if (constructorWithBuilderService == null) {
+      return;
+    }
 
     PsiClass aClass = constructor.getContainingClass();
-    new ReplaceConstructorWithBuilderDialog(project, Objects.requireNonNull(aClass).getConstructors()).show();
+    constructorWithBuilderService.showDialog(project, Objects.requireNonNull(aClass).getConstructors());
   }
 
   @Override
