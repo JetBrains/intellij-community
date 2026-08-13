@@ -7,7 +7,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dev.BuildRequest
+import org.jetbrains.intellij.build.dev.DevBuildComponentEntry
+import org.jetbrains.intellij.build.dev.DevBuildComponentManifest
 import org.jetbrains.intellij.build.dev.IdeFingerprintEntry
+import org.jetbrains.intellij.build.dev.computeIdeFingerprintFromComponents
 import org.jetbrains.intellij.build.dev.configureDevModeBuildOptions
 import org.jetbrains.intellij.build.dev.configureTargetPlatform
 import org.jetbrains.intellij.build.dev.computeIdeFingerprint
@@ -484,6 +487,26 @@ class IdeBuilderTest {
   }
 
   @Test
+  fun componentFingerprintsEqualTheFingerprintOfTheirEntryUnion() {
+    val platformEntry = DevBuildComponentEntry(relativePath = "lib/platform.jar", type = "module-output", hash = 1)
+    val pluginEntry = DevBuildComponentEntry(relativePath = "plugins/sample/lib/plugin.jar", type = "module-output", hash = 2)
+    val platform = componentManifest(kind = "platform", entries = listOf(platformEntry))
+    val plugins = componentManifest(kind = "plugins", entries = listOf(pluginEntry))
+
+    val fingerprint = computeIdeFingerprintFromComponents(listOf(platform, plugins))
+
+    assertThat(fingerprint).isEqualTo(
+      computeIdeFingerprint(
+        listOf(
+          IdeFingerprintEntry(platformEntry.relativePath, platformEntry.type, platformEntry.hash),
+          IdeFingerprintEntry(pluginEntry.relativePath, pluginEntry.type, pluginEntry.hash),
+        )
+      )
+    )
+    assertThat(computeIdeFingerprintFromComponents(listOf(plugins, platform))).isEqualTo(fingerprint)
+  }
+
+  @Test
   fun ideFingerprintRejectsAnEntryOutsideKnownRoots() {
     val entry = CustomAssetEntry(path = tempDir.resolve("external/asset.zip"), hash = 1)
 
@@ -510,6 +533,19 @@ class IdeBuilderTest {
       linkImmutableCacheEntries = linkImmutableCacheEntries,
       os = os,
       arch = arch,
+    )
+  }
+
+  private fun componentManifest(kind: String, entries: List<DevBuildComponentEntry>): DevBuildComponentManifest {
+    return DevBuildComponentManifest(
+      kind = kind,
+      platformPrefix = "idea",
+      os = OsFamily.currentOs.osId,
+      arch = JvmArchitecture.currentJvmArch.name,
+      additionalModules = emptyList(),
+      mainClass = "com.intellij.idea.Main",
+      coreClassPath = emptyList(),
+      entries = entries,
     )
   }
 

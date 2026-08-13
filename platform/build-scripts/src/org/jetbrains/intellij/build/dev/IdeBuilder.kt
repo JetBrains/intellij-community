@@ -13,6 +13,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -97,6 +98,12 @@ import kotlin.time.Duration.Companion.hours
 
 private const val maxWindowsPathLengthForIDERootToBeAbleToRunRiderBackend: Int = 64
 
+enum class DevBuildPart {
+  ALL,
+  PLATFORM,
+  PLUGINS,
+}
+
 data class BuildRequest(
   @JvmField val platformPrefix: String,
   @JvmField val additionalModules: List<String>,
@@ -161,6 +168,12 @@ data class BuildRequest(
    * A dev run directory is disposable and can share bytes with the caches it is assembled from, but a Bazel output must own its bytes.
    */
   @JvmField val linkImmutableCacheEntries: Boolean = true,
+
+  /** Selects the independently cacheable part produced by a standalone Bazel assembly. */
+  @JvmField val buildPart: DevBuildPart = DevBuildPart.ALL,
+
+  /** Metadata for a split component; required when [buildPart] is not [DevBuildPart.ALL]. */
+  @JvmField val componentManifestFile: Path? = null,
 ) {
   override fun toString(): String {
     return buildString {
@@ -204,6 +217,12 @@ internal suspend fun buildProductFromProject(
 }
 
 internal suspend fun buildProduct(request: BuildRequest, createBuildContext: suspend CoroutineScope.(buildDir: Path) -> BuildContext): Path {
+  check(request.buildPart == DevBuildPart.ALL || request.componentManifestFile != null) {
+    "A component manifest file is required for a split dev build"
+  }
+  check(request.buildPart == DevBuildPart.ALL || request.scrambleTool == null) {
+    "Split dev distribution assembly does not support scrambling"
+  }
   val buildDir = request.runDirOverride?.let { prepareOverriddenRunDir(it) } ?: prepareDevRunDir(request)
   request.scratchDir?.let { prepareScratchDir(it) }
 
@@ -232,7 +251,10 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
       val searchableOptionSetDeferred = async(CoroutineName("read searchable options")) {
         getSearchableOptionSet(context)
       }
-      val platformLayoutResultDeferred = async(CoroutineName("platform distribution entries")) {
+      val platformLayoutResultDeferred: Deferred<PlatformLayoutResult> = if (request.buildPart == DevBuildPart.PLUGINS) {
+        CompletableDeferred(PlatformLayoutResult(distributionEntries = emptyList(), coreClassPath = emptySet()))
+      }
+      else async(CoroutineName("platform distribution entries")) {
         val searchableOptionSet = searchableOptionSetDeferred.await()
         launch(Dispatchers.IO) {
           // PathManager.getBinPath() is used as a working dir for maven
@@ -273,7 +295,7 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
         }
       }
 
-      val pluginLayouts = devModePluginCandidates(request, context)
+      val pluginLayouts = if (request.buildPart == DevBuildPart.PLATFORM) emptyList() else devModePluginCandidates(request, context)
       val layoutsOfPluginsToScramble = collectLayoutsOfPluginsToScramble(pluginLayouts)
       val pluginBuildStrategy = selectDevModePluginBuildStrategy(request = request, context = context, pluginLayouts = pluginLayouts)
       val pluginsBuildResultsDeferred = if (pluginBuildStrategy == DevModePluginBuildStrategy.LAYOUT_BEFORE_PLATFORM_SCRAMBLE) {
@@ -295,7 +317,10 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
         null
       }
 
-      val platformScrambleResultDeferred = async(CoroutineName("scramble platform")) {
+      val platformScrambleResultDeferred: Deferred<PlatformLayoutResult> = if (request.buildPart == DevBuildPart.PLUGINS) {
+        platformLayoutResultDeferred
+      }
+      else async(CoroutineName("scramble platform")) {
         val platformLayoutResult = platformLayoutResultDeferred.await()
         if (context.productProperties.scrambleMainJar) {
           request.scrambleTool?.let { scrambleTool ->
@@ -317,7 +342,10 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
         platformLayoutResult
       }
 
-      val pluginDistributionEntriesDeferred = async(CoroutineName("scramble plugins")) {
+      val pluginDistributionEntriesDeferred: Deferred<PluginsLayoutResult> = if (request.buildPart == DevBuildPart.PLATFORM) {
+        CompletableDeferred(PluginsLayoutResult(pluginEntries = emptyList(), additionalPlugins = null))
+      }
+      else async(CoroutineName("scramble plugins")) {
         if (pluginBuildStrategy == DevModePluginBuildStrategy.LAYOUT_BEFORE_PLATFORM_SCRAMBLE) {
           scrambleAlreadyLaidOutPluginsForDevMode(
             descriptors = checkNotNull(pluginsBuildResultsDeferred).await(),
@@ -352,7 +380,7 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
         )
         val classPath = platformClasspath + coreClasspathFromPlugins
 
-        if (request.writeCoreClasspath) {
+        if (request.writeCoreClasspath && request.buildPart == DevBuildPart.ALL) {
           val classPathString = formatCoreClasspath(classPath = classPath, runDir = runDir)
           launch(Dispatchers.IO) {
             Files.writeString(runDir.resolve("core-classpath.txt"), classPathString)
@@ -363,12 +391,45 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
       }
 
       launch(CoroutineName("compute IDE fingerprint")) {
-        computeIdeFingerprint(
-          platformDistributionEntriesDeferred = platformLayoutResultDeferred,
-          pluginDistributionEntriesDeferred = pluginDistributionEntriesDeferred,
-          runDir = runDir,
-          projectDir = request.projectDir,
-        )
+        if (request.buildPart == DevBuildPart.ALL) {
+          computeIdeFingerprint(
+            platformDistributionEntriesDeferred = platformLayoutResultDeferred,
+            pluginDistributionEntriesDeferred = pluginDistributionEntriesDeferred,
+            runDir = runDir,
+            projectDir = request.projectDir,
+          )
+        }
+        else {
+          val platformResult = platformLayoutResultDeferred.await()
+          val pluginsResult = pluginDistributionEntriesDeferred.await()
+          val pluginEntries = pluginsResult.pluginEntries.asSequence().flatMap { it.distribution.asSequence() }
+          val entries = if (request.buildPart == DevBuildPart.PLATFORM) platformResult.distributionEntries.asSequence() else pluginEntries
+          val coreClassPath = if (request.buildPart == DevBuildPart.PLATFORM) {
+            platformResult.coreClassPath
+          }
+          else {
+            generateCoreClasspathFromPlugins(
+              platformLayout = platformLayout.await(),
+              pluginBuildResults = pluginsResult.pluginEntries,
+              context = context,
+            )
+          }
+          withContext(Dispatchers.IO) {
+            writeDevBuildComponentManifest(
+              file = checkNotNull(request.componentManifestFile),
+              kind = request.buildPart,
+              platformPrefix = request.platformPrefix,
+              os = request.os,
+              arch = request.arch,
+              additionalModules = if (request.buildPart == DevBuildPart.PLUGINS) request.additionalModules else emptyList(),
+              mainClass = context.ideMainClassName,
+              coreClassPath = coreClassPath,
+              entries = entries,
+              componentRoot = runDir,
+              projectDir = request.projectDir,
+            )
+          }
+        }
       }
 
       launch(CoroutineName("post-process distribution")) {
@@ -378,7 +439,7 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
         val pluginDistributionEntries = pluginDistributionEntriesDeferred.await()
         val platformLayout = platformLayout.await()
 
-        val pluginClasspathJob = launch {
+        val pluginClasspathJob = if (request.buildPart != DevBuildPart.PLATFORM) launch {
           val (pluginEntries, additionalEntries) = pluginDistributionEntries
           val cachedDescriptorContainer = platformLayout.descriptorCacheContainer
           spanBuilder("generate plugin classpath").use(Dispatchers.IO) {
@@ -410,14 +471,15 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
             Files.write(pluginClasspath, byteOut.toByteArray())
           }
         }
-        if (context.generateRuntimeModuleRepository) {
+        else null
+        if (context.generateRuntimeModuleRepository && request.buildPart == DevBuildPart.ALL) {
           launch(CoroutineName("generate runtime repository")) {
             val contentReport = ContentReport(
               platform = platformFileEntries,
               bundledPlugins = pluginDistributionEntries.pluginEntries,
               nonBundledPlugins = emptyList()
             )
-            pluginClasspathJob.join() //this is necessary to have full data in DescriptorCacheContainer
+            checkNotNull(pluginClasspathJob).join() //this is necessary to have full data in DescriptorCacheContainer
 
             spanBuilder("generate runtime repository").use(Dispatchers.IO) {
               generateRuntimeModuleRepositoryForDevBuild(
@@ -430,7 +492,7 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
           }
         }
 
-        withContext(Dispatchers.IO) {
+        if (request.buildPart != DevBuildPart.PLUGINS) withContext(Dispatchers.IO) {
           context.productProperties.copyAdditionalOsSpecificFiles(
             runDir = runDir,
             os = request.os,

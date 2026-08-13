@@ -11,7 +11,72 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
+import java.nio.file.Files
 import kotlin.io.path.isRegularFile
+
+private const val BAZEL_BUILD_INPUTS_MANIFEST_PROPERTY = "intellij.build.bazel.inputs.manifest"
+
+@Internal
+object BazelBuildInputs {
+  private val resolver: ExplicitBazelInputResolver? by lazy {
+    System.getProperty(BAZEL_BUILD_INPUTS_MANIFEST_PROPERTY)?.let { ExplicitBazelInputResolver.load(Path.of(it)) }
+  }
+
+  fun resolve(label: String): Path {
+    return resolver?.resolve(label) ?: BazelRunfiles.getFileByLabel(BazelLabel.fromString(label))
+  }
+
+  fun writeUnusedInputs(file: Path) {
+    resolver?.writeUnusedInputs(file) ?: Files.writeString(file, "")
+  }
+}
+
+private class ExplicitBazelInputResolver(
+  private val inputs: Map<String, Path>,
+) {
+  private val used = HashSet<Path>()
+
+  @Synchronized
+  fun resolve(label: String): Path {
+    val path = inputs.get(label) ?: error("Bazel input '$label' is not declared in the explicit input manifest")
+    used.add(path)
+    return path
+  }
+
+  @Synchronized
+  fun writeUnusedInputs(file: Path) {
+    file.parent?.let { Files.createDirectories(it) }
+    val unused = inputs.values.asSequence().filterNot(used::contains).distinct().sortedBy(Path::toString)
+    Files.writeString(file, unused.joinToString(separator = "\n", postfix = "\n") { it.toString() })
+  }
+
+  companion object {
+    fun load(file: Path): ExplicitBazelInputResolver {
+      val inputs = LinkedHashMap<String, Path>()
+      Files.readAllLines(file).forEachIndexed { index, line ->
+        if (line.isBlank()) return@forEachIndexed
+        val separator = line.indexOf('\t')
+        check(separator > 0 && separator < line.lastIndex) { "Malformed Bazel input manifest line ${index + 1} in $file" }
+        val label = line.substring(0, separator)
+        val path = Path.of(line.substring(separator + 1)).toAbsolutePath().normalize()
+        check(inputs.put(label, path) == null) { "Duplicate Bazel input label '$label' in $file" }
+        apparentRepositoryLabel(label)?.let { apparentLabel ->
+          check(inputs.put(apparentLabel, path) == null) { "Duplicate Bazel input label '$apparentLabel' in $file" }
+        }
+      }
+      return ExplicitBazelInputResolver(inputs)
+    }
+
+    private fun apparentRepositoryLabel(label: String): String? {
+      if (!label.startsWith("@@")) return null
+      val repositoryEnd = label.indexOf("//")
+      if (repositoryEnd == -1) return null
+      val canonicalRepository = label.substring(2, repositoryEnd)
+      val apparentRepository = canonicalRepository.substringBefore('+')
+      return if (apparentRepository.isEmpty()) label.substring(repositoryEnd) else "@$apparentRepository${label.substring(repositoryEnd)}"
+    }
+  }
+}
 
 @Internal
 class BazelModuleOutputProviderState(
@@ -117,7 +182,7 @@ internal class BazelModuleOutputProvider(
     )
 
     val paths = if (BazelRunfiles.isRunningFromBazel) {
-      library.jarTargets.map { BazelRunfiles.getFileByLabel(BazelLabel.fromString(it)) }
+      library.jarTargets.map(BazelBuildInputs::resolve)
     }
     else {
       library.jars.map { state.bazelOutputRoot.resolve(it) }
@@ -162,7 +227,7 @@ internal class BazelModuleOutputProvider(
 
     return if (BazelRunfiles.isRunningFromBazel) {
       val targets = if (forTests) moduleDescription.testTargets else moduleDescription.productionTargets
-      targets.map { BazelRunfiles.getFileByLabel(BazelLabel.fromString(it)) }
+      targets.map(BazelBuildInputs::resolve)
     }
     else {
       val jarsRelative = if (forTests) moduleDescription.testJars else moduleDescription.productionJars

@@ -12,8 +12,10 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dev.BuildRequest
+import org.jetbrains.intellij.build.dev.DevBuildPart
 import org.jetbrains.intellij.build.dev.buildProductInProcess
 import org.jetbrains.intellij.build.dev.materializeProjectModelTree
+import org.jetbrains.intellij.build.impl.BazelBuildInputs
 import java.nio.file.DirectoryNotEmptyException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -62,9 +64,13 @@ fun main(args: Array<String>) {
   // so it must be set before any code touches those singletons.
   System.setProperty("intellij.build.ultimate.home.path", projectDir.invariantSeparatorsPathString)
 
-  val ideConfigFile = options.requiredPath("--ide-config")
+  val ideConfigFile = options.optionalPath("--ide-config")
   val platformPrefix = options.optional("--platform-prefix") ?: "idea"
   val additionalModules = options.list("--additional-module")
+  val testOutputModules = options.list("--test-output-module")
+  if (testOutputModules.isNotEmpty()) {
+    System.setProperty("idea.build.pack.test.source.modules", testOutputModules.joinToString(","))
+  }
   val os = options.optional("--os")?.let(::parseOs) ?: OsFamily.currentOs
   val arch = options.optional("--arch")?.let(::parseArch) ?: JvmArchitecture.currentJvmArch
   val buildDateInSeconds = options.optional("--build-date-seconds")?.let {
@@ -81,6 +87,18 @@ fun main(args: Array<String>) {
   // directory, so this is for a standalone caller re-running the assembler into a path it already used.
   val cleanOutput = options.optionalBoolean("--clean-output") ?: false
   val cleanScratchOnSuccess = options.optionalBoolean("--clean-scratch-on-success") ?: false
+  val buildPart = options.optional("--build-part")?.let { value ->
+    DevBuildPart.entries.firstOrNull { it.name.equals(value, ignoreCase = true) }
+    ?: error("Unknown --build-part value '$value', expected platform, plugins, or all")
+  } ?: DevBuildPart.ALL
+  val componentManifest = options.optionalPath("--component-manifest")
+  options.optionalPath("--bazel-targets-json")?.let { path ->
+    System.setProperty("intellij.build.bazel.targets.json.file", path.invariantSeparatorsPathString)
+  }
+  options.optionalPath("--bazel-inputs-manifest")?.let { path ->
+    System.setProperty("intellij.build.bazel.inputs.manifest", path.invariantSeparatorsPathString)
+  }
+  val unusedInputs = options.optionalPath("--unused-inputs")
   configurePreloadedDownloads(options)
   options.checkNoUnknownOptions()
 
@@ -110,6 +128,8 @@ fun main(args: Array<String>) {
         buildDateInSeconds = buildDateInSeconds,
         linkImmutableCacheEntries = linkCacheEntries,
         jarCacheDir = jarCacheDir,
+        buildPart = buildPart,
+        componentManifestFile = componentManifest,
       )
     )
 
@@ -118,16 +138,19 @@ fun main(args: Array<String>) {
       // What the distribution is, not just where it is: a consumer that needs a different product or a plugin module
       // this assembly did not build in is looking at the wrong distribution, and `DevIdeConfig` is where it can find
       // that out. The relative-home rule and the file format live there too, with the readers.
-      DevIdeConfig.write(ideConfigFile, runDir, mainClassName, platformPrefix, additionalModules)
+      if (buildPart == DevBuildPart.ALL) {
+        DevIdeConfig.write(checkNotNull(ideConfigFile) { "--ide-config is required for a complete distribution" }, runDir, mainClassName, platformPrefix, additionalModules)
+      }
     }
     runDir
   }
 
-  println("Dev distribution assembled into $runDir (main class: $mainClassName, config: $ideConfigFile)")
+  println("Dev $buildPart distribution component assembled into $runDir (main class: $mainClassName${ideConfigFile?.let { ", config: $it" }.orEmpty()})")
   if (cleanScratchOnSuccess) {
     scratchDir.deleteRecursively()
     Files.createDirectories(scratchDir)
   }
+  unusedInputs?.let(BazelBuildInputs::writeUnusedInputs)
   // the build uses thread pools and Netty/Ktor selectors that may outlive the last coroutine
   exitProcess(0)
 }

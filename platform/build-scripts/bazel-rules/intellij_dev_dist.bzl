@@ -1,142 +1,171 @@
-"""Assembles a dev-mode IDE distribution as a Bazel output, instead of at launch time.
+"""Builds independently cacheable platform and plugin parts of a dev-mode IDE distribution.
 
-A dev launch is build-and-run in one JVM today: every `bazel run` of an `intellij_dev_binary` recomputes the
-whole layout before the IDE's `main` is reached, whether or not anything changed. The ingredients are already
-Bazel inputs - module jars through `bazel-targets.json`, external archives through `preloaded_download_repos` -
-so what is left is to make the assembled home an output too, and let the action cache decide when to redo it.
-
-The assembler is `org.jetbrains.intellij.build.devServer.DevDistMain`, run as an ordinary `java_binary`. Three
-consequences of that shape are worth knowing before changing anything here:
-
-* **The jars must be runfiles of the assembler, not inputs of this action.** The `rules_java` stub exports
-  `JAVA_RUNFILES` even when it is invoked from an action, so `BazelRunfiles.isRunningFromBazel` is true inside
-  and every module and library jar is resolved by label through the runfiles tree
-  (`BazelModuleOutputProvider`), as is `bazel-targets.json` (`ArchivedCompilationContextUtil`). Action inputs
-  are in no runfiles tree. Hence the [assembler] attribute, and the ~14,000 jars hanging off that binary's
-  `data`.
-* **...which is also why it is `cfg = "target"`.** An exec transition would rebuild every one of those jars
-  into a second output directory.
-* **Everything else is a plain input.** The project model arrives as a manifest the assembler materializes
-  into a checkout-shaped tree, and the preloaded archives are named by absolute manifest path, which
-  `PreloadedDownloads` accepts verbatim. Neither needs to be a runfile, so neither forces the assembler to be
-  per product - one binary per repository serves every product in it, and what makes a product is the
-  arguments below.
+Split assembly deliberately supports only builds with scrambling disabled. Platform co-scrambling and
+per-plugin scrambling require both component layouts in one process and remain a known limitation.
 """
 
 load("@community//build:project_model_manifest.bzl", "write_project_model_manifest")
 load("//build:dev_launch_dependencies.bzl", "platform_parts")
 
-IntellijDevDistInfo = provider(
-    doc = "An assembled dev-mode IDE distribution.",
+IntellijDevPlatformInfo = provider(
     fields = {
-        "home": "The IDE home directory, as a tree artifact.",
-        "ide_config": "The `PreBuiltDevMain` config file naming that home and the IDE's main class.",
+        "home": "The platform component tree.",
+        "manifest": "The platform component manifest.",
     },
 )
 
-def _intellij_dev_dist_impl(ctx):
-    home = ctx.actions.declare_directory(ctx.label.name + ".dist")
-    ide_config = ctx.actions.declare_file(ctx.label.name + ".ide.config")
+IntellijDevPluginsInfo = provider(
+    fields = {
+        "home": "The plugins overlay tree.",
+        "manifest": "The plugins component manifest.",
+    },
+)
+
+IntellijDevDistInfo = provider(
+    fields = {
+        "home": "The composed IDE home directory.",
+        "ide_config": "The config file used by PreBuiltDevMain.",
+    },
+)
+
+def _write_bazel_inputs_manifest(ctx):
+    if len(ctx.attr.module_outputs) != len(ctx.attr.module_output_labels):
+        fail("module_outputs and module_output_labels must have the same length")
+    lines = []
+    files = []
+    for target, label in zip(ctx.attr.module_outputs, ctx.attr.module_output_labels):
+        target_files = target[DefaultInfo].files.to_list()
+        if len(target_files) != 1:
+            fail("%s must provide exactly one file, got %s" % (target.label, target_files))
+        file = target_files[0]
+        files.append(file)
+        lines.append("%s\t%s" % (label, file.path))
+    manifest = ctx.actions.declare_file(ctx.label.name + ".bazel-inputs")
+    ctx.actions.write(manifest, "\n".join(lines) + "\n")
+    return manifest, files
+
+def _add_target_platform_args(args, target_platform):
+    if target_platform:
+        target_parts = platform_parts(target_platform)
+        args.add("--os=" + ("macos" if target_parts.os == "darwin" else target_parts.os))
+        args.add("--arch=" + target_parts.arch)
+
+def _component_action(ctx, kind, additional_modules, test_output_modules, provider):
+    home = ctx.actions.declare_directory(ctx.label.name + "." + kind)
+    component_manifest = ctx.actions.declare_file(ctx.label.name + ".component.json")
     scratch = ctx.actions.declare_directory(ctx.label.name + ".scratch")
+    unused_inputs = ctx.actions.declare_file(ctx.label.name + ".unused-inputs")
 
     project_files = ctx.files.project_model_files + ctx.files.extra_project_files
-    manifest = write_project_model_manifest(ctx, ctx.label.name + ".project.manifest", project_files, ctx.attr.mode)
+    project_manifest = write_project_model_manifest(ctx, ctx.label.name + ".project.manifest", project_files, ctx.attr.mode)
+    bazel_inputs_manifest, module_outputs = _write_bazel_inputs_manifest(ctx)
 
     args = ctx.actions.args()
-    args.add("--project-manifest=" + manifest.path)
+    args.add("--project-manifest=" + project_manifest.path)
     args.add("--output-dir=" + home.path)
-    args.add("--ide-config=" + ide_config.path)
-
-    # The assembler empties this declared tree before it exits successfully, so Bazel owns every write without
-    # hashing or caching the ~200 MB of intermediates used during assembly.
+    args.add("--component-manifest=" + component_manifest.path)
     args.add("--scratch-dir=" + scratch.path)
     args.add("--clean-scratch-on-success")
+    args.add("--build-part=" + kind)
     args.add("--platform-prefix=" + ctx.attr.platform_prefix)
-    if ctx.attr.target_platform:
-        target_parts = platform_parts(ctx.attr.target_platform)
-        target_os = "macos" if target_parts.os == "darwin" else target_parts.os
-        args.add("--os=" + target_os)
-        args.add("--arch=" + target_parts.arch)
-    args.add_all(ctx.attr.additional_modules, format_each = "--additional-module=%s")
+    args.add("--bazel-targets-json=" + ctx.file.bazel_targets_json.path)
+    args.add("--bazel-inputs-manifest=" + bazel_inputs_manifest.path)
+    args.add("--unused-inputs=" + unused_inputs.path)
+    _add_target_platform_args(args, ctx.attr.target_platform)
+    args.add_all(additional_modules, format_each = "--additional-module=%s")
+    args.add_all(test_output_modules, format_each = "--test-output-module=%s")
     args.add_all(ctx.files.preloaded_manifests, format_each = "--preloaded-manifest=%s")
     if ctx.attr.preloaded_only:
         args.add("--preloaded-only")
+
     ctx.actions.run(
-        inputs = depset(project_files + [manifest] + ctx.files.preloaded_downloads + ctx.files.preloaded_manifests),
-        outputs = [home, ide_config, scratch],
+        inputs = depset(
+            direct = project_files + [
+                project_manifest,
+                bazel_inputs_manifest,
+                ctx.file.bazel_targets_json,
+            ] + module_outputs + ctx.files.preloaded_downloads + ctx.files.preloaded_manifests,
+        ),
+        outputs = [home, component_manifest, scratch, unused_inputs],
         executable = ctx.executable.assembler,
         arguments = [args],
-        # `local` covers sandboxing and remote execution; `no-remote-cache` is spelled out because the
-        # distribution is ~4 GB per product and this repository configures a shared remote cache by default.
         execution_requirements = {"local": "1", "no-remote-cache": "1"},
-        mnemonic = "IntellijDevDist",
-        progress_message = "Assembling %s dev distribution %s" % (ctx.attr.platform_prefix, ctx.label),
+        unused_inputs_list = unused_inputs,
+        mnemonic = "IntellijDev%s" % kind.title(),
+        progress_message = "Assembling %s %s component %s" % (ctx.attr.platform_prefix, kind, ctx.label),
     )
+    return [
+        DefaultInfo(files = depset([home, component_manifest])),
+        provider(home = home, manifest = component_manifest),
+    ]
 
+def _platform_impl(ctx):
+    return _component_action(ctx, "platform", [], [], IntellijDevPlatformInfo)
+
+def _plugins_impl(ctx):
+    return _component_action(ctx, "plugins", ctx.attr.additional_modules, ctx.attr.test_output_modules, IntellijDevPluginsInfo)
+
+_component_attrs = {
+    "assembler": attr.label(executable = True, cfg = "target", mandatory = True),
+    "mode": attr.string(default = "ultimate", values = ["community", "ultimate"]),
+    "platform_prefix": attr.string(mandatory = True),
+    "target_platform": attr.string(default = ""),
+    "project_model_files": attr.label_list(allow_files = True, mandatory = True),
+    "extra_project_files": attr.label_list(allow_files = True),
+    "bazel_targets_json": attr.label(allow_single_file = True, mandatory = True),
+    "module_outputs": attr.label_list(allow_files = True, mandatory = True),
+    "module_output_labels": attr.string_list(mandatory = True),
+    "preloaded_downloads": attr.label_list(allow_files = True),
+    "preloaded_manifests": attr.label_list(allow_files = True),
+    "preloaded_only": attr.bool(default = False),
+}
+
+intellij_dev_platform = rule(
+    implementation = _platform_impl,
+    attrs = _component_attrs,
+)
+
+intellij_dev_plugins = rule(
+    implementation = _plugins_impl,
+    attrs = dict(
+        _component_attrs,
+        additional_modules = attr.string_list(),
+        test_output_modules = attr.string_list(),
+    ),
+)
+
+def _compose_impl(ctx):
+    home = ctx.actions.declare_directory(ctx.label.name + ".dist")
+    ide_config = ctx.actions.declare_file(ctx.label.name + ".ide.config")
+    platform = ctx.attr.platform[IntellijDevPlatformInfo]
+    plugins = ctx.attr.plugins[IntellijDevPluginsInfo]
+    args = ctx.actions.args()
+    args.add("--platform-dir=" + platform.home.path)
+    args.add("--platform-manifest=" + platform.manifest.path)
+    args.add("--plugins-dir=" + plugins.home.path)
+    args.add("--plugins-manifest=" + plugins.manifest.path)
+    args.add("--output-dir=" + home.path)
+    args.add("--ide-config=" + ide_config.path)
+    ctx.actions.run(
+        inputs = [platform.home, platform.manifest, plugins.home, plugins.manifest],
+        outputs = [home, ide_config],
+        executable = ctx.executable.composer,
+        arguments = [args],
+        execution_requirements = {"local": "1", "no-remote-cache": "1"},
+        mnemonic = "IntellijDevDistCompose",
+        progress_message = "Composing dev distribution %s" % ctx.label,
+    )
     return [
         DefaultInfo(files = depset([home, ide_config])),
         IntellijDevDistInfo(home = home, ide_config = ide_config),
-        # A launcher needs the config file's runfiles path, and `$(rlocationpath ...)` takes a label naming exactly one
-        # file - which this target is not, and which a `declare_file` output cannot be. These groups are how a
-        # `filegroup(output_group = ...)` gets a single-file label to hand it.
         OutputGroupInfo(ide_config = depset([ide_config]), home = depset([home])),
     ]
 
 intellij_dev_dist = rule(
-    doc = "Assembles a dev-mode IDE distribution into a tree artifact, plus the config file that launches it.",
-    implementation = _intellij_dev_dist_impl,
+    implementation = _compose_impl,
     attrs = {
-        "assembler": attr.label(
-            doc = "The `DevDistMain` binary carrying this repository's module and library jars as runfiles. " +
-                  "`cfg = \"target\"` on purpose - see the module docstring.",
-            executable = True,
-            cfg = "target",
-            mandatory = True,
-        ),
-        "mode": attr.string(
-            doc = "Which repository root the materialized project tree is shaped as.",
-            default = "ultimate",
-            values = ["community", "ultimate"],
-        ),
-        "platform_prefix": attr.string(
-            doc = "Selects the product, as `-Didea.platform.prefix` does for a dev launch (e.g. 'idea', 'GoLand').",
-            mandatory = True,
-        ),
-        "target_platform": attr.string(
-            doc = "The HOST_PLATFORMS key the distribution is for, e.g. `linux_aarch64`. Empty means the host platform.",
-            default = "",
-        ),
-        "additional_modules": attr.string_list(
-            doc = "Plugin modules included on top of the product's own, as `-Dadditional.modules` does for a dev launch.",
-            default = [],
-        ),
-        "project_model_files": attr.label_list(
-            doc = "The JPS project model: every `.iml`, every plugin descriptor, and the `.idea` root files.",
-            allow_files = True,
-            mandatory = True,
-        ),
-        "extra_project_files": attr.label_list(
-            doc = "Checkout files the build reads that the project model does not name - `dev-build.json`, " +
-                  "`build.txt`, `idea.properties`, the dependency properties, `OpenedPackages.txt`. A product " +
-                  "whose `copyAdditionalFiles` reaches for something else adds it here, and the assembler fails " +
-                  "loudly rather than producing a thinner distribution.",
-            allow_files = True,
-            default = [],
-        ),
-        "preloaded_downloads": attr.label_list(
-            doc = "Archives the assembly would otherwise download, already fetched.",
-            allow_files = True,
-            default = [],
-        ),
-        "preloaded_manifests": attr.label_list(
-            doc = "The manifests describing [preloaded_downloads], one per fetching repository.",
-            allow_files = True,
-            default = [],
-        ),
-        "preloaded_only": attr.bool(
-            doc = "Makes [preloaded_manifests] the complete inventory, so an undeclared URL fails instead of " +
-                  "reaching the network. Set from a `select` over the platforms where the set was measured.",
-            default = False,
-        ),
+        "composer": attr.label(executable = True, cfg = "target", mandatory = True),
+        "platform": attr.label(providers = [IntellijDevPlatformInfo], mandatory = True),
+        "plugins": attr.label(providers = [IntellijDevPluginsInfo], mandatory = True),
     },
 )
