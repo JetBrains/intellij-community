@@ -35,17 +35,21 @@ data class TestMethodIdentity(
  * whether it is the frontend of a split-mode pair — spelled three ways, because a local directory, a CI artifact path and a line in a test
  * report each accept different things:
  *
- * |          | reporting directories          | [artifactPath]                            | [humanReadableTestName]       |
- * |----------|--------------------------------|-------------------------------------------|-------------------------------|
- * | test     | absent, the root already is it | spelled out, unless the method doubles it | raw, unless a method is known |
- * | method   | hyphenated, bounded, indexed   | the very same segments                    | raw `class/method`            |
- * | launch   | bounded with a hash suffix     | the very same segment                     | raw                           |
- * | frontend | an extra `frontend` segment    | the very same segment                     | absent                        |
+ * |          | reporting directories          | [artifactPath] in a reused IDE             | [humanReadableTestName]       |
+ * |----------|--------------------------------|--------------------------------------------|-------------------------------|
+ * | test     | absent, the root already is it | spelled out, unless the method doubles it  | raw, unless a method is known |
+ * | method   | hyphenated, bounded, indexed   | the very same segments                     | raw `class/method`            |
+ * | launch   | bounded with a hash suffix     | the very same segment                      | raw                           |
+ * | frontend | an extra `frontend` segment    | the very same segment                      | absent                        |
  *
- * Below the test, [artifactPath] is the reporting directories verbatim, so what a launch publishes is shaped the way what it collected is:
- * a launch reporting into `<class>/<index>_<method>/<launch>` publishes into `<test>/<class>/<index>_<method>/<launch>`. [artifactPath] is
- * hyphenated once it has been joined rather than segment by segment, so a segment may keep a trailing hyphen; that is what the published
- * artifacts have already, and changing it moves every existing artifact URL.
+ * Until the IDE is reused, [artifactPath] stays at the legacy `<test>/<launch>` path that IJPerf can reconstruct. Once another reporting
+ * data is registered for the same IDE, all its launches switch to the reused-IDE path shown above. A standalone split-mode frontend shares
+ * the legacy path with its backend, so it prefixes its artifact names with `frontend-` instead.
+ *
+ * In a reused IDE, [artifactPath] follows the reporting directories verbatim below the test: a launch reporting into
+ * `<class>/<index>_<method>/<launch>` publishes into `<test>/<class>/<index>_<method>/<launch>`. [artifactPath] is hyphenated once it has
+ * been joined rather than segment by segment, so a segment may keep a trailing hyphen; that is what the published artifacts have already,
+ * and changing it moves every existing artifact URL.
  *
  * No level is spelled twice: the class is left out when the test's own directory already names it, and the test is left out of
  * [artifactPath] when the method segments already spell it. Exactly one of the two applies, so that something always names the test.
@@ -58,13 +62,18 @@ class IDEReportingData internal constructor(
   reportingRoot: Path,
   private val testName: String,
   private val testMethod: TestMethodIdentity? = null,
-  requestedLaunchName: String? = null,
+  private val launchName: String? = null,
   private val isFrontend: Boolean = false,
 ) {
+  private enum class ArtifactLayout {
+    LEGACY,
+    REUSED_IDE,
+  }
+
   // region Names
 
   /** `null` when the launch has no name of its own: none was requested, it was empty, or it is the test method's name again. */
-  private val launchName: String? = requestedLaunchName
+  private val testMethodAwareLaunchName: String? = launchName
     ?.takeUnless { it.isEmpty() }
     ?.takeUnless { it == testMethod?.displayName?.hyphenateTestName() }
 
@@ -120,23 +129,31 @@ class IDEReportingData internal constructor(
    */
   private val reportingDirSegments: List<String> = buildList {
     addAll(testMethodDirSegments)
-    launchName?.let { add(dirName(it)) }
+    testMethodAwareLaunchName?.let { add(dirName(it)) }
     if (isFrontend) add(FrontendIDEDataPaths.FRONTEND_DIR_NAME)
   }
 
-  /**
-   * The CI-safe path the artifacts of this launch are published under. Unlike the reporting directories, which live under the test's own
-   * directory already, a CI artifact path is rooted at the build, so it has to spell the test out itself.
-   */
-  val artifactPath: String = buildList {
+  private val reusedIdeArtifactPath = buildList {
     if (!testNameSpellsTheMethodOut) add(ReportingPathUtils.testDirectoryName(testName))
     addAll(reportingDirSegments)
   }.filter(String::isNotEmpty).joinToString("/").replaceSpecialCharactersWithHyphens()
 
+  /** The path IJPerf can reconstruct for an IDE used by only one test. */
+  private val legacyArtifactPath: String = buildList {
+    add(testName)
+    launchName?.let { add(it) }
+  }.filter(String::isNotEmpty).joinToString("/").replaceSpecialCharactersWithHyphens()
+
+  @Volatile
+  private var artifactLayout: ArtifactLayout = ArtifactLayout.LEGACY
+
+  val artifactPath: String
+    get() = artifactPathFor(artifactLayout)
+
   /** What a test report calls this launch: the identity as it was given, neither hyphenated nor bounded. */
   val humanReadableTestName: String = buildList {
     if (testMethod == null) add(testName) else addAll(testMethod.nameSegments)
-    launchName?.let(::add)
+    testMethodAwareLaunchName?.let(::add)
   }.filter(String::isNotEmpty).joinToString("/")
 
   // endregion
@@ -179,12 +196,22 @@ class IDEReportingData internal constructor(
   }
 
   internal fun publishArtifact(testContext: IDETestContext, source: Path, artifactName: String) {
+    val artifactLayout = artifactLayout
+    val publishedArtifactType = if (artifactLayout == ArtifactLayout.LEGACY && isFrontend) "frontend-$artifactName" else artifactName
     testContext.publishArtifact(
       source = source,
-      artifactPath = artifactPath,
-      // the path already names the launch, down to which half of a split-mode pair it is, so the file name only has to stay unique in time
-      artifactName = ReportingPathUtils.formatArtifactName(artifactName),
+      artifactPath = artifactPathFor(artifactLayout),
+      artifactName = ReportingPathUtils.formatArtifactName(publishedArtifactType),
     )
+  }
+
+  internal fun markAsPartOfReusedIdeRun() {
+    artifactLayout = ArtifactLayout.REUSED_IDE
+  }
+
+  private fun artifactPathFor(layout: ArtifactLayout): String = when (layout) {
+    ArtifactLayout.LEGACY -> legacyArtifactPath
+    ArtifactLayout.REUSED_IDE -> reusedIdeArtifactPath
   }
 
   // endregion

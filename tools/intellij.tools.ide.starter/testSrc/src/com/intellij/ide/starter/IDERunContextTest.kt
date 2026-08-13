@@ -34,6 +34,7 @@ class IDERunContextTest {
     val runContext = IDERunContext(testContext)
     val firstTestReportingData = runContext.originalIdeReportingData
     val switchedLogDirs = mutableListOf<Path>()
+    firstTestReportingData.artifactPath shouldBe "reused-ide-test"
 
     val firstTestReportingDataAgain = runContext.registerNewIdeReportingData(switchedLogDirs::add)
     CurrentTestMethod.set(testMethod("second test"))
@@ -45,6 +46,8 @@ class IDERunContextTest {
 
     error.message shouldBe "Test method 'first test' was activated again after another test method"
     (firstTestReportingDataAgain === firstTestReportingData) shouldBe true
+    firstTestReportingData.artifactPath shouldBe "reused-ide-test/ide-run-context-test/1-first-test"
+    secondTestReportingData.artifactPath shouldBe "reused-ide-test/ide-run-context-test/2-second-test"
     runContext.registeredIdeReportingData() shouldBe listOf(firstTestReportingData, secondTestReportingData)
     runContext.ideReportingDataFromCurrentToOldest() shouldBe listOf(secondTestReportingData, firstTestReportingData)
     (runContext.lastIdeReportingData === secondTestReportingData) shouldBe true

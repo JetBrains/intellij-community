@@ -1,5 +1,6 @@
 package com.intellij.ide.starter
 
+import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.runner.IDEReportingData
 import com.intellij.ide.starter.runner.TestMethodIdentity
 import com.intellij.ide.starter.utils.ReportingPathUtils
@@ -8,6 +9,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.mockingDetails
 import java.nio.file.Path
 import kotlin.io.path.exists
 
@@ -234,6 +237,36 @@ class IDEReportingDataTest {
     reportingData.artifactPath shouldBe "com.intellij.ide.SomeTest.opens-a-project-param-1-/first-launch"
   }
 
+  @Test
+  fun `an IDE used by one test keeps the legacy artifact path expected by IJPerf`() {
+    val displayName = "addCustomRootsInMavenProject"
+    val reportingData = reportingDataOf(
+      testName = "maven-smoke-tests",
+      testMethod = testMethodIdentity("MavenSmokeTests/$displayName", index = 1),
+      requestedLaunchName = displayName.hyphenateTestName(),
+      isPartOfReusedIdeRun = false,
+    )
+
+    reportingData.artifactPath shouldBe "maven-smoke-tests/add-custom-roots-in-maven-project"
+  }
+
+  @Test
+  fun `a standalone frontend keeps legacy path collisions away with an artifact name prefix`() {
+    val reportingData = reportingDataOf(
+      testName = "split-mode-test",
+      isFrontend = true,
+      isPartOfReusedIdeRun = false,
+    )
+    val testContext = mock(IDETestContext::class.java)
+
+    reportingData.publishArtifact(testContext, reportingData.logsDir, "logs")
+
+    val invocation = mockingDetails(testContext).invocations.single()
+    invocation.arguments[0] shouldBe reportingData.logsDir
+    invocation.arguments[1] shouldBe "split-mode-test"
+    Regex("frontend-logs-[0-9]{14}").matches(invocation.arguments[2] as String) shouldBe true
+  }
+
   // endregion
 
   // region Where a launch reports
@@ -327,14 +360,17 @@ class IDEReportingDataTest {
     requestedLaunchName: String? = null,
     testMethod: TestMethodIdentity? = null,
     isFrontend: Boolean = false,
+    isPartOfReusedIdeRun: Boolean = true,
     root: Path = reportingRoot,
   ): IDEReportingData = IDEReportingData(
     reportingRoot = root,
     testName = testName,
     testMethod = testMethod,
-    requestedLaunchName = requestedLaunchName,
+    launchName = requestedLaunchName,
     isFrontend = isFrontend,
-  )
+  ).also { reportingData ->
+    if (isPartOfReusedIdeRun) reportingData.markAsPartOfReusedIdeRun()
+  }
 
   /** The directory names a launch reports under, read back off the tree it created below [reportingRoot]. */
   private fun IDEReportingData.launchDirSegments(): List<String> =

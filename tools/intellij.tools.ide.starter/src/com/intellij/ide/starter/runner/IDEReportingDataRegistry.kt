@@ -33,16 +33,17 @@ internal class IDEReportingDataRegistry(
    * earlier method is an invalid lifecycle transition.
    */
   fun register(actionToResetLogDir: (Path) -> Unit): IDEReportingData {
-    val currentTestMethod = CurrentTestMethod.get()
-    val testMethodId = currentTestMethod?.id
-
     synchronized(lock) {
+      val currentTestMethod = CurrentTestMethod.get()
+      val testMethodId = currentTestMethod?.id
+
       registered.lastOrNull()?.takeIf { it.testMethodId == testMethodId }?.let { return it.reportingData }
 
       registered.firstOrNull { it.testMethodId == testMethodId }?.let {
         error("Test method '$testMethodId' was activated again after another test method")
       }
 
+      val isIdeReused = registered.isNotEmpty()
       val testMethod = currentTestMethod?.run {
         TestMethodIdentity(
           className = clazzSimpleName,
@@ -54,9 +55,13 @@ internal class IDEReportingDataRegistry(
         reportingRoot = testContext.paths.reportingRoot,
         testName = testContext.testName,
         testMethod = testMethod,
-        requestedLaunchName = launchName,
+        launchName = launchName,
         isFrontend = testContext.testCase.ideInfo.isFrontend,
       )
+      if (isIdeReused) {
+        registered.forEach { registration -> registration.reportingData.markAsPartOfReusedIdeRun() }
+        reportingData.markAsPartOfReusedIdeRun()
+      }
       reportArtifactsLink("Link to Logs and artifacts", reportingData)
       registered.firstOrNull()?.reportingData
         ?.takeUnless { it.artifactPath == reportingData.artifactPath }
