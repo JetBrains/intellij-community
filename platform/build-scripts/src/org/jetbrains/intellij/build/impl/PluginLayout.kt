@@ -13,7 +13,6 @@ import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CustomAssetDescriptor
@@ -43,16 +42,17 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   private val mainJarNameWithoutExtension: String = convertModuleNameToFileName(mainModule)
   private var mainJarName = "$mainJarNameWithoutExtension.jar"
 
-  /** module name to name of the library */
+  /** module name to file names of that module's own libraries which must not be packed */
   @JvmField
-  internal val excludedLibraries: MutableMap<String?, MutableList<String>> = HashMap()
+  internal val excludedModuleLibraries: MutableMap<String, MutableList<String>> = HashMap()
+
+  /** names of project libraries which must not be packed into this plugin */
+  @JvmField
+  internal val excludedProjectLibraries: MutableSet<String> = LinkedHashSet()
 
   internal fun excludeProjectLibrary(libraryName: String) {
-    excludedLibraries.computeIfAbsent(null) { ArrayList() }.add(libraryName)
+    excludedProjectLibraries.add(libraryName)
   }
-
-  @TestOnly
-  fun isLibraryExcluded(name: String): Boolean = excludedLibraries.get(null)?.contains(name) == true
 
   var directoryName: String = mainJarNameWithoutExtension
     private set
@@ -306,7 +306,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     val bundlingRestrictions: PluginBundlingRestrictions.Builder = PluginBundlingRestrictions.Builder()
 
     fun excludeModuleLibrary(libraryName: String, moduleName: String) {
-      layout.excludedLibraries.computeIfAbsent(moduleName) { ArrayList() }.add(libraryName)
+      layout.excludedModuleLibraries.computeIfAbsent(moduleName) { ArrayList() }.add(libraryName)
     }
 
     fun excludeProjectLibrary(libraryName: String) {

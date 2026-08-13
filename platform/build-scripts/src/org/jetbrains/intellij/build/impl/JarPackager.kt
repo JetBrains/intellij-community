@@ -6,8 +6,6 @@ package org.jetbrains.intellij.build.impl
 import com.dynatrace.hash4j.hashing.HashFunnel
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
-import com.intellij.util.PathUtilRt
-import com.intellij.util.io.URLUtil
 import com.jetbrains.util.filetype.FileType
 import com.jetbrains.util.filetype.FileTypeDetector.DetectFileType
 import io.opentelemetry.api.common.AttributeKey
@@ -32,8 +30,6 @@ import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.SignNativeFileMode
 import org.jetbrains.intellij.build.Source
 import org.jetbrains.intellij.build.USER_HOME
-import org.jetbrains.intellij.build.UTIL_8_JAR
-import org.jetbrains.intellij.build.UTIL_JAR
 import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.buildJar
 import org.jetbrains.intellij.build.checkForNoDiskSpace
@@ -42,7 +38,6 @@ import org.jetbrains.intellij.build.computeModuleSourcesByContent
 import org.jetbrains.intellij.build.defaultLibrarySourcesNamesFilter
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.getLibraryRoots
-import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
@@ -72,38 +67,6 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.TreeMap
 import kotlin.io.path.invariantSeparatorsPathString
 
-private val libsUsedInJps = setOf(
-  "Log4J",
-  "slf4j-api",
-  "slf4j-jdk14",
-  // see ArtifactRepositoryManager.getClassesFromDependencies
-  "kotlin-stdlib",
-)
-
-private val predefinedMergeRules = listOf<Pair<String, (String) -> Boolean>>(
-  "groovy.jar" to { it.startsWith("org.codehaus.groovy:") },
-  "jsch-agent.jar" to { it.startsWith("jsch-agent") },
-  PRODUCT_BACKEND_JAR to { name -> name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.") },
-  // see ClassPathUtil.getUtilClassPath
-  UTIL_8_JAR to { libsUsedInJps.contains(it) || (it.startsWith("kotlinx-")) },
-
-  // used in an external process - see `ConsoleProcessListFetcher.getConsoleProcessCount`
-  UTIL_JAR to { it == "pty4j" || it == "jvm-native-trusted-roots" },
-)
-
-internal fun getLibraryFileName(library: JpsLibrary): String {
-  val name = library.name
-  if (!name.startsWith('#')) {
-    return name
-  }
-
-  val roots = library.getRoots(JpsOrderRootType.COMPILED)
-  check(roots.size == 1) {
-    "Non-single entry module library $name: ${roots.joinToString { it.url }}"
-  }
-  return PathUtilRt.getFileName(roots.first().url.removeSuffix(URLUtil.JAR_SEPARATOR))
-}
-
 private fun isJarPreSigned(file: Path, context: BuildContext): Boolean {
   return context.productProperties.presignedNativeLibs.containsKey(getLibNameBySourceFile(file))
 }
@@ -117,7 +80,6 @@ class JarPackager private constructor(
 ) {
   private val assets = LinkedHashMap<Path, AssetDescriptor>()
 
-  private val libToMetadata = HashMap<JpsLibrary, ProjectLibraryData>()
   private val copiedFiles = LibraryFileCopyTracker()
 
   private val helper = (context as BuildContextImpl).jarPackagerDependencyHelper
@@ -160,30 +122,11 @@ class JarPackager private constructor(
       )
       packager.computeModuleCustomLibrarySources(layout)
 
-      val libraryToMerge = packager.computeProjectLibrariesSources(
+      packager.computeProjectLibrariesSources(
         outDir = outputDir,
         layout = layout,
         copiedFiles = packager.copiedFiles,
       )
-      if (isRootDir) {
-        for ((jarName, predicate) in predefinedMergeRules) {
-          packager.mergeLibsByPredicate(
-            jarName = jarName,
-            libraryToMerge = libraryToMerge,
-            outputDir = outputDir,
-            predicate = predicate,
-          )
-        }
-
-        if (!libraryToMerge.isEmpty()) {
-          packager.projectLibsToSourceWithMappings(uberJarFile = outputDir.resolve(PlatformJarNames.LIB_JAR), libraryToMerge = libraryToMerge)
-        }
-      }
-      else if (!libraryToMerge.isEmpty()) {
-        val mainJarName = (layout as PluginLayout).getMainJarName()
-        check(includedModules.any { it.relativeOutputFile == mainJarName })
-        packager.projectLibsToSourceWithMappings(uberJarFile = outputDir.resolve(mainJarName), libraryToMerge = libraryToMerge)
-      }
 
       val cacheManager = if (dryRun || context !is BuildContextImpl) NonCachingJarCacheManager else context.jarCacheManager
       val buildAssetResult = buildJars(
@@ -416,12 +359,18 @@ class JarPackager private constructor(
     val moduleName = module.name
     val includeProjectLib = if (layout is PluginLayout) layout.auto else item.isProductModule()
 
-    val excluded = if (layout is PluginLayout) (layout.excludedLibraries.get(moduleName) ?: emptyList()) + (layout.excludedLibraries.get(null) ?: emptyList()) else emptySet()
+    val excludedModuleLibraries = if (layout is PluginLayout) layout.excludedModuleLibraries.get(moduleName) ?: emptyList() else emptyList()
+    val excludedProjectLibraries = if (layout is PluginLayout) layout.excludedProjectLibraries else emptySet()
     for (element in helper.getLibraryDependencies(module, withTests = withTests)) {
       var projectLibraryData: ProjectLibraryData? = null
       val libRef = element.libraryReference
-      if (libRef.parentReference !is JpsModuleReference) {
+      val isProjectLibrary = libRef.parentReference !is JpsModuleReference
+      if (isProjectLibrary) {
         val libName = libRef.libraryName
+        if (excludedProjectLibraries.contains(libName)) {
+          continue
+        }
+
         if (includeProjectLib) {
           if (platformLayout!!.hasLibrary(libName, moduleName) || layout.hasLibrary(libName)) {
             continue
@@ -456,7 +405,8 @@ class JarPackager private constructor(
 
       val library = requireNotNull(element.library) { "cannot find $libRef" }
       val libraryName = getLibraryFileName(library)
-      if (excluded.contains(libraryName) || layout.includedModuleLibraries.any { it.libraryName == libraryName && !it.extraCopy }) {
+      if ((!isProjectLibrary && excludedModuleLibraries.contains(libraryName)) ||
+          layout.includedModuleLibraries.any { it.libraryName == libraryName && !it.extraCopy }) {
         continue
       }
 
@@ -521,7 +471,7 @@ class JarPackager private constructor(
     projectLibraryData: ProjectLibraryData?,
     library: JpsLibrary,
   ) {
-    val libraryName = getLibraryFilename(library)
+    val libraryName = getLibraryFileName(library)
     val mavenPaths = library.getPaths(JpsOrderRootType.COMPILED).map { toCanonicalReportPath(it, context.paths) }
     for (file in files) {
       val canonicalPath = getCanonicalPath(mavenPaths, file)
@@ -593,68 +543,22 @@ class JarPackager private constructor(
     }
   }
 
-  private fun mergeLibsByPredicate(
-    jarName: String,
-    libraryToMerge: MutableMap<JpsLibrary, List<Path>>,
-    outputDir: Path,
-    predicate: (String) -> Boolean,
-  ) {
-    val result = LinkedHashMap<JpsLibrary, List<Path>>()
-    val iterator = libraryToMerge.entries.iterator()
-    while (iterator.hasNext()) {
-      val (key, value) = iterator.next()
-      if (predicate(key.name)) {
-        iterator.remove()
-        result.put(key, value)
-      }
-    }
-    if (result.isEmpty()) {
-      return
-    }
-    projectLibsToSourceWithMappings(uberJarFile = outputDir.resolve(jarName), libraryToMerge = result)
-  }
-
-  private fun projectLibsToSourceWithMappings(uberJarFile: Path, libraryToMerge: Map<JpsLibrary, List<Path>>) {
-    val descriptor = getJarAsset(targetFile = uberJarFile, relativeOutputFile = "")
-    for ((library, files) in libraryToMerge) {
-      val projectLibraryData = libToMetadata.get(library) ?: throw IllegalStateException("Metadata not found for ${library.name}")
-      filesToSourceWithMapping(asset = descriptor, files = files, library = library, relativeOutputFile = null, projectLibraryData = projectLibraryData)
-    }
-  }
-
   private fun computeProjectLibrariesSources(
     outDir: Path,
     layout: BaseLayout,
     copiedFiles: LibraryFileCopyTracker,
-  ): MutableMap<JpsLibrary, List<Path>> {
+  ) {
     if (layout.includedProjectLibraries.isEmpty()) {
-      return LinkedHashMap()
+      return
     }
 
     val outputProvider = context.outputProvider
     val projectLibs = layout.includedProjectLibraries.sortedBy { it.libraryName }
-    val toMerge = LinkedHashMap<JpsLibrary, List<Path>>()
     for (libraryData in projectLibs) {
       val library = context.project.libraryCollection.findLibrary(libraryData.libraryName)
                     ?: throw IllegalArgumentException("Cannot find library ${libraryData.libraryName} in the project")
-      libToMetadata.put(library, libraryData)
       val libName = library.name
-      var packMode = libraryData.packMode
-      if (packMode == LibraryPackMode.MERGED) {
-        if (layout is PluginLayout) {
-          throw IllegalStateException("PackMode.MERGED is deprecated for plugins, please check why the library is marked as MERGED (libName=$libName, plugin=${layout.mainModule})")
-        }
-        else if (!predefinedMergeRules.any { it.second(libName) } && !isLibraryMergeable(libName)) {
-          packMode = LibraryPackMode.STANDALONE_MERGED
-        }
-      }
-
       val outPath = libraryData.outPath
-      if (packMode == LibraryPackMode.MERGED && outPath == null) {
-        toMerge.put(library, copiedFiles.getLibraryFiles(library = library, targetFile = null, outputProvider = outputProvider))
-        continue
-      }
-
       var libOutputDir = outDir
       if (outPath != null) {
         if (outPath.endsWith(".jar")) {
@@ -673,7 +577,7 @@ class JarPackager private constructor(
         filesToSourceWithMapping(asset = asset, files = files, library = library, relativeOutputFile = relativeOutputFile, projectLibraryData = libraryData)
       }
 
-      if (packMode == LibraryPackMode.STANDALONE_MERGED) {
+      if (libraryData.packMode == LibraryPackMode.STANDALONE_MERGED) {
         val targetFile = libOutputDir.resolve(nameToJarFileName(libName))
         val relativeOutputFile = if (outDir == libOutputDir) "" else outDir.relativize(targetFile).invariantSeparatorsPathString
         addLibrary(
@@ -684,18 +588,12 @@ class JarPackager private constructor(
       }
       else {
         for (file in getLibraryRoots(library, outputProvider)) {
-          var fileName = file.fileName.toString()
-          if (packMode == LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME) {
-            fileName = removeVersionFromJar(fileName)
-          }
-
-          val targetFile = libOutputDir.resolve(fileName)
+          val targetFile = libOutputDir.resolve(file.fileName.toString())
           val relativeOutputFile = if (outDir == libOutputDir) "" else outDir.relativize(targetFile).invariantSeparatorsPathString
           addLibrary(targetFile = targetFile, relativeOutputFile = relativeOutputFile, files = listOf(file))
         }
       }
     }
-    return toMerge
   }
 
   private fun filesToSourceWithMapping(
@@ -737,7 +635,7 @@ class JarPackager private constructor(
               ModuleLibraryFileEntry(
                 path = targetFile,
                 moduleName = moduleName,
-                libraryName = getLibraryFilename(library),
+                libraryName = getLibraryFileName(library),
                 libraryFile = file,
                 canonicalLibraryPath = canonicalPath,
                 size = size,
@@ -795,26 +693,6 @@ private data class AssetDescriptor(
   // must be sorted - we use it as is for Jar Cache
   @JvmField
   val includedModules = Reference2ObjectLinkedOpenHashMap<ModuleItem, MutableList<Source>>()
-}
-
-@Suppress("SpellCheckingInspection", "RedundantSuppression")
-private val excludedFromMergeLibs = setOf(
-  "async-profiler",
-  "dexlib2", // android-only lib
-  "intellij-test-discovery", // used as an agent
-  "protobuf", // https://youtrack.jetbrains.com/issue/IDEA-268753
-)
-
-private fun isLibraryMergeable(libName: String): Boolean {
-  return !excludedFromMergeLibs.contains(libName) &&
-         !(libName.startsWith("kotlin-") && !libName.startsWith("kotlin-test-")) &&
-         !libName.startsWith("kotlinc.") &&
-         !libName.contains("-agent-") &&
-         !libName.startsWith("rd-") &&
-         !libName.contains("annotations", ignoreCase = true) &&
-         !libName.startsWith("junit", ignoreCase = true) &&
-         !libName.startsWith("cucumber-", ignoreCase = true) &&
-         !libName.contains("groovy", ignoreCase = true)
 }
 
 internal val commonModuleExcludes: List<PathMatcher> = FileSystems.getDefault().let { fs ->

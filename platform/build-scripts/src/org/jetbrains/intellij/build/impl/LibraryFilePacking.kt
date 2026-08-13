@@ -6,7 +6,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.getLibraryRoots
 import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.nio.file.Path
+import kotlin.io.path.name
 
 private val JAR_NAME_WITH_VERSION_PATTERN = "(.*)-\\d+(?:\\.\\d+)*\\.jar*".toPattern()
 
@@ -18,6 +20,24 @@ fun removeVersionFromJar(fileName: String): String {
 
 @Internal
 fun nameToJarFileName(name: String): String = sanitizeFileName(name.lowercase(), replacement = "-") { it == ' ' } + ".jar"
+
+/**
+ * The name a library is known by in the distribution: its own name, or - for an unnamed (`#`-prefixed) module library - the file name of its
+ * single JAR.
+ */
+@Internal
+fun getLibraryFileName(lib: JpsLibrary): String {
+  val name = lib.name
+  if (name.startsWith('#')) {
+    // unnamed module libraries in the IntelliJ project may have only one root
+    val paths = lib.getPaths(JpsOrderRootType.COMPILED)
+    require(paths.size == 1) {
+      "Unnamed module library has more than one element: $paths"
+    }
+    return paths[0].name
+  }
+  return name
+}
 
 private val agentLibrariesNotForcedInSeparateJars = listOf(
   "code-agents",

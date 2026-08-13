@@ -84,7 +84,6 @@ import java.nio.file.attribute.FileTime
 import java.nio.file.attribute.PosixFilePermission
 import java.util.Collections
 import java.util.EnumSet
-import java.util.SortedSet
 import java.util.concurrent.TimeUnit
 import java.util.zip.Deflater
 import kotlin.io.path.exists
@@ -464,7 +463,7 @@ internal fun additionalProperties(): VmProperties = VmProperties(mapOf("user.hom
 
 private suspend fun distributionState(
   pluginsToPublish: Set<PluginLayout>,
-  projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>,
+  projectLibrariesUsedByPlugins: Map<String, Set<String>>,
   context: BuildContext,
 ): DistributionBuilderState {
   val platform = createPlatformLayout(projectLibrariesUsedByPlugins, context)
@@ -686,14 +685,19 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Co
   }
 
   if (layout is PluginLayout) {
-    checkModules(modules = layout.excludedLibraries.keys, fieldName = "excludedModuleLibraries in $description", outputProvider)
-    for ((key, value) in layout.excludedLibraries.entries) {
-      val libraries = (if (key == null) context.project.libraryCollection else context.outputProvider.findRequiredModule(key).libraryCollection).libraries
-      for (libraryName in value) {
+    checkModules(modules = layout.excludedModuleLibraries.keys, fieldName = "excludeModuleLibrary in $description", outputProvider)
+    for ((moduleName, libraryNames) in layout.excludedModuleLibraries) {
+      val libraries = context.outputProvider.findRequiredModule(moduleName).libraryCollection.libraries
+      for (libraryName in libraryNames) {
         check(libraries.any { getLibraryFileName(it) == libraryName }) {
-          val where = key?.let { "module '$it'" } ?: "project"
-          "Cannot find library '$libraryName' in $where (used in 'excludedModuleLibraries' in $description)"
+          "Cannot find library '$libraryName' in module '$moduleName' (used in 'excludeModuleLibrary' in $description)"
         }
+      }
+    }
+
+    for (libraryName in layout.excludedProjectLibraries) {
+      check(context.project.libraryCollection.findLibrary(libraryName) != null) {
+        "Cannot find project library '$libraryName' (used in 'excludeProjectLibrary' in $description)"
       }
     }
 
@@ -725,9 +729,9 @@ private fun checkPluginDuplicates(nonTrivialPlugins: List<PluginLayout>) {
   }
 }
 
-private fun checkModules(modules: Collection<String?>?, fieldName: String, outputProvider: ModuleOutputProvider) {
+private fun checkModules(modules: Collection<String>?, fieldName: String, outputProvider: ModuleOutputProvider) {
   if (modules != null) {
-    val unknownModules = modules.filter { it != null && outputProvider.findModule(it) == null }
+    val unknownModules = modules.filter { outputProvider.findModule(it) == null }
     check(unknownModules.isEmpty()) {
       "The following modules from $fieldName aren't found in the project: $unknownModules, ensure you use module name instead of plugin id"
     }

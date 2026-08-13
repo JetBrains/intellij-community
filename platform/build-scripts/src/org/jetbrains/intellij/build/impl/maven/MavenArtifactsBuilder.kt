@@ -24,7 +24,7 @@ import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.buildJar
 import org.jetbrains.intellij.build.impl.commonModuleExcludes
 import org.jetbrains.intellij.build.impl.createModuleSourcesNamesFilter
-import org.jetbrains.intellij.build.impl.getLibraryFilename
+import org.jetbrains.intellij.build.impl.getLibraryFileName
 import org.jetbrains.intellij.build.impl.libraries.isLibraryModule
 import org.jetbrains.intellij.build.isCommunityModule
 import org.jetbrains.intellij.build.mapConcurrent
@@ -425,7 +425,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
           Span.current().addEvent(
             "module depends on non-maven library", Attributes.of(
               AttributeKey.stringKey("module"), module.name,
-              AttributeKey.stringKey("library"), getLibraryFilename(library),
+              AttributeKey.stringKey("library"), getLibraryFileName(library),
             )
           )
           mavenizable = false

@@ -505,22 +505,9 @@ private fun writeProjectLibs(entries: List<DistributionFileEntry>, writer: JsonG
     if (data.reason != null) {
       writer.writeStringProperty("reason", data.reason)
     }
-    writeModuleDependents(writer, data)
     writer.writeEndObject()
   }
   writer.writeEndArray()
-}
-
-private fun writeModuleDependents(writer: JsonGenerator, data: ProjectLibraryData) {
-  writer.writeObjectPropertyStart("dependentModules")
-  for ((key, value) in data.dependentModules) {
-    writer.writeArrayPropertyStart(key)
-    for (moduleName in value.sorted()) {
-      writer.writeString(moduleName)
-    }
-    writer.writeEndArray()
-  }
-  writer.writeEndObject()
 }
 
 private fun createPluginKey(buildResult: PluginBuildResult): String {

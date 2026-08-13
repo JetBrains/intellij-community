@@ -414,7 +414,7 @@ object CommunityRepositoryModules {
    * distribution does.
    *
    * The libraries live in that wrapper module, registered as private plugin content in
-   * `android-plugin/descriptor/resources/META-INF/plugin.xml`. `ModuleLibraryData` and `PluginLayout.excludedLibraries`
+   * `android-plugin/descriptor/resources/META-INF/plugin.xml`. `ModuleLibraryData` and `PluginLayout.excludedModuleLibraries`
    * are keyed by `(moduleName, libraryName)`, so naming the wrapper here - and keeping every `relativeOutputPath` -
    * leaves the distribution byte-identical to when the libraries still sat on `intellij.android.streaming`.
    *
