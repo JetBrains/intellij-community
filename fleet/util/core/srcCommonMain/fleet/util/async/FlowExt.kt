@@ -36,7 +36,6 @@ import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withTimeout
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.nanoseconds
 
 fun <T, U> StateFlow<T>.view(f: (T) -> U): StateFlow<U> {
   val self = this
@@ -149,10 +148,10 @@ private fun <T> Flow<ChunkedEvent<T>>.chunkWithTimerTickOrDone(): Flow<List<T>> 
   result: -----A-----BC-----DEF---Gx
 
  */
-fun <T> Flow<T>.chunkedByTimeout(timeoutMillis: Long): Flow<List<T>> {
+fun <T> Flow<T>.chunkedByTimeout(timeout: Duration): Flow<List<T>> {
   val timer = flow<ChunkedEvent<T>> {
     do {
-      delay(timeoutMillis)
+      delay(timeout)
       emit(ChunkedEvent.Tick())
     }
     while (true)
@@ -182,10 +181,10 @@ fun <T, R> Iterable<Flow<T>>.combineReduce(r: R, f: suspend (R, T) -> R): Flow<R
 /**
  * Collects the underlying flow with timeout. It does not matter if collection is finished "organically" or with an error.
  */
-fun <T> Flow<T>.withTimeout(timeoutMillis: Long): Flow<T> {
+fun <T> Flow<T>.withTimeout(timeout: Duration): Flow<T> {
   val that = this
   return flow {
-    withTimeout(timeoutMillis) {
+    withTimeout(timeout) {
       emitAll(that)
     }
   }
@@ -221,20 +220,12 @@ fun <T> Flow<T>.consumeToChannelIn(scope: CoroutineScope): ReceiveChannel<T> {
   return rcv
 }
 
-fun <T> Flow<T>.throttleLatest(timeout: Duration): Flow<T> =
-  throttleLatest(timeout.toDelayMillis())
-
-fun <T> Flow<T>.throttleLatest(delayMillis: Long): Flow<T> = this
+fun <T> Flow<T>.throttleLatest(delay: Duration): Flow<T> = this
   .conflate()
   .transform {
     emit(it)
-    delay(delayMillis)
+    delay(delay)
   }
-
-private fun Duration.toDelayMillis(): Long = when (isPositive()) {
-  true -> plus(999_999L.nanoseconds).inWholeMilliseconds
-  false -> 0L
-}
 
 fun <ValueType> Flow<ValueType>.onFirst(block: suspend (ValueType) -> Unit): Flow<ValueType> {
   var isExecuted = false
