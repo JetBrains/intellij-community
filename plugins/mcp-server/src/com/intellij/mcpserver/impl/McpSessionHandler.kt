@@ -465,6 +465,12 @@ internal class McpSessionHandler(
                   descriptor = mcpTool.descriptor,
                   outcome = outcome,
                   durationMs = callMark.elapsedNow().inWholeMilliseconds,
+                  // A call that arrives here arrived as an MCP tool call. A dispatched one is reported by the router.
+                  invocationMode = McpToolInvocationMode.DIRECT,
+                  clientName = session.clientVersion?.name,
+                  transportType = transportType,
+                  argumentBytes = request.arguments?.toString()?.length,
+                  resultBytes = null,
                 )
               }
             }

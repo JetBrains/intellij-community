@@ -13,7 +13,7 @@ class McpServerCounterUsagesCollectorTest {
     val fields = event.getFields()
 
     assertThat(group.id).isEqualTo("mcpserver.events")
-    assertThat(group.version).isEqualTo(7)
+    assertThat(group.version).isEqualTo(8)
     assertThat(fields.map { it.name }).containsExactly(
       "min_severity",
       "result",

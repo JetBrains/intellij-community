@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.mcpserver.McpToolDescriptor
+import com.intellij.mcpserver.McpToolInvocationMode
 import com.intellij.mcpserver.McpToolsProvider
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.toolwindow.TransportType
@@ -60,15 +61,55 @@ internal fun lintFilesResultKind(
 }
 
 object McpServerCounterUsagesCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("mcpserver.events", 7)
+  // v8: mcp.tool.call gained the caller, transport, invocation mode and payload-size dimensions, without which a
+  // cost-per-tool analysis cannot separate one client or one dispatch path from another.
+  private val GROUP = EventLogGroup("mcpserver.events", 8)
 
   private val TOOL_NAME = EventFields.StringValidatedByCustomRule<McpToolNameValidator>("tool_name")
   private val OUTCOME = EventFields.Enum("outcome", McpToolCallOutcome::class.java)
+
+  private val KNOWN_CLIENT_NAMES: List<String> = listOf(
+    "codex",
+    "codex-cli",
+    "codex-acp",
+    "codex-mcp-client",
+    "claude-code",
+    "Copilot MCP Gateway",
+    "claude-agent",
+    "cursor",
+    "cursor-cli",
+    "cursor-acp",
+    "copilot",
+    "copilot-cli",
+    "ijproxy",
+    "ij-proxy",
+    "unknown",
+  )
+
+  private val CLIENT_NAME = EventFields.String("client_name", KNOWN_CLIENT_NAMES)
+  private val CLIENT_VERSION = EventFields.StringValidatedByRegexpReference("client_version", "version")
+  private val TRANSPORT_TYPE = EventFields.Enum<TransportType>("transport_type")
+  private val HAS_LOCAL_AGENT = EventFields.Boolean("has_local_agent")
+  private val TOOLS_COUNT = EventFields.RoundedInt("tools_count")
+
+  private val INVOCATION_MODE = EventFields.Enum(
+    "invocation_mode",
+    McpToolInvocationMode::class.java,
+    "Whether the call arrived directly or was dispatched through the universal router. Before this field existed a " +
+    "dispatched call produced no row at all",
+  )
+  private val ARGUMENT_BYTES = EventFields.RoundedInt("argument_bytes", "Rounded size of the serialized arguments")
+  private val RESULT_BYTES = EventFields.RoundedInt("result_bytes", "Rounded size of the serialized result")
 
   private val MCP_TOOL_CALL_EVENT: VarargEventId = GROUP.registerVarargEvent(
     "mcp.tool.call",
     TOOL_NAME,
     OUTCOME,
+    INVOCATION_MODE,
+    CLIENT_NAME,
+    TRANSPORT_TYPE,
+    ARGUMENT_BYTES,
+    RESULT_BYTES,
     EventFields.DurationMs,
   )
 
@@ -113,29 +154,6 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
     EventFields.DurationMs,
   )
 
-  private val KNOWN_CLIENT_NAMES: List<String> = listOf(
-    "codex",
-    "codex-cli",
-    "codex-acp",
-    "codex-mcp-client",
-    "claude-code",
-    "Copilot MCP Gateway",
-    "claude-agent",
-    "cursor",
-    "cursor-cli",
-    "cursor-acp",
-    "copilot",
-    "copilot-cli",
-    "ijproxy",
-    "ij-proxy",
-    "unknown",
-  )
-
-  private val CLIENT_NAME = EventFields.String("client_name", KNOWN_CLIENT_NAMES)
-  private val CLIENT_VERSION = EventFields.StringValidatedByRegexpReference("client_version", "version")
-  private val TRANSPORT_TYPE = EventFields.Enum<TransportType>("transport_type")
-  private val HAS_LOCAL_AGENT = EventFields.Boolean("has_local_agent")
-  private val TOOLS_COUNT = EventFields.RoundedInt("tools_count")
 
   private val SESSION_STARTED_EVENT: VarargEventId = GROUP.registerVarargEvent(
     "mcp.session.started",
@@ -155,11 +173,28 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  internal fun logMcpToolCall(descriptor: McpToolDescriptor, outcome: McpToolCallOutcome, durationMs: Long) {
+  internal fun logMcpToolCall(
+    descriptor: McpToolDescriptor,
+    outcome: McpToolCallOutcome,
+    durationMs: Long,
+    invocationMode: McpToolInvocationMode,
+    clientName: String?,
+    transportType: TransportType?,
+    argumentBytes: Int?,
+    resultBytes: Int?,
+  ) {
     MCP_TOOL_CALL_EVENT.log(
-      TOOL_NAME.with(descriptor.name),
-      OUTCOME.with(outcome),
-      EventFields.DurationMs.with(durationMs),
+      buildList {
+        add(TOOL_NAME.with(descriptor.name))
+        add(OUTCOME.with(outcome))
+        add(INVOCATION_MODE.with(invocationMode))
+        add(EventFields.DurationMs.with(durationMs))
+        // Left out rather than guessed: a dispatched call has no session of its own to read the caller from.
+        clientName?.let { add(CLIENT_NAME.with(it)) }
+        transportType?.let { add(TRANSPORT_TYPE.with(it)) }
+        argumentBytes?.let { add(ARGUMENT_BYTES.with(it)) }
+        resultBytes?.let { add(RESULT_BYTES.with(it)) }
+      }
     )
   }
 

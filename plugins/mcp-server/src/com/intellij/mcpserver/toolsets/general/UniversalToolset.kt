@@ -2,7 +2,9 @@
 
 package com.intellij.mcpserver.toolsets.general
 
+import com.intellij.mcpserver.McpExpectedError
 import com.intellij.mcpserver.McpServerBundle
+import com.intellij.mcpserver.McpToolInvocationMode
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
@@ -12,6 +14,7 @@ import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
+import com.intellij.mcpserver.statistics.McpToolCallOutcome
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -20,6 +23,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportProgressScope
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.util.execution.ParametersListUtil
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
@@ -151,10 +155,49 @@ class UniversalToolset : McpToolset {
     return jsonArgs
   }
 
+  /**
+   * Calls the dispatched tool and reports it as a tool call in its own right.
+   *
+   * The call goes straight to [McpToolDef.call], bypassing the wrapper in `McpSessionHandler` that reports
+   * `mcp.tool.call` — so before this reporting existed, a tool reached through the router produced a dispatch row
+   * and no call row, and per-tool usage silently excluded every routed call.
+   */
   private suspend fun invokeTool(tool: McpToolDef, jsonArgs: JsonObject): String {
-    val result = tool.call(jsonArgs)
-    if (result.isError) mcpFail("Tool execution failed: $result")
-    return result.toString()
+    val callMark = TimeSource.Monotonic.markNow()
+    var outcome = McpToolCallOutcome.SUCCESS
+    try {
+      val result = tool.call(jsonArgs)
+      if (result.isError) {
+        outcome = McpToolCallOutcome.RESULT_ERROR
+        mcpFail("Tool execution failed: $result")
+      }
+      return result.toString()
+    }
+    catch (e: McpExpectedError) {
+      if (outcome == McpToolCallOutcome.SUCCESS) outcome = McpToolCallOutcome.EXPECTED_ERROR
+      throw e
+    }
+    catch (e: CancellationException) {
+      outcome = McpToolCallOutcome.CANCELLED
+      throw e
+    }
+    catch (e: Throwable) {
+      outcome = McpToolCallOutcome.FAILURE
+      throw e
+    }
+    finally {
+      val callInfo = currentCoroutineContext().mcpCallInfo
+      McpServerCounterUsagesCollector.logMcpToolCall(
+        descriptor = tool.descriptor,
+        outcome = outcome,
+        durationMs = callMark.elapsedNow().inWholeMilliseconds,
+        invocationMode = McpToolInvocationMode.VIA_ROUTER,
+        clientName = callInfo.clientInfo?.name,
+        transportType = null,
+        argumentBytes = jsonArgs.toString().length,
+        resultBytes = null,
+      )
+    }
   }
 
   @VisibleForTesting
