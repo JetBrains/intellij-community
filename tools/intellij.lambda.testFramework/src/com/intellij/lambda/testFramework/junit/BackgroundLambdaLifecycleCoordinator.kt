@@ -5,8 +5,9 @@ package com.intellij.lambda.testFramework.junit
  * Remembers only the IDE-side JUnit lifecycle callbacks that reached the current lambda session.
  *
  * A recycled IDE has a new RD session. The JUnit engine does not repeat callbacks for a test that is already
- * running, so the replacement session needs the successfully delivered `beforeAll` callbacks followed by the
- * active `beforeEach`. Host-side extensions are deliberately outside this coordinator and are never replayed.
+ * running, so the replacement session needs the successfully delivered `beforeAll` callbacks, followed by the
+ * active `beforeEach` when a test method is running. Host-side extensions are deliberately outside this
+ * coordinator and are never replayed.
  */
 internal class BackgroundLambdaLifecycleCoordinator {
   private val lock = Any()
@@ -67,18 +68,20 @@ internal class BackgroundLambdaLifecycleCoordinator {
     deliver: suspend (LifecycleCallback) -> Unit,
   ): Boolean {
     val plan = synchronized(lock) {
-      val activeTest = activeBeforeEach ?: return false
       if (synchronizedIdeIdentity === ideIdentity) return false
+      val beforeAll = activeBeforeAll.values.toList()
+      val beforeEach = activeBeforeEach
+      if (beforeAll.isEmpty() && beforeEach == null) return false
       ReplayPlan(
-        beforeAll = activeBeforeAll.values.toList(),
-        beforeEach = activeTest,
+        beforeAll = beforeAll,
+        beforeEach = beforeEach,
       )
     }
 
     for (callback in plan.beforeAll) {
       deliver(callback)
     }
-    deliver(plan.beforeEach.callback)
+    plan.beforeEach?.let { active -> deliver(active.callback) }
 
     synchronized(lock) {
       check(activeBeforeAll.values.toList() == plan.beforeAll && activeBeforeEach == plan.beforeEach) {
@@ -97,7 +100,7 @@ internal class BackgroundLambdaLifecycleCoordinator {
 
   private data class ReplayPlan(
     val beforeAll: List<LifecycleCallback>,
-    val beforeEach: ActiveTest,
+    val beforeEach: ActiveTest?,
   )
 }
 

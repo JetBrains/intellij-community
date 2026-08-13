@@ -28,10 +28,19 @@ internal class BackgroundLambdaLifecycleCoordinatorTest {
   }
 
   @Test
-  fun `does not replay outside an active test`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+  fun `replays before all between test methods`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     val coordinator = BackgroundLambdaLifecycleCoordinator()
     val delivered = ArrayList<LifecycleCallback>()
     coordinator.beforeAllDelivered("example.Suite", "Before all", Any())
+
+    assertThat(coordinator.replayAfterRecycle(Any(), delivered::add)).isTrue()
+    assertThat(delivered).containsExactly(LifecycleCallback(LifecyclePhase.BEFORE_ALL, "Before all"))
+  }
+
+  @Test
+  fun `does not replay with no active lifecycle`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val coordinator = BackgroundLambdaLifecycleCoordinator()
+    val delivered = ArrayList<LifecycleCallback>()
 
     assertThat(coordinator.replayAfterRecycle(Any(), delivered::add)).isFalse()
     assertThat(delivered).isEmpty()
@@ -49,14 +58,16 @@ internal class BackgroundLambdaLifecycleCoordinatorTest {
   }
 
   @Test
-  fun `after each removes replay eligibility`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+  fun `after each removes before each but preserves before all replay`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     val coordinator = BackgroundLambdaLifecycleCoordinator()
+    val delivered = ArrayList<LifecycleCallback>()
     coordinator.beforeAllDelivered("example.Suite", "Before all", Any())
     coordinator.beforeEachDelivered("test-id", "example.Suite", "Before each", Any())
 
     coordinator.afterEachFinished("test-id")
 
-    assertThat(coordinator.replayAfterRecycle(Any()) { error("must not replay") }).isFalse()
+    assertThat(coordinator.replayAfterRecycle(Any(), delivered::add)).isTrue()
+    assertThat(delivered).containsExactly(LifecycleCallback(LifecyclePhase.BEFORE_ALL, "Before all"))
   }
 
   @Test
