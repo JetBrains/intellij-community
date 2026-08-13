@@ -457,14 +457,10 @@ object PluginManagerCore {
     discoveredPlugins: PluginsDiscoveryResult,
     coreLoader: ClassLoader,
     parentActivity: Activity?,
-    reportingPolicy: PluginLoadingErrorReportingPolicy,
     configureClassLoaders: Boolean,
-  ): PluginManagerState {
+  ): PluginSet {
     var initStagesActivity = parentActivity?.startChild("computeTargetState") // no safe end() call, because if it fails, it won't matter
     val pluginSet = initContext.computeTargetState(discoveredPlugins, isStartupInit = true, parentActivity = initStagesActivity)
-    val resolvedPluginSet = pluginSet.resolvedPluginSet
-    val excludedFromCandidateSubset = pluginSet.excludedFromCandidateSubset
-    val candidateSubset = resolvedPluginSet.candidateSet
 
     initStagesActivity = initStagesActivity?.endAndStart("log exclusion tree")
     PluginInitializationDiagnosticUtils.logExclusionTree(logger, pluginSet)
@@ -474,7 +470,24 @@ object PluginManagerCore {
       ClassLoaderConfigurator(pluginSet, coreLoader).configure()
     }
 
-    initStagesActivity = initStagesActivity?.endAndStart("error collection")
+    initStagesActivity?.end()
+    return pluginSet
+  }
+
+  @ApiStatus.Internal
+  fun createPluginManagerState(
+    pluginSet: PluginSet,
+    parentActivity: Activity?,
+    reportingPolicy: PluginLoadingErrorReportingPolicy,
+  ): PluginManagerState {
+    var initStagesActivity = parentActivity?.startChild("createPluginManagerState")
+    val initContext = pluginSet.input.initContext
+    val discoveredPlugins = pluginSet.input.discoveryResult
+    val resolvedPluginSet = pluginSet.resolvedPluginSet
+    val excludedFromCandidateSubset = pluginSet.excludedFromCandidateSubset
+    val candidateSubset = resolvedPluginSet.candidateSet
+
+    initStagesActivity = initStagesActivity?.startChild("error collection")
     val incompletePlugins = HashMap<PluginId, PluginMainDescriptor>()
     val shadowedBundledIds = HashSet<PluginId>()
     for (pluginList in discoveredPlugins.pluginLists) {
@@ -731,13 +744,18 @@ object PluginManagerCore {
     val tracerShim = CoroutineTracerShim.coroutineTracer
     return tracerShim.span("plugin initialization") {
       val coreLoader = PluginManagerCore::class.java.classLoader
-      val initResult = initializePlugins(
+      val parentActivity = tracerShim.getTraceActivity()
+      val pluginSet = initializePlugins(
         initContext = initContext,
         discoveredPlugins = discoveredPlugins,
         coreLoader = coreLoader,
-        parentActivity = tracerShim.getTraceActivity(),
-        reportingPolicy = PluginLoadingErrorReportingPolicy.forCurrentProduct(),
+        parentActivity = parentActivity,
         configureClassLoaders = true,
+      )
+      val initResult = createPluginManagerState(
+        pluginSet = pluginSet,
+        parentActivity = parentActivity,
+        reportingPolicy = PluginLoadingErrorReportingPolicy.forCurrentProduct(),
       )
       val pluginState = pluginsState
       pluginState.pluginsToDisable = initResult.pluginToDisable

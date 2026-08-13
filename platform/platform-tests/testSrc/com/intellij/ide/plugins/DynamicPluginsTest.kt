@@ -1115,7 +1115,7 @@ class DynamicPluginsTest {
     // initial descriptor loading
     val barPluginPath = plugin("bar") {}.installAt(pluginsDir)
     val fooPluginPath = plugin("foo") { depends("bar") }.installAt(pluginsDir)
-    PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").build()
+    PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").buildManagerState()
 
     val barPluginId = PluginId.getId("bar")
     val fooPluginId = PluginId.getId("foo")
@@ -1161,7 +1161,7 @@ class DynamicPluginsTest {
       }
     }.installAt(pluginsDir)
 
-    PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").build()
+    PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").buildManagerState()
     loadPluginInTest(fooPluginPath) {
       loadPluginInTest(barPluginPath) {
         assertThat(PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId("foo.b", "test_ns"))).isNull()
@@ -1184,7 +1184,7 @@ class DynamicPluginsTest {
       }
     }.installAt(pluginsDir)
 
-    PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").build()
+    PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").buildManagerState()
     loadPluginInTest(fooPluginPath) {
       loadPluginInTest(barPluginPath) {
         assertThat(PluginManagerCore.getPluginSet().buildContentModuleIdMap().contains(PluginModuleId("foo.a", "test_ns"))).isTrue

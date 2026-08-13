@@ -16,7 +16,8 @@ import com.intellij.platform.testFramework.plugins.plugin as buildPlugin
  */
 //todo: move this to some testFramework module
 fun buildPluginSet(pluginsDirPath: Path, configureClassLoaders: Boolean = true, builder: PluginSetSpecBuilder.() -> Unit): PluginSet {
-  return buildPluginManagerState(pluginsDirPath, configureClassLoaders, builder).pluginSet
+  builder(PluginSetSpecBuilder(pluginsDirPath))
+  return PluginSetTestBuilder.fromPath(pluginsDirPath).build(configureClassLoaders)
 }
 
 fun buildPluginManagerState(pluginsDirPath: Path, configureClassLoaders: Boolean = true, builder: PluginSetSpecBuilder.() -> Unit): PluginManagerState {
