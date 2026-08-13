@@ -31,6 +31,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import javax.swing.BoxLayout
@@ -40,7 +41,7 @@ import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 
 @ApiStatus.Internal
-class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(project) {
+class WelcomeScreenLeftPanel(private val project: Project, private val scope: CoroutineScope) : ProjectViewPane(project) {
   private var searchField: SearchTextField? = null
 
   override fun getTitle(): String = NonModalWelcomeScreenBundle.message("welcome.screen.project.view.title")
@@ -99,7 +100,7 @@ class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(pro
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
       border = JBUI.Borders.empty()
     }
-    topPanel.add(WelcomeScreenLeftPanelActions(project).createButtonsComponent())
+    topPanel.add(WelcomeScreenLeftPanelActions(project).createButtonsComponent(scope))
     topPanel.add(separator { customize(UnscaledGapsY(top = 17)) })
     topPanel.add(searchPanel(projectFilteringTree))
     topPanel.add(separator())
