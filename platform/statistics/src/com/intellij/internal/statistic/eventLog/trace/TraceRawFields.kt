@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -30,15 +31,6 @@ data class TraceRawField(
       "Field '$name' stores file-backed content. Use TraceRawFileField with checkFileContentForLogging()."
     }
   }
-
-  @Deprecated(
-    "Specify TraceRawFieldKind explicitly so PII filtering can pick the right rule. " +
-      "Use TraceRawFieldKind.TEXT for natural-language text (which may contain code blocks); " +
-      "use TraceRawFieldKind.CODE for source code.",
-    ReplaceWith("TraceRawField(name, TraceRawFieldKind.TEXT)"),
-  )
-  @Suppress("DEPRECATION")
-  constructor(@NonNls name: String) : this(name, TraceRawFieldKind.UNSPECIFIED)
 
   override val validationRule: List<String>
     get() = rawValidationRule(kind)
@@ -71,11 +63,7 @@ class TraceRawFileField @JvmOverloads constructor(
  * distinguishable downstream.
  */
 @ApiStatus.Internal
-enum class TraceRawFieldKind { TEXT,
-  CODE,
-  @Deprecated("Used for backward compatibility only")
-  UNSPECIFIED
-}
+enum class TraceRawFieldKind { TEXT, CODE }
 
 @ApiStatus.Internal
 class TraceRawFileContent private constructor(internal val content: String) {
@@ -127,7 +115,10 @@ val reservedFileContentFieldNames: Set<String> = setOf(
 )
 
 /**
- * Suppresses raw values in automated runs that must not upload real code, such as evaluation and integration tests.
+ * The one answer to "may this IDE record TRACE data", so that a collector on any surface does not derive its own.
+ *
+ * [isForciblyDisabledForTests] suppresses raw values in automated runs that must not upload real code, such as
+ * evaluation runs and integration tests.
  */
 @ApiStatus.Internal
 object TraceRawDataSharing {
@@ -135,11 +126,25 @@ object TraceRawDataSharing {
   @Volatile
   var isForciblyDisabledForTests: Boolean = false
 
+  /**
+   * Whether a raw field may put its value into an event. True in unit tests, where events are collected in memory
+   * and never sent, so that a test can assert on the payload.
+   */
   fun isRawDataLoggingAllowed(): Boolean {
     val application = ApplicationManager.getApplication() ?: return false
-    if (application.isUnitTestMode) {
-      return true
-    }
+    return application.isUnitTestMode || isTraceDataCollectionAllowed(application)
+  }
+
+  /**
+   * Whether a whole collector should report. Unlike [isRawDataLoggingAllowed] this is false in unit tests, matching
+   * what `CounterUsagesCollector.isEnabled` has always answered for the TRACE recorder.
+   */
+  fun isTraceCollectionAllowed(): Boolean {
+    val application = ApplicationManager.getApplication() ?: return false
+    return !application.isUnitTestMode && isTraceDataCollectionAllowed(application)
+  }
+
+  private fun isTraceDataCollectionAllowed(application: Application): Boolean {
     if (isForciblyDisabledForTests) {
       return false
     }
@@ -148,12 +153,10 @@ object TraceRawDataSharing {
   }
 }
 
-@Suppress("DEPRECATION")
 private fun rawValidationRule(kind: TraceRawFieldKind): List<String> {
   val ruleClass = when (kind) {
     TraceRawFieldKind.TEXT -> TraceRawTextValidationRule::class.java
     TraceRawFieldKind.CODE -> TraceRawCodeValidationRule::class.java
-    TraceRawFieldKind.UNSPECIFIED -> TraceRawTextValidationRule::class.java
   }
   return listOf("{util#${CustomValidationRule.getRuleId(ruleClass)}}")
 }
