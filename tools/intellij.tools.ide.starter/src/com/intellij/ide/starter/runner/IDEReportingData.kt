@@ -84,7 +84,8 @@ class IDEReportingData internal constructor(
   val snapshotsDir: Path = createReportingDirectory("snapshots")
   val logsDir: Path = createReportingDirectory("log")
 
-  val jbrDiagnostic: Path = logsDir.resolve("jbrDiagnostic")
+  /** Where the JVM crash logs of this launch are copied, if it left any. Created on demand, unlike its siblings. */
+  val jbrDiagnosticDir: Path = logsDir.resolve("jbrDiagnostic")
 
   private fun createReportingDirectory(name: String): Path =
     checkPathLength(launchDir.resolve(name)).createDirectories()
@@ -171,7 +172,7 @@ class IDEReportingData internal constructor(
       userHome.resolve("java_error_in_idea_$javaProcessId.log"),
       userHome.resolve("jbr_err_pid$javaProcessId.log"),
     ).filter { it.exists() }.forEach { crashFile ->
-      crashFile.copyTo(jbrDiagnostic.createDirectories().resolve(crashFile.name), overwrite = true)
+      crashFile.copyTo(jbrDiagnosticDir.createDirectories().resolve(crashFile.name), overwrite = true)
     }
   }
 
