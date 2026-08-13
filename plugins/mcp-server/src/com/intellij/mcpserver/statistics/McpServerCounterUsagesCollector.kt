@@ -43,6 +43,19 @@ internal enum class McpToolCallOutcome {
   CANCELLED,
 }
 
+/**
+ * Whether the IDE launched the agent behind a call.
+ *
+ * Derived from `McpSessionOptions.localAgentId`, which the IDE sets when it opens a session for an agent it started.
+ * Its absence means a client the IDE did not launch — an agent in a terminal, or another editor pointed at this MCP
+ * server — which is why the constant does not claim "terminal".
+ */
+enum class McpCallerLaunchOrigin {
+  IDE_LAUNCHED,
+  EXTERNAL_CLIENT,
+  UNKNOWN,
+}
+
 /** Why a command passed to `execute_tool` produced no tool call. */
 enum class McpDispatchRejectReason {
   /** The command dispatched to a tool; whether that tool then succeeded is `success`. */
@@ -102,6 +115,12 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
   private val HAS_LOCAL_AGENT = EventFields.Boolean("has_local_agent")
   private val TOOLS_COUNT = EventFields.RoundedInt("tools_count")
 
+  private val LAUNCH_ORIGIN = EventFields.Enum(
+    "launch_origin",
+    McpCallerLaunchOrigin::class.java,
+    "Whether the IDE launched the agent that made this call. An external client is observed only through its MCP " +
+    "calls, so without this field a partial session is averaged in as a complete one",
+  )
   private val INVOCATION_MODE = EventFields.Enum(
     "invocation_mode",
     McpToolInvocationMode::class.java,
@@ -115,6 +134,7 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
     "mcp.tool.call",
     TOOL_NAME,
     OUTCOME,
+    LAUNCH_ORIGIN,
     INVOCATION_MODE,
     CLIENT_NAME,
     TRANSPORT_TYPE,
@@ -196,6 +216,7 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
     outcome: McpToolCallOutcome,
     durationMs: Long,
     invocationMode: McpToolInvocationMode,
+    launchOrigin: McpCallerLaunchOrigin,
     clientName: String?,
     transportType: TransportType?,
     argumentBytes: Int?,
@@ -205,6 +226,7 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
       buildList {
         add(TOOL_NAME.with(descriptor.name))
         add(OUTCOME.with(outcome))
+        add(LAUNCH_ORIGIN.with(launchOrigin))
         add(INVOCATION_MODE.with(invocationMode))
         add(EventFields.DurationMs.with(durationMs))
         // Left out rather than guessed: a dispatched call has no session of its own to read the caller from.

@@ -10,6 +10,7 @@ import com.intellij.mcpserver.McpTool
 import com.intellij.mcpserver.McpToolCallResult
 import com.intellij.mcpserver.McpToolCallResultContent
 import com.intellij.mcpserver.McpToolInvocationMode
+import com.intellij.mcpserver.launchOriginOf
 import com.intellij.mcpserver.ToolCallListener
 import com.intellij.mcpserver.elicitation.McpElicitationKind
 import com.intellij.mcpserver.elicitation.McpSessionElement
@@ -467,6 +468,7 @@ internal class McpSessionHandler(
                   durationMs = callMark.elapsedNow().inWholeMilliseconds,
                   // A call that arrives here arrived as an MCP tool call. A dispatched one is reported by the router.
                   invocationMode = McpToolInvocationMode.DIRECT,
+                  launchOrigin = launchOriginOf(sessionOptions),
                   clientName = session.clientVersion?.name,
                   transportType = transportType,
                   argumentBytes = request.arguments?.toString()?.length,

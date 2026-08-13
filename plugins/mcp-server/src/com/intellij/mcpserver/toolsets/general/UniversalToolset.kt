@@ -14,6 +14,7 @@ import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
+import com.intellij.mcpserver.launchOriginOf
 import com.intellij.mcpserver.statistics.McpDispatchRejectReason
 import com.intellij.mcpserver.statistics.McpToolCallOutcome
 import com.intellij.openapi.diagnostic.fileLogger
@@ -210,6 +211,7 @@ class UniversalToolset : McpToolset {
         outcome = outcome,
         durationMs = callMark.elapsedNow().inWholeMilliseconds,
         invocationMode = McpToolInvocationMode.VIA_ROUTER,
+        launchOrigin = launchOriginOf(callInfo.mcpSessionOptions),
         clientName = callInfo.clientInfo.name,
         transportType = null,
         argumentBytes = jsonArgs.toString().length,
