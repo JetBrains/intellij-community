@@ -8,6 +8,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.Cancellation;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.system.LowLevelLocalMachineAccess;
 import com.intellij.util.system.OS;
@@ -276,20 +278,23 @@ public final class ShellEnvironmentReader {
     if (exitCode != null) return exitCode;
 
     LOG.warn("shell env loader is timed out");
-    try {
-      OSProcessUtil.terminateProcessGracefully(process);
+
+    try(var _ = Cancellation.withNonCancelableSection()) {
+      try {
+        OSProcessUtil.terminateProcessGracefully(process);
+        exitCode = waitFor(process, 1000L);
+        if (exitCode != null) return exitCode;
+      }
+      catch (UnsupportedOperationException _) {
+        // ignore, try force-kill if graceful shutdown is not supported
+      }
+      OSProcessUtil.killProcessTree(process);
       exitCode = waitFor(process, 1000L);
       if (exitCode != null) return exitCode;
-    }
-    catch (UnsupportedOperationException _) {
-      // ignore, try force-kill if graceful shutdown is not supported
-    }
-    OSProcessUtil.killProcessTree(process);
-    exitCode = waitFor(process, 1000L);
-    if (exitCode != null) return exitCode;
-    LOG.warn("failed to kill shell env loader");
+      LOG.warn("failed to kill shell env loader");
 
-    return -1;
+      return -1;
+    }
   }
 
   private static @Nullable Integer waitFor(Process process, long timeoutMillis) {
