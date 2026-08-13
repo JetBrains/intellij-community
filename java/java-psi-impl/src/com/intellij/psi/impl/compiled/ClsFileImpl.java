@@ -65,6 +65,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.PsiClassHolderFileStub;
@@ -341,7 +342,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
           mirrorTreeElement = SourceTreeToPsiMap.psiToTreeNotNull(mirror);
           // force to parse;
           // the non-cancelable section below must only wire mirrors, never parse
-          mirrorTreeElement.getFirstChildNode();
+          TreeUtil.ensureParsed(mirrorTreeElement);
           try {
             TreeElement _mirrorTreeElement = mirrorTreeElement;
             ProgressManager.getInstance().executeNonCancelableSection(() -> {
