@@ -226,7 +226,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
                         listeners[original]?.elementMoved(new)
                     }
                     publisher.afterMove(moveDescriptor)
-                    oldToNewMap.values.map { it.createSmartPointer() }
+                    oldToNewMap.values.filter { it.isValid }.map { it.createSmartPointer() }
                 }
             }
         }
