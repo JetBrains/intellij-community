@@ -149,7 +149,14 @@ class IDEReportingData internal constructor(
   val snapshotsDir: Path = createReportingDirectory("snapshots")
   val logsDir: Path = createReportingDirectory("log")
 
-  /** Where the JVM crash logs of this launch are copied, if it left any. Created on demand, unlike its siblings. */
+  /**
+   * Where the JVM of this launch writes its own crash log, should it crash. Only named here and created by whoever points the JVM at it,
+   * so that an empty directory never claims a crash log went missing; that writer is also the one that checks the directory against
+   * [ReportingPathUtils.WIDEST_CRASH_LOG_NAME], since the name is only worth reserving once something is about to write it.
+   */
+  val jvmCrashLogDir: Path = logsDir.resolve("jvm-crash")
+
+  /** Where the crash logs this launch left in the home directory are copied, if it left any. Created on demand, like [jvmCrashLogDir]. */
   val jbrDiagnosticDir: Path = logsDir.resolve("jbrDiagnostic")
 
   private fun createReportingDirectory(name: String): Path =

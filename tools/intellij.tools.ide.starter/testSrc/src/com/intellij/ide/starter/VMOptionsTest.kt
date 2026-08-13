@@ -3,19 +3,24 @@ package com.intellij.ide.starter
 import com.intellij.ide.starter.ide.InstalledIde
 import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.utils.ReportingPathUtils.PATH_LENGTH_LIMIT
+import com.intellij.ide.starter.utils.ReportingPathUtils.WIDEST_CRASH_LOG_NAME
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.Mockito.mock
 import java.nio.file.Path
 
-/** The widest process id `%p` can be expanded to, on the OS that allows the widest one. */
-private const val WIDEST_CRASH_LOG_NAME = "java_error_in_idea_4294967295.log"
-
 class VMOptionsTest {
   @TempDir
   lateinit var tempDir: Path
+
+  /** A process id is 32 bits wide at most, so reserving a `Long`'s worth of digits rejects directories every real process fits into. */
+  @Test
+  fun `a crash log name is reserved for the widest process id there can be`() {
+    WIDEST_CRASH_LOG_NAME shouldBe "java_error_in_idea_4294967295.log"
+  }
 
   /**
    * `-XX:ErrorFile` is checked against a placeholder id, because the JVM only expands `%p` once it crashes. Reserving room for a `Long`

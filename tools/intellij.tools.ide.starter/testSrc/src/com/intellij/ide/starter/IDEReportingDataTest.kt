@@ -250,8 +250,10 @@ class IDEReportingDataTest {
     reportingRoot.relativize(reportingData.reportsDir) shouldBe launchDir.resolve("reports")
     reportingRoot.relativize(reportingData.snapshotsDir) shouldBe launchDir.resolve("snapshots")
     reportingData.logsDir.exists() shouldBe true
+    reportingData.jvmCrashLogDir shouldBe reportingData.logsDir.resolve("jvm-crash")
     reportingData.jbrDiagnosticDir shouldBe reportingData.logsDir.resolve("jbrDiagnostic")
-    // unlike the three reporting dirs, this one is only created once there is a crash file to copy into it
+    // unlike the three reporting dirs, the crash dirs are only created once the launch has a crash to write into them
+    reportingData.jvmCrashLogDir.exists() shouldBe false
     reportingData.jbrDiagnosticDir.exists() shouldBe false
   }
 

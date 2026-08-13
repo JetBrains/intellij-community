@@ -28,6 +28,9 @@ private const val TEAMCITY_ARTIFACT_SUFFIX = "-2147483647.zip"
 object ReportingPathUtils {
   const val PATH_LENGTH_LIMIT: Int = 260
 
+  /** The longest name a JVM crash log gets: the JVM expands `%p` to a process id, 32 bits wide at most on every OS Starter runs on. */
+  val WIDEST_CRASH_LOG_NAME: String = "java_error_in_idea_${UInt.MAX_VALUE}.log"
+
   /**
    * Whether a path over [PATH_LENGTH_LIMIT] is reported here, rather than left to the one OS its length bothers.
    *
@@ -68,6 +71,16 @@ object ReportingPathUtils {
       kind = SyntheticTestKind.TEST_INFRA_EXCEPTION,
     )
     return path
+  }
+
+  /**
+   * Reports [directory] unless it can still hold the crash log of any process. A directory has to be checked against the widest name it will
+   * ever hold rather than against itself, because the JVM only expands `%p` once it has already crashed: a directory that fits
+   * `-XX:ErrorFile` but not the file it names loses exactly the diagnostics the crash was supposed to leave behind.
+   */
+  fun checkCrashLogDirectoryLength(directory: Path): Path {
+    checkPathLength(directory.resolve(WIDEST_CRASH_LOG_NAME))
+    return directory
   }
 
   /**

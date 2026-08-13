@@ -165,7 +165,7 @@ data class IDERunContext(
       if (!testContext.isRemDevContext()) {
         takeScreenshotsPeriodically()
       }
-      withJvmCrashLogDirectory(lastIdeReportingData.logsDir.resolve("jvm-crash").createDirectories())
+      withJvmCrashLogDirectory(lastIdeReportingData.jvmCrashLogDir.createDirectories())
       withHeapDumpOnOutOfMemoryDirectory(lastIdeReportingData.logsDir.resolve("heap-dump").createDirectories())
       withGCLogs(lastIdeReportingData.reportsDir.resolve("gcLog.log"))
       setOpenTelemetryMaxFilesNumber()

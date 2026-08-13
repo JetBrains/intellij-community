@@ -6,6 +6,7 @@ import com.intellij.ide.starter.runner.targets.TargetResolver
 import com.intellij.ide.starter.runner.targets.isWsl
 import com.intellij.ide.starter.utils.FileSystem.cleanPathFromSlashes
 import com.intellij.ide.starter.utils.JvmUtils
+import com.intellij.ide.starter.utils.ReportingPathUtils.checkCrashLogDirectoryLength
 import com.intellij.ide.starter.utils.ReportingPathUtils.checkPathLength
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.LogLevel
@@ -311,9 +312,7 @@ data class VMOptions(
   }
 
   fun withJvmCrashLogDirectory(directory: Path) {
-    val absoluteDirectory = directory.toAbsolutePath()
-    // the JVM expands %p to the process id, which is 32 bits wide at most on every OS we run on
-    checkPathLength(absoluteDirectory.resolve("java_error_in_idea_${UInt.MAX_VALUE}.log"))
+    val absoluteDirectory = checkCrashLogDirectoryLength(directory.toAbsolutePath())
     addLine("-XX:ErrorFile=${absoluteDirectory.resolve("java_error_in_idea_%p.log")}", "-XX:ErrorFile=")
   }
 
