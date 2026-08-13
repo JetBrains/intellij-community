@@ -94,6 +94,7 @@ DEV_DIST_EXTRA_DESCRIPTOR_FILES = [
     ("android/sdk-updates/resources/META-INF/sdk-updates.xml", "intellij.android.sdkUpdates"),
     ("android/server-flags/resources/META-INF/server-flags.xml", "intellij.android.server-flags"),
     ("android/streaming/resources/META-INF/streaming.xml", "intellij.android.streaming"),
+    ("android/studio-flags/resources/META-INF/studio-flags.xml", "intellij.android.studio-flags"),
     ("android/testartifacts/resources/META-INF/testartifacts.xml", "intellij.android.testartifacts"),
     ("android/threading-checker/resources/META-INF/threading-checker.xml", "intellij.android.threading-checker"),
     ("android/tracer/resources/META-INF/tracer.xml", "intellij.android.tracer"),

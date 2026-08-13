@@ -346,6 +346,8 @@
       <module fileurl="file://$PROJECT_DIR$/android/streaming/intellij.android.streaming.integration.iml" filepath="$PROJECT_DIR$/android/streaming/intellij.android.streaming.integration.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/streaming/intellij.android.streaming.testUtil.iml" filepath="$PROJECT_DIR$/android/streaming/intellij.android.streaming.testUtil.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/streaming/intellij.android.streaming.tests.iml" filepath="$PROJECT_DIR$/android/streaming/intellij.android.streaming.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/studio-flags/intellij.android.studio-flags.iml" filepath="$PROJECT_DIR$/android/studio-flags/intellij.android.studio-flags.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/studio-flags/intellij.android.studio-flags-tests.iml" filepath="$PROJECT_DIR$/android/studio-flags/intellij.android.studio-flags-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/studio/integration/intellij.android.studio.integration/intellij.android.studio.integration.iml" filepath="$PROJECT_DIR$/android/studio/integration/intellij.android.studio.integration/intellij.android.studio.integration.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/studio/tests/intellij.android.studio.tests.iml" filepath="$PROJECT_DIR$/android/studio/tests/intellij.android.studio.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/sync-memory-tests/intellij.android.sync-memory-tests.iml" filepath="$PROJECT_DIR$/android/sync-memory-tests/intellij.android.sync-memory-tests.iml" />

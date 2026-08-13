@@ -199,6 +199,7 @@ android/sdk-updates
 android/server-flags
 android/smali
 android/streaming
+android/studio-flags
 android/studio/integration/intellij.android.studio.integration
 android/studio/tests
 android/swingp
