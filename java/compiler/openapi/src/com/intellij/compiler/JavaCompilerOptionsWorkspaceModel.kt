@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Read/write access to per-module Java compiler options that are stored in the workspace model
- * ([JavaModuleCompilerOptionsEntity]) instead of `compiler.xml` ([JavacConfiguration]).
+ * ([JavaModuleCompilerOptionsEntity]) instead of `compiler.xml` (`JavacConfiguration`).
  *
  * Reading is used by Java highlighting (through [com.intellij.psi.JavaCompilerConfigurationProxy] →
  * [WorkspaceModelJavaCompilerConfigurationProxy]) to pick up build-tool defined options such as `--add-exports`.

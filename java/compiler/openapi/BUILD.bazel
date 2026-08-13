@@ -40,6 +40,7 @@ jvm_library(
         "//platform/lang-api:lang",
         "//java/java-psi-api:psi",
         "//platform/lang-impl",
+        "//platform/backend/workspace",
     ],
 )
 
@@ -79,6 +80,7 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//java/java-psi-api:psi_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/backend/workspace:workspace_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.compiler` end
