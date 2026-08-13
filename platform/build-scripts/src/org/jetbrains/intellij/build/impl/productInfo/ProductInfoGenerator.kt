@@ -155,12 +155,15 @@ internal suspend fun generateIjLightLaunchData(
     commands = listOf("ijLight"),
     vmOptionsFilePath = vmOptionsFilePath(clientContext),
     bootClassPathJarNames = clientContext.bootClassPathJarNames,
-    additionalJvmArguments = clientContext.getAdditionalJvmArguments(os, arch) +
-                             getAdditionalEmbeddedClientVmOptions(os, ideContext) +
-                             "-Dintellij.platform.product.mode=light" +
-                             "-Dintellij.platform.use.proxies.for.open.services=true" +
-                             "-Didea.vfs.max-file-length-to-cache=0" +
-                             "-Dcom.intellij.openapi.fileTypes.impl.FileTypeDetectionService.allowDetectionByContent=false",
+    additionalJvmArguments = buildList {
+      addAll(clientContext.getAdditionalJvmArguments(os, arch))
+      addAll(getAdditionalEmbeddedClientVmOptions(os, ideContext))
+      add("-Dintellij.platform.product.mode=light")
+      add("-Dintellij.platform.use.proxies.for.open.services=true")
+      add("-Didea.vfs.max-file-length-to-cache=0")
+      add("-Dcom.intellij.openapi.fileTypes.impl.FileTypeDetectionService.allowDetectionByContent=false")
+      add("-Ddisable.implicit.soft.compatibility.dependencies=true")
+    },
     mainClass = clientContext.ideMainClassName,
     envVarBaseName = "JETBRAINS_CLIENT",
     dataDirectoryName = clientContext.systemSelector,

@@ -357,6 +357,9 @@ class ProductPluginInitContext(
       descriptor: IdeaPluginDescriptorImpl,
       remainingCandidates: RemainingCandidatesView,
     ): Sequence<DependencyRef> {
+      if (System.getProperty("disable.implicit.soft.compatibility.dependencies").toBoolean()) {
+        return emptySequence()
+      }
       return sequence {
         suspend fun SequenceScope<DependencyRef>.yieldIfResolves(ref: DependencyRef) {
           if (remainingCandidates.resolveReference(ref) != null) {
