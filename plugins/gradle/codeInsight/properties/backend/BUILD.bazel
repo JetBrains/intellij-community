@@ -1,0 +1,73 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.gradle.codeInsight.properties.backend` start
+jvm_library(
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.codeInsight.properties.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/backend",
+        "//plugins/gradle/codeInsight",
+        "//plugins/gradle/codeInsight/backend",
+        "//plugins/gradle/codeInsight/properties",
+        "//plugins/gradle",
+        "//plugins/gradle/properties",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/analysis-api:analysis",
+        "//plugins/properties/properties-psi-api:psi",
+    ],
+)
+
+content_module_jar(module = ":backend")
+
+jvm_library(
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.codeInsight.properties.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//platform/backend:backend_test_lib",
+        "//plugins/gradle/codeInsight:codeInsight_test_lib",
+        "//plugins/gradle/codeInsight/backend:backend_test_lib",
+        "//plugins/gradle/codeInsight/properties:properties_test_lib",
+        "//plugins/gradle:gradle_test_lib",
+        "//plugins/gradle/properties:properties_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//plugins/properties/properties-psi-api:psi_test_lib",
+    ],
+)
+### auto-generated section `build intellij.gradle.codeInsight.properties.backend` end
+
+### auto-generated section `iml intellij.gradle.codeInsight.properties.backend` start
+exports_files(
+    [
+        "intellij.gradle.codeInsight.properties.backend.iml",
+        "resources/intellij.gradle.codeInsight.properties.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.gradle.codeInsight.properties.backend` end

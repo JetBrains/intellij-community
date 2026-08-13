@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.inspections
 
+import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleLatestMinorVersionInspection
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
@@ -11,7 +12,6 @@ import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.enableInspectionTool
 import org.assertj.core.api.Assertions
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.codeInspection.GradleLatestMinorVersionInspection
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.buildScript
 import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase.Companion.assertNodeWithDeprecatedGradleWarning

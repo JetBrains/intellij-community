@@ -1,0 +1,37 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.gradle"/>
+    <module name="intellij.gradle.codeInsight"/>
+    <module name="intellij.gradle.codeInsight.backend"/>
+    <module name="intellij.gradle.codeInsight.kotlin"/>
+    <module name="intellij.gradle.java"/>
+    <module name="intellij.gradle.properties"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.scripting.shared"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.codeInsight.api"/>
+    <module name="intellij.kotlin.codeInsight.shared"/>
+    <module name="intellij.kotlin.references"/>
+    <module name="intellij.kotlin.uast.base"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.k2"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.uast"/>
+    <module name="intellij.properties.psi"/>
+    <module name="kotlin.gradle.scripting.shared"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <dslInspectionProvider language="kotlin"
+                           implementationClass="com.intellij.gradle.codeInsight.kotlin.backend.inspections.KotlinGradleDslInspectionProvider"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <codeinsight.quickfix.registrar
+      implementation="com.intellij.gradle.codeInsight.kotlin.backend.inspections.fixes.KotlinGradlePropertyMethodCallQuickFixRegistrar"/>
+  </extensions>
+</idea-plugin>

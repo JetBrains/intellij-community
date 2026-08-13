@@ -33,6 +33,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//plugins/gradle/completion/kotlin/tests",
         "//plugins/gradle/completion/kotlin/tests:tests_test_lib",
+        "//plugins/gradle/codeInsight/kotlin/backend/tests.integration",
+        "//plugins/gradle/codeInsight/kotlin/backend/tests.integration:tests.integration_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.kotlin.tests.main` end

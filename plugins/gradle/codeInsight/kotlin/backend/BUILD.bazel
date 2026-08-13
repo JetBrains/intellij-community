@@ -1,0 +1,101 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.gradle.codeInsight.kotlin.backend` start
+jvm_library(
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.codeInsight.kotlin.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/backend",
+        "//plugins/gradle/codeInsight",
+        "//plugins/gradle/codeInsight/kotlin",
+        "//plugins/gradle/codeInsight/backend",
+        "//plugins/gradle",
+        "//plugins/gradle/java",
+        "//plugins/gradle/properties",
+        "//java/java-psi-api:psi",
+        "//plugins/properties/properties-psi-api:psi",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/util",
+        "//platform/analysis-api:analysis",
+        "//uast/uast-common:uast",
+        "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base",
+        "//plugins/kotlin/code-insight/api",
+        "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+        "//plugins/kotlin/base/util",
+        "//plugins/kotlin/references",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin/base/scripting/scripting.shared",
+        "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
+    ],
+)
+
+content_module_jar(module = ":backend")
+
+jvm_library(
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.codeInsight.kotlin.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//platform/backend:backend_test_lib",
+        "//plugins/gradle/codeInsight:codeInsight_test_lib",
+        "//plugins/gradle/codeInsight/kotlin:kotlin_test_lib",
+        "//plugins/gradle/codeInsight/backend:backend_test_lib",
+        "//plugins/gradle:gradle_test_lib",
+        "//plugins/gradle/java:java_test_lib",
+        "//plugins/gradle/properties:properties_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//plugins/properties/properties-psi-api:psi_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//uast/uast-common:uast_test_lib",
+        "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base_test_lib",
+        "//plugins/kotlin/code-insight/api:api_test_lib",
+        "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
+        "//plugins/kotlin/base/util:util_test_lib",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
+        "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared_test_lib",
+    ],
+)
+### auto-generated section `build intellij.gradle.codeInsight.kotlin.backend` end
+
+### auto-generated section `iml intellij.gradle.codeInsight.kotlin.backend` start
+exports_files(
+    [
+        "intellij.gradle.codeInsight.kotlin.backend.iml",
+        "resources/intellij.gradle.codeInsight.kotlin.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.gradle.codeInsight.kotlin.backend` end

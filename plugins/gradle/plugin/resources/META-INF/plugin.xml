@@ -28,8 +28,17 @@
     <module name="intellij.gradle.completion.ex"/>
     <module name="intellij.gradle.properties"/>
     <module name="intellij.gradle.settings" loading="embedded"/>
-
     <module name="intellij.gradle.backend"/>
+    <module name="intellij.gradle.codeInsight"/>
+    <module name="intellij.gradle.codeInsight.backend"/>
+    <module name="intellij.gradle.codeInsight.kotlin"/>
+    <module name="intellij.gradle.codeInsight.kotlin.backend"/>
+    <module name="intellij.gradle.codeInsight.groovy"/>
+    <module name="intellij.gradle.codeInsight.groovy.backend"/>
+    <module name="intellij.gradle.codeInsight.toml"/>
+    <module name="intellij.gradle.codeInsight.toml.backend"/>
+    <module name="intellij.gradle.codeInsight.properties"/>
+    <module name="intellij.gradle.codeInsight.properties.backend"/>
   </content>
 
 </idea-plugin>

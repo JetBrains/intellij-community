@@ -1,0 +1,47 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.gradle.codeInsight.kotlin` start
+jvm_library(
+    name = "kotlin",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.codeInsight.kotlin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = ["@lib//:kotlin-stdlib"],
+)
+
+content_module_jar(module = ":kotlin")
+
+jvm_library(
+    name = "kotlin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.codeInsight.kotlin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":kotlin"],
+)
+### auto-generated section `build intellij.gradle.codeInsight.kotlin` end
+
+### auto-generated section `iml intellij.gradle.codeInsight.kotlin` start
+exports_files(
+    [
+        "intellij.gradle.codeInsight.kotlin.iml",
+        "resources/intellij.gradle.codeInsight.kotlin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.gradle.codeInsight.kotlin` end

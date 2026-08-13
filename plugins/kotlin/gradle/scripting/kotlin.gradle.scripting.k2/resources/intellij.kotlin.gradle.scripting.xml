@@ -5,7 +5,6 @@
     <module name="intellij.gradle"/>
     <module name="intellij.kotlin.gradle.gradle"/>
     <module name="intellij.gradle.java"/>
-    <module name="intellij.gradle.properties"/>
     <module name="intellij.java.frontback.psi.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
@@ -23,7 +22,6 @@
     <module name="intellij.kotlin.references"/>
     <module name="intellij.kotlin.uast.base"/>
     <module name="intellij.libraries.kotlinc.analysis.api"/>
-    <module name="intellij.libraries.kotlinc.analysis.api.k2"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
@@ -39,7 +37,6 @@
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.workspace.jps"/>
-    <module name="intellij.properties.psi"/>
     <module name="kotlin.gradle.gradle-java"/>
     <module name="kotlin.gradle.scripting.shared"/>
     <module name="kotlin.scripting"/>
@@ -56,8 +53,6 @@
     <syncExtension implementation="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslScriptSyncExtension"/>
     <syncContributor implementation="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslBaseScriptSyncContributor"/>
     <syncContributor implementation="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslScriptSyncContributor"/>
-    <dslInspectionProvider language="kotlin"
-                           implementationClass="org.jetbrains.kotlin.gradle.scripting.k2.inspections.KotlinGradleDslInspectionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -93,7 +88,6 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <kotlinScriptFilter implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleKotlinScriptProcessingFilter"/>
     <scriptDefinitionsProvider implementation="org.jetbrains.kotlin.gradle.scripting.k2.definition.GradleScriptDefinitionsProvider"/>
-    <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.gradle.scripting.k2.fixes.KotlinGradlePropertyMethodCallQuickFixRegistrar"/>
   </extensions>
 
   <projectListeners>

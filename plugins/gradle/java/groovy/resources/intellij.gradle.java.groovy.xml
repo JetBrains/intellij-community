@@ -61,8 +61,6 @@
     <executionEnvironmentProvider implementation="com.intellij.gradle.java.groovy.execution.build.GroovyGradleApplicationEnvironmentProvider"/>
     <frameworkSupport implementation="com.intellij.gradle.java.groovy.frameworkSupport.GradleGroovyFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="com.intellij.gradle.java.groovy.frameworkSupport.KotlinDslGradleGroovyFrameworkSupportProvider" />
-    <dslInspectionProvider language="Groovy"
-                           implementationClass="com.intellij.gradle.java.groovy.codeInspection.GroovyGradleDslInspectionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -76,27 +74,10 @@
     <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
     <gotoDeclarationHandler implementation="com.intellij.gradle.java.groovy.service.navigation.GradleVersionCatalogGotoDeclarationHandler"/>
     <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.codeInspection.suppression.GradleSuppressHighlightingListener"/>
-    <trafficLightRendererContributor implementation="com.intellij.gradle.java.groovy.codeInspection.suppression.GradleGroovyTrafficLightRendererContributor"/>
 
     <lang.documentationProvider language="Groovy"
                                 implementationClass="com.intellij.gradle.java.groovy.documentation.GradleDocumentationProvider" order="first"/>
     <annotator language="Groovy" implementationClass="com.intellij.gradle.java.groovy.service.resolve.dsl.GradleDslAnnotator"/>
-    <localInspection language="Groovy" groupPath="Gradle" shortName="MultipleRepositoryUrls"
-                     bundle="messages.GradleInspectionBundle"
-                     key="multiple.repository.urls" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.gradle.java.groovy.codeInspection.MultipleRepositoryUrlsInspection"/>
-
-    <localInspection language="Groovy" groupPath="Gradle" shortName="BintrayPublishingPlugin"
-                     bundle="messages.GradleInspectionBundle"
-                     key="bintray.publishing.plugin" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.gradle.java.groovy.codeInspection.BintrayPublishingPluginInspection"/>
-
-    <localInspection language="Groovy" groupPath="Gradle" shortName="JCenterRepository"
-                     bundle="messages.GradleInspectionBundle"
-                     key="jcenter.repository" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.gradle.java.groovy.codeInspection.JCenterRepositoryInspection"/>
 
     <runConfigurationProducer implementation="com.intellij.gradle.java.groovy.execution.GradleGroovyScriptRunConfigurationProducer"
                               order="last"/>
@@ -159,7 +140,6 @@
     <unresolvedHighlightFilter implementation="com.intellij.gradle.java.groovy.service.resolve.GradleUnresolvedReferenceFilter"/>
     <inlayHintFilter implementation="com.intellij.gradle.java.groovy.dsl.GradleInlayHintFilter"/>
     <completionCustomizer implementation="com.intellij.gradle.java.groovy.service.completion.GradleCompletionCustomizer"/>
-    <inspectionDisabler filetype="Gradle" implementationClass="com.intellij.gradle.java.groovy.codeInspection.GradleFileTypeInspectionDisabler"/>
   </extensions>
 
   <actions>

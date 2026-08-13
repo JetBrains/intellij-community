@@ -1,0 +1,65 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.gradle.codeInsight.toml` start
+jvm_library(
+    name = "toml",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.codeInsight.toml",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/util",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-impl",
+        "//plugins/toml/core",
+    ],
+)
+
+content_module_jar(module = ":toml")
+
+jvm_library(
+    name = "toml_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.codeInsight.toml",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":toml",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//plugins/toml/core:core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.gradle.codeInsight.toml` end
+
+### auto-generated section `iml intellij.gradle.codeInsight.toml` start
+exports_files(
+    [
+        "intellij.gradle.codeInsight.toml.iml",
+        "resources/intellij.gradle.codeInsight.toml.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.gradle.codeInsight.toml` end

@@ -31,7 +31,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.task.ExecuteRunConfigurationTask
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.service.execution.loadApplicationInitScript
@@ -39,6 +38,7 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getGradleIdentityPathOrNull
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 @ApiStatus.Experimental
@@ -172,7 +172,7 @@ abstract class GradleBaseApplicationEnvironmentProvider : GradleExecutionEnviron
     catch (e: CantRunException) {
       @Suppress("IncorrectParentDisposable")
       AppUIExecutor.onUiThread().expireWith(project).submit {
-        ExecutionErrorDialog.show(e, GradleInspectionBundle.message("dialog.title.cannot.use.specified.jre"), project)
+        ExecutionErrorDialog.show(e, GradleBundle.message("dialog.title.cannot.use.specified.jre"), project)
       }
       throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
     }

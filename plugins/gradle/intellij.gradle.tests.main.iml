@@ -19,5 +19,8 @@
     <orderEntry type="module" module-name="intellij.gradle.completion.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.completion.toml.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.toolingProxy.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.codeInsight.groovy.backend.tests.integration" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.codeInsight.properties.backend.tests.integration" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.codeInsight.toml.backend.tests.integration" scope="TEST" />
   </component>
 </module>

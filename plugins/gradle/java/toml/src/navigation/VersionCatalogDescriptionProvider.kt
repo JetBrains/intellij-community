@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.java.toml.navigation
 
 import com.intellij.psi.ElementDescriptionLocation
@@ -8,8 +8,8 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.usageView.UsageViewShortNameLocation
 import com.intellij.usageView.UsageViewTypeLocation
 import com.intellij.util.asSafely
-import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.service.resolve.isInVersionCatalog
+import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.toml.lang.psi.TomlKeySegment
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlTable
@@ -22,7 +22,7 @@ class VersionCatalogDescriptionProvider : ElementDescriptionProvider {
 
     return when(location) {
       is UsageViewShortNameLocation -> element.name
-      is UsageViewTypeLocation -> GradleInspectionBundle.message("element.description.version.catalog.alias")
+      is UsageViewTypeLocation -> GradleBundle.message("element.description.version.catalog.alias")
       else -> null
     }
   }

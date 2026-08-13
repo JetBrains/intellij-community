@@ -71,11 +71,6 @@
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.versionCatalogEntrySearcher"
                     interface="org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogEntrySearcher"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.dslInspectionProvider"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint"
-                    dynamic="true">
-      <with attribute="implementationClass" implements="org.jetbrains.plugins.gradle.codeInspection.GradleDslInspectionProvider"/>
-    </extensionPoint>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.initScriptGenerator"
                     interface="org.jetbrains.plugins.gradle.execution.build.GradleInitScriptGenerator"
                     dynamic="true"/>
@@ -167,91 +162,6 @@
                  description="Disable Gradle post-startup activity for Android projects"/>
     <registryKey key="android.sdk.local.properties.update.disabled" defaultValue="false"
                  description="Disable update android sdk for local.properties"/>
-
-    <localInspection language="UAST" groupPath="Gradle" shortName="ConfigurationAvoidance"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.configuration.avoidance" groupKey="inspection.best.practices" groupBundle="messages.GradleInspectionBundle"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleConfigurationAvoidanceInspection"/>
-
-    <localInspection language="UAST" groupPath="Gradle" shortName="DependencyNotationArgument"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.unrecognized.dependency.notation" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleIncorrectDependencyNotationArgumentInspection"/>
-
-    <localInspection language="UAST" groupPath="Gradle" shortName="ForeignDelegate"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.foreign.delegate" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="WEAK WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleForeignDelegateInspection"/>
-
-    <localInspection language="UAST" groupPath="Gradle" shortName="IncorrectPluginDslStructure"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.incorrect.plugin.dsl.structure" groupKey="inspection.validity" groupBundle="messages.GradleInspectionBundle"
-                     enabledByDefault="true" level="ERROR"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradlePluginDslStructureInspection"/>
-
-    <localInspection language="UAST" groupPath="Gradle" shortName="DeprecatedConfigurations"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.deprecated.configurations" groupKey="inspection.validity" groupBundle="messages.GradleInspectionBundle"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleDeprecatedConfigurationInspection"/>
-
-    <localInspection language="UAST" groupPath="Gradle" shortName="RedundantKotlinStdLibDependency"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.redundant.kotlin.std.lib.dependency" groupKey="inspection.best.practices"
-                     groupBundle="messages.GradleInspectionBundle"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleRedundantKotlinStdLibInspection"
-                     isInternal="false"/>
-
-    <localInspection language="UAST" groupPath="Gradle" shortName="AvoidDependencyNamedArgumentsNotation"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.avoid.dependency.named.arguments.notation" groupKey="inspection.best.practices"
-                     groupBundle="messages.GradleInspectionBundle"
-                     enabledByDefault="true" level="WEAK WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDependencyNamedArgumentsNotationInspection"
-                     isInternal="false"/>
-
-    <localInspection language="UAST" groupPath="Gradle" shortName="AvoidApplyPluginMethod"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.avoid.apply.plugin.method" groupKey="inspection.best.practices"
-                     groupBundle="messages.GradleInspectionBundle"
-                     enabledByDefault="true" level="WEAK WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidApplyPluginMethodInspection"
-                     isInternal="false"/>
-
-    <localInspection language="UAST" groupPath="Gradle" shortName="AvoidRepositoriesInBuildGradle"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.avoid.repositories.in.build.gradle" groupKey="inspection.best.practices"
-                     groupBundle="messages.GradleInspectionBundle"
-                     enabledByDefault="false" level="WEAK WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.AvoidRepositoriesInBuildGradleInspection"
-                     isInternal="false"/>
-
-    <localInspection language="UAST" groupPath="Gradle" shortName="AvoidDuplicateDependencies"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.avoid.duplicate.dependencies" groupKey="inspection.best.practices"
-                     groupBundle="messages.GradleInspectionBundle"
-                     enabledByDefault="true" level="WEAK WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDuplicateDependenciesInspection"
-                     isInternal="false"/>
-
-    <localInspection language="UAST" groupPath="Gradle" shortName="TaskMissingDescription"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.task.missing.description" groupKey="inspection.best.practices"
-                     groupBundle="messages.GradleInspectionBundle"
-                     enabledByDefault="true" level="WEAK WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleTaskMissingDescriptionInspection"
-                     isInternal="false"/>
-
-    <localInspection language="UAST" groupPath="Gradle" shortName="AvoidDuplicateRepositories"
-                     bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.avoid.duplicate.repositories" groupKey="inspection.best.practices"
-                     groupBundle="messages.GradleInspectionBundle"
-                     enabledByDefault="true" level="WEAK WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDuplicateRepositoriesInspection"/>
 
   </extensions>
 </idea-plugin>

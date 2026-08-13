@@ -32,15 +32,6 @@
                            id="EnableAutoPopupInTomlVersionCatalogCompletion"
                            implementationClass="com.intellij.gradle.java.toml.completion.EnableAutoPopupInTomlVersionCatalogCompletion" />
 
-    <localInspection language="TOML" groupPath="Gradle" shortName="UnusedVersionCatalogEntry"
-                     bundle="messages.GradleInspectionBundle" key="inspection.display.name.unused.version.catalog.entry"
-                     groupBundle="messages.GradleInspectionBundle" groupKey="inspection.style"
-                     enabledByDefault="true"
-                     implementationClass="com.intellij.gradle.java.toml.codeInspection.UnusedVersionCatalogEntryInspection"/>
-    <lang.inspectionSuppressor language="TOML"
-                               implementationClass="com.intellij.gradle.java.toml.codeInspection.GradleTomlInspectionSuppressor"/>
-
-
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
     <versionCatalogPsiResolver implementation="com.intellij.gradle.java.toml.GradleVersionCatalogPsiResolverImpl"/>

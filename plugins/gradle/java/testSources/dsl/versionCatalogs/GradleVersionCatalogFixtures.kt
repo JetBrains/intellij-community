@@ -1,13 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl.versionCatalogs
 
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 
-internal object GradleVersionCatalogFixtures {
+object GradleVersionCatalogFixtures {
 
-  internal val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-base") { gradleVersion ->
+  val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-base") { gradleVersion ->
     withSettingsFile(gradleVersion) {
       include("subproject1")
     }
@@ -51,7 +51,7 @@ internal object GradleVersionCatalogFixtures {
       withBuildFile(gradleVersion, "subprojectsDir/subproject1")
     }
 
-  internal val VERSION_CATALOG_COMPOSITE_BUILD_FIXTURE =
+  val VERSION_CATALOG_COMPOSITE_BUILD_FIXTURE =
     GradleTestFixtureBuilder.create("GradleVersionCatalogs-composite-build") { gradleVersion ->
       withSettingsFile(gradleVersion) {
         includeBuild("includedBuild1")

@@ -1,0 +1,19 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.gradle"/>
+    <module name="intellij.gradle.codeInsight"/>
+    <module name="intellij.gradle.codeInsight.backend"/>
+    <module name="intellij.gradle.codeInsight.properties"/>
+    <module name="intellij.gradle.properties"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.properties.psi"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <dslInspectionProvider language="Properties"
+                           implementationClass="com.intellij.gradle.codeInsight.properties.backend.inspections.PropertiesGradleDslInspectionProvider"/>
+  </extensions>
+</idea-plugin>

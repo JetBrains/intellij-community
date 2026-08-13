@@ -1,0 +1,109 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.gradle.codeInsight"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.dslInspectionProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.gradle.codeInsight.backend.inspections.GradleDslInspectionProvider"/>
+    </extensionPoint>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection language="UAST" groupPath="Gradle" shortName="ConfigurationAvoidance"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.configuration.avoidance" groupKey="inspection.best.practices"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleConfigurationAvoidanceInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="DependencyNotationArgument"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.unrecognized.dependency.notation" groupKey="group.names.probable.bugs"
+                     groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleIncorrectDependencyNotationArgumentInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="ForeignDelegate"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.foreign.delegate" groupKey="group.names.probable.bugs"
+                     groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleForeignDelegateInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="IncorrectPluginDslStructure"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.incorrect.plugin.dsl.structure" groupKey="inspection.validity"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.gradle.codeInsight.backend.inspections.declarations.GradlePluginDslStructureInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="DeprecatedConfigurations"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.deprecated.configurations" groupKey="inspection.validity"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleDeprecatedConfigurationInspection"/>
+
+    <localInspection language="Properties" groupPath="Gradle" shortName="LatestMinorVersion"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.latest.minor.version" groupKey="inspection.best.practices"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleLatestMinorVersionInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="RedundantKotlinStdLibDependency"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.redundant.kotlin.std.lib.dependency" groupKey="inspection.best.practices"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleRedundantKotlinStdLibInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="AvoidDependencyNamedArgumentsNotation"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.avoid.dependency.named.arguments.notation" groupKey="inspection.best.practices"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleAvoidDependencyNamedArgumentsNotationInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="AvoidApplyPluginMethod"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.avoid.apply.plugin.method" groupKey="inspection.best.practices"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleAvoidApplyPluginMethodInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="AvoidRepositoriesInBuildGradle"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.avoid.repositories.in.build.gradle" groupKey="inspection.best.practices"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="false" level="WEAK WARNING"
+                     implementationClass="com.intellij.gradle.codeInsight.backend.inspections.declarations.AvoidRepositoriesInBuildGradleInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="AvoidDuplicateDependencies"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.avoid.duplicate.dependencies" groupKey="inspection.best.practices"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleAvoidDuplicateDependenciesInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="TaskMissingDescription"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.task.missing.description" groupKey="inspection.best.practices"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleTaskMissingDescriptionInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="AvoidDuplicateRepositories"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.avoid.duplicate.repositories" groupKey="inspection.best.practices"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleAvoidDuplicateRepositoriesInspection"/>
+  </extensions>
+</idea-plugin>

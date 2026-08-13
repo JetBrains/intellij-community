@@ -1,0 +1,55 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.gradle.codeInsight.groovy` start
+jvm_library(
+    name = "groovy",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.codeInsight.groovy",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/gradle/codeInsight",
+    ],
+)
+
+content_module_jar(module = ":groovy")
+
+jvm_library(
+    name = "groovy_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.codeInsight.groovy",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":groovy",
+        "//plugins/gradle/codeInsight:codeInsight_test_lib",
+    ],
+)
+### auto-generated section `build intellij.gradle.codeInsight.groovy` end
+
+### auto-generated section `iml intellij.gradle.codeInsight.groovy` start
+exports_files(
+    [
+        "intellij.gradle.codeInsight.groovy.iml",
+        "resources/intellij.gradle.codeInsight.groovy.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.gradle.codeInsight.groovy` end

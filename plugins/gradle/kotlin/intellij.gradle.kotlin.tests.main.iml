@@ -10,5 +10,6 @@
     <orderEntry type="module" module-name="intellij.platform.bootstrap.coroutine" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.completion.kotlin.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.codeInsight.kotlin.backend.tests.integration" scope="TEST" />
   </component>
 </module>

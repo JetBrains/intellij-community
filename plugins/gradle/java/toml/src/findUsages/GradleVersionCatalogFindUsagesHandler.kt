@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.java.toml.findUsages
 
 import com.intellij.find.findUsages.FindUsagesHandler
@@ -8,8 +8,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.config.GradleBuildscriptSearchScope
+import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.toml.lang.psi.TomlKeySegment
 
 class GradleVersionCatalogFindUsagesHandler(private val tomlElement: TomlKeySegment) : FindUsagesHandler(tomlElement) {
@@ -31,7 +31,7 @@ class GradleVersionCatalogFindUsagesHandler(private val tomlElement: TomlKeySegm
     override fun isSearchInLibraries(): Boolean = buildscriptScope.isSearchInLibraries
 
     override fun getDisplayName(): String {
-      return GradleInspectionBundle.message("gradle.version.catalog.search.scope")
+      return GradleBundle.message("gradle.version.catalog.search.scope")
     }
   }
 

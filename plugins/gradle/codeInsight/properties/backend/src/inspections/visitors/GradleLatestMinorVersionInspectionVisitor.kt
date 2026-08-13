@@ -1,0 +1,62 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.codeInsight.properties.backend.inspections.visitors
+
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
+import com.intellij.gradle.codeInsight.GradleInspectionBundle
+import com.intellij.gradle.properties.GradleVersionQuickFix
+import com.intellij.gradle.properties.GradleVersionQuickFix.Companion.DISTRIBUTION_URL_VERSION_REGEX
+import com.intellij.lang.properties.psi.Property
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
+
+internal class GradleLatestMinorVersionInspectionVisitor(private val holder: ProblemsHolder) : PsiElementVisitor() {
+  override fun visitElement(element: PsiElement) {
+    if (element !is Property) return
+    if (element.key != "distributionUrl") return
+
+    // extract the current Gradle version from the wrapper properties file
+    val group = DISTRIBUTION_URL_VERSION_REGEX.find(element.text)?.groups[2] ?: return
+    val currentVersion = group.value
+    val versionTextRange = TextRange(group.range.first, group.range.last + 1)
+    val currentGradleVersion = try {
+      GradleVersion.version(currentVersion)
+    }
+    catch (_: IllegalArgumentException) {
+      return
+    }
+
+    if (GradleJvmSupportMatrix.isGradleDeprecatedByIdea(currentGradleVersion)) return
+    val latestMinorGradleVersion = GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(currentGradleVersion.majorVersion)
+    if (currentGradleVersion >= latestMinorGradleVersion) return
+
+    holder.problem(element, GradleInspectionBundle.message("inspection.message.newer.gradle.minor.version.available.descriptor"))
+      .range(versionTextRange)
+      .fix(GradleWrapperVersionFix(latestMinorGradleVersion))
+      .register()
+  }
+}
+
+private class GradleWrapperVersionFix(
+  private val newGradleVersion: GradleVersion,
+) : PsiUpdateModCommandQuickFix() {
+  override fun getName(): @IntentionName String {
+    return GradleInspectionBundle.message("intention.name.switch.gradle.version", newGradleVersion.version)
+  }
+
+  override fun getFamilyName(): @IntentionFamilyName String {
+    return GradleInspectionBundle.message("intention.family.name.upgrade")
+  }
+
+  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+    val propertiesFile = (element as? Property)?.propertiesFile ?: return
+    GradleVersionQuickFix.updateGradleWrapperVersion(propertiesFile, newGradleVersion)
+  }
+}

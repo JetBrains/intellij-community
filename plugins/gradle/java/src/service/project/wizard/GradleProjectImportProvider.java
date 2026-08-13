@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportProvider;
@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
@@ -38,6 +38,6 @@ public final class GradleProjectImportProvider extends AbstractExternalProjectIm
 
   @Override
   public @NotNull String getFileSample() {
-    return GradleInspectionBundle.message("gradle.build.script");
+    return GradleBundle.message("gradle.build.script");
   }
 }
