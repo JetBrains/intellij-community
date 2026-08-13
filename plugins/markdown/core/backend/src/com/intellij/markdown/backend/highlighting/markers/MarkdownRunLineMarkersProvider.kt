@@ -65,7 +65,7 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
     }
 
     val directories = getMarkdownCommandWorkingDirectories(element.project, element.containingFile.virtualFile)
-    if (!matches(element.project, directories, true, text)) {
+    if (!matches(element.project, directories, true, text, allowRunConfigurations = inCodeSpan)) {
       return null
     }
 
