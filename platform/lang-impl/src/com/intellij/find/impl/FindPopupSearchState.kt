@@ -2,6 +2,8 @@
 package com.intellij.find.impl
 
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 
 /**
  * Session-scoped paging/autoload state. One instance per [FindPopupPanel]; its lifetime
@@ -9,11 +11,16 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
  * [resetForFreshSearch].
  *
  * Threading: **this class is confined to the EDT and is intentionally not thread-safe.**
+ *
+ * Used only by [FindPopupResultsAutoloadHandler]; visible beyond it so that what it decides about paging can be tested
+ * on its own, which is otherwise reachable only by driving a whole search through the popup.
  */
-internal class FindPopupSearchState {
+@ApiStatus.Internal
+@VisibleForTesting
+class FindPopupSearchState {
   /** Per-pass emission cap; grows by pageSize/2 on each `maybeLoadMore`, reset to pageSize on every fresh search.  */
   @get:RequiresEdt
-  var currentMaxUsages = 0
+  var currentMaxUsages: Int = 0
     private set
 
   // --- Exhausted -----------------------------------------------------------
@@ -22,9 +29,17 @@ internal class FindPopupSearchState {
   @set:RequiresEdt
   var isExhausted: Boolean = false
 
+  /**
+   * The last load-more pass added no row → autoloading further ones cannot fill the visible area either, so stop
+   * chaining by ourselves. Not [isExhausted]: the query has more matches, and asking for them by scrolling still works.
+   */
+  @get:RequiresEdt
+  @set:RequiresEdt
+  var autoloadStalled: Boolean = false
+
   /** Rows preserved at the head of the table from previous passes.  */
   @get:RequiresEdt
-  var frozenRowCount = 0
+  var frozenRowCount: Int = 0
     private set
 
   /** Cumulative file paths since the last fresh search — drives the "in N files" label across paging.  */
@@ -57,6 +72,7 @@ internal class FindPopupSearchState {
   fun resetForFreshSearch(pageSize: Int) {
     currentMaxUsages = pageSize
     this.isExhausted = false
+    autoloadStalled = false
     frozenRowCount = 0
     cumulativeFilePaths.clear()
     cumulativeUsageCount = 0
@@ -82,6 +98,23 @@ internal class FindPopupSearchState {
   fun beginLoadMorePass(rowCount: Int, pageSize: Int) {
     frozenRowCount = rowCount
     currentMaxUsages += (pageSize / 2)
+  }
+
+  /**
+   * Records what a pass that finished by itself says about whether to run another.
+   *
+   * A pass that stopped short of its cap found everything there is. A load-more pass that added no row found more
+   * matches but nothing more to show, so chaining into another cannot bring the table any closer to filling the visible
+   * area either -- and each pass rescans what the ones before it did, for a cap a half page larger. That is what one
+   * line holding every match of a file looks like: a single row, always fully visible, and passes that cost more and
+   * more to add nothing.
+   */
+  @RequiresEdt
+  fun recordPassFinished(loadMore: Boolean, rowCount: Int, occurrences: Int, maxUsages: Int) {
+    isExhausted = occurrences < maxUsages
+    if (loadMore && rowCount == frozenRowCount) {
+      autoloadStalled = true
+    }
   }
 
   // --- Frozen prefix / dedup ----------------------------------------------

@@ -443,9 +443,7 @@ internal class FindPopupResultsAutoloadHandler(
         }
 
         // Update paging state after the search finishes naturally.
-        val occurrences = resultsCount.get()
-        val reachedCap = occurrences >= maxUsages
-        state.isExhausted = !reachedCap
+        state.recordPassFinished(loadMore, host.resultsRowCount, resultsCount.get(), maxUsages)
 
         // Defer the autoload / finalization decision so the table layout (scrollbar bounds,
         // viewport extent) has had a chance to stabilize after the last row was added.
@@ -453,6 +451,7 @@ internal class FindPopupResultsAutoloadHandler(
           if (isCancelled(progressIndicatorWhenSearchStarted)) return@invokeLater
 
           val autoLoadMore = !state.isExhausted &&
+                             !state.autoloadStalled &&
                              loadingHash == 0 &&
                              (host.isContentFullyVisible || host.isUserAtBottom) &&
                              host.resultsRowCount > 0
