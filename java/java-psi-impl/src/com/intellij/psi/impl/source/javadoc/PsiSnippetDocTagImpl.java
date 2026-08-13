@@ -43,7 +43,7 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
   @Override
   public PsiDocComment getContainingComment() {
     ASTNode scope = getTreeParent();
-    while (JavaDocElementType.DOC_COMMENT_TOKENS.contains(scope.getElementType())) {
+    while (!JavaDocElementType.DOC_COMMENT_TOKENS.contains(scope.getElementType())) {
       scope = scope.getTreeParent();
     }
     return (PsiDocComment)SourceTreeToPsiMap.treeElementToPsi(scope);
