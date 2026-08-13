@@ -5,7 +5,6 @@ import com.intellij.core.CoreBundle
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.LoadingState
-import com.intellij.ide.plugins.DisabledPluginsState.Companion.invalidate
 import com.intellij.ide.plugins.PluginCompatibilityUtils.checkBuildNumberCompatibility
 import com.intellij.ide.plugins.PluginInitializationDiagnosticUtils.getIdString
 import com.intellij.ide.plugins.PluginUtils.findEnabledOrInstalledPlugin
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.function.Supplier
 import kotlin.io.path.name
@@ -307,22 +305,6 @@ object PluginManagerCore {
 
   @JvmStatic
   fun isVendorJetBrains(vendorItem: String): Boolean = VENDOR_JETBRAINS == vendorItem || VENDOR_JETBRAINS_SRO == vendorItem
-
-  @ApiStatus.Internal
-  @Deprecated("Platform sunsets support for reload of plugins")
-  @ApiStatus.ScheduledForRemoval
-  @Synchronized
-  @JvmStatic
-  fun invalidatePlugins() {
-    pluginsState.nullablePluginSet = null
-    val future = pluginsState.initFuture
-    if (future != null) {
-      pluginsState.initFuture = null
-      future.cancel(CancellationException("invalidatePlugins"))
-    }
-    invalidate()
-    pluginsState.shadowedBundledPlugins = emptySet()
-  }
 
   @Suppress("LoggingSimilarMessage")
   private fun preparePluginErrors(
