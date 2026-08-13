@@ -495,7 +495,6 @@ internal fun CoroutineScope.scheduleLoading(
         logger = logger,
         initContext = initContext,
         plugins = pluginSet.allPlugins,
-        incompletePlugins = pluginsState.incompletePluginsForLogging,
       )
     }
     pluginSet
