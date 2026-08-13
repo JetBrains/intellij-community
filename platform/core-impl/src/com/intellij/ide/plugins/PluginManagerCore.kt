@@ -469,6 +469,11 @@ object PluginManagerCore {
     initStagesActivity = initStagesActivity?.endAndStart("log exclusion tree")
     PluginInitializationDiagnosticUtils.logExclusionTree(logger, pluginSet)
 
+    if (configureClassLoaders) {
+      initStagesActivity = initStagesActivity?.endAndStart("ClassLoaderConfigurator")
+      ClassLoaderConfigurator(pluginSet, coreLoader).configure()
+    }
+
     initStagesActivity = initStagesActivity?.endAndStart("error collection")
     val incompletePlugins = HashMap<PluginId, PluginMainDescriptor>()
     val shadowedBundledIds = HashSet<PluginId>()
@@ -523,11 +528,6 @@ object PluginManagerCore {
       initContext,
       reportingPolicy,
     )
-
-    if (configureClassLoaders) {
-      initStagesActivity = initStagesActivity?.endAndStart("ClassLoaderConfigurator")
-      ClassLoaderConfigurator(pluginSet, coreLoader).configure()
-    }
 
     initStagesActivity?.end()
     return PluginManagerState(
