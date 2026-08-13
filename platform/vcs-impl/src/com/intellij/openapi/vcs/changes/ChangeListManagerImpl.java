@@ -189,10 +189,10 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     VcsManagedFilesHolder.VCS_IGNORED_FILES_HOLDER_EP.addChangeListener(this.project, () -> {
       VcsDirtyScopeManager.getInstance(this.project).markEverythingDirty();
     }, this);
-    VcsEP.EP_NAME.addChangeListener(() -> {
+    VcsEP.EP_NAME.addChangeListener(coroutineScope, () -> {
       resetChangedFiles();
       VcsDirtyScopeManager.getInstance(this.project).markEverythingDirty();
-    }, this);
+    });
 
     CommitModeManager.subscribeOnCommitModeChange(busConnection, () -> updateChangeListAvailability());
     Registry.get("vcs.disable.changelists").addListener(new RegistryValueListener() {
