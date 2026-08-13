@@ -44,8 +44,10 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public final class LivePreview implements SearchResults.SearchResultsListener, SelectionListener, DocumentListener, EditorColorsListener {
   private static final Key<RangeHighlighter> IN_SELECTION_KEY = Key.create("LivePreview.IN_SELECTION_KEY");
@@ -61,6 +63,11 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   private static boolean NotFound;
 
   private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  /**
+   * The occurrences that currently carry an {@link #IN_SELECTION_KEY} companion. Tracking them is what lets a selection
+   * change touch only the occurrences it can actually affect, instead of asking every match on screen.
+   */
+  private final Set<RangeHighlighter> myInSelectionHighlighters = new HashSet<>();
   private RangeHighlighter myCursorHighlighter;
   private VisibleAreaListener myVisibleAreaListener;
   private Delegate myDelegate;
@@ -196,6 +203,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
 
   private void removeHighlighterWithDependent(@NotNull RangeHighlighter highlighter) {
     removeHighlighter(highlighter);
+    myInSelectionHighlighters.remove(highlighter);
     RangeHighlighter additionalHighlighter = highlighter.getUserData(IN_SELECTION_KEY);
     if (additionalHighlighter != null) {
       removeHighlighter(additionalHighlighter);
@@ -291,6 +299,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
       removeHighlighterWithDependent(h);
     }
     myHighlighters.clear();
+    myInSelectionHighlighters.clear();
   }
 
   private List<RangeHighlighter> addNewHighlighters(@NotNull List<FindResult> occurrences) {
@@ -341,43 +350,103 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
     return existing[0];
   }
 
+  /**
+   * Brings the in-selection highlighting in line with a selection that has just changed.
+   * <p>
+   * Only two kinds of occurrence can need anything done to them: the ones the new selection covers, which the markup
+   * model can hand over directly, and the ones that were covered by the previous selection, which are the ones already
+   * tracked in {@link #myInSelectionHighlighters}. Everything else is left alone, so a selection change costs what the
+   * selection covers rather than a walk over every match in the document - a mouse drag over a file with tens of
+   * thousands of matches highlighted fires this on every mouse-moved event.
+   */
   private void updateInSelectionHighlighters() {
-    updateInSelectionHighlighters(myHighlighters);
-  }
-
-  private void updateInSelectionHighlighters(@NotNull List<RangeHighlighter> highlighters) {
-    final SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
+    MarkupModelEx markupModel = (MarkupModelEx)mySearchResults.getEditor().getMarkupModel();
+    SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
     int[] starts = selectionModel.getBlockSelectionStarts();
     int[] ends = selectionModel.getBlockSelectionEnds();
+    TextRange cursor = mySearchResults.getCursor();
+
+    // Collected rather than acted on inside the processor: that runs under the markup model lock, which forbids both
+    // touching the model and doing any real work.
+    Set<RangeHighlighter> covered = new HashSet<>();
+    for (int i = 0; i < starts.length; ++i) {
+      int selectionStart = starts[i];
+      int selectionEnd = ends[i];
+      markupModel.processRangeHighlightersOverlappingWith(selectionStart, selectionEnd, highlighter -> {
+        if (highlighter.getUserData(SEARCH_MARKER) != null && isInSelection(highlighter, cursor, selectionStart, selectionEnd)) {
+          covered.add(highlighter);
+        }
+        return true;
+      });
+    }
+
+    // Over a copy: dropping the highlighting writes back to the tracking set.
+    for (RangeHighlighter highlighter : new ArrayList<>(myInSelectionHighlighters)) {
+      if (!covered.contains(highlighter)) {
+        dropInSelectionHighlighting(highlighter);
+      }
+    }
+    for (RangeHighlighter highlighter : covered) {
+      addInSelectionHighlighting(highlighter);
+    }
+  }
+
+  /**
+   * The same update for a set of occurrences known up front, which is what a still running search appends. The
+   * selection cannot have changed under a search - it is the occurrences that are new - so the ones already on screen
+   * keep whatever they were given.
+   */
+  private void updateInSelectionHighlighters(@NotNull List<RangeHighlighter> highlighters) {
+    SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
+    int[] starts = selectionModel.getBlockSelectionStarts();
+    int[] ends = selectionModel.getBlockSelectionEnds();
+    TextRange cursor = mySearchResults.getCursor();
 
     for (RangeHighlighter highlighter : highlighters) {
       if (!highlighter.isValid()) continue;
       boolean needsAdditionalHighlighting = false;
-      TextRange cursor = mySearchResults.getCursor();
-      if (cursor == null ||
-          highlighter.getStartOffset() != cursor.getStartOffset() || highlighter.getEndOffset() != cursor.getEndOffset()) {
-        for (int i = 0; i < starts.length; ++i) {
-          TextRange selectionRange = new TextRange(starts[i], ends[i]);
-          needsAdditionalHighlighting = selectionRange.intersects(highlighter.getStartOffset(), highlighter.getEndOffset()) &&
-                           selectionRange.getEndOffset() != highlighter.getStartOffset() &&
-                           highlighter.getEndOffset() != selectionRange.getStartOffset();
-          if (needsAdditionalHighlighting) break;
-        }
+      for (int i = 0; i < starts.length && !needsAdditionalHighlighting; ++i) {
+        needsAdditionalHighlighting = isInSelection(highlighter, cursor, starts[i], ends[i]);
       }
-
-      RangeHighlighter inSelectionHighlighter = highlighter.getUserData(IN_SELECTION_KEY);
-      if (inSelectionHighlighter != null) {
-        if (!needsAdditionalHighlighting) {
-          removeHighlighter(inSelectionHighlighter);
-          highlighter.putUserData(IN_SELECTION_KEY, null);
-        }
-      } else if (needsAdditionalHighlighting) {
-        RangeHighlighter additionalHighlighter = addHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(),
-                                                                myPresentation.getSelectionAttributes(),
-                                                                myPresentation.getDefaultLayer());
-        highlighter.putUserData(IN_SELECTION_KEY, additionalHighlighter);
+      if (needsAdditionalHighlighting) {
+        addInSelectionHighlighting(highlighter);
+      }
+      else {
+        dropInSelectionHighlighting(highlighter);
       }
     }
+  }
+
+  /**
+   * Whether an occurrence lies inside one selection range and so has to be shown as selected. The cursor is shown as
+   * the cursor instead, and an occurrence that merely touches the edge of the selection is not inside it.
+   */
+  private static boolean isInSelection(@NotNull RangeHighlighter highlighter,
+                                       @Nullable TextRange cursor,
+                                       int selectionStart,
+                                       int selectionEnd) {
+    int start = highlighter.getStartOffset();
+    int end = highlighter.getEndOffset();
+    if (cursor != null && start == cursor.getStartOffset() && end == cursor.getEndOffset()) return false;
+    return Math.max(selectionStart, start) <= Math.min(selectionEnd, end) && selectionEnd != start && end != selectionStart;
+  }
+
+  private void addInSelectionHighlighting(@NotNull RangeHighlighter highlighter) {
+    if (highlighter.getUserData(IN_SELECTION_KEY) != null) return;
+    RangeHighlighter additionalHighlighter = addHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(),
+                                                            myPresentation.getSelectionAttributes(),
+                                                            myPresentation.getDefaultLayer());
+    if (additionalHighlighter == null) return; // the project is gone; nothing to track and nothing to remove later
+    highlighter.putUserData(IN_SELECTION_KEY, additionalHighlighter);
+    myInSelectionHighlighters.add(highlighter);
+  }
+
+  private void dropInSelectionHighlighting(@NotNull RangeHighlighter highlighter) {
+    RangeHighlighter additionalHighlighter = highlighter.getUserData(IN_SELECTION_KEY);
+    myInSelectionHighlighters.remove(highlighter);
+    if (additionalHighlighter == null) return;
+    removeHighlighter(additionalHighlighter);
+    highlighter.putUserData(IN_SELECTION_KEY, null);
   }
 
   private void showReplacementPreview() {
