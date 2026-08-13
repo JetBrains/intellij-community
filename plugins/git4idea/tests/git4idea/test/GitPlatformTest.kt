@@ -161,12 +161,6 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE)
   }
 
-  protected fun installHook(gitDir: Path, hookName: String, hookContent: String) {
-    val hookFile = gitDir.resolve("hooks/$hookName").toFile()
-    FileUtil.writeToFile(hookFile, hookContent)
-    hookFile.setExecutable(true, false)
-  }
-
   private fun readAndResetCredentialHelpers(): Map<ConfigScope, List<String>> {
     val system = readAndResetCredentialHelper(SYSTEM)
     val global = readAndResetCredentialHelper(GLOBAL)

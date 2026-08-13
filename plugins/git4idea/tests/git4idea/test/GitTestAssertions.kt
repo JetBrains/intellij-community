@@ -100,6 +100,10 @@ fun GitPlatformTest.assertLastMessage(actual: String, failMessage: String = "Las
   assertMessage(actual, lastMessage(), failMessage)
 }
 
+fun GitPlatformTestContext.assertLastMessage(actual: String, failMessage: String = "Last commit is incorrect") {
+  assertMessage(actual, lastMessage(), failMessage)
+}
+
 fun assertMessage(actual: String, expected: String, failMessage: String = "Commit message is incorrect") {
   Assertions.assertThat(actual).isEqualToIgnoringWhitespace(expected).withFailMessage(failMessage)
 }
@@ -196,7 +200,7 @@ class ChangesBuilder {
                            matcher = { status, beforePath, afterPath ->
                              status == FileStatus.ADDED && beforePath == null && afterPath.relativePath == name },
                            changeMatcher = { change ->
-                             change.afterRevision!!.content == newContent
+                             change.afterRevision!!.content?.normalizeNewLines() == newContent
                            })
     assertTrue(changes.add(addition))
   }
@@ -214,8 +218,8 @@ class ChangesBuilder {
                                 status == FileStatus.MODIFIED && beforePath.relativePath == name && afterPath.relativePath == name
                               },
                                changeMatcher = { change ->
-                                change.beforeRevision!!.content == oldContent &&
-                                change.afterRevision!!.content == newContent
+                                change.beforeRevision!!.content?.normalizeNewLines() == oldContent &&
+                                change.afterRevision!!.content?.normalizeNewLines() == newContent
                               })
     assertTrue(changes.add(modification))
   }
@@ -237,3 +241,8 @@ class ChangesBuilder {
 
 private val FilePath?.relativePath: String
   get() = FileUtil.getRelativePath(Executor.ourCurrentDir().invariantSeparatorsPathString, this!!.path, '/')!!
+
+/**
+ * Convert line separators to compare file content correctly
+ */
+fun String.normalizeNewLines(): String = replace(System.lineSeparator(), "\n")

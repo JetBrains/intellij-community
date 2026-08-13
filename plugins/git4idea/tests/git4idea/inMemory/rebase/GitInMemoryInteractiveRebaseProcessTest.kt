@@ -1,40 +1,62 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.inMemory.rebase
 
 import com.intellij.openapi.components.service
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.test.refresh
+import com.intellij.vcs.test.updateChangeListManager
 import git4idea.GitDisposable
 import git4idea.inMemory.MergeConflictException
-import git4idea.inMemory.rebase.log.GitInMemoryOperationTest
+import git4idea.inMemory.rebase.log.GitInMemoryOperationContext
+import git4idea.inMemory.rebase.log.RewrittenCommit
+import git4idea.inMemory.rebase.log.capturePostRewrites
+import git4idea.inMemory.rebase.log.gitInMemoryOperationFixture
+import git4idea.inMemory.rebase.log.run
 import git4idea.log.createLogDataIn
 import git4idea.log.refreshAndWait
 import git4idea.rebase.interactive.convertToModel
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.rebase.log.GitInteractiveRebaseEntriesProvider
 import git4idea.rebase.log.GitRebaseEntryGeneratedUsingLog
+import git4idea.test.GitSingleRepoContext
 import git4idea.test.assertCommitted
 import git4idea.test.assertLatestHistory
 import git4idea.test.commit
+import git4idea.test.commitDetails
+import git4idea.test.file
 import git4idea.test.getHash
+import git4idea.test.gitSingleRepoContextFixture
+import git4idea.test.installHook
 import git4idea.test.last
-import kotlinx.coroutines.CoroutineScope
+import git4idea.test.normalizeNewLines
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 
-internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTest() {
-  private lateinit var testCs: CoroutineScope
+
+@TestApplication
+internal class GitInMemoryInteractiveRebaseProcessTest {
+  private val fixture = gitSingleRepoContextFixture().gitInMemoryOperationFixture()
+  private val context: GitInMemoryOperationContext get() = fixture.get()
+
   private lateinit var logData: VcsLogData
 
-  override fun setUp() {
-    super.setUp()
-    testCs = GitDisposable.getInstance(project).coroutineScope
-    logData = createLogDataIn(testCs, repo, logProvider)
+  @BeforeEach
+  fun setUpLogData() {
+    with(context) {
+      val testCs = GitDisposable.getInstance(project).coroutineScope
+      logData = createLogDataIn(testCs, repo, logProvider)
+    }
   }
 
-  fun `test pick and reword operations`() {
+  @Test
+  fun `test pick and reword operations`(): Unit = with(context) {
     file("a").create("content a").add()
     val firstCommit = commitDetails(commit("Add a"))
     file("b").create("content b").addCommit("Add b")
@@ -67,7 +89,8 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
     }
   }
 
-  fun `test reorder commits without conflicts`() {
+  @Test
+  fun `test reorder commits without conflicts`(): Unit = with(context) {
     file("a").create("content a").add()
     val firstCommit = commitDetails(commit("Add a"))
     file("b").create("content b").addCommit("Add b")
@@ -99,7 +122,8 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
     }
   }
 
-  fun `test drop and fixup operations`() {
+  @Test
+  fun `test drop and fixup operations`(): Unit = with(context) {
     file("a").create("content a").add()
     val firstCommit = commitDetails(commit("Add a"))
     file("b").create("content b").addCommit("Add b")
@@ -137,7 +161,8 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
     }
   }
 
-  fun `test rebase with merge conflicts throws exception`() {
+  @Test
+  fun `test rebase with merge conflicts throws exception`(): Unit = with(context) {
     file("conflict").create("original content").add()
     val firstCommit = commitDetails(commit("Add conflict file"))
 
@@ -162,7 +187,8 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
     }
   }
 
-  fun `test tree merge without conflicts`() {
+  @Test
+  fun `test tree merge without conflicts`(): Unit = with(context) {
     file("src/main/java/App.java").create("public class App {}").add()
     file("src/test/java/AppTest.java").create("public class AppTest {}").add()
     val firstCommit = commitDetails(commit("Add initial project structure"))
@@ -228,7 +254,8 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
     }
   }
 
-  fun `test rebase with non-conflicting changes to same file`() {
+  @Test
+  fun `test rebase with non-conflicting changes to same file`(): Unit = with(context) {
     val originalContent = """
     line1=value1
     line2=value2
@@ -295,7 +322,8 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
     }
   }
 
-  fun `test reorder commits with reword operations`() {
+  @Test
+  fun `test reorder commits with reword operations`(): Unit = with(context) {
     file("feature1.txt").create("feature 1 content").add()
     val firstCommit = commitDetails(commit("Add feature 1"))
 
@@ -344,7 +372,8 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
     }
   }
 
-  fun `test dropping commit with directory creation`() {
+  @Test
+  fun `test dropping commit with directory creation`(): Unit = with(context) {
     file("dir/file1.txt").create().add()
     val firstCommit = commitDetails(commit("Create file1.txt in dir"))
     file("dir/file2.txt").create().add()
@@ -373,7 +402,8 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
     }
   }
 
-  fun `test rebase with rename and content change preserves both operations correctly`() {
+  @Test
+  fun `test rebase with rename and content change preserves both operations correctly`(): Unit = with(context) {
     val originalContent = "content_v1"
     file("old/file.txt").create(originalContent).add()
     val firstCommit = commitDetails(commit("Add file"))
@@ -419,7 +449,8 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
     }
   }
 
-  fun `test no changes rebase preserves commit hashes`() {
+  @Test
+  fun `test no changes rebase preserves commit hashes`(): Unit = with(context) {
     file("a").create("content a").add()
     val firstCommit = commitDetails(commit("Add a"))
     file("b").create("content b").addCommit("Add b")
@@ -439,11 +470,13 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
 
     GitInMemoryInteractiveRebaseProcess(objectRepo, validationResult.rebaseData).run() as GitCommitEditingOperationResult.Complete
 
-    val lastCommitHashAfter = repo.last()
-    assertEquals("Commit hash should remain unchanged when rebase does nothing", lastCommitHashBefore, lastCommitHashAfter)
+    assertThat(repo.last())
+      .describedAs("Commit hash should remain unchanged when rebase does nothing")
+      .isEqualTo(lastCommitHashBefore)
   }
 
-  fun `test rebase preserves hashes for unchanged segment`() {
+  @Test
+  fun `test rebase preserves hashes for unchanged segment`(): Unit = with(context) {
     file("a").create("content a").add()
     val firstCommit = commitDetails(commit("Add a"))
     file("b").create("content b").add()
@@ -477,14 +510,13 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
       "Add a",
     )
 
-    val commitAHashAfter = getHash(3)
-    val commitBHashAfter = getHash(2)
-
-    assertEquals("Commit hashes should not change for commits that were not modified", listOf(commitAHashBefore, commitBHashBefore),
-                 listOf(commitAHashAfter, commitBHashAfter))
+    assertThat(listOf(getHash(3), getHash(2)))
+      .describedAs("Commit hashes should not change for commits that were not modified")
+      .isEqualTo(listOf(commitAHashBefore, commitBHashBefore))
   }
 
-  fun `test drop commit that adds two files updates working tree and index`() {
+  @Test
+  fun `test drop commit that adds two files updates working tree and index`(): Unit = with(context) {
     file("a.txt").create("content a").add()
     val firstCommit = commitDetails(commit("Add a"))
 
@@ -519,12 +551,13 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
     refresh()
     updateChangeListManager()
 
-    assertEquals("local modified content", file("a.txt").read())
+    assertThat(file("a.txt").read()).isEqualTo("local modified content")
     file("b.txt").assertNotExists()
     file("c.txt").assertNotExists()
   }
 
-  fun `test drop commit cleanly applies local changes after rebase`() {
+  @Test
+  fun `test drop commit cleanly applies local changes after rebase`(): Unit = with(context) {
     file("a.txt").create("content a").add()
     file("b.txt").create("first line\n\nsecond line\n\nthird line").add()
     val firstCommit = commitDetails(commit("Add a, b"))
@@ -547,10 +580,11 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
     GitInMemoryInteractiveRebaseProcess(objectRepo, validationResult.rebaseData).run() as GitCommitEditingOperationResult.Complete
 
     file("b.txt").assertExists()
-    assertEquals("first line\n\nsecond line\n\nthird line\n\nadded fourth line", file("b.txt").read())
+    assertEqualsNormalizedLines("first line\n\nsecond line\n\nthird line\n\nadded fourth line", file("b.txt").read())
   }
 
-  fun `test rebase initial commit`() {
+  @Test
+  fun `test rebase initial commit`(): Unit = with(context) {
     val initialCommit = commitDetails(last())
     file("a.txt").create("content a").addCommit("Add a")
     file("b.txt").create("content b").addCommit("Add b")
@@ -583,7 +617,8 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
     }
   }
 
-  fun `test rebase skips empty commit when changes already applied`() {
+  @Test
+  fun `test rebase skips empty commit when changes already applied`(): Unit = with(context) {
     file("a").create("X").add()
     val firstCommit = commitDetails(commit("Add a X"))
     file("a").write("Y").addCommit("Modify a Y")
@@ -618,7 +653,8 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
     }
   }
 
-  fun `test reword produces rewritten mapping for reworded commit and its descendants`() {
+  @Test
+  fun `test reword produces rewritten mapping for reworded commit and its descendants`(): Unit = with(context) {
     file("a").create("content a").add()
     val firstCommit = commitDetails(commit("Add a"))
     file("b").create("content b").add()
@@ -641,19 +677,14 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
                                                                            entries.last().commitDetails.id) as GitInMemoryRebaseData.Companion.ValidationResult.Valid
     GitInMemoryInteractiveRebaseProcess(objectRepo, validationResult.rebaseData).run() as GitCommitEditingOperationResult.Complete
 
-    val bNewHash = getHash(1)
-    val cNewHash = getHash(0)
-
-    assertEquals(
-      listOf(
-        RewrittenCommit(bOldHash, bNewHash),
-        RewrittenCommit(cOldHash, cNewHash)
-      ),
-      postRewrites.single().mappings
+    assertThat(postRewrites.single().mappings).containsExactly(
+      RewrittenCommit(bOldHash, getHash(1)),
+      RewrittenCommit(cOldHash, getHash(0))
     )
   }
 
-  fun `test drop excludes dropped commit from rewritten mapping`() {
+  @Test
+  fun `test drop excludes dropped commit from rewritten mapping`(): Unit = with(context) {
     file("a").create("content a").add()
     val firstCommit = commitDetails(commit("Add a"))
     file("b").create("content b").addCommit("Add b")
@@ -675,15 +706,11 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
                                                                            entries.last().commitDetails.id) as GitInMemoryRebaseData.Companion.ValidationResult.Valid
     GitInMemoryInteractiveRebaseProcess(objectRepo, validationResult.rebaseData).run() as GitCommitEditingOperationResult.Complete
 
-    val cNewHash = getHash(0)
-
-    assertEquals(
-      listOf(RewrittenCommit(cOldHash, cNewHash)),
-      postRewrites.single().mappings
-    )
+    assertThat(postRewrites.single().mappings).containsExactly(RewrittenCommit(cOldHash, getHash(0)))
   }
 
-  fun `test fixup maps both source commits to the combined`() {
+  @Test
+  fun `test fixup maps both source commits to the combined`(): Unit = with(context) {
     file("a").create("content a").add()
     val firstCommit = commitDetails(commit("Add a"))
     file("b").create("content b").add()
@@ -708,16 +735,14 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
 
     val combinedNewHash = getHash(0)
 
-    assertEquals(
-      listOf(
-        RewrittenCommit(bOldHash, combinedNewHash),
-        RewrittenCommit(cOldHash, combinedNewHash)
-      ),
-      postRewrites.single().mappings
+    assertThat(postRewrites.single().mappings).containsExactly(
+      RewrittenCommit(bOldHash, combinedNewHash),
+      RewrittenCommit(cOldHash, combinedNewHash)
     )
   }
 
-  fun `test no-op rebase doesn't fire post-rewrite`() {
+  @Test
+  fun `test no-op rebase doesn't fire post-rewrite`(): Unit = with(context) {
     file("a").create("content a").add()
     val firstCommit = commitDetails(commit("Add a"))
     file("b").create("content b").addCommit("Add b")
@@ -736,10 +761,11 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
                                                                            entries.last().commitDetails.id) as GitInMemoryRebaseData.Companion.ValidationResult.Valid
     GitInMemoryInteractiveRebaseProcess(objectRepo, validationResult.rebaseData).run() as GitCommitEditingOperationResult.Complete
 
-    assertEmpty(captures)
+    assertThat(captures).isEmpty()
   }
 
-  fun `test reorder produces correct rewrite mapping for moved commits`() {
+  @Test
+  fun `test reorder produces correct rewrite mapping for moved commits`(): Unit = with(context) {
     file("a").create("content a").add()
     val firstCommit = commitDetails(commit("Add a"))
     file("b").create("content b").add()
@@ -763,19 +789,14 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
                                                                            entries.last().commitDetails.id) as GitInMemoryRebaseData.Companion.ValidationResult.Valid
     GitInMemoryInteractiveRebaseProcess(objectRepo, validationResult.rebaseData).run() as GitCommitEditingOperationResult.Complete
 
-    val bNewHash = getHash(0)
-    val cNewHash = getHash(1)
-
-    assertEquals(
-      listOf(
-        RewrittenCommit(cOldHash, cNewHash),
-        RewrittenCommit(bOldHash, bNewHash)
-      ),
-      postRewrites.single().mappings
+    assertThat(postRewrites.single().mappings).containsExactly(
+      RewrittenCommit(cOldHash, getHash(1)),
+      RewrittenCommit(bOldHash, getHash(0))
     )
   }
 
-  fun `test reword first commit then fixup next maps both to combined`() {
+  @Test
+  fun `test reword first commit then fixup next maps both to combined`(): Unit = with(context) {
     file("a").create("content a").add()
     val firstCommit = commitDetails(commit("Add a"))
     val aOldHash = firstCommit.id.asString()
@@ -800,16 +821,14 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
 
     val combinedNewHash = getHash(0)
 
-    assertEquals(
-      listOf(
-        RewrittenCommit(aOldHash, combinedNewHash),
-        RewrittenCommit(bOldHash, combinedNewHash)
-      ),
-      postRewrites.single().mappings
+    assertThat(postRewrites.single().mappings).containsExactly(
+      RewrittenCommit(aOldHash, combinedNewHash),
+      RewrittenCommit(bOldHash, combinedNewHash)
     )
   }
 
-  fun `test post-rewrite hook script actually receives stdin lines`() {
+  @Test
+  fun `test post-rewrite hook script actually receives stdin lines`(): Unit = with(context) {
     file("a").create("content a").add()
     val firstCommit = commitDetails(commit("Add a"))
     file("b").create("content b").add()
@@ -842,16 +861,21 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
     val bNewHash = getHash(1)
     val cNewHash = getHash(0)
 
-    assertTrue("hook script should have produced a capture file", captureFile.exists())
-    assertEquals(
+    assertThat(captureFile.exists()).describedAs("hook script should have produced a capture file").isTrue()
+    assertEqualsNormalizedLines(
       "$bOldHash $bNewHash\n$cOldHash $cNewHash\n",
       captureFile.readText()
     )
   }
 
-  private fun getRebaseEntries(firstCommit: VcsFullCommitDetails): List<GitRebaseEntryGeneratedUsingLog> = runBlocking {
-    val entries = project.service<GitInteractiveRebaseEntriesProvider>().tryGetEntriesForDialog(repo, firstCommit, logData)
-    checkNotNull(entries)
-    entries
+  private fun GitSingleRepoContext.getRebaseEntries(firstCommit: VcsFullCommitDetails): List<GitRebaseEntryGeneratedUsingLog> =
+    runBlocking {
+      val entries = project.service<GitInteractiveRebaseEntriesProvider>().tryGetEntriesForDialog(repo, firstCommit, logData)
+      checkNotNull(entries)
+      entries
+    }
+
+  private fun assertEqualsNormalizedLines(expected: String, actual: String) {
+    assertThat(actual.normalizeNewLines()).isEqualTo(expected)
   }
 }

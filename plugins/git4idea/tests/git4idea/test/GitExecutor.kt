@@ -109,6 +109,7 @@ private fun checkoutNew(project: Project, branchName: String, startPoint: String
 
 fun GitRepository.commit(message: String) = cd { commit(project, message) }
 fun GitPlatformTest.commit(message: String) = commit(project, message)
+fun GitPlatformTestContext.commit(message: String) = commit(project, message)
 private fun commit(project: Project, message: String): String {
   git(project, "commit -m '$message'")
   return last(project)
@@ -158,10 +159,12 @@ internal fun last(project: Project) = git(project, "log -1 --pretty=%H")
 
 fun GitRepository.getHash(depth: Int) = cd { getHash(project, depth) }
 fun GitPlatformTest.getHash(depth: Int) = getHash(project, depth)
+fun GitPlatformTestContext.getHash(depth: Int) = getHash(project, depth)
 private fun getHash(project: Project, depth: Int) = git(project, "log -1 --skip=$depth --pretty=%H")
 
 fun GitRepository.lastMessage() = cd { lastMessage(project) }
 fun GitPlatformTest.lastMessage() = lastMessage(project)
+fun GitPlatformTestContext.lastMessage() = lastMessage(project)
 private fun lastMessage(project: Project) = message(project, "HEAD")
 
 fun GitRepository.lastAuthorTime() = cd { lastAuthorTime(project) }
