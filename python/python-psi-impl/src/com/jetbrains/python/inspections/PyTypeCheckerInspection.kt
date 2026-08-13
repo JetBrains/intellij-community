@@ -1826,12 +1826,12 @@ open class PyTypeCheckerInspection : PyInspection() {
       }
       if (!mapping.unmappedArguments.isEmpty()) {
         for (argument in mapping.unmappedArguments) {
-          unexpectedArgumentForParamSpecs.add(UnexpectedArgumentForParamSpec(argument!!, paramSpec))
+          unexpectedArgumentForParamSpecs.add(UnexpectedArgumentForParamSpec(argument, paramSpec))
         }
       }
       val unmappedParameters = mapping.unmappedParameters
       if (!unmappedParameters.isEmpty()) {
-        unfilledParameterFromParamSpecs.add(UnfilledParameterFromParamSpec(unmappedParameters[0]!!, paramSpec))
+        unfilledParameterFromParamSpecs.add(UnfilledParameterFromParamSpec(unmappedParameters[0], paramSpec))
       }
     }
 

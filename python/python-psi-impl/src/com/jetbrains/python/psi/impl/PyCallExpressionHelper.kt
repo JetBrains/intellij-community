@@ -1136,12 +1136,12 @@ object PyCallExpressionHelper {
     var keywordOnlyMode = false
     var mappedVariadicArgumentsToParameters = false
     val mappedParameters = LinkedHashMap<PyExpression, PyCallableParameter>()
-    val unmappedParameters = mutableListOf<PyCallableParameter?>()
-    val unmappedContainerParameters = mutableListOf<PyCallableParameter?>()
-    val unmappedArguments = mutableListOf<PyExpression?>()
-    val parametersMappedToVariadicKeywordArguments = mutableListOf<PyCallableParameter?>()
-    val parametersMappedToVariadicPositionalArguments = mutableListOf<PyCallableParameter?>()
-    val tupleMappedParameters = mutableMapOf<PyExpression?, PyCallableParameter?>()
+    val unmappedParameters = mutableListOf<PyCallableParameter>()
+    val unmappedContainerParameters = mutableListOf<PyCallableParameter>()
+    val unmappedArguments = mutableListOf<PyExpression>()
+    val parametersMappedToVariadicKeywordArguments = mutableListOf<PyCallableParameter>()
+    val parametersMappedToVariadicPositionalArguments = mutableListOf<PyCallableParameter>()
+    val tupleMappedParameters = mutableMapOf<PyExpression, PyCallableParameter>()
 
     val positionalResults = filterPositionalAndVariadicArguments(arguments, context)
     val keywordArguments = arguments.filterIsInstanceTo(mutableListOf<PyKeywordArgument>())
@@ -1400,8 +1400,8 @@ object PyCallExpressionHelper {
 
   private fun mapComponentsOfTupleParameter(argument: PyExpression?, parameter: PyTupleParameter): TupleMappingResults {
     var argument = argument
-    val unmappedParameters = mutableListOf<PyCallableParameter?>()
-    val unmappedArguments = mutableListOf<PyExpression?>()
+    val unmappedParameters = mutableListOf<PyCallableParameter>()
+    val unmappedArguments = mutableListOf<PyExpression>()
     val mappedParameters = mutableMapOf<PyExpression, PyCallableParameter>()
     argument = PyPsiUtils.flattenParens(argument)
     if (argument is PySequenceExpression) {
@@ -1469,7 +1469,7 @@ object PyCallExpressionHelper {
   ): PositionalArgumentsAnalysisResults {
     val variadicArguments = ArrayList<PyExpression>()
     val allPositionalArguments = ArrayList<PyExpression?>()
-    val componentsOfVariadicPositionalArguments = ArrayList<PyExpression?>()
+    val componentsOfVariadicPositionalArguments = ArrayList<PyExpression>()
     var seenVariadicPositionalArgument = false
     var seenVariadicKeywordArgument = false
     var seenKeywordArgument = false
@@ -1617,23 +1617,23 @@ object PyCallExpressionHelper {
 
 class ArgumentMappingResults internal constructor(
   val mappedParameters: Map<PyExpression, PyCallableParameter>,
-  val unmappedParameters: List<PyCallableParameter?>,
-  val unmappedContainerParameters: List<PyCallableParameter?>,
-  val unmappedArguments: List<PyExpression?>,
-  val parametersMappedToVariadicPositionalArguments: List<PyCallableParameter?>,
-  val parametersMappedToVariadicKeywordArguments: List<PyCallableParameter?>,
-  val mappedTupleParameters: Map<PyExpression?, PyCallableParameter?>,
+  val unmappedParameters: List<PyCallableParameter>,
+  val unmappedContainerParameters: List<PyCallableParameter>,
+  val unmappedArguments: List<PyExpression>,
+  val parametersMappedToVariadicPositionalArguments: List<PyCallableParameter>,
+  val parametersMappedToVariadicKeywordArguments: List<PyCallableParameter>,
+  val mappedTupleParameters: Map<PyExpression, PyCallableParameter>,
 )
 
 private class TupleMappingResults(
   val parameters: Map<PyExpression, PyCallableParameter>,
-  val unmappedParameters: List<PyCallableParameter?>,
-  val unmappedArguments: List<PyExpression?>,
+  val unmappedParameters: List<PyCallableParameter>,
+  val unmappedArguments: List<PyExpression>,
 )
 
 private class PositionalArgumentsAnalysisResults(
   val allPositionalArguments: MutableList<PyExpression?>,
-  val componentsOfVariadicPositionalArguments: List<PyExpression?>,
+  val componentsOfVariadicPositionalArguments: List<PyExpression>,
   val variadicPositionalArguments: MutableList<PyExpression>,
 )
 
