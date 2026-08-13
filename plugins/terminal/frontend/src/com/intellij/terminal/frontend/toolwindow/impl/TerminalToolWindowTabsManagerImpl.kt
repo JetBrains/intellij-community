@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -189,7 +188,7 @@ class TerminalToolWindowTabsManagerImpl(
     coroutineScope.coroutineContext.job.cancelOnDispose(content)
 
     if (closeOnProcessTermination) {
-      coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         terminal.sessionState.collect { state ->
           if (state == TerminalViewSessionState.Terminated) {
             val tab = content.getTerminalTab() ?: return@collect
