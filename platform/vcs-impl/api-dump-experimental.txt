@@ -7,6 +7,22 @@
 - a:beforeChangesProcessing(com.intellij.openapi.vcs.changes.VcsDirtyScope):V
 - a:getChangeListIdFor(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.changes.ChangeListManagerGate):java.lang.String
 - a:markChangesProcessed(com.intellij.openapi.vcs.changes.VcsDirtyScope):V
+*a:com.intellij.openapi.vcs.changes.ChangeListManagerEx
+- com.intellij.openapi.vcs.changes.ChangeListManager
+- <init>():V
+- a:addChangeList(java.lang.String,java.lang.String,com.intellij.openapi.vcs.changes.ChangeListData):com.intellij.openapi.vcs.changes.LocalChangeList
+- a:addUnversionedFiles(com.intellij.openapi.vcs.changes.LocalChangeList,java.util.List):V
+- a:blockModalNotifications():V
+- a:editChangeListData(java.lang.String,com.intellij.openapi.vcs.changes.ChangeListData):Z
+- a:freeze(java.lang.String):V
+- a:getAffectedLists(java.util.Collection):java.util.Collection
+- s:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangeListManagerEx
+- a:isInUpdate():Z
+- a:promiseWaitForUpdate():org.jetbrains.concurrency.Promise
+- a:setDefaultChangeList(com.intellij.openapi.vcs.changes.LocalChangeList,Z):V
+- a:unblockModalNotifications():V
+- a:unfreeze():V
+- a:waitForUpdate():V
 *f:com.intellij.openapi.vcs.changes.ChangeListManagerRefreshHelper
 - sf:INSTANCE:com.intellij.openapi.vcs.changes.ChangeListManagerRefreshHelper
 - f:launchRefreshOrNotifyFrozen(com.intellij.openapi.project.Project):V

@@ -110,6 +110,7 @@ import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 import static com.intellij.util.ui.UIUtil.BR;
 import static java.util.stream.Collectors.toSet;
 
+@ApiStatus.Internal
 @State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class ChangeListManagerImpl extends ChangeListManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(ChangeListManagerImpl.class);

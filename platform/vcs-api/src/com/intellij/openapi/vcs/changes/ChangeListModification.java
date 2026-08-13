@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,6 +11,7 @@ import java.util.List;
 /**
  * @see ChangeListManager
  */
+@ApiStatus.NonExtendable
 public interface ChangeListModification {
   @NotNull LocalChangeList addChangeList(@NotNull @NlsSafe String name, @Nullable @NlsSafe String comment);
 

@@ -805,7 +805,7 @@ com.intellij.openapi.vcs.changes.ChangeListListener
 - defaultListChanged(com.intellij.openapi.vcs.changes.ChangeList,com.intellij.openapi.vcs.changes.ChangeList,Z):V
 - unchangedFileStatusChanged():V
 - unchangedFileStatusChanged(Z):V
-a:com.intellij.openapi.vcs.changes.ChangeListManager
+Fa:com.intellij.openapi.vcs.changes.ChangeListManager
 - com.intellij.openapi.vcs.changes.ChangeListModification
 - <init>():V
 - a:addChangeListListener(com.intellij.openapi.vcs.changes.ChangeListListener):V

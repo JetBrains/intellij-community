@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +22,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
+@ApiStatus.NonExtendable
 public abstract class ChangeListManager implements ChangeListModification {
   public static @NotNull ChangeListManager getInstance(@NotNull Project project) {
     if (project.isDefault()) throw new IllegalArgumentException("Can't create ChangeListManager for default project");
