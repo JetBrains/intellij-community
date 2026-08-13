@@ -85,6 +85,7 @@ import com.jetbrains.python.psi.impl.stubs.PyVersionSpecificStubBaseKt;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PropertyStubStorage;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -93,7 +94,7 @@ import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
-import com.jetbrains.python.psi.types.PySyntheticCallHelper;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
@@ -1059,7 +1060,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         if (!(callable instanceof StubBasedPsiElement) && !context.maySwitchToAST(callable)) {
           return PyAnyType.getAny();
         }
-        return PySyntheticCallHelper.getCallType(callable, receiverType, List.of(), context);
+        RatedResolveResult resolvedCallable = new RatedResolveResult(RatedResolveResult.RATE_NORMAL, callable);
+        final PyType getterType = PyTypeUtil.getTypeOfBoundMember(receiverType, List.of(resolvedCallable), context);
+        return PyCallExpressionHelper.getCallType(getterType, List.of(), context);
       }
       return PyAnyType.getUnknown();
     }

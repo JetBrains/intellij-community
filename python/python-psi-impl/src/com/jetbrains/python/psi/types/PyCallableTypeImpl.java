@@ -77,8 +77,10 @@ public class PyCallableTypeImpl implements PyCallableType {
   }
 
   @Override
-  public @Nullable PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteOwner callSite) {
-    if (myCallable instanceof PyFunction function) {
+  public @Nullable PyType getCallType(@NotNull TypeEvalContext context,
+                                      @Nullable PyCallSiteOwner callSite,
+                                      @NotNull List<PyCallableArgument> arguments) {
+    if (callSite != null && myCallable instanceof PyFunction function) {
       for (PyTypeProvider typeProvider : PyTypeProvider.EP_NAME.getExtensionList()) {
         final Ref<PyType> typeRef = typeProvider.getCallType(function, callSite, context);
         if (typeRef != null) {
@@ -91,7 +93,6 @@ public class PyCallableTypeImpl implements PyCallableType {
       return PyNarrowedType.Companion.bindIfNeeded(myReturnType, callSite);
     }
 
-    List<PyExpression> arguments = callSite.getArguments(myCallable);
     PyCallableParameterListType parametersType = new PyCallableParameterListTypeImpl(ContainerUtil.notNullize(getParameters(context)));
     ArgumentMappingResults mappingResults = PyCallExpressionHelper.analyzeArguments(arguments, parametersType, context);
     final var substitutions = PyTypeChecker.unifyGenericCall(mappingResults.getMappedParameters(), context);

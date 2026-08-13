@@ -26,6 +26,8 @@ import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.types.PyCallableArgument
+import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment
@@ -240,7 +242,8 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
       val callableType = mapping.callableType ?: return null
       val typeParameters = callableType.getTypeParameters(typeEvalContext)?.takeIf { it.isNotEmpty() } ?: return null
 
-      val substitutions = PyTypeInferenceCspFactory.unifyGenericCall(call, callableType, mapping.mappedParameters, typeEvalContext)
+      val mappedParameters = mapping.mappedParameters.mapKeys { PyCallableArgument(it.key) }
+      val substitutions = PyTypeInferenceCspFactory.unifyGenericCall(call, callableType, mappedParameters, typeEvalContext)
                           ?: return null
       return typeParameters.map { PyTypeChecker.substitute(it, substitutions, typeEvalContext) }
     }

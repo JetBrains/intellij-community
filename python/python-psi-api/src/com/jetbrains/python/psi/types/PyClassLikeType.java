@@ -5,11 +5,13 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyCallSiteOwner;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyWithAncestors;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,5 +69,18 @@ public interface PyClassLikeType extends PyCallableType, PyWithAncestors, PyInst
   @Override
   default <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
     return visitor.visitPyClassLikeType(this);
+  }
+
+  @Nullable
+  default PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteOwner callSite) {
+    return getReturnType(context);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  default @Nullable PyType getCallType(@NotNull TypeEvalContext context,
+                                       @Nullable PyCallSiteOwner callSite,
+                                       @NotNull List<PyCallableArgument> arguments) {
+    return callSite != null ? getCallType(context, callSite) : getReturnType(context);
   }
 }

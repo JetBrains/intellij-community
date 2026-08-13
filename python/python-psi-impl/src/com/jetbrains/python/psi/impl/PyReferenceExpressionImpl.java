@@ -59,6 +59,7 @@ import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyAnyType;
+import com.jetbrains.python.psi.types.PyCallableArgument;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -71,7 +72,6 @@ import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyNarrowedType;
 import com.jetbrains.python.psi.types.PyOverloadType;
-import com.jetbrains.python.psi.types.PySyntheticCallHelper;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyTypeUtilKt;
@@ -516,7 +516,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       classType.resolveMember(name, null, AccessDirection.READ, PyResolveContext.noProperties(context));
     if (ContainerUtil.isEmpty(resolveResults)) {
       PyType nameArg = Optional.<PyType>ofNullable(PyLiteralType.stringLiteral(anchor, name)).orElse(PyAnyType.getUnknown());
-      return PySyntheticCallHelper.getCallTypeByFunctionName(PyNames.GETATTR, classType, Collections.singletonList(nameArg), context);
+      return PyCallExpressionHelper.getCallType(classType, PyNames.GETATTR, List.of(new PyCallableArgument(nameArg)),
+                                                PyResolveContext.defaultContext(context));
     }
 
     PyType memberType = PyTypeUtil.getTypeOfMember(resolveResults, context, anchor);

@@ -62,7 +62,7 @@ object PyTypeInferenceCspFactory {
   fun unifyGenericCall(
     callSite: PyCallSiteOwner?,
     callableType: PyCallableType?,
-    mappedParameters: Map<PyExpression, PyCallableParameter>,
+    mappedParameters: Map<PyCallableArgument, PyCallableParameter>,
     context: TypeEvalContext,
   ): GenericSubstitutions? {
     val callSiteExpression = callSite as? PyExpression

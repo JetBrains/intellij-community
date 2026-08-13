@@ -77,14 +77,12 @@ import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.PyABCUtil;
 import com.jetbrains.python.psi.types.PyAnyType;
-import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyNamedTupleType;
-import com.jetbrains.python.psi.types.PySyntheticCallHelper;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
@@ -369,15 +367,17 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
                                                           @NotNull PyClassType withType,
                                                           boolean isAsync,
                                                           @NotNull TypeEvalContext context) {
-    final PyClass cls = withType.getPyClass();
-    final PyFunction enter = cls.findMethodByName(isAsync ? PyNames.AENTER : PyNames.ENTER, true, context);
-    if (enter != null) {
-      final PyType enterType = PySyntheticCallHelper.getCallType(enter, withType, List.of(), context);
-      if (enterType != null) {
+    final String enterName = isAsync ? PyNames.AENTER : PyNames.ENTER;
+    final List<? extends RatedResolveResult> enterMethods =
+      withType.resolveMember(enterName, null, AccessDirection.READ, PyResolveContext.defaultContext(context));
+    if (!ContainerUtil.isEmpty(enterMethods)) {
+      final PyType enterMethodType = PyTypeUtil.getTypeOfBoundMember(withType, enterMethods, context);
+      final PyType enterType = PyCallExpressionHelper.getCallType(enterMethodType, List.of(), context);
+      if (!isUnknown(enterType)) {
         return isAsync ? Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(enterType)) : enterType;
       }
       for (PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
-        final PyType typeFromProvider = provider.getContextManagerVariableType(cls, withExpression, context);
+        final PyType typeFromProvider = provider.getContextManagerVariableType(withType.getPyClass(), withExpression, context);
         if (typeFromProvider != null) {
           return typeFromProvider;
         }
@@ -559,14 +559,11 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     else {
       actualType = classType;
     }
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
-    final List<? extends RatedResolveResult> results = actualType.resolveMember(name, null, AccessDirection.READ, resolveContext);
-    if (!ContainerUtil.isEmpty(results)) {
-      final PyType boundMemberType = PyTypeUtil.getTypeOfBoundMember(actualType, results, context, null, classType);
-      final PyCallableType callableType = ContainerUtil.getFirstItem(PyTypeUtil.getCallableItems(boundMemberType));
-      if (callableType != null) {
-        return Ref.create(PySyntheticCallHelper.getCallTypeOnTypesOnly(callableType, null, List.of(), context));
-      }
+    final List<? extends RatedResolveResult> resolveResults =
+      actualType.resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext(context));
+    if (!ContainerUtil.isEmpty(resolveResults)) {
+      final PyType boundMemberType = PyTypeUtil.getTypeOfBoundMember(actualType, resolveResults, context, null, classType);
+      return Ref.create(PyCallExpressionHelper.getCallType(boundMemberType, List.of(), context));
     }
     return null;
   }

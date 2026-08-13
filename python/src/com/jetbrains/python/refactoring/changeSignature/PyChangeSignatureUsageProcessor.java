@@ -44,6 +44,7 @@ import com.jetbrains.python.psi.impl.ArgumentMappingResults;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
+import com.jetbrains.python.psi.types.PyCallableArgument;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -164,13 +165,13 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     final PyFunction function = changeInfo.getMethod();
 
     final List<PyCallableParameter> allOrigParams = function.getParameters(typeEvalContext);
-    Map<@NotNull PyExpression, @NotNull PyCallableParameter> mappedParameters = Map.of();
+    Map<@NotNull PyCallableArgument, @NotNull PyCallableParameter> mappedParameters = Map.of();
     List<@Nullable PyCallableParameter> parametersMappedToVariadicKeywordArguments = List.of();
     int implicitCount = 0;
     if (typeEvalContext.getType(function) instanceof PyCallableType callableType) {
       final List<PyCallableParameter> rawParameters = callableType.getParameters(typeEvalContext);
       if (rawParameters != null) {
-        final List<PyExpression> arguments = call.getArguments(function);
+        final List<PyCallableArgument> arguments = ContainerUtil.map(call.getArguments(), PyCallableArgument::new);
         final List<PyCallableParameter> parameters = PyCallExpressionHelper.unpackParameters(rawParameters, arguments, typeEvalContext);
         final PyResolveContext resolveContext = PyResolveContext.defaultContext(typeEvalContext);
         final List<PyCallableParameter> explicitParameters = filterExplicitParameters(parameters, function, call, resolveContext);
@@ -181,8 +182,8 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
     }
 
-    MultiMap<Integer, PyExpression> oldParamIndexToArgs = MultiMap.create();
-    for (Map.Entry<PyExpression, PyCallableParameter> entry : mappedParameters.entrySet()) {
+    MultiMap<Integer, PyCallableArgument> oldParamIndexToArgs = MultiMap.create();
+    for (Map.Entry<PyCallableArgument, PyCallableParameter> entry : mappedParameters.entrySet()) {
       final PyCallableParameter param = entry.getValue();
       oldParamIndexToArgs.putValue(allOrigParams.indexOf(param), entry.getKey());
     }
@@ -225,20 +226,20 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         }
       }
       else {
-        final Collection<PyExpression> existingArgs = oldParamIndexToArgs.get(oldIndex);
+        final Collection<PyCallableArgument> existingArgs = oldParamIndexToArgs.get(oldIndex);
         final PyCallableParameter oldParam = allOrigParams.get(oldIndex);
         final boolean usesValueFromVariadic = parametersMappedToVariadicKeywordArguments.contains(oldParam);
         variadicKeywordArgsUsed |= usesValueFromVariadic;
         if (!existingArgs.isEmpty()) {
-          for (PyExpression arg : existingArgs) {
-            PyExpression argValue;
+          for (PyCallableArgument arg : existingArgs) {
+            @Nullable PyExpression argValue;
             String argName;
-            if (arg instanceof PyKeywordArgument) {
-              argValue = ((PyKeywordArgument)arg).getValueExpression();
-              argName = StringUtil.notNullize(((PyKeywordArgument)arg).getKeyword());
+            if (arg.getExpression() instanceof PyKeywordArgument keywordArgument) {
+              argValue = keywordArgument.getValueExpression();
+              argName = StringUtil.notNullize(keywordArgument.getKeyword());
             }
             else {
-              argValue = arg;
+              argValue = arg.getExpression();
               argName = "";
             }
             notInsertedVariadicKeywordArgs.remove(argValue);

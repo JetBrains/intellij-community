@@ -2153,7 +2153,7 @@ object PyTypeChecker {
         if (!classType.isParameterized) {
           return super.visitPyClassType(classType)
         }
-        return PyCollectionTypeImpl(
+        val clonedClassType = PyCollectionTypeImpl(
           classType.pyClass, classType.isDefinition,
           classType.typeArguments.flatMap { typeArg ->
             val clonedTypeArg = clone<PyType>(typeArg)
@@ -2161,6 +2161,7 @@ object PyTypeChecker {
             flattenUnpackedTuple(clonedAndWidenedTypeArg)
           }
         )
+        return if (classType is PyClassTypeImpl) classType.withUserDataCopy(clonedClassType) else clonedClassType
       }
 
       override fun visitPyTupleType(tupleType: PyTupleType): PyType {
@@ -2287,12 +2288,12 @@ object PyTypeChecker {
   }
 
   @JvmStatic
-  fun unifyGenericCall(arguments: Map<PyExpression, PyCallableParameter>, context: TypeEvalContext): GenericSubstitutions? {
+  fun unifyGenericCall(arguments: Map<PyCallableArgument, PyCallableParameter>, context: TypeEvalContext): GenericSubstitutions? {
     val substitutions = GenericSubstitutions()
-    for ((key, paramWrapper) in PyCallExpressionHelper.getRegularMappedParameters(arguments).entries) {
-      val expectedType = paramWrapper.getArgumentType(context)
-      val promotedToLiteral = PyLiteralType.promoteToLiteral(key, expectedType, context, substitutions)
-      val actualType = promotedToLiteral.takeUnless { it.isUnknown } ?: context.getType(key)
+    for ((argument, parameter) in PyCallExpressionHelper.getRegularMappedParameters(arguments).entries) {
+      val expectedType = parameter.getArgumentType(context)
+      val promotedToLiteral = argument.expression?.let { PyLiteralType.promoteToLiteral(it, expectedType, context, substitutions) }
+      val actualType = promotedToLiteral?.takeUnless { it.isUnknown } ?: argument.getType(context)
       val matchedByTypes = match(expectedType, actualType, context, substitutions)
       if (!matchedByTypes) {
         return null
@@ -2317,52 +2318,14 @@ object PyTypeChecker {
     return substitutions
   }
 
-  @JvmStatic
-  fun unifyGenericCallOnArgumentTypes(
-    receiverType: PyType?,
-    arguments: Map<Ref<PyType?>?, PyCallableParameter>,
-    context: TypeEvalContext,
-  ): GenericSubstitutions? {
-    val substitutions = unifyReceiver(receiverType, context)
-    for ((key, paramWrapper) in PyCallExpressionHelper.getRegularMappedParameters(arguments)) {
-      val expectedType = paramWrapper.getArgumentType(context)
-      val actualType = key.derefOrUnknown()
-      val matchedByTypes = match(expectedType, actualType, context, substitutions)
-      if (!matchedByTypes) {
-        return null
-      }
-    }
-    if (!matchContainerByType(PyCallExpressionHelper.getMappedPositionalContainer(arguments),
-                              PyCallExpressionHelper.getArgumentsMappedToPositionalContainer(arguments).map(Ref<*>::deref),
-                              substitutions, context)) {
-      return null
-    }
-    if (!matchContainerByType(PyCallExpressionHelper.getMappedKeywordContainer(arguments),
-                              PyCallExpressionHelper.getArgumentsMappedToKeywordContainer(arguments).map(Ref<*>::deref),
-                              substitutions, context)) {
-      return null
-    }
-    return substitutions
-  }
-
   private fun matchContainer(
-    container: PyCallableParameter?, arguments: List<PyExpression>,
+    container: PyCallableParameter?, arguments: List<PyCallableArgument>,
     substitutions: GenericSubstitutions, context: TypeEvalContext,
   ): Boolean {
     if (container == null) {
       return true
     }
-    val actualArgumentTypes = arguments.map { context.getType(it) }
-    return matchContainerByType(container, actualArgumentTypes, substitutions, context)
-  }
-
-  private fun matchContainerByType(
-    container: PyCallableParameter?, actualArgumentTypes: List<PyType?>,
-    substitutions: GenericSubstitutions, context: TypeEvalContext,
-  ): Boolean {
-    if (container == null) {
-      return true
-    }
+    val actualArgumentTypes = arguments.map { it.getType(context) }
     val expectedArgumentType = container.getArgumentType(context)
     if (container.isPositionalContainer && expectedArgumentType is PyPositionalVariadicType) {
       return match(

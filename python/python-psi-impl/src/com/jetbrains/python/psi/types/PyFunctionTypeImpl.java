@@ -69,26 +69,29 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   }
 
   @Override
-  public @Nullable PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteOwner callSite) {
+  public @Nullable PyType getCallType(@NotNull TypeEvalContext context,
+                                      @Nullable PyCallSiteOwner callSite,
+                                      @NotNull List<PyCallableArgument> arguments) {
     if (!(myCallable instanceof PyFunction function)) {
       return context.getReturnType(myCallable);
     }
 
-    for (PyTypeProvider typeProvider : PyTypeProvider.EP_NAME.getExtensionList()) {
-      final Ref<PyType> typeRef = typeProvider.getCallType(function, callSite, context);
-      if (typeRef != null) {
-        final PyType type = typeRef.get();
-        if (type != null) {
-          type.assertValid(typeProvider.toString());
+    if (callSite != null) {
+      for (PyTypeProvider typeProvider : PyTypeProvider.EP_NAME.getExtensionList()) {
+        final Ref<PyType> typeRef = typeProvider.getCallType(function, callSite, context);
+        if (typeRef != null) {
+          final PyType type = typeRef.get();
+          if (type != null) {
+            type.assertValid(typeProvider.toString());
+          }
+          return type;
         }
-        return type;
       }
     }
 
-    List<PyExpression> arguments = callSite.getArguments(myCallable);
     PyCallableParameterListTypeImpl parametersType = new PyCallableParameterListTypeImpl(myParameters);
     ArgumentMappingResults mappingResults = PyCallExpressionHelper.analyzeArguments(arguments, parametersType, context);
-    Map<PyExpression, PyCallableParameter> parameters = mappingResults.getMappedParameters();
+    Map<PyCallableArgument, PyCallableParameter> parameters = mappingResults.getMappedParameters();
     @Nullable PyType type = context.getReturnType(function);
     if (PyTypeChecker.hasGenerics(type, context)) {
       PyType callableType = context.getType(function);

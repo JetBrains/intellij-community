@@ -21,6 +21,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ast.PyAstFunction
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
@@ -36,7 +37,6 @@ import com.jetbrains.python.psi.PyUtil.isObjectClass
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyTypeProvider
 import com.jetbrains.python.psi.resolve.RatedResolveResult
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
 import com.jetbrains.python.psi.types.PyTypeChecker.collectTypeSubstitutions
@@ -523,14 +523,15 @@ object PyTypeUtil {
   @JvmStatic
   @JvmOverloads
   fun getTypeOfBoundMember(
-    classType: PyClassType,
-    memberResolveResults: List<@JvmWildcard RatedResolveResult>,
+    classType: PyClassLikeType,
+    memberResolveResults: List<@JvmWildcard RatedResolveResult>?,
     context: TypeEvalContext,
     errors: MutableList<ProblemMessage>? = null,
     selfType: PyInstantiableType<*> = classType,
   ): PyType? {
+    if (memberResolveResults.isNullOrEmpty()) return PyAnyType.unknown
     val memberType = getTypeOfMember(memberResolveResults, context)
-    val specializedMemberType = specializeMemberType(classType, selfType, memberType, context)
+    val specializedMemberType = if (classType is PyClassType) specializeMemberType(classType, selfType, memberType, context) else memberType
     // An annotated instance attribute holding a callable is not a descriptor, so it must not be bound to `self`.
     if (!selfType.isDefinition() && isInstanceMember(memberResolveResults, context)) {
       return specializedMemberType

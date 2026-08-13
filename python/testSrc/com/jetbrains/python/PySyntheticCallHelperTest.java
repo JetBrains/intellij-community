@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
@@ -15,12 +16,14 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.PyAnyType;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.types.PyCallableArgument;
 import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PySyntheticCallHelper;
+import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -36,8 +39,8 @@ public class PySyntheticCallHelperTest extends PyTestCase {
         pass
       """, () -> {
       PyFunction function = myFixture.findElementByText("foo", PyFunction.class);
-      return PySyntheticCallHelper.getCallType(function, PyAnyType.getUnknown(), List.of(PyBuiltinCache.getInstance(function).getNoneType()),
-                                               TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
+      return getCallType(function, List.of(PyBuiltinCache.getInstance(function).getNoneType()),
+                         TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
     });
   }
 
@@ -47,8 +50,8 @@ public class PySyntheticCallHelperTest extends PyTestCase {
         pass
       """, () -> {
       PyFunction function = myFixture.findElementByText("foo", PyFunction.class);
-      return PySyntheticCallHelper.getCallType(function, null, List.of(PyBuiltinCache.getInstance(function).getNoneType()),
-                                               TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
+      return getCallType(function, List.of(PyBuiltinCache.getInstance(function).getNoneType()),
+                         TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
     });
   }
 
@@ -58,10 +61,10 @@ public class PySyntheticCallHelperTest extends PyTestCase {
         pass
       """, () -> {
       PyFunction function = myFixture.findElementByText("foo", PyFunction.class);
-      return PySyntheticCallHelper.getCallType(function, null, List.of(PyBuiltinCache.getInstance(function).getNoneType(),
-                                                                       PyBuiltinCache.getInstance(myFixture.getFile()).getStrType(),
-                                                                       PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()),
-                                               TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
+      return getCallType(function, List.of(PyBuiltinCache.getInstance(function).getNoneType(),
+                                           PyBuiltinCache.getInstance(myFixture.getFile()).getStrType(),
+                                           PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()),
+                         TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
     });
   }
 
@@ -78,8 +81,8 @@ public class PySyntheticCallHelperTest extends PyTestCase {
         pass
       """, () -> {
       PyFunction function = myFixture.findElementByText("foo", PyFunction.class);
-      return PySyntheticCallHelper.getCallType(function, null, List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()),
-                                               TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
+      return getCallType(function, List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()),
+                         TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
     });
   }
 
@@ -92,13 +95,10 @@ public class PySyntheticCallHelperTest extends PyTestCase {
       TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
       PyClass clazz = myFixture.findElementByText("Clazz", PyClass.class);
       assertInstanceOf(clazz, PyClass.class);
-      PyType classType = context.getType(clazz);
-      assertInstanceOf(classType, PyClassType.class);
-      classType = ((PyClassType)classType).toInstance();
-      return PySyntheticCallHelper.getCallTypeByFunctionName("foo",
-                                                             classType,
-                                                             List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()),
-                                                             context);
+      PyClassType classType = assertInstanceOf(context.getType(clazz), PyClassType.class).toInstance();
+      return getCallType(classType, "foo",
+                         List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()),
+                         context);
     });
   }
 
@@ -108,10 +108,9 @@ public class PySyntheticCallHelperTest extends PyTestCase {
           pass
       """, () -> {
       PyFunction function = myFixture.findElementByText("foo", PyFunction.class);
-      return PySyntheticCallHelper.getCallType(function,
-                                               null,
-                                               List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()),
-                                               TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
+      return getCallType(function,
+                         List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()),
+                         TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
     });
   }
 
@@ -132,18 +131,15 @@ public class PySyntheticCallHelperTest extends PyTestCase {
       TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
       PyClass clazz = myFixture.findElementByText("Clazz", PyClass.class);
       assertInstanceOf(clazz, PyClass.class);
-      PyType classType = context.getType(clazz);
-      assertInstanceOf(classType, PyClassType.class);
-      classType = ((PyClassType)classType).toInstance();
-      return PySyntheticCallHelper.getCallTypeByFunctionName("foo",
-                                                             classType,
-                                                             List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()),
-                                                             context);
+      PyClassType classType = assertInstanceOf(context.getType(clazz), PyClassType.class).toInstance();
+      return getCallType(classType, "foo",
+                         List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()),
+                         context);
     });
   }
 
   public void testClassMethodWithConditionalImpls() {
-    doTest("str | int", """
+    doTest("int", """
       from typing import overload, Any
       class Clazz:
           if input():
@@ -156,13 +152,10 @@ public class PySyntheticCallHelperTest extends PyTestCase {
       TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
       PyClass clazz = myFixture.findElementByText("Clazz", PyClass.class);
       assertInstanceOf(clazz, PyClass.class);
-      PyType classType = context.getType(clazz);
-      assertInstanceOf(classType, PyClassType.class);
-      classType = ((PyClassType)classType).toInstance();
-      return PySyntheticCallHelper.getCallTypeByFunctionName("foo",
-                                                             classType,
-                                                             List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()),
-                                                             context);
+      PyClassType classType = assertInstanceOf(context.getType(clazz), PyClassType.class).toInstance();
+      return getCallType(classType, "foo",
+                         List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()),
+                         context);
     });
   }
 
@@ -183,12 +176,10 @@ public class PySyntheticCallHelperTest extends PyTestCase {
       TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
       PyTargetExpression classRef = myFixture.findElementByText("clazz", PyTargetExpression.class);
       assertInstanceOf(classRef, PyTargetExpression.class);
-      PyType classType = context.getType(classRef);
-      assertInstanceOf(classType, PyClassType.class);
-      return PySyntheticCallHelper.getCallTypeByFunctionName("foo",
-                                                             classType,
-                                                             List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()),
-                                                             context);
+      PyClassType classType = assertInstanceOf(context.getType(classRef), PyClassType.class);
+      return getCallType(classType, "foo",
+                         List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()),
+                         context);
     });
   }
 
@@ -202,9 +193,8 @@ public class PySyntheticCallHelperTest extends PyTestCase {
       TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
       PyTargetExpression instance = myFixture.findElementByText("instance", PyTargetExpression.class);
       assertInstanceOf(instance, PyTargetExpression.class);
-      PyType classType = context.getType(instance);
-      assertInstanceOf(classType, PyClassType.class);
-      return PySyntheticCallHelper.getCallTypeByFunctionName("foo", classType, List.of(), context);
+      PyClassType classType = assertInstanceOf(context.getType(instance), PyClassType.class);
+      return getCallType(classType, "foo", List.of(), context);
     });
   }
 
@@ -217,8 +207,8 @@ public class PySyntheticCallHelperTest extends PyTestCase {
       assertInstanceOf(functionRef, PyReferenceExpression.class);
       PsiElement resolveResult = functionRef.getReference(PyResolveContext.defaultContext(context)).resolve();
       assertInstanceOf(resolveResult, PyFunction.class);
-      return PySyntheticCallHelper.getCallType((PyFunction)resolveResult, null, List.of(PyBuiltinCache.getInstance(functionRef).getNoneType()),
-                                               TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
+      return getCallType((PyFunction)resolveResult, List.of(PyBuiltinCache.getInstance(functionRef).getNoneType()),
+                         TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
     });
   }
 
@@ -229,13 +219,8 @@ public class PySyntheticCallHelperTest extends PyTestCase {
       TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
       PyReferenceExpression classRef = myFixture.findElementByText("Clazz", PyReferenceExpression.class);
       assertInstanceOf(classRef, PyReferenceExpression.class);
-      PyType classType = context.getType(classRef);
-      assertInstanceOf(classType, PyClassType.class);
-      classType = ((PyClassType)classType).toInstance();
-      return PySyntheticCallHelper.getCallTypeByFunctionName("foo",
-                                                             classType,
-                                                             List.of(),
-                                                             context);
+      PyClassType classType = assertInstanceOf(context.getType(classRef), PyClassType.class).toInstance();
+      return getCallType(classType, "foo", List.of(), context);
     });
   }
 
@@ -247,9 +232,8 @@ public class PySyntheticCallHelperTest extends PyTestCase {
       TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
       PyTargetExpression instance = myFixture.findElementByText("instance", PyTargetExpression.class);
       assertInstanceOf(instance, PyTargetExpression.class);
-      PyType classType = context.getType(instance);
-      assertInstanceOf(classType, PyClassType.class);
-      return PySyntheticCallHelper.getCallTypeByFunctionName("foo", classType, List.of(), context);
+      PyClassType classType = assertInstanceOf(context.getType(instance), PyClassType.class);
+      return getCallType(classType, "foo", List.of(), context);
     });
   }
 
@@ -261,14 +245,28 @@ public class PySyntheticCallHelperTest extends PyTestCase {
       TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
       PyTargetExpression instance = myFixture.findElementByText("instance", PyTargetExpression.class);
       assertInstanceOf(instance, PyTargetExpression.class);
-      PyType classType = context.getType(instance);
-      assertInstanceOf(classType, PyClassType.class);
+      PyClassType classType = assertInstanceOf(context.getType(instance), PyClassType.class);
       PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(myFixture.getFile());
       List<PyType> argumentTypes = List.of(builtinCache.getStrType(), builtinCache.getIntType(), builtinCache.getBoolType());
-      return PySyntheticCallHelper.getCallTypeByFunctionName("foo", classType, argumentTypes, context);
+      return getCallType(classType, "foo", argumentTypes, context);
     });
   }
 
+
+  private static @Nullable PyType getCallType(@NotNull PyFunction function,
+                                              @NotNull List<PyType> argumentTypes,
+                                              @NotNull TypeEvalContext context) {
+    List<PyCallableArgument> arguments = ContainerUtil.map(argumentTypes, PyCallableArgument::new);
+    return PyCallExpressionHelper.getCallType(context.getType(function), arguments, context);
+  }
+
+  private static @Nullable PyType getCallType(@NotNull PyClassLikeType type,
+                                              @SuppressWarnings("SameParameterValue") @NotNull String methodName,
+                                              @NotNull List<PyType> argumentTypes,
+                                              @NotNull TypeEvalContext context) {
+    List<PyCallableArgument> arguments = ContainerUtil.map(argumentTypes, PyCallableArgument::new);
+    return PyCallExpressionHelper.getCallType(type, methodName, arguments, PyResolveContext.defaultContext(context));
+  }
 
   private void doTest(@NotNull String expectedType, @NotNull String text, Supplier<PyType> actualType) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);

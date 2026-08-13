@@ -55,6 +55,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyABCUtil
 import com.jetbrains.python.psi.types.PyAnyType
+import com.jetbrains.python.psi.types.PyCallableArgument
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyTupleType
@@ -791,7 +792,9 @@ class PyStringFormatInspection : PyInspection() {
       ): Int {
         val statistics = callExpression.multiResolveCallee(resolveContext)
           .stream()
-          .map { callableType -> callableType.getCallType(evalContext, callExpression) }
+          .map { callableType ->
+            callableType.getCallType(evalContext, callExpression, callExpression.arguments.map { PyCallableArgument(it) })
+          }
           .collect(
             Collectors.summarizingInt(
               ToIntFunction { callType ->

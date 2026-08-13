@@ -39,9 +39,17 @@ public interface PyCallableType extends PyType {
 
   /**
    * Returns the type which is the result of calling an instance of this type.
+   *
+   * @param callSite the PSI element that represents the call, e.g. a call expression or an operator expression, or
+   *                 {@code null} for calls such as an invocation of a property getter or an application of a decorator
+   *                 to a function.
+   * @param arguments the arguments the call type is evaluated with.
    */
+  @ApiStatus.Internal
   @Nullable
-  PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteOwner callSite);
+  PyType getCallType(@NotNull TypeEvalContext context,
+                     @Nullable PyCallSiteOwner callSite,
+                     @NotNull List<PyCallableArgument> arguments);
 
   /**
    * Returns the list of parameter types.

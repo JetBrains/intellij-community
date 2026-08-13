@@ -698,7 +698,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
           bar = c.bar
       #   └ TYPE str
           baz = c.baz
-      #   └ TYPE Unknown
+      #   └ TYPE UnsafeUnion[int, str]
       """.trimIndent())
 
     @Test
@@ -1608,7 +1608,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
           x = MyDescriptor[int]()
 
       expr = Foo().x
-      #└ TYPE Unknown
+      #└ TYPE UnsafeUnion[int, str | int]
       """.trimIndent())
 
     @Test

@@ -81,6 +81,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.PyABCUtil.isSubtype
 import com.jetbrains.python.psi.types.PyAnyType
+import com.jetbrains.python.psi.types.PyCallableArgument
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterListType
 import com.jetbrains.python.psi.types.PyCallableType
@@ -1815,18 +1816,21 @@ open class PyTypeCheckerInspection : PyInspection() {
         return
       }
 
-      val mapping = analyzeArguments(arguments, paramSpecSubst, myTypeEvalContext)
-      for (item in mapping.mappedParameters.entries) {
-        val argument = item.key
-        val parameter = item.value
-        val argType = myTypeEvalContext.getType(argument)
+      val mapping = analyzeArguments(arguments.map { PyCallableArgument(it) }, paramSpecSubst, myTypeEvalContext)
+      for ((argument, parameter) in mapping.mappedParameters) {
+        val argType = argument.getType(myTypeEvalContext)
         val paramType = parameter.getType(myTypeEvalContext)
-        val matched = matchParameterAndArgument(paramType, argType, argument, substitutions)
-        result.add(AnalyzeArgumentResult(argument, parameter, paramType, substituteGenerics(paramType, substitutions), argType, matched))
+        val matched = matchParameterAndArgument(paramType, argType, argument.expression, substitutions)
+        argument.expression?.let { argExpr ->
+          result.add(AnalyzeArgumentResult(argExpr, parameter, paramType, substituteGenerics(paramType, substitutions), argType, matched))
+        }
       }
       if (!mapping.unmappedArguments.isEmpty()) {
         for (argument in mapping.unmappedArguments) {
-          unexpectedArgumentForParamSpecs.add(UnexpectedArgumentForParamSpec(argument, paramSpec))
+          val argExpr = argument.expression
+          if (argExpr != null) {
+            unexpectedArgumentForParamSpecs.add(UnexpectedArgumentForParamSpec(argExpr, paramSpec))
+          }
         }
       }
       val unmappedParameters = mapping.unmappedParameters
