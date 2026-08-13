@@ -82,6 +82,15 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
   }
 
   @Test
+  fun `test shift enter at the row end inside list item`() {
+    // language=Markdown
+    val before = "- item  \n\n  | none | none |\n  |------|------|\n  | some | some |<caret>"
+    // language=Markdown
+    val after = "- item  \n\n  | none | none |\n  |------|------|\n  | some | some |\n  |      |      |<caret>"
+    doTest(before, after, shift = true)
+  }
+
+  @Test
   fun `test shift enter at the row end in compact table`() {
     withTableStyle(project, TableStyle.COMPACT) {
       val before = """

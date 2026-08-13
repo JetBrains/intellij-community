@@ -145,6 +145,7 @@
     <editorActionHandler action="EditorTab" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableTabHandler$Tab"/>
     <editorActionHandler action="EditorUnindentSelection" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableTabHandler$ShiftTab"/>
     <editorActionHandler action="EditorStartNewLine" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableShiftEnterHandler"/>
+    <editorActionHandler action="EditorStartNewLine" implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListShiftEnterHandler"/>
     <editorActionHandler action="EditorDeleteToWordStart" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableReformatAfterActionHook"/>
     <editorActionHandler action="EditorDelete" implementationClass="org.intellij.plugins.markdown.editor.tables.handlers.MarkdownTableDeleteHandler"/>
     <codeInsight.inlayProvider language="Markdown"
