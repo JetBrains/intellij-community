@@ -58,7 +58,10 @@ fun Project.resolveInProject(pathInProject: String, throwWhenOutside: Boolean = 
 /**
  * Whether [path] is inside one of the project's base directories.
  */
-fun Project.isInProjectDirectories(path: Path): Boolean = projectDirectories().any { path.startsWith(it) }
+fun Project.isInProjectDirectories(path: Path): Boolean {
+  logger.assertTrue(path.isAbsolute, "Expected an absolute path, got '$path'")
+  return projectDirectories().any { path.startsWith(it) }
+}
 
 /**
  * The directories a file may live in and still belong to the project: the project directory itself plus every root
