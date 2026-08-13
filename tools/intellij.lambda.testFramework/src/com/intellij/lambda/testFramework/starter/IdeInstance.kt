@@ -18,6 +18,13 @@ object IdeInstance {
   private val LOG by lazy { logger<IdeInstance>() }
 
   private var _ide: IdeWithLambda? = null
+
+  /**
+   * Relaunches this JVM has performed. Never reset, including across contexts: its only job is to make every
+   * launch name unique, and a name reused is a previous run's report and log overwritten.
+   */
+  private var recycles: Int = 0
+
   val ide: IdeWithLambda
     get() = _ide ?: throw IllegalStateException("IDE is not started yet")
 
@@ -94,6 +101,73 @@ object IdeInstance {
     !isStarted() -> "no IDE is running"
     currentIdeMode != runMode -> "run mode changed from $currentIdeMode"
     else -> "config key changed from '${currentIdeConfig.key}' to '${IdeStartConfig.current.key}'"
+  }
+
+  /**
+   * Quits the running IDE and starts it again **on the same test context**, for a caller that needs a clean IDE
+   * rather than a fresh installation.
+   *
+   * This is not [startIde] with the same config: that one builds a new context through
+   * `Starter.newContextWithLambda`, which calls `newContext(..., preserveSystemDir = false)` and so wipes the
+   * config, system and project directories. Relaunching the context we already have keeps all three, which is
+   * what a caller that only wants to shed in-memory state is asking for, and what keeps a suite that
+   * deliberately chains install state across its tests working.
+   *
+   * Two things make the relaunch go through [runIdeWithLambda] rather than through the run itself:
+   *
+   * - the RD lambda session cannot be reused. Its protocol lifetime is terminated by the `IdeAfterLaunchEvent`
+   *   of this very context and the subscription is one-shot (`IdeLambdaStarter.setUpRdTestSession`), so the
+   *   session that served the previous run is dead and only a new `runIdeWithLambda` creates its replacement.
+   * - re-patching the same context's VM options is safe. `VMOptions.addSystemProperty` replaces an existing
+   *   `-Dkey=` line rather than appending a second one, so the new `LAMBDA_TESTING_PORT` supersedes the old
+   *   one instead of leaving the IDE to pick whichever it reads first.
+   *
+   * Each relaunch gets its own launch name, because the launch name is what separates the runs in the report:
+   * it picks the reporting directory and `-Didea.log.path`, so two runs sharing one name means the recycled IDE
+   * overwrites the `idea.log` of the run whose leftovers caused the recycle — the one log a reader needs.
+   *
+   * [betweenRuns] runs after the old IDE is gone and before the new one starts — the window in which a caller
+   * can reap helper processes the dying IDE leaked, which would otherwise fail the launch that follows.
+   *
+   * [_ide] is reassigned rather than left alone because `IdeWithLambdaParameterResolver` hands
+   * [IdeInstance.ide] to the next test class: a recycle that did not publish its replacement would give that
+   * class a handle to the IDE this one killed. A relaunch that *fails* leaves it null, so the next
+   * [startIde] sees no running IDE and builds a fresh context rather than handing out a dead one.
+   *
+   * One honesty note about [runContext]: it is only ever assigned from the `IdeLaunchEvent` subscription
+   * [startIde] registers, and `EventsBus.unsubscribeAll()` between tests can leave the relaunch's event with no
+   * subscriber — so after a recycle [runContext] may still describe the previous run. Only `testContext` is read
+   * from it here, and that object is the same across runs of one context, which is why it is safe; nothing else
+   * should read [runContext] expecting it to track a relaunch.
+   */
+  fun recycleIde(betweenRuns: () -> Unit = {}): IdeWithLambda = synchronized(this) {
+    check(isStarted()) { "IDE is not started yet; there is nothing to recycle" }
+    val context = when (currentIdeMode) {
+      IdeRunMode.MONOLITH -> runContext.frontendContext.testContext
+      // A split run has a frontend and a backend context, and relaunching one of them leaves the other pointing
+      // at an IDE that no longer exists. Guessing at that pair is worse than saying it is not implemented.
+      else -> error("recycling a $currentIdeMode IDE is not implemented; only ${IdeRunMode.MONOLITH} is supported")
+    }
+
+    recycles++
+    LOG.info("Recycling IDE (#$recycles) in mode $currentIdeMode on the existing test context")
+    catchAll { _ide?.backgroundRun?.closeIdeAndWait() }
+    _ide = null
+    betweenRuns()
+    try {
+      // Configured by the config that defines this instance's identity, not by whatever `current` now holds:
+      // `startIde` decides reuse by comparing against `currentIdeConfig`, so a relaunch configured from
+      // anything else would produce an IDE that no longer matches the key it is reused under.
+      _ide = context.runIdeWithLambda(
+        launchName = "recycle-$recycles",
+        configure = { currentIdeConfig.configureRunContext(this) },
+      )
+    }
+    catch (e: Throwable) {
+      LOG.error("Problems when recycling IDE", e)
+      throw e
+    }
+    return ide
   }
 
   fun stopIde(): Unit = synchronized(this) {
