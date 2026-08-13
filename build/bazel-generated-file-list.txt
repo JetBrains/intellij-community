@@ -681,6 +681,7 @@ platform/core-nio-fs
 platform/core-ui
 platform/credential-store
 platform/credential-store-impl
+platform/credential-store-impl/kwallet
 platform/credential-store-ui
 platform/devIdeConfig
 platform/diagnostic

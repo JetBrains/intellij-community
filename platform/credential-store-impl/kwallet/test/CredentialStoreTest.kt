@@ -1,17 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(com.intellij.util.system.LowLevelLocalMachineAccess::class)
+
 package com.intellij.credentialStore
 
 import com.intellij.credentialStore.keePass.InMemoryCredentialStore
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.system.OS
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.AssumptionViolatedException
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.Timeout
 import java.io.Closeable
 import java.util.concurrent.TimeUnit
+import java.util.UUID
 
 internal class CredentialStoreTest {
   @Rule
@@ -218,3 +224,11 @@ internal class CredentialStoreTest {
     }
   }
 }
+
+private fun assumeLocalMac() =
+  assumeTrue("Local macOS only", OS.CURRENT == OS.macOS && !UsefulTestCase.IS_UNDER_TEAMCITY)
+
+private fun assumeLocalLinux() =
+  assumeTrue("Local Linux only", OS.CURRENT == OS.Linux && (!UsefulTestCase.IS_UNDER_TEAMCITY || System.getenv("FORCE_CREDENTIALS_TEST") != null))
+
+private fun randomString() = UUID.randomUUID().toString()

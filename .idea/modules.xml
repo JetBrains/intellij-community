@@ -1393,6 +1393,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/coverage-common/intellij.platform.coverage.tests.iml" filepath="$PROJECT_DIR$/plugins/coverage-common/intellij.platform.coverage.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/credential-store/intellij.platform.credentialStore.iml" filepath="$PROJECT_DIR$/platform/credential-store/intellij.platform.credentialStore.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/credential-store-impl/intellij.platform.credentialStore.impl.iml" filepath="$PROJECT_DIR$/platform/credential-store-impl/intellij.platform.credentialStore.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/credential-store-impl/kwallet/intellij.platform.credentialStore.impl.kwallet.tests.iml" filepath="$PROJECT_DIR$/platform/credential-store-impl/kwallet/intellij.platform.credentialStore.impl.kwallet.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/credential-store-impl/intellij.platform.credentialStore.impl.tests.iml" filepath="$PROJECT_DIR$/platform/credential-store-impl/intellij.platform.credentialStore.impl.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/credential-store-ui/intellij.platform.credentialStore.ui.iml" filepath="$PROJECT_DIR$/platform/credential-store-ui/intellij.platform.credentialStore.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/idea/customization/min/intellij.platform.customization.min.iml" filepath="$PROJECT_DIR$/idea/customization/min/intellij.platform.customization.min.iml" />

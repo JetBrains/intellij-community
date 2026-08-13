@@ -19763,6 +19763,16 @@ jvm_import(
 )
 
 java_library(
+    name = "platform-credential_store-impl-kwallet-tests-dbus-java",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_2_1_http_import",
+        ":com_github_hypfvieh-dbus-java-core-4_2_1_http_import",
+    ],
+)
+
+java_library(
     name = "platform-credential_store-impl-tests-dbus-java",
     visibility = ["//visibility:public"],
     exports = [
