@@ -177,7 +177,9 @@ abstract class ProjectViewPaneService(
       }
     } ?: return null
     val selectInRequest = selectInRequestDTO.toSelectInRequest(project) ?: return null
-    return manager.pane.findNodeForSelectIn(selectInRequest)
+    return manager.withPaneActive { // need to wake it up and keep it alive for a while to search
+      manager.pane.findNodeForSelectIn(selectInRequest)
+    }
   }
 }
 
@@ -202,6 +204,10 @@ private class ProjectViewPaneManager(val pane: ProjectViewPaneModel, val descrip
               try {
                 pane.manageState(stateBuilder)
               }
+              catch (e: Exception) {
+                rethrowControlFlowException(e)
+                LOG.error("The pane $id crashed", e)
+              }
               finally {
                 withContext(NonCancellable) {
                   stateBuilder.clear()
@@ -212,14 +218,21 @@ private class ProjectViewPaneManager(val pane: ProjectViewPaneModel, val descrip
       }
     }
   }
-
-  fun getPaneStateFlow(): Flow<ProjectViewPaneStateEvent> = flow {
+  
+  suspend inline fun <T> withPaneActive(code: () -> T): T {
     subscriberCount.update { it + 1 }
-    try {
-      stateBuilder.getStateFlow().collect(this)
+    return try {
+      stateBuilder.awaitInitialized()
+      code()
     }
     finally {
       subscriberCount.update { it - 1 }
+    }
+  }
+
+  fun getPaneStateFlow(): Flow<ProjectViewPaneStateEvent> = flow {
+    withPaneActive {
+      stateBuilder.getStateFlow().collect(this)
     }
   }
 

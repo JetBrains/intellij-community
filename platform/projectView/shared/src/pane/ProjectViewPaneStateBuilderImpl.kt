@@ -19,12 +19,15 @@ import com.intellij.platform.projectView.settings.toSettingValue
 import com.intellij.platform.util.coroutines.flow.IncrementalUpdateFlowProducer
 import com.intellij.platform.util.coroutines.flow.MutableStateWithIncrementalUpdates
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import java.util.concurrent.ConcurrentHashMap
 
 internal class ProjectViewPaneStateBuilderImpl(
   paneId: ProjectViewPaneId,
 ) : ProjectViewPaneStateBuilder {
   private class State(private val paneId: ProjectViewPaneId) : MutableStateWithIncrementalUpdates<ProjectViewPaneStateEvent> {
+    var isInitialized = MutableStateFlow(false)
     private var actionState: ProjectViewPaneSettingsStateDTO? = null
     private val superRoot = Node(null, SuperRootModel as ProjectViewNodeModelImpl<*>)
     private val nodeById = ConcurrentHashMap<Long, Node>().also { it[SUPER_ROOT_ID] = superRoot }
@@ -32,8 +35,12 @@ internal class ProjectViewPaneStateBuilderImpl(
 
     override suspend fun applyUpdate(update: ProjectViewPaneStateEvent): ProjectViewPaneStateEvent? {
       LOG.debug { "Handling update: $update" }
+      if (update !is ProjectViewClearStateEvent) {
+        isInitialized.value = true
+      }
       when (update) {
         is ProjectViewClearStateEvent -> {
+          isInitialized.value = false
           actionState = null
           nodeById.clear()
           nodeById[SUPER_ROOT_ID] = superRoot
@@ -228,6 +235,10 @@ internal class ProjectViewPaneStateBuilderImpl(
   private val flowProducer = IncrementalUpdateFlowProducer(state)
 
   fun getStateFlow(): Flow<ProjectViewPaneStateEvent> = flowProducer.getIncrementalUpdateFlow()
+  
+  suspend fun awaitInitialized() {
+    state.isInitialized.first { it }
+  }
 
   @Suppress("UNCHECKED_CAST") // cast to the only implementation of a sealed interface
   override suspend fun setNodeChildren(
