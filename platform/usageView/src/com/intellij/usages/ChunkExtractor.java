@@ -189,37 +189,42 @@ public final class ChunkExtractor {
       myDocumentStamp = myDocument.getModificationStamp();
     }
     else if (lexer.getTokenType() == null || lexer.getTokenStart() > start) {
+      // Going backwards, which the callers walking a file in offset order never do: the loop below leaves the lexer on
+      // the last token of the range it was asked for, so their next range resumes from it.
       highlighter.resetPosition(0);  // todo restart from nearest position with initial state
     }
 
     boolean isBeginning = true;
 
     IElementType tokenType;
-    for (int j = 0; (tokenType = lexer.getTokenType()) != null; lexer.advance(), j++) {
+    for (int j = 0; (tokenType = lexer.getTokenType()) != null; j++) {
       if (j % 50 == 0) {
         ProgressManager.checkCanceled();
       }
-      int hiStart = lexer.getTokenStart();
-      int hiEnd = lexer.getTokenEnd();
-      if (hiStart >= end) {
-        break;
-      }
-      hiStart = Math.max(hiStart, start);
-      hiEnd = Math.min(hiEnd, end);
-      if (hiStart >= hiEnd) {
-        continue;
-      }
-      if (isBeginning) {
-        String text = chars.subSequence(hiStart, hiEnd).toString();
-        if (text.trim().isEmpty()) {
-          continue;
-        }
-      }
-      isBeginning = false;
-      TextAttributesKey[] tokenHighlights = highlighter.getTokenHighlights(tokenType);
-      if (!tokenHighlightProcessor.process(hiStart, hiEnd, tokenHighlights)) {
+      int tokenStart = lexer.getTokenStart();
+      int tokenEnd = lexer.getTokenEnd();
+      if (tokenStart >= end) {
         return;
       }
+      int hiStart = Math.max(tokenStart, start);
+      int hiEnd = Math.min(tokenEnd, end);
+      boolean skip = hiStart >= hiEnd ||
+                     isBeginning && chars.subSequence(hiStart, hiEnd).toString().trim().isEmpty();
+      if (!skip) {
+        isBeginning = false;
+        TextAttributesKey[] tokenHighlights = highlighter.getTokenHighlights(tokenType);
+        if (!tokenHighlightProcessor.process(hiStart, hiEnd, tokenHighlights)) {
+          return;
+        }
+      }
+      // Stay on the last token that reaches into the range instead of advancing past it: the next call starts at a
+      // larger offset inside that same token and can resume from it. A lexer left ahead of `start` sends the next call
+      // through resetPosition(0), and where the text is one merged token - a huge XML attribute value, say - that is
+      // the whole file lexed again, once per occurrence.
+      if (tokenEnd >= end) {
+        return;
+      }
+      lexer.advance();
     }
   }
 
