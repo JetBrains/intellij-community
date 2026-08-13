@@ -179,6 +179,10 @@ jvm_library(
         "//tools/intellij.lambda.testFramework:lambda-testFramework_test_lib",
     ],
     kotlinc_opts = ":custom_lambda-testFramework-tests",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     runtime_deps = [":lambda-testFramework-tests"],
     deps = [
