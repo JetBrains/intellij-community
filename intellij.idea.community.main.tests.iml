@@ -307,6 +307,7 @@
     <orderEntry type="module" module-name="intellij.java.debugger.streams.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.structuralSearch.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.jsonpath.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.lambda.testFramework.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.jps.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testRunner.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.tests" scope="TEST" />
