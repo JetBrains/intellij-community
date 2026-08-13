@@ -23,7 +23,9 @@ public interface BuildConsoleViewStrategy {
    * Wraps the raw {@code executionConsole} into the root console view that is added to the handler's composite view,
    * or returns it unchanged when it is not of the expected type.
    */
-  @NotNull ExecutionConsole createRootConsoleView(@NotNull Project project, @NotNull ExecutionConsole executionConsole);
+  @NotNull ExecutionConsole createRootConsoleView(@NotNull Project project,
+                                                  @NotNull ExecutionNode rootNode,
+                                                  @NotNull ExecutionConsole executionConsole);
 
   @TestOnly
   @NotNull ExecutionConsole resolveNodeConsole(@NotNull Project project,

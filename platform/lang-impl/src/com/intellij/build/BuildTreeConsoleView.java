@@ -54,6 +54,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioPathUtil;
@@ -61,6 +62,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.platform.util.coroutines.CoroutineScopeKt;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.split.SplitComponentBindingKt;
 import com.intellij.util.ObjectUtils;
@@ -620,7 +622,14 @@ public final class BuildTreeConsoleView
   @Deprecated
   @ApiStatus.Internal
   public @NotNull ExecutionConsole getSelectedNodeConsole() {
-    return myConsoleViewHandler.getCurrentConsoleOrEmpty();
+    var selectedExecutionNode = myConsoleViewHandler.getExecutionNode();
+    if (selectedExecutionNode == null) {
+      var empty = new ConsoleViewImpl(myProject, GlobalSearchScope.EMPTY_SCOPE, true, false);
+      Disposer.register(this, empty); // own it so it's disposed with the handler
+      return empty;
+    }
+    var selectionExecutionConsole = resolveNodeConsole(selectedExecutionNode);
+    return ConsoleViewWithDelegateKt.unwrapDelegate(selectionExecutionConsole);
   }
 
   @TestOnly

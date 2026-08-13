@@ -6,33 +6,31 @@ import com.intellij.build.BuildView
 import com.intellij.build.ExecutionNode
 import com.intellij.build.SUCCESSFUL_STEPS_FILTER
 import com.intellij.build.WARNINGS_FILTER
-import com.intellij.execution.impl.ConsoleViewImpl
+import com.intellij.build.console.BuildConsoleView
 import com.intellij.execution.ui.ExecutionConsole
-import com.intellij.execution.ui.unwrapDelegate
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTree
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion.NodeMatcher
 import com.intellij.platform.testFramework.assertion.treeAssertion.buildTreePathTree
-import com.intellij.platform.testFramework.assertion.treeAssertion.node
 import com.intellij.platform.testFramework.assertion.treeAssertion.getTreeString
 import com.intellij.platform.testFramework.assertion.treeAssertion.isSelected
 import com.intellij.platform.testFramework.assertion.treeAssertion.mapTreeValues
-import com.intellij.platform.testFramework.assertion.treeAssertion.userObject
+import com.intellij.platform.testFramework.assertion.treeAssertion.node
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.waitUntilAssertSucceedsBlocking
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.tree.TreeUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions
 import javax.swing.tree.TreePath
 
 typealias BuildViewNodeAssertion = SimpleTreeAssertion.Node<BuildViewNodeContent>
 
-interface BuildViewNodeContent {
-
-  val treeConsoleView: BuildTreeConsoleView
-
-  val treePath: TreePath
-}
+class BuildViewNodeContent internal constructor(
+  val treeConsoleView: BuildTreeConsoleView,
+  val treePath: TreePath,
+)
 
 val BuildViewNodeContent.isNodeSelected: Boolean
   get() = treeConsoleView.tree.isSelected(treePath)
@@ -41,20 +39,21 @@ val BuildViewNodeContent.isNodeExpanded: Boolean
   get() = treeConsoleView.tree.isExpanded(treePath)
 
 val BuildViewNodeContent.executionNode: ExecutionNode
-  get() = treeConsoleView.findNode(treePath.userObject)
-          ?: throw AssertionError("Cannot find ExecutionNode by TreePath: $treePath")
+  get() = treeConsoleView.getExecutionNode(treePath)
 
 val BuildViewNodeContent.consoleView: ExecutionConsole
   get() = treeConsoleView.resolveNodeConsole(executionNode)
 
 val BuildViewNodeContent.consoleText: String
-  get() = (consoleView.unwrapDelegate() as ConsoleViewImpl).text
+  get() = (consoleView as BuildConsoleView).getNodeOutputText(executionNode.id)
 
 fun BuildViewNodeAssertion.assertIsNodeSelected(expected: Boolean) {
   assertValue {
     assertThat(it.isNodeSelected)
-      .describedAs { "Node select assertion for TreePath: ${it.treePath}\n" +
-                     " JTree.selectedPath=${it.treeConsoleView.tree.selectionPath}\n}" }
+      .describedAs {
+        "Node select assertion for TreePath: ${it.treePath}\n" +
+        " JTree.selectedPath=${it.treeConsoleView.tree.selectionPath}\n}"
+      }
       .isEqualTo(expected)
   }
 }
@@ -89,6 +88,9 @@ object BuildViewAssertions {
   fun assertBuildViewNode(buildView: BuildView, nodeText: Regex, assert: (BuildViewNodeContent) -> Unit): Unit =
     assertBuildViewNode(buildView.treeConsoleView, nodeText, assert = assert)
 
+  fun assertBuildViewSelectionText(buildView: BuildView, nodeName: String, assert: (String) -> Unit): Unit =
+    assertBuildViewSelectionText(buildView.treeConsoleView, nodeName, assert = assert)
+
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun buildBuildViewTree(treeConsoleView: BuildTreeConsoleView): SimpleTree<BuildViewNodeContent> {
 
@@ -96,22 +98,30 @@ object BuildViewAssertions {
     treeConsoleView.addFilter(WARNINGS_FILTER)
 
     return buildTreePathTree(treeConsoleView.tree)
-      .mapTreeValues {
-        object : BuildViewNodeContent {
-          override val treeConsoleView = treeConsoleView
-          override val treePath = it.value
-        }
-      }
+      .mapTreeValues { BuildViewNodeContent(treeConsoleView, it.value) }
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  private fun getBuildViewNode(
+  private fun getBuildViewNodeContent(
     treeConsoleView: BuildTreeConsoleView,
     nodeMatcher: NodeMatcher<BuildViewNodeContent>,
   ): BuildViewNodeContent {
     return buildBuildViewTree(treeConsoleView)
       .node(nodeMatcher)
       .value
+  }
+
+  @RequiresEdt
+  private fun selectBuildViewNode(
+    treeConsoleView: BuildTreeConsoleView,
+    nodeMatcher: NodeMatcher<BuildViewNodeContent>,
+  ) {
+    val node = getBuildViewNodeContent(treeConsoleView, nodeMatcher)
+
+    TreeUtil.selectPath(treeConsoleView.tree, node.treePath)
+
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+    PlatformTestUtil.waitWhileBusy(treeConsoleView.tree)
   }
 
   fun assertBuildViewTree(
@@ -151,7 +161,23 @@ object BuildViewAssertions {
   ) {
     waitUntilAssertSucceedsBlocking {
       invokeAndWaitIfNeeded {
-        assert(getBuildViewNode(treeConsoleView, nodeMatcher))
+        assert(getBuildViewNodeContent(treeConsoleView, nodeMatcher))
+      }
+    }
+  }
+
+  /**
+   * Selects [nodeName] in the build tree (as a user click would) and hands the resulting single-console navigation
+   * state to [assert]. Selecting a node runs `SingleBuildConsoleViewStrategy.showExecutionNode`, which scrolls the
+   * shared root console to the node's output (see `BuildConsoleViewImplV2.scrollToNodeOutput` /
+   * `selectProgressOutput`); the snapshot captures the resulting caret/selection and the node's expected output offset
+   * so a test can assert that navigation landed on that node's output instead of switching consoles.
+   */
+  fun assertBuildViewSelectionText(treeConsoleView: BuildTreeConsoleView, nodeName: String, assert: (String) -> Unit) {
+    waitUntilAssertSucceedsBlocking {
+      invokeAndWaitIfNeeded {
+        selectBuildViewNode(treeConsoleView, NodeMatcher.name(nodeName))
+        assert(treeConsoleView.getSelectionText())
       }
     }
   }

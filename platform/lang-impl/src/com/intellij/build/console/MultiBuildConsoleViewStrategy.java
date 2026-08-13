@@ -19,7 +19,9 @@ import org.jetbrains.annotations.TestOnly;
 final class MultiBuildConsoleViewStrategy implements BuildConsoleViewStrategy {
 
   @Override
-  public @NotNull ExecutionConsole createRootConsoleView(@NotNull Project project, @NotNull ExecutionConsole executionConsole) {
+  public @NotNull ExecutionConsole createRootConsoleView(@NotNull Project project,
+                                                         @NotNull ExecutionNode rootNode,
+                                                         @NotNull ExecutionConsole executionConsole) {
     if (executionConsole instanceof ConsoleView consoleView) {
       return new BuildConsoleViewImpl(project, consoleView);
     }

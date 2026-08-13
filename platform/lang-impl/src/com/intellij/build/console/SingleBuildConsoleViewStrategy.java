@@ -21,9 +21,11 @@ import java.util.Objects;
 final class SingleBuildConsoleViewStrategy implements BuildConsoleViewStrategy {
 
   @Override
-  public @NotNull ExecutionConsole createRootConsoleView(@NotNull Project project, @NotNull ExecutionConsole executionConsole) {
+  public @NotNull ExecutionConsole createRootConsoleView(@NotNull Project project,
+                                                         @NotNull ExecutionNode rootNode,
+                                                         @NotNull ExecutionConsole executionConsole) {
     if (executionConsole instanceof ConsoleViewImpl consoleView) {
-      return new BuildConsoleViewImplV2(project, consoleView);
+      return new BuildConsoleViewImplV2(project, consoleView, rootNode);
     }
     return executionConsole;
   }

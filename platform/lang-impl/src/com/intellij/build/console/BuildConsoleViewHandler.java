@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.progress.ProgressUIUtil;
@@ -96,7 +95,7 @@ public final class BuildConsoleViewHandler implements Disposable.Default {
     myRootExecutionNode = buildProgressRootNode;
     if (executionConsole != null) {
       var rootConsoleViewName = getNodeConsoleViewName(buildProgressRootNode);
-      var rootConsoleView = myStrategy.createRootConsoleView(project, executionConsole);
+      var rootConsoleView = myStrategy.createRootConsoleView(project, myRootExecutionNode, executionConsole);
       myView.addViewAndShowIfNeeded(rootConsoleView, rootConsoleViewName, true, false);
     }
 
@@ -145,24 +144,6 @@ public final class BuildConsoleViewHandler implements Disposable.Default {
 
   public @Nullable ExecutionConsole getCurrentConsole() {
     return myView.getVisibleView();
-  }
-
-  /**
-   * @deprecated use {@link #getCurrentConsole()}
-   */
-  @TestOnly
-  @Deprecated
-  public @NotNull ExecutionConsole getCurrentConsoleOrEmpty() {
-    var console = ObjectUtils.doIfNotNull(getCurrentConsole(), it -> unwrapDelegate(it));
-    if (console == null) {
-      var empty = new ConsoleViewImpl(myProject, GlobalSearchScope.EMPTY_SCOPE, true, false);
-      Disposer.register(this, empty); // own it so it's disposed with the handler
-      console = empty;
-    }
-    if (console instanceof ConsoleViewImpl consoleImpl) {
-      consoleImpl.flushDeferredText();
-    }
-    return console;
   }
 
   @TestOnly

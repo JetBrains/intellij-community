@@ -12,6 +12,7 @@ import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.OutputReferenceEvent
 import com.intellij.execution.filters.LazyFileHyperlinkInfo
+import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.ConsoleViewWithDelegate
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.TestOnly
 import java.util.StringJoiner
 import java.util.function.Consumer
 import java.util.regex.Pattern
@@ -75,6 +77,11 @@ internal class BuildConsoleViewImpl(
       delegate.print(": ", contentType)
       delegate.print(event.message, contentType)
     }
+  }
+
+  @TestOnly
+  override fun getNodeOutputText(nodeId: Any): String {
+    return (unwrapDelegate() as ConsoleViewImpl).text
   }
 
   private fun onMessageEvent(event: MessageEvent) {

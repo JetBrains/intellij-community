@@ -3,6 +3,7 @@ package com.intellij.build.console
 
 import com.intellij.build.BuildConsoleUtils
 import com.intellij.build.BuildTextConsoleView
+import com.intellij.build.ExecutionNode
 import com.intellij.build.console.BuildConsoleViewImpl.Companion.getHyperlinkInfo
 import com.intellij.build.console.BuildConsoleViewImpl.Companion.getHyperlinkText
 import com.intellij.build.events.BuildEvent
@@ -15,6 +16,7 @@ import com.intellij.build.events.OutputReferenceEvent
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.ui.ConsoleViewWithDelegate
 import com.intellij.execution.ui.ExecutionConsole
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ComponentInlayAlignment
@@ -25,28 +27,46 @@ import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.addComponentInlay
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.nullize
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.html.HTML
 import kotlinx.html.body
 import kotlinx.html.html
 import kotlinx.html.link
 import kotlinx.html.stream.createHTML
 import org.jetbrains.annotations.CheckReturnValue
+import org.jetbrains.annotations.TestOnly
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 
 internal class BuildConsoleViewImplV2(
   private val project: Project,
   override val delegate: ConsoleViewImpl,
+  private val node: ExecutionNode? = null,
 ) : BuildConsoleView, ConsoleViewWithDelegate, ExecutionConsole by delegate {
 
   private val state = ConsoleViewState(delegate)
+
+  /**
+   * `@TestOnly` per-node projection of the text this single console renders. The output text is read directly from the
+   * production console document (which is why ANSI decoding and carriage-return handling are exactly what production
+   * produced): in single-console mode a node's output is dispatched to that node's own console, so this console's whole
+   * document is the projection of [node]. Message/issue/failure inlays are Swing components and therefore absent from
+   * the document, so the inlay infos are recorded here keyed by the node id and rendered back to plain text on query.
+   * Recorded only in unit-test mode so production stays bare.
+   */
+  private val recordNodeText: Boolean = ApplicationManager.getApplication().isUnitTestMode
+  private val consoleInlayInfos = ConcurrentHashMap<Any, MutableList<ConsoleInlayInfo>>()
 
   init {
     Disposer.register(this, delegate)
   }
 
   override fun onEvent(event: BuildEvent) {
+    // Output ends up in the console document (read back in getNodeOutputText); message/issue/failure text is recorded
+    // in addConsoleInlay as the inlay info the corresponding Swing inlay shows (inlays are not part of the document).
     when (event) {
       is BuildIssueEvent -> onBuildIssueEvent(event)
       is FileMessageEvent -> onFileMessageEvent(event)
@@ -83,7 +103,8 @@ internal class BuildConsoleViewImplV2(
     addConsoleInlay(event.id, ConsoleInlayInfo()
       .withKind(event.result.kind.consoleInlayKind)
       .withOutputIds(event.outputIds)
-      .withHtmlText {
+      // The plain projection matches the multi-console mode: the description if present, the link line otherwise.
+      .withHtmlText(event.description.nullize() ?: "$hyperlinkText: ${event.message}") {
         body {
           link(hyperlinkId, hyperlinkText)
           text(": " + event.message)
@@ -130,6 +151,26 @@ internal class BuildConsoleViewImplV2(
     state.access {
       addNodeOutputMarkers(event.startId, event.outputIds)
     }
+  }
+
+  @TestOnly
+  override fun getNodeOutputText(nodeId: Any): String {
+    if (nodeId == node?.id) {
+      return delegate.text
+    }
+
+    val result = StringBuilder()
+
+    state.access {
+      for (outputMarker in sortedOutputMarkers(nodeId)) {
+        result.append(editor.document.getText(outputMarker.textRange))
+      }
+    }
+
+    for (inlayInfo in consoleInlayInfos[nodeId].orEmpty()) {
+      result.append(inlayInfo.plainText)
+    }
+    return result.toString()
   }
 
   private fun onBuildEvent(event: BuildEvent) {
@@ -181,6 +222,9 @@ internal class BuildConsoleViewImplV2(
   }
 
   private fun addConsoleInlay(nodeId: Any, inlayInfo: ConsoleInlayInfo) {
+    if (recordNodeText) {
+      consoleInlayInfos.computeIfAbsent(nodeId) { CopyOnWriteArrayList() }.add(inlayInfo)
+    }
     val consoleOffset = delegate.contentSize
     state.access {
       when (inlayInfo.outputIds.isEmpty()) {
@@ -204,16 +248,18 @@ internal class BuildConsoleViewImplV2(
   @CheckReturnValue
   private data class ConsoleInlayInfo(
     val text: String = "",
+    /** Plain text projection of [text], shown to `@TestOnly` [getNodeOutputText]. */
+    val plainText: String = "",
     val kind: BuildConsoleViewInlay.Kind = BuildConsoleViewInlay.Kind.ERROR,
     val outputIds: Collection<Any> = emptyList(),
     val hyperlinkListener: HyperlinkListener? = null,
   ) {
 
     fun withText(text: String): ConsoleInlayInfo =
-      copy(text = plainTextToHtml(text.trim()))
+      copy(text = plainTextToHtml(text.trim()), plainText = htmlToPlainText(text))
 
-    fun withHtmlText(block: HTML.() -> Unit = {}): ConsoleInlayInfo =
-      copy(text = createHTML().html(null, block).trim())
+    fun withHtmlText(plainText: String, block: HTML.() -> Unit = {}): ConsoleInlayInfo =
+      copy(text = createHTML().html(null, block).trim(), plainText = plainText)
 
     fun withKind(kind: BuildConsoleViewInlay.Kind): ConsoleInlayInfo =
       copy(kind = kind)
@@ -265,6 +311,47 @@ internal class BuildConsoleViewImplV2(
   }
 
   companion object {
+
+    private val TAG_PATTERN = Regex("<[^>]*>")
+    private val A_PATTERN = Regex("<a ([^>]* )?href=[\"']([^>]*)[\"'][^>]*>")
+    private const val A_CLOSING = "</a>"
+    private val NEW_LINES = setOf("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>", "<pre>", "</pre>")
+
+    /**
+     * Converts the HTML produced for message/issue/failure descriptions into the plain text the old per-node console
+     * printed: `<a>` tags are replaced with their link text, line-break tags become `\n`, other tags are kept
+     * verbatim, and a trailing `\n` is appended (matching the old `printHtml`).
+     */
+    private fun htmlToPlainText(text: String): String {
+      val result = StringBuilder()
+      var content = StringUtil.convertLineSeparators(text)
+      while (true) {
+        val tagMatch = TAG_PATTERN.find(content)
+        if (tagMatch == null) {
+          result.append(content)
+          break
+        }
+        result.append(content, 0, tagMatch.range.first)
+        val tag = tagMatch.value
+        if (A_PATTERN.matches(tag)) {
+          val linkEnd = content.indexOf(A_CLOSING, tagMatch.range.last + 1)
+          if (linkEnd > 0) {
+            result.append(content.substring(tagMatch.range.last + 1, linkEnd).replace(TAG_PATTERN, ""))
+            content = content.substring(linkEnd + A_CLOSING.length)
+            continue
+          }
+        }
+        if (tag in NEW_LINES) {
+          result.append('\n')
+        }
+        else {
+          result.append(tag)
+        }
+        content = content.substring(tagMatch.range.last + 1)
+      }
+      result.append('\n')
+      return result.toString()
+    }
 
     private val MessageEvent.Kind.consoleInlayKind: BuildConsoleViewInlay.Kind
       get() = when (this) {
