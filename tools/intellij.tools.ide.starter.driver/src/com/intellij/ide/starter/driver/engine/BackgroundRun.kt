@@ -1,11 +1,15 @@
 package com.intellij.ide.starter.driver.engine
 
 import com.intellij.driver.client.Driver
+import com.intellij.driver.sdk.WaitForException
 import com.intellij.driver.sdk.waitFor
+import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.models.IDEStartResult
+import com.intellij.ide.starter.report.DetailsOnCI
 import com.intellij.ide.starter.runner.IDEHandle
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.utils.catchAll
+import com.intellij.platform.testFramework.teamCity.TeamCityReporter.SyntheticTestKind
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
@@ -130,6 +134,9 @@ open class BackgroundRun(
       }
       catch (e: Throwable) {
         logError("$logPrefix Error waiting IDE is closed", e)
+        if (e is WaitForException) {
+          reportIdeDidNotStop()
+        }
         forceKill()
         throw IllegalStateException("$logPrefix Process didn't die after waiting for Driver to close IDE", e)
       }
@@ -148,12 +155,18 @@ open class BackgroundRun(
     }.onFailure { e ->
       logError("$logPrefix Error on waiting for application exit", e)
       takeScreenshot("beforeIdeKilled")
+      if (e is WaitForException) {
+        reportIdeDidNotStop()
+      }
       forceKill()
     }
     runCatching {
       waitFor("$logPrefix Process is closed", closeIdeTimeout) { !process.isAlive }
     }.onFailure { e ->
       logError("$logPrefix Error waiting IDE is closed", e)
+      if (e is WaitForException) {
+        reportIdeDidNotStop()
+      }
       forceKill()
       throw IllegalStateException("$logPrefix Process didn't die after waiting for Driver to close IDE", e)
     }
@@ -165,8 +178,30 @@ open class BackgroundRun(
   }
 
   open fun forceKill() {
-    catchAll("Restrict IDE errors to existing before force kill") { runContext.lastIdeReportingData.restrictIdeErrorReportsToExistingFiles() }
+    catchAll("Restrict IDE errors to existing before force kill") {
+      runContext.lastIdeReportingData.restrictIdeErrorReportsToExistingFiles()
+    }
     logOutput("[Closing ${process.id}] Performing force kill")
     process.kill()
+  }
+
+  private fun reportIdeDidNotStop() {
+    catchAll("Report IDE self-shutdown timeout to CI") {
+      if (!process.isAlive) return@catchAll
+
+      val testContext = runContext.testContext
+      val ideInfo = testContext.testCase.ideInfo
+      val commandLine = runContext.commandLine(runContext).args.joinToString(" ")
+
+      CIServer.instance.reportTestFailure(
+        testName = "IDE did not stop by itself in time: product=${ideInfo.fullName}, commandLine=$commandLine",
+        message = "IDE did not stop by itself in time. " +
+                  "product=${ideInfo.fullName}, commandLine=$commandLine",
+        details = "State: driverConnected=${driverWithoutAwaitedConnection.isConnected}, " +
+                  "processAlive=${process.isAlive}, processId=${process.id}",
+        linkToLogs = DetailsOnCI.instance.getLinkToCIArtifacts(runContext.lastIdeReportingData),
+        kind = SyntheticTestKind.TEST_INFRA_EXCEPTION,
+      )
+    }
   }
 }
