@@ -2,10 +2,11 @@ package com.intellij.python.hatch.sdk.evolution
 
 import com.intellij.openapi.module.Module
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.hatch.HatchConfiguration
+import com.intellij.python.hatch.HatchPyTool
 import com.intellij.python.hatch.PyHatchBundle
 import com.intellij.python.hatch.getHatchService
 import com.intellij.python.hatch.icons.PythonHatchIcons
+import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.sdk.backend.evolution.EvoSdk
 import com.intellij.python.sdk.backend.evolution.EvoSelectSdkProvider
 import com.intellij.python.sdk.backend.evolution.evoWarning
@@ -26,7 +27,7 @@ internal class HatchSelectSdkProvider : EvoSelectSdkProvider {
 
   override suspend fun loadSections(module: Module): EvoLoadResultDto {
     val fileSystem = localEel.toFileSystem()
-    val hatchExecutablePath = HatchConfiguration.getOrDetectHatchExecutablePath(fileSystem).getOrNull()
+    val hatchExecutablePath = HatchPyTool.getInstance().resolveExecutable(fileSystem)
                               ?: return evoWarning(PyHatchBundle.message("evolution.hatch.executable.is.not.found"))
     val leaves = findEnvironments(module, fileSystem).map { it.toSelectLeaf() }
     return EvoLoadResultDto.Ok(listOf(EvoSectionDto(label = hatchExecutablePath.toString(), leaves = leaves)))

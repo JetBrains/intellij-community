@@ -12,7 +12,8 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.uv.UvSdkAdditionalData
 import com.jetbrains.python.sdk.uv.UvSdkFlavor
 import com.jetbrains.python.sdk.uv.UvSdkFlavorData
-import com.jetbrains.python.sdk.uv.impl.getUvExecutable
+import com.intellij.python.pytools.resolveExecutable
+import com.intellij.python.uv.backend.UvPyTool
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 
 /**
@@ -29,7 +30,7 @@ internal class UvRunToolProvider : PySdkRunToolProvider<UvSdkFlavorData, UvSdkFl
     fileSystem: FileSystem<P>,
   ): PyRunToolParameters {
     val env = mutableMapOf<String, String>()
-    val uvExecutable = getUvExecutable(fileSystem, flavorData.uvPath)?.toString()
+    val uvExecutable = UvPyTool.getInstance().resolveExecutable(fileSystem, flavorData.uvPath)?.toString()
     val pythonPath = fileSystem.parsePath(sdkHome).getOrThrow()
     val venvPath = fileSystem.resolvePythonHome(pythonPath).toString()
     env += "VIRTUAL_ENV" to venvPath

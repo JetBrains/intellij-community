@@ -8,8 +8,7 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonToolViewModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
-import com.jetbrains.python.sdk.pipenv.PIPENV_TOOL
-import com.jetbrains.python.sdk.pipenv.getPipEnvExecutable
+import com.intellij.python.community.impl.pipenv.PipEnvPyTool
 import kotlinx.coroutines.CoroutineScope
 
 internal class PipenvViewModel<P : PathHolder>(
@@ -20,11 +19,9 @@ internal class PipenvViewModel<P : PathHolder>(
 
   val toolValidator: ToolValidator<P> = ToolValidator(
     fileSystem = fileSystem,
-    toolVersionPrefix = "pipenv",
+    tool = PipEnvPyTool.getInstance(),
     backProperty = pipenvExecutable,
     propertyGraph = propertyGraph,
-    toolCommandSpec = PIPENV_TOOL.toCommandSpec(),
-    defaultPathSupplier = { getPipEnvExecutable(fileSystem) }
   )
 
   override fun initialize(scope: CoroutineScope) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextComponentAccessor
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyInternalExecApi
@@ -30,6 +31,13 @@ interface FileSystem<P : PathHolder> {
   val toolPathCanBePersisted: Boolean
   val userReadableName: @NonNls String
   val platformAndRoot: PlatformAndRoot
+
+  /**
+   * The Eel machine this file system targets, used to key per-machine custom tool paths
+   * (`PyCustomExecutablePaths`). `null` for backends with no Eel (e.g. the legacy
+   * target-based remote SDK), which then have no custom-path override.
+   */
+  val eelDescriptor: EelDescriptor?
 
   fun parsePath(raw: String): PyResult<P>
   suspend fun validateExecutable(path: P): PyResult<Unit>

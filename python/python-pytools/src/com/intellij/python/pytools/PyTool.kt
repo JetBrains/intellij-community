@@ -2,15 +2,17 @@
 package com.intellij.python.pytools
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.pytools.statistics.PyToolFusSnapshot
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 import com.intellij.openapi.util.Version as PlatformVersion
 
-interface PyTool {
+interface PyTool : PyExecutable {
   val presentableName: @NlsSafe String
   val packageName: PyPackageName
 
@@ -30,7 +32,22 @@ interface PyTool {
    **
    * @return A string representing the FUS identifier for the tool, validated via the dictionary of well-known python package names.
    */
-  val fusId: String get() = packageName.name
+  override val fusId: String get() = packageName.name
+
+  /**
+   * Every executable this tool provides: the tool's own command plus any secondary entry points that
+   * ship with it (e.g. uv also provides `uvx`, pyright also provides `pyright-langserver`). Each has its
+   * own custom-path / detection-cache entry keyed by [PyExecutable.fusId]. Defaults to just the tool
+   * itself; tools with extra runners override. Resolve a bare command name through [findExecutable].
+   */
+  val executables: List<PyExecutable> get() = listOf(this)
+
+  /**
+   * How this tool installs/upgrades itself from the settings UI. Defaults to [PackagePyToolManager]
+   * (install as a Python package via uv/pip). Tools installed a different way (conda) override; `null`
+   * means the tool can't be installed through the IDE — the row only lets the user set its path.
+   */
+  val manager: PyToolManager? get() = PackagePyToolManager
 
   /**
    * Lowest tool version the IDE integration is known to work with, or `null` if there is no such
@@ -81,8 +98,7 @@ interface PyTool {
     val entry = PyToolsState.getInstance(project).getEntry(this)
     return PyToolFusSnapshot(
       enabled = entry.enabled,
-      executableDiscoveryMode = entry.discoveryMode,
-      customPath = entry.customToolBinaryPath != null,
+      customPath = getCustomExecutablePath(project.getEelDescriptor()) != null,
     )
   }
 
@@ -93,5 +109,34 @@ interface PyTool {
       val normalized = PyPackageName.from(packageName).name
       return EP_NAME.extensionList.firstOrNull { it.packageName.name == normalized }
     }
+
+    /**
+     * The [PyExecutable] whose command name is [name], searched across every registered tool's
+     * [executables] (own command and secondary entry points), or `null` if no tool provides it.
+     */
+    fun findExecutable(name: String): PyExecutable? =
+      EP_NAME.extensionList.firstNotNullOfOrNull { tool -> tool.executables.firstOrNull { it.fusId == name } }
   }
 }
+
+/**
+ * Marks a [PyTool] as one that is **listed on the External Tools settings page**. Presence of this
+ * interface is what makes a tool appear (and be searchable) there. It also contributes the tool's detail
+ * panel — the feature toggles shown inline when the tool's row is expanded. Kept separate from [PyTool]
+ * so a tool opts into the page without every tool having to.
+ */
+interface ExternalPyTool {
+  /** The inline detail configurable (feature toggles) embedded in the tool's expanded row. */
+  fun createConfigurable(project: Project): UnnamedConfigurable
+}
+
+/**
+ * Marks a [PyTool] as one that is **listed on the Package Managers settings page** (uv, Poetry, Hatch,
+ * Pipenv, conda). Presence of this interface is what makes a tool appear (and be searchable) there.
+ *
+ * A package manager has no per-tool feature panel; the page only shows and edits the executable path.
+ * The custom path itself is a common [PyTool] concern, stored per Eel machine via
+ * [getCustomExecutablePath] / [setCustomExecutablePath] — the same mechanism the External Tools page
+ * uses — so this interface carries no path state of its own.
+ */
+interface PackageManagerPyTool

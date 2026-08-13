@@ -4,7 +4,7 @@ package com.intellij.python.pytools.ui
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
 import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.configuration.ExternalPyTool
+import com.intellij.python.pytools.ExternalPyTool
 import com.intellij.python.pytools.ui.configuration.PyExternalToolsConfigurable
 
 /**

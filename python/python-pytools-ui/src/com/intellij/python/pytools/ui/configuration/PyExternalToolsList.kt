@@ -4,10 +4,12 @@ package com.intellij.python.pytools.ui.configuration
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.PyToolsState
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
-import com.intellij.python.pytools.configuration.ExternalPyTool
+import com.intellij.python.pytools.ExternalPyTool
+import com.intellij.python.pytools.getCustomExecutablePath
+import com.intellij.python.pytools.setCustomExecutablePath
 import com.intellij.python.pytools.statistics.PyToolActionSource
 import com.intellij.python.pytools.statistics.PyToolUsagesCollector
 import com.intellij.ui.components.panels.VerticalLayout
@@ -33,13 +35,15 @@ internal interface RowHost {
   val project: Project
   fun lookupChainHtml(row: ToolRow): @Nls String
   fun isUpgradeAvailable(row: ToolRow): Boolean
+  /** The version an Upgrade would move [row] to, when known. */
+  fun upgradeTargetVersion(row: ToolRow): String?
   /** Ensure background state (path/version probe) is fresh for a row the user just expanded. */
   fun onRowExpanded(row: ToolRow)
   fun browsePath(row: ToolRow)
   fun installOnPath(row: ToolRow)
   fun upgradeOnPath(row: ToolRow)
   fun resetPath(row: ToolRow)
-  fun installIntoSdk(row: ToolRow, sdk: Sdk)
+  fun installIntoSdk(row: ToolRow, sdk: Sdk, anchor: JComponent)
 }
 
 /**
@@ -56,6 +60,9 @@ internal class PyExternalToolsList(
   override val project: Project,
   private val uv: PyToolManagementController,
 ) : RowHost {
+
+  /** Target whose per-machine custom paths this page shows/edits (the project's environment). */
+  private val eelDescriptor = project.getEelDescriptor()
 
   /** Source-of-truth row list, materialised once from the [PyTool] extension point. */
   private val rows: List<ToolRow> = PyTool.EP_NAME.extensionList
@@ -101,6 +108,7 @@ internal class PyExternalToolsList(
   }
 
   override fun isUpgradeAvailable(row: ToolRow): Boolean = uv.isUpgradeAvailable(row)
+  override fun upgradeTargetVersion(row: ToolRow): String? = uv.latestVersionFor(row)
 
   override fun onRowExpanded(row: ToolRow) {
     probeRow(row)
@@ -116,8 +124,8 @@ internal class PyExternalToolsList(
 
   override fun resetPath(row: ToolRow): Unit = setCustomPath(row, "")
 
-  override fun installIntoSdk(row: ToolRow, sdk: Sdk): Unit =
-    uv.installIntoSdk(row, sdk, PyToolActionSource.SETTINGS_TABLE)
+  override fun installIntoSdk(row: ToolRow, sdk: Sdk, anchor: JComponent): Unit =
+    uv.installIntoSdkChoosingGroup(row, sdk, anchor, PyToolActionSource.SETTINGS_TABLE)
 
   /** Route a chosen/cleared custom path through the standard re-probe + refresh flow. */
   private fun setCustomPath(row: ToolRow, value: String) {
@@ -160,6 +168,7 @@ internal class PyExternalToolsList(
 
   /** Persist all rows' staged state into [PyToolsState] and apply any dirty detail configurables. */
   fun apply() {
+    checkNoPathErrors(rows)
     val state = PyToolsState.getInstance(project)
     rows.forEach { row ->
       val current = snapshotOf(row.tool)
@@ -170,13 +179,7 @@ internal class PyExternalToolsList(
         row.tool.onEnabledChanged(project, row.staged.enabled)
       }
       if (row.staged.customPath != current.customPath) {
-        state.setCustomPath(row.tool, row.staged.customPath)
-      }
-      // The lookup chain is fixed (SDK → Path → uvx) and no longer selectable. Normalize the
-      // persisted discovery mode to INTERPRETER — the mode that runs that full chain — so any
-      // pre-existing Path/uvx selection from nightly converges to the fixed behaviour.
-      if (state.getMode(row.tool) != ExecutableDiscoveryMode.INTERPRETER) {
-        state.setMode(row.tool, ExecutableDiscoveryMode.INTERPRETER)
+        row.tool.setCustomExecutablePath(eelDescriptor, row.staged.customPath)
       }
       if (detailModified) {
         try {
@@ -204,6 +207,10 @@ internal class PyExternalToolsList(
     rows.forEach { row ->
       row.staged = snapshotOf(row.tool)
       row.detail?.reset()
+      // Re-probe so the path field / version reflect the reverted path, and clear any stale error
+      // from a rejected custom edit (a non-custom probe never clears it on its own).
+      row.pathError = null
+      probeRow(row)
     }
     rows.forEach { refreshRow(it) }
   }
@@ -257,7 +264,7 @@ internal class PyExternalToolsList(
     val state = PyToolsState.getInstance(project)
     return RowState(
       enabled = state.isEnabled(tool),
-      customPath = state.getCustomPath(tool),
+      customPath = tool.getCustomExecutablePath(eelDescriptor),
     )
   }
 }

@@ -15,6 +15,7 @@
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.impl"/>
     <module name="intellij.python.community.services.systemPython"/>
+    <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools"/>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.uv.backend"/>
@@ -28,5 +29,12 @@
                          instance="com.intellij.python.pytools.ui.configuration.PyExternalToolsConfigurable"/>
     <search.optionContributor
         implementation="com.intellij.python.pytools.ui.PyExternalToolsSearchableOptionContributor"/>
+    <projectConfigurable parentId="python.tools.group.settings"
+                         id="python.package.managers.group.settings"
+                         bundle="messages.PyToolsUiBundle"
+                         key="settings.package.managers.title"
+                         instance="com.intellij.python.pytools.ui.packagemanagers.PyPackageManagersConfigurable"/>
+    <search.optionContributor
+        implementation="com.intellij.python.pytools.ui.packagemanagers.PyPackageManagersSearchableOptionContributor"/>
   </extensions>
 </idea-plugin>

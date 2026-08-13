@@ -22,6 +22,6 @@
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <python.pytools.pyTool implementation="com.intellij.python.uv.backend.UvPyTool"/>
-    <python.pytools.pyToolManagerProvider implementation="com.intellij.python.uv.backend.UvToolManagerProvider" order="first"/>
+    <python.pytools.genericPyToolManagerProvider implementation="com.intellij.python.uv.backend.UvToolManagerProvider" order="first"/>
   </extensions>
 </idea-plugin>

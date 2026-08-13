@@ -25,7 +25,6 @@ import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.ValidatedPathField
 import com.intellij.python.pytools.Version
 import com.jetbrains.python.sdk.add.v2.createInstallCondaFix
-import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
 import com.jetbrains.python.sdk.add.v2.toStatisticsField
 import com.jetbrains.python.sdk.add.v2.validatablePathField
 import com.jetbrains.python.sdk.conda.condaSupportedLanguages
@@ -42,8 +41,12 @@ internal class CondaNewEnvironmentCreator<P : PathHolder>(model: PythonMutableTa
   private lateinit var condaExecutable: ValidatedPathField<Version, P, ValidatedPath.Executable<P>>
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.condaViewModel.condaExecutable
   override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
-    savePathForEelOnly(pathHolder) { path -> saveLocalPythonCondaPath(path) }
+    (pathHolder as? PathHolder.Eel)?.let { if (model.fileSystem.isLocal) saveLocalPythonCondaPath(it.path) }
   }
+
+  // Conda's reader has no detection fallback, so it keeps persisting the created conda on setup (the
+  // persister itself is gated to local). Unchanged from before the "persist only on browse" rule.
+  override val persistToolExecutableOnSetup: Boolean get() = true
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {

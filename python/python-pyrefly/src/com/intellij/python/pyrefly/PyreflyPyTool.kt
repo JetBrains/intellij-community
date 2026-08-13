@@ -14,7 +14,7 @@ import com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.isActiveOn
 import com.intellij.python.pytools.lsp.PyLspTool
-import com.intellij.python.pytools.configuration.ExternalPyTool
+import com.intellij.python.pytools.ExternalPyTool
 import com.intellij.python.pytools.ui.pyLspToolFeaturesSummary
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus

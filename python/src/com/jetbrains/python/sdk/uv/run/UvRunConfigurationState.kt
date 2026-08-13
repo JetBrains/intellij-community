@@ -23,7 +23,10 @@ import com.jetbrains.python.sdk.uv.ScriptSyncCheckResult
 import com.jetbrains.python.sdk.uv.UvLowLevel
 import com.jetbrains.python.sdk.uv.impl.createUvCliLocal
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevelLocal
-import com.jetbrains.python.sdk.uv.impl.getUvExecutableLocal
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.pytools.resolveExecutable
+import com.intellij.python.uv.backend.UvPyTool
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -98,7 +101,7 @@ private suspend fun checkRequiresSync(
   options: UvRunConfigurationOptions,
   logger: Logger,
 ): Result<Boolean, Unit> {
-  val uvExecutable = getUvExecutableLocal() ?: return Result.failure(Unit)
+  val uvExecutable = UvPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))?.path ?: return Result.failure(Unit)
   val uv = createUvCliLocal(uvExecutable).mapSuccess { createUvLowLevelLocal(workingDirectory, it) }.getOrNull()
   return uv?.let { requiresSync(it, options, logger) } ?: Result.failure(Unit)
 }

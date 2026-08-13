@@ -32,7 +32,10 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManager.Companion.PackageManagerErrorMessage
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
-import com.jetbrains.python.sdk.uv.impl.getUvExecutableLocal
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.pytools.resolveExecutable
+import com.intellij.python.uv.backend.UvPyTool
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.packaging.packageRequirements.CachedDependencyTreeProvider
 import com.jetbrains.python.packaging.packageRequirements.PackageCollectionPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
@@ -62,7 +65,7 @@ internal class UvPackageManager internal constructor(
   override val installedPackagesIncludeTransitive: Boolean = true
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
   override val cliSpecs: List<PythonManagerCliSpec> = listOf(
-    PythonManagerCliSpec("uv", ::getUvExecutableLocal)
+    PythonManagerCliSpec("uv", { UvPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))?.path })
   )
   override val treeProvider = CachedDependencyTreeProvider {
     withUv { uv -> uv.listProjectStructureTree() }.getOrNull()

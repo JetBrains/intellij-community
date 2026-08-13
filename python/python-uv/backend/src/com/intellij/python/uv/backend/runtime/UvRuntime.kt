@@ -17,8 +17,8 @@ fun PyToolRuntime.uvxCli(): UvxCli = UvxCli(this)
 /**
  * Build a [PyToolRuntime] whose binary is the given local `uv` executable.
  *
- * Callers are expected to resolve [uvExecutable] themselves (the canonical resolver is
- * `getUvExecutableLocal` in `intellij.python.community.impl`); this helper only encapsulates the
+ * Callers are expected to resolve [uvExecutable] themselves (e.g.
+ * `UvPyTool.getInstance().resolveExecutable(...)`); this helper only encapsulates the
  * `BinOnEel` / `ExecOptions` shape so `runtime.uvCli()` / `runtime.uvxCli()` usage stays uniform
  * across call sites.
  */

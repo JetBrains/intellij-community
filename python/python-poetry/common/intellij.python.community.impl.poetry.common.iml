@@ -16,5 +16,6 @@
     <orderEntry type="module" module-name="intellij.python.community.common" />
     <orderEntry type="module" module-name="intellij.python.community" />
     <orderEntry type="module" module-name="intellij.python.processOutput.common" />
+    <orderEntry type="module" module-name="intellij.python.pytools" />
   </component>
 </module>

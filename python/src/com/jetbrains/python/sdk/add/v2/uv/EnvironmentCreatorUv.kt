@@ -15,7 +15,6 @@ import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.uv.backend.UvPyTool
-import com.intellij.python.uv.backend.setUvExecutableLocal
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.intellij.python.uv.backend.runtime.uvCli
@@ -39,7 +38,7 @@ import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.ValidatedPathField
 import com.jetbrains.python.sdk.add.v2.VenvAlreadyExistsError
 import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState
-import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
+import com.jetbrains.python.sdk.add.v2.persistCustomToolPath
 import com.jetbrains.python.sdk.add.v2.validatablePathField
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
@@ -88,7 +87,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
   private lateinit var venvPathField: ValidatedPathField<Unit, P, ValidatedPath.Folder<P>>
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.uvViewModel.uvExecutable
   override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
-    savePathForEelOnly(pathHolder) { path -> setUvExecutableLocal(path) }
+    model.fileSystem.persistCustomToolPath(pathHolder, pyTool)
   }
 
   private val venvAlreadyExistsError = propertyGraph.property<VenvAlreadyExistsError<P>?>(null)

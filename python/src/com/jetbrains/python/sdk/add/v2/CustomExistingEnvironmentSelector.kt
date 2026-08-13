@@ -32,6 +32,10 @@ internal abstract class CustomExistingEnvironmentSelector<P : PathHolder>(
   private lateinit var comboBox: PythonInterpreterComboBox<P>
   private lateinit var executablePath: ValidatedPathField<Version, P, ValidatedPath.Executable<P>>
 
+  // Persist the tool path only when the user explicitly browsed/typed it, never an autodetected fill.
+  override val persistToolExecutableOnSetup: Boolean
+    get() = this::executablePath.isInitialized && executablePath.isUserEdited
+
   private val existingEnvironments: MutableStateFlow<List<PythonSelectableInterpreter<P>>?> = MutableStateFlow(null)
   protected val selectedEnv: ObservableMutableProperty<PythonSelectableInterpreter<P>?> = propertyGraph.property(null)
 

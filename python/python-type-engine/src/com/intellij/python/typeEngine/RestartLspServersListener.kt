@@ -16,10 +16,8 @@ import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProvider
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
-import com.intellij.python.pyrefly.PyreflyConfiguration
 import com.intellij.python.pyrefly.PyreflyPyTool
 import com.intellij.python.pyrefly.PyreflyUsageCollector
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import com.intellij.python.pytools.ui.getInstalledToolPackage
 import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.packaging.PythonVersionValue
@@ -57,10 +55,6 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
     val typeEngineProjectSettings = PyTypeEngineProjectSettings.getInstance(project)
 
     if (typeEngineProjectSettings.typeEngine != PyTypeEngineType.PYREFLY)
-      return
-
-    val pyreflyConfiguration = project.service<PyreflyConfiguration>()
-    if (pyreflyConfiguration.executableDiscoveryMode != ExecutableDiscoveryMode.INTERPRETER)
       return
 
     val manager = PythonPackageManager.forSdk(project, sdk)

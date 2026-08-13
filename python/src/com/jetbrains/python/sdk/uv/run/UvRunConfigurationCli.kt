@@ -8,7 +8,10 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.run.PythonExecution
 import com.jetbrains.python.run.PythonToolModuleExecution
 import com.jetbrains.python.run.PythonToolScriptExecution
-import com.jetbrains.python.sdk.uv.impl.getUvExecutableLocal
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.pytools.resolveExecutable
+import com.intellij.python.uv.backend.UvPyTool
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
@@ -17,7 +20,7 @@ import kotlin.io.path.pathString
 @ApiStatus.Internal
 @RequiresBackgroundThread(generateAssertion = false)
 suspend fun buildUvRunConfigurationCli(options: UvRunConfigurationOptions, isDebug: Boolean): PythonExecution {
-  val toolPath = requireNotNull(getUvExecutableLocal()) { "Unable to find uv executable." }
+  val toolPath = requireNotNull(UvPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))?.path) { "Unable to find uv executable." }
   val toolParams = mutableListOf("run")
 
   if (isDebug && !options.uvArgs.contains("--cache-dir")) {

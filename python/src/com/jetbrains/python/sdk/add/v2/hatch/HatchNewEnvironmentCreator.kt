@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.util.progress.withProgressText
-import com.intellij.python.hatch.HatchConfiguration
 import com.intellij.python.hatch.HatchPyTool
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.hatch.HatchVirtualEnvironment
@@ -27,7 +26,7 @@ import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.getOrInstallBasePython
-import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
+import com.jetbrains.python.sdk.add.v2.persistCustomToolPath
 import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
@@ -43,7 +42,7 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
   private lateinit var hatchFormFields: HatchFormFields<P>
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.hatchViewModel.hatchExecutable
   override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
-    savePathForEelOnly(pathHolder) { path -> HatchConfiguration.persistPathForTarget(hatchExecutablePath = path) }
+    model.fileSystem.persistCustomToolPath(pathHolder, pyTool)
   }
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {

@@ -19,12 +19,11 @@ import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.Version
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import com.intellij.python.pytools.findExecutableInPath
 import com.intellij.python.pytools.findExecutableInSdk
 import com.jetbrains.python.sdk.pyInterpreterPresentation
 import com.intellij.python.pytools.ui.PyToolsUiBundle
-import com.intellij.python.pytools.configuration.ExternalPyTool
+import com.intellij.python.pytools.ExternalPyTool
 import com.intellij.python.pytools.ui.icons.PythonPytoolsUIIcons
 import com.jetbrains.python.Result
 import com.intellij.python.pytools.validateCustomPath
@@ -42,8 +41,7 @@ import javax.swing.Icon
 /**
  * Snapshot of the user-editable per-row state, comparable to the persisted [PyToolsState] entry.
  * The executable-discovery mode is no longer user-selectable — the page always runs the fixed
- * `SDK → Path → uvx` chain (i.e. [ExecutableDiscoveryMode.INTERPRETER]) — so only the enable flag
- * and the optional custom-path override are staged here.
+ * `SDK → Path → uvx` chain — so only the enable flag and the optional custom-path override are staged here.
  */
 internal data class RowState(
   val enabled: Boolean,
@@ -128,7 +126,7 @@ internal data class SdkEntry(
 )
 
 internal sealed interface PathFieldValue {
-  /** User-supplied [PyToolsState.ToolEntry.customPathToExecutable]. */
+  /** A user-supplied custom executable path (stored per Eel machine in `PyCustomExecutablePaths`). */
   data class Custom(val path: Path) : PathFieldValue
 
   /** Path auto-detected on PATH or in a well-known per-user install directory. */
@@ -171,6 +169,7 @@ internal enum class PathIconKind(val icon: Icon?) {
 internal fun iconKindFor(
   toolRow: ToolRow?,
   detected: PathFieldValue?,
+  canInstall: Boolean,
   isUpgradeAvailable: (ToolRow) -> Boolean,
 ): PathIconKind = when {
   toolRow == null -> PathIconKind.NONE
@@ -178,8 +177,10 @@ internal fun iconKindFor(
   // action there is "revert to auto-detection". Skip install / upgrade / info — none of them
   // apply to a user-pointed-at executable.
   detected is PathFieldValue.Custom -> PathIconKind.RESET
-  // Offer install for any undiscovered tool; the installer uses uv when present and otherwise
-  // falls back to a pip install into a system Python.
+  // No installer for this tool on this target (a manager-less tool, or e.g. conda on a remote
+  // interpreter): path-only, just the browse button. (Reset above still applies to a custom path.)
+  !canInstall -> PathIconKind.NONE
+  // Offer install for any undiscovered tool; the installer uses the tool's manager (uv/pip by default).
   detected is PathFieldValue.NotFound -> PathIconKind.INSTALL
   toolRow.version == null -> PathIconKind.NONE
   isUpgradeAvailable(toolRow) -> PathIconKind.UPGRADE

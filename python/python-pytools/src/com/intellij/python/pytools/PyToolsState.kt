@@ -7,13 +7,9 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import com.intellij.python.pytools.lsp.LSP_TOOLS_STORAGE_FILE
-import com.intellij.util.xmlb.Converter
 import com.intellij.util.xmlb.annotations.OptionTag
-import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.Path
 
 /**
  * Central per-project state for all Python tools that participate in the [PyTool] extension point.
@@ -29,16 +25,7 @@ class PyToolsState(private val project: Project) : PersistentStateComponent<PyTo
   data class ToolEntry(
     @OptionTag
     val enabled: Boolean = false,
-    @OptionTag
-    val discoveryMode: ExecutableDiscoveryMode = ExecutableDiscoveryMode.INTERPRETER,
-    @OptionTag(value = "customPathToExecutable", converter = PathConverter::class)
-    val customToolBinaryPath: Path? = null,
   )
-
-  internal class PathConverter : Converter<Path>() {
-    override fun fromString(value: String): Path? = value.takeIf { it.isNotBlank() }?.let { Path(it) }
-    override fun toString(value: Path): String = value.toString()
-  }
 
   data class State(
     @OptionTag
@@ -78,17 +65,6 @@ class PyToolsState(private val project: Project) : PersistentStateComponent<PyTo
   fun isEnabled(tool: PyTool): Boolean = getEntry(tool).enabled
   fun setEnabled(tool: PyTool, value: Boolean) {
     state.persist(tool, getEntry(tool).copy(enabled = value))
-  }
-
-  fun getMode(tool: PyTool): ExecutableDiscoveryMode = getEntry(tool).discoveryMode
-  fun setMode(tool: PyTool, value: ExecutableDiscoveryMode) {
-    state.persist(tool, getEntry(tool).copy(discoveryMode = value))
-  }
-
-  fun getCustomPath(tool: PyTool): Path? = getEntry(tool).customToolBinaryPath
-
-  fun setCustomPath(tool: PyTool, value: Path?) {
-    state.persist(tool, getEntry(tool).copy(customToolBinaryPath = value))
   }
 
   companion object {

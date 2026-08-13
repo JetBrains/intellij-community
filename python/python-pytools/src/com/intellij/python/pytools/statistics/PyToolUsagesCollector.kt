@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import com.intellij.util.ThreeState
 
 class PyToolUsagesCollector : CounterUsagesCollector() {
@@ -31,7 +30,6 @@ class PyToolUsagesCollector : CounterUsagesCollector() {
         documentationField with s.documentation.toThreeState,
         formattingField with s.formatting.toThreeState,
         sortImportsField with s.sortImports.toThreeState,
-        executableDiscoveryModeField with s.executableDiscoveryMode,
         customPathField with s.customPath,
       )
     }
@@ -50,7 +48,7 @@ class PyToolUsagesCollector : CounterUsagesCollector() {
 
 }
 
-private val GROUP = EventLogGroup("python.lsp", 7)
+private val GROUP = EventLogGroup("python.lsp", 8)
 
 /**
  * UI place from which a Python-tool action (install / upgrade / configuration change) was
@@ -73,7 +71,6 @@ private val inlayHintsField = EventFields.Enum("inlay_hints", ThreeState::class.
 private val documentationField = EventFields.Enum("documentation", ThreeState::class.java)
 private val formattingField = EventFields.Enum("formatting", ThreeState::class.java)
 private val sortImportsField = EventFields.Enum("sort_imports", ThreeState::class.java)
-private val executableDiscoveryModeField = EventFields.Enum("executable_discovery_mode", ExecutableDiscoveryMode::class.java)
 /**
  * True when the user has overridden the tool's executable with a "Browse for executable"
  * custom path; false when the executable is auto-detected (via SDK or `$PATH`).
@@ -91,7 +88,6 @@ private val CONFIGURATION_CHANGED = GROUP.registerVarargEvent(
   documentationField,
   formattingField,
   sortImportsField,
-  executableDiscoveryModeField,
   customPathField,
 )
 

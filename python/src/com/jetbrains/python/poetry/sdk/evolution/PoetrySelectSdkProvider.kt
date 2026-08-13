@@ -17,7 +17,10 @@ import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.icons.PythonIcons
-import com.jetbrains.python.sdk.poetry.getPoetryExecutable
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
+import com.intellij.python.pytools.resolveExecutable
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.poetry.runPoetry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,7 +35,7 @@ internal class PoetrySelectSdkProvider : EvoSelectSdkProvider {
   override val icon: Icon get() = PythonIcons.Python.Origami
 
   override suspend fun loadSections(module: Module): EvoLoadResultDto {
-    getPoetryExecutable()
+    PoetryPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))?.path
     ?: return evoWarning(PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message"))
 
     val pyProjectTomlFile = withContext(Dispatchers.IO) {

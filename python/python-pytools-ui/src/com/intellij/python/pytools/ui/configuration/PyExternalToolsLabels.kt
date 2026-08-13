@@ -1,8 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.pytools.ui.configuration
 
+import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
@@ -22,6 +27,64 @@ import javax.swing.UIManager
 internal fun toggleColumnWidth(): Int = JBUI.scale(64)
 
 internal fun columnGap(): Int = JBUI.scale(12)
+
+/**
+ * Tooltip for the executable path label: the full path, the probed version, a below-minimum-version
+ * warning, and any validation error — each on its own line. `null` when there is nothing to show
+ * (path not resolved / not yet probed). Shared by the External Tools and Package Managers rows so
+ * the path text can stay short while its details live in the tooltip.
+ */
+@Suppress("HardCodedStringLiteral")
+internal fun pathDetailsTooltip(row: ToolRow): HtmlChunk? {
+  val builder = HtmlBuilder()
+  var has = false
+  fun line(text: String) {
+    if (has) builder.br()
+    builder.append(text)
+    has = true
+  }
+  when (val d = row.pathFieldValue) {
+    is PathFieldValue.Custom -> line(d.path.toString())
+    is PathFieldValue.AutoDetected -> line(d.path.toString())
+    PathFieldValue.NotFound, null -> Unit
+  }
+  row.version?.let { line(PyToolsUiBundle.message("settings.external.tools.path.version.tooltip", it.toString())) }
+  row.belowMinVersionMessage?.let { line(it) }
+  row.pathError?.let { line(it) }
+  return if (has) builder.wrapWith(HtmlChunk.html()) else null
+}
+
+/** Text for the Upgrade action link: "Upgrade to X.Y.Z" when the target version is known, else "Upgrade". */
+@Nls
+internal fun upgradeLinkText(latestVersion: String?): String =
+  if (latestVersion != null) PyToolsUiBundle.message("settings.external.tools.upgrade.to.version.link", latestVersion)
+  else PyToolsUiBundle.message("settings.external.tools.upgrade.link")
+
+/**
+ * The short muted "vX.Y.Z" label shown right after a resolved executable path, or `null` when the
+ * path isn't resolved or its version hasn't been probed. The full path plus any error/warning stays
+ * in [pathDetailsTooltip]; only the concise version is shown inline. Shared by both pages.
+ */
+internal fun installedVersionLabel(row: ToolRow): JComponent? {
+  val resolved = row.pathFieldValue is PathFieldValue.Custom || row.pathFieldValue is PathFieldValue.AutoDetected
+  val version = row.version
+  if (!resolved || version == null) return null
+  @NlsSafe val text = "v${version.value}"
+  return JBLabel(text).apply { foreground = UIUtil.getInactiveTextColor() }
+}
+
+/**
+ * Rejects an Apply when any row has an unresolved custom-path validation error, throwing a
+ * [ConfigurationException] so the Settings dialog shows the message at the bottom and does not
+ * persist. Shared by the External Tools and Package Managers pages.
+ */
+@Throws(ConfigurationException::class)
+internal fun checkNoPathErrors(rows: List<ToolRow>) {
+  val invalid = rows.firstOrNull { it.pathError != null } ?: return
+  throw ConfigurationException(
+    PyToolsUiBundle.message("settings.external.tools.path.apply.error", invalid.tool.presentableName, invalid.pathError!!)
+  )
+}
 
 /** Wrap [comp] in a panel pinned to [width], anchored (WEST by default) within that width. */
 internal fun fixedWidthPanel(width: Int, comp: JComponent, anchor: String = BorderLayout.WEST): JComponent =

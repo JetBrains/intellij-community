@@ -7,7 +7,7 @@ import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.statistics.PyToolFusSnapshot
 import com.intellij.python.pytools.lsp.PyLspTool
-import com.intellij.python.pytools.configuration.ExternalPyTool
+import com.intellij.python.pytools.ExternalPyTool
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.intellij.python.ruff.server.RuffLspIntegrationProvider
 import com.jetbrains.python.packaging.PyPackageName

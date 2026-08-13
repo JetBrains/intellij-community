@@ -17,8 +17,9 @@ import com.intellij.python.pyproject.model.spi.PySdkDependencyGroupSupport
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
 import com.intellij.python.pyproject.psi.spi.PyProjectTomlPathValue
 import com.intellij.python.pyproject.psi.spi.isPathDependencyKey
+import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.pytools.runtime.PyToolRuntime
-import com.intellij.python.uv.backend.UV_TOOL
+import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.uv.backend.runtime.createUvToolRuntime
 import com.intellij.python.uv.backend.runtime.uvCli
 import com.intellij.python.uv.common.UV_TOOL_ID
@@ -30,6 +31,7 @@ import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.ToolBasedProjectCreator
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
@@ -45,7 +47,8 @@ import kotlin.io.path.relativeTo
 internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBasedProjectCreator(
   object : ToolBasedProjectCreator.PyToolFuns {
     override suspend fun createRuntime(fs: EelFileSystem, where: Directory): Result<PyToolRuntime, PyError> {
-      val tool = UV_TOOL.getToolExecutableOrError(fs, null).getOr { return it }
+      val tool = UvPyTool.getInstance().resolveExecutable(fs)
+                 ?: return PyResult.localizedError(PySdkBundle.message("path.validation.file.not.found", "uv"))
       return Result.success(createUvToolRuntime(tool.path))
     }
 

@@ -4,9 +4,10 @@ package com.intellij.python.uv.backend
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.eel.EelApi
 import com.intellij.python.pytools.InstalledInfo
+import com.intellij.python.pytools.PyExecutableCache
 import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.PyToolManager
-import com.intellij.python.pytools.PyToolManagerProvider
+import com.intellij.python.pytools.GenericPyToolManager
+import com.intellij.python.pytools.GenericPyToolManagerProvider
 import com.intellij.python.uv.backend.runtime.createUvToolRuntime
 import com.intellij.python.uv.backend.runtime.uvCli
 import com.jetbrains.python.Result
@@ -27,11 +28,10 @@ private val LOG = Logger.getInstance(UvToolManagerProvider::class.java)
  * `order="first"` so uv is preferred over the pip fallback.
  */
 @ApiStatus.Internal
-class UvToolManagerProvider : PyToolManagerProvider {
-  override suspend fun forEel(eel: EelApi): PyToolManager? {
-    val fileSystem = eel.toFileSystem()
-    val uv = UV_TOOL.getToolExecutable(fileSystem, null)?.path ?: return null
-    return UvToolManager(fileSystem, uv)
+class UvToolManagerProvider : GenericPyToolManagerProvider {
+  override suspend fun forEel(eel: EelApi): GenericPyToolManager? {
+    val uv = PyExecutableCache.getInstance().get(eel.descriptor, UvPyTool.getInstance()) ?: return null
+    return UvToolManager(eel.toFileSystem(), uv)
   }
 }
 
@@ -43,7 +43,7 @@ class UvToolManagerProvider : PyToolManagerProvider {
 private class UvToolManager(
   private val fileSystem: FileSystem<PathHolder.Eel>,
   private val uv: Path,
-) : PyToolManager {
+) : GenericPyToolManager {
   override suspend fun install(tool: PyTool): PyResult<Path> = run(tool, reinstall = false)
 
   override suspend fun upgrade(tool: PyTool): PyResult<Path> = run(tool, reinstall = true)

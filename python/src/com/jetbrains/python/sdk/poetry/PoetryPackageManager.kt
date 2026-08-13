@@ -36,6 +36,10 @@ import com.jetbrains.python.poetry.POETRY_LOCK
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
+import com.intellij.python.pytools.resolveExecutable
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
@@ -51,7 +55,7 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
   override val installedPackagesIncludeTransitive: Boolean = true
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
   override val cliSpecs: List<PythonManagerCliSpec> = listOf(
-    PythonManagerCliSpec("poetry", ::getPoetryExecutable)
+    PythonManagerCliSpec("poetry", { PoetryPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))?.path })
   )
   override val treeProvider = CachedDependencyTreeProvider {
     runPoetryWithSdk(sdk, "show", "--tree").getOrNull()

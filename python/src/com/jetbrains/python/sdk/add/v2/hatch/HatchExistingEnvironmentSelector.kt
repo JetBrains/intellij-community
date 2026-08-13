@@ -5,7 +5,7 @@ import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.platform.util.progress.withProgressText
-import com.intellij.python.hatch.HatchConfiguration
+import com.intellij.python.hatch.HatchPyTool
 import com.intellij.python.hatch.PythonVirtualEnvironment
 import com.intellij.python.hatch.resolveHatchWorkingDirectory
 import com.intellij.ui.dsl.builder.Panel
@@ -22,7 +22,7 @@ import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
-import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
+import com.jetbrains.python.sdk.add.v2.persistCustomToolPath
 import com.jetbrains.python.sdk.add.v2.toStatisticsField
 import com.jetbrains.python.sdk.destructured
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
@@ -40,7 +40,7 @@ internal class HatchExistingEnvironmentSelector<P : PathHolder>(
   private lateinit var hatchFormFields: HatchFormFields<P>
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.hatchViewModel.hatchExecutable
   override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
-    savePathForEelOnly(pathHolder) { path -> HatchConfiguration.persistPathForTarget(hatchExecutablePath = path) }
+    model.fileSystem.persistCustomToolPath(pathHolder, HatchPyTool.getInstance())
   }
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
@@ -79,11 +79,6 @@ internal class HatchExistingEnvironmentSelector<P : PathHolder>(
             targetPanelExtension = model.state.targetPanelExtension.get(),
           )
         }
-      }
-    }.onSuccess {
-      when (val pathHolder = model.hatchViewModel.hatchExecutable.get()?.pathHolder) {
-        is PathHolder.Eel -> HatchConfiguration.persistPathForTarget(hatchExecutablePath = pathHolder.path)
-        else -> Unit
       }
     }
 

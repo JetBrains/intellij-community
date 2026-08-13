@@ -2,6 +2,7 @@ package com.intellij.python.pytools
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
@@ -16,13 +17,12 @@ import com.intellij.python.community.execService.ProcessSemiInteractiveFun
 import com.intellij.python.community.execService.execute
 import com.intellij.python.community.execService.processSemiInteractiveHandler
 import com.intellij.python.pytools.PyToolsBundle.message
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
+import com.intellij.python.pytools.impl.detectExecutableOnEel
+import com.intellij.python.pytools.services.PyCustomExecutablePaths
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PythonInterpreter
-import com.jetbrains.python.sdk.ToolCommandExecutor
-import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.moduleIfExists
 import com.jetbrains.python.sdk.pythonInterpreter
@@ -31,6 +31,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.isExecutable
+
+/**
+ * uv's tool-runner command. uv contributes it as a secondary [PyExecutable] via [PyTool.executables];
+ * pytools resolves it by name (it lives in a higher module) with [PyTool.findExecutable].
+ */
+private const val UVX_COMMAND: String = "uvx"
 
 fun PyTool.getState(project: Project): PyToolsState.ToolEntry = PyToolsState.getInstance(project).getEntry(this)
 
@@ -44,22 +50,31 @@ fun PyTool.isEnabledOn(project: Project): Boolean = getState(project).enabled
  */
 fun PyTool.isActiveOn(project: Project): Boolean = isEnabledOn(project) || isSelectedAsTypeEngine(project)
 
+/**
+ * The user-chosen custom executable path for this executable on [eelDescriptor]'s machine, or `null`
+ * for auto-detection. Stored per Eel machine in [PyCustomExecutablePaths] (machine-wide, not per project).
+ */
+fun PyExecutable.getCustomExecutablePath(eelDescriptor: EelDescriptor): Path? =
+  PyCustomExecutablePaths.getInstance().get(eelDescriptor, this)
+
+/** Persist (or clear, when `null`) the custom executable path for this executable on [eelDescriptor]'s machine. */
+fun PyExecutable.setCustomExecutablePath(eelDescriptor: EelDescriptor, path: Path?): Unit =
+  PyCustomExecutablePaths.getInstance().set(eelDescriptor, this, path)
+
 suspend fun PyTool.getExecutableWithBaseArgs(
   moduleOrProject: ModuleOrProject,
   executableName: String = packageName.name,
   workingDir: Path? = null,
 ): PyResult<Pair<BinaryToExec, List<String>>> {
-  val state = getState(moduleOrProject.project)
-  val eelApi = moduleOrProject.project.getEelDescriptor().toEelApi()
+  val eelDescriptor = moduleOrProject.project.getEelDescriptor()
+  val eelApi = eelDescriptor.toEelApi()
+  val customPath = getCustomExecutablePath(eelDescriptor)
 
-  val toolBinaryPath = when (state.discoveryMode) {
-    ExecutableDiscoveryMode.INTERPRETER -> {
-      val pyRichSdk = moduleOrProject.moduleIfExists?.pythonSdk?.pythonInterpreter()
-      pyRichSdk?.let { findExecutableInSdk(it, executableName) } ?: findExecutableInPath(eelApi, state, executableName)
-    }
-    ExecutableDiscoveryMode.PATH -> findExecutableInPath(eelApi, state, executableName)
-    ExecutableDiscoveryMode.UVX -> null
-  }
+  // Fixed resolution chain (the discovery mode is no longer selectable): the
+  // interpreter's scripts dir, then a custom path, then PATH; if still unresolved, run via uvx below.
+  val pyRichSdk = moduleOrProject.moduleIfExists?.pythonSdk?.pythonInterpreter()
+  val toolBinaryPath = pyRichSdk?.let { findExecutableInSdk(it, executableName) }
+                       ?: customPath ?: findExecutableInPath(eelApi, executableName)
 
   val workDir = workingDir
                 ?: moduleOrProject.moduleIfExists?.baseDir?.toNioPath()
@@ -70,7 +85,7 @@ suspend fun PyTool.getExecutableWithBaseArgs(
   }
   else {
     // uvx (installed with uv) may live in a per-user dir off PATH, so detect it like any other tool.
-    val uvxPath = findExecutableInPath(eelApi, "uvx")
+    val uvxPath = PyTool.findExecutable(UVX_COMMAND)?.let { PyExecutableCache.getInstance().get(eelDescriptor, it) }
                   ?: return PyResult.localizedError(message("uvx.is.not.installed"))
 
     // `uvx <pkg>` only works when the package's entry point matches its name. When the executable
@@ -138,39 +153,27 @@ fun PyTool.findExecutableInSdk(pythonInterpreter: PythonInterpreter, executableN
   }
 }
 
-private suspend fun PyTool.findExecutableInPath(
-  eelApi: EelApi,
-  state: PyToolsState.ToolEntry,
-  executableName: String = packageName.name,
-): Path? = state.customToolBinaryPath ?: findExecutableInPath(eelApi, executableName)
-
 /**
  * Resolve [executableName] in the environment [eelApi] describes: on `PATH` and in the well-known per-user
  * install directories tool installers use (pip's user scripts dir, uv/pipx's `~/.local/bin`, …). Detection
- * goes through [ToolCommandExecutor] so it matches how the executable was installed — a plain `PATH` lookup
- * misses those per-user dirs, which are frequently not on `PATH` on Windows (PY-91493). Not tied to a
- * [PyTool]: also used to find `uv`/`uvx`, which have no tool entry.
+ * goes through [detectExecutableOnEel] so it matches how the executable was installed — a plain `PATH`
+ * lookup misses those per-user dirs, which are frequently not on `PATH` on Windows (PY-91493). Not tied
+ * to a [PyTool]: also used to find `uv`/`uvx`, which have no tool entry.
  */
 suspend fun findExecutableInPath(eelApi: EelApi, executableName: String): Path? =
-  ToolCommandExecutor(executableName).detectToolExecutable(eelApi.toFileSystem()) { true }?.path
+  detectExecutableOnEel(eelApi, pyExecutableSpec(executableName))
 
 /**
- * Installs this tool's executable into the environment described by [eel], using the first available
- * [PyToolManager] (`uv tool install` when uv is present, otherwise a pip install via a system Python).
- * Returns the resolved executable path on success.
+ * Installs this tool's executable into the environment described by [eel] via the tool's [PyTool.manager]
+ * (by default a `uv tool install` / pip install; conda uses its own). Returns the resolved executable
+ * path, or an error when the tool has no installer ([PyTool.manager] is `null`).
  */
-suspend fun PyTool.performToolInstallation(eel: EelApi): PyResult<Path> {
-  val manager = PyToolManagerProvider.managerFor(eel)
-                ?: return PyResult.localizedError(message("python.tool.install.no.installer", presentableName))
-  return manager.install(this)
-}
+suspend fun PyTool.performToolInstallation(eel: EelApi): PyResult<Path> =
+  manager?.install(this, eel) ?: PyResult.localizedError(message("python.tool.install.no.installer", presentableName))
 
 /**
- * Upgrades this tool to the latest version in the environment described by [eel], using the first
- * available [PyToolManager]. Returns the resolved executable path on success.
+ * Upgrades this tool to the latest version in the environment described by [eel] via the tool's
+ * [PyTool.manager]. Returns the resolved executable path, or an error when the tool has no installer.
  */
-suspend fun PyTool.performToolUpgrade(eel: EelApi): PyResult<Path> {
-  val manager = PyToolManagerProvider.managerFor(eel)
-                ?: return PyResult.localizedError(message("python.tool.install.no.installer", presentableName))
-  return manager.upgrade(this)
-}
+suspend fun PyTool.performToolUpgrade(eel: EelApi): PyResult<Path> =
+  manager?.upgrade(this, eel) ?: PyResult.localizedError(message("python.tool.install.no.installer", presentableName))

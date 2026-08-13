@@ -119,6 +119,13 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
    */
   private val editorMode = AtomicBoolean(false)
 
+  /**
+   * `true` once the value came from the user (a browse via [fieldAccessor] or typing), as opposed to an
+   * autodetected fill (which writes [text] directly and leaves [editorMode] untouched). Used to persist
+   * a tool executable path only when the user explicitly chose it.
+   */
+  val isUserEdited: Boolean get() = editorMode.load()
+
   private val validationAction = object : DumbAwareAction(AllIcons.Gutter.SuggestedRefactoringBulb) {
     fun doValidate() {
       if (!editorMode.load()) return

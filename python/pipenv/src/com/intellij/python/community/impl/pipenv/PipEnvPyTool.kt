@@ -4,6 +4,7 @@ package com.intellij.python.community.impl.pipenv
 import com.intellij.python.community.impl.pipenv.PyPipenvBundle.message
 import com.intellij.python.community.impl.pipenv.icons.PythonCommunityImplPipenvIcons
 import com.intellij.python.pytools.PyTool
+import com.intellij.python.pytools.PackageManagerPyTool
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -14,7 +15,7 @@ import javax.swing.Icon
  * dependencies in `Pipfile` and `Pipfile.lock` and creating a per-project virtual environment.
  */
 @ApiStatus.Internal
-class PipEnvPyTool : PyTool {
+class PipEnvPyTool : PyTool, PackageManagerPyTool {
   override val presentableName: String = "Pipenv"
   override val packageName: PyPackageName = PyPackageName.from("pipenv")
   override val description: String get() = message("python.pipenv.tool.description")

@@ -21,14 +21,14 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.environmentVariables
-import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
-import com.intellij.platform.eel.where
+import com.intellij.python.pytools.impl.detectExecutableOnEel
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
@@ -112,6 +112,7 @@ data class EelFileSystem(
   override val toolPathCanBePersisted: Boolean = isLocal
   override val userReadableName: @NonNls String = eelApi.descriptor.name
   override val platformAndRoot: PlatformAndRoot = eelApi.getPlatformAndRoot()
+  override val eelDescriptor: EelDescriptor = eelApi.descriptor
 
   override fun getBinaryToExec(path: PathHolder.Eel, workingDir: Path?): BinaryToExec {
     return BinOnEel(path.path, workingDir)
@@ -317,33 +318,8 @@ data class EelFileSystem(
   override suspend fun detectTool(
     toolSpec: ToolCommandSpec,
     filter: (PathHolder.Eel) -> Boolean,
-  ): PathHolder.Eel? = withContext(Dispatchers.IO) {
-    val toolName = toolSpec.toolName
-    val fromPath = eelApi.exec.where(toolName)
-      ?.asNioPath()
-      ?.let { PathHolder.Eel(it) }
-      ?.takeIf(filter)
-    if (fromPath != null) return@withContext fromPath
-
-    val binaryNames =
-      if (eelApi.platform.isWindows) listOf("$toolName.exe", "$toolName.bat")
-      else listOf(toolName)
-    val additionalSearchPaths = resolveToolSearchPaths(toolSpec)
-    for (path in additionalSearchPaths) {
-      assert(path.path.getEelDescriptor() == eelApi.descriptor) {
-        "Additional search paths should be on the same descriptor as EelFileSystem API, but $path isn't on $eelApi"
-      }
-      for (binaryName in binaryNames) {
-        val candidate = path.path.resolve(binaryName)
-          .takeIf { it.isExecutable() }
-          ?.let { PathHolder.Eel(it) }
-          ?.takeIf(filter)
-        if (candidate != null) return@withContext candidate
-      }
-    }
-
-    null
-  }
+  ): PathHolder.Eel? =
+    detectExecutableOnEel(eelApi, toolSpec) { filter(PathHolder.Eel(it)) }?.let { PathHolder.Eel(it) }
 
   override suspend fun probeTools(
     toolSpecs: List<ToolCommandSpec>,
@@ -393,6 +369,7 @@ data class TargetFileSystem(
   override val toolPathCanBePersisted: Boolean = false
   override val userReadableName: @NonNls String = targetEnvironmentConfiguration.displayName
   override val platformAndRoot: PlatformAndRoot = targetEnvironmentConfiguration.getPlatformAndRoot()
+  override val eelDescriptor: EelDescriptor? = null
 
   private val systemPythonCache = mutableMapOf<PathHolder.Target, CachedSystemPython>()
   private lateinit var shellImpl: String
@@ -618,7 +595,7 @@ data class TargetFileSystem(
     workingDir: Path,
     uiInfoGetter: (PathHolder.Target) -> PyToolUIInfo?,
   ): List<DetectedSelectableInterpreter<PathHolder.Target>> {
-    probeTools(ADD_INTERPRETER_TOOL_COMMAND_SPECS).orLogException(LOG) ?: return emptyList()
+    probeTools(packageManagerToolCommandSpecs).orLogException(LOG) ?: return emptyList()
     val environments = targetUserInfoLock.withLock { detectedEnvironments.orEmpty() }
     return environments.mapNotNull { environment ->
       val pythonInfo = environment.python.toPythonInfo() ?: return@mapNotNull null
@@ -642,8 +619,8 @@ data class TargetFileSystem(
     filter: (PathHolder.Target) -> Boolean,
   ): PathHolder.Target? = withContext(Dispatchers.IO) {
     val toolName = toolSpec.toolName
-    if (toolSpec in ADD_INTERPRETER_TOOL_COMMAND_SPECS) {
-      val probeResult = probeTools(ADD_INTERPRETER_TOOL_COMMAND_SPECS).orLogException(LOG)
+    if (toolSpec in packageManagerToolCommandSpecs) {
+      val probeResult = probeTools(packageManagerToolCommandSpecs).orLogException(LOG)
       if (probeResult != null) return@withContext probeResult[toolName]?.path
     }
     val fromWhich = which(toolName)?.takeIf(filter)
@@ -682,7 +659,7 @@ data class TargetFileSystem(
 
   private suspend fun findInitialSystemPython(path: PathHolder.Target): PyResult<CachedSystemPython> {
     getCachedSystemPython(path)?.let { return PyResult.success(it) }
-    probeTools(ADD_INTERPRETER_TOOL_COMMAND_SPECS).getOr { return getOrValidateSystemPython(path) }
+    probeTools(packageManagerToolCommandSpecs).getOr { return getOrValidateSystemPython(path) }
     getCachedSystemPython(path)?.let { return PyResult.success(it) }
     return getOrValidateSystemPython(path)
   }

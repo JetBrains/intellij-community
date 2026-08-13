@@ -33,7 +33,10 @@ import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnvironment
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
-import com.jetbrains.python.sdk.conda.findCondaLocal
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.pytools.resolveExecutable
+import com.jetbrains.python.conda.CondaPyTool
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
@@ -79,7 +82,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
 
   private suspend fun checkManageableEnv(module: PyProject): EnvCheckerResult =
     withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
-      val condaPath = findCondaLocal()
+      val condaPath = CondaPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))
       val canManage = condaPath != null
       val intentionName = PyBundle.message("sdk.create.condaenv.suggestion")
       val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
@@ -107,7 +110,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     }
 
     // Again: only local conda is supported for now
-    val condaExecutable = findCondaLocal()
+    val condaExecutable = CondaPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))
     validateCondaPath(condaExecutable?.path?.pathString, PlatformAndRoot.local)?.let {
       return PyResult.localizedError(it.message)
     }

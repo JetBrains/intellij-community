@@ -2,9 +2,11 @@
 package com.jetbrains.python.uv.sdk.configuration
 
 import com.intellij.openapi.module.Module
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.intellij.python.uv.backend.setUvExecutableLocal
+import com.intellij.python.pytools.PyExecutableCache
+import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
@@ -39,7 +41,10 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
       is EnvCheckerResult.EnvFound, is EnvCheckerResult.SuggestToolInstallation -> baseCheckResult
       is EnvCheckerResult.EnvNotFound -> if (tomlCheckedByWorkspaceTools || findUvLock(module) != null) baseCheckResult else EnvCheckerResult.CannotConfigure
       is EnvCheckerResult.CannotConfigure -> if (findUvLock(module) != null) {
-        val pathPersister: (Path) -> Unit = { setUvExecutableLocal(it) }
+        // uv was just installed; drop the detection cache so the next lookup finds it (don't persist).
+        val pathPersister: (Path) -> Unit = { _ ->
+          PyExecutableCache.getInstance().invalidate(module.project.getEelDescriptor(), UvPyTool.getInstance())
+        }
         val toolName = "uv"
         EnvCheckerResult.SuggestToolInstallation(
           toolToInstall = toolName,

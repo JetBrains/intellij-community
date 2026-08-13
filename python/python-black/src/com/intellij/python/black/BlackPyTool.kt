@@ -8,9 +8,7 @@ import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.PyToolsState
-import com.intellij.python.pytools.icons.PythonPyToolsIcons
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
-import com.intellij.python.pytools.configuration.ExternalPyTool
+import com.intellij.python.pytools.ExternalPyTool
 import com.intellij.python.black.PyBlackBundle.message
 import com.intellij.python.black.configuration.BlackFormatterConfigurable
 import com.intellij.python.black.configuration.BlackFormatterConfiguration
@@ -18,7 +16,6 @@ import com.intellij.python.black.icons.PythonBlackIcons
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
-import kotlin.io.path.Path
 
 /**
  * [Black](https://black.readthedocs.io/) — the uncompromising Python code formatter maintained under
@@ -42,11 +39,6 @@ class BlackPyTool : PyTool, ExternalPyTool {
     val cfg = BlackFormatterConfiguration.getBlackConfiguration(project)
     val entry = PyToolsState.ToolEntry(
       enabled = Registry.`is`("black.formatter.support.enabled") && cfg.enabledOnReformat,
-      discoveryMode = when (cfg.executionMode) {
-        BlackFormatterConfiguration.ExecutionMode.BINARY -> ExecutableDiscoveryMode.PATH
-        BlackFormatterConfiguration.ExecutionMode.PACKAGE -> ExecutableDiscoveryMode.INTERPRETER
-      },
-      customToolBinaryPath = cfg.pathToExecutable?.takeIf { it.isNotBlank() }?.let { Path(it) },
     )
     cfg.enabledOnReformat = false
     cfg.executionMode = BlackFormatterConfiguration.ExecutionMode.PACKAGE

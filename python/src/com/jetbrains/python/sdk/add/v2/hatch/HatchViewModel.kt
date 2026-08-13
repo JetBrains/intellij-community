@@ -6,8 +6,7 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.python.community.execService.UploadConfig
 import com.intellij.python.hatch.HATCH_TOML
-import com.intellij.python.hatch.HatchConfiguration
-import com.intellij.python.hatch.HatchConfiguration.getOrDetectHatchExecutablePath
+import com.intellij.python.hatch.HatchPyTool
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.getHatchService
 import com.intellij.python.pyproject.PY_PROJECT_TOML
@@ -47,11 +46,9 @@ internal class HatchViewModel<P : PathHolder>(
 
   val toolValidator: ToolValidator<P> = ToolValidator(
     fileSystem = fileSystem,
-    toolVersionPrefix = "hatch",
+    tool = HatchPyTool.getInstance(),
     backProperty = hatchExecutable,
     propertyGraph = propertyGraph,
-    toolCommandSpec = HatchConfiguration.toolCommandSpec,
-    defaultPathSupplier = { getOrDetectHatchExecutablePath(fileSystem).successOrNull }
   )
 
   override fun initialize(scope: CoroutineScope) {

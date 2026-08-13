@@ -7,7 +7,10 @@ import com.intellij.python.sdk.backend.evolution.venvStyleSections
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.uv.backend.PyUvBundle
 import com.intellij.python.uv.common.icons.PythonUvCommonIcons
-import com.jetbrains.python.sdk.uv.impl.getUvExecutableLocal
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.pytools.resolveExecutable
+import com.intellij.python.uv.backend.UvPyTool
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import javax.swing.Icon
 
 internal class UvSelectSdkProvider : EvoSelectSdkProvider {
@@ -16,7 +19,8 @@ internal class UvSelectSdkProvider : EvoSelectSdkProvider {
   override val icon: Icon get() = PythonUvCommonIcons.UV
 
   override suspend fun loadSections(module: Module): EvoLoadResultDto {
-    getUvExecutableLocal() ?: return evoWarning(PyUvBundle.message("evolution.uv.executable.is.not.found"))
+    UvPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))?.path
+    ?: return evoWarning(PyUvBundle.message("evolution.uv.executable.is.not.found"))
     return EvoLoadResultDto.Ok(venvStyleSections(module, icon))
   }
 }

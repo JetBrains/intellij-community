@@ -4,8 +4,8 @@ package com.intellij.python.pytools.ui.configuration
 import com.intellij.icons.AllIcons
 import com.intellij.ide.setToolTipText
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.ActionLink
@@ -246,7 +246,9 @@ internal class PyExternalToolRowPanel(
         foreground = UIUtil.getInactiveTextColor()
       })
       add(Box.createHorizontalStrut(JBUI.scale(8)))
-      add(ActionLink(PyToolsUiBundle.message("settings.external.tools.install.link")) { host.installIntoSdk(row, entry.sdk) })
+      val installLink = ActionLink(PyToolsUiBundle.message("settings.external.tools.install.link"))
+      installLink.addActionListener { host.installIntoSdk(row, entry.sdk, installLink) }
+      add(installLink)
     }
   }
 
@@ -271,22 +273,18 @@ internal class PyExternalToolRowPanel(
         muted -> UIUtil.getInactiveTextColor()
         else -> UIUtil.getLabelForeground()
       }
-      pathTooltip()?.let { setToolTipText(it) }
+      pathDetailsTooltip(row)?.let { setToolTipText(it) }
     }
     add(valueLabel)
-    val detectedVersion = row.version
-    if (detectedVersion != null && (detected is PathFieldValue.Custom || detected is PathFieldValue.AutoDetected)) {
-      add(Box.createHorizontalStrut(JBUI.scale(6)))
-      @NlsSafe val versionText = "v${detectedVersion.value}"
-      add(JBLabel(versionText).apply { foreground = UIUtil.getInactiveTextColor() })
-    }
+    installedVersionLabel(row)?.let { add(Box.createHorizontalStrut(JBUI.scale(6))); add(it) }
     add(Box.createHorizontalStrut(JBUI.scale(8)))
 
-    when (iconKindFor(row, detected) { host.isUpgradeAvailable(it) }) {
+    val canInstall = row.tool.manager?.canInstall(host.project.getEelDescriptor()) == true
+    when (iconKindFor(row, detected, canInstall) { host.isUpgradeAvailable(it) }) {
       PathIconKind.INSTALL ->
         add(ActionLink(PyToolsUiBundle.message("settings.external.tools.install.link")) { host.installOnPath(row) })
       PathIconKind.UPGRADE ->
-        add(ActionLink(PyToolsUiBundle.message("settings.external.tools.upgrade.link")) { host.upgradeOnPath(row) })
+        add(ActionLink(upgradeLinkText(host.upgradeTargetVersion(row))) { host.upgradeOnPath(row) })
       PathIconKind.RESET ->
         add(ActionLink(PyToolsUiBundle.message("settings.external.tools.path.reset.tooltip")) { host.resetPath(row) })
       PathIconKind.NONE -> Unit
@@ -303,27 +301,6 @@ internal class PyExternalToolRowPanel(
         if (e.button == MouseEvent.BUTTON1) host.browsePath(row)
       }
     })
-  }
-
-  /** Full path + version + below-minimum + validation-error, or `null` when there is nothing to show. */
-  @Suppress("HardCodedStringLiteral")
-  private fun pathTooltip(): HtmlChunk? {
-    val builder = HtmlBuilder()
-    var has = false
-    fun line(text: String) {
-      if (has) builder.br()
-      builder.append(text)
-      has = true
-    }
-    when (val d = row.pathFieldValue) {
-      is PathFieldValue.Custom -> line(d.path.toString())
-      is PathFieldValue.AutoDetected -> line(d.path.toString())
-      PathFieldValue.NotFound, null -> Unit
-    }
-    row.version?.let { line(PyToolsUiBundle.message("settings.external.tools.path.version.tooltip", it.toString())) }
-    row.belowMinVersionMessage?.let { line(it) }
-    row.pathError?.let { line(it) }
-    return if (has) builder.wrapWith(HtmlChunk.html()) else null
   }
 
   // ---------- Search spotlight ----------

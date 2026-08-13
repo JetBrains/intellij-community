@@ -56,6 +56,7 @@ jvm_library(
         "//python/python-exec-service/execService.python",
         "//python/python-uv/backend",
         "//python/python-sdk/backend",
+        "//python/python-pyproject:pyproject",
     ],
 )
 
@@ -96,6 +97,7 @@ jvm_library(
         "//python/python-exec-service/execService.python:execService.python_test_lib",
         "//python/python-uv/backend:backend_test_lib",
         "//python/python-sdk/backend:backend_test_lib",
+        "//python/python-pyproject:pyproject_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.pytools.ui` end

@@ -5,9 +5,11 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.Version
 import com.intellij.python.pytools.getToolVersion
 import com.intellij.python.pytools.parseVersion
+import com.intellij.python.pytools.resolveExecutable
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.PyResult
@@ -25,13 +27,16 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 class ToolValidator<P : PathHolder>(
   val fileSystem: FileSystem<P>,
-  val toolVersionPrefix: String,
+  val tool: PyTool,
   override val backProperty: ObservableMutableProperty<ValidatedPath.Executable<P>?>,
   propertyGraph: PropertyGraph,
-  val defaultPathSupplier: suspend () -> P?,
-  val toolCommandSpec: ToolCommandSpec,
-  val toolValidator: suspend (P) -> PyResult<Version> = { fileSystem.getBinaryToExec(it).getToolVersion(toolVersionPrefix) },
+  val toolValidator: suspend (P) -> PyResult<Version> = { fileSystem.getBinaryToExec(it).getToolVersion(tool.fusId) },
 ) : PathValidator<Version, P, ValidatedPath.Executable<P>> {
+  // Everything the validator needs is derived from the tool: its version prefix, detection spec, and the
+  // default (auto-detected) executable path.
+  val toolVersionPrefix: String get() = tool.fusId
+  val toolCommandSpec: ToolCommandSpec get() = tool.toolCommandSpec
+  val defaultPathSupplier: suspend () -> P? = { tool.resolveExecutable(fileSystem) }
   override val isDirtyValue: ObservableMutableProperty<Boolean> = propertyGraph.property(false)
   override val isValidationInProgress: Boolean
     get() = validationJob.isActive
@@ -105,7 +110,7 @@ class ToolValidator<P : PathHolder>(
     ): ValidatedPath.Executable<P> = withContext(Dispatchers.IO) {
       val toolName = toolCommandSpec.toolName
       if (!isLocal) {
-        val toolSpecs = ADD_INTERPRETER_TOOL_COMMAND_SPECS.takeIf { knownSpecs ->
+        val toolSpecs = packageManagerToolCommandSpecs.takeIf { knownSpecs ->
           knownSpecs.any { it.toolName == toolName }
         } ?: listOf(toolCommandSpec)
         val probeResult = probeTools(toolSpecs).orLogException(fileLogger())
