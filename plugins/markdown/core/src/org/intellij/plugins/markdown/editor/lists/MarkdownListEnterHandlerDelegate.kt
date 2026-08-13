@@ -118,14 +118,17 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
     if (caretOffset.get() <= markerElement.startOffset) {
       return EnterHandlerDelegate.Result.Continue
     }
-    val indentWithMakerRange = document.getLineIndentRange(itemLine).union(markerElement.textRange)
+    val checkBox = item.checkBox
+    val indentWithMarkerRange = document.getLineIndentRange(itemLine).union(markerElement.textRange)
+    val itemPrefixRange = checkBox?.textRange?.let(indentWithMarkerRange::union) ?: indentWithMarkerRange
 
-    if (indentWithMakerRange.contains(caretOffset.get())) {
-      caretOffset.set(markerElement.endOffset)
+    if (itemPrefixRange.contains(caretOffset.get())) {
+      caretOffset.set(itemPrefixRange.endOffset)
     }
 
     val indentSpaces = document.getLineIndentSpaces(itemLine, file) ?: ""
-    emptyItem = indentSpaces + item.normalizedMarker
+    val checkBoxMarker = if (checkBox != null) CHECK_BOX_MARKER else ""
+    emptyItem = indentSpaces + item.normalizedMarker + checkBoxMarker
     return EnterHandlerDelegate.Result.Default
   }
 
@@ -155,6 +158,11 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
     if (item.parentOfType<MarkdownListItem>(false) == null) {
       val backspaceHandler = MarkdownListMarkerBackspaceHandlerDelegate()
       val markerEnd = markerElement.endOffset
+      item.checkBox?.textRange?.let { checkBoxRange ->
+        runWriteAction {
+          document.deleteString(checkBoxRange.startOffset, checkBoxRange.endOffset)
+        }
+      }
       editor.caretModel.moveToOffset(markerEnd)
       val char = editor.document.charsSequence[markerEnd - 1]
 
@@ -209,6 +217,8 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
   }
 
   companion object {
+    private const val CHECK_BOX_MARKER = "[ ] "
+
     private fun MarkdownListNumber.replaceWithOtherNumber(number: Int): MarkdownListNumber {
       return replaceWithText("$number$delimiter ") as MarkdownListNumber
     }

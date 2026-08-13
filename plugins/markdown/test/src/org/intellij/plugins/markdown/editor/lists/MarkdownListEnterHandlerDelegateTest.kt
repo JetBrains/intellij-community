@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.editor.MarkdownCodeInsightSettingsRule
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,6 +29,79 @@ class MarkdownListEnterHandlerDelegateTest: LightPlatformCodeInsightTestCase() {
 
   @Test
   fun testNewItemTwoSpacesInMarkerAndDocumentEnd() = doTest()
+
+  @Test
+  fun testNewCheckBoxItem() {
+    configureFromFileText("some.md", "- [ ] item<caret>")
+    executeAction(IdeActions.ACTION_EDITOR_ENTER)
+    checkResultByText("- [ ] item\n- [ ] <caret>")
+  }
+
+  @Test
+  fun testNewCheckBoxItemAfterCheckedItem() {
+    configureFromFileText("some.md", "- [x] item<caret>")
+    executeAction(IdeActions.ACTION_EDITOR_ENTER)
+    checkResultByText("- [x] item\n- [ ] <caret>")
+  }
+
+  @Test
+  fun testNewCheckBoxItemInNumberedList() {
+    configureFromFileText("some.md", "1. [ ] item<caret>")
+    executeAction(IdeActions.ACTION_EDITOR_ENTER)
+    checkResultByText("1. [ ] item\n2. [ ] <caret>")
+  }
+
+  @Test
+  fun testExitCheckBoxList() {
+    configureFromFileText("some.md", "- [ ] item<caret>")
+    executeAction(IdeActions.ACTION_EDITOR_ENTER)
+    executeAction(IdeActions.ACTION_EDITOR_ENTER)
+    checkResultByText("- [ ] item\n<caret>")
+  }
+
+  @Test
+  fun testExitCheckedCheckBoxList() {
+    configureFromFileText("some.md", "- [x] <caret>")
+    executeAction(IdeActions.ACTION_EDITOR_ENTER)
+    checkResultByText("<caret>")
+  }
+
+  @Test
+  fun testNewCheckBoxItemInBlockQuote() {
+    configureFromFileText("some.md", "> - [ ] item<caret>")
+    executeAction(IdeActions.ACTION_EDITOR_ENTER)
+    checkResultByText("> - [ ] item\n> - [ ] <caret>")
+  }
+
+  @Test
+  fun testNewCheckBoxItemAfterExtraSpaces() {
+    configureFromFileText("some.md", "- [ ]   item<caret>")
+    executeAction(IdeActions.ACTION_EDITOR_ENTER)
+    checkResultByText("- [ ]   item\n- [ ] <caret>")
+  }
+
+  @Test
+  fun testNewCheckBoxItemWhenRenumberListsOnTypeDisabled() {
+    MarkdownCodeInsightSettings.getInstance().state.renumberListsOnType = false
+    configureFromFileText("some.md", "3. [ ] item<caret>")
+    executeAction(IdeActions.ACTION_EDITOR_ENTER)
+    checkResultByText("3. [ ] item\n4. [ ] <caret>")
+  }
+
+  @Test
+  fun testUnindentEmptyNestedCheckBoxItem() {
+    configureFromFileText("some.md", "- parent\n  - [ ] child<caret>")
+    executeAction(IdeActions.ACTION_EDITOR_ENTER)
+    executeAction(IdeActions.ACTION_EDITOR_ENTER)
+    checkResultByText("- parent\n  - [ ] child\n- [ ] <caret>")
+  }
+
+  @Test
+  fun testEnterBetweenListMarkerAndCheckBox() {
+    configureFromFileText("some.md", "- <caret>[ ] item")
+    executeAction(IdeActions.ACTION_EDITOR_ENTER)
+    checkResultByText("- [ ] \n- [ ] <caret>item")
+  }
 
   @Test
   fun testHardLineBreakDoesNotCreateNewItem() {
