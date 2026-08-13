@@ -21,7 +21,10 @@ import java.util.Map;
 public class JmxCallHandler implements InvocationHandler {
   private final JmxHost hostInfo;
   private final ObjectName mbeanName;
+  private final Object callLock = new Object();
+  private final Object connectorStateLock = new Object();
   private JMXConnector currentConnector;
+  private boolean closed;
 
   public JmxCallHandler(JmxHost hostInfo, String objectName) {
     this.hostInfo = hostInfo;
@@ -35,51 +38,99 @@ public class JmxCallHandler implements InvocationHandler {
   }
 
   @Override
-  public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+  public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     if ("close".equals(method.getName())) {
-      if (this.currentConnector != null) {
-        try {
-          this.currentConnector.close();
-        }
-        finally {
-          this.currentConnector = null;
-        }
-      }
+      closePermanently();
       return null;
     }
 
-    if (this.currentConnector == null) {
-      ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
-      try {
-        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-        this.currentConnector = getConnector();
-      }
-      catch (IOException e) {
-        this.currentConnector = null;
-        throw new JmxCallException("Unable to connect to JMX host: " + getServiceTextURL(), e);
-      }
-      finally {
-        Thread.currentThread().setContextClassLoader(originalClassLoader);
-      }
+    synchronized (callLock) {
+      return invokeCall(proxy, method, args);
     }
+  }
+
+  private Object invokeCall(Object proxy, Method method, Object[] args) throws Throwable {
+    JMXConnector connector = getOrCreateConnector();
 
     try {
-      MBeanServerConnection mbsc = this.currentConnector.getMBeanServerConnection();
+      MBeanServerConnection mbsc = connector.getMBeanServerConnection();
 
       MBeanServerInvocationHandler wrappedHandler = new MBeanServerInvocationHandler(mbsc, mbeanName);
       return wrappedHandler.invoke(proxy, method, args);
     }
     catch (IOException e) {
-       try {
-        if (this.currentConnector != null) {
-          this.currentConnector.close();
-        }
-      } catch (IOException ignored) {
-      } finally {
-        this.currentConnector = null;
-      }
-
+      discardConnector(connector);
       throw new JmxCallException("Unable to perform JMX call: " + method + "(" + (args != null ? Arrays.asList(args) : "null") + ")", e);
+    }
+  }
+
+  private JMXConnector getOrCreateConnector() {
+    synchronized (connectorStateLock) {
+      checkNotClosed();
+      if (currentConnector != null) {
+        return currentConnector;
+      }
+    }
+
+    JMXConnector connector;
+    ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+    try {
+      Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+      connector = getConnector();
+    }
+    catch (IOException e) {
+      throw new JmxCallException("Unable to connect to JMX host: " + getServiceTextURL(), e);
+    }
+    finally {
+      Thread.currentThread().setContextClassLoader(originalClassLoader);
+    }
+
+    synchronized (connectorStateLock) {
+      if (closed) {
+        closeIgnoringFailure(connector);
+        throw new IllegalStateException("JMX call handler is closed");
+      }
+      currentConnector = connector;
+      return connector;
+    }
+  }
+
+  private void closePermanently() {
+    JMXConnector connector;
+    synchronized (connectorStateLock) {
+      if (closed) {
+        return;
+      }
+      closed = true;
+      connector = currentConnector;
+      currentConnector = null;
+    }
+    closeIgnoringFailure(connector);
+  }
+
+  private void discardConnector(JMXConnector connector) {
+    synchronized (connectorStateLock) {
+      if (currentConnector == connector) {
+        currentConnector = null;
+      }
+    }
+    closeIgnoringFailure(connector);
+  }
+
+  private void checkNotClosed() {
+    if (closed) {
+      throw new IllegalStateException("JMX call handler is closed");
+    }
+  }
+
+  private static void closeIgnoringFailure(JMXConnector connector) {
+    if (connector == null) {
+      return;
+    }
+    try {
+      connector.close();
+    }
+    catch (IOException ignored) {
     }
   }
 

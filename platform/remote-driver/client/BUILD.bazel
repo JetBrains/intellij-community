@@ -1,3 +1,4 @@
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.driver.client` start
@@ -29,15 +30,25 @@ jvm_library(
     name = "client_test_lib",
     testonly = True,
     srcs = glob(
-        [],
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
         allow_empty = True,
     ),
-    module_name = "intellij.driver.client",
+    associates = [":client"],
     visibility = ["//visibility:public"],
-    runtime_deps = [
+    deps = [
         # do not sort,
-        ":client",
+        "//platform/remote-driver/model",
         "//platform/remote-driver/model:model_test_lib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
         "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
@@ -51,3 +62,10 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.driver.client` end
+
+### auto-generated section `test intellij.driver.client` start
+jps_test(
+    name = "client_test",
+    runtime_deps = [":client_test_lib"],
+)
+### auto-generated section `test intellij.driver.client` end
