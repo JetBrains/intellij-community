@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl.tabInEditor
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
@@ -27,7 +26,6 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
 import org.assertj.core.api.Assertions.assertThat
@@ -51,7 +49,6 @@ class ToolWindowEditorTabTransferControllerTest {
   private val registryFixture = registryKeyFixture(ToolWindowEditorTabSupportUtil.REGISTRY_KEY) { setValue(true) }
 
   private val project: Project get() = projectFixture.get()
-  private val projectScope: CoroutineScope get() = (project as ComponentManagerEx).getCoroutineScope()
   private val manager: FileEditorManagerImpl get() = fileEditorManagerFixture.get()
 
   private val toolWindowId = "TestToolWindow"
@@ -105,15 +102,8 @@ class ToolWindowEditorTabTransferControllerTest {
     return registerLocalToolWindow(project, toolWindowId, disposable, component)
   }
 
-  private fun createTabFile(content: Content = createTabContent()): ToolWindowEditorTabFile = ToolWindowEditorTabFile(
-    presentationFlow = flowOf(ToolWindowEditorTabPresentation("Tab")),
-    toolWindowId = toolWindowId,
-    component = JPanel(),
-    preferredFocusedComponent = JPanel(),
-    content = content,
-    project = project,
-    parentCoroutineScope = projectScope,
-  )
+  private fun createDetachedTabFile(content: Content = createTabContent()): ToolWindowEditorTabFile =
+    createTabFile(project = project, toolWindowId = toolWindowId, content = content)
 
   private fun openTabFile(): ToolWindowEditorTabFile =
     manager.openFiles.filterIsInstance<ToolWindowEditorTabFile>().single()
@@ -147,7 +137,7 @@ class ToolWindowEditorTabTransferControllerTest {
       assertThat(rootDecorator.mode.isSplit).isTrue()
       controller.moveContentToEditor(toolWindow, movingContent, sourceDecorator = sourceDecorator)
 
-      assertThat(openTabFile().content).isSameAs(movingContent)
+      assertThat(openTabFile().attachedContent(project)).isSameAs(movingContent)
       assertThat(rootDecorator.mode).isEqualTo(InternalDecoratorImpl.Mode.SINGLE)
     }
 
@@ -191,7 +181,9 @@ class ToolWindowEditorTabTransferControllerTest {
   @Test
   fun `move content back falls back to generic close when the source window is missing`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
-      val tabFile = createTabFile()
+      // The tab session is gone once the tab is closed, so keep a handle on the content up front.
+      val content = createTabContent()
+      val tabFile = createDetachedTabFile(content)
       val recordingManager = RecordingFileEditorManager(project)
       project.replaceService(FileEditorManager::class.java, recordingManager, disposable)
 
@@ -200,7 +192,7 @@ class ToolWindowEditorTabTransferControllerTest {
 
       assertThat(recordingManager.closeRequests).containsExactly(tabFile)
       assertThat(recordingManager.closeInWindowRequests).isEmpty()
-      assertThat(toolWindow.contentManager.contents.toList()).containsExactly(tabFile.content)
+      assertThat(toolWindow.contentManager.contents.toList()).containsExactly(content)
       assertThat(tabFile.isValid).isFalse()
     }
 
@@ -269,7 +261,7 @@ class ToolWindowEditorTabTransferControllerTest {
 
       controller.moveContentToEditor(toolWindow, supported)
 
-      assertThat(openTabFile().content).isSameAs(supported)
+      assertThat(openTabFile().attachedContent(project)).isSameAs(supported)
       assertThat(toolWindow.contentManager.contents.toList()).containsExactly(unsupported)
       assertThat(mixedSupport.presentationFlowRequests).containsExactly(supported)
     }

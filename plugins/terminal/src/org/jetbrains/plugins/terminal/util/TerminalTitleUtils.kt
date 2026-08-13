@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabFile
+import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabManager
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.TerminalTitleListener
 import com.intellij.util.text.UniqueNameGenerator
@@ -68,11 +69,12 @@ object TerminalTitleUtils {
       toolWindow.contentManager.contentsRecursively
         .mapTo(this) { content -> content.displayName }
 
+      val tabManager = ToolWindowEditorTabManager.getInstance(project)
       FileEditorManager.getInstance(project).openFiles
         .asSequence()
         .filterIsInstance<ToolWindowEditorTabFile>()
         .filter { it.toolWindowId == TerminalToolWindowFactory.TOOL_WINDOW_ID }
-        .mapTo(this) { it.name }
+        .mapNotNullTo(this) { tabManager.getTabPresentation(it)?.title }
     }
 
     return UniqueNameGenerator.generateUniqueName(

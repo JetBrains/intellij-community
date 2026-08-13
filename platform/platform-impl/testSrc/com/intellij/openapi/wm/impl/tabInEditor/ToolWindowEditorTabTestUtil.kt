@@ -24,6 +24,8 @@ import com.intellij.ui.content.ContentFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -80,6 +82,41 @@ internal fun registerFakeToolWindowEditorTabSupport(
 
 internal fun createTabContent(component: JComponent = JPanel(), displayName: String = "tab"): Content =
   ContentFactory.getInstance().createContent(component, displayName, false)
+
+/**
+ * Builds a transient tool window editor tab with its content already attached, which is the state a tab moved out of a
+ * tool window is in. Transient is enough for every test here: none of them registers a
+ * [ToolWindowEditorTabPersistenceProvider], so no tab would be restorable anyway.
+ *
+ * [presentationFlow] drives the tab presentation directly, so a test can both push presentations of its own and get a
+ * tab with a session before it registers any [ToolWindowEditorTabSupport].
+ */
+internal fun createTabFile(
+  project: Project,
+  toolWindowId: String,
+  content: Content = createTabContent(),
+  presentationFlow: Flow<ToolWindowEditorTabPresentation> = flowOf(ToolWindowEditorTabPresentation("Tab")),
+): ToolWindowEditorTabFile =
+  ToolWindowEditorTabManager
+    .getInstance(project)
+    .createTransientEditorTabFileForTest(
+      toolWindowId = toolWindowId,
+      content = content,
+      presentationFlow = presentationFlow,
+    )
+
+/**
+ * The state of a tool window editor tab lives in [ToolWindowEditorTabSession], not in the file, so the tests
+ * reach it through the owning [ToolWindowEditorTabManager].
+ */
+internal fun ToolWindowEditorTabFile.session(project: Project): ToolWindowEditorTabSession? =
+  ToolWindowEditorTabManager.getInstance(project).getSession(this)
+
+internal fun ToolWindowEditorTabFile.attachedContent(project: Project): Content? = session(project)?.content
+
+internal fun ToolWindowEditorTabFile.tabTitle(project: Project): String? = session(project)?.presentation?.title
+
+internal fun ToolWindowEditorTabFile.tabIcon(project: Project): Icon? = session(project)?.presentation?.icon
 
 internal fun registerLocalToolWindow(
   project: Project,

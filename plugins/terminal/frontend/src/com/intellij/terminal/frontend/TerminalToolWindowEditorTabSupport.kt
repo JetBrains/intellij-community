@@ -4,8 +4,8 @@ package com.intellij.terminal.frontend
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabPresentation
 import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabSupport
@@ -100,9 +100,11 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
   }
 
   private fun buildTabPresentation(project: Project, content: Content): ToolWindowEditorTabPresentation {
+    val terminalContent = content.toTerminalContent()
     return ToolWindowEditorTabPresentation(
-      title = getTabTitle(content),
+      title = terminalContent.getTabTitle(),
       icon = content.icon ?: getToolWindowIcon(project),
+      tooltip = HtmlChunk.text(terminalContent.getFullTabTitle()),
     )
   }
 
@@ -110,10 +112,6 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
     return ToolWindowManager.getInstance(project)
       .getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID)
       ?.icon
-  }
-
-  private fun getTabTitle(content: Content): @NlsContexts.TabTitle String {
-    return content.toTerminalContent().getTabTitle()
   }
 
   private fun titleUpdatesFlow(content: Content): Flow<Unit> {
@@ -134,11 +132,17 @@ private sealed interface TerminalContent {
 
   @NlsSafe
   fun getTabTitle(): String
+
+  @NlsSafe
+  fun getFullTabTitle(): String
+
   fun titleUpdatesFlow(): Flow<Unit>
   suspend fun getConfirmationDetails(): ConfirmationDetails?
 
   class Reworked(override val content: Content, val view: TerminalView) : TerminalContent {
     override fun getTabTitle(): String = view.getTitleText()
+
+    override fun getFullTabTitle(): String = view.getFullTitleText()
 
     override fun titleUpdatesFlow(): Flow<Unit> = view.titleStateFlow().map { }
 
@@ -154,6 +158,8 @@ private sealed interface TerminalContent {
 
   class Classic(override val content: Content, val widget: TerminalWidget) : TerminalContent {
     override fun getTabTitle(): String = widget.terminalTitle.buildSettingsAwareTitle()
+
+    override fun getFullTabTitle(): String = widget.terminalTitle.buildSettingsAwareFullTitle()
 
     override fun titleUpdatesFlow(): Flow<Unit> = widget.terminalTitle.stateFlow(
       buildCroppedTitle = { it.buildSettingsAwareTitle() },

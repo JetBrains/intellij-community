@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl.tabInEditor
 import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
@@ -13,7 +12,6 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -24,7 +22,6 @@ import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import javax.swing.Icon
-import javax.swing.JPanel
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -39,7 +36,6 @@ class ToolWindowEditorTabFileTest {
   private val fileEditorManagerFixture = projectFixture.fileEditorManagerFixture(initDockableContentFactory = true)
 
   private val project: Project get() = projectFixture.get()
-  private val projectScope: CoroutineScope get() = (project as ComponentManagerEx).getCoroutineScope()
   private val manager: FileEditorManagerImpl get() = fileEditorManagerFixture.get()
 
   private fun createFile(presentation: ToolWindowEditorTabPresentation): ToolWindowEditorTabFile {
@@ -47,14 +43,10 @@ class ToolWindowEditorTabFileTest {
   }
 
   private fun createFile(presentationFlow: Flow<ToolWindowEditorTabPresentation>): ToolWindowEditorTabFile {
-    return ToolWindowEditorTabFile(
-      presentationFlow = presentationFlow,
-      toolWindowId = "TestToolWindow",
-      component = JPanel(),
-      preferredFocusedComponent = JPanel(),
-      content = createTabContent(),
+    return createTabFile(
       project = project,
-      parentCoroutineScope = projectScope,
+      toolWindowId = "TestToolWindow",
+      presentationFlow = presentationFlow,
     )
   }
 
@@ -72,7 +64,7 @@ class ToolWindowEditorTabFileTest {
     icon: Icon?,
   ) {
     withTimeout(10.seconds) {
-      while (file.name != title || file.icon != icon) {
+      while (file.tabTitle(project) != title || file.tabIcon(project) != icon) {
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
         delay(20.milliseconds)
       }
@@ -84,8 +76,8 @@ class ToolWindowEditorTabFileTest {
     val file = createFile(ToolWindowEditorTabPresentation("Title", AllIcons.General.Gear))
     awaitPresentation(file, title = "Title", icon = AllIcons.General.Gear)
 
-    assertThat(file.name).isEqualTo("Title")
-    assertThat(file.icon).isEqualTo(AllIcons.General.Gear)
+    assertThat(file.tabTitle(project)).isEqualTo("Title")
+    assertThat(file.tabIcon(project)).isEqualTo(AllIcons.General.Gear)
     assertThat(file.isWritable).isFalse()
     assertThat(file.isValid).isTrue()
     assertThat(file.isIncludedInEditorHistory(project)).isTrue()
@@ -99,7 +91,7 @@ class ToolWindowEditorTabFileTest {
     val file = createFile(ToolWindowEditorTabPresentation("Title"))
     assertThat(file.isValid).isTrue()
 
-    file.onEditorClosed()
+    ToolWindowEditorTabManager.getInstance(project).closeEditorTabFile(file, releaseContent = true)
 
     assertThat(file.isValid).isFalse()
   }
@@ -111,7 +103,7 @@ class ToolWindowEditorTabFileTest {
       // Set by the "return to tool window" path: the file is closed only to be moved, not invalidated.
       file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, true)
 
-      file.onEditorClosed()
+      ToolWindowEditorTabManager.getInstance(project).closeEditorTabFile(file, releaseContent = false)
 
       assertThat(file.isValid).isTrue()
     }
@@ -133,13 +125,13 @@ class ToolWindowEditorTabFileTest {
       // Open in the editor so the presentation-update path runs against a real open composite.
       manager.openFile(file, true)
       awaitPresentation(file, title = "Stable title", icon = AllIcons.General.Gear)
-      assertThat(file.name).isEqualTo("Stable title")
-      assertThat(file.icon).isEqualTo(AllIcons.General.Gear)
+      assertThat(file.tabTitle(project)).isEqualTo("Stable title")
+      assertThat(file.tabIcon(project)).isEqualTo(AllIcons.General.Gear)
 
       presentations.trySend(ToolWindowEditorTabPresentation("Stable title", AllIcons.General.Add))
       awaitPresentation(file, title = "Stable title", icon = AllIcons.General.Add)
-      assertThat(file.icon).isEqualTo(AllIcons.General.Add)
-      assertThat(file.name).isEqualTo("Stable title")
+      assertThat(file.tabIcon(project)).isEqualTo(AllIcons.General.Add)
+      assertThat(file.tabTitle(project)).isEqualTo("Stable title")
     }
 
   @Test
@@ -148,14 +140,14 @@ class ToolWindowEditorTabFileTest {
       val presentations = presentationChannel(ToolWindowEditorTabPresentation("Initial title", AllIcons.General.Gear))
       val file = createFile(presentations.receiveAsFlow())
       awaitPresentation(file, title = "Initial title", icon = AllIcons.General.Gear)
-      assertThat(file.name).isEqualTo("Initial title")
+      assertThat(file.tabTitle(project)).isEqualTo("Initial title")
 
-      // Only the title changes: this exercises the rename branch of updatePresentation.
+      // Only the title changes: this exercises the rename branch of applyPresentation.
       presentations.trySend(ToolWindowEditorTabPresentation("Renamed title", AllIcons.General.Gear))
       awaitPresentation(file, title = "Renamed title", icon = AllIcons.General.Gear)
-      assertThat(file.name).isEqualTo("Renamed title")
+      assertThat(file.tabTitle(project)).isEqualTo("Renamed title")
       // The icon is unchanged across the rename.
-      assertThat(file.icon).isEqualTo(AllIcons.General.Gear)
+      assertThat(file.tabIcon(project)).isEqualTo(AllIcons.General.Gear)
     }
 
   @Test
@@ -166,13 +158,13 @@ class ToolWindowEditorTabFileTest {
       // Open in the editor so the presentation-update path runs against a real open composite.
       manager.openFile(file, true)
       awaitPresentation(file, title = "Initial title", icon = AllIcons.General.Gear)
-      assertThat(file.name).isEqualTo("Initial title")
-      assertThat(file.icon).isEqualTo(AllIcons.General.Gear)
+      assertThat(file.tabTitle(project)).isEqualTo("Initial title")
+      assertThat(file.tabIcon(project)).isEqualTo(AllIcons.General.Gear)
 
       // A single presentation update changes both the title and the icon at once.
       presentations.trySend(ToolWindowEditorTabPresentation("Renamed title", AllIcons.General.Add))
       awaitPresentation(file, title = "Renamed title", icon = AllIcons.General.Add)
-      assertThat(file.name).isEqualTo("Renamed title")
-      assertThat(file.icon).isEqualTo(AllIcons.General.Add)
+      assertThat(file.tabTitle(project)).isEqualTo("Renamed title")
+      assertThat(file.tabIcon(project)).isEqualTo(AllIcons.General.Add)
     }
 }

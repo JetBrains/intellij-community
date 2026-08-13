@@ -9,18 +9,13 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.getPreferredFocusedComponent
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
-import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.PROJECT)
-internal class ToolWindowEditorTabTransferController(
-  private val project: Project,
-  private val coroutineScope: CoroutineScope,
-) {
+internal class ToolWindowEditorTabTransferController(private val project: Project) {
   fun canMoveContentToEditor(toolWindow: ToolWindow, content: Content): Boolean {
     return ToolWindowEditorTabSupportUtil.isEnabled() && getSupport(toolWindow)?.canBeMovedToEditor(content) == true
   }
@@ -33,7 +28,7 @@ internal class ToolWindowEditorTabTransferController(
   ) {
     if (!canMoveContentToEditor(toolWindow, content)) return
 
-    val support = getSupport(toolWindow) ?: return
+    val tabManager = ToolWindowEditorTabManager.getInstance(project)
 
     content.withTemporaryRemovedFlag {
       content.manager?.removeContent(content, false)
@@ -43,7 +38,7 @@ internal class ToolWindowEditorTabTransferController(
       sourceDecorator.unsplit(null)
     }
 
-    val file = createToolWindowTabFile(toolWindow, content, support)
+    val file = tabManager.createEditorTabFileForContent(toolWindow.id, content)
     FileEditorManagerEx.getInstanceEx(project).openFile(
       file = file,
       window = window,
@@ -58,7 +53,7 @@ internal class ToolWindowEditorTabTransferController(
     // Restore the content to the tool window if opening the editor tab failed. This is unexpected, but still possible.
     if (!FileEditorManager.getInstance(project).isFileOpen(file)) {
       restoreContentToToolWindow(content, toolWindow, sourceDecorator?.contentManager?.takeIf { !it.isDisposed })
-      file.invalidate()
+      tabManager.closeEditorTabFile(file, releaseContent = false)
     }
   }
 
@@ -72,6 +67,9 @@ internal class ToolWindowEditorTabTransferController(
     targetDecorator: InternalDecoratorImpl? = null,
   ) {
     if (!canMoveContentToToolWindow(toolWindow, file)) return
+
+    val tabManager = ToolWindowEditorTabManager.getInstance(project)
+    val content = tabManager.getSession(file)?.content
 
     val editorManager = FileEditorManagerEx.getInstanceEx(project)
     val sourceWindow = editorManager.currentWindow?.takeIf { it.getComposite(file) != null }
@@ -94,32 +92,15 @@ internal class ToolWindowEditorTabTransferController(
       file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, null)
     }
 
-    restoreContentToToolWindow(file.content, toolWindow, targetDecorator?.contentManager)
-    file.invalidate()
+    if (content != null) {
+      restoreContentToToolWindow(content, toolWindow, targetDecorator?.contentManager)
+    }
+
+    tabManager.closeEditorTabFile(file, releaseContent = false)
   }
 
   private fun getSupport(toolWindow: ToolWindow): ToolWindowEditorTabSupport? {
     return ToolWindowEditorTabSupportUtil.getSupport(toolWindow.id)
-  }
-
-  private fun createToolWindowTabFile(
-    toolWindow: ToolWindow,
-    content: Content,
-    support: ToolWindowEditorTabSupport,
-  ): ToolWindowEditorTabFile {
-    val component = content.component
-    return ToolWindowEditorTabFile(
-      presentationFlow = support.getTabPresentationFlow(project, content),
-      toolWindowId = toolWindow.id,
-      component = component,
-      preferredFocusedComponent =
-        content.preferredFocusableComponent
-        ?: component.getPreferredFocusedComponent()
-        ?: component,
-      content = content,
-      project = project,
-      parentCoroutineScope = coroutineScope,
-    )
   }
 
   private fun restoreContentToToolWindow(
