@@ -3,30 +3,29 @@ package com.intellij.internal.statistic.eventLog.trace
 
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.jetbrains.fus.reporting.api.IEventContext
+import com.jetbrains.fus.reporting.api.ValidationResultType
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Accept-all FUS validation rule for LLM-generated field values.
+ * Accepts any value, so a field declared with it carries raw content into the TRACE plane.
  *
- * Concrete subclasses ([TrueValidationRuleCode], [TrueValidationRuleText]) differ
- * only in [getRuleId] so that downstream consumers (PII filter, metadata reviewers)
- * can distinguish code-shaped from text-shaped LLM output.
+ * Subclasses differ only in [getRuleId], which tells the metadata reviewer and `TraceLlmPiiDataFilter` whether the
+ * value is code-shaped or text-shaped. The ids are frozen: published event metadata already refers to them.
  */
 @Suppress("UnstableApiUsage")
 @ApiStatus.Internal
-abstract class TrueValidationRule : CustomValidationRule() {
-  final override fun doValidate(data: String, context: IEventContext): com.jetbrains.fus.reporting.api.ValidationResultType =
-    com.jetbrains.fus.reporting.api.ValidationResultType.ACCEPTED
+abstract class TraceRawValidationRule : CustomValidationRule() {
+  final override fun doValidate(data: String, context: IEventContext): ValidationResultType = ValidationResultType.ACCEPTED
 }
 
 @Suppress("UnstableApiUsage")
 @ApiStatus.Internal
-class TrueValidationRuleCode : TrueValidationRule() {
+class TraceRawCodeValidationRule : TraceRawValidationRule() {
   override fun getRuleId(): String = "llm_code_parameters"
 }
 
 @Suppress("UnstableApiUsage")
 @ApiStatus.Internal
-class TrueValidationRuleText : TrueValidationRule() {
+class TraceRawTextValidationRule : TraceRawValidationRule() {
   override fun getRuleId(): String = "llm_text_parameters"
 }

@@ -13,98 +13,118 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 
 /**
- * This field is recorded only if user enabled the data sharing.
+ * A field whose value is recorded as it is, without validation, and only when the user allows TRACE data collection.
  *
- * Use [LlmFieldKind.TEXT] when the value is expected to be natural-language text,
- * even when it may embed code blocks. Use [LlmFieldKind.CODE] when the value is expected to be
- * source code.
+ * Use [TraceRawFieldKind.TEXT] when the value is expected to be natural-language text, even when it may embed code
+ * blocks, and [TraceRawFieldKind.CODE] when it is expected to be source code.
+ *
+ * File-backed content needs [TraceRawFileField] instead, so that dangerous paths are excluded.
  */
 @ApiStatus.Internal
-data class RequestPrivateData(
+data class TraceRawField(
   @param:NonNls override val name: String,
-  val kind: LlmFieldKind,
+  val kind: TraceRawFieldKind,
 ) : StringEventField(name) {
   init {
-    RequestPrivateDataSupport.checkFieldNameIsNotReservedForCheckedFileLogging(name)
+    require(name !in reservedFileContentFieldNames) {
+      "Field '$name' stores file-backed content. Use TraceRawFileField with checkFileContentForLogging()."
+    }
   }
 
   @Deprecated(
-    "Specify LlmFieldKind explicitly so PII filtering can pick the right rule. " +
-      "Use LlmFieldKind.TEXT for natural-language text (which may contain code blocks); " +
-      "use LlmFieldKind.CODE for source code.",
-    ReplaceWith("RequestPrivateData(name, LlmFieldKind.TEXT)"),
+    "Specify TraceRawFieldKind explicitly so PII filtering can pick the right rule. " +
+      "Use TraceRawFieldKind.TEXT for natural-language text (which may contain code blocks); " +
+      "use TraceRawFieldKind.CODE for source code.",
+    ReplaceWith("TraceRawField(name, TraceRawFieldKind.TEXT)"),
   )
   @Suppress("DEPRECATION")
-  constructor(@NonNls name: String) : this(name, LlmFieldKind.UNSPECIFIED)
+  constructor(@NonNls name: String) : this(name, TraceRawFieldKind.UNSPECIFIED)
 
   override val validationRule: List<String>
-    get() = RequestPrivateDataSupport.validationRule(kind)
+    get() = rawValidationRule(kind)
 
   override fun addData(fuData: FeatureUsageData, value: String?) {
-    RequestPrivateDataSupport.addData(fuData, name, value)
+    addRawData(fuData, name, value)
   }
 }
 
 /**
- * File-backed content must be checked with [checkFileContentForLogging] before it can be added to analytics.
+ * A raw field for content read from a file. The value can only be produced by [checkFileContentForLogging],
+ * which drops content whose path looks sensitive.
  */
 @ApiStatus.Internal
-class CheckedFilePrivateData @JvmOverloads constructor(
+class TraceRawFileField @JvmOverloads constructor(
   @NonNls fieldName: String,
-  val kind: LlmFieldKind = LlmFieldKind.TEXT,
-) : PrimitiveEventField<CheckedFileContent?>() {
+  val kind: TraceRawFieldKind = TraceRawFieldKind.TEXT,
+) : PrimitiveEventField<TraceRawFileContent?>() {
   override val name: String = fieldName
   override val validationRule: List<String>
-    get() = RequestPrivateDataSupport.validationRule(kind)
+    get() = rawValidationRule(kind)
 
-  override fun addData(fuData: FeatureUsageData, value: CheckedFileContent?) {
-    RequestPrivateDataSupport.addData(fuData, name, value?.content)
+  override fun addData(fuData: FeatureUsageData, value: TraceRawFileContent?) {
+    addRawData(fuData, name, value?.content)
   }
 }
 
 /**
- * Distinguishes LLM-generated field values that carry source code from those that carry
- * natural-language or identifier-shaped text. Selects which accept-all validation rule
- * ([TrueValidationRuleCode] vs [TrueValidationRuleText]) the field reports.
+ * Selects which accept-all validation rule a raw field reports, so that code-shaped and text-shaped values stay
+ * distinguishable downstream.
  */
 @ApiStatus.Internal
-enum class LlmFieldKind { TEXT,
+enum class TraceRawFieldKind { TEXT,
   CODE,
   @Deprecated("Used for backward compatibility only")
   UNSPECIFIED
 }
 
 @ApiStatus.Internal
-class CheckedFileContent private constructor(internal val content: String) {
+class TraceRawFileContent private constructor(internal val content: String) {
   companion object {
-    internal fun create(content: String): CheckedFileContent = CheckedFileContent(content)
+    internal fun create(content: String): TraceRawFileContent = TraceRawFileContent(content)
   }
 }
 
 @ApiStatus.Internal
-fun checkFileContentForLogging(filePath: String?, content: String?): CheckedFileContent? {
+fun checkFileContentForLogging(filePath: String?, content: String?): TraceRawFileContent? {
   if (content == null || isDangerousFileForLogging(filePath)) {
     return null
   }
-  return CheckedFileContent.create(content)
+  return TraceRawFileContent.create(content)
 }
 
 @ApiStatus.Internal
-fun checkFileContentForLogging(filePaths: Iterable<String?>, content: String?): CheckedFileContent? {
+fun checkFileContentForLogging(filePaths: Iterable<String?>, content: String?): TraceRawFileContent? {
   if (content == null || filePaths.any(::isDangerousFileForLogging)) {
     return null
   }
-  return CheckedFileContent.create(content)
+  return TraceRawFileContent.create(content)
 }
 
 @ApiStatus.Internal
-fun RequestPrivateData.with(value: CheckedFileContent?): EventPair<String?>? {
+fun TraceRawField.with(value: TraceRawFileContent?): EventPair<String?>? {
   return value?.let { this.with(it.content) }
 }
 
-@get:ApiStatus.Internal
-val checkedFileLoggingFieldNames: Set<String>
-  get() = RequestPrivateDataSupport.checkedFileLoggingFieldNames
+/**
+ * Field names dedicated to file-backed content, which therefore must be declared as [TraceRawFileField].
+ * Shared names such as "context" are not listed, because they also carry strings that come from no file.
+ */
+@ApiStatus.Internal
+val reservedFileContentFieldNames: Set<String> = setOf(
+  "after",
+  "before",
+  "content",
+  "diffs",
+  "editable_region",
+  "file_text",
+  "inspectionsProblems",
+  "messages",
+  "output",
+  "prefix",
+  "selection",
+  "suffix",
+  "syntaxErrorsDescription",
+)
 
 /**
  * Suppresses raw values in automated runs that must not upload real code, such as evaluation and integration tests.
@@ -128,44 +148,18 @@ object TraceRawDataSharing {
   }
 }
 
-private object RequestPrivateDataSupport {
-  // Keep this list limited to field IDs that are dedicated to file-backed content.
-  // Shared IDs such as "context" are handled at call sites because they also log non-file strings.
-  val checkedFileLoggingFieldNames: Set<String> = setOf(
-    "after",
-    "before",
-    "content",
-    "diffs",
-    "editable_region",
-    "file_text",
-    "inspectionsProblems",
-    "messages",
-    "output",
-    "prefix",
-    "selection",
-    "suffix",
-    "syntaxErrorsDescription",
-  )
-
-  @Suppress("DEPRECATION")
-  fun validationRule(kind: LlmFieldKind): List<String> {
-    val ruleClass = when (kind) {
-      LlmFieldKind.TEXT -> TrueValidationRuleText::class.java
-      LlmFieldKind.CODE -> TrueValidationRuleCode::class.java
-      LlmFieldKind.UNSPECIFIED -> TrueValidationRuleText::class.java
-    }
-    return listOf("{util#${CustomValidationRule.getRuleId(ruleClass)}}")
+@Suppress("DEPRECATION")
+private fun rawValidationRule(kind: TraceRawFieldKind): List<String> {
+  val ruleClass = when (kind) {
+    TraceRawFieldKind.TEXT -> TraceRawTextValidationRule::class.java
+    TraceRawFieldKind.CODE -> TraceRawCodeValidationRule::class.java
+    TraceRawFieldKind.UNSPECIFIED -> TraceRawTextValidationRule::class.java
   }
+  return listOf("{util#${CustomValidationRule.getRuleId(ruleClass)}}")
+}
 
-  fun checkFieldNameIsNotReservedForCheckedFileLogging(fieldName: String) {
-    require(fieldName !in checkedFileLoggingFieldNames) {
-      "Field '$fieldName' stores file-backed content. Use CheckedFilePrivateData with checkFileContentForLogging()."
-    }
-  }
-
-  fun addData(fuData: FeatureUsageData, fieldName: String, value: String?) {
-    if (value != null && TraceRawDataSharing.isRawDataLoggingAllowed()) {
-      fuData.addData(fieldName, value)
-    }
+private fun addRawData(fuData: FeatureUsageData, fieldName: String, value: String?) {
+  if (value != null && TraceRawDataSharing.isRawDataLoggingAllowed()) {
+    fuData.addData(fieldName, value)
   }
 }
