@@ -64,6 +64,7 @@ internal suspend fun buildPluginsForDevMode(
 ): PluginsLayoutResult {
   val descriptors = buildPluginDescriptorsForDevMode(
     os = request.os,
+    arch = request.arch,
     plugins = pluginLayouts,
     context = context,
     runDir = runDir,
@@ -91,6 +92,7 @@ internal suspend fun layoutAllPluginsForDevMode(
 ): List<PluginBuildResult> {
   return buildPluginDescriptorsForDevMode(
     os = request.os,
+    arch = request.arch,
     plugins = pluginLayouts,
     context = context,
     runDir = runDir,
@@ -103,6 +105,7 @@ internal suspend fun layoutAllPluginsForDevMode(
 
 private suspend fun buildPluginDescriptorsForDevMode(
   os: OsFamily,
+  arch: JvmArchitecture,
   plugins: List<PluginLayout>,
   context: BuildContext,
   runDir: Path,
@@ -119,7 +122,7 @@ private suspend fun buildPluginDescriptorsForDevMode(
   val platform = platformLayout.await()
   val spanName = if (layoutOnly) "lay out plugins" else "build plugins"
   return spanBuilder(spanName).setAttribute(AttributeKey.longKey("count"), plugins.size.toLong()).use {
-    val targetPlatform = SupportedDistribution(os = os, arch = JvmArchitecture.currentJvmArch, libcImpl = LibcImpl.current(os))
+    val targetPlatform = SupportedDistribution(os = os, arch = arch, libcImpl = LibcImpl.current(os))
     buildPlugins(
       plugins = plugins,
       os = null,
@@ -170,7 +173,15 @@ internal suspend fun scrambleAlreadyLaidOutPluginsForDevMode(
 internal fun devModePluginCandidates(request: BuildRequest, context: BuildContext): List<PluginLayout> {
   val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)
   return getPluginLayoutsByJpsModuleNames(bundledMainModuleNames, context.productProperties.productLayout)
-    .filter { isPluginApplicable(bundledMainModuleNames = bundledMainModuleNames, plugin = it, os = request.os, context = context) }
+    .filter {
+      isPluginApplicable(
+        bundledMainModuleNames = bundledMainModuleNames,
+        plugin = it,
+        os = request.os,
+        arch = request.arch,
+        context = context,
+      )
+    }
 }
 
 internal fun collectLayoutsOfPluginsToScramble(pluginLayouts: Collection<PluginLayout>): Map<String, PluginLayout> {
@@ -180,7 +191,13 @@ internal fun collectLayoutsOfPluginsToScramble(pluginLayouts: Collection<PluginL
     .mapValues { it.value.singleOrNull() ?: error("Multiple layouts for plugin ${it.key}") }
 }
 
-private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: PluginLayout, os: OsFamily, context: BuildContext): Boolean {
+internal fun isPluginApplicable(
+  bundledMainModuleNames: Set<String>,
+  plugin: PluginLayout,
+  os: OsFamily,
+  arch: JvmArchitecture,
+  context: BuildContext,
+): Boolean {
   if (!bundledMainModuleNames.contains(plugin.mainModule)) {
     return false
   }
@@ -189,8 +206,8 @@ private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: Plug
     return true
   }
 
-  return satisfiesBundlingRequirements(plugin = plugin, osFamily = os, arch = JvmArchitecture.currentJvmArch, context = context) ||
-         satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = JvmArchitecture.currentJvmArch, context = context)
+  return satisfiesBundlingRequirements(plugin = plugin, osFamily = os, arch = arch, context = context) ||
+         satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = arch, context = context)
 }
 
 private fun getBundledMainModuleNames(context: BuildContext, additionalModules: List<String>): Set<String> {

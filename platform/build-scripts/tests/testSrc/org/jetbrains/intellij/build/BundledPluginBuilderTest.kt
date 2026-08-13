@@ -9,17 +9,18 @@ import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
+import org.jetbrains.intellij.build.dev.isPluginApplicable as isDevModePluginApplicable
 import org.jetbrains.intellij.build.impl.DistributionBuilderState
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.SupportedDistribution
 import org.jetbrains.intellij.build.impl.createTestDistributionBuilderState
+import org.jetbrains.intellij.build.impl.plugins.collectOsSpecificBundledPluginBuildTasks
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.testBuildBundledPluginsForAllPlatforms
 import org.jetbrains.intellij.build.impl.testLayoutBundledPlugins
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
-import java.lang.reflect.Method
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
 
@@ -123,19 +124,21 @@ class BundledPluginBuilderTest {
     `when`(context.isNightlyBuild).thenReturn(false)
 
     assertThat(
-      isPluginApplicable(
+      isDevModePluginApplicable(
         bundledMainModuleNames = setOf(macOnlyPlugin.mainModule),
         plugin = macOnlyPlugin,
-        osFamily = OsFamily.MACOS,
+        os = OsFamily.MACOS,
+        arch = JvmArchitecture.x64,
         context = context,
       )
     ).isTrue()
 
     assertThat(
-      isPluginApplicable(
+      isDevModePluginApplicable(
         bundledMainModuleNames = setOf(macOnlyPlugin.mainModule),
         plugin = macOnlyPlugin,
-        osFamily = OsFamily.LINUX,
+        os = OsFamily.LINUX,
+        arch = JvmArchitecture.x64,
         context = context,
       )
     ).isFalse()
@@ -168,24 +171,9 @@ class BundledPluginBuilderTest {
     pluginLayouts: Collection<PluginLayout>,
     context: BuildContext,
   ): List<OsSpecificTaskDescription> {
-    val tasks = collectOsSpecificBundledPluginBuildTasksMethod.invoke(null, pluginDirs, pluginLayouts, context) as List<*>
-    return tasks.map { task ->
-      val taskClass = checkNotNull(task).javaClass
-      @Suppress("UNCHECKED_CAST")
-      val dist = taskClass.getField("dist").get(task) as SupportedDistribution
-      @Suppress("UNCHECKED_CAST")
-      val plugins = taskClass.getField("plugins").get(task) as List<PluginLayout>
-      OsSpecificTaskDescription(dist = dist, pluginModules = plugins.map { it.mainModule })
+    return collectOsSpecificBundledPluginBuildTasks(pluginDirs, pluginLayouts, context).map { task ->
+      OsSpecificTaskDescription(dist = task.dist, pluginModules = task.plugins.map { it.mainModule })
     }
-  }
-
-  private fun isPluginApplicable(
-    bundledMainModuleNames: Set<String>,
-    plugin: PluginLayout,
-    osFamily: OsFamily,
-    context: BuildContext,
-  ): Boolean {
-    return isPluginApplicableMethod.invoke(null, bundledMainModuleNames, plugin, osFamily, context) as Boolean
   }
 
   private data class OsSpecificTaskDescription(
@@ -193,20 +181,4 @@ class BundledPluginBuilderTest {
     val pluginModules: List<String>,
   )
 
-  companion object {
-    private val collectOsSpecificBundledPluginBuildTasksMethod: Method = Class
-      .forName("org.jetbrains.intellij.build.impl.plugins.BundledPluginBuilderKt")
-      .getDeclaredMethod("collectOsSpecificBundledPluginBuildTasks", List::class.java, Collection::class.java, BuildContext::class.java)
-
-    private val isPluginApplicableMethod: Method = Class
-      .forName("org.jetbrains.intellij.build.dev.PluginBuilderKt")
-      .getDeclaredMethod(
-        "isPluginApplicable",
-        Set::class.java,
-        PluginLayout::class.java,
-        OsFamily::class.java,
-        BuildContext::class.java,
-      )
-      .apply { isAccessible = true }
-  }
 }

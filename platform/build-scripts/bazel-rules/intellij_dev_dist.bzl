@@ -24,6 +24,7 @@ consequences of that shape are worth knowing before changing anything here:
 """
 
 load("@community//build:project_model_manifest.bzl", "write_project_model_manifest")
+load("//build:dev_launch_dependencies.bzl", "platform_parts")
 
 IntellijDevDistInfo = provider(
     doc = "An assembled dev-mode IDE distribution.",
@@ -36,6 +37,7 @@ IntellijDevDistInfo = provider(
 def _intellij_dev_dist_impl(ctx):
     home = ctx.actions.declare_directory(ctx.label.name + ".dist")
     ide_config = ctx.actions.declare_file(ctx.label.name + ".ide.config")
+    scratch = ctx.actions.declare_directory(ctx.label.name + ".scratch")
 
     project_files = ctx.files.project_model_files + ctx.files.extra_project_files
     manifest = write_project_model_manifest(ctx, ctx.label.name + ".project.manifest", project_files, ctx.attr.mode)
@@ -45,23 +47,23 @@ def _intellij_dev_dist_impl(ctx):
     args.add("--output-dir=" + home.path)
     args.add("--ide-config=" + ide_config.path)
 
-    # Build scratch is not part of the distribution: `temp` alone is ~200 MB, and a tree artifact holding it
-    # would make Bazel hash 200 MB of intermediates. An undeclared sibling in `bazel-out` is the right home for
-    # it - the assembler clears it at the start of every build, and `bazel clean` disposes of it.
-    args.add("--scratch-dir=" + home.path + ".scratch")
+    # The assembler empties this declared tree before it exits successfully, so Bazel owns every write without
+    # hashing or caching the ~200 MB of intermediates used during assembly.
+    args.add("--scratch-dir=" + scratch.path)
+    args.add("--clean-scratch-on-success")
     args.add("--platform-prefix=" + ctx.attr.platform_prefix)
-    if ctx.attr.target_os:
-        args.add("--os=" + ctx.attr.target_os)
+    if ctx.attr.target_platform:
+        target_parts = platform_parts(ctx.attr.target_platform)
+        target_os = "macos" if target_parts.os == "darwin" else target_parts.os
+        args.add("--os=" + target_os)
+        args.add("--arch=" + target_parts.arch)
     args.add_all(ctx.attr.additional_modules, format_each = "--additional-module=%s")
     args.add_all(ctx.files.preloaded_manifests, format_each = "--preloaded-manifest=%s")
     if ctx.attr.preloaded_only:
         args.add("--preloaded-only")
-    if ctx.attr.pack_test_sources:
-        args.add("--pack-test-sources")
-
     ctx.actions.run(
         inputs = depset(project_files + [manifest] + ctx.files.preloaded_downloads + ctx.files.preloaded_manifests),
-        outputs = [home, ide_config],
+        outputs = [home, ide_config, scratch],
         executable = ctx.executable.assembler,
         arguments = [args],
         # `local` covers sandboxing and remote execution; `no-remote-cache` is spelled out because the
@@ -100,13 +102,9 @@ intellij_dev_dist = rule(
             doc = "Selects the product, as `-Didea.platform.prefix` does for a dev launch (e.g. 'idea', 'GoLand').",
             mandatory = True,
         ),
-        "target_os": attr.string(
-            doc = "The OS the distribution is for. Empty means the host's, which is what a dev launch wants. " +
-                  "Naming another one cross-assembles: the assembler already takes `--os`, and the per-platform " +
-                  "archive repositories are declared for every platform rather than only the host's, so the " +
-                  "caller has only to hand [preloaded_downloads] that platform's set instead of a host `select`.",
+        "target_platform": attr.string(
+            doc = "The HOST_PLATFORMS key the distribution is for, e.g. `linux_aarch64`. Empty means the host platform.",
             default = "",
-            values = ["", "linux", "macos", "windows"],
         ),
         "additional_modules": attr.string_list(
             doc = "Plugin modules included on top of the product's own, as `-Dadditional.modules` does for a dev launch.",
@@ -138,13 +136,6 @@ intellij_dev_dist = rule(
         "preloaded_only": attr.bool(
             doc = "Makes [preloaded_manifests] the complete inventory, so an undeclared URL fails instead of " +
                   "reaching the network. Set from a `select` over the platforms where the set was measured.",
-            default = False,
-        ),
-        "pack_test_sources": attr.bool(
-            doc = "Lets [additional_modules] name a plugin whose content is test compilation output - a lambda test " +
-                  "plugin, a fixture plugin. Such a distribution needs an [assembler] carrying the test jars as " +
-                  "runfiles too, which is a different binary: putting them on the shared one would make every " +
-                  "product distribution compile the repository's test targets.",
             default = False,
         ),
     },

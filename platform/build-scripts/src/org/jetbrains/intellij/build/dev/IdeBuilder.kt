@@ -8,7 +8,6 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
-import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineName
@@ -89,7 +88,6 @@ import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.moveTo
 import kotlin.io.path.relativeTo
 import kotlin.let
-import kotlin.text.StringBuilder
 import kotlin.text.buildString
 import kotlin.text.removePrefix
 import kotlin.text.take
@@ -131,6 +129,7 @@ data class BuildRequest(
   @JvmField val tracer: Tracer? = null,
 
   @JvmField val os: OsFamily = OsFamily.currentOs,
+  @JvmField val arch: JvmArchitecture = JvmArchitecture.currentJvmArch,
 
   @JvmField val isBootClassPathCorrect: Boolean = false,
   @JvmField val devRunDirPrefix: String = System.getProperty("idea.dev.build.dir.prefix") ?: "",
@@ -220,10 +219,7 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
       withContext(Dispatchers.IO + CoroutineName("cleanup jar cache")) {
         context.cleanupJarCache()
       }
-      if (request.os != OsFamily.currentOs) {
-        context.options.targetOs = persistentListOf(request.os)
-        context.options.targetArch = JvmArchitecture.currentJvmArch
-      }
+      configureTargetPlatform(context.options, request)
 
       val moduleOutputPatcher = ModuleOutputPatcher()
 
@@ -250,7 +246,7 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
             oldFiles.remove(osDistributionBuilder.writeVmOptions(binDir))
             // the file cannot be placed right into the distribution as it throws off home dir detection in `PathManager#getHomeDirFor`
             val productInfoDir = context.paths.tempDir.resolve("product-info").createDirectories()
-            val productInfoFile = osDistributionBuilder.writeProductInfoFile(productInfoDir, JvmArchitecture.currentJvmArch)
+            val productInfoFile = osDistributionBuilder.writeProductInfoFile(productInfoDir, request.arch)
             oldFiles.remove(productInfoFile.moveTo(binDir.resolve(PRODUCT_INFO_FILE_NAME), overwrite = true))
             NioFiles.deleteRecursively(productInfoDir)
           }
@@ -371,7 +367,7 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
           platformDistributionEntriesDeferred = platformLayoutResultDeferred,
           pluginDistributionEntriesDeferred = pluginDistributionEntriesDeferred,
           runDir = runDir,
-          homePath = request.projectDir,
+          projectDir = request.projectDir,
         )
       }
 
@@ -438,13 +434,13 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
           context.productProperties.copyAdditionalOsSpecificFiles(
             runDir = runDir,
             os = request.os,
-            arch = JvmArchitecture.currentJvmArch,
+            arch = request.arch,
             context = context
           )
           copyDistFiles(
             newDir = runDir,
             os = request.os,
-            arch = JvmArchitecture.currentJvmArch,
+            arch = request.arch,
             libcImpl = LibcImpl.current(request.os),
             context = context,
           )
@@ -457,6 +453,12 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
     contextToClose?.messages?.close()
   }
   return runDir
+}
+
+@VisibleForTesting
+internal fun configureTargetPlatform(options: BuildOptions, request: BuildRequest) {
+  options.targetOs = persistentListOf(request.os)
+  options.targetArch = request.arch
 }
 
 /**
@@ -560,6 +562,17 @@ internal fun formatCoreClasspath(classPath: Collection<Path>, runDir: Path): Str
   }
 }
 
+private suspend fun computeIdeFingerprint(
+  platformDistributionEntriesDeferred: Deferred<PlatformLayoutResult>,
+  pluginDistributionEntriesDeferred: Deferred<PluginsLayoutResult>,
+  runDir: Path,
+  projectDir: Path,
+) {
+  val entries = platformDistributionEntriesDeferred.await().distributionEntries.asSequence() +
+                pluginDistributionEntriesDeferred.await().pluginEntries.asSequence().flatMap { it.distribution.asSequence() }
+  writeIdeFingerprint(entries = entries, runDir = runDir, projectDir = projectDir)
+}
+
 private suspend fun getSearchableOptionSet(context: CompilationContext): SearchableOptionSetDescriptor? {
   return withContext(Dispatchers.IO) {
     try {
@@ -569,49 +582,6 @@ private suspend fun getSearchableOptionSet(context: CompilationContext): Searcha
       null
     }
   }
-}
-
-private suspend fun computeIdeFingerprint(
-  platformDistributionEntriesDeferred: Deferred<PlatformLayoutResult>,
-  pluginDistributionEntriesDeferred: Deferred<PluginsLayoutResult>,
-  runDir: Path,
-  homePath: Path,
-) {
-  val hasher = Hashing.xxh3_64().hashStream()
-  val debug = if (System.getProperty("intellij.build.fingerprint.debug").toBoolean()) StringBuilder() else null
-
-  fun relativePath(path: Path): Path = when {
-    path.startsWith(runDir) -> runDir.relativize(path)
-    path.startsWith(homePath) -> homePath.relativize(path)
-    else -> path
-  }
-
-  val distributionFileEntries = platformDistributionEntriesDeferred.await().distributionEntries
-  hasher.putInt(distributionFileEntries.size)
-  debug?.append(distributionFileEntries.size)?.append('\n')
-  for (entry in distributionFileEntries) {
-    hasher.putLong(entry.hash)
-    debug?.append(Long.toUnsignedString(entry.hash, Character.MAX_RADIX))?.append(" ")?.append(relativePath(entry.path))?.append('\n')
-  }
-
-  val pluginDistributionEntries = pluginDistributionEntriesDeferred.await().pluginEntries
-  hasher.putInt(pluginDistributionEntries.size)
-  for (plugin in pluginDistributionEntries) {
-    hasher.putInt(plugin.distribution.size)
-
-    debug?.append('\n')?.append(plugin.mainModule)?.append('\n')
-    for (entry in plugin.distribution) {
-      hasher.putLong(entry.hash)
-      debug?.append("  ")?.append(Long.toUnsignedString(entry.hash, Character.MAX_RADIX))?.append(" ")?.append(relativePath(entry.path))?.append('\n')
-    }
-  }
-
-  val fingerprint = Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX)
-  withContext(Dispatchers.IO) {
-    Files.writeString(runDir.resolve("fingerprint.txt"), fingerprint)
-    debug?.let { Files.writeString(runDir.resolve("fingerprint-debug.txt"), it) }
-  }
-  Span.current().addEvent("IDE fingerprint: $fingerprint")
 }
 
 private suspend fun createBuildContextFromProject(

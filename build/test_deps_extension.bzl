@@ -45,6 +45,10 @@ def write_downloads_repo(repository_ctx, files):
     Returns whether every file was checksum-pinned before the download - which is what makes the
     result reproducible, and the repository shareable through the repo contents cache.
     """
+    conflict = find_download_conflict(files)
+    if conflict:
+        fail(conflict)
+
     downloads = []
     for f in files:
         downloads.append(repository_ctx.download(
@@ -87,6 +91,23 @@ filegroup(
         ),
     )
     return pinned
+
+def find_download_conflict(files):
+    """Returns an error for duplicate output names or URLs, or `None` when [files] are safe to fetch."""
+    names = set()
+    urls = set()
+    for f in files:
+        if f.name in names:
+            return "download repository has duplicate output file name: %s" % f.name
+        if f.url in urls:
+            return "download repository has duplicate URL: %s" % f.url
+        names.add(f.name)
+        urls.add(f.url)
+    return None
+
+def all_downloads_pinned(files):
+    """Whether every file has a checksum known before it is downloaded."""
+    return all([f.sha256 for f in files])
 
 def test_deps_repository(repository_name):
     files = []

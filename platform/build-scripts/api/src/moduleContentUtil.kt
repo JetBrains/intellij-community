@@ -32,7 +32,7 @@ suspend fun getUnprocessedPluginXmlContent(module: JpsModule, outputProvider: Mo
 suspend fun findUnprocessedDescriptorContent(module: JpsModule, path: String, outputProvider: ModuleOutputProvider): ByteArray? {
   try {
     val result = outputProvider.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = false)
-    if (result == null && outputProvider.useTestCompilationOutput) {
+    if (result == null && outputProvider.isTestCompilationOutputEnabled(module)) {
       return outputProvider.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = true)
     }
     return result

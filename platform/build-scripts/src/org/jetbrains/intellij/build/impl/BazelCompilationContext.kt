@@ -43,7 +43,12 @@ class BazelCompilationContext(
   ),
 ) : CompilationContext {
   override val outputProvider: ModuleOutputProvider by lazy {
-    BazelModuleOutputProvider(state = outputProviderState, scope = scope, useTestCompilationOutput = options.useTestCompilationOutput)
+    BazelModuleOutputProvider(
+      state = outputProviderState,
+      scope = scope,
+      useTestCompilationOutput = options.useTestCompilationOutput,
+      testCompilationOutputModules = options.testCompilationOutputModules,
+    )
   }
 
   override val options: BuildOptions

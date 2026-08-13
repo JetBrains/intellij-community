@@ -22,7 +22,7 @@ This file owns the community half - the machinery, and the groups whose version 
 [merge_repo_sets].
 """
 
-load(":test_deps_extension.bzl", "write_downloads_repo")
+load(":test_deps_extension.bzl", "all_downloads_pinned", "write_downloads_repo")
 
 # BuildDependenciesConstants
 MAVEN_CENTRAL_URL = "https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2"
@@ -145,7 +145,7 @@ def _repo_impl(repository_ctx):
 
     # Reproducible even where the checksum was not known up front: every URL here carries its own
     # version, so the same URL is the same artifact, and the repo contents cache may share it.
-    return repository_ctx.repo_metadata(reproducible = True)
+    return repository_ctx.repo_metadata(reproducible = all_downloads_pinned(files))
 
 dev_launch_deps_repo = repository_rule(
     implementation = _repo_impl,

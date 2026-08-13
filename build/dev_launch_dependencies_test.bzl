@@ -19,6 +19,7 @@ load(
     "maven_url",
     "platform_parts",
 )
+load(":test_deps_extension.bzl", "all_downloads_pinned", "find_download_conflict")
 
 _JBR = "https://cache-redirector.jetbrains.com/intellij-jbr"
 _MAVEN = "https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2"
@@ -116,6 +117,28 @@ def _maven_coordinates_urls_test_impl(ctx):
 
 maven_coordinates_urls_test = unittest.make(_maven_coordinates_urls_test_impl)
 
+def _download_repository_integrity_test_impl(ctx):
+    env = unittest.begin(ctx)
+    pinned = struct(name = "one.zip", url = "https://example.test/one.zip", sha256 = "a" * 64)
+    unpinned = struct(name = "two.zip", url = "https://example.test/two.zip", sha256 = "")
+
+    asserts.true(env, all_downloads_pinned([pinned]))
+    asserts.false(env, all_downloads_pinned([pinned, unpinned]))
+    asserts.equals(env, None, find_download_conflict([pinned, unpinned]))
+    asserts.equals(
+        env,
+        "download repository has duplicate output file name: one.zip",
+        find_download_conflict([pinned, struct(name = pinned.name, url = unpinned.url, sha256 = "")]),
+    )
+    asserts.equals(
+        env,
+        "download repository has duplicate URL: https://example.test/one.zip",
+        find_download_conflict([pinned, struct(name = unpinned.name, url = pinned.url, sha256 = "")]),
+    )
+    return unittest.end(env)
+
+download_repository_integrity_test = unittest.make(_download_repository_integrity_test_impl)
+
 def dev_launch_dependencies_test_suite(name):
     """Test suite for the URL builders in dev_launch_dependencies.bzl."""
     unittest.suite(
@@ -126,4 +149,5 @@ def dev_launch_dependencies_test_suite(name):
         lib_ghostty_vt_url_test,
         maven_url_test,
         maven_coordinates_urls_test,
+        download_repository_integrity_test,
     )

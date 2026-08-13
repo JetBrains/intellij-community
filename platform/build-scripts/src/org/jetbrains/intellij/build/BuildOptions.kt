@@ -66,6 +66,7 @@ data class BuildOptions(
    * It is necessary. e.g., to run tests in a dev-build-provided environment.
    */
   var useTestCompilationOutput: Boolean = getBooleanProperty(USE_TEST_COMPILATION_OUTPUT_PROPERTY, defaultValue = USE_TEST_COMPILATION_OUTPUT_DEFAULT_VALUE),
+  @Internal @JvmField val testCompilationOutputModules: Set<String> = getSetProperty(USE_TEST_COMPILATION_OUTPUT_MODULES_PROPERTY),
 
   @JvmField val cleanOutDir: Boolean = getBooleanProperty(CLEAN_OUTPUT_DIRECTORY_PROPERTY, true),
 
@@ -263,6 +264,7 @@ data class BuildOptions(
      * It is necessary. e.g., to run tests in a dev-build-provided environment.
      */
     const val USE_TEST_COMPILATION_OUTPUT_PROPERTY: String = "idea.build.pack.test.source.enabled"
+    const val USE_TEST_COMPILATION_OUTPUT_MODULES_PROPERTY: String = "idea.build.pack.test.source.modules"
     const val USE_TEST_COMPILATION_OUTPUT_DEFAULT_VALUE: Boolean = false
 
     /**

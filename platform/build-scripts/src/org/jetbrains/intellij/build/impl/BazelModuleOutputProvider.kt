@@ -58,6 +58,7 @@ internal class BazelModuleOutputProvider(
   private val state: BazelModuleOutputProviderState,
   scope: CoroutineScope?,
   override val useTestCompilationOutput: Boolean,
+  private val testCompilationOutputModules: Set<String> = emptySet(),
 ) : ModuleOutputProvider {
   constructor(
     modules: List<JpsModule>,
@@ -65,6 +66,7 @@ internal class BazelModuleOutputProvider(
     bazelOutputRoot: Path,
     scope: CoroutineScope?,
     useTestCompilationOutput: Boolean,
+    testCompilationOutputModules: Set<String> = emptySet(),
   ) : this(
     state = BazelModuleOutputProviderState(
       modules = modules,
@@ -73,6 +75,7 @@ internal class BazelModuleOutputProvider(
     ),
     scope = scope,
     useTestCompilationOutput = useTestCompilationOutput,
+    testCompilationOutputModules = testCompilationOutputModules,
   )
 
   private val zipFilePool = ModuleOutputZipFilePool(scope)
@@ -88,6 +91,10 @@ internal class BazelModuleOutputProvider(
   }
 
   override fun getAllModules(): List<JpsModule> = state.modules
+
+  override fun isTestCompilationOutputEnabled(module: JpsModule): Boolean {
+    return useTestCompilationOutput || testCompilationOutputModules.contains(module.name)
+  }
 
   override fun findModule(name: String): JpsModule? = state.findModule(name)
 
@@ -143,10 +150,11 @@ internal class BazelModuleOutputProvider(
     val bazelTargetsMap = state.bazelTargetsMap
     val moduleDescription = bazelTargetsMap.modules[module.name] ?: error("Cannot find module '${module.name}' in the project")
 
-    if (forTests && !useTestCompilationOutput) {
+    if (forTests && !isTestCompilationOutputEnabled(module)) {
       error(
         "Cannot find test sources for module '${module.name}' because 'useTestSourceEnabled' is false.\n" +
         "System property '${BuildOptions.USE_TEST_COMPILATION_OUTPUT_PROPERTY}' value: ${System.getProperty(BuildOptions.USE_TEST_COMPILATION_OUTPUT_PROPERTY)}, " +
+        "selective modules: $testCompilationOutputModules, " +
         "BazelModuleOutputProvider.useTestCompilationOutput (from BuildOptions.useTestCompilationOutput) value: $useTestCompilationOutput, " +
         "default value: ${BuildOptions.USE_TEST_COMPILATION_OUTPUT_DEFAULT_VALUE}"
       )
