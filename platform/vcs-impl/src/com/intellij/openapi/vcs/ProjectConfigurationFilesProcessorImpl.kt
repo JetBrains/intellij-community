@@ -7,7 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeListListener
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -63,7 +63,8 @@ internal class ProjectConfigurationFilesProcessorImpl(
 
   override fun unchangedFileStatusChanged(upToDate: Boolean) {
     if (upToDate && foundProjectConfigurationFiles.compareAndSet(true, false)) {
-      val unversionedProjectConfigurationFiles = doFilterFiles(ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles)
+      val unversionedFiles = ChangeListManager.getInstance(project).unversionedFilesPaths.mapNotNull { it.virtualFile }
+      val unversionedProjectConfigurationFiles = doFilterFiles(unversionedFiles)
       if (unversionedProjectConfigurationFiles.isNotEmpty()) {
         setForCurrentProject(VcsImplUtil.isProjectSharedInVcs(project))
         processFiles(unversionedProjectConfigurationFiles.toList())

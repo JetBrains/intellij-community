@@ -17,7 +17,7 @@ import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder
 import com.intellij.openapi.vcs.changes.ChangeListListener
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider
 import com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
 import com.intellij.openapi.vcs.changes.IgnoredFileProvider
@@ -205,8 +205,11 @@ internal class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disp
 
   override fun doFilterFiles(files: Collection<VirtualFile>): List<VirtualFile> {
     val parents = files.toHashSet()
-    return ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles
+    return ChangeListManager.getInstance(project).unversionedFilesPaths
+      .asSequence()
+      .mapNotNull { it.virtualFile }
       .filter { isUnder(parents, it) }
+      .toList()
   }
 
   override fun rememberForAllProjects() {

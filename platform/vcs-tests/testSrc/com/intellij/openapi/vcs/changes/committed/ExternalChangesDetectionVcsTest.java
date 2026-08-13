@@ -31,6 +31,7 @@ import java.io.File;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static com.intellij.openapi.vcs.changes.ChangeListManagerExtensionsKt.getUnversionedFiles;
 import static org.junit.Assert.assertTrue;
 
 public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
@@ -87,11 +88,11 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
     f.createNewFile();
     final VirtualFile vf = myLFS.refreshAndFindFileByIoFile(f);
     myChangeListManager.ensureUpToDate();
-    assertTrue(myChangeListManager.getUnversionedFiles().contains(vf));
+    assertTrue(getUnversionedFiles(myChangeListManager).contains(vf));
     FileUtil.delete(f);
     myWorkingCopyDir.refresh(false, true);
     myChangeListManager.ensureUpToDate();
-    assertTrue(myChangeListManager.getUnversionedFiles().isEmpty());
+    assertTrue(getUnversionedFiles(myChangeListManager).isEmpty());
   }
 
   @Test
@@ -102,7 +103,7 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
     }
     myWorkingCopyDir.refresh(false, true);
     myChangeListManager.ensureUpToDate();
-    final List<VirtualFile> unversionedFiles = myChangeListManager.getUnversionedFiles();
+    final List<VirtualFile> unversionedFiles = getUnversionedFiles(myChangeListManager);
     final Pattern pattern = Pattern.compile("f([0-9])+\\.txt");
     int cnt = 0;
     for (VirtualFile unversionedFile : unversionedFiles) {
