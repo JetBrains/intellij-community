@@ -4,5 +4,14 @@ package com.intellij.ide.plugins
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class EssentialPluginMissingException internal constructor(val pluginIds: List<String>) :
-  RuntimeException("Missing essential plugins: ${pluginIds.joinToString()}")
+class EssentialPluginMissingException internal constructor(
+  val pluginIds: List<String>,
+  val diagnostic: String? = null,
+) :
+  RuntimeException(buildString {
+    append("Missing essential plugins: ${pluginIds.joinToString()}")
+    if (diagnostic != null) {
+      append("\n")
+      append(diagnostic)
+    }
+  })

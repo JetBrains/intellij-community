@@ -735,16 +735,13 @@ object PluginManagerCore {
       missing.add(id to reason)
     }
     if (missing != null) {
-      throw EssentialPluginMissingException(missing.map { it.first.idString })
-        .apply {
-          val exclusionTraces = missing.mapNotNull { (_, reason) ->
-            reason?.let { PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(resolvedPluginSet, reason.descriptor) }
-          }
-          if (exclusionTraces.isNotEmpty()) {
-            val message = "Exclusion traces:\n${exclusionTraces.joinToString("\n")}"
-            addSuppressed(object : Throwable(message, null, true, false) {})
-          }
-        }
+      val exclusionTraces = missing.mapNotNull { (_, reason) ->
+        reason?.let { PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(resolvedPluginSet, reason.descriptor) }
+      }
+      val diagnostic = if (exclusionTraces.isNotEmpty()) {
+        "Exclusion traces:\n${exclusionTraces.joinToString("\n")}"
+      } else null
+      throw EssentialPluginMissingException(missing.map { it.first.idString }, diagnostic)
     }
   }
 
