@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -46,7 +46,7 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
   public void setUp() throws Exception {
     super.setUp();
     WriteAction.run(() -> IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_17));
-    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).disableBackgroundCommit(getTestRootDisposable());
+    ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(myProject)).disableBackgroundCommit(getTestRootDisposable());
     MadTestingUtil.enableAllInspections(myProject, JavaLanguage.INSTANCE, "GrazieInspection", "GrazieStyle");
   }
 

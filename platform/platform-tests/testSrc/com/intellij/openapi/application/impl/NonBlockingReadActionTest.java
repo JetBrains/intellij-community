@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -329,7 +329,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   }
 
   private void setupUncommittedDocument() {
-    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).disableBackgroundCommit(getTestRootDisposable());
+    ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(getProject())).disableBackgroundCommit(getTestRootDisposable());
     PsiFile file = createFile("a.txt", "");
     WriteCommandAction.runWriteCommandAction(getProject(), () -> file.getViewProvider().getDocument().insertString(0, "a"));
   }

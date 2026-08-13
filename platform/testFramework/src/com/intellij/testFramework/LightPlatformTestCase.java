@@ -61,7 +61,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.util.IncorrectOperationException;
@@ -490,7 +490,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void clearUncommittedDocuments(@NotNull Project project) {
-    PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
+    PsiDocumentManagerEx documentManager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(project);
     documentManager.clearUncommittedDocuments();
 
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
@@ -498,7 +498,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       try {
         Project defaultProject = projectManager.getDefaultProject();
         PsiDocumentManager psiDocumentManager = defaultProject.getServiceIfCreated(PsiDocumentManager.class);
-        if (psiDocumentManager instanceof PsiDocumentManagerImpl impl) {
+        if (psiDocumentManager instanceof PsiDocumentManagerEx impl) {
           impl.clearUncommittedDocuments();
         }
       }

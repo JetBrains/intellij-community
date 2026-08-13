@@ -36,7 +36,7 @@ import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.SlowOperations;
@@ -196,7 +196,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
       return;
     }
 
-    PsiDocumentManagerImpl pdm = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
+    PsiDocumentManagerEx pdm = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(myProject);
     Document document = pdm.getCachedDocument(psiFile);
     if (document != null && myIsDocumentWorthBothering.test(document)) {
       VirtualFile virtualFile = psiFile.getVirtualFile();

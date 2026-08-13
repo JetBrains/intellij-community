@@ -15,7 +15,7 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiStatement
-import com.intellij.psi.impl.PsiDocumentManagerImpl
+import com.intellij.psi.impl.PsiDocumentManagerEx
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodService
@@ -38,7 +38,7 @@ class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
 
   override fun setUp() {
     super.setUp()
-    (PsiDocumentManager.getInstance(myProject) as PsiDocumentManagerImpl).disableBackgroundCommit(testRootDisposable)
+    (PsiDocumentManager.getInstance(myProject) as PsiDocumentManagerEx).disableBackgroundCommit(testRootDisposable)
     TemplateManagerImpl.setTemplateTesting(testRootDisposable)
   }
 

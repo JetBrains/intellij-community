@@ -18,7 +18,7 @@ import com.intellij.psi.PsiImportList;
 import com.intellij.psi.PsiImportStatement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -48,7 +48,7 @@ public class UnivocityTest extends BaseUnivocityTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).disableBackgroundCommit(getTestRootDisposable());
+    ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(myProject)).disableBackgroundCommit(getTestRootDisposable());
     MadTestingUtil.enableAllInspections(myProject, JavaLanguage.INSTANCE, "GrazieInspection", "GrazieStyle");
   }
 
