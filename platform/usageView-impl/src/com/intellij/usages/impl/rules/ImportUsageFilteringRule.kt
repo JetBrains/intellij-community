@@ -6,12 +6,16 @@ import com.intellij.usages.UsageTarget
 import com.intellij.usages.rules.ImportFilteringRule
 import com.intellij.usages.rules.UsageFilteringRule
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.NonNls
 
 
 @Internal
 object ImportUsageFilteringRule : UsageFilteringRule {
 
   const val ACTION_ID: String = "UsageFiltering.Imports"
+  val RULE_ID: String = ImportUsageFilteringRule::class.java.name
+
+  override fun getRuleId(): @NonNls String = RULE_ID
 
   override fun getActionId(): String = ACTION_ID
 

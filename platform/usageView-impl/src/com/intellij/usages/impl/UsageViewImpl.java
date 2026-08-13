@@ -624,6 +624,11 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @ApiStatus.Internal
+  public @NotNull Set<String> getActiveFilteringRuleIds() {
+    return myFilteringRulesState.getActiveRuleIds();
+  }
+
+  @ApiStatus.Internal
   public @NotNull UsageViewSettings getUsageViewSettings() {
     return UsageViewSettings.getInstance();
   }

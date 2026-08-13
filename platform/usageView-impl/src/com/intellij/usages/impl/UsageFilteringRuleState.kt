@@ -6,4 +6,6 @@ internal interface UsageFilteringRuleState {
   fun isActive(ruleId: String): Boolean
 
   fun setActive(ruleId: String, active: Boolean)
+
+  fun getActiveRuleIds(): Set<String>
 }

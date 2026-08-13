@@ -37,6 +37,10 @@ internal class UsageFilteringRuleStateImpl(
     }
   }
 
+  override fun getActiveRuleIds(): Set<String> {
+    return localState.toHashSet()
+  }
+
   private fun shouldShareState(ruleId: String): Boolean {
     // For not it is used in Rider to disable persisting `Show Read Usages / Show Write Usages` between different sessions
     //  because we consider this behavior misleading - users ofter lose some usages because of "forgotten" access filters

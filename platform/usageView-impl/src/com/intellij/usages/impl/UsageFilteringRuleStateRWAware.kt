@@ -26,4 +26,8 @@ internal class UsageFilteringRuleStateRWAware(
       }
     }
   }
+
+  override fun getActiveRuleIds(): Set<String> {
+    return delegate.getActiveRuleIds()
+  }
 }
