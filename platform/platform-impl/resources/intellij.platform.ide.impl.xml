@@ -68,6 +68,7 @@
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.concurrency"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.core.plugins"/>
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.indexing"/>
@@ -331,17 +332,6 @@
     <extensionPoint qualifiedName="com.intellij.updatesInfoProvider"
                     interface="com.intellij.ide.ExternalUpdateProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.applicationSettings"
-                    beanClass="com.intellij.ide.settings.SettingsComponentDescriptor"
-                    dynamic="true">
-      <with attribute="service" implements="com.intellij.openapi.components.PersistentStateComponent"/>
-    </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.projectSettings"
-                    beanClass="com.intellij.ide.settings.SettingsComponentDescriptor"
-                    area="IDEA_PROJECT"
-                    dynamic="true">
-      <with attribute="service" implements="com.intellij.openapi.components.PersistentStateComponent"/>
-    </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.genericAuthProvider"
                     interface="com.intellij.auth.GenericAuthProviderExtension" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.customTypeRpcSerializer" interface="com.intellij.ide.rpc.CustomTypeRpcSerializer" dynamic="true"/>
@@ -399,6 +389,15 @@
     <extensionPoint qualifiedName="com.intellij.diagnostic.freezeNotifier" interface="com.intellij.diagnostic.FreezeNotifier" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.openapi.updateSettings.UpdateStrategyCustomization" open="true"/>
+    <applicationService serviceInterface="com.intellij.toolWindow.DefaultToolWindowLayoutProvider" open="true"
+                        serviceImplementation="com.intellij.toolWindow.IntellijPlatformDefaultToolWindowLayoutProvider"/>
+    <applicationService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter" open="true"/>
+    <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls" open="true"
+                        serviceImplementation="com.intellij.platform.ide.impl.customization.LegacyExternalProductResourceUrls"/>
+    <applicationService serviceImplementation="com.intellij.application.options.colors.FontPreviewService" open="true"/>
+    <applicationService serviceInterface="com.intellij.openapi.ui.DialogBackgroundImageProvider" open="true"
+                        serviceImplementation="com.intellij.openapi.wm.impl.DialogBackgroundImageProviderImpl"/>
     <ApplicationLoadListener implementation="com.intellij.util.imageio.ImageReaderWriterSpiRegistrar"/>
     <applicationActivity implementation="com.intellij.ide.debug.ImageDebugUtilLoader"/>
     <applicationService serviceImplementation="com.intellij.ui.WaylandAppIconPatcher"

@@ -24,6 +24,7 @@
     <extensionPoint qualifiedName="com.intellij.facetType" interface="com.intellij.facet.FacetType" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.lang.IdeLanguageCustomization" open="true"/>
     <sdkType implementation="com.intellij.openapi.projectRoots.SimpleJavaSdkType"/>
   </extensions>
 </idea-plugin>

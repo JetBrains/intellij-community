@@ -13,6 +13,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//platform/platform-resources:resources",
         "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight",
         "//plugins/devkit",
         "//plugins/devkit/devkit-core:core",
@@ -48,6 +49,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-fir-tests",
+        "//platform/platform-resources:resources_test_lib",
         "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//plugins/devkit/intellij.kotlin.devkit/k2:k2_test_lib",
         "//platform/ide-core:ide-core_test_lib",

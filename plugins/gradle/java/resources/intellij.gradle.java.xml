@@ -2,9 +2,9 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.gradle"/>
-    <module name="intellij.gradle.properties"/>
     <module name="intellij.gradle.toolingExtension.impl"/>
     <module name="intellij.java.debugger.impl.shared"/>
+    <module name="intellij.gradle.properties"/>
     <module name="intellij.java"/>
     <module name="intellij.java.compiler"/>
     <module name="intellij.java.compiler.impl"/>
@@ -33,6 +33,7 @@
     <module name="intellij.platform.externalSystem.dependencyUpdater"/>
     <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.jps.build"/>

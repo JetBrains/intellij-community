@@ -1,35 +1,52 @@
-<!--suppress PluginXmlRegistrationCheck -->
-<idea-plugin>
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.hash4j"/>
+    <module name="intellij.libraries.icu4j"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
   <extensionPoints>
-    <extensionPoint name="applicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener" dynamic="false"/>
-    <!-- The platform skips such listeners on dynamic loading/unloading of plugins assuming it is safe -->
-    <extensionPoint name="dynamicApplicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener" dynamic="true"/>
-
-    <extensionPoint name="applicationActivity" interface="com.intellij.ide.ApplicationActivity" dynamic="false"/>
-    <extensionPoint name="registryKey" beanClass="com.intellij.openapi.util.registry.RegistryKeyBean" dynamic="true"/>
-    <extensionPoint name="notificationGroup" beanClass="com.intellij.notification.impl.NotificationGroupEP" dynamic="true"/>
-    <extensionPoint name="registry.managed" interface="com.intellij.openapi.util.registry.ManagedRegistry" dynamic="false"/>
-    <extensionPoint name="getDataRule"
+    <extensionPoint qualifiedName="com.intellij.notificationGroup" beanClass="com.intellij.notification.impl.NotificationGroupEP" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.getDataRule"
                     beanClass="com.intellij.ide.impl.GetDataRuleBean"
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.impl.dataRules.GetDataRule"/>
     </extensionPoint>
-    <extensionPoint name="dataValidators" interface="com.intellij.ide.impl.DataValidators" dynamic="true"/>
-    <extensionPoint name="lowLevelProjectOpenProcessor"
+    <extensionPoint qualifiedName="com.intellij.dataValidators" interface="com.intellij.ide.impl.DataValidators" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lowLevelProjectOpenProcessor"
                     interface="com.intellij.openapi.project.ex.LowLevelProjectOpenProcessor"
                     dynamic="true"/>
-    <extensionPoint name="editorTabTitleProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider" dynamic="true"/>
-    <extensionPoint name="editorTabColorProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabColorProvider" dynamic="true"/>
-    <extensionPoint name="nonProjectFileWritingAccessExtension" area="IDEA_PROJECT"
+    <extensionPoint qualifiedName="com.intellij.editorTabTitleProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.editorTabColorProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabColorProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.nonProjectFileWritingAccessExtension" area="IDEA_PROJECT"
                     interface="com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension" dynamic="true"/>
-    <extensionPoint name="vfs.local.pluggableFileWatcher" interface="com.intellij.openapi.vfs.local.PluggableFileWatcher" dynamic="false" />
-    <extensionPoint name="notification.parentGroup" beanClass="com.intellij.notification.impl.NotificationParentGroupBean" dynamic="false"/>
-    <extensionPoint name="projectNameProvider" interface="com.intellij.openapi.project.ex.ProjectNameProvider" dynamic="true"/>
-    <extensionPoint name="activityTracker" interface="com.intellij.platform.backend.observation.ActivityTracker"
+    <extensionPoint qualifiedName="com.intellij.vfs.local.pluggableFileWatcher" interface="com.intellij.openapi.vfs.local.PluggableFileWatcher" dynamic="false" />
+    <extensionPoint qualifiedName="com.intellij.notification.parentGroup" beanClass="com.intellij.notification.impl.NotificationParentGroupBean" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.projectNameProvider" interface="com.intellij.openapi.project.ex.ProjectNameProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.activityTracker" interface="com.intellij.platform.backend.observation.ActivityTracker"
                     dynamic="true"/>
   </extensionPoints>
-
   <extensions defaultExtensionNs="com.intellij">
+    <applicationSettings service="com.intellij.openapi.editor.ex.EditorSettingsExternalizable"/>
+    <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable" client="all"/>
+    <applicationService serviceInterface="com.intellij.ide.script.IdeScriptEngineManager" open="true"
+                        serviceImplementation="com.intellij.ide.script.IdeScriptEngineManagerImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.project.BaseProjectDirectories" open="true"
+                    serviceImplementation="com.intellij.ide.project.impl.BaseProjectDirectoriesImpl"/>
     <activityTracker implementation="com.intellij.util.MergingUpdateQueueActivityTracker"/>
     <applicationService serviceInterface="com.intellij.util.ui.update.MergingUpdateQueueTracker"
                         serviceImplementation="com.intellij.util.MergingUpdateQueueTrackerImpl"/>
@@ -40,17 +57,9 @@
     <applicationService serviceInterface="com.intellij.notification.NotificationGroupManager"
                         serviceImplementation="com.intellij.notification.impl.NotificationGroupManagerImpl"/>
 
-    <applicationService serviceImplementation="com.intellij.ide.GeneralSettings"/>
-    <applicationSettings service="com.intellij.ide.GeneralSettings"/>
-
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsRefactoringOptionsProviderImpl"
                         serviceInterface="com.intellij.openapi.editor.ex.EditorSettingsRefactoringOptionsProvider"/>
-    <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable" client="all"/>
-    <applicationSettings service="com.intellij.openapi.editor.ex.EditorSettingsExternalizable"/>
 
-    <applicationService serviceImplementation="com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization" open="true"/>
-    <applicationService serviceImplementation="com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomization" open="true"/>
-    
     <applicationService serviceInterface="com.intellij.psi.impl.DocumentCommitProcessor"
                         serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
     <registryKey defaultValue="false" description="ModCompletion contributors (see com.intellij.modcompletion.CompletionItemProvider)"
@@ -85,8 +94,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  defaultValue="[beforeLoad|asyncPostReconfiguration*]"
                  restartRequired="true"
                  description="Changes the way IDE waits for plugins to unload during dynamic plugin reconfiguration"/>
-    <applicationService serviceInterface="com.intellij.ide.script.IdeScriptEngineManager" open="true"
-                        serviceImplementation="com.intellij.ide.script.IdeScriptEngineManagerImpl"/>
     <registryKey defaultValue="false" key="scanning.should.pause.dumb.queue" restartRequired="true"
                  description="Pause dumb queue (including indexing) while scanning is in progress."/>
     <registryKey defaultValue="true" key="vfs.refresh.should.pause.dumb.queue" restartRequired="true"
@@ -97,8 +104,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  description="Scanning will wait until the end of current dumb mode (if any)"/>
     <registryKey defaultValue="true" key="scanning.hide.progress.in.smart.mode" restartRequired="false"
                  description="Hide scanning progress indicator while scanning can continue in smart mode."/>
-    <projectService serviceInterface="com.intellij.openapi.project.BaseProjectDirectories" open="true"
-                    serviceImplementation="com.intellij.ide.project.impl.BaseProjectDirectoriesImpl"/>
     <registryKey key="scroll.to.first.trace" defaultValue="true"
                  description="In tests view: if 'scrollToStackTrace' is enabled and node with multiple children is selected, scroll to the trace of the first child"/>
     <registryKey key="lists.use.open.in.right.splitter" defaultValue="true"
@@ -293,7 +298,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  description="Restricts updating plugins to the configured source (IJPL-171317)"/>
     <registryKey key="platform.make.plugin.update.source.visible.in.ui" defaultValue="false"
                  description="Makes plugin update sources visible in UI (IJPL-171317)"/>
-    <applicationService serviceImplementation="com.intellij.openapi.updateSettings.UpdateStrategyCustomization" open="true"/>
     <registryKey defaultValue="true" key="use.dependencies.cache.service" restartRequired="true"
                  description="Rescan delta of AdditionalLibraryProvider, IndexableSetContributor, DirectoryIndexExcludePolicy values instead of full project."/>
     <registryKey defaultValue="20" key="scanning.dumb.mode.threshold" restartRequired="true"
@@ -439,9 +443,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  description="Enable open in client generator action"/>
     <registryKey key="editor.show.indexing.as.analyzing" defaultValue="true"
                  description="Replaces Indexing progress with Analyzing during dumb mode"/>
-    <applicationService serviceImplementation="com.intellij.lang.IdeLanguageCustomization" open="true"/>
-    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager" open="true"
-                        serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>
     <registryKey key="ide.project.view.new.file.popup" defaultValue="false"
                  description="Switches submenu in File - New to popup step" />
     <registryKey key="ide.allow.folder.as.project" defaultValue="false"
@@ -449,22 +450,12 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <notificationGroup id="Automatic Module Unloading" displayType="BALLOON" bundle="messages.ProjectBundle"
                        key="notification.group.automatic.module.unloading"/>
     <registryKey key="sdk.detector.enabled" defaultValue="true" description="Toggles SDK detection features"/>
-    <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager" open="true"
-                        serviceImplementation="com.intellij.openapi.module.impl.ModuleTypeManagerImpl"/>
     <registryKey key="unknown.sdk" defaultValue="true" description="Check for unknown SDKs and provide automatic fixes or smart suggestions"/>
     <registryKey key="unknown.sdk.auto" defaultValue="true" description="Checks and resolves unknown SDKs automatically on start"/>
     <registryKey key="unknown.sdk.modal.jps" defaultValue="true" description="Run unknown JDK test before JPS build is started"/>
     <registryKey key="unknown.sdk.show.editor.actions" defaultValue="true" description="Show editor suggestions to fix missing SKDs"/>
     <registryKey key="psi.vfs.listener.over.wsm" defaultValue="true" restartRequired="true"
                  description="Use WSM listeners to invalidate PSI caches (new) in addition to legacy ModuleRootListener"/>
-    <applicationService serviceInterface="com.intellij.toolWindow.DefaultToolWindowLayoutProvider" open="true"
-                        serviceImplementation="com.intellij.toolWindow.IntellijPlatformDefaultToolWindowLayoutProvider"/>
-    <applicationService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter" open="true"/>
-    <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls" open="true"
-                        serviceImplementation="com.intellij.platform.ide.impl.customization.LegacyExternalProductResourceUrls"/>
-    <applicationService serviceImplementation="com.intellij.application.options.colors.FontPreviewService" open="true"/>
-    <applicationService serviceInterface="com.intellij.openapi.ui.DialogBackgroundImageProvider" open="true"
-                        serviceImplementation="com.intellij.openapi.wm.impl.DialogBackgroundImageProviderImpl"/>
     <registryKey
       key="auto.hide.all.tool.windows.on.focus.change"
       description="If enabled, hide all auto-hide tool windows on any focus change, otherwise hide only the one that lost focus"

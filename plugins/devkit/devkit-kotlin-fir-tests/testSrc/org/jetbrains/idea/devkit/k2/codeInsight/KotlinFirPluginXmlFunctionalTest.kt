@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.k2.codeInsight
 import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.diagnostic.ITNReporter
 import com.intellij.notification.impl.NotificationGroupEP
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.options.Configurable
@@ -20,7 +21,6 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection
 import org.jetbrains.idea.devkit.inspections.UnresolvedPluginConfigReferenceInspection
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
-import java.nio.file.Paths
 
 class KotlinFirPluginXmlFunctionalTest : JavaCodeInsightFixtureTestCase() {
 
@@ -47,8 +47,8 @@ class KotlinFirPluginXmlFunctionalTest : JavaCodeInsightFixtureTestCase() {
     moduleBuilder.addLibrary("platform-util-base", PathUtil.getJarPathForClass(IncorrectOperationException::class.java))
     //moduleBuilder.addLibrary("platform-util", PathUtil.getJarPathForClass(Iconable::class.java))
     moduleBuilder.addLibrary("platform-analysis", PathUtil.getJarPathForClass(LocalInspectionEP::class.java))
-    moduleBuilder.addLibrary("platform-resources", Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP::class.java))
-      .resolveSibling("intellij.platform.resources").toString())
+    moduleBuilder.addLibrary("platform-resources",
+                             checkNotNull(PathManager.getResourceRoot(RegistryManager::class.java, "/META-INF/PlatformLangPlugin.xml")))
     moduleBuilder.addLibrary("platform-ide-core", PathUtil.getJarPathForClass(Configurable::class.java))
     moduleBuilder.addLibrary("platform-ide-core-impl", PathUtil.getJarPathForClass(NotificationGroupEP::class.java))
     moduleBuilder.addLibrary("platform-editor", PathUtil.getJarPathForClass(AdvancedSettings::class.java))
@@ -82,4 +82,3 @@ class Registry {
     myFixture.testHighlighting(true, false, false, "RegistryKeyId.kt", "registryKeyId.xml")
   }
 }
-

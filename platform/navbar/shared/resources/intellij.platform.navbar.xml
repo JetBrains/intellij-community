@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.lang.impl"/>
   </dependencies>

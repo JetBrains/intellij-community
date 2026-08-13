@@ -52,6 +52,7 @@
     <module name="intellij.platform.feedback"/>
     <module name="intellij.platform.ide.concurrency"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.core.plugins"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.progress"/>
@@ -481,6 +482,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager" open="true"
+                        serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>
+    <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager" open="true"
+                        serviceImplementation="com.intellij.openapi.module.impl.ModuleTypeManagerImpl"/>
     <canBeSelectedInProjectPaneProvider
       implementation="com.intellij.ide.projectView.impl.canBeSelected.SourceOrLibraryCanBeSelectedInProjectPaneProvider"/>
     <canBeSelectedInProjectPaneProvider

@@ -1,6 +1,6 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="fleet.fastutil"/>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.fastutil"/>
@@ -19,6 +19,7 @@
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
@@ -26,8 +27,8 @@
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.textmate.core"/>
     <module name="intellij.textmate.joni"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.textmate.bundleProvider"
                     interface="org.jetbrains.plugins.textmate.api.TextMateBundleProvider"

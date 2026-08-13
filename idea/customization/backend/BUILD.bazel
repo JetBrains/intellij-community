@@ -13,6 +13,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/lang-impl"],
 )
 
 jvm_library(
@@ -24,7 +25,11 @@ jvm_library(
     ),
     module_name = "intellij.idea.customization.backend",
     visibility = ["//visibility:public"],
-    runtime_deps = [":backend"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//platform/lang-impl:lang-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.idea.customization.backend` end
 

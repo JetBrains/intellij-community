@@ -1,5 +1,3 @@
 - name: dist.all/lib/intellij.platform.usageView.jar
   modules:
-  - name: intellij.platform.backend.observation
-  - name: intellij.platform.ide.core.impl
   - name: intellij.platform.usageView

@@ -16,4 +16,10 @@
   <content namespace="jetbrains">
     <module name="intellij.pycharm.community.ide.impl.promotion"/> <!-- mostly promo of Pro -->
   </content>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls"
+                        serviceImplementation="com.intellij.pycharm.community.customization.PyCharmExternalResourceUrls"
+                        overrides="true"/>
+  </extensions>
 </idea-plugin>

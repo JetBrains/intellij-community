@@ -1,6 +1,6 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.mcpserver"/>
@@ -13,6 +13,7 @@
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.lang"/>
@@ -21,8 +22,8 @@
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <serviceViewContributor implementation="com.intellij.mcpserver.frontend.services.McpServiceViewContributor"/>

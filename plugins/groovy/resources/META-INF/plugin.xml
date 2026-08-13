@@ -57,6 +57,7 @@
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.externalSystem"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.jps.build"/>

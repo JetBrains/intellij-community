@@ -8,6 +8,7 @@
     <module name="intellij.platform.analysis.impl"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.util.coroutines"/>
   </dependencies>

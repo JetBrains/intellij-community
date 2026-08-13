@@ -1,10 +1,5 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <!--suppress PluginXmlRegistrationCheck -->
-    <applicationService serviceInterface="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"
-                        serviceImplementation="com.intellij.openapi.updateSettings.base.ShowWhatIsNewPageAfterUpdateCustomization"
-                        overrides="true"/>
-
     <registryKey key="ea.auto.report.feature.visible" defaultValue="false" overrides="true"
                  description="Makes the automatic error reporting feature hidden in UI"/>
   </extensions>
