@@ -33,6 +33,7 @@ fun convertToHashCodeWithOnlyLetters(hash: Int): String {
  **/
 fun generifyErrorMessage(originalMessage: String): String {
   return originalMessage
+    .generifyLink()
     .generifyFileNames()
     .generifyID()
     .generifyUID()
@@ -46,6 +47,12 @@ fun generifyErrorMessage(originalMessage: String): String {
 fun String.generifyFileNames(): String {
   val regex = "([A-Z]:)?([/\\\\][ a-zA-Z0-9_.-]+)+".toRegex()
   return replace(regex,"<FILE>")
+}
+
+/** Replaces links in `scheme://...` format with `<LINK>`, except `file://` links handled by [generifyFileNames]. */
+fun String.generifyLink(): String {
+  val regex = Regex("""(?i)\b(?!file://)[a-z][a-z0-9+.-]*://[^\s"'<>`]+(?<![.,;:!?)}\]])""")
+  return replace(regex, "<LINK>")
 }
 
 /** text@3ba5aac, text => text<ID>, text */

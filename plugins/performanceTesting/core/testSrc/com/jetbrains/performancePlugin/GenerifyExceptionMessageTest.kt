@@ -121,4 +121,22 @@ class GenerifyExceptionMessageTest {
   fun replaceUIDTest() {
     replaceUIDTestTemplate(::generifyErrorMessage)
   }
+
+  @Test
+  fun replaceLinksTest() {
+    val joinLink = "tcp://127.0.0.1:5990#jt=a186acbd-5d03-479c-aaf8-dfc7e24b27d7&p=IU" +
+                   "&fp=A579DA4FB9E3D957BE1D8016CA8C444401B3CD289E785675CAA53FEE4072ED30" +
+                   "&cb=263.SNAPSHOT&newUi=true&jb=25.0.4b557.28"
+    val links = listOf(
+      joinLink,
+      "https://www.jetbrains.com/idea/?ref=error-message",
+      "wss://example.com/socket?id=42",
+      "jetbrains-gateway://connect#host=localhost&port=22",
+    )
+
+    links.forEach { link ->
+      Assert.assertEquals("Link: <LINK>.", generifyErrorMessage("Link: $link."))
+    }
+    Assert.assertEquals("File: file://<FILE>", generifyErrorMessage("File: file:///tmp/log.txt"))
+  }
 }
