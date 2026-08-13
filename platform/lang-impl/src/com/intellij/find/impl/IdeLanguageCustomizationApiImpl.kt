@@ -1,16 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.lang.impl.backend
+package com.intellij.find.impl
 
-import com.intellij.find.impl.IdeLanguageCustomizationApi
 import com.intellij.lang.IdeLanguageCustomization
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.LanguageFileType
-import com.intellij.platform.rpc.backend.RemoteApiProvider
-import fleet.rpc.remoteApiDescriptor
+import org.jetbrains.annotations.ApiStatus
 
-private class IdeLanguageCustomizationApiImpl : IdeLanguageCustomizationApi {
+/**
+ * Serves [IdeLanguageCustomizationApi]: registered by the backend module for the monolith and the
+ * remote-dev backend, used directly by [IdeLanguageCustomizationApi.getInstance] in backend-less
+ * frontends (IJ Light).
+ */
+@ApiStatus.Internal
+class IdeLanguageCustomizationApiImpl : IdeLanguageCustomizationApi {
   override suspend fun getPrimaryIdeLanguagesExtensions(): Set<String> {
     return serviceAsync<IdeLanguageCustomization>().primaryIdeLanguages
       .asSequence()
@@ -26,13 +30,5 @@ private class IdeLanguageCustomizationApiImpl : IdeLanguageCustomizationApi {
       .asSequence()
       .filterIsInstance<ExtensionFileNameMatcher>()
       .map { it.extension }
-  }
-}
-
-internal class IdeLanguageCustomizationApiProvider : RemoteApiProvider {
-  override fun RemoteApiProvider.Sink.remoteApis() {
-    remoteApi(remoteApiDescriptor<IdeLanguageCustomizationApi>()) {
-      IdeLanguageCustomizationApiImpl()
-    }
   }
 }

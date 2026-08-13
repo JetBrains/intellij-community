@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.scopes.backend
+package com.intellij.platform.scopes
 
 import com.intellij.ide.rpc.DataContextId
 import com.intellij.ide.rpc.dataContext
@@ -20,13 +20,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
-import com.intellij.platform.rpc.backend.RemoteApiProvider
-import com.intellij.platform.scopes.ScopeModelRemoteApi
-import com.intellij.platform.scopes.SearchScopeData
-import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.util.cancelOnDispose
-import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -36,10 +31,16 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.util.EnumSet
 import java.util.concurrent.ConcurrentHashMap
 
-internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
+/**
+ * Serves [ScopeModelApi]: registered by the backend module for the monolith and the remote-dev
+ * backend, used directly by [ScopeModelApi.getInstance] in backend-less frontends (IJ Light).
+ */
+@ApiStatus.Internal
+class ScopeModelApiImpl : ScopeModelApi {
   /**
    * Tracks newly created scope names by model ID for deferred selection.
    *
@@ -146,13 +147,5 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
       deferred.complete(Unit)
     }
     return deferred
-  }
-}
-
-internal class ScopesStateApiProvider : RemoteApiProvider {
-  override fun RemoteApiProvider.Sink.remoteApis() {
-    remoteApi(remoteApiDescriptor<ScopeModelRemoteApi>()) {
-      ScopesModelRemoteApiImpl()
-    }
   }
 }

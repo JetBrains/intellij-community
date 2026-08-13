@@ -8,8 +8,10 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
+import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.usageView.UsageInfo
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -21,7 +23,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 @Rpc
-interface FindRemoteApi : RemoteApi<Unit> {
+interface FindInFilesApi : RemoteApi<Unit> {
   /**
    * Searches for matches based on the specified find model within a given project and initial set of files.
    *
@@ -49,9 +51,16 @@ interface FindRemoteApi : RemoteApi<Unit> {
   suspend fun checkDirectoryExists(findModel: FindModel): Boolean
 
   companion object {
+    private val localInstance by lazy { FindInFilesApiImpl() }
+
     @JvmStatic
-    suspend fun getInstance(): FindRemoteApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<FindRemoteApi>())
+    suspend fun getInstance(): FindInFilesApi {
+      LiteRemoteApiProviderService.tryResolve(remoteApiDescriptor<FindInFilesApi>())?.let { return it }
+      // Null is not "no backend": a connected frontend also resolves null until its protocol client
+      // is up. Only a strictly-Light session uses the local implementation; everything else awaits
+      // the connection (IJPL-252054).
+      return if (IdeProductMode.getInstance().currentMode == ProductMode.LIGHT) localInstance
+             else LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<FindInFilesApi>())
     }
   }
 }

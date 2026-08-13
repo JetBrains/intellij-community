@@ -19,13 +19,14 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "//platform/kernel/rpc",
+        "//platform/util:util-ui",
+        "//platform/kernel/rpc.lite",
+        "//platform/runtime/product",
         "@lib//:kotlin-stdlib",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/indexing-api:indexing",
         "//platform/kernel/shared:kernel",
-        "//platform/platform-impl/rpc",
         "//platform/project/shared:project",
         "//libraries/kotlinx/serialization/core",
         "//platform/core-impl",
@@ -38,6 +39,7 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/scopes",
         "//fleet/rhizomedb",
+        "//platform/platform-impl/rpc",
     ],
 )
 
@@ -53,12 +55,13 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":find",
-        "//platform/kernel/rpc:rpc_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
+        "//platform/runtime/product:product_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/indexing-api:indexing_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
-        "//platform/platform-impl/rpc:rpc_test_lib",
         "//platform/project/shared:project_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",
@@ -71,6 +74,7 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/scopes:scopes_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.find` end

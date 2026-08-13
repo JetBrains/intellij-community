@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.project.projectId
-import com.intellij.platform.scopes.ScopeModelRemoteApi
+import com.intellij.platform.scopes.ScopeModelApi
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
@@ -135,7 +135,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
           .mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }
           .toSet()
 
-        FindRemoteApi.getInstance().findByModel(
+        FindInFilesApi.getInstance().findByModel(
           findModel = command.findModel,
           projectId = command.project.projectId(),
           filesToScanInitially = filesToScanInitially.map { it.rpcId() },
@@ -226,7 +226,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
   override fun performFindAllOrReplaceAll(findModel: FindModel, project: Project) {
     if (FindKey.isEnabled) {
       coroutineScope.launch {
-        FindRemoteApi.getInstance().performFindAllOrReplaceAll(findModel, FindSettings.getInstance().isShowResultsInSeparateView, project.projectId())
+        FindInFilesApi.getInstance().performFindAllOrReplaceAll(findModel, FindSettings.getInstance().isShowResultsInSeparateView, project.projectId())
       }
     }
     else {
@@ -243,7 +243,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     validationJob.get()?.let { if (it.isActive) it.cancel("new validation request is started") }
     val job = coroutineScope.launch {
       try {
-        FindRemoteApi.getInstance().checkDirectoryExists(findModel).let { onFinish(it) }
+        FindInFilesApi.getInstance().checkDirectoryExists(findModel).let { onFinish(it) }
       } catch (ex: RpcClientException) {
         LOG.warn("Unable to check directory", ex)
         onFinish(false)
@@ -258,7 +258,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
   override fun performScopeSelection(scopeId: String, project: Project) {
     val job = coroutineScope.launch {
       val deferred = try {
-       ScopeModelRemoteApi.getInstance().performScopeSelection(scopeId, project.projectId())
+       ScopeModelApi.getInstance().performScopeSelection(scopeId, project.projectId())
       }
       catch (e: RpcTimeoutException) {
         LOG.warn("Failed to select scope", e)

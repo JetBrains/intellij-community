@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.find.backend
+package com.intellij.platform.find
 
 import com.intellij.find.FindModel
 import com.intellij.find.FindSettings
@@ -23,8 +23,6 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
-import com.intellij.platform.find.FindInFilesResult
-import com.intellij.platform.find.FindRemoteApi
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.usages.FindUsagesProcessPresentation
@@ -33,13 +31,19 @@ import com.intellij.usages.UsageViewPresentation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
-private val LOG: Logger = logger<FindRemoteApiImpl>()
+private val LOG: Logger = logger<FindInFilesApiImpl>()
 
-internal class FindRemoteApiImpl : FindRemoteApi {
+/**
+ * Serves [FindInFilesApi]: registered by the backend module for the monolith and the remote-dev
+ * backend, used directly by [FindInFilesApi.getInstance] in backend-less frontends (IJ Light).
+ */
+@ApiStatus.Internal
+class FindInFilesApiImpl : FindInFilesApi {
 
   override suspend fun findByModel(findModel: FindModel, projectId: ProjectId, filesToScanInitially: List<VirtualFileId>, maxUsagesCount: Int): Flow<FindInFilesResult> {
     val sentItems = AtomicInteger(0)

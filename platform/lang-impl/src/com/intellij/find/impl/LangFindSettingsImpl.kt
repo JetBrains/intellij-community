@@ -23,7 +23,7 @@ internal class LangFindSettingsImpl: FindSettingsImpl(), Disposable {
 
   private suspend fun loadExtensions() {
     val extensions = durable {
-      IdeLanguageCustomizationApi.awaitInstance().getPrimaryIdeLanguagesExtensions().toMutableSet()
+      IdeLanguageCustomizationApi.getInstance().getPrimaryIdeLanguagesExtensions().toMutableSet()
     }
     if (extensions.contains("java")) {
       extensions.add("properties")

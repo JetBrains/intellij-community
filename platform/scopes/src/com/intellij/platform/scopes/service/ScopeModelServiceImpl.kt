@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
-import com.intellij.platform.scopes.ScopeModelRemoteApi
+import com.intellij.platform.scopes.ScopeModelApi
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
 import fleet.rpc.client.RpcTimeoutException
@@ -39,7 +39,7 @@ internal class ScopeModelServiceImpl(private val project: Project, private val c
     itemsLoadingJob = coroutineScope.childScope("ScopesStateService.subscribeToScopeStates").launch {
       val dataContext = dataContextPromise.await()
       durable {
-        val scopesFlow = ScopeModelRemoteApi.getInstance().createModelAndSubscribe(
+        val scopesFlow = ScopeModelApi.getInstance().createModelAndSubscribe(
           project.projectId(), modelId, filterConditionType, dataContext.rpcId())
         if (scopesFlow == null) {
           LOG.error("Failed to subscribe to model updates for modelId: $modelId")
@@ -70,7 +70,7 @@ internal class ScopeModelServiceImpl(private val project: Project, private val c
     val projectId = project.projectId()
     editScopesJob = coroutineScope.launch {
       val deferred = try {
-        ScopeModelRemoteApi.getInstance().openEditScopesDialog(projectId, selectedScopeId, modelId)
+        ScopeModelApi.getInstance().openEditScopesDialog(projectId, selectedScopeId, modelId)
       }
       catch (e: RpcTimeoutException) {
         LOG.warn("Failed to edit scopes", e)
