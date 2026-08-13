@@ -1024,7 +1024,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       markers.add(document.createRangeMarker(0, document.getTextLength()));
     }
 
-    LeakHunter.checkLeak(document, RangeMarker.class, markers::contains);
+    LeakHunter.checkLeak(document, RangeMarker.class, o -> markers.contains(o));
   }
 
   public void testRangeMarkersAreLazyCreated() {
@@ -1695,30 +1695,30 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   }
 
   public void testRangeMarkerMustPreserveItsOffsetsSomeTimeAfterDeath() {
-    createRemoveCheck(
+    checkCreateRemove(
       () -> createMarker("xxxxx", 1, 3),
-      RangeMarker::dispose);
+      marker -> marker.dispose());
 
-    createRemoveCheck(
+    checkCreateRemove(
       () -> createMarker("xxxxx", 2, 3),
       marker -> ((DocumentEx)marker.getDocument()).removeRangeMarker((RangeMarkerEx)marker));
 
-    createRemoveCheck(
+    checkCreateRemove(
       () -> (RangeMarkerEx)DocumentMarkupModel.forDocument(document, getProject(), true).addRangeHighlighter(2, 4, 0, null, HighlighterTargetArea.EXACT_RANGE),
       highlighter -> highlighter.dispose());
 
-    createRemoveCheck(
+    checkCreateRemove(
       () -> (RangeMarkerEx)DocumentMarkupModel.forDocument(document, getProject(), true).addRangeHighlighter(2, 4, 0, null, HighlighterTargetArea.EXACT_RANGE),
       highlighter -> DocumentMarkupModel.forDocument(document, getProject(), true).removeHighlighter((RangeHighlighter)highlighter));
 
-    createRemoveCheck(
+    checkCreateRemove(
       () -> {
         VirtualFile virtualFile = createFile("x.txt", "xxx").getVirtualFile();
         return (RangeMarkerEx)LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(virtualFile, 2);
       },
-      RangeMarker::dispose);
+      marker1 -> marker1.dispose());
     
-    createRemoveCheck(
+    checkCreateRemove(
       () -> {
         VirtualFile virtualFile = createFile("x.txt", "xxx").getVirtualFile();
         return (RangeMarkerEx)LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(virtualFile, 2);
@@ -1729,7 +1729,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       });
   }
 
-  private static void createRemoveCheck(@NotNull Supplier<? extends RangeMarkerEx> creator, Consumer<? super RangeMarker> remover) {
+  private static void checkCreateRemove(@NotNull Supplier<? extends RangeMarkerEx> creator, @NotNull Consumer<? super RangeMarker> remover) {
     RangeMarkerEx marker = creator.get();
     assertTrue(marker.isValid());
     TextRange range = marker.getTextRange();
