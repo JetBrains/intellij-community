@@ -94,6 +94,12 @@ class NonWriteAccessCommandCompletionService(
     insertNewEditorImpl(editor, {}, null)
   }
 
+  /**
+   * Shows the command completion inlay, letting the caller set up the document of its inline text field.
+   *
+   * [prepareCompletion] is invoked on a background thread once the inlay is shown; completion starts only
+   * if it returns `true`, otherwise the inlay is disposed.
+   */
   fun insertNewEditor(
     editor: Editor,
     configureDocument: (Document) -> Unit,
@@ -110,8 +116,12 @@ class NonWriteAccessCommandCompletionService(
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
     if (editor !is EditorImpl) return
     val project = editor.project ?: return
+    // the key is set while the inlay is shown and cleared when it is disposed: in the remote flow the original
+    // editor keeps the focus during the backend request, so a second keystroke can get here before the first
+    // one is done, and a second inlay would be installed at the same offset
+    if (editor.getUserData(INSTALLED_EDITOR) != null) return
 
-    val textField = LanguageTextField(FileTypes.PLAIN_TEXT.language, editor.project, "", true).apply {
+    val textField = LanguageTextField(FileTypes.PLAIN_TEXT.language, project, "", true).apply {
       val height = ((editor.charHeight * 2 * 1.2) / JBUIScale.scale(1.0F)).toInt() + 10
       val width = editor.lineHeight * 6
       val size = JBUI.size(width, height)
@@ -132,10 +142,15 @@ class NonWriteAccessCommandCompletionService(
     IdeFocusManager.getInstance(project).requestFocus(textField, true)
 
     editor.putUserData(INSTALLED_EDITOR, componentInlay)
-    val editorLifetimeDisposable = Disposer.newDisposable("command completion non-writable inlay")
-    EditorUtil.disposeWithEditor(editor, editorLifetimeDisposable)
-    Disposer.register(editorLifetimeDisposable, componentInlay)
-    textField.setDisposedWith(editorLifetimeDisposable)
+    Disposer.register(componentInlay) {
+      editor.replace(INSTALLED_EDITOR, componentInlay, null)
+    }
+    // the editor lifetime is only a backstop for "the file is closed while the inlay is still shown":
+    // normally the inlay is disposed much earlier, together with the lookup
+    EditorUtil.disposeWithEditor(editor, componentInlay)
+    // tie the inline text field's editor to the inlay, so that it is released as soon as the inlay is gone
+    // and not kept alive until the file is closed
+    textField.setDisposedWith(componentInlay)
 
     val inlayedEditor = textField.getEditor(true) ?: return
     inlayedEditor.putUserData(ORIGINAL_EDITOR, Pair(editor, offset))
@@ -217,6 +232,10 @@ object NonWriteAccessCommandCompletionSupport {
     fun isApplicable(editor: Editor, charTyped: Char): Boolean =
       findApplicableFactory(editor, editor.caretModel.offset, charTyped) != null
 
+    /**
+     * [offset] comes from the frontend caret over RPC, so it may be stale by a round trip
+     * and is not guaranteed to be inside the backend document — it is validated, not trusted.
+     */
     fun isApplicable(editor: Editor, offset: Int, charTyped: Char): Boolean =
       findApplicableFactory(editor, offset, charTyped) != null
 
@@ -280,7 +299,9 @@ object NonWriteAccessCommandCompletionSupport {
     if (!isEnabled()) return null
     val project = editor.project ?: return null
     val document = editor.document
+    // the offset is always valid for a local caret, but it can be an out-of-date frontend caret here, see [Backend.isApplicable]
     if (offset !in 0..document.textLength) return null
+    // the caret may be at the very end of the document, then there is no character to look at
     if (offset < document.textLength && StringUtil.isJavaIdentifierPart(document.immutableCharSequence[offset])) return null
 
     val targetFile = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return null
