@@ -16,6 +16,7 @@ import com.intellij.modcommand.ModRegisterTabOut
 import com.intellij.modcommand.ModStartRename
 import com.intellij.modcommand.ModUpdateFileText
 import com.intellij.modcommand.ModUpdateReferences
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
@@ -147,6 +148,7 @@ private fun findFile(path: String): VirtualFile? =
 private fun RpcTextRange.toTextRange(): TextRange = TextRange(startOffset, endOffset)
 
 private fun logFileNotFound(commandType: String, path: String): Nothing? {
-  ccLogger.warn("ModCommandDeserializer: file not found for $commandType: $path")
+  ccLogger.debug { "ModCommandDeserializer: file not found for $commandType: $path" }
+  ccLogger.warn("ModCommandDeserializer: file not found for $commandType")
   return null
 }
