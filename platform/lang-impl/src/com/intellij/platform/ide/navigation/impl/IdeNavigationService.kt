@@ -15,7 +15,6 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileNavigator
@@ -38,7 +37,6 @@ import com.intellij.platform.backend.navigation.impl.DirectoryNavigationRequest
 import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
 import com.intellij.platform.backend.navigation.impl.SharedSourceNavigationRequest
 import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
-import com.intellij.platform.ide.navigation.NavigationHandler
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.ide.navigation.NavigationTaskCoordinator
@@ -49,7 +47,6 @@ import com.intellij.util.containers.sequenceOfNotNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.cancellation.CancellationException
 
 @Service(Service.Level.PROJECT)
 internal class IdeNavigationService(private val project: Project) : NavigationService {
@@ -200,10 +197,6 @@ private suspend fun tryNavigateToSource(
   options: NavigationOptions.Impl,
   dataContext: DataContext?,
 ): Boolean {
-  if (dataContext != null && executeRequestHandler(request, options, dataContext)) {
-    return true
-  }
-
   when (request) {
     is SourceNavigationRequest -> {
       withContext(Dispatchers.EDT) {
@@ -249,25 +242,6 @@ private suspend fun navigateNonSource(project: Project, request: NavigationReque
       error("Non-source request expected here, got: $request")
     }
   }
-}
-
-private val EP_NAME = ExtensionPointName.create<NavigationHandler>("com.intellij.navigation.navigationHandler")
-
-private fun executeRequestHandler(request: NavigationRequest, options: NavigationOptions, dataContext: DataContext): Boolean {
-  for (handler in EP_NAME.extensionList) {
-    try {
-      if (handler.navigate(request, options, dataContext)) {
-        return true
-      }
-    }
-    catch (ce: CancellationException) {
-      throw ce
-    }
-    catch (e: Throwable) {
-      LOG.error("Failed to navigate with $handler", e)
-    }
-  }
-  return false
 }
 
 private suspend fun navigateToSourceImpl(

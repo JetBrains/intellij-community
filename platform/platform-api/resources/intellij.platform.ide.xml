@@ -140,7 +140,6 @@
                     dynamic="true"/>
     <extensionPoint dynamic="true" qualifiedName="com.intellij.colorSettingsPage" interface="com.intellij.openapi.options.colors.ColorSettingsPage"/>
     <extensionPoint dynamic="true" qualifiedName="com.intellij.colorAndFontDescriptorProvider" interface="com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider"/>
-    <extensionPoint qualifiedName="com.intellij.navigation.navigationHandler" interface="com.intellij.platform.ide.navigation.NavigationHandler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.filePasteProvider" interface="com.intellij.ide.PasteProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.typeName" beanClass="com.intellij.ide.TypeNameEP" dynamic="true">
       <with attribute="className" implements="java.lang.Object"/>
