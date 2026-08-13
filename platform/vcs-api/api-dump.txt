@@ -810,7 +810,6 @@ a:com.intellij.openapi.vcs.changes.ChangeListManager
 - <init>():V
 - a:addChangeListListener(com.intellij.openapi.vcs.changes.ChangeListListener):V
 - a:addChangeListListener(com.intellij.openapi.vcs.changes.ChangeListListener,com.intellij.openapi.Disposable):V
-- a:addDirectoryToIgnoreImplicitly(java.lang.String):V
 - a:areChangeListsEnabled():Z
 - a:commitChanges(com.intellij.openapi.vcs.changes.LocalChangeList,java.util.List):V
 - a:findChangeList(java.lang.String):com.intellij.openapi.vcs.changes.LocalChangeList
@@ -832,11 +831,9 @@ a:com.intellij.openapi.vcs.changes.ChangeListManager
 - a:getChangesIn(com.intellij.openapi.vfs.VirtualFile):java.util.Collection
 - a:getDefaultChangeList():com.intellij.openapi.vcs.changes.LocalChangeList
 - a:getDefaultListName():java.lang.String
-- a:getFilesToIgnore():com.intellij.openapi.vcs.changes.IgnoredFileBean[]
 - a:getIgnoredFilePaths():java.util.List
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangeListManager
 - a:getModifiedWithoutEditing():java.util.List
-- a:getRegisteredExecutors():java.util.List
 - a:getResolvedConflictPaths():java.util.List
 - a:getStatus(com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vcs.FileStatus
 - a:getStatus(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FileStatus
@@ -858,7 +855,6 @@ a:com.intellij.openapi.vcs.changes.ChangeListManager
 - a:reopenFiles(java.util.List):V
 - a:scheduleAutomaticEmptyChangeListDeletion(com.intellij.openapi.vcs.changes.LocalChangeList):V
 - a:scheduleAutomaticEmptyChangeListDeletion(com.intellij.openapi.vcs.changes.LocalChangeList,Z):V
-- a:setFilesToIgnore(com.intellij.openapi.vcs.changes.IgnoredFileBean[]):V
 com.intellij.openapi.vcs.changes.ChangeListManagerGate
 - a:addChangeList(java.lang.String,java.lang.String):com.intellij.openapi.vcs.changes.LocalChangeList
 - a:editComment(java.lang.String,java.lang.String):V

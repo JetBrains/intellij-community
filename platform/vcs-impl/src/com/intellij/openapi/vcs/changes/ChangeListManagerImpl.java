@@ -1377,24 +1377,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     }
   }
 
-  @SuppressWarnings("removal")
-  @Override
-  public void addDirectoryToIgnoreImplicitly(@NotNull String path) {
-  }
-
-  @SuppressWarnings("removal")
-  @Override
-  public void setFilesToIgnore(IgnoredFileBean @NotNull ... filesToIgnore) {
-  }
-
-  @SuppressWarnings("removal")
-  @Override
-  public IgnoredFileBean @NotNull [] getFilesToIgnore() {
-    return EMPTY_ARRAY;
-  }
-
-  private static final IgnoredFileBean[] EMPTY_ARRAY = new IgnoredFileBean[0];
-
   @Override
   public boolean isIgnoredFile(@NotNull VirtualFile file) {
     if (!file.isInLocalFileSystem()) return false;

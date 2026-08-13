@@ -575,7 +575,6 @@ f:com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 - addChangeList(java.lang.String,java.lang.String,com.intellij.openapi.vcs.changes.ChangeListData):com.intellij.openapi.vcs.changes.LocalChangeList
 - addChangeListListener(com.intellij.openapi.vcs.changes.ChangeListListener):V
 - addChangeListListener(com.intellij.openapi.vcs.changes.ChangeListListener,com.intellij.openapi.Disposable):V
-- addDirectoryToIgnoreImplicitly(java.lang.String):V
 - addUnversionedFiles(com.intellij.openapi.vcs.changes.LocalChangeList,java.util.List):V
 - areChangeListsEnabled():Z
 - blockModalNotifications():V
@@ -612,13 +611,11 @@ f:com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 - getDefaultChangeList():com.intellij.openapi.vcs.changes.LocalChangeList
 - getDefaultListName():java.lang.String
 - getDeletedFiles():java.util.List
-- getFilesToIgnore():com.intellij.openapi.vcs.changes.IgnoredFileBean[]
 - getIgnoredFilePaths():java.util.List
 - s:getInstanceImpl(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 - getLockedFolders():java.util.List
 - getLogicallyLockedFolders():java.util.Map
 - getModifiedWithoutEditing():java.util.List
-- getRegisteredExecutors():java.util.List
 - getResolvedConflictPaths():java.util.List
 - getState():org.jdom.Element
 - getStatus(com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vcs.FileStatus
@@ -659,7 +656,6 @@ f:com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 - setDefaultChangeList(com.intellij.openapi.vcs.changes.LocalChangeList,Z):V
 - setDefaultChangeList(java.lang.String):V
 - setDefaultChangeList(java.lang.String,Z):V
-- setFilesToIgnore(com.intellij.openapi.vcs.changes.IgnoredFileBean[]):V
 - setReadOnly(java.lang.String,Z):Z
 - showLocalChangesInvalidated():V
 - stopEveryThingIfInTestMode():V

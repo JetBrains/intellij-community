@@ -216,30 +216,11 @@ public abstract class ChangeListManager implements ChangeListModification {
    */
   public abstract void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list, boolean silently);
 
-  /**
-   * @return an empty array.
-   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
-   */
-  @Deprecated(forRemoval = true)
-  public abstract IgnoredFileBean @NotNull [] getFilesToIgnore();
-
   public abstract boolean isIgnoredFile(@NotNull VirtualFile file);
 
   public abstract boolean isIgnoredFile(@NotNull FilePath file);
 
   public abstract @NotNull List<FilePath> getIgnoredFilePaths();
-
-  /**
-   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void setFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles);
-
-  /**
-   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void addDirectoryToIgnoreImplicitly(@NotNull @NlsSafe String path);
 
   /**
    * Files that were modified without an explicit checkout (ex: in Perforce).
