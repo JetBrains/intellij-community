@@ -1161,7 +1161,6 @@ class DynamicPluginsTest {
       }
     }.installAt(pluginsDir)
 
-    PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").buildManagerState()
     loadPluginInTest(fooPluginPath) {
       loadPluginInTest(barPluginPath) {
         assertThat(PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId("foo.b", "test_ns"))).isNull()
@@ -1184,7 +1183,6 @@ class DynamicPluginsTest {
       }
     }.installAt(pluginsDir)
 
-    PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").buildManagerState()
     loadPluginInTest(fooPluginPath) {
       loadPluginInTest(barPluginPath) {
         assertThat(PluginManagerCore.getPluginSet().buildContentModuleIdMap().contains(PluginModuleId("foo.a", "test_ns"))).isTrue
