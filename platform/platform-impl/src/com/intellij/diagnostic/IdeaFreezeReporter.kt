@@ -18,6 +18,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -30,7 +31,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -43,11 +43,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.name
 
 private val FREEZE_NOTIFIER_EP: ExtensionPointName<FreezeNotifier> = ExtensionPointName("com.intellij.diagnostic.freezeNotifier")
-private val FREEZE_ANALYSIS_EP: ExtensionPointName<FreezeAnalysis> = ExtensionPointName("com.intellij.diagnostic.freezeAnalysis")
 
 private val LOG = fileLogger()
 
-internal class IdeaFreezeReporter : PerformanceListener {
+internal class IdeaFreezeReporter : FreezeListener {
   private var dumpTask: IdeaFreezeSamplingTask? = null
   private var freezeTelemetry: FreezeReporterTelemetry? = null
   private val currentDumps = Collections.synchronizedList(ArrayList<ThreadDump>())
@@ -84,13 +83,6 @@ internal class IdeaFreezeReporter : PerformanceListener {
       }
     }
 
-    internal fun analyzeFreeze(dump: String): FreezeAnalysis.Result? {
-      // analysis requires Performance Testing plugin present
-      return FREEZE_ANALYSIS_EP.computeSafeIfAny {
-        it.analyzeFreeze(dump)
-      }
-    }
-
     internal fun analyzeFreeze(attachments: List<Attachment>): PluginId? {
       val dumps = attachments
         .filter { it.name.startsWith(DUMP_PREFIX) }
@@ -101,7 +93,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
         else -> dumps[dumps.size / 2]
       }
 
-      return bestAttachment?.let { analyzeFreeze(bestAttachment.displayText) }?.plugin
+      return bestAttachment?.let { analyzeFreezeCausingPlugin(bestAttachment.displayText) }?.plugin
     }
 
     internal fun checkProfilerCrash(crashContent: String) {
@@ -109,7 +101,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
     }
   }
 
-  override fun uiFreezeStarted(reportDir: Path, coroutineScope: CoroutineScope) {
+  override suspend fun uiFreezeStarted(reportDir: Path, coroutineScope: CoroutineScope) {
     val telemetry = FreezeReporterTelemetry.start()
     telemetry.freezeDetected()
     if (!DEBUG && DebugAttachDetector.isAttached()) {
@@ -137,7 +129,8 @@ internal class IdeaFreezeReporter : PerformanceListener {
     dumpTask = IdeaFreezeSamplingTask(reportDir, maxDumpDuration, coroutineScope)
   }
 
-  override fun dumpedThreads(toFile: Path, dump: ThreadDump) {
+  @Suppress("BlockingMethodInNonBlockingContext")
+  override suspend fun dumpedThreads(toFile: Path, dump: ThreadDump) {
     val dumpTask = dumpTask ?: return
 
     currentDumps.add(dump)
@@ -167,12 +160,12 @@ internal class IdeaFreezeReporter : PerformanceListener {
     }
   }
 
-  override fun uiFreezeFinished(durationMs: Long, reportDir: Path?) {
+  override suspend fun uiFreezeFinished(durationMs: Long, reportDir: Path?) {
     (dumpTask ?: return).stop()
     reportDir?.let { cleanup(it) }
   }
 
-  override fun uiFreezeRecorded(durationMs: Long, reportDir: Path?) {
+  override suspend fun uiFreezeRecorded(durationMs: Long, reportDir: Path?) {
     val dumpTask = dumpTask
     if (dumpTask == null) {
       return
@@ -214,11 +207,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
 
       val loggingEvent = createEvent(dumpTask, durationMs, attachments, reportDir, PerformanceWatcher.getInstance(), finished = true)
       if (loggingEvent != null) {
-        @Suppress("RAW_RUN_BLOCKING") // we are inside PerformanceWatcher coroutineScope, safe to block
-        // todo change uiFreezeRecorded to suspend fun in API
-        runBlocking {
-          processDumps(dumps, reportDir, loggingEvent, durationMs, telemetry)
-        }
+        processDumps(dumps, loggingEvent, durationMs, telemetry)
       }
       else {
         telemetry.finishNotSent(FreezeNotSentReason.EVENT_CREATION_FAILED, durationMs)
@@ -237,7 +226,6 @@ internal class IdeaFreezeReporter : PerformanceListener {
 
   private suspend fun processDumps(
     dumps: ArrayList<ThreadDump>,
-    reportDir: Path?,
     loggingEvent: LogMessage,
     durationMs: Long,
     telemetry: FreezeReporterTelemetry,
@@ -272,11 +260,16 @@ internal class IdeaFreezeReporter : PerformanceListener {
         telemetry.freezeNotSent(FreezeNotSentReason.AUTO_REPORT_DISABLED, durationMs)
       }
 
-      if (reportDir != null) {
-        LOG.debug("Reporting freeze to plugin notifications")
-
+      LOG.debug("Reporting freeze to plugin notifications")
+      if (reason != null) {
         for (notifier in FREEZE_NOTIFIER_EP.extensionList) {
-          notifier.notifyFreeze(loggingEvent, dumps, reportDir, durationMs)
+          try {
+            notifier.notifyFreeze(loggingEvent, reason, dumps, durationMs)
+          }
+          catch (e: Exception) {
+            rethrowControlFlowException(e)
+            LOG.warn("Failed to notify freeze", e)
+          }
         }
       }
     }
@@ -376,8 +369,8 @@ internal fun reportToIndicator(event: LogMessage) {
 
 @ApiStatus.Internal
 object FreezeAnalysisFacade {
-  fun analyzeFreeze(dump: String): FreezeAnalysis.Result? {
-    return IdeaFreezeReporter.analyzeFreeze(dump)
+  fun analyzeFreeze(dump: String): FreezeCauseResult? {
+    return analyzeFreezeCausingPlugin(dump)
   }
 }
 

@@ -23,15 +23,11 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <diagnostic.freezeNotifier implementation="com.intellij.performanceTesting.freezes.PluginFreezeNotifier"/>
-    <diagnostic.freezeAnalysis implementation="com.intellij.performanceTesting.freezes.PluginFreezeAnalysis"/>
     <editorNotificationProvider implementation="com.intellij.performanceTesting.freezes.PluginFreezeNotificationPanel"/>
 
     <registryKey key="ide.diagnostics.notification.freezes.in.plugins"
                  defaultValue="true"
                  description="Show notification about freezes in plugins"/>
-    <registryKey key="ide.diagnostics.notification.freezes.in.bundled.plugins"
-                 defaultValue="true"
-                 description="Show notification about freezes in bundled plugins (in releases)"/>
     <applicationSettings service="com.intellij.performanceTesting.freezes.PluginsFreezesService"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.performanceTesting.freezes.promo.ErrorReportPromoterActivity"/>

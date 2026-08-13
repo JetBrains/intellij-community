@@ -396,8 +396,7 @@
                     interface="com.intellij.ide.plugins.marketplace.statistics.features.MarketplaceTextualFeaturesProvider"/>
     <extensionPoint qualifiedName="com.intellij.lookup.charFilter" interface="com.intellij.codeInsight.lookup.CharFilter" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.registerToolWindowTaskProvider" interface="com.intellij.toolWindow.RegisterToolWindowTaskProvider"/>
-    <extensionPoint qualifiedName="com.intellij.diagnostic.freezeNotifier" interface="com.intellij.diagnostic.FreezeNotifier"/>
-    <extensionPoint qualifiedName="com.intellij.diagnostic.freezeAnalysis" interface="com.intellij.diagnostic.FreezeAnalysis"/>
+    <extensionPoint qualifiedName="com.intellij.diagnostic.freezeNotifier" interface="com.intellij.diagnostic.FreezeNotifier" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <ApplicationLoadListener implementation="com.intellij.util.imageio.ImageReaderWriterSpiRegistrar"/>
@@ -1485,6 +1484,8 @@
     <interactiveCourseFactory implementation="com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy.JBAcademyInteractiveCourse"/>
     <cachesInvalidator implementation="com.intellij.ide.ui.IconCacheInvalidator"/>
     <cachesInvalidator implementation="com.intellij.openapi.editor.impl.zombie.NecropolisDestroyer$InvalidationRequest"/>
+    <diagnostic.freezeListener implementation="com.intellij.diagnostic.FusFreezeReporter"/>
+    <diagnostic.freezeListener implementation="com.intellij.diagnostic.IdeaFreezeReporter"/>
     <diagnostic.freezeProfiler implementation="com.intellij.diagnostic.opentelemetry.OTelMetricsFreezeProfiler"/>
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.opentelemetry.JVMStatsToOTelReporter"/>
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.opentelemetry.LowMemoryToOTelReporter"/>
@@ -1494,7 +1495,6 @@
     <applicationActivity implementation="com.intellij.diagnostic.JVMResponsivenessMonitorStarter"/>
     <applicationActivity implementation="com.intellij.openapi.application.impl.WriteActionLoggerApplicationActivity"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.vfs.newvfs.monitoring.VFSInitializationConditionsToFusReporter"/>
-    <idePerformanceListener implementation="com.intellij.diagnostic.FusFreezeReporter"/>
     <actionConfigurationCustomizer implementation="com.intellij.openapi.project.impl.SeparateProcessActionsCustomizer"/>
     <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.CustomPluginRepositoriesConfigurationComponent"
                     configurationSchemaKey="plugins"/>
@@ -1793,7 +1793,6 @@
     <applicationService
       serviceInterface="com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo" open="true"
       serviceImplementation="com.intellij.formatting.visualLayer.PlatformVirtualFormattingInlaysInfo" />
-    <idePerformanceListener implementation="com.intellij.diagnostic.IdeaFreezeReporter"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.impl.inspector.InspectionsSettingContentService" open="true"
                         serviceImplementation="com.intellij.openapi.editor.impl.inspector.InspectionsSettingContentServiceImpl"/>
     <applicationService serviceInterface="com.intellij.codeInsight.actions.ReaderModeDefaultsOverride" open="true"

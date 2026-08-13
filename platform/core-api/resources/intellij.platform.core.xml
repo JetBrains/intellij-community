@@ -29,7 +29,7 @@
     <extensionPoint qualifiedName="com.intellij.utf8BomOptionProvider" interface="com.intellij.openapi.vfs.encoding.Utf8BomOptionProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.fileEncodingProvider" interface="com.intellij.openapi.vfs.encoding.FileEncodingProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.ide.dynamicPluginVetoer" interface="com.intellij.ide.plugins.DynamicPluginVetoer" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.idePerformanceListener" interface="com.intellij.diagnostic.PerformanceListener" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.diagnostic.freezeListener" interface="com.intellij.diagnostic.FreezeListener" dynamic="true"/>
     <!-- com.intellij.psi.PsiElement -->
     <extensionPoint qualifiedName="com.intellij.cantBeStatic" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.foldingBuilder" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">

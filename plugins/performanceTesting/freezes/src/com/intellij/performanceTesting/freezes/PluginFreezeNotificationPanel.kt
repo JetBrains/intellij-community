@@ -13,10 +13,12 @@ import com.intellij.ide.setToolTipText
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.diagnostic.UnhandledReportSinkService
 import com.intellij.openapi.diagnostic.UnhandledReportSinkService.PluginFreezeReportData
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
@@ -30,7 +32,6 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.application
-import java.nio.file.Path
 import java.util.Collections
 import java.util.function.Function
 import javax.swing.JComponent
@@ -38,7 +39,12 @@ import javax.swing.JComponent
 private val LOG = fileLogger()
 
 internal class PluginFreezeNotifier : FreezeNotifier {
-  override fun notifyFreeze(event: LogMessage, currentDumps: Collection<ThreadDump>, reportDir: Path, durationMs: Long) {
+  override suspend fun notifyFreeze(
+    event: LogMessage,
+    problematicPluginId: PluginId,
+    currentDumps: Collection<ThreadDump>,
+    durationMs: Long,
+  ) {
     val freezeWatcher = PluginFreezeWatcher.getInstance()
 
     val freezeReason = freezeWatcher.getFreezeReason()
@@ -49,10 +55,12 @@ internal class PluginFreezeNotifier : FreezeNotifier {
 
     countFreezes()
 
-    val reason = freezeWatcher.processFreeze(event, durationMs)
+    val reason = freezeWatcher.processFreeze(event, problematicPluginId, durationMs)
     if (reason != null) {
       if (reason.reportToUser) {
-        updateUi()
+        readActionBlocking {
+          updateUi()
+        }
       }
 
       UnhandledReportSinkService.getInstance()?.report(PluginFreezeReportData(
