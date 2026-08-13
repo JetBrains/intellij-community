@@ -3,6 +3,7 @@ package fleet.util.async
 
 import fleet.util.channels.channels
 import fleet.util.channels.use
+import kotlin.jvm.JvmInline
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -22,9 +23,11 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.produceIn
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.transformWhile
@@ -231,4 +234,27 @@ fun <T> Flow<T>.throttleLatest(delayMillis: Long): Flow<T> = this
 private fun Duration.toDelayMillis(): Long = when (isPositive()) {
   true -> plus(999_999L.nanoseconds).inWholeMilliseconds
   false -> 0L
+}
+
+fun <ValueType> Flow<ValueType>.onFirst(block: suspend (ValueType) -> Unit): Flow<ValueType> {
+  var isExecuted = false
+  return onEach { value ->
+    if (!isExecuted) {
+      block(value)
+      isExecuted = true
+    }
+  }
+}
+
+@JvmInline
+private value class ValueWrapper<ValueType>(val value: ValueType)
+
+fun <ValueType> Flow<ValueType>.onLast(block: suspend (ValueType) -> Unit): Flow<ValueType> {
+  return flow {
+    val events = onEach(this@flow::emit)
+    val last = events.map(::ValueWrapper).lastOrNull()
+    if (last != null) {
+      block(last.value)
+    }
+  }
 }
