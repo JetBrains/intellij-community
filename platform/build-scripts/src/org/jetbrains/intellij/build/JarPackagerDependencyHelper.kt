@@ -35,7 +35,8 @@ internal class JarPackagerDependencyHelper(private val outputProvider: ModuleOut
   }
 
   fun isTestPluginModule(moduleName: String, module: JpsModule?): Boolean {
-    if (!outputProvider.useTestCompilationOutput) {
+    val resolvedModule = module ?: outputProvider.findModule(moduleName)
+    if (resolvedModule == null || !outputProvider.isTestCompilationOutputEnabled(resolvedModule)) {
       return false
     }
 
@@ -54,7 +55,7 @@ internal class JarPackagerDependencyHelper(private val outputProvider: ModuleOut
 
     if (moduleName.contains(".test.")) {
       @Suppress("RedundantIf", "RedundantSuppression")
-      if (module?.sourceRoots?.none { it.rootType.isForTests } == true) {
+      if (resolvedModule.sourceRoots.none { it.rootType.isForTests }) {
         return false
       }
 

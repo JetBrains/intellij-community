@@ -14,6 +14,16 @@ import java.nio.file.Path
 
 internal class JarPackagerDependencyHelperTest {
   @Test
+  fun `recognizes a selectively enabled test plugin module`() {
+    val project = JpsElementFactory.getInstance().createModel().project
+    val module = project.addModule("intellij.sample._test", JpsJavaModuleType.INSTANCE)
+    val helper = newDependencyHelper(SelectiveTestOutputProvider(module))
+
+    assertThat(helper.isTestPluginModule(module.name, module)).isTrue()
+    assertThat(helper.isTestPluginModule(module.name, null)).isTrue()
+  }
+
+  @Test
   fun `caches library dependencies separately for test runtime`() {
     val project = JpsElementFactory.getInstance().createModel().project
     val module = project.addModule("intellij.test.module", JpsJavaModuleType.INSTANCE)
@@ -33,11 +43,17 @@ internal class JarPackagerDependencyHelperTest {
   }
 }
 
-private fun newDependencyHelper(): Any {
+private fun newDependencyHelper(outputProvider: ModuleOutputProvider = EmptyModuleOutputProvider): Any {
   val helperClass = Class.forName("org.jetbrains.intellij.build.JarPackagerDependencyHelper")
   val constructor = helperClass.getDeclaredConstructor(ModuleOutputProvider::class.java)
   constructor.isAccessible = true
-  return constructor.newInstance(EmptyModuleOutputProvider)
+  return constructor.newInstance(outputProvider)
+}
+
+private fun Any.isTestPluginModule(moduleName: String, module: JpsModule?): Boolean {
+  val method = javaClass.getDeclaredMethod("isTestPluginModule", String::class.java, JpsModule::class.java)
+  method.isAccessible = true
+  return method.invoke(this, moduleName, module) as Boolean
 }
 
 private fun Any.getLibraryDependencies(module: JpsModule, withTests: Boolean): List<JpsLibraryDependency> {
@@ -71,4 +87,10 @@ private object EmptyModuleOutputProvider : ModuleOutputProvider {
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> = emptyList()
 
   override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? = null
+}
+
+private class SelectiveTestOutputProvider(private val selectedModule: JpsModule) : ModuleOutputProvider by EmptyModuleOutputProvider {
+  override fun findModule(name: String): JpsModule? = selectedModule.takeIf { module -> module.name == name }
+
+  override fun isTestCompilationOutputEnabled(module: JpsModule): Boolean = module == selectedModule
 }
