@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
 @ApiStatus.Internal
 interface KotlinScriptingSettings {
-    fun autoReloadConfigurations(scriptDefinition: ScriptDefinition): Boolean = true
     fun isScriptDefinitionEnabled(scriptDefinition: ScriptDefinition): Boolean
     fun getScriptDefinitionOrder(scriptDefinition: ScriptDefinition): Int
 

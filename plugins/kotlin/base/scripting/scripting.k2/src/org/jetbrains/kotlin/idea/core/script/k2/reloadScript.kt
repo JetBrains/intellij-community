@@ -36,6 +36,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.core.script.k2.ReloadScriptConfigurationService.Companion.TOPIC
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptService
+import org.jetbrains.kotlin.idea.core.script.k2.statistics.KotlinScriptingLifecycleCollector
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.shared.definition.kotlinScriptTemplate
 import org.jetbrains.kotlin.idea.core.script.shared.definition.reloadable
@@ -125,6 +126,10 @@ class ReloadScriptConfigurationService(private val project: Project, private val
             scriptingDebugLog(virtualFile) { "reloadScriptData started" }
             KotlinScriptService.getInstance(project).reload(virtualFile)
             val configurationResult = project.service<ScriptConfigurationsProvider>().getScriptConfigurationResult(ktFile)
+
+            readAction { ktFile.findScriptDefinition() }?.let {
+                KotlinScriptingLifecycleCollector.logConfigurationReloaded(project, it, configurationResult != null)
+            }
 
             val notificationManager = NotificationGroupManager.getInstance()
             if (configurationResult != null) {

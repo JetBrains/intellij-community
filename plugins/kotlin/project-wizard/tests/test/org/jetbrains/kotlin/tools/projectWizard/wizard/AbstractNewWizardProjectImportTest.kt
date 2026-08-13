@@ -3,14 +3,13 @@
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getSettings
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.psi.PsiManager
@@ -175,7 +174,8 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
 
         scripts.map { it.canonicalFile }.forEach { file ->
             val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
-            val psiFile = PsiManager.getInstance(project).findFile(virtualFile) as? KtFile ?: error("Cannot find KtFile for $file")
+            val psiFile = runReadActionBlocking { PsiManager.getInstance(project).findFile(virtualFile) as? KtFile }
+                ?: error("Cannot find KtFile for $file")
             assertTrue(
                 "Configuration for ${file.path} is missing",
                 psiFile.isProcessedAsKotlinScript()

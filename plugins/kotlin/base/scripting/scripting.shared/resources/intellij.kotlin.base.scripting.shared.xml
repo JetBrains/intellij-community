@@ -19,7 +19,6 @@
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
-    <module name="intellij.platform.statistics"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
@@ -60,7 +59,6 @@
 
     <fileType name="script-definition-marker" fieldName="INSTANCE"
               implementationClass="org.jetbrains.kotlin.idea.core.script.shared.definition.ScriptDefinitionMarkerFileType"/>
-    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.core.script.shared.ScriptingSettingsFUSCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

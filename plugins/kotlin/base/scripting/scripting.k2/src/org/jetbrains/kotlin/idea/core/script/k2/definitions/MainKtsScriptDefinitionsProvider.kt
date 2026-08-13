@@ -16,7 +16,7 @@ import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import kotlin.script.experimental.jvm.JvmDependency
 
 class MainKtsScriptDefinitionsProvider(val project: Project) : ScriptDefinitionsProvider {
-    override val id: String = "MainKts"
+    override val id: String = KotlinScriptDefinitionsProviderId.MAIN_KTS.id
 
     override fun getTemplateClasspath(): List<Path> = listOf(
         KotlinArtifacts.kotlinMainKtsPath,

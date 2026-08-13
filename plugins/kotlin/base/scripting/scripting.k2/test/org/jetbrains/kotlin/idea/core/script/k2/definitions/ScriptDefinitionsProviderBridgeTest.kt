@@ -17,10 +17,6 @@ import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
-/**
- * Guards the [ScriptDefinitionsProvider] EP: its definitions must reach the definition provider, must take precedence
- * over the bundled default, and must be able to narrow the extension-based match with [filePathPattern].
- */
 class ScriptDefinitionsProviderBridgeTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun `test definitions from the provider EP reach the definition provider`() {
@@ -57,7 +53,6 @@ class ScriptDefinitionsProviderBridgeTest : KotlinLightCodeInsightFixtureTestCas
         registerProvider(filtered)
 
         val definitionProvider = project.service<ScriptDefinitionProvider>()
-        // both files match the definition's extension, so only the path pattern can tell them apart
         assertEquals(
             "A file outside filePathPattern must fall through to the bundled default definition",
             true,

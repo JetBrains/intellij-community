@@ -33,7 +33,7 @@ data class DefinitionTemplates(
 private const val MAIN_KTS = "org.jetbrains.kotlin.mainKts.MainKtsScript.classname"
 
 class DefinitionFromDependenciesProvider(val project: Project) : ScriptDefinitionsProvider {
-    override val id: String = "DefinitionFromDependencies"
+    override val id: String = KotlinScriptDefinitionsProviderId.FROM_DEPENDENCIES.id
 
     override fun getDefinitionClasses(): List<String> = definitionClasses()
 

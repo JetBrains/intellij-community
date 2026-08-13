@@ -37,6 +37,7 @@
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
@@ -68,6 +69,9 @@
                        key="notification.group.kotlin.script"/>
 
     <problemHighlightFilter implementation="org.jetbrains.kotlin.idea.core.script.k2.highlighting.ScriptProblemHighlightFilter"/>
+
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.core.script.k2.statistics.KotlinScriptingUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.core.script.k2.statistics.KotlinScriptingLifecycleCollector"/>
 
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptHighlightingVisitor"/>
 

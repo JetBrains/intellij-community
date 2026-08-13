@@ -49,7 +49,6 @@ jvm_library(
         "//platform/external-system-impl:externalSystem-impl",
         "//platform/external-system-api:externalSystem",
         "//platform/execution",
-        "//platform/statistics",
     ],
 )
 
@@ -89,7 +88,6 @@ jvm_library(
         "//platform/external-system-impl:externalSystem-impl_test_lib",
         "//platform/external-system-api:externalSystem_test_lib",
         "//platform/execution:execution_test_lib",
-        "//platform/statistics:statistics_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.scripting.shared` end

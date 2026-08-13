@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("IO_FILE_USAGE") // the deprecated getDefinitionsClassPath is kept as a File API on purpose
+@file:Suppress("IO_FILE_USAGE")
 
 package kotlin.script.experimental.intellij
 
@@ -40,9 +40,7 @@ interface ScriptDefinitionsProvider {
     fun getDefinitionsClassPath(): Iterable<File> = emptyList()
 
     /**
-     * Should return a classpath required for loading script definition template classes.
-     *
-     * Supersedes [getDefinitionsClassPath], which it falls back to while implementations are migrated off `java.io.File`.
+     * Should return a classpath required for loading script definition template classes
      */
     fun getTemplateClasspath(): Iterable<Path> =
         @Suppress("DEPRECATION", "IO_FILE_USAGE") getDefinitionsClassPath().map { it.toPath() }

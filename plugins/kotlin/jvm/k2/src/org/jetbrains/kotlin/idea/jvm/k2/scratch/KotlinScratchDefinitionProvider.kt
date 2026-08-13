@@ -8,9 +8,9 @@ import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.core.script.k2.definitions.KotlinScriptDefinitionsProviderId
 import org.jetbrains.kotlin.idea.core.script.scratch.definition.KotlinScratchCompilationConfiguration
 import org.jetbrains.kotlin.idea.core.script.shared.definition.jdkSupplier
 import org.jetbrains.kotlin.idea.core.script.shared.definition.scriptClassPath
@@ -33,7 +33,7 @@ import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
 class KotlinScratchDefinitionProvider(val project: Project) : ScriptDefinitionsProvider {
-    override val id: String = "KotlinScratch"
+    override val id: String = KotlinScriptDefinitionsProviderId.KOTLIN_SCRATCH.id
 
     override fun provideDefinitions(
         baseHostConfiguration: ScriptingHostConfiguration,
@@ -49,7 +49,6 @@ class KotlinScratchDefinitionProvider(val project: Project) : ScriptDefinitionsP
         displayName("Kotlin Scratch")
         hostConfiguration(defaultJvmScriptingHostConfiguration)
         ide.dependenciesSources(JvmDependency(KotlinArtifacts.kotlinStdlibSources))
-        // only .kts under the scratches root, e.g. <config>/scratches/scratch_174.kts; the extension is checked separately
         filePathPattern(scratchPathPattern())
         ide.jdkSupplier { virtualFile ->
             val jdkHome = scratchModuleSdkHome(project, virtualFile)
@@ -59,11 +58,6 @@ class KotlinScratchDefinitionProvider(val project: Project) : ScriptDefinitionsP
         }
     }
 
-    /**
-     * `isScript` matches against [VirtualFile.path], so the root has to be resolved through the VFS too — a plain
-     * config path can differ from it by symlink canonicalization (`/var` vs `/private/var` on macOS).
-     * Until the root shows up in the VFS, fall back to matching the directory name at any depth.
-     */
     private fun scratchPathPattern(): String {
         val root = ScratchFileService.getInstance().getRootPath(ScratchRootType.getInstance())
         val vfsRoot = LocalFileSystem.getInstance().findFileByPath(FileUtilRt.toSystemIndependentName(root))

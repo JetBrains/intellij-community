@@ -77,8 +77,7 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
                 ScriptDefinitionTableModel(
                     id = it.definitionId,
                     name = it.name,
-                    pattern = (it as? ScriptDefinition.FromConfigurationsBase)?.fileNamePattern
-                        ?: (it as? ScriptDefinition.FromConfigurationsBase)?.filePathPattern ?: ("." + it.fileExtension),
+                    pattern = (it as? ScriptDefinition.FromConfigurationsBase)?.fileNamePattern ?: ("." + it.fileExtension),
                     canBeSwitchedOff = it.compilationConfiguration[ScriptCompilationConfiguration.ide.canBeSwitchedOff] ?: true,
                     isEnabled = state.isScriptDefinitionEnabled(it)
                 )
