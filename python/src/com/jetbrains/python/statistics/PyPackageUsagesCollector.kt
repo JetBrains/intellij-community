@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.getOrNull
@@ -62,5 +63,5 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
   }
 }
 
-val PACKAGE_FIELD = EventFields.StringValidatedByDictionary("package", "python_packages.ndjson")
-val PACKAGE_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("package_version", "version")
+internal val PACKAGE_FIELD: StringEventField = EventFields.StringValidatedByDictionary("package", "python_packages.ndjson")
+internal val PACKAGE_VERSION_FIELD: StringEventField = EventFields.StringValidatedByRegexpReference("package_version", "version")

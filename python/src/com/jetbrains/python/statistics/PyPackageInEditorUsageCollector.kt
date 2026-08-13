@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.packaging.PyPackageName
 
-class PyPackageInEditorUsageCollector : ProjectUsagesCollector() {
+internal class PyPackageInEditorUsageCollector : ProjectUsagesCollector() {
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val keys = PyPackageUsageStatistics.getInstance(project).getStatisticsAndResetState().keys
     return keys.map { packageUsage ->
