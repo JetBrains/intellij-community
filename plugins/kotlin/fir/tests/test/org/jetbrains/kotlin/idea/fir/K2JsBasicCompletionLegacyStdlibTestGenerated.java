@@ -4555,6 +4555,16 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
                 runTest("../../completion/testData/basic/common/when/nullableSealedClassInWhen.kt");
             }
 
+            @TestMetadata("objectOfTypeSealedClassInWhen.kt")
+            public void testObjectOfTypeSealedClassInWhen() throws Exception {
+                runTest("../../completion/testData/basic/common/when/objectOfTypeSealedClassInWhen.kt");
+            }
+
+            @TestMetadata("objectOfTypeSealedClassInWhen2.kt")
+            public void testObjectOfTypeSealedClassInWhen2() throws Exception {
+                runTest("../../completion/testData/basic/common/when/objectOfTypeSealedClassInWhen2.kt");
+            }
+
             @TestMetadata("onTyping.kt")
             public void testOnTyping() throws Exception {
                 runTest("../../completion/testData/basic/common/when/onTyping.kt");
