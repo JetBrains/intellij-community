@@ -13,6 +13,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.asSafely
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.hatch.sdk.isHatch
@@ -112,6 +113,7 @@ internal val PYTHON_IMPLEMENTATION: StringEventField = EventFields.String("pytho
  * This class is for statistics only. It was never intented to provide an API for anything else. Do not use it!
  */
 @ApiStatus.Internal
+@PyInternalExecApi
 enum class InterpreterTarget(val value: String) {
   LOCAL("local"),
   REMOTE_DOCKER("Remote_Docker"),
@@ -162,6 +164,7 @@ val EXECUTION_TYPE: StringEventField = EventFields.String("executionType", listO
  * This class is for statistics only. It was never intented to provide an API for anything else. Do not use it!
  */
 @ApiStatus.Internal
+@PyInternalExecApi
 enum class InterpreterType(val value: String) {
   PIPENV("pipenv"),
   CONDAVENV("condavenv"),
@@ -198,6 +201,9 @@ private val Sdk.pythonImplementation: String get() = PythonSdkFlavor.getFlavor(t
 @get:ApiStatus.Internal
 val Sdk?.version: LanguageLevel get() = PySdkUtil.getLanguageLevelForSdk(this)
 
+/**
+ * **DO NOT USE FOR ANYTHING BUT FUS**
+ */
 @get:ApiStatus.Internal
 val Sdk.executionType: InterpreterTarget
   get() =

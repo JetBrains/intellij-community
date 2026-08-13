@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.registry.Registry
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.sdk.isReadOnly
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.InterpreterTarget
@@ -30,6 +31,7 @@ object PyTypeEngineUtils {
    */
   fun isLocalNonReadOnlySdk(module: Module): Boolean {
     val pythonSdk = module.pythonSdk ?: return false
+    @OptIn(PyInternalExecApi::class) // TODO: Do not use executionType, it is for the statistics only
     return !pythonSdk.isReadOnly && pythonSdk.executionType == InterpreterTarget.LOCAL
   }
 }
