@@ -114,7 +114,7 @@ class ConditionalModuleLoadingRuleValueTest {
   }
 
   private fun buildPluginSet(builder: PluginSetTestBuilder.() -> Unit = {}): PluginSet {
-    val state = PluginSetTestBuilder.fromPath(pluginsDirPath).apply(builder).buildState()
+    val state = PluginSetTestBuilder.fromPath(pluginsDirPath).apply(builder).buildManagerState()
     loadingErrors = state.loadingErrors
     return state.pluginSet
   }

@@ -1572,7 +1572,7 @@ internal class PluginDependenciesTest {
     val state = PluginSetTestBuilder.fromPath(pluginDirPath)
       .withExpiredPlugins(*expiredPluginIds)
       .withDisabledPlugins(*disabledPluginIds)
-      .buildState()
+      .buildManagerState()
     loadingErrors = state.loadingErrors
     return state.pluginSet
   }

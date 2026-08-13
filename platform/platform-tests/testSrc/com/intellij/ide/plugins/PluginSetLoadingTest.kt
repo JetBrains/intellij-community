@@ -96,7 +96,7 @@ class PluginSetLoadingTest {
 
     val resultState = PluginSetTestBuilder.fromPath(pluginsDirPath)
       .withDisabledPlugins("foo")
-      .buildState()
+      .buildManagerState()
     assertThat(resultState.incompletePluginsForLogging).isEmpty()
     assertThat(resultState.pluginSet.resolvedPluginSet.candidateSet.plugins).hasSize(1)
     val foo = resultState.pluginSet.resolvedPluginSet.candidateSet.plugins.single()
@@ -125,7 +125,7 @@ class PluginSetLoadingTest {
 
     val resultState = PluginSetTestBuilder.fromPath(pluginsDirPath)
       .withProductBuildNumber(BuildNumber.fromString("4.0")!!)
-      .buildState()
+      .buildManagerState()
 
     val plugins = resultState.pluginSet.enabledPlugins.toList()
     assertThat(plugins).hasSize(1)
@@ -898,7 +898,7 @@ class PluginSetLoadingTest {
   }
 
   private fun buildPluginSet(builder: PluginSetTestBuilder.() -> Unit = {}): PluginSet {
-    val state = PluginSetTestBuilder.fromPath(pluginsDirPath).apply(builder).buildState()
+    val state = PluginSetTestBuilder.fromPath(pluginsDirPath).apply(builder).buildManagerState()
     loadingErrors = state.loadingErrors
     return state.pluginSet
   }

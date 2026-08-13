@@ -125,7 +125,7 @@ class PluginSetTestBuilder private constructor(
     return loadingContext to discoveryResult
   }
 
-  fun buildState(configureClassLoaders: Boolean = true): PluginManagerState {
+  fun buildManagerState(configureClassLoaders: Boolean = true): PluginManagerState {
     val initContext = buildInitContext()
     val loadingContext = PluginDescriptorLoadingContext(getBuildNumberForDefaultDescriptorVersion = { productBuildNumber })
     val pluginList = PluginInitContextFactory.withCustomFactoryInUnitTests(TestPluginInitContextFactory(initContext)) { // FIXME this should not exist
@@ -145,5 +145,5 @@ class PluginSetTestBuilder private constructor(
     )
   }
 
-  fun build(): PluginSet = buildState().pluginSet
+  fun build(): PluginSet = buildManagerState().pluginSet
 }

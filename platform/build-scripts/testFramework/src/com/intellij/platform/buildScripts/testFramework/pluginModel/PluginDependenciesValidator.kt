@@ -78,7 +78,7 @@ class PluginDependenciesValidator private constructor(
       val validator = PluginDependenciesValidator(tempDir = tempDir, project = project, productMode = productMode, pluginLayoutProvider = pluginLayoutProvider, options = options)
       val pluginSetTestBuilder = validator.createPluginSet()
       val (pluginSet, loadingErrors) = pluginSetBuildMutex.withLock {
-        val pluginManagerState = pluginSetTestBuilder.buildState()
+        val pluginManagerState = pluginSetTestBuilder.buildManagerState()
         pluginManagerState.pluginSet to pluginManagerState.loadingErrors
       }
       validator.reportPluginLoadingErrors(loadingErrors)
