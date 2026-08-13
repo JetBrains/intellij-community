@@ -669,12 +669,6 @@ f:com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 - waitEverythingDoneInTestMode():V
 - waitForUpdate():V
 - waitUntilRefreshed():V
-f:com.intellij.openapi.vcs.changes.ChangeListManagerImpl$DefaultIgnoredFileProvider
-- com.intellij.openapi.vcs.changes.IgnoredFileProvider
-- <init>():V
-- getIgnoredFiles(com.intellij.openapi.project.Project):java.util.Set
-- getIgnoredGroupDescription():java.lang.String
-- isIgnoredFile(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
 f:com.intellij.openapi.vcs.changes.ChangeListUtil
 - sf:createNameForChangeList(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
 - sf:createSystemShelvedChangeListName(java.lang.String,java.lang.String):java.lang.String

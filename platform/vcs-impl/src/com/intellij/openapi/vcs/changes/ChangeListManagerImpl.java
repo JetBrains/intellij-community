@@ -1430,50 +1430,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     });
   }
 
-  public static final class DefaultIgnoredFileProvider implements IgnoredFileProvider {
-    @Override
-    public boolean isIgnoredFile(@NotNull Project project, @NotNull FilePath filePath) {
-      IProjectStore store = ProjectKt.getStateStore(project);
-      if (!ProjectKt.isDirectoryBased(project) && FileUtilRt.extensionEquals(filePath.getPath(), WorkspaceFileType.DEFAULT_EXTENSION)) {
-        return true; // *.iws
-      }
-
-      if (StringsKt.equals(filePath.getPath(),
-                           FileUtil.toSystemIndependentName(store.getWorkspacePath().toString()),
-                           !SystemInfo.isFileSystemCaseSensitive)) {
-        return true; // workspace.xml
-      }
-
-      if (isShelfDirOrInsideIt(filePath, project)) {
-        return true; // .idea/shelf
-      }
-
-      return false;
-    }
-
-    private static boolean isShelfDirOrInsideIt(@NotNull FilePath filePath, @NotNull Project project) {
-      String shelfPath = ShelveChangesManager.getShelfPath(project);
-      return FileUtil.isAncestor(shelfPath, filePath.getPath(), false);
-    }
-
-    @Override
-    public @NotNull Set<IgnoredFileDescriptor> getIgnoredFiles(@NotNull Project project) {
-      Set<IgnoredFileBean> ignored = new LinkedHashSet<>();
-
-      String shelfPath = ShelveChangesManager.getShelfPath(project);
-      ignored.add(IgnoredBeanFactory.ignoreUnderDirectory(shelfPath, project));
-
-      Path workspaceFile = ProjectKt.getStateStore(project).getWorkspacePath();
-      ignored.add(IgnoredBeanFactory.ignoreFile(workspaceFile.toString().replace(File.separatorChar, '/'), project));
-      return ContainerUtil.unmodifiableOrEmptySet(ignored);
-    }
-
-    @Override
-    public @NotNull String getIgnoredGroupDescription() {
-      return VcsBundle.message("changes.text.default.ignored.files");
-    }
-  }
-
   @Override
   public @Nullable String getSwitchedBranch(@NotNull VirtualFile file) {
     if (!file.isInLocalFileSystem()) return null;
