@@ -1063,6 +1063,8 @@ jvm_library(
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark-tests_test_lib",
         "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector-tests",
         "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector-tests_test_lib",
+        "//tools/intellij.tools.ide.metrics.statistics:ide-metrics-statistics-tests",
+        "//tools/intellij.tools.ide.metrics.statistics:ide-metrics-statistics-tests_test_lib",
         "//plugins/performanceTesting/event-bus:tools-ide-starter-bus-tests",
         "//plugins/performanceTesting/event-bus:tools-ide-starter-bus-tests_test_lib",
         "//plugins/git-features-trainer:vcs-git-featuresTrainer-tests",
