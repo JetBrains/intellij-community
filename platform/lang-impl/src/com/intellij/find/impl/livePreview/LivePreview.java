@@ -55,6 +55,8 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
 
   private final Disposable myDisposable = Disposer.newDisposable("livePreview");
   private boolean mySuppressedUpdate = false;
+  /** Set by {@link #cursorMoved} so that the general update it is paired with does not redo the occurrence highlighting. */
+  private boolean myCursorMoveOnly = false;
 
   private static final Key<Boolean> MARKER_USED = Key.create("LivePreview.MARKER_USED");
   private static final Key<Boolean> SEARCH_MARKER = Key.create("LivePreview.SEARCH_MARKER");
@@ -129,6 +131,11 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   public void searchResultsUpdated(@NotNull SearchResults sr) {
     if (mySuppressedUpdate) {
       mySuppressedUpdate = false;
+      return;
+    }
+    if (myCursorMoveOnly) {
+      // Everything this update would do has just been done by cursorMoved, which is the only thing that changed.
+      myCursorMoveOnly = false;
       return;
     }
     highlightUsages();
@@ -250,6 +257,12 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   public void cursorMoved() {
     requestInSelectionUpdate();
     updateCursorHighlighting();
+    // SearchResults.notifyCursorMoved reports a cursor move to each listener as a cursor move and then, immediately, as
+    // a general update. Redoing the occurrence highlighting for the second of those is pure waste: a cursor move cannot
+    // change which occurrences exist, and with a whole file's matches highlighted rederiving them is the most expensive
+    // thing a caret move does. This relies on the two notifications staying adjacent, which is the only way
+    // notifyCursorMoved issues them.
+    myCursorMoveOnly = true;
   }
 
   @Override
