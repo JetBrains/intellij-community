@@ -554,10 +554,12 @@ sealed class K2MoveRenameUsageInfo(
             val fileCount = qualifiedUsages.size
             val progress = ProgressManager.getInstance().progressIndicator
             qualifiedUsages.forEach { (file, usageMap) ->
+                // Retargeting might invalidate elements
+                val validUsages = usageMap.keys.filter { it.isValid }
                 // We create pointers to the qualified elements here because they might get invalidated by shortening.
-                val qualifiedExpressionPointers = usageMap.keys.filterIsInstance<KtDotQualifiedExpression>().map { it.createSmartPointer() }
+                val qualifiedExpressionPointers = validUsages.filterIsInstance<KtDotQualifiedExpression>().map { it.createSmartPointer() }
                 if (file is KtFile) {
-                  shortenReferences(usageMap.keys.filterIsInstance<KtElement>())
+                  shortenReferences(validUsages.filterIsInstance<KtElement>())
                 }
                 // There are some circumstances where the reference shortener does not shorten an expression we added the root prefix to.
                 // This can happen if the reference shortener is unable to add an import because the declaration's name is already
