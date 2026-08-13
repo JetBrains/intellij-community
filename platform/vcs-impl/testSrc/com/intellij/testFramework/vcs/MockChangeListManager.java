@@ -251,12 +251,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
-  @Override
-  public List<CommitExecutor> getRegisteredExecutors() {
-    throw new UnsupportedOperationException();
-  }
-
   @Override
   public void addUnversionedFiles(@NotNull LocalChangeList list, @NotNull List<? extends VirtualFile> unversionedFiles) {
     throw new UnsupportedOperationException();

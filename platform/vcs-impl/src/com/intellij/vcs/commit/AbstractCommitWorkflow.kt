@@ -440,7 +440,6 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     @JvmStatic
     fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs>): List<CommitExecutor> {
       return vcses.flatMap { it.commitExecutors } +
-             ChangeListManager.getInstance(project).registeredExecutors +
              CommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)
     }
 

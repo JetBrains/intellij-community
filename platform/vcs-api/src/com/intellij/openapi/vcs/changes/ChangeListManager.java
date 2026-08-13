@@ -203,9 +203,6 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   public abstract void removeChangeListListener(@NotNull ChangeListListener listener);
 
-
-  public abstract @NotNull @Unmodifiable List<CommitExecutor> getRegisteredExecutors();
-
   public abstract void commitChanges(@NotNull LocalChangeList changeList, @NotNull @Unmodifiable List<? extends Change> changes);
 
 

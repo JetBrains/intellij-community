@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.CommonBundle;
 import com.intellij.concurrency.SensitiveProgressWrapper;
-import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
@@ -15,7 +14,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -28,9 +26,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
@@ -52,7 +47,6 @@ import com.intellij.openapi.vcs.changes.actions.ChangeListRemoveConfirmation;
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
 import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
-import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vcs.impl.VcsEP;
@@ -64,7 +58,6 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.vcs.changes.ChangeListManagerState;
-import com.intellij.project.ProjectKt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
@@ -86,7 +79,6 @@ import com.intellij.vcs.commit.ShowNotificationCommitResultHandler;
 import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import kotlin.text.StringsKt;
 import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -100,14 +92,12 @@ import org.jetbrains.concurrency.Promise;
 
 import javax.swing.JComponent;
 import java.io.File;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -162,8 +152,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private boolean myModalNotificationsBlocked;
-
-  private final List<CommitExecutor> myRegisteredCommitExecutors = new ArrayList<>();
 
   public static ChangeListManagerImpl getInstanceImpl(@NotNull Project project) {
     return (ChangeListManagerImpl)getInstance(project);
@@ -1387,11 +1375,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     finally {
       readonlyStatusHandler.getState().SHOW_DIALOG = savedOption;
     }
-  }
-
-  @Override
-  public @NotNull @Unmodifiable List<CommitExecutor> getRegisteredExecutors() {
-    return Collections.unmodifiableList(myRegisteredCommitExecutors);
   }
 
   @SuppressWarnings("removal")
