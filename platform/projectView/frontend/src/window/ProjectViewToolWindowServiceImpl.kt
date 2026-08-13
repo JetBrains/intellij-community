@@ -162,8 +162,8 @@ internal class ProjectViewToolWindowServiceImpl(
                   TreeBasedFrontendProjectViewPane(project, descriptor)
                 }
                 val paneManager = PaneContentManager(toolWindow, pane)
-                LOG.debug { "Created pane ${descriptor.id}" }
                 panes[descriptor.id] = pane
+                LOG.info("Added pane ${descriptor.id}")
                 paneManager.managePane()
               }
               catch (e: Throwable) {
@@ -172,6 +172,7 @@ internal class ProjectViewToolWindowServiceImpl(
               }
               finally {
                 panes.remove(descriptor.id)
+                LOG.info("Removed pane ${descriptor.id}")
               }
             }
             val newJob = ManagePaneJob(descriptor, job)
