@@ -24,7 +24,6 @@ import kotlin.concurrent.Volatile
 internal abstract class DocumentMutatorImpl(
   private val settings: DocumentSettings,
   private val dispatcher: DocumentEventDispatcherImpl,
-  private val guardedBlocks: GuardedBlocks,
 ) : DocumentMutator {
   @Volatile private var textChangeInProgress = false
 
@@ -404,7 +403,7 @@ internal abstract class DocumentMutatorImpl(
 
   private fun assertFragmentNotGuarded(changeEvent: DocumentEvent, endOffset: Int) {
     if (settings.isGuardCheckEnabled(changeEvent.isWholeTextReplaced)) {
-      val marker: RangeMarker? = guardedBlocks.getRangeGuard(changeEvent.getOffset(), endOffset)
+      val marker: RangeMarker? = changeEvent.document.getRangeGuard(changeEvent.getOffset(), endOffset)
       if (marker != null) {
         throw ReadOnlyFragmentModificationException(changeEvent, marker)
       }

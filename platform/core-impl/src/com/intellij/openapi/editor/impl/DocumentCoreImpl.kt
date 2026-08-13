@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.ex.DocumentEventDispatcher
 import com.intellij.openapi.editor.ex.DocumentMutator
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
-import com.intellij.openapi.editor.ex.RangeMarkerStorage
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import java.util.function.UnaryOperator
 import kotlin.concurrent.Volatile
@@ -18,9 +17,7 @@ internal class DocumentCoreImpl private constructor(
   @Volatile private var snapshot: DocumentSnapshot, // mutable via SNAPSHOT_UPDATER
   private val settings: DocumentSettings,
   private val dispatcher: DocumentEventDispatcherImpl,
-  private val rangeMarkers: RangeMarkerStorageImpl,
 ) : DocumentCore {
-  private val guardedBlocks: GuardedBlocks = GuardedBlocksImpl(rangeMarkers)
   private val live: CharSequence = LiveCharSequence()
   private val mutator: DocumentMutator = MutatorImpl()
   @Volatile private var frozen: FrozenDocument? = null
@@ -31,14 +28,6 @@ internal class DocumentCoreImpl private constructor(
 
   override fun live(): CharSequence {
     return live
-  }
-
-  override fun rangeMarkers(): RangeMarkerStorage {
-    return rangeMarkers
-  }
-
-  override fun guardedBlocks(): GuardedBlocks {
-    return guardedBlocks
   }
 
   override fun dispatcher(): DocumentEventDispatcher {
@@ -88,7 +77,7 @@ internal class DocumentCoreImpl private constructor(
     }
   }
 
-  private inner class MutatorImpl : DocumentMutatorImpl(settings, dispatcher, guardedBlocks) {
+  private inner class MutatorImpl : DocumentMutatorImpl(settings, dispatcher) {
     override fun getSnapshot(): DocumentSnapshot {
       return this@DocumentCoreImpl.snapshot
     }
@@ -103,9 +92,8 @@ internal class DocumentCoreImpl private constructor(
     fun createCore(chars: CharSequence, acceptSlashR: Boolean, forUseInNonAWTThread: Boolean): DocumentCore {
       val settings = DocumentSettingsImpl(!forUseInNonAWTThread, acceptSlashR, chars)
       val dispatcher = DocumentEventDispatcherImpl(settings)
-      val tree = RangeMarkerStorageImpl(dispatcher)
       val snapshot = DocumentSnapshotImpl(DocumentTextImpl(chars))
-      return DocumentCoreImpl(snapshot, settings, dispatcher, tree)
+      return DocumentCoreImpl(snapshot, settings, dispatcher)
     }
 
     /**

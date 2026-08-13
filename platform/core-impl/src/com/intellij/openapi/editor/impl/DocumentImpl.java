@@ -40,6 +40,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
    * Actual document implementation hidden behind an interface
    */
   private final DocumentCore impl;
+  private final RangeMarkerStorageImpl rangeMarkers;
+  private final GuardedBlocks guardedBlocks;
 
   /**
    * Document reference used for communication with the outside world: document listeners, EPs, CommandProcessor, etc.
@@ -92,6 +94,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   public DocumentImpl(@NotNull DocumentCore impl, @Nullable DocumentImpl hostDocument) {
     this.impl = impl;
     this.hostDocument = hostDocument;
+    rangeMarkers = new RangeMarkerStorageImpl(impl.dispatcher());
+    guardedBlocks = new GuardedBlocksImpl(rangeMarkers);
   }
 
   @Override
@@ -211,12 +215,12 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public @NotNull RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
-    return impl.rangeMarkers().createRangeMarker(hostDocument(), startOffset, endOffset, surviveOnExternalChange);
+    return rangeMarkers.createRangeMarker(hostDocument(), startOffset, endOffset, surviveOnExternalChange);
   }
 
   @Override
   public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
-    return impl.rangeMarkers().removeRangeMarker(rangeMarker);
+    return rangeMarkers.removeRangeMarker(rangeMarker);
   }
 
   @Override
@@ -226,7 +230,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
                                   boolean greedyToLeft,
                                   boolean greedyToRight,
                                   int layer) {
-    impl.rangeMarkers().registerRangeMarker(rangeMarker, start, end, greedyToLeft, greedyToRight, layer);
+    rangeMarkers.registerRangeMarker(rangeMarker, start, end, greedyToLeft, greedyToRight, layer);
   }
 
   @Override
@@ -236,7 +240,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) {
-    return impl.rangeMarkers().processRangeMarkersOverlappingWith(start, end, processor);
+    return rangeMarkers.processRangeMarkersOverlappingWith(start, end, processor);
   }
 
   @Override
@@ -293,27 +297,27 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public @NotNull RangeMarker createGuardedBlock(int startOffset, int endOffset) {
-    return impl.guardedBlocks().createGuardedBlock(hostDocument(), startOffset, endOffset);
+    return guardedBlocks.createGuardedBlock(hostDocument(), startOffset, endOffset);
   }
 
   @Override
   public void removeGuardedBlock(@NotNull RangeMarker block) {
-    impl.guardedBlocks().removeGuardedBlock(block);
+    guardedBlocks.removeGuardedBlock(block);
   }
 
   @Override
   public @NotNull @UnmodifiableView List<RangeMarker> getGuardedBlocks() {
-    return impl.guardedBlocks().getGuardedBlocks();
+    return guardedBlocks.getGuardedBlocks();
   }
 
   @Override
   public @Nullable RangeMarker getOffsetGuard(int offset) {
-    return impl.guardedBlocks().getOffsetGuard(offset);
+    return guardedBlocks.getOffsetGuard(offset);
   }
 
   @Override
   public @Nullable RangeMarker getRangeGuard(int start, int end) {
-    return impl.guardedBlocks().getRangeGuard(start, end);
+    return guardedBlocks.getRangeGuard(start, end);
   }
 
   @Override
@@ -383,7 +387,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @ApiStatus.Internal
   public void documentCreatedFrom(@NotNull VirtualFile f, int tabSize) {
-    impl.rangeMarkers().restoreRangeMarkersFromFile(f, hostDocument(), tabSize);
+    rangeMarkers.restoreRangeMarkersFromFile(f, hostDocument(), tabSize);
   }
 
   @ApiStatus.Internal
@@ -460,13 +464,13 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   @TestOnly
   @ApiStatus.Internal
   public int getRangeMarkersSize() {
-    return impl.rangeMarkers().getRangeMarkersSize();
+    return rangeMarkers.getRangeMarkersSize();
   }
 
   @TestOnly
   @ApiStatus.Internal
   public int getRangeMarkersNodeSize() {
-    return impl.rangeMarkers().getRangeMarkersNodeSize();
+    return rangeMarkers.getRangeMarkersNodeSize();
   }
 
   private @NotNull DocumentImpl hostDocument() {

@@ -27,8 +27,7 @@ import kotlin.concurrent.Volatile
 internal abstract class DocumentRealMutator(
   settings: DocumentSettings,
   private val dispatcher: DocumentMagicEventDispatcher,
-  guardedBlocks: GuardedBlocks,
-) : DocumentMutatorImpl(settings, dispatcher, guardedBlocks) {
+) : DocumentMutatorImpl(settings, dispatcher) {
   @Volatile private var textChangeInProgress = false
   @Volatile private var isApplyingElfChangesToReal = false
 

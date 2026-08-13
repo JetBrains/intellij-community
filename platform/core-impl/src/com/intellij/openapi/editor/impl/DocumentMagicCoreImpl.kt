@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.ex.DocumentEventDispatcher
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.DocumentMagicCore
 import com.intellij.openapi.editor.ex.DocumentMutator
-import com.intellij.openapi.editor.ex.RangeMarkerStorage
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
@@ -35,13 +34,12 @@ import kotlin.concurrent.Volatile
  * @see DocumentMagicCore
  */
 internal class DocumentMagicCoreImpl private constructor(
-  @Volatile private var snapshot: SnapshotSnapshot, // mutable via SNAPSHOT_UPDATER
+  /** mutable via [SNAPSHOT_UPDATER] */
+  @Volatile private var snapshot: SnapshotSnapshot,
   private val settingsElf: DocumentSettings,
   private val settingsReal: DocumentSettings,
 ): DocumentMagicCore {
   private val dispatcher: DocumentMagicEventDispatcher = DocumentMagicEventDispatcherImpl()
-  private val rangeMarkers: RangeMarkerStorageImpl = RangeMarkerStorageImpl(dispatcher)
-  private val guardedBlocks: GuardedBlocks = GuardedBlocksImpl(rangeMarkers)
   private val mutatorElf: DocumentElfMutator = DocumentElfMutatorImpl()
   private val mutatorReal: DocumentRealMutator = DocumentRealMutatorImpl()
   private val sync: ElfRealSync = ElfRealSyncImpl()
@@ -72,14 +70,6 @@ internal class DocumentMagicCoreImpl private constructor(
     } else {
       liveReal
     }
-  }
-
-  override fun rangeMarkers(): RangeMarkerStorage {
-    return rangeMarkers
-  }
-
-  override fun guardedBlocks(): GuardedBlocks {
-    return guardedBlocks
   }
 
   override fun dispatcher(): DocumentEventDispatcher {
@@ -180,14 +170,6 @@ internal class DocumentMagicCoreImpl private constructor(
       return this@DocumentMagicCoreImpl.liveElf
     }
 
-    override fun rangeMarkers(): RangeMarkerStorage {
-      return this@DocumentMagicCoreImpl.rangeMarkers
-    }
-
-    override fun guardedBlocks(): GuardedBlocks {
-      return this@DocumentMagicCoreImpl.guardedBlocks
-    }
-
     override fun dispatcher(): DocumentEventDispatcher {
       return this@DocumentMagicCoreImpl.dispatcher.elf()
     }
@@ -212,14 +194,6 @@ internal class DocumentMagicCoreImpl private constructor(
 
     override fun live(): CharSequence {
       return this@DocumentMagicCoreImpl.liveReal
-    }
-
-    override fun rangeMarkers(): RangeMarkerStorage {
-      return this@DocumentMagicCoreImpl.rangeMarkers
-    }
-
-    override fun guardedBlocks(): GuardedBlocks {
-      return this@DocumentMagicCoreImpl.guardedBlocks
     }
 
     override fun dispatcher(): DocumentEventDispatcher {
@@ -273,7 +247,7 @@ internal class DocumentMagicCoreImpl private constructor(
     }
   }
 
-  private inner class DocumentRealMutatorImpl : DocumentRealMutator(settingsReal, dispatcher, guardedBlocks) {
+  private inner class DocumentRealMutatorImpl : DocumentRealMutator(settingsReal, dispatcher) {
     override fun getSnapshot(): DocumentSnapshot {
       return this@DocumentMagicCoreImpl.snapshot.real
     }
@@ -295,7 +269,7 @@ internal class DocumentMagicCoreImpl private constructor(
     }
   }
 
-  private inner class DocumentElfMutatorImpl : DocumentElfMutator(settingsElf, dispatcher, guardedBlocks) {
+  private inner class DocumentElfMutatorImpl : DocumentElfMutator(settingsElf, dispatcher) {
     override fun getSnapshot(): DocumentSnapshot {
       return this@DocumentMagicCoreImpl.snapshot.elf
     }

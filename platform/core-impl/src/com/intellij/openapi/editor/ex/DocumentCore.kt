@@ -29,17 +29,6 @@ interface DocumentCore {
   fun live(): CharSequence
 
   /**
-   * Returns storage and lookup support for range markers
-   */
-  @Contract(pure = true)
-  fun rangeMarkers(): RangeMarkerStorage
-  /**
-   * Returns storage and lookup support for guarded blocks
-   */
-  @Contract(pure = true)
-  fun guardedBlocks(): GuardedBlocks
-
-  /**
    * Returns listener storage and notification dispatch support
    */
   @Contract(pure = true)
