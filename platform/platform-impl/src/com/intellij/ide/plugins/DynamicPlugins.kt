@@ -57,7 +57,6 @@ object DynamicPlugins {
       pretendEnabled = pretendEnabled,
       pretendDisabled = pretendDisabled,
     )
-    // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
     val resolvedPluginSet = newState.resolvedPluginSet
     extraStateValidator.validate(resolvedPluginSet)?.let {
       LOG.info("new plugins state did not meet expectations: $it")
@@ -106,7 +105,6 @@ object DynamicPlugins {
       cancellation = TaskCancellation.nonCancellable()
     ) {
       val newState = computeNewPluginsState(addNewCustomPlugins, forceRemovePlugins, forceExclude = true)
-      // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
       val resolvedPluginSet = newState.resolvedPluginSet
       extraStateValidator.validate(resolvedPluginSet)?.let {
         LOG.info("new plugins state did not meet expectations: $it")
@@ -154,7 +152,6 @@ object DynamicPlugins {
       cancellation = TaskCancellation.nonCancellable()
     ) {
       val newState = computeNewPluginsState(plugins, emptyList())
-      // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
       val resolvedPluginSet = newState.resolvedPluginSet
       expectPluginsState(expectToLoad = plugins.map { it.pluginId }).validate(resolvedPluginSet)?.let {
         LOG.info("new plugins state did not meet expectations: $it")
@@ -174,7 +171,6 @@ object DynamicPlugins {
       cancellation = TaskCancellation.nonCancellable()
     ) {
       val newState = computeNewPluginsState(listOf(pluginDescriptor), emptyList())
-      // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
       val resolvedPluginSet = newState.resolvedPluginSet
       expectPluginsState(expectToLoad = listOf(pluginDescriptor.pluginId)).validate(resolvedPluginSet)?.let {
         LOG.info("new plugins state did not meet expectations: $it")
@@ -199,7 +195,6 @@ object DynamicPlugins {
       cancellation = TaskCancellation.nonCancellable()
     ) {
       val newState = computeNewPluginsState(emptyList(), plugins)
-      // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
       val resolvedPluginSet = newState.resolvedPluginSet
       expectPluginsState(expectNotToLoad = plugins.map { it.pluginId }).validate(resolvedPluginSet)?.let {
         LOG.info("new plugins state did not meet expectations: $it")
@@ -218,7 +213,6 @@ object DynamicPlugins {
       cancellation = TaskCancellation.nonCancellable()
     ) {
       val newState = computeNewPluginsState(emptyList(), listOf(pluginDescriptor))
-      // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
       val resolvedPluginSet = newState.resolvedPluginSet
       expectPluginsState(expectNotToLoad = listOf(pluginDescriptor.pluginId)).validate(resolvedPluginSet)?.let {
         LOG.info("new plugins state did not meet expectations: $it")
@@ -235,7 +229,6 @@ object DynamicPlugins {
   @RequiresBackgroundThread(generateAssertion = false)
   fun validateCanUnloadWithoutRestart(plugin: PluginMainDescriptor): String? {
     val newState = computeNewPluginsState(emptyList(), listOf(plugin), pretendDisabled = listOf(plugin.pluginId))
-    // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
     val resolvedPluginSet = newState.resolvedPluginSet
     expectPluginsState(expectNotToLoad = listOf(plugin.pluginId)).validate(resolvedPluginSet)?.let {
       return it
@@ -251,7 +244,6 @@ object DynamicPlugins {
   @RequiresBackgroundThread(generateAssertion = false)
   fun validateCanLoadWithoutRestart(plugin: PluginMainDescriptor): String? {
     val newState = computeNewPluginsState(listOf(plugin), listOf(), pretendEnabled = listOf(plugin.pluginId))
-    // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
     val resolvedPluginSet = newState.resolvedPluginSet
     expectPluginsState(expectToLoad = listOf(plugin.pluginId)).validate(resolvedPluginSet)?.let {
       return it
