@@ -645,7 +645,72 @@ class PluginInitializationTargetStateTest {
   }
 
   @Nested
-  inner class IncompatibleWithEssentialPlugins {
+  inner class DependencyCycles {
+
+    @Test
+    fun `multiple dependency cycles are excluded independently and exclusion propagates to dependents`() {
+      plugin("cycle-a") { depends("cycle-b") }.installAt(pluginsDirPath)
+      plugin("cycle-b") { depends("cycle-a") }.installAt(pluginsDirPath)
+      plugin("cycle-c") { depends("cycle-d") }.installAt(pluginsDirPath)
+      plugin("cycle-d") { depends("cycle-e") }.installAt(pluginsDirPath)
+      plugin("cycle-e") { depends("cycle-c") }.installAt(pluginsDirPath)
+      plugin("dependent") { depends("cycle-a") }.installAt(pluginsDirPath)
+      plugin("unrelated") {}.installAt(pluginsDirPath)
+
+      val result = computeTargetState()
+      val cycleReasons = listOf("cycle-a", "cycle-b", "cycle-c", "cycle-d", "cycle-e").associateWith { id ->
+        result.resolvedPluginSet.getExclusionReason(result.getCandidatePlugin(id)) as PartOfDependencyCycle
+      }
+
+      assertThat(result).hasExactlyEnabledPlugins("unrelated")
+      assertThat(cycleReasons.values.map { it.dependencyCycle }.toSet()).hasSize(2)
+      assertThat(cycleReasons.getValue("cycle-a").dependencyCycle).isSameAs(cycleReasons.getValue("cycle-b").dependencyCycle)
+      assertThat(cycleReasons.getValue("cycle-c").dependencyCycle).isSameAs(cycleReasons.getValue("cycle-d").dependencyCycle)
+        .isSameAs(cycleReasons.getValue("cycle-e").dependencyCycle)
+      assertThat(result.resolvedPluginSet.getExclusionReason(result.getCandidatePlugin("dependent")))
+        .isInstanceOf(DependencyIsExcluded::class.java)
+    }
+
+    @Test
+    fun `cycle formed by optional dependencies is excluded`() {
+      plugin("cycle-a") { depends("cycle-b", optional = true) }.installAt(pluginsDirPath)
+      plugin("cycle-b") { depends("cycle-c", optional = true) }.installAt(pluginsDirPath)
+      plugin("cycle-c") { depends("cycle-a", optional = true) }.installAt(pluginsDirPath)
+
+      val result = computeTargetState()
+
+      assertThat(result).doesNotHaveEnabledPlugins()
+      for (id in listOf("cycle-a", "cycle-b", "cycle-c")) {
+        assertThat(result.resolvedPluginSet.getExclusionReason(result.getCandidatePlugin(id)))
+          .isInstanceOf(PartOfRuntimeModuleGroupDependencyCycle::class.java)
+      }
+    }
+
+    @Test
+    fun `cycle through optional config descriptors is excluded`() {
+      plugin("cycle-a") {
+        depends("support", configFile = "support.xml") {
+          depends("cycle-c", configFile = "cycle-c.xml") {}
+        }
+      }.installAt(pluginsDirPath)
+      plugin("support") {}.installAt(pluginsDirPath)
+      plugin("cycle-c") {
+        depends("cycle-a")
+        depends("support")
+      }.installAt(pluginsDirPath)
+
+      val result = computeTargetState()
+
+      assertThat(result).hasExactlyEnabledPlugins("support")
+      for (id in listOf("cycle-a", "cycle-c")) {
+        assertThat(result.resolvedPluginSet.getExclusionReason(result.getCandidatePlugin(id)))
+          .isInstanceOf(PartOfRuntimeModuleGroupDependencyCycle::class.java)
+      }
+    }
+  }
+
+  @Nested
+  inner class IncompatibleWith {
 
     @Test
     fun `plugin remains a candidate and is excluded when essential declares incompatible-with it`() {
@@ -727,6 +792,34 @@ class PluginInitializationTargetStateTest {
       assertThat(result.resolvedPluginSet.isResolved(foo)).isTrue()
       assertThat(result.resolvedPluginSet.isExcluded(bar)).isTrue()
       assertThat(result.resolvedPluginSet.getExclusionReason(bar)).isInstanceOf(IncompatibleWithAnotherModule::class.java)
+    }
+
+    @Test
+    fun `incompatible-with unknown module does not exclude plugin`() {
+      plugin("foo") {
+        incompatibleWith = listOf("unknown.module")
+      }.installAt(pluginsDirPath)
+
+      val result = computeTargetState()
+
+      assertThat(result).hasExactlyEnabledPlugins("foo")
+    }
+
+    @Test
+    fun `incompatible-with excluded module does not exclude plugin`() {
+      plugin("foo") {
+        incompatibleWith = listOf("unavailable.module")
+      }.installAt(pluginsDirPath)
+      plugin("unavailable") {
+        pluginAliases = listOf("unavailable.module")
+        depends("missing")
+      }.installAt(pluginsDirPath)
+
+      val result = computeTargetState()
+
+      assertThat(result).hasExactlyEnabledPlugins("foo")
+      assertThat(result.resolvedPluginSet.getExclusionReason(result.getCandidatePlugin("unavailable")))
+        .isInstanceOf(DependencyIsNotResolved::class.java)
     }
   }
 
