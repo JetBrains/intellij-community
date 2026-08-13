@@ -1091,6 +1091,8 @@ jvm_library(
         "//plugins/yaml:yaml-tests_test_lib",
         "//plugins/kotlin/gradle/gradle-java:kotlin-gradle-gradle-java-tests",
         "//plugins/kotlin/gradle/gradle-java:kotlin-gradle-gradle-java-tests_test_lib",
+        "//platform/remote-driver/client:driver-client-tests",
+        "//platform/remote-driver/client:driver-client-tests_test_lib",
         "//platform/execution-process-mediator/client:execution-process-mediator-client-tests",
         "//platform/execution-process-mediator/client:execution-process-mediator-client-tests_test_lib",
         "//platform/execution-process-mediator/common:execution-process-mediator-common-tests",

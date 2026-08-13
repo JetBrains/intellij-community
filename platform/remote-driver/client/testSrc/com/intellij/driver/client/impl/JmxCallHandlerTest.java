@@ -70,7 +70,7 @@ class JmxCallHandlerTest {
       Future<String> blockedCall = executor.submit(mbean::block);
       assertThat(callEntered.await(5, TimeUnit.SECONDS)).isTrue();
 
-      ((AutoCloseable)mbean).close();
+      mbean.close();
 
       assertThatThrownBy(() -> blockedCall.get(5, TimeUnit.SECONDS))
         .isInstanceOf(ExecutionException.class)
@@ -98,7 +98,7 @@ class JmxCallHandlerTest {
     return null;
   }
 
-  private interface BlockingMBean {
+  private interface BlockingMBean extends AutoCloseable {
     String block();
   }
 }

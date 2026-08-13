@@ -30,25 +30,15 @@ jvm_library(
     name = "client_test_lib",
     testonly = True,
     srcs = glob(
-        [
-            "testSrc/**/*.kt",
-            "testSrc/**/*.java",
-            "testSrc/**/*.form",
-        ],
+        [],
         allow_empty = True,
     ),
-    associates = [":client"],
+    module_name = "intellij.driver.client",
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
-        "//platform/remote-driver/model",
+        ":client",
         "//platform/remote-driver/model:model_test_lib",
-        "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
-        "@lib//:kotlin-stdlib",
-        "//libraries/jetbrains/annotations",
         "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
@@ -63,9 +53,56 @@ exports_files(
 )
 ### auto-generated section `iml intellij.driver.client` end
 
-### auto-generated section `test intellij.driver.client` start
-jps_test(
-    name = "client_test",
-    runtime_deps = [":client_test_lib"],
+### auto-generated section `build intellij.driver.client.tests` start
+jvm_library(
+    name = "driver-client-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.driver.client.tests",
+    visibility = ["//visibility:public"],
 )
-### auto-generated section `test intellij.driver.client` end
+
+jvm_library(
+    name = "driver-client-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//platform/remote-driver/client",
+        "//platform/remote-driver/client:client_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [":driver-client-tests"],
+    deps = [
+        # do not sort,
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+    ],
+)
+### auto-generated section `build intellij.driver.client.tests` end
+
+### auto-generated section `iml intellij.driver.client.tests` start
+exports_files(
+    [
+        "intellij.driver.client.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.driver.client.tests` end
+
+### auto-generated section `test intellij.driver.client.tests` start
+jps_test(
+    name = "driver-client-tests_test",
+    runtime_deps = [":driver-client-tests_test_lib"],
+)
+### auto-generated section `test intellij.driver.client.tests` end

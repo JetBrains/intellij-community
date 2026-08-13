@@ -445,6 +445,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/env-files-support/kotlin/intellij.dotenv.kotlin.iml" filepath="$PROJECT_DIR$/plugins/env-files-support/kotlin/intellij.dotenv.kotlin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/env-files-support/python/intellij.dotenv.python.iml" filepath="$PROJECT_DIR$/plugins/env-files-support/python/intellij.dotenv.python.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/client/intellij.driver.client.iml" filepath="$PROJECT_DIR$/platform/remote-driver/client/intellij.driver.client.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/client/intellij.driver.client.tests.iml" filepath="$PROJECT_DIR$/platform/remote-driver/client/intellij.driver.client.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/core/intellij.driver.impl.iml" filepath="$PROJECT_DIR$/platform/remote-driver/core/intellij.driver.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/model/intellij.driver.model.iml" filepath="$PROJECT_DIR$/platform/remote-driver/model/intellij.driver.model.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/test-sdk/intellij.driver.sdk.iml" filepath="$PROJECT_DIR$/platform/remote-driver/test-sdk/intellij.driver.sdk.iml" />
