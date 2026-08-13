@@ -52,6 +52,7 @@
     <propertyAccessorDetector implementation="de.plushnikov.intellij.plugin.extension.LombokPropertyAccessorDetector"/>
 
     <lang.java.javaErrorFilter implementation="de.plushnikov.intellij.plugin.extension.LombokHighlightErrorFilter"/>
+    <lang.inspectionSuppressor language="JAVA" implementationClass="de.plushnikov.intellij.plugin.extension.LombokJavadocInspectionSuppressor"/>
 
     <lang.inferredAnnotationProvider implementation="de.plushnikov.intellij.plugin.extension.LombokInferredAnnotationProvider"/>
 

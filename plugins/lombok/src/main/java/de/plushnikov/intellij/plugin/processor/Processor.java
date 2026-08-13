@@ -87,4 +87,20 @@ public interface Processor {
   /// @param psiAnnotation supported annotation that may generate usage of `psiField`
   /// @return usage kind introduced for `psiField` by `psiAnnotation`
   LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation);
+
+  /// Checks whether call to [Processor#process(PsiClass)] would generate getter for the `psiField`.
+  ///
+  /// @param psiField field to check
+  /// @return true if call to [Processor#process(PsiClass)] would generate getter for the `psiField`.
+  default boolean contributesGetter(@NotNull PsiField psiField) {
+    return false;
+  }
+
+  /// Checks whether call to [Processor#process(PsiClass)] would generate a setter for the `psiField`.
+  ///
+  /// @param psiField field to check
+  /// @return true if call to [Processor#process(PsiClass)] would generate a setter for the `psiField`.
+  default boolean contributesSetter(@NotNull PsiField psiField) {
+    return false;
+  }
 }
