@@ -77,6 +77,18 @@ data class IDERunContext(
   val collectNativeThreads: Boolean = false,
   private val stdOut: ExecOutputRedirect? = null,
 ) {
+  /**
+   * What this run is called wherever the name has to stay the same across runs of the same test — the identity IJ Perf, bisect and the
+   * screenshot service know it by — and, for the same reason, the path under which anything of this run is published.
+   *
+   * A published artifact is only worth publishing if the tools that link to it can name it, and all IJ Perf keeps of a run is the project and
+   * the method name: a path it cannot rebuild out of those two is a path nothing ever navigates to again. Publishing under the launch's own
+   * [IDEReportingData.artifactPath] instead takes IJ Perf's links, issue creation and log analysis with it, and buries the artifacts a few
+   * directories deeper on the way out.
+   *
+   * It names the whole IDE process, so it is deliberately blind to the test methods that process reports for. To name a launch to a human,
+   * use the launch's own [IDEReportingData.humanReadableTestName].
+   */
   val contextName: String = (if (launchName.isNotBlank()) "${testContext.testName}/${launchName}" else testContext.testName)
 
   private val reportingDataRegistry = IDEReportingDataRegistry(testContext, launchName)

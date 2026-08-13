@@ -88,12 +88,15 @@ object TimeoutAnalyzer {
   private fun postLastScreenshots(runContext: IDERunContext) {
     if (!CIServer.instance.isBuildRunningOnCI) return
 
+    // under the name of the run, which is the only artifact path IJ Perf and issue creation can rebuild — see IDERunContext.contextName
+    val screenshotsArtifactPath = runContext.contextName.replaceSpecialCharactersWithHyphens() + "/timeout-screenshots"
+
     getLastScreenshots(runContext).forEach { screenshot ->
       logOutput("Adding screenshot to metadata: ${screenshot.pathString}")
 
       TeamCityClient.publishTeamCityArtifacts(
         screenshot,
-        runContext.contextName.replaceSpecialCharactersWithHyphens() + "/timeout-screenshots",
+        screenshotsArtifactPath,
         screenshot.name,
         false
       )
@@ -103,7 +106,7 @@ object TimeoutAnalyzer {
         type = TeamCityReporter.MetadataType.IMAGE,
         flowId = null,
         name = null,
-        value = runContext.contextName.replaceSpecialCharactersWithHyphens() + "/timeout-screenshots/${screenshot.name}"
+        value = "$screenshotsArtifactPath/${screenshot.name}"
       )
     }
   }
