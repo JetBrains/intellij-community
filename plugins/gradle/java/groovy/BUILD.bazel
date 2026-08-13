@@ -63,7 +63,7 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io",
         "//platform/ide-core",
         "//platform/testRunner",
-        "//plugins/gradle/java/properties",
+        "//plugins/gradle/properties",
     ],
 )
 
@@ -123,7 +123,7 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/testRunner:testRunner_test_lib",
-        "//plugins/gradle/java/properties:properties_test_lib",
+        "//plugins/gradle/properties:properties_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.java.groovy` end

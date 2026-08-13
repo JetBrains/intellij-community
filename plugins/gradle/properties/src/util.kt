@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.java.properties.util
+package com.intellij.gradle.properties
 
 import com.intellij.lang.properties.psi.PropertiesFile
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil

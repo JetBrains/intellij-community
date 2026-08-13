@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.java.properties.findUsages
 
+import com.intellij.gradle.properties.gradlePropertiesStream
 import com.intellij.lang.properties.codeInspection.unused.ImplicitPropertyUsageProvider
 import com.intellij.lang.properties.psi.PropertiesFile
 import com.intellij.lang.properties.psi.Property
 import com.intellij.util.asSafely
-import com.intellij.gradle.java.properties.util.gradlePropertiesStream
 
 class GradleImplicitPropertyUsageProvider : ImplicitPropertyUsageProvider {
 

@@ -5,7 +5,7 @@
     <module name="intellij.gradle"/>
     <module name="intellij.kotlin.gradle.gradle"/>
     <module name="intellij.gradle.java"/>
-    <module name="intellij.gradle.java.properties"/>
+    <module name="intellij.gradle.properties"/>
     <module name="intellij.java.frontback.psi.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>

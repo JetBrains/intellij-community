@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.gradle.java.properties.util.gradlePropertiesStream
+import com.intellij.gradle.properties.gradlePropertiesStream
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile

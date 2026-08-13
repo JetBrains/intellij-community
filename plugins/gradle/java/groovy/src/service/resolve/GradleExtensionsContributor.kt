@@ -3,7 +3,7 @@ package com.intellij.gradle.java.groovy.service.resolve
 
 import com.intellij.gradle.java.groovy.service.resolve.GradleExtensionsContributorUtil.Companion.PROPERTIES_FILE_ORIGINAL_INFO
 import com.intellij.gradle.java.groovy.service.resolve.GradleExtensionsContributorUtil.Companion.getExtensionsFor
-import com.intellij.gradle.java.properties.util.gradlePropertiesStream
+import com.intellij.gradle.properties.gradlePropertiesStream
 import com.intellij.icons.AllIcons
 import com.intellij.lang.properties.IProperty
 import com.intellij.psi.CommonClassNames
