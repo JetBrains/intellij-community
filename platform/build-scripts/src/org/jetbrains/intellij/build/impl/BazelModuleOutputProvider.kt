@@ -10,8 +10,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.jps.model.module.JpsModule
-import java.nio.file.Path
 import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 
 private const val BAZEL_BUILD_INPUTS_MANIFEST_PROPERTY = "intellij.build.bazel.inputs.manifest"
@@ -31,37 +31,44 @@ object BazelBuildInputs {
   }
 }
 
-private class ExplicitBazelInputResolver(
-  private val inputs: Map<String, Path>,
+private data class ExplicitBazelInput(
+  @JvmField val execPath: String,
+  @JvmField val absolutePath: Path,
+)
+
+internal class ExplicitBazelInputResolver private constructor(
+  private val inputs: Map<String, ExplicitBazelInput>,
 ) {
-  private val used = HashSet<Path>()
+  private val usedExecPaths = HashSet<String>()
 
   @Synchronized
   fun resolve(label: String): Path {
-    val path = inputs.get(label) ?: error("Bazel input '$label' is not declared in the explicit input manifest")
-    used.add(path)
-    return path
+    val input = inputs.get(label) ?: error("Bazel input '$label' is not declared in the explicit input manifest")
+    usedExecPaths.add(input.execPath)
+    return input.absolutePath
   }
 
   @Synchronized
   fun writeUnusedInputs(file: Path) {
     file.parent?.let { Files.createDirectories(it) }
-    val unused = inputs.values.asSequence().filterNot(used::contains).distinct().sortedBy(Path::toString)
-    Files.writeString(file, unused.joinToString(separator = "\n", postfix = "\n") { it.toString() })
+    val unused = inputs.values.asSequence().map(ExplicitBazelInput::execPath).filterNot(usedExecPaths::contains).distinct().sorted()
+    Files.writeString(file, unused.joinToString(separator = "\n", postfix = "\n"))
   }
 
   companion object {
     fun load(file: Path): ExplicitBazelInputResolver {
-      val inputs = LinkedHashMap<String, Path>()
+      val inputs = LinkedHashMap<String, ExplicitBazelInput>()
       Files.readAllLines(file).forEachIndexed { index, line ->
         if (line.isBlank()) return@forEachIndexed
         val separator = line.indexOf('\t')
         check(separator > 0 && separator < line.lastIndex) { "Malformed Bazel input manifest line ${index + 1} in $file" }
         val label = line.substring(0, separator)
-        val path = Path.of(line.substring(separator + 1)).toAbsolutePath().normalize()
-        check(inputs.put(label, path) == null) { "Duplicate Bazel input label '$label' in $file" }
+        val execPath = line.substring(separator + 1)
+        check(!Path.of(execPath).isAbsolute) { "Bazel input path '$execPath' must be relative to the execution root" }
+        val input = ExplicitBazelInput(execPath = execPath, absolutePath = Path.of(execPath).toAbsolutePath().normalize())
+        check(inputs.put(label, input) == null) { "Duplicate Bazel input label '$label' in $file" }
         apparentRepositoryLabel(label)?.let { apparentLabel ->
-          check(inputs.put(apparentLabel, path) == null) { "Duplicate Bazel input label '$apparentLabel' in $file" }
+          check(inputs.put(apparentLabel, input) == null) { "Duplicate Bazel input label '$apparentLabel' in $file" }
         }
       }
       return ExplicitBazelInputResolver(inputs)

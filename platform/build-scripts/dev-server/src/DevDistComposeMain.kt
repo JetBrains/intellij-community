@@ -6,13 +6,10 @@ package org.jetbrains.intellij.build.devServer
 
 import com.intellij.platform.devIdeConfig.DevIdeConfig
 import org.jetbrains.intellij.build.dev.computeIdeFingerprintFromComponents
+import org.jetbrains.intellij.build.dev.mergeDevBuildComponent
 import org.jetbrains.intellij.build.dev.readDevBuildComponentManifest
-import java.io.IOException
-import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.SimpleFileVisitor
-import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 
@@ -36,8 +33,8 @@ fun main(args: Array<String>) {
 
   if (Files.exists(outputDir)) outputDir.deleteRecursively()
   Files.createDirectories(outputDir)
-  mergeComponent(platformDir, outputDir)
-  mergeComponent(pluginsDir, outputDir)
+  mergeDevBuildComponent(platformDir, outputDir)
+  mergeDevBuildComponent(pluginsDir, outputDir)
 
   val classPath = platformManifest.coreClassPath + pluginsManifest.coreClassPath
   Files.writeString(outputDir.resolve("core-classpath.txt"), classPath.joinToString(separator = "\n"))
@@ -49,32 +46,6 @@ fun main(args: Array<String>) {
     platformManifest.platformPrefix,
     pluginsManifest.additionalModules,
   )
-}
-
-private fun mergeComponent(source: Path, target: Path) {
-  Files.walkFileTree(source, object : SimpleFileVisitor<Path>() {
-    override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
-      Files.createDirectories(target.resolve(source.relativize(dir).toString()))
-      return FileVisitResult.CONTINUE
-    }
-
-    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-      val destination = target.resolve(source.relativize(file).toString())
-      check(!Files.exists(destination)) { "Dev-build components both provide '${target.relativize(destination)}'" }
-      if (Files.isSymbolicLink(file)) {
-        Files.createSymbolicLink(destination, Files.readSymbolicLink(file))
-      }
-      else {
-        try {
-          Files.createLink(destination, file)
-        }
-        catch (_: IOException) {
-          Files.copy(file, destination)
-        }
-      }
-      return FileVisitResult.CONTINUE
-    }
-  })
 }
 
 private class ComposeOptions(private val values: Map<String, String>) {
