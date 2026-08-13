@@ -250,7 +250,10 @@ public final class ChunkExtractor {
         lastOffset[0] = usageEnd;
         return usageEnd <= hiEnd;
       }
-      return true;
+      // Segments arrive in start offset order, so once one starts at or past the end of this token none of the ones
+      // after it can intersect either. Reading on is what made a row that has absorbed every occurrence of a very long
+      // line cost that whole line per token, and every segment read resolves a marker.
+      return usageStart < hiEnd;
     });
     if (lastOffset[0] < hiEnd) {
       addChunk(chars, lastOffset[0], hiEnd, originalAttrs, false, result);
