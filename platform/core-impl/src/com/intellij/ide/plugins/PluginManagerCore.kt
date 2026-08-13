@@ -548,7 +548,6 @@ object PluginManagerCore {
       pluginToDisable = pluginsToDisable.values.toList(),
       pluginToEnable = pluginsToEnable.values.toList(),
       loadingErrors = loadingErrors,
-      incompletePluginsForLogging = incompletePlugins.values.toList(),
       shadowedBundledPlugins = shadowedBundledIds,
     )
   }
