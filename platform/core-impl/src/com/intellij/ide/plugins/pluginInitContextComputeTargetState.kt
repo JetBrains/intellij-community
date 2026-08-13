@@ -3,10 +3,16 @@ package com.intellij.ide.plugins
 
 import com.intellij.diagnostic.Activity
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 import java.util.IdentityHashMap
 
+
+/**
+ * @throws EssentialPluginMissingException if [checkEssentialPlugins] is true and any essential plugin is missing
+ */
 @ApiStatus.Internal
+@Throws(EssentialPluginMissingException::class)
 fun PluginInitializationContext.computeTargetState(
   discoveryResult: PluginsDiscoveryResult,
   isStartupInit: Boolean,
@@ -35,6 +41,11 @@ fun PluginInitializationContext.computeTargetState(
   initStagesActivity = initStagesActivity?.endAndStart("resolve constraints")
   val resolvedPluginSet = resolveConstraints(candidateSubset)
 
+  if (checkEssentialPlugins) {
+    initStagesActivity = initStagesActivity?.endAndStart("check essential plugins")
+    checkEssentialPluginsAreAvailable(resolvedPluginSet, essentialPlugins)
+  }
+
   initStagesActivity = initStagesActivity?.endAndStart("adapt plugin set")
   val pluginSet = PluginSet(
     input = PluginSubsystemInput(this, discoveryResult),
@@ -44,4 +55,32 @@ fun PluginInitializationContext.computeTargetState(
   initStagesActivity?.end()
 
   return pluginSet
+}
+
+/**
+ * @throws EssentialPluginMissingException if any essential plugin is missing
+ */
+private fun checkEssentialPluginsAreAvailable(
+  resolvedPluginSet: ResolvedPluginSet,
+  essentialPlugins: Set<PluginId>,
+) {
+  var missingIds: ArrayList<String>? = null
+  var diagnosticMessage: StringBuilder? = null
+  for (id in essentialPlugins) {
+    val module = resolvedPluginSet.candidateSet.resolvePluginId(id)
+    if (module != null && resolvedPluginSet.isResolved(module)) {
+      continue
+    }
+    missingIds = missingIds ?: ArrayList()
+    missingIds.add(id.idString)
+    val reason = module?.let { resolvedPluginSet.getExclusionReason(it) }
+    if (reason != null) {
+      diagnosticMessage = diagnosticMessage ?: StringBuilder("Exclusion traces:")
+      diagnosticMessage.appendLine()
+      diagnosticMessage.append(PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(resolvedPluginSet, module))
+    }
+  }
+  if (missingIds != null) {
+    throw EssentialPluginMissingException(missingIds, diagnosticMessage?.toString())
+  }
 }

@@ -524,11 +524,6 @@ object PluginManagerCore {
       reportingPolicy,
     )
 
-    if (initContext.checkEssentialPlugins) {
-      initStagesActivity = initStagesActivity?.endAndStart("check essential plugins")
-      checkEssentialPluginsAreAvailable(resolvedPluginSet, initContext.essentialPlugins)
-    }
-
     if (configureClassLoaders) {
       initStagesActivity = initStagesActivity?.endAndStart("ClassLoaderConfigurator")
       ClassLoaderConfigurator(pluginSet, coreLoader).configure()
@@ -715,31 +710,6 @@ object PluginManagerCore {
     }
     else {
       processRootCause(exclusionReason)
-    }
-  }
-
-  private fun checkEssentialPluginsAreAvailable(
-    resolvedPluginSet: ResolvedPluginSet,
-    essentialPlugins: Set<PluginId>,
-  ) {
-    var missingIds: ArrayList<String>? = null
-    var diagnosticMessage: StringBuilder? = null
-    for (id in essentialPlugins) {
-      val module = resolvedPluginSet.candidateSet.resolvePluginId(id)
-      if (module != null && resolvedPluginSet.isResolved(module)) {
-        continue
-      }
-      missingIds = missingIds ?: ArrayList()
-      missingIds.add(id.idString)
-      val reason = module?.let { resolvedPluginSet.getExclusionReason(it) }
-      if (reason != null) {
-        diagnosticMessage = diagnosticMessage ?: StringBuilder("Exclusion traces:")
-        diagnosticMessage.appendLine()
-        diagnosticMessage.append(PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(resolvedPluginSet, module))
-      }
-    }
-    if (missingIds != null) {
-      throw EssentialPluginMissingException(missingIds, diagnosticMessage?.toString())
     }
   }
 
