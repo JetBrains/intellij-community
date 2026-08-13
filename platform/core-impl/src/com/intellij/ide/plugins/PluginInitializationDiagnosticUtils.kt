@@ -2,7 +2,9 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
+import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
 
@@ -210,5 +212,66 @@ object PluginInitializationDiagnosticUtils {
   internal fun DependencyRef.getIdString(): String = when (this) {
     is DependencyRef.ContentModule -> moduleId.name
     is DependencyRef.Plugin -> pluginId.idString
+  }
+
+  internal fun logPluginLists(
+    logger: Logger,
+    initContext: PluginInitializationContext,
+    plugins: Collection<PluginMainDescriptor>,
+    incompletePlugins: List<PluginMainDescriptor>,
+  ) {
+    fun appendPlugin(descriptor: IdeaPluginDescriptor, target: StringBuilder) {
+      if (target.isNotEmpty()) {
+        target.append(", ")
+      }
+      target.append(descriptor.name)
+      val version = descriptor.version
+      if (version != null) {
+        target.append(" (").append(version).append(')')
+      }
+    }
+
+    if (AppMode.isDisableNonBundledPlugins()) {
+      logger.info("Running with disableThirdPartyPlugins argument, third-party plugins will be disabled")
+    }
+
+    val bundled = StringBuilder()
+    val disabled = StringBuilder()
+    val custom = StringBuilder()
+    val disabledPlugins = HashSet<PluginId>()
+    for (descriptor in plugins) {
+      val pluginId = descriptor.pluginId
+      val target = if (!PluginManagerCore.isLoaded(descriptor)) {
+        if (!initContext.isPluginDisabled(pluginId)) {
+          // the plugin will be logged as part of "Problems found loading plugins"
+          continue
+        }
+        disabledPlugins.add(pluginId)
+        disabled
+      }
+      else if (descriptor.isBundled || PluginManagerCore.SPECIAL_IDEA_PLUGIN_ID == pluginId) {
+        bundled
+      }
+      else {
+        custom
+      }
+      appendPlugin(descriptor, target)
+    }
+
+    for (descriptor in incompletePlugins) {
+      val pluginId = descriptor.pluginId
+      // log only explicitly disabled plugins
+      if (initContext.isPluginDisabled(pluginId) && !disabledPlugins.contains(pluginId)) {
+        appendPlugin(descriptor, disabled)
+      }
+    }
+
+    logger.info("Loaded bundled plugins: $bundled")
+    if (custom.isNotEmpty()) {
+      logger.info("Loaded custom plugins: $custom")
+    }
+    if (disabled.isNotEmpty()) {
+      logger.info("Disabled plugins: $disabled")
+    }
   }
 }
