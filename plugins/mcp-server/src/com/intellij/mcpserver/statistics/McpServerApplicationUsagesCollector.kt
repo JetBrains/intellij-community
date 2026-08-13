@@ -13,7 +13,8 @@ import com.intellij.mcpserver.settings.McpToolDisallowListSettings
 import com.intellij.mcpserver.settings.McpToolFilterSettings
 
 internal class McpServerApplicationUsagesCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("mcpserver", 9)
+  // v10: mcp.tools.exposed, the aggregate cost of what the IDE exposes.
+  private val GROUP = EventLogGroup("mcpserver", 10)
   private val MCP_RUNNING = GROUP.registerEvent("mcp.running", EventFields.Enabled)
   private val MCP_BRAVE_MODE_ENABLED = GROUP.registerEvent("mcp.brave.mode.enabled", EventFields.Enabled)
   private val MCP_GLOBAL_CLIENTS = GROUP.registerEvent("mcp.global.clients",
@@ -37,6 +38,25 @@ internal class McpServerApplicationUsagesCollector : ApplicationUsagesCollector(
                         "Whether the MCP tool is exposed only via the universal router (on-demand) instead of being callable directly"),
   )
 
+  /**
+   * The aggregate cost of the exposed tool set. `mcp.tool.state` already reports one row per tool, but an analysis of
+   * how much context the IDE spends on tool descriptions cannot be built by summing hundreds of rows per report.
+   */
+  private val TOOLS_TOTAL = EventFields.Int("tools_total", "Number of MCP tools the IDE knows about, enabled or not")
+  private val TOOLS_ENABLED = EventFields.Int("tools_enabled", "Number of tools exposed to clients in the current configuration")
+  private val TOOLS_ROUTER_ONLY = EventFields.Int("tools_router_only", "Number of tools reachable only through the universal router")
+  private val TOOLS_DISABLED = EventFields.Int("tools_disabled", "Number of tools not exposed to clients")
+  private val DESCRIPTION_BYTES = EventFields.RoundedInt(
+    "description_bytes",
+    "Total length of the descriptions of the exposed tools, rounded. This is the context every session pays for " +
+    "before a single tool is called",
+  )
+
+  private val MCP_TOOLS_EXPOSED = GROUP.registerVarargEvent(
+    "mcp.tools.exposed",
+    TOOLS_TOTAL, TOOLS_ENABLED, TOOLS_ROUTER_ONLY, TOOLS_DISABLED, DESCRIPTION_BYTES,
+  )
+
   override fun getGroup(): EventLogGroup = GROUP
 
   override suspend fun getMetricsAsync(): Set<MetricEvent> {
@@ -53,7 +73,30 @@ internal class McpServerApplicationUsagesCollector : ApplicationUsagesCollector(
     }
 
     metrics.addAll(collectToolStateMetrics(mcpServerService))
+    metrics.add(collectExposedToolsMetric(mcpServerService))
     return metrics
+  }
+
+  private fun collectExposedToolsMetric(mcpServerService: McpServerService): MetricEvent {
+    val disallowListSettings = McpToolDisallowListSettings.getInstance()
+    var enabled = 0
+    var routerOnly = 0
+    var descriptionBytes = 0
+    val tools = mcpServerService.getAllMcpTools()
+    for (tool in tools) {
+      val state = disallowListSettings.toolStateFor(tool)
+      if (!state.enabled) continue
+      enabled++
+      if (state.routerOnly) routerOnly++
+      descriptionBytes += tool.descriptor.description.length
+    }
+    return MCP_TOOLS_EXPOSED.metric(
+      TOOLS_TOTAL.with(tools.size),
+      TOOLS_ENABLED.with(enabled),
+      TOOLS_ROUTER_ONLY.with(routerOnly),
+      TOOLS_DISABLED.with(tools.size - enabled),
+      DESCRIPTION_BYTES.with(descriptionBytes),
+    )
   }
 
   private fun collectToolStateMetrics(mcpServerService: McpServerService): List<MetricEvent> {
