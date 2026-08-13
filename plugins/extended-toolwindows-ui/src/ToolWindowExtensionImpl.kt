@@ -160,6 +160,8 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
     val f = getTextFont()
     val fm = button.getFontMetrics(f)
     val text = getStripeText()
+    val verticalOffset = JBUIScale.scale(if (compactMode) 1 else 2)
+    val leftStripeVerticalOffset = JBUIScale.scale(1)
 
     UIUtil.useSafely(g!!) { g2 ->
       g2.color = getForegroundColor()
@@ -170,14 +172,14 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
         ToolWindowAnchorEnum.LEFT -> {
           g2.rotate(-Math.PI / 2)
           val iconCenterX = labelIconPosition.x + labelIconSize / 2
-          val baselineX = iconCenterX + (fm.ascent - fm.descent) / 2
+          val baselineX = iconCenterX + (fm.ascent - fm.descent) / 2 + verticalOffset
           val textBottomY = labelIconPosition.y - scaledInsets.iconLabelInset
           g2.drawString(text, -textBottomY, baselineX)
         }
         ToolWindowAnchorEnum.RIGHT -> {
           g2.rotate(Math.PI / 2)
           val iconCenterX = labelIconPosition.x + labelIconSize / 2
-          val baselineX = iconCenterX - (fm.ascent - fm.descent) / 2
+          val baselineX = iconCenterX - (fm.ascent - fm.descent) / 2 - leftStripeVerticalOffset
           val textTopY = labelIconPosition.y + labelIconSize + scaledInsets.iconLabelInset
           g2.drawString(text, textTopY, -baselineX)
         }
@@ -186,7 +188,7 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
           -> {
           val textX = labelIconPosition.x + labelIconSize + scaledInsets.iconLabelInset
           val iconCenterY = labelIconPosition.y + labelIconSize / 2
-          val baselineY = iconCenterY + (fm.ascent - fm.descent) / 2
+          val baselineY = iconCenterY + (fm.ascent - fm.descent) / 2 + verticalOffset
           g2.drawString(text, textX, baselineY)
         }
       }

@@ -47,15 +47,17 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
   private var myCurrentScale = 0f
 
   init {
-    myComponent.addMouseListener(object : PopupHandler() {
-      override fun invokePopup(component: Component, x: Int, y: Int) {
-        val action = ActionManager.getInstance().getAction("ToolWindowShowNamesAction")!!
-        val group = object : ActionGroup() {
-          override fun getChildren(e: AnActionEvent?) = arrayOf(action)
+    if (!ToolWindowExtension.exists) {
+      myComponent.addMouseListener(object : PopupHandler() {
+        override fun invokePopup(component: Component, x: Int, y: Int) {
+          val action = ActionManager.getInstance().getAction("ToolWindowShowNamesAction")!!
+          val group = object : ActionGroup() {
+            override fun getChildren(e: AnActionEvent?) = arrayOf(action)
+          }
+          showPopup(group, component, x, y)
         }
-        showPopup(group, component, x, y)
-      }
-    })
+      })
+    }
   }
 
   fun createLayout(): BorderLayout {
