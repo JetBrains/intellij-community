@@ -35,7 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentListener;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LeakHunter;
@@ -75,7 +75,7 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 public class RangeMarkerTest extends LightPlatformTestCase {
-  private PsiDocumentManagerImpl documentManager;
+  private PsiDocumentManagerEx documentManager;
   private PsiToDocumentSynchronizer synchronizer;
   private Document document;
   private PsiFile psiFile;
@@ -85,7 +85,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject());
+    documentManager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(getProject());
     synchronizer = documentManager.getSynchronizer();
   }
 
