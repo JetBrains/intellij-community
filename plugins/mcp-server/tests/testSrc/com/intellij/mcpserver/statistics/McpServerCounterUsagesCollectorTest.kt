@@ -36,6 +36,26 @@ class McpServerCounterUsagesCollectorTest {
     assertThat(countFields).allMatch { it is RoundedIntEventField }
   }
 
+  /**
+   * A tool call is only comparable across populations if the row says who called it and how it arrived: without
+   * `invocation_mode` a routed call is indistinguishable from a direct one, and without `launch_origin` an agent the
+   * IDE launched is counted together with an external client whose session the IDE only partly observes.
+   */
+  @Test
+  fun tool_call_event_reports_the_caller_and_how_the_call_arrived() {
+    val event = McpServerCounterUsagesCollector.group.events.single { it.eventId == "mcp.tool.call" }
+
+    assertThat(event.getFields().map { it.name }).contains(
+      "tool_name",
+      "outcome",
+      "duration_ms",
+      "invocation_mode",
+      "launch_origin",
+      "client_name",
+      "transport_type",
+    )
+  }
+
   @Test
   fun lint_files_result_classifies_complete_and_incomplete_analysis() {
     assertThat(lintFilesResultKind(problemCount = 0, timedOutFileCount = 0, notAnalyzedFileCount = 0, more = false))
