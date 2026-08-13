@@ -29,6 +29,7 @@ class IdeStartConfig(
   val testCase: TestCase<*> = (object : TestCaseTemplate(IdeInfo.IdeaUltimate) {}).withProject(NoProject),
   val configureTestContext: (IDETestContext.() -> Unit) = defaultTestContextConfig,
   val configureRunContext: (IDERunContext.() -> Unit) = defaultRunContextConfig,
+  val forceKill: Boolean = false
 ) {
   init {
     require(key.isNotBlank()) { "IdeStartConfig key must not be blank: it is what decides whether an IDE is reused" }

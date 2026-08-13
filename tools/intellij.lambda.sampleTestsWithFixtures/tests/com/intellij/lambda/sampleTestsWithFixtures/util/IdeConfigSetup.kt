@@ -8,7 +8,8 @@ class IdeConfigSetup : BeforeAllCallback {
   override fun beforeAll(context: ExtensionContext) {
     IdeStartConfig.current = IdeStartConfig(
       key = "lambda-sample-fixtures-unit-test-mode",
-      configureTestContext = { applyVMOptionsPatch { inUnitTestMode() } }
+      configureTestContext = { applyVMOptionsPatch { inUnitTestMode() } },
+      forceKill = true // run with fixtures can't stop properly, todo
     )
   }
 }
