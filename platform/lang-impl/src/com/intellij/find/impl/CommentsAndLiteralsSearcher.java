@@ -34,6 +34,8 @@ import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import it.unimi.dsi.fastutil.ints.Int2IntSortedMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,8 +48,9 @@ import java.util.regex.Matcher;
  * Searching for a string inside comments and string literals only, which is done by lexing the file and matching within
  * the tokens the model is interested in rather than over the text as a whole.
  * <p>
- * The lexer and searcher are expensive to build, so they are cached per thread on the {@link FindModel}; that cache is
- * what makes walking a file one occurrence at a time affordable.
+ * A file is lexed once: the first search over it collects every occurrence, and every search that follows is a lookup in
+ * what was collected. The lexer, the searcher and the occurrences are cached per thread on the {@link FindModel}, which
+ * is what lets a caller that walks a file one occurrence at a time pay for the walk once instead of once per occurrence.
  */
 final class CommentsAndLiteralsSearcher {
   private static final Key<ThreadLocal<SoftReference<CommentsLiteralsSearchData>>> ourCommentsLiteralsSearchDataKey =
@@ -66,8 +69,9 @@ final class CommentsAndLiteralsSearcher {
   }
 
   /**
-   * Looks up, and creates if necessary, the lexer and searcher this thread uses to walk {@code file} for {@code model}.
-   * Returns {@code null} when the file has no syntax highlighter, in which case there is nothing to search.
+   * Looks up, and creates if necessary, the lexer, the searcher and the collected occurrences this thread uses to walk
+   * {@code file} for {@code model}. Returns {@code null} when the file has no syntax highlighter, in which case there is
+   * nothing to search.
    */
   private @Nullable CommentsLiteralsSearchData getSearchData(@NotNull CharSequence text,
                                                              @NotNull FindModel model,
@@ -168,11 +172,10 @@ final class CommentsAndLiteralsSearcher {
 
   /**
    * Drives the highlighting lexer once over {@code [fromOffset, text.length())} and reports every occurrence of the
-   * pattern that lies inside a comment or a string literal, in increasing offset order, until {@code processor} stops it.
+   * pattern that lies inside a comment or a string literal, in increasing offset order.
    * <p>
-   * The walk deliberately does no filtering of its own: which occurrences are interesting, and when to stop, is the
-   * caller's business. That is what lets a caller that wants all of them get them from a single pass instead of
-   * restarting the walk once per occurrence.
+   * The walk deliberately does no filtering of its own -- which of the occurrences are interesting is the caller's
+   * business, decided over what this one pass has collected.
    */
   private static void processOccurrences(@NotNull CharSequence text,
                                          char @Nullable [] textArray,
@@ -228,7 +231,7 @@ final class CommentsAndLiteralsSearcher {
 
           Match match = currentThreadData.tokenSearcher.findNext(text, textArray, tokenContentStart, start, end);
           if (match == null) break;
-          if (!processor.process(match.start, match.end, lastGoodOffset)) return;
+          processor.process(match.start, match.end, lastGoodOffset);
 
           // step past the occurrence; the +1 keeps a zero-length regexp match from spinning on the same offset
           start = match.end + (start == end || start == match.end ? 1 : 0);
@@ -254,15 +257,9 @@ final class CommentsAndLiteralsSearcher {
    * with.
    * <p>
    * Only the occurrence is decided here. Whether it is acceptable -- whole words, the find context -- belongs to
-   * {@link FindManagerBase}, which calls this once per occurrence, so walking a whole file means as many calls as it
-   * has occurrences.
-   * <p>
-   * Both directions walk the token stream forward; backward simply keeps the last occurrence it passes and stops at
-   * the first one reaching {@code offset}, which means a backward search always costs a walk from the start of the
-   * file. A forward search tries to do better by resuming from
-   * {@link CommentsLiteralsSearchData#startOffset the last point the lexer can safely be restarted at}, which only
-   * advances where the lexer returns to its initial state -- in a long attribute list or a large comment it does not,
-   * and the walk starts over from the beginning of the file.
+   * {@link FindManagerBase}, which calls this once per occurrence. The file is lexed on the first of those calls, which
+   * collects all of its occurrences, and the rest are answered from {@link CommentsLiteralsSearchData#occurrences} --
+   * so walking a whole file costs one lexer pass rather than one per occurrence.
    *
    * @param textArray the backing array of {@code text} where it has one, or {@code null}; an optimization that lets
    *                  the scan avoid {@link CharSequence#charAt} calls
@@ -275,25 +272,34 @@ final class CommentsAndLiteralsSearcher {
     CommentsLiteralsSearchData data = getSearchData(text, model, file);
     if (data == null) return FindManagerBase.NOT_FOUND_RESULT;
 
-    FindResultImpl[] result = {FindManagerBase.NOT_FOUND_RESULT};
-    if (model.isForward()) {
-      int initialStartOffset = data.startOffset < offset ? data.startOffset : 0;
-      processOccurrences(text, textArray, initialStartOffset, model, data, (start, end, lastGoodOffset) -> {
-        if (start < offset) return true; // an occurrence the caller has already been given
-        data.startOffset = lastGoodOffset;
-        result[0] = new FindResultImpl(start, end);
-        return false;
-      });
-    }
-    else {
-      // walks forward too, keeping the last occurrence that ends before `offset`
-      processOccurrences(text, textArray, 0, model, data, (start, end, _) -> {
-        if (end >= offset) return false;
-        result[0] = new FindResultImpl(start, end);
-        return true;
-      });
-    }
-    return result[0];
+    collectAll(text, textArray, model, data);
+
+    Occurrences occurrences = data.occurrences;
+    return occurrences.findResult(model.isForward() ? occurrences.firstAtOrAfter(offset)
+                                                    : occurrences.lastEndingBefore(offset));
+  }
+
+  /**
+   * Lexes whatever of the file is left to lex, so that {@code data} holds every occurrence. Does nothing once it does.
+   * <p>
+   * The walk resumes from {@link CommentsLiteralsSearchData#resumeOffset the last point the lexer can safely be
+   * restarted at}, which is never past the last occurrence collected, so the stretch of the file it covers a second time
+   * reports occurrences that are already there and {@link Occurrences#add} drops them. That is also what makes an
+   * interrupted walk resumable: a {@link ProgressManager#checkCanceled cancellation} leaves the collection consistent,
+   * only short of the end of the file, and the call that follows carries on rather than starting over.
+   */
+  private static void collectAll(@NotNull CharSequence text,
+                                 char @Nullable [] textArray,
+                                 @NotNull FindModel model,
+                                 @NotNull CommentsLiteralsSearchData data) {
+    if (data.allCollected) return;
+
+    processOccurrences(text, textArray, data.resumeOffset, model, data, (start, end, lastGoodOffset) -> {
+      data.occurrences.add(start, end);
+      // every walk starts counting lastGoodOffset from 0 again, so take it only where it moves the resume point forward
+      if (lastGoodOffset > data.resumeOffset) data.resumeOffset = lastGoodOffset;
+    });
+    data.allCollected = true;
   }
 
   private static @NotNull TokenSet addTokenTypesForLanguage(@NotNull FindModel model,
@@ -327,15 +333,18 @@ final class CommentsAndLiteralsSearcher {
     CommentsLiteralsSearchData data = getSearchData(text, model, file);
     if (data == null) return;
 
-    char[] textArray = CharArrayUtil.fromSequenceWithoutCopying(text);
+    collectAll(text, CharArrayUtil.fromSequenceWithoutCopying(text), model, data);
+
     boolean wholeWordsOnly = model.isWholeWordsOnly();
-    processOccurrences(text, textArray, 0, model, data, (start, end, _) -> {
+    Occurrences occurrences = data.occurrences;
+    for (int i = 0; i < occurrences.size(); i++) {
+      int start = occurrences.start(i);
+      int end = occurrences.end(i);
       // findStringLoop applies this filter for the one-occurrence-at-a-time callers; keep the collected set the same
       if (!wholeWordsOnly || FindManagerBase.isWholeWord(text, start, end)) {
         result.put(start, end);
       }
-      return true;
-    });
+    }
   }
 
   /**
@@ -346,13 +355,84 @@ final class CommentsAndLiteralsSearcher {
     /**
      * @param lastGoodOffset start of the last token at which the lexer was in its initial state, i.e. the furthest point
      *                       a later call may safely resume lexing from
-     * @return {@code false} to stop the walk
      */
-    boolean process(int startOffset, int endOffset, int lastGoodOffset);
+    void process(int startOffset, int endOffset, int lastGoodOffset);
   }
 
   /** Where an occurrence was found, filled in by {@link TokenSearcher#findNext}. */
   private record Match(int start, int end) {
+  }
+
+  /**
+   * The occurrences a walk has found, in increasing order of their start offset.
+   * <p>
+   * Append-only, because the walk that fills it runs forward. A walk that resumes behind where an earlier one stopped
+   * reports the occurrences in between a second time, and {@link #add} is what drops those.
+   */
+  private static final class Occurrences {
+    private final IntList myStarts = new IntArrayList();
+    private final IntList myEnds = new IntArrayList();
+
+    /** Appends the occurrence, unless an earlier walk collected it already -- which is so unless it starts past them all. */
+    void add(int start, int end) {
+      if (!myStarts.isEmpty() && start <= myStarts.getInt(myStarts.size() - 1)) return;
+      myStarts.add(start);
+      myEnds.add(end);
+    }
+
+    int size() {
+      return myStarts.size();
+    }
+
+    int start(int index) {
+      return myStarts.getInt(index);
+    }
+
+    int end(int index) {
+      return myEnds.getInt(index);
+    }
+
+    /** The index of the first occurrence starting at or after {@code offset}, or {@code -1} when there is none. */
+    int firstAtOrAfter(int offset) {
+      int index = startsFrom(offset);
+      return index < size() ? index : -1;
+    }
+
+    /**
+     * The index of the last occurrence ending before {@code offset}, or {@code -1} when there is none. Occurrences are
+     * ordered by where they start, so the search steps back over the ones that start earlier and still reach into
+     * {@code offset} -- which only a regular expression matching different lengths can produce.
+     */
+    int lastEndingBefore(int offset) {
+      for (int index = startsFrom(offset) - 1; index >= 0; index--) {
+        if (end(index) < offset) return index;
+      }
+      return -1;
+    }
+
+    /** The occurrence at {@code index}, or {@link FindManagerBase#NOT_FOUND_RESULT} for the {@code -1} of a miss. */
+    @NotNull FindResult findResult(int index) {
+      return index < 0 ? FindManagerBase.NOT_FOUND_RESULT : new FindResultImpl(start(index), end(index));
+    }
+
+    /**
+     * Where an occurrence starting at {@code offset} would sit among the collected ones, which is {@link #size()} when
+     * they all start before it. A binary search, which the strictly increasing starts allow.
+     */
+    private int startsFrom(int offset) {
+      int low = 0;
+      int high = size();
+      while (low < high) {
+        int mid = (low + high) >>> 1;
+        if (start(mid) < offset) {
+          low = mid + 1;
+        }
+        else {
+          high = mid;
+        }
+      }
+      return low;
+    }
   }
 
   /**
@@ -407,10 +487,23 @@ final class CommentsAndLiteralsSearcher {
     }
   }
 
+  /**
+   * The state one thread keeps for searching one file with one model: what to lex it with, what to look for, and what has
+   * been found so far.
+   * <p>
+   * It lives no longer than the {@link FindModel} instance it is attached to, and the editor's live preview makes a fresh
+   * copy of its model for every update, so the collected occurrences are currently rebuilt once per keystroke -- one
+   * lexer pass, where it used to be one per occurrence.
+   */
   private static final class CommentsLiteralsSearchData {
     @NotNull final VirtualFile lastFile;
     final @Nullable Language lang;
-    int startOffset;
+    /** The furthest offset the lexer may safely be restarted at, i.e. the start of a token it was in its initial state at. */
+    int resumeOffset;
+    /** The occurrences found so far; all of the file's once {@link #allCollected}. */
+    @NotNull final Occurrences occurrences = new Occurrences();
+    /** Whether the walk has reached the end of the file. */
+    boolean allCollected;
     @NotNull final SyntaxHighlighterOverEditorHighlighter highlighter;
 
     @NotNull TokenSet tokensOfInterest;

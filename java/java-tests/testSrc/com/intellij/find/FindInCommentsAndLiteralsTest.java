@@ -148,6 +148,29 @@ public class FindInCommentsAndLiteralsTest extends DaemonAnalyzerTestCase {
                  occurrences(text, FindModel.SearchContext.EXCEPT_STRING_LITERALS, false, true));
   }
 
+  /**
+   * A repeated Find Previous through occurrences that all share one token: the whole file is collected on the first of
+   * these calls and every one of them is answered from that, so the walk they used to cost each is gone.
+   */
+  public void testBackwardSearchInOneHugeLiteral() {
+    String text = oneHugeLiteral(6);
+    FindModel model = FindManagerTestUtils.configureFindModel("needle");
+    model.setSearchContext(FindModel.SearchContext.IN_STRING_LITERALS);
+    model.setForward(false);
+    LightVirtualFile file = new LightVirtualFile("A.xml", text);
+
+    List<String> result = new ArrayList<>();
+    int offset = text.length();
+    while (offset > 0) {
+      FindResult found = myFindManager.findString(text, offset, model, file);
+      if (!found.isStringFound()) break;
+      result.add(found.getStartOffset() + "-" + found.getEndOffset());
+      offset = found.getStartOffset();
+    }
+    // the forward walk of testAllOccurrencesInOneToken, in reverse; <tail>needle</tail> is outside the literal
+    assertEquals(List.of("66-72", "57-63", "48-54", "39-45", "30-36", "21-27"), result);
+  }
+
   public void testBackwardSearch() {
     String text = multiLine(3);
     FindModel model = FindManagerTestUtils.configureFindModel("needle");

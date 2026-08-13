@@ -2,16 +2,22 @@
 package com.intellij.find;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
+import java.util.concurrent.TimeUnit;
+
 /**
- * Guards the cost of building the {@code EXCEPT_*} skip-range set, which used to restart the lexer once per occurrence.
+ * Guards the cost of searching comments and string literals, which used to restart the lexer once per occurrence -- for
+ * the {@code EXCEPT_*} contexts when building their skip-range set, and for the {@code IN_*} ones on every occurrence
+ * handed to the caller.
  * <p>
- * Both shapes here defeated the incremental resume and were quadratic: with 8000 occurrences {@link #oneGiantTag} took
- * ~9.6 s and {@link #oneHugeLiteral} ~5.4 s, against ~50 ms for the same number of occurrences spread over ordinary
- * markup. Collecting the ranges in a single pass brought both under 10 ms.
+ * Both shapes here defeated the incremental resume and were quadratic: with 8000 occurrences building the skip ranges of
+ * {@link #oneGiantTag} took ~9.6 s and of {@link #oneHugeLiteral} ~5.4 s, against ~50 ms for the same number of
+ * occurrences spread over ordinary markup, and walking {@code IN_STRING_LITERALS} over the latter held a thread for 6.3 s.
+ * Collecting the occurrences in a single pass brought them all under 10 ms.
  */
 @PerformanceUnitTest
 public class FindInCommentsAndLiteralsPerformanceTest extends DaemonAnalyzerTestCase {
@@ -33,8 +39,12 @@ public class FindInCommentsAndLiteralsPerformanceTest extends DaemonAnalyzerTest
 
   /** Every occurrence inside one attribute value, so they all share a single lexer token. */
   private static String oneHugeLiteral() {
+    return oneHugeLiteral(OCCURRENCES);
+  }
+
+  private static String oneHugeLiteral(int occurrences) {
     StringBuilder sb = new StringBuilder("<root>\n  <item data=\"");
-    for (int i = 0; i < OCCURRENCES; i++) {
+    for (int i = 0; i < occurrences; i++) {
       sb.append("needle ").append(i).append(' ');
     }
     sb.append("\"/>\n  <tail>needle</tail>\n</root>\n");
@@ -72,5 +82,75 @@ public class FindInCommentsAndLiteralsPerformanceTest extends DaemonAnalyzerTest
 
   public void testExceptLiteralsWhenLexerNeverReturnsToInitialState() {
     benchmarkFindString("find except literals, one element spanning the file", oneGiantTag());
+  }
+
+  /**
+   * What the {@code IN_*} contexts cost is not one {@link FindManager#findString} call -- that one stops at the first
+   * occurrence -- but the walk over all of them, which is what every caller does: the find bar to count the matches,
+   * Find in Files and replace-all to report them. Each of those calls used to lex the file again.
+   * <p>
+   * A fresh model and file per iteration for the same reason the {@code EXCEPT_*} benchmark needs them: what is
+   * collected is cached against both.
+   */
+  private void benchmarkFindAll(String name, String text) {
+    Benchmark.newBenchmark(name, () -> {
+      for (int i = 0; i < 3; i++) {
+        LightVirtualFile file = new LightVirtualFile("perf" + i + ".xml", text);
+        assertEquals(OCCURRENCES, countOccurrences(text, inStringLiterals(), file));
+      }
+    }).start();
+  }
+
+  private int countOccurrences(String text, FindModel findModel, VirtualFile file) {
+    int count = 0;
+    int offset = 0;
+    while (offset < text.length()) {
+      FindResult found = myFindManager.findString(text, offset, findModel, file);
+      if (!found.isStringFound()) break;
+      count++;
+      offset = found.getEndOffset() == offset ? offset + 1 : found.getEndOffset();
+    }
+    return count;
+  }
+
+  private static FindModel inStringLiterals() {
+    FindModel findModel = FindManagerTestUtils.configureFindModel("needle");
+    findModel.setSearchContext(FindModel.SearchContext.IN_STRING_LITERALS);
+    return findModel;
+  }
+
+  public void testInLiteralsWhenAllOccurrencesShareOneToken() {
+    benchmarkFindAll("find all in literals, all occurrences in one token", oneHugeLiteral());
+  }
+
+  public void testInLiteralsWhenLexerNeverReturnsToInitialState() {
+    benchmarkFindAll("find all in literals, one element spanning the file", oneGiantTag());
+  }
+
+  /**
+   * Pins the complexity rather than a millisecond count, which is machine-specific: lexing the file once per occurrence
+   * made four times as many of them cost ~14 times as much (130 ms at 1000, 1895 ms at 4000), where one pass over the
+   * file is proportional to its size.
+   */
+  public void testFindAllInLiteralsScalesWithOccurrenceCount() {
+    millisOfFindAll(1000); // warms up the JIT and whatever the highlighter and the file type resolve to
+
+    long thousand = millisOfFindAll(1000);
+    long fourThousand = millisOfFindAll(4000);
+    assertTrue("4000 occurrences took " + fourThousand + " ms against " + thousand + " ms for 1000",
+               fourThousand <= 6 * thousand + 100);
+  }
+
+  private long millisOfFindAll(int occurrences) {
+    String text = oneHugeLiteral(occurrences);
+    LightVirtualFile file = new LightVirtualFile("scaling.xml", text);
+    FindModel findModel = inStringLiterals();
+
+    long startedAt = System.nanoTime();
+    int found = countOccurrences(text, findModel, file);
+    long millis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt);
+
+    assertEquals(occurrences, found);
+    return millis;
   }
 }
