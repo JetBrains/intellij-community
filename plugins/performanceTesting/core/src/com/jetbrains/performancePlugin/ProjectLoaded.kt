@@ -88,24 +88,17 @@ private const val PROJECT_CONTENTS_WARMUP_EMPTY_CONFIRMATIONS = 3
 
 /** Outcome of a host-side `readdir` of the project directory. */
 private enum class ProjectDirState {
-  /** The listing threw: typically an EEL/IJent transport that is dead or not serving yet. */
   UNREADABLE,
-
-  /** The listing succeeded, but the path is absent or is not a directory: typically a mount that delivers nothing. */
   MISSING,
-
   EMPTY,
   NON_EMPTY,
 }
 
 private fun probeProjectDir(path: Path): ProjectDirState {
-  // Files.isDirectory() swallows IOException and answers `false`, which reports a dead transport as a missing
-  // directory and hides the real failure. Read the attributes directly, so a transport failure propagates to the
-  // caller and is logged as UNREADABLE with a `lastFailure=` field.
   val attributes = try {
     Files.readAttributes(path, BasicFileAttributes::class.java)
   }
-  catch (_: java.nio.file.NoSuchFileException) {
+  catch (_: NoSuchFileException) {
     return ProjectDirState.MISSING
   }
   if (!attributes.isDirectory) return ProjectDirState.MISSING
@@ -117,66 +110,47 @@ private fun probeProjectDir(path: Path): ProjectDirState {
 /**
  * Wait until [projectPath]'s contents are actually readable over the (possibly remote) EEL/IJent
  * filesystem, so that the command-line project-open detection that runs right after does not race a
- * still-mounting `\\wsl.localhost\...` (WSL) or container (Docker) FS. When detection loses that race
- * it finds no project markers, falls back to a LightEdit frame, and the script then either throws
- * `ReadConstraint.inSmartMode() ... LightEdit mode` on `%waitForSmart` or parks on `%importGradleProject`
- * until the external timeout (IJPL-250122).
+ * still-mounting `\\wsl.localhost\...` (WSL) or container (Docker) FS.
  *
- * [EelInitialization.runEelInitialization] only registers the MRFS backend; it does not guarantee the
- * mount is serving directory contents. This forces + awaits a real `readdir` so detection wins the race.
- * Must run *before* [AppMode.setFlags], which is what derives `isLightEdit` from `Files.exists`.
- * Only invoked under the `STARTER_TESTS_SUPPORT_TARGETS` integration-test flag. Bounded by
- * `performance.eel.project.markers.warmup.timeout.ms` (default 120s); on timeout or error it logs and
- * returns so normal open behavior still applies. On a correctly provisioned target the directory is
- * visible on the first attempt, i.e. the overhead is a single `readdir`.
- *
- * Readiness is decided by a host-side listing, because that is exactly what the platform reads. A
- * non-empty listing is the ideal signal; a readable but empty directory is accepted after
- * [PROJECT_CONTENTS_WARMUP_EMPTY_CONFIRMATIONS] polls, since the mount is then provably serving and
- * waiting longer would only delay an outcome that will not change.
+ * IJPL-250122
  */
 private suspend fun awaitProjectContentsVisible(projectPath: Path) {
   val timeoutMs = SystemProperties.getIntProperty("performance.eel.project.markers.warmup.timeout.ms", 120_000).toLong()
-  LOG.info("Project contents warmup [IJPL-250122]: path='$projectPath'" +
+  LOG.info("Project contents warmup: path='$projectPath'" +
            ", routedToEelBackend=${EelNioFsBackend.instance?.resolveDescriptor(projectPath) != null}" +
            ", fs=${projectPath.fileSystem.javaClass.name}, timeoutMs=$timeoutMs")
 
   val start = System.currentTimeMillis()
-  var attempt = 0
-  var emptyInARow = 0
   var lastFailure: String? = null
-  while (true) {
-    attempt++
-    val state = withContext(Dispatchers.IO) {
-      try {
-        probeProjectDir(projectPath)
-      }
-      catch (t: Throwable) {
-        lastFailure = "attempt $attempt: $t"
-        ProjectDirState.UNREADABLE
-      }
-    }
-    emptyInARow = if (state == ProjectDirState.EMPTY) emptyInARow + 1 else 0
-    val elapsed = System.currentTimeMillis() - start
 
-    if (state == ProjectDirState.NON_EMPTY || emptyInARow >= PROJECT_CONTENTS_WARMUP_EMPTY_CONFIRMATIONS) {
-      LOG.info("Project contents warmup [IJPL-250122] result=READY ($state) after $attempt attempt(s) / $elapsed ms" +
-               "; path='$projectPath'; command-line project detection can win the race")
-      return
+  val state = withContext(Dispatchers.IO) {
+    try {
+      probeProjectDir(projectPath)
     }
+    catch (t: Throwable) {
+      lastFailure = "$t"
+      ProjectDirState.UNREADABLE
+    }
+  }
 
-    if (elapsed >= timeoutMs) {
-      LOG.warn("Project contents warmup [IJPL-250122] result=TIMEOUT after $attempt attempt(s) / $elapsed ms (limit $timeoutMs ms)" +
-               "; path='$projectPath'; lastState=$state" +
-               (lastFailure?.let { "; lastFailure=$it" } ?: "") +
-               (if (state == ProjectDirState.MISSING)
-                 "; the target never provided this directory - the project was not provisioned into the target" +
-                 " (mount or copy), so raising the timeout will not help"
-               else "") +
-               "; project open may still fall back to LightEdit")
-      return
-    }
-    delay(PROJECT_CONTENTS_WARMUP_POLL)
+  val elapsed = System.currentTimeMillis() - start
+
+  if (state == ProjectDirState.NON_EMPTY) {
+    LOG.info("Project contents warmup result=READY ($state) / $elapsed ms" +
+             "; path='$projectPath'; command-line project detection can win the race")
+    return
+  }
+
+  if (elapsed >= timeoutMs) {
+    LOG.warn("Project contents warmup result=TIMEOUT / $elapsed ms (limit $timeoutMs ms)" +
+             "; path='$projectPath'; lastState=$state" +
+             (lastFailure?.let { "; lastFailure=$it" } ?: "") +
+             (if (state == ProjectDirState.MISSING)
+               "; the target never provided this directory - the project was not provisioned into the target" +
+               " (mount or copy), so raising the timeout will not help"
+             else "") +
+             "; project open may still fall back to LightEdit")
+    return
   }
 }
 
@@ -338,15 +312,10 @@ class ProjectLoaded : ApplicationInitializedListener {
           EelInitialization.runEelInitialization(projectPath.getEelDescriptor())
         }
         catch (e: EelUnavailableException) {
-          // Report it here rather than letting it escape from ApplicationInitializedListener.execute(): without a
-          // working backend the warmup below cannot succeed either, and the run ends up in LightEdit anyway, so a
-          // named error is far easier to triage than a failed application listener.
           LOG.error(e)
         }
         // Warm the EEL/IJent remote FS mount BEFORE re-evaluating the flags, so detection does not race a
-        // still-mounting WSL/Docker FS and fall back to a LightEdit frame (IJPL-250122). setFlags is what
-        // derives isLightEdit from mayHappenToBeAFile -> Files.exists, so warming up after it has no effect
-        // on the decision it already made.
+        // still-mounting WSL/Docker FS and fall back to a LightEdit frame (IJPL-250122).
         awaitProjectContentsVisible(projectPath)
         // Re-evaluate AppMode flags: the first setFlags call in Main.kt runs before EPs are loaded,
         // so MultiRoutingFileSystemBackend (Docker/WSL) isn't registered yet and mayHappenToBeAFile
