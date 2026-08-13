@@ -490,7 +490,7 @@ internal fun CoroutineScope.scheduleLoading(
     val pluginSet = pluginsState.pluginSet
     this@scheduleLoading.launch {
       // logging is not as a part of a plugin set job for performance reasons
-      logPlugins(plugins = pluginSet.allPlugins, initContext = initContext, incompletePlugins = pluginsState.incompletePluginsForLogging, log = {
+      logPlugins(initContext = initContext, plugins = pluginSet.allPlugins, incompletePlugins = pluginsState.incompletePluginsForLogging, log = {
         // make sure that logger is ready to use (not a console logger)
         (logDeferred?.await() ?: LOG).info(it)
       })
@@ -501,8 +501,8 @@ internal fun CoroutineScope.scheduleLoading(
 }
 
 private suspend fun logPlugins(
-  plugins: Collection<IdeaPluginDescriptorImpl>,
   initContext: PluginInitializationContext,
+  plugins: Collection<PluginMainDescriptor>,
   incompletePlugins: List<PluginMainDescriptor>,
   log: suspend (String) -> Unit,
 ) {
