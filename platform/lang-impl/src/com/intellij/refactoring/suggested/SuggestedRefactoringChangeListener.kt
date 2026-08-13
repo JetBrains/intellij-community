@@ -4,7 +4,8 @@ package com.intellij.refactoring.suggested
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.ReadConstraint
+import com.intellij.openapi.application.constrainedReadAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.undo.UndoManager
@@ -58,6 +59,8 @@ class SuggestedRefactoringChangeListener(
   )
 
   private var editingState: SignatureEditingState? = null
+
+  @Volatile // EDT written, BGT read in [awaitSignatureAnalysis]
   private var signatureUpdateJob: Job? = null
 
   private var isFirstChangeInsideCommand = false
@@ -78,6 +81,10 @@ class SuggestedRefactoringChangeListener(
   companion object {
     @TestOnly
     fun getSignatureAnalysisScope(project: Project): CoroutineScope = project.service<SuggestedRefactoringService>().scope
+  }
+
+  suspend fun awaitSignatureAnalysis() {
+    signatureUpdateJob?.join()
   }
 
   fun reset(withNewIdentifiers: Boolean = false) {
@@ -220,8 +227,6 @@ class SuggestedRefactoringChangeListener(
   }
 
   private inner class MyDocumentListener : DocumentListener {
-    private var isActionOnAllCommittedScheduled = false
-
     override fun beforeDocumentChange(event: DocumentEvent) {
       val document = event.document
       val psiFile = psiDocumentManager.getCachedPsiFile(document) ?: return
@@ -278,39 +283,18 @@ class SuggestedRefactoringChangeListener(
         return
       }
 
-      scheduleSignatureUpdateWhenAllCommitted()
-    }
-
-    private fun scheduleSignatureUpdateWhenAllCommitted() {
-      signatureUpdateJob?.cancel()
-      if (!isActionOnAllCommittedScheduled) {
-        isActionOnAllCommittedScheduled = true
-        psiDocumentManager.performWhenAllCommitted(this::scheduleSignatureUpdate)
-      }
+      scheduleSignatureUpdate()
     }
 
     private fun scheduleSignatureUpdate() {
-      isActionOnAllCommittedScheduled = false
       val state = editingState ?: return
 
-      val document = state.signatureRangeMarker.document
-      val scheduledModificationStamp = document.modificationStamp
-
       signatureUpdateJob?.cancel()
-      signatureUpdateJob = project.service<SuggestedRefactoringService>().scope.launch(Dispatchers.IO) {
-        val signatureUpdate = readAction {
-          if (document.modificationStamp != scheduledModificationStamp) SignatureUpdate.NoUpdate
-          else computeSignatureUpdate(state)
+      signatureUpdateJob = project.service<SuggestedRefactoringService>().scope.launch {
+        val signatureUpdate = constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
+          computeSignatureUpdate(state)
         }
-
-        withContext(Dispatchers.EDT) {
-          if (editingState !== state) return@withContext
-          if (document.modificationStamp != scheduledModificationStamp) {
-            scheduleSignatureUpdateWhenAllCommitted()
-            return@withContext
-          }
-          applySignatureUpdate(state, signatureUpdate)
-        }
+        withContext(Dispatchers.EDT) { applySignatureUpdate(state, signatureUpdate) }
       }
     }
 
