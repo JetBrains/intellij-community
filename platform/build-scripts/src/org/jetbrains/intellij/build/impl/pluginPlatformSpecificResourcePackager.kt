@@ -118,7 +118,14 @@ internal suspend fun handleCustomPlatformSpecificAssets(
               )
             }
 
-            distEntries.add(CustomAssetEntry(path = source.file, hash = lazySource.precomputedHash, relativeOutputFile = customAsset.relativePath))
+            distEntries.add(
+              CustomAssetEntry(
+                path = source.file,
+                hash = lazySource.precomputedHash,
+                relativeOutputFile = customAsset.relativePath,
+                distributionPath = rootDir,
+              )
+            )
           }
 
           is CustomAssetShimSource -> {

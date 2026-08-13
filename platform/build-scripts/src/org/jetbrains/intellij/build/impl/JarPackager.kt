@@ -491,6 +491,7 @@ class JarPackager private constructor(
                 hash = hash,
                 relativeOutputFile = item.relativeOutputFile,
                 owner = item,
+                distributionPath = asset.file,
               )
             }
             else {
@@ -502,6 +503,7 @@ class JarPackager private constructor(
                 hash = hash,
                 size = size,
                 relativeOutputFile = item.relativeOutputFile,
+                distributionPath = asset.file,
               )
             }
           },
@@ -629,6 +631,7 @@ class JarPackager private constructor(
                 hash = hash,
                 size = size,
                 relativeOutputFile = relativeOutputFile,
+                distributionPath = asset.file,
               )
             }
             else {
@@ -642,6 +645,7 @@ class JarPackager private constructor(
                 hash = hash,
                 relativeOutputFile = relativeOutputFile,
                 owner = ModuleItem(moduleName, relativeOutputFile = targetFile.fileName.toString(), reason = null),
+                distributionPath = asset.file,
               )
             }
           },
@@ -1058,6 +1062,7 @@ private fun computeDistributionFileEntries(
         hash = hash,
         relativeOutputFile = module.relativeOutputFile,
         reason = module.reason,
+        distributionPath = asset.file,
       )
     )
   }
@@ -1067,7 +1072,7 @@ private fun computeDistributionFileEntries(
       source.distributionFileEntryProducer?.consume(size = 0, hash = 0, targetFile = asset.effectiveFile)?.let(list::add)
     }
     else if (source is LazySource) {
-      list.add(CustomAssetEntry(path = asset.effectiveFile, hash = 0))
+      list.add(CustomAssetEntry(path = asset.effectiveFile, hash = 0, distributionPath = asset.file))
     }
   }
 }

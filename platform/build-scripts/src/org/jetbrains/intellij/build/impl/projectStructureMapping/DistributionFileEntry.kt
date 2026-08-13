@@ -25,9 +25,13 @@ internal data class ContentReport(
 
 sealed interface DistributionFileEntry {
   /**
-   * Path to a file in IDE distribution
+   * Path used to access this entry. It may point to an immutable cache file which is linked into the distribution.
    */
   val path: Path
+
+  /** Logical path occupied by this entry in the IDE distribution. */
+  val distributionPath: Path
+    get() = path
 
   val relativeOutputFile: String?
 
@@ -54,6 +58,7 @@ data class CustomAssetEntry(
   override val path: Path,
   override val hash: Long,
   override val relativeOutputFile: String? = null,
+  override val distributionPath: Path = path,
 ) : DistributionFileEntry {
   override val type: String
     get() = "custom-asset"
@@ -76,6 +81,7 @@ internal data class ModuleLibraryFileEntry(
   override val hash: Long,
   override val relativeOutputFile: String?,
   override val owner: ModuleItem?,
+  override val distributionPath: Path = path,
 ) : DistributionFileEntry, LibraryFileEntry, ModuleOwnedFileEntry {
   override val type: String
     get() = "module-library-file"
@@ -92,6 +98,7 @@ internal data class ProjectLibraryEntry(
   override val hash: Long,
   override val size: Int,
   override val relativeOutputFile: String?,
+  override val distributionPath: Path = path,
 ) : DistributionFileEntry, LibraryFileEntry, ModuleOwnedFileEntry {
   override val type: String
     get() = "project-library"
@@ -110,6 +117,7 @@ data class ModuleOutputEntry(
   override val hash: Long,
   override val relativeOutputFile: String,
   @JvmField val reason: String? = null,
+  override val distributionPath: Path = path,
 ) : DistributionFileEntry, ModuleOwnedFileEntry {
   override val type: String
     get() = "module-output"

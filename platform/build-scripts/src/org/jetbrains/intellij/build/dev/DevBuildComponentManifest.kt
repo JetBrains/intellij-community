@@ -11,7 +11,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
-private const val DEV_BUILD_COMPONENT_MANIFEST_VERSION = 1
+private const val DEV_BUILD_COMPONENT_MANIFEST_VERSION = 2
 
 @Serializable
 @ApiStatus.Internal
@@ -95,17 +95,7 @@ private fun normalizeDevBuildComponentEntries(
   val normalizedComponentRoot = componentRoot.toAbsolutePath().normalize()
   val normalizedProjectDir = projectDir.toAbsolutePath().normalize()
   return entries.map { entry ->
-    val relativePath = entry.relativeOutputFile?.let { Path.of(it).normalize() } ?: run {
-      val path = entry.path.toAbsolutePath().normalize()
-      when {
-        path.startsWith(normalizedComponentRoot) -> normalizedComponentRoot.relativize(path)
-        path.startsWith(normalizedProjectDir) -> normalizedProjectDir.relativize(path)
-        else -> error("Cannot describe distribution entry outside the component and project roots: ${entry.path}")
-      }
-    }
-    check(!relativePath.isAbsolute && !relativePath.startsWith("..")) {
-      "Distribution entry has a non-relative output path '${entry.relativeOutputFile}': ${entry.path}"
-    }
+    val relativePath = getRelativeDistributionPath(entry, normalizedComponentRoot, normalizedProjectDir)
     DevBuildComponentEntry(
       relativePath = relativePath.invariantSeparatorsPathString,
       type = entry.type,

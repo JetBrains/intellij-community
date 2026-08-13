@@ -11,7 +11,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
-private const val IDE_FINGERPRINT_VERSION = "v2"
+private const val IDE_FINGERPRINT_VERSION = "v3"
 
 private val ideFingerprintEntryComparator = Comparator<IdeFingerprintEntry> { first, second ->
   var result = first.relativePath.compareTo(second.relativePath)
@@ -58,17 +58,7 @@ internal fun computeIdeFingerprint(
   val normalizedRunDir = runDir.toAbsolutePath().normalize()
   val normalizedProjectDir = projectDir.toAbsolutePath().normalize()
   val fingerprintEntries = entries.map { entry ->
-    val relativePath = entry.relativeOutputFile?.let { Path.of(it).normalize() } ?: run {
-      val path = entry.path.toAbsolutePath().normalize()
-      when {
-        path.startsWith(normalizedRunDir) -> normalizedRunDir.relativize(path)
-        path.startsWith(normalizedProjectDir) -> normalizedProjectDir.relativize(path)
-        else -> error("Cannot fingerprint distribution entry outside the IDE and project roots: ${entry.path}")
-      }
-    }
-    check(!relativePath.isAbsolute && !relativePath.startsWith("..")) {
-      "Distribution entry has a non-relative output path '${entry.relativeOutputFile}': ${entry.path}"
-    }
+    val relativePath = getRelativeDistributionPath(entry, normalizedRunDir, normalizedProjectDir)
     IdeFingerprintEntry(
       relativePath = relativePath.invariantSeparatorsPathString,
       type = entry.type,
@@ -76,6 +66,15 @@ internal fun computeIdeFingerprint(
     )
   }.toList()
   return computeIdeFingerprint(fingerprintEntries, debug)
+}
+
+internal fun getRelativeDistributionPath(entry: DistributionFileEntry, distributionRoot: Path, projectDir: Path): Path {
+  val path = entry.distributionPath.toAbsolutePath().normalize()
+  return when {
+    path.startsWith(distributionRoot) -> distributionRoot.relativize(path)
+    path.startsWith(projectDir) -> projectDir.relativize(path)
+    else -> error("Distribution entry is outside the distribution and project roots: ${entry.distributionPath}")
+  }
 }
 
 @VisibleForTesting

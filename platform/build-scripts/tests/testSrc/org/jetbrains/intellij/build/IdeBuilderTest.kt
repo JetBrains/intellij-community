@@ -7,6 +7,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dev.BuildRequest
+import org.jetbrains.intellij.build.dev.DevBuildPart
 import org.jetbrains.intellij.build.dev.DevBuildComponentEntry
 import org.jetbrains.intellij.build.dev.DevBuildComponentManifest
 import org.jetbrains.intellij.build.dev.IdeFingerprintEntry
@@ -19,6 +20,8 @@ import org.jetbrains.intellij.build.dev.createDevBuildPaths
 import org.jetbrains.intellij.build.dev.formatCoreClasspath
 import org.jetbrains.intellij.build.dev.prepareOverriddenRunDir
 import org.jetbrains.intellij.build.dev.prepareScratchDir
+import org.jetbrains.intellij.build.dev.readDevBuildComponentManifest
+import org.jetbrains.intellij.build.dev.writeDevBuildComponentManifest
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -449,13 +452,19 @@ class IdeBuilderTest {
 
     val fingerprint = computeIdeFingerprint(sequenceOf(first, second), runDir, projectDir)
 
-    assertThat(fingerprint).startsWith("v2:")
+    assertThat(fingerprint).startsWith("v3:")
     assertThat(computeIdeFingerprint(sequenceOf(second, first), runDir, projectDir)).isEqualTo(fingerprint)
     assertThat(computeIdeFingerprint(sequenceOf(first.copy(hash = 3), second), runDir, projectDir)).isNotEqualTo(fingerprint)
-    assertThat(computeIdeFingerprint(sequenceOf(first.copy(path = runDir.resolve("lib/renamed.jar")), second), runDir, projectDir))
+    assertThat(
+      computeIdeFingerprint(
+        sequenceOf(first.copy(path = runDir.resolve("lib/renamed.jar"), distributionPath = runDir.resolve("lib/renamed.jar")), second),
+        runDir,
+        projectDir,
+      )
+    )
       .isNotEqualTo(fingerprint)
     assertThat(computeIdeFingerprint(sequenceOf(first.copy(relativeOutputFile = "lib/moved.jar"), second), runDir, projectDir))
-      .isNotEqualTo(fingerprint)
+      .isEqualTo(fingerprint)
   }
 
   @Test
@@ -466,7 +475,7 @@ class IdeBuilderTest {
     val second = CustomAssetEntry(
       path = runDir.resolve("ignored.jar"),
       hash = 2,
-      relativeOutputFile = "lib/../lib/shared.jar",
+      distributionPath = runDir.resolve("lib/../lib/shared.jar"),
     )
 
     val fingerprint = computeIdeFingerprint(sequenceOf(first, second), runDir, projectDir)
@@ -475,7 +484,69 @@ class IdeBuilderTest {
     assertThat(computeIdeFingerprint(sequenceOf(first, second.copy(hash = 3)), runDir, projectDir)).isNotEqualTo(fingerprint)
     assertThat(computeIdeFingerprint(sequenceOf(first), runDir, projectDir)).isNotEqualTo(fingerprint)
     assertThat(computeIdeFingerprint(sequenceOf(second), runDir, projectDir))
-      .isEqualTo(computeIdeFingerprint(sequenceOf(second.copy(relativeOutputFile = "lib/shared.jar")), runDir, projectDir))
+      .isEqualTo(
+        computeIdeFingerprint(
+          sequenceOf(second.copy(distributionPath = runDir.resolve("lib/shared.jar"))),
+          runDir,
+          projectDir,
+        )
+      )
+  }
+
+  @Test
+  fun ideFingerprintUsesDistributionPathForExternalCacheAsset() {
+    val runDir = tempDir.resolve("run")
+    val projectDir = tempDir.resolve("project")
+    val distributionPath = runDir.resolve("plugins/rider-plugins-renderdoc")
+    val entry = CustomAssetEntry(
+      path = tempDir.resolve("maven/renderdoc-runtime-linux-aarch64.jar"),
+      hash = 1,
+      distributionPath = distributionPath,
+    )
+
+    val fingerprint = computeIdeFingerprint(sequenceOf(entry), runDir, projectDir)
+
+    assertThat(computeIdeFingerprint(sequenceOf(entry.copy(path = tempDir.resolve("other-cache/renderdoc.jar"))), runDir, projectDir))
+      .isEqualTo(fingerprint)
+    assertThat(
+      computeIdeFingerprint(
+        sequenceOf(entry.copy(distributionPath = runDir.resolve("plugins/renamed-renderdoc"))),
+        runDir,
+        projectDir,
+      )
+    ).isNotEqualTo(fingerprint)
+  }
+
+  @Test
+  fun componentManifestUsesDistributionPathForExternalCacheAsset() {
+    val componentRoot = tempDir.resolve("component")
+    val projectDir = tempDir.resolve("project")
+    val manifestFile = tempDir.resolve("component-manifest.json")
+    val entry = CustomAssetEntry(
+      path = tempDir.resolve("maven/renderdoc-runtime-linux-aarch64.jar"),
+      hash = 1,
+      distributionPath = componentRoot.resolve("plugins/rider-plugins-renderdoc"),
+    )
+
+    writeDevBuildComponentManifest(
+      file = manifestFile,
+      kind = DevBuildPart.PLUGINS,
+      platformPrefix = "Rider",
+      os = OsFamily.LINUX,
+      arch = JvmArchitecture.aarch64,
+      additionalModules = emptyList(),
+      mainClass = "com.intellij.idea.Main",
+      coreClassPath = emptyList(),
+      entries = sequenceOf(entry),
+      componentRoot = componentRoot,
+      projectDir = projectDir,
+    )
+
+    val manifest = readDevBuildComponentManifest(manifestFile)
+    assertThat(manifest.version).isEqualTo(2)
+    assertThat(manifest.entries).containsExactly(
+      DevBuildComponentEntry(relativePath = "plugins/rider-plugins-renderdoc", type = "custom-asset", hash = 1)
+    )
   }
 
   @Test
@@ -512,7 +583,7 @@ class IdeBuilderTest {
 
     assertThatThrownBy { computeIdeFingerprint(sequenceOf(entry), tempDir.resolve("run"), tempDir.resolve("project")) }
       .isInstanceOf(IllegalStateException::class.java)
-      .hasMessageContaining("outside the IDE and project roots")
+      .hasMessageContaining("outside the distribution and project roots")
   }
 
   private fun createBuildRequest(
