@@ -6,6 +6,7 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 
 @ApiStatus.Internal
 object PluginInitializationDiagnosticUtils {
@@ -44,7 +45,7 @@ object PluginInitializationDiagnosticUtils {
     fun StringBuilder.writeExclusionTree(descriptor: IdeaPluginDescriptorImpl, indent: Int) {
       val exclusionReason = resolvedPluginSet.getExclusionReason(descriptor)!!
       appendIndentString(indent)
-      appendLine(exclusionReason.logMessage())
+      appendLine(exclusionReason.exclusionTreeLogMessage())
       val children = exclusionChildren[descriptor] ?: emptyList()
       val (childFreeChainedExclusions, otherChildren) = children.partition { (exclusionChildren[it]?.size ?: 0) == 0 && resolvedPluginSet.getExclusionReason(it) is ChainedExclusion }
       if (childFreeChainedExclusions.isNotEmpty()) {
@@ -148,16 +149,28 @@ object PluginInitializationDiagnosticUtils {
     ?: asSafely<PartOfRuntimeModuleGroupDependencyCycle>()?.dependencyCycle?.nodesWithDependenciesOnCycle?.keys?.first()?.representativeModule
     ?: error("$this is not a cycle exclusion reason")
 
+  private fun DescriptorExclusionReason.exclusionTreeLogMessage(): String {
+    val logDescr by descriptor::shortLogDescription
+    return when (this) {
+      is ContentModuleParentIsExcluded,
+      is RequiredContentModuleIsExcluded,
+      is DependencyIsExcluded,
+      is DependsParentIsExcluded,
+      is DependencyIsNotResolved -> "dependent $logDescr excluded" // special handling in logExclusionTree
+      else -> logMessage()
+    }
+  }
+
   private fun DescriptorExclusionReason.logMessage(): String {
-    val logDescr = descriptor.shortLogDescription
+    val logDescr by descriptor::shortLogDescription
     return when (this) {
       // chained:
-      is ContentModuleParentIsExcluded -> "dependent $logDescr excluded"
-      is RequiredContentModuleIsExcluded -> "dependent $logDescr excluded"
-      is DependencyIsExcluded -> "dependent $logDescr excluded"
-      is DependsParentIsExcluded -> "dependent $logDescr excluded"
+      is ContentModuleParentIsExcluded -> "$logDescr excluded due to its parent ${this.precedingExcludedDescriptor.shortLogDescription} exclusion"
+      is DependsParentIsExcluded -> "$logDescr excluded due to its parent ${this.precedingExcludedDescriptor.shortLogDescription} exclusion"
+      is RequiredContentModuleIsExcluded -> "$logDescr excluded due to its required ${this.precedingExcludedDescriptor.shortLogDescription} exclusion"
+      is DependencyIsExcluded -> "$logDescr excluded due to its dependency ${this.precedingExcludedDescriptor.shortLogDescription} exclusion"
       // root:
-      is DependencyIsNotResolved -> "dependent $logDescr excluded" // special handling in logExclusionTree
+      is DependencyIsNotResolved -> "$logDescr depends on ${dependency.logDescription} which is absent"
       is DependencyIsNotVisible -> "$logDescr depends on ${dependencyModule.shortLogDescription} which is not visible"
       is ExcludedByEnvironmentConfiguration -> "$logDescr is excluded: ${reason.logMessage}"
       is IncompatibleWithAnotherModule -> "$logDescr is incompatible with ${preferredIncompatibleModule.shortLogDescription}"
@@ -262,4 +275,117 @@ object PluginInitializationDiagnosticUtils {
       logger.info("Disabled plugins: $disabled")
     }
   }
+
+  fun logMajorPluginLoadingProblems(
+    logger: Logger,
+    pluginSet: PluginSet,
+    reportingPolicy: PluginLoadingErrorReportingPolicy,
+  ) {
+    val problems = collectMajorPluginLoadingProblemMessages(pluginSet)
+    if (problems.isEmpty()) {
+      return
+    }
+
+    val message = "Problems found while loading plugins:\n  " + problems.joinToString(separator = "\n  ")
+    when (reportingPolicy.logLevel) {
+      PluginLoadingErrorLogLevel.INFO -> logger.info(message)
+      PluginLoadingErrorLogLevel.WARN -> logger.warn(message)
+      PluginLoadingErrorLogLevel.ERROR -> logger.error(message)
+    }
+  }
+
+  @VisibleForTesting
+  fun collectMajorPluginLoadingProblemMessages(pluginSet: PluginSet): List<String> {
+    val resolvedPluginSet = pluginSet.resolvedPluginSet
+    val result = ArrayList<String>()
+    val reportedCycles = HashSet<IdeaPluginDescriptorImpl>()
+
+    pluginSet.input.discoveryResult.descriptorLoadingErrors.mapTo(result) {
+      "Failed to read a plugin descriptor from path ${PluginUtils.pluginPathToUserString(it.path)}"
+    }
+
+    for (plugin in pluginSet.allPlugins) {
+      val earlyExclusionReason = pluginSet.excludedFromCandidateSubset[plugin]
+      if (earlyExclusionReason != null) {
+        if (!pluginSet.initContext.isPluginDisabled(plugin.pluginId)) {
+          earlyExclusionReason.majorProblemLogMessage()?.let(result::add)
+        }
+        continue
+      }
+
+      for (descriptor in plugin.sequenceAllDescriptors()) {
+        val exclusionReason = resolvedPluginSet.getExclusionReason(descriptor)
+        if ((exclusionReason is PartOfDependencyCycle || exclusionReason is PartOfRuntimeModuleGroupDependencyCycle) &&
+            reportedCycles.add(exclusionReason.getDependencyCycleRepresentative())) {
+          exclusionReason.majorProblemLogMessage()?.let(result::add)
+        }
+        if (exclusionReason is PackagePrefixConflictWithAnotherModule) {
+          exclusionReason.majorProblemLogMessage()?.let(result::add)
+        }
+      }
+      resolvedPluginSet.getExclusionReason(plugin)
+        ?.buildMajorProblemRootCauseLogMessageForPlugin(plugin, resolvedPluginSet)
+        ?.let(result::add)
+    }
+    return result
+  }
+
+  private fun DescriptorExclusionReason.buildMajorProblemRootCauseLogMessageForPlugin(
+    plugin: PluginMainDescriptor,
+    resolvedPluginSet: ResolvedPluginSet,
+  ): String? {
+    if (this is PartOfDependencyCycle || this is PartOfRuntimeModuleGroupDependencyCycle) {
+      return null // special handling in collectMajorPluginProblemLogMessages
+    }
+    if (this !is ChainedExclusion) {
+      return majorProblemLogMessage()
+    }
+    val exclusionChain = descriptor.sequenceDescriptorExclusionChain(resolvedPluginSet::getExclusionReason)
+    val rootCauseDescriptor = exclusionChain.last()
+    val rootCause = resolvedPluginSet.getExclusionReason(rootCauseDescriptor)!!
+    if (rootCause is ExcludedByEnvironmentConfiguration) {
+      return null
+    }
+    return when (rootCause) {
+      is PluginIsMarkedDisabled ->
+        "${plugin.shortLogDescription} requires ${rootCause.descriptor.getMainDescriptor().shortLogDescription} to be enabled"
+      is PartOfDependencyCycle, is PartOfRuntimeModuleGroupDependencyCycle ->
+        "${plugin.shortLogDescription} requires ${rootCause.descriptor.shortLogDescription} which is a part of a dependency cycle"
+      else ->
+        "${plugin.shortLogDescription} requires ${rootCause.descriptor.getMainDescriptor().shortLogDescription}: ${rootCause.logMessage()}"
+    }
+  }
+
+  private fun DescriptorExclusionReason.isMajorProblemRootCause(): Boolean {
+    return when (this) {
+      is ExcludedByEnvironmentConfiguration,
+      is OnDemandContentModuleHasNoDependentsLeft,
+      is PluginIsMarkedDisabled,
+      is PluginVersionIsSuperseded -> false
+      is ProductRulesImposedExclusion -> when (productReason) {
+        NonBundledPluginsLoadingIsDisabled,
+        PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading,
+        PluginLoadingIsDisabledCompletelyExceptCore -> false
+        else -> true
+      }
+      else -> true
+    }
+  }
+
+  private fun DescriptorExclusionReason.majorProblemLogMessage(): String? {
+    if (!isMajorProblemRootCause()) return null
+    return when (this) {
+      // more concise messages for cycles
+      is PartOfDependencyCycle -> "Dependency cycle detected between ${dependencyCycle.nodesWithDependenciesOnCycle.keys.joinToString { it.shortLogDescription }}"
+      is PartOfRuntimeModuleGroupDependencyCycle -> "Runtime module group dependency cycle detected between " +
+                                                    dependencyCycle.nodesWithDependenciesOnCycle.keys.joinToString { it.representativeModule.shortLogDescription }
+      else -> logMessage()
+    }
+  }
+
+  private val DependencyRef.logDescription: String
+    get() = when (this) {
+      is DependencyRef.ContentModule -> "module $moduleId"
+      is DependencyRef.Plugin -> "plugin ${pluginId.idString}"
+    }
 }

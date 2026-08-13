@@ -143,6 +143,8 @@ class PluginSet internal constructor(
 
   val candidateSubset: UnambiguousPluginSet get() = resolvedPluginSet.candidateSet
 
+  val initContext: PluginInitializationContext get() = input.initContext
+
   override fun toString(): String {
     return buildString {
       val resolvedPluginsCount = resolvedPluginSet.sortedResolvedDescriptors.filterIsInstance<PluginMainDescriptor>().count()

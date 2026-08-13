@@ -483,9 +483,11 @@ internal fun CoroutineScope.scheduleLoading(
   }
   val pluginSetDeferred = async {
     val discoveredPlugins = resultDeferred.await()
+    val reportingPolicy = PluginLoadingErrorReportingPolicy.forCurrentProduct()
     val pluginsState = PluginManagerCore.initializeAndSetPlugins(
       initContext = initContext,
       discoveredPlugins = discoveredPlugins,
+      reportingPolicy = reportingPolicy,
     )
     val pluginSet = pluginsState.pluginSet
     this@scheduleLoading.launch {
@@ -496,6 +498,11 @@ internal fun CoroutineScope.scheduleLoading(
         logger = logger,
         initContext = initContext,
         plugins = pluginSet.allPlugins,
+      )
+      PluginInitializationDiagnosticUtils.logMajorPluginLoadingProblems(
+        logger = logger,
+        pluginSet = pluginSet,
+        reportingPolicy = reportingPolicy,
       )
     }
     pluginSet

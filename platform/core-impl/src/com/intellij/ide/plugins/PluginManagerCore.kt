@@ -306,7 +306,6 @@ object PluginManagerCore {
   @JvmStatic
   fun isVendorJetBrains(vendorItem: String): Boolean = VENDOR_JETBRAINS == vendorItem || VENDOR_JETBRAINS_SRO == vendorItem
 
-  @Suppress("LoggingSimilarMessage")
   private fun preparePluginErrors(
     pluginNonLoadReasons: Map<PluginId, PluginNonLoadReason>,
     descriptorLoadingErrors: List<PluginDescriptorLoadingError>,
@@ -335,17 +334,7 @@ object PluginManagerCore {
       return emptyList()
     }
 
-    // the log includes all messages, not only those which need to be reported to the user
     val loadingErrors = pluginNonLoadReasons.values
-    val logMessage =
-      "Problems found loading plugins:\n  " +
-      (globalErrors.asSequence().map { it.htmlMessage.toString() } + loadingErrors.asSequence().map { it.logMessage })
-        .joinToString(separator = "\n  ")
-    when (reportingPolicy.logLevel) {
-      PluginLoadingErrorLogLevel.INFO -> logger.info(logMessage)
-      PluginLoadingErrorLogLevel.WARN -> logger.warn(logMessage)
-      PluginLoadingErrorLogLevel.ERROR -> logger.error(logMessage)
-    }
     return if (reportingPolicy.reportToUser) globalErrors + mapForUserNotification(loadingErrors) else emptyList()
   }
 
@@ -718,6 +707,7 @@ object PluginManagerCore {
   internal suspend fun initializeAndSetPlugins(
     initContext: PluginInitializationContext,
     discoveredPlugins: PluginsDiscoveryResult,
+    reportingPolicy: PluginLoadingErrorReportingPolicy,
   ): PluginManagerState {
     val tracerShim = CoroutineTracerShim.coroutineTracer
     return tracerShim.span("plugin initialization") {
@@ -733,7 +723,7 @@ object PluginManagerCore {
       val initResult = createPluginManagerState(
         pluginSet = pluginSet,
         parentActivity = parentActivity,
-        reportingPolicy = PluginLoadingErrorReportingPolicy.forCurrentProduct(),
+        reportingPolicy = reportingPolicy,
       )
       val pluginState = pluginsState
       pluginState.pluginsToDisable = initResult.pluginToDisable
