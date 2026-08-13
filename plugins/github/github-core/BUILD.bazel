@@ -100,6 +100,8 @@ jvm_library(
         "//platform/vcs-impl/shared",
         "//platform/lang-api:lang",
         "//platform/util/concurrency",
+        "//platform/eel-provider",
+        "//platform/eel",
     ],
 )
 
@@ -201,6 +203,8 @@ jvm_library(
         "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/eel-provider:eel-provider_test_lib",
+        "//platform/eel:eel_test_lib",
     ],
 )
 ### auto-generated section `build intellij.vcs.github` end
