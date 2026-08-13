@@ -180,7 +180,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   @VisibleForTesting
-  public DocumentEx getCachedDocument() {
+  private DocumentEx getCachedDocument() {
     Object file = myDocumentOrFile;
     return file instanceof VirtualFile ? (DocumentEx)FileDocumentManager.getInstance().getCachedDocument((VirtualFile)file) : (DocumentEx)file;
   }
@@ -206,6 +206,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     }
   }
 
+  @Override
   public void setStickingToRight(boolean value) {
     RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
     if (isValid(node) && value != node.isStickingToRight()) {
@@ -459,6 +460,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
    * @return this marker text range in the scalar form
    */
   @ApiStatus.Internal
+  @Override
   public long getScalarRange() {
     RangeMarkerTree.RMNode<?> node = myNode;
     if (node == null) {

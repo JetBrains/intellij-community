@@ -17,6 +17,8 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.TextRangeScalarUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 public interface RangeMarkerEx extends RangeMarker {
   /**
@@ -24,4 +26,12 @@ public interface RangeMarkerEx extends RangeMarker {
    * Must not be called for the disposed range marker.
    */
   long getId();
+
+  @ApiStatus.Internal
+  default void setStickingToRight(boolean value) {}
+
+  @ApiStatus.Internal
+  default long getScalarRange() {
+    return TextRangeScalarUtil.toScalarRange(getTextRange());
+  }
 }
