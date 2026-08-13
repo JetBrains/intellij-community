@@ -43,6 +43,16 @@ internal enum class McpToolCallOutcome {
   CANCELLED,
 }
 
+/** Why a command passed to `execute_tool` produced no tool call. */
+enum class McpDispatchRejectReason {
+  /** The command dispatched to a tool; whether that tool then succeeded is `success`. */
+  NONE,
+  EMPTY_COMMAND,
+  UNKNOWN_TOOL,
+  MISSING_REQUIRED_PARAMETERS,
+  ARGUMENTS_NOT_PARSEABLE,
+}
+
 internal enum class LintFilesResultKind {
   CLEAN,
   PROBLEMS_FOUND,
@@ -118,12 +128,20 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
   private val DISPATCHED_TOOL_FOUND = EventFields.Boolean("dispatched_tool_found")
   private val SUCCESS = EventFields.Boolean("success")
 
+  private val DISPATCH_REJECT_REASON = EventFields.Enum(
+    "dispatch_reject_reason",
+    McpDispatchRejectReason::class.java,
+    "Why a dispatched command produced no tool call. Before this field the reason was only inferable from a " +
+    "validation sentinel in dispatched_tool_name, which is not a value the IDE controls",
+  )
+
   private val EXECUTE_TOOL_DISPATCH_EVENT: VarargEventId = GROUP.registerVarargEvent(
     "mcp.execute_tool.dispatch",
     DISPATCHED_TOOL_NAME,
     ARG_COUNT,
     DISPATCHED_TOOL_FOUND,
     SUCCESS,
+    DISPATCH_REJECT_REASON,
     EventFields.DurationMs,
   )
 
@@ -198,13 +216,25 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
     )
   }
 
-  fun logExecuteToolDispatch(dispatchedToolName: String, argCount: Int, found: Boolean, success: Boolean, durationMs: Long) {
+  fun logExecuteToolDispatch(
+    dispatchedToolName: String?,
+    argCount: Int,
+    found: Boolean,
+    success: Boolean,
+    rejectReason: McpDispatchRejectReason,
+    durationMs: Long,
+  ) {
     EXECUTE_TOOL_DISPATCH_EVENT.log(
-      DISPATCHED_TOOL_NAME.with(dispatchedToolName),
-      ARG_COUNT.with(argCount),
-      DISPATCHED_TOOL_FOUND.with(found),
-      SUCCESS.with(success),
-      EventFields.DurationMs.with(durationMs),
+      buildList {
+        // The name is reported only once it resolved to a tool that exists. What the agent typed is its own text,
+        // and putting it here is what made the validator write a sentinel into this field.
+        dispatchedToolName?.let { add(DISPATCHED_TOOL_NAME.with(it)) }
+        add(ARG_COUNT.with(argCount))
+        add(DISPATCHED_TOOL_FOUND.with(found))
+        add(SUCCESS.with(success))
+        add(DISPATCH_REJECT_REASON.with(rejectReason))
+        add(EventFields.DurationMs.with(durationMs))
+      }
     )
   }
 
