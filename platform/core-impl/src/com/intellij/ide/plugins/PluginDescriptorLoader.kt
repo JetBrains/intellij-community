@@ -1436,7 +1436,7 @@ private fun loadPluginDependencyDescriptors(
       dependency.setSubDescriptor(subDescriptor)
     }
     finally {
-      visitedFiles.removeLast()
+      visitedFiles.removeAt(visitedFiles.lastIndex)
     }
   }
 }
