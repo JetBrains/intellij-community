@@ -37,7 +37,7 @@ class IDERunContextTest {
   @Test
   fun `repeating the current method is idempotent but switching back to an earlier method fails`() {
     CurrentTestMethod.set(testMethod("first test"))
-    val testContext = mock(IDETestContext::class.java)
+    val testContext = testContext()
     doReturn("reused-ide-test").`when`(testContext).testName
     doReturn(IDEDataPaths(tempDir, null)).`when`(testContext).paths
     val runContext = IDERunContext(testContext)
@@ -63,7 +63,7 @@ class IDERunContextTest {
   @Test
   fun `JUnit identities distinguish colliding readable test names`() {
     CurrentTestMethod.set(testMethod("same test", id = "first-id"))
-    val testContext = mock(IDETestContext::class.java)
+    val testContext = testContext()
     doReturn("reused-ide-test").`when`(testContext).testName
     doReturn(IDEDataPaths(tempDir, null)).`when`(testContext).paths
     val runContext = IDERunContext(testContext)
@@ -83,7 +83,7 @@ class IDERunContextTest {
     id = id,
   )
 
-  private fun testContext(isFrontend: Boolean, isBackend: Boolean = false): IDETestContext {
+  private fun testContext(isFrontend: Boolean = false, isBackend: Boolean = false): IDETestContext {
     val context = if (isBackend) mock(IDERemDevTestContext::class.java) else mock(IDETestContext::class.java)
     val testCase = mock(TestCase::class.java)
     val ideInfo = mock(IdeInfo::class.java)

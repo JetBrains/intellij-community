@@ -23,7 +23,7 @@ import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.ide.starter.screenRecorder.IDEScreenRecorder
 import com.intellij.ide.starter.utils.FileSystem.listDirectoryEntriesQuietly
-import com.intellij.ide.starter.utils.ReportingPathUtils.requirePathFits
+import com.intellij.ide.starter.utils.ReportingPathUtils.checkPathLength
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.startProfileNativeThreads
 import com.intellij.ide.starter.utils.stopProfileNativeThreads
@@ -56,6 +56,13 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * One run of an IDE: what to start it with, and what the launches of that run report.
+ *
+ * [copy] gives the copy reporting of its own — a fresh [IDEReportingDataRegistry], so a new [originalIdeReportingData], a method execution
+ * index counted from one again and its own link on CI. That is what a copy standing for another IDE process wants; a copy meant to be the
+ * same run would report itself twice, so copy only to start something.
+ */
 data class IDERunContext(
   val testContext: IDETestContext,
   val commandLine: (IDERunContext) -> IDECommandLine = ::openTestCaseProject,
@@ -80,15 +87,20 @@ data class IDERunContext(
   val lastIdeReportingData: IDEReportingData get() = reportingDataRegistry.current
   val originalIdeReportingData: IDEReportingData = reportingDataRegistry.original
 
+  /**
+   * The reporting directories of the one launch this run had. A run that reported for several test methods has no single answer to give,
+   * so these throw; reach for [lastIdeReportingData] or [registeredIdeReportingData] instead, which say which launch you mean.
+   */
   val reportsDir: Path
-    get() = registeredIdeReportingData().singleOrNull()?.reportsDir ?: multipleReportingDirsError()
+    get() = registeredIdeReportingData().singleOrNull()?.reportsDir ?: multipleReportingDirsError("reportsDir")
   val snapshotsDir: Path
-    get() = registeredIdeReportingData().singleOrNull()?.snapshotsDir ?: multipleReportingDirsError()
+    get() = registeredIdeReportingData().singleOrNull()?.snapshotsDir ?: multipleReportingDirsError("snapshotsDir")
   val logsDir: Path
-    get() = registeredIdeReportingData().singleOrNull()?.logsDir ?: multipleReportingDirsError()
+    get() = registeredIdeReportingData().singleOrNull()?.logsDir ?: multipleReportingDirsError("logsDir")
 
-  private fun multipleReportingDirsError(): Nothing =
-    error("There have been several reporting dirs. You need either to choose the last one or perform your action for all reporting dirs.")
+  private fun multipleReportingDirsError(accessor: String): Nothing =
+    error("There have been several reporting dirs, so '$accessor' cannot tell which one it means. " +
+          "You need either to choose the last one or perform your action for all reporting dirs.")
 
   private val patchesForVMOptions: ConcurrentList<VMOptions.() -> Unit> = ContainerUtil.createConcurrentList()
 
@@ -101,8 +113,6 @@ data class IDERunContext(
     // process - under the same path scheme as the rest, so that it lands next to the logs and reports it belongs with
     catchAll("publish event-log-data") { originalIdeReportingData.publishArtifact(testContext, testContext.paths.eventLogDataDir, "event-log-data") }
   }
-
-  fun verbose(): IDERunContext = copy(verboseOutput = true)
 
   @Suppress("unused")
   fun withVMOptions(patchVMOptions: VMOptions.() -> Unit): IDERunContext = addVMOptionsPatch(patchVMOptions)
@@ -288,7 +298,7 @@ data class IDERunContext(
       val dumpFile = lastIdeReportingData.logsDir
         .resolve("monitoring-thread-dumps-${processName}")
         .resolve("threadDump-${++cnt}-${getCurrentTimestamp()}.txt")
-      requirePathFits(dumpFile).parent.createDirectories()
+      checkPathLength(dumpFile).parent.createDirectories()
 
       logOutput("Dumping threads to $dumpFile")
       catchAll { collectJavaThreadDumpSuspendable(jdkHome, workDir, collectingProcessId, dumpFile) }

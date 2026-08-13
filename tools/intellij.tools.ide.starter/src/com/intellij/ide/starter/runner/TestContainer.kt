@@ -149,7 +149,7 @@ interface TestContainer {
     val testDirectory = run {
       val commonPath = (GlobalPaths.instance.testsDirectory / "${testCase.ideInfo.productCode}-$buildNumber") / testDirectoryName
       if (testCase.ideInfo.isFrontend) {
-        commonPath / "frontend"
+        commonPath / FrontendIDEDataPaths.FRONTEND_DIR_NAME
       }
       else {
         commonPath

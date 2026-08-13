@@ -1,7 +1,8 @@
 package com.intellij.ide.starter.runner
 
 import com.intellij.ide.starter.ide.IDETestContext
-import com.intellij.ide.starter.path.FrontendIDEDataPaths
+import com.intellij.ide.starter.report.DetailsOnCI
+import com.intellij.platform.testFramework.teamCity.TeamCityReporter
 import java.nio.file.Path
 
 internal class IDEReportingDataRegistry(
@@ -43,23 +44,41 @@ internal class IDEReportingDataRegistry(
       }
 
       val testMethod = currentTestMethod?.run {
-        IDEReportingData.TestMethodData(
+        TestMethodIdentity(
           className = clazzSimpleName,
           displayName = displayName,
-          index = registered.count { registration -> registration.testMethodId != null } + 1,
+          executionIndex = registered.count { registration -> registration.testMethodId != null } + 1,
         )
       }
       val reportingData = IDEReportingData(
-        providedTestName = testContext.testName,
-        launchName = launchName,
+        reportingRoot = testContext.paths.reportingRoot,
+        testName = testContext.testName,
         testMethod = testMethod,
-        testHome = testContext.paths.testHome,
-        isFrontend = testContext.paths is FrontendIDEDataPaths,
+        requestedLaunchName = launchName,
+        isFrontend = testContext.testCase.ideInfo.isFrontend,
       )
-      registered.firstOrNull()?.reportingData?.let { reportingData.reportStartupArtifactsLink(it) }
+      reportArtifactsLink("Link to Logs and artifacts", reportingData)
+      registered.firstOrNull()?.reportingData
+        ?.takeUnless { it.artifactPath == reportingData.artifactPath }
+        ?.let { reportArtifactsLink("Link to Logs and artifacts (IDE Startup)", it) }
       actionToResetLogDir.invoke(reportingData.logsDir)
       registered.add(Registration(testMethodId, reportingData))
       return reportingData
     }
+  }
+
+  /**
+   * Publishes a link to the artifacts of a launch as soon as it is registered, so that a running test can already be followed on CI.
+   * Lives here rather than in [IDEReportingData] so that asking a launch for its name has no effect.
+   */
+  private fun reportArtifactsLink(name: String, reportingData: IDEReportingData) {
+    val link = DetailsOnCI.instance.getLinkToCIArtifacts(reportingData) ?: return
+    TeamCityReporter.reportTestMetadata(
+      testName = null,
+      type = TeamCityReporter.MetadataType.LINK,
+      flowId = null,
+      name = name,
+      value = link,
+    )
   }
 }

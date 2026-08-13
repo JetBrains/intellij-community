@@ -38,6 +38,9 @@ open class IDEDataPaths(
     }
   }
 
+  /** The directory every launch of this test reports under, which is not always [testHome]: see [FrontendIDEDataPaths]. */
+  open val reportingRoot: Path get() = testHome
+
   val tempDir = (testHome / "temp").createDirectories()
 
   val configDir = ((inMemoryRoot ?: testHome) / "config").createDirectories()
