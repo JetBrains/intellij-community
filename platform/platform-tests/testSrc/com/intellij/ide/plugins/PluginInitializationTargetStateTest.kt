@@ -9,6 +9,7 @@ import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.pluginSystem.testFramework.PseudoProductTestPluginInitContext
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.testFramework.plugins.content
+import com.intellij.platform.testFramework.plugins.dependencies
 import com.intellij.platform.testFramework.plugins.depends
 import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.module
@@ -21,6 +22,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
 
@@ -59,6 +61,7 @@ class PluginInitializationTargetStateTest {
     productBuildNumber: BuildNumber = BuildNumber.fromString("241.0")!!,
     explicitPluginSubsetToLoad: Set<PluginId>? = null,
     disablePluginLoadingCompletely: Boolean = false,
+    checkEssentialPlugins: Boolean = false,
     startupConfiguration: (UnambiguousPluginSet) -> Unit = {},
   ): PluginInitializationContext {
     return object : PseudoProductTestPluginInitContext() {
@@ -67,6 +70,7 @@ class PluginInitializationTargetStateTest {
       override fun isPluginDisabled(id: PluginId): Boolean = explicitPluginSubsetToLoad == null && id in disabledPlugins
       override val explicitPluginSubsetToLoad: Set<PluginId>? = explicitPluginSubsetToLoad
       override val disablePluginLoadingCompletely: Boolean = disablePluginLoadingCompletely
+      override val checkEssentialPlugins: Boolean = checkEssentialPlugins
       override val currentProductModeId: String = ProductMode.MONOLITH.id
       override val environmentConfiguredModules: Map<PluginModuleId, PluginInitializationContext.EnvironmentConfiguredModuleData> =
         emptyMap()
@@ -85,6 +89,7 @@ class PluginInitializationTargetStateTest {
     productBuildNumber: BuildNumber = BuildNumber.fromString("241.0")!!,
     explicitPluginSubsetToLoad: Set<PluginId>? = null,
     disablePluginLoadingCompletely: Boolean = false,
+    checkEssentialPlugins: Boolean = false,
     discoveryResult: PluginsDiscoveryResult = discoverPlugins(),
   ): PluginSet {
     val initContext = createInitContext(
@@ -92,7 +97,8 @@ class PluginInitializationTargetStateTest {
       disabledPlugins = disabledPlugins,
       productBuildNumber = productBuildNumber,
       explicitPluginSubsetToLoad = explicitPluginSubsetToLoad,
-      disablePluginLoadingCompletely = disablePluginLoadingCompletely
+      disablePluginLoadingCompletely = disablePluginLoadingCompletely,
+      checkEssentialPlugins = checkEssentialPlugins,
     )
     return initContext.computeTargetState(discoveryResult, isStartupInit = false, parentActivity = null)
   }
@@ -102,50 +108,142 @@ class PluginInitializationTargetStateTest {
            ?: throw AssertionError("Candidate plugin '$id' not found")
   }
 
-  @Test
-  fun `core exclusion is logged if startup configuration fails`() {
-    val conflictingId = "duplicate.core.id"
-    plugin(PluginManagerCore.CORE_PLUGIN_ID) {
-      pluginAliases = listOf(conflictingId, conflictingId)
-    }.installAt(pluginsDirPath)
+  @Nested
+  inner class EssentialPlugins {
 
-    val startupFailure = IllegalStateException("Core plugin is missing")
-    val initContext = createInitContext(
-      essentialPlugins = setOf(PluginManagerCore.CORE_ID),
-      startupConfiguration = { candidateSubset ->
-        if (candidateSubset.resolvePluginId(PluginManagerCore.CORE_ID) == null) {
-          throw startupFailure
-        }
-      },
-    )
-    val loggedErrors = mutableListOf<Pair<String, Throwable?>>()
+    @Test
+    fun `resolved essential plugins pass validation`() {
+      plugin("foo") {}.installAt(pluginsDirPath)
+      val result = computeTargetState(
+        essentialPlugins = setOf(PluginId.getId("foo")),
+        checkEssentialPlugins = true,
+      )
 
-    LoggedErrorProcessor.executeWith<Nothing>(object : LoggedErrorProcessor() {
-      override fun processError(
-        category: String,
-        message: String,
-        details: Array<String?>,
-        t: Throwable?,
-      ): MutableSet<Action?> {
-        loggedErrors.add(message to t)
-        return Action.NONE
-      }
-    }) {
-      assertThatThrownBy {
-        initContext.computeTargetState(discoverPlugins(), isStartupInit = true, parentActivity = null)
-      }.isSameAs(startupFailure)
+      assertThat(result).hasExactlyEnabledPlugins("foo")
     }
 
-    assertThat(loggedErrors).hasSize(3)
-    assertThat(loggedErrors[0].first).isEqualTo("Fatal plugin initialization error")
-    assertThat(loggedErrors[0].second).isSameAs(startupFailure)
-    assertThat(loggedErrors[1].first).contains("[plugins] candidate subset:")
-    assertThat(loggedErrors[2].first).contains(
-      "[plugins] excluded from candidate subset:",
-      PluginManagerCore.CORE_PLUGIN_ID,
-      "declares conflicting id",
-      conflictingId,
-    )
+    @Test
+    fun `missing essential plugins are reported without diagnostic`() {
+      val exception = assertThrows<EssentialPluginMissingException> {
+        computeTargetState(
+          essentialPlugins = setOf(PluginId.getId("foo"), PluginId.getId("bar")),
+          checkEssentialPlugins = true,
+          discoveryResult = PluginsDiscoveryResult.build(emptyList()),
+        )
+      }
+
+      assertThat(exception.pluginIds).containsExactly("foo", "bar")
+      assertThat(exception.diagnostic).isNull()
+      assertThat(exception.message).isEqualTo("Missing essential plugins: foo, bar")
+    }
+
+    @Test
+    fun `essential plugins excluded from candidate subset are reported without exclusion traces`() {
+      plugin("foo") { pluginAliases = listOf("shared") }.installAt(pluginsDirPath)
+      plugin("bar") { pluginAliases = listOf("shared") }.installAt(pluginsDirPath)
+      val exception = assertThrows<EssentialPluginMissingException> {
+        computeTargetState(
+          essentialPlugins = setOf(PluginId.getId("foo"), PluginId.getId("bar")),
+          checkEssentialPlugins = true,
+        )
+      }
+
+      assertThat(exception.pluginIds).containsExactly("foo", "bar")
+      assertThat(exception.diagnostic).isNull()
+    }
+
+    @Test
+    fun `constraint exclusion traces are attached for all excluded essential plugins`() {
+      plugin("foo") { untilBuild = "100.*" }.installAt(pluginsDirPath)
+      plugin("bar") { depends("missing") }.installAt(pluginsDirPath)
+      val exception = assertThrows<EssentialPluginMissingException> {
+        computeTargetState(
+          essentialPlugins = setOf(PluginId.getId("foo"), PluginId.getId("bar")),
+          productBuildNumber = BuildNumber.fromString("241.0")!!,
+          checkEssentialPlugins = true,
+        )
+      }
+
+      assertThat(exception.pluginIds).containsExactly("foo", "bar")
+      assertThat(exception.diagnostic).contains(
+        "Exclusion traces:",
+        "foo",
+        "requires build <= 100.*",
+        "plugin missing is not resolved",
+        "bar",
+      )
+    }
+
+    @Test
+    fun `required core content module exclusion is reported through core exclusion trace`() {
+      plugin(PluginManagerCore.CORE_PLUGIN_ID) {
+        content(namespace = "jetbrains") {
+          module("core.required", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+            dependencies { plugin("missing") }
+          }
+        }
+      }.installAt(pluginsDirPath)
+      val exception = assertThrows<EssentialPluginMissingException> {
+        computeTargetState(
+          essentialPlugins = setOf(PluginManagerCore.CORE_ID),
+          checkEssentialPlugins = true,
+        )
+      }
+
+      assertThat(exception.pluginIds).containsExactly(PluginManagerCore.CORE_PLUGIN_ID)
+      assertThat(exception.diagnostic).contains(
+        "Exclusion traces:",
+        "plugin missing is not resolved",
+        "core.required",
+        PluginManagerCore.CORE_PLUGIN_ID,
+      )
+    }
+
+    @Test
+    fun `core exclusion is logged if startup configuration fails`() {
+      val conflictingId = "duplicate.core.id"
+      plugin(PluginManagerCore.CORE_PLUGIN_ID) {
+        pluginAliases = listOf(conflictingId, conflictingId)
+      }.installAt(pluginsDirPath)
+
+      val startupFailure = IllegalStateException("Core plugin is missing")
+      val initContext = createInitContext(
+        essentialPlugins = setOf(PluginManagerCore.CORE_ID),
+        startupConfiguration = { candidateSubset ->
+          if (candidateSubset.resolvePluginId(PluginManagerCore.CORE_ID) == null) {
+            throw startupFailure
+          }
+        },
+      )
+      val loggedErrors = mutableListOf<Pair<String, Throwable?>>()
+
+      LoggedErrorProcessor.executeWith<Nothing>(object : LoggedErrorProcessor() {
+        override fun processError(
+          category: String,
+          message: String,
+          details: Array<String?>,
+          t: Throwable?,
+        ): MutableSet<Action?> {
+          loggedErrors.add(message to t)
+          return Action.NONE
+        }
+      }) {
+        assertThatThrownBy {
+          initContext.computeTargetState(discoverPlugins(), isStartupInit = true, parentActivity = null)
+        }.isSameAs(startupFailure)
+      }
+
+      assertThat(loggedErrors).hasSize(3)
+      assertThat(loggedErrors[0].first).isEqualTo("Fatal plugin initialization error")
+      assertThat(loggedErrors[0].second).isSameAs(startupFailure)
+      assertThat(loggedErrors[1].first).contains("[plugins] candidate subset:")
+      assertThat(loggedErrors[2].first).contains(
+        "[plugins] excluded from candidate subset:",
+        PluginManagerCore.CORE_PLUGIN_ID,
+        "declares conflicting id",
+        conflictingId,
+      )
+    }
   }
 
   @Nested
