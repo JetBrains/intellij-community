@@ -100,6 +100,7 @@ internal class AlertMessagesManager {
                         exitActionTypes: Array<ExitActionType>): Int {
     val dialog = AlertDialog(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex, getIcon(icon),
                              doNotAskOption, helpId, invocationPlace, exitActionTypes)
+    dialog.setShouldUseWriteIntentReadAction(false)
     AppIcon.getInstance().requestAttention(project, true)
     dialog.show()
     return dialog.exitCode
