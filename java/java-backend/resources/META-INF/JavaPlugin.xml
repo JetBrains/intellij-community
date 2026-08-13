@@ -87,8 +87,6 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.module.WebModuleTypeRegistrar" preload="true"/>
 
-    <applicationService serviceImplementation="com.intellij.codeInsight.generation.SetterTemplatesManager"/>
-    <applicationService serviceImplementation="com.intellij.codeInsight.generation.GetterTemplatesManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager"/>
     <applicationService serviceImplementation="org.jetbrains.java.generate.template.toString.ToStringTemplatesManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory" open="true"/>
@@ -557,7 +555,6 @@
     <idIndexer filetype="CLASS" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaIdIndexer"/>
     <idIndexer filetype="JAVA" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaIdIndexer"/>
     <fileIconPatcher id="javaFileIconPatcher" implementation="com.intellij.ide.JavaFileIconPatcher"/>
-    <templateCompletionProcessor implementation="com.intellij.codeInsight.template.macro.JavaTemplateCompletionProcessor"/>
     <optionsApplicabilityFilter implementation="com.intellij.application.options.JavaOptionsApplicabilityFilter"/>
     <typeHierarchyProvider language="JAVA" implementationClass="com.intellij.ide.hierarchy.type.JavaTypeHierarchyProvider"/>
     <methodHierarchyProvider language="JAVA" implementationClass="com.intellij.ide.hierarchy.method.JavaMethodHierarchyProvider"/>
@@ -576,7 +573,6 @@
     <methodImplementor implementation="com.intellij.codeInsight.javadoc.SnippetDocTagMethodImplementor"/>
     <methodNavigationOffsetProvider implementation="com.intellij.codeInsight.navigation.JavaMethodNavigationOffsetProvider"/>
     <codeInsight.surroundWithRangeAdjuster implementation="com.intellij.codeInsight.generation.surroundWith.XmlSurroundWithRangeAdjuster"/>
-    <liveTemplateSubstitutor implementation="com.intellij.codeInsight.template.impl.JavaTemplateSubstitutor"/>
     <treeStructureProvider id="ClassesTreeStructureProvider" implementation="com.intellij.ide.projectView.impl.ClassesTreeStructureProvider"
                            order="last, after NestingTreeStructureProvider"/>
     <importFilteringRule implementation="com.intellij.usages.impl.rules.ImportFilteringRule"/>
@@ -689,12 +685,6 @@
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.PsiMethodFavoriteNodeProvider"/>
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.PsiFieldFavoriteNodeProvider"/>
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.PsiClassFavoriteNodeProvider"/>
-    <defaultTemplatePropertiesProvider implementation="com.intellij.ide.fileTemplates.TemplatePackagePropertyProvider"/>
-    <createFromTemplateHandler implementation="com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler" id="java"/>
-    <createFromTemplateHandler implementation="com.intellij.ide.fileTemplates.JavaInternalTemplatesHandler" order="after java"/>
-    <liveTemplateOptionalProcessor implementation="com.intellij.codeInsight.template.impl.ShortenToStaticImportProcessor"/>
-    <liveTemplateOptionalProcessor implementation="com.intellij.codeInsight.template.impl.ShortenFQNamesProcessor"/>
-    <liveTemplateOptionalProcessor implementation="com.intellij.codeInsight.template.impl.CodeBlockReformattingProcessor"/>
     <scopeDescriptorProvider implementation="com.intellij.ide.util.scopeChooser.HierarchyScopeDescriptorProvider"/>
     <patternDialectProvider implementation="com.intellij.packageDependencies.ui.PackagePatternProvider" id="package" order="before file"/>
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightImportedElementsHandlerFactory"/>
@@ -704,65 +694,11 @@
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightExceptionsHandlerFactory"/>
     <workspaceModel.moduleExtensionBridgeFactory
       implementation="com.intellij.workspaceModel.ide.legacyBridge.impl.java.CompilerModuleExtensionBridge$Factory"/>
-    <liveTemplateContext contextId="JAVA_CODE" implementation="com.intellij.codeInsight.template.JavaCodeContextType$Generic"/>
-    <liveTemplateContext contextId="JAVA_STATEMENT" baseContextId="JAVA_CODE"
-                         implementation="com.intellij.codeInsight.template.JavaCodeContextType$Statement"/>
-    <liveTemplateContext contextId="JAVA_CONSUMER" baseContextId="JAVA_CODE"
-                         implementation="com.intellij.codeInsight.template.JavaCodeContextType$ConsumerFunction"/>
-    <liveTemplateContext contextId="JAVA_EXPRESSION" baseContextId="JAVA_CODE"
-                         implementation="com.intellij.codeInsight.template.JavaCodeContextType$Expression"/>
-    <liveTemplateContext contextId="JAVA_ELSE_PLACE" baseContextId="JAVA_CODE"
-                         implementation="com.intellij.codeInsight.template.JavaCodeContextType$ElsePlace"/>
-    <liveTemplateContext contextId="JAVA_DECLARATION" baseContextId="JAVA_CODE"
-                         implementation="com.intellij.codeInsight.template.JavaCodeContextType$Declaration"/>
-    <liveTemplateContext contextId="JAVA_IMPLICIT_CLASS_DECLARATION" baseContextId="JAVA_CODE"
-                         implementation="com.intellij.codeInsight.template.JavaCodeContextType$ImplicitClassDeclaration"/>
-    <liveTemplateContext contextId="JAVA_NORMAL_CLASS_DECLARATION_WITHOUT_INSTANCE_MAIN" baseContextId="JAVA_CODE"
-                         implementation="com.intellij.codeInsight.template.JavaCodeContextType$NormalClassDeclarationBeforeShortMainMethod"/>
-    <liveTemplateContext contextId="JAVA_LANG_IO_STATEMENT" baseContextId="JAVA_CODE"
-                         implementation="com.intellij.codeInsight.template.JavaCodeContextType$JavaLangIOStatement"/>
-    <liveTemplateContext contextId="JAVA_NORMAL_CLASS_DECLARATION_WITH_INSTANCE_MAIN" baseContextId="JAVA_CODE"
-                         implementation="com.intellij.codeInsight.template.JavaCodeContextType$NormalClassDeclarationAfterShortMainMethod"/>
-    <liveTemplateContext contextId="JAVA_STATEMENT_WITH_STRUCTURED_CONCURRENCY_STATIC_FACTORY_METHODS_WITH_EXECUTION_EXCEPTION" baseContextId="JAVA_CODE"
-                         implementation="com.intellij.codeInsight.template.JavaCodeContextType$JavaStructuredConcurrencyStaticFactoryMethodsWithExecExceptionType" />
-    <liveTemplateContext contextId="JAVA_COMMENT" baseContextId="JAVA_CODE"
-                         implementation="com.intellij.codeInsight.template.JavaCommentContextType"/>
-    <liveTemplateContext contextId="JAVA_STRING" baseContextId="JAVA_CODE"
-                         implementation="com.intellij.codeInsight.template.JavaStringContextType"/>
-    <liveTemplateContext contextId="COMPLETION" baseContextId="JAVA_CODE"
-                         implementation="com.intellij.codeInsight.template.SmartCompletionContextType"/>
     <usageTargetProvider implementation="com.intellij.find.findUsages.JavaUsageTargetProvider"/>
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.JavaCopyPasteReferenceProcessor"/>
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.JavadocCopyPastePreProcessor"/>
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor"/>
     <importBlockRangeProvider implementation="com.intellij.codeInsight.editorActions.JavaImportBlockRangeProvider"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ArrayVariableMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.VariableOfTypeMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ComponentTypeOfMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SuggestVariableNameMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SuggestFirstVariableNameMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SuggestIndexNameMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.GuessElementTypeMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ExpectedTypeMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ExpressionTypeMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.AnnotatedMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.AnnotationTypeMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.MethodNameMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.MethodParametersMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ParameterInfoMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.MethodParameterTypesMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.MethodReturnTypeMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ClassNameMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.QualifiedClassNameMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentPackageMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.RightSideTypeMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CastToLeftSideTypeMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.IterableVariableMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.IterableComponentTypeMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.TypeParameterOfMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.DescendantClassesEnumMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SubtypesMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.TypeOfVariableMacro"/>
     <codeInspection.InspectionExtension implementation="com.intellij.codeInspection.ex.JavaInspectionExtensionsFactory"/>
     <postFormatProcessor implementation="com.intellij.psi.impl.source.codeStyle.ImportPostFormatProcessor"/>
     <postFormatProcessor implementation="com.intellij.psi.impl.source.codeStyle.BracePostFormatProcessor"/>
@@ -1291,10 +1227,8 @@
     <projectSettings service="com.intellij.codeInspection.ex.impl.EntryPointsManagerImpl"/>
     <projectSettings service="com.intellij.codeInsight.JavaProjectCodeInsightSettings"/>
     <applicationSettings service="com.intellij.codeInsight.JavaIdeCodeInsightSettings"/>
-    <applicationSettings service="com.intellij.codeInsight.generation.GetterTemplatesManager"/>
     <applicationSettings service="com.intellij.refactoring.JavaRefactoringSettings"/>
     <projectSettings service="com.intellij.codeInsight.NullableNotNullManagerImpl"/>
-    <applicationSettings service="com.intellij.codeInsight.generation.SetterTemplatesManager"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

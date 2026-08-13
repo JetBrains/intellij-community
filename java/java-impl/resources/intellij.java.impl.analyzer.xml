@@ -82,5 +82,11 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SubtypesMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.TypeOfVariableMacro"/>
     <liveTemplateSubstitutor implementation="com.intellij.codeInsight.template.impl.JavaTemplateSubstitutor"/>
+    <createFromTemplateHandler implementation="com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler" id="java"/>
+    <defaultTemplatePropertiesProvider implementation="com.intellij.ide.fileTemplates.TemplatePackagePropertyProvider"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.generation.SetterTemplatesManager"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.generation.GetterTemplatesManager"/>
+    <applicationSettings service="com.intellij.codeInsight.generation.SetterTemplatesManager"/>
+    <applicationSettings service="com.intellij.codeInsight.generation.GetterTemplatesManager"/>
   </extensions>
 </idea-plugin>
