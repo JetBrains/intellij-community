@@ -72,8 +72,8 @@ abstract class AbstractOpenProjectProvider {
       isNewProject = !isValidIdeaProject,
       runConfigurators = false,
       projectRootDir = nioPath,
-      beforeOpenTasks = openProjectTask.beforeOpenTasks.toMutableList().apply {
-        addFirst { project ->
+      beforeOpenTasks = buildList {
+        add { project ->
           if (isValidIdeaProject) {
             UnlinkedProjectNotificationAware.enableNotifications(project, systemId)
           }
@@ -87,7 +87,8 @@ abstract class AbstractOpenProjectProvider {
           }
           true
         }
-      },
+        addAll(openProjectTask.beforeOpenTasks)
+      }
     )
     return ProjectManagerEx.getInstanceEx().openProjectAsync(nioPath, options)
   }

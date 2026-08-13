@@ -122,11 +122,12 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         projectName = dummyProjectName,
         runConfigurators = false,
         runConversionBeforeOpen = false,
-        beforeOpenTasks = options.beforeOpenTasks.toMutableList().apply {
-          addFirst { project ->
+        beforeOpenTasks = buildList {
+          add { project ->
             project.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
             true
           }
+          addAll(options.beforeOpenTasks)
         }
       ).let {
         // both callers of this go on to `openFileFromCommandLine`, which is what releases the hold this asks for
