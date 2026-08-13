@@ -34,6 +34,7 @@
     <extensionPoint qualifiedName="com.intellij.usageViewPopupFactory" interface="com.intellij.usages.impl.UsageViewPopupFactory" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.usageViewFactory" interface="com.intellij.usages.impl.UsageViewFactory" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.usageViewElementsListener" interface="com.intellij.usages.impl.UsageViewElementsListener" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platformUsageFilteringRuleProvider" interface="com.intellij.usages.impl.rules.PlatformUsageFilteringRuleProvider" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.usages.impl.UsageFilteringRuleStateService" client="all"/>
@@ -42,6 +43,7 @@
                     serviceImplementation="com.intellij.usages.impl.UsageViewManagerImpl"/>
     <usageGroupingRuleProvider implementation="com.intellij.usages.impl.UsageGroupingRuleProviderImpl"/>
     <usageContextPanelProvider implementation="com.intellij.usages.impl.UsagePreviewPanel$Provider"/>
+    <platformUsageFilteringRuleProvider implementation="com.intellij.usages.impl.rules.DefaultPlatformUsageFilteringRuleProvider"/>
     <projectService serviceImplementation="com.intellij.usages.impl.rules.DirectoryGroupingRule" open="true"/>
     <actionPromoter implementation="com.intellij.usages.impl.UsageViewActionPromoter"/>
     <postStartupActivity implementation="com.intellij.usages.impl.rules.UsageFilteringRulesActivity"/>

@@ -3,6 +3,8 @@
 
 package com.intellij.usages.impl.rules
 
+import com.intellij.idea.AppMode
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.usages.rules.GeneratedSourceUsageFilter
 import com.intellij.usages.rules.ImportFilteringRule
@@ -11,9 +13,32 @@ import com.intellij.usages.rules.UsageFilteringRuleProvider
 import org.jetbrains.annotations.ApiStatus
 
 internal fun usageFilteringRules(project: Project): List<UsageFilteringRule> {
-  val result = ArrayList(platformUsageFilteringRules(project))
-  fromExtensions(project, result)
-  return java.util.List.copyOf(result)
+  val result = mutableListOf<UsageFilteringRule>()
+  for (provider in EP_NAME.extensionList) {
+    result += provider.getUsageFilteringRules(project)
+  }
+  return result
+}
+
+private val EP_NAME = ExtensionPointName.create<PlatformUsageFilteringRuleProvider>("com.intellij.platformUsageFilteringRuleProvider")
+
+/**
+ * Platform-only equivalent of [UsageFilteringRuleProvider].
+ * 
+ * It's separate from the public provider because the platform has special remdev handling.
+ */
+@ApiStatus.Internal
+interface PlatformUsageFilteringRuleProvider {
+  fun getUsageFilteringRules(project: Project): List<UsageFilteringRule>
+}
+
+internal class DefaultPlatformUsageFilteringRuleProvider : PlatformUsageFilteringRuleProvider {
+  override fun getUsageFilteringRules(project: Project): List<UsageFilteringRule> {
+    if (!AppMode.isMonolith()) return emptyList() // replaced by FrontendPlatformUsageFilteringRuleProvider
+    val result = ArrayList(platformUsageFilteringRules(project))
+    fromExtensions(project, result)
+    return java.util.List.copyOf(result)
+  }
 }
 
 @ApiStatus.Internal

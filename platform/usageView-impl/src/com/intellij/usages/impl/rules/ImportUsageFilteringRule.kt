@@ -6,13 +6,14 @@ import com.intellij.usages.UsageTarget
 import com.intellij.usages.rules.ImportFilteringRule
 import com.intellij.usages.rules.UsageFilteringRule
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.VisibleForTesting
+
 
 @Internal
-@VisibleForTesting
 object ImportUsageFilteringRule : UsageFilteringRule {
 
-  override fun getActionId(): String = "UsageFiltering.Imports"
+  const val ACTION_ID: String = "UsageFiltering.Imports"
+
+  override fun getActionId(): String = ACTION_ID
 
   override fun isVisible(usage: Usage, targets: Array<out UsageTarget>): Boolean {
     for (rule in ImportFilteringRule.EP_NAME.extensionList) {
