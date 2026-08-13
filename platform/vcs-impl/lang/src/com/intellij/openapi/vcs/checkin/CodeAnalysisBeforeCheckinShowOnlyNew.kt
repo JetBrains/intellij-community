@@ -20,7 +20,7 @@ import com.intellij.openapi.vcs.ex.compareLines
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.psi.impl.PsiDocumentManagerImpl
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.containers.MultiMap
 
 internal object CodeAnalysisBeforeCheckinShowOnlyNew {
@@ -59,7 +59,7 @@ internal object CodeAnalysisBeforeCheckinShowOnlyNew {
     val commonCodeSmells = HashSet<CodeSmellInfo>()
     runAnalysisAfterShelvingSync(project, selectedFiles, progressIndicator) {
       RefreshVFsSynchronously.updateChanges(changes4Update)
-      WriteAction.runAndWait<Exception> { PsiDocumentManagerImpl.getInstance(project).commitAllDocuments() }
+      WriteAction.runAndWait<Exception> { PsiDocumentManager.getInstance(project).commitAllDocuments() }
       codeSmellDetector.findCodeSmells(selectedFiles.filter { it.exists() }).forEach { oldCodeSmell ->
         val file = fileDocumentManager.getFile(oldCodeSmell.document) ?: return@forEach
         location2CodeSmell[Pair(file, oldCodeSmell.startLine)].forEach inner@{ newCodeSmell ->
