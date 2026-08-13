@@ -14,7 +14,7 @@ ${IdeBundle.message("gdpr.ai.data.collection.consent.additional.notice.1")}
 ${IdeBundle.message("gdpr.ai.data.collection.consent.additional.notice.2")}"""
 
   override fun getForcedState(): ConsentForcedState? {
-    val externalSettings = AiDataCollectionExternalSettings.findSettingsImplementedByAiAssistant()
+    val externalSettings = AiDataCollectionExternalSettings.findSettingsImplementedByAiPlugin()
     if (externalSettings != null && externalSettings.isForciblyDisabled()) {
       val description = externalSettings.getForciblyDisabledDescription()
                         ?: IdeBundle.message("gdpr.consent.externally.disabled.warning")

@@ -62,7 +62,7 @@ final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
     if (metadata == null) {
       return false;
     }
-    AiDataCollectionExternalSettings settings = AiDataCollectionExternalSettings.findSettingsImplementedByAiAssistant();
+    AiDataCollectionExternalSettings settings = AiDataCollectionExternalSettings.findSettingsImplementedByAiPlugin();
     if (settings == null) {
       return false; // AIA plugin is required for TRACE data collection
     }

@@ -18,7 +18,7 @@ internal class TraceDataCollectionConsentUI(
   override fun getCheckBoxCommentText(): @NlsSafe String = consent.text
 
   override fun getForcedState(): ConsentForcedState? {
-    val externalSettings = AiDataCollectionExternalSettings.findSettingsImplementedByAiAssistant()
+    val externalSettings = AiDataCollectionExternalSettings.findSettingsImplementedByAiPlugin()
     if (LOG.isDebugEnabled) {
       LOG.debug("AiDataCollectionExternalSettings: $externalSettings")
     }

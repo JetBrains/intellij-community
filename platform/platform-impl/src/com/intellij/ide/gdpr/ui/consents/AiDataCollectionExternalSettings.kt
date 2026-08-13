@@ -14,7 +14,12 @@ interface AiDataCollectionExternalSettings {
     val EP_NAME: ExtensionPointName<AiDataCollectionExternalSettings> =
       ExtensionPointName.create("com.intellij.aiDataCollectionExternalSettings")
 
-    private const val AI_ASSISTANT_PLUGIN_ID = "com.intellij.ml.llm"
+    /**
+     * Plugins allowed to answer for AI data collection, in priority order: AIR wins over AI Assistant, because AIR
+     * is where the consent surface ends up. The order is inert today, since AIR registers no extension yet, and it
+     * is what decides whose answer counts once it does.
+     */
+    private val AI_PLUGIN_IDS: List<String> = listOf("com.intellij.air", "com.intellij.ml.llm")
 
     private var testOverride: AiDataCollectionExternalSettings? = null
 
@@ -26,12 +31,18 @@ interface AiDataCollectionExternalSettings {
     }
 
     @JvmStatic
-    fun findSettingsImplementedByAiAssistant(): AiDataCollectionExternalSettings? {
+    fun findSettingsImplementedByAiPlugin(): AiDataCollectionExternalSettings? {
       testOverride?.let { return it }
-      return EP_NAME.findFirstSafe {
-        val pluginInfo = getPluginInfo(it.javaClass)
-        pluginInfo.isDevelopedByJetBrains() && pluginInfo.id == AI_ASSISTANT_PLUGIN_ID
+      for (pluginId in AI_PLUGIN_IDS) {
+        val settings = EP_NAME.findFirstSafe {
+          val pluginInfo = getPluginInfo(it.javaClass)
+          pluginInfo.isDevelopedByJetBrains() && pluginInfo.id == pluginId
+        }
+        if (settings != null) {
+          return settings
+        }
       }
+      return null
     }
   }
 
