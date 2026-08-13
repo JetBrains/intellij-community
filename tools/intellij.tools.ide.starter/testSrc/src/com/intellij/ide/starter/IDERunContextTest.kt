@@ -1,12 +1,10 @@
 package com.intellij.ide.starter
 
-import com.intellij.ide.starter.ide.IDERemDevTestContext
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.models.TestCase
 import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.runner.CurrentTestMethod
-import com.intellij.ide.starter.runner.IDEReportingData
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.TestMethod
 import io.kotest.matchers.shouldBe
@@ -25,13 +23,6 @@ class IDERunContextTest {
   @AfterEach
   fun clearCurrentTestMethod() {
     CurrentTestMethod.set(null)
-  }
-
-  @Test
-  fun `artifact names identify split mode roles and leave monolith unqualified`() {
-    IDEReportingData.artifactNameWithIdeRole(testContext(isFrontend = false), "logs") shouldBe "logs"
-    IDEReportingData.artifactNameWithIdeRole(testContext(isFrontend = true), "logs") shouldBe "logs-frontend"
-    IDEReportingData.artifactNameWithIdeRole(testContext(isFrontend = false, isBackend = true), "logs") shouldBe "logs-backend"
   }
 
   @Test
@@ -83,13 +74,13 @@ class IDERunContextTest {
     id = id,
   )
 
-  private fun testContext(isFrontend: Boolean = false, isBackend: Boolean = false): IDETestContext {
-    val context = if (isBackend) mock(IDERemDevTestContext::class.java) else mock(IDETestContext::class.java)
+  private fun testContext(): IDETestContext {
+    val context = mock(IDETestContext::class.java)
     val testCase = mock(TestCase::class.java)
     val ideInfo = mock(IdeInfo::class.java)
     doReturn(testCase).`when`(context).testCase
     doReturn(ideInfo).`when`(testCase).ideInfo
-    doReturn(isFrontend).`when`(ideInfo).isFrontend
+    doReturn(false).`when`(ideInfo).isFrontend
     return context
   }
 }

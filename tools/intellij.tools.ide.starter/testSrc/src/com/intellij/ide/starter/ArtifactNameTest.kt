@@ -61,6 +61,12 @@ class ArtifactNameTest {
     reported.shouldBeEmpty()
   }
 
+  /** A launch publishes into a directory of its own, so its artifacts only need a name that stays unique in time. */
+  @Test
+  fun `an unqualified artifact name is the type and a timestamp`() {
+    ReportingPathUtils.formatArtifactName("logs").matches(Regex("logs-\\d{14}")) shouldBe true
+  }
+
   @Test
   fun `short names stay unchanged`() {
     ReportingPathUtils.shortenWithHashIfNeeded("logs-short-test", MAX_ARTIFACT_NAME_LENGTH_IN_BYTES) shouldBe "logs-short-test"

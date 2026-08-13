@@ -1,7 +1,6 @@
 package com.intellij.ide.starter.runner
 
 import com.intellij.ide.starter.ide.IDETestContext
-import com.intellij.ide.starter.ide.isRemDevContext
 import com.intellij.ide.starter.path.FrontendIDEDataPaths
 import com.intellij.ide.starter.report.ErrorReporter
 import com.intellij.ide.starter.utils.ReportingPathUtils
@@ -48,6 +47,9 @@ data class TestMethodIdentity(
  * hyphenated once it has been joined rather than segment by segment, so a segment may keep a trailing hyphen; that is what the published
  * artifacts have already, and changing it moves every existing artifact URL.
  *
+ * No level is spelled twice: the class is left out when the test's own directory already names it, and the test is left out of
+ * [artifactPath] when the method segments already spell it. Exactly one of the two applies, so that something always names the test.
+ *
  * A launch takes its directories as it is constructed, so a resulting path that would not fit within [ReportingPathUtils.PATH_LENGTH_LIMIT]
  * is reported as this is constructed. The directories are created all the same — see [ReportingPathUtils.checkPathLength].
  */
@@ -74,11 +76,30 @@ class IDEReportingData internal constructor(
     testMethod != null && testName.hyphenateTestName() == testMethod.nameSegments.joinToString("/").hyphenateTestName()
 
   /**
+   * Whether the test's own reporting directory already names the class the method is in, which is what a test name derived from
+   * `CurrentTestMethod` does — even when a suffix of its own, a product code say, keeps it from spelling the whole method out. Repeating
+   * the class below that directory spends a bounded name on what the level above says already, and cutting both to the same length leaves
+   * two directories that look alike without being alike. Never together with [testNameSpellsTheMethodOut], which leaves the naming of the
+   * test to the class.
+   */
+  private val testNameSpellsTheClassOut: Boolean = !testNameSpellsTheMethodOut && testMethod?.className
+    ?.takeUnless(String::isEmpty)
+    ?.hyphenateTestName()
+    ?.let { hyphenatedClassName ->
+      val hyphenatedTestName = testName.hyphenateTestName()
+      // up to a separator only, so that a class the test name merely begins like is still spelled out
+      hyphenatedTestName.startsWith(hyphenatedClassName) &&
+      hyphenatedTestName.getOrNull(hyphenatedClassName.length)?.isLetterOrDigit() != true
+    } == true
+
+  /**
    * One directory name per level the method occupies, the last of them prefixed with the execution index so that the order the methods ran
    * in is visible in the reporting tree. Shared verbatim with [artifactPath].
    */
   private val testMethodDirSegments: List<String> = testMethod?.run {
-    val segments = nameSegments.map { it.hyphenateTestName() }
+    val hyphenatedSegments = nameSegments.map { it.hyphenateTestName() }
+    // the class only when the root does not name it already, and never when it is the only segment: the last one carries the index
+    val segments = if (testNameSpellsTheClassOut && hyphenatedSegments.size > 1) hyphenatedSegments.drop(1) else hyphenatedSegments
     segments.mapIndexed { segmentIndex, segment ->
       val isIndexedSegment = segmentIndex == segments.lastIndex
       // a parameterized display name may contain slashes, which have to stay inside the one directory the method gets
@@ -138,14 +159,6 @@ class IDEReportingData internal constructor(
 
   // region Artifact publication
 
-  companion object {
-    internal fun artifactNameWithIdeRole(testContext: IDETestContext, artifactName: String): String = when {
-      testContext.testCase.ideInfo.isFrontend -> "$artifactName-frontend"
-      testContext.isRemDevContext() -> "$artifactName-backend"
-      else -> artifactName
-    }
-  }
-
   internal fun publishArtifacts(testContext: IDETestContext) {
     runCatching {
       publishArtifact(testContext, logsDir, "logs")
@@ -162,10 +175,8 @@ class IDEReportingData internal constructor(
     testContext.publishArtifact(
       source = source,
       artifactPath = artifactPath,
-      artifactName = ReportingPathUtils.formatArtifactName(
-        artifactNameWithIdeRole(testContext, artifactName),
-        artifactPath,
-      ),
+      // the path already names the launch, down to which half of a split-mode pair it is, so the file name only has to stay unique in time
+      artifactName = ReportingPathUtils.formatArtifactName(artifactName),
     )
   }
 

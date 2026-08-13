@@ -65,20 +65,52 @@ class IDEReportingDataTest {
     ).launchDirSegments()
     val parameterDirName = segments.last()
 
-    segments.size shouldBe 2
+    segments.size shouldBe 1
     parameterDirName.toByteArray(Charsets.UTF_8).size shouldBe MAX_DIR_NAME_LENGTH_IN_BYTES
     HASH_SUFFIX.containsMatchIn(parameterDirName) shouldBe true
   }
 
   @Test
-  fun `the execution index prefixes the method below its test class directory`() {
+  fun `the execution index prefixes the method inside the directory of its test`() {
     val reportingData = reportingDataOf(
       testName = "maven-smoke-tests",
       testMethod = testMethodIdentity("MavenSmokeTests/addCustomRootsInMavenProject", index = 1),
     )
 
+    reportingData.launchDirSegments() shouldBe listOf("1_add-custom-roots-in-maven-project")
+    reportingData.artifactPath shouldBe "maven-smoke-tests/1-add-custom-roots-in-maven-project"
+  }
+
+  /**
+   * A test name built from `CurrentTestMethod` names the class already, and a suffix of its own — a product code, say — must not hide
+   * that. Spelling the class a second time cost a whole bounded directory name and pushed the JVM crash log of a CI run past the limit:
+   * `…/AI-LOCAL/check-fus-…-witho-f69a9e/check-fus-…-witho-538b4e/1_open-project-without-settings/…` came to 278 characters, of which the
+   * two directories that begin alike without being alike were 100.
+   */
+  @Test
+  fun `a class the directory of the test already names is not repeated below it`() {
+    val methodName = "CheckFusReopenStartupOpenProjectWithoutSettingsAITest/openProjectWithoutSettings"
+    val reportingData = reportingDataOf(
+      testName = "${methodName.hyphenateTestName()}-AI",
+      testMethod = testMethodIdentity(methodName, index = 1),
+      requestedLaunchName = "setupMetadataScheme",
+    )
+
+    reportingData.launchDirSegments() shouldBe listOf("1_open-project-without-settings", "setupMetadataScheme")
+    // the test is still named once: what stops the class from being spelled twice must not stop the test from being spelled at all
+    reportingData.artifactPath shouldBe
+      "${ReportingPathUtils.testDirectoryName("${methodName.hyphenateTestName()}-AI")}/" +
+      "1-open-project-without-settings/setupMetadataScheme"
+  }
+
+  @Test
+  fun `a class the test name only begins like is still spelled out`() {
+    val reportingData = reportingDataOf(
+      testName = "maven-smoke-testsuite",
+      testMethod = testMethodIdentity("MavenSmokeTests/addCustomRootsInMavenProject", index = 1),
+    )
+
     reportingData.launchDirSegments() shouldBe listOf("maven-smoke-tests", "1_add-custom-roots-in-maven-project")
-    reportingData.artifactPath shouldBe "maven-smoke-tests/maven-smoke-tests/1-add-custom-roots-in-maven-project"
   }
 
   @Test
@@ -212,7 +244,7 @@ class IDEReportingDataTest {
       testName = "maven-smoke-tests",
       testMethod = testMethodIdentity("MavenSmokeTests/addCustomRootsInMavenProject", index = 1),
     )
-    val launchDir = Path.of("maven-smoke-tests", "1_add-custom-roots-in-maven-project")
+    val launchDir = Path.of("1_add-custom-roots-in-maven-project")
 
     reportingRoot.relativize(reportingData.logsDir) shouldBe launchDir.resolve("log")
     reportingRoot.relativize(reportingData.reportsDir) shouldBe launchDir.resolve("reports")
@@ -244,8 +276,7 @@ class IDEReportingDataTest {
     )
 
     reportingData.logsDir.normalize().startsWith(reportingRoot.normalize()) shouldBe true
-    reportingRoot.relativize(reportingData.logsDir) shouldBe
-      Path.of("traversal-test", "1_..-..-..-outside", "log")
+    reportingRoot.relativize(reportingData.logsDir) shouldBe Path.of("1_..-..-..-outside", "log")
   }
 
   @Test
@@ -257,7 +288,7 @@ class IDEReportingDataTest {
           "RustRoverCompletionTest/[6] FileParameters(fileToOpen=crates/bevy_pbr/src/render/light.rs, line=683, column=62)",
           index = 6,
         ),
-        root = reportingRootWithAbsoluteLength(190),
+        root = reportingRootWithAbsoluteLength(210),
       )
     }
 
@@ -274,7 +305,7 @@ class IDEReportingDataTest {
 
   @Test
   fun `an impossibly deep reporting root is reported by the path it made too long`() {
-    val root = reportingRootWithAbsoluteLength(220)
+    val root = reportingRootWithAbsoluteLength(240)
 
     val reported = failuresReportedWhile {
       reportingDataOf(

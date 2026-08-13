@@ -70,10 +70,17 @@ object ReportingPathUtils {
     return path
   }
 
-  fun formatArtifactName(artifactType: String, testName: String): String {
-    val testNameFormatted = testName.replace("/", "-").replace(" ", "")
+  /**
+   * The file name a published artifact takes: `<type>-<timestamp>`, timestamped so that several artifacts of one type can land in one
+   * directory, and short enough for the suffix TeamCity appends. [testName] qualifies it for whoever publishes without a directory of their
+   * own to tell the tests apart.
+   */
+  fun formatArtifactName(artifactType: String, testName: String = ""): String {
     val time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
-    return shortenWithHashIfNeeded("$artifactType-$testNameFormatted-$time", MAX_FILE_NAME_LENGTH_IN_BYTES - TEAMCITY_ARTIFACT_SUFFIX.length)
+    val name = listOf(artifactType, testName.replace("/", "-").replace(" ", ""), time)
+      .filter(String::isNotEmpty)
+      .joinToString("-")
+    return shortenWithHashIfNeeded(name, MAX_FILE_NAME_LENGTH_IN_BYTES - TEAMCITY_ARTIFACT_SUFFIX.length)
   }
 
   /**
