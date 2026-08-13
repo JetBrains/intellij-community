@@ -146,7 +146,16 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
 
   override suspend fun describe(builder: ProjectViewPaneDescriptorBuilder): ProjectViewPaneDescriptor {
     builder.setDefault(isDefault())
+    describeSelectInTargets(builder)
     return builder.build(id(), presentableName(), order())
+  }
+  
+  protected open suspend fun describeSelectInTargets(builder: ProjectViewPaneDescriptorBuilder) {
+    builder.addSelectInTarget(
+      id = id().idString,
+      presentableName = presentableName(),
+      weight = order().toFloat(),
+    )
   }
 
   protected abstract suspend fun createNodeProvider(settingsAccessor: ProjectViewPaneSettingsAccessor): ProjectViewTreeNodeProvider<T>

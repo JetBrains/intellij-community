@@ -73,6 +73,7 @@
 - pa:createSelectNodeVisitorProvider():com.intellij.platform.projectView.impl.ProjectViewSelectNodeVisitorProvider
 - pa:createUpdater(kotlin.coroutines.Continuation):java.lang.Object
 - describe(com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder,kotlin.coroutines.Continuation):java.lang.Object
+- p:describeSelectInTargets(com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder,kotlin.coroutines.Continuation):java.lang.Object
 - findNodeForSelectIn(com.intellij.platform.projectView.pane.SelectInRequest,kotlin.coroutines.Continuation):java.lang.Object
 - p:flushExternalUpdates(kotlin.coroutines.Continuation):java.lang.Object
 - getCutCopyPasteDeleteHandler():com.intellij.platform.projectView.pane.ProjectViewPaneCutCopyPasteDeleteHandler
