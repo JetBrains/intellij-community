@@ -16,7 +16,7 @@ internal class ResetSettingsNewBadgesAction : AnAction() {
     val ids = mutableSetOf<String>()
     collectIds(ConfigurableExtensionPointUtil.getConfigurableGroup(e.project, true).configurables, ids)
     for (id in ids) {
-      props.unsetValue(SettingsNewBadgeRecorder.KEY_PREFIX + id)
+      props.unsetValue(KEY_PREFIX + id)
     }
   }
 

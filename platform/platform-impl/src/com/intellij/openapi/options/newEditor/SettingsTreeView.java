@@ -93,8 +93,6 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeExpansionListener;
 import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
@@ -124,11 +122,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -152,9 +148,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   private final MyRoot myRoot;
   private final FilteringTreeModel myModel;
-  private final Set<String> mySeenNewBadgesThisOpen = new HashSet<>();
   private final Map<String, Integer> myNewBadgeShownAtOpenCache = new HashMap<>();
-  private volatile boolean myIsDisposed;
 
   private Configurable myQueuedConfigurable;
   private MyControl myControl;
@@ -273,19 +267,6 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myTree.setModel(new AsyncTreeModel(myModel, this));
 
     myTree.getAccessibleContext().setAccessibleName(UIBundle.message("settings.tree.settings.categories.accessible.name"));
-
-    myScroller.getViewport().addChangeListener(e -> requestNewBadgeRecording());
-    myTree.addTreeExpansionListener(new TreeExpansionListener() {
-      @Override
-      public void treeExpanded(TreeExpansionEvent event) {
-        requestNewBadgeRecording();
-      }
-
-      @Override
-      public void treeCollapsed(TreeExpansionEvent event) {
-        requestNewBadgeRecording();
-      }
-    });
   }
 
   @Override
@@ -553,6 +534,11 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   }
 
   private @NotNull Promise<?> fireSelected(Configurable configurable) {
+    if (configurable != null && hasNewOptions(configurable)) {
+      SettingsNewBadgeRecorder.recordOpened(configurable);
+      myNewBadgeShownAtOpenCache.put(ConfigurableVisitor.getId(configurable), SettingsNewBadgeRecorder.MAX_SHOWS);
+      myTree.repaint();
+    }
     return myFilter.context.fireSelected(configurable, this);
   }
 
@@ -561,8 +547,6 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myQueuedConfigurable = null;
     // help GC and avoid leak on dynamic plugin reload (if some configurable hold language or something plugin-specific)
     myConfigurableToNodeMap.clear();
-    myIsDisposed = true;
-    SettingsNewBadgeRecorder.getInstance().release(this);
   }
 
   @Override
@@ -1229,26 +1213,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     if (configurable == null) return false;
     String id = ConfigurableVisitor.getId(configurable);
     int shownAtOpen = myNewBadgeShownAtOpenCache.computeIfAbsent(
-      id, _ -> SettingsNewBadgeRecorder.getInstance().shownCount(configurable));
+      id, _ -> SettingsNewBadgeRecorder.shownCount(configurable));
     return shownAtOpen < SettingsNewBadgeRecorder.MAX_SHOWS;
   }
 
-  @Nullable Configurable configurableWithNewBadgeAt(@NotNull Object treeComponent) {
-    if (myIsDisposed) return null;
-    MyNode node = extractNode(treeComponent);
-    if (node == null || !node.hasNewOptions()) return null;
-    return node.myConfigurable;
-  }
-
-  void captureNewBadgeSnapshot(@NotNull String id, int shown) {
-    myNewBadgeShownAtOpenCache.putIfAbsent(id, shown);
-  }
-
-  boolean markNewBadgeRecordedThisOpen(@NotNull String id) {
-    return mySeenNewBadgesThisOpen.add(id);
-  }
-
-  private void requestNewBadgeRecording() {
-    SettingsNewBadgeRecorder.getInstance().request(this);
-  }
 }
