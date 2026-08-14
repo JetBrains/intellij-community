@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
+import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
 import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
@@ -36,13 +37,17 @@ import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.DisabledOnOs
+import org.junit.jupiter.api.condition.EnabledOnOs
 import java.awt.Color
 import java.awt.Font
 import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.awt.event.MouseWheelEvent
 import kotlin.math.ceil
+import org.junit.jupiter.api.condition.OS as JUnitOs
 
 /**
  * Checks the full effect of mouse events in the terminal: whether a hyperlink is followed, whether the event
@@ -61,14 +66,31 @@ internal class TerminalMouseEventsHandlingTest {
 
     /** An arbitrary hover-attributes value owned by the test, so it doesn't depend on the default hover formula. */
     private val TEST_HOVERED_LINK_ATTRIBUTES = TextAttributes(null, null, Color.RED, EffectType.LINE_UNDERSCORE, Font.PLAIN)
+
+    /**  Mirrors [com.intellij.ui.scroll.TouchScrollUtil] private constants */
+    private const val TOUCH_BEGIN = 2
+    private const val TOUCH_UPDATE = 3
+    private const val TOUCH_END = 4
   }
 
   private val project: Project by projectFixture
 
-  /** Mouse reporting is disabled by default, matching [TerminalSession.processMouseEvent] before any app enables it. */
-  private fun doTest(isMouseReportingEnabled: Boolean = false, block: suspend (Fixture) -> Unit): Unit =
+  /**
+   * Mouse reporting is disabled by default, matching [TerminalSession.processMouseEvent] before any app enables it.
+   * Arrow-key simulation for wheel scroll on the alt-screen buffer defaults to `true`, matching
+   * [com.jediterm.terminal.ui.settings.DefaultSettingsProvider]'s own default.
+   */
+  private fun doTest(
+    isMouseReportingEnabled: Boolean = false,
+    simulateMouseScrollWithArrowKeysInAlternateScreen: Boolean = true,
+    block: suspend (Fixture) -> Unit,
+  ): Unit =
     timeoutRunBlocking(context = Dispatchers.EDT) {
-      Fixture(project, isMouseReportingEnabled = isMouseReportingEnabled).use { fixture ->
+      Fixture(
+        project,
+        isMouseReportingEnabled = isMouseReportingEnabled,
+        simulateMouseScrollWithArrowKeysInAlternateScreen = simulateMouseScrollWithArrowKeysInAlternateScreen,
+      ).use { fixture ->
         block(fixture)
       }
     }
@@ -79,7 +101,7 @@ internal class TerminalMouseEventsHandlingTest {
   }
 
   private enum class MouseEventKind {
-    PRESSED, RELEASED, MOVED, DRAGGED,
+    PRESSED, RELEASED, MOVED, DRAGGED, WHEEL,
   }
 
   @Nested
@@ -181,6 +203,174 @@ internal class TerminalMouseEventsHandlingTest {
         assertThat(releaseConsumed).isTrue()
         assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.PRESSED, MouseEventKind.DRAGGED, MouseEventKind.RELEASED)
         assertThat(fixture.linkFollowedCount).isZero()
+      }
+    }
+  }
+
+  /**
+   * Dispatched on [Fixture.alternateBufferEditor], the one editor whose scrollbar is always hidden regardless of content.
+   * In the main editor, [JBScrollPane][com.intellij.ui.components.JBScrollPane]'s own wheel listener runs first and consumes the event,
+   * so this is the only editor guaranteed to let a raw-wheel event reach [org.jetbrains.plugins.terminal.session.impl.TerminalSession].
+   */
+  @Nested
+  inner class WheelScrolling {
+    /**
+     * Unlike press/release/move/drag, "mouse reporting off" does not mean "wheel does nothing" on the real encoder:
+     * on the alt-screen buffer, it falls back to simulating arrow keys instead, as long as that fallback itself isn't disabled.
+     * So the two axes: mouse reporting and arrow-key simulation are tested independently.
+     */
+    @Nested
+    inner class MouseReportingDisabled {
+      @Test
+      fun `wheel scroll simulates arrow keys by default, even with mouse reporting off`(): Unit = doTest { fixture ->
+        fixture.setText("plain text")
+
+        // wheelRotation is large enough that the resulting pixel delta clears one row on any platform's
+        // formula; exact magnitude is covered by the MouseReportingEnabled tests below - this just confirms
+        // the alt-screen arrow-key fallback actually fires and is consumed when mouse reporting is off.
+        val consumed = fixture.wheelUnitScroll(scrollAmount = 3, wheelRotation = 20)
+
+        assertThat(consumed).isTrue()
+        assertThat(fixture.reportedEvents).isNotEmpty().containsOnly(MouseEventKind.WHEEL)
+      }
+
+      @Test
+      fun `shift-held wheel does not trigger arrow-key simulation either`(): Unit = doTest { fixture ->
+        fixture.setText("plain text")
+
+        val consumed = fixture.wheelUnitScroll(scrollAmount = 3, wheelRotation = 20, modifiers = InputEvent.SHIFT_DOWN_MASK)
+
+        assertThat(consumed).isFalse()
+        assertThat(fixture.reportedEvents).isEmpty()
+      }
+
+      @Test
+      fun `wheel is not reported or consumed when arrow-key simulation is also disabled`(): Unit =
+        doTest(simulateMouseScrollWithArrowKeysInAlternateScreen = false) { fixture ->
+          fixture.setText("plain text")
+
+          val consumed = fixture.wheelUnitScroll(scrollAmount = 3, wheelRotation = 20)
+
+          assertThat(consumed).isFalse()
+          assertThat(fixture.reportedEvents).isEmpty()
+        }
+    }
+
+    @Nested
+    inner class MouseReportingEnabled {
+      // Unit scroll (WHEEL_UNIT_SCROLL): platform-specific, mirroring JBScrollBar#getPreciseDelta.
+
+      @Test
+      @EnabledOnOs(JUnitOs.MAC)
+      fun `on macOS, a wheel notch is reported via the fixed 10x pixel scale, ignoring scrollAmount`(): Unit =
+        doTest(isMouseReportingEnabled = true) { fixture ->
+          fixture.setText("plain text")
+          val rowHeight = fixture.alternateBufferEditor.lineHeight
+          // Large enough that 10x scaling clears at least one row regardless of the real font's line height,
+          // but still small enough to land on a single, exactly-known row count.
+          val wheelRotation = rowHeight
+          val expectedLines = (10.0 * wheelRotation / rowHeight).toInt()
+
+          val consumed = fixture.wheelUnitScroll(scrollAmount = 3, wheelRotation = wheelRotation)
+
+          assertThat(consumed).isTrue()
+          assertThat(fixture.reportedEvents).hasSize(expectedLines).containsOnly(MouseEventKind.WHEEL)
+        }
+
+      @Test
+      @DisabledOnOs(JUnitOs.MAC)
+      fun `elsewhere, a physical wheel notch is reported the OS lines-per-notch number of times`(): Unit =
+        doTest(isMouseReportingEnabled = true) { fixture ->
+          fixture.setText("plain text")
+
+          val consumed = fixture.wheelUnitScroll(scrollAmount = 3, wheelRotation = 1)
+
+          assertThat(consumed).isTrue()
+          assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.WHEEL, MouseEventKind.WHEEL, MouseEventKind.WHEEL)
+        }
+
+      @Test
+      @DisabledOnOs(JUnitOs.MAC)
+      fun `elsewhere, a wheel notch in the opposite direction is still reported that many times`(): Unit =
+        doTest(isMouseReportingEnabled = true) { fixture ->
+          fixture.setText("plain text")
+
+          val consumed = fixture.wheelUnitScroll(scrollAmount = 2, wheelRotation = -1)
+
+          assertThat(consumed).isTrue()
+          assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.WHEEL, MouseEventKind.WHEEL)
+        }
+
+      // Block scroll (WHEEL_BLOCK_SCROLL): treated as one full page.
+
+      @Test
+      fun `a block scroll is reported one page of rows`(): Unit =
+        doTest(isMouseReportingEnabled = true) { fixture ->
+          fixture.setText("plain text")
+          val rows = fixture.alternateBufferEditor.calculateTerminalSize()!!.rows
+
+          val consumed = fixture.wheelBlockScroll(direction = 1)
+
+          assertThat(consumed).isTrue()
+          assertThat(fixture.reportedEvents).hasSize(rows).containsOnly(MouseEventKind.WHEEL)
+        }
+
+      @Test
+      fun `a block scroll in the opposite direction is still reported one page of rows`(): Unit =
+        doTest(isMouseReportingEnabled = true) { fixture ->
+          fixture.setText("plain text")
+          val rows = fixture.alternateBufferEditor.calculateTerminalSize()!!.rows
+
+          val consumed = fixture.wheelBlockScroll(direction = -1)
+
+          assertThat(consumed).isTrue()
+          assertThat(fixture.reportedEvents).hasSize(rows).containsOnly(MouseEventKind.WHEEL)
+        }
+
+      // Touch-phase scroll
+
+      @Test
+      fun `a burst of small precise trackpad deltas is reported far fewer times than events dispatched`(): Unit =
+        doTest(isMouseReportingEnabled = true) { fixture ->
+          fixture.setText("plain text")
+          val rowHeight = fixture.alternateBufferEditor.lineHeight
+
+          // Many small per-event deltas (well under one row each) simulate a fast trackpad fling; despite
+          // firing a callback per frame, the number of actual scroll reports must track total physical
+          // distance scrolled, not the number of callbacks - this is the core of the fix for IJPL-251729.
+          val eventCount = 20
+          val perEventPixels = 5.0
+          repeat(eventCount) { fixture.wheelTouchUpdate(pixels = perEventPixels) }
+
+          val expectedLines = (eventCount * perEventPixels / rowHeight).toInt()
+          assertThat(expectedLines).isLessThan(eventCount) // sanity: the scenario must actually exercise smoothing
+          assertThat(fixture.reportedEvents.count { it == MouseEventKind.WHEEL }).isEqualTo(expectedLines)
+        }
+
+      @Test
+      fun `touch begin and end markers carry no delta of their own, so they are not consumed or reported`(): Unit =
+        doTest(isMouseReportingEnabled = true) { fixture ->
+          fixture.setText("plain text")
+
+          val beginConsumed = fixture.wheelTouchPhase(scrollType = TOUCH_BEGIN, pixels = 0.0)
+          val endConsumed = fixture.wheelTouchPhase(scrollType = TOUCH_END, pixels = 0.0)
+
+          assertThat(beginConsumed).isFalse()
+          assertThat(endConsumed).isFalse()
+          assertThat(fixture.reportedEvents).isEmpty()
+        }
+
+      @Test
+      fun `shift-held wheel is not reported`(): Unit = doTest(isMouseReportingEnabled = true) { fixture ->
+        fixture.setText("plain text")
+
+        // wheelRotation is large enough that the resulting pixel delta clears one row on any platform's
+        // formula, so this actually exercises "Shift is respected", rather than passing merely because
+        // nothing accumulated yet.
+        val consumed = fixture.wheelUnitScroll(scrollAmount = 3, wheelRotation = 20, modifiers = InputEvent.SHIFT_DOWN_MASK)
+
+        assertThat(consumed).isFalse()
+        assertThat(fixture.reportedEvents).isEmpty()
       }
     }
   }
@@ -712,9 +902,14 @@ internal class TerminalMouseEventsHandlingTest {
    * A real [TerminalViewImpl] connected to a [RecordingTerminalSession], so the production mouse events handler,
    * hyperlinks logic, and editor logic are exercised as-is.
    */
-  private class Fixture(project: Project, columns: Int = 20, isMouseReportingEnabled: Boolean = false) : AutoCloseable {
+  private class Fixture(
+    project: Project,
+    columns: Int = 20,
+    isMouseReportingEnabled: Boolean = false,
+    simulateMouseScrollWithArrowKeysInAlternateScreen: Boolean = true,
+  ) : AutoCloseable {
     private val scope = terminalProjectScope(project).childScope("TerminalViewImpl")
-    private val session = RecordingTerminalSession(scope, isMouseReportingEnabled)
+    private val session = RecordingTerminalSession(scope, isMouseReportingEnabled, simulateMouseScrollWithArrowKeysInAlternateScreen)
     private val terminalView: TerminalViewImpl = TerminalViewImpl(
       project = project,
       settings = JBTerminalSystemSettingsProvider(),
@@ -728,6 +923,9 @@ internal class TerminalMouseEventsHandlingTest {
 
     val editor: EditorImpl
       get() = terminalView.outputEditor
+
+    val alternateBufferEditor: EditorImpl
+      get() = terminalView.alternateBufferEditor
 
     /** Kinds of the mouse events reported to the (fake) terminal process, in order. */
     val reportedEvents: List<MouseEventKind>
@@ -747,6 +945,10 @@ internal class TerminalMouseEventsHandlingTest {
       val characterGrid = editor.characterGrid ?: error("Character grid is not initialized")
       val widthInPixels = ceil(columns * characterGrid.charWidth).toInt()
       EditorTestUtil.setEditorVisibleSizeInPixels(editor, widthInPixels, 3 * editor.lineHeight)
+
+      val alternateCharacterGrid = alternateBufferEditor.characterGrid ?: error("Character grid is not initialized")
+      val alternateWidthInPixels = ceil(columns * alternateCharacterGrid.charWidth).toInt()
+      EditorTestUtil.setEditorVisibleSizeInPixels(alternateBufferEditor, alternateWidthInPixels, 3 * alternateBufferEditor.lineHeight)
     }
 
     fun setText(text: String) {
@@ -821,12 +1023,53 @@ internal class TerminalMouseEventsHandlingTest {
       return dispatch(MouseEventKind.DRAGGED, point, modifiers).isConsumed
     }
 
+    /** A point safely inside [alternateBufferEditor] - wheel dispatch doesn't care which grid cell it lands on. */
+    private fun alternatePoint(): Point = Point(5, alternateBufferEditor.lineHeight / 2)
+
+    /** Dispatches a classic notch-based wheel event (`WHEEL_UNIT_SCROLL`) and returns whether it ended up consumed. */
+    fun wheelUnitScroll(scrollAmount: Int, wheelRotation: Int, modifiers: Int = 0): Boolean {
+      val point = alternatePoint()
+      val event = MouseWheelEvent(
+        alternateBufferEditor.scrollPane, MouseEvent.MOUSE_WHEEL, System.currentTimeMillis(), modifiers,
+        point.x, point.y, 1, false, MouseWheelEvent.WHEEL_UNIT_SCROLL, scrollAmount, wheelRotation,
+      )
+      alternateBufferEditor.scrollPane.mouseWheelListeners.forEach { it.mouseWheelMoved(event) }
+      return event.isConsumed
+    }
+
+    /** Dispatches a `WHEEL_BLOCK_SCROLL` event (one page) in the given [direction] (positive = away from the user), and returns whether it ended up consumed. */
+    fun wheelBlockScroll(direction: Int): Boolean {
+      val point = alternatePoint()
+      val event = MouseWheelEvent(
+        alternateBufferEditor.scrollPane, MouseEvent.MOUSE_WHEEL, System.currentTimeMillis(), 0,
+        point.x, point.y, 1, false, MouseWheelEvent.WHEEL_BLOCK_SCROLL, 1, direction,
+      )
+      alternateBufferEditor.scrollPane.mouseWheelListeners.forEach { it.mouseWheelMoved(event) }
+      return event.isConsumed
+    }
+
+    /** Dispatches a touch-phase update event carrying [pixels] of already-smooth delta, and returns whether it ended up consumed. */
+    fun wheelTouchUpdate(pixels: Double): Boolean = wheelTouchPhase(TOUCH_UPDATE, pixels)
+
+    /** Dispatches a touch-phase event of the given [scrollType] (begin/update/end) and returns whether it ended up consumed. */
+    fun wheelTouchPhase(scrollType: Int, pixels: Double): Boolean {
+      val point = alternatePoint()
+      val sign = if (pixels < 0) -1 else 1
+      val event = MouseWheelEvent(
+        alternateBufferEditor.scrollPane, MouseEvent.MOUSE_WHEEL, System.currentTimeMillis(), 0,
+        point.x, point.y, 0, 0, 1, false, scrollType, 1, sign, pixels,
+      )
+      alternateBufferEditor.scrollPane.mouseWheelListeners.forEach { it.mouseWheelMoved(event) }
+      return event.isConsumed
+    }
+
     private fun dispatch(kind: MouseEventKind, point: Point, modifiers: Int): MouseEvent {
       val id = when (kind) {
         MouseEventKind.PRESSED -> MouseEvent.MOUSE_PRESSED
         MouseEventKind.RELEASED -> MouseEvent.MOUSE_RELEASED
         MouseEventKind.MOVED -> MouseEvent.MOUSE_MOVED
         MouseEventKind.DRAGGED -> MouseEvent.MOUSE_DRAGGED
+        MouseEventKind.WHEEL -> error("Wheel events are dispatched via wheelUnitScroll/wheelTouchUpdate/wheelTouchPhase, not dispatch()")
       }
       val event =
         MouseEvent(editor.contentComponent, id, System.currentTimeMillis(), modifiers, point.x, point.y, 1, false, MouseEvent.BUTTON1)
@@ -835,6 +1078,7 @@ internal class TerminalMouseEventsHandlingTest {
         MouseEventKind.RELEASED -> editor.mouseListener.mouseReleased(event)
         MouseEventKind.MOVED -> editor.contentComponent.mouseMotionListeners.forEach { it.mouseMoved(event) }
         MouseEventKind.DRAGGED -> editor.contentComponent.mouseMotionListeners.forEach { it.mouseDragged(event) }
+        MouseEventKind.WHEEL -> error("Wheel events are dispatched via wheelUnitScroll/wheelTouchUpdate/wheelTouchPhase, not dispatch()")
       }
       return event
     }
@@ -846,12 +1090,19 @@ internal class TerminalMouseEventsHandlingTest {
 
   /**
    * Collects the kinds of mouse events reported to the (fake) terminal process, always acknowledging them with
-   * a static 1-byte report - unless [isMouseReportingEnabled] is false or the event is Shift-held, mirroring
-   * how the real encoder leaves those cases for the editor.
+   * a static 1-byte report - unless the event is Shift-held (mirroring how the real encoder leaves that case
+   * for the editor) or, for non-wheel events, [isMouseReportingEnabled] is false.
+   *
+   * Wheel events are special: on the real encoder, mouse reporting off does *not* mean "do nothing" - on the
+   * alt-screen buffer (which is what every [WheelScrolling] test dispatches on), it falls back to simulating
+   * arrow keys instead, gated by [simulateMouseScrollWithArrowKeysInAlternateScreen] (defaults to `true`,
+   * matching [com.jediterm.terminal.ui.settings.DefaultSettingsProvider]'s own default).
+   * So the wheel is reportable whenever *either* mouse reporting or arrow-key simulation is on.
    */
   private class RecordingTerminalSession(
     override val coroutineScope: CoroutineScope,
     private val isMouseReportingEnabled: Boolean,
+    private val simulateMouseScrollWithArrowKeysInAlternateScreen: Boolean = true,
   ) : TerminalSession {
     val reportedEvents: MutableList<MouseEventKind> = mutableListOf()
 
@@ -869,12 +1120,20 @@ internal class TerminalMouseEventsHandlingTest {
      *  Then we will be able to test mouse scenarios end-to-end with different [org.jetbrains.plugins.terminal.TerminalEmulatorType].
      */
     override fun processMouseEvent(e: MouseEvent, x: Int, y: Int): ByteArray? {
-      if (!isMouseReportingEnabled || e.isShiftDown) return null
+      if (e.isShiftDown) return null
+      val isReportable = if (e.id == MouseEvent.MOUSE_WHEEL) {
+        isMouseReportingEnabled || simulateMouseScrollWithArrowKeysInAlternateScreen
+      }
+      else {
+        isMouseReportingEnabled
+      }
+      if (!isReportable) return null
       reportedEvents += when (e.id) {
         MouseEvent.MOUSE_PRESSED -> MouseEventKind.PRESSED
         MouseEvent.MOUSE_RELEASED -> MouseEventKind.RELEASED
         MouseEvent.MOUSE_MOVED -> MouseEventKind.MOVED
         MouseEvent.MOUSE_DRAGGED -> MouseEventKind.DRAGGED
+        MouseEvent.MOUSE_WHEEL -> MouseEventKind.WHEEL
         else -> error("Unexpected mouse event id: ${e.id}")
       }
       return REPORTED_EVENT_BYTES
