@@ -3,6 +3,8 @@ package com.intellij.ide.starter.junit5
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.runner.CurrentTestMethod
 import com.intellij.ide.starter.runner.TestMethod
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.platform.engine.TestExecutionResult
 import org.junit.platform.engine.support.descriptor.MethodSource
 import org.junit.platform.launcher.TestExecutionListener
@@ -11,10 +13,18 @@ import org.kodein.di.direct
 import org.kodein.di.instance
 
 /**
- * Provides [CurrentTestMethod] to DI
+ * Provides [CurrentTestMethod] to DI.
+ *
+ * The method is remembered as soon as the JUnit platform starts the test, but announced to listeners only from
+ * [beforeEach] - the two are different moments as far as the CI server is concerned.
  */
-open class CurrentTestMethodProvider : TestExecutionListener {
+open class CurrentTestMethodProvider : TestExecutionListener, BeforeEachCallback {
 
+  /**
+   * Launcher listeners registered via `META-INF/services` are notified before the ones the test runner passes to
+   * `Launcher.execute`, and the runner's TeamCity listener is one of the latter. Its `testStarted` message has not been
+   * printed yet, so metadata reported for this test would still attach to the previous one: only remember the method.
+   */
   override fun executionStarted(testIdentifier: TestIdentifier?) {
     if (testIdentifier?.isTest != true) {
       return
@@ -31,6 +41,14 @@ open class CurrentTestMethodProvider : TestExecutionListener {
         id = testIdentifier.uniqueId,
       )
     )
+  }
+
+  /**
+   * The JUnit platform runs before-each callbacks only after every launcher listener has seen `executionStarted`, so the
+   * TeamCity test is open by now and listeners may report metadata that attaches to it.
+   */
+  override fun beforeEach(context: ExtensionContext) {
+    di.direct.instance<CurrentTestMethod>().publishToListeners()
   }
 
   override fun executionFinished(testIdentifier: TestIdentifier?, testExecutionResult: TestExecutionResult?) {
