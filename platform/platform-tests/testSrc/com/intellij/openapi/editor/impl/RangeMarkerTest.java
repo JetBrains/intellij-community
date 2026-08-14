@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -883,7 +884,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       }
       document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', N));
 
-      final DocumentEx finalDocument = document;
+      DocumentEx finalDocument = document;
       WriteCommandAction.runWriteCommandAction(getProject(), () -> {
         List<Pair<RangeMarker, TextRange>> adds = new ArrayList<>();
         List<Pair<RangeMarker, TextRange>> dels = new ArrayList<>();
@@ -1017,8 +1018,8 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     return createMarker(string, start, end);
   }
 
-  public void testRangeMarkersAreWeakReferenced() {
-    final Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
+  public void testRangeMarkerInstancesAreWeaklyRetainedByDocument() {
+    Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
     Set<RangeMarker> markers = new HashSet<>();
     for (int i = 0; i < 10; i++) {
       markers.add(document.createRangeMarker(0, document.getTextLength()));
@@ -1027,8 +1028,22 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     LeakHunter.checkLeak(document, RangeMarker.class, o -> markers.contains(o));
   }
 
+  public void testRangeMarkersAreGarbageCollectableAndWhenTheyHaveTheyLeaveNoTracesInDocumentEvenTheirIds() {
+    DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
+    Ref<RangeMarkerEx> markerRef = new Ref<>((RangeMarkerEx)document.createRangeMarker(0, document.getTextLength()));
+    long markerId = markerRef.get().getId();
+    Reference<RangeMarkerEx> reference = new WeakReference<>(markerRef.get());
+    markerRef.set(null);
+    GCUtil.tryGcSoftlyReachableObjects(()->reference.get() == null);
+
+    document.processRangeMarkers(m -> {
+      assertFalse("Found marker with id:"+markerId+": "+m, ((RangeMarkerEx)m).getId() == markerId);
+      return true;
+    });
+  }
+
   public void testRangeMarkersAreLazyCreated() {
-    final Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
+    Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
     RangeMarker m1 = document.createRangeMarker(2, 4);
     RangeMarker m2 = document.createRangeMarker(2, 4);
 
