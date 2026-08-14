@@ -26,26 +26,23 @@ public class TextAttributeTest extends TestCase {
     assertEquals("ff", writeAndReadField(attributes, "BACKGROUND"));
   }
 
+  /**
+   * Reading is deliberately not gated on {@code editor.text.attributes.transparency}: a scheme saved while the key
+   * was on must stay readable after it is turned off again.
+   */
   @TestFor(issues = "IJPL-223521")
-  public void testWriteTranslucentColorsToElement() {
-    TextAttributes attributes = new TextAttributes(new Color(0xAF, 0x1D, 0x1D, 0x80), new Color(0x00, 0x00, 0xFF, 0x01),
-                                                   null, EffectType.BOXED, Font.PLAIN);
-    assertEquals("af1d1d80", writeAndReadField(attributes, "FOREGROUND"));
-    assertEquals("0000ff01", writeAndReadField(attributes, "BACKGROUND"));
-  }
+  public void testReadColorsWithAlphaFromElement() {
+    Element element = new Element("value");
+    addField(element, "FOREGROUND", "af1d1d80");
+    addField(element, "BACKGROUND", "1d1daf40");
+    addField(element, "EFFECT_COLOR", "11223344");
+    addField(element, "ERROR_STRIPE_COLOR", "55667788");
 
-  @TestFor(issues = "IJPL-223521")
-  public void testElementRoundTripKeepsAlpha() {
-    TextAttributes attributes = new TextAttributes(new Color(0xAF, 0x1D, 0x1D, 0x80), new Color(0x1D, 0x1D, 0xAF, 0x40),
-                                                   new Color(0x11, 0x22, 0x33, 0x44), EffectType.WAVE_UNDERSCORE, Font.BOLD);
-    attributes.setErrorStripeColor(new Color(0x55, 0x66, 0x77, 0x88));
-
-    TextAttributes restored = writeAndRead(attributes);
-    assertEquals(attributes, restored);
-    assertEquals(0x80, restored.getForegroundColor().getAlpha());
-    assertEquals(0x40, restored.getBackgroundColor().getAlpha());
-    assertEquals(0x44, restored.getEffectColor().getAlpha());
-    assertEquals(0x88, restored.getErrorStripeColor().getAlpha());
+    TextAttributes attributes = new TextAttributes(element);
+    assertEquals(new Color(0xAF, 0x1D, 0x1D, 0x80), attributes.getForegroundColor());
+    assertEquals(new Color(0x1D, 0x1D, 0xAF, 0x40), attributes.getBackgroundColor());
+    assertEquals(new Color(0x11, 0x22, 0x33, 0x44), attributes.getEffectColor());
+    assertEquals(new Color(0x55, 0x66, 0x77, 0x88), attributes.getErrorStripeColor());
   }
 
   public void testReadLegacyRgbFromElement() {
@@ -73,9 +70,4 @@ public class TextAttributeTest extends TestCase {
     return null;
   }
 
-  private static TextAttributes writeAndRead(TextAttributes attributes) {
-    Element element = new Element("value");
-    attributes.writeExternal(element);
-    return new TextAttributes(element);
-  }
 }
