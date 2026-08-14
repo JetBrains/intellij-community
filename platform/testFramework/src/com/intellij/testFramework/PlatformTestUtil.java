@@ -120,6 +120,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemDependent;
 import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.Promise;
 import org.junit.AssumptionViolatedException;
 
@@ -167,6 +168,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.splitByLines;
 import static com.intellij.testFramework.UsefulTestCase.assertSameLines;
+import static com.intellij.util.containers.ContainerUtil.all;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 import static java.util.Objects.requireNonNull;
 import static org.junit.Assert.assertArrayEquals;
@@ -721,6 +723,27 @@ public final class PlatformTestUtil {
     while (!canary.get()) {
       EdtTestUtilKt.dispatchAllEventsInIdeEventQueue();
     }
+  }
+
+  /**
+   * Dispatches pending events through the canary posted after current write actions.
+   * Returns early if {@code deadlineNs} is reached
+   * BEWARE: deadline = absolute time, not relative timeout.
+   * @return false if deadlineNs is breached before all events were dispatched (=wait timed out)
+   */
+  @RequiresEdt
+  @RequiresBlockingContext(replaceWith = @ReplaceWith(expression = "yield()", imports = {}))
+  @VisibleForTesting
+  public static boolean dispatchAllEventsInIdeEventQueue(long deadlineNs) {
+    var canary = new Ref<>(false);
+    launchCanary(canary);
+    while (!canary.get()) {
+      boolean allEventsDispatchedBeforeDeadline = EdtTestUtilKt.dispatchAllEventsInIdeEventQueue(deadlineNs);
+      if (!allEventsDispatchedBeforeDeadline) {// == deadline was breached
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -1505,10 +1528,12 @@ public final class PlatformTestUtil {
     int timeoutInSeconds,
     @Nullable Runnable callback
   ) {
-    var start = System.nanoTime();
+    var startedNs = System.nanoTime();
+    var timeoutNs = Duration.ofSeconds(timeoutInSeconds).toNanos();
+    var deadlineNs = startedNs + timeoutNs;
     while (true) {
       try {
-        if (System.nanoTime() - start > Duration.ofSeconds(timeoutInSeconds).toNanos()) {
+        if (System.nanoTime() >= deadlineNs) {
           if (callback != null) {
             callback.run();
           }
@@ -1532,7 +1557,7 @@ public final class PlatformTestUtil {
           }
           break;
         }
-        dispatchAllEventsInIdeEventQueue();
+        dispatchAllEventsInIdeEventQueue(deadlineNs);
         //noinspection BusyWait
         Thread.sleep(10);
       }
