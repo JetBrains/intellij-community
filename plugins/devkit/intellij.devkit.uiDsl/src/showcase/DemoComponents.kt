@@ -18,6 +18,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.rows
 import com.intellij.ui.dsl.builder.tabbedPaneHeader
 import com.intellij.ui.dsl.builder.text
+import com.intellij.ui.dsl.builder.toHtmlIcon
 import javax.swing.JLabel
 
 @Suppress("DialogTitleCapitalization")
@@ -98,7 +99,7 @@ fun demoComponents(): DialogPanel {
     }
 
     row(DevkitUiDslBundle.message("demo.components.text")) {
-      text(DevkitUiDslBundle.message("demo.components.text.value"))
+      text(DevkitUiDslBundle.message("demo.components.text.value", toHtmlIcon(AllIcons.General::Information)))
     }
 
     row(DevkitUiDslBundle.message("demo.components.link")) {
