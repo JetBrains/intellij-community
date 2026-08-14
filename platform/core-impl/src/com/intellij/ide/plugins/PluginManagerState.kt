@@ -10,7 +10,6 @@ class PluginManagerState internal constructor(
   val pluginToDisable: List<PluginStateChangeData>,
   val pluginToEnable: List<PluginStateChangeData>,
   val loadingErrors: List<PluginLoadingError>,
-  val shadowedBundledPlugins: Set<PluginId>,
 )
 
 @ApiStatus.Internal

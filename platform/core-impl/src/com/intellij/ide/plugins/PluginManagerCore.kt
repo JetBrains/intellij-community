@@ -32,6 +32,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
+import java.lang.ref.WeakReference
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -101,12 +102,6 @@ object PluginManagerCore {
     var pluginsToDisable: List<PluginStateChangeData> = emptyList()
     var pluginsToEnable: List<PluginStateChangeData> = emptyList()
 
-    /**
-     * Bundled plugins that were updated.
-     * When we update a bundled plugin, it becomes non-bundled, so it is more challenging for analytics to use that data.
-     */
-    var shadowedBundledPlugins: Set<PluginId> = emptySet()
-
     @Volatile
     var initFuture: Deferred<PluginSet>? = null
 
@@ -150,6 +145,18 @@ object PluginManagerCore {
   private val pluginsStateLazy = lazy { PluginsMutableState() }
   private val pluginsState: PluginsMutableState
     get() = pluginsStateSupplier?.invoke() ?: pluginsStateLazy.value
+
+
+  private class ShadowedBundledPluginsCache(
+    val pluginSetRef: WeakReference<PluginSet>,
+    val pluginIds: Set<PluginId>,
+  )
+
+  /**
+   * Bundled plugins that were updated.
+   * When we update a bundled plugin, it becomes non-bundled, so it is more challenging for analytics to use that data.
+   */
+  private var shadowedBundledPluginsCache: ShadowedBundledPluginsCache? = null // TODO consider moving this out of here somewhere to PluginManager
 
   /**
    * Returns `true` if the IDE is running from source code **without using 'dev build'**.
@@ -463,7 +470,6 @@ object PluginManagerCore {
 
     initStagesActivity = initStagesActivity?.startChild("error collection")
     val incompletePlugins = HashMap<PluginId, PluginMainDescriptor>()
-    val shadowedBundledIds = HashSet<PluginId>()
     for (pluginList in discoveredPlugins.pluginLists) {
       for (plugin in pluginList.plugins) {
         val exclusionReason = excludedFromCandidateSubset[plugin]
@@ -472,11 +478,6 @@ object PluginManagerCore {
           if (existing == null || VersionComparatorUtil.compare(plugin.version, existing.version) > 0) {
             incompletePlugins[plugin.pluginId] = plugin
           }
-        }
-        if ((pluginList.source == PluginsSourceContext.Bundled ||
-             pluginList.source == PluginsSourceContext.ClassPathProvided) && // FIXME checking only Bundled should be sufficient here
-            exclusionReason is PluginVersionIsSuperseded) {
-          shadowedBundledIds.add(plugin.pluginId)
         }
       }
     }
@@ -522,7 +523,6 @@ object PluginManagerCore {
       pluginToDisable = pluginsToDisable.values.toList(),
       pluginToEnable = pluginsToEnable.values.toList(),
       loadingErrors = loadingErrors,
-      shadowedBundledPlugins = shadowedBundledIds,
     )
   }
 
@@ -735,7 +735,6 @@ object PluginManagerCore {
       pluginState.pluginsToDisable = initResult.pluginToDisable
       pluginState.pluginsToEnable = initResult.pluginToEnable
       pluginState.setErrorsForNotificationReporterAndLogger(initResult.loadingErrors)
-      pluginState.shadowedBundledPlugins = initResult.shadowedBundledPlugins
       //activity.setDescription("plugin count: ${initResult.pluginSet.enabledPlugins.size}")
       pluginState.nullablePluginSet = initResult.pluginSet
       initResult
@@ -826,9 +825,34 @@ object PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  @Synchronized
   @JvmStatic
-  fun isUpdatedBundledPlugin(plugin: PluginDescriptor): Boolean = !plugin.isBundled && pluginsState.shadowedBundledPlugins.contains(plugin.getPluginId())
+  fun isUpdatedBundledPlugin(plugin: PluginDescriptor): Boolean =
+    !plugin.isBundled && getShadowedBundledPluginIds(getPluginSet()).contains(plugin.getPluginId())
+
+  @Synchronized
+  private fun getShadowedBundledPluginIds(pluginSet: PluginSet): Set<PluginId> {
+    val cached = shadowedBundledPluginsCache
+    if (cached != null && cached.pluginSetRef.get() === pluginSet) {
+      return cached.pluginIds
+    }
+
+    val result = HashSet<PluginId>()
+    for (pluginList in pluginSet.input.discoveryResult.pluginLists) {
+      if (
+        pluginList.source != PluginsSourceContext.Bundled &&
+        pluginList.source != PluginsSourceContext.ClassPathProvided // FIXME checking only Bundled should be sufficient here
+      ) {
+        continue
+      }
+      for (plugin in pluginList.plugins) {
+        if (pluginSet.excludedFromCandidateSubset[plugin] is PluginVersionIsSuperseded) {
+          result.add(plugin.pluginId)
+        }
+      }
+    }
+    shadowedBundledPluginsCache = ShadowedBundledPluginsCache(pluginSetRef = WeakReference(pluginSet), pluginIds = result)
+    return result
+  }
 
   @ApiStatus.Internal
   fun dependsOnUltimateOptionally(pluginDescriptor: IdeaPluginDescriptor?): Boolean {
