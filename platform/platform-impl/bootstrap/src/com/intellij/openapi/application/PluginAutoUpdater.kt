@@ -177,7 +177,7 @@ object PluginAutoUpdater {
         if (plugin == null || plugin !== updateDesc) {
           val nonLoadReason = excludedDescriptors[updateDesc]
           rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} would not load after the update" +
-                                (nonLoadReason?.let { ": ${PluginInitializationDiagnosticUtils.getLogMessageForRootExclusionReason(it)}" } ?:
+                                (nonLoadReason?.let { ": ${PluginInitializationDiagnosticUtils.getLogMessage(it)}" } ?:
                                  plugin?.let { ": version ${it.version} is selected for loading instead" }.orEmpty())
           continue
         }

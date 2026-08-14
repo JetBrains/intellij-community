@@ -18,7 +18,7 @@ class PluginModuleConfigurationError(
     sb.append("${message}\n")
     descriptorExclusionReason?.let { reason ->
       sb.append("  Plugin: ${reason.descriptor.shortLogDescription}\n")
-      sb.append("  Reason: ${PluginInitializationDiagnosticUtils.getLogMessageForRootExclusionReason(reason)}\n")
+      sb.append("  Reason: ${PluginInitializationDiagnosticUtils.getLogMessage(reason)}\n")
     }
     cause?.let {
       sb.append("  Cause: ${it.message}\n")

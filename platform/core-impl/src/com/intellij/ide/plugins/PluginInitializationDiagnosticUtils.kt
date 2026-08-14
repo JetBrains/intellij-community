@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object PluginInitializationDiagnosticUtils {
-  fun getLogMessageForRootExclusionReason(reason: DescriptorExclusionReason): String = reason.logMessage()
+  fun getLogMessage(reason: DescriptorExclusionReason): String = reason.logMessage()
 
   fun logExclusionTree(logger: Logger, pluginSet: PluginSet) {
     val resolvedPluginSet = pluginSet.resolvedPluginSet
@@ -191,7 +191,7 @@ object PluginInitializationDiagnosticUtils {
       }
       is ProductRulesImposedExclusion -> "$logDescr is excluded: ${productReason.getLogMessage()}"
       is PluginDeclaresConflictingId -> "$logDescr declares conflicting id with ${this.conflictingModule.shortLogDescription}: ${conflictingPluginId ?: conflictingModuleId}"
-      is PluginIsIncompatibleWithProduct -> "$logDescr is incompatible with the product: ${incompatibilityReason.getLogMessageForRootExclusionReason(descriptor)}"
+      is PluginIsIncompatibleWithProduct -> "$logDescr is incompatible with the product: ${incompatibilityReason.getLogMessage(descriptor)}"
       is PluginIsMarkedDisabled -> "$logDescr is marked disabled"
       is PluginVersionIsSuperseded -> "$logDescr is superseded by ${supersededBy.shortLogDescription}"
     }

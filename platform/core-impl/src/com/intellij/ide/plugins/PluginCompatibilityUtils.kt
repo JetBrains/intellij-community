@@ -148,7 +148,7 @@ sealed interface PluginIncompatibilityReason {
 }
 
 @ApiStatus.Internal
-fun PluginIncompatibilityReason.getLogMessageForRootExclusionReason(plugin: PluginMainDescriptor): String {
+fun PluginIncompatibilityReason.getLogMessage(plugin: PluginMainDescriptor): String {
   return when (this) {
     is PluginIncompatibilityReason.IncompatibleWithCpuArch -> "incompatible with host CPU architecture: required ${requiredArch.name.lowercase()}, host ${hostArch.name.lowercase()}"
     is PluginIncompatibilityReason.IncompatibleWithHostPlatform -> "incompatible with host OS: required ${requiredOS.name.lowercase()}, host ${hostOS.name.lowercase()}"
