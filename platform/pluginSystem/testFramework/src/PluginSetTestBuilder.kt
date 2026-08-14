@@ -7,12 +7,14 @@ import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.ide.plugins.PluginDescriptorLoadingContext
 import com.intellij.ide.plugins.PluginInitContextFactory
 import com.intellij.ide.plugins.PluginInitializationContext
+import com.intellij.ide.plugins.PluginInitializationContext.EnvironmentConfiguredModuleData
 import com.intellij.ide.plugins.PluginInitializationContext.RemainingCandidatesView
 import com.intellij.ide.plugins.PluginInitializationDiagnosticUtils
 import com.intellij.ide.plugins.PluginLoadingErrorReportingPolicy
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerState
+import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.PluginsDiscoveryResult
 import com.intellij.ide.plugins.PluginsSourceContext
@@ -36,6 +38,7 @@ class PluginSetTestBuilder private constructor(
   private var customCoreLoader: UrlClassLoader? = null
   private var productMode: ProductMode = ProductMode.MONOLITH
   private var explicitPluginSubsetToLoad: Set<PluginId>? = null
+  private var customEnvironmentConfiguredModules: Map<PluginModuleId, EnvironmentConfiguredModuleData>? = null
   private var compatibilityDependenciesForRemainingCandidatesProvider:
     ((IdeaPluginDescriptorImpl, RemainingCandidatesView) -> Sequence<DependencyRef>)? = null
 
@@ -81,6 +84,12 @@ class PluginSetTestBuilder private constructor(
     this.explicitPluginSubsetToLoad = pluginsToLoad
   }
 
+  fun withEnvironmentConfiguredModules(
+    environmentConfiguredModules: Map<PluginModuleId, EnvironmentConfiguredModuleData>,
+  ): PluginSetTestBuilder = apply {
+    customEnvironmentConfiguredModules = environmentConfiguredModules
+  }
+
   fun withCompatibilityDependenciesForRemainingCandidatesProvider(
     provider: (IdeaPluginDescriptorImpl, RemainingCandidatesView) -> Sequence<DependencyRef>,
   ): PluginSetTestBuilder = apply {
@@ -104,6 +113,8 @@ class PluginSetTestBuilder private constructor(
       }
       override val explicitPluginSubsetToLoad: Set<PluginId>? = this@PluginSetTestBuilder.explicitPluginSubsetToLoad
       override val currentProductModeId: String = productMode.id
+      override val environmentConfiguredModules: Map<PluginModuleId, EnvironmentConfiguredModuleData>
+        get() = customEnvironmentConfiguredModules ?: super.environmentConfiguredModules
       override fun provideCompatibilityDependenciesForRemainingCandidates(
         descriptor: IdeaPluginDescriptorImpl,
         remainingCandidates: RemainingCandidatesView,
