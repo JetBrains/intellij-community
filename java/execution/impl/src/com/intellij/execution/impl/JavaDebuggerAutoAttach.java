@@ -44,7 +44,11 @@ public final class JavaDebuggerAutoAttach extends RunConfigurationExtension {
             Project project = configuration.getProject();
 
             ApplicationManager.getApplication().invokeLater(
-              () -> JavaAttachDebuggerProvider.attach(transport, address, null, project),
+              () -> {
+                if (!JavaDebuggerConsoleFilterProvider.isDebuggerAttached(transport, address, project)) {
+                  JavaAttachDebuggerProvider.attach(transport, address, null, project);
+                }
+              },
               ModalityState.any());
           }
         }
