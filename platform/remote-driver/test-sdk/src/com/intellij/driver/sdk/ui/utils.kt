@@ -41,6 +41,8 @@ fun UiComponent.pasteText(text: String) {
 @Remote(value = "com.intellij.ide.impl.ProjectUtil")
 interface ProjectUtil {
   fun focusProjectWindow(project: Project?, stealFocusIfAppInactive: Boolean)
+
+  fun openOrImport(path: String, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project?
 }
 
 @Remote("com.intellij.ide.IdeEventQueue")
