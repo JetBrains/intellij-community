@@ -27,18 +27,27 @@ import kotlin.time.Duration.Companion.minutes
 
 class AndroidFramework(testContext: IDETestContext) : Framework(testContext) {
   companion object {
-    fun downloadLatestAndroidSdk(javaHome: Path): Path {
+    const val DEFAULT_PLATFORM_VERSION: String = "28"
+    const val DEFAULT_BUILD_TOOLS_VERSION: String = "31.0.0"
+    const val DEFAULT_COMMAND_LINE_TOOLS_BUILD: String = "6200805"
+
+    fun downloadAndroidSdk(
+      javaHome: Path,
+      platformVersion: String = DEFAULT_PLATFORM_VERSION,
+      buildToolsVersion: String = DEFAULT_BUILD_TOOLS_VERSION,
+      commandLineToolsBuild: String = DEFAULT_COMMAND_LINE_TOOLS_BUILD,
+    ): Path {
       val packages = listOf(
-        "build-tools;31.0.0",
+        "build-tools;$buildToolsVersion",
         //"cmake;3.10.2.4988404",
         //"docs",
         //"ndk;20.0.5594570",
-        "platforms;android-28",
-        "sources;android-28",
+        "platforms;android-$platformVersion",
+        "sources;android-$platformVersion",
         "platform-tools"
       )
 
-      val sdkManager = downloadSdkManager()
+      val sdkManager = downloadSdkManager(commandLineToolsBuild)
 
       // we use unique home folder per installation to ensure only expected
       // packages are included into the SDK home path
@@ -86,13 +95,14 @@ class AndroidFramework(testContext: IDETestContext) : Framework(testContext) {
       }
     }
 
-    private fun downloadSdkManager(): Path {
-      val url = when (OS.CURRENT) {
-        OS.macOS -> "https://dl.google.com/android/repository/commandlinetools-mac-6200805_latest.zip"
-        OS.Windows -> "https://dl.google.com/android/repository/commandlinetools-win-6200805_latest.zip"
-        OS.Linux -> "https://dl.google.com/android/repository/commandlinetools-linux-6200805_latest.zip"
+    private fun downloadSdkManager(commandLineToolsBuild: String): Path {
+      val platform = when (OS.CURRENT) {
+        OS.macOS -> "mac"
+        OS.Windows -> "win"
+        OS.Linux -> "linux"
         else -> error("Unsupported OS: ${OS.CURRENT} ${OS.CURRENT.version()}")
       }
+      val url = "https://dl.google.com/android/repository/commandlinetools-$platform-${commandLineToolsBuild}_latest.zip"
 
       val name = url.split("/").last()
       val androidSdkCache = GlobalPaths.instance.getCacheDirectoryFor("android-sdk")
@@ -105,7 +115,9 @@ class AndroidFramework(testContext: IDETestContext) : Framework(testContext) {
       val ext = if (OS.CURRENT == OS.Windows) ".bat" else ""
 
       @Suppress("SpellCheckingInspection")
-      val sdkManager = targetUnpack.walk().first { it.endsWith("tools/bin/sdkmanager$ext") }
+      val sdkManager = targetUnpack.walk().first {
+        it.endsWith("tools/bin/sdkmanager$ext") || it.endsWith("cmdline-tools/bin/sdkmanager$ext")
+      }
 
       if (OS.CURRENT == OS.macOS || OS.CURRENT == OS.Linux) {
         val permissions = Files.getPosixFilePermissions(sdkManager)
