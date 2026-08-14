@@ -62,6 +62,8 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.paths.UrlReference;
 import com.intellij.openapi.paths.WebReference;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Queryable;
@@ -1531,40 +1533,50 @@ public final class PlatformTestUtil {
     var startedNs = System.nanoTime();
     var timeoutNs = Duration.ofSeconds(timeoutInSeconds).toNanos();
     var deadlineNs = startedNs + timeoutNs;
-    while (true) {
-      try {
-        if (System.nanoTime() >= deadlineNs) {
-          if (callback != null) {
-            callback.run();
-          }
-
-          var dump = ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), true).getRawDump();
-          DumpKt.publishArtifact("waitWithEventsDispatching", "txt", (path) -> {
-            try {
-              Files.writeString(path, dump);
-              return Unit.INSTANCE;
+    //Events processing on EDT executed, by default, as ProgressManager.computePrioritized { ... }, i.e., as
+    // high-priority task.
+    // When priority tasks are running -- non-priority tasks are yielding inside checkCancelled(), for details
+    // see sleepIfNeededToGivePriorityToAnotherThread().
+    // This is useful when EDT runs UI user interacts with -- but here we just pump EDT events, no UI, no user
+    // => prioritization is useless. Even worse: it may lead to significant tests slowdowns, up to starvation
+    // in some edge cases => better suppress the EDT prioritization for this method:
+    ((CoreProgressManager)ProgressManager.getInstance()).suppressAllDeprioritizationsDuringLongTestsExecutionIn(() -> {
+      while (true) {
+        try {
+          if (System.nanoTime() >= deadlineNs) {
+            if (callback != null) {
+              callback.run();
             }
-            catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-          });
 
-          fail(errorMessageSupplier.get());
-        }
-        if (condition.getAsBoolean()) {
-          if (callback != null) {
-            callback.run();
+            var dump = ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), true).getRawDump();
+            DumpKt.publishArtifact("waitWithEventsDispatching", "txt", (path) -> {
+              try {
+                Files.writeString(path, dump);
+                return Unit.INSTANCE;
+              }
+              catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+            });
+
+            fail(errorMessageSupplier.get());
           }
-          break;
+          if (condition.getAsBoolean()) {
+            if (callback != null) {
+              callback.run();
+            }
+            break;
+          }
+          dispatchAllEventsInIdeEventQueue(deadlineNs);
+          //noinspection BusyWait
+          Thread.sleep(10);
         }
-        dispatchAllEventsInIdeEventQueue(deadlineNs);
-        //noinspection BusyWait
-        Thread.sleep(10);
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
       }
-      catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-    }
+      return null;
+    });
   }
 
   public static PsiElement findElementBySignature(@NotNull String signature, @NotNull String fileRelativePath, @NotNull Project project) {
