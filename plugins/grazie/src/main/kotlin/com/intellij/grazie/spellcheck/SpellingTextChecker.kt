@@ -11,6 +11,7 @@ import ai.grazie.rules.common.KnownPhrases
 import ai.grazie.spell.Speller
 import ai.grazie.spell.text.TextSpeller
 import ai.grazie.spell.text.Typo
+import ai.grazie.text.TextRange
 import ai.grazie.text.exclusions.SentenceWithExclusions
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.cloud.APIQueries
@@ -124,21 +125,15 @@ internal class SpellingTextChecker : ExternalTextChecker() {
   private fun getTextSpeller(project: Project): TextSpeller? {
     val speller = GrazieSpellCheckerEngine.getInstance(project).getSpeller() ?: return null
     val enabledLanguages = GrazieConfig.get().enabledLanguages.mapNotNull { it.withVariant }
-    val validPhrasesTexts = ConcurrentHashMap<CharSequence, List<ai.grazie.rules.tree.TextRange>>()
+    val validPhrasesTexts = ConcurrentHashMap<CharSequence, List<TextRange>>()
 
     return object : TextSpeller(listOf(object : Speller by speller {
       override fun languages(): List<LanguageWithVariant> = enabledLanguages
     })) {
-      override fun ignoreInContext(word: Tokenizer.Token, text: CharSequence): Boolean {
-        return super.ignoreInContext(word, text) || isRangeCoveredByValidPhrase(word, text)
-      }
+      override fun knownPhraseRanges(text: CharSequence): List<TextRange> =
+        validPhrasesTexts.getOrPut(text) { getValidPhraseRanges(text) }
 
-      private fun isRangeCoveredByValidPhrase(word: Tokenizer.Token, text: CharSequence): Boolean {
-        val textRanges = validPhrasesTexts.getOrPut(text) { getValidPhraseRanges(text) }
-        return textRanges.any { it.start <= word.range.first && it.end <= word.range.checkedEndExclusive }
-      }
-
-      private fun getValidPhraseRanges(text: CharSequence): List<ai.grazie.rules.tree.TextRange> {
+      private fun getValidPhraseRanges(text: CharSequence): List<TextRange> {
         return enabledLanguages
           .asSequence()
           .map { it.base }
@@ -148,7 +143,8 @@ internal class SpellingTextChecker : ExternalTextChecker() {
             ProgressManager.checkCanceled()
             it.validPhrases(text)
           }
-          .map { it.range() }
+          .map { TextRange(it.start, it.end) }
+          .distinct()
           .toList()
       }
     }
