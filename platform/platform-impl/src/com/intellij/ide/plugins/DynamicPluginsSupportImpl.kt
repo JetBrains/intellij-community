@@ -350,11 +350,6 @@ internal class DynamicPluginsSupportImpl(
             runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(plugin) }
             DynamicPluginsUsagesCollector.logDescriptorLoad(plugin)
           }
-          for (group in groups) {
-            for (descriptor in group.sortedDescriptors) {
-              PluginManagerCore.clearPluginNonLoadReasonFor(descriptor.pluginId) // FIXME this should be implied from the new plugin set state
-            }
-          }
           runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginsLoaded() }
         }
       }

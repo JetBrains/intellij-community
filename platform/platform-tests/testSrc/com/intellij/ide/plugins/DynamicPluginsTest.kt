@@ -57,7 +57,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
-import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.pluginSystem.testFramework.buildPluginSet
 import com.intellij.platform.testFramework.loadDescriptorInTest
 import com.intellij.platform.testFramework.loadExtensionWithText
@@ -1110,36 +1109,6 @@ class DynamicPluginsTest {
   }
 
   @Test
-  @TestFor(issues = ["IJPL-183884"])
-  fun `initial loading errors are cleared after successful dynamic plugin loading`() {
-    // initial descriptor loading
-    val barPluginPath = plugin("bar") {}.installAt(pluginsDir)
-    val fooPluginPath = plugin("foo") { depends("bar") }.installAt(pluginsDir)
-    PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").buildManagerState()
-
-    val barPluginId = PluginId.getId("bar")
-    val fooPluginId = PluginId.getId("foo")
-    assertNoLoadingErrors(barPluginId)
-    assertDisabledDependencyLoadingError(pluginId = fooPluginId, dependencyId = barPluginId)
-    assertThat(PluginManagerCore.getPluginSet()).doesNotHaveEnabledPlugins("foo", "bar")
-
-    // enable dependency
-    loadPluginInTest(barPluginPath) {
-      assertThat(PluginManagerCore.getPluginSet()).hasEnabledPlugins("bar")
-      assertThat(PluginManagerCore.getPluginSet()).doesNotHaveEnabledPlugins("foo")
-      assertNoLoadingErrors(barPluginId)
-      assertDisabledDependencyLoadingError(pluginId = fooPluginId, dependencyId = barPluginId)
-
-      // enable dependent with dependency enabled beforehand
-      loadPluginInTest(fooPluginPath) {
-        assertThat(PluginManagerCore.getPluginSet()).hasEnabledPlugins("foo", "bar")
-        assertNoLoadingErrors(barPluginId)
-        assertNoLoadingErrors(fooPluginId)
-      }
-    }
-  }
-
-  @Test
   fun `enabling a plugin will not load actions form a module with an unsatisfied dependency`() {
     val barPluginPath = plugin("bar") {}.installAt(pluginsDir)
     val fooPluginPath = plugin("foo") {
@@ -1409,18 +1378,6 @@ private fun loadPluginInTest(plugin: PluginMainDescriptor, actionWithPluginLoade
   finally {
     assertThat(unloadAndUninstallPlugin(plugin)).isTrue()
   }
-}
-
-private fun assertNoLoadingErrors(pluginId: PluginId) {
-  val error = PluginManagerCore.getPluginNonLoadReason(pluginId)
-  assertThat(error).isNull()
-}
-
-private fun assertDisabledDependencyLoadingError(pluginId: PluginId, dependencyId: PluginId) {
-  val error = PluginManagerCore.getPluginNonLoadReason(pluginId)
-  assertThat(error).isNotNull().isInstanceOfAny(PluginDependencyIsDisabled::class.java, PluginDependencyCannotBeLoaded::class.java)
-  val disabledDependency = (error as? PluginDependencyIsDisabled)?.dependencyId ?: (error as? PluginDependencyCannotBeLoaded)!!.dependency.pluginId
-  assertThat(disabledDependency).isNotNull().isEqualTo(dependencyId)
 }
 
 /** note: can't cast the output to [T], [T] can only be loaded by the isolated classloader of [descriptor] */
