@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 
 @StressTestApplication
-class CoroutinesIntegrationBenchmark {
+class CoroutinesIntegrationBenchmarkTest {
 
   @Test
   fun `performance of strict UI dispatcher`() {
