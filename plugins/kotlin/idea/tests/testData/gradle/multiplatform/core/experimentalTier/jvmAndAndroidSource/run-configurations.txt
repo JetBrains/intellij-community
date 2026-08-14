@@ -12,7 +12,6 @@ project.consumer.commonTest
     name: Consumer_commonTest_usagesKt.useCommonTest
     type: Gradle
     tasks: [:consumer:cleanTestDebugUnitTest, :consumer:testDebugUnitTest, --tests, "test.Consumer_commonTest_usagesKt.useCommonTest"]
-    scriptParameters:
     isDebugAllEnabled: false
     isRunAsTest: true
 
