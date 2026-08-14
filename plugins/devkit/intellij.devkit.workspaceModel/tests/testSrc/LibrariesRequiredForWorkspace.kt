@@ -75,7 +75,7 @@ internal object LibrariesRequiredForWorkspace {
       "intellij.kotlin.gradle.scripting" -> {
         listOf(kotlinBaseScripting)
       }
-      "intellij.bazel.importer" -> {
+      "intellij.bazel.backend" -> {
         listOf(bazelCommons)
       }
       "intellij.gradle" -> {
