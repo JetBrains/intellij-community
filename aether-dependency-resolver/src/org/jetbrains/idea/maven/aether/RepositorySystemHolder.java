@@ -18,7 +18,6 @@ import org.eclipse.aether.connector.basic.BasicRepositoryConnectorFactory;
 import org.eclipse.aether.impl.DefaultServiceLocator;
 import org.eclipse.aether.internal.impl.TrackingFileManager;
 import org.eclipse.aether.named.NamedLockFactory;
-import org.eclipse.aether.named.providers.LocalReadWriteLockNamedLockFactory;
 import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
 import org.eclipse.aether.spi.connector.transport.TransporterFactory;
 import org.eclipse.aether.transport.file.FileTransporterFactory;
@@ -39,7 +38,7 @@ final class RepositorySystemHolder {
     locator.addService(RepositoryConnectorFactory.class, BasicRepositoryConnectorFactory.class);
     locator.addService(TransporterFactory.class, FileTransporterFactory.class);
     locator.addService(TransporterFactory.class, HttpTransporterFactory.class);
-    locator.addService(NamedLockFactory.class, LocalReadWriteLockNamedLockFactory.class);
+    locator.setServices(NamedLockFactory.class, new FairLocalReadWriteLockNamedLockFactory());
     locator.setServices(ModelBuilder.class, new DefaultModelBuilderFactory() {
       @Override
       public ProfileActivator[] newProfileActivators() {

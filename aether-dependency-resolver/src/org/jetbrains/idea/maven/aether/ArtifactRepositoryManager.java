@@ -333,32 +333,23 @@ public final class ArtifactRepositoryManager {
         }
 
         if (!requests.isEmpty()) {
-          try {
+          if (kind == ArtifactKind.ARTIFACT) {
             List<ArtifactResult> resultList = runWithRetry(session, s -> RepositorySystemHolder.getInstance().resolveArtifacts(s, requests));
-
             for (ArtifactResult result : resultList) {
               artifacts.add(result.getArtifact());
             }
           }
-          catch (ArtifactResolutionException e) {
-            if (kind != ArtifactKind.ARTIFACT) {
-              // for sources and javadocs, try to process requests one-by-one and fetch at least something
-              if (requests.size() > 1) {
-                for (ArtifactRequest request : requests) {
-                  try {
-                    // Don't retry on sources or javadocs resolution: used only in IDE, will only waste user's time if the artifact does not
-                    // exist.
-                    ArtifactResult result = RepositorySystemHolder.getInstance().resolveArtifact(session, request);
-                    artifacts.add(result.getArtifact());
-                  }
-                  catch (ArtifactResolutionException ignored) {
-                  }
-                }
+          else {
+            // Resolve optional artifacts separately: a batch takes exclusive locks for the entire dependency graph while downloading
+            // any missing item. Overlapping graphs then block each other even when most coordinates are unrelated.
+            for (ArtifactRequest request : requests) {
+              try {
+                // Don't retry optional artifacts: used only in IDE, will only waste user's time if the artifact does not exist.
+                ArtifactResult result = RepositorySystemHolder.getInstance().resolveArtifact(session, request);
+                artifacts.add(result.getArtifact());
               }
-            }
-            else {
-              // for ArtifactKind.ARTIFACT should fail if at least one request in this group fails
-              throw e;
+              catch (ArtifactResolutionException ignored) {
+              }
             }
           }
         }
