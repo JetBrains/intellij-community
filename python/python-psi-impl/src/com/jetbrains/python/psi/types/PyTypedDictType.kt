@@ -20,19 +20,40 @@ import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import org.jetbrains.annotations.ApiStatus
 import java.util.Objects
 
-class PyTypedDictType(
+class PyTypedDictType private constructor(
   override val name: String,
-  val fields: Map<String, FieldTypeAndTotality>,
+  private val lazyFields: Lazy<Map<String, FieldTypeAndTotality>>,
   private val dictClass: PyClass,
   isDefinition: Boolean,
   private val declaration: PyQualifiedNameOwner,
-  val isClosed: Boolean = false,
-  val extraItemsType: PyType? = PyAnyType.unknown,
-  val extraItemsQualifiers: TypedDictFieldQualifiers = TypedDictFieldQualifiers(),
+  val isClosed: Boolean,
+  private val lazyExtraItemsType: Lazy<PyType?>,
+  val extraItemsQualifiers: TypedDictFieldQualifiers,
 ) : PyClassTypeImpl(dictClass, isDefinition) {
-  init {
-    PyAnyType.validate(extraItemsType)
-  }
+
+  val fields: Map<String, FieldTypeAndTotality> get() = lazyFields.value
+  val extraItemsType: PyType? get() = lazyExtraItemsType.value.also { PyAnyType.validate(it) }
+
+  /**
+   * The items and the extra items type are evaluated on first access, not on creation: both can refer back to the TypedDict
+   * being created, as `parent: "Node"` and `extra_items="Node"` do. Both providers have to use the [TypeEvalContext] the type
+   * is created for, since what they produce becomes part of this instance.
+   */
+  constructor(
+    name: String,
+    fieldsProvider: () -> Map<String, FieldTypeAndTotality>,
+    dictClass: PyClass,
+    isDefinition: Boolean,
+    declaration: PyQualifiedNameOwner,
+    isClosed: Boolean = false,
+    extraItemsTypeEvaluator: () -> PyType? = { PyAnyType.unknown },
+    extraItemsQualifiers: TypedDictFieldQualifiers = TypedDictFieldQualifiers(),
+  ) : this(name,
+           lazy(LazyThreadSafetyMode.PUBLICATION, fieldsProvider),
+           dictClass, isDefinition, declaration, isClosed,
+           lazy(LazyThreadSafetyMode.PUBLICATION, extraItemsTypeEvaluator),
+           extraItemsQualifiers)
+
   fun getElementType(key: String): PyType? {
     val field = fields[key] ?: return PyAnyType.unknown
     return field.type
@@ -44,7 +65,7 @@ class PyTypedDictType(
 
   override fun toInstance(): PyTypedDictType {
     return if (isDefinition)
-      PyTypedDictType(name, fields, dictClass, false, declaration, isClosed, extraItemsType, extraItemsQualifiers)
+      PyTypedDictType(name, lazyFields, dictClass, false, declaration, isClosed, lazyExtraItemsType, extraItemsQualifiers)
     else
       this
   }
@@ -53,7 +74,7 @@ class PyTypedDictType(
     return if (isDefinition)
       this
     else
-      PyTypedDictType(name, fields, dictClass, true, declaration, isClosed, extraItemsType, extraItemsQualifiers)
+      PyTypedDictType(name, lazyFields, dictClass, true, declaration, isClosed, lazyExtraItemsType, extraItemsQualifiers)
   }
 
   override val isBuiltin: Boolean = false

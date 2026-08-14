@@ -328,7 +328,7 @@ object PyExpectedTypeJudgement {
       val dictClass = PyBuiltinCache.getInstance(callArgument).getClass("dict") ?: return null
       val typedDictType = PyTypedDictType(
         name = "Parameters",
-        fields = fields,
+        fieldsProvider = { fields },
         dictClass = dictClass,
         isDefinition = false,
         // TODO: This is incorrect:

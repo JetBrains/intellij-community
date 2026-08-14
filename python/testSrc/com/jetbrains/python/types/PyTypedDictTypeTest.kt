@@ -221,6 +221,216 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
   }
 
   @Nested
+  inner class RecursiveTypedDicts {
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `directly recursive item type`() = test("""
+      from typing import TypedDict
+
+      class Node(TypedDict):
+          parent: "Node"
+
+      def f(n: Node):
+          expr = n["parent"]["parent"]["parent"]
+      #   └ TYPE Node
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `recursive item type inside a container`() = test("""
+      from typing import TypedDict
+
+      class Category(TypedDict):
+          name: str
+          sub: list["Category"]
+
+      def f(cat: Category):
+          expr = cat["sub"]
+      #   └ TYPE list[Category]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `mutually recursive item types`() = test("""
+      from typing import TypedDict
+
+      class A(TypedDict):
+          b: "B"
+
+      class B(TypedDict):
+          a: "A"
+
+      def f(a: A):
+          expr = a["b"]["a"]["b"]
+      #   └ TYPE B
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `dict literal matched against a recursive TypedDict`() = test("""
+      from typing import TypedDict
+
+      class Node(TypedDict):
+          name: str
+          parent: "Node"
+
+      n: Node = {"name": "a", "parent": {"name": "b", "parent": {"name": "c"}}}
+      #                                                         ^^^^^^^^^^^^^ WARNING TypedDict 'Node' has missing key: 'parent'
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `recursive TypedDict constructor call`() = test("""
+      from typing import TypedDict
+
+      class Node(TypedDict):
+          name: str
+          parent: "Node"
+
+      def f(n: Node):
+          expr = Node(name="a", parent=n)
+      #   └ TYPE Node
+          Node(name="a", parent="wrong")
+      #                  ^^^^^^^^^^^^^^ WARNING Expected type 'Node', got 'Literal["wrong"]' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `Unpack of a recursive TypedDict`() = test("""
+      from typing import TypedDict, Unpack
+
+      class Node(TypedDict):
+          name: str
+          parent: "Node"
+
+      def g(**kwargs: Unpack[Node]) -> None: ...
+
+      def f(n: Node):
+          g(name="a", parent=n)
+          g(name="a", parent=1)
+      #               ^^^^^^^^ WARNING Expected type 'Node', got 'Literal[1]' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    // Structural matching of two recursive TypedDicts relies on the recursion guard in PyTypeChecker.match,
+    // which treats a repeated (expected, actual) pair as a match, so the assertion on recursion prevention has
+    // to be off here.
+    fun `assignability between recursive TypedDicts`() = test(
+      TestOptions(assertRecursionPrevention = false),
+      """
+      from typing import TypedDict
+
+      class Node(TypedDict):
+          v: int
+          parent: "Node"
+
+      class Same(TypedDict):
+          v: int
+          parent: "Same"
+
+      class Other(TypedDict):
+          v: str
+          parent: "Other"
+
+      def f(same: Same, other: Other):
+          ok: Node = same
+          bad: Node = other
+      #               ^^^^^ WARNING Expected type 'Node', got 'Other' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `recursive TypedDict in the functional syntax`() = test("""
+      from typing import TypedDict
+
+      Node = TypedDict("Node", {"name": str, "parent": "Node"})
+      #                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[str, type]', got 'dict[Literal["name", "parent"], type[str] | Literal["Node"]]' instead
+
+      def f(n: Node):
+          expr = n["parent"]["parent"]
+      #   └ TYPE Node
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `recursion through a type alias`() = test("""
+      from typing import TypedDict
+
+      type NodeAlias = Node
+
+      class Node(TypedDict):
+          parent: NodeAlias
+
+      def f(n: Node):
+          expr = n["parent"]["parent"]
+      #   └ TYPE Node
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `mutually recursive TypedDicts from another file`() = test(
+      """
+      from other import A
+
+      def f(a: A):
+          expr = a["b"]["a"]["b"]
+      #   └ TYPE B
+      """,
+      "other.py" to """
+        from typing import TypedDict
+
+        class A(TypedDict):
+            b: "B"
+
+        class B(TypedDict):
+            a: "A"
+        """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `recursive extra_items`() = test("""
+      from typing_extensions import TypedDict
+
+      class Node(TypedDict, extra_items="Node"):
+          name: str
+
+      def f(n: Node):
+          expr = n["whatever"]["whatever"]
+      #   └ TYPE Node
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `recursive extra_items in functional syntax`() = test("""
+      from typing_extensions import TypedDict
+
+      Node = TypedDict("Node", {"name": str}, extra_items="Node")
+      #                                       ^^^^^^^^^^^^^^^^^^ WARNING Expected type 'type', got 'Literal["Node"]' instead
+
+      def f(n: Node):
+          expr = n["whatever"]["whatever"]
+      #   └ TYPE Node
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `recursive inherited extra_items`() = test("""
+      from typing_extensions import TypedDict
+
+      class Base(TypedDict, extra_items="Child"):
+          pass
+
+      class Child(Base):
+          pass
+
+      def f(c: Child):
+          expr = c["whatever"]["whatever"]
+      #   └ TYPE Child
+      """)
+  }
+
+  @Nested
   inner class ExtraItemsInferredTypes {
     @Test
     @TestFor(issues = ["PY-85421"])
@@ -1417,6 +1627,23 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       f_opt()
       """.trimIndent())
   }
+
+  @Test
+  @TestFor(issues = ["PY-85440"])
+  fun `subscription does not depend on unrelated items`() = test("""
+    from typing_extensions import TypedDict
+
+    class Mixed(TypedDict, extra_items=str):
+        good: int
+        broken: undefined_name
+    #           ^^^^^^^^^^^^^^ ERROR Unresolved reference 'undefined_name'
+
+    def f(m: Mixed):
+        known = m["good"]
+    #   └ TYPE int
+        extra = m["other"]
+    #   └ TYPE str
+    """)
 
   @Test
   @TestFor(issues = ["PY-90291"])

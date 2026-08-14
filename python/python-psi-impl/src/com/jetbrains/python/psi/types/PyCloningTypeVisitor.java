@@ -8,9 +8,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -51,29 +54,46 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   // Intentionally not marked as @Nullable to avoid false positives. 
   // A recursive type is an exceptional case.
   protected final <T extends PyType> T clone(@Nullable PyType type) {
-    PyAnyType.validate(type);
-    final @Nullable PyType result;
-    if (cloned.containsKey(type)) {
-      result = cloned.get(type);
-    }
-    else {
-      result = doClone(type);
-      PyAnyType.validate(result);
-      cloned.put(type, result);
-    }
     //noinspection unchecked
-    return (T)result;
+    return (T)doClone(type);
   }
 
   private @Nullable PyType doClone(@Nullable PyType type) {
+    PyAnyType.validate(type);
+    if (cloned.containsKey(type)) {
+      return cloned.get(type);
+    }
     if (!cloning.add(type)) {
+      // The "unknown" breaking the cycle is valid for this path only, so it is deliberately not memoized: a type whose
+      // components are cloned lazily asks for the same type again outside of any cycle, and has to get its real clone.
       return PyAnyType.getUnknown();
     }
     try {
-      return visit(type, this);
+      final PyType result = visit(type, this);
+      PyAnyType.validate(result);
+      cloned.put(type, result);
+      return result;
     }
     finally {
       cloning.remove(type);
+    }
+  }
+
+  /**
+   * Runs {@code body} as the start of a fresh traversal: a component cloned lazily runs on an arbitrary stack, possibly nested
+   * inside the cloning of a type it legitimately has to clone itself. The memo of cloned types is kept, so nothing is repeated.
+   * <p>
+   * Synchronized because deferring makes the visitor outlive its traversal: the lazy components of one cloned type may be asked
+   * for from several threads, and they share its memo and cycle-detection state.
+   */
+  protected final synchronized <T> T cloneDeferred(@NotNull Supplier<T> body) {
+    final List<PyType> suspended = new ArrayList<>(cloning);
+    cloning.clear();
+    try {
+      return body.get();
+    }
+    finally {
+      cloning.addAll(suspended);
     }
   }
 
@@ -119,8 +139,21 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
 
   @Override
   public PyType visitPyTypedDictType(@NotNull PyTypedDictType typedDictType) {
+    // Cloned lazily, so that cloning a TypedDict does not force item types that may refer back to it.
+    return new PyTypedDictType(
+      typedDictType.getName(),
+      () -> cloneFields(typedDictType),
+      typedDictType.myClass,
+      typedDictType.isDefinition(),
+      typedDictType.getDeclarationElement(),
+      typedDictType.isClosed(),
+      () -> cloneDeferred(() -> clone(typedDictType.getExtraItemsType())),
+      typedDictType.getExtraItemsQualifiers());
+  }
+
+  private @NotNull Map<String, PyTypedDictType.FieldTypeAndTotality> cloneFields(@NotNull PyTypedDictType typedDictType) {
     // TODO Copied from PyTypeChecker.substitute, revise
-    final var substitutedTDFields = typedDictType.getFields().entrySet().stream().collect(
+    return cloneDeferred(() -> typedDictType.getFields().entrySet().stream().collect(
       Collectors.toMap(
         Map.Entry::getKey,
         field -> new PyTypedDictType.FieldTypeAndTotality(
@@ -129,10 +162,7 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
           field.getValue().getQualifiers()
         )
       )
-    );
-    return new PyTypedDictType(typedDictType.getName(), substitutedTDFields, typedDictType.myClass, typedDictType.isDefinition(),
-                               typedDictType.getDeclarationElement(), typedDictType.isClosed(), clone(typedDictType.getExtraItemsType()),
-                               typedDictType.getExtraItemsQualifiers());
+    ));
   }
 
   @Override

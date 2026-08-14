@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.PySliceItem;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyTupleType;
@@ -78,26 +79,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
           return PyUnionType.union(possibleTypes);
         }
         if (operandType instanceof PyTypedDictType typedDictType) {
-          List<String> indexPossibleValues = getIndexExpressionPossibleValues(indexExpression, context, String.class);
-          if (typedDictType.getExtraItemsType() != null && !typedDictType.isClosed()) {
-            if (indexPossibleValues.isEmpty() && !isUnknown(typedDictType.getExtraItemsType()) && isStringIndex(indexExpression, context)) {
-              // Non-literal `str` key: the value can be any declared item or an explicitly typed extra item.
-              List<PyType> types = new ArrayList<>(ContainerUtil.map(typedDictType.getFields().values(), field -> field.getType()));
-              types.add(typedDictType.getExtraItemsType());
-              return PyUnionType.union(types);
-            }
-            List<PyType> types = new ArrayList<>();
-            for (String indexValue : indexPossibleValues) {
-              if (typedDictType.getFields().containsKey(indexValue)) {
-                types.add(typedDictType.getElementType(indexValue));
-              }
-              else {
-                types.add(typedDictType.getExtraItemsType());
-              }
-            }
-            return PyUnionType.union(types);
-          }
-          return PyUnionType.union(ContainerUtil.map(indexPossibleValues, typedDictType::getElementType));
+          return getTypedDictSubscriptionType(typedDictType, indexExpression, context);
         }
         if (operandType instanceof PyClassType) {
           PyType parameterizedType = Ref.deref(PyTypingTypeProvider.getType(this, context));
@@ -108,6 +90,35 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
       }
     }
     return PyCallExpressionHelper.getCallType(this, context, key);
+  }
+
+  /** The extra items type is asked for only when a key is really missing: evaluating it costs as much as an item type. */
+  private static @Nullable PyType getTypedDictSubscriptionType(@NotNull PyTypedDictType typedDictType,
+                                                               @NotNull PyExpression indexExpression,
+                                                               @NotNull TypeEvalContext context) {
+    List<String> keys = getIndexExpressionPossibleValues(indexExpression, context, String.class);
+    if (keys.isEmpty()) {
+      if (typedDictType.isClosed() || !isStringIndex(indexExpression, context)) return PyAnyType.getUnknown();
+      PyType extraItemsType = typedDictType.getExtraItemsType();
+      if (extraItemsType == null || isUnknown(extraItemsType)) return PyAnyType.getUnknown();
+      // Non-literal `str` key: the value can be any declared item or an explicitly typed extra item.
+      List<PyType> types =
+        new ArrayList<>(ContainerUtil.map(typedDictType.getFields().values(), PyTypedDictType.FieldTypeAndTotality::getType));
+      types.add(extraItemsType);
+      return PyUnionType.union(types);
+    }
+
+    List<PyType> types = new ArrayList<>();
+    for (String key : keys) {
+      PyTypedDictType.FieldTypeAndTotality field = typedDictType.getFields().get(key);
+      if (field != null) {
+        types.add(field.getType());
+        continue;
+      }
+      PyType extraItemsType = typedDictType.isClosed() ? null : typedDictType.getExtraItemsType();
+      types.add(extraItemsType != null ? extraItemsType : PyAnyType.getUnknown());
+    }
+    return PyUnionType.union(types);
   }
 
   @ApiStatus.Internal
