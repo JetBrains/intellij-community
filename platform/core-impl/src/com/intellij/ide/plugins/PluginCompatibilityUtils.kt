@@ -36,18 +36,6 @@ object PluginCompatibilityUtils {
     return false
   }
 
-  /** temporary migration helper */
-  fun PluginIncompatibilityReason.convertToUIError(descriptor: IdeaPluginDescriptorImpl): PluginNonLoadReason {
-    return when (this) {
-      is PluginIncompatibilityReason.IncompatibleWithCpuArch -> PluginIsIncompatibleWithHostCpu(descriptor, requiredArch, hostArch)
-      is PluginIncompatibilityReason.IncompatibleWithHostPlatform -> PluginIsIncompatibleWithHostPlatform(descriptor, requiredOS, hostOS.name)
-      PluginIncompatibilityReason.MalformedSinceUntilConstraints -> PluginMalformedSinceUntilConstraints(descriptor)
-      is PluginIncompatibilityReason.SinceBuildConstraintViolation -> PluginSinceBuildConstraintViolation(descriptor, productBuildNumber)
-      is PluginIncompatibilityReason.UntilBuildConstraintViolation -> PluginUntilBuildConstraintViolation(descriptor, productBuildNumber)
-      is PluginIncompatibilityReason.PluginIsMarkedBroken -> PluginIsMarkedBroken(descriptor)
-    }
-  }
-
   @JvmStatic
   @OptIn(LowLevelLocalMachineAccess::class)
   fun checkBuildNumberCompatibility(descriptor: IdeaPluginDescriptor, ideBuildNumber: BuildNumber): PluginIncompatibilityReason? {

@@ -25,7 +25,7 @@ sealed interface PluginNonLoadReason {
 fun DescriptorExclusionReason.toSelectionPluginNonLoadReason(): PluginNonLoadReason? {
   val plugin = descriptor.getMainDescriptor()
   return when (this) {
-    is PluginIsIncompatibleWithProduct -> with(PluginCompatibilityUtils) { incompatibilityReason.convertToUIError(descriptor) }
+    is PluginIsIncompatibleWithProduct -> incompatibilityReason.convertToUIError(descriptor)
     is IncompatibleWithAnotherModule -> PluginIsIncompatibleWithAnotherPlugin(plugin, preferredIncompatibleModule, true)
     is PluginDeclaresConflictingId -> PluginIdConflictNonLoadReason(this)
     is PluginIsMarkedDisabled,
@@ -39,6 +39,32 @@ fun DescriptorExclusionReason.toSelectionPluginNonLoadReason(): PluginNonLoadRea
       else -> null
     }
     else -> null
+  }
+}
+
+/** temporary migration helper */
+internal fun PluginIncompatibilityReason.convertToUIError(descriptor: IdeaPluginDescriptorImpl): PluginNonLoadReason {
+  return when (this) {
+    is PluginIncompatibilityReason.IncompatibleWithCpuArch -> PluginIsIncompatibleWithHostCpu(descriptor, requiredArch, hostArch)
+    is PluginIncompatibilityReason.IncompatibleWithHostPlatform -> PluginIsIncompatibleWithHostPlatform(descriptor, requiredOS, hostOS.name)
+    PluginIncompatibilityReason.MalformedSinceUntilConstraints -> PluginMalformedSinceUntilConstraints(descriptor)
+    is PluginIncompatibilityReason.SinceBuildConstraintViolation -> PluginSinceBuildConstraintViolation(descriptor, productBuildNumber)
+    is PluginIncompatibilityReason.UntilBuildConstraintViolation -> PluginUntilBuildConstraintViolation(descriptor, productBuildNumber)
+    is PluginIncompatibilityReason.PluginIsMarkedBroken -> PluginIsMarkedBroken(descriptor)
+  }
+}
+
+private fun getPackagePrefixConflictModuleId(descriptor: PluginModuleDescriptor): String {
+  return when (descriptor) {
+    is PluginMainDescriptor -> descriptor.pluginId.idString
+    is ContentModuleDescriptor -> descriptor.moduleId.name
+  }
+}
+
+private fun getPackagePrefixConflictNamespace(descriptor: PluginModuleDescriptor): String {
+  return when (descriptor) {
+    is PluginMainDescriptor -> descriptor.implicitNamespaceForPluginDescriptorModule ?: "<none>"
+    is ContentModuleDescriptor -> descriptor.moduleId.namespace
   }
 }
 

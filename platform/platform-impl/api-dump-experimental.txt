@@ -97,6 +97,11 @@ f:com.intellij.ide.plugins.PluginNode
 - com.intellij.ide.plugins.IdeaPluginDescriptor
 - *:getChannel():java.lang.String
 - *:setChannel(java.lang.String):V
+*:com.intellij.ide.plugins.PluginNonLoadReason
+- a:getDetailedMessage():java.lang.String
+- a:getPlugin():com.intellij.ide.plugins.IdeaPluginDescriptor
+- a:getShortMessage():java.lang.String
+- a:getShouldNotifyUser():Z
 *f:com.intellij.ide.settings.SettingsComponentDescriptor
 - com.intellij.openapi.extensions.PluginAware
 - *sf:Companion:com.intellij.ide.settings.SettingsComponentDescriptor$Companion

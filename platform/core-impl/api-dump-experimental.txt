@@ -46,11 +46,6 @@
 - f:getName():java.lang.String
 - f:getOrganization():java.lang.String
 - f:getUrl():java.lang.String
-*:com.intellij.ide.plugins.PluginNonLoadReason
-- a:getDetailedMessage():java.lang.String
-- a:getPlugin():com.intellij.ide.plugins.IdeaPluginDescriptor
-- a:getShortMessage():java.lang.String
-- a:getShouldNotifyUser():Z
 *c:com.intellij.lang.impl.TokenSequence
 - com.intellij.lexer.TokenList
 - asLexer():com.intellij.lexer.Lexer
