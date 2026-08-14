@@ -40,7 +40,6 @@ class PluginSetLoadingTest {
 
   private val rootPath get() = inMemoryFs.fs.getPath("/")
   private val pluginsDirPath get() = rootPath.resolve("wd/plugins")
-  private var loadingErrors: List<PluginLoadingError> = emptyList()
 
   @Test
   fun `fleet backend logs plugin loading errors without scheduling user notification`() {
@@ -94,14 +93,14 @@ class PluginSetLoadingTest {
         <version>2.0</version>
       </idea-plugin>""")
 
-    val resultState = PluginSetTestBuilder.fromPath(pluginsDirPath)
+    val pluginSet = PluginSetTestBuilder.fromPath(pluginsDirPath)
       .withDisabledPlugins("foo")
-      .buildManagerState()
-    assertThat(resultState.pluginSet.resolvedPluginSet.candidateSet.plugins).hasSize(1)
-    val foo = resultState.pluginSet.resolvedPluginSet.candidateSet.plugins.single()
+      .build()
+    assertThat(pluginSet.candidateSubset.plugins).hasSize(1)
+    val foo = pluginSet.candidateSubset.plugins.single()
     assertThat(foo.version).isEqualTo("2.0")
     assertThat(foo.pluginId.idString).isEqualTo("foo")
-    assertThat(resultState.pluginSet.resolvedPluginSet.getExclusionReason(foo)).isInstanceOf(PluginIsMarkedDisabled::class.java)
+    assertThat(pluginSet.resolvedPluginSet.getExclusionReason(foo)).isInstanceOf(PluginIsMarkedDisabled::class.java)
   }
 
   @Test
@@ -122,11 +121,11 @@ class PluginSetLoadingTest {
         <idea-version until-build="4"/>
       </idea-plugin>""")
 
-    val resultState = PluginSetTestBuilder.fromPath(pluginsDirPath)
+    val pluginSet = PluginSetTestBuilder.fromPath(pluginsDirPath)
       .withProductBuildNumber(BuildNumber.fromString("4.0")!!)
-      .buildManagerState()
+      .build()
 
-    val plugins = resultState.pluginSet.enabledPlugins.toList()
+    val plugins = pluginSet.enabledPlugins.toList()
     assertThat(plugins).hasSize(1)
     val foo = plugins[0]
     assertThat(foo.version).isEqualTo("2.0")
@@ -255,18 +254,10 @@ class PluginSetLoadingTest {
     }.installAt(pluginsDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
-    assertThat(loadingErrors).hasSizeGreaterThan(0)
-    val fooImplicitNamespace = "foo_" + '$' + "implicit"
-    val barImplicitNamespace = "bar_" + '$' + "implicit"
-    assertThat(loadingErrors[0].htmlMessage.toString()).contains(
-      "conflicts with",
-      "bar.module",
-      "foo.module",
-      fooImplicitNamespace,
-      barImplicitNamespace,
-      "common.module",
-      "package prefix",
-    )
+    val conflict = pluginSet.packagePrefixConflicts().single()
+    assertThat(conflict.descriptor.contentModuleName).isEqualTo("bar.module")
+    assertThat(conflict.preferredConflictingModule.contentModuleName).isEqualTo("foo.module")
+    assertThat(conflict.descriptor.packagePrefix).isEqualTo("common.module")
   }
 
   @Test
@@ -284,7 +275,6 @@ class PluginSetLoadingTest {
 
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("json", "textmate")
-    assertThat(loadingErrors).isEmpty()
   }
 
   @Test
@@ -335,8 +325,9 @@ class PluginSetLoadingTest {
     }.installAt(pluginsDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
-    assertThat(loadingErrors).hasSizeGreaterThan(0)
-    assertThat(loadingErrors[0].htmlMessage.toString()).contains("conflicts with", "foo.module", "package prefix")
+    val conflict = pluginSet.packagePrefixConflicts().single()
+    assertThat(conflict.descriptor.pluginId.idString).isEqualTo("foo")
+    assertThat(conflict.preferredConflictingModule.contentModuleName).isEqualTo("foo.module")
   }
 
   @Test
@@ -355,8 +346,9 @@ class PluginSetLoadingTest {
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     // FIXME these plugins are not related, but one of them loads => depends on implicit order
     assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors("foo.module")
-    assertThat(loadingErrors).isNotEmpty()
-    assertThat(loadingErrors[0].htmlMessage.toString()).contains("conflicts with", "bar", "foo.module", "package prefix")
+    val conflict = pluginSet.packagePrefixConflicts().single()
+    assertThat(conflict.descriptor.getMainDescriptor().pluginId.idString).isEqualTo("bar")
+    assertThat(conflict.preferredConflictingModule.contentModuleName).isEqualTo("foo.module")
   }
 
   @Test
@@ -511,8 +503,7 @@ class PluginSetLoadingTest {
     }.installAt(pluginsDirPath)
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
-    assertThat(loadingErrors).hasSizeGreaterThan(0)
-    assertThat(loadingErrors[0].htmlMessage.toString()).contains("foo", "invalid plugin descriptor")
+    assertThat(pluginSet.input.discoveryResult.descriptorLoadingErrors).isNotEmpty()
   }
 
   @Test
@@ -668,7 +659,6 @@ class PluginSetLoadingTest {
     }.installAt(pluginsDirPath)
 
     val pluginSet = buildPluginSet()
-    assertThat(loadingErrors).isEmpty()
     val moduleOrder = pluginSet.getEnabledModules().map { it.getPluginId().idString + ":" + it.contentModuleName }
     val validOrders = listOf(
       listOf(
@@ -696,9 +686,10 @@ class PluginSetLoadingTest {
 
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
-    assertThat(loadingErrors).hasSize(1)
-    val error = loadingErrors[0]
-    assertThat(error.htmlMessage.toString()).contains("bar", "not compatible", "foo")
+    val bar = pluginSet.candidateSubset.resolvePluginId(PluginId("bar"))!!
+    val reason = pluginSet.resolvedPluginSet.getExclusionReason(bar)
+    assertThat(reason).isInstanceOf(IncompatibleWithAnotherModule::class.java)
+    assertThat((reason as IncompatibleWithAnotherModule).preferredIncompatibleModule.pluginId.idString).isEqualTo("foo")
   }
 
   @Test
@@ -823,7 +814,6 @@ class PluginSetLoadingTest {
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("a.live", "b.onDemand")
     assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors("a.live.module")
-    assertThat(loadingErrors).isEmpty()
   }
 
   @Test
@@ -896,8 +886,13 @@ class PluginSetLoadingTest {
   }
 
   private fun buildPluginSet(builder: PluginSetTestBuilder.() -> Unit = {}): PluginSet {
-    val state = PluginSetTestBuilder.fromPath(pluginsDirPath).apply(builder).buildManagerState()
-    loadingErrors = state.loadingErrors
-    return state.pluginSet
+    return PluginSetTestBuilder.fromPath(pluginsDirPath).apply(builder).build()
   }
+
+  private fun PluginSet.packagePrefixConflicts(): List<PackagePrefixConflictWithAnotherModule> =
+    resolvedPluginSet.candidateSet.plugins
+      .asSequence()
+      .flatMap { it.sequenceAllDescriptors() }
+      .mapNotNull { resolvedPluginSet.getExclusionReason(it) as? PackagePrefixConflictWithAnotherModule }
+      .toList()
 }
