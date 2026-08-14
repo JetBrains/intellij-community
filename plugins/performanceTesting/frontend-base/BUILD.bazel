@@ -1,0 +1,59 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.performanceTesting.frontend.base` start
+jvm_library(
+    name = "frontend-base",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.performanceTesting.frontend.base",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/platform-frontend:frontend",
+        "//platform/statistics",
+        "//platform/core-api:core",
+        "@lib//:kotlin-stdlib",
+    ],
+)
+
+content_module_jar(module = ":frontend-base")
+
+jvm_library(
+    name = "frontend-base_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.performanceTesting.frontend.base",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":frontend-base",
+        "//platform/platform-frontend:frontend_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/core-api:core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.performanceTesting.frontend.base` end
+
+### auto-generated section `iml intellij.performanceTesting.frontend.base` start
+exports_files(
+    [
+        "intellij.performanceTesting.frontend.base.iml",
+        "resources/intellij.performanceTesting.frontend.base.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.performanceTesting.frontend.base` end
