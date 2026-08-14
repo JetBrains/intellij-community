@@ -7,9 +7,10 @@ import org.jetbrains.annotations.PropertyKey
 
 private const val BUNDLE = "messages.RemoteDevUtilBundle"
 
-object RemoteDevUtilBundle : DynamicBundle(BUNDLE) {
+object RemoteDevUtilBundle {
+  private val instance = DynamicBundle(RemoteDevUtilBundle::class.java, BUNDLE)
   @Nls
   fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String {
-    return RemoteDevUtilBundle.getMessage(key, *params)
+    return instance.getMessage(key, *params)
   }
 }

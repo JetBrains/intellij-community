@@ -23,15 +23,16 @@ import java.util.function.Supplier
 
 private const val BUNDLE_NAME = "messages.dependencySearchBundle"
 
-object DependencySearchBundle : DynamicBundle(BUNDLE_NAME) {
+object DependencySearchBundle {
+  private val instance = DynamicBundle(DependencySearchBundle::class.java, BUNDLE_NAME)
 
   @Nls
   fun message(
     @PropertyKey(resourceBundle = BUNDLE_NAME) key: String,
     vararg params: Any
-  ): String = getMessage(key, *params)
+  ): String = instance.getMessage(key, *params)
 
   @Nls
   fun messagePointer(@PropertyKey(resourceBundle = BUNDLE_NAME) key: String, vararg params: Any): Supplier<String> =
-    getLazyMessage(key, *params)
+    instance.getLazyMessage(key, *params)
 }

@@ -9,14 +9,15 @@ import java.util.function.Supplier
 @NonNls
 private const val BUNDLE = "messages.TomlBundle"
 
-object TomlBundle : DynamicBundle(BUNDLE) {
+object TomlBundle {
+  private val instance = DynamicBundle(TomlBundle::class.java, BUNDLE)
 
   @Nls
   fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String {
-    return getMessage(key, *params)
+    return instance.getMessage(key, *params)
   }
 
   fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): Supplier<String> {
-    return getLazyMessage(key, *params)
+    return instance.getLazyMessage(key, *params)
   }
 }

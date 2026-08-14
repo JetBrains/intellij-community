@@ -451,13 +451,6 @@ f:com.intellij.codeInsight.codeVision.AppCodeVisionInitializationHost
 f:com.intellij.codeInsight.codeVision.AppCodeVisionInitializationHost$Companion
 - f:getInstance():com.intellij.codeInsight.codeVision.AppCodeVisionInitializationHost
 - f:getInstanceSuspending(kotlin.coroutines.Continuation):java.lang.Object
-f:com.intellij.codeInsight.codeVision.CodeVisionBundle
-- com.intellij.DynamicBundle
-- sf:Companion:com.intellij.codeInsight.codeVision.CodeVisionBundle$Companion
-- <init>():V
-f:com.intellij.codeInsight.codeVision.CodeVisionBundle$Companion
-- f:message(java.lang.String,java.lang.Object[]):java.lang.String
-- f:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 Fc:com.intellij.codeInsight.codeVision.CodeVisionHost
 - sf:Companion:com.intellij.codeInsight.codeVision.CodeVisionHost$Companion
 - sf:defaultVisibleLenses:I

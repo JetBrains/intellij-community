@@ -9,14 +9,15 @@ import java.util.function.Supplier
 
 private const val BUNDLE: @NonNls String = "messages.SpellCheckerBundle"
 
-object SpellCheckerBundle : DynamicBundle(BUNDLE) {
+object SpellCheckerBundle {
+  private val instance = DynamicBundle(SpellCheckerBundle::class.java, BUNDLE)
   @JvmStatic
   fun message(key: @PropertyKey(resourceBundle = BUNDLE) String, vararg params: Any): @Nls String {
-    return getMessage(key, *params)
+    return instance.getMessage(key, *params)
   }
 
   @JvmStatic
   fun messagePointer(key: @PropertyKey(resourceBundle = BUNDLE) String, vararg params: Any): Supplier<@Nls String> {
-    return getLazyMessage(key, params)
+    return instance.getLazyMessage(key, params)
   }
 }

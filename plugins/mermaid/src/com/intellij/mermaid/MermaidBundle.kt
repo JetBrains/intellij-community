@@ -10,16 +10,17 @@ import java.util.function.Supplier
 @NonNls
 private const val BUNDLE = "messages.MermaidBundle"
 
-object MermaidBundle : DynamicBundle(BUNDLE) {
+object MermaidBundle {
+  private val instance = DynamicBundle(MermaidBundle::class.java, BUNDLE)
   @Suppress("SpreadOperator")
   @JvmStatic
   fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): @Nls String {
-    return getMessage(key, *params)
+    return instance.getMessage(key, *params)
   }
 
   @Suppress("SpreadOperator", "unused")
   @JvmStatic
   fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): Supplier<@Nls String> {
-    return getLazyMessage(key, *params)
+    return instance.getLazyMessage(key, *params)
   }
 }

@@ -9,10 +9,11 @@ import org.jetbrains.annotations.PropertyKey
 @NonNls
 private const val BUNDLE = "messages.PydevBundle"
 
-object PydevBundle : DynamicBundle(BUNDLE) {
+object PydevBundle {
+  private val instance = DynamicBundle(PydevBundle::class.java, BUNDLE)
   @Nls
   @JvmStatic
-  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
+  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = instance.getMessage(key, *params)
 
   @JvmStatic
   fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): () -> String = { message(key, *params) }

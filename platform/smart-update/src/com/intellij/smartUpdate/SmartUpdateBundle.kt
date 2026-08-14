@@ -21,9 +21,10 @@ import org.jetbrains.annotations.PropertyKey
 
 private const val BUNDLE = "messages.SmartUpdateBundle"
 
-object SmartUpdateBundle : DynamicBundle(BUNDLE) {
+object SmartUpdateBundle {
+  private val instance = DynamicBundle(SmartUpdateBundle::class.java, BUNDLE)
   @Nls
   fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String {
-    return SmartUpdateBundle.getMessage(key, *params)
+    return instance.getMessage(key, *params)
   }
 }

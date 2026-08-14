@@ -8,14 +8,15 @@ import java.util.function.Supplier
 
 private const val BUNDLE = "messages.PyHuggingFaceBundle"
 
-object PyHuggingFaceBundle : DynamicBundle(BUNDLE) {
+object PyHuggingFaceBundle {
+  private val instance = DynamicBundle(PyHuggingFaceBundle::class.java, BUNDLE)
 
   @Nls
   fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String {
-    return getMessage(key, *params)
+    return instance.getMessage(key, *params)
   }
 
   fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): Supplier<String> {
-    return getLazyMessage(key, *params)
+    return instance.getLazyMessage(key, *params)
   }
 }

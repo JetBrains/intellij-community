@@ -9,8 +9,9 @@ import org.jetbrains.annotations.PropertyKey
 @NonNls
 private const val BUNDLE = "messages.GroovyGitBundle"
 
-object GroovyGitBundle : DynamicBundle(BUNDLE) {
+object GroovyGitBundle {
+  private val instance = DynamicBundle(GroovyGitBundle::class.java, BUNDLE)
   @Nls
   @JvmStatic
-  fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
+  fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = instance.getMessage(key, *params)
 }

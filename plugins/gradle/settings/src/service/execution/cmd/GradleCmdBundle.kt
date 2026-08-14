@@ -8,13 +8,14 @@ import java.util.function.Supplier
 
 private const val PATH_TO_BUNDLE = "messages.GradleCmdBundle"
 
-internal object GradleCmdBundle : DynamicBundle(GradleCmdBundle::class.java, PATH_TO_BUNDLE) {
+internal object GradleCmdBundle {
+  private val instance = DynamicBundle(GradleCmdBundle::class.java, PATH_TO_BUNDLE)
 
   @Nls
   @JvmStatic
-  fun message(@PropertyKey(resourceBundle = PATH_TO_BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
+  fun message(@PropertyKey(resourceBundle = PATH_TO_BUNDLE) key: String, vararg params: Any): String = instance.getMessage(key, *params)
 
   @JvmStatic
   fun messagePointer(@PropertyKey(resourceBundle = PATH_TO_BUNDLE) key: String, vararg params: Any): Supplier<@Nls String> =
-    getLazyMessage(key, *params)
+    instance.getLazyMessage(key, *params)
 }
