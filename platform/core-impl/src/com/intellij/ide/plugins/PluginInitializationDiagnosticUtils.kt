@@ -6,7 +6,6 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
 
 @ApiStatus.Internal
 object PluginInitializationDiagnosticUtils {
@@ -294,7 +293,6 @@ object PluginInitializationDiagnosticUtils {
     }
   }
 
-  @VisibleForTesting
   fun collectMajorPluginLoadingProblemMessages(pluginSet: PluginSet): List<String> {
     val resolvedPluginSet = pluginSet.resolvedPluginSet
     val result = ArrayList<String>()

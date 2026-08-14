@@ -2,6 +2,7 @@
 @file:JvmName("TestMain")
 package com.intellij.idea
 
+import com.intellij.ide.plugins.PluginInitializationDiagnosticUtils
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.scheduleDescriptorLoading
 import com.intellij.ide.plugins.PluginModuleId
@@ -59,14 +60,12 @@ fun main(rawArgs: Array<String>) {
     ?: error(buildString {
       appendLine("module $testEntryPointModule not found in product layout")
 
-      // Structured loading errors from existing API
-      val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
+      val errors = PluginInitializationDiagnosticUtils.collectMajorPluginLoadingProblemMessages(pluginSet)
       if (errors.isNotEmpty()) {
         appendLine()
         appendLine("Plugin loading errors:")
         for (error in errors) {
-          val msg = error.reason?.logMessage ?: error.htmlMessage.toString()
-          appendLine("  - $msg")
+          appendLine("  - $error")
         }
       }
 
