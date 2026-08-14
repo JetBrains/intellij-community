@@ -57,8 +57,14 @@ object PluginManagerCore {
   const val PLUGIN_XML_PATH: String = META_INF + PLUGIN_XML
   const val VENDOR_JETBRAINS: String = "JetBrains"
   const val VENDOR_JETBRAINS_SRO: String = "JetBrains s.r.o."
+  @ApiStatus.ScheduledForRemoval // drop after 26.3 release
+  @Deprecated("replace with literal at use site")
   const val DISABLE: String = "disable"
+  @ApiStatus.ScheduledForRemoval // drop after 26.3 release
+  @Deprecated("replace with literal at use site")
   const val ENABLE: String = "enable"
+  @ApiStatus.ScheduledForRemoval // drop after 26.3 release
+  @Deprecated("replace with literal at use site")
   const val EDIT: String = "edit"
 
   @JvmField val CORE_ID: PluginId = PluginId.getId(CORE_PLUGIN_ID)
