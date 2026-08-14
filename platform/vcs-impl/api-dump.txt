@@ -634,7 +634,6 @@ f:com.intellij.openapi.vcs.changes.ChangesViewManager
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.vcs.changes.ChangesViewEx
 - sf:Companion:com.intellij.openapi.vcs.changes.ChangesViewManager$Companion
-- sf:createTextStatusFactory(java.lang.String,Z):com.intellij.openapi.util.Factory
 - dispose():V
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewI
 - sf:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewEx
@@ -645,7 +644,6 @@ f:com.intellij.openapi.vcs.changes.ChangesViewManager
 - selectFile(com.intellij.openapi.vfs.VirtualFile):V
 - setGrouping(java.lang.String):V
 f:com.intellij.openapi.vcs.changes.ChangesViewManager$Companion
-- f:createTextStatusFactory(java.lang.String,Z):com.intellij.openapi.util.Factory
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewI
 - f:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewEx
 - f:getLocalChangesToolWindowName(com.intellij.openapi.project.Project):java.lang.String

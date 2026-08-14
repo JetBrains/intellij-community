@@ -69,15 +69,4 @@ public class EmptyChangelistBuilder implements ChangelistBuilder {
   public boolean reportChangesOutsideProject() {
     return false;
   }
-
-  @Override
-  public void reportAdditionalInfo(final String text) {
-  }
-
-  @Override
-  public void reportAdditionalInfo(Factory<JComponent> infoComponent) {
-  }
-
-  public void reportWarningMessage(final String message) {
-  }
 }

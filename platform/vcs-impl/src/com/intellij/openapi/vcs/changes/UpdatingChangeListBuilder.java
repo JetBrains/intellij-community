@@ -32,8 +32,6 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
   private final @NotNull ProjectLevelVcsManager myVcsManager;
   private final @NotNull FoldersCutDownWorker myFoldersCutDownWorker;
 
-  private final List<Supplier<@Nullable JComponent>> myAdditionalInfo = new ArrayList<>();
-
   UpdatingChangeListBuilder(@NotNull VcsDirtyScope scope,
                             @NotNull ChangeListUpdater changeListUpdater,
                             @NotNull FileHolderComposite composite,
@@ -182,20 +180,6 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
   @Override
   public boolean reportChangesOutsideProject() {
     return false;
-  }
-
-  @Override
-  public void reportAdditionalInfo(@NlsContexts.Label String text) {
-    reportAdditionalInfo(ChangesViewManager.createTextStatusFactory(text, true));
-  }
-
-  @Override
-  public void reportAdditionalInfo(@NotNull Factory<@Nullable JComponent> infoComponent) {
-    myAdditionalInfo.add(infoComponent);
-  }
-
-  public @NotNull List<Supplier<@Nullable JComponent>> getAdditionalInfo() {
-    return myAdditionalInfo;
   }
 
   private boolean acceptFile(@Nullable VirtualFile file) {

@@ -100,14 +100,6 @@ public class MockChangelistBuilder implements ChangelistBuilder {
     return false;
   }
 
-  @Override
-  public void reportAdditionalInfo(final String text) {
-  }
-
-  @Override
-  public void reportAdditionalInfo(Factory<JComponent> infoComponent) {
-  }
-
   public List<Change> getChanges() {
     return myChanges;
   }

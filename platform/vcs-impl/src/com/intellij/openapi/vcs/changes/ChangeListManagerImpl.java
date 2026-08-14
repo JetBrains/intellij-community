@@ -90,7 +90,6 @@ import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
-import javax.swing.JComponent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -142,7 +141,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
   private boolean myInitialUpdate = true;
   private VcsException myUpdateException;
-  private @NotNull List<Supplier<@Nullable JComponent>> myAdditionalInfo = Collections.emptyList();
   private volatile boolean myShowLocalChangesInvalidated;
 
   private final @NotNull ChangesListManagerStateProviderImpl myStateProvider;
@@ -489,7 +487,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
         myComposite = dataHolder.getComposite();
 
         myUpdateException = null;
-        myAdditionalInfo = Collections.emptyList();
       }
 
       myDelayedNotificator.changedFileStatusChanged(true);
@@ -547,7 +544,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
           myStateProvider.setInUpdateMode(true);
           if (wasEverythingDirty) {
             myUpdateException = null;
-            myAdditionalInfo = Collections.emptyList();
           }
 
           if (LOG.isDebugEnabled()) {
@@ -656,8 +652,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     FileHolderComposite composite = dataHolder.getComposite();
     Supplier<Boolean> disposedGetter = () -> project.isDisposed() || myUpdater.isStopped();
 
-    List<Supplier<@Nullable JComponent>> additionalInfos = new ArrayList<>();
-
     dataHolder.notifyStart();
     try {
       for (VcsModifiableDirtyScope scope : scopes) {
@@ -666,7 +660,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
         // do actual requests about file statuses
         UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(scope, updater, composite, disposedGetter);
         actualUpdate(builder, scope, dataHolder, updater, indicator);
-        additionalInfos.addAll(builder.getAdditionalInfo());
 
         synchronized (myDataLock) {
           if (myUpdateException != null) break;
@@ -675,10 +668,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     }
     finally {
       dataHolder.notifyEnd();
-    }
-
-    synchronized (myDataLock) {
-      myAdditionalInfo = additionalInfos;
     }
   }
 
@@ -949,21 +938,10 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     });
   }
 
-  public VcsException getUpdateException() {
+  @Override
+  public @Nullable VcsException getUpdateException() {
     synchronized (myDataLock) {
       return myUpdateException;
-    }
-  }
-
-  public @NotNull List<Supplier<@Nullable JComponent>> getAdditionalUpdateInfo() {
-    synchronized (myDataLock) {
-      List<Supplier<JComponent>> updateInfo = new ArrayList<>();
-      if (myUpdateException != null) {
-        String errorMessage = VcsBundle.message("error.updating.changes", myUpdateException.getMessage());
-        updateInfo.add(ChangesViewManager.createTextStatusFactory(errorMessage, true));
-      }
-      updateInfo.addAll(myAdditionalInfo);
-      return updateInfo;
     }
   }
 

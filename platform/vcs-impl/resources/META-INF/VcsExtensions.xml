@@ -175,6 +175,7 @@
 
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ChangesViewI"
                     serviceImplementation="com.intellij.openapi.vcs.changes.ChangesViewManager"/>
+    <changeListManagerStatusProvider implementation="com.intellij.openapi.vcs.changes.ChangeListManagerUpdateErrorStatusProvider"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesViewContentI"
                     serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager"/>
 

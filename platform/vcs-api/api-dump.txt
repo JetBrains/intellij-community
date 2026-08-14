@@ -895,8 +895,6 @@ com.intellij.openapi.vcs.changes.ChangelistBuilder
 - a:processSwitchedFile(com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z):V
 - a:processUnversionedFile(com.intellij.openapi.vcs.FilePath):V
 - a:removeRegisteredChangeFor(com.intellij.openapi.vcs.FilePath):V
-- a:reportAdditionalInfo(com.intellij.openapi.util.Factory):V
-- a:reportAdditionalInfo(java.lang.String):V
 - a:reportChangesOutsideProject():Z
 f:com.intellij.openapi.vcs.changes.ChangesUtil
 - sf:CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY:com.intellij.util.containers.HashingStrategy
@@ -994,10 +992,7 @@ c:com.intellij.openapi.vcs.changes.EmptyChangelistBuilder
 - processSwitchedFile(com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z):V
 - processUnversionedFile(com.intellij.openapi.vcs.FilePath):V
 - removeRegisteredChangeFor(com.intellij.openapi.vcs.FilePath):V
-- reportAdditionalInfo(com.intellij.openapi.util.Factory):V
-- reportAdditionalInfo(java.lang.String):V
 - reportChangesOutsideProject():Z
-- reportWarningMessage(java.lang.String):V
 c:com.intellij.openapi.vcs.changes.ExternallyRenamedChange
 - com.intellij.openapi.vcs.changes.Change
 - <init>(com.intellij.openapi.vcs.changes.ContentRevision,com.intellij.openapi.vcs.changes.ContentRevision,java.lang.String):V

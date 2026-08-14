@@ -13,13 +13,9 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil.wrap
-import com.intellij.openapi.application.ModalityState.nonModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Factory
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -37,15 +33,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBPanel
-import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.components.panels.VerticalLayout.FILL
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
-import com.intellij.util.ModalityUiUtil.invokeLaterIfNeeded
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels
 import com.intellij.util.ui.UIUtil
@@ -57,7 +48,6 @@ import com.intellij.vcs.commit.ChangesViewCommitTabTitleUpdater
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.commit.CommitModeManager.Companion.subscribeOnCommitModeChange
-import com.intellij.vcs.commit.FixedSizeScrollPanel
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -192,7 +182,7 @@ class ChangesViewManager internal constructor(private val project: Project, priv
     private val editorDiffPreview: ChangesViewEditorDiffPreview
     private var splitterDiffPreview: ChangesViewSplitterDiffPreview? = null
 
-    private val progressLabel = Wrapper()
+    private val statusPanel = ChangesViewUIUtil.createStatusPanel(project)
 
     private var commitPanel: ChangesViewCommitPanel? = null
 
@@ -205,13 +195,6 @@ class ChangesViewManager internal constructor(private val project: Project, priv
       vcsConfiguration = VcsConfiguration.getInstance(project)
 
       registerShortcuts(this)
-
-      busConnection.subscribe(ChangeListListener.TOPIC, object : ChangeListListener {
-        override fun changedFileStatusChanged() {
-          val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
-          updateProgressComponent(changeListManager.additionalUpdateInfo)
-        }
-      })
 
       subscribeOnCommitModeChange(busConnection, CommitModeManager.CommitModeListener { configureToolbars() })
       configureToolbars()
@@ -226,7 +209,7 @@ class ChangesViewManager internal constructor(private val project: Project, priv
       editorDiffPreview = ChangesViewEditorDiffPreview(changesView, contentPanel)
       Disposer.register(this, editorDiffPreview)
 
-      val mainPanel = Panels.simplePanel(mainPanelContent).addToBottom(progressLabel)
+      val mainPanel = Panels.simplePanel(mainPanelContent).addToBottom(statusPanel)
       setContent(mainPanel)
 
       mainPanel.launchOnShow("Changes refresh on changes show") {
@@ -345,22 +328,6 @@ class ChangesViewManager internal constructor(private val project: Project, priv
       DataSink.uiDataSnapshot(sink, commitPanel)
     }
 
-    private fun updateProgressComponent(progress: List<Supplier<JComponent?>>) {
-      invokeLaterIfNeeded(nonModal(), { isDisposed }, Runnable {
-        val components = progress.mapNotNull { it.get() }
-        if (!components.isEmpty()) {
-          val panel = JBPanel<JBPanel<*>?>(VerticalLayout(ChangesViewUIUtil.CHANGES_VIEW_STATUSES_GAP, FILL))
-          for (component in components) {
-            panel.add(component)
-          }
-          progressLabel.setContent(FixedSizeScrollPanel(panel, JBDimension(400, 100)))
-        }
-        else {
-          progressLabel.setContent(null)
-        }
-      })
-    }
-
     companion object {
       private fun registerShortcuts(component: JComponent) {
         wrap("ChangesView.Refresh").registerCustomShortcutSet(CommonShortcuts.getRerun(), component)
@@ -393,19 +360,6 @@ class ChangesViewManager internal constructor(private val project: Project, priv
     }
 
     @JvmStatic
-    fun createTextStatusFactory(@NlsContexts.Label text: @NlsContexts.Label String, isError: Boolean): Factory<JComponent?> {
-      return Factory {
-        val text = StringUtil.replace(text.trim { it <= ' ' }, "\n", UIUtil.BR)
-        JBLabel(text).apply {
-          setCopyable(true)
-          setVerticalTextPosition(SwingConstants.TOP)
-          setBorder(JBUI.Borders.empty(3))
-          setForeground(if (isError) JBColor.RED else UIUtil.getLabelForeground())
-        }
-      }
-    }
-
-    @JvmStatic
     @Nls
     fun getLocalChangesToolWindowName(project: Project): @Nls String {
       return if (CommitModeManager.isCommitToolWindowEnabled(project)) {
@@ -427,5 +381,22 @@ interface ChangesViewController {
   companion object {
     @JvmField
     val DATA_KEY: DataKey<ChangesViewController> = DataKey.create("ChangesViewController")
+  }
+}
+
+@ApiStatus.Internal
+class ChangeListManagerUpdateErrorStatusProvider : ChangeListManagerStatusProvider {
+  override fun getStatusComponent(project: Project): JComponent? {
+    val exception = ChangeListManagerEx.getInstanceEx(project).getUpdateException()
+    if (exception == null) return null
+
+    val message = exception.message.trim { it <= ' ' }.replace("\n", UIUtil.BR)
+    val errorMessage = VcsBundle.message("error.updating.changes", message)
+    return JBLabel(errorMessage).apply {
+      setCopyable(true)
+      setVerticalTextPosition(SwingConstants.TOP)
+      setBorder(JBUI.Borders.empty(3))
+      setForeground(JBColor.RED)
+    }
   }
 }

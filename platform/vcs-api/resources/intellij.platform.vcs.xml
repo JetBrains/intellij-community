@@ -34,6 +34,10 @@
     <extensionPoint name="checkoutCompletedListener"
                     interface="com.intellij.openapi.vcs.checkout.CheckoutListener"
                     dynamic="true"/>
+
+    <extensionPoint name="changeListManagerStatusProvider"
+                    interface="com.intellij.openapi.vcs.changes.ChangeListManagerStatusProvider"
+                    dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectSettings service="com.intellij.openapi.vcs.VcsSharedProjectSettings"/>

@@ -86,8 +86,4 @@ public interface ChangelistBuilder {
   void processRootSwitch(VirtualFile file, @NlsSafe String branch);
 
   boolean reportChangesOutsideProject();
-
-  void reportAdditionalInfo(final @NlsContexts.Label String text);
-
-  void reportAdditionalInfo(@NotNull Factory<@Nullable JComponent> infoComponent);
 }

@@ -23,8 +23,6 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.changes.ChangeListListener
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangeListManagerRefreshHelper
 import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vcs.changes.DiffPreview
@@ -51,9 +49,6 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.components.JBPanel
-import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.components.panels.VerticalLayout.FILL
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.EditSourceOnDoubleClickHandler
@@ -62,7 +57,6 @@ import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ProportionKey
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.TwoKeySplitter
@@ -101,6 +95,7 @@ import java.awt.BorderLayout
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
 import java.util.EventListener
+import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class GitStagePanel(
@@ -117,7 +112,7 @@ internal class GitStagePanel(
   private val progressStripe: ProgressStripe
   private val toolbar: ActionToolbar
   private val commitPanel: GitStageCommitPanel
-  private val changesStatusPanel: Wrapper
+  private val changesStatusPanel: JComponent
 
   private val mainPanelContent = Wrapper()
   private val treeMessageSplitter: Splitter
@@ -177,8 +172,7 @@ internal class GitStagePanel(
     treeMessageSplitter.firstComponent = treePanelWithToolbar
     treeMessageSplitter.secondComponent = commitPanel.component
 
-    changesStatusPanel = Wrapper()
-    changesStatusPanel.minimumSize = JBUI.emptySize()
+    changesStatusPanel = ChangesViewUIUtil.createStatusPanel(project)
 
     mainPanelContent.setContent(treeMessageSplitter)
 
@@ -203,7 +197,6 @@ internal class GitStagePanel(
     tracker.addListener(MyGitStageTrackerListener(), this)
     val busConnection = project.messageBus.connect(this)
     busConnection.subscribe(GitRefreshListener.TOPIC, MyGitChangeProviderListener())
-    busConnection.subscribe(ChangeListListener.TOPIC, MyChangeListListener())
     busConnection.subscribe(VcsManagedFilesHolder.TOPIC, VcsManagedFilesHolder.VcsManagedFilesHolderListener {
       runInEdt(disposableFlag) { updateProgressState() }
     })
@@ -217,7 +210,6 @@ internal class GitStagePanel(
       tree.setEmptyText(message("stage.loading.status"))
       progressStripe.startLoadingImmediately()
     }
-    updateChangesStatusPanel()
 
     Disposer.register(disposableParent, this)
     Disposer.register(this, disposableFlag)
@@ -235,16 +227,6 @@ internal class GitStagePanel(
       LOG.trace("Repository $it files holder update state - $updateModeForFilesHolder")
       updateModeForFilesHolder
     }
-  }
-
-  private fun updateChangesStatusPanel() {
-    val manager = ChangeListManagerImpl.getInstanceImpl(project)
-    val components = manager.additionalUpdateInfo.mapNotNull { it.get() }
-    val componentsStack = JBPanel<JBPanel<*>?>(VerticalLayout(ChangesViewUIUtil.CHANGES_VIEW_STATUSES_GAP, FILL))
-    for (component in components) {
-      componentsStack.add(component)
-    }
-    changesStatusPanel.setContent(componentsStack)
   }
 
   @RequiresEdt
@@ -550,14 +532,6 @@ internal class GitStagePanel(
     override fun progressStopped() {
       runInEdt(disposableFlag) {
         updateProgressState()
-      }
-    }
-  }
-
-  private inner class MyChangeListListener : ChangeListListener {
-    override fun changeListUpdateDone() {
-      runInEdt(disposableFlag) {
-        updateChangesStatusPanel()
       }
     }
   }

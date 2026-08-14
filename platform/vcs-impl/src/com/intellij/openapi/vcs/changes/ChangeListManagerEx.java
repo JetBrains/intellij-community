@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -22,6 +23,8 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
   }
 
   public abstract boolean isInUpdate();
+
+  public abstract @Nullable VcsException getUpdateException();
 
   public abstract @NotNull Collection<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes);
 
