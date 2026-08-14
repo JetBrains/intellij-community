@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.types
 
-import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.allure.Layers
-import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.inspections.PyCallingNonCallableInspection
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
@@ -29,7 +29,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       def foo(x):
           expr = x  # type: int
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `multi assignment type comment`() = test("""
@@ -37,7 +37,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
           c1, c2 = x  # type: int, str
           expr = c1, c2
       #   └ TYPE tuple[int, str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19220"])
@@ -49,7 +49,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       ]  # type: list[str]
       expr
       # └ TYPE list[str]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -60,7 +60,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
           for expr, x in xs:  # type: int, str
       #       └ TYPE int
               pass
-      """)
+      """.trimIndent())
 
     @Test
     fun `with type comment`() = test("""
@@ -68,7 +68,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
           with x as expr:  # type: int
       #        └ TYPE Unknown
               pass
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -79,7 +79,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       expr, x = undefined()  # type: (int, str) 
       # │       ^^^^^^^^^ ERROR Unresolved reference 'undefined'
       # └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-21191"])
@@ -87,7 +87,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       _, (_, expr) = undefined()  # type: str, (str, int)
       #         │    ^^^^^^^^^ ERROR Unresolved reference 'undefined'
       #         └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-21191"])
@@ -96,7 +96,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       #│     │                    ^^^^^^^^ WARNING Type comment cannot be matched with unpacked variables
       #│     ^^^^^^^^^ ERROR Unresolved reference 'undefined'
       #└ TYPE Unknown
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-21191"])
@@ -105,7 +105,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       #         │    │                    ^^^^^^^^^^^^^^^^^^^^ WARNING Type comment cannot be matched with unpacked variables
       #         │    ^^^^^^^^^ ERROR Unresolved reference 'undefined'
       #         └ TYPE Unknown
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-21191"])
@@ -114,7 +114,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       #         │    │                    ^^^^^^^^^^^^^^^ WARNING Type comment cannot be matched with unpacked variables
       #         │    ^^^^^^^^^ ERROR Unresolved reference 'undefined'
       #         └ TYPE Unknown
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-21191"])
@@ -123,7 +123,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       #    │                     └ TYPE tuple[str, int] FIXME int
       #    ^^^^^^^^^ ERROR Unresolved reference 'undefined'
           pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-21191"])
@@ -132,7 +132,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       #            │        ^^^^^^^^^ ERROR Unresolved reference 'undefined'
       #            └ TYPE int
           pass
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -147,21 +147,21 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       
       expr = f
       # └ TYPE (x: int, *args: float | int, **kwargs: str) -> list[bool]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-18595"])
+    @TestInspections(
+      disableInspections = [
+        PyUnresolvedReferencesInspection::class,
+        PyCallingNonCallableInspection::class,
+        PyTypeCheckerInspection::class,
+      ],
+    )
     fun `function type comment for static method`() = test(
       // The deliberately wrong `-> bool` return annotation triggers a return-type warning that the
       // daemon emits a non-deterministic number of times; the original test only inferred the
       // parameter type, so the type checker is disabled here to keep the focus on that.
-      TestOptions(
-        disableInspections = setOf(
-          PyUnresolvedReferencesInspection::class.java,
-          PyCallingNonCallableInspection::class.java,
-          PyTypeCheckerInspection::class.java,
-        ),
-      ),
       """
       class C:
           @staticmethod
@@ -169,8 +169,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
               # type: (int, bool, str) -> bool
               expr = some_int
       #       └ TYPE int
-      """,
-    )
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-18598"])
@@ -181,7 +180,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       
       expr = f
       #└ TYPE (x: Unknown, y: Unknown, z: Unknown) -> int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-20421"])
@@ -194,7 +193,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       
       expr = f()
       #└ TYPE tuple[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-18741"])
@@ -207,7 +206,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       
       expr = f
       #└ TYPE (x: int, y: bool, z: Unknown) -> str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-18877"])
@@ -218,16 +217,15 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       
       expr = f
       #└ TYPE (x: int, y: int) -> None
-      """)
+      """.trimIndent())
 
     @Test
-    fun `function type comment in stubs`() = test(
-      """
+    fun `function type comment in stubs`() = test("""
       from module import func
       
       expr = func()
       #└ TYPE MyClass
-      """,
+      """.trimIndent(),
       "module.py" to """
         class MyClass(object):
             pass
@@ -236,8 +234,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
         def func():
             # type: () -> MyClass
             pass
-        """,
-    )
+        """.trimIndent())
   }
 
   @Nested
@@ -248,7 +245,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
           x = 0  # type: str
       #       └ WARNING Expected type 'str', got 'Literal[0]' instead
           y = 1  # type: int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-90747"])
@@ -263,6 +260,6 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
                             ):
           # type: (...) -> None
           ...
-      """)
+      """.trimIndent())
   }
 }

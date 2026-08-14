@@ -23,5 +23,5 @@ class PyClassesTypeTest : PyCodeInsightTestCase() {
     
     class C(A, a="str"): ...
     #          ^^^^^^^ WARNING Expected type 'int', got 'Literal["str"]' instead
-    """)
+    """.trimIndent())
 }

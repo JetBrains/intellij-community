@@ -31,7 +31,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
           return ('a', 1)
       expr = x()
       # └ TYPE tuple[Literal[1], Literal['a']] | tuple[Literal['a'], Literal[1]]
-      """)
+      """.trimIndent())
 
     @Test
     fun `attribute initialised to None yields union with Any`() = test("""
@@ -39,7 +39,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
           def __init__(self): self.foo = None
       expr = C().foo
       # └ TYPE UnsafeUnion[None, Unknown]
-      """)
+      """.trimIndent())
 
     @Test
     fun `union with unknown type from unresolved call`() = test("""
@@ -50,7 +50,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       expr = f(1, g())
       # │         └ ERROR Unresolved reference 'g'
       # └ TYPE Literal[1] | Unknown
-      """)
+      """.trimIndent())
 
     @Test
     fun `union iteration yields union of element types`() = test("""
@@ -67,21 +67,19 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       #       │       ^^^^ WARNING Expected type 'collections.Iterable', got 'list[int] | float | Literal["foo"]' instead
       #       └ TYPE int | LiteralString | Unknown
               pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-26973"])
-    fun `slice of union picks matching member`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON36,
-                  enableWeakWarnings = false,
-                  assertRecursionPrevention = false),
-      """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON36,
+                enableWeakWarnings = false,
+                assertRecursionPrevention = false)
+    fun `slice of union picks matching member`() = test("""
       from typing import Union
       myvar: Union[str, int]
       expr = myvar[0:3]
       #└ TYPE str
-      """,
-    )
+      """.trimIndent())
   }
 
   @Nested
@@ -98,7 +96,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
           o = Foo() if c else Bar()
           expr = o.x
       #   └ TYPE list[Unknown] | int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-90791"])
@@ -109,7 +107,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       def foo(box: Box[int] | Box[str]):
           expr = box.t
       #   └ TYPE int | str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-90791"])
@@ -124,7 +122,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       def foo(box: Box[int] | Box[str]):
           expr = box.t
       #   └ TYPE int | str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-90791", "PY-91007"])
@@ -137,7 +135,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       def foo(box: Box[int] | Box[str]):
           expr = box.t
       #   └ TYPE int | str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-90791", "PY-90894"])
@@ -149,7 +147,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       def foo(box: Box[int] | Box[str]):
           expr = box.whatever
       #   └ TYPE int | str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-11364"])
@@ -170,7 +168,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       
       expr = f().foo()
       # └ TYPE C1 | C2
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-12862"])
@@ -192,7 +190,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       expr = f()[0]
       #└ TYPE C1 | C2
       print(expr)
-      """)
+      """.trimIndent())
 
     @Test
     fun `property of docstring union type`() = test("""
@@ -206,7 +204,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       expr = x.bit_length()
       # │      ^^^^^^^^^^ WEAK-WARNING Member 'slice' of 'int | slice' does not have attribute 'bit_length'
       # └ TYPE int | Unknown
-      """)
+      """.trimIndent())
 
     @Test
     fun `undefined property of union type`() = test("""
@@ -214,7 +212,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       expr = x.foo
       #│       ^^^ WEAK-WARNING Member 'Literal[42]' of 'Literal[42, "spam"]' does not have attribute 'foo'
       #└ TYPE Unknown
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -224,7 +222,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       def f(expr: None):
       #     └ TYPE None
           pass
-      """)
+      """.trimIndent())
 
     @Test
     fun `None return type`() = test("""
@@ -233,24 +231,23 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       #          └ WARNING Expected type 'None', got 'Literal[0]' instead
       expr = f()
       # └ TYPE None
-      """)
+      """.trimIndent())
 
     @Test
-    fun `None literal`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON34, assertRecursionPrevention = false),
-      """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON34, assertRecursionPrevention = false)
+    fun `None literal`() = test("""
       expr = None
       # └ TYPE None
-      """,
-    )
+      """.trimIndent())
 
     @Test
+    @TestCaseOptions(assertRecursionPrevention = false)
     fun `type of None`() = test(
-      TestOptions(assertRecursionPrevention = false), // PY-90413
+      // PY-90413
       """
       expr = type(None)
       # └ TYPE type[None]
-      """)
+      """.trimIndent())
 
     @Test
     fun `Optional parameter annotation`() = test("""
@@ -259,7 +256,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       def foo(expr: Optional[int]):
       #       └ TYPE int | None
           pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-28032"])
@@ -269,7 +266,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       x = None  # type: Optional[Any]
       expr = x
       #└ TYPE Any | None
-      """)
+      """.trimIndent())
 
     @Test
     fun `Optional from default None`() = test("""
@@ -277,7 +274,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       #       │           ^^^^ WARNING Expected type 'int', got 'None' instead
       #       └ TYPE int | None
           pass
-      """)
+      """.trimIndent())
 
     @Test
     fun `explicit None attribute`() = test("""
@@ -287,7 +284,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       def f(a: A):
           expr = a.x
       #   └ TYPE None
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -299,7 +296,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       def f(expr: Union[int, str]):
       #     └ TYPE int | str
           pass
-      """)
+      """.trimIndent())
 
     @Test
     fun `nested Union annotations are flattened`() = test("""
@@ -308,7 +305,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       def foo(expr: Union[int, Union[str, list]]):
       #       └ TYPE int | str | list[Unknown]
           pass
-      """)
+      """.trimIndent())
 
     @Test
     fun `union of class object types`() = test("""
@@ -317,7 +314,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       def f(x: Type[Union[int, str]]):
           expr = x
       #   └ TYPE type[int | str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-88281"])
@@ -325,16 +322,15 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       expr: int | asdf
       #│          ^^^^ ERROR Unresolved reference 'asdf'
       #└ TYPE int | Unknown
-      """)
+      """.trimIndent())
   }
 
   @Nested
   inner class BitwiseOrUnions {
     @Test
     @TestFor(issues = ["PY-44974"])
-    fun `bitwise-or union from branches with from future import`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON39, assertRecursionPrevention = false),
-      """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON39, assertRecursionPrevention = false)
+    fun `bitwise-or union from branches with from future import`() = test("""
       from __future__ import annotations
       if something:
       #  ^^^^^^^^^ ERROR Unresolved reference 'something'
@@ -343,14 +339,12 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
           x: str
       expr = x
       # └ TYPE int | str
-      """,
-    )
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-44974"])
-    fun `bitwise-or union from branches without from future import`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON39, assertRecursionPrevention = false),
-      """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON39, assertRecursionPrevention = false)
+    fun `bitwise-or union from branches without from future import`() = test("""
       if something:
       #  ^^^^^^^^^ ERROR Unresolved reference 'something'
           x: int
@@ -358,8 +352,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
           x: str
       expr = x
       #└ TYPE Union[int, str]
-      """,
-    )
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-44974"])
@@ -367,7 +360,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       bar: int | ((list | dict) | (float | str)) = ""
       expr = bar
       #└ TYPE int | list[Unknown] | dict[Unknown, Unknown] | float | str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-44974"])
@@ -377,7 +370,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       
       expr = A() | A()
       # └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `bitwise-or operator overload yields union`() = test("""
@@ -390,7 +383,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       
       expr = Foo | None
       # └ TYPE UnionType | Self
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-51329"])
@@ -408,7 +401,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       expr: Alias
       #│    ^^^^^ WARNING Invalid type annotation
       #└ TYPE Unknown
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-51329"])
@@ -425,7 +418,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       expr: Foo | None
       # │   ^^^^^^^^^^ WARNING Invalid type annotation
       # └ TYPE Unknown
-      """)
+      """.trimIndent())
 
     @Test
     fun `right-hand bitwise-or with class`() = test("""
@@ -437,7 +430,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       
       expr = str | A
       # └ TYPE UnionType | type[str] | int
-      """)
+      """.trimIndent())
 
     @Test
     fun `union with LiteralString collapses on string concatenation`() = test("""
@@ -446,7 +439,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       x: LiteralString | str | int
       expr = x + "foo"
       #└ TYPE LiteralString FIXME LiteralString | str | Any # PY-90517
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -458,26 +451,24 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       
       expr = f()
       # └ TYPE Never
-      """)
+      """.trimIndent())
   }
 
   @Nested
   inner class MultiFile {
     @Test
-    fun `None inside a callable alias from another file`() = test(
-      """
+    fun `None inside a callable alias from another file`() = test("""
       from other import MyType
       
       expr: MyType = ...
       # │            ^^^ WARNING Expected type '(int) -> None', got 'EllipsisType' instead
       # └ TYPE (int) -> None
-      """,
+      """.trimIndent(),
       "other.py" to """
         from typing import Callable
         
         MyType = Callable[[int], None]
-        """,
-    )
+        """.trimIndent())
   }
 
   @Nested
@@ -485,13 +476,13 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
     @Test
     fun `assigning list to None-int-str bitwise-or union is reported`() = test("""
       bar: None | int | str = [42] # WARNING Expected type 'None | int | str', got 'list[Literal[42]]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-44974"])
     fun `assigning None to parenthesized bitwise-or union of unions is reported`() = test("""
       bar: int | ((list | dict) | (float | str)) = None # WARNING Expected type 'int | list[Unknown] | dict[Unknown, Unknown] | float | str', got 'None' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-44974"])
@@ -500,7 +491,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       def foo(x: Type[int | str]):
           pass
       foo(int | str) # WARNING Expected type 'type[int | str]', got 'UnionType | type[int] | type[str]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-44974"])
@@ -553,12 +544,11 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
           expect_new_optional_none_first(42)
           expect_new_optional_none_first(None)
           expect_new_optional_none_first([42]) # WARNING Expected type 'int | None', got 'list[Literal[42]]' instead
-      """)
+      """.trimIndent())
 
     @Test
-    fun `bitwise-or union with not calculated generic from union`() = test(
-      TestOptions(enableWeakWarnings = false, assertRecursionPrevention = false),
-      """
+    @TestCaseOptions(enableWeakWarnings = false, assertRecursionPrevention = false)
+    fun `bitwise-or union with not calculated generic from union`() = test("""
       from typing import Union, TypeVar
 
       T = TypeVar("T", bytes, str)
@@ -569,7 +559,6 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
 
       def foo(path_or_buf: another_union[T] | None) -> None:
           print(path_or_buf)
-      """,
-    )
+      """.trimIndent())
   }
 }

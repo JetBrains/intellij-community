@@ -313,7 +313,8 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
 
   @Test
   // FIXME PY-91461
-  fun `generic argument mismatch carries the breakdown in its tooltip 2`() = test(TestOptions(enablePyAnyType = false), """
+  @TestCaseOptions(enablePyAnyType = false)
+  fun `generic argument mismatch carries the breakdown in its tooltip 2`() = test("""
         class Box[T]:
             def __init__(self, x: T) -> None:
                 self.x = x

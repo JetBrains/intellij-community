@@ -26,67 +26,67 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
     fun `list literal types`() = test("""
       expr = []
       # └ TYPE list[Unknown]
-      """)
+      """.trimIndent())
 
     @Test
     fun `list literal of ints`() = test("""
       expr = [1, 2, 3]
       # └ TYPE list[int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `list literal of mixed values`() = test("""
       expr = ['1', 1, 1]
       # └ TYPE list[str | int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `list literal of many mixed values`() = test("""
       expr = ['1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
       #└ TYPE list[str | int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `set literal of ints`() = test("""
       expr = {1}
       #└ TYPE set[int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `set literal of mixed values`() = test("""
       expr = {'1', 1, 1}
       # └ TYPE set[str | int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `set literal of many mixed values`() = test("""
       expr = {'1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
       #└ TYPE set[str | int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `empty dict literal`() = test("""
       expr = {}
       #└ TYPE dict[Unknown, Unknown]
-      """)
+      """.trimIndent())
 
     @Test
     fun `dict literal of int to bool`() = test("""
       expr = {1: False}
       #└ TYPE dict[int, bool]
-      """)
+      """.trimIndent())
 
     @Test
     fun `dict literal of mixed keys and values`() = test("""
       expr = {'1': 1, 1: '1', 1: 1}
       #└ TYPE dict[str | int, int | str]
-      """)
+      """.trimIndent())
 
     @Test
     fun `dict literal of many mixed keys and values`() = test("""
       expr = {'1': 1, 1: '1', 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1}
       #└ TYPE dict[str | int | Unknown, int | str | Unknown]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -96,13 +96,13 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
     fun `list item by integer index`() = test("""
       l = [1, 2, 3]; expr = l[0]
       #              └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `list slice type`() = test("""
       l = [1, 2, 3]; expr = l[0:1]
       #              └ TYPE list[int]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -115,7 +115,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
       def f(expr: List):
       #     └ TYPE list
           pass
-      """)
+      """.trimIndent())
 
     @Test
     fun `builtin list with parameter`() = test("""
@@ -124,7 +124,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
       def f(expr: List[int]):
       #     └ TYPE list[int]
           pass
-      """)
+      """.trimIndent())
 
     @Test
     fun `builtin dict with parameters`() = test("""
@@ -133,7 +133,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
       def f(expr: Dict[str, int]):
       #     └ TYPE dict[str, int]
           pass
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -147,7 +147,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
       def foo(x: List[List]):
           expr = x[0]
       #   └ TYPE list
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19858"])
@@ -158,7 +158,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
           y = 0
           expr = x[y]
       #   └ TYPE list
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19858"])
@@ -168,7 +168,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
       def foo(x: List[List]):
           expr = x[1:3]
       #   └ TYPE list[list]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19858"])
@@ -179,7 +179,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
           y = slice(1, 3)
           expr = x[y]
       #   └ TYPE list[list]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-19858"])
@@ -190,7 +190,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
           expr = x[y]
       #   │        └ ERROR Unresolved reference 'y'
       #   └ TYPE UnsafeUnion[list, list[list]]
-      """)
+      """.trimIndent())
 
     @Test
     fun `get list of lists item by integral`() = test("""
@@ -200,7 +200,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
           sublist = x[0]
           expr = sublist[0]
       #   └ TYPE Unknown
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-27627"])
@@ -210,14 +210,14 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
       }
       expr = d[int]()
       #└ TYPE tuple[()]
-      """)
+      """.trimIndent())
 
     @Test
     fun `list containing classes pop`() = test("""
       xs = [str]
       expr = xs.pop()
       #└ TYPE type[str]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -229,7 +229,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
       for expr in d.values():
       #   └ TYPE int
           pass
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -242,7 +242,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
       s = slice(0, 2)
 
       x = l[s]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-20460"])
@@ -251,7 +251,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
       st = "abcdef"
 
       print(st[sl])
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-20460"])
@@ -260,7 +260,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
       st = b"abcdef"
 
       print(st[sl])
-      """)
+      """.trimIndent())
   }
 
   @Test
@@ -269,7 +269,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
     def test(k1, v1):
         d = {k1: v1}
         return 1 + d[k1]
-    """)
+    """.trimIndent())
 
   /**
    * mirrors of tests in this suite but with PyAnyType disabled to ensure that the old style doesn't regress
@@ -277,15 +277,11 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
   @Nested
   inner class PyAnyTypeMigrationMirrors {
 
-    val oldAny = TestOptions(enablePyAnyType = false)
-
     @Test
-    fun `empty dict literal (old py-any)`() = test(
-      oldAny,
-      """
+    @TestCaseOptions(enablePyAnyType = false)
+    fun `empty dict literal (old py-any)`() = test("""
       expr = {}
       # └ TYPE dict[Any, Any]
-      """,
-    )
+      """.trimIndent())
   }
 }

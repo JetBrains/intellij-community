@@ -27,7 +27,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       def f(x: TypeForm[int]):
           y = x
       #   └ TYPE TypeForm[int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `TypeForm of a complex type expression`() = test("""
@@ -36,7 +36,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       def f(x: TypeForm[int | str]):
           y = x
       #   └ TYPE TypeForm[int | str]
-      """)
+      """.trimIndent())
 
 
     // PEP 747: bare `TypeForm` is equivalent to `TypeForm[Any]`.
@@ -47,7 +47,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       def f(x: TypeForm):
           y = x
       #   └ TYPE TypeForm[Any]
-      """)
+      """.trimIndent())
 
     @Test
     fun `explicit TypeForm of Any resolves to TypeForm of Any`() = test("""
@@ -57,30 +57,30 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       def f(x: TypeForm[Any]):
           y = x
       #   └ TYPE TypeForm[Any]
-      """)
+      """.trimIndent())
 
     // Same, but with the `python.type.any` engine off (the production default), where the represented type is
     // `null` rather than the explicit `PyAnyType.Any`. Both must still render as `TypeForm[Any]`.
     @Test
-    fun `bare TypeForm resolves to TypeForm of Any with the legacy engine`() = test(
-      defaultTestOptions.copy(enablePyAnyType = false), """
+    @TestCaseOptions(enablePyAnyType = false)
+    fun `bare TypeForm resolves to TypeForm of Any with the legacy engine`() = test("""
       from typing_extensions import TypeForm
 
       def f(x: TypeForm):
           y = x
       #   └ TYPE TypeForm[Any]
-      """)
+      """.trimIndent())
 
     @Test
-    fun `explicit TypeForm of Any resolves to TypeForm of Any with the legacy engine`() = test(
-      defaultTestOptions.copy(enablePyAnyType = false), """
+    @TestCaseOptions(enablePyAnyType = false)
+    fun `explicit TypeForm of Any resolves to TypeForm of Any with the legacy engine`() = test("""
       from typing import Any
       from typing_extensions import TypeForm
 
       def f(x: TypeForm[Any]):
           y = x
       #   └ TYPE TypeForm[Any]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -91,21 +91,21 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       from typing_extensions import TypeForm
 
       def func(x: TypeForm): ...
-      """)
+      """.trimIndent())
 
     @Test
     fun `TypeForm with too many arguments`() = test("""
       from typing_extensions import TypeForm
 
       def func(x: TypeForm[int, str]): ... # ISSUES *
-      """)
+      """.trimIndent())
 
     @Test
     fun `TypeForm with a single argument is valid`() = test("""
       from typing_extensions import TypeForm
 
       def func(x: TypeForm[int]): ...
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -117,7 +117,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       x = TypeForm(int)
       y = x
       #   └ TYPE TypeForm[int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `explicit TypeForm constructor of a union expression`() = test("""
@@ -126,7 +126,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       x = TypeForm(str | None)
       y = x
       #   └ TYPE TypeForm[str | None]
-      """)
+      """.trimIndent())
 
     @Test
     fun `explicit TypeForm constructor of a string forward reference`() = test("""
@@ -135,14 +135,14 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       x = TypeForm('list[int]')
       y = x
       #   └ TYPE TypeForm[list[int]]
-      """)
+      """.trimIndent())
 
     @Test
     fun `explicit TypeForm constructor is a valid TypeForm value`() = test("""
       from typing_extensions import TypeForm
 
       x: TypeForm[int | str] = TypeForm(int)
-      """)
+      """.trimIndent())
 
     // The synthesized callable takes exactly one parameter, so the regular argument-list checks cover the arity.
     @Test
@@ -151,7 +151,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
 
       x = TypeForm()
       #            └ WARNING No signature matches the arguments. Argument types: (). Expected one of: (Any)
-      """)
+      """.trimIndent())
 
     @Test
     fun `explicit TypeForm constructor rejects extra arguments`() = test("""
@@ -159,14 +159,14 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
 
       x = TypeForm(int, str)
       #                 ^^^ WARNING Unexpected argument
-      """)
+      """.trimIndent())
 
     @Test
     fun `explicit TypeForm constructor accepts exactly one argument`() = test("""
       from typing_extensions import TypeForm
 
       x = TypeForm(int)
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -176,56 +176,56 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       from typing_extensions import TypeForm
 
       x: TypeForm[int] = int
-      """)
+      """.trimIndent())
 
     @Test
     fun `TypeForm is covariant`() = test("""
       from typing_extensions import TypeForm
 
       x: TypeForm[int | str] = int
-      """)
+      """.trimIndent())
 
     @Test
     fun `union of class objects is assignable to TypeForm`() = test("""
       from typing_extensions import TypeForm
 
       x: TypeForm[int | str] = int | str
-      """)
+      """.trimIndent())
 
     @Test
     fun `wrong class object is not assignable to TypeForm`() = test("""
       from typing_extensions import TypeForm
 
       x: TypeForm[int] = str # ISSUES *
-      """)
+      """.trimIndent())
 
     @Test
     fun `plain value is not assignable to TypeForm`() = test("""
       from typing_extensions import TypeForm
 
       x: TypeForm[int] = 42 # ISSUES *
-      """)
+      """.trimIndent())
 
     @Test
     fun `string forward reference is assignable to TypeForm`() = test("""
       from typing_extensions import TypeForm
 
       x: TypeForm[str | None] = "str | None"
-      """)
+      """.trimIndent())
 
     @Test
     fun `simple string forward reference is assignable to TypeForm`() = test("""
       from typing_extensions import TypeForm
 
       x: TypeForm[int] = "int"
-      """)
+      """.trimIndent())
 
     @Test
     fun `string forward reference is covariant`() = test("""
       from typing_extensions import TypeForm
 
       x: TypeForm[int | str] = "int"
-      """)
+      """.trimIndent())
 
     @Test
     fun `string forward reference is assignable to TypeForm of Any`() = test("""
@@ -233,7 +233,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       from typing_extensions import TypeForm
 
       x: TypeForm[Any] = "int"
-      """)
+      """.trimIndent())
 
     @Test
     fun `class object is assignable to TypeForm of Any`() = test("""
@@ -241,7 +241,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       from typing_extensions import TypeForm
 
       x: TypeForm[Any] = int
-      """)
+      """.trimIndent())
 
     // PEP 747: `TypeForm[Any]` is assignable both to and from any other `TypeForm` type.
     @Test
@@ -251,7 +251,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
 
       def use(a: TypeForm[Any]):
           x: TypeForm[int] = a
-      """)
+      """.trimIndent())
 
     @Test
     fun `specific TypeForm is assignable to TypeForm of Any`() = test("""
@@ -260,7 +260,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
 
       def use(a: TypeForm[int]):
           x: TypeForm[Any] = a
-      """)
+      """.trimIndent())
 
     @Test
     fun `multiline string forward reference is assignable to TypeForm`() = test("""
@@ -269,49 +269,49 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       x: TypeForm[int | str] = ${"\"\"\""}
           int | str
       ${"\"\"\""}
-      """)
+      """.trimIndent())
 
     @Test
     fun `string forward reference to a wrong type is not assignable to TypeForm`() = test("""
       from typing_extensions import TypeForm
 
       x: TypeForm[int] = "str" # ISSUES *
-      """)
+      """.trimIndent())
 
     @Test
     fun `invalid string forward reference is not assignable to TypeForm`() = test("""
       from typing_extensions import TypeForm
 
       x: TypeForm[int] = "not a type" # ISSUES *
-      """)
+      """.trimIndent())
 
     @Test
     fun `f-string is not assignable to TypeForm`() = test("""
       from typing_extensions import TypeForm
 
       x: TypeForm[int] = f"int"
-      """)
+      """.trimIndent())
 
     @Test
     fun `None is assignable to a TypeForm containing None`() = test("""
       from typing_extensions import TypeForm
 
       x: TypeForm[str | None] = None
-      """)
+      """.trimIndent())
 
     @Test
     fun `None is assignable to TypeForm of None`() = test("""
       from typing_extensions import TypeForm
 
       x: TypeForm[None] = None
-      """)
+      """.trimIndent())
 
     @Test
     fun `None is not assignable to a TypeForm without None`() = test("""
       from typing_extensions import TypeForm
 
       x: TypeForm[int] = None # ISSUES *
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -324,7 +324,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
 
       def use():
           g("int")
-      """)
+      """.trimIndent())
 
     @Test
     fun `reports a wrong string forward reference argument`() = test("""
@@ -334,7 +334,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
 
       def use():
           g("bytes") # ISSUES *
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -348,7 +348,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       def use():
           r = f(int)
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `infers represented type from a union expression`() = test("""
@@ -359,7 +359,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       def use():
           r = f(int | str)
       #   └ TYPE int | str
-      """)
+      """.trimIndent())
 
     @Test
     fun `infers represented type from a generic alias`() = test("""
@@ -370,7 +370,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       def use():
           r = f(list[int])
       #   └ TYPE list[int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `reports a plain value argument`() = test("""
@@ -380,7 +380,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
 
       def use():
           f(42) # ISSUES *
-      """)
+      """.trimIndent())
 
     @Test
     fun `infers represented type from a string forward reference`() = test("""
@@ -391,7 +391,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       def use():
           r = f("int")
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `infers represented type from a string forward reference union`() = test("""
@@ -402,7 +402,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       def use():
           r = f("int | str")
       #   └ TYPE int | str
-      """)
+      """.trimIndent())
 
     @Test
     fun `infers represented type from a keyword string forward reference`() = test("""
@@ -413,7 +413,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       def use():
           r = f(form="int")
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `infers represented type from None`() = test("""
@@ -424,14 +424,14 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       def use():
           r = f(None)
       #   └ TYPE None
-      """)
+      """.trimIndent())
   }
 
   @Nested
   inner class VersionGating {
     @Test
-    fun `typing TypeForm is available since 3_15`() = test(
-      defaultTestOptions.copy(languageLevel = LanguageLevel.PYTHON315), """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON315)
+    fun `typing TypeForm is available since 3_15`() = test("""
       from typing import TypeForm
 
       def f[T](form: TypeForm[T]) -> T: ...
@@ -439,11 +439,11 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       def use():
           r = f(int)
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
-    fun `typing_extensions TypeForm is available on older versions`() = test(
-      defaultTestOptions.copy(languageLevel = LanguageLevel.PYTHON313), """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313)
+    fun `typing_extensions TypeForm is available on older versions`() = test("""
       from typing_extensions import TypeForm
 
       def f[T](form: TypeForm[T]) -> T: ...
@@ -451,6 +451,6 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
       def use():
           r = f(int)
       #   └ TYPE int
-      """)
+      """.trimIndent())
   }
 }

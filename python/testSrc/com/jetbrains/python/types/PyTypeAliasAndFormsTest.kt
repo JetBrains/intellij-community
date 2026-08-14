@@ -24,9 +24,10 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
   @Nested
   inner class TypeObjectForms {
     @Test
+    @TestCaseOptions(assertRecursionPrevention = false)
     @TestFor(issues = ["PY-7058"])
     fun `type of an instance is a class object type`() = test(
-      TestOptions(assertRecursionPrevention = false), // PY-90413
+      // PY-90413
       """
       class C:
           pass
@@ -34,33 +35,32 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       x = C()
       expr = type(x)
       # └ TYPE type[C]
-      """,
-    )
+      """.trimIndent())
 
     @Test
+    @TestCaseOptions(assertRecursionPrevention = false)
     @TestFor(issues = ["PY-7058"])
     fun `type of a class object is type`() = test(
-      TestOptions(assertRecursionPrevention = false), // PY-90413
+      // PY-90413
       """
       class C:
           pass
 
       expr = type(C)
       # └ TYPE type
-      """,
-    )
+      """.trimIndent())
 
     @Test
+    @TestCaseOptions(assertRecursionPrevention = false)
     @TestFor(issues = ["PY-7058"])
     fun `type of an unknown value is Unknown`() = test(
-      TestOptions(assertRecursionPrevention = false), // PY-90413
+      // PY-90413
       """
       def f(x):
       #     └ TYPE Unknown
           expr = type(x)
       #   └ TYPE Unknown
-      """,
-    )
+      """.trimIndent())
 
     @Test
     fun `Type of union of class objects`() = test("""
@@ -69,7 +69,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       def f(x: Type[Union[int, str]]):
           expr = x
       #   └ TYPE type[int | str]
-      """)
+      """.trimIndent())
 
     @Test
     fun `type of Self in classmethod`() = test("""
@@ -81,7 +81,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = Test.foo()
       # └ TYPE type[Test]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-20057"])
@@ -129,7 +129,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       expects_any_type_via_type_var(type)
       expects_str_subclass(type) # WARNING Expected type 'type[T ≤: str]', got 'type[type]' instead
       expects_object(type)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-20057"])
@@ -155,7 +155,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       expects_myclass_or_str2(str)
       expects_myclass_or_str2(int) # WARNING Expected type 'type[MyClass | str]', got 'type[int]' instead
       expects_myclass_or_str2(42) # WARNING Expected type 'type[MyClass | str]', got 'Literal[42]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-43838"])
@@ -166,7 +166,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           pass
 
       my_function(List[str])
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-43838"])
@@ -177,7 +177,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           pass
 
       my_function(Union[int, str])
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -188,7 +188,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       from typing_extensions import Final
       expr: Final[int] = undefined # ERROR Unresolved reference 'undefined'
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-34945"])
@@ -196,7 +196,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       from typing_extensions import Final
       expr: Final = 5
       #└ TYPE Literal[5]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-34945"])
@@ -204,7 +204,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       from typing_extensions import Final
       expr: Final[int] # WARNING 'Final' name should be initialized with a value
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-34945"])
@@ -212,28 +212,24 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       from typing_extensions import Final
       expr: Final = [1, 2]
       #└ TYPE list[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-34945"])
-    fun `Final in type comment with explicit type`() = test(
-      """
+    fun `Final in type comment with explicit type`() = test("""
       from typing_extensions import Final
       expr = undefined  # type: Final[int]
       #│     ^^^^^^^^^ ERROR Unresolved reference 'undefined'
       #└ TYPE int
-      """,
-    )
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-34945"])
-    fun `Final in type comment inferred from literal`() = test(
-      """
+    fun `Final in type comment inferred from literal`() = test("""
       from typing_extensions import Final
       expr = 5  # type: Final
       #└ TYPE Literal[5]
-      """,
-    )
+      """.trimIndent())
 
     @Test
     fun `ClassVar type resolved from annotation`() = test("""
@@ -242,7 +238,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           x: ClassVar[int] = 1
       expr = A.x
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `ClassVar type resolved from type comment`() = test("""
@@ -251,7 +247,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           x = 1  # type: ClassVar[int]
       expr = A.x
       #└ TYPE int
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -262,7 +258,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           Alias = int
           expr: Alias = g()
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-18816"])
@@ -273,7 +269,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
               # type: (Alias) -> None
               expr = x
       #       └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `explicit TypeAlias annotation yields class object type`() = test("""
@@ -281,25 +277,23 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr: TypeAlias = int
       #└ TYPE type[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-89068"])
-    fun `imported generic explicit TypeAlias type`() = test(
-      """
+    fun `imported generic explicit TypeAlias type`() = test("""
       from m import MyList
 
       expr = MyList[int]
       #└ TYPE type[list[int]]
-      """,
+      """.trimIndent(),
       "m.py" to """
         from typing import TypeAlias, TypeVar
 
         T = TypeVar("T")
 
         MyList: TypeAlias = list[T]
-        """,
-    )
+        """.trimIndent())
 
     @Test
     fun `TypeAlias to Any`() = test("""
@@ -308,7 +302,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       Plug: TypeAlias = Any
       expr: int | Plug
       #└ TYPE int | Any
-      """)
+      """.trimIndent())
 
     @Test
     fun `new-style type alias to Any`() = test("""
@@ -317,14 +311,14 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       type Plug = Any
       expr: int | Plug
       #└ TYPE int | Any
-      """)
+      """.trimIndent())
 
     @Test
     fun `type alias statement type not interpreted as assigned type outside of type hint`() = test("""
       type myType = str
       expr = myType
       #└ TYPE TypeAliasType
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-51329"])
@@ -341,7 +335,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       Alias = Foo | None
       expr: Alias # WARNING Invalid type annotation
       #└ TYPE Unknown
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -352,10 +346,11 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           def foo(self, expr: 'C'):
       #                  └ TYPE C
               pass
-      """)
+      """.trimIndent())
 
+    @TestCaseOptions(assertRecursionPrevention = false)
     @Test
-    fun `qualified type in string literal`() = test(TestOptions(assertRecursionPrevention = false), """
+    fun `qualified type in string literal`() = test("""
       import typing
 
       def foo(x: 'typing.AnyStr') -> typing.AnyStr:
@@ -363,7 +358,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = foo('bar')
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     fun `quoted forward reference in type comment`() = test("""
@@ -373,8 +368,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       #   └ TYPE MyClass
 
       class MyClass: ...
-      """,
-    )
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86223"])
@@ -382,7 +376,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       def foo[T](p: "T"):
           expr = p
       #   └ TYPE T
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86223"])
@@ -390,7 +384,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       def foo[T](p: list["T"]):
           expr = p
       #   └ TYPE list[T]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86223"])
@@ -398,7 +392,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       def foo[T](p: "list[T]"):
           expr = p
       #   └ TYPE list[T]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86223"])
@@ -411,7 +405,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       #       └ TYPE tuple[A, B]
 
           class B: ...
-      """)
+      """.trimIndent())
 
     @Test
     fun `quoted forward reference in type hint`() = test("""
@@ -420,7 +414,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       #   └ TYPE MyClass
 
       class MyClass: ...
-      """)
+      """.trimIndent())
 
     @Test
     fun `generic type with quoted forward reference in type hint`() = test("""
@@ -429,7 +423,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       #   └ TYPE list[MyClass]
 
       class MyClass: ...
-      """)
+      """.trimIndent())
 
     @Test
     fun `quoted generic type with forward reference in type hint`() = test("""
@@ -438,7 +432,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       #   └ TYPE list[MyClass]
 
       class MyClass: ...
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-84430"])
@@ -449,7 +443,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = any.imag
       #└ TYPE Any
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -461,7 +455,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       def my_function(literal_string: LiteralString) -> LiteralString: ...
       expr = my_function("42")
       #└ TYPE LiteralString
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53612"])
@@ -471,7 +465,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       y: LiteralString
       expr = x + y
       #└ TYPE LiteralString
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53612"])
@@ -481,7 +475,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       y: str
       expr = x + y
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53612"])
@@ -491,7 +485,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       y: LiteralString
       expr = x + y
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53612"])
@@ -501,7 +495,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       xs: list[LiteralString]
       expr = x.join(xs)
       #└ TYPE LiteralString
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53612"])
@@ -511,7 +505,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       xs: list[LiteralString]
       expr = x.join(xs)
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53612"])
@@ -521,7 +515,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       xs: list[str]
       expr = x.join(xs)
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53612"])
@@ -532,24 +526,25 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       string: LiteralString = "Hello, {name}. You are {age}"
       expr = string.format(name=name.capitalize(), age=age)
       # └ TYPE LiteralString
-      """)
+      """.trimIndent())
 
     @Test
+    @TestCaseOptions(assertRecursionPrevention = false)
     @TestFor(issues = ["PY-53612"])
-    fun `LiteralString format with str argument`() = test(TestOptions( assertRecursionPrevention = false), """
+    fun `LiteralString format with str argument`() = test("""
       from typing_extensions import LiteralString
       name: LiteralString = "foo"
       age = str(42)
       string: LiteralString = "Hello, {name}. You are {age}"
       expr = string.format(name=name.capitalize(), age=age)
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     fun `LiteralString is not inferred without explicit annotation for list literal addition`() = test("""
       expr = ['1' + '2']
       #└ TYPE list[str]
-      """)
+      """.trimIndent())
 
     @Test
     fun `LiteralString is not inferred without explicit annotation for same-type call`() = test("""
@@ -560,32 +555,32 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       s: str
       expr = same_type(['foo'], [s])
       #└ TYPE list[str]
-      """)
+      """.trimIndent())
 
     @Test
     fun `LiteralString is not inferred without explicit annotation for list of strings`() = test("""
       expr = ['foo', 'bar']
       #└ TYPE list[str]
-      """)
+      """.trimIndent())
 
     @Test
     fun `LiteralString is not inferred without explicit annotation for deque of strings`() = test("""
       from collections import deque
       expr = deque(['foo', 'bar'])
       #└ TYPE deque[str]
-      """)
+      """.trimIndent())
 
     @Test
     fun `LiteralString inferred for string addition`() = test("""
       expr = '1' + '2'
       #└ TYPE LiteralString
-      """)
+      """.trimIndent())
 
     @Test
     fun `LiteralString inferred for percent format of literal`() = test("""
       expr = '%s' % ('a')
       #└ TYPE LiteralString
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53612"])
@@ -598,7 +593,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       def expectsLiteralString(x: LiteralString):
           expectsStr(x)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53612"])
@@ -607,7 +602,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       s: str
       literal_string: LiteralString = s # WARNING Expected type 'LiteralString', got 'str' instead
       literal_string: LiteralString = "hello" # WARNING Redeclared 'literal_string' defined above without usage
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53612"])
@@ -625,7 +620,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       plain_string: str
       expect_literal_string(literal_string + plain_string) # WARNING Expected type 'LiteralString', got 'str' instead
       expect_literal_string(plain_string + literal_string) # WARNING Expected type 'LiteralString', got 'str' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-65488"])
@@ -646,7 +641,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
         "* "
         "from table"
       )
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53612"])
@@ -665,7 +660,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       plain_string: str
       expect_literal_string(plain_string.join([literal_string, literal_string2])) # WARNING Expected type 'LiteralString', got 'str' instead
       expect_literal_string(literal_string.join([plain_string, literal_string2])) # WARNING Expected type 'LiteralString', got 'str' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53612"])
@@ -675,7 +670,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           return s
       hello: Literal["hello"] = "hello"
       literal_identity(hello)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53612"])
@@ -686,7 +681,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       literal_string: LiteralString
       expect_literal_string(f"hello {literal_string}")
       expect_literal_string(f"hello {plain_string}") # WARNING Expected type 'LiteralString', got 'str' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53612"])
@@ -699,7 +694,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       literal_string: LiteralString
       calc('literal string', plain_string)
       calc(literal_string, plain_string)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-61137"])
@@ -711,12 +706,13 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           return "foo" if condition1() else "bar"  # OK
       def return_literal_str2(literal_string: LiteralString) -> LiteralString:
           return "foo" if condition1() else literal_string  # OK
-      """)
+      """.trimIndent())
 
+    @TestCaseOptions(assertRecursionPrevention = false)
     @Test
     @TestFor(issues = ["PY-61137"])
     fun `LiteralString does not get captured inside generics`() =
-      test(TestOptions(assertRecursionPrevention = false), """
+      test("""
       import typing
       T = typing.TypeVar('T')
       class Box(typing.Generic[T]):
@@ -726,7 +722,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           ...
       b = Box('foo'.upper())
       same_type(b, Box('FOO'))
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -746,7 +742,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = f("foo")
       #└ TYPE list[str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76076"])
@@ -765,7 +761,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = C().m("foo")
       #└ TYPE list[str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76076"])
@@ -779,7 +775,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = x
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77168"])
@@ -790,7 +786,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       if sys.version_info < (3, 0):
           expr: Literal[42]
       #   └ TYPE Literal[42]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77168"])
@@ -801,17 +797,16 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       if sys.version_info < (3, 0):
           expr: Alias
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON310)
     @TestFor(issues = ["PY-34617"])
-    fun `top-level function under version check`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON310),
-      """
+    fun `top-level function under version check`() = test("""
       from mod import foo
       expr = foo()
       #└ TYPE str
-      """,
+      """.trimIndent(),
       "mod.py" to """
         import sys
 
@@ -821,18 +816,16 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
         else:
             def foo() -> str:
                 pass
-        """,
-    )
+        """.trimIndent())
 
     @Test
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON34)
     @TestFor(issues = ["PY-34617"])
-    fun `class method under version check`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON34),
-      """
+    fun `class method under version check`() = test("""
       from mod import Foo
       expr = Foo().foo()
       #└ TYPE Union[float, int]
-      """,
+      """.trimIndent(),
       "mod.py" to """
         import sys
 
@@ -849,17 +842,15 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
                 else:
                     def foo(self) -> str:
                         pass
-        """,
-    )
+        """.trimIndent())
 
     @Test
-    fun `generic alias under version guard`() = test(
-      """
+    fun `generic alias under version guard`() = test("""
       from mod import f
 
       expr = f("foo")
       #└ TYPE list[str]
-      """,
+      """.trimIndent(),
       "mod.py" to """
         import sys
         from typing import TypeAlias, TypeVar
@@ -873,17 +864,15 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
         def f(x: T) -> Alias[T]:
             pass
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76076"])
-    fun `generic method return type imported under version guard`() = test(
-      """
+    fun `generic method return type imported under version guard`() = test("""
       from mod import C
       expr = C().m()
       #└ TYPE list[str]
-      """,
+      """.trimIndent(),
       "mod.py" to """
         import sys
 
@@ -896,22 +885,20 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
         class C:
             def m(self) -> Container[str]:
                 ...
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-60968"])
-    fun `generic method return type imported under version guard in stub`() = test(
-      """
+    fun `generic method return type imported under version guard in stub`() = test("""
       from mod import C
       expr = C().m()
       #└ TYPE list[str]
-      """,
+      """.trimIndent(),
       "mod.py" to """
         class C:
             def m(self):
                 pass
-        """,
+        """.trimIndent(),
       "mod.pyi" to """
         import sys
 
@@ -924,8 +911,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
         class C:
             def m(self) -> Container[str]:
                 ...
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-50642"])
@@ -938,7 +924,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           v: str = 'ab'
       expr = v
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-50642"])
@@ -952,16 +938,15 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
               def foo(self) -> str: ...
       expr = A().foo()
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-50642"])
-    fun `TYPE_CHECKING guard multifile`() = test(
-      """
+    fun `TYPE_CHECKING guard multifile`() = test("""
       from mod import v
       expr = v
       #└ TYPE int
-      """,
+      """.trimIndent(),
       "mod.py" to """
         import typing
 
@@ -969,74 +954,62 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
             v: int = -1
         else:
             v: str = 'ab'
-        """,
-    )
+        """.trimIndent())
   }
 
   @Nested
   inner class WalrusAndSuper {
     @Test
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON38)
     @TestFor(issues = ["PY-33886"])
-    fun `assignment expression in list literal`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON38),
-      """
+    fun `assignment expression in list literal`() = test("""
       [expr := 1]
       # └ TYPE Literal[1]
-      """,
-    )
+      """.trimIndent())
 
     @Test
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON38)
     @TestFor(issues = ["PY-33886"])
-    fun `assignment expression with parenthesized value`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON38),
-      """
+    fun `assignment expression with parenthesized value`() = test("""
       [expr := (1)]
       # └ TYPE Literal[1]
-      """,
-    )
+      """.trimIndent())
 
     @Test
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON38)
     @TestFor(issues = ["PY-33886"])
-    fun `nested assignment expression`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON38),
-      """
+    fun `nested assignment expression`() = test("""
       expr = (e := 1)
       #└ TYPE Literal[1]
-      """,
-    )
+      """.trimIndent())
 
     @Test
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON38)
     @TestFor(issues = ["PY-33886"])
-    fun `assignment expression in call argument`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON38),
-      """
+    fun `assignment expression in call argument`() = test("""
       foo(expr := 1)
       #│  └ TYPE Literal[1]
       #^^ ERROR Unresolved reference 'foo'
-      """,
-    )
+      """.trimIndent())
 
     @Test
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON38)
     @TestFor(issues = ["PY-33886"])
-    fun `assignment expression imported member`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON38),
-      """
+    fun `assignment expression imported member`() = test("""
       from a import member
       expr = member
       #└ TYPE Type[A]
-      """,
+      """.trimIndent(),
       "a.py" to """
         class A:
           pass
 
         (member := A)
-        """,
-    )
+        """.trimIndent())
 
     @Test
-    fun `super() with another type`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON34),
-      """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON34)
+    fun `super() with another type`() = test("""
       class A:
           def f(self):
               return 'A'
@@ -1054,8 +1027,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
               expr = super(B, self)
       #       └ TYPE A
               return expr.f()
-      """,
-    )
+      """.trimIndent())
   }
 
   @Nested
@@ -1072,7 +1044,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           pass
       expr = B().foo()
       #└ TYPE B
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53104"])
@@ -1086,7 +1058,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           pass
       expr = B().foo()
       #└ TYPE list[B]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53104"])
@@ -1106,7 +1078,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = Circle.from_config({})
       #└ TYPE Circle
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53104"])
@@ -1126,13 +1098,12 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = OuterClass.Circle.from_config({})
       #└ TYPE Circle
-      """)
+      """.trimIndent())
 
     @Test
+    @TestCaseOptions(assertRecursionPrevention = false, enableWeakWarnings = false)
     @TestFor(issues = ["PY-53104"])
-    fun `Self method called on union receiver`() = test(
-      TestOptions( assertRecursionPrevention = false, enableWeakWarnings = false),
-      """
+    fun `Self method called on union receiver`() = test("""
       from typing import Self
 
 
@@ -1148,8 +1119,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = x.method()
       #└ TYPE C | Unknown
-      """,
-    )
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-82945"])
@@ -1169,7 +1139,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       d = Derived[int]()
       expr = d.bar().foo().bar().foo()
       #└ TYPE Derived[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-75679"])
@@ -1183,7 +1153,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = B().f()
       #└ TYPE B
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-88691"])
@@ -1199,7 +1169,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = Derived.foo()
       #└ TYPE Derived
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-88691"])
@@ -1215,7 +1185,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = Derived[int].foo()
       #└ TYPE Derived[int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `generic class dunder new returns Self`() = test("""
@@ -1227,7 +1197,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = Box("foo")
       #└ TYPE Box[str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-82833"])
@@ -1241,7 +1211,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = Box.create("foo")
       #└ TYPE Box FIXME Box[str]
-      """)
+      """.trimIndent())
 
     @Test
     fun `generic class classmethod returning Self called on instance`() = test("""
@@ -1255,7 +1225,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       b: Box[int]
       expr = b.create("foo") # WARNING Expected type 'int', got 'Literal["foo"]' instead
       #└ TYPE Box[int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `generic class method returning Self called on instance`() = test("""
@@ -1268,7 +1238,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       b: Box[int]
       expr = b.m("foo") # WARNING Expected type 'int', got 'Literal["foo"]' instead
       #└ TYPE Box[int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `generic class generic method returning Self called on instance`() = test("""
@@ -1281,7 +1251,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       b: Box[int]
       expr = b.m("foo")
       #└ TYPE Box[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-78044"])
@@ -1297,7 +1267,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       for x in A.f():
           expr = x
       #   └ TYPE A
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-78044"])
@@ -1316,7 +1286,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       for x in C.f():
           expr = x
       #   └ TYPE C
-      """)
+      """.trimIndent())
 
     @Test
     fun `self annotated with type var on same class instance`() = test("""
@@ -1330,7 +1300,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = C().method()
       #└ TYPE C
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-24990"])
@@ -1348,7 +1318,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = D().method()
       #└ TYPE D
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-24990"])
@@ -1369,11 +1339,12 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = (A() or B()).method()
       #└ TYPE A | B
-      """)
+      """.trimIndent())
 
     @Test
+    @TestCaseOptions(assertRecursionPrevention = false)
     @TestFor(issues = ["PY-24990"])
-    fun `self annotated instance method called on class object`() = test(TestOptions(assertRecursionPrevention = false), """
+    fun `self annotated instance method called on class object`() = test("""
       from typing import TypeVar
 
       T = TypeVar('T')
@@ -1387,7 +1358,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = C.method(D())
       #└ TYPE D
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-24990"])
@@ -1403,7 +1374,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = C().method()
       #└ TYPE C
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-24990"])
@@ -1422,7 +1393,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = D().method()
       #└ TYPE D
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-33663"])
@@ -1438,11 +1409,10 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       expr = A().foo
       #└ TYPE A
-      """)
+      """.trimIndent())
 
     @Test
-    fun `ancestor property returns self`() = test(
-      """
+    fun `ancestor property returns self`() = test("""
       class Master:
           @property
           def me(self):
@@ -1452,12 +1422,10 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       child = Child()
       expr = child.me
       #└ TYPE Child
-      """,
-    )
+      """.trimIndent())
 
     @Test
-    fun `self in docstring`() = test(
-      """
+    fun `self in docstring`() = test("""
       class C:
           def foo(self):
               '''
@@ -1465,8 +1433,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
               '''
               expr = self
       #       └ TYPE int
-      """,
-    )
+      """.trimIndent())
   }
 
   @Nested
@@ -1505,7 +1472,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       cir.apply(fShape)
       sh.apply(fCircle) # WARNING Expected type '(Shape) -> None', got '(c: Circle) -> None' instead
       sh.apply(fShape)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53104"])
@@ -1534,7 +1501,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       subClass.foo(subClass)
       subClass.foo(MyClass)
       subClass.foo(SubClass)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53104"])
@@ -1563,7 +1530,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       subClass.foo(42)
       subClass.foo(None)
       subClass.foo("") # WARNING Expected type 'SubClass | None | int', got 'Literal[""]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53104"])
@@ -1590,7 +1557,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       subClass.foo(subClass.foo(subClass))
       subClass.foo(myClass.foo(subClass)) # WARNING Expected type 'SubClass', got 'MyClass' instead
       subClass.foo(subClass.foo(myClass)) # WARNING Expected type 'SubClass', got 'MyClass' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79220"])
@@ -1611,7 +1578,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       #^^^^^^^^^ WARNING Invalid self argument 'type[A[str]]' to method 'A.bar' with type '(x: type[A[int]]) -> None'
       A[str]().bar()
       #^^^^^^^^^^^ WARNING Invalid self argument 'type[A[str]]' to method 'A.bar' with type '(x: type[A[int]]) -> None'
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79220"])
@@ -1629,7 +1596,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           x.foo()
           y.foo()
       #   ^^^^^ WARNING Invalid self argument 'C[str]' to method 'C.foo' with type '(self: C[int]) -> None'
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79220"])
@@ -1641,7 +1608,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       Class.foo()
       Meta("T", (), {}).foo()
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-56785"])
@@ -1656,7 +1623,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
           def bar(self) -> Self:
               pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-56785"])
@@ -1671,7 +1638,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           @classmethod
           def from_config(cls, config: dict[str, float]) -> Self:
               return cls(config["scale"])
-      """)
+      """.trimIndent())
 
     @Test
     fun `Self vs specific class in return`() = test("""
@@ -1684,7 +1651,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
          def method3(self) -> Self:
              return self # OK
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76860"])
@@ -1695,7 +1662,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
              my_instance: Self = Shape() # E
       #                          ^^^^^^^ WARNING Expected type 'Self@Shape', got 'Shape' instead
              my_instance: Self = self # OK
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76860"])
@@ -1710,7 +1677,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           def method2(self) -> Self:
               return Shape()
       #              ^^^^^^^ WARNING Expected type 'Self@Circle', got 'Shape' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76860"])
@@ -1728,7 +1695,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
           def method3(self, x: Self): ...
           def method4(self, x: list[Self]): ...
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76886"])
@@ -1749,7 +1716,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
          @classmethod
          def method4(cls) -> type[Self]:
              return cls # OK
-      """)
+      """.trimIndent())
 
     @Test
     fun `Self vs dunder class`() = test("""
@@ -1759,7 +1726,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
               return self.__class__() # OK
           def clone_cls(self) -> type[Self]:
               return self.__class__ # OK
-      """)
+      """.trimIndent())
 
     @Test
     fun `Self in unions`() = test("""
@@ -1775,7 +1742,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       #                                     ^^^ WARNING Expected type 'Self@MyClass | int | list[Self@MyClass]', got 'list[Literal[3]]' instead
               y7: Self | int | list[Self] = "str" # E
       #                                     ^^^^^ WARNING Expected type 'Self@MyClass | int | list[Self@MyClass]', got 'Literal["str"]' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `Self assigned to other type good`() = test("""
@@ -1801,7 +1768,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
               y6: Base = cls()
 
       class Circle(Shape): ...
-      """)
+      """.trimIndent())
 
     @Test
     fun `Self assigned to other type bad`() = test("""
@@ -1843,7 +1810,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       #                    ^^^^^ WARNING Expected type 'Circle', got 'Self@Shape' instead
 
       class Circle(Shape): ...
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85974"])
@@ -1855,39 +1822,35 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       c: Node
       c.next = Node()
-      """)
+      """.trimIndent())
   }
 
   @Nested
   inner class ModuleAndImportAttributeTypes {
     @Test
     @TestFor(issues = ["PY-86315"])
-    fun `import alias type is module`() = test(
-      """
+    fun `import alias type is module`() = test("""
       import imported as expr
       #                  └ TYPE imported
-      """,
+      """.trimIndent(),
       "imported.py" to """
         if _:
             x: int
         else:
             x: str
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86315"])
-    fun `imported attribute type from version-guarded module`() = test(
-      """
+    fun `imported attribute type from version-guarded module`() = test("""
       from imported import x as expr
       #                         └ TYPE str | int
-      """,
+      """.trimIndent(),
       "imported.py" to """
         if _:
             x: int
         else:
             x: str
-        """,
-    )
+        """.trimIndent())
   }
 }

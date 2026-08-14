@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.types
 
-import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.allure.Layers
-import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.psi.LanguageLevel
@@ -31,7 +31,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       a: A = {'x': 42}
       expr = a
       # └ TYPE A
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-36008"])
@@ -40,7 +40,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       A = TypedDict('A', {'x': int}, total=False)
       expr = A
       # └ TYPE type[A]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -54,7 +54,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       a: A = {'x': 42}
       expr = a['x']
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-36008"])
@@ -66,7 +66,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       def foo(v: TD, k: Literal['b']):
           expr = v[k]
       #   └ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-36008"])
@@ -79,7 +79,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       def foo(v: TD, k: Literal['c', 'b']):
           expr = v[k]
       #   └ TYPE bool | str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-36008"])
@@ -91,7 +91,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       expr = a[x]
       #│       └ ERROR Unresolved reference 'x'
       #└ TYPE Unknown FIXME Any
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-36008"])
@@ -102,7 +102,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       a: A = {'x': 42}
       expr = a.get('x')
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-36008"])
@@ -113,7 +113,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       a: A = {'x': 42}
       expr = a.get('x')
       #└ TYPE int | None
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-36008"])
@@ -124,7 +124,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       a: A = {'x': 42}
       expr = a.get('x', 42)
       #└ TYPE int | Literal[42]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-36008"])
@@ -135,7 +135,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       a: A = {'x': 42}
       expr = a.get('x', '')
       #└ TYPE int | Literal[""]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -149,7 +149,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       def f(a: A):
           expr = a['x']
       #   └ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77796"])
@@ -160,7 +160,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       def f(a: A):
           expr = a['x']
       #   └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77796"])
@@ -171,7 +171,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       def f(a: A):
           expr = a['x']
       #   └ TYPE str
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -186,16 +186,15 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       def foo(**x: Unpack[Movie]):
           expr = x
       #   └ TYPE Movie
-      """)
+      """.trimIndent())
   }
 
   @Nested
   inner class ExtraItemsInferredTypes {
     @Test
     @TestFor(issues = ["PY-85421"])
-    fun `extra_items known key type`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON313),
-      """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313)
+    fun `extra_items known key type`() = test("""
       from typing_extensions import TypedDict
       
       class Movie(TypedDict, extra_items=int):
@@ -204,14 +203,12 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       def movie_keys(movie: Movie) -> None:
           expr = movie["name"]
       #   └ TYPE str
-      """,
-    )
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85421"])
-    fun `extra_items arbitrary key type`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON313),
-      """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313)
+    fun `extra_items arbitrary key type`() = test("""
       from typing_extensions import TypedDict
       
       class Movie(TypedDict, extra_items=int):
@@ -220,14 +217,12 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       def movie_keys(movie: Movie) -> None:
           expr = movie["novel_adaptation"]
       #   └ TYPE int
-      """,
-    )
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85421"])
-    fun `extra_items multiple arbitrary keys`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON313),
-      """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313)
+    fun `extra_items multiple arbitrary keys`() = test("""
       from typing_extensions import TypedDict
       
       class Movie(TypedDict, extra_items=int):
@@ -236,14 +231,12 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       def movie_keys(movie: Movie) -> None:
           expr = movie["year"]
       #   └ TYPE int
-      """,
-    )
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-90620"])
-    fun `extra_items non-literal str key`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON313),
-      """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313)
+    fun `extra_items non-literal str key`() = test("""
       from typing_extensions import TypedDict
 
       class Foo(TypedDict, extra_items=int):
@@ -252,14 +245,12 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       def bar(foo: Foo, key: str) -> None:
           expr = foo[key]
       #   └ TYPE int
-      """,
-    )
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85421"])
-    fun `extra_items reflected in items`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON313, assertRecursionPrevention = false),
-      """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313, assertRecursionPrevention = false)
+    fun `extra_items reflected in items`() = test("""
       from typing_extensions import TypedDict
 
       class MovieExtraInt(TypedDict, extra_items=int):
@@ -268,14 +259,12 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       def foo(movie: MovieExtraInt) -> None:
           expr = list(movie.items())
       #   └ TYPE list[tuple[str, str | int]]
-      """,
-    )
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85421"])
-    fun `extra_items reflected in values`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON313, assertRecursionPrevention = false),
-      """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313, assertRecursionPrevention = false)
+    fun `extra_items reflected in values`() = test("""
       from typing_extensions import TypedDict
 
       class MovieExtraInt(TypedDict, extra_items=int):
@@ -284,14 +273,12 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       def foo(movie: MovieExtraInt) -> None:
           expr = list(movie.values())
       #   └ TYPE list[str | int]
-      """,
-    )
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85421"])
-    fun `extra_items reflected in popitem`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON313),
-      """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313)
+    fun `extra_items reflected in popitem`() = test("""
       from typing_extensions import TypedDict
       
       class MovieExtraInt(TypedDict, extra_items=int):
@@ -301,8 +288,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
           expr = movie.popitem()
       #   │            ^^^^^^^ WARNING This operation might break TypedDict consistency
       #   └ TYPE tuple[str, str | int]
-      """,
-    )
+      """.trimIndent())
   }
 
   @Nested
@@ -367,7 +353,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       #          ^^^^^ WARNING Expected type 'Point', got 'None' instead
           if True:
               pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53611"])
@@ -391,7 +377,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       without_total_with_explicit_required: WithoutTotalWithExplicitRequired = {}
       #                                                                        ^^ WARNING TypedDict 'WithoutTotalWithExplicitRequired' has missing key: 'x'
       alternative_syntax: AlternativeSyntax = {}
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53611"])
@@ -424,7 +410,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       f(Movie1(title="Jaws"))
       f(Movie2(title="Jaws"))
       # ^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'Movie0', got 'Movie2' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53611"])
@@ -441,12 +427,11 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
           pass
       g({})
       # ^^ WARNING TypedDict 'B' has missing key: 'x'
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-53611"])
-    fun `Required type specifications across files`() = test(
-      """
+    fun `Required type specifications across files`() = test("""
       from required import A, AlternativeSyntax
       
       
@@ -455,7 +440,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       a1: A = {'x': 42, 'y': 42}
       a2: AlternativeSyntax = {'y': "str"}
       #                             ^^^^^ WARNING Expected type 'int', got 'str' instead
-      """,
+      """.trimIndent(),
       "required.py" to """
         from typing_extensions import TypedDict, Annotated, Required, NotRequired
         
@@ -466,8 +451,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
         
         
         AlternativeSyntax = TypedDict("AlternativeSyntax", {'x': NotRequired[int], 'y': Required[Annotated[int, 'Some constraint']]})
-        """,
-    )
+        """.trimIndent())
 
     @Test
     fun `Required with ReadOnly`() = test("""
@@ -479,7 +463,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       
       m: Movie = {"year": 2024}
       #          ^^^^^^^^^^^^^^ WARNING TypedDict 'Movie' has missing key: 'name'
-      """)
+      """.trimIndent())
 
     @Test
     fun `ReadOnly consistency in assignability`() = test("""
@@ -512,7 +496,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       
       def func2(b: B3):
           a: A2 = b
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -533,7 +517,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
           m: Movie = {key: "abb", "year": 1917}
       #              │^^^^^^^^^^ WARNING Extra key 'wrong_key' for TypedDict 'Movie'
       #              ^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING TypedDict 'Movie' has missing key: 'name'
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-88391"])
@@ -546,7 +530,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       a: Address | None = {"street": "Pine"}
       b: Address | None = {"color": "red"}
       #                   ^^^^^^^^^^^^^^^^ WARNING Expected type 'Address | None', got 'dict[Literal["color"], Literal["red"]]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-88391"])
@@ -566,7 +550,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       last:  A | B | C = {"c": 1}
       none:  A | B | C = {"z": 1}
       #                  ^^^^^^^^ WARNING Expected type 'A | B | C', got 'dict[Literal["z"], Literal[1]]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-38873"])
@@ -581,7 +565,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       #                   ^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'LiteralString', got 'str' instead
       s2: LiteralString = movie2['address'][0]
       #                   ^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'LiteralString', got 'str' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79733"])
@@ -603,7 +587,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       foo_dict1: dict[str, Foo] = {bar: {"foo": bar} for bar in ["bar"]}
       foo_dict2: dict[str, Foo] = {bar: {"foo": bar, "buz": "qux"} for bar in ["bar"]}
       #                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[str, Foo]', got 'dict[str, dict[Literal["foo", "buz"], str | Literal["qux"]]]' instead
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -628,7 +612,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
       d: Movie = {"name": "Blade Runner", "year": 1982}
       #                                           ^^^^ WARNING Expected type 'bool', got 'int' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85421"])
@@ -650,7 +634,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
       ExtraMovie(name="Dune", year=None)
       #                       ^^^^^^^^^ WARNING Expected type 'int', got 'None' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85421"])
@@ -666,7 +650,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
       InheritedMovie(name="Blade Runner", year=1982, budget="100M")
       #                                              ^^^^^^^^^^^^^ WARNING Expected type 'int | None', got 'Literal["100M"]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85421"])
@@ -691,7 +675,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       int_mapping: Mapping[str, int] = extra_int3
       #                                ^^^^^^^^^^ WARNING Expected type 'Mapping[str, int]', got 'MovieExtraInt' instead
       int_str_mapping: Mapping[str, int | str] = extra_int3  # OK
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85421"])
@@ -749,7 +733,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       required_readonly_dict: IntDictRequiredReadOnly = {"id": 1}
       combined_error: dict[str, int] = required_readonly_dict  # Error: 'id' is both required and read-only
       #                                ^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[str, int]', got 'IntDictRequiredReadOnly' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-90596"])
@@ -763,26 +747,26 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
           name: str
 
       Functional = TypedDict('Functional', {'name': str}, closed=True, extra_items=int)  # WARNING Cannot use both 'closed' and 'extra_items' in the same TypedDict definition
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-90596"])
+    @TestInspections(disableInspections = [PyTypeCheckerInspection::class])
     fun `functional extra_items value must be a type`() = test(
       // PyTypeCheckerInspection separately flags the `type`-typed parameter; here we only assert the dedicated check.
-      TestOptions(disableInspections = setOf(PyTypeCheckerInspection::class.java)),
       """
       from typing_extensions import TypedDict
 
       Movie = TypedDict('Movie', {'name': str}, extra_items=2)
       #                                                     └ WEAK-WARNING Value must be a type
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-90596"])
+    @TestCaseOptions(enablePyAnyType = false)
     fun `closed TypedDict reports unknown key on subscription`() = test(
       // `enablePyAnyType = false`: the closed-subscription value type is still `null` rather than `Unknown`;
       // hardening that path is part of the `PyAnyType` migration (PY-88453).
-      TestOptions(enablePyAnyType = false),
       """
       from typing_extensions import TypedDict
 
@@ -792,14 +776,14 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       def f(m: Movie) -> None:
           present = m['name']
           missing = m['year']  # WARNING TypedDict "Movie" has no key 'year'
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-90618"])
+    @TestCaseOptions(enablePyAnyType = false)
     fun `assigning to a read-only extra item is reported`() = test(
       // `enablePyAnyType = false`: writing an extra key feeds a `null` expected type into the value check;
       // making that path yield the extra-items type instead is part of the `PyAnyType` migration (PY-88453).
-      TestOptions(enablePyAnyType = false),
       """
       from typing_extensions import TypedDict, ReadOnly
 
@@ -808,7 +792,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
       def f(foo: Foo) -> None:
           foo["bar"] = 43  # WARNING TypedDict key "bar" is ReadOnly
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -826,7 +810,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
       foo(name=1)
       #   ^^^^^^ WARNING Expected type 'str', got 'Literal[1]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76847"])
@@ -847,7 +831,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       func1(**my_dict)
       #       ^^^^^^^ WARNING Expected type 'TD2', got 'dict[str, str]' instead
       func1(**my_typed_dict) # OK
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76847"])
@@ -866,7 +850,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       func1(**{'v1': 1, 'v2': 'test', 'v3': 'test'}) # OK
       func1(**{'v1': 1, 'v2': 'test', 'v3': 1})
       #                                     └ WARNING Expected type 'str', got 'int' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76847"])
@@ -890,7 +874,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       _: TDProtocol = foo
       #               ^^^ WARNING Expected type 'TDProtocol', got '(*, v1: int, v3: str, v2: str) -> None' instead
       _: TDProtocol = bar # OK, has **kwargs
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76847"])
@@ -906,7 +890,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       td2 = TD1(v1=2, v2="def")
       func1(a=td1, b=td2, c="wrong")
       #                   ^^^^^^^^^ WARNING Expected type 'TD1', got 'Literal["wrong"]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76847"])
@@ -927,7 +911,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       #                  ^^^^^^^^^^^^ WARNING TypedDict 'Person' has missing key: 'age'
       g(create_person)(name="John", age="30")
       #                             ^^^^^^^^ WARNING Expected type 'int', got 'Literal["30"]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76847"])
@@ -954,7 +938,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       #                           ^^^^^^^^^^^^ WARNING TypedDict 'Person' has missing key: 'age'
       Factory(create_person).fn(name="")
       #                                └ WARNING Parameter 'age' unfilled
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76847"])
@@ -979,7 +963,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       #                  ^^^^^^^^^^^^ WARNING TypedDict 'Person' has missing key: 'age'
       g(create_person, name="")
       #                       └ WARNING Parameter 'age' unfilled (from ParamSpec 'P')
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-88727", "PY-76847"])
@@ -996,7 +980,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       #   ^^^^^^^ WARNING Expected type 'int', got 'Literal["wrong"]' instead
       foo(1, "hello", name=42)
       #               ^^^^^^^ WARNING Expected type 'str', got 'Literal[42]' instead
-      """)
+      """.trimIndent())
   }
 
   @Test
@@ -1078,5 +1062,5 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
     #                               ^^ WARNING Expected type 'Mapping[str, int]', got 'Open' instead
     d_open: dict[str, int] = op
     #                        ^^ WARNING Expected type 'dict[str, int]', got 'Open' instead
-    """)
+    """.trimIndent())
 }

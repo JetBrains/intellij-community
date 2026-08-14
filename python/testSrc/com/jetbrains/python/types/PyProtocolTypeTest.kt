@@ -1,13 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.types
 
-import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.allure.Layers
-import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
-import com.intellij.openapi.util.StackOverflowPreventedException
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
-import com.jetbrains.python.fixtures.PyTestCase.fixme
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -57,7 +55,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       expr = a(C())
       # └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-88326"])
@@ -86,7 +84,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       expr = func1(ImplB())
       #└ TYPE list[T] FIXME list[int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `generic protocol unification with the same type variable`() = test("""
@@ -108,7 +106,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       expr = my_iter(MyList())
       #└ TYPE list[int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `generic protocol unification with a separate type variable`() = test("""
@@ -131,7 +129,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       expr = my_iter(MyList())
       # └ TYPE list[int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `generic protocol unification with generic implementation`() = test("""
@@ -151,7 +149,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       obj: MyClass[int]
       expr = f(obj)
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `generic protocol unification with nongeneric implementation with generic superclass`() = test("""
@@ -174,7 +172,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       obj: MyClass
       expr = f(obj)
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `generic protocol unification with generic implementation with generic superclass`() = test("""
@@ -197,7 +195,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       obj: MyClass[int]
       expr = f(obj)
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `generic protocol unification with generic implementation with generic superclass and extra parameter`() = test("""
@@ -220,7 +218,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       obj: MyClass[str]
       expr = f(obj)
       # └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-61883"])
@@ -243,7 +241,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       expr = my_iter(MyList())
       #└ TYPE list[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-61883"])
@@ -263,7 +261,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       expr = my_iter(MyList())
       #└ TYPE list[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-61883"])
@@ -288,7 +286,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       obj: MyClass[int]
       expr = f(obj)
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76902"])
@@ -306,7 +304,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       #                    ^^^ WARNING Expected type 'Pair[int, str]', got 'EllipsisType' instead
       expr = xs.get()
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86463"])
@@ -330,7 +328,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       expr = expects_generic(Impl())
       #└ TYPE int
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -358,7 +356,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       obj = MyClass()
       accepts_protocol(obj)
-      """)
+      """.trimIndent())
 
     @TestFor(issues = ["PY-53104"])
     @Test
@@ -386,7 +384,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       obj = MyClass()
       accepts_protocol(obj)
-      """)
+      """.trimIndent())
 
     @TestFor(issues = ["PY-53104"])
     @Test
@@ -410,7 +408,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       obj = MyClass()
       accepts_protocol(obj) # WARNING Expected type 'MyProtocol', got 'MyClass' instead
-      """)
+      """.trimIndent())
 
     @TestFor(issues = ["PY-53104"])
     @Test
@@ -439,7 +437,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       obj = MyClass()
       accepts_protocol(obj) # WARNING Expected type 'MyProtocol', got 'MyClass' instead
-      """)
+      """.trimIndent())
 
     @TestFor(issues = ["PY-53104"])
     @Test
@@ -463,7 +461,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       obj = MyClass()
       accepts_protocol(obj)
-      """)
+      """.trimIndent())
 
     @Test
     fun `nongeneric protocol does not match generic class`() = test("""
@@ -484,7 +482,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       box: Box[str]
       f(box) # WARNING Expected type 'IntGetter', got 'Box[str]' instead
-      """)
+      """.trimIndent())
 
     @Test
     fun `generic protocol does not match generic class with wrong argument`() = test("""
@@ -503,7 +501,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       box: Box[str]
       f(box) # WARNING Expected type 'Getter[int]', got 'Box[str]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85123"])
@@ -525,7 +523,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
 
       a: SupportsWrite[str] = B()
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85123"])
@@ -548,7 +546,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       def accepts_p(arg: P[T, str]) -> None: ...
       accepts_p(B())
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85123"])
@@ -570,7 +568,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       def accepts_union(x: SupportsWrite[str] | SupportsWrite[T]) -> None: ...
       accepts_union(B())
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86463"])
@@ -592,7 +590,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           pass
 
       expr = expects_P2_str(Impl()) # WARNING Expected type 'P2[str]', got 'Impl' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-86249"])
@@ -620,7 +618,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
 
       do(Impl(name="vrf1"))
-      """)
+      """.trimIndent())
 
     @Test
     fun `overloaded method in concrete class matches protocol`() = test("""
@@ -641,7 +639,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
               return 1
 
       var: Template = Concrete()
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -671,7 +669,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
 
       var: Template = Concrete("value", 42)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76822"])
@@ -688,7 +686,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           val1: int = 0
 
       var: Template = Concrete()
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76822"])
@@ -707,7 +705,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
               ...
 
       var: Template = Concrete()
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76822"])
@@ -734,7 +732,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
               ...
 
       var: Template = Concrete() # WARNING FIXME Expected type 'Template', got 'Concrete' instead # PY-91385
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76822"])
@@ -757,7 +755,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           val: int = 0
 
       var: Template = Concrete() # WARNING FIXME Expected type 'Template', got 'Concrete' instead # PY-91385
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76822"])
@@ -772,7 +770,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           val: ClassVar[int] = 0
 
       var: Template = Concrete()
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76822"])
@@ -787,7 +785,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           val: int = 0
 
       var: Template = Concrete() # WARNING Expected type 'Template', got 'Concrete' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76822"])
@@ -802,7 +800,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           val: ClassVar[int] = 0
 
       var: Template = Concrete() # WARNING Expected type 'Template', got 'Concrete' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76822"])
@@ -825,7 +823,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           val: int = 0
 
       var: Template = Concrete() # WARNING Expected type 'Template', got 'Concrete' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76822"])
@@ -840,7 +838,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           val: Any
 
       var: Template = Concrete()
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76822"])
@@ -855,7 +853,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           val: int
 
       var: Template = Concrete()
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76822"])
@@ -870,7 +868,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           val: Any
 
       var: Template = Concrete()
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-87730"])
@@ -880,7 +878,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       class A(Protocol):
           def f(self, a: str = ...):
               pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-87801"])
@@ -899,7 +897,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
 
       v: Proto = f # WARNING Expected type 'Proto', got '(x: int) -> None' instead
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -959,7 +957,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       def all_union_members_dont_match_with_any(iterable: C | None | Any):
           for _ in iterable: # WARNING Expected type 'collections.Iterable', got 'C | None | Any' instead
               pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76922"])
@@ -1021,14 +1019,14 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       #                                                             └ WARNING Class 'type' does not define '__and__', so the '&' operator cannot be used on its instances
           for _ in iterable:
               pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85997"])
+    @TestCaseOptions(assertRecursionPrevention = false)
     fun `recursive iterator protocol matches Iterator`() = test(
       // Matching `() -> Iterator` against `() -> Self` is mutually recursive, so recursion prevention
       // legitimately engages while checking the assignment below.
-      defaultTestOptions.copy(assertRecursionPrevention = false),
       """
       from typing import Iterator, Self
 
@@ -1038,8 +1036,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       ys: MyIterable[str]
       xs: Iterator[str] = ys
-      """,
-    )
+      """.trimIndent())
 
     @Test
     fun `identical generic protocol and implementation using Self`() = test("""
@@ -1055,7 +1052,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       ys: MyIterable[str] = MyIterable[str]()
       xs: MyProtocol[str] = ys
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -1063,8 +1060,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-76818"])
-    fun `match module with protocol by number of attributes`() = test(
-      """
+    fun `match module with protocol by number of attributes`() = test("""
       import _protocols_modules1
       from typing import Protocol
 
@@ -1084,18 +1080,16 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       op1: Options2 = _protocols_modules1
       #│              ^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'Options2', got '_protocols_modules1' instead
       #^^ WARNING Redeclared 'op1' defined above without usage
-      """,
+      """.trimIndent(),
       "_protocols_modules1.py" to """
         timeout = 100
         one_flag = True
         other_flag = False
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76818"])
-    fun `match protocol with module callables`() = test(
-      """
+    fun `match protocol with module callables`() = test("""
       import _protocols_modules2
       from typing import Protocol
 
@@ -1121,7 +1115,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       rp1: Reporter1 = _protocols_modules2  # OK
       rp2: Reporter2 = _protocols_modules2 # WARNING Expected type 'Reporter2', got '_protocols_modules2' instead
       rp3: Reporter3 = _protocols_modules2 # WARNING Expected type 'Reporter3', got '_protocols_modules2' instead
-      """,
+      """.trimIndent(),
       "_protocols_modules2.py" to """
         def on_error(x: int) -> None:
             ...
@@ -1129,13 +1123,11 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
         def on_success() -> None:
             ...
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-76818"])
-    fun `match generic protocol with module`() = test(
-      """
+    fun `match generic protocol with module`() = test("""
       import mod
       from typing import Protocol
 
@@ -1150,15 +1142,14 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       t2: Options1[int, float, bool] = mod # WARNING Expected type 'Options1[int, float | int, bool]', got 'mod' instead
       t3: Options1[str, float, bool] = mod # WARNING Expected type 'Options1[str, float | int, bool]', got 'mod' instead
       t4: Options1[int, str, str] = mod # WARNING Expected type 'Options1[int, str, str]', got 'mod' instead
-      """,
+      """.trimIndent(),
       "mod.py" to """
         timeout = 100
         one_flag = True
         other_flag = False
 
         def foo(x: int, y: str) -> bool: ...
-        """,
-    )
+        """.trimIndent())
   }
 
   @Nested
@@ -1166,45 +1157,39 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-85997"])
-    fun `recursive protocol and implementation using Self`() = test(
-      TestOptions(assertRecursionPrevention = false),
-      """
-          from typing import Self, Protocol
-    
-          class MyProtocol[T](Protocol):
-              def __next__(self) -> T: ...
-              def __iter__(self) -> MyProtocol[T]: ...
-    
-          class MyIterable[T]:
-              def __next__(self) -> T: ...
-              def __iter__(self) -> Self: ...
-    
-          ys: MyIterable[str] = MyIterable[str]()
-          xs: MyProtocol[str] = ys
-          """,
-    )
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `recursive protocol and implementation using Self`() = test("""
+      from typing import Self, Protocol
+
+      class MyProtocol[T](Protocol):
+          def __next__(self) -> T: ...
+          def __iter__(self) -> MyProtocol[T]: ...
+
+      class MyIterable[T]:
+          def __next__(self) -> T: ...
+          def __iter__(self) -> Self: ...
+
+      ys: MyIterable[str] = MyIterable[str]()
+      xs: MyProtocol[str] = ys
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-85997"])
-    fun `recursive protocol and implementation referring to itself`() =
-      fixme("Recursive protocol definitions cause infinite recursion during matching",
-            StackOverflowPreventedException::class.java,
-            "Endless recursion prevention occurred on") {
-        test("""
-          from typing import Self, Protocol
-    
-          class MyProtocol[T](Protocol):
-              def __next__(self) -> T: ...
-              def __iter__(self) -> MyProtocol[T]: ...
-    
-          class MyIterable[T]:
-              def __next__(self) -> T: ...
-              def __iter__(self) -> MyIterable[T]: ...
-    
-          ys: MyIterable[str] = MyIterable[str]()
-          xs: MyProtocol[str] = ys
-          """)
-      }
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `recursive protocol and implementation referring to itself`() = test("""
+      from typing import Self, Protocol
+
+      class MyProtocol[T](Protocol):
+          def __next__(self) -> T: ...
+          def __iter__(self) -> MyProtocol[T]: ...
+
+      class MyIterable[T]:
+          def __next__(self) -> T: ...
+          def __iter__(self) -> MyIterable[T]: ...
+
+      ys: MyIterable[str] = MyIterable[str]()
+      xs: MyProtocol[str] = ys
+      """.trimIndent())
   }
 
   @Test
@@ -1218,7 +1203,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
             pass
 
     f(A)
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-43133"])
@@ -1242,7 +1227,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
     b = B()
     test(b)
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28720"])
@@ -1266,7 +1251,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
         pass
 
     method(Cls())
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-28720"])
@@ -1289,7 +1274,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
         ...
 
     f(Bar())
-    """)
+    """.trimIndent())
 
   @Test
   fun `structural types for nested calls`() = test("""
@@ -1303,7 +1288,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
     def test():
         f("string") # WARNING Type 'Literal["string"]' doesn't have expected attributes 'foo', 'bar'
-    """)
+    """.trimIndent())
 
   @Test
   fun `comparison operators for numeric types`() = test("""
@@ -1315,7 +1300,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
     print(f(True)) # WARNING Type 'Literal[True]' doesn't have expected attribute 'foo'
     print(f(0)) # WARNING Type 'Literal[0]' doesn't have expected attribute 'foo'
     print(f(3.14)) # WARNING Type 'float' doesn't have expected attribute 'foo'
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-27231"])
@@ -1332,7 +1317,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
     func31(None) # WARNING Type 'None' doesn't have expected attribute '__mul__'
     func32(None) # WARNING Type 'None' doesn't have expected attribute '__mul__'
-    """)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-36062"])
@@ -1349,7 +1334,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
     foo(module)
     bar(module)
-    """,
+    """.trimIndent(),
     "module.py" to "",
   )
 }

@@ -1142,21 +1142,24 @@ class PyExpectedTypeJudgmentTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  fun `Key in dict comprehension as argument`() = test(defaultTestOptions.copy(assertRecursionPrevention = false), """
+  @TestCaseOptions(assertRecursionPrevention = false)
+  fun `Key in dict comprehension as argument`() = test("""
     def foo(d: dict[int, str]): ...
     foo({idx: str(idx) for idx in range(5)})
     #    └ EXPECTED_TYPE int
     """.trimIndent())
 
   @Test
-  fun `Value in dict comprehension as argument`() = test(defaultTestOptions.copy(assertRecursionPrevention = false), """
+  @TestCaseOptions(assertRecursionPrevention = false)
+  fun `Value in dict comprehension as argument`() = test("""
     def foo(d: dict[int, str]): ...
     foo({i: str(i) for i in range(5)})
     #       ^^^^^^ EXPECTED_TYPE str
     """.trimIndent())
 
   @Test
-  fun `Key in dict comprehension assigned to typed target`() = test(defaultTestOptions.copy(assertRecursionPrevention = false), """
+  @TestCaseOptions(assertRecursionPrevention = false)
+  fun `Key in dict comprehension assigned to typed target`() = test("""
     d: dict[int, str] = {idx: str(idx) for idx in range(5)}
     #                    └ EXPECTED_TYPE int
     """.trimIndent())

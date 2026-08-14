@@ -31,7 +31,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
 
       expr: Type
       # └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     fun `conditional generic type alias without explicit parameter`() = test("""
@@ -43,7 +43,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       expr: Type[str]
       # │       └ WEAK-WARNING Member 'type[set]' of 'type[list | set]' does not have attribute '__getitem__' FIXME
       # └ TYPE list[str]
-      """)
+      """.trimIndent())
 
     @Test
     fun `conditional generic type alias with explicit parameter`() = test("""
@@ -59,7 +59,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       expr: Type[str]
       #│        └ WEAK-WARNING Member 'type[set[T]]' of 'type[list[T] | set[T]]' does not have attribute '__getitem__' FIXME
       #└ TYPE list[str]
-      """)
+      """.trimIndent())
 
     @Test
     fun `type alias of union of generic types`() = test("""
@@ -72,7 +72,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       expr: Type[str]
       # │       └ WEAK-WARNING Member 'type[set[T]]' of 'UnionType | type[list[T]] | type[set[T]]' does not have attribute '__getitem__' FIXME
       # └ TYPE list[str] | set[str]
-      """)
+      """.trimIndent())
 
     @Test
     fun `type alias of union of generic types with different arity`() = test("""
@@ -86,24 +86,26 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       expr: Type[str, int]
       #│        └ WEAK-WARNING Member 'type[set[T2]]' of 'UnionType | type[dict[T1, T2]] | type[set[T2]]' does not have attribute '__getitem__' FIXME
       #└ TYPE dict[str, int] | set[int]
-      """)
+      """.trimIndent())
   }
 
   @Nested
   inner class RecursiveAliasesSameFile {
     @Test
     @TestFor(issues = ["PY-18386"])
-    fun `recursive type`() = test(TestOptions(assertRecursionPrevention = false), """
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `recursive type`() = test("""
       from typing import Union
       
       Type = Union[int, 'Type']
       expr = 42 # type: Type
       # └ TYPE int | Unknown
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-18386"])
-    fun `recursive type in dict value`() = test(TestOptions(assertRecursionPrevention = false), """
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `recursive type in dict value`() = test("""
       from typing import Dict, Union
       
       JsonDict = Dict[str, Union[str, int, float, 'JsonDict']]
@@ -111,11 +113,12 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       def f(x: JsonDict):
           expr = x
       #   └ TYPE dict[str, str | int | float | Unknown]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-18386"])
-    fun `recursive type via two aliases`() = test(TestOptions(assertRecursionPrevention = false), """
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `recursive type via two aliases`() = test("""
       from typing import Union
       
       Type1 = Union[str, 'Type2']
@@ -123,109 +126,98 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       
       expr = None # type: Type1
       #└ TYPE str | int | Unknown
-      """)
+      """.trimIndent())
   }
 
   @Nested
   inner class RecursiveOrTrivialAliasesInAnotherFile {
     @Test
     @TestFor(issues = ["PY-31004"])
-    fun `recursive type alias in another file`() = test(
-      """
+    fun `recursive type alias in another file`() = test("""
       from other import MyType
 
       expr: MyType = ...
       #│             ^^^ WARNING Expected type 'list[Unknown] | int', got 'EllipsisType' instead
       #└ TYPE list[Unknown] | int
-      """,
+      """.trimIndent(),
       "other.py" to """
         from typing import List, Union
         
         MyType = Union[List['MyType'], int]
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-34478"])
-    fun `trivial type alias in another file`() = test(
-      """
+    fun `trivial type alias in another file`() = test("""
       from other import alias
       
       expr: alias
       #└ TYPE str
-      """,
+      """.trimIndent(),
       "other.py" to "alias = str",
     )
 
     @Test
     @TestFor(issues = ["PY-34478"])
-    fun `trivial unresolved type alias in another file`() = test(
-      """
+    fun `trivial unresolved type alias in another file`() = test("""
       from other import alias
       
       expr: alias
       #└ TYPE Unknown
-      """,
+      """.trimIndent(),
       "other.py" to "alias = unresolved",
     )
 
     @Test
     @TestFor(issues = ["PY-34478"])
-    fun `trivial recursive type alias in another file`() = test(
-      """
+    fun `trivial recursive type alias in another file`() = test("""
       from other import alias
 
       expr: alias
       #│    ^^^^^ WARNING Invalid type annotation
       #└ TYPE Unknown
-      """,
+      """.trimIndent(),
       "other.py" to """
         alias2 = 'alias'
         alias = alias2
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-61883"])
-    fun `recursive type alias in another file PEP695 syntax`() = test(
-      """
+    fun `recursive type alias in another file PEP695 syntax`() = test("""
       from a import MyType
 
       expr: MyType = ...
       #│             ^^^ WARNING Expected type 'list[Unknown] | int', got 'EllipsisType' instead
       #└ TYPE list[Unknown] | int
-      """,
+      """.trimIndent(),
       "a.py" to """
         from typing import List, Union
         
         type MyType = Union[List['MyType'], int]
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-61883"])
-    fun `trivial recursive type alias in another file PEP695 syntax`() = test(
-      """
+    fun `trivial recursive type alias in another file PEP695 syntax`() = test("""
       from a import alias
       
       expr: alias
       #└ TYPE Unknown
-      """,
+      """.trimIndent(),
       "a.py" to """
         type alias2 = 'alias'
         type alias = alias2
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-61883"])
-    fun `generic type alias in another file PEP695 syntax`() = test(
-      """
+    fun `generic type alias in another file PEP695 syntax`() = test("""
       from a import alias
       
       expr: alias[str, int]
       #└ TYPE dict[str, int]
-      """,
+      """.trimIndent(),
       "a.py" to "type alias[T, U] = dict[T, U]",
     )
   }
@@ -240,7 +232,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       dict_t1 = dict[str, T]
       expr: dict_t1[int]
       #└ TYPE dict[str, int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-29257"])
@@ -250,7 +242,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       dict_t1 = dict[T, int]
       expr: dict_t1[str]
       #└ TYPE dict[str, int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-49582"])
@@ -262,7 +254,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       def f(expr: Optional[Input[str]]):
       #     └ TYPE str | Awaitable[str] | None
           pass
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-29257"])
@@ -274,7 +266,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       expr: Alias[str]
       #│          ^^^ WARNING Passed type arguments do not match type parameters of type alias 'Alias'
       #└ TYPE dict[str, Unknown]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-29257"])
@@ -286,7 +278,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       expr: Alias[str]
       #│          ^^^ WARNING Passed type arguments do not match type parameters of type alias 'Alias'
       #└ TYPE dict[str, Unknown]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-29257"])
@@ -297,7 +289,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       Alias = dict[T1, T2]
       expr: Alias[Any, str]
       #└ TYPE dict[Any, str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-29257"])
@@ -309,7 +301,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       Alias2 = Alias1[int, T2]
       expr: Alias2[str]
       #└ TYPE dict[int, str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-44905"])
@@ -320,7 +312,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       Inject = Annotated[T, marker]
       expr: Inject[int]
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-29257"])
@@ -330,7 +322,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       Pair = tuple[T, T]
       expr: Pair[int]
       #└ TYPE tuple[int, int]
-      """)
+      """.trimIndent())
 
     @Test
     fun `chain of generic aliases with TypeVar replaced by generic type`() = test("""
@@ -345,7 +337,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       t: MyType1[str]
       expr = t
       #└ TYPE tuple[int, list[str]]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -356,7 +348,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       class slice[StartT = int, StopT = StartT, StepT = int | None]: ...
       expr = slice[str]()
       #└ TYPE slice[str, str, int | None]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -364,7 +356,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       class slice[StartT = int, StopT = StartT, StepT = int | None]: ...
       expr = slice[str, bool, complex]()
       #└ TYPE slice[str, bool, complex | float | int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -376,7 +368,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
           def __init__(self, x: Z1, y: ListDefaultT): ...
       expr = Bar
       #└ TYPE type[Bar[Unknown, list[Unknown]]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -388,7 +380,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
           def __init__(self, x: Z1, y: ListDefaultT): ...
       expr = Bar[int]
       #└ TYPE type[Bar[int, list[int]]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -400,7 +392,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
           def __init__(self, x: Z1, y: ListDefaultT): ...
       expr = Bar[int](0, [])
       #└ TYPE Bar[int, list[int]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -413,7 +405,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
           def __init__(self, x: Z1, y: ListDefaultT): ...
       expr = Bar[int, str](0, "")
       #└ TYPE Bar[int, str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -427,7 +419,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       class Bar(SubclassMe[int, DefaultStrT]): ...
       expr = Bar()
       #└ TYPE Bar[str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -443,7 +435,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
               self.value2 = c
       expr = Box("str")
       #└ TYPE Box[str, str, bool]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -457,7 +449,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
           x: DefaultIntT
       expr = Test().x
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -468,7 +460,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
           x: DefaultIntT
       expr = Test[str]().x
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -477,7 +469,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
           x: DefaultIntT
       expr = Test().x
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -487,7 +479,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       
       expr = Test().x
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -496,7 +488,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
           x: DefaultIntT
       expr = Test[str]().x
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -507,7 +499,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
           x: DefaultIntT
       expr = Test.x
       #└ TYPE int
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -524,7 +516,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       class AllTheDefaults(Generic[T1, T2, DefaultStrT, DefaultIntT, DefaultBoolT]): ...
       expr = AllTheDefaults[int, complex]()
       #└ TYPE AllTheDefaults[int, complex | float | int, str, int, bool]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -538,7 +530,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       class AllTheDefaults(Generic[T1, T2, DefaultStrT, DefaultIntT, DefaultBoolT]): ...
       expr = AllTheDefaults[int, complex]
       #└ TYPE type[AllTheDefaults[int, complex | float | int, str, int, bool]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -553,7 +545,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       expr = AllTheDefaults[int]()
       #│                    ^^^ WARNING Passed type arguments do not match type parameters [T1, T2, DefaultStrT, DefaultIntT, DefaultBoolT] of class 'AllTheDefaults'
       #└ TYPE AllTheDefaults[int, Unknown, str, int, bool]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -567,7 +559,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       class AllTheDefaults(Generic[T1, T2, DefaultStrT, DefaultIntT, DefaultBoolT]): ...
       expr = AllTheDefaults()
       #└ TYPE AllTheDefaults[Unknown, Unknown, str, int, bool]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -591,7 +583,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
           value: T8
       expr = Box().value
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -612,7 +604,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
           value: T8
       expr = Box[list]().value
       #└ TYPE list[Unknown]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -633,7 +625,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
           value: T8
       expr = Box[list, int]().value
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -655,7 +647,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       
       expr = Box().value
       #└ TYPE str | bool | float | int
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -666,7 +658,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type Alias[T = int, U = str] = dict[T, U]
       expr: Alias
       #└ TYPE dict[int, str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -674,7 +666,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type Alias[T = int, U = str] = dict[T, U]
       expr: Alias[bool]
       #└ TYPE dict[bool, str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -683,7 +675,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       x: Alias[bool, int]
       expr = x
       #└ TYPE dict[bool, list[int]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -691,7 +683,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type Alias[T = int, U = str] = dict[T, list[U]]
       expr: Alias
       #└ TYPE dict[int, list[str]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -699,7 +691,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type Alias[T = int, U = str] = dict[T, list[U]]
       expr: Alias[bool]
       #└ TYPE dict[bool, list[str]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -707,7 +699,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type Alias[T = int, U = str] = dict[T, list[U]]
       expr: Alias[bool, bool]
       #└ TYPE dict[bool, list[bool]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -715,7 +707,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type Alias[T = int] = T
       expr: Alias
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -723,7 +715,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type Alias[T = int] = T
       expr: Alias[bool]
       #└ TYPE bool
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -731,7 +723,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type Alias[T = int, U = str] = T | U
       expr: Alias
       #└ TYPE int | str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -739,7 +731,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type Alias[T = int, U = str] = T | U
       expr: Alias[bool]
       #└ TYPE bool | str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -747,7 +739,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type Alias[T = int, U = str] = T | U
       expr: Alias[bool, float]
       #└ TYPE bool | float | int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -755,7 +747,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type Alias[T = int, U = str] = U | list[T]
       expr: Alias
       #└ TYPE str | list[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -763,7 +755,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type Alias[T = int, U = str] = U | list[T]
       expr: Alias[float, bool]
       #└ TYPE bool | list[float | int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -775,7 +767,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       Alias : TypeAlias = dict[T, U] | list[B]
       expr: Alias
       #└ TYPE dict[Unknown, str] | list[float | int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -783,7 +775,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type Alias[T, U = str, B = float] = dict[T, U] | list[B]
       expr: Alias
       #└ TYPE dict[Unknown, str] | list[float | int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -791,7 +783,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type Alias[T, U = str, B = float] = dict[T, U] | list[B] | T
       expr: Alias[int]
       #└ TYPE dict[int, str] | list[float | int] | int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -799,7 +791,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type Alias[T, U = str, B = float] = dict[T, U] | list[B] | T
       expr: Alias[int, int, int]
       #└ TYPE dict[int, int] | list[int] | int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -807,7 +799,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type Alias[T, U = T] = T | list[U]
       expr: Alias[str]
       #└ TYPE str | list[str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -815,7 +807,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type Alias[T = str, T1 = T, T2 = T1, T3 = T2, T4 = T3] = T4
       expr: Alias
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -825,7 +817,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       def f() -> ReturnTupleAlias: ...
       expr = f()
       #└ TYPE (str, int, str, str) -> float | int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -835,7 +827,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       def f() -> ReturnTupleAlias[list[str]]: ...
       expr = f()
       #└ TYPE (str, int, str, str) -> list[str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -845,7 +837,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       def f() -> ReturnTupleAlias[list[str], [float, float]]: ...
       expr = f()
       #└ TYPE (str, int, float | int, float | int) -> list[str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -855,7 +847,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       def f() -> ReturnTupleAlias[list[str], [float, float], str, float, bool, list[bool]]: ...
       expr = f()
       #└ TYPE (str, float | int, bool, list[bool], float | int, float | int) -> list[str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -864,7 +856,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
           def foo(self) -> U: ...
       expr = Test().foo()
       #└ TYPE int
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -880,7 +872,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       MyAlias: TypeAlias = SomethingWithNoDefaults[int, DefaultStrT]
       expr: MyAlias
       #└ TYPE SomethingWithNoDefaults[int, str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -893,7 +885,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       MyAlias: TypeAlias = SomethingWithNoDefaults[int, DefaultStrT]
       expr: MyAlias[bool]
       #└ TYPE SomethingWithNoDefaults[int, bool]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -904,7 +896,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       MyAlias: TypeAlias = T | U
       expr: MyAlias
       #└ TYPE int | str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -915,7 +907,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       MyAlias: TypeAlias = dict[T, U]
       expr: MyAlias
       #└ TYPE dict[int, str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -926,7 +918,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       MyAlias: TypeAlias = dict[T, U]
       expr: MyAlias[str]
       #└ TYPE dict[str, str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -937,7 +929,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       MyAlias: TypeAlias = dict[T, U]
       expr: MyAlias[str, float]
       #└ TYPE dict[str, float | int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -950,7 +942,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       def g() -> ReturnTupleAlias: ...
       expr = g()
       #└ TYPE (str, int, str, str) -> float | int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -969,7 +961,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       #          ^^^^ WARNING Expected type 'Triple[str, int, str, int, bool]', got 'None' instead
       expr = e.val
       #└ TYPE dict[str, int] | str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -979,7 +971,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       #│          │    ^^^ ERROR Unresolved reference 'Any'
       #│          ^^^ ERROR Unresolved reference 'Any'
       #└ TYPE Test[Unknown, Unknown, bool]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -991,7 +983,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type D = C[float]
       expr: D
       #└ TYPE float | int | str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1005,7 +997,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type D = C[float]
       expr: D
       #└ TYPE float | int | str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1014,7 +1006,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type myIntStrDict = my_dict[int, str]
       expr: myIntStrDict
       #└ TYPE dict[int, str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1023,7 +1015,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       type Alias2 = Alias[float, bool]
       expr: Alias2
       #└ TYPE bool | list[float | int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
@@ -1035,20 +1027,19 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       Alias2: TypeAlias = Alias[float, bool]
       expr: Alias2
       #└ TYPE float | int | list[bool]
-      """)
+      """.trimIndent())
   }
 
   @Nested
   inner class DefaultsDefinedInAnotherFile {
     @Test
     @TestFor(issues = ["PY-71002"])
-    fun `class with default generics defined in another file`() = test(
-      """
+    fun `class with default generics defined in another file`() = test("""
       from mod import StackOfIntsByDefault
       stack = StackOfIntsByDefault()
       expr = stack.pop()
       #└ TYPE int
-      """,
+      """.trimIndent(),
       "mod.py" to """
         from typing import Generic, TypeVar
         
@@ -1056,18 +1047,16 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
         
         class StackOfIntsByDefault(Generic[T]):
             def pop(self) -> T: ...
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
-    fun `class with default generics defined in another file default overriden`() = test(
-      """
+    fun `class with default generics defined in another file default overriden`() = test("""
       from mod import StackOfIntsByDefault
       stack = StackOfIntsByDefault[str]()
       expr = stack.pop()
       #└ TYPE str
-      """,
+      """.trimIndent(),
       "mod.py" to """
         from typing import Generic, TypeVar
         
@@ -1075,17 +1064,15 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
         
         class StackOfIntsByDefault(Generic[T]):
             def pop(self) -> T: ...
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
-    fun `class with default generics defined in another file attribute access`() = test(
-      """
+    fun `class with default generics defined in another file attribute access`() = test("""
       from mod import Box
       expr = Box.val
       #└ TYPE int | str
-      """,
+      """.trimIndent(),
       "mod.py" to """
         from typing import Generic, TypeVar
         
@@ -1094,48 +1081,42 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
         
         class Box(Generic[T, U]):
             val: T | U
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
-    fun `class with new style default generics defined in another file`() = test(
-      """
+    fun `class with new style default generics defined in another file`() = test("""
       from mod import StackOfIntsByDefault
       stack = StackOfIntsByDefault()
       expr = stack.pop()
       #└ TYPE int
-      """,
+      """.trimIndent(),
       "mod.py" to """
         class StackOfIntsByDefault[T = int]:
             def pop(self) -> T: ...
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
-    fun `type alias with defaults defined in another file`() = test(
-      """
+    fun `type alias with defaults defined in another file`() = test("""
       from mod import StrIntDict
       expr: StrIntDict
       #└ TYPE dict[int, str]
-      """,
+      """.trimIndent(),
       "mod.py" to """
         from typing import TypeVar, TypeAlias
         T = TypeVar('T', default = int)
         U = TypeVar('U', default = str)
         StrIntDict: TypeAlias = dict[T, U]
-        """,
-    )
+        """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-71002"])
-    fun `type alias with defaults defined in another file aliasing generic class`() = test(
-      """
+    fun `type alias with defaults defined in another file aliasing generic class`() = test("""
       from mod import MyAlias
       expr = MyAlias[bool]()
       #└ TYPE SomethingWithNoDefaults[int, bool]
-      """,
+      """.trimIndent(),
       "mod.py" to """
         from typing import TypeVar, TypeAlias, Generic
         T = TypeVar('T')
@@ -1144,8 +1125,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
         DefaultStrT = TypeVar('DefaultStrT', default = str)
         class SomethingWithNoDefaults(Generic[T, T2]): ...
         MyAlias: TypeAlias = SomethingWithNoDefaults[int, DefaultStrT]
-        """,
-    )
+        """.trimIndent())
   }
 
   @Nested
@@ -1162,7 +1142,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       
       expr = f().m()
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-82454"])
@@ -1175,7 +1155,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       
       expr = f().attr
       #└ TYPE str
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-82454"])
@@ -1189,7 +1169,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       
       expr = f()
       #└ TYPE list[Box[str]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-82454"])
@@ -1205,7 +1185,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       
       expr = f().m()
       #└ TYPE Box[str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-82454"])
@@ -1221,7 +1201,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       
       expr = f().m()
       #└ TYPE list[Box[str]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-82454"])
@@ -1237,6 +1217,6 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       
       expr = f().m()
       #└ TYPE Box[str]
-      """)
+      """.trimIndent())
   }
 }

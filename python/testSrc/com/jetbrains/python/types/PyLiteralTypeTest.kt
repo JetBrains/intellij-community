@@ -26,14 +26,12 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
   inner class LiteralAnnotationsAndTypeComments {
     @Test
     @TestFor(issues = ["PY-35235"])
-    fun `Literal of bool annotation`() = test(
-      """
+    fun `Literal of bool annotation`() = test("""
       from typing_extensions import Literal
       expr: Literal[True] = False
       # │                   ^^^^^ WARNING Expected type 'Literal[True]', got 'Literal[False]' instead
       # └ TYPE Literal[True]
-      """,
-    )
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-35235"])
@@ -42,7 +40,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       expr: Literal[] = False
       #│            └ ERROR Expression expected
       #└ TYPE Literal[False]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-35235"])
@@ -51,14 +49,14 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       expr: Literal = False
       #│    ^^^^^^^ WARNING 'Literal' must have at least one parameter
       #└ TYPE Literal[False]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-35235"])
     fun `bool inferred without Literal annotation`() = test("""
       expr = False
       #└ TYPE Literal[False]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-35235"])
@@ -67,7 +65,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       expr = 20  # type: Literal[10]
       #│     ^^ WARNING Expected type 'Literal[10]', got 'Literal[20]' instead
       #└ TYPE Literal[10]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-35235"])
@@ -76,7 +74,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       expr = 20  # type: Literal[-10]
       # │    ^^ WARNING Expected type 'Literal[-10]', got 'Literal[20]' instead
       # └ TYPE Literal[-10]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-35235"])
@@ -85,7 +83,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       expr = 20  # type: Literal[10.5]
       #│                         ^^^^ WARNING 'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types
       #└ TYPE Literal[20]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-35235"])
@@ -94,7 +92,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       expr = 20  # type: Literal[10j]
       #│                         ^^^ WARNING 'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types
       #└ TYPE Literal[20]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-35235"])
@@ -103,7 +101,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       expr = 20  # type: Literal[]
       # │                        └ ERROR Expression expected
       # └ TYPE Literal[20]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-35235"])
@@ -112,7 +110,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       expr = 20  # type: Literal
       #│                 ^^^^^^^ WARNING 'Literal' must have at least one parameter
       #└ TYPE Literal[20]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-35235"])
@@ -120,7 +118,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       from typing_extensions import Literal
       expr = 20
       #└ TYPE Literal[20]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-35235"])
@@ -129,7 +127,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       expr: Literal[None] = undefined
       #│                    ^^^^^^^^^ ERROR Unresolved reference 'undefined'
       #└ TYPE None
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-35235"])
@@ -145,7 +143,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       expr: Literal[A.V1] = undefined
       #│                    ^^^^^^^^^ ERROR Unresolved reference 'undefined'
       #└ TYPE Literal[A.V1]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -157,7 +155,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       expr = undefined  # type: Literal[-1, 0, 1]
       #│     ^^^^^^^^^ ERROR Unresolved reference 'undefined'
       #└ TYPE Literal[-1, 0, 1]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-35235"])
@@ -166,7 +164,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       expr = undefined  # type: Literal[42, "foo", True]
       #│     ^^^^^^^^^ ERROR Unresolved reference 'undefined'
       #└ TYPE Literal[42, "foo", True]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-35235"])
@@ -179,7 +177,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       expr = undefined  # type: Literal[a, d]
       #│     ^^^^^^^^^ ERROR Unresolved reference 'undefined'
       #└ TYPE Literal[1, 2, 3, 4, 5]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-35235"])
@@ -188,7 +186,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       expr = undefined  # type: Literal[Literal[Literal[1, 2], "foo"], 5, None]
       #│     ^^^^^^^^^ ERROR Unresolved reference 'undefined'
       #└ TYPE Literal[1, 2, "foo", 5] | None
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -229,14 +227,12 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       
       expr = foo1()
       #└ TYPE Literal["1"]
-      """,
-    )
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-35235"])
-    fun `overload selected by literal argument`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON36),
-      """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON36)
+    fun `overload selected by literal argument`() = test("""
       from typing_extensions import Literal
       from typing import overload
       
@@ -257,14 +253,12 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       a: Literal["a"]
       expr = foo(a)
       #└ TYPE str
-      """,
-    )
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-35235"])
-    fun `overload falls back to non-literal argument`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON36),
-      """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON36)
+    fun `overload falls back to non-literal argument`() = test("""
       from typing_extensions import Literal
       from typing import overload
       
@@ -285,14 +279,12 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       a: str = "a"
       expr = foo(a)
       #└ TYPE int
-      """,
-    )
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-35235"])
-    fun `overload selected by literal string argument`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON36),
-      """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON36)
+    fun `overload selected by literal string argument`() = test("""
       from typing_extensions import Literal
       from typing import overload
       
@@ -312,8 +304,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       
       expr = foo("a")
       #└ TYPE str
-      """,
-    )
+      """.trimIndent())
   }
 
   @Nested
@@ -325,7 +316,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if (v == "abba"):
               expr = v
       #       └ TYPE Literal["abba"]
-      """)
+      """.trimIndent())
 
     @Test
     fun `narrow literal union by inequality`() = test("""
@@ -334,7 +325,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if (v != "abba"):
               expr = v
       #       └ TYPE Literal["ab"]
-      """)
+      """.trimIndent())
 
     @Test
     fun `narrow str by equality to literal variable`() = test("""
@@ -344,7 +335,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if (v == abc):
               expr = v
       #       └ TYPE Literal["abc"]
-      """)
+      """.trimIndent())
 
     @Test
     fun `narrow walrus by equality to literal`() = test("""
@@ -352,7 +343,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       if ((v := input()) == "abba"):
           expr = v
       #   └ TYPE Literal["abba"]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-83625"])
@@ -362,7 +353,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if (v == w):
               expr = v
       #       └ TYPE Literal["b"]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-83625"])
@@ -372,7 +363,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if (v != w):
               expr = v
       #       └ TYPE Literal["a", "b"]
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -383,7 +374,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if a in (1, 2, ""):
               expr = a
       #       └ TYPE Literal[1, 2]
-      """)
+      """.trimIndent())
 
     @Test
     fun `narrow int by membership in set`() = test("""
@@ -391,7 +382,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if a in {1, 2, ""}:
               expr = a
       #       └ TYPE Literal[1, 2]
-      """)
+      """.trimIndent())
 
     @Test
     fun `narrow int by membership in list`() = test("""
@@ -399,7 +390,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if a in [1, 2, ""]:
               expr = a
       #       └ TYPE Literal[1, 2]
-      """)
+      """.trimIndent())
 
     @Test
     fun `narrow union by membership including enum member`() = test("""
@@ -410,7 +401,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if a in (-10, E.A, "a"):
               expr = a
       #       └ TYPE Literal[-10, "a"]
-      """)
+      """.trimIndent())
 
     @Test
     fun `narrow literal union by membership`() = test("""
@@ -419,7 +410,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if a in ("abb", True):
               expr = a
       #       └ TYPE Literal["abb"]
-      """)
+      """.trimIndent())
 
     @Test
     fun `narrow literal union by negated membership`() = test("""
@@ -428,7 +419,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if a not in ("abb", False):
               expr = a
       #       └ TYPE Literal[3, "ab"]
-      """)
+      """.trimIndent())
 
     @Test
     fun `narrow literal union in else of negated membership`() = test("""
@@ -439,7 +430,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           else:
               expr = a
       #       └ TYPE Literal["abb", False]
-      """)
+      """.trimIndent())
 
     @Test
     fun `narrow object by membership including None`() = test("""
@@ -447,7 +438,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if v in (-1, None):
               expr = v
       #       └ TYPE Literal[-1] | None
-      """)
+      """.trimIndent())
 
     @Test
     fun `narrow walrus by membership`() = test("""
@@ -455,7 +446,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       if (a := input()) in ("abba", False):
           expr = a
       #   └ TYPE Literal["abba"]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-83625"])
@@ -465,7 +456,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if v in (u, w):
               expr = v
       #       └ TYPE Literal["b", "c"]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-83625"])
@@ -475,7 +466,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if v not in (u, w):
               expr = v
       #       └ TYPE Literal["a", "c"]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-83625"])
@@ -489,7 +480,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if x in [y, z]:
               expr = x
       #       └ TYPE A
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-83625"])
@@ -503,7 +494,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if x not in [y, z]:
               expr = x
       #       └ TYPE A
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -516,7 +507,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if v is w:
               expr = v
       #       └ TYPE Literal["b"]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-83625"])
@@ -526,20 +517,18 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if v is not w:
               expr = v
       #       └ TYPE Literal["a", "b"]
-      """)
+      """.trimIndent())
 
     @Test
-    fun `narrow literal union by legacy not equal operator`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON27, assertRecursionPrevention = false),
-      """
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON27, assertRecursionPrevention = false)
+    fun `narrow literal union by legacy not equal operator`() = test("""
       from typing import Literal
       def foo(v: Literal["abba", "ab"]):
       #        └ ERROR Type annotations are unsupported in Python 2
           if (v <> "abba"):
               expr = v
       #       └ TYPE Literal["ab"]
-      """,
-    )
+      """.trimIndent())
   }
 
   @Nested
@@ -553,7 +542,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       num2: Literal[2] = 2
       expr = [num1, num2]
       #└ TYPE list[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77937"])
@@ -564,21 +553,21 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       e2: Literal["abc"] = "abc"
       expr = [e1, e2]
       #└ TYPE list[int | str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77937"])
+    @TestCaseOptions(enableWeakWarnings = false)
     fun `list of literal and literalstring widens to union`() = test(
       // weak warnings disabled: with literal inference on, the `|` chain in the annotation
       // triggers a spurious `__or__` weak-warning unrelated to the inferred element type
-      TestOptions(enableWeakWarnings = false),
       """
       from typing import Literal, LiteralString
 
       e: Literal[1, "ab"] | LiteralString | Literal["x"] = "abb"
       expr = [e]
       #└ TYPE list[int | str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77937"])
@@ -589,7 +578,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       num2: Literal[2] = 2
       expr = {num1, num2}
       #└ TYPE set[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77937"])
@@ -600,20 +589,20 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       e2: Literal["abc"] = "abc"
       expr = {e1, e2}
       #└ TYPE set[int | str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77937"])
+    @TestCaseOptions(enableWeakWarnings = false)
     fun `set of literal and literalstring widens to union`() = test(
       // weak warnings disabled: see `list of literal and literalstring widens to union`
-      TestOptions(enableWeakWarnings = false),
       """
       from typing import Literal, LiteralString
 
       e: Literal[1, "ab"] | LiteralString | Literal["x"] = "abb"
       expr = {e}
       #└ TYPE set[int | str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77937"])
@@ -627,7 +616,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       v2: Literal["2"] = "2"
       expr = {k1: v1, k2: v2}
       #└ TYPE dict[int, str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77937"])
@@ -640,13 +629,13 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       v2: Literal[True] = True
       expr = { k1: v1, k2: v2 }
       #└ TYPE dict[int | str, str | bool]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-77937"])
+    @TestCaseOptions(enableWeakWarnings = false)
     fun `dict of literal unions widens to unions`() = test(
       // weak warnings disabled: see `list of literal and literalstring widens to union`
-      TestOptions(enableWeakWarnings = false),
       """
       from typing import Literal, LiteralString
 
@@ -654,7 +643,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       v: Literal[1, "ab"] | LiteralString | Literal["x"] = 1
       expr = {k: v}
       #└ TYPE dict[int | str, int | str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-78125"])
@@ -664,7 +653,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       v: Literal[1, "ab"] = 1
       expr = {"abb": v}
       #└ TYPE dict[str, int | str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-78125"])
@@ -675,7 +664,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       v: Literal[1, "ab"] = 1
       expr = {k: v}
       #└ TYPE dict[str, int | str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-78125"])
@@ -686,7 +675,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       v: Literal[1, "ab"] = 1
       expr = {k: v}
       #└ TYPE dict[str, int | str]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-78125"])
@@ -697,7 +686,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       v: Literal[1, "ab"] = 1
       expr = {k: v}
       #└ TYPE dict[str, int | str]
-      """)
+      """.trimIndent())
 
     @Test
     fun `literal widens to int on augmented assignment`() = test("""
@@ -708,15 +697,14 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       x += 1
       expr = x
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
-    fun `literal preserved when imported via star`() = test(
-      """
+    fun `literal preserved when imported via star`() = test("""
       from m import *
       expr = foo
       #└ TYPE Literal[1]
-      """,
+      """.trimIndent(),
       "m.py" to "foo = 1",
     )
   }
@@ -751,7 +739,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           pass
       foo4(a) # WARNING Expected type 'bytes', got 'Literal["abc"]' instead
       foo4(b)
-      """)
+      """.trimIndent())
 
     @Test
     fun `Final variable or attribute inferred as literal`() = test("""
@@ -765,7 +753,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       def bar():
           var: Final = 3
           expects_three(var)
-      """)
+      """.trimIndent())
 
     @Test
     fun `Final list variable is not over-narrowed to literal`() = test("""
@@ -774,7 +762,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       def expects_list(l: list[int]): ...
       
       expects_list(v)
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-79733"])
@@ -789,7 +777,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           s2: set[Literal[1]] = {2 for x in strings} # WARNING Expected type 'set[Literal[1]]', got 'set[Literal[2]]' instead
           d1: dict[str, Literal[1]] = {x: 1 for x in strings}
           d2: dict[str, Literal[1]] = {x: 2 for x in strings} # WARNING Expected type 'dict[str, Literal[1]]', got 'dict[str, Literal[2]]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-75556"])
@@ -799,7 +787,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       def f(**kwargs: Literal[1]): ...
       f(a=1)
       f(a=2) # WARNING Expected type 'Literal[1]', got 'Literal[2]' instead
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-61137"])
@@ -811,7 +799,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           return "foo" if condition1() else "bar"  # OK
       def return_literal_str2(literal_string: Literal["foo"]) -> Literal["foo"]:
           return "foo" if condition1() else literal_string  # OK
-      """)
+      """.trimIndent())
   }
 
   @Nested
@@ -822,21 +810,21 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
     fun `int literal expression inferred as literal by default`() = test("""
       expr = 1
       #└ TYPE Literal[1]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-46450"])
     fun `bool literal expression inferred as literal by default`() = test("""
       expr = True
       #└ TYPE Literal[True]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-46450"])
     fun `str literal expression inferred as literal by default`() = test("""
       expr = "s"
       #└ TYPE Literal["s"]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-46450"])
@@ -847,7 +835,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
         test("""
           expr = 1
           #└ TYPE int
-          """)
+          """.trimIndent())
       }
       finally {
         Disposer.dispose(disposable)
@@ -856,22 +844,22 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-46450"])
+    @TestCaseOptions
     fun `class attribute accessed via self is not over-narrowed to literal`() = test(
       // enablePyAnyType=false: attribute inference still degrades to Unknown under the py-any migration
-      TestOptions(),
       """
       class A:
           a = 1
           def f(self):
               expr = self.a
       #       └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-46450"])
+    @TestCaseOptions
     fun `instance attribute accessed via self is not over-narrowed to literal`() = test(
       // enablePyAnyType=false: attribute inference still degrades to Unknown under the py-any migration
-      TestOptions(),
       """
       class A:
           def __init__(self):
@@ -880,19 +868,19 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           def f(self):
               expr = self.foo
       #       └ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-46450"])
+    @TestCaseOptions
     fun `class attribute accessed via class is not over-narrowed to literal`() = test(
       // enablePyAnyType=false: attribute inference still degrades to Unknown under the py-any migration
-      TestOptions(),
       """
       class A:
           a = 1
       expr = A.a
       #└ TYPE int
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-46450"])
@@ -901,7 +889,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           def __init__(self, t: T, *x_): ...
       expr = A(1, 1)
       #└ TYPE A[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-46450"])
@@ -910,20 +898,20 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
       expr = [f() for x in []]
       #└ TYPE list[int]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-46450"])
+    @TestCaseOptions
     fun `literal in tuple from generator stays literal`() = test(
       // enablePyAnyType=false: generator element inference still degrades to Unknown under the py-any migration
-      TestOptions(),
       """
       def f():
           return 1
 
       expr = tuple(f() for x in [])
       #└ TYPE tuple[Literal[1], ...]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-80353"])
@@ -932,7 +920,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           a = 1
           expr = a
       #     └ TYPE int FIXME Literal[1]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-46450"])
@@ -940,7 +928,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       def f[*Ts](*t: *Ts) -> tuple[*Ts]: ...
       expr = f(1)
       #└ TYPE tuple[int] FIXME tuple[Literal[1]]
-      """)
+      """.trimIndent())
 
     @Test
     @TestFor(issues = ["PY-46450"])
@@ -950,6 +938,6 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       def f[T: Literal[1]](t: T) -> list[T]: ...
       expr = f(1)
       #└ TYPE list[Literal[1]]
-      """)
+      """.trimIndent())
   }
 }

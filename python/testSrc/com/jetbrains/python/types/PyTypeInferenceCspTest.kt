@@ -2,7 +2,6 @@
 package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
-import com.intellij.openapi.roots.OrderRootType
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -89,10 +88,11 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  fun `Attrs type per default`() = test(TestOptions(
+  @TestCaseOptions(
     assertRecursionPrevention = false,
-    additionalSdkRoots = mapOf("packages" to OrderRootType.CLASSES),
-  ), """
+    additionalSdkRoots = [SdkRoot("packages", OrderRootTypeEnum.CLASSES)],
+  )
+  fun `Attrs type per default`() = test("""
     from typing import Any, assert_type
     import attr
 
