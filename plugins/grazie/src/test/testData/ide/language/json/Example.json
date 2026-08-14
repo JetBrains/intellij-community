@@ -3,7 +3,7 @@
   "menu": {
     "id": "file",
     "value": "File",
-    "knownPhrases": "Apache APISIX or Apache Gobblin",
+    "knownPhrases": "Apache APISIX or Apache Gobblin and unrelated <TYPO descr="Typo: In word 'typppo'">typppo</TYPO>",
     "popup": {
       "menu_item": [
         {
