@@ -3,6 +3,7 @@ package com.intellij.notebooks.visualization.ui.cellsDnD
 
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
 import com.intellij.notebooks.visualization.NotebookVisualizationCoroutine
+import com.intellij.notebooks.visualization.cellSelectionModel
 import com.intellij.notebooks.visualization.getCell
 import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.notebooks.visualization.ui.EditorCellInput
@@ -195,7 +196,16 @@ class EditorCellDragAssistant(
 
     ApplicationManager.getApplication().messageBus
       .syncPublisher(CellDropNotifier.getTopicForEditor(editor))
-      .cellDropped(CellDropEvent(cellInput.cell, targetCell))
+      .cellDropped(CellDropEvent(cellInput.cell, targetCell, getDraggedCells()))
+  }
+
+  private fun getDraggedCells(): List<EditorCell> {
+    val selectedCells = editor.cellSelectionModel?.selectedCells.orEmpty()
+    if (selectedCells.none { it.ordinal == cellInput.cell.interval.ordinal }) {
+      return listOf(cellInput.cell)
+    }
+    val inlayManager = inlayManager ?: return listOf(cellInput.cell)
+    return selectedCells.sortedBy { it.ordinal }.map { inlayManager.getCell(it.ordinal) }.ifEmpty { listOf(cellInput.cell) }
   }
 
   private fun getCellUnderCursor(editorPoint: Point): CellDropTarget {
@@ -240,7 +250,7 @@ class EditorCellDragAssistant(
 
     cellInput.cell.view?.outputs?.outputs?.forEachIndexed { index, output ->
       outputInitialStates[index] = output.collapsed
-      output.collapsed = true
+      if (!output.collapsed) output.collapsed = true
     }
     wasFolded = true
   }
@@ -250,7 +260,8 @@ class EditorCellDragAssistant(
     if (!inputFoldedState) unfoldInput()
 
     cellInput.cell.view?.outputs?.outputs?.forEachIndexed { index, output ->
-      output.collapsed = outputInitialStates[index] == true
+      val collapsed = outputInitialStates[index] == true
+      if (output.collapsed != collapsed) output.collapsed = collapsed
     }
     outputInitialStates.clear()
     wasFolded = false
