@@ -339,6 +339,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
       enabledIcon = enabledIcon.rpcId(),
       disabledIcon = disabledIcon.rpcId(),
       suspendNoneIcon = suspendNoneIcon.rpcId(),
+      suspendNoneDisabledIcon = suspendNoneDisabledIcon.rpcId(),
       mutedEnabledIcon = mutedEnabledIcon.rpcId(),
       mutedDisabledIcon = mutedDisabledIcon.rpcId(),
       pendingIcon = pendingIcon?.rpcId(),

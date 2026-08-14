@@ -130,6 +130,7 @@ private open class FrontendXBreakpointType(
   override val enabledIcon: Icon = dto.icons.enabledIcon.icon()
   override val disabledIcon: Icon = dto.icons.disabledIcon.icon()
   override val suspendNoneIcon: Icon = dto.icons.suspendNoneIcon.icon()
+  override val suspendNoneDisabledIcon: Icon = dto.icons.suspendNoneDisabledIcon.icon()
   override val mutedEnabledIcon: Icon = dto.icons.mutedEnabledIcon.icon()
   override val mutedDisabledIcon: Icon = dto.icons.mutedDisabledIcon.icon()
   override val pendingIcon: Icon? = dto.icons.pendingIcon?.icon()

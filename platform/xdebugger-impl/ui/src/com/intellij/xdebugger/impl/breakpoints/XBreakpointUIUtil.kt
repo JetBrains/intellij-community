@@ -349,6 +349,9 @@ object XBreakpointUIUtil {
       return if (session != null && session.areBreakpointsMuted()) {
         type.mutedDisabledIcon
       }
+      else if (breakpoint.getSuspendPolicy() == SuspendPolicy.NONE) {
+        type.suspendNoneDisabledIcon
+      }
       else {
         type.disabledIcon
       }

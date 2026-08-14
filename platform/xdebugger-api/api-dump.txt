@@ -309,6 +309,7 @@ a:com.intellij.xdebugger.breakpoints.XBreakpointType
 - getPropertyXMLDescriptions(com.intellij.xdebugger.breakpoints.XBreakpoint):java.util.List
 - getShortText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
 - getSourcePosition(com.intellij.xdebugger.breakpoints.XBreakpoint):com.intellij.xdebugger.XSourcePosition
+- getSuspendNoneDisabledIcon():javax.swing.Icon
 - getSuspendNoneIcon():javax.swing.Icon
 - getTitle():java.lang.String
 - getVisibleStandardPanels():java.util.EnumSet

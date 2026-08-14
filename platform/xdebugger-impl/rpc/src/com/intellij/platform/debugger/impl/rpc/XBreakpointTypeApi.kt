@@ -99,6 +99,7 @@ data class XBreakpointTypeIcons(
   val enabledIcon: IconId,
   val disabledIcon: IconId,
   val suspendNoneIcon: IconId,
+  val suspendNoneDisabledIcon: IconId,
   val mutedEnabledIcon: IconId,
   val mutedDisabledIcon: IconId,
   val pendingIcon: IconId?,

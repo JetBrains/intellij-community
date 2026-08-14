@@ -18,6 +18,7 @@ interface XBreakpointTypeProxy {
   val enabledIcon: Icon
   val disabledIcon: Icon
   val suspendNoneIcon: Icon
+  val suspendNoneDisabledIcon: Icon
   val mutedEnabledIcon: Icon
   val mutedDisabledIcon: Icon
   val pendingIcon: Icon?

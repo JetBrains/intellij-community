@@ -42,6 +42,8 @@ internal open class MonolithBreakpointTypeProxy @Deprecated("Use type.asProxy() 
     get() = breakpointType.disabledIcon
   override val suspendNoneIcon: Icon
     get() = breakpointType.suspendNoneIcon
+  override val suspendNoneDisabledIcon: Icon
+    get() = breakpointType.suspendNoneDisabledIcon
   override val mutedEnabledIcon: Icon
     get() = breakpointType.mutedEnabledIcon
   override val mutedDisabledIcon: Icon
