@@ -52,6 +52,7 @@ import com.jetbrains.python.psi.types.PyTypeRendererFeature;
 import com.jetbrains.python.psi.types.PyTypeVarTupleType;
 import com.jetbrains.python.psi.types.PyTypeVarType;
 import com.jetbrains.python.psi.types.PyTypeVisitorExt;
+import com.jetbrains.python.psi.types.PyTypedDictType;
 import com.jetbrains.python.psi.types.PyTypingNewType;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.PyUnpackedTupleType;
@@ -348,6 +349,22 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     }
     HtmlChunk genericTypeRender = renderGenericType(classType);
     return classType.isDefinition() ? wrapInTypingType(genericTypeRender) : genericTypeRender;
+  }
+
+  @Override
+  public HtmlChunk visitPyTypedDictType(@NotNull PyTypedDictType typedDictType) {
+    List<PyType> typeArguments = typedDictType.getSubstitutedTypeArguments();
+    if (typeArguments.isEmpty()) {
+      return visitPyClassLikeType(typedDictType);
+    }
+
+    HtmlChunk parameterizedRender = new HtmlBuilder()
+      .append(classLink(typedDictType, getTypeName(typedDictType)))
+      .append(styled("[", PyHighlighter.PY_BRACKETS))
+      .append(renderList(ContainerUtil.map(typeArguments, this::render)))
+      .append(styled("]", PyHighlighter.PY_BRACKETS))
+      .toFragment();
+    return typedDictType.isDefinition() ? wrapInTypingType(parameterizedRender) : parameterizedRender;
   }
 
   @Override

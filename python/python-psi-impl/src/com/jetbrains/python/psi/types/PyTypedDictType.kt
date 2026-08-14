@@ -29,6 +29,16 @@ class PyTypedDictType private constructor(
   val isClosed: Boolean,
   private val lazyExtraItemsType: Lazy<PyType?>,
   val extraItemsQualifiers: TypedDictFieldQualifiers,
+  /**
+   * Read from the declaration rather than from the item types, which a recursive TypedDict cannot evaluate. An empty list means
+   * "not generic"; `null` means unstated, which only a TypedDict synthesized from something else is.
+   */
+  val declaredTypeParameters: List<PyType?>?,
+  /**
+   * The arguments [declaredTypeParameters] have been substituted with, empty until the type is parameterized. Distinct from the
+   * inherited [typeArguments], which belong to the `dict` class this type is built on top of.
+   */
+  val substitutedTypeArguments: List<PyType?>,
 ) : PyClassTypeImpl(dictClass, isDefinition) {
 
   val fields: Map<String, FieldTypeAndTotality> get() = lazyFields.value
@@ -48,11 +58,19 @@ class PyTypedDictType private constructor(
     isClosed: Boolean = false,
     extraItemsTypeEvaluator: () -> PyType? = { PyAnyType.unknown },
     extraItemsQualifiers: TypedDictFieldQualifiers = TypedDictFieldQualifiers(),
+    declaredTypeParameters: List<PyType?>? = null,
+    substitutedTypeArguments: List<PyType?> = emptyList(),
   ) : this(name,
            lazy(LazyThreadSafetyMode.PUBLICATION, fieldsProvider),
            dictClass, isDefinition, declaration, isClosed,
            lazy(LazyThreadSafetyMode.PUBLICATION, extraItemsTypeEvaluator),
-           extraItemsQualifiers)
+           extraItemsQualifiers,
+           declaredTypeParameters,
+           substitutedTypeArguments)
+
+  /** The arguments as they appear in this TypedDict's notation, `null` when the parameters are unstated. */
+  val typeArgumentsOrDeclaredParameters: List<PyType?>?
+    get() = substitutedTypeArguments.ifEmpty { declaredTypeParameters }
 
   fun getElementType(key: String): PyType? {
     val field = fields[key] ?: return PyAnyType.unknown
@@ -65,7 +83,8 @@ class PyTypedDictType private constructor(
 
   override fun toInstance(): PyTypedDictType {
     return if (isDefinition)
-      PyTypedDictType(name, lazyFields, dictClass, false, declaration, isClosed, lazyExtraItemsType, extraItemsQualifiers)
+      PyTypedDictType(name, lazyFields, dictClass, false, declaration, isClosed, lazyExtraItemsType, extraItemsQualifiers,
+                      declaredTypeParameters, substitutedTypeArguments)
     else
       this
   }
@@ -74,7 +93,8 @@ class PyTypedDictType private constructor(
     return if (isDefinition)
       this
     else
-      PyTypedDictType(name, lazyFields, dictClass, true, declaration, isClosed, lazyExtraItemsType, extraItemsQualifiers)
+      PyTypedDictType(name, lazyFields, dictClass, true, declaration, isClosed, lazyExtraItemsType, extraItemsQualifiers,
+                      declaredTypeParameters, substitutedTypeArguments)
   }
 
   override val isBuiltin: Boolean = false
@@ -120,11 +140,11 @@ class PyTypedDictType private constructor(
     if (!super.equals(other)) return false
 
     other as PyTypedDictType
-    return declaration == other.declaration
+    return declaration == other.declaration && substitutedTypeArguments == other.substitutedTypeArguments
   }
 
   override fun hashCode(): Int {
-    return Objects.hash(super.hashCode(), declaration)
+    return Objects.hash(super.hashCode(), declaration, substitutedTypeArguments)
   }
 
   override val declarationElement: PyQualifiedNameOwner = declaration

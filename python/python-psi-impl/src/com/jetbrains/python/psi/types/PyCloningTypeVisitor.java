@@ -148,7 +148,14 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
       typedDictType.getDeclarationElement(),
       typedDictType.isClosed(),
       () -> cloneDeferred(() -> clone(typedDictType.getExtraItemsType())),
-      typedDictType.getExtraItemsQualifiers());
+      typedDictType.getExtraItemsQualifiers(),
+      typedDictType.getDeclaredTypeParameters(),
+      cloneTypedDictTypeArguments(typedDictType));
+  }
+
+  /** Clones the arguments a TypedDict already has. Substitution overrides this to parameterize a generic one. */
+  protected @NotNull List<PyType> cloneTypedDictTypeArguments(@NotNull PyTypedDictType typedDictType) {
+    return cloneTypeArguments(typedDictType.getSubstitutedTypeArguments());
   }
 
   private @NotNull Map<String, PyTypedDictType.FieldTypeAndTotality> cloneFields(@NotNull PyTypedDictType typedDictType) {
@@ -218,15 +225,20 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
         impl.createInstance(
           classType.getPyClass(),
           classType.isDefinition(),
-          ContainerUtil.map(classType.getTypeArguments(), type -> clone(type))
+          cloneTypeArguments(classType.getTypeArguments())
         )
       );
     }
     return new PyCollectionTypeImpl(
       classType.getPyClass(),
       classType.isDefinition(),
-      ContainerUtil.map(classType.getTypeArguments(), type -> clone(type))
+      cloneTypeArguments(classType.getTypeArguments())
     );
+  }
+
+  /** Overridable because substitution has to normalize the result — flattening an unpacked tuple, for one — everywhere alike. */
+  protected @NotNull List<PyType> cloneTypeArguments(@NotNull List<PyType> typeArguments) {
+    return ContainerUtil.map(typeArguments, type -> clone(type));
   }
 
   @Override

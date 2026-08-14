@@ -41,6 +41,7 @@ import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeProviderBase
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef
@@ -312,8 +313,46 @@ private fun getTypedDictTypeForClass(
     closed,
     extraItemsTypeProvider,
     extraItemsQualifiers,
+    collectDeclaredTypeParameters(cls, context),
   )
 }
+
+/**
+ * The type parameters a generic TypedDict is parameterized by, read from the declarations rather than from the item types, which
+ * a recursive one cannot evaluate. Inherited parameters come first, so that `class Sub(Base, Generic[T1])` over
+ * `class Base(TypedDict, Generic[T])` is parameterized as `Sub[T, T1]`, matching the order the items are collected in.
+ *
+ * A base is always reached unspecialized, since `PyClassImpl.unfoldSuperClassExpression` unfolds `Base[int]` to `Base`.
+ */
+private fun collectDeclaredTypeParameters(cls: PyClass, context: TypeEvalContext): List<PyType?> {
+  val result = LinkedHashSet<PyType?>()
+  for (ancestorType in typedDictAncestors(cls, context)) {
+    when (ancestorType) {
+      is PyTypedDictType -> result.addAll(ancestorType.declaredTypeParameters.orEmpty())
+      is PyClassType -> if (ancestorType.pyClass.isTypingTypedDictInheritor(context)) {
+        result.addAll(ownTypeParameters(ancestorType.pyClass, context))
+      }
+    }
+  }
+  result.addAll(ownTypeParameters(cls, context))
+  return result.toList()
+}
+
+/**
+ * The ancestors up to `TypedDict` itself, past which come `dict` and its own hierarchy.
+ *
+ * Without AST the ancestors are resolved from the superclass names in the stub, so `TypedDict` is the resolved class rather than
+ * a synthetic [PyCustomType] and a TypedDict ancestor is a plain [PyClassType]. The boundary is found by name so that both modes
+ * see the same slice.
+ */
+private fun typedDictAncestors(cls: PyClass, context: TypeEvalContext): List<PyClassLikeType?> {
+  val ancestors = cls.getAncestorTypes(context)
+  val boundary = ancestors.indexOfFirst { nameIsTypedDict(it?.classQName) }
+  return if (boundary >= 0) ancestors.take(boundary) else ancestors
+}
+
+private fun ownTypeParameters(cls: PyClass, context: TypeEvalContext): List<PyType?> =
+  PyTypeChecker.findGenericDefinitionType(cls, context)?.typeArguments.orEmpty()
 
 private fun getSuperClassKeywordArgumentText(cls: PyClass, name: String): String? {
   // This method is stub-friendly
@@ -334,24 +373,14 @@ private fun getSuperClassKeywordArgumentText(cls: PyClass, name: String): String
 
 private fun collectFields(cls: PyClass, context: TypeEvalContext): TDFields {
   val fields = mutableMapOf<String, PyTypedDictType.FieldTypeAndTotality>()
-  val ancestors = cls.getAncestorTypes(context)
-  val typedDictCustomTypeIndex = ancestors.indexOfFirst { it is PyCustomType && nameIsTypedDict(it.classQName) }
-  // When some ancestor is located in another file its type will be PyClassType because of difference in getting ancestor types.
-  // (see com.jetbrains.python.psi.impl.PyClassImpl.fillSuperClassesNoSwitchToAst)
-  // When AST is unavailable, the type of resolved element is returned, TypedDict reference is resolved to PyClass,
-  // therefore the type of that PyClass is PyClassType.
-  // That's why in case when AST for ancestors is unavailable we need to collect fields from PyClassType instances.
-  if (typedDictCustomTypeIndex > 0) {
-    ancestors.take(typedDictCustomTypeIndex)
-      .forEach {
-        when (it) {
-          is PyTypedDictType -> fields.putAll(it.fields)
-          is PyClassType -> fields.putAll(collectTypingTDInheritorFields(it.pyClass, context))
-        }
+  for (ancestorType in typedDictAncestors(cls, context)) {
+    when (ancestorType) {
+      is PyTypedDictType -> fields.putAll(ancestorType.fields)
+      // Without AST a TypedDict ancestor is a plain PyClassType, see typedDictAncestors.
+      is PyClassType -> if (ancestorType.pyClass.isTypingTypedDictInheritor(context)) {
+        fields.putAll(collectTypingTDInheritorFields(ancestorType.pyClass, context))
       }
-  }
-  else {
-    ancestors.forEach { if (it is PyTypedDictType) fields.putAll(it.fields) }
+    }
   }
   fields.putAll(collectDeclaredFields(cls, context))
   return TDFields(fields)
@@ -480,6 +509,7 @@ private fun getTypedDictTypeFromStub(
     stub.isClosed,
     { extraItemsText?.let { PyTypingTypeProvider.getStringBasedType(it, target, context) }.derefOrUnknown() },
     extraItemsQualifiers,
+    declaredTypeParameters = emptyList(),
   )
 }
 

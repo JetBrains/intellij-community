@@ -340,6 +340,34 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
+    @TestFor(issues = ["PY-85440", "PY-91571", "PY-91630"])
+    fun `recursive generic TypedDict`() = test("""
+      from typing import TypedDict
+
+      class Tree[T](TypedDict):
+          value: T
+          children: list["Tree[T]"]
+
+      def f(t: Tree[int]):
+          expr = t["children"]
+      #   └ TYPE list[Tree[int]]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571", "PY-91630"])
+    fun `recursive generic TypedDict traversed several levels deep`() = test("""
+      from typing import TypedDict
+
+      class Tree[T](TypedDict):
+          value: T
+          children: list["Tree[T]"]
+
+      def f(t: Tree[str]):
+          expr = t["children"][0]["children"][0]["value"]
+      #   └ TYPE str
+      """)
+
+    @Test
     @TestFor(issues = ["PY-85440", "PY-91571"])
     fun `recursive TypedDict in the functional syntax`() = test("""
       from typing import TypedDict
@@ -428,6 +456,142 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
           expr = c["whatever"]["whatever"]
       #   └ TYPE Child
       """)
+  }
+
+  @Nested
+  inner class GenericTypedDicts {
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `item type substituted with the type argument`() = test("""
+      from typing import TypedDict
+
+      class Box[T](TypedDict):
+          value: T
+
+      def f(b: Box[int]):
+          expr = b["value"]
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `item type substituted in the pre-695 syntax`() = test(
+      TestOptions(languageLevel = LanguageLevel.PYTHON311),
+      """
+      from typing import TypedDict, TypeVar, Generic
+
+      T = TypeVar("T")
+
+      class Box(TypedDict, Generic[T]):
+          value: T
+
+      def f(b: Box[int]):
+          expr = b["value"]
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `dict literal checked against the substituted item type`() = test("""
+      from typing import TypedDict
+
+      class Box[T](TypedDict):
+          value: T
+
+      b: Box[int] = {"value": "wrong"}
+      #                       ^^^^^^^ WARNING Expected type 'int', got 'str' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `item qualifiers survive parameterization`() = test("""
+      from typing import TypedDict, NotRequired, ReadOnly
+
+      class Box[T](TypedDict):
+          value: NotRequired[T]
+
+      class Frozen[T](TypedDict):
+          value: ReadOnly[T]
+
+      b: Box[int] = {}
+
+      def f(frozen: Frozen[int]):
+          frozen["value"] = 1
+      #   ^^^^^^^^^^^^^^^ WARNING TypedDict key "value" is ReadOnly
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `TypeVarTuple parameters`() = test("""
+      from typing import TypedDict
+
+      class Variadic[*Ts](TypedDict):
+          values: tuple[*Ts]
+
+      def f(v: Variadic[int, str]):
+          expr = v
+      #   └ TYPE Variadic[int, str]
+          items = v["values"]
+      #   └ TYPE tuple[int, str]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `ParamSpec parameter`() = test("""
+      from typing import TypedDict, Callable
+
+      class Handler[**P](TypedDict):
+          fn: Callable[P, None]
+
+      def f(h: Handler[[int, str]]):
+          expr = h["fn"]
+      #   └ TYPE (int, str) -> None
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `TypedDicts parameterized differently are not assignable`() = test("""
+      from typing import TypedDict
+
+      class Box[T](TypedDict):
+          value: T
+
+      def f(b: Box[int]):
+          same: Box[int] = b
+          other: Box[str] = b
+      #                     └ WARNING Expected type 'Box[str]', got 'Box[int]' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630", "PY-91594"])
+    // The cross-file counterpart of PyTypeCheckerInspectionTest#testGenericTypedDict (PY-55092): an added parameter comes after
+    // the inherited one. The warning is the inspection counting one parameter where inference uses two, which the same
+    // declarations in a single file are not reported for.
+    fun `own parameter over a generic base from another file`() = test(
+      """
+      from typing import TypeVar, Generic
+      from other import Group
+
+      T1 = TypeVar('T1')
+
+      class GroupWithOtherKey(Group, Generic[T1]):
+          some_other_key: T1
+
+      def f(g: GroupWithOtherKey[str, int]):
+      #                          ^^^^^^^^ WARNING Passed type arguments do not match type parameters [T1] of class 'GroupWithOtherKey'
+          inherited = g["key"]
+      #   └ TYPE str
+          own = g["some_other_key"]
+      #   └ TYPE int
+      """,
+      "other.py" to """
+        from typing import TypeVar, TypedDict, Generic
+
+        T = TypeVar('T')
+
+        class Group(TypedDict, Generic[T]):
+            key: T
+        """)
   }
 
   @Nested
