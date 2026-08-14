@@ -9,6 +9,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -30,6 +31,21 @@ public class PagedFileStoragePropertyTest {
   @SuppressWarnings("unused")
   public PagedFileStoragePropertyTest(@NotNull String name,
                                       @NotNull StorageLockContext context) { storageLockContext = context; }
+
+  @Rule
+  public ExternalResource storageLockRule() {
+    return new ExternalResource() {
+      @Override
+      protected void before() {
+        storageLockContext.lockWrite();
+      }
+
+      @Override
+      protected void after() {
+        storageLockContext.unlockWrite();
+      }
+    };
+  }
 
   @Parameterized.Parameters(name = "{0}")
   public static Iterable<Object[]> parameters() {
