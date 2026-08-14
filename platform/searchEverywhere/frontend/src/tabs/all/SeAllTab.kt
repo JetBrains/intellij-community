@@ -21,6 +21,7 @@ import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfoProvider
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
+import com.intellij.platform.searchEverywhere.frontend.SeTabsCustomizer
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.frontend.tabs.SeDefaultTabBase
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
@@ -92,7 +93,9 @@ class SeAllTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
 private class SeAllFilterEditor(providersIdToName: Map<SeProviderId, @Nls String>) :
   SeFilterEditorBase<SeEverywhereFilter>(SeEverywhereFilterImpl(true, false, disabledProviders))
 {
-  private val actions = listOf(getEverywhereToggleAction(), PreviewAction(), getFilterTypesAction(providersIdToName))
+  private val actions = listOfNotNull(getEverywhereToggleAction(),
+                                      PreviewAction(),
+                                      if (isTypeFilterEnabled) getFilterTypesAction(providersIdToName) else null)
   override fun getHeaderActions(): List<AnAction> = actions
 
   private fun getEverywhereToggleAction() = object : CheckBoxSearchEverywhereToggleAction(IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items")), AutoToggleAction {
@@ -137,8 +140,10 @@ private class SeAllFilterEditor(providersIdToName: Map<SeProviderId, @Nls String
   }
 
   companion object {
+    private val isTypeFilterEnabled get() = SeTabsCustomizer.getInstance().isTypeFilterEnabled(SeAllTab.ID)
+
     val disabledProviders: List<SeProviderId>
       get() =
-        SearchEverywhereConfiguration.getInstance().state?.filteredOutFileTypeNames?.map { SeProviderId(it) } ?: emptyList()
+        SearchEverywhereConfiguration.getInstance().takeIf { isTypeFilterEnabled }?.state?.filteredOutFileTypeNames?.map { SeProviderId(it) } ?: emptyList()
   }
 }

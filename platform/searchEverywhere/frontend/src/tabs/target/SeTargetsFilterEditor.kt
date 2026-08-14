@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.scopes.SearchScopeData
 import com.intellij.platform.scopes.SearchScopesInfo
+import com.intellij.platform.searchEverywhere.frontend.SeTabsCustomizer
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeTypeVisibilityStateHolder
 import com.intellij.platform.searchEverywhere.providers.SeLog
@@ -29,17 +30,28 @@ class SeTargetsFilterEditor(
 ) : SeFilterEditorBase<SeTargetsFilter>( run {
   val selectedScopeId = SeScopePersistentStorage.create(project, tabId, scopesInfo, persistScopeIfAvailable)?.getScope()?.scopeId
                         ?: scopesInfo?.selectedScopeId
+
+  val actualHiddenTypes = if (SeTabsCustomizer.getInstance().isTypeFilterEnabled(tabId)) {
+    hiddenTypes(typeVisibilityStates)
+  }
+  else {
+    // can be null, but at SeTargetsFilter.from the missing HIDDEN_TYPES keys results in emptyList. Keep an eye on it if you're touching it.
+    emptyList()
+  }
+
   SeTargetsFilter(selectedScopeId,
                   selectedScopeId != scopesInfo?.everywhereScopeId,
-                  hiddenTypes(typeVisibilityStates))
+                  actualHiddenTypes)
 }
 ) {
+  private val isTypeFilterEnabled = SeTabsCustomizer.getInstance().isTypeFilterEnabled(tabId)
+
   private val updateFilterValueWithVisibilityStates = {
     filterValue = filterValue.cloneWith(hiddenTypes(visibilityStateHolder?.elements))
   }
 
   private val visibilityStateHolder: SeTypeVisibilityStateHolder? =
-    typeVisibilityStates?.takeIf { it.isNotEmpty() }?.let {
+    typeVisibilityStates?.takeIf { isTypeFilterEnabled && it.isNotEmpty() }?.let {
       SeTypeVisibilityStateHolder(it, updateFilterValueWithVisibilityStates)
     }
 
