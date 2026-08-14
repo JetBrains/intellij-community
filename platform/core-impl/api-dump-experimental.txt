@@ -48,7 +48,6 @@
 - f:getUrl():java.lang.String
 *:com.intellij.ide.plugins.PluginNonLoadReason
 - a:getDetailedMessage():java.lang.String
-- a:getLogMessage():java.lang.String
 - a:getPlugin():com.intellij.ide.plugins.IdeaPluginDescriptor
 - a:getShortMessage():java.lang.String
 - a:getShouldNotifyUser():Z

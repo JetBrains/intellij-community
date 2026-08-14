@@ -18,7 +18,6 @@ sealed interface PluginNonLoadReason {
   val plugin: IdeaPluginDescriptor
   val detailedMessage: @NlsContexts.DetailedDescription String
   val shortMessage: @NlsContexts.Label String
-  val logMessage: @NonNls String
   val shouldNotifyUser: Boolean
 }
 
@@ -59,15 +58,6 @@ private class PluginIdConflictNonLoadReason(
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.declares.conflicting.id", reason.conflictingId)
 
-  override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}" +
-            (reason.declarationOrigin as? ContentModuleDescriptor)?.let { ", content module ${it.moduleId.name}" }.orEmpty() +
-            ") declares id '${reason.conflictingId}' " +
-            "which conflicts with the same id " +
-            "from plugin '${reason.conflictingModule.getMainDescriptor().name}' " +
-            "(${reason.conflictingModule.getMainDescriptor().pluginId}" +
-            (reason.conflictingModule as? ContentModuleDescriptor)?.let { ", content module ${it.moduleId.name}" }.orEmpty() + ")"
-
   override val shouldNotifyUser: Boolean = true
 }
 
@@ -81,8 +71,6 @@ class PluginDependencyIsDisabled(
     get() = CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", plugin.name, dependencyId)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", dependencyId)
-  override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) requires plugin with id=${dependencyId} to be enabled"
 }
 
 @ApiStatus.Internal
@@ -93,8 +81,6 @@ class NonBundledPluginsAreExplicitlyDisabled(
     get() = CoreBundle.message("plugin.loading.error.long.custom.plugin.loading.disabled", plugin.name)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.custom.plugin.loading.disabled")
-  override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is not loaded because non-bundled plugins are explicitly disabled"
   override val shouldNotifyUser: Boolean = false
 }
 
@@ -107,8 +93,6 @@ class PluginIsMarkedBroken(
     get() = CoreBundle.message("plugin.loading.error.long.marked.as.broken", plugin.name, plugin.version)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.marked.as.broken")
-  override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) is marked incompatible with the current version of the IDE"
   override val shouldNotifyUser: Boolean = true
 }
 
@@ -120,8 +104,6 @@ class PluginIsCompatibleOnlyWithIntelliJIDEA(
     get() = CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", plugin.name)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.compatible.with.intellij.idea.only")
-  override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is compatible with IntelliJ IDEA only because it doesn''t define any explicit module dependencies"
   override val shouldNotifyUser: Boolean = true
 }
 
@@ -135,8 +117,6 @@ class PluginIsIncompatibleWithHostPlatform(
     get() = CoreBundle.message("plugin.loading.error.long.incompatible.with.platform", plugin.name, plugin.version, requiredOs, hostOs)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.incompatible.with.platform", requiredOs)
-  override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) requires platform ${requiredOs} but the current platform is ${hostOs}"
   override val shouldNotifyUser: Boolean = true
 }
 
@@ -150,8 +130,6 @@ class PluginIsIncompatibleWithHostCpu(
     get() = CoreBundle.message("plugin.loading.error.long.incompatible.with.cpu", plugin.name, plugin.version, requiredCpuArch, hostCpu)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.incompatible.with.platform", requiredCpuArch)
-  override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) requires CPU ${requiredCpuArch} but the current platform is ${hostCpu}"
   override val shouldNotifyUser: Boolean = true
 }
 
@@ -168,8 +146,6 @@ class PluginSinceBuildConstraintViolation(
                                               productBuildNumber)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.incompatible.since.build", plugin.sinceBuild)
-  override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) requires IDE build ${plugin.sinceBuild} or newer, but the current build is $productBuildNumber"
   override val shouldNotifyUser: Boolean = true
 }
 
@@ -186,8 +162,6 @@ class PluginUntilBuildConstraintViolation(
                                               productBuildNumber)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.incompatible.until.build", plugin.untilBuild)
-  override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) requires IDE build ${plugin.untilBuild} or older, but the current build is $productBuildNumber"
   override val shouldNotifyUser: Boolean = true
 }
 
@@ -223,8 +197,6 @@ class PluginMalformedSinceUntilConstraints(
     get() = CoreBundle.message("plugin.loading.error.long.failed.to.load.requirements.for.ide.version", plugin.name)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.failed.to.load.requirements.for.ide.version")
-  override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) has malformed constraints for IDE version"
   override val shouldNotifyUser: Boolean = true
 }
 
@@ -236,8 +208,6 @@ class PluginLoadingIsDisabledCompletely(
     get() = CoreBundle.message("plugin.loading.error.long.plugin.loading.disabled", plugin.name)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.plugin.loading.disabled")
-  override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is not loaded because plugin loading is disabled completely"
   override val shouldNotifyUser: Boolean = true
 }
 
@@ -264,10 +234,6 @@ class PluginPackagePrefixConflict(
       plugin.getMainDescriptor().name,
       conflictingModule.getMainDescriptor().name,
     )
-  override val logMessage: @NonNls String
-    get() = "Plugin '${module.getMainDescriptor().name}' conflicts with '${conflictingModule.getMainDescriptor().name}' and may work incorrectly. " +
-            "Their respective modules [${formatPackagePrefixConflictDetails(module)}] and " +
-            "[${formatPackagePrefixConflictDetails(conflictingModule)}] declare the same package prefix"
   override val shouldNotifyUser: Boolean = true
 }
 
@@ -282,8 +248,6 @@ class PluginIsIncompatibleWithAnotherPlugin(
     get() = CoreBundle.message("plugin.loading.error.long.ide.contains.conflicting.module", plugin.name, incompatiblePlugin.pluginId)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.ide.contains.conflicting.module", incompatiblePlugin.pluginId)
-  override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is incompatible with another plugin '${incompatiblePlugin.name}' (${incompatiblePlugin.pluginId})"
 }
 
 @ApiStatus.Internal
@@ -297,8 +261,6 @@ class PluginDependencyCannotBeLoaded(
     get() = CoreBundle.message("plugin.loading.error.long.depends.on.failed.to.load.plugin", plugin.name, dependencyName)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.depends.on.failed.to.load.plugin", dependencyName)
-  override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) has dependency on '${dependencyName}' which cannot be loaded"
 }
 
 @ApiStatus.Internal
@@ -311,8 +273,6 @@ class PluginDependencyIsNotInstalled(
     get() = CoreBundle.message("plugin.loading.error.long.depends.on.not.installed.plugin", plugin.name, dependencyNameOrId)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.depends.on.not.installed.plugin", dependencyNameOrId)
-  override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) has dependency on '${dependencyNameOrId}' which is not installed"
 }
 
 @ApiStatus.Internal
@@ -323,7 +283,5 @@ class PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins(
     get() = CoreBundle.message("plugin.loading.error.long.not.required.for.explicitly.configured.subset", plugin.name)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.not.required.for.explicitly.configured.subset")
-  override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is not required for loading the explicitly configured subset of plugins"
   override val shouldNotifyUser: Boolean = false
 }
