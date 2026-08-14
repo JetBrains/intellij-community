@@ -217,8 +217,7 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
       @Override
     protected void onMousePressed(@NotNull MouseEvent e) {
       Rectangle baseRect = new Rectangle(getSize());
-      JBInsets.removeFrom(baseRect, getInsets());
-      int arrowWidth = ARROW_DOWN.getIconWidth() + JBUIScale.scale(7);
+        int arrowWidth = ARROW_DOWN.getIconWidth() + JBUIScale.scale(7) + getInsets().right;
 
       Rectangle execButtonRect = new Rectangle(baseRect.x, baseRect.y, baseRect.width - arrowWidth, baseRect.height);
       Rectangle arrowButtonRect = new Rectangle(execButtonRect.x + execButtonRect.width, baseRect.y, arrowWidth, baseRect.height);
