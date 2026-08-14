@@ -15,7 +15,11 @@ class ScopeSeparator @ApiStatus.Internal constructor(@Nls val text: String) : Sc
   }
 }
 
-internal fun createScopeDescriptorRenderer(separatorProvider: ((ScopeDescriptor) -> ListSeparator?)?, @Nls nullText: String? = null): ListCellRenderer<ScopeDescriptor?> {
+@ApiStatus.Internal
+fun createScopeDescriptorRenderer(
+  separatorProvider: ((ScopeDescriptor) -> ListSeparator?)?,
+  @Nls nullText: String? = null,
+): ListCellRenderer<ScopeDescriptor?> {
   return listCellRenderer(nullText ?: "") {
     value.icon?.let {
       icon(it)

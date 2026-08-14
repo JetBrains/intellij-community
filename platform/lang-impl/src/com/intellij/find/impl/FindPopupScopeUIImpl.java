@@ -7,6 +7,7 @@ import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.FrontendScopeChooser;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
+import com.intellij.ide.util.scopeChooser.ScopeModelService;
 import com.intellij.ide.util.scopeChooser.ScopesFilterConditionType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -94,10 +95,10 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
   }
 
   private JComponent getScopeChooser() {
-    return FindKey.isEnabled() ? newScopeCombo : myScopeCombo;
+    return FindKey.isEnabled() ? newScopeCombo.getComponent() : myScopeCombo;
   }
 
-  private ComboBox<ScopeDescriptor> getScopeCombo() {
+  private JComboBox<?> getScopeCombo() {
     return FindKey.isEnabled() ? newScopeCombo.getComboBox() : myScopeCombo.getComboBox();
   }
 
@@ -109,8 +110,8 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
     };
     String selection = ObjectUtils.coalesce(myHelper.getModel().getCustomScopeName(), FindSettings.getInstance().getDefaultScopeName());
     if (FindKey.isEnabled()) {
-      newScopeCombo = new FrontendScopeChooser(myProject, selection, ScopesFilterConditionType.FIND);
-      Disposer.register(myFindPopupPanel.getDisposable(), newScopeCombo);
+      newScopeCombo = ScopeModelService.getInstance(myProject)
+        .createScopeChooser(myFindPopupPanel.getDisposable(), selection, ScopesFilterConditionType.FIND);
     }
     else {
       myScopeCombo = new ScopeChooserCombo();

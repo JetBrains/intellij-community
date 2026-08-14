@@ -8,6 +8,7 @@ import com.intellij.ide.todo.scopeChooser.TodoScopeChooser;
 import com.intellij.ide.todo.scopeChooser.TodoScopeChooserImpl;
 import com.intellij.ide.util.scopeChooser.FrontendScopeChooser;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
+import com.intellij.ide.util.scopeChooser.ScopeModelService;
 import com.intellij.ide.util.scopeChooser.ScopesFilterConditionType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -82,8 +83,8 @@ public final class ScopeBasedTodosPanel extends TodoPanel {
 
   private TodoScopeChooser initScopeChooser(String preselect) {
     if (shouldUseSplitTodo()) {
-      FrontendScopeChooser scopeChooser = new FrontendScopeChooser(myProject, preselect, ScopesFilterConditionType.TODO);
-      Disposer.register(this, scopeChooser);
+      FrontendScopeChooser scopeChooser =
+        ScopeModelService.getInstance(myProject).createScopeChooser(this, preselect, ScopesFilterConditionType.TODO);
       return new FrontendTodoScopeChooserImpl(scopeChooser);
     }
     else {

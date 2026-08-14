@@ -2,30 +2,21 @@
 package com.intellij.ide.util.scopeChooser
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.IndexingBundle
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.concurrency.Promise
 
 
 @ApiStatus.Internal
 interface ScopeModelService {
-
-  fun loadItemsAsync(
-    modelId: String,
-    filterConditionType: ScopesFilterConditionType,
-    dataContextPromise: Promise<DataContext>,
-    onScopesUpdate: suspend (Map<String, ScopeDescriptor>?, selectedScopeId: String?) -> Unit,
-  )
-
-  fun disposeModel(modelId: String)
-
-  fun getScopeDescriptorById(scopeId: String): ScopeDescriptor?
-
-  fun openEditScopesDialog(selectedScopeId: String?, modelId: String, onFinish: (selectedScopeId: String?) -> Unit)
+  fun createScopeChooser(
+    parentDisposable: Disposable,
+    preselectedScopeName: String?,
+    filterConditionType: ScopesFilterConditionType = ScopesFilterConditionType.OTHER,
+  ): FrontendScopeChooser
 
   companion object {
     @JvmStatic

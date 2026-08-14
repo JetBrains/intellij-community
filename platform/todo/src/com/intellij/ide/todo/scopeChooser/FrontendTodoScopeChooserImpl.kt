@@ -8,13 +8,13 @@ import javax.swing.JComponent
 
 @ApiStatus.Internal
 class FrontendTodoScopeChooserImpl(private val chooser: FrontendScopeChooser) : TodoScopeChooser {
-  override fun getSelectedScopeId(): String? = chooser.getSelectedScopeId()
+  override fun getSelectedScopeId(): String? = chooser.selectedScopeId
 
-  override fun getSelectedScopeName(): String? = chooser.getSelectedScopeName()
+  override fun getSelectedScopeName(): String? = chooser.selectedScopeName
 
-  override fun asComponent(): JComponent = chooser
+  override fun asComponent(): JComponent = chooser.component
 
   override fun addSelectionListener(listener: Runnable) {
-    chooser.getComboBox().addActionListener(ActionListener { listener.run() })
+    chooser.comboBox.addActionListener(ActionListener { listener.run() })
   }
 }

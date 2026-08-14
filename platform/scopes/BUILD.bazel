@@ -41,6 +41,8 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/util/concurrency",
         "//fleet/rhizomedb",
+        "//platform/platform-api:ide",
+        "//platform/editor-ui-api:editor-ui",
     ],
 )
 
@@ -78,6 +80,8 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.scopes` end
