@@ -54,20 +54,6 @@ internal fun PluginIncompatibilityReason.convertToUIError(descriptor: IdeaPlugin
   }
 }
 
-private fun getPackagePrefixConflictModuleId(descriptor: PluginModuleDescriptor): String {
-  return when (descriptor) {
-    is PluginMainDescriptor -> descriptor.pluginId.idString
-    is ContentModuleDescriptor -> descriptor.moduleId.name
-  }
-}
-
-private fun getPackagePrefixConflictNamespace(descriptor: PluginModuleDescriptor): String {
-  return when (descriptor) {
-    is PluginMainDescriptor -> descriptor.implicitNamespaceForPluginDescriptorModule ?: "<none>"
-    is ContentModuleDescriptor -> descriptor.moduleId.namespace
-  }
-}
-
 private class PluginIdConflictNonLoadReason(
   private val reason: PluginDeclaresConflictingId,
 ) : PluginNonLoadReason {
@@ -261,6 +247,20 @@ class PluginPackagePrefixConflict(
       conflictingModule.getMainDescriptor().name,
     )
   override val shouldNotifyUser: Boolean = true
+
+  private fun getPackagePrefixConflictModuleId(descriptor: PluginModuleDescriptor): String {
+    return when (descriptor) {
+      is PluginMainDescriptor -> descriptor.pluginId.idString
+      is ContentModuleDescriptor -> descriptor.moduleId.name
+    }
+  }
+
+  private fun getPackagePrefixConflictNamespace(descriptor: PluginModuleDescriptor): String {
+    return when (descriptor) {
+      is PluginMainDescriptor -> descriptor.implicitNamespaceForPluginDescriptorModule ?: "<none>"
+      is ContentModuleDescriptor -> descriptor.moduleId.namespace
+    }
+  }
 }
 
 @ApiStatus.Internal
