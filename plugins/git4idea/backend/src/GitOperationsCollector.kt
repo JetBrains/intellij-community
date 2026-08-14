@@ -25,7 +25,7 @@ import git4idea.repo.GitRepository
 internal object GitOperationsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup(id = "git.operations", version = 12)
+  private val GROUP: EventLogGroup = EventLogGroup(id = "git.operations", version = 13)
 
   internal val UPDATE_FORCE_PUSHED_BRANCH_ACTIVITY = GROUP.registerIdeActivity("update.force.pushed")
 

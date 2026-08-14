@@ -6,9 +6,11 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.asDisposable
+import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsShortCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.GitOperationsCollector.logCantRebaseUsingLog
 import git4idea.GitUtil
@@ -40,13 +42,18 @@ internal class GitInteractiveRebaseEntriesProvider {
     }
   }
 
+  /**
+   * @param head the tip commit to collect entries down to [commit] from; defaults to the repository HEAD.
+   * Callers that append their own newest entry (e.g. amend-to-specific-commit) pass the parent of that entry.
+   */
   suspend fun tryGetEntriesForCommitEditing(
     repository: GitRepository,
     commit: VcsCommitMetadata,
     logData: VcsLogData? = null,
+    head: Hash? = null,
   ): List<GitRebaseEntryGeneratedUsingLog>? {
     return tryGetEntries(repository, logData) { actualLogData ->
-      getEntriesForCommitEditing(repository, commit, actualLogData)
+      getEntriesForCommitEditing(repository, commit, actualLogData, head)
     }
   }
 
@@ -78,7 +85,7 @@ internal class GitInteractiveRebaseEntriesProvider {
     commit: VcsCommitMetadata,
     logData: VcsLogData,
   ): GetEntriesUsingLogResult {
-    val result = getEntriesForCommitEditing(repository, commit, logData)
+    val result = getEntriesForCommitEditing(repository, commit, logData, head = null)
 
     if (result is GetEntriesUsingLogResult.Success) {
       if (result.entries.any { entry -> GitSquashedCommitsMessage.isAutosquashCommitMessage(entry.commitDetails.subject) }) {
@@ -95,12 +102,21 @@ internal class GitInteractiveRebaseEntriesProvider {
     repository: GitRepository,
     commit: VcsShortCommitDetails,
     logData: VcsLogData,
+    head: Hash?,
   ): GetEntriesUsingLogResult =
     coroutineScope {
+      // Start the walk from a concrete tip commit (the repository HEAD by default) instead of the log's HEAD ref.
+      // If that commit is not in the current data pack yet - e.g. a commit was just made and the log refresh hasn't
+      // finished - the traversal fails fast (the hash is absent from the graph, caught below), so we fall back to
+      // Git-native generation instead of silently walking from a stale HEAD and dropping recent commits.
+      val startHash = head ?: repository.currentRevision?.let(HashImpl::build)
+                      ?: return@coroutineScope GetEntriesUsingLogResult.Failure(GetEntriesUsingLogResult.FailureReason.LOG_NOT_UP_TO_DATE)
+      val startNode = GitHistoryTraverser.StartNode.CommitHash(startHash)
+
       val traverser: GitHistoryTraverser = GitHistoryTraverserImpl(repository.project, logData, this.asDisposable())
       val details = mutableListOf<VcsCommitMetadata>()
       try {
-        traverser.traverse(repository.root) { (commitId, parents) ->
+        traverser.traverse(repository.root, startNode) { (commitId, parents) ->
           loadMetadataLater(commitId) { metadata ->
             details.add(metadata)
           }
@@ -108,6 +124,10 @@ internal class GitInteractiveRebaseEntriesProvider {
           val hash = traverser.toHash(commitId)
           parents.size <= 1 && hash != commit.id // stop when we reach merge commit or target commit
         }
+      }
+      catch (_: IllegalArgumentException) {
+        // The repository HEAD is not present in the current data pack yet, i.e. the log is behind the repository.
+        return@coroutineScope GetEntriesUsingLogResult.Failure(GetEntriesUsingLogResult.FailureReason.LOG_NOT_UP_TO_DATE)
       }
       catch (_: VcsException) {
         return@coroutineScope GetEntriesUsingLogResult.Failure(GetEntriesUsingLogResult.FailureReason.UNRESOLVED_HASH)
@@ -138,7 +158,8 @@ internal sealed interface GetEntriesUsingLogResult {
     FIXUP_SQUASH,
     UNEXPECTED_HASH,
     UNRESOLVED_HASH,
-    UPDATE_REFS // should generate an update-ref entry in the editor, which is not supported when using log
+    UPDATE_REFS, // should generate an update-ref entry in the editor, which is not supported when using log
+    LOG_NOT_UP_TO_DATE // the VCS log is behind the repository HEAD, so generated entries would miss recent commits
   }
 }
 

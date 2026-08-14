@@ -160,6 +160,71 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
     assertErrorNotification("Rebase failed", GitBundle.message("rebase.using.log.couldnt.start.error"))
   }
 
+  // "Interactive Rebase from Here" collects commits from the VCS log (GitInteractiveRebaseEntriesProvider). While the
+  // post-commit log refresh is still running, a just-made commit is already shown (via the overlay pack) but the
+  // traversable data pack (VcsLogData.graphData) does not contain it yet, so a naive traversal would silently omit it.
+  // Reproduces that state deterministically: refresh the log, then advance the real HEAD without refreshing the log,
+  // so the data pack is an older-but-valid pack that does not contain the current HEAD.
+  fun `test entries generated from a stale log omit the just-added commit`() {
+    val base = file("firstFile.txt").create("").addCommit("0").details()
+    build {
+      1()
+      2()
+    }
+    logData.refreshAndWait(repo, true) // data pack now contains 0..2
+
+    // A commit lands and GitRepository catches up (as it would right after an IDE commit),
+    // but the VCS log data pack has NOT been refreshed yet -> same state as "action triggered during loading".
+    val justAdded = file("secondFile.txt").create("content").addCommit("3").details()
+    repo.update()
+    assertEquals("Sanity: the real repo HEAD must be the just-added commit", justAdded.id.asString(), repo.currentRevision)
+
+    val entries = runBlocking {
+      repo.project.service<GitInteractiveRebaseEntriesProvider>().tryGetEntriesForDialog(repo, base, logData)
+    }
+
+    // The generator must not silently drop the just-added commit: it must bail out (null -> the action falls back to
+    // git-native generation) because the data pack does not contain the current HEAD.
+    val newHash = justAdded.id.asString()
+    val includesNew = entries?.any { it.commit.startsWith(newHash) || newHash.startsWith(it.commit) } == true
+    assertTrue(
+      "Interactive rebase built from a stale log must not silently drop the just-added commit ($newHash); " +
+      "expected a fallback (null) or entries including it, but got ${entries?.map { it.commit }}",
+      entries == null || includesNew
+    )
+  }
+
+  // Same staleness as above, but through the commit-editing entry point used by Drop/Squash. Verified as an A/B:
+  // while the data pack is behind the real HEAD the generator must bail out (null, so those operations fall back to
+  // their Git-native path); once the data pack catches up, the same call succeeds and includes the new commit.
+  fun `test commit-editing entries fall back when the data pack is behind the repository head`() {
+    val base = file("firstFile.txt").create("").addCommit("0").details()
+    build {
+      1()
+      2()
+    }
+    logData.refreshAndWait(repo, true)
+
+    val justAdded = file("secondFile.txt").create("content").addCommit("3").details()
+    repo.update()
+    assertEquals("Sanity: the real repo HEAD must be the just-added commit", justAdded.id.asString(), repo.currentRevision)
+
+    val provider = repo.project.service<GitInteractiveRebaseEntriesProvider>()
+    val newHash = justAdded.id.asString()
+
+    val staleEntries = runBlocking { provider.tryGetEntriesForCommitEditing(repo, base, logData) }
+    assertTrue("Commit-editing entries built from a stale data pack must not silently drop the current HEAD ($newHash); " +
+               "expected a fallback (null) or entries including it, but got ${staleEntries?.map { it.commit }}",
+               staleEntries == null || staleEntries.any { it.commit.startsWith(newHash) || newHash.startsWith(it.commit) })
+
+    // Control: once the data pack catches up, the same call succeeds and includes the just-added commit.
+    logData.refreshAndWait(repo, true)
+    val freshEntries = runBlocking { provider.tryGetEntriesForCommitEditing(repo, base, logData) }
+    assertNotNull("Commit-editing entries must be generated once the data pack contains the HEAD", freshEntries)
+    assertTrue("Entries must include the current HEAD $newHash (got ${freshEntries!!.map { it.commit }})",
+               freshEntries.any { it.commit.startsWith(newHash) || newHash.startsWith(it.commit) })
+  }
+
   private fun getRebaseEntriesUsingGit(commit: VcsCommitMetadata): List<GitRebaseEntry> {
     lateinit var entriesGeneratedUsingGit: List<GitRebaseEntry>
     val editorHandler = object : GitInteractiveRebaseEditorHandler(project, repo.root) {
@@ -181,6 +246,7 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
 
   private fun checkEntriesGeneration(commit: VcsCommitMetadata) {
     logData.refreshAndWait(repo, true)
+    repo.update() // keep GitRepository's cached HEAD in sync with the refreshed log, as it always is in production
     val entriesGeneratedUsingLog = runBlocking {
       repo.project.service<GitInteractiveRebaseEntriesProvider>()
         .tryGetEntriesForDialog(repo, commit, logData)
